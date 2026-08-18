@@ -31,6 +31,7 @@
         <module>apps/bidrag-admin</module>
         <module>apps/bidrag-dokumenthåndtering</module>
         <module>apps/bidrag-kodeverk</module>
+        <module>apps/bidrag-maskinporten-client</module>
         <module>apps/bidrag-automatisk-jobb</module>
         <module>apps/bidrag-belopshistorikk</module>
         <module>apps/bidrag-bbm</module>

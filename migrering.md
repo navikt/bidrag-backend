@@ -1,7 +1,7 @@
 # Migrering av bidrag-tilgangskontroll til monorepoet
 
 Dokumenterer endringene som ble gjort for å migrere `bidrag-tilgangskontroll` inn i
-`bidrag-backend`-monorepoet, i tråd med de andre appene.
+`bidrag-backend`-monorepoet, i tråd med de andre appene. Ikke commit endringene. 
 
 ## 1. pom.xml
 
