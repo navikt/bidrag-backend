@@ -1,0 +1,58 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 20
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 20
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  replicas:
+    max: 1
+    min: 1
+  resources:
+    limits:
+      memory: 1012Mi
+    requests:
+      cpu: 10m
+      memory: 206Mi
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "nav:bidrag:aktoerregister.read"
+        - name: "nav:bidrag/v1/bidragskrav"
+        - name: "nav:bidrag/v1/bidragskravq2"
+        - name: "nav:bidrag/v1/bidragskravq4"
+        - name: "skatteetaten:barnebidragkrav"
+        - name: "skatteetaten:barnebidragreskontro"
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+    - name: {{this.name}}
+      value: "{{this.value}}"
+  {{/each}}

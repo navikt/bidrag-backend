@@ -1,0 +1,6 @@
+name: bidrag-maskinporten-client
+ingresses:
+  - https://bidrag-maskinporten-client.intern.nav.no
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: prod
