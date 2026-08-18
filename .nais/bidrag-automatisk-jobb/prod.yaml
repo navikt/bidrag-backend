@@ -1,0 +1,100 @@
+name: bidrag-automatisk-jobb
+ingresses:
+  - https://bidrag-automatisk-jobb.intern.nav.no
+limits:
+  memory: 8096Mi
+requests:
+  cpu: 400m
+  memory: 2000Mi
+replicas:
+  max: 2
+  min: 2
+database:
+  navn: bidrag-automatisk-jobb-prod
+  tier: db-custom-1-3840
+  size: 25
+  auditlog: "on"
+bucket:
+  navn: bidrag-automatisk-jobb-rapporter-prod
+kafka:
+  pool: nav-prod
+env:
+  PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_BELOPSHISTORIKK_URL: http://bidrag-belopshistorikk
+  BIDRAG_BELOPSHISTORIKK_SCOPE: prod-gcp.bidrag.bidrag-belopshistorikk
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak
+  BIDRAG_VEDTAK_SCOPE: prod-gcp.bidrag.bidrag-vedtak
+  BIDRAG_SAMHANDLER_URL: http://bidrag-samhandler
+  BIDRAG_RESKONTRO_URL: http://bidrag-reskontro
+  BIDRAG_RESKONTRO_SCOPE: prod-gcp.bidrag.bidrag-reskontro
+  BIDRAG_SAMHANDLER_SCOPE: prod-gcp.bidrag.bidrag-samhandler
+  BIDRAG_DOKUMENT_FORSENDELSE_URL: http://bidrag-dokument-forsendelse
+  BIDRAG_DOKUMENT_FORSENDELSE_SCOPE: prod-gcp.bidrag.bidrag-dokument-forsendelse
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  BIDRAG_BEHANDLING_URL: http://bidrag-behandling
+  BIDRAG_BEHANDLING_SCOPE: prod-gcp.bidrag.bidrag-behandling
+  BIDRAG_GRUNNLAG_URL: http://bidrag-grunnlag
+  BIDRAG_GRUNNLAG_SCOPE: prod-gcp.bidrag.bidrag-grunnlag
+  OPPGAVE_URL: https://oppgave.prod-fss-pub.nais.io
+  OPPGAVE_SCOPE: prod-fss.oppgavehandtering.oppgave
+  KODEVERK_URL: http://bidrag-kodeverk
+  BIDRAG_SJABLON_URL: https://bidrag-sjablon.prod-fss-pub.nais.io/bidrag-sjablon
+  BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
+  KAFKA_VEDTAK_TOPIC: bidrag.vedtak
+  KAFKA_PERSON_HENDELSE_TOPIC: bidrag.personhendelse.v1
+  KAFKA_BAKS_OPPHOER_BARNETRYGD_TOPIC: teamfamilie.aapen-familie-ba-sak-opphoer-barnetrygd
+  BAKS_OPPHOER_BARNETRYGD_KAFKA_GROUP_ID: bidrag-automatisk-jobb-2
+  VEDTAK_KAFKA_GROUP_ID_SISTE: bidrag-automatisk-jobb-siste
+  VEDTAK_KAFKA_GROUP_ID_START: bidrag-automatisk-jobb-start-6
+  PERSON_HENDELSE_KAFKA_GROUP_ID: bidrag-automatisk-jobb
+  SLACK_CHANNEL_ID: C0ATAUAJ38Q
+  SLACK_BATCH_KJOREPLAN_VARSLING_CRON: "0 0 12 1 * *" # Hver måned den 1. kl 12:00
+  REVURDER_FORSKUDD_OPPRETT_CRON: "-"
+  REVURDER_FORSKUDD_EVALUER_CRON: "-"
+  REVURDER_FORSKUDD_FATTE_VEDTAK_CRON: "-"
+  REVURDER_FORSKUDD_REVURDERINGSLENKE_CRON: "-"
+  ALDERSJUSTERING_BIDRAG_OPPRETT_CRON: "-"
+  ALDERSJUSTERING_BIDRAG_BEREGN_CRON: "-"
+  ALDERSJUSTERING_BIDRAG_FATT_VEDTAK_CRON: "-"
+  REVURDER_FORSKUDD_OPPRETT_FORSENDELSE_CRON: "-"
+  REVURDER_FORSKUDD_DISTRUBUER_FORSENDELSE_CRON: "-"
+  ALDERSJUSTERING_BIDRAG_OPPRETT_OPPGAVE_CRON: "-"
+  INDEKSREGULERING_BIDRAG_OPPRETT_CRON: "-"
+  INDEKSREGULERING_BIDRAG_GJENNOMFOR_CRON: "-"
+  INDEKSREGULERING_BIDRAG_FATT_VEDTAK_CRON: "-"
+  INDEKSREGULERING_BIDRAG_RAPPORTER_CRON: "-"
+  BUCKET_NAME: bidrag-automatisk-jobb-rapporter-prod
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  SFTP_HOST: sftp.nav.no
+  SFTP_SKAL_OVERFORE_FIL: false
+outbound-access-apps:
+  - bidrag-belopshistorikk
+  - bidrag-vedtak
+  - bidrag-kodeverk
+  - bidrag-samhandler
+  - bidrag-dokument-forsendelse
+  - bidrag-reskontro
+  - bidrag-behandling
+  - bidrag-grunnlag
+outbound-access-hosts:
+  - bidrag-person.prod-fss-pub.nais.io
+  - bidrag-sak.prod-fss-pub.nais.io
+  - bidrag-sjablon.prod-fss-pub.nais.io
+  - oppgave.prod-fss-pub.nais.io
+  - bidrag-unleash-api.nav.cloud.nais.io
+azure_access_inbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+unleash:
+  env: production
+  secret_name: bidrag-automatisk-jobb-unleash-api-token

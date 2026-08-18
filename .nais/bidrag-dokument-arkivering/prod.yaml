@@ -1,0 +1,19 @@
+name: bidrag-dokument-arkivering
+ingresses:
+  - https://bidrag-dokument-arkivering.nais.adeo.no
+  - https://bidrag-dokument-arkivering.intern.nav.no
+env:
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.intern.nav.no/bidrag-dokument
+  DOKARKIV_URL: https://dokarkiv.intern.nav.no
+  DOKARKIV_SCOPE: prod-fss.teamdokumenthandtering.dokarkiv
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+vault:
+  srvKvPath: prod
+  secretKvPath: prod
+azureAccessInbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss

@@ -1,0 +1,40 @@
+{
+  "data": {
+    "hentPerson": {
+      "doedsfall": [],
+      "navn": [
+        {
+          "fornavn": "ARTIG",
+          "mellomnavn": null,
+          "etternavn": "TAREMEL"
+        }
+      ],
+      "kontaktadresse": [],
+      "oppholdsadresse": [],
+      "bostedsadresse": [
+        {
+          "angittFlyttedato": "1977-05-18",
+          "gyldigFraOgMed": "1977-05-18T00:00",
+          "gyldigTilOgMed": null,
+          "coAdressenavn": null,
+          "ukjentBosted": null,
+          "metadata": {
+            "master": "FREG"
+          },
+          "matrikkeladresse": null,
+          "vegadresse": {
+            "postnummer": "1613",
+            "adressenavn": "Oredalsåsen",
+            "husnummer": "48",
+            "husbokstav": null,
+            "bruksenhetsnummer": "H0102",
+            "tilleggsnavn": null,
+            "kommunenummer": "3004",
+            "bydelsnummer": null
+          },
+          "utenlandskAdresse": null
+        }
+      ]
+    }
+  }
+}

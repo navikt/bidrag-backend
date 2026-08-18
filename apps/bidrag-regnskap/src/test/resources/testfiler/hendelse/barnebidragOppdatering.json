@@ -1,0 +1,59 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "64847",
+  "opprettetAv": "B138788",
+  "kildeapplikasjon": "TEST",
+  "vedtakstidspunkt": "2022-01-02T00:00:00.000000000",
+  "enhetsnummer": "4849",
+  "innkrevingUtsattTilDato": null,
+  "opprettetTidspunkt": "2022-01-02T16:00:23.254988482",
+  "stønadsendringListe": [
+    {
+      "type": "BIDRAG",
+      "sak": "2203234",
+      "skyldner": "BP",
+      "kravhaver": "BARN1",
+      "mottaker": "BM",
+      "førsteIndeksreguleringsår": "2023",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": [
+        {
+          "periode": {
+            "fom":"2022-03",
+            "til": null
+          },
+          "beløp": 5520.00,
+          "valutakode": "NOK",
+          "resultatkode": "KBB"
+        }
+      ]
+    },
+    {
+      "type": "BIDRAG",
+      "sak": "2203234",
+      "skyldner": "BP",
+      "kravhaver": "BARN2",
+      "mottaker": "BM",
+      "førsteIndeksreguleringsår": "2023",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": [
+        {
+          "periode": {
+            "fom":"2022-03",
+            "til": null
+          },
+          "beløp": 4950.00,
+          "valutakode": "NOK",
+          "resultatkode": "KBB"
+        }
+      ]
+    }
+  ],
+  "engangsbeløpListe": [],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

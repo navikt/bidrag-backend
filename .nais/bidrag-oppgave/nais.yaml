@@ -1,0 +1,55 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  image: {{ image }}
+  port: 8080
+  azure:
+    application:
+      enabled: true
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  liveness:
+    path: /internal/health/liveness
+    initialDelay: 10
+  readiness:
+    path: /internal/health/readiness
+    initialDelay: 10
+  prometheus:
+    enabled: true
+    path: /internal/prometheus
+  replicas:
+    max: {{ replicas.max }}
+    min: {{ replicas.min }}
+  resources:
+    limits:
+      memory: {{ limits.memory }}
+    requests:
+      cpu: {{ requests.cpu }}
+      memory: {{ requests.memory }}
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+  {{/each}}
+  accessPolicy:
+    inbound:
+      # Apper som kaller bidrag-oppgave sitt /api/**. Legg til konsument-app(er)
+      # her når de er bekreftet (f.eks. bidrag-behandling/frontend).
+      rules: []
+    outbound:
+      external:
+        - host: {{ env.OPPGAVE_API_HOST }}
+      rules:
+        - application: logging
+          namespace: nais-system

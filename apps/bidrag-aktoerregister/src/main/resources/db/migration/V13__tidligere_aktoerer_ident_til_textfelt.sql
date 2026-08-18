@@ -1,0 +1,1 @@
+ALTER TABLE aktoerregister.tidligere_identer ALTER COLUMN tidligere_aktoer_ident TYPE TEXT;

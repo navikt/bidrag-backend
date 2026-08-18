@@ -1,0 +1,5 @@
+AZURE_APP_TENANT_ID: <app_tenant_id>
+AZURE_APP_CLIENT_ID: <app_client_id>
+AZURE_APP_CLIENT_SECRET: unset
+server.port: 8181
+NAIS_APP_NAME: bidrag-bbm

@@ -1,0 +1,16 @@
+BISYS_URL: b27wasl00850.preprod.local
+IS_LOCAL: true
+---
+spring:
+  config:
+    activate:
+      on-profile: q1
+
+BISYS_URL: b27wasl00850.preprod.local
+
+---
+spring:
+  config:
+    activate:
+      on-profile: q2
+BISYS_URL: b27wasl00850.preprod.local

@@ -1,0 +1,281 @@
+# Verdiene for beregning av forskudd oppdateres normalt 1. juli hvert år.
+# Tallene er hentet fra "Vedlegg 1 til forskotteringsloven – Beregning av bidragsforskott. Satser" (https://lovdata.no/nav/rundskriv/v1-54-00)
+# Satsen for ordinært forskudd skal i følge "Rundskriv til forskotteringsloven" (https://lovdata.no/nav/rundskriv/r54-00/KAPITTEL_2-5-1-1)
+# fastsettes av Sosialdepartementet ved å indeksregulere tidligere sats og runde av til nærmeste 10kr.
+
+Multiplikator for øvre inntektsgrense: #0013
+  2023-07-01:                                330x
+  2003-01-01:                                320x
+
+Forskudd:
+  2026-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 388.200,-
+      Ordinært forskudd enslig:          580.400,-
+      Ordinært forskudd gift/samboer:    479.200,-
+      Inntektsinterval:                   82.500,-
+    Sats forhøyet forskudd:                2.080,-
+
+  2025-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 375.900,-     #0033
+      Ordinært forskudd enslig:          556.900,-     #0034
+      Ordinært forskudd gift/samboer:    459.300,-     #0035
+      Inntektsinterval:                   76.600,-     #0036
+    Sats forhøyet forskudd:                2.010,-     #0005
+
+  2024-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 369.300,-
+      Ordinært forskudd enslig:          547.500,-
+      Ordinært forskudd gift/samboer:    453.500,-
+      Inntektsinterval:                   75.800,-
+    Sats forhøyet forskudd:                1.970,-
+
+  2023-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 346.200,-
+      Ordinært forskudd enslig:          532.400,-
+      Ordinært forskudd gift/samboer:    420.600,-
+      Inntektsinterval:                   74.600,-
+    Sats forhøyet forskudd:                1.880,-
+
+  2022-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 312.700,-
+      Ordinært forskudd enslig:          488.300,-
+      Ordinært forskudd gift/samboer:    375.700,-
+      Inntektsinterval:                   68.900,-
+    Sats forhøyet forskudd:                1.760,-
+
+  2021-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 305.000,-
+      Ordinært forskudd enslig:          476.600,-
+      Ordinært forskudd gift/samboer:    366.900,-
+      Inntektsinterval:                   68.400,-
+    Sats forhøyet forskudd:                1.710,-
+
+  2020-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 297.500,-
+      Ordinært forskudd enslig:          468.500,-
+      Ordinært forskudd gift/samboer:    360.800,-
+      Inntektsinterval:                   69.100,-
+    Sats forhøyet forskudd:                1.670,-
+
+  2019-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 277.600,-
+      Ordinært forskudd enslig:          430.000,-
+      Ordinært forskudd gift/samboer:    344.900,-
+      Inntektsinterval:                   62.700,-
+    Sats forhøyet forskudd:                1.640,-
+
+  2018-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 270.200,-
+      Ordinært forskudd enslig:          419.700,-
+      Ordinært forskudd gift/samboer:    336.500,-
+      Inntektsinterval:                   61.700,-
+    Sats forhøyet forskudd:                1.600,-
+
+  2017-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 271.000,-
+      Ordinært forskudd enslig:          408.200,-
+      Ordinært forskudd gift/samboer:    335.900,-
+      Inntektsinterval:                   61.100,-
+    Sats forhøyet forskudd:                1.570,-
+
+  2016-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 264.200,-
+      Ordinært forskudd enslig:          399.100,-
+      Ordinært forskudd gift/samboer:    328.700,-
+      Inntektsinterval:                   60.200,-
+    Sats forhøyet forskudd:                1.530,-
+
+  2015-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 241.600,-
+      Ordinært forskudd enslig:          370.200,-
+      Ordinært forskudd gift/samboer:    314.800,-
+      Inntektsinterval:                   58.400,-
+    Sats forhøyet forskudd:                1.490,-
+
+  2014-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 238.900,-
+      Ordinært forskudd enslig:          363.200,-
+      Ordinært forskudd gift/samboer:    308.900,-
+      Inntektsinterval:                   57.300,-
+    Sats forhøyet forskudd:                1.470,-
+
+  2013-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 235.100,-
+      Ordinært forskudd enslig:          342.800,-
+      Ordinært forskudd gift/samboer:    300.500,-
+      Inntektsinterval:                   55.100,-
+    Sats forhøyet forskudd:                1.440,-
+
+  2012-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 232.500,-
+      Ordinært forskudd enslig:          341.500,-
+      Ordinært forskudd gift/samboer:    299.300,-
+      Inntektsinterval:                   54.800,-
+    Sats forhøyet forskudd:                1.430,-
+
+  2011-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 232.000,-
+      Ordinært forskudd enslig:          341.200,-
+      Ordinært forskudd gift/samboer:    298.500,-
+      Inntektsinterval:                   54.000,-
+    Sats forhøyet forskudd:                1.410,-
+
+  2011-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 217.200,-
+      Ordinært forskudd enslig:          323.900,-
+      Ordinært forskudd gift/samboer:    290.000,-
+      Inntektsinterval:                   52.800,-
+    Sats forhøyet forskudd:                1.380,-
+
+  2010-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 170.900,-
+      Ordinært forskudd enslig:          323.900,-
+      Ordinært forskudd gift/samboer:    290.000,-
+      Inntektsinterval:                   52.800,-
+    Sats forhøyet forskudd:                1.380,-
+
+  2010-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 170.900,-
+      Ordinært forskudd enslig:          305.700,-
+      Ordinært forskudd gift/samboer:    275.700,-
+      Inntektsinterval:                   48.900,-
+    Sats forhøyet forskudd:                1.350,-
+
+  2009-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 163.200,-
+      Ordinært forskudd enslig:          305.700,-
+      Ordinært forskudd gift/samboer:    275.700,-
+      Inntektsinterval:                   48.900,-
+    Sats forhøyet forskudd:                1.350,-
+
+  2009-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 163.200,-
+      Ordinært forskudd enslig:          283.700,-
+      Ordinært forskudd gift/samboer:    261.800,-
+      Inntektsinterval:                   44.500,-
+    Sats forhøyet forskudd:                1.320,-
+
+  2008-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 158.000,-
+      Ordinært forskudd enslig:          283.700,-
+      Ordinært forskudd gift/samboer:    261.800,-
+      Inntektsinterval:                   44.500,-
+    Sats forhøyet forskudd:                1.320,-
+
+  2008-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 158.000,-
+      Ordinært forskudd enslig:          257.400,-
+      Ordinært forskudd gift/samboer:    236.600,-
+      Inntektsinterval:                   40.600,-
+    Sats forhøyet forskudd:                1.270,-
+
+  2007-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 143.200,-
+      Ordinært forskudd enslig:          257.400,-
+      Ordinært forskudd gift/samboer:    236.600,-
+      Inntektsinterval:                   40.600,-
+    Sats forhøyet forskudd:                1.270,-
+
+  2007-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 143.200,-
+      Ordinært forskudd enslig:          248.700,-
+      Ordinært forskudd gift/samboer:    222.900,-
+      Inntektsinterval:                   36.700,-
+    Sats forhøyet forskudd:                1.250,-
+
+  2006-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 136.000,-
+      Ordinært forskudd enslig:          248.700,-
+      Ordinært forskudd gift/samboer:    222.900,-
+      Inntektsinterval:                   36.700,-
+    Sats forhøyet forskudd:                1.250,-
+
+  2006-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 136.000,-
+      Ordinært forskudd enslig:          248.100,-
+      Ordinært forskudd gift/samboer:    217.900,-
+      Inntektsinterval:                   38.000,-
+    Sats forhøyet forskudd:                1.230,-
+
+  2005-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 131.900,-
+      Ordinært forskudd enslig:          248.100,-
+      Ordinært forskudd gift/samboer:    217.900,-
+      Inntektsinterval:                   38.000,-
+    Sats forhøyet forskudd:                1.230,-
+
+  2005-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 131.900,-
+      Ordinært forskudd enslig:          245.100,-
+      Ordinært forskudd gift/samboer:    210.900,-
+      Inntektsinterval:                   34.400,-
+    Sats forhøyet forskudd:                1.220,-
+
+  2004-07-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 128.400,-
+      Ordinært forskudd enslig:          245.100,-
+      Ordinært forskudd gift/samboer:    210.900,-
+      Inntektsinterval:                   34.400,-
+    Sats forhøyet forskudd:                1.220,-
+
+  2004-06-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 128.400,-
+      Ordinært forskudd enslig:          237.700,-
+      Ordinært forskudd gift/samboer:    208.300,-
+      Inntektsinterval:                   35.200,-
+    Sats forhøyet forskudd:                1.220,-
+
+  2004-05-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 128.400,-
+      Ordinært forskudd enslig:          237.700,-
+      Ordinært forskudd gift/samboer:    208.300,-
+      Inntektsinterval:                   35.200,-
+    Sats forhøyet forskudd:                1.240,-
+
+  2004-01-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 128.000,-
+      Ordinært forskudd enslig:          237.700,-
+      Ordinært forskudd gift/samboer:    208.300,-
+      Inntektsinterval:                   35.200,-
+    Sats forhøyet forskudd:                1.240,-
+
+  2003-01-01:
+    Inntektsgrenser:
+      Forhøyet forskudd:                 125.000,-
+      Ordinært forskudd enslig:          233.100,-
+      Ordinært forskudd gift/samboer:    204.000,-
+      Inntektsinterval:                   29.200,-
+    Sats forhøyet forskudd:                1.240,-

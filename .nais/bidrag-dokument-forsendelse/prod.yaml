@@ -1,0 +1,107 @@
+name: bidrag-dokument-forsendelse
+bucket_name: bidrag-dokument-forsendelse-prod
+min_replicas: 2
+ingresses:
+  - https://bidrag-dokument-forsendelse.intern.nav.no
+env:
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+
+  BIDRAG_DOKUMENT_BESTILLING_URL: http://bidrag-dokument-bestilling
+  BIDRAG_DOKUMENT_BESTILLING_SCOPE: prod-gcp.bidrag.bidrag-dokument-bestilling
+
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.prod-fss-pub.nais.io/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+
+  BIDRAG_DOKUMENT_JOURNALPOST_URL: https://bidrag-dokument-journalpost.prod-fss-pub.nais.io/bidrag-dokument-journalpost
+  BIDRAG_DOKUMENT_JOURNALPOST_SCOPE: prod-fss.bidrag.bidrag-dokument-journalpost
+
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io/bidrag-sak
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+
+  BIDRAG_TILGANGSKONTROLL_URL: http://bidrag-tilgangskontroll
+  BIDRAG_TILGANGSKONTROLL_SCOPE: prod-gcp.bidrag.bidrag-tilgangskontroll
+
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+
+  BIDRAG_VEDTAK_URL:  http://bidrag-vedtak
+  BIDRAG_VEDTAK_SCOPE: prod-gcp.bidrag.bidrag-vedtak
+
+  BIDRAG_BEHANDLING_URL:  http://bidrag-behandling
+  BIDRAG_BEHANDLING_SCOPE: prod-gcp.bidrag.bidrag-behandling
+
+  TOPIC_DOKUMENT: bidrag.dokument
+  TOPIC_JOURNALPOST: bidrag.journalpost
+
+  KODEVERK_URL: http://bidrag-kodeverk
+
+  INNSENDING_API_URL: https://innsending-api-gcp.intern.nav.no
+  INNSENDING_API_SCOPE: prod-gcp.team-soknad.innsending-api
+
+  BIDRAG_SAMHANDLER_URL: http://bidrag-samhandler
+  BIDRAG_SAMHANDLER_SCOPE: prod-gcp.bidrag.bidrag-samhandler
+
+  BIDRAG_BBM_URL: https://bidrag-bbm.prod-fss-pub.nais.io
+  BIDRAG_BBM_SCOPE: prod-fss.bidrag.bidrag-bbm
+
+  LAGRE_DIST_INFO_PAGE_SIZE: 500
+  LAGRE_DIST_INFO_CRON: "0 0 */3 * * ?"
+  OPPDATER_DIST_STATUS_CRON: "0 0 */12 * * ?"
+  SYNKRONISER_STATUS_DOKUMENTER_CRON: "0 0 */12 * * ?"
+  SYNKRONISER_STATUS_DOKUMENTER_ENABLED: true
+  REBESTILL_DOKUMENTER_UNDER_PRODUKSJON_SCHEDULE: "0 */10 * * * *"
+  SJEKK_DOKUMENTER_UNDER_PRODUKSJON_SCHEDULE: "0 */5 * * * *"
+  REBESTILL_DOKUMENTER_BESTILLING_FEILET_SCHEDULE: "0 * * * * *"
+  RESYNK_FORSENDELSE_DISTRIBUSJON_SCHEDULE: "0 0 */1 * * ?"
+  FERDIGSTILL_NOTAT_FORSENDELSE_SCHEDULE: "0 */30 * * * *"
+  GCP_DOCUMENT_CLIENTSIDE_KMS_KEY_PATH: gcp-kms://projects/bidrag-prod-8f72/locations/europe-north1/keyRings/bidrag-dokument-forsendelse/cryptoKeys/clientside_document_encryption
+
+  JAVA_OPTS: -Xmx1028m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+
+  DB_MAX_POOL_SIZE: 70
+  DB_MIN_IDLE: 5
+database:
+  dbname: bidrag-dokument-forsendelse
+  autoResize: false
+  tier: db-custom-1-3840
+kafka:
+  pool: nav-prod
+outbound-access-apps:
+   - bidrag-tilgangskontroll
+   - bidrag-dokument-bestilling
+   - bidrag-vedtak
+   - bidrag-behandling
+   - bidrag-kodeverk
+   - bidrag-samhandler
+outbound-access-hosts:
+   - bidrag-dokument.prod-fss-pub.nais.io
+   - bidrag-person.prod-fss-pub.nais.io
+   - bidrag-sak.prod-fss-pub.nais.io
+   - bidrag-organisasjon.prod-fss-pub.nais.io
+   - innsending-api-gcp.intern.nav.no
+   - bidrag-unleash-api.nav.cloud.nais.io
+   - bidrag-dokument-journalpost.prod-fss-pub.nais.io
+   - bidrag-bbm.prod-fss-pub.nais.io
+azure_access_inbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+unleash:
+  env: production
+  secret_name: bidrag-dokument-forsendelse-unleash-api-token

@@ -1,0 +1,120 @@
+name: Bygg og deploy til prod
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: 21
+        description: Hvilken versjon av java applikasjonen skal bygges med
+      runner:
+        required: false
+        type: string
+        default: ubuntu-latest
+        description: Runner build-jobben skal kjøre på. Kan settes til en større GitHub-hosted runner for tyngre Maven/Docker-bygg.
+      nais_cluster:
+        required: false
+        type: string
+        default: gcp
+        description: Skal enten være gcp eller fss
+      nais_variabler_filnavn:
+        required: false
+        type: string
+        default: prod.yaml
+        description: Navnet på miljøvariabler filen som skal brukes ved deploy med filending
+      nais_hovedfil_navn:
+        required: false
+        type: string
+        default: nais.yaml
+        description: Navnet på nais filen som skal brukes. Parameter skal inkludere filending og evt path om det ikke ligger på root i .nais folder.
+      maven_options:
+        required: false
+        type: string
+        default: -B -fae
+        description: Ekstra options ved kjøring av maven bygget. Dette kan være lag eller profiler. Default -B (Batchmode, non-interactive), -fae (Fail at end).
+      maven_test_lifecycle:
+        required: false
+        type: string
+        default: install
+        description: Mulighet for å endre hvilken maven lifecycle som kjøres sammen med testene. For å kunne kjøre integrasjonstester må verify/install/deploy brukes.
+      maven_cache_paths:
+        required: false
+        type: string
+        default: "**/pom.xml"
+        description: pom.xml-filer (én per linje) som utgjør avhengighetstreet for denne appen (rot-pom.xml + evt. parent-aggregator + appens egen pom.xml). Brukes til å lage en presis Maven-cache-nøkkel istedenfor å hashe alle pom.xml i monorepoet. Default hasher alle (samme oppførsel som før).
+      maven_cache_key:
+        required: false
+        type: string
+        description: Unik nøkkel-prefiks for Maven-cachen til denne appen. Faller tilbake til image_suffix om ikke satt.
+      ktlint_paths:
+        required: false
+        type: string
+        default: src/**/*.kt
+        description: Space-separerte glob-mønstre (relativt til repo-rot) som skal ktlint-sjekkes.
+      ktlint_version:
+        required: false
+        type: string
+        default: "1.8.0"
+        description: Versjon av ktlint-CLI som skal brukes. Må holdes i sync med <ktlint.version> i rot-pom.xml.
+      dockerfile_with_path:
+        required: false
+        type: string
+        default: Dockerfile
+        description: Kan settes for å spesifisere path for dockerfile.
+      docker_context:
+        required: false
+        type: string
+        default: .
+        description: Kan settes for å spesifisere docker context for build files.
+      image_suffix:
+        required: false
+        type: string
+        description: Suffix for docker image om det er multimodul repo.
+      tag:
+        required: false
+        type: string
+        description: Custom docker tag
+    outputs:
+      image:
+        description: "Docker image som blir deployet til miljø"
+        value: ${{ jobs.build_and_deploy.outputs.image }}
+      tag:
+        description: "Docker tag som blir deployet til miljø"
+        value: ${{ jobs.build_and_deploy.outputs.tag }}
+
+jobs:
+  build_and_deploy:
+    name: "Build and deploy to production"
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    with:
+      nais_variabler_filnavn: ${{ inputs.nais_variabler_filnavn }}
+      nais_cluster: ${{ inputs.nais_cluster }}
+      produksjon: true
+      java-version: ${{ inputs.java-version }}
+      runner: ${{ inputs.runner }}
+      maven_options: ${{ inputs.maven_options }}
+      maven_test_lifecycle: ${{ inputs.maven_test_lifecycle }}
+      maven_cache_paths: ${{ inputs.maven_cache_paths }}
+      maven_cache_key: ${{ inputs.maven_cache_key }}
+      nais_hovedfil_navn: ${{ inputs.nais_hovedfil_navn }}
+      ktlint_paths: ${{ inputs.ktlint_paths }}
+      ktlint_version: ${{ inputs.ktlint_version }}
+      dockerfile_with_path: ${{ inputs.dockerfile_with_path }}
+      docker_context: ${{ inputs.docker_context }}
+      image_suffix: ${{ inputs.image_suffix }}
+      tag: ${{ inputs.tag }}
+    secrets: inherit
+
+  tag:
+    name: "Tag release"
+    needs: build_and_deploy
+    permissions:
+      contents: "write"
+    uses: ./.github/workflows/tag_utgivelse.yaml
+    with:
+      tag: ${{ needs.build_and_deploy.outputs.tag }}
+      app_navn: ${{ inputs.tag }}
+    secrets: inherit

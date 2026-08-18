@@ -1,0 +1,39 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "8",
+  "opprettetAv": "E158931",
+  "kildeapplikasjon": "TEST",
+  "vedtakstidspunkt": "2021-06-30T00:00:00.000000000",
+  "enhetsnummer": "9401",
+  "innkrevingUtsattTilDato": null,
+  "opprettetTidspunkt": "2021-06-30T16:00:23.254988482",
+  "stønadsendringListe": [
+    {
+      "type": "MOTREGNING",
+      "sak": "1706132",
+      "skyldner": "",
+      "kravhaver": "",
+      "mottaker": "",
+      "førsteIndeksreguleringsår": "2023",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": [
+        {
+          "periode": {
+            "fom":"2021-08",
+            "til":"2022-08"
+          },
+          "beløp": 815.00,
+          "valutakode": "NOK",
+          "resultatkode": "IV",
+          "delytelseId": "26681362"
+        }
+      ]
+    }
+  ],
+  "engangsbeløpListe": [],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

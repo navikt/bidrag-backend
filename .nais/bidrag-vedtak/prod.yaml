@@ -1,0 +1,62 @@
+name: bidrag-vedtak
+ingresses:
+  - https://bidrag-vedtak.intern.nav.no
+dbname: bidrag-vedtak-prod
+kafka:
+  pool: nav-prod
+kafka-topic-vedtak: bidrag.vedtak
+kafka-topic-vedtaksforslag: bidrag.vedtaksforslag
+spring-profiles: live,nais,database-legacy
+azureAccessInbound:
+  - application: bidrag-vedtak
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-bestilling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-statistikk
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-regnskap
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+azure:
+  bidrag_organisasjon_url: bidrag-organisasjon.prod-fss-pub.nais.io
+  bidrag_organisasjon_scope: prod-fss.bidrag.bidrag-organisasjon
+  bidrag_person_url: bidrag-person.prod-fss-pub.nais.io
+  bidrag_person_scope: prod-fss.bidrag.bidrag-person
+spec:
+  replicas:
+    min: 2
+    max: 4
+  resources:
+    limits:
+      memory: 4096Mi
+    requests:
+      cpu: 1000m
+      memory: 2000Mi
+  gcp:
+    sqlInstances:
+      tier: db-custom-8-7680
+      diskAutoresize: true
+      diskSize: 25
+      pointInTimeRecovery: true
+      auditlog: "on"

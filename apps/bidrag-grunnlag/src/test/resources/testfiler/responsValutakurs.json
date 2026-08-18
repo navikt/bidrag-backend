@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "id": "IREF235740",
+    "prepared": "2025-11-07T13:52:54",
+    "test": false,
+    "datasetId": "2aee1655-af6c-4cc6-9dea-7504294a74cc",
+    "sender": {
+      "id": "Unknown"
+    },
+    "receiver": {
+      "id": "guest"
+    },
+    "links": [
+      {
+        "rel": "self",
+        "href": "/data/EXR/M.USD.NOK.SP?endPeriod=2025-11-01&format=sdmx-json&locale=no&startPeriod=2025-10-01",
+        "uri": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/data-message/tools/schemas/1.0/sdmx-json-data-schema.json"
+      }
+    ]
+  },
+  "data": {
+    "dataSets": [
+      {
+        "links": [
+          {
+            "rel": "dataflow",
+            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=NB:EXR(1.0)"
+          }
+        ],
+        "reportingBegin": "2025-10-01T00:00:00",
+        "reportingEnd": "2025-10-01T23:59:59",
+        "action": "Information",
+        "series": {
+          "0:0:0:0": {
+            "attributes": [0, 0, 0, 0],
+            "observations": {
+              "0": [
+                "10.0285"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "structure": {
+      "links": [
+        {
+          "rel": "dataflow",
+          "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=NB:EXR(1.0)"
+        },
+        {
+          "rel": "datastructure",
+          "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=NB:DSD_EXR(1.0)"
+        }
+      ],
+      "name": "Valutakurser",
+      "names": {
+        "no": "Valutakurser"
+      },
+      "description": "Norges Banks valutakurser",
+      "descriptions": {
+        "no": "Norges Banks valutakurser"
+      },
+      "dimensions": {
+        "dataset": [],
+        "series": [
+          {
+            "id": "FREQ",
+            "name": "Frekvens",
+            "description": "Tidsintervallet for observasjoner over en gitt tidsperiode.",
+            "keyPosition": 0,
+            "role": null,
+            "values": [
+              {
+                "id": "M",
+                "name": "Månedlig",
+                "description": "Månedlig"
+              }
+            ]
+          },
+          {
+            "id": "BASE_CUR",
+            "name": "Basisvaluta",
+            "description": "Første valuta i et valutakvoteringspar. Også kalt transaksjonsvalutaen.",
+            "keyPosition": 1,
+            "role": null,
+            "values": [
+              {
+                "id": "USD",
+                "name": "Amerikanske dollar"
+              }
+            ]
+          },
+          {
+            "id": "QUOTE_CUR",
+            "name": "Kvoteringsvaluta",
+            "description": "Den andre valutaen i et valutakvoteringspar. Også kjent som motvaluta.",
+            "keyPosition": 2,
+            "role": null,
+            "values": [
+              {
+                "id": "NOK",
+                "name": "Norske kroner"
+              }
+            ]
+          },
+          {
+            "id": "TENOR",
+            "name": "Løpetid",
+            "description": "Mengde tid igjen inntil tilbakebetaling av et lån eller en finansiell kontrakt utløper.",
+            "keyPosition": 3,
+            "role": null,
+            "values": [
+              {
+                "id": "SP",
+                "name": "Spot"
+              }
+            ]
+          }
+        ],
+        "observation": [
+          {
+            "id": "TIME_PERIOD",
+            "name": "Tidsperiode",
+            "description": "Tidsperioden eller tidspunktet for den målte observasjonen.",
+            "keyPosition": 4,
+            "role": "time",
+            "values": [
+              {
+                "start": "2025-10-01T00:00:00",
+                "end": "2025-10-31T23:59:59",
+                "id": "2025-10",
+                "name": "2025-10"
+              }
+            ]
+          }
+        ]
+      },
+      "attributes": {
+        "dataset": [],
+        "series": [
+          {
+            "id": "DECIMALS",
+            "name": "Desimaler",
+            "description": "Antall sifre til høyre for desimalskilletegnet.",
+            "relationship": {
+              "dimensions": [
+                "BASE_CUR",
+                "QUOTE_CUR",
+                "TENOR"
+              ]
+            },
+            "role": null,
+            "values": [
+              {
+                "id": "4",
+                "name": "4"
+              }
+            ]
+          },
+          {
+            "id": "CALCULATED",
+            "name": "Kalkulert",
+            "description": "Indikerer om verdien er en kalkulasjon / anslag eller en observert verdi.",
+            "relationship": {
+              "dimensions": [
+                "BASE_CUR",
+                "QUOTE_CUR",
+                "TENOR"
+              ]
+            },
+            "role": null,
+            "values": [
+              {
+                "id": "false",
+                "name": "false"
+              }
+            ]
+          },
+          {
+            "id": "UNIT_MULT",
+            "name": "Multiplikator",
+            "description": "Eksponent i tiende potens slik at en multiplikasjon av observasjonsverdien med 10^UNIT_MULT gir verdien av en enhet.",
+            "relationship": {
+              "dimensions": [
+                "BASE_CUR",
+                "QUOTE_CUR",
+                "TENOR"
+              ]
+            },
+            "role": null,
+            "values": [
+              {
+                "id": "0",
+                "name": "Enheter"
+              }
+            ]
+          },
+          {
+            "id": "COLLECTION",
+            "name": "Innsamlingstidspunkt",
+            "description": "Datoer eller perioder for når verdien ble innhentet.",
+            "relationship": {
+              "dimensions": [
+                "BASE_CUR",
+                "QUOTE_CUR",
+                "TENOR"
+              ]
+            },
+            "role": null,
+            "values": [
+              {
+                "id": "A",
+                "name": "Gjennomsnitt av observasjoner gjennom perioden"
+              }
+            ]
+          }
+        ],
+        "observation": []
+      }
+    }
+  }
+}

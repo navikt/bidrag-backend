@@ -1,0 +1,170 @@
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad
+AZURE_APP_TENANT_ID: 12321321-123213-3213123
+AZURE_APP_CLIENT_ID: asdasd-sadas-ddas-qwe
+AZURE_APP_CLIENT_SECRET: asdasdsad214123sadas
+LAGRE_DIST_INFO_CRON: "0 * * * * *"
+OPPDATER_DIST_STATUS_CRON: "0 * * * * *"
+REBESTILL_DOKUMENTER_UNDER_PRODUKSJON_SCHEDULE: "0 */10 * * * *"
+SJEKK_DOKUMENTER_UNDER_PRODUKSJON_SCHEDULE: "0 */10 * * * *"
+REBESTILL_DOKUMENTER_BESTILLING_FEILET_SCHEDULE: "0 * * * * *"
+SYNKRONISER_STATUS_DOKUMENTER_CRON: "*/1 * * * * *"
+RESYNK_FORSENDELSE_DISTRIBUSJON_SCHEDULE: "*/1 * * * * *"
+FERDIGSTILL_NOTAT_FORSENDELSE_SCHEDULE: "*/1 * * * * *"
+NAIS_APP_NAME: bidrag-dokument-forsendelse
+TOPIC_DOKUMENT: bidrag.dokument
+TOPIC_JOURNALPOST: bidrag.journalpost
+BIDRAG_DOKUMENT_BESTILLING_URL: http://localhost:${wiremock.server.port}/bestilling
+BIDRAG_BBM_URL: http://localhost:${wiremock.server.port}/bbm
+BIDRAG_DOKUMENT_URL: http://localhost:${wiremock.server.port}/dokument
+BIDRAG_DOKUMENT_JOURNALPOST_URL: http://localhost:${wiremock.server.port}/dokumentjp
+BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
+BIDRAG_SAK_URL: http://localhost:${wiremock.server.port}/sak
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/person
+BIDRAG_SAMHANDLER_URL: http://localhost:${wiremock.server.port}/samhandler
+KODEVERK_URL: http://localhost:${wiremock.server.port}/kodeverk
+BIDRAG_TILGANGSKONTROLL_URL: http://localhost:${wiremock.server.port}/tilgangskontroll
+BIDRAG_VEDTAK_URL: http://localhost:${wiremock.server.port}/vedtak
+BIDRAG_BEHANDLING_URL: http://localhost:${wiremock.server.port}/behandling
+INNSENDING_API_URL: http://localhost:${wiremock.server.port}/innsending
+UNLEASH_SERVER_API_URL: http://localhost:${wiremock.server.port}/unleash
+KAFKA_BROKERS: localhost:9093
+KAFKA_MAX_RETRY: 0
+SYNKRONISER_STATUS_DOKUMENTER_ENABLED: true
+BUCKET_NAME: bidrag-dokument-forsendelse-local
+GCP_HOST: http://0.0.0.0:4443
+GCP_BUCKET_DOCUMENT_KMS_KEY_PATH: path/to/kms/key
+GCP_DOCUMENT_CLIENTSIDE_KMS_KEY_PATH: gcp-kms://projects/bidrag-local/locations/localhost/keyRings/bidrag-dokument-forsendelse/cryptoKeys/clientside_document_encryption
+GCP_CREDENTIALS_PATH: fake_service_account.json
+DISABLE_CLIENTSIDE_ENCRYPTION: true
+UNLEASH_SERVER_API_TOKEN: 123123
+UNLEASH_SERVER_API_ENV: development
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-organisasjon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-dokument:
+        resource-url: ${BIDRAG_DOKUMENT_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-dokument-journalpost:
+        resource-url: ${BIDRAG_DOKUMENT_JOURNALPOST_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-sak:
+        resource-url: ${BIDRAG_SAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-tilgangskontroll:
+        resource-url: ${BIDRAG_TILGANGSKONTROLL_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-dokument-bestilling:
+        resource-url: ${BIDRAG_DOKUMENT_BESTILLING_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-vedtak:
+        resource-url: ${BIDRAG_VEDTAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-behandling:
+        resource-url: ${BIDRAG_BEHANDLING_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-samhandler:
+        resource-url: ${BIDRAG_SAMHANDLER_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-bbm:
+        resource-url: ${BIDRAG_BBM_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:0}/aad/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        enable_lazy_load_no_trans: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      auto-offset-reset: earliest
+      enableAutoCommit: false
+    listener:
+      ackMode: RECORD
+
+---
+spring.config.activate.on-profile: "!testcontainer"
+
+spring:
+  flyway.enabled: false
+  datasource.type: com.zaxxer.hikari.HikariDataSource
+  datasource.url: jdbc:h2:mem:testdb;MODE=PostgreSQL;INIT=RUNSCRIPT FROM 'classpath:db/init.sql'
+  jpa.hibernate.hbmddl-auto: create-drop

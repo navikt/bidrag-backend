@@ -1,0 +1,13 @@
+{
+  "data": {
+    "hentPerson": {
+      "forelderBarnRelasjon": [
+        {
+          "relatertPersonsIdent": "12345678901",
+          "relatertPersonsRolle": "BARN",
+          "minRolleForPerson": "FAR"
+        }
+      ]
+    }
+  }
+}

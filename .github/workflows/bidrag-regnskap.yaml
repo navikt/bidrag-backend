@@ -1,0 +1,136 @@
+name: Bidrag-regnskap
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - prod
+          - q1
+          - q2
+          - q1+q2
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-regnskap/**.yaml'
+#      - '.github/workflows/bidrag-regnskap.yaml' //TODO(Slå på etter migrering)
+#     - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-regnskap/**'
+
+jobs:
+  bygg_og_test:
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    name: "Bygg og test"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
+      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
+      # invalideres av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bidrag-regnskap-${{ hashFiles('pom.xml', 'apps/bidrag-regnskap/pom.xml') }}
+          restore-keys: |
+            maven-bidrag-regnskap-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+      - name: Bygg og kjør tester (inkl. ktlint)
+        run: mvn -B -fae verify -pl apps/bidrag-regnskap -am -Pit
+
+  sjekk_sync_med_main:
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment != 'prod')
+    permissions:
+      contents: "read"
+    uses: ./.github/workflows/sjekk_sync_med_main.yaml
+
+  deploy_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Build and deploy to prod"
+    concurrency:
+      group: deploy-regnskap-prod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -Pit -pl apps/bidrag-regnskap -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-regnskap/pom.xml
+      ktlint_paths: apps/bidrag-regnskap/src/**/*.kt
+      docker_context: ./apps/bidrag-regnskap
+      nais_variabler_filnavn: bidrag-regnskap/prod.yaml
+      nais_hovedfil_navn: bidrag-regnskap/nais.yaml
+      image_suffix: bidrag-regnskap
+      tag: bidrag-regnskap
+
+  deploy_q1:
+    needs: sjekk_sync_med_main
+    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q1' || github.event.inputs.environment == 'q1+q2')))
+    name: "Build and deploy to Q1"
+    concurrency:
+      group: deploy-regnskap-q1-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -Pit -pl apps/bidrag-regnskap -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-regnskap/pom.xml
+      maven_test_lifecycle: verify
+      ktlint_paths: apps/bidrag-regnskap/src/**/*.kt
+      docker_context: ./apps/bidrag-regnskap
+      nais_variabler_filnavn: bidrag-regnskap/q1.yaml
+      nais_hovedfil_navn: bidrag-regnskap/nais.yaml
+      image_suffix: bidrag-regnskap
+      tag: bidrag-regnskap
+
+  deploy_q2:
+    needs: sjekk_sync_med_main
+    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q2/') || startsWith(github.ref, 'refs/heads/Q2/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q2' || github.event.inputs.environment == 'q1+q2')))
+    name: "Build and deploy to Q2"
+    concurrency:
+      group: deploy-regnskap-q2-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -Pit -pl apps/bidrag-regnskap -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-regnskap/pom.xml
+      maven_test_lifecycle: verify
+      ktlint_paths: apps/bidrag-regnskap/src/**/*.kt
+      docker_context: ./apps/bidrag-regnskap
+      nais_variabler_filnavn: bidrag-regnskap/q2.yaml
+      nais_hovedfil_navn: bidrag-regnskap/nais.yaml
+      image_suffix: bidrag-regnskap
+      tag: bidrag-regnskap

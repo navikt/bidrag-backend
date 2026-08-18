@@ -1,0 +1,55 @@
+name: bidrag-dokument-journalpost
+min_replicas: 1
+ingresses:
+  - https://bidrag-dokument-journalpost.intern.dev.nav.no
+  - https://bidrag-dokument-journalpost.dev-fss-pub.nais.io
+kafka:
+  pool: nav-dev
+env:
+  ABAC_PDP_ENDPOINT_URL: https://abac-bidrag-q2.dev.intern.nav.no/application/asm-pdp/authorize
+  PIP_URL: https://bidrag-sak-q2.intern.dev.nav.no/bidrag-sak
+  BREVSERVER_ONLINEBREV: QA.Q2_475.BREVSERVER_ONLINEBREV
+  BREVSERVER_KVITTERING_QUEUE: QA.Q2_464.BREV_REPLY_QUE
+  BREVSERVER_URL: https://wasapp-q2.adeo.no/brevweb/
+  BREVSERVER_NAIS_URL: https://brevserver-nais-q2.intern.dev.nav.no
+  BREVSERVER_NAIS_SCOPE: dev-fss.teamdokumenthandtering.brevserver-nais
+  BRUK_BREVSERVER_REST: "true"
+  TOPIC_JOURNALPOST: bidrag.journalpost
+  TOPIC_DOKUMENT: bidrag.dokument
+  MQ_QUEUE_MANAGER: MQLS02
+  MQ_PORT: 1413
+  MQ_HOSTNAME: b27apvl220.preprod.local
+  MQ_CHANNEL: Q2_BDJOURNALPOST
+  BIDRAG_DB_HOST: ztest.test.local
+  BIDRAG_DB_PORT: 5025
+  BIDRAG_DB_NAME: QDB2
+  BIDRAG_DB_SCHEMA: BI464Q2
+  NORG2_API_V1_URL: https://norg2.dev.intern.nav.no/norg2/api/v1
+  OPPGAVE_OPPGAVER_URL: https://oppgave.intern.dev.nav.no/api/v1/oppgaver
+  OPPGAVE_SCOPE: dev-fss.oppgavehandtering.oppgave
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.intern.dev.nav.no/bidrag-organisasjon
+  ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon
+  BIDRAG_PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no
+  PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+  BIDRAG_TILGANGSKONTROLL_URL: https://bidrag-tilgangskontroll.intern.dev.nav.no
+  BIDRAG_TILGANGSKONTROLL_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+vault:
+  paths:
+    - kvPath: /serviceuser/data/dev/srvbdjournalpost
+      mountPath: /var/run/secrets/srvbdjournalpost
+    - kvPath: /serviceuser/data/dev/srvbisys
+      mountPath: /var/run/secrets/srvbisys
+    - kvPath: /kv/preprod/fss/bidrag-dokument-journalpost/bidrag
+      mountPath: /var/run/secrets/nais.io/vault
+azure_access_inbound:
+  - application: bidrag-dokument
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: dev-gcp
+outbound-access-hosts:
+  - brevserver-nais-q2.intern.dev.nav.no
+database:
+  secret_name: bidrag-dokument-journalpost-database

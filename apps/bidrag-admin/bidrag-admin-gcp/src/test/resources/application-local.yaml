@@ -1,0 +1,31 @@
+PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q1
+PERSON_URL: https://bidrag-person-q1.dev-fss-pub.nais.io/bidrag-person
+AZURE_APP_TENANT_ID: <app-tenant-id>
+AZURE_APP_CLIENT_ID: <app_client_id>
+AZURE_APP_CLIENT_SECRET: unset
+server.port: 8319
+NAIS_APP_NAME: bidrag-automatisk-jobb
+KAFKA_PERSON_HENDELSE_TOPIC: bidrag.personhendelse.v1-test
+KAFKA_VEDTAK_TOPIC: bidrag.vedtak-test
+KAFKA_BROKERS: localhost:9092
+
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5454}/${DB_DATABASE:bidrag-admin}?user=${DB_USERNAME:cloudsqliamuser}&password=${DB_PASSWORD:admin}&reWriteBatchedInserts=true
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      data-source-properties:
+        ssl: false
+        sslmode: disable
+        sslcert: ""
+        sslkey: ""
+        sslrootcert: ""
+  kafka:
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      enableAutoCommit: false
+      auto-offset-reset: earliest

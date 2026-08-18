@@ -1,0 +1,24 @@
+name: bidrag-bbm-feature
+min_replicas: 1
+ingresses:
+  - https://bidrag-bbm-feature.dev.intern.nav.no
+  - https://bidrag-bbm-feature.dev-fss-pub.nais.io
+env:
+  DB_HOST: ztest.test.local
+  DB_PORT: 5025
+  DB_NAME: QDB2
+  BBM_DB_SCHEMA: BI460Q1
+  BISYS_DB_SCHEMA: BI464Q1
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure_access_inbound:
+  - application: bidrag-behandling-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-arbeidsflyt-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+database:
+  secret_name: bidrag-bbm-feature-db

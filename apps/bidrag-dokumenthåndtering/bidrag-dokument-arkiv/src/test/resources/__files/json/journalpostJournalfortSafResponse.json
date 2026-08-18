@@ -1,0 +1,42 @@
+{
+  "data": {
+    "journalpost": {
+      "avsenderMottaker": {
+        "navn": null
+      },
+      "bruker": {
+        "id": "1385076492416",
+        "type": "AKTOERID"
+      },
+      "dokumenter": [
+        {
+          "tittel": null,
+          "brevkode": "BI01S02",
+          "dokumentInfoId": "13213"
+        }
+      ],
+      "journalforendeEnhet": "4806",
+      "journalfortAvNavn": null,
+      "journalpostId": "201028011",
+      "journalposttype": "I",
+      "journalstatus": "JOURNALFOERT",
+      "relevanteDatoer": [
+        {
+          "dato": "2021-08-18T13:20:33",
+          "datotype": "DATO_DOKUMENT"
+        }
+      ],
+      "tema": "BID",
+      "tittel": "Filosofens bidrag",
+      "sak": {
+        "fagsakId": "5276661"
+      },
+      "tilleggsopplysninger": [
+        {
+          "nokkel": "something",
+          "verdi": "something"
+        }
+      ]
+    }
+  }
+}

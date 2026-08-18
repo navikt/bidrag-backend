@@ -1,0 +1,79 @@
+name: bidrag-person
+ingresses:
+  - https://bidrag-person.nais.adeo.no/
+  - https://bidrag-person.intern.nav.no/
+  - https://bidrag-person.prod-fss-pub.nais.io
+env:
+  KRR_URL: https://digdir-krr-proxy.intern.nav.no
+  PDL_URL: https://pdl-api.nais.adeo.no
+  SKJERMING_URL: https://skjermede-personer-pip.nais.adeo.no
+  KODEVERK_URL: https://bidrag-kodeverk.intern.nav.no
+  KRR_SCOPE: prod-gcp.team-rocket.digdir-krr-proxy
+  PDL_SCOPE: prod-fss.pdl.pdl-api
+  KONTOREGISTER_URL: https://sokos-kontoregister-person.intern.nav.no
+  KONTOREGISTER_SCOPE: prod-gcp.okonomi.sokos-kontoregister-person
+vault:
+  kvPath: prod
+azure:
+  inbound:
+    rules:
+      - application: bidrag-grunnlag
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-arbeidsflyt
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-organisasjon
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-journalpost
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-arkiv
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bisys
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-behandling
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-reisekostnad-api
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-sak
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-forsendelse
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-aktoerregister
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-person-hendelse
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-regnskap
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-automatisk-jobb
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-bidragskalkulator-api
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-vedtak
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-belopshistorikk
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-frontend
+        namespace: bidrag
+        cluster: prod-gcp

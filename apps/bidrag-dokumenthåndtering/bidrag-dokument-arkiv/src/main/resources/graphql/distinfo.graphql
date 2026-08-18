@@ -1,0 +1,39 @@
+query journalpost($journalpostId: String!) {
+    journalpost(journalpostId: $journalpostId) {
+        kanal
+        journalposttype
+        journalstatus
+        tilleggsopplysninger {
+            nokkel
+            verdi
+        }
+        relevanteDatoer {
+            dato
+            datotype
+        }
+        utsendingsinfo {
+            epostVarselSendt {
+                tittel
+                adresse
+                varslingstekst
+            }
+            smsVarselSendt {
+                adresse
+                varslingstekst
+            }
+            fysiskpostSendt {
+                adressetekstKonvolutt
+            }
+            digitalpostSendt {
+                adresse
+            }
+            varselSendt {
+                tittel
+                type
+                varslingstekst
+                adresse
+                varslingstidspunkt
+            }
+        }
+    }
+}

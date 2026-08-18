@@ -1,0 +1,58 @@
+name: bidrag-dokument-journalpost
+image: {{ image }}
+min_replicas: 2
+ingresses:
+  - https://bidrag-dokument-journalpost.nais.adeo.no/
+  - https://bidrag-dokument-journalpost.intern.nav.no/
+  - https://bidrag-dokument-journalpost.prod-fss-pub.nais.io
+kafka:
+  pool: nav-prod
+env:
+  ABAC_PDP_ENDPOINT_URL: https://abac-bidrag.intern.nav.no/application/asm-pdp/authorize
+  PIP_URL: https://bidrag-sak.intern.nav.no/bidrag-sak
+  SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  BREVSERVER_ONLINEBREV: QA.P475.BREVSERVER_ONLINEBREV
+  BREVSERVER_KVITTERING_QUEUE: QA.P464.BISYS_REPLY_QUE
+  BREVSERVER_URL: https://wasapp.adeo.no/brevweb/
+  BREVSERVER_NAIS_URL: https://brevserver-nais.intern.nav.no
+  BREVSERVER_NAIS_SCOPE: prod-fss.teamdokumenthandtering.brevserver-nais
+  BRUK_BREVSERVER_REST: "false"
+  TOPIC_JOURNALPOST: bidrag.journalpost
+  TOPIC_DOKUMENT: bidrag.dokument
+  MQ_QUEUE_MANAGER: MPLS02
+  MQ_PORT: 1414
+  MQ_HOSTNAME: mpls02.adeo.no
+  MQ_CHANNEL: P_BDJOURNALPOST
+  BIDRAG_DB_HOST: zprod.adeo.no
+  BIDRAG_DB_PORT: 5021
+  BIDRAG_DB_NAME: DB2
+  BIDRAG_DB_SCHEMA: BI464P
+  NORG2_API_V1_URL: https://norg2.intern.nav.no/norg2/api/v1
+  OPPGAVE_OPPGAVER_URL: https://oppgave.intern.nav.no/api/v1/oppgaver
+  OPPGAVE_SCOPE: prod-fss.oppgavehandtering.oppgave
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.intern.nav.no/bidrag-organisasjon
+  ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+  BIDRAG_PERSON_URL: https://bidrag-person.intern.nav.no
+  PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_TILGANGSKONTROLL_URL: https://bidrag-tilgangskontroll.intern.nav.no
+  BIDRAG_TILGANGSKONTROLL_SCOPE: prod-gcp.bidrag.bidrag-tilgangskontroll
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=80 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+vault:
+  paths:
+    - kvPath: /serviceuser/data/prod/srvbdjournalpost
+      mountPath: /var/run/secrets/srvbdjournalpost
+    - kvPath: /serviceuser/data/prod/srvbisys
+      mountPath: /var/run/secrets/srvbisys
+    - kvPath: /kv/prod/fss/bidrag-dokument-journalpost/bidrag
+      mountPath: /var/run/secrets/nais.io/vault
+azure_access_inbound:
+  - application: bidrag-dokument
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+outbound-access-hosts:
+  - brevserver-nais.intern.nav.no
+database:
+    secret_name: bidrag-dokument-journalpost-database

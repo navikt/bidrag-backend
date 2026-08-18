@@ -1,0 +1,105 @@
+
+Barnetrygd: # 0001
+  2026-07-01:      2.012,-
+  2025-07-01:      1.968,-
+  2024-07-01:      1.510,-
+  2023-07-01:      1.310,-
+  2019-07-01:      1.054,-
+  2004-01-01:        970,-
+  2003-01-01:        972,-
+
+Forhøyet barnetrygd: # 0041
+  2026-07-01:      2.012,-
+  2025-07-01:      1.968,-
+  2024-07-01:      1.766,-
+  2023-07-01:      1.766,-
+  2022-07-01:      1.676,-
+  2021-07-01:      1.354,-
+
+Utvidet barnetrygd: # 0042
+  2026-02-01:      2.572,-
+  2023-07-01:      2.516,-
+  2023-03-01:      2.489,-
+  2019-07-01:      1.054,-
+
+Småbarnstillegg: # 0002
+  2003-01-01:          0,-
+
+Ekstra småbarnstillegg: # 0032
+  2026-02-01:        712,-
+  2023-07-01:        696,-
+  2023-03-01:        678,-
+  2004-01-01:        660,-
+  2003-01-01:        657,-
+
+Kontantstøtte: # 0029
+  2003-08-01:     43.884,-
+  2003-01-01:     36.000,-
+
+Daglig sats barnetillegg: # 0026 - Fortsatt i bruk? Brukt i bidragsregler før 2009
+  2007-08-01:         27,-
+  2003-01-01:         17,-
+
+Skatteprosent barnetillegg: # 0018 - Fortsatt i bruk? Brukt i bidragsregler før 2009
+  2003-01-01:         10%
+
+Barnetillegg fra Forsvaret:
+  2022-01-01:
+    Første barn:   6.038,-
+    Øvrige barn:   2.487,-
+
+  2020-01-01:
+    Første barn:   5.667,-
+    Øvrige barn:   2.334,-
+
+  2019-01-01:
+    Første barn:   5.498,-
+    Øvrige barn:   2.264,-
+
+  2018-01-01:
+    Første barn:   5.313,-
+    Øvrige barn:   2.187,-
+
+  2017-07-01:
+    Første barn:   5.254,-
+    Øvrige barn:   2.163,-
+
+  2014-07-01:
+    Første barn:   5.100,-
+    Øvrige barn:   2.100,-
+
+  2012-07-01:
+    Første barn:   4.923,-
+    Øvrige barn:   2.028,-
+
+  2011-07-01:
+    Første barn:   4.707,-
+    Øvrige barn:   1.938,-
+
+  2010-07-01:
+    Første barn:   4.581,-
+    Øvrige barn:   1.887,-
+
+  2009-07-01:
+    Første barn:   4.422,-
+    Øvrige barn:   1.821,-
+
+  2008-07-01:
+    Første barn:   4.260,-
+    Øvrige barn:   1.755,-
+
+  2007-07-01:
+    Første barn:   3.966,-
+    Øvrige barn:   1.635,-
+
+  2006-07-01:
+    Første barn:   3.834,-
+    Øvrige barn:   1.581,-
+
+  2004-07-01:
+    Første barn:   3.669,-
+    Øvrige barn:   1.515,-
+
+  2003-01-01:
+    Første barn:   3.369,-  # 0021
+    Øvrige barn:   1.392,-  # 0022

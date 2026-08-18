@@ -1,0 +1,188 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+management.health.db.enabled: true
+management.endpoint.health.show-details: always
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+spring:
+  application:
+    name: "bidrag-sak"
+  datasource:
+    url: jdbc:db2://${BIDRAG_DB_HOST}:${BIDRAG_DB_PORT}/${BIDRAG_DB_NAME}:currentSchema=${BIDRAG_DB_SCHEMA};
+    username: ${BIDRAG_DB_USERNAME}
+    password: ${BIDRAG_DB_PASSWORD}
+    driver-class-name: com.ibm.db2.jcc.DB2Driver
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: SSL
+      ssl:
+        keystore:
+          type: PKCS12
+          location: ${KAFKA_KEYSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+        truststore:
+          location: ${KAFKA_TRUSTSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+    consumer:
+      enableAutoCommit: false
+    listener:
+      ackMode: RECORD
+  main:
+    banner-mode: off
+
+no.nav.security.jwt.sts:
+  properties:
+    url: https://sts.adeo.no/SecurityTokenServiceProvider/
+    username: ${STS_USERNAME}
+    password: ${STS_PASSWORD}
+
+no.nav.security.jwt:
+  issuers: aad
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+    proxy_url: http://webproxy.nais:8088
+  client:
+    registration:
+      person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_basic
+      organisajon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_ORGANISASJON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_basic
+      tilgang:
+        resource-url: ${BIDRAG_TILGANG_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_TILGANG_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_basic
+      samhandler:
+        resource-url: ${BIDRAG_SAMHANDLER_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_SAMHANDLER_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_basic
+
+
+KODEVERK_URL: https://kodeverk-api.nav.no/
+
+springdoc:
+  swagger-ui:
+    path: /
+
+---
+
+####################################################################
+# Profile: live
+#----------------------------
+#
+# Profile for prod and preprod. Start app using BidragSak 
+# with no runtime arguments. Obtains system variables from Fasit.
+#							
+####################################################################
+spring:
+  config.activate.on-profile: live
+  jpa:
+    database-platform: org.hibernate.dialect.DB2zDialect
+#    hibernate:
+#      ddl-auto: validate
+
+---
+
+####################################################################
+# Profile: integration-test
+#----------------------------
+#
+#
+####################################################################
+spring.config.activate.on-profile: integration-test, integration-db2
+
+server.port: 8090
+
+# OIDC
+AAD_ISSUER_URL: https://login.microsoftonline.com/nav.no/v2.0/.well-known/openid-configuration
+
+# LDAP -Properties collected from Fasit resource: LDAP - ldap
+LDAP_URL: ldaps://ldapgw.adeo.no
+LDAP_SERVICEUSER_BASEDN: OU=ServiceAccounts,DC=adeo,DC=no
+LDAP_USERNAME: srvSSOLinux
+
+---
+
+####################################################################
+# Profile: live, integration-test
+#----------------------------
+#
+# Live token-support properties.
+#
+####################################################################
+spring.config.activate.on-profile: live, integration-test
+
+---
+
+####################################################################
+# Profile: test, integration-db
+#----------------------------
+#
+# Properties for unit testing and local runs.#
+#							
+####################################################################
+spring:
+  config.activate.on-profile: test, integration-db2
+  ldap:
+    embedded:
+      base-dn: dc=test,dc=local
+      credential:
+        username: userPrincipalName=srvtjhorse@test.local
+        password: secret
+      ldif: classpath:test-schema.ldif
+      validation:
+        enabled: false
+
+no.nav.security.jwt:
+  issuers: aad
+  issuer.aad:
+    discoveryurl: http://metadata
+    accepted_audience: aud-localhost
+
+---
+
+spring:
+  config.activate.on-profile: test
+  logging:
+    level:
+      no.nav.security.spring.oidc.validation.interceptor=trace, org.hibernate.sql=info
+
+---
+
+spring:
+  config.activate.on-profile: integration-db2, integration-test
+BIDRAG_DB_HOST: ztest.test.local
+BIDRAG_DB_PORT: 5025
+BIDRAG_DB_NAME: QDB2
+BIDRAG_DB_SCHEMA: BI464Q0
+BIDRAG_DB_USERNAME: BI464Q0S
+

@@ -1,0 +1,48 @@
+name: bidrag-dokument-arkiv
+azure:
+  inbound:
+    rules:
+      - application: bidrag-dokument
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: prod-fss
+ingresses:
+  - https://bidrag-dokument-arkiv.nais.adeo.no/
+  - https://bidrag-dokument-arkiv.intern.nav.no/
+kafka:
+  pool: nav-prod
+cpu:
+  limits: 1000m
+  requests: 200m
+memory:
+  limits: 8500Mi
+  requests: 5400Mi
+env:
+  ACCEPTED_SERVICE_USER_AUDIENCE: srvbdarkivering,srvbisys
+  STS_ISSUER_URL: https://security-token-service.nais.adeo.no
+  ACCESS_TOKEN_URL: https://security-token-service.nais.adeo.no
+  DOKARKIV_URL: https://dokarkiv.intern.nav.no/
+  DOKARKIV_KNYTT_TIL_SAK_URL: https://dokarkiv.intern.nav.no
+  DOKDISTFORDELING_URL: https://dokdistfordeling.intern.nav.no
+  DOKDISTFORDELING_SCOPE: prod-fss.teamdokumenthandtering.dokdistfordeling
+  SAF_URL: https://saf.intern.nav.no
+  OPPGAVE_URL: https://oppgave.intern.nav.no/api/v1/oppgaver
+  OPPGAVE_SCOPE: prod-fss.oppgavehandtering.oppgave
+  SAF_SCOPE: prod-fss.teamdokumenthandtering.saf
+  DOKARKIV_SCOPE: prod-fss.teamdokumenthandtering.dokarkiv
+  TOPIC_JOURNALPOST: bidrag.journalpost
+  TOPIC_OPPGAVE_HENDELSE: oppgavehandtering.oppgavehendelse-v1
+  TOPIC_JOURNALFOERING: teamdokumenthandtering.aapen-dok-journalfoering
+  BIDRAG_PERSON_URL: https://bidrag-person.intern.nav.no
+  PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.intern.nav.no/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.intern.nav.no
+  ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+  DOKDISTKANAL_URL: https://dokdistkanal.intern.nav.no
+  DOKDISTKANAL_SCOPE: prod-fss.teamdokumenthandtering.dokdistkanal
+  INNSENDING_API_URL: https://innsending-api-gcp.intern.nav.no
+  INNSENDING_API_SCOPE: prod-gcp.team-soknad.innsending-api
+  JAVA_OPTS: -XX:MaxRAMPercentage=80

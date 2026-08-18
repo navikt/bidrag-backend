@@ -1,0 +1,66 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  image: {{ image }}
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  webproxy: true
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azureAccessInbound}}
+          - application: {{this.application}}
+            namespace: {{this.namespace}}
+            cluster: {{this.cluster}}
+      {{/each}}
+  liveness:
+    path: /internal/actuator/health
+    initialDelay: 30
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /internal/actuator/health
+    initialDelay: 30
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /internal/actuator/prometheus
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 100m
+      memory: 512Mi
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+      - name: {{@key}}
+        value: "{{this}}"
+  {{/each}}
+  vault:
+    enabled: true
+    paths:
+      - kvPath: /serviceuser/data/{{ vault.srvKvPath }}/srvbdarkivering
+        mountPath: /var/run/secrets/nais.io/srvbdarkivering
+      - kvPath: /kv/{{ vault.secretKvPath }}/fss/{{ name }}/bidrag
+        mountPath: /var/run/secrets/nais.io/vault

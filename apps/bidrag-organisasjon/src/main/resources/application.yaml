@@ -1,0 +1,61 @@
+SRVBIDRAG_USERNAME: srvbidrag-organisa
+SRVBIDRAG_PASSWORD: bareForTest
+spring:
+  main:
+    banner-mode: off
+spring.application:
+  name: bidrag-organisasjon
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    ldap:
+      enabled: false
+server:
+  servlet:
+    context-path: /bidrag-organisasjon
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.organisasjon.controller
+  swagger-ui:
+    path: /
+no.nav.security.jwt:
+  client:
+    registration:
+      person:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        resource-url: ${PERSON_URL}
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      entrproxy:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        resource-url: ${ENTRA_PROXY_URL}
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${ENTRAPROXY_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      skjerming:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${SKJERMING_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+cache:
+  warming:
+    enabled: true
+    enheter: 2103,4251,4252,4253,4255,4294,4295,4296,4806,4812,4817,4820,4833,4849,4860,4865,4883
+

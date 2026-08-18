@@ -1,0 +1,93 @@
+apiVersion: "nais.io/v1alpha1"
+kind: Application
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azureAccessInbound}}
+          - application: {{this.application}}
+            namespace: {{this.namespace}}
+            cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
+      external:
+        - host: {{ access-outbound.BIDRAG_PERSON_URL }}
+  image: {{ image }}
+  kafka:
+    pool: {{ kafka.pool }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 60
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 60
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      cpu: {{ spec.resources.limits.cpu }}
+      memory: {{ spec.resources.limits.memory }}
+    requests:
+      cpu: {{ spec.resources.requests.cpu }}
+      memory: {{ spec.resources.requests.memory }}
+  replicas:
+    cpuThresholdPercentage: 80
+    min: {{ spec.replicas.min }}
+    max: {{ spec.replicas.max }}
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}
+  gcp:
+    sqlInstances:
+      - name: {{ dbname }}
+        type: POSTGRES_17
+        databases:
+          - name: {{ dbname }}
+            envVarPrefix: DB
+        tier: {{ spec.gcp.sqlInstances.tier }}
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "{{ spec.gcp.sqlInstances.auditlog }}"
+          - name: "pgaudit.log"
+            value: "write,ddl,role"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+  env:
+    - name: TOPIC_VEDTAK
+      value: {{ kafka-topic-vedtak }}
+    - name: SPRING_PROFILES_ACTIVE
+      value: {{ spring-profiles }}
+    - name: BIDRAG_PERSON_URL
+      value: {{ env.BIDRAG_PERSON_URL }}
+    - name: BIDRAG_PERSON_SCOPE
+      value: {{ env.BIDRAG_PERSON_SCOPE }}

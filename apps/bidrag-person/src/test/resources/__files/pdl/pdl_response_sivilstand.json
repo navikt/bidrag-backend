@@ -1,0 +1,38 @@
+{
+  "data": {
+    "hentPerson": {
+      "sivilstand": [
+        {
+          "type": "GIFT",
+          "gyldigFraOgMed": "2021-09-29",
+          "bekreftelsesdato": "2021-09-29",
+          "metadata": {
+            "master": "PDL",
+            "endringer": [
+            {
+              "type": "OPPRETT",
+              "registrert": "2023-01-18T23:58:58"
+            }
+            ],
+            "historisk": "true"
+          }
+        },
+        {
+          "type": "SKILT",
+          "gyldigFraOgMed": "2022-01-17",
+          "bekreftelsesdato": "2022-01-17",
+          "metadata": {
+            "master": "PDL",
+            "endringer": [
+              {
+              "type": "KORRIGER",
+              "registrert": "2023-01-18T23:59:59"
+            }
+            ],
+            "historisk": "true"
+          }
+        }
+      ]
+    }
+  }
+}

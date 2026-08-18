@@ -1,0 +1,75 @@
+{
+  "avsenderMottaker": {
+    "navn": "Tuborg"
+  },
+  "bruker": {
+    "id": "1000024690889",
+    "type": "AKTOERID"
+  },
+  "dokumenter": [
+    {
+      "dokumentInfoId": "12345",
+      "brevkode": "BI01S02",
+      "tittel": "ROD SNO"
+    },
+    {
+      "dokumentInfoId": "56789",
+      "brevkode": "BI01S02",
+      "tittel": "SNOMANNEN"
+    }
+  ],
+  "journalforendeEnhet": "0104",
+  "journalfortAvNavn": "Terkelsen, Karin",
+  "journalpostId": "203915975",
+  "journalposttype": "I",
+  "journalstatus": "JOURNALFOERT",
+  "tilleggsopplysninger": [
+    {
+      "nokkel": "retur0_2020-11-15",
+      "verdi": "Beskrivelse av retur"
+    },
+    {
+      "nokkel": "retur0_2020-12-14",
+      "verdi": "Beskrivelse av retur"
+    },
+    {
+      "nokkel": "retur21_2020-12-15",
+      "verdi": " mer tekst for å teste lengre verdier"
+    },
+    {
+      "nokkel": "retur1_2020-12-14",
+      "verdi": " mer tekst for å teste lengre verdier"
+    },
+    {
+      "nokkel": "retur20_2020-12-15",
+      "verdi": "Beskrivelse av retur 2"
+    },
+    {
+      "nokkel": "distAdresse0",
+      "verdi": "{\"adresselinje1\":\"Testveien 20A\",\"adresselinje2\":\"TestLinje2\",\"adresselinje3\":\"TestLinje4\",\"land\":\""
+    },
+    {
+      "nokkel": "distAdresse1",
+      "verdi": "NO\",\"postnummer\":\"7950\",\"poststed\":\"ABELVÆR\"}"
+    }
+  ],
+  "relevanteDatoer": [
+    {
+      "dato": "2010-12-16T00:00",
+      "datotype": "DATO_JOURNALFOERT"
+    },
+    {
+      "dato": "2010-12-15T00:00",
+      "datotype": "DATO_REGISTRERT"
+    },
+    {
+      "dato": "2020-12-15T01:00",
+      "datotype": "DATO_AVS_RETUR"
+    }
+  ],
+  "sak": {
+    "fagsakId": "5276661"
+  },
+  "tema": "AAP",
+  "tittel": "...and so on..."
+}

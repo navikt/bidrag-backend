@@ -1,0 +1,101 @@
+#logging.level.org.hibernate.sql=debug
+#logging.level.org.hibernate.type=trace
+#logging.level.no.nav.security.spring.oidc.validation.interceptor.OIDCTokenControllerHandlerInterceptor=trace
+NAIS_APP_NAME: bjp
+TOPIC_JOURNALPOST: na.in.unit.tests
+TOPIC_DOKUMENT: na.in.unit.tests
+STS_URL: https://junit.adeo.no
+ACCESS_TOKEN_URL: http://localhost:${wiremock.server.port:123}/aad
+NORG2_API_V1_URL: http://localhost:${wiremock.server.port:123}/norg2
+BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port:123}/organisasjon
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port:123}/person
+OPPGAVE_OPPGAVER_URL: http://localhost:${wiremock.server.port:123}/oppgave
+BIDRAG_TILGANGSKONTROLL_URL: http://localhost:${wiremock.server.port:123}/tilgang
+BREVSERVER_KVITTERING_QUEUE: BREV_REPLY_QUE
+
+SRVBIDRAG_USERNAME: srvbidrag
+SRVBIDRAG_PASSWORD: bareForTest
+no.nav.security.jwt:
+  client:
+    registration:
+      organisasjon:
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      person:
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      oppgave:
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-tilgangskontroll:
+        resource-url: ${BIDRAG_TILGANGSKONTROLL_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:1234}/aad/.well-known/openid-configuration
+    accepted_audience: aud-localhost
+
+
+spring:
+  config.activate.on-profile: test, local, integration-abac
+  datasource:
+    url:  jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  h2:
+    console:
+      enabled: true
+  jpa.hibernate.ddl-auto: create-drop
+  kafka:
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      enableAutoCommit: false
+    listener:
+      ackMode: RECORD
+
+##### ABAC #####
+ABAC_USERNAME: srvbdjournalpost
+ABAC_PASSWORD: bareForTest
+ABAC_PDP_ENDPOINT_URL: http://localhost:1080/mock-pdp
+
+##### Bidrag #####
+PIP_USERNAME: srvbdjournalpost
+PIP_PASSWORD: bareForTest
+PIP_URL: http://localhost:1081/mock-pip
+
+#### SRVBISYS ####
+SRVBISYS_USERNAME: srvbisys
+SRVBISYS_PASSWORD: bareForTest
+
+## Brevklient
+BREVKLIENT_USERNAME: brukernavn
+BREVKLIENT_PASSWORD: passord
+
+mq:
+  hostname: localhost
+  port: 1414
+  name: QM1
+  channel: DEV.ADMIN.SVRCONN
+  brevserverQueue: BREVSERVER_ONLINEBREV
+  username: brukernavn
+  password: passord
+  appname: bidrag-dokument-journalpost

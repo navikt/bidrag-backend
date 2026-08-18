@@ -1,0 +1,31 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "7",
+  "opprettetAv": "B121269",
+  "kildeapplikasjon": "TEST",
+  "vedtakstidspunkt": "2018-04-18T00:00:00.000000000",
+  "enhetsnummer": "4849",
+  "innkrevingUtsattTilDato": null,
+  "opprettetTidspunkt": "2018-04-18T16:00:23.254988482",
+  "stønadsendringListe": [],
+  "engangsbeløpListe": [
+    {
+      "type": "ETTERGIVELSE_TILBAKEKREVING",
+      "sak": "0411765",
+      "skyldner": "",
+      "kravhaver": "",
+      "mottaker": "",
+      "beløp": 36279.00,
+      "valutakode": "NOK",
+      "resultatkode": "HE",
+      "referanse": "ETTERGIVELSE_TILBAKEKREVING_REFERANSE",
+      "delytelseId": "25314875",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    }
+  ],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

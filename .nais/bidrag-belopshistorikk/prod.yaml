@@ -1,0 +1,45 @@
+name: bidrag-belopshistorikk
+ingresses:
+  - https://bidrag-belopshistorikk.intern.nav.no
+dbname: bidrag-belopshistorikk-prod
+kafka:
+  pool: nav-prod
+kafka-topic-vedtak: bidrag.vedtak
+spring-profiles: live,nais
+azureAccessInbound:
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+
+env:
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+access-outbound:
+  BIDRAG_PERSON_URL: bidrag-person.prod-fss-pub.nais.io
+spec:
+  replicas:
+    min: 2
+    max: 4
+  resources:
+    limits:
+      memory: 2048Mi
+    requests:
+      cpu: 270m
+      memory: 512Mi
+  gcp:
+    sqlInstances:
+      tier: db-custom-1-3840
+      diskAutoresize: true
+      auditlog: "on"

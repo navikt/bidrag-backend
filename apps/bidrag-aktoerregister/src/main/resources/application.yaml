@@ -1,0 +1,110 @@
+spring:
+  mvc:
+    problemdetails:
+      enabled: true
+  batch:
+    job:
+      enabled: 'false'
+    jdbc:
+      initialize-schema: never
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: SSL
+      ssl:
+        keystore:
+          type: PKCS12
+          location: ${KAFKA_KEYSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+        truststore:
+          location: ${KAFKA_TRUSTSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+    consumer:
+      auto-offset-reset: latest
+      max-poll-records: 10
+      enable-auto-commit: false
+    listener:
+      ackMode: RECORD
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.aktoerregister.controller
+  swagger-ui:
+    path: /
+
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-samhandler:
+        resource-url: ${BIDRAG_SAMHANDLER_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_SAMHANDLER_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer:
+    aad:
+      discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+      accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+    maskinporten:
+      discovery-url: ${MASKINPORTEN_WELL_KNOWN_URL}
+      validation:
+        optional-claims: aud,sub,nbf
+      accepted_audience: ${MASKINPORTEN_AUDIENCE}
+
+---
+spring:
+  config.activate.on-profile: database-legacy
+  flyway:
+    schemas: migrations
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database: POSTGRESQL
+  datasource:
+    hikari:
+      maximum-pool-size: '4'
+      schema: aktoerregister
+    password: ${DB_PASSWORD}
+    username: ${DB_USERNAME}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
+
+---
+spring:
+  config.activate.on-profile: database-new
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: ${DB_JDBC_URL}
+    hikari:
+      idle-timeout: 10001
+      max-lifetime: 30001
+      connectionTimeout: 1000
+      maximum-pool-size: 10
+      minimum-idle: 1
+      data-source-properties:
+        ssl: true
+        sslmode: ${DB_SSLMODE}
+        sslcert: ${DB_SSLCERT}
+        sslkey: ${DB_SSLKEY_PK8}
+        sslrootcert: ${DB_SSLROOTCERT}
+  flyway:
+    enabled: true
+    schemas: migrations
+    locations: classpath:/db/migration
+  jpa:
+    hibernate.connection.provider_class: org.hibernate.hikaricp.internal.HikariCPConnectionProvider
+    database: postgresql

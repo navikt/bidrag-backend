@@ -1,0 +1,49 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 20
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 20
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 40m
+      memory: 300Mi
+  replicas:
+    disableAutoScaling: true
+    max: 2
+    min: 2
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+  {{/each}}

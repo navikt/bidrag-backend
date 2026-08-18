@@ -1,0 +1,27 @@
+{
+  "data": {
+    "hentPerson": {
+      "navn": [
+        {
+          "fornavn": "Geometrisk",
+          "mellomnavn": null,
+          "etternavn": "Helgen"
+        }
+      ]
+    },
+    "hentIdenter": {
+      "identer": [
+        {
+          "ident": "21508703020",
+          "historisk": false,
+          "gruppe": "FOLKEREGISTERIDENT"
+        },
+        {
+          "ident": "2404953480746",
+          "historisk": false,
+          "gruppe": "AKTORID"
+        }
+      ]
+    }
+  }
+}

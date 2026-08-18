@@ -1,0 +1,1 @@
+CREATE INDEX idx_skattegrunnlagspost_1 ON skattegrunnlagspost(skattegrunnlag_id);

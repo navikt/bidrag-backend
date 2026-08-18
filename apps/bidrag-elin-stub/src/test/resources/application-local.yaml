@@ -1,0 +1,11 @@
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+AZURE_APP_CLIENT_ID: <CLIENT_ID>
+AZURE_APP_CLIENT_SECRET: <CLIENT_SECRET>
+server.port: 8998
+NAIS_APP_NAME: bidrag-elin-stub
+spring:
+  devtools:
+    livereload:
+      port: 35730
+
+MASKINPORTEN_WELL_KNOWN_URL: https://test.maskinporten.no/.well-known/oauth-authorization-server

@@ -1,0 +1,113 @@
+package no.nav.bidrag.automatiskjobb.persistence.entity
+
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
+import jakarta.persistence.OneToMany
+import jakarta.persistence.OrderBy
+import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Behandlingstype
+import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Status
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.felles.personidentNav
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.domene.sak.Stønadsid
+import org.hibernate.proxy.HibernateProxy
+import java.sql.Timestamp
+
+@Entity(name = "revurdering_forskudd")
+data class RevurderingForskudd(
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    override val id: Int? = null,
+    val forMåned: String,
+    @Column(name = "batch_id", nullable = false)
+    override var batchId: String,
+    @field:ManyToMany(fetch = FetchType.EAGER)
+    @field:JoinTable(
+        name = "revurdering_forskudd_barn",
+        joinColumns = [JoinColumn(name = "revurdering_forskudd_id")],
+        inverseJoinColumns = [JoinColumn(name = "barn_id")],
+    )
+    @field:OrderBy("id")
+    val barn: MutableList<Barn>,
+    @Column(nullable = false)
+    val saksnummer: String,
+    var begrunnelse: List<String> = emptyList(),
+    @Enumerated(EnumType.STRING)
+    var status: Status,
+    @Enumerated(EnumType.STRING)
+    var behandlingstype: Behandlingstype? = null,
+    var vurdereTilbakekreving: Boolean = false,
+    var vedtaksidBeregning: Int? = null,
+    override var vedtak: Int? = null,
+    var oppgave: Int? = null,
+    @Column(name = "opprettet_tidspunkt", nullable = false, updatable = false)
+    val opprettetTidspunkt: Timestamp = Timestamp(System.currentTimeMillis()),
+    var fattetTidspunkt: Timestamp? = null,
+    var resultatSisteVedtak: String? = null,
+    @Enumerated(EnumType.STRING)
+    override val stønadstype: Stønadstype = Stønadstype.FORSKUDD,
+    @OneToMany
+    @JoinColumn(name = "revurdering_forskudd_id")
+    override val forsendelseBestilling: MutableList<ForsendelseBestilling> = mutableListOf(),
+) : ForsendelseEntity {
+    override val unikReferanse get() = "revurdering_forskudd_${batchId}_${tilStønadsid(
+        barn.joinToString(separator = "-") { it.kravhaver },
+    ).toReferanse()}"
+
+    fun tilStønadsid(kravhaver: String): Stønadsid = Stønadsid(
+        Stønadstype.FORSKUDD,
+        Personident(kravhaver),
+        personidentNav,
+        Saksnummer(saksnummer),
+    )
+
+    val begrunnelseVisningsnavn
+        get() =
+            begrunnelse.map { begrunnelse ->
+                begrunnelse.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " ")
+            }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        val oEffectiveClass =
+            if (other is HibernateProxy) other.hibernateLazyInitializer.persistentClass else other.javaClass
+        val thisEffectiveClass =
+            this.javaClass
+        if (thisEffectiveClass != oEffectiveClass) return false
+        other as RevurderingForskudd
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int = javaClass.hashCode()
+
+    @Override
+    override fun toString(): String = this::class.simpleName + "(" +
+        "id = $id, " +
+        "forMåned = $forMåned, " +
+        "batchId = $batchId, " +
+        "barn = $barn, " +
+        "saksnummer = $saksnummer, " +
+        "begrunnelse = $begrunnelse, " +
+        "status = $status, " +
+        "behandlingstype = $behandlingstype, " +
+        "vurdereTilbakekreving = $vurdereTilbakekreving, " +
+        "vedtaksidBeregning = $vedtaksidBeregning, " +
+        "vedtak = $vedtak, " +
+        "oppgave = $oppgave, " +
+        "opprettetTidspunkt = $opprettetTidspunkt, " +
+        "fattetTidspunkt = $fattetTidspunkt, " +
+        "resultatSisteVedtak = $resultatSisteVedtak, " +
+        "stønadstype = $stønadstype)"
+}

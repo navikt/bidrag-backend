@@ -1,0 +1,31 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "801",
+  "vedtakstidspunkt": "2022-01-02T00:00:00.000000000",
+  "enhetsnummer": "4812",
+  "opprettetAv": "B101173",
+  "kildeapplikasjon": "TEST",
+  "opprettetTidspunkt": "2022-01-02T16:00:23.254988482",
+  "stønadsendringListe": [
+  ],
+  "engangsbeløpListe": [
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2200400",
+      "skyldner": "",
+      "kravhaver": "",
+      "mottaker": "",
+      "beløp": "15010.40",
+      "valutakode": "NOK",
+      "referanse": "SARTILSKUDD_REFERANSE",
+      "omgjørVedtakId": "800",
+      "resultatkode": "GIGI",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    }
+  ],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

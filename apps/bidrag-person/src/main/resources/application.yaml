@@ -1,0 +1,83 @@
+
+####################################################################
+#
+# Profiles: All
+#
+####################################################################
+
+server:
+  servlet:
+    context-path: /bidrag-person
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.person.controller
+  swagger-ui:
+    path: /
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+    banner-mode: off
+  application:
+    name: bidrag-person
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+---
+
+####################################################################
+#
+# Profiles: live
+#
+####################################################################
+
+spring.config.activate.on-profile: live, default
+
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+
+no.nav.security.jwt:
+  client:
+    registration:
+      krr:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${KRR_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      kontoregister:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${KONTOREGISTER_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      pdl:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${PDL_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      pdl_tokenx:
+        well-known-url: ${TOKEN_X_WELL_KNOWN_URL}
+        grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+        token-exchange:
+          audience: ${PDL_SCOPE}
+        authentication:
+          client-id: ${TOKEN_X_CLIENT_ID}
+          client-jwk: ${TOKEN_X_PRIVATE_JWK}
+          client-auth-method: private_key_jwt
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+  issuer.tokenx:
+    discovery_url: ${TOKEN_X_WELL_KNOWN_URL}
+    accepted_audience: ${TOKEN_X_CLIENT_ID}

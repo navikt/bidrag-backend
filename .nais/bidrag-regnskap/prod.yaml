@@ -1,0 +1,64 @@
+name: bidrag-regnskap
+ingresses:
+  - https://bidrag-regnskap.intern.nav.no
+limits:
+  memory: 8192Mi
+requests:
+  cpu: 300m
+  memory: 3048Mi
+replicas:
+  max: 2
+  min: 2
+
+kafka:
+  pool: nav-prod
+database:
+  navn: bidrag-regnskap-prod
+  tier: db-custom-2-5120
+  size: 25
+  auditlog: "on"
+bucket:
+  navn: bidrag-regnskap-prod
+maskinporten:
+  url: https://maskinporten.no
+env:
+  SPRING_PROFILES_ACTIVE: database-legacy
+  SKATT_URL: https://tolking2predator-proxy-ske-elin.elin.innkreving.skatteetaten.no/Tolkning2PredatorV2.RestApi
+  SKATT_HOST: tolking2predator-proxy-ske-elin.elin.innkreving.skatteetaten.no
+  TOPIC_VEDTAK: bidrag.vedtak
+  TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+  PERSON_HENDELSE_KAFKA_GROUP_ID_SISTE: personhendelse.v1.bidrag-regnskap
+  BUCKET_NAME: bidrag-regnskap-prod
+  SFTP_HOST: sftp.nav.no
+  SFTP_SKAL_OVERFORE_FIL: true
+  SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io
+  SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  SAK_HOST: bidrag-sak.prod-fss-pub.nais.io
+  PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  PERSON_HOST: bidrag-person.prod-fss-pub.nais.io
+  BIDRAG_VEDTAK_URL: https://bidrag-vedtak.intern.nav.no
+  BIDRAG_VEDTAK_SCOPE: prod-gcp.bidrag.bidrag-vedtak
+  BIDRAG_VEDTAK_HOST: bidrag-vedtak.intern.nav.no
+  BIDRAG_RESKONTRO_URL: https://bidrag-reskontro.intern.nav.no
+  BIDRAG_RESKONTRO_SCOPE: prod-gcp.bidrag.bidrag-reskontro
+  BIDRAG_RESKONTRO_HOST: bidrag-reskontro.intern.nav.no
+  MASKINPORTEN_SCOPES: "skatteetaten:barnebidragkrav"
+  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  KONTERINGER_FORELDET_DATO: 2006-04
+  SEND_KRAV_CRON: "0 */10 * * * *" #Hvert 10. minutt
+  RESEND_KRAV_CRON: "0 2 4 * * *" #Hver dag kl 04:02
+  BEHANDLINGSSTATUS_CRON: "0 25 * * * *" #Hver time 25 minutter over hel
+  AVSTEMNING_CRON: "0 15 0 * * *" #Hver dag kl 00:15
+  PALOSKJORING_CRON: "0 5 * * * *" #Hver time 5 minutter over hel
+  SLACK_CHANNEL_ID: CGVH3MV47
+  KAFKA_AUTO_OFFSET_RESET: earliest
+azure:
+  inbound:
+    rules:
+      - application: bisys
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-vedtak
+        namespace: bidrag
+        cluster: prod-gcp

@@ -1,0 +1,8 @@
+BIDRAG_DOKUMENT_URL: https://bidrag-dokument-feature.dev.adeo.no/bidrag-dokument
+DOKARKIV_URL: https://dokarkiv-q1.dev.adeo.no
+SRVBDARKIVERING_PWD: <changeme>
+USE_DUMMY_DOCUMENT: true
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+DOKARKIV_SCOPE: dev-fss.teamdokumenthandtering.dokarkiv-q1
+BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument-feature
+server.port: 9911

@@ -1,0 +1,36 @@
+wiremock.server.port: 8089
+AAD_ISSUER_URL: http://localhost:${mock-oauth2-server.port}/aad
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad/token
+SRVBIDRAG_USERNAME: srvbidrag-person
+SRVBIDRAG_PASSWORD: bareForTest
+KRR_URL: http://localhost:${wiremock.server.port}/krr.json
+KONTOREGISTER_URL: http://localhost:${wiremock.server.port}/kontoregister
+PDL_URL: http://localhost:${wiremock.server.port}/pdl
+KODEVERK_URL: http://localhost:${wiremock.server.port}/kodeverk
+SKJERMING_URL: http://localhost:${wiremock.server.port}/skjerming
+logging.level.org.springframework.web.client.RestTemplate: DEBUG
+
+no.nav.security.jwt:
+  client:
+    registration:
+      krr:
+        token-endpoint-url: ${AZURE_OPENID_CONFIG_ISSUER}
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://krr/.default
+        authentication:
+          client-id: id
+          client-secret: secret
+          client-auth-method: client_secret_post
+      pdl:
+        token-endpoint-url: ${AZURE_OPENID_CONFIG_ISSUER}
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://pdl/.default
+        authentication:
+          client-id: id
+          client-secret: secret
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discoveryurl: ${AAD_ISSUER_URL}/.well-known/openid-configuration
+    accepted_audience: aud-localhost
+
+NAIS_APP_NAME: bidrag-person

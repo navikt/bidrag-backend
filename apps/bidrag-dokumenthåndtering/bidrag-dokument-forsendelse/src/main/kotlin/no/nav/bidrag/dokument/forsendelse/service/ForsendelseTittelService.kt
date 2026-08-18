@@ -1,0 +1,155 @@
+package no.nav.bidrag.dokument.forsendelse.service
+
+import no.nav.bidrag.dokument.forsendelse.config.UnleashFeatures
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragBBMConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragBehandlingConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragDokumentBestillingConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragSamhandlerConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragVedtakConsumer
+import no.nav.bidrag.dokument.forsendelse.persistence.database.datamodell.BehandlingInfo
+import no.nav.bidrag.dokument.forsendelse.persistence.database.datamodell.Forsendelse
+import no.nav.bidrag.dokument.forsendelse.persistence.database.repository.ForsendelseRepository
+import no.nav.bidrag.dokument.forsendelse.utvidelser.gjelderKlage
+import no.nav.bidrag.dokument.forsendelse.utvidelser.hoveddokument
+import no.nav.bidrag.dokument.forsendelse.utvidelser.tilBehandlingInfo
+import no.nav.bidrag.dokument.forsendelse.utvidelser.tilBeskrivelse
+import no.nav.bidrag.dokument.forsendelse.utvidelser.tilBeskrivelseBehandlingType
+import no.nav.bidrag.dokument.forsendelse.utvidelser.toName
+import no.nav.bidrag.domene.ident.SamhandlerId
+import no.nav.bidrag.transport.dokument.forsendelse.HentDokumentValgRequest
+import no.nav.bidrag.transport.dokument.forsendelse.OpprettDokumentForespørsel
+import no.nav.bidrag.transport.dokument.forsendelse.OpprettForsendelseForespørsel
+import org.springframework.stereotype.Service
+
+@Service
+class ForsendelseTittelService(
+    private val sakService: SakService,
+    private val vedtakConsumer: BidragVedtakConsumer,
+    private val behandlingConsumer: BidragBehandlingConsumer,
+    private val dokumentBestillingConsumer: BidragDokumentBestillingConsumer,
+    private val samhandlerConsumer: BidragSamhandlerConsumer,
+    private val forsendelseService: ForsendelseRepository,
+    private val bbmConsumer: BidragBBMConsumer,
+) {
+    fun opprettDokumentTittel(
+        forsendelse: OpprettForsendelseForespørsel,
+        dokument: OpprettDokumentForespørsel,
+    ): String? {
+        val sak = sakService.hentSak(forsendelse.saksnummer)
+        val detaljer = dokumentBestillingConsumer.dokumentmalDetaljer()
+        val dokumentMalId = dokument.dokumentmalId
+        if (dokumentMalId.isNullOrEmpty()) return null
+        val dokumentMal = detaljer[dokumentMalId] ?: return null
+        val rolleGjelder = sak?.roller?.find { it.fødselsnummer?.verdi == forsendelse.mottaker?.ident }
+        val gjelderRm = sak?.roller?.find { it.reellMottaker?.ident?.verdi == forsendelse.mottaker?.ident }?.reellMottaker
+        val rolleNavn =
+            when {
+                gjelderRm != null && gjelderRm.verge -> {
+                    "verge"
+                }
+
+                // Kan være at RM er BM i saken
+                gjelderRm != null && SamhandlerId(gjelderRm.ident.verdi).gyldig() -> {
+                    samhandlerConsumer
+                        .hentSamhandler(gjelderRm.ident.verdi)
+                        ?.områdekode
+                        ?.name
+                        ?.lowercase() ?: ""
+                }
+
+                rolleGjelder != null -> {
+                    rolleGjelder.type.name.lowercase()
+                }
+
+                else -> {
+                    return null
+                }
+            }
+
+        return "${dokumentMal.tittel} til $rolleNavn"
+    }
+
+    fun hentForsendelseRolle(request: HentDokumentValgRequest?): String {
+        val forsendelseId = request?.forsendelseId ?: return ""
+        val forsendelse = forsendelseService.medForsendelseId(forsendelseId)!!
+        val sak = sakService.hentSak(forsendelse.saksnummer)
+        val gjelderRolle = sak?.roller?.find { it.fødselsnummer?.verdi == forsendelse.gjelderIdent }
+        val rolleTekst = gjelderRolle?.type?.toName()?.lowercase()
+        return rolleTekst?.let { " til $it" } ?: ""
+    }
+
+    fun opprettForsendelseTittel(forsendelse: Forsendelse): String {
+        val sak = sakService.hentSak(forsendelse.saksnummer)
+        val vedtak =
+            if (UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled) {
+                forsendelse.behandlingInfo?.vedtakId?.let {
+                    vedtakConsumer.hentVedtak(it)
+                }
+            } else {
+                null
+            }
+        val behandling =
+            if (vedtak == null) {
+                forsendelse.behandlingInfo?.behandlingId?.let {
+                    behandlingConsumer.hentBehandling(
+                        it,
+                    )
+                }
+            } else {
+                null
+            }
+        val søknad = forsendelse.behandlingInfo?.soknadId?.let { bbmConsumer.hentSøknad(it.toLong()) }
+        val gjelderRolle = sak?.roller?.find { it.fødselsnummer?.verdi == forsendelse.gjelderIdent }
+        return forsendelse.behandlingInfo?.tilBeskrivelse(gjelderRolle?.type, vedtak, behandling, søknad)
+            ?: forsendelse.dokumenter.hoveddokument?.tittel ?: "Forsendelse ${forsendelse.forsendelseId}"
+    }
+
+    fun opprettForsendelseTittel(forespørsel: OpprettForsendelseForespørsel): String? {
+        val sak = sakService.hentSak(forespørsel.saksnummer)
+        val vedtak =
+            if (UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled) {
+                forespørsel.behandlingInfo?.vedtakId?.let {
+                    vedtakConsumer.hentVedtak(it)
+                }
+            } else {
+                null
+            }
+        val behandling =
+            if (vedtak == null) {
+                forespørsel.behandlingInfo?.behandlingId?.let {
+                    behandlingConsumer.hentBehandling(
+                        it,
+                    )
+                }
+            } else {
+                null
+            }
+        val søknad = forespørsel.behandlingInfo?.soknadId?.let { bbmConsumer.hentSøknad(it.toLong()) }
+        val gjelderRolle = sak?.roller?.find { it.fødselsnummer?.verdi == forespørsel.gjelderIdent }
+        return forespørsel.tilBehandlingInfo()?.tilBeskrivelse(gjelderRolle?.type, vedtak, behandling, søknad)
+    }
+
+    fun opprettForsendelseBehandlingPrefiks(behandlingInfo: BehandlingInfo?): String? {
+        val vedtak =
+            if (UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled) {
+                behandlingInfo?.vedtakId?.let {
+                    vedtakConsumer.hentVedtak(it)
+                }
+            } else {
+                null
+            }
+        val behandling = if (vedtak == null) behandlingInfo?.behandlingId?.let { behandlingConsumer.hentBehandling(it) } else null
+        val gjelderKlage = behandlingInfo?.gjelderKlage(vedtak, behandling) ?: false
+        val klagePostfiks = if (gjelderKlage) " klage" else ""
+        val behandlingType = behandlingInfo?.tilBeskrivelseBehandlingType(vedtak, behandling)
+        return behandlingType?.let { "$it$klagePostfiks" }
+    }
+
+    fun hentTittelMedPrefiks(
+        originalTittel: String,
+        forespørsel: BehandlingInfo?,
+    ): String {
+        val tittelPrefiks = opprettForsendelseBehandlingPrefiks(forespørsel)
+        return tittelPrefiks?.let { "$it, $originalTittel" } ?: originalTittel
+    }
+}

@@ -1,0 +1,49 @@
+name: bidrag-admin
+ingresses:
+  - https://bidrag-admin.intern.dev.nav.no
+limits:
+  memory: 1000Mi
+requests:
+  cpu: 80m
+  memory: 200Mi
+replicas:
+  max: 2
+  min: 1
+database:
+  navn: bidrag-admin-dev
+  tier: db-f1-micro
+  size: 10
+  auditlog: "off"
+kafka:
+  pool: nav-dev
+env:
+  BIDRAG_ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.dev-fss-pub.nais.io/bidrag-organisasjon
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+outbound-access-apps:
+  - bidrag-kodeverk
+outbound-access-hosts:
+  - bidrag-organisasjon.dev-fss-pub.nais.io
+  - bidrag-unleash-api.nav.cloud.nais.io
+unleash:
+  env: development
+  secret_name: bidrag-admin-unleash-api-token
+azure_access_inbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-ui-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-frontend-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-frontend-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: azure-token-generator
+    namespace: nais
+    cluster: dev-gcp

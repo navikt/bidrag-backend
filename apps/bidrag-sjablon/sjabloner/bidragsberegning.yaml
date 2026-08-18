@@ -1,0 +1,200 @@
+# Boutgifter og maks tilsyn oppdateres normalt med virkning fra 1. juli hvert år.
+# https://lovdata.no/nav/rundskriv/v1-55-02
+
+Boutgifter bidragsbarn:   #0003
+  2026-07-01:     3.811,-
+  2025-07-01:     3.679,-
+  2024-07-01:     3.596,-
+  2023-07-01:     3.198,-
+  2022-07-01:     2.989,-
+  2021-07-01:     2.896,-
+  2020-07-01:     2.825,-
+  2019-07-01:     2.775,-
+  2018-07-01:     2.692,-
+  2017-07-01:     2.649,-
+  2016-07-01:     2.577,-
+  2015-07-01:     2.504,-
+  2014-07-01:     2.456,-
+  2013-07-01:     2.232,-
+  2012-07-01:     2.190,-
+  2011-07-01:     2.183,-
+  2010-07-01:     2.044,-
+  2009-07-01:     1.912,-
+  2009-01-01:     1.690,-
+  2008-07-01:     1.660,-
+  2007-07-01:     1.300,-
+  2006-07-01:       890,-
+  2005-07-01:     1.180,-
+  2004-07-01:       800,-
+  2003-01-01:       810,-
+
+Kapitalinntekt innslag:   # 0006
+  2003-01-01:    10.000,-
+
+Endringsgrense:           # 0020
+  2009-01-01:        12%
+  2003-01-01:        10%
+
+Virkedager i måneden:     # 0024
+  2003-01-01:        21,67
+
+Bidragspliktigs inntekt:
+  2003-01-01:
+    Maks andel:      25%  # 0008
+    Høy inntekt:    550x  # 0009
+
+Bidragsbarns inntekt:
+  2003-01-01:
+    Innslag:         30x # 0010
+    Maks inntekt:   100x # 0012
+
+
+Maks fradrag:
+  2008-07-01:
+    Fra 1 barn:      2.083,33
+    Fra 2 barn:      3.333,-
+    Fra 3 barn:      4.583,-
+    Fra 4 barn:      5.833,-
+    Fra 5 barn:      7.083,-
+    Fra 6 barn:      8.333,-
+    Fra 7 barn:      9.583,-
+    Fra 8 barn:     10.833,-
+    Fra 9 barn:     12.083,-
+  
+  2005-01-01:
+    Fra 1 barn:      2.083,33
+    Fra 2 barn:      2.500,-
+    Fra 3 barn:      2.917,-
+    Fra 4 barn:      3.333,-
+    Fra 5 barn:      3.750,-
+    Fra 6 barn:      4.167,-
+    Fra 7 barn:      4.583,-
+    Fra 8 barn:      5.000,-
+    Fra 9 barn:      5.417,-
+  
+  2001-01-01:
+    Fra 1 barn:      2.083,33
+    Fra 2 barn:      2.500,-
+    Fra 3 barn:      2.500,-
+
+Maks tilsyn:
+  2026-07-01:
+    Fra 1 barn:      7.648,-
+    Fra 2 barn:      9.977,-
+    Fra 3 barn:     11.308,-
+  
+  2025-07-01:
+    Fra 1 barn:      7.484,-
+    Fra 2 barn:      9.763,-
+    Fra 3 barn:     11.064,-
+  
+  2024-07-01:
+    Fra 1 barn:      7.266,-
+    Fra 2 barn:      9.478,-
+    Fra 3 barn:     10.742,-
+  
+  2023-07-01:
+    Fra 1 barn:      6.827,-
+    Fra 2 barn:      8.906,-
+    Fra 3 barn:     10.094,-
+  
+  2022-07-01:
+    Fra 1 barn:      6.641,-
+    Fra 2 barn:      8.664,-
+    Fra 3 barn:      9.819,-
+  
+  2021-07-01:
+    Fra 1 barn:      6.555,-
+    Fra 2 barn:      8.553,-
+    Fra 3 barn:      9.692,-
+  
+  2020-07-01:
+    Fra 1 barn:      6.333,-
+    Fra 2 barn:      8.264,-
+    Fra 3 barn:      9.364,-
+  
+  2019-07-01:
+    Fra 1 barn:      6.214,-
+    Fra 2 barn:      8.109,-
+    Fra 3 barn:      9.189,-
+  
+  2016-07-01:
+    Fra 1 barn:      6.075,-
+    Fra 2 barn:      7.928,-
+    Fra 3 barn:      8.983,-
+  
+  2014-07-01:
+    Fra 1 barn:      5.905,-
+    Fra 2 barn:      7.705,-
+    Fra 3 barn:      8.730,-
+  
+  2013-07-01:
+    Fra 1 barn:      5.705,-
+    Fra 2 barn:      7.444,-
+    Fra 3 barn:      8.434,-
+  
+  2012-07-01:
+    Fra 1 barn:      5.522,-
+    Fra 2 barn:      7.206,-
+    Fra 3 barn:      8.164,-
+  
+  2011-07-01:
+    Fra 1 barn:      5.356,-
+    Fra 2 barn:      6.989,-
+    Fra 3 barn:      7.919,-
+  
+  2010-07-01:
+    Fra 1 barn:      5.194,-
+    Fra 2 barn:      6.778,-
+    Fra 3 barn:      7.680,-
+  
+  2009-07-01:
+    Fra 1 barn:      5.033,-
+    Fra 2 barn:      6.567,-
+    Fra 3 barn:      7.442,-
+  
+  2008-07-01:
+    Fra 1 barn:      4.820,-
+    Fra 2 barn:      6.289,-
+    Fra 3 barn:      7.128,-
+  
+  2007-07-01:
+    Fra 1 barn:      4.622,-
+    Fra 2 barn:      6.030,-
+    Fra 3 barn:      6.834,-
+  
+  2006-07-01:
+    Fra 1 barn:      4.453,-
+    Fra 2 barn:      5.809,-
+    Fra 3 barn:      6.584,-
+  
+  2005-01-01:
+    Fra 1 barn:      4.316,-
+    Fra 2 barn:      5.630,-
+    Fra 3 barn:      6.380,-
+  
+  2004-01-01:
+    Fra 1 barn:      4.173,-
+    Fra 2 barn:      5.445,-
+    Fra 3 barn:      6.170,-
+  
+  2003-01-01:
+    Fra 1 barn:      4.047,-
+    Fra 2 barn:      5.280,-
+    Fra 3 barn:      5.983,-
+  
+
+Multiplikator maks bidrag:
+  2019-07-01:            5x
+  2019-01-01:           50x
+  2018-07-01:            5x
+  2017-07-01:           50x
+  2016-07-01:           50x
+  2015-07-01:           50x
+  2014-07-01:            5x
+  2014-01-01:           10x
+  2013-07-01:            5x
+  2012-07-01:           10x
+  2011-07-01:           10x
+  2009-01-01:           10x
+  2003-01-01:            5x

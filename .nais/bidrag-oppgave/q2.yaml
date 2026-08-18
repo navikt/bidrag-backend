@@ -1,0 +1,15 @@
+name: bidrag-oppgave
+ingresses:
+  - https://bidrag-oppgave.intern.dev.nav.no
+limits:
+  memory: 512Mi
+requests:
+  cpu: 50m
+  memory: 256Mi
+replicas:
+  max: 4
+  min: 2
+env:
+  OPPGAVE_API_URL: https://oppgave.dev-fss-pub.nais.io
+  OPPGAVE_API_SCOPE: api://dev-fss.oppgavehandtering.oppgave/.default
+  OPPGAVE_API_HOST: oppgave.dev-fss-pub.nais.io

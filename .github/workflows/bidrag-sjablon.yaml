@@ -1,0 +1,105 @@
+name: Bidrag-sjablon
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-sjablon/**.yaml'
+#      - '.github/workflows/bidrag-sjablon.yaml' //TODO(Slå på etter migrering)
+#     - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-sjablon/**'
+
+jobs:
+  bygg_og_test:
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    name: "Bygg og test"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
+      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
+      # invalideres av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bidrag-sjablon-${{ hashFiles('pom.xml', 'apps/bidrag-sjablon/pom.xml') }}
+          restore-keys: |
+            maven-bidrag-sjablon-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+      - name: Bygg og kjør tester (inkl. ktlint)
+        run: mvn -B -fae verify -pl apps/bidrag-sjablon -am
+
+  deploy_dev:
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    name: "Build and deploy to dev"
+    concurrency:
+      group: deploy-sjablon-dev-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      nais_cluster: fss
+      maven_options: -B -fae -pl apps/bidrag-sjablon -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-sjablon/pom.xml
+      ktlint_paths: apps/bidrag-sjablon/src/**/*.kt
+      docker_context: ./apps/bidrag-sjablon
+      dockerfile_with_path: ./apps/bidrag-sjablon/Dockerfile
+      nais_variabler_filnavn: bidrag-sjablon/dev.yaml
+      nais_hovedfil_navn: bidrag-sjablon/nais.yaml
+      image_suffix: bidrag-sjablon
+      tag: bidrag-sjablon
+
+  deploy_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Build and deploy to prod"
+    concurrency:
+      group: deploy-sjablon-prod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
+    secrets: inherit
+    with:
+      nais_cluster: fss
+      maven_options: -B -fae -pl apps/bidrag-sjablon -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-sjablon/pom.xml
+      ktlint_paths: apps/bidrag-sjablon/src/**/*.kt
+      docker_context: ./apps/bidrag-sjablon
+      dockerfile_with_path: ./apps/bidrag-sjablon/Dockerfile
+      nais_variabler_filnavn: bidrag-sjablon/prod.yaml
+      nais_hovedfil_navn: bidrag-sjablon/nais.yaml
+      image_suffix: bidrag-sjablon
+      tag: bidrag-sjablon

@@ -1,0 +1,66 @@
+name: bidrag-grunnlag
+ingresses:
+  - https://bidrag-grunnlag.intern.nav.no
+azure:
+  tenant: nav.no
+  familiebasak_url: familie-ba-sak.intern.nav.no
+  familiebasak_scope: prod-gcp.teamfamilie.familie-ba-sak
+  familieefsak_url: familie-ef-sak.intern.nav.no
+  familieefsak_scope: prod-gcp.teamfamilie.familie-ef-sak
+  inntektskomponenten_url: ikomp.prod-fss-pub.nais.io
+  inntektskomponenten_scope: prod-fss.team-inntekt.ikomp
+  sigrun_base_url: team-inntekt-proxy.prod-fss-pub.nais.io
+  sigrun_url: sigrun.prod-fss-pub.nais.io
+  sigrun_scope: prod-fss.team-inntekt.sigrun
+  pensjon_url: pensjon-pen.prod-fss-pub.nais.io
+  pensjon_scope: prod-fss.pensjondeployer.pensjon-pen
+  bidragperson_base_url: bidrag-person.prod-fss-pub.nais.io
+  bidragperson_url: bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  bidragperson_scope: prod-fss.bidrag.bidrag-person
+  bidragperson_app: bidrag-person
+  bidragperson_cluster: prod-fss
+  familiekssak_scope: prod-gcp.teamfamilie.familie-ks-sak
+  familiekssak_url: familie-ks-sak.intern.nav.no
+  familiekssak_app: familie-ks-sak
+  aareg_url: aareg-services.prod-fss-pub.nais.io
+  aareg_scope: prod-fss.arbeidsforhold.aareg-services-nais
+  aareg_app: aareg-services
+  aareg_cluster: prod-fss
+  bidrag_organisasjon_url: bidrag-organisasjon.prod-fss-pub.nais.io
+  bidrag_organisasjon_scope: prod-fss.bidrag.bidrag-organisasjon
+  tilleggsstonadersak_url: tilleggsstonader-sak.intern.nav.no
+  tilleggsstonadersak_scope: prod-gcp.tilleggsstonader.tilleggsstonader-sak
+  unsecure:
+    ereg_url: ereg-services.prod-fss-pub.nais.io
+    norgesbank_url: data.norges-bank.no
+dbname: bidrag-grunnlag-prod-4
+dbinstancename: bidrag-grunnlag-prod-4
+azureAccessInbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-bidragskalkulator-api
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+spec:
+  replicas:
+    min: 2
+  resources:
+    limits:
+      memory: 2560Mi
+    requests:
+      cpu: 800m
+      memory: 2048Mi
+  gcp:
+    sqlInstances:
+      diskSize: 20
+      tier: db-custom-1-3840

@@ -1,0 +1,182 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+scheduler:
+  sendkrav:
+    cron: ${SEND_KRAV_CRON}
+  behandlingsstatus:
+    cron: ${BEHANDLINGSSTATUS_CRON}
+  avstemning:
+    cron: ${AVSTEMNING_CRON}
+  påløpkjøring:
+    cron: ${PALOSKJORING_CRON}
+  resendkrav:
+    cron: ${RESEND_KRAV_CRON}
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.regnskap.controller
+  swagger-ui:
+    path: /
+    display-request-duration: true
+    try-it-out-enabled: true
+  cache:
+    disabled: true
+
+maskinporten:
+  tokenUrl: ${MASKINPORTEN_ISSUER}token
+  audience: ${MASKINPORTEN_ISSUER}
+  clientId: ${MASKINPORTEN_CLIENT_ID}
+  scope: ${MASKINPORTEN_SCOPES}
+  privateKey: ${MASKINPORTEN_CLIENT_JWK}
+  validInSeconds: 120 #120 er maks antall sekunder et maskinporten Jwt-token kan være gyldig.
+
+sftp:
+  username: srvBidragRegnskap
+  host: ${SFTP_HOST}
+  port: 22
+  privateKey: ${SFTP_PRIVATE_KEY}
+  skalOverforeFil: ${SFTP_SKAL_OVERFORE_FIL}
+
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+
+spring.config.activate.on-profile: nais
+
+no.nav.security.jwt:
+  client:
+    registration:
+      sak:
+        resource-url: ${SAK_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${SAK_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      person:
+        resource-url: ${PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      vedtak:
+        resource-url: ${BIDRAG_VEDTAK_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_VEDTAK_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      reskontro:
+        resource-url: ${BIDRAG_RESKONTRO_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_RESKONTRO_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+spring:
+  task:
+    scheduling:
+      pool:
+        size: 5
+  mvc:
+    problemdetails:
+      enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: SSL
+      ssl:
+        keystore:
+          type: PKCS12
+          location: ${KAFKA_KEYSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+        truststore:
+          location: ${KAFKA_TRUSTSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+    consumer:
+      auto-offset-reset: earliest
+      max-poll-records: 10
+      enable-auto-commit: false
+      heartbeat-interval: 10000
+    listener:
+      ackMode: MANUAL_IMMEDIATE
+
+---
+spring:
+  config.activate.on-profile: database-legacy
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}?user=${DB_USERNAME}&password=${DB_PASSWORD}&reWriteBatchedInserts=true
+    hikari:
+      idle-timeout: 10001
+      max-lifetime: 60001
+      connectionTimeout: 10000
+      maximum-pool-size: 20
+      minimum-idle: 1
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+    baseline-on-migrate: true
+  jpa:
+    hibernate.connection.provider_class: org.hibernate.hikaricp.internal.HikariCPConnectionProvider
+    database: postgresql
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        query:
+          plan_cache_max_size: 1024
+          plan_parameter_metadata_max_size: 64
+        jdbc:
+          batch_size: 1000
+          batch_versioned_data: true
+
+---
+spring:
+  config.activate.on-profile: database-new
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: ${DB_JDBC_URL}
+    hikari:
+      idle-timeout: 10001
+      max-lifetime: 60001
+      connectionTimeout: 1000
+      maximum-pool-size: 10
+      minimum-idle: 1
+      data-source-properties:
+        ssl: true
+        sslmode: ${DB_SSLMODE}
+        sslcert: ${DB_SSLCERT}
+        sslkey: ${DB_SSLKEY_PK8}
+        sslrootcert: ${DB_SSLROOTCERT}
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+  jpa:
+    hibernate.connection.provider_class: org.hibernate.hikaricp.internal.HikariCPConnectionProvider
+    database: postgresql
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        query:
+          plan_cache_max_size: 1024
+          plan_parameter_metadata_max_size: 64
+        jdbc:
+          batch_size: 1000
+          batch_versioned_data: true

@@ -1,0 +1,144 @@
+server:
+  servlet:
+    context-path: /bidrag-dokument-arkiv
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+spring.main.banner-mode: off
+springdoc:
+  packages-to-scan: no.nav.bidrag.dokument.arkiv.controller
+spring.main.allow-bean-definition-overriding: true
+STS_ISSUER_URL: ${STS_ISSUER_URL:${ACCESS_TOKEN_URL}}
+KAFKA_GROUP_ID: bidrag-dokument-arkiv-oppgave-consumer
+SERVICE_USER_USERNAME: srvbdarkiv
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+---
+
+spring.config.activate.on-profile: live
+
+no.nav.security.jwt:
+  sts:
+    properties:
+      url: ${ACCESS_TOKEN_URL}/rest/v1/sts/token
+      username: srvbdarkiv
+      password: ${SERVICE_USER_PASSWORD}
+  client:
+    registration:
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-organisasjon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${ORGANISASJON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      oppgave:
+        resource-url: ${OPPGAVE_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${OPPGAVE_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      saf:
+        resource-url: ${SAF_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${SAF_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      dokarkiv:
+        resource-url: ${DOKARKIV_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${DOKARKIV_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      dokdistfordeling:
+        resource-url: ${DOKDISTFORDELING_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${DOKDISTFORDELING_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      dokdistkanal:
+        resource-url: ${DOKDISTKANAL_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${DOKDISTKANAL_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-dokument:
+        resource-url: ${BIDRAG_DOKUMENT_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_DOKUMENT_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      innsending-api:
+        resource-url: ${INNSENDING_API_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${INNSENDING_API_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.sts:
+    acceptedaudience: srvbisys
+    discoveryurl: ${STS_ISSUER_URL}/rest/v1/sts/.well-known/openid-configuration
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+#    proxy_url: http://webproxy.nais:8088
+
+
+spring.kafka:
+  bootstrap-servers: ${KAFKA_BROKERS}
+  properties:
+    security.protocol: SSL
+    specific.avro.reader: true
+    schema.registry.url: ${KAFKA_SCHEMA_REGISTRY}
+    basic.auth.credentials.source: USER_INFO
+    basic.auth.user.info: ${KAFKA_SCHEMA_REGISTRY_USER}:${KAFKA_SCHEMA_REGISTRY_PASSWORD}
+    ssl:
+      keystore:
+        type: PKCS12
+        location: ${KAFKA_KEYSTORE_PATH}
+        password: ${KAFKA_CREDSTORE_PASSWORD}
+      truststore:
+        location: ${KAFKA_TRUSTSTORE_PATH}
+        password: ${KAFKA_CREDSTORE_PASSWORD}
+  consumer:
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+    properties:
+      spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
+    enableAutoCommit: false
+  listener:
+    ackMode: RECORD
+

@@ -1,0 +1,7 @@
+BIDRAG_SAK_URL: https://bidrag-sak.dev.adeo.no
+BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+server.port: 8991
+NAIS_APP_NAME: bidrag-tilgangskontroll
+ENABLE_TEMA_CHECK: false
+IDENTENTER_SOM_KAN_OPPRETTE_SAK_UTEN_BM: Z994977,Z9999

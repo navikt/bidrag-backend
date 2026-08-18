@@ -1,0 +1,65 @@
+KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+KAFKA_GROUP_ID: bidrag-dokument-forsendelse
+KAFKA_BROKERS: localhost:9092
+TOPIC_DOKUMENT: bidrag.dokument
+TOPIC_JOURNALPOST: bidrag.journalpost
+KODEVERK_URL: https://kodeverk.dev.adeo.no
+#DB_DATABASE=bidrag-dokument-forsendelse
+#DB_USERNAME=ugur.alpay.cenar@nav.no
+#DB_PASSWORD=asdsadsadasd
+
+
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+  datasource:
+    url: jdbc:postgresql://localhost:${DB_PORT:5454}/${DB_DATABASE:bidrag-dokument-forsendelse}?user=${DB_USERNAME:cloudsqliamuser}&password=${DB_PASSWORD:admin}
+    type: com.zaxxer.hikari.HikariDataSource
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      enableAutoCommit: false
+    listener:
+      ackMode: RECORD
+
+springdoc.packages-to-scan: no.nav.bidrag.dokument.forsendelse.api
+
+BIDRAG_PERSON_URL: https://bidrag-person-feature.dev.adeo.no
+PERSON_SCOPE: dev-fss.bidrag.bidrag-person-feature
+
+BIDRAG_DOKUMENT_BESTILLING_URL: https://bidrag-dokument-bestilling.intern.dev.nav.no
+BIDRAG_DOKUMENT_BESTILLING_URL2: http://localhost:8998
+BIDRAG_DOKUMENT_URL: http://localhost:8099/bidrag-dokument
+
+BIDRAG_TILGANGSKONTROLL_URL: https://bidrag-tilgangskontroll.intern.dev.nav.no
+BIDRAG_DOKUMENT_BESTILLING_SCOPE: dev-gcp.bidrag.bidrag-dokument-bestilling
+
+BIDRAG_VEDTAK_URL: https://bidrag-vedtak-syntetisk.intern.dev.nav.no
+BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-syntetisk
+
+BIDRAG_BEHANDLING_URL: https://bidrag-behandling.intern.dev.nav.no
+BIDRAG_BEHANDLING_SCOPE: dev-gcp.bidrag.bidrag-behandling
+
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+AZURE_APP_CLIENT_ID: <app_client_id>
+AZURE_APP_CLIENT_SECRET: unset
+server.port: 8999
+NAIS_APP_NAME: bidrag-dokument-forsendelse
+LAGRE_DIST_INFO_CRON: "0 * * * * *"
+OPPDATER_DIST_STATUS_CRON: "0 * * * * *"
+SYNKRONISER_STATUS_DOKUMENTER_CRON: "*/1 * * * * *"
+REBESTILL_DOKUMENTER_UNDER_PRODUKSJON_SCHEDULE: "0 */10 * * * *"
+REBESTILL_DOKUMENTER_BESTILLING_FEILET_SCHEDULE: "0 * * * * *"
+RESYNK_FORSENDELSE_DISTRIBUSJON_SCHEDULE: "0 * * * * *"
+FERDIGSTILL_NOTAT_FORSENDELSE_SCHEDULE: "0 * * * * *"
+
+---
+spring.config.activate.on-profile: lokal-nais-docker
+BUCKET_NAME: bidrag-dokument-forsendelse-local
+GCP_HOST: http://0.0.0.0:4443
+GCP_BUCKET_DOCUMENT_KMS_KEY_PATH: path/to/kms/key
+GCP_DOCUMENT_CLIENTSIDE_KMS_KEY_PATH: gcp-kms://path/to/kms/key
+DISABLE_CLIENTSIDE_ENCRYPTION: false

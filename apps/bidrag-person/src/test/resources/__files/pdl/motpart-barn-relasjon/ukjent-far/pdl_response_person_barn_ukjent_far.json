@@ -1,0 +1,27 @@
+{
+  "data": {
+    "hentPerson": {
+      "navn": [
+        {
+          "fornavn": "Interessant",
+          "mellomnavn": null,
+          "etternavn": "Villa"
+        }
+      ]
+    },
+    "hentIdenter": {
+      "identer": [
+        {
+          "ident": "23461397379",
+          "historisk": false,
+          "gruppe": "FOLKEREGISTERIDENT"
+        },
+        {
+          "ident": "2056943379689",
+          "historisk": false,
+          "gruppe": "AKTORID"
+        }
+      ]
+    }
+  }
+}

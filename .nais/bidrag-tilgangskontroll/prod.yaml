@@ -1,0 +1,47 @@
+name: bidrag-tilgangskontroll
+min_replicas: 2
+ingresses:
+  - https://bidrag-tilgangskontroll.intern.nav.no
+env:
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  TILGANGSMASKIN_URL: https://tilgangsmaskin.intern.nav.no
+  TILGANGSMASKIN_SCOPE: prod-gcp.tilgangsmaskin.populasjonstilgangskontroll
+  ENABLE_TEMA_CHECK: true
+  IDENTENTER_SOM_KAN_OPPRETTE_SAK_UTEN_BM: H103527,H103703,F161384,L105659,H103410,J141208,E117063
+outbound-access-hosts:
+  - bidrag-sak.prod-fss-pub.nais.io
+  - skjermede-personer-pip.intern.nav.no
+  - bidrag-unleash-api.nav.cloud.nais.io
+  - tilgangsmaskin.intern.nav.no
+azure_access_inbound:
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-sak
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-journalpost
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-arbeidsflyt
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-organisasjon
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+unleash:
+  env: production
+  secret_name: bidrag-tilgangskontroll-unleash-api-token

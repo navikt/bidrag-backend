@@ -1,0 +1,445 @@
+package no.nav.bidrag.dokument.forsendelse.service
+
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JavaType
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import no.nav.bidrag.dokument.forsendelse.config.UnleashFeatures
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragBehandlingConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragDokumentBestillingConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.BidragVedtakConsumer
+import no.nav.bidrag.dokument.forsendelse.consumer.dto.DokumentMalDetaljer
+import no.nav.bidrag.dokument.forsendelse.consumer.dto.DokumentMalType
+import no.nav.bidrag.dokument.forsendelse.mapper.hentBarnIBehandling
+import no.nav.bidrag.dokument.forsendelse.model.HentDokumentValgResponse
+import no.nav.bidrag.dokument.forsendelse.model.ResultatKode
+import no.nav.bidrag.dokument.forsendelse.model.ifTrue
+import no.nav.bidrag.dokument.forsendelse.persistence.database.datamodell.BehandlingInfo
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.BehandlingType
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.DokumentBehandlingDetaljer
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.DokumentBehandlingTittelDetaljer
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.erVedtakTilbakekrevingLik
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.isValid
+import no.nav.bidrag.dokument.forsendelse.persistence.database.model.isVedtaktypeValid
+import no.nav.bidrag.dokument.forsendelse.utvidelser.gjelderKlage
+import no.nav.bidrag.dokument.forsendelse.utvidelser.harOpprettetForholdsmessigFordeling
+import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadForPerson
+import no.nav.bidrag.transport.behandling.vedtak.response.erOrkestrertVedtak
+import no.nav.bidrag.transport.behandling.vedtak.response.erTrukketFFRevurdering
+import no.nav.bidrag.transport.behandling.vedtak.response.erVedtakAvvistRevurderingsøknad
+import no.nav.bidrag.transport.behandling.vedtak.response.finnResultatFraAnnenVedtak
+import no.nav.bidrag.transport.behandling.vedtak.response.omgjøringsvedtakErEnesteVedtak
+import no.nav.bidrag.transport.dokument.forsendelse.HentDokumentValgRequest
+import org.springframework.core.io.ClassPathResource
+import org.springframework.stereotype.Component
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+
+val brevkodeAldersjustering = "BI01B05"
+val brevkodeForsideVedtak = "VOFORSIDE"
+
+@Component
+class DokumentValgService(
+    val bestillingConsumer: BidragDokumentBestillingConsumer,
+    val bidragVedtakConsumer: BidragVedtakConsumer,
+    val behandlingConsumer: BidragBehandlingConsumer,
+    val tittelService: ForsendelseTittelService,
+) {
+    @Suppress("ktlint:standard:property-naming")
+    val FRITEKSTBREV = "BI01S02"
+    lateinit var dokumentValgMap: Map<BehandlingType, List<DokumentBehandlingDetaljer>>
+    lateinit var dokumentValgTittelMap: Map<BehandlingType, List<DokumentBehandlingTittelDetaljer>>
+
+    val standardBrevkoder = listOf("BI01S02", "BI01S10") // BI01S67 - Adresseforespørsel
+    val ekstraBrevkoderVedtakFattet = listOf("BI01S02", "BI01S10")
+    val ekstraBrevkoderVedtakIkkeFattet = listOf("BI01S02", "BI01S10")
+    val notaterBrevkoder = listOf("BI01P11", "BI01P18", "BI01X01", "BI01X02")
+    val notaterKlage = listOf("BI01P17")
+
+    init {
+        dokumentValgMap = fetchDokumentValgMapFromFile()
+        dokumentValgTittelMap = fetchDokumentValgTitlerMapFromFile()
+    }
+
+    fun hentNotatListe(request: HentDokumentValgRequest? = null): Map<String, DokumentMalDetaljer> = if (erKlage(request)) {
+        (notaterKlage + notaterBrevkoder).associateWith { mapToMalDetaljer(it, request, true) }
+    } else {
+        notaterBrevkoder.associateWith { mapToMalDetaljer(it, request, true) }
+    }
+
+    fun erKlage(request: HentDokumentValgRequest? = null): Boolean = if (request == null) {
+        false
+    } else if (request.erKlage()) {
+        true
+    } else if (!request.vedtakId.isNullOrEmpty() && UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled) {
+        bidragVedtakConsumer.hentVedtak(vedtakId = request.vedtakId!!)?.let { it.type == Vedtakstype.KLAGE }
+            ?: false
+    } else if (!request.behandlingId.isNullOrEmpty()) {
+        behandlingConsumer
+            .hentBehandling(behandlingId = request.behandlingId!!)
+            ?.let { it.vedtakstype == Vedtakstype.KLAGE } ?: false
+    } else {
+        false
+    }
+
+    fun hentDokumentMalListe(request: HentDokumentValgRequest? = null): Map<String, DokumentMalDetaljer> = hentDokumentMalListeV2(request).dokumentMalDetaljer
+
+    fun hentDokumentMalListeV2(request: HentDokumentValgRequest? = null): HentDokumentValgResponse {
+        if (request == null) return HentDokumentValgResponse(standardBrevkoder.associateWith { mapToMalDetaljer(it) })
+        val requestUtfylt = hentUtfyltDokumentValgDetaljer(request)
+        val maler =
+            hentDokumentMalListeForRequest(requestUtfylt)
+                ?: standardBrevkoder.associateWith { mapToMalDetaljer(it, request) }
+
+        val automatiskOpprettDokumenter = bestemDokumentMallisteForVedtak(request)
+        val behandlingInfo = request.tilBehandlingInfo()
+        return HentDokumentValgResponse(
+            maler
+                .toList()
+                .sortedBy { (a, b) ->
+                    val automatiskOpprettDokumenterIds = automatiskOpprettDokumenter.map { it.malId }
+                    if (automatiskOpprettDokumenterIds.contains(a)) {
+                        automatiskOpprettDokumenterIds.indexOf(a)
+                    } else if (a == FRITEKSTBREV) {
+                        Int.MAX_VALUE
+                    } else {
+                        automatiskOpprettDokumenterIds.size
+                    }
+                }.toMap(),
+            bestemDokumentMallisteForVedtak(request),
+            barnIBehandlingDetaljer = behandlingInfo.hentBarnIBehandling(bidragVedtakConsumer, behandlingConsumer),
+        )
+    }
+
+    private fun bestemDokumentMallisteForVedtak(request: HentDokumentValgRequest? = null): List<DokumentMalDetaljer> {
+        return if (request?.vedtakId != null) {
+            val it = bidragVedtakConsumer.hentVedtak(vedtakId = request.vedtakId!!) ?: return emptyList()
+            if (!it.erOrkestrertVedtak) {
+                return emptyList()
+            }
+            val virkningstidspunktGrunnlag =
+                it.grunnlagListe
+                    .filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
+                        Grunnlagstype.VIRKNINGSTIDSPUNKT,
+                    )
+
+            val erDirekteAvslag =
+                virkningstidspunktGrunnlag.isNotEmpty() && virkningstidspunktGrunnlag.all { it.innhold.avslag != null }
+            val erForholdsmessigFordeling =
+                it.erOrkestrertVedtak &&
+                    it.stønadsendringListe.any { s ->
+                        s.periodeListe.any { p ->
+                            val resultatFraAnnenVedtak = it.grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
+                            val vedtakAnnen =
+                                resultatFraAnnenVedtak?.vedtaksid?.let {
+                                    bidragVedtakConsumer.hentVedtak(vedtakId = it.toString())
+                                }
+                            vedtakAnnen?.grunnlagListe?.harOpprettetForholdsmessigFordeling() == true
+                        }
+                    }
+
+            val dokumentmalListe = mutableListOf<String>()
+
+            if (!erForholdsmessigFordeling) {
+                val inneholderAldersjustering =
+                    it.erOrkestrertVedtak &&
+                        it.stønadsendringListe.any { s ->
+                            s.periodeListe.any { p ->
+                                val resultatFraAnnenVedtak = it.grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
+                                val vedtakstype =
+                                    resultatFraAnnenVedtak?.vedtakstype ?: run {
+                                        resultatFraAnnenVedtak?.vedtaksid?.let {
+                                            bidragVedtakConsumer.hentVedtak(vedtakId = it.toString())?.type
+                                        }
+                                    }
+                                vedtakstype == Vedtakstype.ALDERSJUSTERING && resultatFraAnnenVedtak != null
+                            }
+                        }
+                if (!erDirekteAvslag) {
+                    dokumentmalListe.add("BI01B50")
+                }
+                if (inneholderAldersjustering) {
+                    dokumentmalListe.add(brevkodeAldersjustering)
+                }
+            }
+            if (!it.omgjøringsvedtakErEnesteVedtak) {
+                dokumentmalListe.add(brevkodeForsideVedtak)
+            }
+
+            dokumentmalListe.map { mapToMalDetaljer(it, request, false) }
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun hentUtfyltDokumentValgDetaljer(request: HentDokumentValgRequest? = null): HentDokumentValgRequest? = if (request == null) {
+        null
+    } else if (request.vedtakId != null && UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled) {
+        val søknadsid = request.soknadId?.toLong()
+        bidragVedtakConsumer
+            .hentVedtak(vedtakId = request.vedtakId!!)
+            ?.let { vedtak ->
+                val vedtakOrkestrert =
+                    // Caser hvor det er FF vedtak med innkreving. Vil da hente innhold fra opprinnelig vedtak istedenfor
+                    if (vedtak.type == Vedtakstype.INNKREVING && vedtak.erOrkestrertVedtak) {
+                        vedtak.stønadsendringListe
+                            .map { s ->
+                                val sistePeriode =
+                                    s.periodeListe.maxByOrNull { p ->
+                                        p.periode.fom
+                                    } ?: return@map vedtak
+                                val resultatFraAnnenVedtak =
+                                    vedtak.grunnlagListe.finnResultatFraAnnenVedtak(
+                                        sistePeriode.grunnlagReferanseListe,
+                                    )
+                                resultatFraAnnenVedtak?.vedtaksid?.let {
+                                    bidragVedtakConsumer.hentVedtak(vedtakId = it.toString())
+                                } ?: vedtak
+                            }.firstOrNull() ?: vedtak
+                    } else {
+                        vedtak
+                    }
+                val behandlingType =
+                    if (vedtakOrkestrert.stønadsendringListe.isNotEmpty()) {
+                        vedtakOrkestrert.stønadsendringListe
+                            .filter {
+                                it.periodeListe.none { it.resultatkode == "AutomatiskOpphør" }
+                            }.firstOrNull {
+                                val søknad = vedtakOrkestrert.grunnlagListe.hentSøknadForPerson(it.kravhaver, it.type)
+                                søknad == null || søknadsid == null || søknadsid == søknad.søknadsid
+                            }?.type
+                            ?.name ?: request.stonadType?.name
+                    } else {
+                        vedtakOrkestrert.engangsbeløpListe[0].type.name
+                    }
+                val erFattetBeregnet =
+                    if (!vedtakOrkestrert.kildeapplikasjon.startsWith("bidrag-behandling")) {
+                        request.erFattetBeregnet
+                    } else {
+                        // Opprett varselbrev hvis det er trukket FF for revurderingsbarn
+                        søknadsid == null || !vedtak.erTrukketFFRevurdering(søknadsid)
+                    }
+                val erVedtakIkkeTilbakekreving =
+                    vedtakOrkestrert.engangsbeløpListe.any { gr ->
+                        gr.resultatkode ==
+                            ResultatKode.IKKE_TILBAKEKREVING
+                    }
+                val inneholderAldersjustering =
+                    vedtak.erOrkestrertVedtak &&
+                        vedtak.stønadsendringListe.any { s ->
+                            s.periodeListe.any { p ->
+                                val resultatFraAnnenVedtak =
+                                    vedtak.grunnlagListe.finnResultatFraAnnenVedtak(
+                                        p.grunnlagReferanseListe,
+                                    )
+                                val vedtakstype =
+                                    resultatFraAnnenVedtak?.vedtakstype ?: run {
+                                        resultatFraAnnenVedtak?.vedtaksid?.let {
+                                            bidragVedtakConsumer.hentVedtak(vedtakId = it.toString())?.type
+                                        }
+                                    }
+                                vedtakstype == Vedtakstype.ALDERSJUSTERING && resultatFraAnnenVedtak != null
+                            }
+                        }
+                request.copy(
+                    behandlingType = behandlingType,
+                    vedtakType = vedtakOrkestrert.type,
+                    erFattetBeregnet = erFattetBeregnet,
+                    erOrkestrertVedtak = vedtak.erOrkestrertVedtak && !vedtak.omgjøringsvedtakErEnesteVedtak,
+                    inneholderAldersjustering = inneholderAldersjustering,
+                    erVedtakIkkeTilbakekreving = erVedtakIkkeTilbakekreving,
+                    enhet = request.enhet ?: vedtakOrkestrert.enhetsnummer?.verdi,
+                )
+            }
+    } else if (request.behandlingId != null &&
+        request.erFattetBeregnet == null &&
+        UnleashFeatures.DOKUMENTVALG_FRA_VEDTAK_BEHANDLING.isEnabled
+    ) {
+        val søknadsid = request.soknadId?.toLong()
+        behandlingConsumer
+            .hentBehandling(
+                request.behandlingId!!,
+            )?.let { behandling ->
+                val rolle = søknadsid?.let { behandling.søknadsbarn.find { rolle -> rolle.søknader.any { it.søknadsId == søknadsid } } }
+                val rolleSøknad = rolle?.søknader?.find { it.søknadsId == søknadsid }
+                request.copy(
+                    behandlingType = rolle?.stønadstype?.name ?: behandling.stønadstype?.name ?: behandling.engangsbeløptype?.name,
+                    vedtakType = rolleSøknad?.vedtakstype ?: behandling.vedtakstype,
+                    soknadFra = rolleSøknad?.søknadFra ?: request.soknadFra ?: behandling.søktAv,
+                    erFattetBeregnet = null,
+                    erVedtakIkkeTilbakekreving = false,
+                    enhet = rolleSøknad?.enhet ?: request.enhet ?: behandling.behandlerenhet,
+                )
+            }
+    } else {
+        request
+    }
+
+    private fun hentDokumentMalListeForRequest(request: HentDokumentValgRequest?): Map<String, DokumentMalDetaljer>? {
+        if (request == null) return null
+        val (soknadType, vedtakType, _, soknadFra, erFattetBeregnet, erVedtakIkkeTilbakekreving, _, _, enhet) = request
+        val behandlingType = request.behandlingtypeKonvertert
+        val behandlingTypeConverted = if (behandlingType == "GEBYR_MOTTAKER") "GEBYR_SKYLDNER" else behandlingType
+        val dokumentValg =
+            dokumentValgMap[behandlingTypeConverted]
+                ?.find {
+                    it.soknadFra.contains(soknadFra) &&
+                        it.isVedtaktypeValid(vedtakType, soknadType) &&
+                        it.behandlingStatus.isValid(erFattetBeregnet) &&
+                        it.forvaltning.isValid(enhet) &&
+                        it.erVedtakIkkeTilbakekreving == erVedtakIkkeTilbakekreving
+                }?.let {
+                    val ekstraKoder = mutableListOf<String>()
+                    if (request.inneholderAldersjustering == true) {
+                        ekstraKoder.add(brevkodeAldersjustering)
+                    }
+                    if (request.erOrkestrertVedtak == true) {
+                        ekstraKoder.add(brevkodeForsideVedtak)
+                    }
+                    it.copy(
+                        brevkoder = it.brevkoder + ekstraKoder,
+                    )
+                }
+
+        val brevkoder =
+            dokumentValg?.brevkoder?.let {
+                if (erFattetBeregnet != null) {
+                    it + ekstraBrevkoderVedtakFattet
+                } else {
+                    it + ekstraBrevkoderVedtakIkkeFattet
+                }
+            }
+                ?: if (erFattetBeregnet != null) ekstraBrevkoderVedtakFattet else ekstraBrevkoderVedtakIkkeFattet
+        return brevkoder
+            .associateWith { mapToMalDetaljer(it, request) }
+            .filter { it.value.type != DokumentMalType.NOTAT }
+    }
+
+    fun mapToMalDetaljer(
+        malId: String,
+        request: HentDokumentValgRequest? = null,
+        leggTilPrefiksPåTittel: Boolean = false,
+    ): DokumentMalDetaljer {
+        val dokumentDetaljer = bestillingConsumer.dokumentmalDetaljer()
+        val malInfo = dokumentDetaljer[malId]
+        val originalTittel = malInfo?.tittel ?: "Ukjent"
+        val malType = malInfo?.type ?: DokumentMalType.UTGÅENDE
+        var tittel =
+            if (leggTilPrefiksPåTittel) {
+                tittelService.hentTittelMedPrefiks(
+                    originalTittel,
+                    request?.tilBehandlingInfo(),
+                )
+            } else {
+                originalTittel
+            }
+
+        var beskrivelse = malInfo?.beskrivelse ?: tittel
+        if (malId == brevkodeForsideVedtak) {
+            val foreløpigTittel = "Omgjøringsvedtak om barnebidrag${tittelService.hentForsendelseRolle(request)} (forside)"
+            tittel =
+                request?.tilBehandlingInfo()?.gjelderKlage()?.ifTrue {
+                    foreløpigTittel.replace("Omgjøringsvedtak", "Klagevedtak", ignoreCase = false)
+                } ?: originalTittel
+            beskrivelse = tittel
+        }
+
+        return DokumentMalDetaljer(
+            malId,
+            tittel,
+            beskrivelse = beskrivelse,
+            type = malType,
+            alternativeTitler = hentAlternativeTitlerForMal(malId, request),
+        )
+    }
+
+    fun hentAlternativeTitlerForMal(
+        malId: String,
+        request: HentDokumentValgRequest? = null,
+    ): List<String> {
+        if (request == null) return emptyList()
+        return dokumentValgTittelMap[malId]
+            ?.sortedByDescending {
+                it.isVedtaktypeValid(
+                    request.vedtakType,
+                    request.soknadType,
+                ) ||
+                    it.soknadFra.contains(request.soknadFra)
+            }?.find {
+                (it.soknadFra.isEmpty() || it.soknadFra.contains(request.soknadFra)) &&
+                    (it.vedtakType.isEmpty() || it.isVedtaktypeValid(request.vedtakType, request.soknadType)) &&
+                    listOf(
+                        it.stonadType?.name,
+                        it.engangsbelopType?.name,
+                        it.behandlingType,
+                    ).contains(request.behandlingtypeKonvertert) &&
+                    it.behandlingStatus.isValid(request.erFattetBeregnet) &&
+                    (it.forvaltning == null || it.forvaltning.isValid(request.enhet)) &&
+                    it.erVedtakTilbakekrevingLik(request.erVedtakIkkeTilbakekreving)
+            }?.titler ?: emptyList()
+    }
+
+    private fun fetchDokumentValgMapFromFile(): Map<BehandlingType, List<DokumentBehandlingDetaljer>> = try {
+        val objectMapper = ObjectMapper(YAMLFactory())
+        objectMapper.findAndRegisterModules().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val inputstream = ClassPathResource("files/dokument_valg.json").inputStream
+        val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
+        val listType: JavaType =
+            objectMapper.typeFactory.constructParametricType(
+                MutableList::class.java,
+                DokumentBehandlingDetaljer::class.java,
+            )
+        val stringType = objectMapper.typeFactory.constructType(String::class.java)
+        objectMapper.readValue(
+            text,
+            objectMapper.typeFactory.constructMapType(
+                MutableMap::class.java,
+                stringType,
+                listType,
+            ),
+        )
+    } catch (e: IOException) {
+        throw RuntimeException("Kunne ikke laste fil", e)
+    }
+
+    private fun fetchDokumentValgTitlerMapFromFile(): Map<BehandlingType, List<DokumentBehandlingTittelDetaljer>> = try {
+        val objectMapper = ObjectMapper(YAMLFactory())
+        objectMapper.findAndRegisterModules().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val inputstream = ClassPathResource("files/dokument_valg_tittel.json").inputStream
+        val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
+        val listType: JavaType =
+            objectMapper.typeFactory.constructParametricType(
+                MutableList::class.java,
+                DokumentBehandlingTittelDetaljer::class.java,
+            )
+        val stringType = objectMapper.typeFactory.constructType(String::class.java)
+        objectMapper.readValue(
+            text,
+            objectMapper.typeFactory.constructMapType(
+                MutableMap::class.java,
+                stringType,
+                listType,
+            ),
+        )
+    } catch (e: IOException) {
+        throw RuntimeException("Kunne ikke laste fil", e)
+    }
+}
+
+fun HentDokumentValgRequest.tilBehandlingInfo(): BehandlingInfo = BehandlingInfo(
+    vedtakId = this.vedtakId,
+    behandlingId = this.behandlingId,
+    vedtakType = this.vedtakType,
+    engangsBelopType = this.engangsBelopType,
+    soknadId = this.soknadId,
+    stonadType = this.stonadType,
+    soknadType = this.soknadType,
+    erFattetBeregnet = this.erFattetBeregnet,
+    erVedtakIkkeTilbakekreving = this.erVedtakIkkeTilbakekreving,
+    soknadFra = this.soknadFra,
+    behandlingType = this.behandlingType,
+)

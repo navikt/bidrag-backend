@@ -1,0 +1,110 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 30
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 20
+  readiness:
+    path: /actuator/health
+    initialDelay: 30
+    timeout: 5
+    failureThreshold: 20
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      cpu: {{limits.cpu}}
+      memory: {{limits.memory}}
+    requests:
+      cpu: {{requests.cpu}}
+      memory: {{requests.memory}}
+  replicas:
+    disableAutoScaling: true
+    max: {{replicas.max}}
+    min: {{replicas.min}}
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "nav:bidrag/v1/bidragskrav" #Q1
+        - name: "skatteetaten:barnebidragkrav"
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  kafka:
+    pool: {{ kafka.pool }}
+  envFrom:
+    - secret: bidrag-regnskap-sftp-private-key
+    - secret: bidrag-bot-slack-oauth-token
+  env:
+  {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+  {{/each}}
+  gcp:
+    sqlInstances:
+      - name: {{ database.navn }}
+        type: POSTGRES_15
+        diskSize: {{ database.size }}
+        tier: {{ database.tier }}
+        databases:
+          - name: bidrag-regnskap-db
+            envVarPrefix: DB
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "{{ database.auditlog }}"
+          - name: "pgaudit.log"
+            value: "write,role,ddl"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+    buckets:
+      - name: {{ bucket.navn }}
+  accessPolicy:
+    outbound:
+      external:
+        - host: {{ env.SAK_HOST }}
+        - host: {{ env.PERSON_HOST }}
+        - host: {{ env.BIDRAG_VEDTAK_HOST }}
+        - host: {{ env.SKATT_HOST }}
+        - host: {{ env.BIDRAG_RESKONTRO_HOST }}
+        - host: {{ env.SFTP_HOST }}
+          ports:
+            - port: 22
+        - host: slack.com
+        - host: api.slack.com
+      rules:
+        - application: bidrag-elin-stub
+          namespace: bidrag
+          cluster: dev-gcp
+        - application: logging
+          namespace: nais-system
+    inbound:
+      rules:
+      {{#each azure.inbound.rules}}
+      - application: {{this.application}}
+        namespace: {{this.namespace}}
+        cluster: {{this.cluster}}
+      {{/each}}

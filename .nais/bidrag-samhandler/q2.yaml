@@ -1,0 +1,50 @@
+name: bidrag-samhandler-q2
+ingresses:
+  - https://bidrag-samhandler-q2.intern.dev.nav.no
+limits:
+  memory: 1012Mi
+requests:
+  cpu: 50m
+  memory: 512Mi
+replicas:
+  max: 1
+  min: 1
+database:
+  navn: bidrag-samhandler-q2
+  tier: db-f1-micro
+  size: 10
+  auditlog: "on"
+kafka:
+  pool: nav-dev
+env:
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+  TOPIC_SAMHANDLER: bidrag.samhandler-q2
+  KODEVERK_URL: http://bidrag-kodeverk
+azure_access_inbound:
+  - application: bidrag-sak-q2
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-aktoerregister-q2
+    namespace: bidrag
+    cluser: dev-gcp
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-automatisk-jobb-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-frontend-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp

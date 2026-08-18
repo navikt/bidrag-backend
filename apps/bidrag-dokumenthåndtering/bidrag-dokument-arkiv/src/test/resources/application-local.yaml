@@ -1,0 +1,69 @@
+NAIS_APP_NAME: bidrag-dokument-arkiv-local
+TOPIC_JOURNALPOST: bidrag-journalpost
+TOPIC_JOURNALFOERING: joark-hendelse
+STS_ISSUER_URL: http://localhost:8888/sts
+ACCEPTED_SERVICE_USER_AUDIENCE: srvbdarkivering,srvbisys
+FEATURE_ENABLED: KAFKA_ARBEIDSFLYT
+AZURE_APP_TENANT_ID: <tenant-id>
+KAFKA_GROUP_ID: bidrag-arkiv-consumer
+KAFKA_BROKERS: localhost:9092
+NAV_TRUSTSTORE_PATH: test
+NAV_TRUSTSTORE_PASSWORD: test
+TOPIC_OPPGAVE_OPPRETTET: oppgave-opprettet
+KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+
+
+server.port: 8082
+SRV_BD_ARKIV_AUTH: changme
+AZURE_APP_CLIENT_SECRET: changme
+AZURE_APP_CLIENT_ID: changeme
+OPPGAVE_URL: https://oppgave-q1.dev-fss-pub.nais.io/api/v1/oppgaver
+OPPGAVE_SCOPE: dev-fss.oppgavehandtering.oppgave-q1
+SAF_SCOPE: dev-fss.teamdokumenthandtering.saf-q1
+PERSON_SCOPE: dev-fss.bidrag.bidrag-person-feature
+ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon-feature
+DOKARKIV_SCOPE: dev-fss.teamdokumenthandtering.dokarkiv-q1
+DOKDISTFORDELING_SCOPE: dev-fss.teamdokumenthandtering.dokdistfordeling-q1
+
+ACCESS_TOKEN_URL: https://security-token-service.dev.adeo.no
+AKTORREGISTER_URL: https://app-q1.adeo.no/aktoerregister
+DOKARKIV_URL: https://dokarkiv-q1.dev.adeo.no
+DOKDISTFORDELING_URL: https://dokdistfordeling-q1.dev.adeo.no
+DOKARKIV_KNYTT_TIL_SAK_URL: https://dokarkiv-q1.dev.adeo.no
+BIDRAG_PERSON_URL: https://bidrag-person-feature.dev.adeo.no
+BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon-feature.dev.adeo.no
+SAF_URL: https://saf-q1.dev.adeo.no
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      enableAutoCommit: false
+      auto-offset-reset: latest
+    listener:
+      ackMode: RECORD
+
+
+---
+spring.config.activate.on-profile: q2
+
+OPPGAVE_URL: https://oppgave.dev-fss-pub.nais.io/api/v1/oppgaver
+OPPGAVE_SCOPE: dev-fss.oppgavehandtering.oppgave
+SAF_SCOPE: dev-fss.teamdokumenthandtering.saf
+PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon
+DOKARKIV_SCOPE: dev-fss.teamdokumenthandtering.dokarkiv
+BIDRAG_DOKUMENT_URL: http://localhost:8099/bidrag-dokument
+INNSENDING_API_URL: https://innsending-api-gcp.intern.dev.nav.no
+INNSENDING_API_SCOPE: dev-gcp.team-soknad.innsending-api
+
+ACCESS_TOKEN_URL: https://security-token-service.dev.adeo.no
+AKTORREGISTER_URL: https://app-q2.adeo.no/aktoerregister
+DOKARKIV_URL: https://dokarkiv-q2.intern.dev.nav.no
+DOKDISTFORDELING_URL: https://dokdistfordeling-q2.intern.dev.nav.no
+DOKARKIV_PROXY_URL: https://dokarkivproxy-q2.intern.dev.nav.no
+BIDRAG_PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no
+BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.intern.dev.nav.no
+SAF_URL: https://saf-q2.intern.dev.nav.no

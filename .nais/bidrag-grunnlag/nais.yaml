@@ -1,0 +1,142 @@
+apiVersion: "nais.io/v1alpha1"
+kind: Application
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      tenant: {{ azure.tenant }}
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azureAccessInbound}}
+         - application: {{this.application}}
+           namespace: {{this.namespace}}
+           cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      external:
+        - host: {{ azure.familiebasak_url }}
+        - host: {{ azure.familieefsak_url }}
+        - host: {{ azure.bidragperson_base_url }}
+        - host: {{ azure.familiekssak_url }}
+        - host: {{ azure.inntektskomponenten_url }}
+        - host: {{ azure.sigrun_base_url }}
+        - host: {{ azure.pensjon_url }}
+        - host: {{ azure.aareg_url }}
+        - host: {{ azure.bidrag_organisasjon_url }}
+        - host: {{ azure.tilleggsstonadersak_url }}
+        - host: {{ azure.unsecure.ereg_url }}
+        - host: {{ azure.unsecure.norgesbank_url }}
+      rules:
+        - application: familie-ba-sak
+          namespace: teamfamilie
+        - application: familie-ef-sak
+          namespace: teamfamilie
+        - application: familie-ks-sak
+          namespace: teamfamilie
+        - application: tilleggsstonader-sak
+          namespace: tilleggsstonader
+        - application: logging
+          namespace: nais-system
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 70
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 70
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      memory: {{ spec.resources.limits.memory }}
+    requests:
+      cpu: {{ spec.resources.requests.cpu }}
+      memory: {{ spec.resources.requests.memory }}
+  replicas:
+    scalingStrategy:
+      cpu:
+        thresholdPercentage: 70
+    max: 4
+    min: {{ spec.replicas.min }}
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}
+  env:
+    - name: FAMILIEBASAK_URL
+      value: https://{{ azure.familiebasak_url }}
+    - name: FAMILIEBASAK_SCOPE
+      value: {{ azure.familiebasak_scope }}
+    - name: FAMILIEEFSAK_URL
+      value: https://{{ azure.familieefsak_url }}
+    - name: FAMILIEEFSAK_SCOPE
+      value: {{ azure.familieefsak_scope }}
+    - name: INNTEKTSKOMPONENTEN_URL
+      value: https://{{ azure.inntektskomponenten_url }}
+    - name: INNTEKTSKOMPONENTEN_SCOPE
+      value: {{ azure.inntektskomponenten_scope }}
+    - name: SIGRUN_URL
+      value: https://{{ azure.sigrun_url }}
+    - name: SIGRUN_SCOPE
+      value: {{ azure.sigrun_scope }}
+    - name: PENSJON_URL
+      value: https://{{ azure.pensjon_url }}
+    - name: PENSJON_SCOPE
+      value: {{ azure.pensjon_scope }}
+    - name: BIDRAG_PERSON_URL
+      value: https://{{ azure.bidragperson_url }}
+    - name: BIDRAGPERSON_SCOPE
+      value: {{ azure.bidragperson_scope }}
+    - name: FAMILIEKSSAK_URL
+      value: https://{{ azure.familiekssak_url }}
+    - name: FAMILIEKSSAK_SCOPE
+      value: {{ azure.familiekssak_scope }}
+    - name: AAREG_URL
+      value: https://{{ azure.aareg_url }}
+    - name: AAREG_SCOPE
+      value: {{ azure.aareg_scope }}
+    - name: EREG_URL
+      value: https://{{ azure.unsecure.ereg_url }}
+    - name: BIDRAG_ORGANISASJON_URL
+      value: https://{{ azure.bidrag_organisasjon_url }}/bidrag-organisasjon
+    - name: BIDRAG_ORGANISASJON_SCOPE
+      value: {{ azure.bidrag_organisasjon_scope }}
+    - name: TILLEGGSSTONADERSAK_URL
+      value: https://{{ azure.tilleggsstonadersak_url }}
+    - name: TILLEGGSSTONADERSAK_SCOPE
+      value: {{ azure.tilleggsstonadersak_scope }}
+    - name: NORGESBANK_URL
+      value: https://{{ azure.unsecure.norgesbank_url }}
+  gcp:
+    sqlInstances:
+      - name: {{ dbinstancename }}
+        type: POSTGRES_15
+        diskSize: {{ spec.gcp.sqlInstances.diskSize }}
+        databases:
+          - name: {{ dbname }}
+            envVarPrefix: DB
+        tier: {{ spec.gcp.sqlInstances.tier }}

@@ -1,0 +1,14 @@
+---
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+server:
+  servlet:
+    context-path: /
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.sjablon.controller
+  swagger-ui.path: /swagger-ui.html

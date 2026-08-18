@@ -1,0 +1,125 @@
+name: Bidrag-grunnlag
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - feature #TODO(Skrive om til Q1/Q2 etter migrering)
+          - main
+          - prod
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-grunnlag/**.yaml'
+#      - '.github/workflows/bidrag-grunnlag.yaml' //TODO(Slå på etter migrering)
+#      - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-grunnlag/**'
+
+jobs:
+  bygg_og_test:
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    name: "Bygg og test"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
+      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
+      # invalideres av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bidrag-grunnlag-${{ hashFiles('pom.xml', 'apps/bidrag-grunnlag/pom.xml') }}
+          restore-keys: |
+            maven-bidrag-grunnlag-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+      - name: Bygg og kjør tester (inkl. ktlint)
+        run: mvn -B -fae verify -pl apps/bidrag-grunnlag -am
+
+  deploy_feature:
+    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'feature')
+    name: "Build and deploy to feature"
+    concurrency:
+      group: deploy-grunnlag-feature-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-grunnlag -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-grunnlag/pom.xml
+      ktlint_paths: apps/bidrag-grunnlag/src/**/*.kt
+      docker_context: ./apps/bidrag-grunnlag
+      nais_variabler_filnavn: bidrag-grunnlag/feature.yaml
+      nais_hovedfil_navn: bidrag-grunnlag/nais.yaml
+      image_suffix: bidrag-grunnlag
+      tag: bidrag-grunnlag
+
+  deploy_main:
+    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q2/') || startsWith(github.ref, 'refs/heads/Q2/') || startsWith(github.ref, 'refs/heads/dev/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'main')
+    name: "Build and deploy to main"
+    concurrency:
+      group: deploy-grunnlag-main-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-grunnlag -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-grunnlag/pom.xml
+      ktlint_paths: apps/bidrag-grunnlag/src/**/*.kt
+      docker_context: ./apps/bidrag-grunnlag
+      nais_variabler_filnavn: bidrag-grunnlag/main.yaml
+      nais_hovedfil_navn: bidrag-grunnlag/nais.yaml
+      image_suffix: bidrag-grunnlag
+      tag: bidrag-grunnlag
+
+  deploy_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Build and deploy to prod"
+    concurrency:
+      group: deploy-grunnlag-prod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-grunnlag -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-grunnlag/pom.xml
+      ktlint_paths: apps/bidrag-grunnlag/src/**/*.kt
+      docker_context: ./apps/bidrag-grunnlag
+      nais_variabler_filnavn: bidrag-grunnlag/prod.yaml
+      nais_hovedfil_navn: bidrag-grunnlag/nais.yaml
+      image_suffix: bidrag-grunnlag
+      tag: bidrag-grunnlag

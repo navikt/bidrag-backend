@@ -1,0 +1,40 @@
+SKATT_URL: http://localhost:8097
+SAK_URL: http://localhost:8098
+PERSON_URL: http://localhost:8099
+BIDRAG_VEDTAK_URL: http://localhost:8100
+BIDRAG_RESKONTRO_URL: http://localhost:8101
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad
+TOPIC_VEDTAK: bidrag.vedtak-feature-test
+TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+PERSON_HENDELSE_KAFKA_GROUP_ID_SISTE: personhendelse.v1.bidrag-regnskap
+BIDRAG_BOT_SLACK_OAUTH_TOKEN: ikkeGyldigToken
+KAFKA_BROKERS: ${spring.embedded.kafka.brokers:localhost:9092}
+KAFKA_KEYSTORE_PATH: ""
+KAFKA_TRUSTSTORE_PATH: ""
+KAFKA_CREDSTORE_PASSWORD: ""
+
+scheduler:
+  sendkrav:
+    cron: "-" #Disabled
+  avstemning:
+    cron: "-" #Disabled
+  påløpkjøring:
+    cron: "-" #Disabled
+
+atlas.kafka.zookeeper.session.timeout.ms: 60000
+atlas.kafka.zookeeper.connection.timeout.ms: 30000
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:${KAFKA_BROKERS}}
+    listener:
+      auto-startup: true
+    consumer:
+      auto-offset-reset: earliest
+      group-id: bidrag-regnskap

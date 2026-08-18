@@ -1,0 +1,26 @@
+name: bidrag-statistikk-q2
+ingresses:
+  - https://bidrag-statistikk-q2.intern.dev.nav.no
+kafka:
+  pool: nav-dev
+env:
+  SPRING_PROFILES_ACTIVE: live,nais
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak-q2
+  BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q2
+  TOPIC_STATISTIKK: bidrag.statistikk-q2
+  TOPIC_STATISTIKK_BIDRAG: bidrag.statistikk-bidrag-q2
+  TOPIC_STATISTIKK_SAERBIDRAG: bidrag.statistikk-saerbidrag-q2
+  TOPIC_VEDTAK: bidrag.vedtak-q2
+outbound-access-apps:
+  - bidrag-vedtak-q2
+spec:
+  replicas:
+    min: 1
+    max: 1
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2048Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

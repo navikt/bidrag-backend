@@ -1,0 +1,95 @@
+name: bidrag-sak-q1
+ingresses:
+  - https://bidrag-sak-q1.intern.dev.nav.no
+  - https://bidrag-sak-q1.dev-fss-pub.nais.io
+database:
+  secret_name: bidrag-sak-db-q1
+unleash:
+  env: development
+  secret_name: bidrag-sak-unleash-api-token
+env:
+  - name: LDAP_SERVICEUSER_BASEDN
+    value: ou=ServiceAccounts,dc=preprod,dc=local
+  - name: LDAP_URL
+    value: ldaps://ldapgw.preprod.local
+  - name: LDAP_USERNAME
+    value: srvSSOLinux
+  - name: BIDRAG_SAMHANDLER_URL
+    value: https://bidrag-samhandler-q1.intern.dev.nav.no
+  - name: BIDRAG_SAMHANDLER_SCOPE
+    value: dev-gcp.bidrag.bidrag-samhandler-q1
+  - name: BIDRAG_TILGANG_URL
+    value: https://bidrag-tilgangskontroll-feature.intern.dev.nav.no
+  - name: BIDRAG_TILGANG_SCOPE
+    value: dev-gcp.bidrag.bidrag-tilgangskontroll-feature
+  - name: BIDRAG_PERSON_URL
+    value: https://bidrag-person-q1.intern.dev.nav.no/bidrag-person
+  - name: BIDRAG_PERSON_SCOPE
+    value: dev-fss.bidrag.bidrag-person-q1
+  - name: BIDRAG_ORGANISASJON_URL
+    value: https://bidrag-organisasjon-feature.intern.dev.nav.no/bidrag-organisasjon
+  - name: BIDRAG_ORGANISASJON_SCOPE
+    value: dev-fss.bidrag.bidrag-organisasjon-feature
+  - name: TOPIC_SAK
+    value: bidrag.sak-q1
+  - name: JAVA_OPTS
+    value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+  - name: KODEVERK_URL
+    value: https://bidrag-kodeverk.intern.dev.nav.no
+kafka:
+  pool: nav-dev
+azure_access_inbound:
+  - application: bidrag-ui-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-bestilling-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-regnskap-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: arbeid-og-inntekt
+    namespace: team-inntekt
+    cluster: dev-fss
+  - application: arbeid-og-inntekt-q1
+    namespace: team-inntekt
+    cluster: dev-fss
+  - application: arbeid-og-inntekt-ascension
+    namespace: team-inntekt
+    cluster: dev-fss
+  - application: arbeid-og-inntekt-t4
+    namespace: team-inntekt
+    cluster: dev-fss
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-automatisk-jobb-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-arbeidsflyt-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: azure-token-generator
+    namespace: nais
+    cluster: dev-gcp
+  - application: bidrag-tilgangskontroll-feature
+    namespace: bidrag
+    cluster: dev-gcp
+    permissions:
+      roles:
+        - "sak-pip"
+  - application: saf-q1
+    namespace: teamdokumenthandtering
+    cluster: dev-fss
+    permissions:
+      roles:
+        - "sak-pip"
+  - application: bidrag-frontend-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp

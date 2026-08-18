@@ -1,0 +1,1 @@
+alter table endringslogg_endring add if not exists endringstype text default 'ENDRING';

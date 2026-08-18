@@ -1,0 +1,87 @@
+name: bidrag-person-q1
+ingresses:
+  - https://bidrag-person-q1.dev-fss-pub.nais.io
+  - https://bidrag-person-q1.intern.dev.nav.no
+env:
+  KRR_URL: https://digdir-krr-proxy.intern.dev.nav.no
+  PDL_URL: https://pdl-api-q1.intern.dev.nav.no
+  SKJERMING_URL: https://skjermede-personer-pip.dev.adeo.no
+  KODEVERK_URL: https://bidrag-kodeverk.intern.dev.nav.no
+  KRR_SCOPE: dev-gcp.team-rocket.digdir-krr-proxy
+  PDL_SCOPE: dev-fss.pdl.pdl-api-q1
+  KONTOREGISTER_URL: https://sokos-kontoregister-person.intern.dev.nav.no
+  KONTOREGISTER_SCOPE: dev-gcp.okonomi.sokos-kontoregister-person
+vault:
+  kvPath: dev
+azure:
+  inbound:
+    rules:
+      - application: bidrag-grunnlag-feature
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-behandling-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-ui-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-arbeidsflyt-feature
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-organisasjon-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-journalpost-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-arkiv-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bisys
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-bestilling-feature
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-cucumber-onprem-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-reisekostnad-api
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-sak-q1
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-forsendelse-feature
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-aktoerregister-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-person-hendelse
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-regnskap-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-automatisk-jobb-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: tokenx-token-generator
+        namespace: nais
+        cluster: dev-gcp
+      - application: bidrag-bidragskalkulator-api
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-vedtak-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-belopshistorikk-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-frontend-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-localauth
+        namespace: bidrag
+        cluster: dev-gcp

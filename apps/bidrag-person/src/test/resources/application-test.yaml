@@ -1,0 +1,10 @@
+wiremock.server.port: 8089
+AAD_ISSUER_URL: http://aad
+AZURE_OPENID_CONFIG_ISSUER: http://aad
+SRVBIDRAG_USERNAME: srvbidrag-person
+SRVBIDRAG_PASSWORD: bareForTest
+KRR_URL: http://krr.json
+PDL_URL: http://pdl
+KODEVERK_URL: http://kodeverk
+KONTOREGISTER_URL: http://kontoregister
+NAIS_APP_NAME: bidrag-person

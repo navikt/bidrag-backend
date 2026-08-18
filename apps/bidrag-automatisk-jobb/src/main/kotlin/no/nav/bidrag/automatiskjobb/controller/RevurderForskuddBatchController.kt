@@ -1,0 +1,302 @@
+package no.nav.bidrag.automatiskjobb.controller
+
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import no.nav.bidrag.automatiskjobb.batch.revurderforskudd.evaluer.EvaluerRevurderForskuddBatch
+import no.nav.bidrag.automatiskjobb.batch.revurderforskudd.fattvedtak.FatteVedtakRevurderForskuddBatch
+import no.nav.bidrag.automatiskjobb.batch.revurderforskudd.opprett.OpprettRevurderForskuddBatch
+import no.nav.bidrag.automatiskjobb.batch.revurderforskudd.revurderingslenke.RevurderingslenkeRevurderForskuddBatch
+import no.nav.bidrag.automatiskjobb.persistence.entity.RevurderingForskudd
+import no.nav.bidrag.automatiskjobb.service.RevurderForskuddService
+import no.nav.security.token.support.core.api.Protected
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
+import java.time.YearMonth
+
+@Protected
+@RestController
+@Tag(
+    name = "Revurder forskudd batch",
+    description = "Endepunkter for å starte og administrere batch-jobber for revurdering av forskuddsutbetalinger.",
+)
+class RevurderForskuddBatchController(
+    private val opprettRevurderForskuddBatch: OpprettRevurderForskuddBatch,
+    private val evaluerRevurderForskuddBatch: EvaluerRevurderForskuddBatch,
+    private val fatteVedtakRevurderForskuddBatch: FatteVedtakRevurderForskuddBatch,
+    private val revurderingslenkeRevurderForskuddBatch: RevurderingslenkeRevurderForskuddBatch,
+    private val revurderForskuddService: RevurderForskuddService,
+) {
+    @PostMapping("/revurderforskudd/batch/opprett")
+    @Operation(
+        summary = "Starter batch: Opprett revurder forskudd.",
+        description = "Oppretter revurdering av forskudd for alle barn som ikke har hatt en revurdering siste 12 måneder.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "Batch for oppretting av revurdering av forskudd startet"),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun opprettRevurderForskudd(
+        @Parameter(required = false, example = "12") månederTilbakeForManueltVedtak: Int = 12,
+    ): ResponseEntity<Void> {
+        opprettRevurderForskuddBatch.start(månederTilbakeForManueltVedtak)
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @DeleteMapping("/revurderforskudd/batch/opprett/slett")
+    @Operation(
+        summary = "Sletter alle revurderinger av forskudd for en måned opprettet av batch.",
+        description = "Sletter alle revurderinger av forskudd for en måned opprettet av batch.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Revurderinger for angitt måned ble slettet."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun slettRevurderingForskuddForMåned(
+        @Parameter(
+            required = true,
+            description = "Måneden (YYYY-MM) som revurderingene skal slettes for.",
+            example = "2026-01",
+        ) forMåned: YearMonth,
+    ): ResponseEntity<Void> {
+        revurderForskuddService.slettRevurderingForskuddForMåned(forMåned)
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/evaluer")
+    @Operation(
+        summary = "Starter batch: Evaluering for revurdering av forskudd.",
+        description =
+        "Evaluerer om forskudd skal revurderes for alle ubehandlede opprettede revurdering av forskudd " +
+            "og oppretter vedtaksforslag.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "Batch for evaluering av revurdering av forskudd startet."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun evaluerRevurderForskudd(
+        @Parameter(
+            required = true,
+            example = "true",
+            description = "Avgjør om batchen skal kjøres i simuleringsmodus.",
+        ) simuler: Boolean = true,
+        @Parameter(
+            required = false,
+            description = "Kan settes for å endre hvilken måned beregningen skal gjelde fra. Default er en måned frem i tid.",
+        ) beregnFraMåned: YearMonth? = null,
+        @Parameter(
+            required = false,
+            description =
+            "Kan settes for å endre hvilken måned av revurdering forskudd innslag som skal behandles. " +
+                "Default er innværende måned.",
+        ) forMåned: YearMonth? = null,
+        @Parameter(
+            required = true,
+            example = "3",
+            description = "Avgjør hvor mange måneder som skal brukes tilbake i tid for beregning av månedsinntekt.",
+        ) antallMånederForBeregning: Long = 3,
+    ): ResponseEntity<Void> {
+        evaluerRevurderForskuddBatch.start(simuler, beregnFraMåned, forMåned, antallMånederForBeregning)
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/evaluer/{saksnummer}")
+    @Operation(
+        summary = "Starter evaluering revurdering av forskudd for en sak.",
+        description =
+        "Evaluerer om forskudd skal revurderes for én spesifikk sak og returnerer resultatet. " +
+            "Oppretter vedtaksforslag dersom simuler=false.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Evaluering gjennomført. Returnerer revurderingsforskudd-innslaget med oppdatert status og vedtaksforslag.",
+                content = [Content(schema = Schema(implementation = RevurderingForskudd::class))],
+            ),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun evaluerRevuderForskuddForSak(
+        @Parameter(
+            required = true,
+            example = "true",
+            description = "Avgjør om batchen skal kjøres i simuleringsmodus.",
+        ) simuler: Boolean = true,
+        @Parameter(
+            required = false,
+            description = "Kan settes for å endre hvilken måned beregningen skal gjelde fra. Default er en måned frem i tid.",
+        ) beregnFraMåned: YearMonth = YearMonth.now().plusMonths(1),
+        @Parameter(
+            required = false,
+            description =
+            "Kan settes for å endre hvilken måned av revurdering forskudd innslag som skal behandles. " +
+                "Default er innværende måned.",
+        ) forMåned: YearMonth = YearMonth.now(),
+        @PathVariable @Parameter(
+            required = true,
+            description = "Saksnummeret for saken som skal evalueres.",
+            example = "2600001",
+        ) saksnummer: String,
+        @Parameter(
+            required = true,
+            example = "3",
+            description = "Avgjør hvor mange måneder som skal brukes tilbake i tid for beregning av månedsinntekt.",
+        ) antallMånederForBeregning: Long = 3,
+    ): ResponseEntity<RevurderingForskudd> {
+        val revurderingForskudd =
+            revurderForskuddService.evaluerRevurderForskuddForSak(
+                simuler,
+                beregnFraMåned,
+                forMåned,
+                saksnummer,
+                antallMånederForBeregning,
+            )
+        return ResponseEntity.status(HttpStatus.OK).body(revurderingForskudd)
+    }
+
+    @PostMapping("/revurderforskudd/batch/reskontroVurderTilbakekreving")
+    @Operation(
+        summary = "Vurder tilbakekreving basert på reskontro",
+        description =
+        "Starter en asynkron vurdering av tilbakekreving basert på reskontrodata. " +
+            "Identifiserer forskuddsaker der utbetalt beløp overstiger rettmessig beløp og oppretter vedtaksforslag for tilbakekreving.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "Tilbakekrevingsvurdering startet (kjøres asynkront)."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun reskontroVurderTilbakekreving(): ResponseEntity<Void> {
+        CoroutineScope(Dispatchers.IO).launch {
+            revurderForskuddService.vurderTilbakekrevingBasertPåReskontro()
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/evaluer/resetSimulering")
+    @Operation(
+        summary = "Resetter evaluering for revurdering av forskudd etter simulering.",
+        description =
+        "Resetter status til UBEHANDLET for alle revurdering som er simulerte.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Simulerte revurderinger ble resatt til UBEHANDLET."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun evaluerRevurderForskudd(): ResponseEntity<Void> {
+        revurderForskuddService.resetEvalueringEtterSimuering()
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/evaluer/resetFeilede")
+    @Operation(
+        summary = "Resetter evaluering for feilede revurderinger av forskudd.",
+        description =
+        "Setter status til UBEHANDLET for alle revurderinger av forskudd som har feilet i evaluering.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Feilede revurderinger ble resatt til UBEHANDLET."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun resetFeiledeRevurderForskudd(): ResponseEntity<Void> {
+        revurderForskuddService.resetFeiledeRevurderinger()
+        return ResponseEntity.status(HttpStatus.OK).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/fattevedtak")
+    @Operation(
+        summary = "Starter batch: Fatte vedtak revurder forskudd.",
+        description = "Fatter vedtak på revurdering av forskudd for alle beregnede revurderinger.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "Batch for fatting av vedtak på revurdering av forskudd startet."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun fatteVedtakRevurderForskudd(
+        @Parameter(required = true, example = "true") simuler: Boolean = true,
+    ): ResponseEntity<Void> {
+        fatteVedtakRevurderForskuddBatch.start(simuler)
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @PostMapping("/revurderforskudd/batch/revurderingslenke")
+    @Operation(
+        summary = "Starter batch: Opprett revurderingslenke for revurder forskudd i tilfeller hvor det skal tilbakekreves forskudd.",
+        description = "Oppretter revurderingslenke for saksbehandling i de tilfeller hvor revurdering av forskudd medfører tilbakekreving.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "201", description = "Batch for oppretting av revurderingslenker startet."),
+            ApiResponse(responseCode = "401", description = "Ikke autentisert."),
+            ApiResponse(responseCode = "403", description = "Ikke autorisert."),
+            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+        ],
+    )
+    fun opprettRevurderingslengeForRevurderForskudd(
+        @Parameter(
+            required = false,
+            description = "Settes default til 12 måneder tilbake.",
+        ) søktFraDato: LocalDate,
+        @Parameter(
+            required = false,
+            description =
+            "Kan settes for å endre hvilken måned av revurdering forskudd innslag som skal behandles. " +
+                "Default er innværende måned.",
+        ) forMåned: YearMonth? = null,
+    ): ResponseEntity<Void> {
+        revurderingslenkeRevurderForskuddBatch.start(søktFraDato, forMåned)
+        return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+}

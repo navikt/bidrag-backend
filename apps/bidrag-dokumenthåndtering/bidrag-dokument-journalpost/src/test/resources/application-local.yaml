@@ -1,0 +1,72 @@
+server.port: 9999
+SRVBISYS_USERNAME: srvbisys
+SRVJOURNALPOST_USERNAME: srvbdjournalpost
+
+ABAC_PDP_ENDPOINT_URL: https://abac-bidrag-q1.dev.intern.nav.no/application/asm-pdp/authorize
+BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon-feature.dev.adeo.no/bidrag-organisasjon
+BREVSERVER_ONLINEBREV: DEV.QUEUE.1
+BREVSERVER_URL: https://wasapp-q1.adeo.no/brevweb/
+
+NORG2_API_V1_URL: https://norg2.dev.intern.nav.no/norg2/api/v1
+OPPGAVE_OPPGAVER_URL: https://oppgave-q1.dev-fss-pub.nais.io/api/v1/oppgaver
+PIP_URL: https://bidrag-sak-feature.dev.adeo.no/bidrag-sak
+TOPIC_JOURNALPOST: bidrag.journalpost-feature
+ABAC_USERNAME: ${SRVJOURNALPOST_USERNAME}
+ABAC_PASSWORD: ${SRVJOURNALPOST_PASSWORD}
+PIP_USERNAME: ${SRVJOURNALPOST_USERNAME}
+PIP_PASSWORD: ${SRVJOURNALPOST_PASSWORD}
+
+#DATABASE
+BIDRAG_DB_HOST: localhost
+BIDRAG_DB_PORT: 50000
+BIDRAG_DB_NAME: QDB2
+BIDRAG_DB_SCHEMA: BI464Q1
+BIDRAG_DB_PASSWORD: apassword
+BIDRAG_DB_USERNAME: bisys
+
+#MQ
+MQ_CHANNEL: DEV.APP.SVRCONN
+MQ_HOSTNAME: localhost
+MQ_PORT: 1414
+MQ_QUEUE_MANAGER: MQ1LSC02
+mq:
+  username:
+  password: passw0rd
+
+BREVKLIENT_USERNAME: BI12
+BREVSERVER_KVITTERING_QUEUE: DEV.QUEUE.2
+BREVKLIENT_PASSWORD: <changeme>
+STS_URL: https://security-token-service.dev.adeo.no
+http.proxy: ""
+AZURE_APP_TENANT_ID: <tenant-id>
+AZURE_APP_CLIENT_ID: <client-id>
+
+AZURE_APP_CLIENT_SECRET: <changeme>
+SRVJOURNALPOST_PASSWORD: <changme>
+SRVBISYS_PASSWORD: <changme>
+
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:/flyway
+logging:
+  level:
+    root: info
+---
+spring.config.activate.on-profile: q1
+MQ_CHANNEL: Q1_BISYS
+MQ_HOSTNAME: b27apvl176.preprod.local
+MQ_PORT: 1413
+BIDRAG_DB_HOST: ztest.test.local
+BIDRAG_DB_PORT: 5025
+BIDRAG_DB_NAME: QDB2
+BIDRAG_DB_SCHEMA: BI464Q1
+
+#spring:
+#  config.activate.on-profile: test, local, integration-abac
+#  datasource:
+#    url:  jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#  h2:
+#    console:
+#      enabled: true
+#  jpa.hibernate.ddl-auto: create-drop

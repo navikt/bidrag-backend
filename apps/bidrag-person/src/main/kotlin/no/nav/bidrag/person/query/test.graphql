@@ -1,0 +1,36 @@
+query($paging:Paging, $criteria:[Criterion]) {
+    sokPerson(paging: $paging,  criteria: $criteria){
+        pageNumber,
+        totalHits,
+        totalPages,
+        hits {
+            person {
+                navn(historikk: false) {
+                    fornavn
+                    mellomnavn
+                    etternavn
+                }
+                folkeregisteridentifikator(historikk: false) {
+                    identifikasjonsnummer
+                    status
+                    type
+                }
+                bostedsadresse(historikk: true) {
+                    angittFlyttedato
+                    gyldigFraOgMed
+                    gyldigTilOgMed
+                    vegadresse {
+                        adressenavn
+                        husnummer
+                        husbokstav
+                        bruksenhetsnummer
+                        postnummer
+                        bydelsnummer
+                        kommunenummer
+                        matrikkelId
+                    }
+                }
+            }
+        }
+    }
+}

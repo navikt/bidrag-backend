@@ -1,0 +1,21 @@
+name: bidrag-dokument-arkivering
+ingresses:
+  - https://bidrag-dokument-arkivering.intern.dev.nav.no
+env:
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.intern.dev.nav.no/bidrag-dokument
+  DOKARKIV_URL: https://dokarkiv-q2.intern.dev.nav.no
+  DOKARKIV_SCOPE: dev-fss.teamdokumenthandtering.dokarkiv
+  BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument
+vault:
+  srvKvPath: dev
+  secretKvPath: preprod
+azureAccessInbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-cucumber-onprem
+    namespace: bidrag
+    cluster: dev-fss

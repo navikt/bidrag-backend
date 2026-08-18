@@ -1,0 +1,27 @@
+{
+  "data": {
+    "hentPerson": {
+      "navn": [
+        {
+          "fornavn": "Humoristisk",
+          "mellomnavn": null,
+          "etternavn": "Kalddusj"
+        }
+      ]
+    },
+    "hentIdenter": {
+      "identer": [
+        {
+          "ident": "06510985255",
+          "historisk": false,
+          "gruppe": "FOLKEREGISTERIDENT"
+        },
+        {
+          "ident": "2545516695968",
+          "historisk": false,
+          "gruppe": "AKTORID"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "data": {
+    "tilknyttedeJournalposter": [
+      {
+        "tittel": "Hoveddokument - Testdokument",
+        "journalpostId": "510560098",
+        "journalstatus": "JOURNALFOERT",
+        "sak": {
+          "fagsakId": "9999999",
+          "fagsaksystem": "BISYS",
+          "sakstype": "FAGSAK",
+          "tema": "BID"
+        }
+      },
+      {
+        "tittel": "Hoveddokument - Testdokument",
+        "journalpostId": "510560082",
+        "journalstatus": "JOURNALFOERT",
+        "sak": {
+          "fagsakId": "2106585",
+          "fagsaksystem": "BISYS",
+          "sakstype": "FAGSAK",
+          "tema": "BID"
+        }
+      }
+    ]
+  }
+}

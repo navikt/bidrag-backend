@@ -1,0 +1,26 @@
+{
+    "data": {
+        "hentPerson": {
+            "adressebeskyttelse": [],
+            "oppholdsadresse": []
+        },
+        "hentGeografiskTilknytning": {
+            "gtType": "KOMMUNE",
+            "gtKommune": "3005"
+        },
+        "hentIdenter": {
+            "identer": [
+                {
+                    "ident": "5512432134123",
+                    "historisk": false,
+                    "gruppe": "FOLKEREGISTERIDENT"
+                },
+                {
+                    "ident": "123123123123",
+                    "historisk": false,
+                    "gruppe": "AKTORID"
+                }
+            ]
+        }
+    }
+}

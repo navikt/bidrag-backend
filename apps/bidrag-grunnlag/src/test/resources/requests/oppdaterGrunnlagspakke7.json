@@ -1,0 +1,10 @@
+{
+  "grunnlagRequestDtoListe": [
+    {
+      "type": "UTVIDET_BARNETRYGD_OG_SMÅBARNSTILLEGG",
+      "personId": "1234",
+      "periodeFra": "2021-11-01",
+      "periodeTil": "2021-11-15"
+    }
+  ]
+}

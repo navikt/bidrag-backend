@@ -1,0 +1,41 @@
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/person
+KODEVERK_URL: http://localhost:${wiremock.server.port}/kodeverk
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad
+AZURE_APP_TENANT_ID: 12321321-123213-3213123
+AZURE_APP_CLIENT_ID: asdasd-sadas-ddas-qwe
+AZURE_APP_CLIENT_SECRET: asdasdsad214123sadas
+NAIS_APP_NAME: bidrag-samhandler
+TOPIC_SAMHANDLER: bidrag.samhandler-test
+no.nav.security.jwt:
+  issuer.aad:
+    discovery_url: ${DISCOVERY_URL}
+    accepted_audience: aud-localhost
+
+#    Noen brukere får ikke bygd lokalt med localhost-url, bytt i så fall med 127.0.0.1
+#DISCOVERY_URL: http://127.0.0.1:${mock-oauth2-server.port}/aad/.well-known/openid-configuration
+DISCOVERY_URL: http://localhost:${mock-oauth2-server.port}/aad/.well-known/openid-configuration
+
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:/db/migration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/default_database?user=cloudsqliamuser&password=samhandleradmin
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      data-source-properties:
+        ssl: false
+        sslmode: disable
+        sslcert: ""
+        sslkey: ""
+        sslrootcert: ""
+
+  kafka:
+    properties:
+      security.protocol: PLAINTEXT
+    consumer:
+      auto-offset-reset: earliest

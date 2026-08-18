@@ -1,0 +1,242 @@
+name: Bygg og deploy
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: 21
+        description: Hvilken versjon av java applikasjonen skal bygges med
+      runner:
+        required: false
+        type: string
+        default: ubuntu-latest
+        description: Runner build-jobben skal kjøre på. Kan settes til en større GitHub-hosted runner for tyngre Maven/Docker-bygg.
+      produksjon:
+        required: false
+        type: boolean
+        default: false
+        description: Skal være true hvis det skal deployes til produksjon
+      nais_cluster:
+        required: false
+        type: string
+        default: gcp
+        description: Nais cluster som applikasjonen skal deployes til. Skal enten være 'gcp' eller 'fss'
+      nais_variabler_filnavn:
+        required: false
+        type: string
+        default: feature.yaml
+        description: Navnet på miljøvariabler filen som skal brukes ved deploy. Parameter skal inkludere filending som feks .yaml
+      nais_hovedfil_navn:
+        required: false
+        type: string
+        default: nais.yaml
+        description: Navnet på nais filen som skal brukes. Parameter skal inkludere filending og evt path om det ikke ligger på root i .nais folder.
+      maven_options:
+        required: false
+        type: string
+        default: -B -fae
+        description: Ekstra options ved kjøring av maven bygget. Dette kan være lag eller profiler. Default -B (Batchmode, non-interactive), -fae (Fail at end).
+      maven_test_lifecycle:
+        required: false
+        type: string
+        default: install
+        description: Mulighet for å endre hvilken maven lifecycle som kjøres sammen med testene. For å kunne kjøre integrasjonstester må verify/install/deploy brukes.
+      maven_cache_paths:
+        required: false
+        type: string
+        default: "**/pom.xml"
+        description: pom.xml-filer (én per linje) som utgjør avhengighetstreet for denne appen (rot-pom.xml + evt. parent-aggregator + appens egen pom.xml). Brukes til å lage en presis Maven-cache-nøkkel istedenfor å hashe alle pom.xml i monorepoet. Default hasher alle.
+      maven_cache_key:
+        required: false
+        type: string
+        description: Unik nøkkel-prefiks for Maven-cachen til denne appen. Faller tilbake til image_suffix om ikke satt.
+      ktlint_paths:
+        required: false
+        type: string
+        default: src/**/*.kt
+        description: Path relativt til repo-rot hovr ktlint skal kjøre, f.eks. "apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt".
+      ktlint_version:
+        required: false
+        type: string
+        default: "1.8.0"
+        description: Versjon av ktlint-CLI som skal brukes. Må holdes i sync med <ktlint.version> i rot-pom.xml.
+      dockerfile_with_path:
+        required: false
+        type: string
+        default: Dockerfile
+        description: Kan settes for å spesifisere path for dockerfile.
+      docker_context:
+        required: false
+        type: string
+        default: .
+        description: Kan settes for å spesifisere docker context for build files.
+      image_suffix:
+        required: false
+        type: string
+        description: Suffix for docker image om det er multimodul repo.
+      tag:
+        required: false
+        type: string
+        description: Custom docker tag
+      skip_tester:
+        required: false
+        type: boolean
+        default: true
+        description: >-
+          Om tester skal hoppes over ved deploy til testmiljø (q1/q2). Gjelder kun når produksjon=false
+          og nais_variabler_filnavn peker på q1/q2. Deploy til prod kjører alltid tester.
+          Sett til false for å tvinge tester også i q1/q2.
+    outputs:
+      deploy_suksess:
+        description: "Om deploy har gått gjennom OK"
+        value: ${{ jobs.deploy.outputs.deploy_suksess }}
+      image:
+        description: "Docker Image navnet som blir deployet til miljø"
+        value: ${{ jobs.build.outputs.image }}
+      tag:
+        description: "Docker tag som blir deployet til miljø"
+        value: ${{ jobs.build.outputs.tag }}
+env:
+  GITHUB_TOKEN: ${{ secrets.READER_TOKEN }}
+  CLUSTER: ${{ inputs.produksjon && 'prod' || 'dev' }}-${{ inputs.nais_cluster }}
+  # Hopp over tester kun ved deploy til q1/q2. Prod (produksjon=true) kjører alltid tester.
+  SKIP_TESTER: ${{ inputs.skip_tester && !inputs.produksjon && (contains(inputs.nais_variabler_filnavn, 'q1.') || contains(inputs.nais_variabler_filnavn, 'q2.')) }}
+
+jobs:
+  build:
+    name: Build with maven and docker
+    runs-on: ${{ inputs.runner }}
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: 'temurin'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede via maven_cache_paths) istedenfor
+      # innebygd `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed invalideres
+      # av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
+          restore-keys: |
+            maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{secrets.READER_TOKEN}}"
+              },
+              {
+                "id": "github2",
+                "username": "x-access-token",
+                "password": "${{secrets.READER_TOKEN}}"
+              }
+            ]
+      # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
+      # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
+      # feiler for moduler med interne avhengigheter
+      - name: Cache ktlint CLI
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/bin/ktlint
+          key: ktlint-cli-${{ inputs.ktlint_version }}
+      - name: Verifiser formatering med ktlint
+        run: |
+          if [ ! -x ~/.local/bin/ktlint ]; then
+            mkdir -p ~/.local/bin
+            curl -sSL -o ~/.local/bin/ktlint "https://github.com/pinterest/ktlint/releases/download/${{ inputs.ktlint_version }}/ktlint"
+            chmod +x ~/.local/bin/ktlint
+          fi
+          ~/.local/bin/ktlint ${{ inputs.ktlint_paths }}
+      - name: Bygg og kjør tester
+        # -Dmaven.antrun.skip=true: hopper over ktlint-antrun-executionen som er bundet til
+        # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og maven-antrun-plugin
+        # brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
+        # -DskipTests=${SKIP_TESTER}: tester hoppes over ved deploy til q1/q2 (testkode kompileres fortsatt).
+        run: |
+          if [ "$SKIP_TESTER" = "true" ]; then
+            echo "::notice::Hopper over tester fordi dette er en deploy til q1/q2 (${{ inputs.nais_variabler_filnavn }})"
+          fi
+          mvn ${{ inputs.maven_options }} clean ${{ inputs.maven_test_lifecycle }} -Dmaven.antrun.skip=true -DskipTests=$SKIP_TESTER -Dparallel=all -DperCoreThreadCount=true -DthreadCount=10
+      - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
+        if: github.actor != 'dependabot[bot]'
+        id: docker-push
+        env:
+          TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
+        with:
+          team: bidrag
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          dockerfile: ${{ inputs.dockerfile_with_path }}
+          docker_context: ${{ inputs.docker_context }}
+          image_suffix: ${{ inputs.image_suffix }}
+          tag: ${{ inputs.tag }}
+          salsa: false
+    outputs:
+      image: ${{ steps.docker-push.outputs.image }}
+      tag: ${{ steps.docker-push.outputs.tag }}
+      digest: ${{ steps.docker-push.outputs.digest }}
+
+  salsa:
+    name: Generate SBOM, attest and sign image
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: "write"
+    steps:
+      - name: NAIS login
+        uses: nais/login@40b72a35a18ddf2ad74b632461139ab838cc2a2f # v0
+        id: login
+        with:
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          team: bidrag
+      - id: setup
+        shell: bash
+        run: |
+          suffix="${{ inputs.image_suffix }}"
+          suffix=${suffix:+-$suffix} # Ensure we only add a dash if suffix is set
+          repo_name="${GITHUB_REPOSITORY/$GITHUB_REPOSITORY_OWNER\//}$suffix"
+          repo_name="$(tr '[:upper:]' '[:lower:]' <<< "$repo_name")"
+          echo "REPO_NAME=$repo_name" >> $GITHUB_OUTPUT
+      - name: Generate SBOM, attest and sign image
+        id: attest-sign
+        uses: nais/attest-sign@61e94c81cec0784078969aefa8e136bf343cfd7d # v2.0.16
+        with:
+          image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.build.outputs.digest }}
+    outputs:
+        description: "SBOM.json in cyclonedx format"
+        value: ${{ steps.attest-sign.outputs.sbom }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy ${{ inputs.nais_variabler_filnavn }}
+    if: github.actor != 'dependabot[bot]'
+    needs: build
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: deploy
+      - name: Deploy to ${{ env.CLUSTER }} with ${{ inputs.nais_variabler_filnavn }}
+        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        env:
+          CLUSTER: ${{ env.CLUSTER }}
+          RESOURCE: deploy/.nais/${{ inputs.nais_hovedfil_navn }}
+          VARS: deploy/.nais/${{ inputs.nais_variabler_filnavn }}
+          IMAGE: ${{ needs.build.outputs.image }}
+      - id: generate_outputs
+        run: echo "deploy_suksess=true" >> $GITHUB_OUTPUT
+    outputs:
+      deploy_suksess: ${{ steps.generate_outputs.outputs.deploy_suksess }}

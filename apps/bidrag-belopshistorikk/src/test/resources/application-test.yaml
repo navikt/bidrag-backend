@@ -1,0 +1,60 @@
+####################################################################
+# Profile: test
+#----------------------------
+#
+# Properties for unit testing and local runs.
+# Mocks OIDC.
+#
+####################################################################
+#logging.level.org.hibernate:sql=debug
+#logging.level.org.hibernate:type=trace
+NAIS_APP_NAME: bidrag-belopshistorikk
+TOPIC_VEDTAK: topic.vedtak
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/bidragperson
+KAFKA_KEYSTORE_PATH: ""
+KAFKA_TRUSTSTORE_PATH: ""
+KAFKA_CREDSTORE_PASSWORD: ""
+KAFKA_BROKERS: ${spring.embedded.kafka.brokers:localhost:9092}
+
+logging.level:
+  secureLogger: OFF
+
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port}/azure/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://org/.default
+        authentication:
+          client-id: someid
+          client-secret: secret
+          client-auth-method: client_secret_post
+  issuer:
+    aad:
+      discovery_url: http://localhost:${mock-oauth2-server.port}/aad/.well-known/openid-configuration
+      accepted_audience: aud-localhost
+
+spring:
+  config.activate.on-profile: test, local
+  flyway.enabled: false
+  datasource.type: com.zaxxer.hikari.HikariDataSource
+  datasource.url: jdbc:h2:mem:default
+  h2.console.enabled: true
+  jpa.hibernate.ddl-auto: create-drop
+#  logging:
+#    level:
+#      org.hibernate.sql=debug, org.hibernate.type.descriptor.sql.BasicBinder=trace
+
+spring.kafka:
+  bootstrap-servers: ${spring.embedded.kafka.brokers:${KAFKA_BROKERS}}
+  properties:
+    schema:
+      registry.url: http://unused-dummy-url
+      security.protocol: PLAINTEXT
+  consumer:
+    group-id: test
+    auto-offset-reset: earliest
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

@@ -1,0 +1,40 @@
+name: bidrag-reskontro
+ingresses:
+  - https://bidrag-reskontro.intern.nav.no
+limits:
+  memory: 1024Mi
+requests:
+  cpu: 200m
+  memory: 512Mi
+replicas:
+  max: 2
+  min: 2
+
+maskinporten:
+  url: https://maskinporten.no
+env:
+  SKATT_URL: https://ske-elin-api-bisysresk.elin.innkreving.skatteetaten.no
+  SKATT_HOST: ske-elin-api-bisysresk.elin.innkreving.skatteetaten.no
+  MASKINPORTEN_SCOPES: "skatteetaten:barnebidragreskontro"
+  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure:
+  inbound:
+    rules:
+      - application: bisys
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-regnskap
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-automatisk-jobb
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-frontend
+        namespace: bidrag
+        cluster: prod-gcp

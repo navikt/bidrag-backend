@@ -1,0 +1,23 @@
+{
+    "data": {
+        "hentPerson": {
+            "adressebeskyttelse": [],
+            "oppholdsadresse": []
+        },
+        "hentGeografiskTilknytning": null,
+        "hentIdenter": {
+            "identer": [
+                {
+                    "ident": "{ident}",
+                    "historisk": false,
+                    "gruppe": "FOLKEREGISTERIDENT"
+                },
+                {
+                    "ident": "{aktørId}",
+                    "historisk": false,
+                    "gruppe": "AKTORID"
+                }
+            ]
+        }
+    }
+}

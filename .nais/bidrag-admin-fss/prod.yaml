@@ -1,0 +1,25 @@
+name: bidrag-admin-fss
+ingresses:
+  - https://bidrag-admin-fss.intern.nav.no
+bisys_url: b27wasl00850.preprod.local
+limits:
+  memory: 2048Mi
+requests:
+  cpu: 117m
+  memory: 512Mi
+replicas:
+  max: 1
+  min: 1
+env:
+  BISYS_URL: b27wasl00850.preprod.local
+  SLACK_CHANNEL_ID: CGVH3MV47
+  DB_HOST: zprod.adeo.no
+  DB_PORT: 5021
+  DB_NAME: DB2
+  BBM_DB_SCHEMA: BI460P
+  BISYS_DB_SCHEMA: BI464P
+  JIRA_URL: https://jira.adeo.no/rest
+azure_access_inbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss

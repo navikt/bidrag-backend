@@ -1,0 +1,25 @@
+services:
+  mq:
+    container_name: ibmmq_livshendelse_container
+    image: ibmcom/mq:latest
+    restart: always
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: QM1
+      MQ_APP_PASSWORD: passw0rd
+    ports:
+      - "1415:1415"
+      - "9445:9445"
+    volumes:
+      - qm1data:/mnt/mqm
+    platform: linux/amd64
+  database:
+    image: postgres:17
+    ports:
+      - "5456:5432"
+    environment:
+      POSTGRES_USER: cloudsqliamuser
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: bidrag-person-hendelse
+volumes:
+  qm1data:

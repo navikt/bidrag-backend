@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  database:
+    image: postgres:latest
+    ports:
+      - "5455:5432"
+    environment:
+      POSTGRES_USER: cloudsqliamuser
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: bidrag-grunnlag
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
+    driver: local
+  storage:
+    driver: local

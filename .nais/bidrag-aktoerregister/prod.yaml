@@ -1,0 +1,29 @@
+name: bidrag-aktoerregister
+database:
+  navn: bidrag-aktoerregister
+  tier: db-custom-1-3840
+  size: 25
+  auditlog: "on"
+limits:
+  memory: 2048Mi
+requests:
+  cpu: 50m
+  memory: 512Mi
+replicas:
+  max: 2
+  min: 2
+ingresses:
+  - https://bidrag-aktoerregister.nav.no/
+kafka:
+  pool: nav-prod
+env:
+  SPRING_PROFILES_ACTIVE: prod,database-legacy,nais
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_PERSON_HOST: bidrag-person.prod-fss-pub.nais.io
+  BIDRAG_SAMHANDLER_URL: https://bidrag-samhandler.intern.nav.no
+  BIDRAG_SAMHANDLER_HOST: bidrag-samhandler.intern.nav.no
+  BIDRAG_SAMHANDLER_SCOPE: prod-gcp.bidrag.bidrag-samhandler
+  TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+  TOPIC_SAMHANDLER: bidrag.samhandler
+  KAFKA_GROUP_ID: bidrag-aktoerregister-prod-v2

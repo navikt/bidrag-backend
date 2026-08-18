@@ -1,0 +1,270 @@
+{
+  "BI01S02": [
+    {
+      "vedtakType": [
+        "INNKREVING"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "engangsbelopType": "SÆRBIDRAG",
+      "soknadFra": [],
+      "titler": [
+        "Varsel innkreving bidrag til særbidrag",
+        "Orientering innkreving bidrag til særbidrag"
+      ]
+    },
+    {
+      "vedtakType": [
+        "INNKREVING"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG",
+      "soknadFra": [],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad",
+        "Informasjon om innkreving av bidragsgjeld"
+      ]
+    },
+    {
+      "vedtakType": [
+        "INNKREVING"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG18AAR",
+      "soknadFra": [],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad",
+        "Informasjon om innkreving av bidragsgjeld"
+      ]
+    },
+    {
+      "vedtakType": [
+        "FASTSETTELSE",
+        "ENDRING"
+      ],
+      "engangsbelopType": "SÆRBIDRAG",
+      "behandlingStatus": "IKKE_FATTET",
+      "soknadFra": [],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten"
+      ]
+    },
+    {
+      "soknadType": [
+        "PRIVAT_AVTALE"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG",
+      "soknadFra": [],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "soknadType": [
+        "PRIVAT_AVTALE"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG18AAR",
+      "soknadFra": [],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [
+        "EGET_TILTAK"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG",
+      "soknadFra": [],
+      "titler": [
+        "Varsel om offentlig tilbakekreving",
+        "Orientering om offentlig tilbakekreving",
+        "Varsel om endring av barnebidrag barnetillegg"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [
+        "EGET_TILTAK"
+      ],
+      "behandlingStatus": "FATTET",
+      "stonadType": "BIDRAG",
+      "soknadFra": [],
+      "titler": [
+        "Vedtak om offentlig tilbakekreving"
+      ]
+    },
+    {
+      "vedtakType": [
+        "FASTSETTELSE",
+        "ENDRING"
+      ],
+      "soknadType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG",
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "vedtakType": [
+        "FASTSETTELSE",
+        "ENDRING"
+      ],
+      "soknadType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG18AAR",
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "vedtakType": [
+        "FASTSETTELSE",
+        "ENDRING"
+      ],
+      "soknadType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG",
+      "soknadFra": [
+        "BARN_18_ÅR",
+        "BIDRAGSMOTTAKER"
+      ],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "vedtakType": [
+        "FASTSETTELSE",
+        "ENDRING"
+      ],
+      "soknadType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "BIDRAG18AAR",
+      "soknadFra": [
+        "BARN_18_ÅR",
+        "BIDRAGSMOTTAKER"
+      ],
+      "titler": [
+        "Innkreving orientering til søker",
+        "Innkreving varsel til motparten",
+        "Orientering om trukket søknad"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "stonadType": "FORSKUDD",
+      "soknadFra": [
+        "BIDRAGSMOTTAKER"
+      ],
+      "titler": [
+        "Orientering om bidragsforskudd"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [],
+      "behandlingStatus": "FATTET",
+      "behandlingType": "AVSKRIVNING",
+      "titler": [
+        "Vedtak om avskrivning til bidragspliktig",
+        "Vedtak om avskrivning til bidragsmottaker"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [],
+      "soknadFra": [
+        "BIDRAGSPLIKTIG"
+      ],
+      "behandlingStatus": "IKKE_FATTET",
+      "behandlingType": "AVSKRIVNING",
+      "titler": [
+        "Innkreving av bidragsgjeld, bidragspliktig har bedt om reduksjon",
+        "Innkreving av gjeld, vi trenger flere opplysninger"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [],
+      "soknadFra": [
+        "BIDRAGSPLIKTIG"
+      ],
+      "behandlingStatus": "FATTET",
+      "behandlingType": "AVSKRIVNING",
+      "titler": [
+        "Vedtak om innkreving av bidragsgjeld",
+        "Vedtak om avskrivning til bidragspliktig",
+        "Vedtak om avskrivning til bidragsmottaker"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "soknadType": [],
+      "behandlingStatus": "FATTET",
+      "behandlingType": "SAKSOMKOSTNINGER",
+      "titler": [
+        "Vedtak om saksomkostninger til bidragspliktig",
+        "Vedtak om saksomkostninger til bidragsmottaker"
+      ]
+    },
+    {
+      "vedtakType": [
+        "INNKREVING"
+      ],
+      "behandlingStatus": "FATTET",
+      "stonadType": "BIDRAG18AAR",
+      "titler": [
+        "Orientering om innkreving av fremtidig bidrag",
+        "Vedtak om innkreving av fremtidig bidrag"
+      ]
+    },
+    {
+      "vedtakType": [
+        "INNKREVING"
+      ],
+      "behandlingStatus": "FATTET",
+      "stonadType": "BIDRAG",
+      "titler": [
+        "Orientering om innkreving av fremtidig bidrag",
+        "Vedtak om innkreving av fremtidig bidrag"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "behandlingStatus": "IKKE_FATTET",
+      "engangsbelopType": "TILBAKEKREVING",
+      "titler": [
+        "Varsel om mulig tilbakekreving av feilutbetalt bidrag"
+      ]
+    },
+    {
+      "vedtakType": [],
+      "behandlingStatus": "FATTET",
+      "engangsbelopType": "TILBAKEKREVING",
+      "titler": [
+        "Vedtak om tilbakekreving etter direktebetaling"
+      ]
+    }
+  ]
+}

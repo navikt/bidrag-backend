@@ -1,0 +1,38 @@
+package no.nav.bidrag.automatiskjobb.batch.utils.forsendelse.opprett
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.automatiskjobb.persistence.entity.ForsendelseBestilling
+import no.nav.bidrag.automatiskjobb.persistence.repository.ForsendelseBestillingRepository
+import no.nav.bidrag.automatiskjobb.service.ForsendelseBestillingService
+import org.springframework.batch.core.annotation.BeforeStep
+import org.springframework.batch.core.configuration.annotation.StepScope
+import org.springframework.batch.core.step.StepExecution
+import org.springframework.batch.infrastructure.item.ItemProcessor
+import org.springframework.stereotype.Component
+
+private val log = KotlinLogging.logger {}
+
+@Component
+@StepScope
+class OpprettForsendelseBatchProcessor(
+    private val forsendelseBestillingService: ForsendelseBestillingService,
+    private val forsendelseBestillingRepository: ForsendelseBestillingRepository,
+) : ItemProcessor<ForsendelseBestilling, Unit> {
+    private var prosesserFeilet: Boolean = false
+    private var tvingReopprett: Boolean = false
+
+    @BeforeStep
+    fun beforeStep(stepExecution: StepExecution) {
+        prosesserFeilet = stepExecution.jobParameters.getString("prosesserFeilet").toBoolean()
+        tvingReopprett = !stepExecution.jobParameters.getString("bestillingIds").isNullOrEmpty()
+    }
+
+    override fun process(forsendelseBestilling: ForsendelseBestilling) = try {
+        forsendelseBestillingService.opprettForsendelse(forsendelseBestilling, prosesserFeilet, tvingReopprett)
+    } catch (e: Exception) {
+        log.error(e) { "Det skjedde en feil ved opprettelse av forsendelse for bestilling ${forsendelseBestilling.id}" }
+        forsendelseBestilling.feilBegrunnelse = e.message
+        forsendelseBestillingRepository.save(forsendelseBestilling)
+        null
+    }
+}

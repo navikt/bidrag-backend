@@ -1,0 +1,382 @@
+2101:
+  - spraak: NB
+    enhetsnr: '2101'
+    navn: Nav Internasjonalt
+    telefonnummer:
+    returadresse:
+    postadresse:
+      enhetsnr: '4803'
+      enhetsnavn:
+      adresselinje1: Postboks 6215 Etterstad
+      adresselinje2:
+      postnr: '0603'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+2103:
+  - spraak: NB
+    enhetsnr: '2103'
+    navn: Nav Vikafossen
+    telefonnummer: '48507350'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 354
+      adresselinje2:
+      postnr: '8601'
+      poststed: Mo i Rana
+      land: Norway
+      kommunenr:
+    besoksadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1:
+      adresselinje2:
+      postnr: '0033'
+      poststed: Oslo
+      land:
+      kommunenr:
+2830:
+  - spraak: NB
+    enhetsnr: '2830'
+    navn: Arbeids- og velferdsdirektoratet
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 354
+      adresselinje2:
+      postnr: '8601'
+      poststed: Mo i Rana
+      land: Norge
+      kommunenr:
+4250:
+  - spraak: NB
+    enhetsnr: '4250'
+    navn: Klageinstans Kristiansand
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4293:
+  - spraak: NB
+    enhetsnr: '4293'
+    navn: Klageinstans Tønsberg
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4291:
+  - spraak: NB
+    enhetsnr: '4291'
+    navn: Klageinstans Oslo
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4294:
+  - spraak: NB
+    enhetsnr: '4294'
+    navn: Klageinstans Bergen
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4295:
+  - spraak: NB
+    enhetsnr: '4295'
+    navn: Klageinstans Tromsø
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4251:
+  - spraak: NB
+    enhetsnr: '4251'
+    navn: Klageinstans
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4252:
+  - spraak: NB
+    enhetsnr: '4252'
+    navn: Klageinstans
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4253:
+  - spraak: NB
+    enhetsnr: '4253'
+    navn: Klageinstans
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4254:
+  - spraak: NB
+    enhetsnr: '4254'
+    navn: Klageinstans
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 7028 St. Olavs plass
+      adresselinje2:
+      postnr: '0130'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4803:
+  - spraak: NB
+    enhetsnr: '4803'
+    navn: Nav familie- og pensjonsytelser Oslo 2
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn: NAV Skanning Bidrag
+      adresselinje1: Postboks 6215 Etterstad
+      adresselinje2:
+      postnr: '0603'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4806:
+  - spraak: NB
+    enhetsnr: '4806'
+    navn: Nav familie- og pensjonsytelser Drammen
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 1583
+      adresselinje2:
+      postnr: '3007'
+      poststed: Drammen
+      land: Norway
+      kommunenr:
+4812:
+  - spraak: NB
+    enhetsnr: '4812'
+    navn: Nav familie- og pensjonsytelser Bergen
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6244
+      adresselinje2: Bedriftssenter
+      postnr: '5893'
+      poststed: Bergen
+      land: Norway
+      kommunenr:
+4817:
+  - spraak: NB
+    enhetsnr: '4817'
+    navn: Nav familie- og pensjonsytelser Steinkjer
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 2615
+      adresselinje2:
+      postnr: '7734'
+      poststed: Steinkjer
+      land: Norway
+      kommunenr:
+4820:
+  - spraak: NB
+    enhetsnr: '4820'
+    navn: Nav familie- og pensjonsytelser Vadsø
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 1343
+      adresselinje2:
+      postnr: '9505'
+      poststed: Alta
+      land: Norway
+      kommunenr:
+4833:
+  - spraak: NB
+    enhetsnr: '4833'
+    navn: Nav familie- og pensjonsytelser Oslo 1
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 325 Alnabru
+      adresselinje2:
+      postnr: '0614'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4847:
+  - spraak: NB
+    enhetsnr: '4847'
+    navn: Nav familie- og pensjonsytelser Levanger
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 40
+      adresselinje2:
+      postnr: '7601'
+      poststed: Levanger
+      land: Norway
+      kommunenr:
+4849:
+  - spraak: NB
+    enhetsnr: '4849'
+    navn: Nav familie- og pensjonsytelser Tromsø
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 2363
+      adresselinje2:
+      postnr: '9271'
+      poststed: Tromsø
+      land: Norway
+      kommunenr:
+4860:
+  - spraak: NB
+    enhetsnr: '4860'
+    navn: Nav familie- og pensjonsytelser Bergen
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6244
+      adresselinje2: Bedriftssenter
+      postnr: '5893'
+      poststed: Bergen
+      land: Norway
+      kommunenr:
+4865:
+  - spraak: NB
+    enhetsnr: '4865'
+    navn: Nav familie- og pensjonsytelser Bidrag utland
+    telefonnummer: '21073700'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6600 Etterstad
+      adresselinje2:
+      postnr: '0607'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+  - spraak: EN
+    enhetsnr: '4865'
+    navn: Nav Family Benefits and Pensions - Child Support
+    telefonnummer: '21073700'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6600 Etterstad
+      adresselinje2:
+      postnr: '0607'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+4883:
+  - spraak: NB
+    enhetsnr: '4883'
+    navn: Nav familie- og pensjonsytelser
+    telefonnummer: '55553333'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6600 Etterstad
+      adresselinje2:
+      postnr: '0607'
+      poststed: Oslo
+      land: Norway
+      kommunenr:
+  - spraak: EN
+    enhetsnr: '4883'
+    navn: Nav Family Benefits and Pensions - Child Support
+    telefonnummer: '21073700'
+    returadresse:
+    postadresse:
+      enhetsnr:
+      enhetsnavn:
+      adresselinje1: Postboks 6600 Etterstad
+      adresselinje2:
+      postnr: '0607'
+      poststed: Oslo
+      land: Norway
+      kommunenr:

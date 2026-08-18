@@ -1,0 +1,51 @@
+dn: dc=test,dc=local
+objectclass: top
+objectclass: domain
+objectclass: extensibleObject
+dc: test
+
+# Organizational Units
+dn: ou=ServiceAccounts,dc=test,dc=local
+objectclass: top
+objectclass: organizationalUnit
+ou: ServiceAccounts
+
+dn: OU=BusinessUnits,DC=test,DC=local
+objectclass: top
+objectclass: organizationalUnit
+ou: BusinessUnits
+
+dn: OU=NAV,OU=BusinessUnits,DC=test,DC=local
+objectclass: top
+objectclass: organizationalUnit
+ou: NAV
+
+dn: OU=Groups,OU=NAV,OU=BusinessUnits,DC=test,DC=local
+objectclass: top
+objectclass: organizationalUnit
+ou: Groups
+
+dn: OU=AccountGroupNotInRemedy,OU=Groups,OU=NAV,OU=BusinessUnits,DC=test,DC=local
+objectclass: top
+objectclass: organizationalUnit
+ou: AccountGroupNotInRemedy
+
+# Create system user
+dn: cn=srvtjhorse,ou=ServiceAccounts,dc=test,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: srvtjhorse
+sn: srvtjhorse
+userPrincipalName: userPrincipalName=srvtjhorse@test.local
+memberOf: CN=0000-GA-PIP_BIDRAGSAK,OU=AccountGroupNotInRemedy,OU=Groups,OU=NAV,OU=BusinessUnits,DC=test,DC=local
+password: secret
+
+# Create Group
+dn: CN=0000-GA-PIP_BIDRAGSAK,OU=AccountGroupNotInRemedy,OU=Groups,OU=NAV,OU=BusinessUnits,DC=test,DC=local
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: 0000-GA-PIP_BIDRAGSAK
+ou: PIP-access
+uniqueMember: uid=srvtjhorse,ou=ServiceAccounts,dc=test,dc=local

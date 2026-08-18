@@ -1,0 +1,92 @@
+name: bidrag-organisasjon
+ingresses:
+  - https://bidrag-organisasjon.intern.dev.nav.no
+  - https://bidrag-organisasjon.dev-fss-pub.nais.io
+env:
+  ARBEIDSFORDELING_URL: https://norg2.dev.adeo.no/norg2/api/v1
+  SKJERMING_URL: https://skjermede-personer-pip.intern.dev.nav.no
+  PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no/bidrag-person
+  LDAP_URL: ldaps://ldapgw.preprod.local
+  PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+  SKJERMING_SCOPE: dev-gcp.nom.skjermede-personer-pip
+  ENTRA_PROXY_URL: https://entraproxy.intern.dev.nav.no
+  ENTRAPROXY_SCOPE: dev-gcp.sikkerhetstjenesten.entra-proxy
+vault:
+  kvPath: dev
+  secretPath: preprod
+azure:
+  inbound:
+    rules:
+      - application: bidrag-dokument-arkiv
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-journalpost
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-arbeidsflyt
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-ui-feature
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-sak
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-sak-q1
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-sak-q2
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-sak-q4
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-cucumber-onprem
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-forsendelse
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bisys
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-vedtak
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-vedtak-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-vedtak-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-vedtak-q4
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-grunnlag
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-behandling
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-behandling-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-automatisk-jobb-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-admin
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-frontend-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-localauth
+        namespace: bidrag
+        cluster: dev-gcp
+

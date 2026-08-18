@@ -1,0 +1,18 @@
+package no.nav.bidrag.admin.produksjonsoppfølging.oppfølginger.duplikatroller
+
+import no.nav.bidrag.admin.produksjonsoppfølging.domene.Rolle
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+
+interface DuplikatrollerRepository : JpaRepository<Rolle, Long> {
+    @Query(
+        "SELECT DISTINCT r1.saksnr " +
+            "  FROM Rolle r1 " +
+            "    INNER JOIN Rolle r2 ON r1.id < r2.id" +
+            "      AND r1.saksnr = r2.saksnr" +
+            "      AND r1.fnr = r2.fnr" +
+            "      AND r1.type = r2.type" +
+            "  WHERE r1.type IN ('BP', 'BM', 'BA')",
+    )
+    fun finnSakerMedDuplikateRoller(): MutableList<String>
+}

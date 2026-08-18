@@ -1,0 +1,62 @@
+name: bidrag-dokument
+azure:
+  inbound:
+    rules:
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-arkivering
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-arkiv
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bisys
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-arbeidsflyt
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-reisekostnad-api
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-dokument-forsendelse
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-behandling
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-behandling-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-frontend-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-localauth
+        namespace: bidrag
+        cluster: dev-gcp
+ingresses:
+  - https://bidrag-dokument.intern.dev.nav.no/
+  - https://bidrag-dokument.dev-fss-pub.nais.io/
+env:
+    STS_ACCEPTED_AUDIENCE: srvbdarkivering,srvbisys
+    BIDRAG_ARKIV_URL: https://bidrag-dokument-arkiv.intern.dev.nav.no/bidrag-dokument-arkiv
+    BIDRAG_FORSENDELSE_URL: https://bidrag-dokument-forsendelse.intern.dev.nav.no/api/forsendelse
+    JOURNALPOST_URL: https://bidrag-dokument-journalpost.intern.dev.nav.no/bidrag-dokument-journalpost
+    SECURITY_TOKEN_URL: https://security-token-service.dev.adeo.no/rest/v1/sts/token
+    SRVBIDRAG_USERNAME: srvbidrag-dokument
+    BIDRAG_DOKUMENT_JOURNALPOST_CLIENT_ID: dev-fss.bidrag.bidrag-dokument-journalpost
+    BIDRAG_DOKUMENT_ARKIV_CLIENT_ID: dev-fss.bidrag.bidrag-dokument-arkiv
+    BIDRAG_DOKUMENT_FORSENDELSE_CLIENT_ID: dev-gcp.bidrag.bidrag-dokument-forsendelse
+    STS_ISSUER_URL: https://security-token-service.dev.adeo.no
+    JAVA_OPTS: -Xms1500m -Xmx1500m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0 -XX:+UseContainerSupport -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+path: dev
+cpu:
+  limits: 1000m
+  requests: 50m
+memory:
+  limits: 2Gi
+  requests: 1000Mi

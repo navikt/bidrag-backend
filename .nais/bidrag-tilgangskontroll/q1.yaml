@@ -1,0 +1,59 @@
+name: bidrag-tilgangskontroll-feature
+min_replicas: 1
+ingresses:
+  - https://bidrag-tilgangskontroll-feature.intern.dev.nav.no
+env:
+  BIDRAG_SAK_URL: https://bidrag-sak-q1.dev-fss-pub.nais.io
+  BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q1
+  TILGANGSMASKIN_URL: https://tilgangsmaskin.intern.dev.nav.no
+  TILGANGSMASKIN_SCOPE: dev-gcp.tilgangsmaskin.populasjonstilgangskontroll
+  ENABLE_TEMA_CHECK: true
+  IDENTENTER_SOM_KAN_OPPRETTE_SAK_UTEN_BM: Z994977,Z993148
+outbound-access-hosts:
+  - bidrag-sak-q1.dev-fss-pub.nais.io
+  - skjermede-personer-pip.intern.dev.nav.no
+  - bidrag-unleash-api.nav.cloud.nais.io
+  - tilgangsmaskin.intern.dev.nav.no
+azure_access_inbound:
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-sak-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-sak-q1
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-ui-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-journalpost-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-arbeidsflyt-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-organisasjon-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: azure-token-generator
+    namespace: nais
+    cluster: dev-gcp
+  - application: bidrag-frontend-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+unleash:
+  env: development
+  secret_name: bidrag-tilgangskontroll-unleash-api-token

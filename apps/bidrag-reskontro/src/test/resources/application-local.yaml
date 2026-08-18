@@ -1,0 +1,29 @@
+SKATT_URL: https://bidrag-elin-stub.intern.dev.nav.no
+SKATT_SCOPE: dev-gcp.bidrag.bidrag-elin-stub
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+AZURE_APP_CLIENT_ID:
+AZURE_APP_CLIENT_SECRET:
+server.port: 8999
+NAIS_APP_NAME: bidrag-reskontro
+
+maskinporten:
+  tokenUrl: https://test.maskinporten.no/token
+  audience: https://test.maskinporten.no/
+  clientId: <MASKINPORTEN_CLIENT_ID>
+  scope: <MASKINPORTEN_SCOPES>
+  privateKey: <MASKINPORTEN_CLIENT_JWK>
+  validInSeconds: 120 #120 er maks antall sekunder et maskinporten Jwt-token kan være gyldig.
+
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-reskontro-legacy:
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}

@@ -1,0 +1,28 @@
+query NavnFoedselsdatoDoedQuery($personId: ID!)
+{
+    hentPerson(ident: $personId) {
+        foedselsdato {
+            foedselsdato
+            foedselsaar
+        },
+        doedsfall {
+            doedsdato
+        },
+        navn(historikk: false) {
+            fornavn
+            mellomnavn
+            etternavn
+            folkeregistermetadata {
+              ajourholdstidspunkt
+            }
+            metadata {
+              historisk
+              master
+              endringer {
+                type
+                registrert
+              }
+            }
+        }
+    }
+}

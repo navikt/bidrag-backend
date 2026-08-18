@@ -1,0 +1,40 @@
+{
+  "data": {
+    "hentPerson": {
+      "doedsfall": [],
+      "navn": [
+        {
+          "fornavn": "GOD",
+          "mellomnavn": null,
+          "etternavn": "VEGGPRYD"
+        }
+      ],
+      "kontaktadresse": [
+        {
+          "gyldigFraOgMed": "2022-01-18T00:00",
+          "gyldigTilOgMed": "2023-01-18T23:59:59",
+          "type": "Utland",
+          "metadata": {
+            "master": "PDL"
+          },
+          "coAdressenavn": null,
+          "postboksadresse": null,
+          "postadresseIFrittFormat": null,
+          "utenlandskAdresseIFrittFormat": null,
+          "vegadresse": null,
+          "utenlandskAdresse": {
+            "adressenavnNummer": "BIGGO 2",
+            "bygningEtasjeLeilighet": "34 C",
+            "postboksNummerNavn": null,
+            "postkode": "2323",
+            "bySted": "DANDA RO",
+            "regionDistriktOmraade": "DADDA",
+            "landkode": "AGO"
+          }
+        }
+      ],
+      "oppholdsadresse": [],
+      "bostedsadresse": []
+    }
+  }
+}

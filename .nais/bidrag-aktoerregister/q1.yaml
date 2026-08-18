@@ -1,0 +1,31 @@
+name: bidrag-aktoerregister-q1
+database:
+  navn: bidrag-aktoerregister-q1
+  tier: db-custom-1-3840
+  size: 25
+  auditlog: "off"
+limits:
+  memory: 2048Mi
+requests:
+  cpu: 50m
+  memory: 512Mi
+replicas:
+  max: 1
+  min: 1
+ingresses:
+  - https://bidrag-aktoerregister-q1.intern.dev.nav.no/
+  - https://bidrag-aktoerregister.ekstern.dev.nav.no/
+kafka:
+  pool: nav-dev
+env:
+  SPRING_PROFILES_ACTIVE: dev,database-new,nais
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+  BIDRAG_PERSON_URL: https://bidrag-person-q1.dev-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q1
+  BIDRAG_PERSON_HOST: bidrag-person-q1.dev-fss-pub.nais.io
+  BIDRAG_SAMHANDLER_URL: https://bidrag-samhandler-q1.intern.dev.nav.no
+  BIDRAG_SAMHANDLER_HOST: bidrag-samhandler-q1.intern.dev.nav.no
+  BIDRAG_SAMHANDLER_SCOPE: dev-gcp.bidrag.bidrag-samhandler-q1
+  TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+  TOPIC_SAMHANDLER: bidrag.samhandler-q1
+  KAFKA_GROUP_ID: bidrag-aktoerregister-q1

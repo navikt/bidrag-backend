@@ -1,0 +1,46 @@
+name: bidrag-samhandler
+ingresses:
+  - https://bidrag-samhandler.intern.nav.no
+limits:
+  memory: 2048Mi
+requests:
+  cpu: 50m
+  memory: 512Mi
+replicas:
+  max: 2
+  min: 2
+database:
+  navn: bidrag-samhandler-prod
+  tier: db-custom-1-3840
+  size: 25
+  auditlog: "on"
+kafka:
+  pool: nav-prod
+env:
+  TOPIC_SAMHANDLER: bidrag.samhandler
+  KODEVERK_URL: http://bidrag-kodeverk
+azure_access_inbound:
+  - application: bidrag-sak
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-aktoerregister
+    namespace: bidrag
+    cluser: prod-gcp
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp

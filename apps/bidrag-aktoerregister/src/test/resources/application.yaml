@@ -1,0 +1,78 @@
+NAIS_APP_NAME: bidrag-aktoerregister
+TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+TOPIC_SAMHANDLER: bidrag.samhandler-test
+KAFKA_GROUP_ID: bidrag-aktoerregister-local
+
+AZURE_APP_CLIENT_ID: <CLIENT_ID>
+AZURE_APP_CLIENT_SECRET: <CLIENT_SECRET>
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+
+BIDRAG_SAMHANDLER_URL: https://bidrag-samhandler-feature.intern.dev.nav.no
+BIDRAG_SAMHANDLER_SCOPE: dev-gcp.bidrag.bidrag-samhandler-feature
+BIDRAG_PERSON_URL: https://bidrag-person-feature.intern.dev.nav.no/bidrag-person
+BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-feature
+
+server:
+  port: '8080'
+  servlet:
+    context-path: /bidrag-aktoerregister
+
+logging:
+  level:
+    root: INFO
+
+springdoc:
+  swagger-ui:
+    path: /
+
+spring:
+  flyway:
+    schemas: migrations
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database: POSTGRESQL
+  datasource:
+    hikari:
+      maximum-pool-size: '4'
+      schema: aktoerregister
+    password: root
+    username: root
+    url: jdbc:postgresql://localhost:5432/test_db
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:${KAFKA_BROKERS}}
+    properties:
+      security.protocol: PLAINTEXT
+    listener:
+      auto-startup: false
+    consumer:
+      auto-offset-reset: earliest
+      group-id: bidrag-aktoerregister
+
+no.nav.security.jwt:
+  issuer.maskinporten:
+    discovery-url: http://localhost:${mock-oauth2-server.port}/maskinporten/.well-known/openid-configuration
+    validation.optional-claims: aud
+    accepted_audience: test-audience
+  client:
+    registration:
+      skatt:
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:0}/aad/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+aktoerregister:
+  scope: nav:bidrag:aktoerregister.read

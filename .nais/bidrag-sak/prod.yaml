@@ -1,0 +1,79 @@
+name: bidrag-sak
+ingresses:
+  - https://bidrag-sak.nais.adeo.no/
+  - https://bidrag-sak.intern.nav.no
+  - https://bidrag-sak.prod-fss-pub.nais.io
+database:
+  secret_name: bidrag-sak-db
+unleash:
+  env: production
+  secret_name: bidrag-sak-unleash-api-token
+env:
+  - name: LDAP_SERVICEUSER_BASEDN
+    value: OU=ServiceAccounts,dc=adeo,dc=no
+  - name: LDAP_URL
+    value: ldaps://ldapgw.adeo.no
+  - name: LDAP_USERNAME
+    value: srvSSOLinux
+  - name: BIDRAG_SAMHANDLER_URL
+    value: https://bidrag-samhandler.intern.nav.no
+  - name: BIDRAG_SAMHANDLER_SCOPE
+    value: prod-gcp.bidrag.bidrag-samhandler
+  - name: BIDRAG_TILGANG_URL
+    value: https://bidrag-tilgangskontroll.intern.nav.no
+  - name: BIDRAG_TILGANG_SCOPE
+    value: prod-gcp.bidrag.bidrag-tilgangskontroll
+  - name: BIDRAG_PERSON_URL
+    value: https://bidrag-person.intern.nav.no/bidrag-person
+  - name: BIDRAG_PERSON_SCOPE
+    value: prod-fss.bidrag.bidrag-person
+  - name: BIDRAG_ORGANISASJON_URL
+    value: https://bidrag-organisasjon.intern.nav.no/bidrag-organisasjon
+  - name: BIDRAG_ORGANISASJON_SCOPE
+    value: prod-fss.bidrag.bidrag-organisasjon
+  - name: TOPIC_SAK
+    value: bidrag.sak
+  - name: KODEVERK_URL
+    value: https://bidrag-kodeverk.intern.nav.no
+kafka:
+  pool: nav-prod
+azure_access_inbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-bestilling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-regnskap
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: arbeid-og-inntekt
+    namespace: team-inntekt
+    cluster: prod-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-arbeidsflyt
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-tilgangskontroll
+    namespace: bidrag
+    cluster: prod-gcp
+    permissions:
+      roles:
+        - "sak-pip"
+  - application: saf
+    namespace: teamdokumenthandtering
+    cluster: prod-fss
+    permissions:
+      roles:
+        - "sak-pip"
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp

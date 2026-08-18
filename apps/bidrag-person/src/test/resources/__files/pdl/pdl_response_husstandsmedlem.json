@@ -1,0 +1,61 @@
+{
+  "data": {
+    "sokPerson": {
+      "hits": [
+        {
+          "person": {
+            "foedselsdato": [
+              {
+                "foedselsdato": "2000-10-17",
+                "foedselsaar": "2000"
+              }
+            ],
+            "doedsfall": [
+              {
+                "doedsdato": "2022-01-17"
+              }
+            ],
+            "navn": [
+              {
+                "fornavn": "Blå",
+                "mellomnavn": "Mellomfornøyd",
+                "etternavn": "Skilpadde"
+              }
+            ],
+            "folkeregisteridentifikator": [
+              {
+              "identifikasjonsnummer": "{ident}",
+              "status": "I_BRUK",
+              "type": "FNR"
+              }
+            ],
+            "bostedsadresse": [
+              {
+                "angittFlyttedato": "1977-05-18",
+                "gyldigFraOgMed": "1977-05-18T00:00",
+                "gyldigTilOgMed": null,
+                "coAdressenavn": null,
+                "ukjentBosted": null,
+                "metadata": {
+                  "master": "FREG"
+                },
+                "matrikkeladresse": null,
+                "vegadresse": {
+                  "postnummer": "1613",
+                  "adressenavn": "Oredalsåsen",
+                  "husnummer": "48",
+                  "husbokstav": null,
+                  "bruksenhetsnummer": "H203",
+                  "tilleggsnavn": null,
+                  "kommunenummer": "3004",
+                  "bydelsnummer": null
+                },
+                "utenlandskAdresse": null
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

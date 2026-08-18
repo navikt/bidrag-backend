@@ -1,0 +1,6 @@
+no.nav.security.oidc:
+  issuers: aad
+  issuer.aad :
+    discoveryurl: http://metadata
+    accepted_audience: aud-localhost
+    cookie_name: localhost-idtoken

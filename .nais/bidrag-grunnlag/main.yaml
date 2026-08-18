@@ -1,0 +1,71 @@
+name: bidrag-grunnlag
+ingresses:
+  - https://bidrag-grunnlag.intern.dev.nav.no
+azure:
+  tenant: trygdeetaten.no
+  familiebasak_url: familie-ba-sak.intern.dev.nav.no
+  familiebasak_scope: dev-gcp.teamfamilie.familie-ba-sak
+  familieefsak_url: familie-ef-sak.intern.dev.nav.no
+  familieefsak_scope: dev-gcp.teamfamilie.familie-ef-sak
+  inntektskomponenten_url: ikomp-q2.dev-fss-pub.nais.io
+  inntektskomponenten_scope: dev-fss.team-inntekt.ikomp-q2
+  sigrun_base_url: team-inntekt-proxy.dev-fss-pub.nais.io
+  sigrun_url: sigrun-q2.dev-fss-pub.nais.io
+  sigrun_scope: dev-fss.team-inntekt.sigrun-q2
+  pensjon_url: pensjon-pen-q1.dev-fss-pub.nais.io
+  pensjon_scope: dev-fss.pensjon-q1.pensjon-pen-q1
+  bidragperson_base_url: bidrag-person-q2.dev-fss-pub.nais.io
+  bidragperson_url: bidrag-person-q2.dev-fss-pub.nais.io/bidrag-person
+  bidragperson_scope: dev-fss.bidrag.bidrag-person-q2
+  bidragperson_app: bidrag-person-q2
+  bidragperson_cluster: dev-fss
+  familiekssak_url: familie-kontantstotte-sak.intern.dev.nav.no
+  familiekssak_scope: dev-gcp.teamfamilie.familie-ks-sak
+  aareg_url: aareg-services.dev-fss-pub.nais.io
+  aareg_scope: dev-fss.arbeidsforhold.aareg-services-nais
+  aareg_app: aareg-services
+  aareg_cluster: dev-fss
+  bidrag_organisasjon_url: bidrag-organisasjon.dev-fss-pub.nais.io
+  bidrag_organisasjon_scope: dev-fss.bidrag.bidrag-organisasjon
+  tilleggsstonadersak_url: tilleggsstonader-sak.intern.dev.nav.no
+  tilleggsstonadersak_scope: dev-gcp.tilleggsstonader.tilleggsstonader-sak
+  unsecure:
+    ereg_url: ereg-services.dev-fss-pub.nais.io
+    norgesbank_url: data.norges-bank.no
+dbname: bidrag-grunnlag-main-1
+dbinstancename: bidrag-grunnlag-main-1
+azureAccessInbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-cucumber-cloud
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-bidragskalkulator-api
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-automatisk-jobb-q2
+    namespace: bidrag
+    cluster: dev-gcp
+spec:
+  replicas:
+    min: 2
+  resources:
+    limits:
+      memory: 736Mi
+    requests:
+      cpu: 135m
+      memory: 704Mi
+  gcp:
+    sqlInstances:
+      diskSize: 15
+      tier: db-f1-micro

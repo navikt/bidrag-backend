@@ -1,0 +1,162 @@
+{
+  "kilde": "MANUELT",
+  "type": "ALDERSJUSTERING",
+  "opprettetAv": "X123456",
+  "vedtakstidspunkt": "2020-01-01T23:34:55.869121094",
+  "enhetsnummer": "4812",
+  "grunnlagListe": [
+    {
+      "referanse": "BM-LIGS-19",
+      "vedtaksid": 1,
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "inntektDatoFraTil": {
+          "periodeDatoFra": "2019-01-01",
+          "periodeDatoTil": "2020-01-01"
+        },
+        "inntektBelop": 400000,
+        "inntektType": "SKATTEGRUNNLAG_SKE"
+      }
+    },
+    {
+      "referanse": "BM-LIGN-19",
+      "vedtaksid": 1,
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "inntektDatoFraTil": {
+          "periodeDatoFra": "2019-01-01",
+          "periodeDatoTil": "2020-01-01"
+        },
+        "inntektBelop": 400000,
+        "inntektType": "LIGNING_SKE"
+      }
+    },
+    {
+      "referanse": "BP-SKATTEKLASSE-19",
+      "type": "SKATTEKLASSE",
+      "innhold": {
+        "skatteklasseDatoFraTil": {
+          "periodeDatoFra": "2019-01-01",
+          "periodeDatoTil": "2020-01-01"
+        },
+        "skatteklasseId": 1
+      }
+    },
+    {
+      "referanse": "SJAB-REF001",
+      "type": "SJABLON",
+      "innhold": {
+        "sjablonListe": [
+          {
+            "sjablonNavn": "BoutgiftBeløp",
+            "sjablonVerdi": 5981
+          },
+          {
+            "sjablonNavn": "FordelSærfradragBeløp",
+            "sjablonVerdi": 12977
+          }
+        ]
+      }
+    }
+  ],
+  "stønadsendringListe": [
+    {
+      "type": "BIDRAG",
+      "vedtaksid": 1,
+      "sak": "SAK-001",
+      "skyldner": "SKYLDNER",
+      "kravhaver": "KRAVHAVER",
+      "mottaker": "MOTTAKER",
+      "førsteIndeksreguleringsår": null,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "grunnlagReferanseListe": [],
+      "periodeListe": [
+        {
+          "periode": {
+            "fom": "2019-01",
+            "til": "2019-07"
+          },
+          "stønadsendringsid": 1,
+          "beløp": 3490,
+          "valutakode": "NOK",
+          "resultatkode": "KOSTNADSBEREGNET_BIDRAG",
+          "referanse": "referanse1",
+          "grunnlagReferanseListe": [
+            "BM-LIGS-19",
+            "BM-LIGN-19",
+            "SJAB-REF001"
+          ]
+        },
+        {
+          "periode": {
+            "fom": "2019-07",
+            "til": "2019-08"
+          },
+          "stønadsendringsid": 1,
+          "beløp": 3520,
+          "valutakode": "NOK",
+          "resultatkode": "KOSTNADSBEREGNET_BIDRAG",
+          "referanse": "referanse2",
+          "grunnlagReferanseListe": [
+            "BM-LIGS-19",
+            "BM-LIGN-19",
+            "BP-SKATTEKLASSE-19",
+            "SJAB-REF001"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FORSKUDD",
+      "sak": "SAK-001",
+      "skyldner": "SKYLDNER",
+      "kravhaver": "KRAVHAVER",
+      "mottaker": "MOTTAKER",
+      "førsteIndeksreguleringsår": null,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "grunnlagReferanseListe": [],
+      "periodeListe": [
+        {
+          "periode": {
+            "fom": "2019-01",
+            "til": "2019-07"
+          },
+          "beløp": 4240,
+          "valutakode": "NOK",
+          "resultatkode": "FORSKUDD_INNVILGET",
+          "referanse": "referanse1",
+          "grunnlagReferanseListe": [
+            "BM-LIGS-19",
+            "SJAB-REF001"
+          ]
+        },
+        {
+          "periode": {
+            "fom": "2019-07",
+            "til": "2019-08"
+          },
+          "beløp": 3410,
+          "valutakode": "NOK",
+          "resultatkode": "FORSKUDD_INNVILGET",
+          "referanse": "referanse2",
+          "grunnlagReferanseListe": [
+            "BM-LIGS-19",
+            "SJAB-REF001"
+          ]
+        }
+      ]
+    }
+  ],
+  "behandlingsreferanseListe": [
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "Bisys-01"
+    },
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "Bisys-02"
+    }
+  ]
+}

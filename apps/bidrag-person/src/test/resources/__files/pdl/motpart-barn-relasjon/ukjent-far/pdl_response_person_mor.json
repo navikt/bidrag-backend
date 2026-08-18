@@ -1,0 +1,27 @@
+{
+  "data": {
+    "hentPerson": {
+      "navn": [
+        {
+          "fornavn": "Ubestikkelig",
+          "mellomnavn": null,
+          "etternavn": "Deig"
+        }
+      ]
+    },
+    "hentIdenter": {
+      "identer": [
+        {
+          "ident": "09449020216",
+          "historisk": false,
+          "gruppe": "FOLKEREGISTERIDENT"
+        },
+        {
+          "ident": "2412600300415",
+          "historisk": false,
+          "gruppe": "AKTORID"
+        }
+      ]
+    }
+  }
+}

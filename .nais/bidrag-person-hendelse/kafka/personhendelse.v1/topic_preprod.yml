@@ -1,0 +1,54 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  name: personhendelse.v1
+  namespace: bidrag
+  labels:
+    team: bidrag
+  annotations:
+    dcat.data.nav.no/title: "Personhendelser for Bidrag"
+    dcat.data.nav.no/description: "Personhendelser av interesse for Bidrag"
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+spec:
+  pool: nav-dev
+  config: # optional; all fields are optional too; defaults shown
+    cleanupPolicy: compact  # delete, compact, compact,delete
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3  # see min/max requirements
+    retentionBytes: -1
+    retentionHours: 12
+  acl:
+    - team: bidrag
+      application: bidrag-person-hendelse
+      access: readwrite
+    - team: bidrag
+      application: bidrag-aktoerregister-q1
+      access: read
+    - team: bidrag
+      application: bidrag-aktoerregister-q2
+      access: read
+    - team: bidrag
+      application: bidrag-aktoerregister-q4
+      access: read
+    - team: bidrag
+      application: bidrag-regnskap-q1
+      access: read
+    - team: bidrag
+      application: bidrag-regnskap-q2
+      access: read
+    - team: bidrag
+      application: bidrag-regnskap-q4
+      access: read
+    - team: bidrag
+      application: bidrag-automatisk-jobb-q1
+      access: read
+    - team: bidrag
+      application: bidrag-automatisk-jobb-q2
+      access: read
+    - team: bidrag
+      application: bidrag-automatisk-jobb-q4
+      access: read
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: read

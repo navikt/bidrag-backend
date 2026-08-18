@@ -1,0 +1,93 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+  image: {{ image }}
+  gcp:
+    sqlInstances:
+      - name: {{ database.navn }}
+        type: POSTGRES_15
+        diskSize: {{ database.size }}
+        tier: {{ database.tier }}
+        databases:
+        - name: bidrag-aktoerregister-db
+          envVarPrefix: DB
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "{{ database.auditlog }}"
+          - name: "pgaudit.log"
+            value: "write,role,ddl"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+  liveness:
+    path: /actuator/health/liveness
+    initialDelay: 30
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health/readiness
+    initialDelay: 30
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 10
+  resources:
+    limits:
+      cpu: {{limits.cpu}}
+      memory: {{limits.memory}}
+    requests:
+      cpu: {{requests.cpu}}
+      memory: {{requests.memory}}
+  replicas:
+    max: {{replicas.max}}
+    min: {{replicas.min}}
+    cpuThresholdPercentage: 50
+  kafka:
+    pool: {{ kafka.pool }}
+  maskinporten:
+    enabled: true
+    scopes:
+      exposes:
+        - name: "aktoerregister.read"
+          enabled: true
+          product: "bidrag"
+          allowedIntegrations:
+            - maskinporten
+          atMaxAge: 120
+          consumers:
+            - name: "NAV"
+              orgno: "889640782"
+            - name: "Skatteetaten"
+              orgno: "974761076"
+            - name: "Banqsoft"
+              orgno: "871579792"
+  envFrom:
+    - secret: bidrag-aktoerregister-mqpassword
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+  {{/each}}
+  accessPolicy:
+    outbound:
+      external:
+        - host: {{ env.BIDRAG_PERSON_HOST }}
+        - host: {{ env.BIDRAG_SAMHANDLER_HOST }}
+      rules:
+        - application: logging
+          namespace: nais-system

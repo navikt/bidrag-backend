@@ -1,0 +1,25 @@
+name: bidrag-bbm
+min_replicas: 2
+ingresses:
+  - https://bidrag-bbm.intern.nav.no
+  - https://bidrag-bbm.prod-fss-pub.nais.io
+env:
+  DB_HOST: zprod.adeo.no
+  DB_PORT: 5021
+  DB_NAME: DB2
+  BBM_DB_SCHEMA: BI460P
+  BISYS_DB_SCHEMA: BI464P
+  JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+
+azure_access_inbound:
+  - application: bidrag-behandling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-arbeidsflyt
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+database:
+  secret_name: bidrag-bbm-db

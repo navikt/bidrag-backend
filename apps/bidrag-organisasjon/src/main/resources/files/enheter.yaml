@@ -1,0 +1,247 @@
+Forvaltningsenheter:
+  2103:
+    navn: Nav Vikafossen
+    telefonnummer: '48507350'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 354
+        postnr: '8601'
+        poststed: Mo i Rana
+        land: Norway
+  4251:
+    navn: Klageinstans - bidrag - inn
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4806:
+    navn: Nav familie- og pensjonsytelser Drammen
+    telefonnummer: '55553333'
+    settekontor: 4849
+    postadresse:
+      NB:
+        adresselinje1: Postboks 1583
+        postnr: '3007'
+        poststed: Drammen
+        land: Norway
+  4812:
+    navn: Nav familie- og pensjonsytelser Bergen
+    telefonnummer: '55553333'
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 6244
+        adresselinje2: Bedriftssenter
+        postnr: '5893'
+        poststed: Bergen
+        land: Norway
+  4815:
+    navn: Nav familie- og pensjonsytelser Ålesund
+  4817:
+    navn: Nav familie- og pensjonsytelser Steinkjer
+    telefonnummer: '55553333'
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 2615
+        postnr: '7734'
+        poststed: Steinkjer
+        land: Norway
+  4820:
+    navn: Nav familie- og pensjonsytelser Vadsø
+    telefonnummer: '55553333'
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 1343
+        postnr: '9505'
+        poststed: Alta
+        land: Norway
+  4833:
+    navn: Nav familie- og pensjonsytelser Oslo 1
+    telefonnummer: '55553333'
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 325 Alnabru
+        postnr: '0614'
+        poststed: Oslo
+        land: Norway
+  4849:
+    navn: Nav familie- og pensjonsytelser Tromsø
+    telefonnummer: '55553333'
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 2363
+        postnr: '9271'
+        poststed: Tromsø
+        land: Norway
+  4860:
+    navn: Nav familie- og pensjonsytelser farskap
+    telefonnummer: '55553333'
+    arbeidsfordeling: FARSKAP
+    settekontor: 4806
+    postadresse:
+      NB:
+        adresselinje1: Postboks 6244
+        adresselinje2: Bedriftssenter
+        postnr: '5893'
+        poststed: Bergen
+        land: Norway
+  4865:
+    navn: Nav familie- og pensjonsytelser bidrag utland
+    telefonnummer: '21073700'
+    sakskategori: UTLAND
+    postadresse:
+      NB:
+        adresselinje1: Postboks 6600 Etterstad
+        postnr: '0607'
+        poststed: Oslo
+        land: Norway
+      EN:
+        navn: Nav Family Benefits and Pensions - Child Support
+        adresselinje1: Postboks 6600 Etterstad
+        postnr: '0607'
+        poststed: Oslo
+        land: Norway
+  4883:
+    navn: Nav familie- og pensjonsytelser egne ansatte
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 6600 Etterstad
+        postnr: '0607'
+        poststed: Oslo
+        land: Norway
+      EN:
+        navn: Nav Family Benefits and Pensions - Child Support
+        adresselinje1: Postboks 6600 Etterstad
+        postnr: '0607'
+        poststed: Oslo
+        land: Norway
+
+Klageenheter:
+  4200:
+    navn: Klageinstans styringsenhet
+  4250:
+    navn: Klageinstans Kristiansand
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4251:
+    navn: Klageinstans - bidrag - inn
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4252:
+    navn: Klageinstans - bidrag -klage
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4253:
+    navn: Klageinstans - bidrag - tilbakekreving
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4254:
+    navn: Klageinstans - bidrag - vakt
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4291:
+    navn: Klageinstans Oslo
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4293:
+    navn: Klageinstans Tønsberg
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4294:
+    navn: Klageinstans Bergen
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+  4295:
+    navn: Klageinstans Tromsø
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 7028 St. Olavs plass
+        postnr: '0130'
+        poststed: Oslo
+        land: Norway
+
+Innkreving:
+  9401:
+    navn: Nav innkreving
+
+Direktoratet:
+  2820:
+    navn: HR-avdelingen
+  2826:
+    navn: DIR kunnskapsavdelingen
+  2830:
+    navn: DIR ytelsesavdelingen
+    telefonnummer: '55553333'
+    postadresse:
+      NB:
+        adresselinje1: Postboks 354
+        postnr: '8601'
+        poststed: Mo i Rana
+        land: Norge
+
+Økonomi:
+  4151:
+    navn: Nav økonomi stønad
+
+Kontrollenheter:
+  4503:
+    navn: Nav kontroll Øst
+  4511:
+    navn: Nav kontroll Vest
+  4519:
+    navn: Nav kontroll Nord
+  4530:
+    navn: Nav medlemskap og avgift
+  4534:
+    navn: Nav registerforvaltning
+  4550:
+    navn: Nav kontroll analyse Oslo

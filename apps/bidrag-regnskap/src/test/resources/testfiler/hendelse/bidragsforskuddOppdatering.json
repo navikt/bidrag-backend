@@ -1,0 +1,38 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "7941",
+  "opprettetAv": "F102622",
+  "kildeapplikasjon": "TEST",
+  "vedtakstidspunkt": "2022-05-19T00:00:00.000000000",
+  "enhetsnummer": "4806",
+  "innkrevingUtsattTilDato": null,
+  "opprettetTidspunkt": "2022-05-19T16:00:23.254988482",
+  "stønadsendringListe": [
+    {
+      "type": "FORSKUDD",
+      "sak": "2007671",
+      "skyldner": "NAV",
+      "kravhaver": "",
+      "mottaker": "",
+      "førsteIndeksreguleringsår": "2023",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": [
+        {
+          "periode": {
+            "fom":"2022-01",
+            "til":"2022-05"
+          },
+          "beløp": 1710.50,
+          "valutakode": "NOK",
+          "resultatkode": "100"
+        }
+      ]
+    }
+  ],
+  "engangsbeløpListe": [],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

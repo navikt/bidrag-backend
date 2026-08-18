@@ -1,0 +1,39 @@
+{
+  "data": {
+    "personBolk": [
+      {
+        "code": "ok",
+        "ident": "250884230",
+        "person": {
+          "foedselsdato": [
+            {
+              "foedselsdato": "1984-08-25"
+            }
+          ]
+        }
+      },
+      {
+        "code": "ok",
+        "ident": "091186325",
+        "person": {
+          "foedselsdato": [
+            {
+              "foedselsdato": "1986-11-09"
+            }
+          ]
+        }
+      },
+      {
+        "code": "ok",
+        "ident": "180777782",
+        "person": {
+          "foedselsdato": [
+            {
+              "foedselsdato": "1977-07-18"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

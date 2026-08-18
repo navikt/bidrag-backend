@@ -1,0 +1,137 @@
+name: Bidrag-person-hendelse
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - preprod
+          - prod
+  schedule:
+    - cron: '0 2 * * 1'
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-person-hendelse/**.yaml'
+      - '.nais/bidrag-person-hendelse/**.yml'
+#      - '.github/workflows/bidrag-person-hendelse.yaml' //TODO(Slå på etter migrering)
+#      - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-person-hendelse/**'
+
+jobs:
+  bygg_og_test:
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    name: "Bygg og test"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
+      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
+      # invalideres av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bidrag-person-hendelse-${{ hashFiles('pom.xml', 'apps/bidrag-person-hendelse/pom.xml') }}
+          restore-keys: |
+            maven-bidrag-person-hendelse-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+      - name: Bygg og kjør tester (inkl. ktlint)
+        run: mvn -B -fae verify -pl apps/bidrag-person-hendelse -am
+
+  deploy_preprod:
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod')
+    name: "Build and deploy to preprod"
+    concurrency:
+      group: deploy-person-hendelse-preprod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-person-hendelse -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-person-hendelse/pom.xml
+      ktlint_paths: apps/bidrag-person-hendelse/src/**/*.kt
+      docker_context: ./apps/bidrag-person-hendelse
+      nais_variabler_filnavn: bidrag-person-hendelse/preprod.yaml
+      nais_hovedfil_navn: bidrag-person-hendelse/nais.yaml
+      image_suffix: bidrag-person-hendelse
+      tag: bidrag-person-hendelse
+
+  deploy_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Build and deploy to prod"
+    concurrency:
+      group: deploy-person-hendelse-prod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-person-hendelse -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-person-hendelse/pom.xml
+      ktlint_paths: apps/bidrag-person-hendelse/src/**/*.kt
+      docker_context: ./apps/bidrag-person-hendelse
+      nais_variabler_filnavn: bidrag-person-hendelse/prod.yaml
+      nais_hovedfil_navn: bidrag-person-hendelse/nais.yaml
+      image_suffix: bidrag-person-hendelse
+      tag: bidrag-person-hendelse
+
+
+  deploy_kafka_topic_preprod:
+    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod')
+    name: "Deploy Kafka-topic til preprod"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Deploy personhendelse Kafka-topic til dev
+        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: .nais/bidrag-person-hendelse/kafka/personhendelse.v1/topic_preprod.yml
+          PRINT_PAYLOAD: true
+
+  deploy_kafka_topic_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Deploy Kafka-topic til prod"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Deploy personhendelse Kafka-topic til prod
+        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: .nais/bidrag-person-hendelse/kafka/personhendelse.v1/topic_prod.yml
+          PRINT_PAYLOAD: true

@@ -1,0 +1,79 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 30
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 30
+    timeout: 5
+    periodSeconds: 5
+    failureThreshold: 10
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      cpu: {{limits.cpu}}
+      memory: {{limits.memory}}
+    requests:
+      cpu: {{requests.cpu}}
+      memory: {{requests.memory}}
+  replicas:
+    disableAutoScaling: true
+    max: {{replicas.max}}
+    min: {{replicas.min}}
+  maskinporten:
+    enabled: true
+    scopes:
+      consumes:
+        - name: "nav:bidrag/v1/bidragskrav" #Q1
+        - name: "skatteetaten:barnebidragreskontro"
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azure.inbound.rules}}
+      - application: {{this.application}}
+        namespace: {{this.namespace}}
+        cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      external:
+        - host: {{ env.SKATT_HOST }}
+      rules:
+        - application: logging
+          namespace: nais-system

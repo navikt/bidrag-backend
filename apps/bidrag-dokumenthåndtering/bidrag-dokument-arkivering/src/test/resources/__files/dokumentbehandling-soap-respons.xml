@@ -1,0 +1,12 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Body>
+    <b:hentDokumentResponse xmlns:a="http://www.w3.org/2005/05/xmlmime" xmlns:b="http://dokumentbehandling.brevogarkiv.tjenester.nav.no/">
+      <response>
+        <knappStatus>7</knappStatus>
+        <dokumentData>
+          <xop:Include href="cid:b87dfba26ff239a1aeec1806c97d8077db325fa606a597be@apache.org" xmlns:xop="http://www.w3.org/2004/08/xop/include"/>
+        </dokumentData>
+      </response>
+    </b:hentDokumentResponse>
+  </soapenv:Body>
+</soapenv:Envelope>

@@ -1,0 +1,71 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+  image: {{ image }}
+  tokenx:
+    enabled: true
+  azure:
+    application:
+      allowAllUsers: true
+      enabled: true
+      claims:
+        extra:
+          - "azp_name"
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azure.inbound.rules}}
+         - application: {{this.application}}
+           namespace: {{this.namespace}}
+           cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      rules:
+      - application: logging
+        namespace: nais-system
+  webproxy: true
+  liveness:
+    path: /bidrag-person/actuator/health
+    initialDelay: 20
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /bidrag-person/actuator/health
+    initialDelay: 20
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /bidrag-person/actuator/prometheus
+  resources:
+    limits:
+      memory: 2024Mi
+    requests:
+      cpu: 200m
+      memory: 1500Mi
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+      - name: JAVA_TOOL_OPTIONS
+        value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  {{#each env}}
+      - name: {{@key }}
+        value: "{{this}}"
+  {{/each}}
+  envFrom:
+    - secret: bidrag-person-serviceuser

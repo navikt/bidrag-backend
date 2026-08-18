@@ -1,0 +1,84 @@
+{
+  "aarMaaned": "2020-06",
+  "arbeidsInntektInformasjon": "ArbeidsInntektInformasjon",
+  "inntektListe": [
+    {
+      "inntektType": "LOENNSINNTEKT",
+      "beloep": "5000",
+      "fordel": "naturalytelse",
+      "inntektskilde": "A-ordningen",
+      "inntektsperiodetype": "Maaned",
+      "inntektsstatus": "LoependeInnrapportert",
+      "leveringstidspunkt": null,
+      "opptjeningsland": null,
+      "opptjeningsperiodeFom": "2020-06-01",
+      "opptjeningsperiodeTom": "2020-06-30",
+      "utbetaltIMaaned": "2020-06",
+      "opplysningspliktig": {
+        "identifikator": "979692900",
+        "aktoerType": "ORGANISASJON"
+      },
+      "virksomhet": {
+        "identifikator": "979821506",
+        "aktoerType": "ORGANISASJON"
+      },
+      "tilleggsinformasjon": {
+        "kategori": "Periode",
+        "tilleggsinformasjonDetaljer": {
+          "detaljerType": "ETTERBETALINGSPERIODE",
+          "etterbetalingsperiodeFom": "2018-05-18",
+          "etterbetalingsperiodeTom": "2018-06-01"
+        }
+      },
+      "inntektsmottaker": {
+        "identifikator": "12345678901",
+        "aktoerType": "NATURLIG_IDENT"
+      },
+      "inngaarIGrunnlagForTrekk": "true",
+      "utloeserArbeidsgiveravgift": "false",
+      "informasjonsstatus": "InngaarAlltid",
+      "beskrivelse": "skattepliktigDelForsikringer",
+      "skatteOgAvgiftsregel": null,
+      "antall": null
+    },
+    {
+      "inntektType": "LOENNSINNTEKT",
+      "beloep": "17000",
+      "fordel": "kontantytelse",
+      "inntektskilde": "A-ordningen",
+      "inntektsperiodetype": "Maaned",
+      "inntektsstatus": "LoependeInnrapportert",
+      "leveringstidspunkt": null,
+      "opptjeningsland": null,
+      "opptjeningsperiodeFom": "2020-06-01",
+      "opptjeningsperiodeTom": "2020-06-30",
+      "utbetaltIMaaned": "2020-06",
+      "opplysningspliktig": {
+        "identifikator": "979692900",
+        "aktoerType": "ORGANISASJON"
+      },
+      "virksomhet": {
+        "identifikator": "979821506",
+        "aktoerType": "ORGANISASJON"
+      },
+      "tilleggsinformasjon": {
+        "kategori": "Periode",
+        "tilleggsinformasjonDetaljer": {
+          "detaljerType": "ETTERBETALINGSPERIODE",
+          "etterbetalingsperiodeFom": "2018-06-18",
+          "etterbetalingsperiodeTom": "2018-07-01"
+        }
+      },
+      "inntektsmottaker": {
+        "identifikator": "12345678901",
+        "aktoerType": "NATURLIG_IDENT"
+      },
+      "inngaarIGrunnlagForTrekk": "true",
+      "utloeserArbeidsgiveravgift": "false",
+      "informasjonsstatus": "InngaarAlltid",
+      "beskrivelse": "feriepenger",
+      "skatteOgAvgiftsregel": null,
+      "antall": null
+    }
+  ]
+}

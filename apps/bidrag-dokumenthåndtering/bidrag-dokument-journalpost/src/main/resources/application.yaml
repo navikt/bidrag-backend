@@ -1,0 +1,128 @@
+####################################################################
+#
+# Common properties
+#
+###################################################################
+springdoc:
+  packages-to-scan: no.nav.bidrag.dokument.journalpost.controller
+  show-login-endpoint: false
+  swagger-ui.path: /swagger-ui.html
+server:
+  servlet:
+    context-path: /bidrag-dokument-journalpost
+
+management:
+  health:
+    jms:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+spring.main.banner-mode: off
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+
+mq:
+  hostname: ${MQ_HOSTNAME}
+  port: ${MQ_PORT}
+  name: ${MQ_QUEUE_MANAGER}
+  channel: ${MQ_CHANNEL}
+  brevserverQueue: ${BREVSERVER_ONLINEBREV}
+  username: ${SRVJOURNALPOST_USERNAME}
+  password: ${SRVJOURNALPOST_PASSWORD}
+  appname: ${NAIS_APP_NAME:bidrag-dokument-journalpost}
+
+---
+####################################################################
+#
+# Live: DB2 datasource properties
+#
+####################################################################
+
+spring.config.activate.on-profile: live, integration-db2
+spring.config:
+    jpa:
+      hibernate:
+        ddl-auto: validate
+      database-platform: org.hibernate.dialect.DB2Dialect
+---
+
+####################################################################
+#
+# Live: Properties for configuring OIDC from OpenAM
+#
+####################################################################
+
+spring:
+  config.activate.on-profile: live, integration-abac, integration-db2
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS}
+    properties:
+      security.protocol: SSL
+      ssl:
+        keystore:
+          type: PKCS12
+          location: ${KAFKA_KEYSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+        truststore:
+          location: ${KAFKA_TRUSTSTORE_PATH}
+          password: ${KAFKA_CREDSTORE_PASSWORD}
+        endpoint.identification.algorithm:
+        producer:
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+no.nav.security.jwt:
+  client:
+    registration:
+      oppgave:
+        resource-url: ${OPPGAVE_OPPGAVER_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${OPPGAVE_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      organisasjon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${ORGANISASJON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      brevserver-nais:
+        resource-url: ${BREVSERVER_NAIS_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BREVSERVER_NAIS_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-tilgangskontroll:
+        resource-url: ${BIDRAG_TILGANGSKONTROLL_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_TILGANGSKONTROLL_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+    proxy_url: http://webproxy.nais:8088

@@ -1,0 +1,237 @@
+# Verdiene for beregning av bidragsevne oppdateres normalt med virkning fra 1. juli hvert år.
+# https://lovdata.no/nav/rundskriv/v1-55-02
+
+Bidragspliktigs kostnader:
+  2026-07-01:
+    Boutgifter:
+      Bor alene:             12.408,-
+      Deler bolig:            7.833,-
+    Underhold:
+      Bor alene:             12.330,-
+      Deler bolig:           10.442,-
+    Underhold egne barn:      4.652,-      
+
+  2025-07-01:
+    Boutgifter:
+      Bor alene:             11.977,-
+      Deler bolig:            7.561,-
+    Underhold:
+      Bor alene:             11.902,-
+      Deler bolig:           10.079,-
+    Underhold egne barn:      4.315,-      
+
+  2024-07-01:
+    Boutgifter:
+      Bor alene:             11.708,-
+      Deler bolig:            7.391,-
+    Underhold:
+      Bor alene:             11.634,-
+      Deler bolig:            9.852,-
+    Underhold egne barn:      4.253,-
+
+  2023-07-01:
+    Boutgifter:
+      Bor alene:             11.051,-
+      Deler bolig:            6.770,-
+    Underhold:
+      Bor alene:             11.112,-
+      Deler bolig:            9.410,-
+    Underhold egne barn:      4.177,-
+
+  2022-07-01:
+    Boutgifter:
+      Bor alene:             10.328,-
+      Deler bolig:            6.327,-
+    Underhold:
+      Bor alene:             10.385,-
+      Deler bolig:            8.794,-
+    Underhold egne barn:      3.852,-
+
+  2021-07-01:
+    Boutgifter:
+      Bor alene:             10.008,-
+      Deler bolig:            6.131,-
+    Underhold:
+      Bor alene:             10.063,-
+      Deler bolig:            8.521,-
+    Underhold egne barn:      3.811,-
+
+  2020-07-01:
+    Boutgifter:
+      Bor alene:              9.764,-
+      Deler bolig:            5.981,-
+    Underhold:
+      Bor alene:              9.818,-
+      Deler bolig:            8.313,-
+    Underhold egne barn:      3.841,-
+
+  2019-07-01:
+    Boutgifter:
+      Bor alene:              9.591,-
+      Deler bolig:            5.875,-
+    Underhold:
+      Bor alene:              8.925,-
+      Deler bolig:            7.557,-
+    Underhold egne barn:      3.487,-
+
+  2018-07-01:
+    Boutgifter:
+      Bor alene:              9.303,-
+      Deler bolig:            5.698,-
+    Underhold:
+      Bor alene:              8.657,-
+      Deler bolig:            7.330,-
+    Underhold egne barn:      3.417,-
+
+  2017-07-01:
+    Boutgifter:
+      Bor alene:              9.156,-
+      Deler bolig:            5.609,-
+    Underhold:
+      Bor alene:              8.521,-
+      Deler bolig:            7.215,-
+    Underhold egne barn:      3.365,-
+
+  2016-07-01:
+    Boutgifter:
+      Bor alene:              8.907,-
+      Deler bolig:            5.456,-
+    Underhold:
+      Bor alene:              8.289,-
+      Deler bolig:            7.018,-
+    Underhold egne barn:      3.294,-
+
+  2015-07-01:
+    Boutgifter:
+      Bor alene:              7.711,-
+      Deler bolig:            5.073,-
+    Underhold:
+      Bor alene:              8.048,-
+      Deler bolig:            6.814,-
+    Underhold egne barn:      3.150,-
+
+  2014-07-01:
+    Boutgifter:
+      Bor alene:              7.560,-
+      Deler bolig:            4.974,-
+    Underhold:
+      Bor alene:              7.890,-
+      Deler bolig:            6.680,-
+    Underhold egne barn:      3.091,-
+
+  2013-07-01:
+    Boutgifter:
+      Bor alene:              7.390,-
+      Deler bolig:            4.862,-
+    Underhold:
+      Bor alene:              7.713,-
+      Deler bolig:            6.530,-
+    Underhold egne barn:      2.943,-
+
+  2012-07-01:
+    Boutgifter:
+      Bor alene:              7.295,-
+      Deler bolig:            4.800,-
+    Underhold:
+      Bor alene:              7.614,-
+      Deler bolig:            6.446,-
+    Underhold egne barn:      2.931,-
+
+  2011-07-01:
+    Boutgifter:
+      Bor alene:              7.259,-
+      Deler bolig:            4.776,-
+    Underhold:
+      Bor alene:              7.576,-
+      Deler bolig:            6.414,-
+    Underhold egne barn:      2.886,-
+
+  2010-07-01:
+    Boutgifter:
+      Bor alene:              6.495,-
+      Deler bolig:            4.488,-
+    Underhold:
+      Bor alene:              7.427,-
+      Deler bolig:            6.288,-
+    Underhold egne barn:      2.824,-
+
+  2009-07-01:
+    Boutgifter:
+      Bor alene:              6.113,-
+      Deler bolig:            4.323,-
+    Underhold:
+      Bor alene:              7.246,-
+      Deler bolig:            6.135,-
+    Underhold egne barn:      2.614,-
+
+  2009-01-01: # Kun underhold egne barn er endret
+    Boutgifter:
+      Bor alene:              5.243,-
+      Deler bolig:            3.906,-
+    Underhold:
+      Bor alene:              7.090,-
+      Deler bolig:            6.003,-
+    Underhold egne barn:      2.470,-
+
+  2008-07-01:
+    Boutgifter:
+      Bor alene:              5.243,-
+      Deler bolig:            3.906,-
+    Underhold:
+      Bor alene:              7.090,-
+      Deler bolig:            6.003,-
+    Underhold egne barn:      2.380,-
+
+  2007-07-01:
+    Boutgifter:
+      Bor alene:              4.638,-
+      Deler bolig:            3.364,-
+    Underhold:
+      Bor alene:              6.837,-
+      Deler bolig:            5.789,-
+    Underhold egne barn:      2.170,-
+
+  2006-07-01:
+    Boutgifter:
+      Bor alene:              4.556,-
+      Deler bolig:            3.040,-
+    Underhold:
+      Bor alene:              6.756,-
+      Deler bolig:            5.720,-
+    Underhold egne barn:      1.960,-
+
+  2005-07-01:
+    Boutgifter:
+      Bor alene:              4.544,-
+      Deler bolig:            2.806,-
+    Underhold:
+      Bor alene:              6.637,-
+      Deler bolig:            5.619,-
+    Underhold egne barn:      2.030,-
+
+  2004-07-01:
+    Boutgifter:
+      Bor alene:              4.761,-
+      Deler bolig:            2.826,-
+    Underhold:
+      Bor alene:              6.565,-
+      Deler bolig:            5.558,-
+    Underhold egne barn:      1.840,-
+
+  2004-01-01:
+    Boutgifter:
+      Bor alene:              4.313,-
+      Deler bolig:            2.631,-
+    Underhold:
+      Bor alene:              6.565,-
+      Deler bolig:            5.558,-
+    Underhold egne barn:      1.880,-
+
+  2003-01-01:
+    Boutgifter:
+      Bor alene:              4.313,-
+      Deler bolig:            2.631,-
+    Underhold:
+      Bor alene:              6.245,-
+      Deler bolig:            5.287,-
+    Underhold egne barn:      1.560,- #0019

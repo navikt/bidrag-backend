@@ -1,0 +1,50 @@
+{
+  "data": {
+    "personBolk": [
+      {
+        "code": "ok",
+        "ident": "250884230",
+        "person": {
+          "adressebeskyttelse": [
+            {
+              "gradering": "STRENGT_FORTROLIG"
+            }
+          ]
+        }
+      },
+      {
+        "code": "ok",
+        "ident": "091186325",
+        "person": {
+          "adressebeskyttelse": [
+            {
+              "gradering": "STRENGT_FORTROLIG_UTLAND"
+            }
+          ]
+        }
+      },
+      {
+        "code": "ok",
+        "ident": "111193325",
+        "person": {
+          "adressebeskyttelse": [
+            {
+              "gradering": "UGRADERT"
+            }
+          ]
+        }
+      },
+      {
+        "code": "ok",
+        "ident": "180777782",
+        "person": {
+          "adressebeskyttelse": [
+            {
+              "gradering": "FORTROLIG"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

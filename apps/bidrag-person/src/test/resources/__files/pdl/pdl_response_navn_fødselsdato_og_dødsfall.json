@@ -1,0 +1,24 @@
+{
+  "data": {
+    "hentPerson": {
+      "foedselsdato": [
+        {
+          "foedselsdato": "2000-10-17",
+          "foedselsaar": "2000"
+        }
+      ],
+      "doedsfall": [
+        {
+          "doedsdato": "2022-01-17"
+        }
+      ],
+      "navn": [
+        {
+          "fornavn": "Blå",
+          "mellomnavn": "Mellomfornøyd",
+          "etternavn": "Skilpadde"
+        }
+      ]
+    }
+  }
+}

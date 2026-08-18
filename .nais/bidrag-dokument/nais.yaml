@@ -1,0 +1,74 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+  azure:
+    application:
+      allowAllUsers: true
+      enabled: true
+      claims:
+        extra:
+          - "azp_name"
+  accessPolicy:
+    outbound:
+        rules:
+         - application: logging
+           namespace: nais-system
+    inbound:
+      rules:
+      {{#each azure.inbound.rules}}
+        - application: {{this.application}}
+          namespace: {{this.namespace}}
+          cluster: {{this.cluster}}
+      {{/each}}
+  webproxy: true
+  image: {{ image }}
+  liveness:
+    path: /bidrag-dokument/actuator/health
+    initialDelay: 20
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /bidrag-dokument/actuator/health
+    initialDelay: 20
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /bidrag-dokument/actuator/prometheus
+  resources:
+    requests:
+      cpu: {{ cpu.requests }}
+      memory: {{ memory.requests }}
+    limits:
+      memory: {{ memory.limits }}
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}
+  vault:
+    enabled: true
+    paths:
+      - kvPath: /serviceuser/data/{{ path }}/srvbidrag-dokument
+        mountPath: /var/run/secrets/nais.io/srvbidrag-dokument

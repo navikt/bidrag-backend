@@ -1,0 +1,31 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "778",
+  "vedtakstidspunkt": "2022-01-02T00:00:00.000000000",
+  "enhetsnummer": "4812",
+  "opprettetAv": "B101173",
+  "kildeapplikasjon": "TEST",
+  "opprettetTidspunkt": "2022-01-02T16:00:23.254988482",
+  "stønadsendringListe": [
+  ],
+  "engangsbeløpListe": [
+    {
+      "type": "GEBYR_SKYLDNER",
+      "sak": "2200381",
+      "skyldner": "",
+      "kravhaver": "NAV",
+      "mottaker": "NAV",
+      "beløp": "1700",
+      "valutakode": "NOK",
+      "resultatkode": "GIGI",
+      "referanse": "GEBYR_SKYLDNER_REFERANSE",
+      "delytelseId": "12345",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    }
+  ],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

@@ -1,0 +1,7 @@
+##### ABAC #####
+ABAC_PDP_ENDPOINT_URL: https://wasapp-q0.adeo.no/asm-pdp/authorize
+ABAC_USERNAME: srvbdjournalpost
+
+##### Bidrag #####
+PIP_URL: https://bidrag-sak.nais.preprod.local/bidrag-sak
+PIP_USERNAME: srvbdjournalpost

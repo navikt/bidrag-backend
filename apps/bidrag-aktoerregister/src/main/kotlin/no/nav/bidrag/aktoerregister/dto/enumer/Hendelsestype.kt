@@ -1,0 +1,13 @@
+package no.nav.bidrag.aktoerregister.dto.enumer
+
+enum class Hendelsestype {
+    IDENT_OPPDATERING,
+    NAVN_OPPDATERING,
+    KONTONUMMER_OPPDATERING,
+    ADRESSE_OPPDATERING,
+    FODT_DATO_OPPDATERING,
+    DOD_DATO_OPPDATERING,
+    GRADERING_OPPDATERING,
+    DODSBO_OPPDATERING,
+    SPRAK_OPPDATERING,
+}

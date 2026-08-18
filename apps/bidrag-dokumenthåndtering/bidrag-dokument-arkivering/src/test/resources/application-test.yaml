@@ -1,0 +1,33 @@
+server.port: 8085
+
+logging.level.org.springframework.web.client.RestTemplate: DEBUG
+BIDRAG_DOKUMENT_URL: http://localhost:${wiremock.server.port:1234}/bidrag-dokument
+SRVBDARKIVERING_PWD: topp hemmelig
+DOKARKIV_URL: http://localhost:${wiremock.server.port:1234}
+AZURE_ISSUER_URL: http://localhost:${mock-oauth2-server.port:1234}/aad
+SECURITY_TOKEN_SERVICE_URL: http://localhost:${wiremock.server.port:1234}
+
+SRVBIDRAG_USERNAME: srvbidrag
+SRVBIDRAG_PASSWORD: bareForTest
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-dokument:
+        token-endpoint-url: ${AZURE_ISSUER_URL}/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://pdl/.default
+        authentication:
+          client-id: id
+          client-secret: secret
+          client-auth-method: client_secret_post
+      dokarkiv:
+        token-endpoint-url: ${AZURE_ISSUER_URL}/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://pdl/.default
+        authentication:
+          client-id: id
+          client-secret: secret
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:0}/aad/.well-known/openid-configuration
+    accepted_audience: aud-localhost

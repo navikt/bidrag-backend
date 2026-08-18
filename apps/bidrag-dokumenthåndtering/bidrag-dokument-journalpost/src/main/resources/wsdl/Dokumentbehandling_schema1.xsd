@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema version="1.0" targetNamespace="http://dokumentbehandling.brevogarkiv.tjenester.nav.no/" xmlns:tns="http://dokumentbehandling.brevogarkiv.tjenester.nav.no/" xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:import namespace="http://www.w3.org/2005/05/xmlmime" schemaLocation="./xmlmime.xsd"/>
+  <xs:element name="avbrytDokument" type="tns:avbrytDokument"/>
+
+  <xs:element name="avbrytDokumentResponse" type="tns:avbrytDokumentResponse"/>
+
+  <xs:element name="ferdigstillDokument" type="tns:ferdigstillDokument"/>
+
+  <xs:element name="ferdigstillDokumentResponse" type="tns:ferdigstillDokumentResponse"/>
+
+  <xs:element name="hentDokument" type="tns:hentDokument"/>
+
+  <xs:element name="hentDokumentResponse" type="tns:hentDokumentResponse"/>
+
+  <xs:element name="lagreDokument" type="tns:lagreDokument"/>
+
+  <xs:element name="lagreDokumentResponse" type="tns:lagreDokumentResponse"/>
+
+  <xs:element name="ping" type="tns:ping"/>
+
+  <xs:element name="pingResponse" type="tns:pingResponse"/>
+
+  <xs:complexType name="hentDokument">
+    <xs:sequence>
+      <xs:element name="request" type="tns:HentDokumentRequest" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HentDokumentRequest">
+    <xs:sequence>
+      <xs:element name="brevreferanse" type="xs:string"/>
+      <xs:element name="systemId" type="xs:string"/>
+      <xs:element name="token" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="hentDokumentResponse">
+    <xs:sequence>
+      <xs:element name="response" type="tns:HentDokumentResponse" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="HentDokumentResponse">
+    <xs:sequence>
+      <xs:element name="knappStatus" type="xs:string"/>
+      <xs:element name="dokumentData" xmime:expectedContentTypes="application/octet-stream" type="xs:base64Binary"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ferdigstillDokument">
+    <xs:sequence>
+      <xs:element name="request" type="tns:FerdigstillDokumentRequest" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FerdigstillDokumentRequest">
+    <xs:sequence>
+      <xs:element name="brevreferanse" type="xs:string"/>
+      <xs:element name="systemId" type="xs:string"/>
+      <xs:element name="token" type="xs:string"/>
+      <xs:element name="kvitteringskoe" type="xs:string" minOccurs="0"/>
+      <xs:element name="malpakke" type="xs:string" minOccurs="0"/>
+      <xs:element name="nyttDokument" type="xs:boolean"/>
+      <xs:element name="brukerId" type="xs:string"/>
+      <xs:element name="redDokument" xmime:expectedContentTypes="application/octet-stream" type="xs:base64Binary"/>
+      <xs:element name="pdfDokument" xmime:expectedContentTypes="application/octet-stream" type="xs:base64Binary"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ferdigstillDokumentResponse">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="ping">
+    <xs:sequence>
+      <xs:element name="request" type="tns:PingRequest" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PingRequest">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="pingResponse">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="avbrytDokument">
+    <xs:sequence>
+      <xs:element name="request" type="tns:AvbrytDokumentRequest" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AvbrytDokumentRequest">
+    <xs:sequence>
+      <xs:element name="brevreferanse" type="xs:string"/>
+      <xs:element name="systemId" type="xs:string"/>
+      <xs:element name="token" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="avbrytDokumentResponse">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="lagreDokument">
+    <xs:sequence>
+      <xs:element name="request" type="tns:LagreDokumentRequest" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="LagreDokumentRequest">
+    <xs:sequence>
+      <xs:element name="brevreferanse" type="xs:string"/>
+      <xs:element name="systemId" type="xs:string"/>
+      <xs:element name="token" type="xs:string"/>
+      <xs:element name="kvitteringskoe" type="xs:string" minOccurs="0"/>
+      <xs:element name="malpakke" type="xs:string" minOccurs="0"/>
+      <xs:element name="nyttDokument" type="xs:boolean"/>
+      <xs:element name="brukerId" type="xs:string"/>
+      <xs:element name="dokumentData" xmime:expectedContentTypes="application/octet-stream" type="xs:base64Binary"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="lagreDokumentResponse">
+    <xs:sequence/>
+  </xs:complexType>
+</xs:schema>
+

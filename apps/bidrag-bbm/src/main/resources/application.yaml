@@ -1,0 +1,33 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.bbm.api
+  swagger-ui:
+    path: /
+spring.main.banner-mode: off
+
+
+---
+spring.config.activate.on-profile: nais,lokal-nais
+spring:
+  application:
+    name: "bidrag-bbm"
+  datasource:
+    bbm:
+      url: jdbc:db2://${DB_HOST}:${DB_PORT}/${DB_NAME}:currentSchema=${BBM_DB_SCHEMA};
+      username: ${BBM_DB_USERNAME}
+      password: ${BBM_DB_PASSWORD}
+      driver-class-name: com.ibm.db2.jcc.DB2Driver
+    bisys:
+      url: jdbc:db2://${DB_HOST}:${DB_PORT}/${DB_NAME}:currentSchema=${BISYS_DB_SCHEMA};
+      username: ${BISYS_DB_USERNAME}
+      password: ${BISYS_DB_PASSWORD}
+      driver-class-name: com.ibm.db2.jcc.DB2Driver
+no.nav.security.jwt:
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}

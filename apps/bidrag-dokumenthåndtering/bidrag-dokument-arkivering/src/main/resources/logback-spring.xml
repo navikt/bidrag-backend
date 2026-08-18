@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <mdc/>
+        <timestamp/>
+        <message/>
+        <loggerName/>
+        <threadName/>
+        <logLevel/>
+        <callerData/>
+        <arguments/>
+        <stackTrace/>
+      </providers>
+    </encoder>
+  </appender>
+
+  <springProfile name="test">
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+      <layout class="ch.qos.logback.classic.PatternLayout">
+        <Pattern>
+          %d{yyyy-MM-dd HH:mm:ss} %X{correlationId} [%thread] %-5level %logger{70} - %msg%n
+        </Pattern>
+      </layout>
+    </appender>
+  </springProfile>
+  <logger name="org.apache.cxf.ext.logging.LoggingFeature" additivity="false" level="ERROR"/>
+  <logger name="org.apache.cxf.services.Dokumentbehandling.DokumentbehandlingPort.DokumentbehandlingPortType" additivity="false" level="ERROR"/>
+  <root level="info">
+    <appender-ref ref="stdout_json"/>
+  </root>
+</configuration>

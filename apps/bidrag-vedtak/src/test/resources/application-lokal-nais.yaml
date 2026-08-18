@@ -1,0 +1,13 @@
+NAIS_APP_NAME: bidrag-vedtak-local
+spring:
+  flyway.enabled: false
+  datasource:
+  type: com.zaxxer.hikari.HikariDataSource
+  url: jdbc:postgresql://localhost:${DB_PORT:5454}/${DB_DATABASE:bidrag-vedtak}?user=${DB_USERNAME:cloudsqliamuser}&password=${DB_PASSWORD:admin}
+  jpa.hibernate.hbmddl-auto: create-drop
+no.nav.security.jwt:
+  issuer:
+    aad:
+      discoveryurl: ${AZURE_APP_WELL_KNOWN_URL}
+      accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+server.port: 8889

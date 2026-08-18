@@ -1,0 +1,5 @@
+name: bidrag-sjablon
+ingresses:
+  - https://bidrag-sjablon.intern.nav.no/
+  - https://bidrag-sjablon.nais.adeo.no/
+  - https://bidrag-sjablon.prod-fss-pub.nais.io

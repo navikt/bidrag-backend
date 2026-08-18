@@ -1,0 +1,37 @@
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad
+AZURE_APP_TENANT_ID: 12321321-123213-3213123
+AZURE_APP_CLIENT_ID: aud-localhost
+AZURE_APP_CLIENT_SECRET: asdasdsad214123sadas
+NAIS_APP_NAME: bidrag-bbm
+
+DB_HOST: localhost
+DB_PORT: 5555
+DB_NAME: bbm
+
+#logging:
+#  level:
+#    org:
+#      hibernate:
+#        type:
+#          descriptor:
+#            sql: trace
+#      flywaydb: debug
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+    generate-ddl: true
+    hibernate:
+      ddl-auto: create
+  config.activate.on-profile: test, local
+  datasource:
+    bbm:
+      url: jdbc:h2:mem:;MODE=DB2;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
+    bisys:
+      url: jdbc:h2:mem:;MODE=DB2;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
+no.nav.security.jwt:
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:0}/aad/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}

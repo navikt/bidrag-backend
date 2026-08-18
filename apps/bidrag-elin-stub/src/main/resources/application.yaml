@@ -1,0 +1,27 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.elin.stub
+  swagger-ui:
+    path: /
+
+spring.main.banner-mode: off
+spring.mvc.problemdetails.enabled: true
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+---
+spring.config.activate.on-profile: nais,local
+no.nav.security.jwt:
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+no.nav.security.jwt.issuer.maskinporten:
+  discovery-url: ${MASKINPORTEN_WELL_KNOWN_URL}
+  accepted_audience: ${MASKINPORTEN_AUDIENCE}
+  # Claims som ikke støttes av Maskinporten. Audience (aud) kan legges til men er ikke nødvendig. Sub and nbf finnes ikke i claimet og må derfor settes som optional.
+  validation.optional-claims: aud,sub,nbf

@@ -1,0 +1,26 @@
+{
+    "data": {
+        "hentPerson": {
+            "adressebeskyttelse": [],
+            "oppholdsadresse": []
+        },
+        "hentGeografiskTilknytning": {
+            "gtType": "UTLAND",
+            "gtLand": "SWE"
+        },
+        "hentIdenter": {
+            "identer": [
+                {
+                    "ident": "{ident}",
+                    "historisk": false,
+                    "gruppe": "FOLKEREGISTERIDENT"
+                },
+                {
+                    "ident": "{aktørId}",
+                    "historisk": false,
+                    "gruppe": "AKTORID"
+                }
+            ]
+        }
+    }
+}

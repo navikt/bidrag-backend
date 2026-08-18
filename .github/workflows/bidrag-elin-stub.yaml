@@ -1,0 +1,32 @@
+name: Bidrag-elin-stub
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+      - '!main'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-elin-stub/**.yaml'
+#      - '.github/workflows/bidrag-elin-stub.yaml' //TODO(Slå på etter migrering)
+#     - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-elin-stub/**'
+
+jobs:
+  build_and_deploy:
+    name: "Build and deploy"
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-elin-stub -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-elin-stub/pom.xml
+      ktlint_paths: apps/bidrag-elin-stub/src/**/*.kt
+      docker_context: ./apps/bidrag-elin-stub
+      nais_variabler_filnavn: bidrag-elin-stub/main.yaml
+      nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
+      image_suffix: bidrag-elin-stub

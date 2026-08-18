@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  mq:
+    container_name: ibmmq_container
+    image: ibmcom/mq:latest
+    restart: always
+    environment:
+      LICENSE: accept
+      MQ_QMGR_NAME: MQ1LSC02
+    ports:
+      - "1414:1414"
+      - "9443:9443"
+    volumes:
+      - qm1data:/mnt/mqm
+  db2:
+    image: ibmcom/db2
+    privileged: true
+    ports:
+      - 50000:50000
+    environment:
+      DB2INSTANCE: bisys
+      DB2INST1_PASSWORD: apassword
+      LICENSE: accept
+      DBNAME: QDB2
+    volumes:
+      - db2data:/mnt/data
+
+volumes:
+  qm1data:
+  db2data:

@@ -1,0 +1,26 @@
+ACCESS_TOKEN_URL: https://security-token-service.dev.adeo.no
+ARBEIDSFORDELING_URL: https://norg2.dev.adeo.no/norg2/api/v1
+SKJERMING_URL: https://skjermede-personer-pip.dev.intern.nav.no
+PERSON_URL: https://bidrag-person-feature.dev.intern.nav.no/bidrag-person
+LDAP_URL: ldaps://ldapgw.test.local
+SRVBIDRAG_USERNAME: srvbidrag-organisa
+LDAP_USERNAME: srvSSOLinux
+LDAP_DOMAIN: TEST.LOCAL
+LDAP_BASEDN: dc=test,dc=local
+SKJERMING_SCOPE: dev-gcp.nom.skjermede-personer-pip
+PERSON_SCOPE: dev-fss.bidrag.bidrag-person
+AZURE_APP_WELL_KNOWN_URL: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0/.well-known/openid-configuration
+AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token
+AZURE_OPENID_CONFIG_ISSUER: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0
+AZURE_APP_TENANT_ID: 966ac572-f5b7-4bbe-aa88-c76419c0f851
+SRVBIDRAG_PASSWORD: CHANGEME
+LDAP_PASSWORD: CHANGEME
+AZURE_APP_CLIENT_ID: <changeme>
+ENTRA_PROXY_URL: https://entra-proxy.dev.intern.nav.no
+ENTRAPROXY_SCOPE: dev-gcp.org.entra-proxy
+
+cache:
+  warming:
+    enabled: false
+    enheter: 4806
+

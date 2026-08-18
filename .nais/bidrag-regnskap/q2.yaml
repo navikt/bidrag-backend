@@ -1,0 +1,67 @@
+name: bidrag-regnskap-q2
+ingresses:
+  - https://bidrag-regnskap-q2.intern.dev.nav.no
+limits:
+  memory: 2048Mi
+requests:
+  cpu: 50m
+  memory: 512Mi
+replicas:
+  max: 1
+  min: 1
+
+kafka:
+  pool: nav-dev
+database:
+  navn: bidrag-regnskap-q2
+  tier: db-f1-micro
+  size: 10
+  auditlog: "on"
+bucket:
+  navn: bidrag-regnskap-q2
+maskinporten:
+  url: https://test.maskinporten.no
+env:
+  SPRING_PROFILES_ACTIVE: database-new
+  SKATT_URL: https://tolking2predator-proxy-ske-elin.synt.elin.innkreving.skatteetaten-test.no/Tolkning2PredatorV2.RestApi
+  SKATT_HOST: tolking2predator-proxy-ske-elin.synt.elin.innkreving.skatteetaten-test.no
+  TOPIC_VEDTAK: bidrag.vedtak-q2
+  TOPIC_PERSONHENDELSE: bidrag.personhendelse.v1
+  PERSON_HENDELSE_KAFKA_GROUP_ID_SISTE: personhendelse.v1.bidrag-regnskap
+  BUCKET_NAME: bidrag-regnskap-q2
+  SFTP_HOST: sftp-q.nav.no
+  SFTP_SKAL_OVERFORE_FIL: true
+  SAK_URL: https://bidrag-sak-q2.dev-fss-pub.nais.io
+  SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q2
+  SAK_HOST: bidrag-sak-q2.dev-fss-pub.nais.io
+  PERSON_URL: https://bidrag-person-q2.dev-fss-pub.nais.io/bidrag-person
+  PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+  PERSON_HOST: bidrag-person-q2.dev-fss-pub.nais.io
+  BIDRAG_VEDTAK_URL: https://bidrag-vedtak-q2.intern.dev.nav.no
+  BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q2
+  BIDRAG_VEDTAK_HOST: bidrag-vedtak-q2.intern.dev.nav.no
+  BIDRAG_RESKONTRO_URL: https://bidrag-reskontro-q2.intern.dev.nav.no
+  BIDRAG_RESKONTRO_SCOPE: dev-gcp.bidrag.bidrag-reskontro-q2
+  BIDRAG_RESKONTRO_HOST: bidrag-reskontro-q2.intern.dev.nav.no
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  MASKINPORTEN_SCOPES: "skatteetaten:barnebidragkrav"
+  KONTERINGER_FORELDET_DATO: 2006-04
+  SEND_KRAV_CRON: "0 */10 * * * *" #Hvert 10. minutt
+  RESEND_KRAV_CRON: "0 2 4 * * *" #Hver dag kl 04:02
+  BEHANDLINGSSTATUS_CRON: "0 25 * * * *" #Hver time 25 minutter over hel
+  AVSTEMNING_CRON: "0 15 0 * * *" #Hver dag kl 00:15
+  PALOSKJORING_CRON: "0 5 * * * *" #Hver time 5 minutter over hel
+  SLACK_CHANNEL_ID: C05HQPLTFAA
+  KAFKA_AUTO_OFFSET_RESET: latest
+azure:
+  inbound:
+    rules:
+      - application: bisys
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-vedtak-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: azure-token-generator
+        namespace: nais
+        cluster: dev-gcp

@@ -1,0 +1,129 @@
+FAMILIEBASAK_URL: http://localhost:${wiremock.server.port}/familiebasak
+FAMILIEEFSAK_URL: http://localhost:${wiremock.server.port}/familieefsak
+PENSJON_URL: http://localhost:${wiremock.server.port}/pensjon
+INNTEKTSKOMPONENTEN_URL: http://localhost:${wiremock.server.port}/inntektskomponenten
+SIGRUN_URL: http://localhost:${wiremock.server.port}/sigrun
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/bidragperson
+#KONTANTSTOTTE_URL: http://localhost:${wiremock.server.https-port}/kontantstotte
+FAMILIEKSSAK_URL: http://localhost:${wiremock.server.port}/familiekssak
+AAREG_URL: http://localhost:${wiremock.server.port}/aareg
+EREG_URL: http://localhost:${wiremock.server.port}/ereg
+NORGESBANK_URL: http://localhost:${wiremock.server.port}/norgesbank
+BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
+TILLEGGSSTONADERSAK_URL: http://localhost:${wiremock.server.port}/tilleggsstonadersak
+NAIS_APP_NAME: bidrag-grunnlag
+spring:
+  config.activate.on-profile: local
+  flyway.enabled: false
+  datasource.type: com.zaxxer.hikari.HikariDataSource
+  datasource.url: jdbc:h2:mem:default
+  #  datasource.url: jdbc:h2:file:/Users/R153961/Dev/bidrag-grunnlag/src/main/resources/data
+  h2.console.enabled: true
+  jpa.hibernate.hbmddl-auto: create-drop
+
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-organisasjon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      familie-ba-sak:
+        resource-url: ${FAMILIEBASAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      familie-ef-sak:
+        resource-url: ${FAMILIEEFSAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      familie-ks-sak:
+        resource-url: ${FAMILIEKSSAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      inntektskomponenten:
+        resource-url: ${INNTEKTSKOMPONENTEN_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      sigrun:
+        resource-url: ${SIGRUN_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      pensjon:
+        resource-url: ${PENSJON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      arbeidsforhold:
+        resource-url: ${AAREG_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+      tilleggsstønad:
+        resource-url: ${TILLEGGSSTONADERSAK_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://123/.default
+        authentication:
+          client-id: 123
+          client-secret: 123
+          client-auth-method: client_secret_basic
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port:1234}/aad/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}, aud-localhost
+spring.kafka:
+  properties:
+    schema:
+      registry.url: http://unused-dummy-url
+      security.protocol: PLAINTEXT
+  consumer:
+    group-id: test
+    auto-offset-reset: earliest
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

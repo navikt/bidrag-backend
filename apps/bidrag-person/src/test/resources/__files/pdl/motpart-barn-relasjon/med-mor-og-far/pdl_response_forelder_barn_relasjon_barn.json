@@ -1,0 +1,18 @@
+{
+  "data": {
+    "hentPerson": {
+      "forelderBarnRelasjon": [
+        {
+          "relatertPersonsIdent": "21508703020",
+          "relatertPersonsRolle": "MOR",
+          "minRolleForPerson": "BARN"
+        },
+        {
+          "relatertPersonsIdent": "07456732334",
+          "relatertPersonsRolle": "FAR",
+          "minRolleForPerson": "BARN"
+        }
+      ]
+    }
+  }
+}

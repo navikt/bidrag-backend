@@ -1,0 +1,62 @@
+name: bidrag-organisasjon
+ingresses:
+  - https://bidrag-organisasjon.nais.adeo.no
+  - https://bidrag-organisasjon.intern.nav.no
+  - https://bidrag-organisasjon.prod-fss-pub.nais.io
+env:
+  ARBEIDSFORDELING_URL: https://norg2.nais.adeo.no/norg2/api/v1
+  SKJERMING_URL: https://skjermede-personer-pip.intern.nav.no
+  PERSON_URL: https://bidrag-person.intern.nav.no/bidrag-person
+  LDAP_URL: ldaps://ldapgw.adeo.no
+  PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  SKJERMING_SCOPE: prod-gcp.nom.skjermede-personer-pip
+  ENTRA_PROXY_URL: https://entraproxy.intern.nav.no
+  ENTRAPROXY_SCOPE: prod-gcp.sikkerhetstjenesten.entra-proxy
+vault:
+  kvPath: prod
+  secretPath: prod
+azure:
+  inbound:
+    rules:
+      - application: bidrag-dokument-arkiv
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-journalpost
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-arbeidsflyt
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-sak
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-dokument-forsendelse
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bisys
+        namespace: bidrag
+        cluster: prod-fss
+      - application: bidrag-vedtak
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-grunnlag
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-behandling
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-automatisk-jobb
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-admin
+        namespace: bidrag
+        cluster: prod-gcp
+      - application: bidrag-frontend
+        namespace: bidrag
+        cluster: prod-gcp

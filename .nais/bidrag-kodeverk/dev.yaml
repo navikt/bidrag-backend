@@ -1,0 +1,55 @@
+name: bidrag-kodeverk
+ingresses:
+  - https://bidrag-kodeverk.intern.dev.nav.no
+env:
+  KODEVERK_URL: https://kodeverk-api.nav.no
+  KODEVERK_SCOPE: dev-gcp.team-rocket.kodeverk-api
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure_access_inbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-ui-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-bestilling
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-bestilling-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-behandling-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-samhandler-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-samhandler-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-samhandler-q4
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-frontend-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-frontend-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+outbound-access-hosts:
+  - kodeverk-api.nav.no

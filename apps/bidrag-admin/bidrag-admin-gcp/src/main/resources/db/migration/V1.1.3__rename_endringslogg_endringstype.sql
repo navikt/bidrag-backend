@@ -1,0 +1,1 @@
+alter table endringslogg rename column endringstype to endringstyper;

@@ -1,0 +1,45 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "id": "6",
+  "opprettetAv": "O163248",
+  "kildeapplikasjon": "TEST",
+  "vedtakstidspunkt": "2022-02-28T00:00:00.000000000",
+  "enhetsnummer": "4817",
+  "innkrevingUtsattTilDato": null,
+  "opprettetTidspunkt": "2022-02-28T16:00:23.254988482",
+  "stønadsendringListe": [],
+  "engangsbeløpListe": [
+    {
+      "type": "ETTERGIVELSE",
+      "sak": "0809545",
+      "skyldner": "",
+      "kravhaver": "",
+      "mottaker": "",
+      "beløp": 11599.00,
+      "valutakode": "NOK",
+      "resultatkode": "HE",
+      "delytelseId": "26681284",
+      "referanse": "ETTERGIVELSE_REFERANSE1",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    },
+    {
+      "type": "ETTERGIVELSE",
+      "sak": "0809545",
+      "skyldner": "",
+      "kravhaver": "",
+      "mottaker": "",
+      "beløp": 11001.00,
+      "valutakode": "NOK",
+      "resultatkode": "HE",
+      "referanse": "ETTERGIVELSE_REFERANSE2",
+      "delytelseId": "26681285",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    }
+  ],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

@@ -1,0 +1,91 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  accessPolicy:
+    outbound:
+        rules:
+         - application: logging
+           namespace: nais-system
+    inbound:
+      rules:
+      {{#each azure_access_inbound}}
+         - application: {{application}}
+           namespace: {{namespace}}
+           cluster: {{cluster}}
+           {{#if permissions}}
+           permissions:
+             roles:
+             {{#each permissions.roles}}
+                 - {{this}}
+             {{/each}}
+             scopes:
+              {{#each permissions.scopes}}
+                  - {{this}}
+              {{/each}}
+             {{/if}}
+      {{/each}}
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  kafka:
+    pool: {{ kafka.pool }}
+  image: {{ image }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 30
+    timeout: 1
+    periodSeconds: 10
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 30
+    periodSeconds: 10
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      memory: 2024Mi
+    requests:
+      cpu: 200m
+      memory: 1000Mi
+  replicas:
+    disableAutoScaling: true
+    max: 2
+    min: 2
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+    - name: {{this.name}}
+      value: "{{this.value}}"
+  {{/each}}
+  envFrom:
+    - secret: {{database.secret_name}}
+    - secret: bidrag-sak-serviceuser
+    - secret: {{unleash.secret_name}}
+  filesFrom:
+    - secret: db2license
+      mountPath: /var/run/secrets/db2license
+  webproxy: true

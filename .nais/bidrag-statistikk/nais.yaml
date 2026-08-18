@@ -1,0 +1,68 @@
+apiVersion: "nais.io/v1alpha1"
+kind: Application
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+  azure:
+    application:
+      enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  accessPolicy:
+    outbound:
+      rules:
+      {{#each outbound-access-apps}}
+          - application: {{this}}
+      {{/each}}
+          - application: logging
+            namespace: nais-system
+  image: {{ image }}
+  kafka:
+    pool: {{ kafka.pool }}
+  liveness:
+    path: /actuator/health
+    initialDelay: 120
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 70
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      cpu: {{ spec.resources.limits.cpu }}
+      memory: {{ spec.resources.limits.memory }}
+    requests:
+      cpu: {{ spec.resources.requests.cpu }}
+      memory: {{ spec.resources.requests.memory }}
+  replicas:
+    cpuThresholdPercentage: 80
+    min: {{ spec.replicas.min }}
+    max: {{ spec.replicas.max }}
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}

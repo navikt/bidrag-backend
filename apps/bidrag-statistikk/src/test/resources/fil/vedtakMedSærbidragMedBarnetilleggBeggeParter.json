@@ -1,0 +1,944 @@
+{
+  "vedtaksid": 1411,
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "opprettetAv": "Z990313",
+  "opprettetAvNavn": "F_Z990313 E_Z990313",
+  "kildeapplikasjon": "bidrag-behandling-q2",
+  "vedtakstidspunkt": "2026-08-17T08:34:25.911971",
+  "unikReferanse": "behandling_1910_20260817082809",
+  "enhetsnummer": "4806",
+  "innkrevingUtsattTilDato": null,
+  "fastsattILand": null,
+  "opprettetTidspunkt": "2026-08-17T08:34:26.847326",
+  "grunnlagListe": [
+    {
+      "referanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "ident": "30528732328",
+        "fødselsdato": "1987-12-30",
+        "delAvOpprinneligBehandling": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "ident": "23418445645",
+        "fødselsdato": "1984-01-23",
+        "delAvOpprinneligBehandling": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "02422177550",
+        "fødselsdato": "2021-02-02",
+        "bidragsmottaker": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+        "delAvOpprinneligBehandling": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+      "type": "PERSON_HUSSTANDSMEDLEM",
+      "innhold": {
+        "ident": "18421572271",
+        "fødselsdato": "2015-02-18",
+        "delAvOpprinneligBehandling": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+      "type": "PERSON_HUSSTANDSMEDLEM",
+      "innhold": {
+        "ident": "06521554922",
+        "fødselsdato": "2015-12-06",
+        "delAvOpprinneligBehandling": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "bostatus_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_20260801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08"
+        },
+        "bostatus": "BOR_IKKE_MED_ANDRE_VOKSNE",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "bostatus_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08"
+        },
+        "bostatus": "IKKE_MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_HUSSTANDSMEDLEM_20151206_6840_20260801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08"
+        },
+        "bostatus": "IKKE_MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_HUSSTANDSMEDLEM_20151206_6840"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_HUSSTANDSMEDLEM_20150218_6842_20260801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08"
+        },
+        "bostatus": "IKKE_MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_HUSSTANDSMEDLEM_20150218_6842"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842"
+    },
+    {
+      "referanse": "inntekt_BARNETILLEGG_BARNETILLEGG_AAP_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11292",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 14400,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "gjelderBarn": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+        "inntektspostListe": [
+          {
+            "kode": "BARNETILLEGG",
+            "beløp": 1200,
+            "beløpstype": "MÅNEDSBELØP",
+            "inntektstype": "BARNETILLEGG_AAP"
+          }
+        ],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "BARNETILLEGG"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+    },
+    {
+      "referanse": "inntekt_BARNETILLEGG_BARNETILLEGG_DAGPENGER_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11293",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 6000,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "gjelderBarn": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+        "inntektspostListe": [
+          {
+            "kode": "BARNETILLEGG",
+            "beløp": 500,
+            "beløpstype": "MÅNEDSBELØP",
+            "inntektstype": "BARNETILLEGG_DAGPENGER"
+          }
+        ],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "BARNETILLEGG"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+    },
+    {
+      "referanse": "inntekt_SAKSBEHANDLER_BEREGNET_INNTEKT_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_20260801_11291",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 300000,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "inntektspostListe": [],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "SAKSBEHANDLER_BEREGNET_INNTEKT"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "inntekt_BARNETILLEGG_BARNETILLEGG_DAGPENGER_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11289",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 12000,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "gjelderBarn": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+        "inntektspostListe": [
+          {
+            "kode": "BARNETILLEGG",
+            "beløp": 1000,
+            "beløpstype": "MÅNEDSBELØP",
+            "inntektstype": "BARNETILLEGG_DAGPENGER"
+          }
+        ],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "BARNETILLEGG"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "gjelderBarnReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+    },
+    {
+      "referanse": "inntekt_BARNETILLEGG_BARNETILLEGG_STOREBRAND_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11290",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 24000,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "gjelderBarn": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+        "inntektspostListe": [
+          {
+            "kode": "BARNETILLEGG",
+            "beløp": 2000,
+            "beløpstype": "MÅNEDSBELØP",
+            "inntektstype": "BARNETILLEGG_STOREBRAND"
+          }
+        ],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "BARNETILLEGG"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "gjelderBarnReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+    },
+    {
+      "referanse": "inntekt_SAKSBEHANDLER_BEREGNET_INNTEKT_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_20260801_11288",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 200000,
+        "periode": {
+          "fom": "2026-08"
+        },
+        "inntektspostListe": [],
+        "manueltRegistrert": true,
+        "inntektsrapportering": "SAKSBEHANDLER_BEREGNET_INNTEKT"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "Upraktisk Fot",
+          "perioder": [],
+          "relasjon": "BARN",
+          "fødselsdato": "2021-02-02",
+          "gjelderPerson": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2026-08-17T08:28:16.000191"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "Anstendig Fugl",
+          "perioder": [],
+          "relasjon": "BARN",
+          "fødselsdato": "2015-12-06",
+          "gjelderPerson": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2026-08-17T08:28:16.000191"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "Diskret Komposisjon",
+          "perioder": [],
+          "relasjon": "BARN",
+          "fødselsdato": "2015-02-18",
+          "gjelderPerson": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2026-08-17T08:28:16.000191"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "type": "INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN",
+      "innhold": [],
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "utgiftsposter",
+      "type": "UTGIFTSPOSTER",
+      "innhold": [
+        {
+          "dato": "2026-08-10",
+          "type": "TANNREGULERING",
+          "kommentar": "",
+          "betaltAvBp": false,
+          "kravbeløp": 2000,
+          "godkjentBeløp": 2000
+        },
+        {
+          "dato": "2026-08-05",
+          "type": "TANNREGULERING",
+          "kommentar": "",
+          "betaltAvBp": false,
+          "kravbeløp": 17000,
+          "godkjentBeløp": 17000
+        }
+      ],
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "utgift_direkte_betalt",
+      "type": "UTGIFT_DIREKTE_BETALT",
+      "innhold": {
+        "beløpDirekteBetalt": 0
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "notat_UTGIFTER_kun_i_notat",
+      "type": "NOTAT",
+      "innhold": {
+        "type": "UTGIFTER",
+        "innhold": "<p>eeee</p>",
+        "fraOmgjortVedtak": false,
+        "erMedIVedtaksdokumentet": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "søknad",
+      "type": "SØKNAD",
+      "innhold": {
+        "søktAv": "BIDRAGSMOTTAKER",
+        "egetTiltak": false,
+        "saksnummer": "2400150",
+        "mottattDato": "2026-07-10",
+        "paragraf35c": false,
+        "privatAvtale": false,
+        "søktFraDato": "2026-08-01",
+        "behandlerenhet": "4806",
+        "innkrevingsgrunnlag": false,
+        "begrensetRevurdering": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "virkningstidspunkt",
+      "type": "VIRKNINGSTIDSPUNKT",
+      "innhold": {
+        "virkningstidspunkt": "2026-08-01"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "særbidrag_kategori",
+      "type": "SÆRBIDRAG_KATEGORI",
+      "innhold": {
+        "kategori": "TANNREGULERING"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_BARN_I_HUSSTAND_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_BARN_I_HUSSTAND",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "antallBarn": 0
+      },
+      "grunnlagsreferanseListe": [
+        "bostatus_person_PERSON_HUSSTANDSMEDLEM_20150218_6842_20260801",
+        "bostatus_person_PERSON_HUSSTANDSMEDLEM_20151206_6840_20260801",
+        "bostatus_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_BIDRAGSEVNE_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+      "type": "DELBEREGNING_BIDRAGSEVNE",
+      "innhold": {
+        "skatt": {
+          "sumSkatt": 54703,
+          "trinnskatt": 1651.4,
+          "trygdeavgift": 24350.4,
+          "minstefradrag": 75400,
+          "sumSkattFaktor": 0,
+          "skattAlminneligInntekt": 28701.2
+        },
+        "beløp": 0,
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "sumInntekt25Prosent": 0,
+        "underholdBarnEgenHusstand": 0
+      },
+      "grunnlagsreferanseListe": [
+        "delberegning_DELBEREGNING_BOFORHOLD_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "Sjablon_Bidragsevne_20260701",
+        "Sjablon_MinstefradragInntektBeløp_20260701",
+        "Sjablon_MinstefradragInntektProsent_20220101",
+        "Sjablon_PersonfradragKlasse1Beløp_20260701",
+        "Sjablon_SkattesatsAlminneligInntektProsent_20190101",
+        "Sjablon_TrinnvisSkattesats_20260101",
+        "Sjablon_TrygdeavgiftProsent_20260101",
+        "Sjablon_UnderholdEgneBarnIHusstandBeløp_20260701"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+      "type": "DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "andelBeløp": 10941.05,
+        "barnEndeligInntekt": 0,
+        "endeligAndelFaktor": 0.575844716,
+        "beregnetAndelFaktor": 0.575844716,
+        "barnetErSelvforsørget": false
+      },
+      "grunnlagsreferanseListe": [
+        "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "delberegning_utgift",
+        "Sjablon_ForskuddssatsBeløp_20260701"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+      "type": "DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "beregnetBidragPerBarnListe": [
+          {
+            "vedtaksid": 1069,
+            "saksnummer": "2400150",
+            "valutakode": "NOK",
+            "gjelderBarn": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+            "faktiskBeløp": 5830,
+            "beregnetBeløp": 5830,
+            "beregnetBidrag": 3237,
+            "løpendeBeløp": 2610,
+            "samværsklasse": "SAMVÆRSKLASSE_1",
+            "samværsfradrag": 627,
+            "erVedtakKildeBBM": false,
+            "reduksjonUnderholdskostnad": 0,
+            "bruttoBidragEtterBarnetilleggBM": 6303.66,
+            "bruttoBidragEtterBarnetilleggBP": 6303.66,
+            "bidragJustertForNettoBarnetilleggBP": false
+          },
+          {
+            "vedtaksid": 1248,
+            "saksnummer": "2400150",
+            "valutakode": "NOK",
+            "gjelderBarn": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+            "faktiskBeløp": 7700,
+            "beregnetBeløp": 7700,
+            "beregnetBidrag": 2610,
+            "løpendeBeløp": 2610,
+            "samværsklasse": "SAMVÆRSKLASSE_0",
+            "samværsfradrag": 0,
+            "erVedtakKildeBBM": false,
+            "reduksjonUnderholdskostnad": 0,
+            "bruttoBidragEtterBarnetilleggBM": 7700.36,
+            "bruttoBidragEtterBarnetilleggBP": 7700.36,
+            "bidragJustertForNettoBarnetilleggBP": false
+          }
+        ],
+        "bidragspliktigesBeregnedeTotalbidrag": 5847
+      },
+      "grunnlagsreferanseListe": [
+        "løpende_bidrag_bidragspliktig",
+        "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+        "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+        "Sjablon_Samværsfradrag_person_PERSON_HUSSTANDSMEDLEM_20150218_6842_20260701",
+        "Sjablon_Samværsfradrag_person_PERSON_HUSSTANDSMEDLEM_20151206_6840_20260701"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_BOFORHOLD_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_BOFORHOLD",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08"
+        },
+        "antallBarn": 0,
+        "borMedAndreVoksne": false
+      },
+      "grunnlagsreferanseListe": [
+        "delberegning_DELBEREGNING_BARN_I_HUSSTAND_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+        "delberegning_DELBEREGNING_VOKSNE_I_HUSSTAND_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_SUM_INNTEKT",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "barnetillegg": 36000,
+        "totalinntekt": 236000,
+        "skattepliktigInntekt": 200000
+      },
+      "grunnlagsreferanseListe": [
+        "inntekt_BARNETILLEGG_BARNETILLEGG_DAGPENGER_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11289",
+        "inntekt_BARNETILLEGG_BARNETILLEGG_STOREBRAND_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11290",
+        "inntekt_SAKSBEHANDLER_BEREGNET_INNTEKT_person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985_20260801_11288"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19871230_1721253985",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_SUM_INNTEKT",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "barnetillegg": 20400,
+        "totalinntekt": 320400,
+        "skattepliktigInntekt": 300000
+      },
+      "grunnlagsreferanseListe": [
+        "inntekt_BARNETILLEGG_BARNETILLEGG_AAP_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11292",
+        "inntekt_BARNETILLEGG_BARNETILLEGG_DAGPENGER_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_ba_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_20260801_11293",
+        "inntekt_SAKSBEHANDLER_BEREGNET_INNTEKT_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_20260801_11291"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_SUM_INNTEKT_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_SUM_INNTEKT",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "totalinntekt": 0
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_utgift",
+      "type": "DELBEREGNING_UTGIFT",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "sumGodkjent": 19000,
+        "sumBetaltAvBp": 0
+      },
+      "grunnlagsreferanseListe": [
+        "utgiftsposter",
+        "utgift_direkte_betalt"
+      ],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_VOKSNE_I_HUSSTAND_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608",
+      "type": "DELBEREGNING_VOKSNE_I_HUSSTAND",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "borMedAndreVoksne": false
+      },
+      "grunnlagsreferanseListe": [
+        "bostatus_person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956_20260801"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "løpende_bidrag_bidragspliktig",
+      "type": "LØPENDE_BIDRAG",
+      "innhold": {
+        "løpendeBidragListe": [
+          {
+            "type": "BIDRAG",
+            "vedtaksid": 1069,
+            "saksnummer": "2400150",
+            "valutakode": "NOK",
+            "gjelderBarn": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+            "faktiskBeløp": 5830,
+            "beregnetBeløp": 5834.66,
+            "løpendeBeløp": 2610,
+            "samværsklasse": "SAMVÆRSKLASSE_1",
+            "erVedtakKildeBBM": false,
+            "bruttoBidragEtterBarnetilleggBM": 6303.66,
+            "bruttoBidragEtterBarnetilleggBP": 6303.66,
+            "bidragJustertForNettoBarnetilleggBP": false
+          },
+          {
+            "type": "BIDRAG",
+            "vedtaksid": 1248,
+            "saksnummer": "2400150",
+            "valutakode": "NOK",
+            "gjelderBarn": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+            "faktiskBeløp": 7700,
+            "beregnetBeløp": 7700.36,
+            "løpendeBeløp": 2610,
+            "samværsklasse": "SAMVÆRSKLASSE_0",
+            "erVedtakKildeBBM": false,
+            "bruttoBidragEtterBarnetilleggBM": 7700.36,
+            "bruttoBidragEtterBarnetilleggBP": 7700.36,
+            "bidragJustertForNettoBarnetilleggBP": false
+          }
+        ]
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19840123_-1386529956",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_Bidragsevne_20260701",
+      "type": "SJABLON_BIDRAGSEVNE",
+      "innhold": {
+        "periode": {
+          "fom": "2026-07"
+        },
+        "bostatus": "",
+        "boutgiftBeløp": 12408,
+        "underholdBeløp": 12330
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_Samværsfradrag_person_PERSON_HUSSTANDSMEDLEM_20150218_6842_20260701",
+      "type": "SJABLON_SAMVARSFRADRAG",
+      "innhold": {
+        "periode": {
+          "fom": "2026-07"
+        },
+        "alderTom": 0,
+        "beløpFradrag": 627,
+        "antallDagerTom": 0,
+        "samværsklasse": "",
+        "antallNetterTom": 0
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20150218_6842",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_Samværsfradrag_person_PERSON_HUSSTANDSMEDLEM_20151206_6840_20260701",
+      "type": "SJABLON_SAMVARSFRADRAG",
+      "innhold": {
+        "periode": {
+          "fom": "2026-07"
+        },
+        "alderTom": 0,
+        "beløpFradrag": 0,
+        "antallDagerTom": 0,
+        "samværsklasse": "",
+        "antallNetterTom": 0
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20151206_6840",
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_ForskuddssatsBeløp_20260701",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 2080,
+        "periode": {
+          "fom": "2026-07"
+        },
+        "sjablon": "FORSKUDDSSATS_BELØP"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_MinstefradragInntektBeløp_20260701",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 75400,
+        "periode": {
+          "fom": "2026-07"
+        },
+        "sjablon": "MINSTEFRADRAG_INNTEKT_BELØP"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_MinstefradragInntektProsent_20220101",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 40,
+        "periode": {
+          "fom": "2022-01"
+        },
+        "sjablon": "MINSTEFRADRAG_INNTEKT_PROSENT"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_PersonfradragKlasse1Beløp_20260701",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 114540,
+        "periode": {
+          "fom": "2026-07"
+        },
+        "sjablon": "PERSONFRADRAG_KLASSE1_BELØP"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_SkattesatsAlminneligInntektProsent_20190101",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 22,
+        "periode": {
+          "fom": "2019-01"
+        },
+        "sjablon": "SKATTESATS_ALMINNELIG_INNTEKT_PROSENT"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_TrygdeavgiftProsent_20260101",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 7.6,
+        "periode": {
+          "fom": "2026-01"
+        },
+        "sjablon": "TRYGDEAVGIFT_PROSENT"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_UnderholdEgneBarnIHusstandBeløp_20260701",
+      "type": "SJABLON_SJABLONTALL",
+      "innhold": {
+        "verdi": 4652,
+        "periode": {
+          "fom": "2026-07"
+        },
+        "sjablon": "UNDERHOLD_EGNE_BARN_I_HUSSTAND_BELØP"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "Sjablon_TrinnvisSkattesats_20260101",
+      "type": "SJABLON_TRINNVIS_SKATTESATS",
+      "innhold": {
+        "periode": {
+          "fom": "2026-01"
+        },
+        "trinnliste": [
+          {
+            "sats": 1.7,
+            "inntektsgrense": 226100
+          },
+          {
+            "sats": 4,
+            "inntektsgrense": 318300
+          },
+          {
+            "sats": 13.7,
+            "inntektsgrense": 725050
+          },
+          {
+            "sats": 16.8,
+            "inntektsgrense": 980100
+          },
+          {
+            "sats": 17.8,
+            "inntektsgrense": 1467200
+          }
+        ]
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": null
+    },
+    {
+      "referanse": "sluttberegning_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+      "type": "SLUTTBEREGNING_SÆRBIDRAG",
+      "innhold": {
+        "periode": {
+          "fom": "2026-08",
+          "til": "2026-09"
+        },
+        "resultatKode": "SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE",
+        "beregnetBeløp": 10941.05
+      },
+      "grunnlagsreferanseListe": [
+        "delberegning_DELBEREGNING_BIDRAGSEVNE_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+        "delberegning_DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609",
+        "delberegning_DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609"
+      ],
+      "gjelderReferanse": "person_PERSON_SØKNADSBARN_20210202_null_-1261383727",
+      "gjelderBarnReferanse": null
+    }
+  ],
+  "stønadsendringListe": [],
+  "engangsbeløpListe": [
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2400150",
+      "skyldner": "23418445645",
+      "kravhaver": "02422177550",
+      "mottaker": "30528732328",
+      "beløp": null,
+      "valutakode": "NOK",
+      "resultatkode": "SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "omgjørVedtakId": null,
+      "referanse": "behandling_1910_20260817082809_SÆRBIDRAG",
+      "delytelseId": null,
+      "eksternReferanse": null,
+      "grunnlagReferanseListe": [
+        "notat_UTGIFTER_kun_i_notat",
+        "søknad",
+        "virkningstidspunkt",
+        "særbidrag_kategori",
+        "sluttberegning_person_PERSON_SØKNADSBARN_20210202_null_-1261383727_202608_202609"
+      ],
+      "betaltBeløp": 0
+    }
+  ],
+  "behandlingsreferanseListe": [
+    {
+      "kilde": "BEHANDLING_ID",
+      "referanse": "1910"
+    },
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "50014156"
+    }
+  ]
+}

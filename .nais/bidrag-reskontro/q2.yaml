@@ -1,0 +1,45 @@
+name: bidrag-reskontro-q2
+ingresses:
+  - https://bidrag-reskontro-q2.intern.dev.nav.no
+limits:
+  memory: 1028Mi
+requests:
+  cpu: 50m
+  memory: 206Mi
+replicas:
+  max: 1
+  min: 1
+maskinporten:
+  url: https://test.maskinporten.no
+env:
+  SKATT_URL: https://ske-elin-api-bisysresk.synt.elin.innkreving.skatteetaten-test.no
+  SKATT_HOST: ske-elin-api-bisysresk.synt.elin.innkreving.skatteetaten-test.no
+  MASKINPORTEN_SCOPES: "skatteetaten:barnebidragreskontro"
+  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure:
+  inbound:
+    rules:
+      - application: bisys
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-dokument-bestilling
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-regnskap-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-automatisk-jobb-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: azure-token-generator
+        namespace: nais
+        cluster: dev-gcp
+      - application: bidrag-ui
+        namespace: bidrag
+        cluster: dev-fss
+      - application: bidrag-frontend-q2
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-localauth
+        namespace: bidrag
+        cluster: dev-gcp

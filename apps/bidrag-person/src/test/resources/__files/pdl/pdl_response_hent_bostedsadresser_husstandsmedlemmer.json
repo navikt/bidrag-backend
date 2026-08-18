@@ -1,0 +1,78 @@
+{
+  "data": {
+    "hentPerson": {
+      "bostedsadresse": [
+        {
+          "angittFlyttedato": "1977-05-18",
+          "gyldigFraOgMed": "1977-05-18T00:00",
+          "gyldigTilOgMed": null,
+          "coAdressenavn": null,
+          "ukjentBosted": null,
+          "metadata": {
+            "master": "FREG"
+          },
+          "matrikkeladresse": null,
+          "vegadresse": {
+            "postnummer": "1613",
+            "adressenavn": "Oredalsåsen",
+            "husnummer": "48",
+            "husbokstav": null,
+            "bruksenhetsnummer": "H203",
+            "tilleggsnavn": null,
+            "kommunenummer": "3004",
+            "bydelsnummer": null
+          },
+          "utenlandskAdresse": null
+        }
+      ],
+      "bostedsadresse": [
+        {
+          "angittFlyttedato": "1983-03-01",
+          "gyldigFraOgMed": "1983-03-01T00:00",
+          "gyldigTilOgMed": null,
+          "coAdressenavn": null,
+          "ukjentBosted": null,
+          "metadata": {
+            "master": "FREG"
+          },
+          "matrikkeladresse": null,
+          "vegadresse": {
+            "postnummer": "2422",
+            "adressenavn": "Etheltannetsted",
+            "husnummer": "5",
+            "husbokstav": null,
+            "bruksenhetsnummer": "H301",
+            "tilleggsnavn": null,
+            "kommunenummer": "2003",
+            "bydelsnummer": null
+          },
+          "utenlandskAdresse": null
+        }
+      ],
+      "bostedsadresse": [
+        {
+          "angittFlyttedato": "1999-12-17",
+          "gyldigFraOgMed": "1999-12-17T00:00",
+          "gyldigTilOgMed": null,
+          "coAdressenavn": null,
+          "ukjentBosted": null,
+          "metadata": {
+            "master": "FREG"
+          },
+          "matrikkeladresse": null,
+          "vegadresse": {
+            "postnummer": "8888",
+            "adressenavn": "Nordreisa",
+            "husnummer": "17",
+            "husbokstav": null,
+            "bruksenhetsnummer": null,
+            "tilleggsnavn": null,
+            "kommunenummer": "8004",
+            "bydelsnummer": null
+          },
+          "utenlandskAdresse": null
+        }
+      ]
+    }
+  }
+}

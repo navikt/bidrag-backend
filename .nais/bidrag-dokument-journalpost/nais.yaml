@@ -1,0 +1,86 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+  annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "5000"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "5000"
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  image: {{ image }}
+  azure:
+    application:
+      allowAllUsers: true
+      enabled: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azure_access_inbound}}
+          - application: {{this.application}}
+            namespace: {{this.namespace}}
+            cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      external:
+        {{#each outbound-access-hosts}}
+            - host: {{this}}
+        {{/each}}
+      rules:
+      - application: logging
+        namespace: nais-system
+  webproxy: true
+  replicas:
+    min: {{min_replicas}}
+    max: 4
+  kafka:
+    pool: {{ kafka.pool }}
+  liveness:
+    path: /bidrag-dokument-journalpost/actuator/health
+    initialDelay: 60
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /bidrag-dokument-journalpost/actuator/health
+    initialDelay: 60
+    timeout: 1
+  prometheus:
+    enabled: true
+    path: /bidrag-dokument-journalpost/actuator/prometheus
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 3000Mi
+    requests:
+      cpu: 300m
+      memory: 2000Mi
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  envFrom:
+    - secret: {{database.secret_name}}
+    - secret: bidrag-dokument-journalpost-serviceuser
+  filesFrom:
+    - secret: db2license
+      mountPath: /var/run/secrets/db2license
+  env:
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}

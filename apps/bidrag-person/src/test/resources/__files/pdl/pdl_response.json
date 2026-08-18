@@ -1,0 +1,42 @@
+{
+  "data": {
+    "hentPerson": {
+      "adressebeskyttelse": [
+        {
+          "gradering": "STRENGT_FORTROLIG"
+        }
+      ],
+      "doedsfall": [
+        {
+          "doedsdato": "2021-09-29"
+        }
+      ],
+      "kjoenn": [
+        {
+          "kjoenn": "KVINNE"
+        }
+      ],
+      "navn": [
+        {
+          "fornavn": "BLÅ",
+          "mellomnavn": null,
+          "etternavn": "SKILPADDE"
+        }
+      ]
+    },
+    "hentIdenter": {
+      "identer": [
+        {
+          "ident": "{ident}",
+          "historisk": false,
+          "gruppe": "FOLKEREGISTERIDENT"
+        },
+        {
+          "ident": "{aktørId}",
+          "historisk": false,
+          "gruppe": "AKTORID"
+        }
+      ]
+    }
+  }
+}
