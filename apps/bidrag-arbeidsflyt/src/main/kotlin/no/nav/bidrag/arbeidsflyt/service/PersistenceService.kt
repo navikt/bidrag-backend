@@ -1,0 +1,170 @@
+package no.nav.bidrag.arbeidsflyt.service
+
+import jakarta.transaction.Transactional
+import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
+import no.nav.bidrag.arbeidsflyt.model.erEksterntFagomrade
+import no.nav.bidrag.arbeidsflyt.model.erMottattStatus
+import no.nav.bidrag.arbeidsflyt.model.hentTema
+import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
+import no.nav.bidrag.arbeidsflyt.persistence.entity.DLQKafka
+import no.nav.bidrag.arbeidsflyt.persistence.entity.Journalpost
+import no.nav.bidrag.arbeidsflyt.persistence.entity.Oppgave
+import no.nav.bidrag.arbeidsflyt.persistence.repository.BehandlingRepository
+import no.nav.bidrag.arbeidsflyt.persistence.repository.DLQKafkaRepository
+import no.nav.bidrag.arbeidsflyt.persistence.repository.JournalpostRepository
+import no.nav.bidrag.arbeidsflyt.persistence.repository.OppgaveRepository
+import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
+import no.nav.bidrag.transport.dokument.JournalpostHendelse
+import org.slf4j.LoggerFactory
+import org.springframework.dao.InvalidDataAccessApiUsageException
+import org.springframework.stereotype.Service
+
+@Service
+class PersistenceService(
+    private val oppgaveRepository: OppgaveRepository,
+    private val dlqKafkaRepository: DLQKafkaRepository,
+    private val journalpostRepository: JournalpostRepository,
+) {
+    companion object {
+        @JvmStatic
+        private val LOGGER = LoggerFactory.getLogger(PersistenceService::class.java)
+    }
+
+    fun hentJournalforingOppgave(oppgaveId: Long): Oppgave? = oppgaveRepository.findByOppgaveId(oppgaveId)?.takeIf { it.erJournalforingOppgave() }
+
+    fun hentOppgave(oppgaveId: Long): Oppgave? = oppgaveRepository.findByOppgaveId(oppgaveId)
+
+    fun hentJournalpostMedStatusMottatt(journalpostId: String): Journalpost? = journalpostRepository.findByJournalpostId(journalpostId)?.takeIf { it.erStatusMottatt && it.erBidragFagomrade }
+
+    @Transactional
+    fun lagreEllerOppdaterJournalpostFraHendelse(journalpostHendelse: JournalpostHendelse) {
+        val journalpostId = journalpostHendelse.journalpostId
+        if (!journalpostHendelse.erMottattStatus || journalpostHendelse.erEksterntFagomrade) {
+            deleteJournalpost(journalpostId)
+            LOGGER.info(
+                "Slettet journalpost $journalpostId fra hendelse fra databasen fordi status ikke lenger er MOTTATT eller er endret til ekstern fagområde (status=${journalpostHendelse.status}, fagomrade=${journalpostHendelse.hentTema()})",
+            )
+        } else {
+            saveOrUpdateMottattJournalpost(journalpostId, journalpostHendelse)
+            LOGGER.info("Lagret journalpost $journalpostId i databasen")
+        }
+    }
+
+    @Transactional
+    fun lagreDLQKafka(
+        topic: String,
+        key: String?,
+        payload: String,
+        retry: Boolean = true,
+    ) {
+        try {
+            dlqKafkaRepository.save(
+                DLQKafka(
+                    messageKey = key ?: "UKJENT",
+                    topicName = topic,
+                    payload = payload,
+                    retry = retry,
+                ),
+            )
+        } catch (e: Exception) {
+            LOGGER.error("Det skjedde en feil ved lagring av feilet kafka melding", e)
+        }
+    }
+
+    @Transactional
+    fun lagreJournalforingsOppgaveFraHendelse(oppgaveHendelse: OppgaveData) {
+        if (!oppgaveHendelse.erJournalforingOppgave && !oppgaveHendelse.erSøknadsoppgave) {
+            LOGGER.debug(
+                "Oppgave ${oppgaveHendelse.id} har oppgavetype ${oppgaveHendelse.oppgavetype}. Skal bare lagre oppgaver med type JFR. Lagrer ikke oppgave",
+            )
+            return
+        }
+        val oppgave =
+            Oppgave(
+                oppgaveId = oppgaveHendelse.id,
+                oppgavetype = oppgaveHendelse.oppgavetype!!,
+                status = oppgaveHendelse.status?.name!!,
+                journalpostId = oppgaveHendelse.journalpostId,
+                frist = oppgaveHendelse.fristFerdigstillelse,
+                søknadsoppgave = oppgaveHendelse.erSøknadsoppgave,
+                tildeltEnhetsnr = oppgaveHendelse.tildeltEnhetsnr,
+            )
+        oppgaveRepository.save(oppgave)
+        LOGGER.info("Lagret oppgave med id ${oppgaveHendelse.id} i databasen.")
+    }
+
+    @Transactional
+    fun oppdaterEllerSlettOppgaveMetadataFraHendelse(oppgaveHendelse: OppgaveData) {
+        if (oppgaveHendelse.erAapenJournalforingsoppgave() || oppgaveHendelse.erSøknadsoppgave) {
+            oppgaveRepository
+                .findByOppgaveId(oppgaveHendelse.id)
+                ?.apply {
+                    LOGGER.info("Oppdaterer oppgave ${oppgaveHendelse.id} i databasen")
+                    oppdaterOppgaveFraHendelse(oppgaveHendelse)
+                } ?: run {
+                LOGGER.info("Fant ingen oppgave med id ${oppgaveHendelse.id} i databasen. Lagrer opppgave")
+                lagreJournalforingsOppgaveFraHendelse(oppgaveHendelse)
+            }
+        }
+
+        if (oppgaveHendelse.erStatusKategoriAvsluttet) {
+            oppgaveRepository.deleteByOppgaveId(oppgaveHendelse.id)
+            LOGGER.info("Slettet oppgave ${oppgaveHendelse.id} fra databasen fordi oppgave ikke lenger er åpen journalføringsoppgave")
+        }
+    }
+
+    @Transactional
+    fun slettFeiledeMeldingerMedOppgaveid(oppgaveid: Long) {
+        try {
+            dlqKafkaRepository.deleteByMessageKey(oppgaveid.toString())
+        } catch (e: Exception) {
+            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med oppgaveid $oppgaveid", e)
+        }
+    }
+
+    @Transactional
+    fun slettFeiledeMeldingerMedJournalpostId(journalpostId: String) {
+        try {
+            dlqKafkaRepository.deleteByMessageKey(journalpostId)
+        } catch (e: Exception) {
+            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med journalpostid $journalpostId", e)
+        }
+    }
+
+    @Transactional
+    fun slettFeiledeMeldingerMedSøknadId(søknadId: Long) {
+        try {
+            dlqKafkaRepository.deleteByMessageKey(søknadId.toString())
+        } catch (e: Exception) {
+            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med søknadId $søknadId", e)
+        }
+    }
+
+    fun saveOrUpdateMottattJournalpost(
+        journalpostId: String,
+        journalpostHendelse: JournalpostHendelse,
+    ) {
+        journalpostRepository.findByJournalpostId(journalpostId)?.run {
+            journalpostRepository.save(
+                copy(
+                    status = journalpostHendelse.status?.name ?: this.status,
+                    enhet = journalpostHendelse.enhetKonvertert ?: this.enhet,
+                    tema = journalpostHendelse.hentTema() ?: this.tema,
+                ),
+            )
+        } ?: run {
+            journalpostRepository.save(
+                Journalpost(
+                    journalpostId = journalpostId,
+                    status = journalpostHendelse.status?.name ?: "UKJENT",
+                    tema = journalpostHendelse.hentTema() ?: "BID",
+                    enhet = journalpostHendelse.enhetKonvertert ?: "UKJENT",
+                ),
+            )
+        }
+    }
+
+    fun deleteJournalpost(journalpostId: String) {
+        journalpostRepository.deleteByJournalpostId(journalpostId)
+    }
+}

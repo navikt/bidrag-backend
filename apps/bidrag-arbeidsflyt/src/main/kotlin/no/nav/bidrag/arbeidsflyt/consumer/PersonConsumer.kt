@@ -1,0 +1,71 @@
+package no.nav.bidrag.arbeidsflyt.consumer
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.arbeidsflyt.CacheConfig.Companion.PERSON_CACHE
+import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
+import no.nav.bidrag.arbeidsflyt.model.HentArbeidsfordelingFeiletTekniskException
+import no.nav.bidrag.arbeidsflyt.model.HentPersonFeiletFunksjoneltException
+import no.nav.bidrag.commons.web.client.AbstractRestClient
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.person.PersonRequest
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
+import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.client.RestTemplate
+import org.springframework.web.util.UriComponentsBuilder
+import java.net.URI
+
+private val LOGGER = KotlinLogging.logger {}
+
+@Service
+class PersonConsumer(
+    @Value($$"${BIDRAG_PERSON_URL}") bidragPersonUrl: URI,
+    @Qualifier("azure") restTemplate: RestTemplate,
+    @Value($$"${retry.enabled:true}") val shouldRetry: Boolean,
+) : AbstractRestClient(restTemplate, "bidrag-person") {
+    private val hentPersonUri =
+        UriComponentsBuilder
+            .fromUri(bidragPersonUrl)
+            .pathSegment("bidrag-person")
+            .pathSegment("informasjon")
+            .build()
+            .toUri()
+
+    @Cacheable(PERSON_CACHE, unless = "#ident==null||#result==null")
+    @Retryable(
+        exceptionExpression = "@personConsumer.shouldRetry",
+        value = [HentArbeidsfordelingFeiletTekniskException::class],
+        maxAttempts = 10,
+        backoff = Backoff(delay = 2000, maxDelay = 30000, multiplier = 2.0),
+    )
+    fun hentPerson(ident: String?): PersonDto? {
+        if (ident == null) return null
+
+        try {
+            val response =
+                postForEntity<PersonDto>(
+                    hentPersonUri,
+                    PersonRequest(Personident(ident)),
+                )
+
+            if (response == null) {
+                SECURE_LOGGER.warn("Fant ingen person for ident $ident")
+                return null
+            }
+
+            return response
+        } catch (statusException: HttpStatusCodeException) {
+            if (statusException.statusCode.is4xxClientError) {
+                LOGGER.error(statusException) { "Det skjedde en feil ved henting av person" }
+                SECURE_LOGGER.error("Det skjedde en feil ved henting av person $ident", statusException)
+                throw HentPersonFeiletFunksjoneltException("Det skjedde en feil ved henting av person $ident", statusException)
+            }
+            throw HentArbeidsfordelingFeiletTekniskException("Det skjedde en teknisk feil ved henting av person $ident", statusException)
+        }
+    }
+}

@@ -1,0 +1,52 @@
+name: bidrag-arbeidsflyt
+kafka:
+  pool: nav-prod
+min_replicas: 2
+cpu:
+  limits: 1000m
+  requests: 300m
+env:
+  OPPGAVE_URL: https://oppgave.prod-fss-pub.nais.io
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.prod-fss-pub.nais.io
+  BIDRAG_TILGANGSKONTROLL_URL: http://bidrag-tilgangskontroll
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io/bidrag-sak
+  BIDRAG_BBM_URL: https://bidrag-bbm.prod-fss-pub.nais.io
+  BIDRAG_BEHANDLING_URL: http://bidrag-behandling
+
+  BIDRAG_BBM_SCOPE: prod-fss.bidrag.bidrag-bbm
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  OPPGAVE_SCOPE: prod-fss.oppgavehandtering.oppgave
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+  TILGANGSKONTROLL_SCOPE: prod-gcp.bidrag.bidrag-tilgangskontroll
+  BIDRAG_BEHANDLING_SCOPE: prod-gcp.bidrag.bidrag-behandling
+
+  TOPIC_VEDTAK_HENDELSE: bidrag.vedtak
+  TOPIC_BEHANDLING_HENDELSE: bidrag.behandling
+  TOPIC_OPPGAVE_HENDELSE: oppgavehandtering.oppgavehendelse-v1
+  TOPIC_DOKUMENT: bidrag.dokument
+  TOPIC_JOURNALPOST: bidrag.journalpost
+  SCHEDULER_FERDIGSTILL_BEHANDLING_DELAY: PT2M
+database:
+  dbname: bidrag-arbeidsflyt
+  autoResize: true
+  tier: db-g1-small
+ingresses:
+  - https://bidrag-arbeidsflyt.intern.nav.no
+outbound-access-apps:
+  - bidrag-tilgangskontroll
+  - bidrag-behandling
+outbound-access-hosts:
+   - bidrag-bbm.prod-fss-pub.nais.io
+   - bidrag-dokument.prod-fss-pub.nais.io
+   - bidrag-sak.prod-fss-pub.nais.io
+   - bidrag-person.prod-fss-pub.nais.io
+   - oppgave.prod-fss-pub.nais.io
+   - bidrag-organisasjon.prod-fss-pub.nais.io
+   - bidrag-unleash-api.nav.cloud.nais.io
+unleash:
+  env: production
+  secret_name: bidrag-arbeidsflyt-unleash-api-token

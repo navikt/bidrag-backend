@@ -1,0 +1,382 @@
+package no.nav.bidrag.arbeidsflyt.hendelse
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
+import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.patch
+import com.github.tomakehurst.wiremock.client.WireMock.patchRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
+import com.github.tomakehurst.wiremock.client.WireMock.verify
+import com.github.tomakehurst.wiremock.matching.ContainsPattern
+import com.github.tomakehurst.wiremock.stubbing.Scenario
+import io.mockk.mockkObject
+import no.nav.bidrag.arbeidsflyt.BidragArbeidsflytTest
+import no.nav.bidrag.arbeidsflyt.PROFILE_TEST
+import no.nav.bidrag.arbeidsflyt.dto.DefaultOpprettOppgaveRequest
+import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
+import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokResponse
+import no.nav.bidrag.arbeidsflyt.dto.PatchOppgaveRequest
+import no.nav.bidrag.arbeidsflyt.utils.TestDataGenerator
+import no.nav.bidrag.arbeidsflyt.utils.aktørId
+import no.nav.bidrag.arbeidsflyt.utils.createJournalforendeEnheterResponse
+import no.nav.bidrag.arbeidsflyt.utils.enhet4806
+import no.nav.bidrag.arbeidsflyt.utils.journalpostResponse
+import no.nav.bidrag.arbeidsflyt.utils.oppgaveDataResponse
+import no.nav.bidrag.arbeidsflyt.utils.oppgaveId1
+import no.nav.bidrag.arbeidsflyt.utils.opprettSakForBehandling
+import no.nav.bidrag.arbeidsflyt.utils.personident1
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
+import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
+import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
+import no.nav.bidrag.transport.dokument.JournalpostResponse
+import no.nav.bidrag.transport.felles.commonObjectmapper
+import no.nav.bidrag.transport.organisasjon.EnhetDto
+import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.sak.BidragssakDto
+import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
+import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
+import org.wiremock.spring.ConfigureWireMock
+import org.wiremock.spring.EnableWireMock
+import java.time.LocalDate
+import java.util.Arrays
+
+@SpringBootTest(
+    classes = [BidragArbeidsflytTest::class],
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+)
+@ActiveProfiles(PROFILE_TEST)
+@EnableMockOAuth2Server
+@EnableWireMock(ConfigureWireMock(port = 0))
+@Transactional
+abstract class AbstractBehandleHendelseTest {
+    @Autowired
+    lateinit var testDataGenerator: TestDataGenerator
+
+    val objectMapper: ObjectMapper = commonObjectmapper
+
+    @BeforeEach
+    fun init() {
+        mockkObject(UnleashFeaturesProvider)
+        testDataGenerator.deleteAll()
+        stubHentPerson()
+        stubOpprettOppgave()
+        stubHentSak()
+        stubEndreOppgave()
+        stubHentOppgaveSok()
+        stubHentTemaTilgang()
+        stubHentJournalforendeEnheter()
+    }
+
+    @AfterEach
+    fun cleanupData() {
+        WireMock.reset()
+        WireMock.resetToDefault()
+        testDataGenerator.deleteAll()
+    }
+
+    private fun aClosedJsonResponse(): ResponseDefinitionBuilder = WireMock
+        .aResponse()
+        .withHeader(HttpHeaders.CONNECTION, "close")
+        .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+
+    fun stubHentSak(
+        response: BidragssakDto =
+            opprettSakForBehandling(
+                BehandlingHendelseBarn(
+                    ident = personident1,
+                    saksnummer = "213213",
+                    søktAv = SøktAvType.BIDRAGSMOTTAKER,
+                    søktFraDato = LocalDate.parse("2025-07-01"),
+                    behandlerEnhet = "4806",
+                ),
+            ),
+    ) {
+        stubFor(
+            get("/sak/sak/${response.saksnummer}").willReturn(
+                aClosedJsonResponse().withStatus(HttpStatus.OK.value()).withBody(objectMapper.writeValueAsString(response)),
+            ),
+        )
+    }
+
+    fun stubOpprettOppgave(
+        oppgaveId: Long = oppgaveId1,
+        status: HttpStatus = HttpStatus.OK,
+    ) {
+        val responseBody =
+            OppgaveData(
+                id = oppgaveId1,
+                versjon = 1,
+                aktoerId = aktørId,
+                oppgavetype = "JFR",
+                tema = "BID",
+                tildeltEnhetsnr = "4833",
+            )
+        stubFor(
+            post("/oppgave/api/v1/oppgaver/").willReturn(
+                aClosedJsonResponse().withStatus(status.value()).withBody(objectMapper.writeValueAsString(responseBody)),
+            ),
+        )
+    }
+
+    fun stubEndreOppgave() {
+        stubFor(patch(urlMatching("/oppgave/api/v1/oppgaver/.*")).willReturn(aClosedJsonResponse().withStatus(HttpStatus.OK.value())))
+    }
+
+    fun stubHentOppgaveSok(
+        oppgaver: List<OppgaveData> = oppgaveDataResponse(),
+        oppgaver2: List<OppgaveData>? = null,
+    ) {
+        stubFor(
+            get(urlMatching("/oppgave/api/v1/oppgaver/\\?.*"))
+                .willReturn(
+                    aClosedJsonResponse()
+                        .withStatus(HttpStatus.OK.value())
+                        .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(oppgaver = oppgaver, antallTreffTotalt = 10))),
+                ),
+        )
+
+        if (oppgaver2 != null) {
+            stubFor(
+                get(urlMatching("/oppgave/api/v1/oppgaver/\\?.*"))
+                    .inScenario("Opprett oppgave scenario")
+                    .whenScenarioStateIs(Scenario.STARTED)
+                    .willReturn(
+                        aClosedJsonResponse()
+                            .withStatus(HttpStatus.OK.value())
+                            .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(oppgaver = oppgaver, antallTreffTotalt = 10))),
+                    ).willSetStateTo("SECOND_CALL"),
+            )
+            stubFor(
+                get(urlMatching("/oppgave/api/v1/oppgaver/\\?.*"))
+                    .inScenario("Opprett oppgave scenario")
+                    .whenScenarioStateIs("SECOND_CALL")
+                    .willReturn(
+                        aClosedJsonResponse()
+                            .withStatus(HttpStatus.OK.value())
+                            .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(oppgaver = oppgaver2, antallTreffTotalt = 10))),
+                    ),
+            )
+        }
+    }
+
+    fun stubHentOppgave(
+        oppgaveId: Long,
+        oppgave: OppgaveData,
+    ) {
+        stubFor(
+            get(urlMatching("/oppgave/api/v1/oppgaver/$oppgaveId")).willReturn(
+                aClosedJsonResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withBody(objectMapper.writeValueAsString(oppgave)),
+            ),
+        )
+    }
+
+    fun stubHentJournalpost(
+        journalpostResponse: JournalpostResponse = journalpostResponse(),
+        status: HttpStatus = HttpStatus.OK,
+    ) {
+        stubFor(
+            get(urlMatching("/dokument/bidrag-dokument/journal/.*")).willReturn(
+                aClosedJsonResponse().withStatus(status.value()).withBody(objectMapper.writeValueAsString(journalpostResponse)),
+            ),
+        )
+    }
+
+    fun stubHentOppgaveError() {
+        stubFor(
+            get(
+                urlMatching("/oppgave/api/v1/oppgaver/.*"),
+            ).willReturn(aClosedJsonResponse().withStatus(HttpStatus.INTERNAL_SERVER_ERROR.value())),
+        )
+    }
+
+    fun stubHentOppgaveContaining(
+        oppgaver: List<OppgaveData> = oppgaveDataResponse(),
+        vararg params: Pair<String, String>,
+    ) {
+        var matchUrl = "/oppgave/api/v1/oppgaver/.*"
+        params.forEach { matchUrl = "$matchUrl${it.first}=${it.second}.*" }
+        val stub = get(urlMatching(matchUrl))
+        stub.willReturn(
+            aClosedJsonResponse()
+                .withStatus(HttpStatus.OK.value())
+                .withBody(objectMapper.writeValueAsString(OppgaveSokResponse(oppgaver = oppgaver, antallTreffTotalt = 10))),
+        )
+        stubFor(stub)
+    }
+
+    fun stubHentTemaTilgang(result: Boolean = true) {
+        stubFor(
+            post(urlMatching("/tilgangskontroll/v2/api/tilgang/tema(.*)"))
+                .willReturn(
+                    aClosedJsonResponse().withStatus(HttpStatus.OK.value()).withBody(commonObjectmapper.writeValueAsString(TilgangskontrollResponse(result))),
+                ),
+        )
+    }
+
+    fun stubHentPerson(
+        personId: String = personident1,
+        aktorId: String = aktørId,
+        status: HttpStatus = HttpStatus.OK,
+        scenarioState: String? = null,
+        nextScenario: String? = null,
+    ) {
+        stubFor(
+            post(urlMatching("/person/bidrag-person/informasjon"))
+                .inScenario("Hent person response")
+                .whenScenarioStateIs(scenarioState ?: Scenario.STARTED)
+                .willReturn(
+                    aClosedJsonResponse()
+                        .withStatus(status.value())
+                        .withBody(objectMapper.writeValueAsString(PersonDto(ident = Personident(personId), aktørId = aktorId))),
+                ).willSetStateTo(nextScenario),
+        )
+    }
+
+    fun stubHentGeografiskEnhet(
+        enhet: String = enhet4806,
+        status: HttpStatus = HttpStatus.OK,
+    ) {
+        stubFor(
+            post(urlMatching("/organisasjon/arbeidsfordeling/enhet/geografisktilknytning")).willReturn(
+                aClosedJsonResponse().withStatus(status.value()).withBody(
+                    objectMapper.writeValueAsString(
+                        EnhetDto(Enhetsnummer(enhet), "Enhetnavn"),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    fun stubHentEnhet(
+        enhet: String = enhet4806,
+        erNedlagt: Boolean = false,
+        status: HttpStatus = HttpStatus.OK,
+    ) {
+        stubFor(
+            get(urlMatching("/organisasjon/enhet/info/.*")).willReturn(
+                aClosedJsonResponse().withStatus(status.value()).withBody(
+                    objectMapper.writeValueAsString(
+                        EnhetDto(
+                            Enhetsnummer(enhet),
+                            "Enhetnavn",
+                            status = if (erNedlagt) Enhetsstatus.NEDLAGT else Enhetsstatus.AKTIV,
+                        ),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    fun stubHentJournalforendeEnheter() {
+        stubFor(
+            get(urlEqualTo("/organisasjon/arbeidsfordeling/enhetsliste/journalforende")).willReturn(
+                aClosedJsonResponse().withStatus(HttpStatus.OK.value()).withBody(
+                    objectMapper.writeValueAsString(
+                        createJournalforendeEnheterResponse(),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    fun verifyHentGeografiskEnhetKalt(antall: Int = 1) {
+        verify(antall, postRequestedFor(urlMatching("/organisasjon/arbeidsfordeling/enhet/geografisktilknytning")))
+    }
+
+    fun verifyHentJournalforendeEnheterKalt(antall: Int = 1) {
+        verify(antall, getRequestedFor(urlEqualTo("/organisasjon/arbeidsfordeling/enhetsliste/journalforende")))
+    }
+
+    fun verifyHentPersonKalt(antall: Int = 1) {
+        verify(antall, postRequestedFor(urlMatching("/person.*")))
+    }
+
+    fun verifySjekkTematilgangKalt(
+        antall: Int = 1,
+        saksbehandlerId: String,
+    ) {
+        verify(antall, postRequestedFor(urlEqualTo("/tilgangskontroll/v2/api/tilgang/tema")).withRequestBody(ContainsPattern(saksbehandlerId)))
+    }
+
+    fun verifyHentPersonKaltMedFnr(fnr: String) {
+        verify(1, postRequestedFor(urlEqualTo("/person/bidrag-person/informasjon")).withRequestBody(ContainsPattern(fnr)))
+    }
+
+    fun verifyOppgaveNotOpprettet() {
+        verify(0, postRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/")))
+    }
+
+    fun verifyOppgaveNotEndret() {
+        verify(0, patchRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/.*")))
+    }
+
+    fun verifyOppgaveOpprettetWith(vararg contains: String) {
+        val requestPattern = postRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/"))
+        Arrays.stream(contains).forEach { contain: String? ->
+            requestPattern.withRequestBody(
+                ContainsPattern(contain),
+            )
+        }
+        verify(1, requestPattern)
+    }
+
+    fun getOppgaveOpprettRequest(saksnummer: String? = null): DefaultOpprettOppgaveRequest? {
+        val requests = WireMock.findAll(postRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/")))
+        return if (requests.isNotEmpty()) {
+            requests
+                .map {
+                    objectMapper.readValue(it.bodyAsString, DefaultOpprettOppgaveRequest::class.java)
+                }.find { saksnummer == null || it.saksreferanse == saksnummer }
+        } else {
+            null
+        }
+    }
+
+    fun getOppgaveEndretRequest(oppgaveId: Long? = null): PatchOppgaveRequest? {
+        val requests = WireMock.findAll(patchRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/.*")))
+        return if (requests.isNotEmpty()) {
+            requests
+                .map {
+                    objectMapper.readValue(it.bodyAsString, PatchOppgaveRequest::class.java)
+                }.find { oppgaveId == null || it.id == oppgaveId }
+        } else {
+            null
+        }
+    }
+
+    fun verifyDokumentHentet(count: Int? = 1) {
+        verify(count ?: 1, getRequestedFor(urlMatching("/dokument/bidrag-dokument/journal/.*")))
+    }
+
+    fun verifyOppgaveEndretWith(
+        count: Int? = null,
+        vararg contains: String,
+    ) {
+        val requestPattern = patchRequestedFor(urlMatching("/oppgave/api/v1/oppgaver/.*"))
+        Arrays.stream(contains).forEach { contain: String? ->
+            requestPattern.withRequestBody(
+                ContainsPattern(contain),
+            )
+        }
+        if (count != null) verify(count, requestPattern) else verify(requestPattern)
+    }
+}

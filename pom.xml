@@ -25,6 +25,7 @@
         <module>libs/oppgave-api-client</module>
         <module>apps/bidrag-regnskap</module>
         <module>apps/bidrag-aktoerregister</module>
+        <module>apps/bidrag-arbeidsflyt</module>
         <module>apps/bidrag-reskontro</module>
         <module>apps/bidrag-elin-stub</module>
         <module>apps/bidrag-admin</module>
@@ -110,6 +111,12 @@
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -169,6 +176,7 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
+                <extensions>true</extensions>
                 <executions>
                     <execution>
                         <id>compile</id>
