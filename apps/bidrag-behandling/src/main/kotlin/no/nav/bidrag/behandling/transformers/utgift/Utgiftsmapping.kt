@@ -30,104 +30,96 @@ val Utgift.totalKravbeløp get() = utgiftsposter.sumOf { it.kravbeløp }
 val Utgift.totalBeløpBetaltAvBp
     get() = totalGodkjentBeløpBp + beløpDirekteBetaltAvBp
 
-fun Behandling.tilSærbidragKategoriDto() =
-    SærbidragKategoriDto(
-        kategori = særbidragKategori,
-        beskrivelse = kategoriBeskrivelse,
-    )
+fun Behandling.tilSærbidragKategoriDto() = SærbidragKategoriDto(
+    kategori = særbidragKategori,
+    beskrivelse = kategoriBeskrivelse,
+)
 
-fun Utgift?.hentValideringsfeil() =
-    UtgiftValideringsfeilDto(
-        ugyldigUtgiftspost =
-            this?.utgiftsposter?.any {
-                OppdatereUtgift(
-                    dato = it.dato,
-                    type =
-                        when {
-                            kategorierSomKreverType.contains(behandling.særbidragKategori) -> it.type
-                            else -> null
-                        },
-                    kravbeløp = it.kravbeløp,
-                    godkjentBeløp = it.godkjentBeløp,
-                    kommentar = it.kommentar,
-                    betaltAvBp = it.betaltAvBp,
-                    id = it.id,
-                ).validerUtgiftspost(behandling).isNotEmpty()
-            } ?: false,
-        manglerUtgifter = this == null || utgiftsposter.isEmpty(),
-        maksGodkjentBeløp = this?.validerMaksGodkjentBeløp(),
-    ).takeIf { it.harFeil }
-
-fun Utgift.validerMaksGodkjentBeløp() =
-    if (maksGodkjentBeløpTaMed) {
-        MaksGodkjentBeløpValideringsfeil(
-            manglerBeløp = maksGodkjentBeløp == null || maksGodkjentBeløp == BigDecimal.ZERO,
-            manglerBegrunnelse = maksGodkjentBeløpBegrunnelse.isNullOrEmpty(),
-        ).takeIf { it.harFeil }
-    } else {
-        null
-    }
-
-fun Utgift.tilTotalBeregningDto() =
-    utgiftsposter
-        .groupBy {
-            Pair(it.type, it.betaltAvBp)
-        }.map { (gruppe, utgifter) ->
-            TotalBeregningUtgifterDto(
-                betaltAvBp = gruppe.second,
-                utgiftstype = gruppe.first,
-                utgifter.sumOf {
-                    it.kravbeløp
-                },
-                utgifter.sumOf { it.godkjentBeløp },
-            )
-        }.sorterBeregnetUtgifter()
-
-fun Utgift.tilMaksGodkjentBeløpDto() =
-    MaksGodkjentBeløpDto(
-        taMed = maksGodkjentBeløpTaMed,
-        beløp = maksGodkjentBeløp,
-        begrunnelse = maksGodkjentBeløpBegrunnelse,
-    )
-
-fun Utgift.tilBeregningDto() =
-    UtgiftBeregningDto(
-        beløpDirekteBetaltAvBp = beløpDirekteBetaltAvBp,
-        totalBeløpBetaltAvBp = totalBeløpBetaltAvBp,
-        totalGodkjentBeløp = totalGodkjentBeløp,
-        totalKravbeløp = totalKravbeløp,
-        totalGodkjentBeløpBp = totalGodkjentBeløpBp,
-    )
-
-fun Utgiftspost.tilDto() =
-    UtgiftspostDto(
-        id = id!!,
-        kommentar = if (erUtgiftForeldet()) "Utgiften er foreldet" else kommentar ?: "",
-        type = type,
-        godkjentBeløp = godkjentBeløp,
-        kravbeløp = kravbeløp,
-        betaltAvBp = betaltAvBp,
-        dato = dato,
-    )
-
-fun OppdatereUtgift.tilUtgiftspost(utgift: Utgift) =
-    Utgiftspost(
-        utgift = utgift,
-        kommentar = kommentar,
-        type =
+fun Utgift?.hentValideringsfeil() = UtgiftValideringsfeilDto(
+    ugyldigUtgiftspost =
+    this?.utgiftsposter?.any {
+        OppdatereUtgift(
+            dato = it.dato,
+            type =
             when {
-                kategorierSomKreverType.contains(utgift.behandling.særbidragKategori) -> type!!
-                utgift.behandling.særbidragKategori == Særbidragskategori.OPTIKK -> Utgiftstype.OPTIKK.name
-                utgift.behandling.særbidragKategori == Særbidragskategori.TANNREGULERING -> Utgiftstype.TANNREGULERING.name
-                else -> throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Kunne ikke bestemme type for utgiftspost")
+                kategorierSomKreverType.contains(behandling.særbidragKategori) -> it.type
+                else -> null
             },
-        godkjentBeløp =
-            if (utgift.behandling.erDatoForUtgiftForeldet(dato)) {
-                BigDecimal.ZERO
-            } else {
-                godkjentBeløp
+            kravbeløp = it.kravbeløp,
+            godkjentBeløp = it.godkjentBeløp,
+            kommentar = it.kommentar,
+            betaltAvBp = it.betaltAvBp,
+            id = it.id,
+        ).validerUtgiftspost(behandling).isNotEmpty()
+    } ?: false,
+    manglerUtgifter = this == null || utgiftsposter.isEmpty(),
+    maksGodkjentBeløp = this?.validerMaksGodkjentBeløp(),
+).takeIf { it.harFeil }
+
+fun Utgift.validerMaksGodkjentBeløp() = if (maksGodkjentBeløpTaMed) {
+    MaksGodkjentBeløpValideringsfeil(
+        manglerBeløp = maksGodkjentBeløp == null || maksGodkjentBeløp == BigDecimal.ZERO,
+        manglerBegrunnelse = maksGodkjentBeløpBegrunnelse.isNullOrEmpty(),
+    ).takeIf { it.harFeil }
+} else {
+    null
+}
+
+fun Utgift.tilTotalBeregningDto() = utgiftsposter
+    .groupBy {
+        Pair(it.type, it.betaltAvBp)
+    }.map { (gruppe, utgifter) ->
+        TotalBeregningUtgifterDto(
+            betaltAvBp = gruppe.second,
+            utgiftstype = gruppe.first,
+            utgifter.sumOf {
+                it.kravbeløp
             },
-        kravbeløp = kravbeløp,
-        betaltAvBp = betaltAvBp,
-        dato = dato,
-    )
+            utgifter.sumOf { it.godkjentBeløp },
+        )
+    }.sorterBeregnetUtgifter()
+
+fun Utgift.tilMaksGodkjentBeløpDto() = MaksGodkjentBeløpDto(
+    taMed = maksGodkjentBeløpTaMed,
+    beløp = maksGodkjentBeløp,
+    begrunnelse = maksGodkjentBeløpBegrunnelse,
+)
+
+fun Utgift.tilBeregningDto() = UtgiftBeregningDto(
+    beløpDirekteBetaltAvBp = beløpDirekteBetaltAvBp,
+    totalBeløpBetaltAvBp = totalBeløpBetaltAvBp,
+    totalGodkjentBeløp = totalGodkjentBeløp,
+    totalKravbeløp = totalKravbeløp,
+    totalGodkjentBeløpBp = totalGodkjentBeløpBp,
+)
+
+fun Utgiftspost.tilDto() = UtgiftspostDto(
+    id = id!!,
+    kommentar = if (erUtgiftForeldet()) "Utgiften er foreldet" else kommentar ?: "",
+    type = type,
+    godkjentBeløp = godkjentBeløp,
+    kravbeløp = kravbeløp,
+    betaltAvBp = betaltAvBp,
+    dato = dato,
+)
+
+fun OppdatereUtgift.tilUtgiftspost(utgift: Utgift) = Utgiftspost(
+    utgift = utgift,
+    kommentar = kommentar,
+    type =
+    when {
+        kategorierSomKreverType.contains(utgift.behandling.særbidragKategori) -> type!!
+        utgift.behandling.særbidragKategori == Særbidragskategori.OPTIKK -> Utgiftstype.OPTIKK.name
+        utgift.behandling.særbidragKategori == Særbidragskategori.TANNREGULERING -> Utgiftstype.TANNREGULERING.name
+        else -> throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Kunne ikke bestemme type for utgiftspost")
+    },
+    godkjentBeløp =
+    if (utgift.behandling.erDatoForUtgiftForeldet(dato)) {
+        BigDecimal.ZERO
+    } else {
+        godkjentBeløp
+    },
+    kravbeløp = kravbeløp,
+    betaltAvBp = betaltAvBp,
+    dato = dato,
+)

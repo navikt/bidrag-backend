@@ -53,46 +53,42 @@ fun Set<Tilleggsstønad>.tilleggsstønadTilDatoperioder() = this.map { Datoperio
 
 fun Set<Tilleggsstønad>.tilleggsstønadTilUnderholdsperioder() = this.map { DatoperiodeDto(it.fom, it.tom) }
 
-fun Barnetilsyn.tilStønadTilBarnetilsynDto(): StønadTilBarnetilsynDto =
-    StønadTilBarnetilsynDto(
-        id = this.id,
-        periode = DatoperiodeDto(this.fom, this.tom),
-        skolealder =
-            when (this.under_skolealder) {
-                true -> Skolealder.UNDER
-                false -> Skolealder.OVER
-                else -> null
-            },
-        tilsynstype =
-            when (this.omfang) {
-                Tilsynstype.IKKE_ANGITT -> null
-                else -> this.omfang
-            },
-        kilde = this.kilde,
-    )
+fun Barnetilsyn.tilStønadTilBarnetilsynDto(): StønadTilBarnetilsynDto = StønadTilBarnetilsynDto(
+    id = this.id,
+    periode = DatoperiodeDto(this.fom, this.tom),
+    skolealder =
+    when (this.under_skolealder) {
+        true -> Skolealder.UNDER
+        false -> Skolealder.OVER
+        else -> null
+    },
+    tilsynstype =
+    when (this.omfang) {
+        Tilsynstype.IKKE_ANGITT -> null
+        else -> this.omfang
+    },
+    kilde = this.kilde,
+)
 
 fun Set<Barnetilsyn>.tilStønadTilBarnetilsynDtos() = sortedBy { it.fom }.map { it.tilStønadTilBarnetilsynDto() }.toSet()
 
 fun Behandling.harAndreBarnIUnderhold() = this.underholdskostnader.find { it.rolle == null } != null
 
-fun BarnDto.annetBarnMedSammeNavnOgFødselsdatoEksistererFraFør(behandling: Behandling) =
-    behandling.underholdskostnader
-        .filter { it.personIdent == null }
-        .find { it.personNavn == this.navn && it.personFødselsdato == this.fødselsdato } != null
+fun BarnDto.annetBarnMedSammeNavnOgFødselsdatoEksistererFraFør(behandling: Behandling) = behandling.underholdskostnader
+    .filter { it.personIdent == null }
+    .find { it.personNavn == this.navn && it.personFødselsdato == this.fødselsdato } != null
 
-fun BarnDto.annetBarnMedSammePersonidentEksistererFraFør(behandling: Behandling) =
-    behandling.underholdskostnader
-        .find {
-            (it.personIdent != null && personident != null && it.tilhørerPerson(personident.verdi, stønadstype)) ||
-                (it.personIdent == null && personident == null && it.personNavn == navn && it.personFødselsdato == fødselsdato)
-        } !=
-        null
+fun BarnDto.annetBarnMedSammePersonidentEksistererFraFør(behandling: Behandling) = behandling.underholdskostnader
+    .find {
+        (it.personIdent != null && personident != null && it.tilhørerPerson(personident.verdi, stønadstype)) ||
+            (it.personIdent == null && personident == null && it.personNavn == navn && it.personFødselsdato == fødselsdato)
+    } !=
+    null
 
-fun Set<BarnetilsynGrunnlagDto>.tilBarnetilsyn(u: Underholdskostnad) =
-    this
-        .justerBarnetilsynPeriodeTil()
-        .map { it.tilBarnetilsyn(u) }
-        .toSet()
+fun Set<BarnetilsynGrunnlagDto>.tilBarnetilsyn(u: Underholdskostnad) = this
+    .justerBarnetilsynPeriodeTil()
+    .map { it.tilBarnetilsyn(u) }
+    .toSet()
 
 fun BarnetilsynGrunnlagDto.tilBarnetilsyn(u: Underholdskostnad): Barnetilsyn {
     fun erUnderSkolealder(fødselsdato: LocalDate) = fødselsdato.plusYears(ALDER_VED_SKOLESTART).year > LocalDate.now().year
@@ -109,19 +105,18 @@ fun BarnetilsynGrunnlagDto.tilBarnetilsyn(u: Underholdskostnad): Barnetilsyn {
     )
 }
 
-fun Collection<BarnetilsynGrunnlagDto>.justerBarnetilsynPeriodeTil() =
-    map {
-        // Hvis barnetilsyn slutter i Juli så justeres den automatisk til August.
-        // Det har blitt avklart at sjablongsatsen for stønad til barnetilsyn skal legges til grunn for den betalingsfrie måneden, juli.
-        // Ref FAGSYSTEM-394230
-        if (it.periodeTil != null && it.periodeTil!!.monthValue == 7) {
-            it.copy(
-                periodeTil = LocalDate.of(it.periodeTil!!.year, 8, 1),
-            )
-        } else {
-            it
-        }
+fun Collection<BarnetilsynGrunnlagDto>.justerBarnetilsynPeriodeTil() = map {
+    // Hvis barnetilsyn slutter i Juli så justeres den automatisk til August.
+    // Det har blitt avklart at sjablongsatsen for stønad til barnetilsyn skal legges til grunn for den betalingsfrie måneden, juli.
+    // Ref FAGSYSTEM-394230
+    if (it.periodeTil != null && it.periodeTil!!.monthValue == 7) {
+        it.copy(
+            periodeTil = LocalDate.of(it.periodeTil!!.year, 8, 1),
+        )
+    } else {
+        it
     }
+}
 
 fun Grunnlag.justerePerioderForBearbeidaBarnetilsynEtterVirkningstidspunkt(overskriveAktiverte: Boolean = true) {
     val barnetilsyn = konvertereData<MutableSet<BarnetilsynGrunnlagDto>>()!!

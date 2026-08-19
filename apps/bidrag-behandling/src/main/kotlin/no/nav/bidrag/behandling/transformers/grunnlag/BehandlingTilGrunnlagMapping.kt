@@ -17,18 +17,17 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDate
 
-fun Rolle.tilGrunnlagsreferanse() =
-    if (rolletype == Rolletype.BARN) {
-        rolletype.tilGrunnlagstype().tilPersonreferanse(
-            "${fødselsdato.toCompactString()}_$stønadstype",
-            ident.hashCode(),
-        )
-    } else {
-        rolletype.tilGrunnlagstype().tilPersonreferanse(
-            fødselsdato.toCompactString(),
-            ident.hashCode(),
-        )
-    }
+fun Rolle.tilGrunnlagsreferanse() = if (rolletype == Rolletype.BARN) {
+    rolletype.tilGrunnlagstype().tilPersonreferanse(
+        "${fødselsdato.toCompactString()}_$stønadstype",
+        ident.hashCode(),
+    )
+} else {
+    rolletype.tilGrunnlagstype().tilPersonreferanse(
+        fødselsdato.toCompactString(),
+        ident.hashCode(),
+    )
+}
 
 fun Rolle.tilGrunnlagPerson(): GrunnlagDto {
     val grunnlagstype = rolletype.tilGrunnlagstype()
@@ -37,43 +36,42 @@ fun Rolle.tilGrunnlagPerson(): GrunnlagDto {
         type = grunnlagstype,
         gjelderReferanse = tilGrunnlagsreferanse(),
         innhold =
-            POJONode(
-                Person(
-                    ident = ident.takeIf { !it.isNullOrEmpty() }?.let { hentNyesteIdent(it) },
-                    navn = if (ident.isNullOrEmpty()) navn ?: hentPersonVisningsnavn(ident) else null,
-                    stønadstype = if (rolletype == Rolletype.BARN) stønadstype else null,
-                    bidragsmottaker =
-                        if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
-                            bidragsmottaker?.tilGrunnlagsreferanse()
-                        } else {
-                            null
-                        },
-                    delAvOpprinneligBehandling =
-                        if (forholdsmessigFordeling != null) {
-                            !forholdsmessigFordeling!!.erRevurdering
-                        } else {
-                            true
-                        },
-                    fødselsdato =
-                        finnFødselsdato(
-                            ident,
-                            fødselsdato,
-                        ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
-                            ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
-                ).valider(rolletype),
-            ),
+        POJONode(
+            Person(
+                ident = ident.takeIf { !it.isNullOrEmpty() }?.let { hentNyesteIdent(it) },
+                navn = if (ident.isNullOrEmpty()) navn ?: hentPersonVisningsnavn(ident) else null,
+                stønadstype = if (rolletype == Rolletype.BARN) stønadstype else null,
+                bidragsmottaker =
+                if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
+                    bidragsmottaker?.tilGrunnlagsreferanse()
+                } else {
+                    null
+                },
+                delAvOpprinneligBehandling =
+                if (forholdsmessigFordeling != null) {
+                    !forholdsmessigFordeling!!.erRevurdering
+                } else {
+                    true
+                },
+                fødselsdato =
+                finnFødselsdato(
+                    ident,
+                    fødselsdato,
+                ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
+                    ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
+            ).valider(rolletype),
+        ),
     )
 }
 
 fun finnFødselsdato(
     ident: String?,
     fødselsdato: LocalDate?,
-): LocalDate? =
-    if (fødselsdato == null && ident != null) {
-        hentPersonFødselsdato(ident)
-    } else {
-        fødselsdato
-    }
+): LocalDate? = if (fødselsdato == null && ident != null) {
+    hentPersonFødselsdato(ident)
+} else {
+    fødselsdato
+}
 
 fun Person.valider(rolle: Rolletype? = null): Person {
     if ((ident == null || ident!!.verdi.isEmpty()) && navn.isNullOrEmpty()) {

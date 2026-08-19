@@ -14,12 +14,11 @@ data class GrunnlagFeilDto(
     val feilmelding: String?,
 )
 
-fun FeilrapporteringDto.tilGrunnlagFeilDto() =
-    GrunnlagFeilDto(
-        grunnlagstype = grunnlagstype,
-        periodeTil = periodeTil,
-        personId = personId,
-        periodeFra = periodeFra,
-        feiltype = feiltype,
-        feilmelding = feilmelding,
-    )
+fun FeilrapporteringDto.tilGrunnlagFeilDto() = GrunnlagFeilDto(
+    grunnlagstype = grunnlagstype,
+    periodeTil = periodeTil,
+    personId = personId,
+    periodeFra = periodeFra,
+    feiltype = feiltype,
+    feilmelding = feilmelding,
+)

@@ -76,32 +76,29 @@ class RestConfig(
     }
 
     @Bean
-    fun customOpenAPI(): OpenAPI =
-        OpenAPI()
-            .components(Components())
-            .info(
-                io.swagger.v3.oas.models.info
-                    .Info()
-                    .title("Bidrag Behandling API")
-                    .version("1.0")
-                    .description("API documentation for bidrag-behandling"),
-            )
+    fun customOpenAPI(): OpenAPI = OpenAPI()
+        .components(Components())
+        .info(
+            io.swagger.v3.oas.models.info
+                .Info()
+                .title("Bidrag Behandling API")
+                .version("1.0")
+                .description("API documentation for bidrag-behandling"),
+        )
 
     @Bean
-    fun openApiCustomizer(): OpenApiCustomizer =
-        OpenApiCustomizer { openApi: OpenAPI ->
-            openApi.components?.schemas?.values?.forEach { _ ->
-                // Additional schema adjustments if needed
-            }
+    fun openApiCustomizer(): OpenApiCustomizer = OpenApiCustomizer { openApi: OpenAPI ->
+        openApi.components?.schemas?.values?.forEach { _ ->
+            // Additional schema adjustments if needed
         }
+    }
 
     @Bean
     fun clientRequestObservationConvention() = DefaultClientRequestObservationConvention()
 
     @Bean
     @Primary
-    fun restTemplateBuilder(restTemplate: RestTemplateBuilder): RestTemplateBuilder =
-        restTemplate
-            .connectTimeout(Duration.of(30, ChronoUnit.SECONDS))
-            .readTimeout(Duration.of(30, ChronoUnit.SECONDS))
+    fun restTemplateBuilder(restTemplate: RestTemplateBuilder): RestTemplateBuilder = restTemplate
+        .connectTimeout(Duration.of(30, ChronoUnit.SECONDS))
+        .readTimeout(Duration.of(30, ChronoUnit.SECONDS))
 }

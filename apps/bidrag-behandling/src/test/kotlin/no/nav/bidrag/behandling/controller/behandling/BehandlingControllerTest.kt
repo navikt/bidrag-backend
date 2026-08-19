@@ -27,19 +27,18 @@ class BehandlingControllerTest : KontrollerTestRunner() {
             enhet: String,
             roller: Set<OpprettRolleDto>,
             søknadsid: Long = 100,
-        ): OpprettBehandlingRequest =
-            OpprettBehandlingRequest(
-                søknadstype = Behandlingstype.SØKNAD,
-                vedtakstype = Vedtakstype.FASTSETTELSE,
-                stønadstype = Stønadstype.FORSKUDD,
-                søktFomDato = LocalDate.now().minusMonths(4),
-                mottattdato = LocalDate.now(),
-                søknadFra = SøktAvType.BIDRAGSMOTTAKER,
-                saksnummer = saksnummer ?: SAKSNUMMER,
-                behandlerenhet = enhet,
-                roller = roller,
-                engangsbeløpstype = null,
-                søknadsid = søknadsid,
-            )
+        ): OpprettBehandlingRequest = OpprettBehandlingRequest(
+            søknadstype = Behandlingstype.SØKNAD,
+            vedtakstype = Vedtakstype.FASTSETTELSE,
+            stønadstype = Stønadstype.FORSKUDD,
+            søktFomDato = LocalDate.now().minusMonths(4),
+            mottattdato = LocalDate.now(),
+            søknadFra = SøktAvType.BIDRAGSMOTTAKER,
+            saksnummer = saksnummer ?: SAKSNUMMER,
+            behandlerenhet = enhet,
+            roller = roller,
+            engangsbeløpstype = null,
+            søknadsid = søknadsid,
+        )
     }
 }

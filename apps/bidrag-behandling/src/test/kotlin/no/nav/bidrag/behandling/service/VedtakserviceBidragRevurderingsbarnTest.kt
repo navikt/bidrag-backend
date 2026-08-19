@@ -67,46 +67,46 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
             ResultatBidragsberegning(
                 vedtakstype = Vedtakstype.ENDRING,
                 resultatBarn =
-                    listOf(
-                        // Mock resultat for søknadsbarn (testdataBarn1)
-                        ResultatBidragsberegningBarn(
-                            barn =
-                                ResultatRolle(
-                                    ident =
-                                        Personident(testdataBarn1.ident),
-                                    navn = testdataBarn1.navn,
-                                    fødselsdato = testdataBarn1.fødselsdato,
-                                    referanse = "barn1",
-                                    erRevurderingsbarn = false,
-                                ),
-                            resultat =
-                                BeregnetBarnebidragResultat(
-                                    beregnetBarnebidragPeriodeListe = emptyList(),
-                                    grunnlagListe = emptyList(),
-                                ),
-                            opphørsdato = null,
-                            `løperBidrag` = true,
+                listOf(
+                    // Mock resultat for søknadsbarn (testdataBarn1)
+                    ResultatBidragsberegningBarn(
+                        barn =
+                        ResultatRolle(
+                            ident =
+                            Personident(testdataBarn1.ident),
+                            navn = testdataBarn1.navn,
+                            fødselsdato = testdataBarn1.fødselsdato,
+                            referanse = "barn1",
+                            erRevurderingsbarn = false,
                         ),
-                        // Mock resultat for revurderingsbarn (testdataBarn2)
-                        ResultatBidragsberegningBarn(
-                            barn =
-                                ResultatRolle(
-                                    ident =
-                                        Personident(testdataBarn2.ident),
-                                    navn = testdataBarn2.navn,
-                                    fødselsdato = testdataBarn2.fødselsdato,
-                                    referanse = "barn2",
-                                    erRevurderingsbarn = true,
-                                ),
-                            resultat =
-                                BeregnetBarnebidragResultat(
-                                    beregnetBarnebidragPeriodeListe = emptyList(),
-                                    grunnlagListe = emptyList(),
-                                ),
-                            opphørsdato = null,
-                            `løperBidrag` = true,
+                        resultat =
+                        BeregnetBarnebidragResultat(
+                            beregnetBarnebidragPeriodeListe = emptyList(),
+                            grunnlagListe = emptyList(),
                         ),
+                        opphørsdato = null,
+                        `løperBidrag` = true,
                     ),
+                    // Mock resultat for revurderingsbarn (testdataBarn2)
+                    ResultatBidragsberegningBarn(
+                        barn =
+                        ResultatRolle(
+                            ident =
+                            Personident(testdataBarn2.ident),
+                            navn = testdataBarn2.navn,
+                            fødselsdato = testdataBarn2.fødselsdato,
+                            referanse = "barn2",
+                            erRevurderingsbarn = true,
+                        ),
+                        resultat =
+                        BeregnetBarnebidragResultat(
+                            beregnetBarnebidragPeriodeListe = emptyList(),
+                            grunnlagListe = emptyList(),
+                        ),
+                        opphørsdato = null,
+                        `løperBidrag` = true,
+                    ),
+                ),
             )
 
         // Update beregningService reference in the test and in BehandlingTilVedtakMapping
@@ -262,9 +262,9 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
                 generateId = true,
                 typeBehandling = TypeBehandling.BIDRAG,
                 andreBarn =
-                    listOf(
-                        testdataBarn2,
-                    ),
+                listOf(
+                    testdataBarn2,
+                ),
             )
         val revurderingsbarn =
             Rolle(
@@ -368,15 +368,15 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
                 erRevurdering = true,
                 bidragsmottaker = behandling.bidragsmottaker?.ident,
                 søknader =
-                    mutableSetOf(
-                        ForholdsmessigFordelingSøknadBarn(
-                            søknadsid = 123,
-                            mottattDato = LocalDate.parse("2025-01-01"),
-                            søktAvType = SøktAvType.BIDRAGSMOTTAKER,
-                            behandlingstype = Behandlingstype.ENDRING,
-                            behandlingstema = Behandlingstema.BIDRAG,
-                        ),
+                mutableSetOf(
+                    ForholdsmessigFordelingSøknadBarn(
+                        søknadsid = 123,
+                        mottattDato = LocalDate.parse("2025-01-01"),
+                        søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+                        behandlingstype = Behandlingstype.ENDRING,
+                        behandlingstema = Behandlingstema.BIDRAG,
                     ),
+                ),
             )
         behandling.søknadsbarn.filter { !it.erRevurderingsbarn }.forEach {
             it.forholdsmessigFordeling =
@@ -387,15 +387,15 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
                     erRevurdering = true,
                     bidragsmottaker = behandling.bidragsmottaker?.ident,
                     søknader =
-                        mutableSetOf(
-                            ForholdsmessigFordelingSøknadBarn(
-                                søknadsid = 123,
-                                mottattDato = LocalDate.parse("2025-01-01"),
-                                søktAvType = SøktAvType.BIDRAGSMOTTAKER,
-                                behandlingstype = Behandlingstype.ENDRING,
-                                behandlingstema = Behandlingstema.BIDRAG,
-                            ),
+                    mutableSetOf(
+                        ForholdsmessigFordelingSøknadBarn(
+                            søknadsid = 123,
+                            mottattDato = LocalDate.parse("2025-01-01"),
+                            søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+                            behandlingstype = Behandlingstype.ENDRING,
+                            behandlingstema = Behandlingstema.BIDRAG,
                         ),
+                    ),
                 )
         }
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling()

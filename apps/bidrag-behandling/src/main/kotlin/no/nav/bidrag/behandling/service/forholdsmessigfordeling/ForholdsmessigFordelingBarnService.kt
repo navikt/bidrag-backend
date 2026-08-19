@@ -342,15 +342,15 @@ class ForholdsmessigFordelingBarnService(
             eksisterendeRolle.forholdsmessigFordeling =
                 ffRolleDetaljer.copy(
                     søknader =
-                        (
-                            eksisterendeSøknadsliste +
-                                setOf(
-                                    søknadsdetaljerBarn.copy(
-                                        søknadsid = request.søknadsid,
-                                        status =
-                                            søknadsdetaljerBarn.status ?: Behandlingstatus.UNDER_BEHANDLING,
-                                    ),
-                                )
+                    (
+                        eksisterendeSøknadsliste +
+                            setOf(
+                                søknadsdetaljerBarn.copy(
+                                    søknadsid = request.søknadsid,
+                                    status =
+                                    søknadsdetaljerBarn.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                                ),
+                            )
                         ).toMutableSet(),
                 )
             eksisterendeRolle.innkrevingstype =

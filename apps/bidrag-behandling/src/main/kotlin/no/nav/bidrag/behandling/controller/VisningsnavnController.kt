@@ -25,22 +25,21 @@ class VisningsnavnController {
     @OptIn(ExperimentalStdlibApi::class)
     @Suppress("unused")
     @GetMapping("/visningsnavn")
-    fun hentVisningsnavn(): Map<String, String> =
-        Inntektsrapportering.entries.associate { it.name to it.visningsnavn.intern } +
-            VirkningstidspunktÅrsakstype.entries.associate { it.name to it.visningsnavn.intern } +
-            Inntektstype.entries.associate { it.name to it.visningsnavn.intern } +
-            Vedtakstype.entries.associate { it.name to it.visningsnavn.intern } +
-            Resultatkode.entries.associate { it.name to it.visningsnavn.intern } +
-            Bostatuskode.entries.associate { it.name to it.visningsnavn.intern } +
-            Sivilstandskode.entries.associate { it.name to it.visningsnavn.intern } +
-            Særbidragskategori.entries.associate { it.name to it.visningsnavn.intern } +
-            Samværsklasse.entries.associate { it.name to it.visningsnavn.intern } +
-            SamværskalkulatorFerietype.entries.associate { it.name to it.visningsnavn.intern } +
-            SamværskalkulatorNetterFrekvens.entries.associate { it.name to it.visningsnavn.intern } +
-            Engangsbeløptype.entries.associate { it.name to it.visningsnavn.intern } +
-            Utgiftstype.entries.associate { it.name to it.visningsnavn.intern } +
-            PrivatAvtaleType.entries.associate { it.name to it.visningsnavn.intern } +
-            BeregnTil.entries.associate { it.name to it.visningsnavn.intern } +
-            Behandlingstype.entries.associate { it.name to it.visningsnavn.intern } +
-            Valutakode.entries.associate { it.name to it.visningsnavn }
+    fun hentVisningsnavn(): Map<String, String> = Inntektsrapportering.entries.associate { it.name to it.visningsnavn.intern } +
+        VirkningstidspunktÅrsakstype.entries.associate { it.name to it.visningsnavn.intern } +
+        Inntektstype.entries.associate { it.name to it.visningsnavn.intern } +
+        Vedtakstype.entries.associate { it.name to it.visningsnavn.intern } +
+        Resultatkode.entries.associate { it.name to it.visningsnavn.intern } +
+        Bostatuskode.entries.associate { it.name to it.visningsnavn.intern } +
+        Sivilstandskode.entries.associate { it.name to it.visningsnavn.intern } +
+        Særbidragskategori.entries.associate { it.name to it.visningsnavn.intern } +
+        Samværsklasse.entries.associate { it.name to it.visningsnavn.intern } +
+        SamværskalkulatorFerietype.entries.associate { it.name to it.visningsnavn.intern } +
+        SamværskalkulatorNetterFrekvens.entries.associate { it.name to it.visningsnavn.intern } +
+        Engangsbeløptype.entries.associate { it.name to it.visningsnavn.intern } +
+        Utgiftstype.entries.associate { it.name to it.visningsnavn.intern } +
+        PrivatAvtaleType.entries.associate { it.name to it.visningsnavn.intern } +
+        BeregnTil.entries.associate { it.name to it.visningsnavn.intern } +
+        Behandlingstype.entries.associate { it.name to it.visningsnavn.intern } +
+        Valutakode.entries.associate { it.name to it.visningsnavn }
 }

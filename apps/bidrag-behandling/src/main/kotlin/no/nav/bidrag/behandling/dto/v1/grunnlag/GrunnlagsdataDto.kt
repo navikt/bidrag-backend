@@ -33,10 +33,9 @@ data class BpsBarnUtenLøpendeBidragDto(
     val beløpshistorikkBidrag: StønadDto?,
     val beløpshistorikkBidrag18År: StønadDto?,
 ) {
-    fun finnBeløpshistorikk(stønadstype: Stønadstype?) =
-        when (stønadstype) {
-            Stønadstype.BIDRAG -> beløpshistorikkBidrag
-            Stønadstype.BIDRAG18AAR -> beløpshistorikkBidrag18År
-            else -> null
-        }
+    fun finnBeløpshistorikk(stønadstype: Stønadstype?) = when (stønadstype) {
+        Stønadstype.BIDRAG -> beløpshistorikkBidrag
+        Stønadstype.BIDRAG18AAR -> beløpshistorikkBidrag18År
+        else -> null
+    }
 }

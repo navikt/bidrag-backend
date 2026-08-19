@@ -77,6 +77,5 @@ open class Underholdskostnad(
     val personFødselsdato: LocalDate get() = person?.fødselsdato ?: rolle?.fødselsdato!!
     val opphørsdato get() = rolle?.opphørsdato ?: behandling.globalOpphørsdato
 
-    override fun toString(): String =
-        "Underholdskostnad(id=$id, behandling=${behandling.id}, person=${person?.id}, harTilsynsordning=$harTilsynsordning, faktiskeTilsynsutgifter=$faktiskeTilsynsutgifter, barnetilsyn=$barnetilsyn, tilleggsstønad=$tilleggsstønad)"
+    override fun toString(): String = "Underholdskostnad(id=$id, behandling=${behandling.id}, person=${person?.id}, harTilsynsordning=$harTilsynsordning, faktiskeTilsynsutgifter=$faktiskeTilsynsutgifter, barnetilsyn=$barnetilsyn, tilleggsstønad=$tilleggsstønad)"
 }

@@ -100,10 +100,10 @@ class BarnebidragGrunnlagInnhenting(
         skyldner = skyldner ?: Personident(bidragspliktig!!.ident!!),
         kravhaver = Personident(gjelderBarnIdent),
         gyldigTidspunkt =
-            if (erKlageEllerOmgjøring && fraOpprinneligVedtakstidspunkt) {
-                omgjøringsdetaljer!!.minsteVedtakstidspunkt!!.minusMinutes(1)
-            } else {
-                LocalDateTime.now()
-            },
+        if (erKlageEllerOmgjøring && fraOpprinneligVedtakstidspunkt) {
+            omgjøringsdetaljer!!.minsteVedtakstidspunkt!!.minusMinutes(1)
+        } else {
+            LocalDateTime.now()
+        },
     )
 }

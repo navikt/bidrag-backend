@@ -51,15 +51,14 @@ data class OpprettBehandlingRequest(
     val gebyrGjelder18År get() = roller.any { it.harGebyrsøknad && it.rolletype == Rolletype.BARN }
 }
 
-fun OpprettBehandlingRequest.tilKanBehandlesINyLøsningRequest(): KanBehandlesINyLøsningRequest =
-    KanBehandlesINyLøsningRequest(
-        saksnummer = this.saksnummer,
-        søknadstype = søknadstype,
-        roller = this.roller.map { SjekkRolleDto(it.rolletype, it.ident, it.erUkjent) },
-        stønadstype = this.stønadstype,
-        engangsbeløpstype = this.engangsbeløpstype,
-        vedtakstype = vedtakstype,
-    )
+fun OpprettBehandlingRequest.tilKanBehandlesINyLøsningRequest(): KanBehandlesINyLøsningRequest = KanBehandlesINyLøsningRequest(
+    saksnummer = this.saksnummer,
+    søknadstype = søknadstype,
+    roller = this.roller.map { SjekkRolleDto(it.rolletype, it.ident, it.erUkjent) },
+    stønadstype = this.stønadstype,
+    engangsbeløpstype = this.engangsbeløpstype,
+    vedtakstype = vedtakstype,
+)
 
 fun OpprettBehandlingRequest.tilType() = bestemTypeBehandling(stønadstype, engangsbeløpstype)
 

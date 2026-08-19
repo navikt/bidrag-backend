@@ -43,6 +43,5 @@ open class Person(
 
     val henteFødselsdato get() = fødselsdato ?: rolle.firstOrNull()?.fødselsdato
 
-    override fun toString(): String =
-        "Person(id=$id, ident=$ident, navn=$navn, fødselsdato=$fødselsdato, opprettet=$opprettet, roller=$rolle)"
+    override fun toString(): String = "Person(id=$id, ident=$ident, navn=$navn, fødselsdato=$fødselsdato, opprettet=$opprettet, roller=$rolle)"
 }

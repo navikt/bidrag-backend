@@ -42,14 +42,13 @@ private fun ÅrMånedsperiode.overlapperMed(annenPeriode: ÅrMånedsperiode): Bo
     return starterForEllerNarAndreSlutter && slutterEtterEllerNarAndreStarter
 }
 
-fun List<ÅrMånedsperiode>.filtrerOgJusterFraVirkningstidspunkt(beregningsperiode: ÅrMånedsperiode): List<ÅrMånedsperiode> =
-    mapNotNull { periode ->
-        if (!periode.overlapperMed(beregningsperiode)) {
-            null
-        } else {
-            ÅrMånedsperiode(
-                maxOf(periode.fom, beregningsperiode.fom),
-                minOfNullable(periode.til, beregningsperiode.til),
-            )
-        }
+fun List<ÅrMånedsperiode>.filtrerOgJusterFraVirkningstidspunkt(beregningsperiode: ÅrMånedsperiode): List<ÅrMånedsperiode> = mapNotNull { periode ->
+    if (!periode.overlapperMed(beregningsperiode)) {
+        null
+    } else {
+        ÅrMånedsperiode(
+            maxOf(periode.fom, beregningsperiode.fom),
+            minOfNullable(periode.til, beregningsperiode.til),
+        )
     }
+}

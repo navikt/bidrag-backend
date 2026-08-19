@@ -61,23 +61,21 @@ open class Grunnlag(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     open val id: Long? = null,
 ) {
-    fun gjelderBarn(person: PersonStønad) =
-        (person.rolleId != null && gjelderBarnRolle != null && gjelderBarnRolle!!.id == person.rolleId) ||
-            (
-                person.rolleId == null && gjelderBarnRolle != null &&
-                    gjelderBarnRolle!!
-                        .erSammeRolle(person.personident!!.verdi, person.stønadstype)
+    fun gjelderBarn(person: PersonStønad) = (person.rolleId != null && gjelderBarnRolle != null && gjelderBarnRolle!!.id == person.rolleId) ||
+        (
+            person.rolleId == null && gjelderBarnRolle != null &&
+                gjelderBarnRolle!!
+                    .erSammeRolle(person.personident!!.verdi, person.stønadstype)
             ) ||
-            (person.rolleId == null && person.personident?.verdi == gjelder) ||
-            (gjelderBarnRolle == null && gjelder == person.personident?.verdi)
+        (person.rolleId == null && person.personident?.verdi == gjelder) ||
+        (gjelderBarnRolle == null && gjelder == person.personident?.verdi)
 
-    override fun toString(): String =
-        try {
-            "Grunnlag($type, erBearbeidet=$erBearbeidet, rolle=${rolle.rolletype}, ident=${rolle.ident}, aktiv=$aktiv, " +
-                "id=$id, behandling=${behandling.id}, innhentet=$innhentet, gjelder=$gjelder)"
-        } catch (e: Exception) {
-            "Grunnlag($type, erBearbeidet=$erBearbeidet, aktiv=$aktiv, id=$id, innhentet=$innhentet, gjelder=$gjelder)"
-        }
+    override fun toString(): String = try {
+        "Grunnlag($type, erBearbeidet=$erBearbeidet, rolle=${rolle.rolletype}, ident=${rolle.ident}, aktiv=$aktiv, " +
+            "id=$id, behandling=${behandling.id}, innhentet=$innhentet, gjelder=$gjelder)"
+    } catch (e: Exception) {
+        "Grunnlag($type, erBearbeidet=$erBearbeidet, aktiv=$aktiv, id=$id, innhentet=$innhentet, gjelder=$gjelder)"
+    }
 
     val identifikator get() = type.name + rolle.ident + erBearbeidet + gjelder + gjelderBarnRolle?.identifikator
     val identifikatorAlle get() =
@@ -89,43 +87,38 @@ fun Set<Grunnlag>.hentAlleIkkeAktiv() = sortedByDescending { it.innhentet }.filt
 
 fun Set<Grunnlag>.hentAlleAktiv() = sortedByDescending { it.innhentet }.filter { g -> g.aktiv != null }
 
-fun Set<Grunnlag>.hentSisteGrunnlagBpsBarnUtenBidragsak() =
-    hentSisteAktiv()
-        .find { it.type == Grunnlagsdatatype.BARN_TIL_BP_UTEN_BIDRAGSAK && !it.erBearbeidet }
-        .konvertereData<List<BpsBarnUtenBidragsakEllerLøpendeBidrag>>()
+fun Set<Grunnlag>.hentSisteGrunnlagBpsBarnUtenBidragsak() = hentSisteAktiv()
+    .find { it.type == Grunnlagsdatatype.BARN_TIL_BP_UTEN_BIDRAGSAK && !it.erBearbeidet }
+    .konvertereData<List<BpsBarnUtenBidragsakEllerLøpendeBidrag>>()
 
 fun Set<Grunnlag>.henteNyesteGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolleInnhentetFor: Rolle,
-): Grunnlag? =
-    filter {
-        it.type == grunnlagstype.type && it.rolle.id == rolleInnhentetFor.id && grunnlagstype.erBearbeidet == it.erBearbeidet
-    }.toSet().maxByOrNull { it.innhentet }
+): Grunnlag? = filter {
+    it.type == grunnlagstype.type && it.rolle.id == rolleInnhentetFor.id && grunnlagstype.erBearbeidet == it.erBearbeidet
+}.toSet().maxByOrNull { it.innhentet }
 
-fun Set<Grunnlag>.hentSisteIkkeAktiv() =
-    hentAlleIkkeAktiv()
-        .groupBy { it.identifikator }
-        .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
-        .values
-        .filterNotNull()
+fun Set<Grunnlag>.hentSisteIkkeAktiv() = hentAlleIkkeAktiv()
+    .groupBy { it.identifikator }
+    .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
+    .values
+    .filterNotNull()
 
-fun Set<Grunnlag>.hentSisteAktiv(inkluderGrunnlagFraVedtakSomSkalOmgjøres: Boolean = false) =
-    hentAlleAktiv()
-        .groupBy { if (inkluderGrunnlagFraVedtakSomSkalOmgjøres) it.identifikatorAlle else it.identifikator }
-        .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
-        .values
-        .filterNotNull()
+fun Set<Grunnlag>.hentSisteAktiv(inkluderGrunnlagFraVedtakSomSkalOmgjøres: Boolean = false) = hentAlleAktiv()
+    .groupBy { if (inkluderGrunnlagFraVedtakSomSkalOmgjøres) it.identifikatorAlle else it.identifikator }
+    .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
+    .values
+    .filterNotNull()
 
-fun Set<Grunnlag>.hentIdenterForEgneBarnIHusstandFraGrunnlagForRolle(rolleInnhentetFor: Rolle) =
-    henteNyesteGrunnlag(
-        Grunnlagstype(Grunnlagsdatatype.BOFORHOLD, false),
-        rolleInnhentetFor,
-    )?.data
-        ?.let { jsonListeTilObjekt<RelatertPersonGrunnlagDto>(it) }
-        ?.filter { it.erBarn && it.gjelderPersonId != null }
-        ?.groupBy { it.gjelderPersonId!! }
-        ?.map { Personident(it.key) }
-        ?.toSet()
+fun Set<Grunnlag>.hentIdenterForEgneBarnIHusstandFraGrunnlagForRolle(rolleInnhentetFor: Rolle) = henteNyesteGrunnlag(
+    Grunnlagstype(Grunnlagsdatatype.BOFORHOLD, false),
+    rolleInnhentetFor,
+)?.data
+    ?.let { jsonListeTilObjekt<RelatertPersonGrunnlagDto>(it) }
+    ?.filter { it.erBarn && it.gjelderPersonId != null }
+    ?.groupBy { it.gjelderPersonId!! }
+    ?.map { Personident(it.key) }
+    ?.toSet()
 
 fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderBarn(
     gjelderBarnIdent: String?,
@@ -169,20 +162,19 @@ fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderRolleListe(
             }
     }
 
-fun Behandling.bpsBarnUtenLøpendeBidrag(): Set<BpsBarnUtenLøpendeBidragDto> =
-    grunnlag
-        .hentSisteGrunnlagBpsBarnUtenBidragsak()
-        ?.map {
-            BpsBarnUtenLøpendeBidragDto(
-                ident = it.ident.verdi,
-                fødselsdato = it.fødselsdato,
-                navn = it.navn,
-                saksnummer = it.saksnummer,
-                enhet = it.enhet,
-                beløpshistorikkBidrag = it.beløpshistorikkBidrag,
-                beløpshistorikkBidrag18År = it.beløpshistorikkBidrag18År,
-            )
-        }?.toSet() ?: emptySet()
+fun Behandling.bpsBarnUtenLøpendeBidrag(): Set<BpsBarnUtenLøpendeBidragDto> = grunnlag
+    .hentSisteGrunnlagBpsBarnUtenBidragsak()
+    ?.map {
+        BpsBarnUtenLøpendeBidragDto(
+            ident = it.ident.verdi,
+            fødselsdato = it.fødselsdato,
+            navn = it.navn,
+            saksnummer = it.saksnummer,
+            enhet = it.enhet,
+            beløpshistorikkBidrag = it.beløpshistorikkBidrag,
+            beløpshistorikkBidrag18År = it.beløpshistorikkBidrag18År,
+        )
+    }?.toSet() ?: emptySet()
 
 fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderRolle(
     rolle: Rolle,
@@ -208,30 +200,27 @@ fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderRolle(
             }
     }
 
-fun Set<Grunnlag>.henteSisteSivilstand(erBearbeidet: Boolean) =
-    hentSisteAktiv()
-        .find { it.erBearbeidet == erBearbeidet && Grunnlagsdatatype.SIVILSTAND == it.type }
-        .konvertereData<Set<Sivilstand>>()
+fun Set<Grunnlag>.henteSisteSivilstand(erBearbeidet: Boolean) = hentSisteAktiv()
+    .find { it.erBearbeidet == erBearbeidet && Grunnlagsdatatype.SIVILSTAND == it.type }
+    .konvertereData<Set<Sivilstand>>()
 
-fun Husstandsmedlem.hentSisteBearbeidetBoforhold() =
-    behandling.grunnlag
-        .hentSisteAktiv()
-        .find {
-            it.erBearbeidet && it.type == Grunnlagsdatatype.BOFORHOLD &&
+fun Husstandsmedlem.hentSisteBearbeidetBoforhold() = behandling.grunnlag
+    .hentSisteAktiv()
+    .find {
+        it.erBearbeidet && it.type == Grunnlagsdatatype.BOFORHOLD &&
+            (
                 (
-                    (
-                        it.gjelderBarnRolle != null && this.rolle != null &&
-                            it.gjelderBarnRolle!!.erSammeRolle(this.rolle!!)
+                    it.gjelderBarnRolle != null && this.rolle != null &&
+                        it.gjelderBarnRolle!!.erSammeRolle(this.rolle!!)
                     ) ||
-                        (it.gjelderBarnRolle == null && it.gjelder == this.ident)
+                    (it.gjelderBarnRolle == null && it.gjelder == this.ident)
                 )
-        }.konvertereData<List<BoforholdResponseV2>>()
+    }.konvertereData<List<BoforholdResponseV2>>()
 
-fun Underholdskostnad.hentSisteBearbeidetBarnetilsyn() =
-    behandling.grunnlag
-        .hentSisteAktiv()
-        .find { it.erBearbeidet && it.type == Grunnlagsdatatype.BARNETILSYN && it.gjelder == this.personIdent }
-        .konvertereData<List<BarnetilsynGrunnlagDto>>()
+fun Underholdskostnad.hentSisteBearbeidetBarnetilsyn() = behandling.grunnlag
+    .hentSisteAktiv()
+    .find { it.erBearbeidet && it.type == Grunnlagsdatatype.BARNETILSYN && it.gjelder == this.personIdent }
+    .konvertereData<List<BarnetilsynGrunnlagDto>>()
 
 fun Husstandsmedlem.henteGjeldendeBoforholdsgrunnlagForAndreVoksneIHusstanden(gjelderRolle: Rolle): List<RelatertPersonGrunnlagDto> {
     val nyesteIkkebearbeidaBoforholdsgrunnlag =
@@ -257,11 +246,10 @@ fun List<Grunnlag>.henteBearbeidaInntekterForType(
 fun Behandling.hentNyesteGrunnlagForAktiv(
     grunnlagsdatatype: Grunnlagsdatatype,
     hentesForRolle: Rolle? = null,
-): Grunnlag? =
-    henteNyesteAktiveGrunnlag(
-        Grunnlagstype(grunnlagsdatatype, false),
-        hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
-    )
+): Grunnlag? = henteNyesteAktiveGrunnlag(
+    Grunnlagstype(grunnlagsdatatype, false),
+    hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
+)
 
 fun Behandling.hentNyesteGrunnlagForIkkeAktiv(
     grunnlagsdatatype: Grunnlagsdatatype,
@@ -293,15 +281,14 @@ fun Behandling.hentNyesteGrunnlagForIkkeAktiv(
 fun Behandling.henteNyesteIkkeAktiveGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolleInnhentetFor: Rolle,
-): Grunnlag? =
-    grunnlag
-        .filter {
-            it.type == grunnlagstype.type &&
-                it.rolle.erSammeRolle(rolleInnhentetFor) &&
-                grunnlagstype.erBearbeidet == it.erBearbeidet &&
-                it.aktiv == null
-        }.toSet()
-        .maxByOrNull { it.innhentet }
+): Grunnlag? = grunnlag
+    .filter {
+        it.type == grunnlagstype.type &&
+            it.rolle.erSammeRolle(rolleInnhentetFor) &&
+            grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            it.aktiv == null
+    }.toSet()
+    .maxByOrNull { it.innhentet }
 
 fun Behandling.henteNyesteAktiveGrunnlag(
     grunnlagstype: Grunnlagstype,

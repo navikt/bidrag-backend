@@ -28,8 +28,7 @@ import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import java.time.LocalDate
 import java.time.YearMonth
 
-fun RelatertPersonGrunnlagDto.erBarnTilBMUnder12År(virkningstidspunkt: LocalDate) =
-    erBarn && fødselsdato != null && fødselsdato.erUnder12År(virkningstidspunkt)
+fun RelatertPersonGrunnlagDto.erBarnTilBMUnder12År(virkningstidspunkt: LocalDate) = erBarn && fødselsdato != null && fødselsdato.erUnder12År(virkningstidspunkt)
 
 val grunnlagstyperSomIkkeKreverAktivering = listOf(Grunnlagsdatatype.ANDRE_BARN, Grunnlagsdatatype.TILLEGGSSTØNAD)
 val summertAinntektstyper =
@@ -78,16 +77,15 @@ val List<SummertÅrsinntekt>.skattegrunnlagListe
         }
 val List<SummertÅrsinntekt>.ainntektListe get() = filter { summertAinntektstyper.contains(it.inntektRapportering) }
 
-fun List<InntektPost>.tilInntektspost(inntekt: Inntekt) =
-    this
-        .map {
-            Inntektspost(
-                beløp = it.beløp,
-                kode = it.kode,
-                inntektstype = it.inntekstype,
-                inntekt = inntekt,
-            )
-        }.toMutableSet()
+fun List<InntektPost>.tilInntektspost(inntekt: Inntekt) = this
+    .map {
+        Inntektspost(
+            beløp = it.beløp,
+            kode = it.kode,
+            inntektstype = it.inntekstype,
+            inntekt = inntekt,
+        )
+    }.toMutableSet()
 
 fun SummertÅrsinntekt.tilInntekt(
     behandling: Behandling,
@@ -102,8 +100,8 @@ fun SummertÅrsinntekt.tilInntekt(
             ident = rolle.ident!!,
             gjelderBarn = this.gjelderBarnPersonId,
             gjelderBarnRolle =
-                this.gjelderBarnPersonId
-                    .let { behandling.finnRolleForPeriode(it, null, this.periode.fom.atDay(1)) },
+            this.gjelderBarnPersonId
+                .let { behandling.finnRolleForPeriode(it, null, this.periode.fom.atDay(1)) },
             datoFom = null,
             datoTom = null,
             rolle = rolle,
@@ -142,55 +140,50 @@ fun List<SummertÅrsinntekt>.tilInntekt(
         it.tilInntekt(behandling, rolle)
     }.toMutableSet()
 
-fun Inntektsrapportering.tilGrunnlagsdataType() =
-    when (this) {
-        Inntektsrapportering.BARNETILLEGG -> Grunnlagsdatatype.BARNETILLEGG
-        Inntektsrapportering.BARNETILSYN -> Grunnlagsdatatype.BARNETILSYN
-        Inntektsrapportering.UTVIDET_BARNETRYGD -> Grunnlagsdatatype.UTVIDET_BARNETRYGD
-        Inntektsrapportering.SMÅBARNSTILLEGG -> Grunnlagsdatatype.SMÅBARNSTILLEGG
-        Inntektsrapportering.KONTANTSTØTTE -> Grunnlagsdatatype.KONTANTSTØTTE
-        else -> Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER
-    }
+fun Inntektsrapportering.tilGrunnlagsdataType() = when (this) {
+    Inntektsrapportering.BARNETILLEGG -> Grunnlagsdatatype.BARNETILLEGG
+    Inntektsrapportering.BARNETILSYN -> Grunnlagsdatatype.BARNETILSYN
+    Inntektsrapportering.UTVIDET_BARNETRYGD -> Grunnlagsdatatype.UTVIDET_BARNETRYGD
+    Inntektsrapportering.SMÅBARNSTILLEGG -> Grunnlagsdatatype.SMÅBARNSTILLEGG
+    Inntektsrapportering.KONTANTSTØTTE -> Grunnlagsdatatype.KONTANTSTØTTE
+    else -> Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER
+}
 
-operator fun BeregnGrunnlag.plus(grunnlag: List<GrunnlagDto>) =
-    copy(
-        grunnlagListe = (grunnlagListe + grunnlag).toSet().toList(),
-    )
+operator fun BeregnGrunnlag.plus(grunnlag: List<GrunnlagDto>) = copy(
+    grunnlagListe = (grunnlagListe + grunnlag).toSet().toList(),
+)
 
 fun Behandling.henteNyesteGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolleInnhentetFor: Rolle,
-): Grunnlag? =
-    grunnlag
-        .filter {
-            it.type == grunnlagstype.type && it.rolle.id == rolleInnhentetFor.id && grunnlagstype.erBearbeidet == it.erBearbeidet
-        }.toSet()
-        .maxByOrNull { it.innhentet }
+): Grunnlag? = grunnlag
+    .filter {
+        it.type == grunnlagstype.type && it.rolle.id == rolleInnhentetFor.id && grunnlagstype.erBearbeidet == it.erBearbeidet
+    }.toSet()
+    .maxByOrNull { it.innhentet }
 
-fun Grunnlag.finnRolleGrunnlagGjelder(): Rolle? =
-    behandling.søknadsbarn.find {
-        if (gjelderBarnRolle != null) {
-            it.erSammeRolle(gjelderBarnRolle!!)
-        } else {
-            it.ident == gjelder
-        }
+fun Grunnlag.finnRolleGrunnlagGjelder(): Rolle? = behandling.søknadsbarn.find {
+    if (gjelderBarnRolle != null) {
+        it.erSammeRolle(gjelderBarnRolle!!)
+    } else {
+        it.ident == gjelder
     }
+}
 
 fun Behandling.henteNyesteGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolle: Rolle,
     gjelder: Personident?,
     gjelderBarnRolle: Rolle?,
-): Grunnlag? =
-    grunnlag
-        .filter {
-            it.type == grunnlagstype.type &&
-                it.rolle.id == rolle.id &&
-                grunnlagstype.erBearbeidet == it.erBearbeidet &&
-                (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id) &&
-                it.gjelder == gjelder?.verdi
-        }.toSet()
-        .maxByOrNull { it.innhentet }
+): Grunnlag? = grunnlag
+    .filter {
+        it.type == grunnlagstype.type &&
+            it.rolle.id == rolle.id &&
+            grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id) &&
+            it.gjelder == gjelder?.verdi
+    }.toSet()
+    .maxByOrNull { it.innhentet }
 
 fun Behandling.opprettAldersjusteringDetaljerGrunnlag(
     søknadsbarnReferanse: String,
@@ -207,15 +200,15 @@ fun Behandling.opprettAldersjusteringDetaljerGrunnlag(
     gjelderBarnReferanse = søknadsbarnReferanse,
     gjelderReferanse = søknadsbarnReferanse,
     innhold =
-        POJONode(
-            AldersjusteringDetaljerGrunnlag(
-                periode = ÅrMånedsperiode(YearMonth.now().withMonth(7), null),
-                aldersjusteresManuelt = aldersjusteresManuelt,
-                aldersjustert = aldersjustert,
-                begrunnelser = begrunnelser,
-                følgerAutomatiskVedtak = metadata?.getFølgerAutomatiskVedtak(),
-                aldersjustertManuelt = true,
-                grunnlagFraVedtak = vedtaksidBeregning,
-            ),
+    POJONode(
+        AldersjusteringDetaljerGrunnlag(
+            periode = ÅrMånedsperiode(YearMonth.now().withMonth(7), null),
+            aldersjusteresManuelt = aldersjusteresManuelt,
+            aldersjustert = aldersjustert,
+            begrunnelser = begrunnelser,
+            følgerAutomatiskVedtak = metadata?.getFølgerAutomatiskVedtak(),
+            aldersjustertManuelt = true,
+            grunnlagFraVedtak = vedtaksidBeregning,
         ),
+    ),
 )

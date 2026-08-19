@@ -78,31 +78,28 @@ data class OppdaterBarnFraFFRequest(
 val HentSøknad.parterUnderBehandling get() = partISøknadListe.filterBarnUnderBehandling()
 val HentSøknad.parterVedtakFattet get() = partISøknadListe.filterBarnVedtakFattet()
 
-fun List<PartISøknad>.filterBarnUnderBehandling() =
-    filter {
-        it.rolletype == Rolletype.BARN &&
-            it.behandlingstatus == Behandlingstatus.UNDER_BEHANDLING
-    }
+fun List<PartISøknad>.filterBarnUnderBehandling() = filter {
+    it.rolletype == Rolletype.BARN &&
+        it.behandlingstatus == Behandlingstatus.UNDER_BEHANDLING
+}
 
-fun List<PartISøknad>.filterBarnVedtakFattet() =
-    filter {
-        it.rolletype == Rolletype.BARN &&
-            it.behandlingstatus == Behandlingstatus.VEDTAK_FATTET
-    }
+fun List<PartISøknad>.filterBarnVedtakFattet() = filter {
+    it.rolletype == Rolletype.BARN &&
+        it.behandlingstatus == Behandlingstatus.VEDTAK_FATTET
+}
 
 fun List<PartISøknad>.finnBarn(ident: String) = find { it.personident == ident }
 
 fun HentSøknad.tilIdentStønadstypeNøkkel(ident: String) = "${ident}_${behandlingstema.tilStønadstype()}"
 
-fun Rolle.tilOpprettRolleDto() =
-    OpprettRolleDto(
-        Rolletype.BARN,
-        personident!!,
-        navn,
-        fødselsdato,
-        behandlingstema =
-            behandlingstema ?: stønadstype?.tilBehandlingstema() ?: behandling.stonadstype?.tilBehandlingstema(),
-    )
+fun Rolle.tilOpprettRolleDto() = OpprettRolleDto(
+    Rolletype.BARN,
+    personident!!,
+    navn,
+    fødselsdato,
+    behandlingstema =
+    behandlingstema ?: stønadstype?.tilBehandlingstema() ?: behandling.stonadstype?.tilBehandlingstema(),
+)
 
 val BehandlingStatusType.erÅpenStatus get() =
     listOf(
@@ -122,28 +119,25 @@ val Behandlingstatus.erFeilregistrert get() =
         Behandlingstatus.FEILREGISTRERT,
     ).contains(this)
 
-fun Collection<SakKravhaver>.finnEldsteSøktFomDato(behandling: Behandling) =
-    (
-        flatMap {
-            it.åpneBehandlinger.map { it.søktFomDato } +
-                it.åpneSøknader.filter { it.søknadFomDato != null }.map { it.søknadFomDato!! }
-        } + listOf(behandling.søktFomDato)
+fun Collection<SakKravhaver>.finnEldsteSøktFomDato(behandling: Behandling) = (
+    flatMap {
+        it.åpneBehandlinger.map { it.søktFomDato } +
+            it.åpneSøknader.filter { it.søknadFomDato != null }.map { it.søknadFomDato!! }
+    } + listOf(behandling.søktFomDato)
     ).min()
 
 fun StønadPeriodeDto.løperBidragEtterDato(fraDato: YearMonth) = periode.løperBidragEtterDato(fraDato)
 
 fun LøpendeBidragSakPeriode.løperBidragEtterDato(fraDato: YearMonth) = ÅrMånedsperiode(periodeFra, periodeTil).løperBidragEtterDato(fraDato)
 
-fun SakKravhaver.løperBidragEtterDato(fraDato: YearMonth) =
-    løperBidragFra
-        ?.let {
-            ÅrMånedsperiode(it, løperBidragTil)
-        }.løperBidragEtterDato(fraDato)
+fun SakKravhaver.løperBidragEtterDato(fraDato: YearMonth) = løperBidragFra
+    ?.let {
+        ÅrMånedsperiode(it, løperBidragTil)
+    }.løperBidragEtterDato(fraDato)
 
 fun ÅrMånedsperiode?.løperBidragEtterDato(fraDato: YearMonth) = if (this == null) false else (til == null || til!! > fraDato)
 
-fun Collection<SakKravhaver>.finnSøktFomRevurderingSøknad(behandling: Behandling) =
-    maxOf(finnEldsteSøktFomDato(behandling).withDayOfMonth(1), LocalDate.now().plusMonths(1).withDayOfMonth(1))
+fun Collection<SakKravhaver>.finnSøktFomRevurderingSøknad(behandling: Behandling) = maxOf(finnEldsteSøktFomDato(behandling).withDayOfMonth(1), LocalDate.now().plusMonths(1).withDayOfMonth(1))
 
 fun Rolle.fjernSøknad(søknadsid: Long) {
     if (forholdsmessigFordeling == null) return
@@ -159,25 +153,23 @@ fun Rolle.fjernSøknad(søknadsid: Long) {
             }.toMutableSet()
 }
 
-fun Behandling.tilFFDetaljerBP() =
-    ForholdsmessigFordelingRolle(
-        tilhørerSak = saksnummer,
-        behandlingsid = id,
-        behandlerenhet = behandlerEnhet,
-        delAvOpprinneligBehandling = true,
-        erRevurdering = false,
-        bidragsmottaker = null,
-    )
+fun Behandling.tilFFDetaljerBP() = ForholdsmessigFordelingRolle(
+    tilhørerSak = saksnummer,
+    behandlingsid = id,
+    behandlerenhet = behandlerEnhet,
+    delAvOpprinneligBehandling = true,
+    erRevurdering = false,
+    bidragsmottaker = null,
+)
 
-fun OpprettFFRequest?.finnManueltOverstyrtRevurderingsdato(kravhaver: SakKravhaver): LocalDate? =
-    this
-        ?.detaljerBarn
-        ?.find {
-            kravhaver.erSammePerson(
-                it.ident,
-                it.stønadstype,
-            )
-        }?.manueltOverstyrtRevurderingFraDato
+fun OpprettFFRequest?.finnManueltOverstyrtRevurderingsdato(kravhaver: SakKravhaver): LocalDate? = this
+    ?.detaljerBarn
+    ?.find {
+        kravhaver.erSammePerson(
+            it.ident,
+            it.stønadstype,
+        )
+    }?.manueltOverstyrtRevurderingFraDato
 
 fun finnSøktFomDatoForKravhaver(
     alleKravhavere: Set<SakKravhaver>,
@@ -204,51 +196,48 @@ fun finnSøktFomDatoForKravhaver(
     }
 }
 
-fun Behandling.tilFFDetaljerBM() =
-    ForholdsmessigFordelingRolle(
-        delAvOpprinneligBehandling = true,
-        tilhørerSak = saksnummer,
-        behandlingsid = id,
-        behandlerenhet = behandlerEnhet,
-        bidragsmottaker = null,
-        erRevurdering = false,
-        søknader =
-            mutableSetOf(
-                tilFFBarnDetaljer(),
-            ),
-    )
+fun Behandling.tilFFDetaljerBM() = ForholdsmessigFordelingRolle(
+    delAvOpprinneligBehandling = true,
+    tilhørerSak = saksnummer,
+    behandlingsid = id,
+    behandlerenhet = behandlerEnhet,
+    bidragsmottaker = null,
+    erRevurdering = false,
+    søknader =
+    mutableSetOf(
+        tilFFBarnDetaljer(),
+    ),
+)
 
-fun Behandling.tilFFBarnDetaljer() =
-    ForholdsmessigFordelingSøknadBarn(
-        søktAvType = soknadFra,
-        behandlingstype = søknadstype,
-        behandlingstema = behandlingstema,
-        mottattDato = mottattdato,
-        søknadFomDato = søktFomDato,
-        søknadsid = soknadsid,
-        innkreving = innkrevingstype == Innkrevingstype.MED_INNKREVING,
-        omgjørSøknadsid = omgjøringsdetaljer?.soknadRefId,
-        omgjørVedtaksid = omgjøringsdetaljer?.omgjørVedtakId,
-        enhet = behandlerEnhet,
-        saksnummer = saksnummer,
-        status = Behandlingstatus.UNDER_BEHANDLING,
-    )
+fun Behandling.tilFFBarnDetaljer() = ForholdsmessigFordelingSøknadBarn(
+    søktAvType = soknadFra,
+    behandlingstype = søknadstype,
+    behandlingstema = behandlingstema,
+    mottattDato = mottattdato,
+    søknadFomDato = søktFomDato,
+    søknadsid = soknadsid,
+    innkreving = innkrevingstype == Innkrevingstype.MED_INNKREVING,
+    omgjørSøknadsid = omgjøringsdetaljer?.soknadRefId,
+    omgjørVedtaksid = omgjøringsdetaljer?.omgjørVedtakId,
+    enhet = behandlerEnhet,
+    saksnummer = saksnummer,
+    status = Behandlingstatus.UNDER_BEHANDLING,
+)
 
-fun HentSøknad.tilForholdsmessigFordelingSøknad() =
-    ForholdsmessigFordelingSøknadBarn(
-        behandlingstype = behandlingstype,
-        behandlingstema = behandlingstema,
-        mottattDato = søknadMottattDato,
-        søknadFomDato = søknadFomDato,
-        søktAvType = søktAvType,
-        søknadsid = søknadsid,
-        status = partISøknadListe.find { it.rolletype == Rolletype.BARN }?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
-        omgjørVedtaksid = refVedtaksid,
-        innkreving = innkreving,
-        enhet = behandlerenhet ?: "9999",
-        omgjørSøknadsid = refSøknadsid,
-        saksnummer = saksnummer,
-    )
+fun HentSøknad.tilForholdsmessigFordelingSøknad() = ForholdsmessigFordelingSøknadBarn(
+    behandlingstype = behandlingstype,
+    behandlingstema = behandlingstema,
+    mottattDato = søknadMottattDato,
+    søknadFomDato = søknadFomDato,
+    søktAvType = søktAvType,
+    søknadsid = søknadsid,
+    status = partISøknadListe.find { it.rolletype == Rolletype.BARN }?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+    omgjørVedtaksid = refVedtaksid,
+    innkreving = innkreving,
+    enhet = behandlerenhet ?: "9999",
+    omgjørSøknadsid = refSøknadsid,
+    saksnummer = saksnummer,
+)
 
 fun opprettEllerOppdaterRolle(
     behandling: Behandling,
@@ -288,19 +277,19 @@ fun opprettEllerOppdaterRolle(
         Rolle(
             harGebyrsøknadColumn = harGebyrSøknad != null,
             gebyr =
-                GebyrRolle(
-                    overstyrGebyr = false,
-                    gebyrSøknader = listOfNotNull(harGebyrSøknad).toMutableSet(),
-                ),
+            GebyrRolle(
+                overstyrGebyr = false,
+                gebyrSøknader = listOfNotNull(harGebyrSøknad).toMutableSet(),
+            ),
             innkrevesFraDato = innkrevesFraDato?.atDay(1),
             innkrevingstype =
-                if (medInnkreving == null) {
-                    null
-                } else if (medInnkreving) {
-                    Innkrevingstype.MED_INNKREVING
-                } else {
-                    Innkrevingstype.UTEN_INNKREVING
-                },
+            if (medInnkreving == null) {
+                null
+            } else if (medInnkreving) {
+                Innkrevingstype.MED_INNKREVING
+            } else {
+                Innkrevingstype.UTEN_INNKREVING
+            },
             behandling = behandling,
             rolletype = rolletype,
             innbetaltBeløp = innbetaltBeløp,
@@ -308,36 +297,36 @@ fun opprettEllerOppdaterRolle(
             behandlingstema = stønadstype.tilBehandlingstema(),
             behandlingstatus = Behandlingstatus.UNDER_BEHANDLING,
             virkningstidspunkt =
-                if (erBarn) {
-                    val virkningstidspunkt =
-                        maxOf(
-                            hentPersonFødselsdato(fødselsnummer)!!.plusMonths(1).withDayOfMonth(1),
-                            ffDetaljer.eldsteSøknad?.søknadFomDato ?: behandling.eldsteVirkningstidspunkt,
-                        )
-                    if (opphørsdato != null && !ffDetaljer.erRevurdering) {
-                        minOf(opphørsdato.toLocalDate(), virkningstidspunkt)
-                    } else {
-                        virkningstidspunkt
-                    }
+            if (erBarn) {
+                val virkningstidspunkt =
+                    maxOf(
+                        hentPersonFødselsdato(fødselsnummer)!!.plusMonths(1).withDayOfMonth(1),
+                        ffDetaljer.eldsteSøknad?.søknadFomDato ?: behandling.eldsteVirkningstidspunkt,
+                    )
+                if (opphørsdato != null && !ffDetaljer.erRevurdering) {
+                    minOf(opphørsdato.toLocalDate(), virkningstidspunkt)
                 } else {
-                    null
-                },
+                    virkningstidspunkt
+                }
+            } else {
+                null
+            },
             opphørsdato = if (erBarn) opphørsdato?.toLocalDate() else null,
             årsak =
-                if (erBarn && ffDetaljer.erRevurdering) {
-                    VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
-                } else if (erBarn) {
-                    hentDefaultÅrsak(behandling.tilType(), behandling.vedtakstype)
-                } else {
-                    null
-                },
+            if (erBarn && ffDetaljer.erRevurdering) {
+                VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
+            } else if (erBarn) {
+                hentDefaultÅrsak(behandling.tilType(), behandling.vedtakstype)
+            } else {
+                null
+            },
             avslag = if (erBarn) behandling.avslag else null,
             beregnTil =
-                if (behandling.vedtakstype == Vedtakstype.KLAGE) {
-                    BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
-                } else {
-                    BeregnTil.INNEVÆRENDE_MÅNED
-                },
+            if (behandling.vedtakstype == Vedtakstype.KLAGE) {
+                BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+            } else {
+                BeregnTil.INNEVÆRENDE_MÅNED
+            },
             ident = fødselsnummer,
             fødselsdato = hentPersonFødselsdato(fødselsnummer)!!,
             forholdsmessigFordeling = ffDetaljer,
@@ -346,19 +335,18 @@ fun opprettEllerOppdaterRolle(
     return rolle
 }
 
-fun Grunnlag.kopierGrunnlag(hovedbehandling: Behandling): Grunnlag =
-    Grunnlag(
-        behandling = hovedbehandling,
-        rolle = hovedbehandling.roller.find { it.erSammeRolle(rolle) }!!,
-        erBearbeidet = erBearbeidet,
-        grunnlagFraVedtakSomSkalOmgjøres = grunnlagFraVedtakSomSkalOmgjøres,
-        type = type,
-        data = data,
-        gjelder = gjelder,
-        gjelderBarnRolle = gjelderBarnRolle?.let { hovedbehandling.roller.find { r -> r.erSammeRolle(it) } },
-        aktiv = aktiv,
-        innhentet = innhentet,
-    )
+fun Grunnlag.kopierGrunnlag(hovedbehandling: Behandling): Grunnlag = Grunnlag(
+    behandling = hovedbehandling,
+    rolle = hovedbehandling.roller.find { it.erSammeRolle(rolle) }!!,
+    erBearbeidet = erBearbeidet,
+    grunnlagFraVedtakSomSkalOmgjøres = grunnlagFraVedtakSomSkalOmgjøres,
+    type = type,
+    data = data,
+    gjelder = gjelder,
+    gjelderBarnRolle = gjelderBarnRolle?.let { hovedbehandling.roller.find { r -> r.erSammeRolle(it) } },
+    aktiv = aktiv,
+    innhentet = innhentet,
+)
 
 fun Rolle.kopierRolle(
     hovedbehandling: Behandling,
@@ -372,13 +360,13 @@ fun Rolle.kopierRolle(
     rolletype = rolletype,
     stønadstype = stønadstype,
     innkrevingstype =
-        if (medInnkreving == null) {
-            null
-        } else if (medInnkreving) {
-            Innkrevingstype.MED_INNKREVING
-        } else {
-            Innkrevingstype.UTEN_INNKREVING
-        },
+    if (medInnkreving == null) {
+        null
+    } else if (medInnkreving) {
+        Innkrevingstype.MED_INNKREVING
+    } else {
+        Innkrevingstype.UTEN_INNKREVING
+    },
     ident = ident,
     årsak = årsak ?: behandling.årsak,
     avslag = avslag ?: behandling.avslag,
@@ -393,23 +381,23 @@ fun Rolle.kopierRolle(
     beregnTil = beregnTil,
     fødselsdato = fødselsdato,
     forholdsmessigFordeling =
-        ForholdsmessigFordelingRolle(
-            delAvOpprinneligBehandling = false,
-            behandlingsid = behandling.id,
-            tilhørerSak = behandling.saksnummer,
-            behandlerenhet = behandling.behandlerEnhet,
-            bidragsmottaker = bmFnr,
-            harLøpendeBidrag = medInnkreving == true,
-            løperBidragFra = periodeFra,
-            løperBidragTil = periodeTil,
-            erRevurdering = false,
-            søknader =
-                (
-                    setOf(
-                        behandling.tilFFBarnDetaljer(),
-                    ) + åpneBehandlinger.map { it.tilFFBarnDetaljer() }
-                ).toMutableSet(),
-        ),
+    ForholdsmessigFordelingRolle(
+        delAvOpprinneligBehandling = false,
+        behandlingsid = behandling.id,
+        tilhørerSak = behandling.saksnummer,
+        behandlerenhet = behandling.behandlerEnhet,
+        bidragsmottaker = bmFnr,
+        harLøpendeBidrag = medInnkreving == true,
+        løperBidragFra = periodeFra,
+        løperBidragTil = periodeTil,
+        erRevurdering = false,
+        søknader =
+        (
+            setOf(
+                behandling.tilFFBarnDetaljer(),
+            ) + åpneBehandlinger.map { it.tilFFBarnDetaljer() }
+            ).toMutableSet(),
+    ),
 )
 
 fun kopierInntekt(
@@ -767,50 +755,49 @@ fun SakKravhaver.mapSakKravhaverTilForholdsmessigFordelingDto(
         stønadstype = stønadstype,
         eldsteSøktFraDato = åpneBehandlinger.filter { it.søktFraDato != null }.minOfOrNull { it.søktFraDato!! },
         innkrevesFraDato =
-            if (løpendeBidrag) {
-                løperBidragFra
-            } else {
-                null
-            },
+        if (løpendeBidrag) {
+            løperBidragFra
+        } else {
+            null
+        },
         opphørsdato = if (løpendeBidrag) løperBidragTil else opphørsdato,
         åpneBehandlinger = åpneBehandlinger,
         privateAvtale =
-            privatAvtale?.let {
-                ForholdsmessigFordelingPrivateAvtaleDto(
-                    avtaleDato = it.avtaleDato,
-                    avtaleType = it.avtaleType,
-                    stønadstype = it.stønadstype,
-                    utenlandsk = it.utenlandsk,
-                )
-            },
+        privatAvtale?.let {
+            ForholdsmessigFordelingPrivateAvtaleDto(
+                avtaleDato = it.avtaleDato,
+                avtaleType = it.avtaleType,
+                stønadstype = it.stønadstype,
+                utenlandsk = it.utenlandsk,
+            )
+        },
         bidragsmottaker =
-            RolleDto(
-                id = -1,
-                ident = bmFødselsnummer,
-                rolletype = Rolletype.BIDRAGSMOTTAKER,
-                navn = hentPersonVisningsnavn(bmFødselsnummer) ?: "Ukjent",
-                fødselsdato = hentPersonFødselsdato(bmFødselsnummer),
-                delAvOpprinneligBehandling = false,
-                erRevurdering = !erSøknadsbarn,
-                stønadstype = null,
-                saksnummer = saksnummer ?: "",
-            ),
+        RolleDto(
+            id = -1,
+            ident = bmFødselsnummer,
+            rolletype = Rolletype.BIDRAGSMOTTAKER,
+            navn = hentPersonVisningsnavn(bmFødselsnummer) ?: "Ukjent",
+            fødselsdato = hentPersonFødselsdato(bmFødselsnummer),
+            delAvOpprinneligBehandling = false,
+            erRevurdering = !erSøknadsbarn,
+            stønadstype = null,
+            saksnummer = saksnummer ?: "",
+        ),
     )
 }
 
-private fun Behandling.tilFFBarnDto() =
-    ForholdsmessigFordelingÅpenBehandlingDto(
-        søktFraDato = søktFomDato,
-        mottattDato = mottattdato,
-        stønadstype = stonadstype!!,
-        behandlerEnhet = behandlerEnhet,
-        behandlingId = id,
-        medInnkreving = innkrevingstype == Innkrevingstype.MED_INNKREVING,
-        søknadsid = null,
-        behandlingstype = søknadstype,
-        søktAvType = soknadFra,
-        behandlingstema = behandlingstema,
-    )
+private fun Behandling.tilFFBarnDto() = ForholdsmessigFordelingÅpenBehandlingDto(
+    søktFraDato = søktFomDato,
+    mottattDato = mottattdato,
+    stønadstype = stonadstype!!,
+    behandlerEnhet = behandlerEnhet,
+    behandlingId = id,
+    medInnkreving = innkrevingstype == Innkrevingstype.MED_INNKREVING,
+    søknadsid = null,
+    behandlingstype = søknadstype,
+    søktAvType = soknadFra,
+    behandlingstema = behandlingstema,
+)
 
 private fun HentSøknad.tilFFBarnDto(
     sak: BidragssakDto?,

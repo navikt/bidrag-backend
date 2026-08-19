@@ -29,6 +29,5 @@ class Tilleggsstønad(
     @Enumerated(EnumType.STRING)
     open var beløpstype: InntektBeløpstype = InntektBeløpstype.DAGSATS,
 ) {
-    override fun toString(): String =
-        "Tilleggsstønad(id=$id, underholdskostnad=${underholdskostnad.id}, fom=$fom, tom=$tom, dagsats=$`beløp`, beløpstype=$beløpstype)"
+    override fun toString(): String = "Tilleggsstønad(id=$id, underholdskostnad=${underholdskostnad.id}, fom=$fom, tom=$tom, dagsats=$`beløp`, beløpstype=$beløpstype)"
 }

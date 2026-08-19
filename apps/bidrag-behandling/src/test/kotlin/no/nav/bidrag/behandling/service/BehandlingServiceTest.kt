@@ -603,16 +603,16 @@ class BehandlingServiceTest : TestContainerRunner() {
                     rolle = behandling.bidragsmottaker!!,
                     type = Grunnlagsdatatype.SIVILSTAND,
                     data =
-                        commonObjectmapper.writeValueAsString(
-                            setOf(
-                                Sivilstand(
-                                    kilde = Kilde.OFFENTLIG,
-                                    periodeFom = LocalDate.now().minusYears(13),
-                                    periodeTom = null,
-                                    sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
-                                ),
+                    commonObjectmapper.writeValueAsString(
+                        setOf(
+                            Sivilstand(
+                                kilde = Kilde.OFFENTLIG,
+                                periodeFom = LocalDate.now().minusYears(13),
+                                periodeTom = null,
+                                sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
                             ),
                         ),
+                    ),
                 ),
             )
 
@@ -623,16 +623,16 @@ class BehandlingServiceTest : TestContainerRunner() {
                     rolle = behandling.bidragsmottaker!!,
                     type = Grunnlagsdatatype.SIVILSTAND,
                     data =
-                        commonObjectmapper.writeValueAsString(
-                            setOf(
-                                Sivilstand(
-                                    kilde = Kilde.OFFENTLIG,
-                                    periodeFom = LocalDate.now().minusYears(15),
-                                    periodeTom = null,
-                                    sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
-                                ),
+                    commonObjectmapper.writeValueAsString(
+                        setOf(
+                            Sivilstand(
+                                kilde = Kilde.OFFENTLIG,
+                                periodeFom = LocalDate.now().minusYears(15),
+                                periodeTom = null,
+                                sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
                             ),
                         ),
+                    ),
                 ),
             )
 
@@ -677,18 +677,18 @@ class BehandlingServiceTest : TestContainerRunner() {
                         stønadstype = Stønadstype.FORSKUDD,
                         engangsbeløpstype = null,
                         roller =
-                            setOf(
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BARN,
-                                    ident = Personident(testdataBarn1.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSMOTTAKER,
-                                    ident = Personident(testdataBM.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
+                        setOf(
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BARN,
+                                ident = Personident(testdataBarn1.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
                             ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                                ident = Personident(testdataBM.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                        ),
                     ),
                 )
 
@@ -731,18 +731,18 @@ class BehandlingServiceTest : TestContainerRunner() {
                         stønadstype = Stønadstype.FORSKUDD,
                         engangsbeløpstype = null,
                         roller =
-                            setOf(
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BARN,
-                                    ident = Personident(testdataBarn1.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSMOTTAKER,
-                                    ident = Personident(testdataBM.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
+                        setOf(
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BARN,
+                                ident = Personident(testdataBarn1.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
                             ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                                ident = Personident(testdataBM.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                        ),
                     ),
                 )
 
@@ -845,27 +845,27 @@ class BehandlingServiceTest : TestContainerRunner() {
                         stønadstype = null,
                         engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
                         kategori =
-                            OpprettKategoriRequestDto(
-                                Særbidragskategori.KONFIRMASJON.name,
-                            ),
+                        OpprettKategoriRequestDto(
+                            Særbidragskategori.KONFIRMASJON.name,
+                        ),
                         roller =
-                            setOf(
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BARN,
-                                    ident = Personident(testdataBarn1.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSMOTTAKER,
-                                    ident = Personident(testdataBM.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSPLIKTIG,
-                                    ident = Personident(testdataBP.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
+                        setOf(
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BARN,
+                                ident = Personident(testdataBarn1.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
                             ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                                ident = Personident(testdataBM.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSPLIKTIG,
+                                ident = Personident(testdataBP.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                        ),
                     ),
                 )
 
@@ -909,28 +909,28 @@ class BehandlingServiceTest : TestContainerRunner() {
                         stønadstype = null,
                         engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
                         kategori =
-                            OpprettKategoriRequestDto(
-                                Særbidragskategori.ANNET.name,
-                                "Dette er test",
-                            ),
+                        OpprettKategoriRequestDto(
+                            Særbidragskategori.ANNET.name,
+                            "Dette er test",
+                        ),
                         roller =
-                            setOf(
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BARN,
-                                    ident = Personident(testdataBarn1.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSMOTTAKER,
-                                    ident = Personident(testdataBM.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BIDRAGSPLIKTIG,
-                                    ident = Personident(testdataBP.ident),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
+                        setOf(
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BARN,
+                                ident = Personident(testdataBarn1.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
                             ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                                ident = Personident(testdataBM.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BIDRAGSPLIKTIG,
+                                ident = Personident(testdataBP.ident),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
+                            ),
+                        ),
                     ),
                 )
 
@@ -973,13 +973,13 @@ class BehandlingServiceTest : TestContainerRunner() {
                         stønadstype = Stønadstype.FORSKUDD,
                         engangsbeløpstype = null,
                         roller =
-                            setOf(
-                                OpprettRolleDto(
-                                    rolletype = Rolletype.BARN,
-                                    ident = Personident("213"),
-                                    fødselsdato = LocalDate.parse("2005-01-01"),
-                                ),
+                        setOf(
+                            OpprettRolleDto(
+                                rolletype = Rolletype.BARN,
+                                ident = Personident("213"),
+                                fødselsdato = LocalDate.parse("2005-01-01"),
                             ),
+                        ),
                     ),
                 )
 
@@ -1056,19 +1056,19 @@ class BehandlingServiceTest : TestContainerRunner() {
                         rolle = b.bidragsmottaker!!,
                         type = Grunnlagsdatatype.SIVILSTAND,
                         data =
-                            commonObjectmapper.writeValueAsString(
-                                setOf(
-                                    SivilstandGrunnlagDto(
-                                        bekreftelsesdato = b.virkningstidspunktEllerSøktFomDato.minusYears(15),
-                                        gyldigFom = b.virkningstidspunktEllerSøktFomDato.minusYears(15),
-                                        historisk = false,
-                                        master = "Freg",
-                                        personId = b.bidragsmottaker!!.ident!!,
-                                        registrert = b.virkningstidspunktEllerSøktFomDato.minusYears(8).atStartOfDay(),
-                                        type = SivilstandskodePDL.GIFT,
-                                    ),
+                        commonObjectmapper.writeValueAsString(
+                            setOf(
+                                SivilstandGrunnlagDto(
+                                    bekreftelsesdato = b.virkningstidspunktEllerSøktFomDato.minusYears(15),
+                                    gyldigFom = b.virkningstidspunktEllerSøktFomDato.minusYears(15),
+                                    historisk = false,
+                                    master = "Freg",
+                                    personId = b.bidragsmottaker!!.ident!!,
+                                    registrert = b.virkningstidspunktEllerSøktFomDato.minusYears(8).atStartOfDay(),
+                                    type = SivilstandskodePDL.GIFT,
                                 ),
                             ),
+                        ),
                     ),
                 )
 
@@ -1080,16 +1080,16 @@ class BehandlingServiceTest : TestContainerRunner() {
                         rolle = b.bidragsmottaker!!,
                         type = Grunnlagsdatatype.SIVILSTAND,
                         data =
-                            commonObjectmapper.writeValueAsString(
-                                setOf(
-                                    Sivilstand(
-                                        kilde = Kilde.OFFENTLIG,
-                                        periodeFom = LocalDate.now().minusYears(15),
-                                        periodeTom = null,
-                                        sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
-                                    ),
+                        commonObjectmapper.writeValueAsString(
+                            setOf(
+                                Sivilstand(
+                                    kilde = Kilde.OFFENTLIG,
+                                    periodeFom = LocalDate.now().minusYears(15),
+                                    periodeTom = null,
+                                    sivilstandskode = Sivilstandskode.GIFT_SAMBOER,
                                 ),
                             ),
+                        ),
                     ),
                 )
 
@@ -1142,12 +1142,12 @@ class BehandlingServiceTest : TestContainerRunner() {
                             navn = "Lyrisk Sopp",
                             partPersonId = b.bidragsmottaker!!.ident!!,
                             borISammeHusstandDtoListe =
-                                listOf(
-                                    BorISammeHusstandDto(
-                                        periodeFra = LocalDate.parse("2023-01-01"),
-                                        periodeTil = LocalDate.parse("2023-05-31"),
-                                    ),
+                            listOf(
+                                BorISammeHusstandDto(
+                                    periodeFra = LocalDate.parse("2023-01-01"),
+                                    periodeTil = LocalDate.parse("2023-05-31"),
                                 ),
+                            ),
                         ),
                         RelatertPersonGrunnlagDto(
                             relatertPersonPersonId = personidentBarnBoforholdSkalAktiveresFor.verdi,
@@ -1156,16 +1156,16 @@ class BehandlingServiceTest : TestContainerRunner() {
                             navn = "Lyrisk Sopp",
                             partPersonId = b.bidragsmottaker!!.ident!!,
                             borISammeHusstandDtoListe =
-                                listOf(
-                                    BorISammeHusstandDto(
-                                        periodeFra = LocalDate.parse("2023-01-01"),
-                                        periodeTil = LocalDate.parse("2023-05-31"),
-                                    ),
-                                    BorISammeHusstandDto(
-                                        periodeFra = LocalDate.parse("2023-08-01"),
-                                        periodeTil = null,
-                                    ),
+                            listOf(
+                                BorISammeHusstandDto(
+                                    periodeFra = LocalDate.parse("2023-01-01"),
+                                    periodeTil = LocalDate.parse("2023-05-31"),
                                 ),
+                                BorISammeHusstandDto(
+                                    periodeFra = LocalDate.parse("2023-08-01"),
+                                    periodeTil = null,
+                                ),
+                            ),
                         ),
                     )
                 b.grunnlag.add(
@@ -1380,14 +1380,14 @@ class BehandlingServiceTest : TestContainerRunner() {
                     OppdaterRollerRequest(
                         søknadsid = b.soknadsid,
                         roller =
-                            listOf(
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident("newident"),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                ),
+                        listOf(
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident("newident"),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
                             ),
+                        ),
                     ),
                 )
             response.status shouldBe OppdaterRollerStatus.ROLLER_OPPDATERT
@@ -1408,16 +1408,16 @@ class BehandlingServiceTest : TestContainerRunner() {
                     b.id!!,
                     OppdaterRollerRequest(
                         roller =
-                            listOf(
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident(b.søknadsbarn.first().ident!!),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    null,
-                                    true,
-                                ),
+                        listOf(
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident(b.søknadsbarn.first().ident!!),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                null,
+                                true,
                             ),
+                        ),
                     ),
                 )
 
@@ -1489,55 +1489,55 @@ class BehandlingServiceTest : TestContainerRunner() {
                     OppdaterRollerRequest(
                         søknadsid = behandling.soknadsid,
                         roller =
-                            listOf(
-                                OpprettRolleDto(
-                                    Rolletype.BIDRAGSPLIKTIG,
-                                    Personident(testdataBP.ident),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    null,
-                                    false,
-                                    harGebyrsøknad = true,
-                                ),
-                                OpprettRolleDto(
-                                    Rolletype.BIDRAGSMOTTAKER,
-                                    Personident(testdataBM.ident),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    null,
-                                    false,
-                                    harGebyrsøknad = false,
-                                ),
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident(identOriginaltMedISaken),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    null,
-                                    true,
-                                ),
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident(identOriginaltIkkeMedISaken),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                ),
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident("1111234"),
-                                    null,
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    innbetaltBeløp = BigDecimal("100.254"),
-                                ),
-                                OpprettRolleDto(
-                                    Rolletype.BARN,
-                                    Personident("5555566666"),
-                                    "Person som ikke finnes",
-                                    fødselsdato = LocalDate.now().minusMonths(144),
-                                    null,
-                                    true,
-                                ),
+                        listOf(
+                            OpprettRolleDto(
+                                Rolletype.BIDRAGSPLIKTIG,
+                                Personident(testdataBP.ident),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                null,
+                                false,
+                                harGebyrsøknad = true,
                             ),
+                            OpprettRolleDto(
+                                Rolletype.BIDRAGSMOTTAKER,
+                                Personident(testdataBM.ident),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                null,
+                                false,
+                                harGebyrsøknad = false,
+                            ),
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident(identOriginaltMedISaken),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                null,
+                                true,
+                            ),
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident(identOriginaltIkkeMedISaken),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                            ),
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident("1111234"),
+                                null,
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                innbetaltBeløp = BigDecimal("100.254"),
+                            ),
+                            OpprettRolleDto(
+                                Rolletype.BARN,
+                                Personident("5555566666"),
+                                "Person som ikke finnes",
+                                fødselsdato = LocalDate.now().minusMonths(144),
+                                null,
+                                true,
+                            ),
+                        ),
                     ),
                 )
             val behandlingEtter = behandlingService.hentBehandlingById(behandling.id!!)
@@ -1840,12 +1840,12 @@ class BehandlingServiceTest : TestContainerRunner() {
                         navn = "Test",
                         partPersonId = behandling.bidragspliktig!!.ident,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    periodeFra = LocalDate.now().minusMonths(4).withDayOfMonth(1),
-                                    periodeTil = LocalDate.now().minusMonths(1).withDayOfMonth(1),
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                periodeFra = LocalDate.now().minusMonths(4).withDayOfMonth(1),
+                                periodeTil = LocalDate.now().minusMonths(1).withDayOfMonth(1),
                             ),
+                        ),
                     ),
                 )
 
@@ -1864,7 +1864,7 @@ class BehandlingServiceTest : TestContainerRunner() {
                     erBearbeidet = false,
                     aktiv = null,
                     data =
-                        tilJson(nyAndreVoksneIHusstandGrunnlag),
+                    tilJson(nyAndreVoksneIHusstandGrunnlag),
                 ),
             )
             behandling.grunnlag.add(
@@ -1933,12 +1933,12 @@ class BehandlingServiceTest : TestContainerRunner() {
                         navn = "Test",
                         partPersonId = behandling.bidragspliktig!!.ident,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    periodeFra = LocalDate.now().minusMonths(4).withDayOfMonth(1),
-                                    periodeTil = null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                periodeFra = LocalDate.now().minusMonths(4).withDayOfMonth(1),
+                                periodeTil = null,
                             ),
+                        ),
                     ),
                 )
 
@@ -1957,7 +1957,7 @@ class BehandlingServiceTest : TestContainerRunner() {
                     erBearbeidet = false,
                     aktiv = null,
                     data =
-                        tilJson(nyAndreVoksneIHusstandGrunnlag),
+                    tilJson(nyAndreVoksneIHusstandGrunnlag),
                 ),
             )
             behandling.grunnlag.add(
@@ -2171,14 +2171,14 @@ class BehandlingServiceTest : TestContainerRunner() {
                 lagretBehandling.id!!,
                 OppdaterRollerRequest(
                     roller =
-                        listOf(
-                            OpprettRolleDto(
-                                rolletype = Rolletype.BARN,
-                                ident = Personident(barnSomSkalSlettes.ident!!),
-                                fødselsdato = barnSomSkalSlettes.fødselsdato,
-                                erSlettet = true,
-                            ),
+                    listOf(
+                        OpprettRolleDto(
+                            rolletype = Rolletype.BARN,
+                            ident = Personident(barnSomSkalSlettes.ident!!),
+                            fødselsdato = barnSomSkalSlettes.fødselsdato,
+                            erSlettet = true,
                         ),
+                    ),
                 ),
             ).status shouldBe OppdaterRollerStatus.ROLLER_OPPDATERT
 
@@ -2192,7 +2192,7 @@ class BehandlingServiceTest : TestContainerRunner() {
                     ).setParameter("behandlingId", lagretBehandling.id!!)
                     .setParameter("rolleId", barnSomSkalSlettes.id!!)
                     .singleResult as Number
-            ).toLong()
+                ).toLong()
 
         antallNotatForSlettetRolle shouldBe 0L
     }
@@ -2234,14 +2234,14 @@ class BehandlingServiceTest : TestContainerRunner() {
                 lagretBehandling.id!!,
                 OppdaterRollerRequest(
                     roller =
-                        listOf(
-                            OpprettRolleDto(
-                                rolletype = Rolletype.BARN,
-                                ident = Personident(barnSomSkalSlettes.ident!!),
-                                fødselsdato = barnSomSkalSlettes.fødselsdato,
-                                erSlettet = true,
-                            ),
+                    listOf(
+                        OpprettRolleDto(
+                            rolletype = Rolletype.BARN,
+                            ident = Personident(barnSomSkalSlettes.ident!!),
+                            fødselsdato = barnSomSkalSlettes.fødselsdato,
+                            erSlettet = true,
                         ),
+                    ),
                 ),
             ).status shouldBe OppdaterRollerStatus.ROLLER_OPPDATERT
 
@@ -2261,7 +2261,7 @@ class BehandlingServiceTest : TestContainerRunner() {
                     .setParameter("rolleId", barnSomSkalSlettes.id!!)
                     .setParameter("ident", barnSomSkalSlettes.ident!!)
                     .singleResult as Number
-            ).toLong()
+                ).toLong()
 
         antallGrunnlagSomReferererTilSlettetRolle shouldBe 0L
     }
@@ -2302,12 +2302,11 @@ class BehandlingServiceTest : TestContainerRunner() {
             return behandling
         }
 
-        fun prepareRoles(behandling: Behandling): Set<Rolle> =
-            setOf(
-                testdataBM.tilRolle(behandling),
-                testdataBP.tilRolle(behandling),
-                testdataBarn1.tilRolle(behandling),
-            )
+        fun prepareRoles(behandling: Behandling): Set<Rolle> = setOf(
+            testdataBM.tilRolle(behandling),
+            testdataBP.tilRolle(behandling),
+            testdataBarn1.tilRolle(behandling),
+        )
     }
 
     fun oppretteBehandling(): Behandling {
@@ -2333,28 +2332,26 @@ class BehandlingServiceTest : TestContainerRunner() {
         stubUtils.stubTilgangskontrollPerson()
     }
 
-    private fun Behandling.tilOppretteBehandlingRequest() =
-        OpprettBehandlingRequest(
-            vedtakstype = this.vedtakstype,
-            søktFomDato = this.søktFomDato,
-            mottattdato = this.mottattdato,
-            søknadFra = this.soknadFra,
-            saksnummer = this.saksnummer,
-            søknadsid = this.soknadsid!!,
-            behandlerenhet = this.behandlerEnhet,
-            stønadstype = this.stonadstype,
-            engangsbeløpstype = this.engangsbeloptype,
-            kategori = OpprettKategoriRequestDto(kategori = this.kategori ?: ""),
-            roller = this.roller.tilOpprettRolleDto(),
-        )
+    private fun Behandling.tilOppretteBehandlingRequest() = OpprettBehandlingRequest(
+        vedtakstype = this.vedtakstype,
+        søktFomDato = this.søktFomDato,
+        mottattdato = this.mottattdato,
+        søknadFra = this.soknadFra,
+        saksnummer = this.saksnummer,
+        søknadsid = this.soknadsid!!,
+        behandlerenhet = this.behandlerEnhet,
+        stønadstype = this.stonadstype,
+        engangsbeløpstype = this.engangsbeloptype,
+        kategori = OpprettKategoriRequestDto(kategori = this.kategori ?: ""),
+        roller = this.roller.tilOpprettRolleDto(),
+    )
 
-    private fun Set<Rolle>.tilOpprettRolleDto() =
-        this
-            .map {
-                OpprettRolleDto(
-                    rolletype = it.rolletype,
-                    fødselsdato = it.fødselsdato,
-                    ident = Personident(it.ident!!),
-                )
-            }.toSet()
+    private fun Set<Rolle>.tilOpprettRolleDto() = this
+        .map {
+            OpprettRolleDto(
+                rolletype = it.rolletype,
+                fødselsdato = it.fødselsdato,
+                ident = Personident(it.ident!!),
+            )
+        }.toSet()
 }

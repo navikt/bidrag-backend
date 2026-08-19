@@ -97,17 +97,16 @@ fun Set<Rolle>.reelMottakerEllerBidragsmottaker(rolle: RolleDto): Personident {
 
 fun String?.nullIfEmpty() = if (this.isNullOrEmpty()) null else this
 
-fun <T, R> T?.takeIfNotNullOrEmpty(block: (T) -> R): R? =
-    if (this == null ||
-        this is String &&
-        this.trim().isEmpty() ||
-        this is List<*> &&
-        this.isEmpty()
-    ) {
-        null
-    } else {
-        block(this)
-    }
+fun <T, R> T?.takeIfNotNullOrEmpty(block: (T) -> R): R? = if (this == null ||
+    this is String &&
+    this.trim().isEmpty() ||
+    this is List<*> &&
+    this.isEmpty()
+) {
+    null
+} else {
+    block(this)
+}
 
 fun Inntekt?.ifTaMed(block: (Inntekt) -> Unit) {
     if (this?.taMed == true) block(this)
@@ -115,11 +114,9 @@ fun Inntekt?.ifTaMed(block: (Inntekt) -> Unit) {
 
 fun <T> Boolean?.ifFalse(block: (Boolean) -> T?): T? = if (this == false) block(this) else null
 
-fun Rolle.opprettPersonBarnBPBMReferanse(type: Grunnlagstype = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER) =
-    opprettPersonBarnBPBMReferanse(type, fødselsdato, ident, navn)
+fun Rolle.opprettPersonBarnBPBMReferanse(type: Grunnlagstype = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER) = opprettPersonBarnBPBMReferanse(type, fødselsdato, ident, navn)
 
-fun Person.opprettPersonBarnBPBMReferanse(type: Grunnlagstype = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER) =
-    opprettPersonBarnBPBMReferanse(type, fødselsdato, ident, navn)
+fun Person.opprettPersonBarnBPBMReferanse(type: Grunnlagstype = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER) = opprettPersonBarnBPBMReferanse(type, fødselsdato, ident, navn)
 
 fun PrivatAvtale.tilPersonGrunnlag(): GrunnlagDto {
     val referanse =
@@ -131,13 +128,13 @@ fun PrivatAvtale.tilPersonGrunnlag(): GrunnlagDto {
         grunnlagsreferanseListe = emptyList(),
         type = Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG,
         innhold =
-            POJONode(
-                PersonGrunnlag(
-                    ident = personIdent!!.let { Personident(it) },
-                    navn = if (personIdent.isNullOrEmpty()) rolle!!.navn else null,
-                    fødselsdato = personFødselsdato,
-                ).valider(),
-            ),
+        POJONode(
+            PersonGrunnlag(
+                ident = personIdent!!.let { Personident(it) },
+                navn = if (personIdent.isNullOrEmpty()) rolle!!.navn else null,
+                fødselsdato = personFødselsdato,
+            ).valider(),
+        ),
     )
 }
 
@@ -151,84 +148,83 @@ fun opprettPersonBarnBPBMReferanse(
     if (ident.isNullOrEmpty()) (fødselsdato.toCompactString() + navn).hashCode() else (ident + fødselsdato.toCompactString()).hashCode(),
 )
 
-fun OpprettVedtakRequestDto.tilVedtakDto(): VedtakDto =
-    VedtakDto(
-        type = type,
-        opprettetAv = opprettetAv ?: "",
-        opprettetAvNavn = opprettetAv,
-        kilde = kilde,
-        kildeapplikasjon = "behandling",
-        vedtakstidspunkt = vedtakstidspunkt,
-        enhetsnummer = enhetsnummer,
-        innkrevingUtsattTilDato = innkrevingUtsattTilDato,
-        fastsattILand = fastsattILand,
-        opprettetTidspunkt = LocalDateTime.now(),
-        behandlingsreferanseListe =
-            behandlingsreferanseListe.map {
-                BehandlingsreferanseDto(
-                    kilde = it.kilde,
-                    referanse = it.referanse,
-                )
-            },
-        stønadsendringListe =
-            stønadsendringListe.map {
-                StønadsendringDto(
-                    innkreving = it.innkreving,
-                    skyldner = it.skyldner,
-                    kravhaver = it.kravhaver,
-                    mottaker = it.mottaker,
-                    sak = it.sak,
-                    type = it.type,
-                    beslutning = it.beslutning,
-                    grunnlagReferanseListe = it.grunnlagReferanseListe,
-                    eksternReferanse = it.eksternReferanse,
-                    omgjørVedtakId = it.omgjørVedtakId,
-                    førsteIndeksreguleringsår = it.førsteIndeksreguleringsår,
-                    sisteVedtaksid = null,
-                    periodeListe =
-                        it.periodeListe.map {
-                            VedtakPeriodeDto(
-                                periode = it.periode,
-                                beløp = it.beløp,
-                                valutakode = it.valutakode,
-                                resultatkode = it.resultatkode,
-                                delytelseId = it.delytelseId,
-                                grunnlagReferanseListe = it.grunnlagReferanseListe,
-                            )
-                        },
-                )
-            },
-        engangsbeløpListe =
-            engangsbeløpListe.map {
-                EngangsbeløpDto(
+fun OpprettVedtakRequestDto.tilVedtakDto(): VedtakDto = VedtakDto(
+    type = type,
+    opprettetAv = opprettetAv ?: "",
+    opprettetAvNavn = opprettetAv,
+    kilde = kilde,
+    kildeapplikasjon = "behandling",
+    vedtakstidspunkt = vedtakstidspunkt,
+    enhetsnummer = enhetsnummer,
+    innkrevingUtsattTilDato = innkrevingUtsattTilDato,
+    fastsattILand = fastsattILand,
+    opprettetTidspunkt = LocalDateTime.now(),
+    behandlingsreferanseListe =
+    behandlingsreferanseListe.map {
+        BehandlingsreferanseDto(
+            kilde = it.kilde,
+            referanse = it.referanse,
+        )
+    },
+    stønadsendringListe =
+    stønadsendringListe.map {
+        StønadsendringDto(
+            innkreving = it.innkreving,
+            skyldner = it.skyldner,
+            kravhaver = it.kravhaver,
+            mottaker = it.mottaker,
+            sak = it.sak,
+            type = it.type,
+            beslutning = it.beslutning,
+            grunnlagReferanseListe = it.grunnlagReferanseListe,
+            eksternReferanse = it.eksternReferanse,
+            omgjørVedtakId = it.omgjørVedtakId,
+            førsteIndeksreguleringsår = it.førsteIndeksreguleringsår,
+            sisteVedtaksid = null,
+            periodeListe =
+            it.periodeListe.map {
+                VedtakPeriodeDto(
+                    periode = it.periode,
                     beløp = it.beløp,
                     valutakode = it.valutakode,
                     resultatkode = it.resultatkode,
                     delytelseId = it.delytelseId,
                     grunnlagReferanseListe = it.grunnlagReferanseListe,
-                    beslutning = it.beslutning,
-                    innkreving = it.innkreving,
-                    skyldner = it.skyldner,
-                    kravhaver = it.kravhaver,
-                    mottaker = it.mottaker,
-                    sak = it.sak,
-                    type = it.type,
-                    eksternReferanse = it.eksternReferanse,
-                    omgjørVedtakId = it.omgjørVedtakId,
-                    referanse = it.referanse ?: "",
                 )
             },
-        unikReferanse = null,
-        vedtaksid = 1,
-        grunnlagListe =
-            grunnlagListe.map {
-                GrunnlagDto(
-                    referanse = it.referanse,
-                    type = it.type,
-                    innhold = it.innhold,
-                    grunnlagsreferanseListe = it.grunnlagsreferanseListe,
-                    gjelderReferanse = it.gjelderReferanse,
-                    gjelderBarnReferanse = it.gjelderBarnReferanse,
-                )
-            },
-    )
+        )
+    },
+    engangsbeløpListe =
+    engangsbeløpListe.map {
+        EngangsbeløpDto(
+            beløp = it.beløp,
+            valutakode = it.valutakode,
+            resultatkode = it.resultatkode,
+            delytelseId = it.delytelseId,
+            grunnlagReferanseListe = it.grunnlagReferanseListe,
+            beslutning = it.beslutning,
+            innkreving = it.innkreving,
+            skyldner = it.skyldner,
+            kravhaver = it.kravhaver,
+            mottaker = it.mottaker,
+            sak = it.sak,
+            type = it.type,
+            eksternReferanse = it.eksternReferanse,
+            omgjørVedtakId = it.omgjørVedtakId,
+            referanse = it.referanse ?: "",
+        )
+    },
+    unikReferanse = null,
+    vedtaksid = 1,
+    grunnlagListe =
+    grunnlagListe.map {
+        GrunnlagDto(
+            referanse = it.referanse,
+            type = it.type,
+            innhold = it.innhold,
+            grunnlagsreferanseListe = it.grunnlagsreferanseListe,
+            gjelderReferanse = it.gjelderReferanse,
+            gjelderBarnReferanse = it.gjelderBarnReferanse,
+        )
+    },
+)

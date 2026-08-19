@@ -58,18 +58,16 @@ class BidragBBMConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    override fun hentBeregning(request: BidragBeregningRequestDto): BidragBeregningResponsDto =
-        postForNonNullEntity(
-            bidragBBMUri.build().toUri(),
-            request,
-        )
+    override fun hentBeregning(request: BidragBeregningRequestDto): BidragBeregningResponsDto = postForNonNullEntity(
+        bidragBBMUri.build().toUri(),
+        request,
+    )
 
     @BrukerCacheable(BBM_ALLE_BEREGNINGER_CACHE)
-    override fun hentAlleBeregninger(request: BidragBeregningRequestDto): BidragBeregningResponsDto =
-        postForNonNullEntity(
-            bidragBBMUri.pathSegment("alleberegningerogsamvar").build().toUri(),
-            request,
-        )
+    override fun hentAlleBeregninger(request: BidragBeregningRequestDto): BidragBeregningResponsDto = postForNonNullEntity(
+        bidragBBMUri.pathSegment("alleberegningerogsamvar").build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
@@ -92,104 +90,97 @@ class BidragBBMConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun lagreBehandlingsid(request: OppdaterBehandlingsidRequest) =
-        try {
-            postForEntity<Unit>(
-                bidragBBMUri.pathSegment("settbehandlingsid").build().toUri(),
-                request,
-            )
-        } catch (e: RestClientResponseException) {
-            secureLogger.error(e) { "Feil ved oppdatering av behandlingsid av request=$request" }
-        }
-
-    @Retryable(
-        value = [Exception::class],
-        maxAttempts = 3,
-        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
-    )
-    fun leggTilBarnISøknad(request: LeggTilBarnIFFSøknadRequest) =
+    fun lagreBehandlingsid(request: OppdaterBehandlingsidRequest) = try {
         postForEntity<Unit>(
-            bidragBBMUri.pathSegment("leggtilbarniffsoknad").build().toUri(),
+            bidragBBMUri.pathSegment("settbehandlingsid").build().toUri(),
             request,
         )
+    } catch (e: RestClientResponseException) {
+        secureLogger.error(e) { "Feil ved oppdatering av behandlingsid av request=$request" }
+    }
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun feilregistrerSøknadsbarn(request: FeilregistrerSøknadsBarnRequest) =
-        postForEntity<Unit>(
-            bidragBBMUri.pathSegment("feilregistrersoknadsbarn").build().toUri(),
-            request,
-        )
+    fun leggTilBarnISøknad(request: LeggTilBarnIFFSøknadRequest) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("leggtilbarniffsoknad").build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun feilregistrerSøknad(request: FeilregistrerSøknadRequest) =
-        postForEntity<Unit>(
-            bidragBBMUri.pathSegment("feilregistrersoknad").build().toUri(),
-            request,
-        )
+    fun feilregistrerSøknadsbarn(request: FeilregistrerSøknadsBarnRequest) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("feilregistrersoknadsbarn").build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun lagreBehandlerEnhet(request: OppdaterBehandlerenhetRequest) =
-        postForEntity<Unit>(
-            bidragBBMUri.pathSegment("oppdaterbehandlerenhet").build().toUri(),
-            request,
-        )
+    fun feilregistrerSøknad(request: FeilregistrerSøknadRequest) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("feilregistrersoknad").build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun hentÅpneSøknaderForBp(bidragspliktig: String): HentBPsÅpneSøknaderResponse =
+    fun lagreBehandlerEnhet(request: OppdaterBehandlerenhetRequest) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("oppdaterbehandlerenhet").build().toUri(),
+        request,
+    )
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun hentÅpneSøknaderForBp(bidragspliktig: String): HentBPsÅpneSøknaderResponse = postForNonNullEntity(
+        bidragBBMUri.pathSegment("apnesoknader").build().toUri(),
+        HentBPsÅpneSøknaderRequest(bidragspliktig),
+    )
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun hentSøknad(søknadsid: Long): HentSøknadResponse? = try {
         postForNonNullEntity(
-            bidragBBMUri.pathSegment("apnesoknader").build().toUri(),
-            HentBPsÅpneSøknaderRequest(bidragspliktig),
+            bidragBBMUri.pathSegment("hentsoknad").build().toUri(),
+            HentSøknadRequest(søknadsid),
         )
-
-    @Retryable(
-        value = [Exception::class],
-        maxAttempts = 3,
-        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
-    )
-    fun hentSøknad(søknadsid: Long): HentSøknadResponse? =
-        try {
-            postForNonNullEntity(
-                bidragBBMUri.pathSegment("hentsoknad").build().toUri(),
-                HentSøknadRequest(søknadsid),
+    } catch (e: Exception) {
+        if (debugMode) {
+            HentSøknadResponse(
+                søknad =
+                HentSøknad(
+                    søknadsid = søknadsid,
+                    søknadMottattDato = LocalDate.parse("2025-01-01"),
+                    søknadFomDato = LocalDate.parse("2025-01-01"),
+                    saksnummer = "2600613",
+                    behandlingstema = Behandlingstema.BIDRAG,
+                    behandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
+                    partISøknadListe = emptyList(),
+                    innkreving = true,
+                    søktAvType = SøktAvType.NAV_BIDRAG,
+                ),
             )
-        } catch (e: Exception) {
-            if (debugMode) {
-                HentSøknadResponse(
-                    søknad =
-                        HentSøknad(
-                            søknadsid = søknadsid,
-                            søknadMottattDato = LocalDate.parse("2025-01-01"),
-                            søknadFomDato = LocalDate.parse("2025-01-01"),
-                            saksnummer = "2600613",
-                            behandlingstema = Behandlingstema.BIDRAG,
-                            behandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
-                            partISøknadListe = emptyList(),
-                            innkreving = true,
-                            søktAvType = SøktAvType.NAV_BIDRAG,
-                        ),
-                )
-            } else if (e is HttpClientErrorException && e.statusCode.is4xxClientError) {
-                null
-            } else {
-                throw e
-            }
+        } else if (e is HttpClientErrorException && e.statusCode.is4xxClientError) {
+            null
+        } else {
+            throw e
         }
+    }
 
     @Retryable(
         value = [Exception::class],
@@ -199,11 +190,10 @@ class BidragBBMConsumer(
     fun endreSammenknytningSøknad(
         hovedsøknadsid: Long,
         søknadsid: Long,
-    ): SøknadsknytningResponse? =
-        postForEntity<SøknadsknytningResponse>(
-            bidragBBMUri.pathSegment("endresammenknytningsoknad").build().toUri(),
-            SammenknyttSøknaderRequest(hovedsøknadsid, søknadsid),
-        )
+    ): SøknadsknytningResponse? = postForEntity<SøknadsknytningResponse>(
+        bidragBBMUri.pathSegment("endresammenknytningsoknad").build().toUri(),
+        SammenknyttSøknaderRequest(hovedsøknadsid, søknadsid),
+    )
 
     @Retryable(
         value = [Exception::class],
@@ -213,22 +203,20 @@ class BidragBBMConsumer(
     fun sammeknyttSøknader(
         hovedsøknadsid: Long,
         søknadsid: Long,
-    ): SøknadsknytningResponse? =
-        postForEntity<SøknadsknytningResponse>(
-            bidragBBMUri.pathSegment("sammenknyttsoknader").build().toUri(),
-            SammenknyttSøknaderRequest(hovedsøknadsid, søknadsid),
-        )
+    ): SøknadsknytningResponse? = postForEntity<SøknadsknytningResponse>(
+        bidragBBMUri.pathSegment("sammenknyttsoknader").build().toUri(),
+        SammenknyttSøknaderRequest(hovedsøknadsid, søknadsid),
+    )
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun fjernSammenknytning(søknadsid: Long) =
-        postForEntity<Unit>(
-            bidragBBMUri.pathSegment("slettsammenknytningsoknad").build().toUri(),
-            SlettSammenknytningForSøknadRequest(søknadsid),
-        )
+    fun fjernSammenknytning(søknadsid: Long) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("slettsammenknytningsoknad").build().toUri(),
+        SlettSammenknytningForSøknadRequest(søknadsid),
+    )
 
     @Retryable(
         value = [Exception::class],

@@ -24,91 +24,87 @@ fun Behandling.tilGrunnlagUtgift(): GrunnlagDto {
         referanse = grunnlagsreferanse_delberegning_utgift,
         type = Grunnlagstype.DELBEREGNING_UTGIFT,
         innhold =
-            POJONode(
-                DelberegningUtgift(
-                    periode =
-                        ÅrMånedsperiode(
-                            virkningstidspunkt!!,
-                            finnBeregnTilDatoBehandling(),
-                        ),
-                    sumBetaltAvBp = beregningUtgifter.totalBeløpBetaltAvBp,
-                    sumGodkjent =
-                        run {
-                            val maksGodkjentBeløp = utgift!!.maksGodkjentBeløp
-                            if (utgift!!.maksGodkjentBeløpTaMed && maksGodkjentBeløp != null && maksGodkjentBeløp > BigDecimal.ZERO) {
-                                minOf(
-                                    beregningUtgifter.totalGodkjentBeløp,
-                                    maksGodkjentBeløp,
-                                )
-                            } else {
-                                beregningUtgifter.totalGodkjentBeløp
-                            }
-                        },
+        POJONode(
+            DelberegningUtgift(
+                periode =
+                ÅrMånedsperiode(
+                    virkningstidspunkt!!,
+                    finnBeregnTilDatoBehandling(),
                 ),
+                sumBetaltAvBp = beregningUtgifter.totalBeløpBetaltAvBp,
+                sumGodkjent =
+                run {
+                    val maksGodkjentBeløp = utgift!!.maksGodkjentBeløp
+                    if (utgift!!.maksGodkjentBeløpTaMed && maksGodkjentBeløp != null && maksGodkjentBeløp > BigDecimal.ZERO) {
+                        minOf(
+                            beregningUtgifter.totalGodkjentBeløp,
+                            maksGodkjentBeløp,
+                        )
+                    } else {
+                        beregningUtgifter.totalGodkjentBeløp
+                    }
+                },
             ),
+        ),
         grunnlagsreferanseListe =
-            listOfNotNull(
-                grunnlagsreferanse_utgiftsposter,
-                grunnlagsreferanse_utgift_direkte_betalt,
-                utgift!!.maksGodkjentBeløpTaMed.ifTrue { grunnlagsreferanse_utgift_maks_godkjent_beløp },
-            ),
+        listOfNotNull(
+            grunnlagsreferanse_utgiftsposter,
+            grunnlagsreferanse_utgift_direkte_betalt,
+            utgift!!.maksGodkjentBeløpTaMed.ifTrue { grunnlagsreferanse_utgift_maks_godkjent_beløp },
+        ),
     )
 }
 
-fun Behandling.byggGrunnlagUtgiftsposter() =
+fun Behandling.byggGrunnlagUtgiftsposter() = setOf(
+    GrunnlagDto(
+        referanse = grunnlagsreferanse_utgiftsposter,
+        type = Grunnlagstype.UTGIFTSPOSTER,
+        innhold =
+        POJONode(
+            utgift!!.utgiftsposter.map {
+                UtgiftspostGrunnlag(
+                    dato = it.dato,
+                    type = it.type,
+                    kravbeløp = it.kravbeløp,
+                    godkjentBeløp = it.godkjentBeløp,
+                    kommentar = it.kommentar,
+                    betaltAvBp = it.betaltAvBp,
+                )
+            },
+        ),
+    ),
+)
+
+fun Behandling.byggGrunnlagUtgiftMaksGodkjentBeløp() = utgift!!.maksGodkjentBeløpTaMed.ifTrue {
     setOf(
         GrunnlagDto(
-            referanse = grunnlagsreferanse_utgiftsposter,
-            type = Grunnlagstype.UTGIFTSPOSTER,
+            referanse = grunnlagsreferanse_utgift_maks_godkjent_beløp,
+            type = Grunnlagstype.UTGIFT_MAKS_GODKJENT_BELØP,
             innhold =
-                POJONode(
-                    utgift!!.utgiftsposter.map {
-                        UtgiftspostGrunnlag(
-                            dato = it.dato,
-                            type = it.type,
-                            kravbeløp = it.kravbeløp,
-                            godkjentBeløp = it.godkjentBeløp,
-                            kommentar = it.kommentar,
-                            betaltAvBp = it.betaltAvBp,
-                        )
-                    },
+            POJONode(
+                UtgiftMaksGodkjentBeløpGrunnlag(
+                    beløp = utgift!!.maksGodkjentBeløp!!,
+                    begrunnelse = utgift!!.maksGodkjentBeløpBegrunnelse!!,
                 ),
-        ),
-    )
-
-fun Behandling.byggGrunnlagUtgiftMaksGodkjentBeløp() =
-    utgift!!.maksGodkjentBeløpTaMed.ifTrue {
-        setOf(
-            GrunnlagDto(
-                referanse = grunnlagsreferanse_utgift_maks_godkjent_beløp,
-                type = Grunnlagstype.UTGIFT_MAKS_GODKJENT_BELØP,
-                innhold =
-                    POJONode(
-                        UtgiftMaksGodkjentBeløpGrunnlag(
-                            beløp = utgift!!.maksGodkjentBeløp!!,
-                            begrunnelse = utgift!!.maksGodkjentBeløpBegrunnelse!!,
-                        ),
-                    ),
             ),
-        )
-    } ?: emptySet()
-
-fun Behandling.byggGrunnlagUtgiftDirekteBetalt() =
-    setOf(
-        GrunnlagDto(
-            referanse = grunnlagsreferanse_utgift_direkte_betalt,
-            type = Grunnlagstype.UTGIFT_DIREKTE_BETALT,
-            innhold =
-                POJONode(
-                    UtgiftDirekteBetaltGrunnlag(
-                        beløpDirekteBetalt = utgift!!.beløpDirekteBetaltAvBp,
-                    ),
-                ),
         ),
     )
+} ?: emptySet()
 
-fun Behandling.byggGrunnlagLøpendeBidragForholdsmessigFordeling(grunnlagsliste: MutableSet<GrunnlagDto>) =
-    grunnlag.hentSisteGrunnlagLøpendeBidragFF(this).tilGrunnlagDto(grunnlagsliste)
+fun Behandling.byggGrunnlagUtgiftDirekteBetalt() = setOf(
+    GrunnlagDto(
+        referanse = grunnlagsreferanse_utgift_direkte_betalt,
+        type = Grunnlagstype.UTGIFT_DIREKTE_BETALT,
+        innhold =
+        POJONode(
+            UtgiftDirekteBetaltGrunnlag(
+                beløpDirekteBetalt = utgift!!.beløpDirekteBetaltAvBp,
+            ),
+        ),
+    ),
+)
+
+fun Behandling.byggGrunnlagLøpendeBidragForholdsmessigFordeling(grunnlagsliste: MutableSet<GrunnlagDto>) = grunnlag.hentSisteGrunnlagLøpendeBidragFF(this).tilGrunnlagDto(grunnlagsliste)
 
 fun Behandling.byggGrunnlagBehandlingDetaljer(
     fatteVedtakRevurderingsbarn: FatteVedtakRevurderingsbarn? = null,
@@ -118,33 +114,32 @@ fun Behandling.byggGrunnlagBehandlingDetaljer(
         referanse = "behandling_detaljer",
         type = Grunnlagstype.BEHANDLING_DETALJER,
         innhold =
-            POJONode(
-                BehandlingDetaljerGrunnlag(
-                    opprettetForholdsmessigFordeling = erIForholdsmessigFordeling,
-                    fatteVedtakRevurderingsbarn =
-                        if (erIForholdsmessigFordeling) {
-                            fatteVedtakRevurderingsbarn?.copy(
-                                bleFFTrukket = bleFFTrukket,
-                            ) ?: FatteVedtakRevurderingsbarn(bleFFTrukket = bleFFTrukket)
-                        } else {
-                            null
-                        },
-                ),
+        POJONode(
+            BehandlingDetaljerGrunnlag(
+                opprettetForholdsmessigFordeling = erIForholdsmessigFordeling,
+                fatteVedtakRevurderingsbarn =
+                if (erIForholdsmessigFordeling) {
+                    fatteVedtakRevurderingsbarn?.copy(
+                        bleFFTrukket = bleFFTrukket,
+                    ) ?: FatteVedtakRevurderingsbarn(bleFFTrukket = bleFFTrukket)
+                } else {
+                    null
+                },
             ),
+        ),
     ),
 )
 
-fun Behandling.byggGrunnlagSærbidragKategori() =
-    setOf(
-        GrunnlagDto(
-            referanse = "særbidrag_kategori",
-            type = Grunnlagstype.SÆRBIDRAG_KATEGORI,
-            innhold =
-                POJONode(
-                    SærbidragskategoriGrunnlag(
-                        kategori = særbidragKategori,
-                        beskrivelse = kategoriBeskrivelse,
-                    ),
-                ),
+fun Behandling.byggGrunnlagSærbidragKategori() = setOf(
+    GrunnlagDto(
+        referanse = "særbidrag_kategori",
+        type = Grunnlagstype.SÆRBIDRAG_KATEGORI,
+        innhold =
+        POJONode(
+            SærbidragskategoriGrunnlag(
+                kategori = særbidragKategori,
+                beskrivelse = kategoriBeskrivelse,
+            ),
         ),
-    )
+    ),
+)

@@ -157,9 +157,9 @@ class ForholdsmessigFordelingOverføringService(
                 bidragsmottaker = åpenSøknad.bidragsmottaker?.personident,
                 erRevurdering = åpenSøknad.behandlingstype == behandling.behandlingstypeForFF,
                 søknader =
-                    mutableSetOf(
-                        åpenSøknad.tilForholdsmessigFordelingSøknad(),
-                    ),
+                mutableSetOf(
+                    åpenSøknad.tilForholdsmessigFordelingSøknad(),
+                ),
             )
         åpenSøknad.bidragsmottaker?.let { bm ->
             val åpneSøknaderRolle = åpneSøknader.filter { it.barn.any { it.personident == bm.personident } }
@@ -168,16 +168,16 @@ class ForholdsmessigFordelingOverføringService(
                 Rolletype.BIDRAGSMOTTAKER,
                 bm.personident!!,
                 harGebyrSøknad =
-                    bm.gebyr.ifTrue {
-                        GebyrRolleSøknad(
-                            saksnummer = åpenSøknad.saksnummer,
-                            søknadsid = åpenSøknad.søknadsid,
-                        )
-                    },
+                bm.gebyr.ifTrue {
+                    GebyrRolleSøknad(
+                        saksnummer = åpenSøknad.saksnummer,
+                        søknadsid = åpenSøknad.søknadsid,
+                    )
+                },
                 ffDetaljer =
-                    ffDetaljer.copy(
-                        søknader = åpneSøknaderRolle.map { it.tilForholdsmessigFordelingSøknad() }.toMutableSet(),
-                    ),
+                ffDetaljer.copy(
+                    søknader = åpneSøknaderRolle.map { it.tilForholdsmessigFordelingSøknad() }.toMutableSet(),
+                ),
             )
         }
         åpenSøknad.barn.forEach { barn ->
@@ -203,17 +203,17 @@ class ForholdsmessigFordelingOverføringService(
                 barn.personident!!,
                 stønadstype = åpenSøknad.behandlingstema.tilStønadstype() ?: Stønadstype.BIDRAG,
                 harGebyrSøknad =
-                    barn.gebyr.ifTrue {
-                        GebyrRolleSøknad(
-                            saksnummer = åpenSøknad.saksnummer,
-                            søknadsid = åpenSøknad.søknadsid,
-                        )
-                    },
+                barn.gebyr.ifTrue {
+                    GebyrRolleSøknad(
+                        saksnummer = åpenSøknad.saksnummer,
+                        søknadsid = åpenSøknad.søknadsid,
+                    )
+                },
                 innbetaltBeløp = barn.innbetaltBeløp,
                 ffDetaljer =
-                    ffDetaljer.copy(
-                        søknader = åpneSøknaderRolle.map { it.tilForholdsmessigFordelingSøknad() }.toMutableSet(),
-                    ),
+                ffDetaljer.copy(
+                    søknader = åpneSøknaderRolle.map { it.tilForholdsmessigFordelingSøknad() }.toMutableSet(),
+                ),
                 opphørsdato = if (åpenSøknad.innkreving) løpendeBidrag?.periodeTil else null,
                 medInnkreving = åpenSøknad.innkreving,
                 innkrevesFraDato = if (åpenSøknad.innkreving) løpendeBidrag?.periodeFra else null,

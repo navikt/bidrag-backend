@@ -190,30 +190,30 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode =
-                                                ÅrMånedsperiode(
-                                                    behandling.virkningstidspunkt!!,
-                                                    behandling.finnBeregnTilDatoBehandling(søknadsbarn),
-                                                ),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode =
+                                        ÅrMånedsperiode(
+                                            behandling.virkningstidspunkt!!,
+                                            behandling.finnBeregnTilDatoBehandling(søknadsbarn),
                                         ),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, behandling.finnBeregnTilDatoBehandling(søknadsbarn)),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, behandling.finnBeregnTilDatoBehandling(søknadsbarn)),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                         ),
                     ),
@@ -316,26 +316,26 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                         ),
                     ),
@@ -440,26 +440,26 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                         ),
                     ),
@@ -610,26 +610,26 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                         ),
                     ),
@@ -762,26 +762,26 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                         ),
                     ),
@@ -900,13 +900,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.INDEKSREGULERING,
@@ -914,13 +914,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -928,53 +928,53 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 grunnlagslisteDelvedtak =
-                                    listOf(
-                                        GrunnlagDto(
-                                            type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
-                                            innhold =
-                                                POJONode(
-                                                    ResultatFraVedtakGrunnlag(
-                                                        vedtaksid = vedtakidsEtterfølgende,
-                                                        omgjøringsvedtak = false,
-                                                        beregnet = false,
-                                                        vedtakstype = Vedtakstype.ENDRING,
-                                                        opprettParagraf35c = false,
-                                                    ),
-                                                ),
-                                            referanse = "",
+                                listOf(
+                                    GrunnlagDto(
+                                        type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                                        innhold =
+                                        POJONode(
+                                            ResultatFraVedtakGrunnlag(
+                                                vedtaksid = vedtakidsEtterfølgende,
+                                                omgjøringsvedtak = false,
+                                                beregnet = false,
+                                                vedtakstype = Vedtakstype.ENDRING,
+                                                opprettParagraf35c = false,
+                                            ),
                                         ),
+                                        referanse = "",
                                     ),
+                                ),
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
@@ -1247,13 +1247,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.INDEKSREGULERING,
@@ -1261,13 +1261,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -1275,53 +1275,53 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 grunnlagslisteDelvedtak =
-                                    listOf(
-                                        GrunnlagDto(
-                                            type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
-                                            innhold =
-                                                POJONode(
-                                                    ResultatFraVedtakGrunnlag(
-                                                        vedtaksid = vedtakidsEtterfølgende,
-                                                        omgjøringsvedtak = false,
-                                                        beregnet = false,
-                                                        vedtakstype = Vedtakstype.ENDRING,
-                                                        opprettParagraf35c = false,
-                                                    ),
-                                                ),
-                                            referanse = "",
+                                listOf(
+                                    GrunnlagDto(
+                                        type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                                        innhold =
+                                        POJONode(
+                                            ResultatFraVedtakGrunnlag(
+                                                vedtaksid = vedtakidsEtterfølgende,
+                                                omgjøringsvedtak = false,
+                                                beregnet = false,
+                                                vedtakstype = Vedtakstype.ENDRING,
+                                                opprettParagraf35c = false,
+                                            ),
                                         ),
+                                        referanse = "",
                                     ),
+                                ),
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
@@ -1603,13 +1603,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.INDEKSREGULERING,
@@ -1617,13 +1617,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -1631,53 +1631,53 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 grunnlagslisteDelvedtak =
-                                    listOf(
-                                        GrunnlagDto(
-                                            type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
-                                            innhold =
-                                                POJONode(
-                                                    ResultatFraVedtakGrunnlag(
-                                                        vedtaksid = vedtakidsEtterfølgende,
-                                                        omgjøringsvedtak = false,
-                                                        beregnet = false,
-                                                        vedtakstype = Vedtakstype.ENDRING,
-                                                        opprettParagraf35c = false,
-                                                    ),
-                                                ),
-                                            referanse = "",
+                                listOf(
+                                    GrunnlagDto(
+                                        type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                                        innhold =
+                                        POJONode(
+                                            ResultatFraVedtakGrunnlag(
+                                                vedtaksid = vedtakidsEtterfølgende,
+                                                omgjøringsvedtak = false,
+                                                beregnet = false,
+                                                vedtakstype = Vedtakstype.ENDRING,
+                                                opprettParagraf35c = false,
+                                            ),
                                         ),
+                                        referanse = "",
                                     ),
+                                ),
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), LocalDate.parse("2025-08-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-08-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
@@ -1942,13 +1942,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(søknadsbarn.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(søknadsbarn.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -1956,58 +1956,58 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 grunnlagslisteDelvedtak =
-                                    listOf(
-                                        GrunnlagDto(
-                                            type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
-                                            innhold =
-                                                POJONode(
-                                                    ResultatFraVedtakGrunnlag(
-                                                        vedtaksid = vedtakidsEtterfølgende,
-                                                        omgjøringsvedtak = false,
-                                                        beregnet = false,
-                                                        opprettParagraf35c = false,
-                                                        vedtakstype = Vedtakstype.ENDRING,
-                                                    ),
-                                                ),
-                                            referanse = "",
+                                listOf(
+                                    GrunnlagDto(
+                                        type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                                        innhold =
+                                        POJONode(
+                                            ResultatFraVedtakGrunnlag(
+                                                vedtaksid = vedtakidsEtterfølgende,
+                                                omgjøringsvedtak = false,
+                                                beregnet = false,
+                                                opprettParagraf35c = false,
+                                                vedtakstype = Vedtakstype.ENDRING,
+                                            ),
                                         ),
+                                        referanse = "",
                                     ),
+                                ),
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-05-01"), LocalDate.parse("2024-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-05-01"), LocalDate.parse("2024-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2024-05-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-05-01"), LocalDate.parse("2024-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2024-05-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-05-01"), LocalDate.parse("2024-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
@@ -2240,15 +2240,15 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                     GrunnlagDto(
                         type = no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype.RESULTAT_FRA_VEDTAK,
                         innhold =
-                            POJONode(
-                                ResultatFraVedtakGrunnlag(
-                                    vedtaksid = vedtakidsEtterfølgende,
-                                    omgjøringsvedtak = false,
-                                    beregnet = false,
-                                    opprettParagraf35c = false,
-                                    vedtakstype = Vedtakstype.ENDRING,
-                                ),
+                        POJONode(
+                            ResultatFraVedtakGrunnlag(
+                                vedtaksid = vedtakidsEtterfølgende,
+                                omgjøringsvedtak = false,
+                                beregnet = false,
+                                opprettParagraf35c = false,
+                                vedtakstype = Vedtakstype.ENDRING,
                             ),
+                        ),
                         referanse = "",
                     ),
                 ),
@@ -2261,13 +2261,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(søknadsbarn.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(søknadsbarn.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -2275,31 +2275,31 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2024-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2024-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),
@@ -2463,15 +2463,15 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                     GrunnlagDto(
                         type = Grunnlagstype.RESULTAT_FRA_VEDTAK,
                         innhold =
-                            POJONode(
-                                ResultatFraVedtakGrunnlag(
-                                    vedtaksid = vedtakidsEtterfølgende,
-                                    omgjøringsvedtak = false,
-                                    beregnet = false,
-                                    vedtakstype = Vedtakstype.ENDRING,
-                                    opprettParagraf35c = false,
-                                ),
+                        POJONode(
+                            ResultatFraVedtakGrunnlag(
+                                vedtaksid = vedtakidsEtterfølgende,
+                                omgjøringsvedtak = false,
+                                beregnet = false,
+                                vedtakstype = Vedtakstype.ENDRING,
+                                opprettParagraf35c = false,
                             ),
+                        ),
                         referanse = "",
                     ),
                 ) + byggGrunnlagForBeregning(behandling, søknadsbarn),
@@ -2484,13 +2484,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 omgjøringsvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.INDEKSREGULERING,
@@ -2498,13 +2498,13 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-06-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-06-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.ENDRING,
@@ -2512,36 +2512,36 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                                 delvedtak = true,
                                 beregnet = false,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), null),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                ),
                             ),
                             ResultatVedtakV2(
                                 vedtakstype = Vedtakstype.KLAGE,
                                 omgjøringsvedtak = false,
                                 beregnet = true,
                                 periodeListe =
-                                    listOf(
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-06-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-06-01"), LocalDate.parse("2025-07-01")),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
-                                        ResultatPeriode(
-                                            periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), søknadsbarn.opphørsdato),
-                                            resultat = ResultatBeregning(BigDecimal.ZERO),
-                                            grunnlagsreferanseListe = emptyList(),
-                                        ),
+                                listOf(
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, LocalDate.parse("2025-06-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
                                     ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-06-01"), LocalDate.parse("2025-07-01")),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                    ResultatPeriode(
+                                        periode = ÅrMånedsperiode(LocalDate.parse("2025-07-01"), søknadsbarn.opphørsdato),
+                                        resultat = ResultatBeregning(BigDecimal.ZERO),
+                                        grunnlagsreferanseListe = emptyList(),
+                                    ),
+                                ),
                             ),
                         ),
                     ),

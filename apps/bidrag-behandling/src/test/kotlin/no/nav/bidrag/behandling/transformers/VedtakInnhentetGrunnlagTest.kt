@@ -311,12 +311,12 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = testdataBarn2.fødselsdato,
                         erBarnAvBmBp = true,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-07-01"),
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-07-01"),
+                                null,
                             ),
+                        ),
                     ),
                     RelatertPersonGrunnlagDto(
                         partPersonId = testdataBM.ident,
@@ -325,12 +325,12 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = LocalDate.parse("1999-01-01"),
                         erBarnAvBmBp = false,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2020-07-01"),
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2020-07-01"),
+                                null,
                             ),
+                        ),
                     ),
                 ).tilGrunnlagEntity(behandling)
             val grunnlagHusstandsmedlemmer =
@@ -382,24 +382,24 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = testdataBarn1.fødselsdato,
                         erBarnAvBmBp = true,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2022-01-01"),
-                                    LocalDate.parse("2022-06-08"),
-                                ),
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-01-02"),
-                                    LocalDate.parse("2023-06-28"),
-                                ),
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-07-01"),
-                                    null,
-                                ),
-                                BorISammeHusstandDto(
-                                    null,
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2022-01-01"),
+                                LocalDate.parse("2022-06-08"),
                             ),
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-01-02"),
+                                LocalDate.parse("2023-06-28"),
+                            ),
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-07-01"),
+                                null,
+                            ),
+                            BorISammeHusstandDto(
+                                null,
+                                null,
+                            ),
+                        ),
                     ),
                     RelatertPersonGrunnlagDto(
                         partPersonId = testdataBM.ident,
@@ -408,12 +408,12 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = testdataBarn2.fødselsdato,
                         erBarnAvBmBp = true,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-07-01"),
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-07-01"),
+                                null,
                             ),
+                        ),
                     ),
                     RelatertPersonGrunnlagDto(
                         partPersonId = testdataBM.ident,
@@ -422,12 +422,12 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = LocalDate.parse("1999-01-01"),
                         erBarnAvBmBp = false,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2020-07-01"),
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2020-07-01"),
+                                null,
                             ),
+                        ),
                     ),
                     RelatertPersonGrunnlagDto(
                         partPersonId = testdataBP.ident,
@@ -436,20 +436,20 @@ class VedtakInnhentetGrunnlagTest {
                         fødselsdato = testdataBarn1.fødselsdato,
                         erBarnAvBmBp = true,
                         borISammeHusstandDtoListe =
-                            listOf(
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2022-01-01"),
-                                    LocalDate.parse("2022-06-08"),
-                                ),
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-01-01"),
-                                    LocalDate.parse("2023-06-30"),
-                                ),
-                                BorISammeHusstandDto(
-                                    LocalDate.parse("2023-07-01"),
-                                    null,
-                                ),
+                        listOf(
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2022-01-01"),
+                                LocalDate.parse("2022-06-08"),
                             ),
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-01-01"),
+                                LocalDate.parse("2023-06-30"),
+                            ),
+                            BorISammeHusstandDto(
+                                LocalDate.parse("2023-07-01"),
+                                null,
+                            ),
+                        ),
                     ),
                 ).tilGrunnlagEntity(behandling)
             val grunnlagHusstandsmedlemmer =

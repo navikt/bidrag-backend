@@ -206,27 +206,27 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
                 erRevurdering = true,
                 bidragsmottaker = behandling.bidragsmottaker?.ident,
                 søknader =
-                    mutableSetOf(
-                        opprettSøknad(
-                            søknadsid = 1001L,
-                            søknadFomDato = LocalDate.parse("2024-01-01"),
-                            mottattDato = LocalDate.parse("2024-01-10"),
-                            behandlingstype = behandling.behandlingstypeForFF,
-                        ),
-                        opprettSøknad(
-                            søknadsid = 2001L,
-                            søknadFomDato = LocalDate.parse("2024-01-01"),
-                            mottattDato = LocalDate.parse("2024-01-10"),
-                            behandlingstype = Behandlingstype.ALDERSJUSTERING,
-                        ),
-                        opprettSøknad(
-                            søknadsid = 2002L,
-                            søknadFomDato = LocalDate.parse("2024-01-01"),
-                            mottattDato = LocalDate.parse("2024-01-10"),
-                            behandlingstype = behandling.behandlingstypeForFF,
-                            status = Behandlingstatus.FEILREGISTRERT,
-                        ),
+                mutableSetOf(
+                    opprettSøknad(
+                        søknadsid = 1001L,
+                        søknadFomDato = LocalDate.parse("2024-01-01"),
+                        mottattDato = LocalDate.parse("2024-01-10"),
+                        behandlingstype = behandling.behandlingstypeForFF,
                     ),
+                    opprettSøknad(
+                        søknadsid = 2001L,
+                        søknadFomDato = LocalDate.parse("2024-01-01"),
+                        mottattDato = LocalDate.parse("2024-01-10"),
+                        behandlingstype = Behandlingstype.ALDERSJUSTERING,
+                    ),
+                    opprettSøknad(
+                        søknadsid = 2002L,
+                        søknadFomDato = LocalDate.parse("2024-01-01"),
+                        mottattDato = LocalDate.parse("2024-01-10"),
+                        behandlingstype = behandling.behandlingstypeForFF,
+                        status = Behandlingstatus.FEILREGISTRERT,
+                    ),
+                ),
             )
 
         service.slettDuplikatForholdsmessigFordelingSøknader(behandling)

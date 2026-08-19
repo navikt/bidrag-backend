@@ -187,17 +187,17 @@ class GrunnlagMockService {
             runBlocking {
                 grunnlagConsumer.henteGrunnlag(
                     grunnlag =
-                        match {
-                            it.any { request ->
-                                request.personId != testdataBM.ident && request.personId != testdataBP.ident
-                            }
-                        },
+                    match {
+                        it.any { request ->
+                            request.personId != testdataBM.ident && request.personId != testdataBP.ident
+                        }
+                    },
                     formål = any(),
                 )
             }
         } returns (
             HentetGrunnlag(opprettHentGrunnlagDto())
-        )
+            )
     }
 
     @Test
@@ -631,23 +631,23 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.FORSKUDD }) } returns
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         assertSoftly("Grunnlagsliste før") {
             val grunnlagsliste = behandling.grunnlag
@@ -718,25 +718,25 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                            vedtaksid = 200,
-                            beløp = BigDecimal(200),
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                        vedtaksid = 200,
+                        beløp = BigDecimal(200),
+                        valutakode = "NOK",
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG18AAR }) } returns
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG18AAR,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                ),
             )
         behandling.søknadstype = Behandlingstype.SØKNAD
         grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -794,24 +794,24 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG18AAR }) } returns
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG18AAR,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                ),
             )
         behandling.søknadstype = Behandlingstype.SØKNAD
         grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -870,24 +870,24 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG18AAR }) } returns
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG18AAR,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
+                ),
             )
         behandling.søknadstype = Behandlingstype.SØKNAD
         grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -995,23 +995,23 @@ class GrunnlagMockService {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                ),
             )
         every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG18AAR }) } returns null
         grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -1075,7 +1075,7 @@ class GrunnlagMockService {
             HentetGrunnlag(
                 grunnlagBM,
             )
-        )
+            )
         every {
             runBlocking {
                 grunnlagConsumer.henteGrunnlag(
@@ -1091,6 +1091,6 @@ class GrunnlagMockService {
             HentetGrunnlag(
                 grunnlagBP,
             )
-        )
+            )
     }
 }

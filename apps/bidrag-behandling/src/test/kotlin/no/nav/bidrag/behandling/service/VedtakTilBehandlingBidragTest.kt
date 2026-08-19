@@ -156,21 +156,21 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
                 vedtaksid = 1,
                 stønadsendringListe = originalVedtak.stønadsendringListe.map { it.copy(omgjørVedtakId = 2) },
                 grunnlagListe =
-                    originalVedtak.grunnlagListe.map {
-                        if (it.type == Grunnlagstype.SØKNAD) {
-                            it.copy(
-                                innhold =
-                                    POJONode(
-                                        it.innholdTilObjekt<SøknadGrunnlag>().copy(
-                                            mottattDato = LocalDate.parse("2024-05-01"),
-                                            klageMottattDato = LocalDate.parse("2024-03-01"),
-                                        ),
-                                    ),
-                            )
-                        } else {
-                            it
-                        }
-                    },
+                originalVedtak.grunnlagListe.map {
+                    if (it.type == Grunnlagstype.SØKNAD) {
+                        it.copy(
+                            innhold =
+                            POJONode(
+                                it.innholdTilObjekt<SøknadGrunnlag>().copy(
+                                    mottattDato = LocalDate.parse("2024-05-01"),
+                                    klageMottattDato = LocalDate.parse("2024-03-01"),
+                                ),
+                            ),
+                        )
+                    } else {
+                        it
+                    }
+                },
             )
         every { vedtakConsumer.hentVedtak(eq(2)) } returns
             originalVedtak.copy(
@@ -234,31 +234,31 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-02-01").atStartOfDay(),
                 engangsbeløpListe =
-                    originalVedtak.engangsbeløpListe.map {
-                        it.copy(
-                            omgjørVedtakId = 123,
-                        )
-                    },
+                originalVedtak.engangsbeløpListe.map {
+                    it.copy(
+                        omgjørVedtakId = 123,
+                    )
+                },
             )
         val vedtak2 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-03-01").atStartOfDay(),
                 engangsbeløpListe =
-                    originalVedtak.engangsbeløpListe.map {
-                        it.copy(
-                            omgjørVedtakId = 124,
-                        )
-                    },
+                originalVedtak.engangsbeløpListe.map {
+                    it.copy(
+                        omgjørVedtakId = 124,
+                    )
+                },
             )
         val vedtak3 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-04-01").atStartOfDay(),
                 engangsbeløpListe =
-                    originalVedtak.engangsbeløpListe.map {
-                        it.copy(
-                            omgjørVedtakId = null,
-                        )
-                    },
+                originalVedtak.engangsbeløpListe.map {
+                    it.copy(
+                        omgjørVedtakId = null,
+                    )
+                },
             )
         every { vedtakConsumer.hentVedtak(eq(12333)) } returns vedtak1
         every { vedtakConsumer.hentVedtak(eq(123)) } returns vedtak2

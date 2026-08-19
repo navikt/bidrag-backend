@@ -385,11 +385,11 @@ class InntektService(
                     (
                         ytelsetypeSomOppdateres != null &&
                             it.type == ytelsetypeSomOppdateres
-                    ) ||
+                        ) ||
                         (
                             ytelsetypeSomOppdateres == null &&
                                 !inntektsrapporteringerForYtelser.contains(it.type)
-                        )
+                            )
                 }.filter { i ->
                     behandling.inntekter
                         .filter { it.kilde == Kilde.OFFENTLIG }
@@ -435,11 +435,11 @@ class InntektService(
                     (
                         ytelsetypeSomOppdateres != null &&
                             it.type == ytelsetypeSomOppdateres
-                    ) ||
+                        ) ||
                         (
                             ytelsetypeSomOppdateres == null &&
                                 !inntektsrapporteringerForYtelser.contains(it.type)
-                        )
+                            )
                 }.filter { it.erSammeRolle(rolle) }
                 .filter { !idTilInntekterSomBleOppdatert.contains(it.id) }
 
@@ -613,34 +613,32 @@ class InntektService(
         return null
     }
 
-    private fun Behandling.hentSisteInntektMedSammeType2(offentligInntekt: Inntekt) =
-        inntekter
-            .filter {
-                it.type == offentligInntekt.type &&
-                    it.taMed &&
-                    offentligInntekt.id != it.id
-            }.filter {
-                offentligInntekt.inntektsposter.isEmpty() ||
-                    it.inntektsposter.any { offentligInntekt.inntektsposter.any { oit -> oit.inntektstype == it.inntektstype } }
-            }.filter {
-                offentligInntekt.tilhørerSammePerson(it) && offentligInntekt.tilhørerSammeBarn(it)
-            }.sortedBy { it.datoFom }
-            .lastOrNull()
+    private fun Behandling.hentSisteInntektMedSammeType2(offentligInntekt: Inntekt) = inntekter
+        .filter {
+            it.type == offentligInntekt.type &&
+                it.taMed &&
+                offentligInntekt.id != it.id
+        }.filter {
+            offentligInntekt.inntektsposter.isEmpty() ||
+                it.inntektsposter.any { offentligInntekt.inntektsposter.any { oit -> oit.inntektstype == it.inntektstype } }
+        }.filter {
+            offentligInntekt.tilhørerSammePerson(it) && offentligInntekt.tilhørerSammeBarn(it)
+        }.sortedBy { it.datoFom }
+        .lastOrNull()
 
-    private fun Behandling.hentSisteInntektMedSammeType(manuellInntekt: OppdatereManuellInntekt) =
-        inntekter
-            .filter {
-                it.type == manuellInntekt.type &&
-                    it.taMed &&
-                    manuellInntekt.id != it.id
-            }.filter {
-                manuellInntekt.inntektstype == null ||
-                    it.inntektsposter.any { it.inntektstype == manuellInntekt.inntektstype }
-            }.filter {
-                it.tilhørerSammePerson(manuellInntekt.ident?.verdi, manuellInntekt.gjelderId) &&
-                    it.tilhørerSammeBarn(manuellInntekt.gjelderBarn?.verdi, manuellInntekt.gjelderBarnId)
-            }.sortedBy { it.datoFom }
-            .lastOrNull()
+    private fun Behandling.hentSisteInntektMedSammeType(manuellInntekt: OppdatereManuellInntekt) = inntekter
+        .filter {
+            it.type == manuellInntekt.type &&
+                it.taMed &&
+                manuellInntekt.id != it.id
+        }.filter {
+            manuellInntekt.inntektstype == null ||
+                it.inntektsposter.any { it.inntektstype == manuellInntekt.inntektstype }
+        }.filter {
+            it.tilhørerSammePerson(manuellInntekt.ident?.verdi, manuellInntekt.gjelderId) &&
+                it.tilhørerSammeBarn(manuellInntekt.gjelderBarn?.verdi, manuellInntekt.gjelderBarnId)
+        }.sortedBy { it.datoFom }
+        .lastOrNull()
 
     private fun <T> behandleInntektsoppdatering(
         behandling: Behandling,

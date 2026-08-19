@@ -240,18 +240,16 @@ data class TestDataPerson(
         rolle = mutableSetOf(behandling.roller.find { it.ident == ident } ?: tilRolle(behandling, id)),
     )
 
-    fun tilPersonStønad() =
-        PersonStønad(
-            personident = Personident(ident),
-        )
+    fun tilPersonStønad() = PersonStønad(
+        personident = Personident(ident),
+    )
 
-    fun tilPersonDto() =
-        PersonDto(
-            ident = Personident(ident),
-            navn = navn,
-            aktørId = ident,
-            fødselsdato = fødselsdato,
-        )
+    fun tilPersonDto() = PersonDto(
+        ident = Personident(ident),
+        navn = navn,
+        aktørId = ident,
+        fødselsdato = fødselsdato,
+    )
 
     fun tilForsendelseRolleDto() = ForsendelseRolleDto(Personident(ident), type = rolletype)
 }
@@ -263,43 +261,41 @@ fun Behandling.synkSøknadsbarnVirkningstidspunkt() {
     }
 }
 
-fun opprettForsendelseResponsUnderOpprettelse(forsendelseId: Long = 1) =
-    ForsendelseResponsTo(
-        forsendelseId = forsendelseId,
-        saksnummer = SAKSNUMMER,
-        behandlingInfo =
-            BehandlingInfoResponseDto(
-                soknadId = SOKNAD_ID.toString(),
-                erFattet = false,
-            ),
-        forsendelseType = ForsendelseTypeTo.UTGÅENDE,
-        status = ForsendelseStatusTo.UNDER_OPPRETTELSE,
-    )
+fun opprettForsendelseResponsUnderOpprettelse(forsendelseId: Long = 1) = ForsendelseResponsTo(
+    forsendelseId = forsendelseId,
+    saksnummer = SAKSNUMMER,
+    behandlingInfo =
+    BehandlingInfoResponseDto(
+        soknadId = SOKNAD_ID.toString(),
+        erFattet = false,
+    ),
+    forsendelseType = ForsendelseTypeTo.UTGÅENDE,
+    status = ForsendelseStatusTo.UNDER_OPPRETTELSE,
+)
 
 fun oppretteBehandling(
     id: Long? = null,
     vedtakstype: Vedtakstype = Vedtakstype.FASTSETTELSE,
     virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01"),
     stønadstype: Stønadstype = Stønadstype.FORSKUDD,
-): Behandling =
-    Behandling(
-        vedtakstype,
-        søktFomDato = YearMonth.parse("2022-02").atEndOfMonth(),
-        mottattdato = LocalDate.parse("2023-03-15"),
-        SAKSNUMMER,
-        SOKNAD_ID.toLong(),
-        "4806",
-        "Z9999",
-        "Navn Navnesen",
-        "bisys",
-        SøktAvType.BIDRAGSMOTTAKER,
-        stønadstype,
-        null,
-        årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
-        virkningstidspunkt = virkningstidspunkt,
-        id = id,
-        omgjøringsdetaljer = null,
-    )
+): Behandling = Behandling(
+    vedtakstype,
+    søktFomDato = YearMonth.parse("2022-02").atEndOfMonth(),
+    mottattdato = LocalDate.parse("2023-03-15"),
+    SAKSNUMMER,
+    SOKNAD_ID.toLong(),
+    "4806",
+    "Z9999",
+    "Navn Navnesen",
+    "bisys",
+    SøktAvType.BIDRAGSMOTTAKER,
+    stønadstype,
+    null,
+    årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
+    virkningstidspunkt = virkningstidspunkt,
+    id = id,
+    omgjøringsdetaljer = null,
+)
 
 fun opprettInntekter(
     behandling: Behandling,
@@ -344,60 +340,56 @@ fun opprettInntekter(
     ),
 )
 
-fun opprettInntektsposter(inntekt: Inntekt): MutableSet<Inntektspost> =
-    setOf(
-        Inntektspost(
-            beløp = BigDecimal.valueOf(400000),
-            kode = "lønnFraFluefiske",
-            inntekt = inntekt,
-            inntektstype = Inntektstype.NÆRINGSINNTEKT,
-        ),
-    ).toMutableSet()
+fun opprettInntektsposter(inntekt: Inntekt): MutableSet<Inntektspost> = setOf(
+    Inntektspost(
+        beløp = BigDecimal.valueOf(400000),
+        kode = "lønnFraFluefiske",
+        inntekt = inntekt,
+        inntektstype = Inntektstype.NÆRINGSINNTEKT,
+    ),
+).toMutableSet()
 
 fun opprettSivilstand(
     behandling: Behandling,
     datoFom: LocalDate = LocalDate.parse("2023-01-01"),
     datoTom: LocalDate? = null,
     sivilstand: Sivilstandskode = Sivilstandskode.BOR_ALENE_MED_BARN,
-): Sivilstand =
-    Sivilstand(
-        behandling = behandling,
-        datoFom = datoFom,
-        datoTom = datoTom,
-        sivilstand = sivilstand,
-        kilde = Kilde.OFFENTLIG,
-    )
+): Sivilstand = Sivilstand(
+    behandling = behandling,
+    datoFom = datoFom,
+    datoTom = datoTom,
+    sivilstand = sivilstand,
+    kilde = Kilde.OFFENTLIG,
+)
 
 fun opprettRolle(
     behandling: Behandling,
     data: TestDataPerson,
     id: Long? = null,
-): Rolle =
-    Rolle(
-        id = id,
-        navn = data.navn,
-        ident = data.ident,
-        rolletype = data.rolletype,
-        behandling = behandling,
-        fødselsdato = data.fødselsdato,
-        opprettet = LocalDateTime.now(),
-    )
+): Rolle = Rolle(
+    id = id,
+    navn = data.navn,
+    ident = data.ident,
+    rolletype = data.rolletype,
+    behandling = behandling,
+    fødselsdato = data.fødselsdato,
+    opprettet = LocalDateTime.now(),
+)
 
-fun oppretteRequestForOppdateringAvManuellInntekt(idInntekt: Long? = null) =
-    OppdatereManuellInntekt(
-        id = idInntekt,
-        type = Inntektsrapportering.KONTANTSTØTTE,
-        beløp = BigDecimal("305203.00"),
-        datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
-        datoTom =
-            LocalDate
-                .now()
-                .minusYears(1)
-                .withMonth(12)
-                .withDayOfMonth(31),
-        ident = Personident("12345678910"),
-        gjelderBarn = Personident(MANUELL_INNTEKT_GJELDER_BARN_IDENT),
-    )
+fun oppretteRequestForOppdateringAvManuellInntekt(idInntekt: Long? = null) = OppdatereManuellInntekt(
+    id = idInntekt,
+    type = Inntektsrapportering.KONTANTSTØTTE,
+    beløp = BigDecimal("305203.00"),
+    datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
+    datoTom =
+    LocalDate
+        .now()
+        .minusYears(1)
+        .withMonth(12)
+        .withDayOfMonth(31),
+    ident = Personident("12345678910"),
+    gjelderBarn = Personident(MANUELL_INNTEKT_GJELDER_BARN_IDENT),
+)
 
 fun oppretteHusstandsmedlem(
     behandling: Behandling,
@@ -490,51 +482,49 @@ fun oppretteBehandlingRoller(
     return roller
 }
 
-fun opprettSakForBehandling(behandling: Behandling): BidragssakDto =
-    BidragssakDto(
-        eierfogd = Enhetsnummer(behandling.behandlerEnhet),
-        saksnummer = Saksnummer(behandling.saksnummer),
-        saksstatus = Bidragssakstatus.IN,
-        kategori = Sakskategori.NASJONAL,
-        opprettetDato = LocalDate.now(),
-        levdeAdskilt = false,
-        ukjentPart = false,
-        roller =
-            behandling.roller.map {
-                RolleDto(
-                    fødselsnummer = Personident(it.ident!!),
-                    type = it.rolletype,
-                    rollehistorikk = emptyList(),
-                )
-            },
-    )
+fun opprettSakForBehandling(behandling: Behandling): BidragssakDto = BidragssakDto(
+    eierfogd = Enhetsnummer(behandling.behandlerEnhet),
+    saksnummer = Saksnummer(behandling.saksnummer),
+    saksstatus = Bidragssakstatus.IN,
+    kategori = Sakskategori.NASJONAL,
+    opprettetDato = LocalDate.now(),
+    levdeAdskilt = false,
+    ukjentPart = false,
+    roller =
+    behandling.roller.map {
+        RolleDto(
+            fødselsnummer = Personident(it.ident!!),
+            type = it.rolletype,
+            rollehistorikk = emptyList(),
+        )
+    },
+)
 
-fun opprettSakForBehandlingMedReelMottaker(behandling: Behandling): BidragssakDto =
-    BidragssakDto(
-        eierfogd = Enhetsnummer(behandling.behandlerEnhet),
-        saksnummer = Saksnummer(behandling.saksnummer),
-        saksstatus = Bidragssakstatus.IN,
-        kategori = Sakskategori.NASJONAL,
-        opprettetDato = LocalDate.now(),
-        levdeAdskilt = false,
-        ukjentPart = false,
-        roller =
-            behandling.roller.map {
-                RolleDto(
-                    fødselsnummer = Personident(it.ident!!),
-                    reellMottager = if (it.ident == testdataBarn1.ident) ReellMottaker("REEL_MOTTAKER") else null,
-                    reellMottaker =
-                        if (it.ident == testdataBarn1.ident) {
-                            ReellMottakerDto(
-                                ident = ReellMottaker("REEL_MOTTAKER"),
-                            )
-                        } else {
-                            null
-                        },
-                    type = it.rolletype,
+fun opprettSakForBehandlingMedReelMottaker(behandling: Behandling): BidragssakDto = BidragssakDto(
+    eierfogd = Enhetsnummer(behandling.behandlerEnhet),
+    saksnummer = Saksnummer(behandling.saksnummer),
+    saksstatus = Bidragssakstatus.IN,
+    kategori = Sakskategori.NASJONAL,
+    opprettetDato = LocalDate.now(),
+    levdeAdskilt = false,
+    ukjentPart = false,
+    roller =
+    behandling.roller.map {
+        RolleDto(
+            fødselsnummer = Personident(it.ident!!),
+            reellMottager = if (it.ident == testdataBarn1.ident) ReellMottaker("REEL_MOTTAKER") else null,
+            reellMottaker =
+            if (it.ident == testdataBarn1.ident) {
+                ReellMottakerDto(
+                    ident = ReellMottaker("REEL_MOTTAKER"),
                 )
+            } else {
+                null
             },
-    )
+            type = it.rolletype,
+        )
+    },
+)
 
 fun opprettGyldigBehandlingAldersjustering(generateId: Boolean): Behandling {
     val behandling =
@@ -585,10 +575,10 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
             if (generateId) 1 else null,
             vedtakstype = vedtakstype,
             virkningstidspunkt =
-                when (typeBehandling) {
-                    TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> LocalDate.parse("2023-02-01")
-                    TypeBehandling.SÆRBIDRAG -> LocalDate.now().withDayOfMonth(1)
-                },
+            when (typeBehandling) {
+                TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> LocalDate.parse("2023-02-01")
+                TypeBehandling.SÆRBIDRAG -> LocalDate.now().withDayOfMonth(1)
+            },
         )
     behandling.innkrevingstype = Innkrevingstype.MED_INNKREVING
     behandling.roller =
@@ -1068,14 +1058,14 @@ fun opprettBeregnetInntektFraGrunnlag(
             erBearbeidet = true,
             aktiv = LocalDateTime.now(),
             data =
-                commonObjectmapper.writeValueAsString(
-                    POJONode(
-                        SummerteInntekter(
-                            versjon = inntekterBearbeidet.versjon,
-                            inntekter = inntekterBearbeidet.summertMånedsinntektListe,
-                        ),
+            commonObjectmapper.writeValueAsString(
+                POJONode(
+                    SummerteInntekter(
+                        versjon = inntekterBearbeidet.versjon,
+                        inntekter = inntekterBearbeidet.summertMånedsinntektListe,
                     ),
                 ),
+            ),
             innhentet = LocalDateTime.now(),
             rolle = testDataPerson.tilRolle(behandling),
         ),
@@ -1085,16 +1075,16 @@ fun opprettBeregnetInntektFraGrunnlag(
             erBearbeidet = true,
             aktiv = LocalDateTime.now(),
             data =
-                commonObjectmapper.writeValueAsString(
-                    POJONode(
-                        SummerteInntekter(
-                            versjon = inntekterBearbeidet.versjon,
-                            inntekter =
-                                inntekterBearbeidet.summertÅrsinntektListe.ainntektListe +
-                                    inntekterBearbeidet.summertÅrsinntektListe.skattegrunnlagListe,
-                        ),
+            commonObjectmapper.writeValueAsString(
+                POJONode(
+                    SummerteInntekter(
+                        versjon = inntekterBearbeidet.versjon,
+                        inntekter =
+                        inntekterBearbeidet.summertÅrsinntektListe.ainntektListe +
+                            inntekterBearbeidet.summertÅrsinntektListe.skattegrunnlagListe,
                     ),
                 ),
+            ),
             innhentet = LocalDateTime.now(),
             rolle = testDataPerson.tilRolle(behandling),
         ),
@@ -1136,22 +1126,21 @@ fun TransformerInntekterResponse.tilGrunnlag(
     erBearbeidet = true,
     aktiv = LocalDateTime.now(),
     data =
-        commonObjectmapper.writeValueAsString(
-            POJONode(
-                SummerteInntekter(
-                    versjon = versjon,
-                    summertÅrsinntektListe.filter { it.inntektRapportering == type },
-                ),
+    commonObjectmapper.writeValueAsString(
+        POJONode(
+            SummerteInntekter(
+                versjon = versjon,
+                summertÅrsinntektListe.filter { it.inntektRapportering == type },
             ),
         ),
+    ),
     innhentet = LocalDateTime.now(),
     rolle = person.tilRolle(behandling),
 )
 
-fun hentFil(filsti: String) =
-    TestdataManager::class.java.getResource(
-        filsti,
-    ) ?: throw RuntimeException("Fant ingen fil på sti $filsti")
+fun hentFil(filsti: String) = TestdataManager::class.java.getResource(
+    filsti,
+) ?: throw RuntimeException("Fant ingen fil på sti $filsti")
 
 fun tilAinntektspostDto(
     beløp: BigDecimal = BigDecimal(40000),
@@ -1171,78 +1160,76 @@ fun tilAinntektspostDto(
     virksomhetId = "995277670",
 )
 
-fun oppretteBoforholdBearbeidetGrunnlagForhusstandsmedlem(husstandsmedlemSet: Set<Husstandsmedlem>): List<Grunnlag> =
-    husstandsmedlemSet.groupBy { it.ident }.map { (ident, husstandsmedlem) ->
-        val behandling = husstandsmedlem.first().behandling!!
-        Grunnlag(
-            behandling = behandling,
-            type = Grunnlagsdatatype.BOFORHOLD,
-            erBearbeidet = true,
-            gjelder = ident,
-            aktiv = LocalDateTime.now(),
-            rolle = behandling.bidragsmottaker!!,
-            innhentet = LocalDateTime.now(),
-            data =
-                commonObjectmapper.writeValueAsString(
-                    husstandsmedlem.flatMap { hb ->
-                        hb.perioder.map {
-                            BoforholdResponseV2(
-                                gjelderPersonId = hb.ident,
-                                periodeFom = it.datoFom!!,
-                                periodeTom = it.datoTom,
-                                kilde = it.kilde,
-                                bostatus = it.bostatus,
-                                fødselsdato = hb.fødselsdato!!,
-                            )
-                        }
-                    },
-                ),
-        )
-    }
-
-fun oppretteHusstandsmedlemMedOffentligePerioder(behandling: Behandling): Set<Husstandsmedlem> =
-    setOf(
-        oppretteHusstandsmedlem(behandling, testdataBarn1).let {
-            it.perioder =
-                mutableSetOf(
-                    Bostatusperiode(
-                        datoFom = LocalDate.parse("2023-01-01"),
-                        datoTom = LocalDate.parse("2023-05-31"),
-                        bostatus = Bostatuskode.MED_FORELDER,
-                        kilde = Kilde.OFFENTLIG,
-                        husstandsmedlem = it,
-                    ),
-                    Bostatusperiode(
-                        datoFom = LocalDate.parse("2023-06-01"),
-                        datoTom = null,
-                        bostatus = Bostatuskode.IKKE_MED_FORELDER,
-                        kilde = Kilde.OFFENTLIG,
-                        husstandsmedlem = it,
-                    ),
-                )
-            it
-        },
-        oppretteHusstandsmedlem(behandling, testdataBarn2).let {
-            it.perioder =
-                mutableSetOf(
-                    Bostatusperiode(
-                        datoFom = LocalDate.parse("2023-01-01"),
-                        datoTom = LocalDate.parse("2023-10-31"),
-                        bostatus = Bostatuskode.MED_FORELDER,
-                        kilde = Kilde.OFFENTLIG,
-                        husstandsmedlem = it,
-                    ),
-                    Bostatusperiode(
-                        datoFom = LocalDate.parse("2023-11-01"),
-                        datoTom = null,
-                        bostatus = Bostatuskode.IKKE_MED_FORELDER,
-                        kilde = Kilde.OFFENTLIG,
-                        husstandsmedlem = it,
-                    ),
-                )
-            it
-        },
+fun oppretteBoforholdBearbeidetGrunnlagForhusstandsmedlem(husstandsmedlemSet: Set<Husstandsmedlem>): List<Grunnlag> = husstandsmedlemSet.groupBy { it.ident }.map { (ident, husstandsmedlem) ->
+    val behandling = husstandsmedlem.first().behandling!!
+    Grunnlag(
+        behandling = behandling,
+        type = Grunnlagsdatatype.BOFORHOLD,
+        erBearbeidet = true,
+        gjelder = ident,
+        aktiv = LocalDateTime.now(),
+        rolle = behandling.bidragsmottaker!!,
+        innhentet = LocalDateTime.now(),
+        data =
+        commonObjectmapper.writeValueAsString(
+            husstandsmedlem.flatMap { hb ->
+                hb.perioder.map {
+                    BoforholdResponseV2(
+                        gjelderPersonId = hb.ident,
+                        periodeFom = it.datoFom!!,
+                        periodeTom = it.datoTom,
+                        kilde = it.kilde,
+                        bostatus = it.bostatus,
+                        fødselsdato = hb.fødselsdato!!,
+                    )
+                }
+            },
+        ),
     )
+}
+
+fun oppretteHusstandsmedlemMedOffentligePerioder(behandling: Behandling): Set<Husstandsmedlem> = setOf(
+    oppretteHusstandsmedlem(behandling, testdataBarn1).let {
+        it.perioder =
+            mutableSetOf(
+                Bostatusperiode(
+                    datoFom = LocalDate.parse("2023-01-01"),
+                    datoTom = LocalDate.parse("2023-05-31"),
+                    bostatus = Bostatuskode.MED_FORELDER,
+                    kilde = Kilde.OFFENTLIG,
+                    husstandsmedlem = it,
+                ),
+                Bostatusperiode(
+                    datoFom = LocalDate.parse("2023-06-01"),
+                    datoTom = null,
+                    bostatus = Bostatuskode.IKKE_MED_FORELDER,
+                    kilde = Kilde.OFFENTLIG,
+                    husstandsmedlem = it,
+                ),
+            )
+        it
+    },
+    oppretteHusstandsmedlem(behandling, testdataBarn2).let {
+        it.perioder =
+            mutableSetOf(
+                Bostatusperiode(
+                    datoFom = LocalDate.parse("2023-01-01"),
+                    datoTom = LocalDate.parse("2023-10-31"),
+                    bostatus = Bostatuskode.MED_FORELDER,
+                    kilde = Kilde.OFFENTLIG,
+                    husstandsmedlem = it,
+                ),
+                Bostatusperiode(
+                    datoFom = LocalDate.parse("2023-11-01"),
+                    datoTom = null,
+                    bostatus = Bostatuskode.IKKE_MED_FORELDER,
+                    kilde = Kilde.OFFENTLIG,
+                    husstandsmedlem = it,
+                ),
+            )
+        it
+    },
+)
 
 fun opprettInntekt(
     datoFom: YearMonth? = null,
@@ -1297,7 +1284,7 @@ fun opprettInntekt(
                         kode = it.first,
                     )
                 }
-        ).toMutableSet()
+            ).toMutableSet()
     return inntekt
 }
 
@@ -1461,31 +1448,30 @@ fun oppretteTestbehandling(
     return behandling
 }
 
-fun oppretteArbeidsforhold(personident: String): ArbeidsforholdGrunnlagDto =
-    ArbeidsforholdGrunnlagDto(
-        arbeidsgiverNavn = "Liv og røre",
-        arbeidsgiverOrgnummer = "001122445577",
-        startdato = LocalDate.now().minusMonths(144),
-        sluttdato = null,
-        partPersonId = personident,
-        permitteringListe = emptyList(),
-        permisjonListe = emptyList(),
-        ansettelsesdetaljerListe =
-            listOf(
-                Ansettelsesdetaljer(
-                    periodeFra = YearMonth.now().minusMonths(144),
-                    periodeTil = null,
-                    ansettelsesformBeskrivelse = "Fast ansatt",
-                    antallTimerPrUke = 40.0,
-                    arbeidsforholdType = "Ordinaer",
-                    avtaltStillingsprosent = 100.0,
-                    arbeidstidsordningBeskrivelse = "Ikke skift",
-                    sisteLønnsendringDato = LocalDate.now().minusMonths(10).withMonth(1),
-                    sisteStillingsprosentendringDato = LocalDate.now().minusMonths(144),
-                    yrkeBeskrivelse = "Snekker",
-                ),
-            ),
-    )
+fun oppretteArbeidsforhold(personident: String): ArbeidsforholdGrunnlagDto = ArbeidsforholdGrunnlagDto(
+    arbeidsgiverNavn = "Liv og røre",
+    arbeidsgiverOrgnummer = "001122445577",
+    startdato = LocalDate.now().minusMonths(144),
+    sluttdato = null,
+    partPersonId = personident,
+    permitteringListe = emptyList(),
+    permisjonListe = emptyList(),
+    ansettelsesdetaljerListe =
+    listOf(
+        Ansettelsesdetaljer(
+            periodeFra = YearMonth.now().minusMonths(144),
+            periodeTil = null,
+            ansettelsesformBeskrivelse = "Fast ansatt",
+            antallTimerPrUke = 40.0,
+            arbeidsforholdType = "Ordinaer",
+            avtaltStillingsprosent = 100.0,
+            arbeidstidsordningBeskrivelse = "Ikke skift",
+            sisteLønnsendringDato = LocalDate.now().minusMonths(10).withMonth(1),
+            sisteStillingsprosentendringDato = LocalDate.now().minusMonths(144),
+            yrkeBeskrivelse = "Snekker",
+        ),
+    ),
+)
 
 fun oppretteArbeidsforhold(
     behandling: Behandling,
@@ -1526,12 +1512,12 @@ private fun oppretteBoforhold(
                 navn = "Lyrisk Sopp",
                 partPersonId = Grunnlagsdatatype.BOFORHOLD.innhentesForRolle(behandling)!!.ident,
                 borISammeHusstandDtoListe =
-                    listOf(
-                        BorISammeHusstandDto(
-                            periodeFra = LocalDate.parse("2023-01-01"),
-                            periodeTil = LocalDate.parse("2023-05-31"),
-                        ),
+                listOf(
+                    BorISammeHusstandDto(
+                        periodeFra = LocalDate.parse("2023-01-01"),
+                        periodeTil = LocalDate.parse("2023-05-31"),
                     ),
+                ),
             ),
             RelatertPersonGrunnlagDto(
                 relatertPersonPersonId = testdataBarn2.ident,
@@ -1541,12 +1527,12 @@ private fun oppretteBoforhold(
                 navn = "Lyrisk Sopp",
                 partPersonId = Grunnlagsdatatype.BOFORHOLD.innhentesForRolle(behandling)!!.ident,
                 borISammeHusstandDtoListe =
-                    listOf(
-                        BorISammeHusstandDto(
-                            periodeFra = LocalDate.parse("2023-01-01"),
-                            periodeTil = LocalDate.parse("2023-05-31"),
-                        ),
+                listOf(
+                    BorISammeHusstandDto(
+                        periodeFra = LocalDate.parse("2023-01-01"),
+                        periodeTil = LocalDate.parse("2023-05-31"),
                     ),
+                ),
             ),
         )
 
@@ -1560,16 +1546,16 @@ private fun oppretteBoforhold(
                 navn = voksenPersonIBpsHusstand.navn,
                 partPersonId = Grunnlagsdatatype.BOFORHOLD.innhentesForRolle(behandling)!!.ident,
                 borISammeHusstandDtoListe =
-                    listOf(
-                        BorISammeHusstandDto(
-                            periodeFra = behandling.virkningstidspunktEllerSøktFomDato.plusMonths(2).withDayOfMonth(1),
-                            periodeTil =
-                                behandling.virkningstidspunktEllerSøktFomDato
-                                    .plusMonths(6)
-                                    .withDayOfMonth(1)
-                                    .minusDays(1),
-                        ),
+                listOf(
+                    BorISammeHusstandDto(
+                        periodeFra = behandling.virkningstidspunktEllerSøktFomDato.plusMonths(2).withDayOfMonth(1),
+                        periodeTil =
+                        behandling.virkningstidspunktEllerSøktFomDato
+                            .plusMonths(6)
+                            .withDayOfMonth(1)
+                            .minusDays(1),
                     ),
+                ),
             ),
         )
 
@@ -1887,34 +1873,33 @@ fun opprettLøpendeBidragGrunnlag(
     saksnummer = Saksnummer(SAKSNUMMER),
 )
 
-fun opprettEvnevurderingResultat(sakerFor: List<Pair<TestDataPerson, Stønadstype>>) =
-    EvnevurderingBeregningResultat(
-        løpendeBidragsaker =
-            sakerFor.map {
-                LøpendeBidragssak(
-                    kravhaver = Personident(it.first.ident),
-                    type = it.second,
-                    løpendeBeløp = BigDecimal(5123),
-                    sak = Saksnummer(SAKSNUMMER),
-                )
-            },
-        beregnetBeløpListe =
-            BidragBeregningResponsDto(
-                beregningListe =
-                    sakerFor.map {
-                        BidragBeregningResponsDto.BidragBeregning(
-                            beløpSamvær = BigDecimal(5123),
-                            faktiskBeløp = BigDecimal(6555),
-                            samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1,
-                            beregnetBeløp = BigDecimal(6334),
-                            saksnummer = SAKSNUMMER,
-                            datoSøknad = LocalDate.now(),
-                            personidentBarn = Personident(it.first.ident),
-                            stønadstype = it.second,
-                        )
-                    },
-            ),
-    )
+fun opprettEvnevurderingResultat(sakerFor: List<Pair<TestDataPerson, Stønadstype>>) = EvnevurderingBeregningResultat(
+    løpendeBidragsaker =
+    sakerFor.map {
+        LøpendeBidragssak(
+            kravhaver = Personident(it.first.ident),
+            type = it.second,
+            løpendeBeløp = BigDecimal(5123),
+            sak = Saksnummer(SAKSNUMMER),
+        )
+    },
+    beregnetBeløpListe =
+    BidragBeregningResponsDto(
+        beregningListe =
+        sakerFor.map {
+            BidragBeregningResponsDto.BidragBeregning(
+                beløpSamvær = BigDecimal(5123),
+                faktiskBeløp = BigDecimal(6555),
+                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1,
+                beregnetBeløp = BigDecimal(6334),
+                saksnummer = SAKSNUMMER,
+                datoSøknad = LocalDate.now(),
+                personidentBarn = Personident(it.first.ident),
+                stønadstype = it.second,
+            )
+        },
+    ),
+)
 
 fun Behandling.taMedInntekt(
     rolle: Rolle,
@@ -2003,22 +1988,22 @@ fun Behandling.leggTilGrunnlagManuelleVedtak(
             aktiv = LocalDateTime.now(),
             gjelder = søknadsbarn.ident,
             data =
-                commonObjectmapper.writeValueAsString(
-                    listOf(
-                        ManuellVedtakGrunnlag(
-                            1,
-                            LocalDateTime.of(LocalDate.parse("2024-01-01"), LocalTime.of(1, 0)),
-                            LocalDate.parse("2024-01-01"),
-                            Vedtakstype.FASTSETTELSE,
-                            Stønadstype.BIDRAG,
-                            false,
-                            false,
-                            false,
-                            "",
-                            "",
-                        ),
+            commonObjectmapper.writeValueAsString(
+                listOf(
+                    ManuellVedtakGrunnlag(
+                        1,
+                        LocalDateTime.of(LocalDate.parse("2024-01-01"), LocalTime.of(1, 0)),
+                        LocalDate.parse("2024-01-01"),
+                        Vedtakstype.FASTSETTELSE,
+                        Stønadstype.BIDRAG,
+                        false,
+                        false,
+                        false,
+                        "",
+                        "",
                     ),
                 ),
+            ),
         ),
     )
 }
@@ -2042,14 +2027,14 @@ fun Behandling.leggTilGrunnlagEtterfølgendeVedtak(
             innhentet = LocalDateTime.now(),
             aktiv = LocalDateTime.now(),
             data =
-                commonObjectmapper.writeValueAsString(
-                    listOf(
-                        vedtakForStønad
-                            .copy(
-                                stønadsendring = vedtakForStønad.stønadsendring.copy(periodeListe = periodeListe),
-                            ),
-                    ),
+            commonObjectmapper.writeValueAsString(
+                listOf(
+                    vedtakForStønad
+                        .copy(
+                            stønadsendring = vedtakForStønad.stønadsendring.copy(periodeListe = periodeListe),
+                        ),
                 ),
+            ),
         ),
     )
 }
@@ -2071,27 +2056,27 @@ fun Behandling.leggTilGrunnlagBeløpshistorikk(
         Grunnlag(
             type = type,
             rolle =
-                when (type) {
-                    Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD -> bidragsmottaker!!
-                    else -> bidragspliktig!!
-                },
+            when (type) {
+                Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD -> bidragsmottaker!!
+                else -> bidragspliktig!!
+            },
             behandling = this,
             innhentet = LocalDateTime.now(),
             aktiv = LocalDateTime.now(),
             gjelder = søknadsbarn.ident,
             data =
-                commonObjectmapper.writeValueAsString(
-                    opprettStønadDto(
-                        indeksår = nesteIndeksår,
-                        stønadstype =
-                            when (type) {
-                                Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD -> Stønadstype.FORSKUDD
-                                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR -> Stønadstype.BIDRAG18AAR
-                                else -> Stønadstype.BIDRAG
-                            },
-                        periodeListe = periodeListe,
-                    ),
+            commonObjectmapper.writeValueAsString(
+                opprettStønadDto(
+                    indeksår = nesteIndeksår,
+                    stønadstype =
+                    when (type) {
+                        Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD -> Stønadstype.FORSKUDD
+                        Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR -> Stønadstype.BIDRAG18AAR
+                        else -> Stønadstype.BIDRAG
+                    },
+                    periodeListe = periodeListe,
                 ),
+            ),
         ),
     )
 }
@@ -2124,38 +2109,38 @@ fun Behandling.leggTilSamvær(
         SamværskalkulatorDetaljer(
             regelmessigSamværNetter = BigDecimal(4),
             ferier =
-                listOf(
-                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                        type = SamværskalkulatorFerietype.VINTERFERIE,
-                        bidragsmottakerNetter = BigDecimal(0),
-                        bidragspliktigNetter = BigDecimal(0),
-                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                    ),
-                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                        type = SamværskalkulatorFerietype.JUL_NYTTÅR,
-                        bidragsmottakerNetter = BigDecimal(0),
-                        bidragspliktigNetter = BigDecimal(0),
-                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                    ),
-                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                        type = SamværskalkulatorFerietype.ANNET,
-                        bidragsmottakerNetter = BigDecimal(14),
-                        bidragspliktigNetter = BigDecimal(1),
-                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                    ),
-                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                        type = SamværskalkulatorFerietype.PÅSKE,
-                        bidragsmottakerNetter = BigDecimal(14),
-                        bidragspliktigNetter = BigDecimal(1),
-                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                    ),
-                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                        type = SamværskalkulatorFerietype.SOMMERFERIE,
-                        bidragsmottakerNetter = BigDecimal(14),
-                        bidragspliktigNetter = BigDecimal(1),
-                        frekvens = SamværskalkulatorNetterFrekvens.ANNET_HVERT_ÅR,
-                    ),
+            listOf(
+                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                    type = SamværskalkulatorFerietype.VINTERFERIE,
+                    bidragsmottakerNetter = BigDecimal(0),
+                    bidragspliktigNetter = BigDecimal(0),
+                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
                 ),
+                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                    type = SamværskalkulatorFerietype.JUL_NYTTÅR,
+                    bidragsmottakerNetter = BigDecimal(0),
+                    bidragspliktigNetter = BigDecimal(0),
+                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
+                ),
+                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                    type = SamværskalkulatorFerietype.ANNET,
+                    bidragsmottakerNetter = BigDecimal(14),
+                    bidragspliktigNetter = BigDecimal(1),
+                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
+                ),
+                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                    type = SamværskalkulatorFerietype.PÅSKE,
+                    bidragsmottakerNetter = BigDecimal(14),
+                    bidragspliktigNetter = BigDecimal(1),
+                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
+                ),
+                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                    type = SamværskalkulatorFerietype.SOMMERFERIE,
+                    bidragsmottakerNetter = BigDecimal(14),
+                    bidragspliktigNetter = BigDecimal(1),
+                    frekvens = SamværskalkulatorNetterFrekvens.ANNET_HVERT_ÅR,
+                ),
+            ),
         )
     val samværBarn = samvær.find { it.rolle.ident == barn.ident }!!
     samværBarn.perioder.add(
@@ -2165,10 +2150,10 @@ fun Behandling.leggTilSamvær(
             fom = periode.fom.atDay(1),
             tom = periode.til?.minusMonths(1)?.atEndOfMonth(),
             samværsklasse =
-                samværsklasse ?: BeregnSamværsklasseApi(stubSjablonService())
-                    .beregnSamværsklasse(
-                        samværsklasseDetaljer,
-                    ).delberegningSamværsklasse.samværsklasse,
+            samværsklasse ?: BeregnSamværsklasseApi(stubSjablonService())
+                .beregnSamværsklasse(
+                    samværsklasseDetaljer,
+                ).delberegningSamværsklasse.samværsklasse,
             beregningJson = if (medBeregning) commonObjectmapper.writeValueAsString(samværsklasseDetaljer) else null,
         ),
     )
@@ -2287,38 +2272,38 @@ fun Behandling.leggeTilNyttBarnetilsyn(
             rolle = barnetilsynInnhentesForRolle,
             type = Grunnlagsdatatype.BARNETILSYN,
             data =
-                commonObjectmapper.writeValueAsString(
-                    setOf(
-                        oppretteBarnetilsynGrunnlagDto(this, barnPersonId = testdataBarn2.ident),
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4500,
-                            periodeFra = fraDato,
-                            periodeTil = fraDato.plusMonths(6),
-                            skolealder = Skolealder.OVER,
-                            tilsynstype = Tilsynstype.HELTID,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4600,
-                            periodeFra = fraDato.plusMonths(6),
-                            periodeTil = fraDato.plusMonths(8),
-                            skolealder = Skolealder.OVER,
-                            tilsynstype = Tilsynstype.HELTID,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4700,
-                            periodeFra = fraDato.plusMonths(8),
-                            periodeTil = null,
-                            skolealder = null,
-                            tilsynstype = null,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
+            commonObjectmapper.writeValueAsString(
+                setOf(
+                    oppretteBarnetilsynGrunnlagDto(this, barnPersonId = testdataBarn2.ident),
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4500,
+                        periodeFra = fraDato,
+                        periodeTil = fraDato.plusMonths(6),
+                        skolealder = Skolealder.OVER,
+                        tilsynstype = Tilsynstype.HELTID,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
+                    ),
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4600,
+                        periodeFra = fraDato.plusMonths(6),
+                        periodeTil = fraDato.plusMonths(8),
+                        skolealder = Skolealder.OVER,
+                        tilsynstype = Tilsynstype.HELTID,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
+                    ),
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4700,
+                        periodeFra = fraDato.plusMonths(8),
+                        periodeTil = null,
+                        skolealder = null,
+                        tilsynstype = null,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
                     ),
                 ),
+            ),
         ),
     )
 
@@ -2332,37 +2317,37 @@ fun Behandling.leggeTilNyttBarnetilsyn(
             rolle = barnetilsynInnhentesForRolle,
             type = Grunnlagsdatatype.BARNETILSYN,
             data =
-                commonObjectmapper.writeValueAsString(
-                    setOf(
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4500,
-                            periodeFra = fraDato,
-                            periodeTil = fraDato.plusMonths(6),
-                            skolealder = Skolealder.IKKE_ANGITT,
-                            tilsynstype = Tilsynstype.IKKE_ANGITT,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4600,
-                            periodeFra = fraDato.plusMonths(6),
-                            periodeTil = fraDato.plusMonths(8),
-                            skolealder = Skolealder.OVER,
-                            tilsynstype = Tilsynstype.HELTID,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
-                        BarnetilsynGrunnlagDto(
-                            beløp = 4700,
-                            periodeFra = fraDato.plusMonths(8),
-                            periodeTil = null,
-                            skolealder = null,
-                            tilsynstype = null,
-                            barnPersonId = testdataBarn1.ident,
-                            partPersonId = barnetilsynInnhentesForRolle.ident!!,
-                        ),
+            commonObjectmapper.writeValueAsString(
+                setOf(
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4500,
+                        periodeFra = fraDato,
+                        periodeTil = fraDato.plusMonths(6),
+                        skolealder = Skolealder.IKKE_ANGITT,
+                        tilsynstype = Tilsynstype.IKKE_ANGITT,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
+                    ),
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4600,
+                        periodeFra = fraDato.plusMonths(6),
+                        periodeTil = fraDato.plusMonths(8),
+                        skolealder = Skolealder.OVER,
+                        tilsynstype = Tilsynstype.HELTID,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
+                    ),
+                    BarnetilsynGrunnlagDto(
+                        beløp = 4700,
+                        periodeFra = fraDato.plusMonths(8),
+                        periodeTil = null,
+                        skolealder = null,
+                        tilsynstype = null,
+                        barnPersonId = testdataBarn1.ident,
+                        partPersonId = barnetilsynInnhentesForRolle.ident!!,
                     ),
                 ),
+            ),
         ),
     )
 
@@ -2376,11 +2361,11 @@ fun Behandling.leggeTilNyttBarnetilsyn(
             rolle = barnetilsynInnhentesForRolle,
             type = Grunnlagsdatatype.BARNETILSYN,
             data =
-                commonObjectmapper.writeValueAsString(
-                    setOf(
-                        oppretteBarnetilsynGrunnlagDto(this, barnPersonId = testdataBarn2.ident),
-                    ),
+            commonObjectmapper.writeValueAsString(
+                setOf(
+                    oppretteBarnetilsynGrunnlagDto(this, barnPersonId = testdataBarn2.ident),
                 ),
+            ),
         ),
     )
 }
@@ -2441,112 +2426,107 @@ fun opprettVedtakhendelse(
     vedtakId: Int,
     behandlingId: Long,
     stonadType: Stønadstype = Stønadstype.BIDRAG18AAR,
-): VedtakHendelse =
-    VedtakHendelse(
-        type = Vedtakstype.FASTSETTELSE,
-        opprettetAv = SAKSBEHANDLER_IDENT,
-        stønadsendringListe =
-            listOf(
-                Stønadsendring(
-                    type = stonadType,
-                    eksternReferanse = "",
-                    beslutning = Beslutningstype.ENDRING,
-                    førsteIndeksreguleringsår = 2024,
-                    innkreving = Innkrevingstype.MED_INNKREVING,
-                    kravhaver = Personident(""),
-                    mottaker = Personident(""),
-                    omgjørVedtakId = 1,
-                    periodeListe = emptyList(),
-                    sak = Saksnummer(SAKSNUMMER),
-                    skyldner = Personident(""),
-                ),
-            ),
-        engangsbeløpListe = emptyList(),
-        enhetsnummer = Enhetsnummer("4806"),
-        id = vedtakId,
-        kilde = Vedtakskilde.MANUELT,
-        kildeapplikasjon = "bidrag-behandling",
-        opprettetTidspunkt = LocalDateTime.now(),
-        opprettetAvNavn = "",
-        sporingsdata = Sporingsdata("sporing"),
-        innkrevingUtsattTilDato = null,
-        vedtakstidspunkt = LocalDateTime.now(),
-        fastsattILand = null,
-        behandlingsreferanseListe =
-            listOf(
-                Behandlingsreferanse(
-                    BehandlingsrefKilde.BEHANDLING_ID.name,
-                    behandlingId.toString(),
-                ),
-                Behandlingsreferanse(
-                    BehandlingsrefKilde.BISYS_SØKNAD.name,
-                    SOKNAD_ID.toString(),
-                ),
-            ),
-    )
+): VedtakHendelse = VedtakHendelse(
+    type = Vedtakstype.FASTSETTELSE,
+    opprettetAv = SAKSBEHANDLER_IDENT,
+    stønadsendringListe =
+    listOf(
+        Stønadsendring(
+            type = stonadType,
+            eksternReferanse = "",
+            beslutning = Beslutningstype.ENDRING,
+            førsteIndeksreguleringsår = 2024,
+            innkreving = Innkrevingstype.MED_INNKREVING,
+            kravhaver = Personident(""),
+            mottaker = Personident(""),
+            omgjørVedtakId = 1,
+            periodeListe = emptyList(),
+            sak = Saksnummer(SAKSNUMMER),
+            skyldner = Personident(""),
+        ),
+    ),
+    engangsbeløpListe = emptyList(),
+    enhetsnummer = Enhetsnummer("4806"),
+    id = vedtakId,
+    kilde = Vedtakskilde.MANUELT,
+    kildeapplikasjon = "bidrag-behandling",
+    opprettetTidspunkt = LocalDateTime.now(),
+    opprettetAvNavn = "",
+    sporingsdata = Sporingsdata("sporing"),
+    innkrevingUtsattTilDato = null,
+    vedtakstidspunkt = LocalDateTime.now(),
+    fastsattILand = null,
+    behandlingsreferanseListe =
+    listOf(
+        Behandlingsreferanse(
+            BehandlingsrefKilde.BEHANDLING_ID.name,
+            behandlingId.toString(),
+        ),
+        Behandlingsreferanse(
+            BehandlingsrefKilde.BISYS_SØKNAD.name,
+            SOKNAD_ID.toString(),
+        ),
+    ),
+)
 
 fun opprettPrivatAvtale(
     behandling: Behandling,
     person: TestDataPerson,
     privatAvtaleDato: LocalDate = LocalDate.parse("2024-01-01"),
-): PrivatAvtale =
-    PrivatAvtale(
-        id = 1,
-        behandling = behandling,
-        avtaleDato = privatAvtaleDato,
-        rolle = person.tilRolle(behandling),
-        avtaleType = PrivatAvtaleType.PRIVAT_AVTALE,
-    )
+): PrivatAvtale = PrivatAvtale(
+    id = 1,
+    behandling = behandling,
+    avtaleDato = privatAvtaleDato,
+    rolle = person.tilRolle(behandling),
+    avtaleType = PrivatAvtaleType.PRIVAT_AVTALE,
+)
 
 fun opprettPrivatAvtalePeriode(
     privatAvtale: PrivatAvtale,
     fom: YearMonth,
     tom: YearMonth?,
     beløp: BigDecimal = BigDecimal(1000),
-): PrivatAvtalePeriode =
-    PrivatAvtalePeriode(
-        id = 1,
-        privatAvtale = privatAvtale,
-        fom = fom.atDay(1),
-        tom = tom?.atEndOfMonth(),
-        beløp = beløp,
-    )
+): PrivatAvtalePeriode = PrivatAvtalePeriode(
+    id = 1,
+    privatAvtale = privatAvtale,
+    fom = fom.atDay(1),
+    tom = tom?.atEndOfMonth(),
+    beløp = beløp,
+)
 
-fun opprettVedtakDto() =
-    VedtakDto(
-        vedtaksid = 1,
-        kilde = Vedtakskilde.MANUELT,
-        fastsattILand = "",
-        type = Vedtakstype.ENDRING,
-        opprettetAv = "",
-        opprettetAvNavn = "",
-        kildeapplikasjon = "bisys",
-        vedtakstidspunkt = LocalDateTime.now(),
-        enhetsnummer = Enhetsnummer("4444"),
-        innkrevingUtsattTilDato = null,
-        opprettetTidspunkt = LocalDateTime.now(),
-        engangsbeløpListe = emptyList(),
-        behandlingsreferanseListe = emptyList(),
-        grunnlagListe = emptyList(),
-        stønadsendringListe = emptyList(),
-        unikReferanse = null,
-    )
+fun opprettVedtakDto() = VedtakDto(
+    vedtaksid = 1,
+    kilde = Vedtakskilde.MANUELT,
+    fastsattILand = "",
+    type = Vedtakstype.ENDRING,
+    opprettetAv = "",
+    opprettetAvNavn = "",
+    kildeapplikasjon = "bisys",
+    vedtakstidspunkt = LocalDateTime.now(),
+    enhetsnummer = Enhetsnummer("4444"),
+    innkrevingUtsattTilDato = null,
+    opprettetTidspunkt = LocalDateTime.now(),
+    engangsbeløpListe = emptyList(),
+    behandlingsreferanseListe = emptyList(),
+    grunnlagListe = emptyList(),
+    stønadsendringListe = emptyList(),
+    unikReferanse = null,
+)
 
-fun opprettEngangsbeløp(type: Engangsbeløptype = Engangsbeløptype.SÆRBIDRAG) =
-    EngangsbeløpDto(
-        type = type,
-        kravhaver = Personident(testdataBarn1.ident),
-        mottaker = Personident(testdataBM.ident),
-        skyldner = Personident(testdataBP.ident),
-        sak = Saksnummer(SAKSNUMMER),
-        innkreving = Innkrevingstype.MED_INNKREVING,
-        beslutning = Beslutningstype.ENDRING,
-        omgjørVedtakId = null,
-        eksternReferanse = null,
-        resultatkode = Resultatkode.SÆRBIDRAG_INNVILGET.name,
-        beløp = BigDecimal(1000),
-        valutakode = "",
-        referanse = "",
-        delytelseId = "",
-        grunnlagReferanseListe = emptyList(),
-    )
+fun opprettEngangsbeløp(type: Engangsbeløptype = Engangsbeløptype.SÆRBIDRAG) = EngangsbeløpDto(
+    type = type,
+    kravhaver = Personident(testdataBarn1.ident),
+    mottaker = Personident(testdataBM.ident),
+    skyldner = Personident(testdataBP.ident),
+    sak = Saksnummer(SAKSNUMMER),
+    innkreving = Innkrevingstype.MED_INNKREVING,
+    beslutning = Beslutningstype.ENDRING,
+    omgjørVedtakId = null,
+    eksternReferanse = null,
+    resultatkode = Resultatkode.SÆRBIDRAG_INNVILGET.name,
+    beløp = BigDecimal(1000),
+    valutakode = "",
+    referanse = "",
+    delytelseId = "",
+    grunnlagReferanseListe = emptyList(),
+)

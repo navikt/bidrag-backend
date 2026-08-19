@@ -505,8 +505,8 @@ data class PeriodeAndreVoksneIHusstanden(
     val totalAntallHusstandsmedlemmer: Int,
     @get:Schema(
         description =
-            "Detaljer om husstandsmedlemmer som bor hos BP for gjeldende periode. " +
-                "Antall hustandsmedlemmer er begrenset til maks 10 personer",
+        "Detaljer om husstandsmedlemmer som bor hos BP for gjeldende periode. " +
+            "Antall hustandsmedlemmer er begrenset til maks 10 personer",
     )
     val husstandsmedlemmer: List<AndreVoksneIHusstandenDetaljerDto> = emptyList(),
 )
@@ -650,80 +650,75 @@ enum class Grunnlagsdatatype(
     ;
 
     companion object {
-        fun Behandling.skalInnhentesForBehandling(type: Grunnlagsdatatype) =
-            entries.any { type.behandlingstypeMotRolletyper.keys.contains(tilType()) }
+        fun Behandling.skalInnhentesForBehandling(type: Grunnlagsdatatype) = entries.any { type.behandlingstypeMotRolletyper.keys.contains(tilType()) }
 
         @OptIn(ExperimentalStdlibApi::class)
         fun grunnlagsdatatypeobjekter(
             behandlingstype: TypeBehandling,
             rolletype: Rolletype? = null,
-        ): Set<Grunnlagsdatatype> =
-            when (rolletype != null) {
-                true -> {
-                    entries
-                        .filter { it.behandlingstypeMotRolletyper.keys.contains(behandlingstype) }
-                        .filter { it.behandlingstypeMotRolletyper[behandlingstype]?.any { it == rolletype } == true }
-                        .toSet()
-                }
-
-                false -> {
-                    entries.filter { it.behandlingstypeMotRolletyper.keys.contains(behandlingstype) }.toSet()
-                }
+        ): Set<Grunnlagsdatatype> = when (rolletype != null) {
+            true -> {
+                entries
+                    .filter { it.behandlingstypeMotRolletyper.keys.contains(behandlingstype) }
+                    .filter { it.behandlingstypeMotRolletyper[behandlingstype]?.any { it == rolletype } == true }
+                    .toSet()
             }
+
+            false -> {
+                entries.filter { it.behandlingstypeMotRolletyper.keys.contains(behandlingstype) }.toSet()
+            }
+        }
 
         @OptIn(ExperimentalStdlibApi::class)
         fun gjeldende() = Grunnlagsdatatype.entries.filter { it.erGjeldende }
     }
 }
 
-fun Grunnlagsdatatype.getOrMigrate() =
-    when (this) {
-        Grunnlagsdatatype.AINNTEKT, Grunnlagsdatatype.SKATTEGRUNNLAG, Grunnlagsdatatype.INNTEKTSOPPLYSNINGER,
-        Grunnlagsdatatype.INNTEKT_BEARBEIDET,
-        -> Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER
+fun Grunnlagsdatatype.getOrMigrate() = when (this) {
+    Grunnlagsdatatype.AINNTEKT, Grunnlagsdatatype.SKATTEGRUNNLAG, Grunnlagsdatatype.INNTEKTSOPPLYSNINGER,
+    Grunnlagsdatatype.INNTEKT_BEARBEIDET,
+    -> Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER
 
-        Grunnlagsdatatype.HUSSTANDSMEDLEMMER, Grunnlagsdatatype.BOFORHOLD_BEARBEIDET -> Grunnlagsdatatype.BOFORHOLD
+    Grunnlagsdatatype.HUSSTANDSMEDLEMMER, Grunnlagsdatatype.BOFORHOLD_BEARBEIDET -> Grunnlagsdatatype.BOFORHOLD
 
-        else -> this
-    }
+    else -> this
+}
 
-fun Grunnlagsdatatype.tilInntektrapporteringYtelse() =
-    when (this) {
-        Grunnlagsdatatype.UTVIDET_BARNETRYGD -> Inntektsrapportering.UTVIDET_BARNETRYGD
-        Grunnlagsdatatype.SMÅBARNSTILLEGG -> Inntektsrapportering.SMÅBARNSTILLEGG
-        Grunnlagsdatatype.BARNETILLEGG -> Inntektsrapportering.BARNETILLEGG
-        Grunnlagsdatatype.BARNETILSYN -> Inntektsrapportering.BARNETILSYN
-        Grunnlagsdatatype.KONTANTSTØTTE -> Inntektsrapportering.KONTANTSTØTTE
-        else -> null
-    }
+fun Grunnlagsdatatype.tilInntektrapporteringYtelse() = when (this) {
+    Grunnlagsdatatype.UTVIDET_BARNETRYGD -> Inntektsrapportering.UTVIDET_BARNETRYGD
+    Grunnlagsdatatype.SMÅBARNSTILLEGG -> Inntektsrapportering.SMÅBARNSTILLEGG
+    Grunnlagsdatatype.BARNETILLEGG -> Inntektsrapportering.BARNETILLEGG
+    Grunnlagsdatatype.BARNETILSYN -> Inntektsrapportering.BARNETILSYN
+    Grunnlagsdatatype.KONTANTSTØTTE -> Inntektsrapportering.KONTANTSTØTTE
+    else -> null
+}
 
 fun Grunnlagsdatatype.innhentesForRolle2(behandling: Behandling) = this.behandlingstypeMotRolletyper[behandling.tilType()]
 
-fun Grunnlagsdatatype.innhentesForRolle(behandling: Behandling) =
-    when (this) {
-        Grunnlagsdatatype.BARNETILSYN,
-        Grunnlagsdatatype.BOFORHOLD,
-        Grunnlagsdatatype.BOFORHOLD_ANDRE_VOKSNE_I_HUSSTANDEN,
-        Grunnlagsdatatype.ANDRE_BARN,
-        -> {
-            val t = this.behandlingstypeMotRolletyper[behandling.tilType()]
-            t?.let {
-                when (it.first()) {
-                    Rolletype.BIDRAGSMOTTAKER -> behandling.bidragsmottaker
-                    Rolletype.BIDRAGSPLIKTIG -> behandling.bidragspliktig
-                    else -> null
-                }
-            }
-        }
-
-        Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN -> {
-            when (behandling.tilType()) {
-                TypeBehandling.BIDRAG -> behandling.bidragsmottaker
+fun Grunnlagsdatatype.innhentesForRolle(behandling: Behandling) = when (this) {
+    Grunnlagsdatatype.BARNETILSYN,
+    Grunnlagsdatatype.BOFORHOLD,
+    Grunnlagsdatatype.BOFORHOLD_ANDRE_VOKSNE_I_HUSSTANDEN,
+    Grunnlagsdatatype.ANDRE_BARN,
+    -> {
+        val t = this.behandlingstypeMotRolletyper[behandling.tilType()]
+        t?.let {
+            when (it.first()) {
+                Rolletype.BIDRAGSMOTTAKER -> behandling.bidragsmottaker
+                Rolletype.BIDRAGSPLIKTIG -> behandling.bidragspliktig
                 else -> null
             }
         }
+    }
 
-        else -> {
-            null
+    Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN -> {
+        when (behandling.tilType()) {
+            TypeBehandling.BIDRAG -> behandling.bidragsmottaker
+            else -> null
         }
     }
+
+    else -> {
+        null
+    }
+}

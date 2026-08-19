@@ -219,18 +219,16 @@ class ForholdsmessigFordelingService(
     }
 
     @Transactional
-    fun leggTilEllerSlettBarnFraBehandlingSomErIFF(request: OppdaterBarnFraFFRequest) =
-        barnService.leggTilEllerSlettBarnFraBehandlingSomErIFF(request)
+    fun leggTilEllerSlettBarnFraBehandlingSomErIFF(request: OppdaterBarnFraFFRequest) = barnService.leggTilEllerSlettBarnFraBehandlingSomErIFF(request)
 
     private fun finnEksisterendeSøknadsbarn(
         behandling: Behandling,
         reevaluerSøkndasbarn: Pair<String, Stønadstype?>?,
-    ): List<String> =
-        behandling.søknadsbarn
-            .filter {
-                reevaluerSøkndasbarn == null ||
-                    (!reevaluerSøkndasbarn.erSamme(it.ident!!, it.stønadstype))
-            }.map { it.identStønadstypeNøkkel }
+    ): List<String> = behandling.søknadsbarn
+        .filter {
+            reevaluerSøkndasbarn == null ||
+                (!reevaluerSøkndasbarn.erSamme(it.ident!!, it.stønadstype))
+        }.map { it.identStønadstypeNøkkel }
 
     private fun leggTilManglendeSøknadsbarnIKravhavere(
         reevaluerSøkndasbarn: Pair<String, Stønadstype?>?,
@@ -713,14 +711,14 @@ class ForholdsmessigFordelingService(
                     stønadstype = søknad.behandlingstema.tilStønadstype(),
                     søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad(),
                     rollerSomSkalLeggesTilDto =
-                        søknad.parterUnderBehandling.map {
-                            OpprettRolleDto(
-                                rolletype = it.rolletype,
-                                fødselsdato = hentPersonFødselsdato(it.personident!!),
-                                ident = Personident(it.personident!!),
-                                behandlingstema = søknad.behandlingstema,
-                            )
-                        },
+                    søknad.parterUnderBehandling.map {
+                        OpprettRolleDto(
+                            rolletype = it.rolletype,
+                            fødselsdato = hentPersonFødselsdato(it.personident!!),
+                            ident = Personident(it.personident!!),
+                            behandlingstema = søknad.behandlingstema,
+                        )
+                    },
                 ),
             )
         }
@@ -755,16 +753,14 @@ class ForholdsmessigFordelingService(
         return søknadSomSkalBeholdes
     }
 
-    private fun finnAktivFFSøknad(lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>) =
-        lagretSøknader
-            .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
-            .filter { it.status == Behandlingstatus.UNDER_BEHANDLING || it.status == null }
-            .maxByOrNull { it.søknadsid ?: Long.MIN_VALUE }
+    private fun finnAktivFFSøknad(lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>) = lagretSøknader
+        .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
+        .filter { it.status == Behandlingstatus.UNDER_BEHANDLING || it.status == null }
+        .maxByOrNull { it.søknadsid ?: Long.MIN_VALUE }
 
-    private fun finnSisteFFSøknad(lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>) =
-        lagretSøknader
-            .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
-            .maxByOrNull { it.søknadsid ?: Long.MIN_VALUE }
+    private fun finnSisteFFSøknad(lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>) = lagretSøknader
+        .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
+        .maxByOrNull { it.søknadsid ?: Long.MIN_VALUE }
 
     private fun feilregistrerAndreSøknader(
         lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>,
@@ -899,9 +895,9 @@ class ForholdsmessigFordelingService(
             søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
             skalBehandlesAvEnhet = behandlesAvEnhet,
             kanOppretteForholdsmessigFordeling =
-                (
-                    relevanteKravhavereIkkeSøknadsbarn.isNotEmpty() ||
-                        (!behandling.erIForholdsmessigFordeling && finnesLøpendeBidragSomOverlapperMedEldsteVirkning)
+            (
+                relevanteKravhavereIkkeSøknadsbarn.isNotEmpty() ||
+                    (!behandling.erIForholdsmessigFordeling && finnesLøpendeBidragSomOverlapperMedEldsteVirkning)
                 ),
             simulertGrunnlag = resultat.simulertGrunnlag,
             måOppretteForholdsmessigFordeling = resultat.beregningManglerGrunnlag,
@@ -932,59 +928,58 @@ class ForholdsmessigFordelingService(
         return harLøpendeBidragForBarnIkkeIBehandling(behandling)
     }
 
-    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling): FFBeregningResultat =
-        try {
-            val resultat =
-                try {
-                    beregningService.beregneBidrag(behandling, true, simulerBeregning = true)
-                } catch (e: Exception) {
-                    ResultatBidragsberegning(vedtakstype = behandling.vedtakstype)
+    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling): FFBeregningResultat = try {
+        val resultat =
+            try {
+                beregningService.beregneBidrag(behandling, true, simulerBeregning = true)
+            } catch (e: Exception) {
+                ResultatBidragsberegning(vedtakstype = behandling.vedtakstype)
+            }
+        val lagretLøpendeBidrag = behandling.grunnlag.hentSisteGrunnlagLøpendeBidragFF(behandling) ?: emptyList()
+        val grunnlagsliste = resultat.grunnlagsliste.toSet().toList()
+
+        val simulertInntektGrunnlag =
+            grunnlagsliste
+                .filter {
+                    it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE &&
+                        it.referanse.contains(grunnlagsreferanseSimulert)
+                }.map {
+                    SimulertInntektGrunnlag(
+                        type = it.type,
+                        gjelder = grunnlagsliste.hentPersonMedReferanse(it.gjelderReferanse!!)!!.personIdent!!,
+                        beløp = it.innholdTilObjekt<InntektsrapporteringPeriode>().beløp,
+                        inntektstype = it.innholdTilObjekt<InntektsrapporteringPeriode>().inntektsrapportering,
+                    )
                 }
-            val lagretLøpendeBidrag = behandling.grunnlag.hentSisteGrunnlagLøpendeBidragFF(behandling) ?: emptyList()
-            val grunnlagsliste = resultat.grunnlagsliste.toSet().toList()
 
-            val simulertInntektGrunnlag =
-                grunnlagsliste
-                    .filter {
-                        it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE &&
-                            it.referanse.contains(grunnlagsreferanseSimulert)
-                    }.map {
-                        SimulertInntektGrunnlag(
-                            type = it.type,
-                            gjelder = grunnlagsliste.hentPersonMedReferanse(it.gjelderReferanse!!)!!.personIdent!!,
-                            beløp = it.innholdTilObjekt<InntektsrapporteringPeriode>().beløp,
-                            inntektstype = it.innholdTilObjekt<InntektsrapporteringPeriode>().inntektsrapportering,
-                        )
-                    }
-
-            val løpendeBidrag =
-                grunnlagsliste.filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordelingLøpendeBidrag>(
-                    Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_LØPENDE_BIDRAG,
-                )
-            val lagretLøpendeBidragBarnIdenter = lagretLøpendeBidrag.map { it.gjelderBarnIdent to it.gjelderStønadstype }
-            val løpendeBidragBarn =
-                grunnlagsliste
-                    .mapTilBeregnetBidragDto(løpendeBidrag)
-                    .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident!!.verdi to it.stønadstype) }
-                    .groupBy { it.barn.ident!!.verdi to it.stønadstype }
-                    .map { (identStønad, løpendeBidrag) ->
-                        LøpendeBidragGrunnlagForholdsmessigFordeling(
-                            identStønad.first,
-                            identStønad.second,
-                            løpendeBidrag.mapNotNull { it.beregnetBidrag },
-                        )
-                    }
-
-            FFBeregningResultat(
-                harSlåttUtTilFF = grunnlagsliste.harSlåttUtTilForholdsmessigFordeling(),
-                beregningManglerGrunnlag = resultat.alleUgyldigBeregninger.isNotEmpty(),
-                simulertGrunnlag = simulertInntektGrunnlag,
-                løpendeBidragBarn = løpendeBidragBarn + lagretLøpendeBidrag,
+        val løpendeBidrag =
+            grunnlagsliste.filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordelingLøpendeBidrag>(
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_LØPENDE_BIDRAG,
             )
-        } catch (e: Exception) {
-            // Valideringsfeil
-            FFBeregningResultat(false, false)
-        }
+        val lagretLøpendeBidragBarnIdenter = lagretLøpendeBidrag.map { it.gjelderBarnIdent to it.gjelderStønadstype }
+        val løpendeBidragBarn =
+            grunnlagsliste
+                .mapTilBeregnetBidragDto(løpendeBidrag)
+                .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident!!.verdi to it.stønadstype) }
+                .groupBy { it.barn.ident!!.verdi to it.stønadstype }
+                .map { (identStønad, løpendeBidrag) ->
+                    LøpendeBidragGrunnlagForholdsmessigFordeling(
+                        identStønad.first,
+                        identStønad.second,
+                        løpendeBidrag.mapNotNull { it.beregnetBidrag },
+                    )
+                }
+
+        FFBeregningResultat(
+            harSlåttUtTilFF = grunnlagsliste.harSlåttUtTilForholdsmessigFordeling(),
+            beregningManglerGrunnlag = resultat.alleUgyldigBeregninger.isNotEmpty(),
+            simulertGrunnlag = simulertInntektGrunnlag,
+            løpendeBidragBarn = løpendeBidragBarn + lagretLøpendeBidrag,
+        )
+    } catch (e: Exception) {
+        // Valideringsfeil
+        FFBeregningResultat(false, false)
+    }
 
     private fun harLøpendeBidragForBarnIkkeIBehandling(behandling: Behandling): Boolean {
         val bidraggsakerBP =

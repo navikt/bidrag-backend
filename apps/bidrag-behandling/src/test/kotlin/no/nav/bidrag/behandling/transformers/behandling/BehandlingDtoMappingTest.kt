@@ -304,14 +304,14 @@ class BehandlingDtoMappingTest : TestContainerRunner() {
             RelatertPersonGrunnlagDto(
                 partPersonId = voksenIHusstanden!!.partPersonId!!,
                 borISammeHusstandDtoListe =
-                    listOf(
-                        BorISammeHusstandDto(
-                            voksenIHusstanden.borISammeHusstandDtoListe.minBy { it.periodeFra!! }.periodeFra?.minusMonths(
-                                1,
-                            ),
-                            null,
+                listOf(
+                    BorISammeHusstandDto(
+                        voksenIHusstanden.borISammeHusstandDtoListe.minBy { it.periodeFra!! }.periodeFra?.minusMonths(
+                            1,
                         ),
+                        null,
                     ),
+                ),
                 fødselsdato = voksenIHusstanden.fødselsdato!!,
                 navn = voksenIHusstanden.navn!!,
             ),

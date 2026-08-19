@@ -58,7 +58,7 @@ fun Behandling.tilBeregningFeilmelding(): UgyldigBeregningDto? {
             return UgyldigBeregningDto(
                 tittel = "Innhenting av beløpshistorikk feilet",
                 begrunnelse =
-                    "Det skjedde en feil ved innhenting av beløpshistorikk for forskudd og bidrag. ",
+                "Det skjedde en feil ved innhenting av beløpshistorikk for forskudd og bidrag. ",
                 resultatPeriode = emptyList(),
                 feiltype = UgyldigBeregningDto.UgyldigBeregningType.BEREGNING_FEILET_TEKNISK,
             )
@@ -69,7 +69,7 @@ fun Behandling.tilBeregningFeilmelding(): UgyldigBeregningDto? {
             return UgyldigBeregningDto(
                 tittel = "Innhenting av beløpshistorikk feilet",
                 begrunnelse =
-                    "Det skjedde en feil ved innhenting av beløpshistorikk for bidrag. ",
+                "Det skjedde en feil ved innhenting av beløpshistorikk for bidrag. ",
                 resultatPeriode = emptyList(),
                 feiltype = UgyldigBeregningDto.UgyldigBeregningType.BEREGNING_FEILET_TEKNISK,
             )
@@ -79,7 +79,7 @@ fun Behandling.tilBeregningFeilmelding(): UgyldigBeregningDto? {
         return UgyldigBeregningDto(
             tittel = "Innhenting av beløpshistorikk feilet",
             begrunnelse =
-                "Det skjedde en feil ved innhenting av beløpshistorikk for bidrag. ",
+            "Det skjedde en feil ved innhenting av beløpshistorikk for bidrag. ",
             resultatPeriode = emptyList(),
             feiltype = UgyldigBeregningDto.UgyldigBeregningType.BEREGNING_FEILET_TEKNISK,
         )
@@ -113,11 +113,11 @@ fun BegrensetRevurderingLøpendeForskuddManglerException.opprettBegrunnelse(): U
         tittel = "Begrenset revurdering",
         resultatPeriode = resultatPerioderUtenForskudd,
         begrunnelse =
-            if (perioderUtenForskudd.size > 1) {
-                "Perioder ${perioderUtenForskudd.joinToString {it.periodeString}} har ingen løpende forskudd"
-            } else {
-                "Periode ${perioderUtenForskudd.first().periodeString} har ingen løpende forskudd"
-            },
+        if (perioderUtenForskudd.size > 1) {
+            "Perioder ${perioderUtenForskudd.joinToString {it.periodeString}} har ingen løpende forskudd"
+        } else {
+            "Periode ${perioderUtenForskudd.first().periodeString} har ingen løpende forskudd"
+        },
         perioder = perioderUtenForskudd,
         feiltype = UgyldigBeregningDto.UgyldigBeregningType.BEGRENSET_REVURDERING_UTEN_LØPENDE_FORSKUDD,
     )
@@ -148,11 +148,11 @@ fun BegrensetRevurderingLikEllerLavereEnnLøpendeBidragException.opprettBegrunne
         resultatPeriode = resultatPerioderUnderLøpendeBidrag,
         feiltype = UgyldigBeregningDto.UgyldigBeregningType.BEGRENSET_REVURDERING_LIK_ELLER_LAVERE_ENN_LØPENDE_BIDRAG,
         begrunnelse =
-            if (this.periodeListe.size > 1) {
-                "Flere perioder er lik eller lavere enn løpende bidrag"
-            } else {
-                "Periode ${this.periodeListe.first().periodeString} er lik eller lavere enn løpende bidrag"
-            },
+        if (this.periodeListe.size > 1) {
+            "Flere perioder er lik eller lavere enn løpende bidrag"
+        } else {
+            "Periode ${this.periodeListe.first().periodeString} er lik eller lavere enn løpende bidrag"
+        },
     )
 }
 
@@ -165,36 +165,35 @@ data class ResultatUtførBidragsberegning(
     val feiltype: UgyldigBeregningDto.UgyldigBeregningType? = null,
     val resultat: BidragsberegningOrkestratorResponseV2,
 ) {
-    fun tilBeregningFeilmelding() =
-        if (feiltype == null) {
-            null
-        } else {
-            when (feiltype) {
-                UgyldigBeregningDto.UgyldigBeregningType.UFULSTENDING_GRUNNLAG_FF -> {
-                    UgyldigBeregningDto(
-                        tittel = "Forholdsmessig fordeling",
-                        feiltype = feiltype,
-                        begrunnelse = @Suppress("ktlint:standard:max-line-length")
-                        "Bidraget må forholdsmessig fordeles på grunn av manglende evne i minst en av periodene. Opprett forholdsmessig fordeling fra dialogen over",
-                        resultatPeriode = emptyList(),
-                    )
-                }
+    fun tilBeregningFeilmelding() = if (feiltype == null) {
+        null
+    } else {
+        when (feiltype) {
+            UgyldigBeregningDto.UgyldigBeregningType.UFULSTENDING_GRUNNLAG_FF -> {
+                UgyldigBeregningDto(
+                    tittel = "Forholdsmessig fordeling",
+                    feiltype = feiltype,
+                    begrunnelse = @Suppress("ktlint:standard:max-line-length")
+                    "Bidraget må forholdsmessig fordeles på grunn av manglende evne i minst en av periodene. Opprett forholdsmessig fordeling fra dialogen over",
+                    resultatPeriode = emptyList(),
+                )
+            }
 
-                UgyldigBeregningDto.UgyldigBeregningType.BEREGNING_FEILET_TEKNISK -> {
-                    UgyldigBeregningDto(
-                        tittel = "Feil under beregning",
-                        feiltype = feiltype,
-                        begrunnelse = @Suppress("ktlint:standard:max-line-length")
-                        "Det skjedde en ukjent feil ved beregning. Prøv igjen senere.",
-                        resultatPeriode = emptyList(),
-                    )
-                }
+            UgyldigBeregningDto.UgyldigBeregningType.BEREGNING_FEILET_TEKNISK -> {
+                UgyldigBeregningDto(
+                    tittel = "Feil under beregning",
+                    feiltype = feiltype,
+                    begrunnelse = @Suppress("ktlint:standard:max-line-length")
+                    "Det skjedde en ukjent feil ved beregning. Prøv igjen senere.",
+                    resultatPeriode = emptyList(),
+                )
+            }
 
-                else -> {
-                    null
-                }
+            else -> {
+                null
             }
         }
+    }
 }
 
 data class ResultatBidragsberegning(
@@ -602,13 +601,12 @@ data class IndeksreguleringDetaljer(
     val faktor: BigDecimal,
 )
 
-fun List<GrunnlagDto>.finnSluttberegningIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    find {
-        listOf(
-            Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
-            Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
-            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
-            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
-        ).contains(it.type) &&
-            grunnlagsreferanseListe.contains(it.referanse)
-    }
+fun List<GrunnlagDto>.finnSluttberegningIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = find {
+    listOf(
+        Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
+        Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
+        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+    ).contains(it.type) &&
+        grunnlagsreferanseListe.contains(it.referanse)
+}

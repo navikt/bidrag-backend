@@ -16,7 +16,7 @@ import java.time.LocalDate
 data class OppdatereUtgiftRequest(
     @get:Schema(
         description =
-            "Oppdater avslag.",
+        "Oppdater avslag.",
         enumAsRef = true,
     )
     val avslag: Resultatkode? = null,
@@ -24,12 +24,12 @@ data class OppdatereUtgiftRequest(
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
     @get:Schema(
         description =
-            "Legg til eller endre en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
+        "Legg til eller endre en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
     )
     val nyEllerEndretUtgift: OppdatereUtgift? = null,
     @get:Schema(
         description =
-            "Slette en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
+        "Slette en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
     )
     val sletteUtgift: Long? = null,
     @get:Schema(description = "Oppdatere saksbehandlers begrunnelse")
@@ -70,8 +70,8 @@ data class OppdatereUtgift(
     val dato: LocalDate,
     @get:Schema(
         description =
-            "Type utgift. Kan feks være hva som ble kjøpt for kravbeløp (bugnad, klær, sko, etc). " +
-                "Skal bare settes for kategori konfirmasjon",
+        "Type utgift. Kan feks være hva som ble kjøpt for kravbeløp (bugnad, klær, sko, etc). " +
+            "Skal bare settes for kategori konfirmasjon",
         oneOf = [Utgiftstype::class, String::class],
     )
     val type: String? = null,
@@ -83,8 +83,8 @@ data class OppdatereUtgift(
     val godkjentBeløp: BigDecimal = kravbeløp,
     @get:Schema(
         description =
-            "Kommentar kan brukes til å legge inn nærmere informasjon om utgiften f.eks. fakturanr., butikk det er handlet i," +
-                " informasjon om hvorfor man ikke har godkjent hele kravbeløpet",
+        "Kommentar kan brukes til å legge inn nærmere informasjon om utgiften f.eks. fakturanr., butikk det er handlet i," +
+            " informasjon om hvorfor man ikke har godkjent hele kravbeløpet",
     )
     val kommentar: String? = null,
     @get:Schema(description = "Om utgiften er betalt av BP")
@@ -92,9 +92,8 @@ data class OppdatereUtgift(
     val id: Long? = null,
 )
 
-fun String.tilUtgiftstype(): Utgiftstype? =
-    try {
-        Utgiftstype.valueOf(this)
-    } catch (e: Exception) {
-        null
-    }
+fun String.tilUtgiftstype(): Utgiftstype? = try {
+    Utgiftstype.valueOf(this)
+} catch (e: Exception) {
+    null
+}

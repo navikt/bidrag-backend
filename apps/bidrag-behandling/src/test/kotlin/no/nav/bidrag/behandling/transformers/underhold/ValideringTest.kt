@@ -282,11 +282,11 @@ class ValideringTest {
                     underholdskostnad = underholdskostnad,
                     fom = LocalDate.now().minusMonths(2).withDayOfMonth(1),
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(1)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(1)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     tilsynsutgift = BigDecimal(4000),
                     kostpenger = BigDecimal(1250),
                     kommentar = "Treretters",
@@ -338,11 +338,11 @@ class ValideringTest {
                     underholdskostnad = underholdskostnad,
                     fom = LocalDate.now().minusMonths(3).withDayOfMonth(1),
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(1)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(1)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     tilsynsutgift = BigDecimal(8000),
                     kostpenger = BigDecimal(1250),
                     kommentar = "Treretters",
@@ -441,11 +441,11 @@ class ValideringTest {
                     u,
                     fom = LocalDate.now().minusMonths(8).withDayOfMonth(1),
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(6)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(6)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     tilsynsutgift = BigDecimal(4000),
                 ),
             )
@@ -468,11 +468,11 @@ class ValideringTest {
                     u,
                     fom = LocalDate.now().minusMonths(8).withDayOfMonth(1),
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(6)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(6)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     `beløp` = BigDecimal(64),
                 ),
             )
@@ -483,11 +483,11 @@ class ValideringTest {
                     u,
                     fom = fomdatoFørstePeriodeUtenTilsynsutgift,
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(4)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(4)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     `beløp` = BigDecimal(64),
                 ),
             )
@@ -690,11 +690,11 @@ class ValideringTest {
                     u,
                     fom = fomLavesteTilOverlappendePeriode,
                     tom =
-                        LocalDate
-                            .now()
-                            .minusMonths(4)
-                            .withDayOfMonth(1)
-                            .minusDays(1),
+                    LocalDate
+                        .now()
+                        .minusMonths(4)
+                        .withDayOfMonth(1)
+                        .minusDays(1),
                     `beløp` = BigDecimal(64),
                 ),
             )

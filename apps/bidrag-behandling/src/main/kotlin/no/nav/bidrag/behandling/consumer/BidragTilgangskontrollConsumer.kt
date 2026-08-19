@@ -29,12 +29,11 @@ class BidragTilgangskontrollConsumer(
     @Value($$"${BIDRAG_TILGANGSKONTROLL_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-tilgangskontroll") {
-    private fun createUri(path: String?) =
-        UriComponentsBuilder
-            .fromUri(url)
-            .path(path ?: "")
-            .build()
-            .toUri()
+    private fun createUri(path: String?) = UriComponentsBuilder
+        .fromUri(url)
+        .path(path ?: "")
+        .build()
+        .toUri()
 
     @Retryable(
         value = [Exception::class],

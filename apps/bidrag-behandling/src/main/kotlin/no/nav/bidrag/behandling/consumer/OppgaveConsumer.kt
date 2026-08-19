@@ -27,19 +27,17 @@ class OppgaveConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun opprettOppgave(request: OpprettOppgaveRequest): OppgaveDto =
-        postForNonNullEntity(
-            oppgaveURI.build().toUri(),
-            request,
-        )
+    fun opprettOppgave(request: OpprettOppgaveRequest): OppgaveDto = postForNonNullEntity(
+        oppgaveURI.build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun hentOppgave(request: OppgaveSokRequest): OppgaveSokResponse =
-        getForNonNullEntity(
-            oppgaveURI.query(request.hentParametre()).build().toUri(),
-        )
+    fun hentOppgave(request: OppgaveSokRequest): OppgaveSokResponse = getForNonNullEntity(
+        oppgaveURI.query(request.hentParametre()).build().toUri(),
+    )
 }

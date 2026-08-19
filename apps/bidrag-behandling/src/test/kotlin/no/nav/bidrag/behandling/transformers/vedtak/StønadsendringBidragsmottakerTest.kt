@@ -119,9 +119,9 @@ class StønadsendringBidragsmottakerTest {
                 fødselsnummer = Personident(barnIRolleDtoIdent),
                 type = Rolletype.BARN,
                 reellMottaker =
-                    ReellMottakerDto(
-                        ident = ReellMottaker(reellMottakerIdent),
-                    ),
+                ReellMottakerDto(
+                    ident = ReellMottaker(reellMottakerIdent),
+                ),
             )
 
         val bidragsmottaker =
@@ -220,13 +220,13 @@ class StønadsendringBidragsmottakerTest {
                 behandling = behandling,
                 fødselsdato = LocalDate.of(2010, 3, 20),
                 forholdsmessigFordeling =
-                    ForholdsmessigFordelingRolle(
-                        tilhørerSak = "123",
-                        behandlerenhet = "13",
-                        delAvOpprinneligBehandling = true,
-                        erRevurdering = false,
-                        bidragsmottaker = bidragsmottakerIdent,
-                    ),
+                ForholdsmessigFordelingRolle(
+                    tilhørerSak = "123",
+                    behandlerenhet = "13",
+                    delAvOpprinneligBehandling = true,
+                    erRevurdering = false,
+                    bidragsmottaker = bidragsmottakerIdent,
+                ),
             )
         val barn2 =
             Rolle(
@@ -235,13 +235,13 @@ class StønadsendringBidragsmottakerTest {
                 behandling = behandling,
                 fødselsdato = LocalDate.of(2010, 3, 20),
                 forholdsmessigFordeling =
-                    ForholdsmessigFordelingRolle(
-                        tilhørerSak = "123",
-                        behandlerenhet = "13",
-                        delAvOpprinneligBehandling = true,
-                        erRevurdering = false,
-                        bidragsmottaker = bidragsmottakerIdent2,
-                    ),
+                ForholdsmessigFordelingRolle(
+                    tilhørerSak = "123",
+                    behandlerenhet = "13",
+                    delAvOpprinneligBehandling = true,
+                    erRevurdering = false,
+                    bidragsmottaker = bidragsmottakerIdent2,
+                ),
             )
         val roller = setOf(bidragsmottaker, bidragspliktig, barn, bidragsmottaker2, barn2)
         behandling.roller = roller.toMutableSet()

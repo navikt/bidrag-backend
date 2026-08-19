@@ -48,10 +48,9 @@ data class SamværValideringsfeilDto(
         get() = manglerBegrunnelse || harPeriodiseringsfeil
 }
 
-fun Set<Samvær>.mapValideringsfeil(): Set<SamværValideringsfeilDto> =
-    map { samvær -> samvær.mapValideringsfeil() }
-        .filter { it.harFeil }
-        .toSet()
+fun Set<Samvær>.mapValideringsfeil(): Set<SamværValideringsfeilDto> = map { samvær -> samvær.mapValideringsfeil() }
+    .filter { it.harFeil }
+    .toSet()
 
 fun Samvær.mapValideringsfeil(): SamværValideringsfeilDto {
     val notatSæmvær = behandling.notater.find { it.type == NotatGrunnlag.NotatType.SAMVÆR && it.rolle.id == rolle.id }
@@ -65,27 +64,27 @@ fun Samvær.mapValideringsfeil(): SamværValideringsfeilDto {
         gjelderRolle = rolle,
         manglerBegrunnelse = if (behandling.erKlageEllerOmgjøring) false else notatSæmvær?.innhold.isNullOrBlank(),
         ingenLøpendeSamvær =
-            (opphørsdato == null || opphørsdato.opphørSisteTilDato().isAfter(LocalDate.now().sluttenAvForrigeMåned)) &&
-                (perioder.isEmpty() || perioder.maxByOrNull { it.fom }!!.tom != null),
+        (opphørsdato == null || opphørsdato.opphørSisteTilDato().isAfter(LocalDate.now().sluttenAvForrigeMåned)) &&
+            (perioder.isEmpty() || perioder.maxByOrNull { it.fom }!!.tom != null),
         overlappendePerioder =
-            perioder
-                .map { Pair(it.id ?: -1, it.tilDatoperiode()) }
-                .finnOverlappendePerioder(),
+        perioder
+            .map { Pair(it.id ?: -1, it.tilDatoperiode()) }
+            .finnOverlappendePerioder(),
         manglerSamvær = perioder.isEmpty(),
         ugyldigSluttperiode =
-            perioder
-                .map { it.tilDatoperiode() }
-                .ugyldigSluttperiode(rolle.opphørsdato),
+        perioder
+            .map { it.tilDatoperiode() }
+            .ugyldigSluttperiode(rolle.opphørsdato),
         hullIPerioder =
-            perioder
-                .map { it.tilDatoperiode() }
-                .finnHullIPerioder(
-                    rolle.finnBeregnFra().toLocalDate(),
-                    rolle.opphørsdato,
-                ).filter {
-                    it.til !=
-                        null
-                },
+        perioder
+            .map { it.tilDatoperiode() }
+            .finnHullIPerioder(
+                rolle.finnBeregnFra().toLocalDate(),
+                rolle.opphørsdato,
+            ).filter {
+                it.til !=
+                    null
+            },
     )
 }
 

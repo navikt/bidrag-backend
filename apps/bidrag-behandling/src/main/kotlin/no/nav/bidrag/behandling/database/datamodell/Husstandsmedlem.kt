@@ -67,8 +67,7 @@ open class Husstandsmedlem(
 
     val erSøknadsbarn get() = behandling.søknadsbarn.any { it.ident == ident }
 
-    override fun toString(): String =
-        "Husstandsmedlem(id=$id, behandlingId=${behandling.id}, ident=$ident, navn=$navn, fødselsdato=$fødselsdato," +
-            " perioder(size)=${perioder.size}, kilde=$kilde, " +
-            "forrigePerioder=${forrigePerioder?.substring(0, minOf(forrigePerioder!!.length, 10)) ?: ""}...)"
+    override fun toString(): String = "Husstandsmedlem(id=$id, behandlingId=${behandling.id}, ident=$ident, navn=$navn, fødselsdato=$fødselsdato," +
+        " perioder(size)=${perioder.size}, kilde=$kilde, " +
+        "forrigePerioder=${forrigePerioder?.substring(0, minOf(forrigePerioder!!.length, 10)) ?: ""}...)"
 }

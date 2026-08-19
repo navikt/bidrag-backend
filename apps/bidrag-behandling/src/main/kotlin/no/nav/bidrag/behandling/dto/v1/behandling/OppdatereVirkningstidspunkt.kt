@@ -17,8 +17,8 @@ data class OppdatereVirkningstidspunktBegrunnelseResponseDto(
     var oppdatertBegrunnelse: String? = null,
     @get:Schema(
         description =
-            "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
-                " Dette kan bare settes hvis det er 18 års bidrag",
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
         deprecated = true,
     )
     var oppdatertBegrunnelseVurderingAvSkolegang: String? = null,
@@ -33,8 +33,8 @@ data class OppdaterVirkningstidspunktBegrunnelseBarnResponse(
     var oppdatertBegrunnelse: String? = null,
     @get:Schema(
         description =
-            "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
-                " Dette kan bare settes hvis det er 18 års bidrag",
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
     )
     var oppdatertBegrunnelseVurderingAvSkolegang: String? = null,
 )
@@ -45,8 +45,8 @@ data class OppdatereVirkningstidspunktBegrunnelseDto(
     var oppdatereBegrunnelse: OppdatereBegrunnelse? = null,
     @get:Schema(
         description =
-            "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
-                " Dette kan bare settes hvis det er 18 års bidrag",
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
     )
     var oppdaterBegrunnelseVurderingAvSkolegang: OppdatereBegrunnelse? = null,
 )
@@ -57,16 +57,16 @@ data class OppdatereVirkningstidspunkt(
     @get:Schema(
         name = "årsak",
         description =
-            "Oppdater årsak. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
-                "Hvis verdien er satt så vil årsak settes til samme verdi fra forespørsel og avslag settes til null",
+        "Oppdater årsak. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
+            "Hvis verdien er satt så vil årsak settes til samme verdi fra forespørsel og avslag settes til null",
         enumAsRef = true,
     )
     @JsonSetter(nulls = Nulls.SKIP)
     val årsak: VirkningstidspunktÅrsakstype? = null,
     @get:Schema(
         description =
-            "Oppdater avslag. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
-                "Hvis verdien er satt så vil avslag settes til samme verdi fra forespørsel og årsak settes til null",
+        "Oppdater avslag. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
+            "Hvis verdien er satt så vil avslag settes til samme verdi fra forespørsel og årsak settes til null",
         enumAsRef = true,
     )
     val avslag: Resultatkode? = null,
@@ -75,7 +75,7 @@ data class OppdatereVirkningstidspunkt(
         format = "date",
         example = "2025-01-25",
         description =
-            "Oppdater virkningsdato. Hvis verdien er satt til null vil det ikke bli gjort noe endringer",
+        "Oppdater virkningsdato. Hvis verdien er satt til null vil det ikke bli gjort noe endringer",
     )
     @JsonFormat(pattern = "yyyy-MM-dd")
     @JsonSetter(nulls = Nulls.SKIP)
@@ -85,8 +85,8 @@ data class OppdatereVirkningstidspunkt(
     var oppdatereBegrunnelse: OppdatereBegrunnelse? = null,
     @get:Schema(
         description =
-            "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
-                " Dette kan bare settes hvis det er 18 års bidrag",
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
     )
     var oppdaterBegrunnelseVurderingAvSkolegang: OppdatereBegrunnelse? = null,
     @get:Schema(description = "Deprekert - Bruk oppdatereBegrunnelse i stedet")

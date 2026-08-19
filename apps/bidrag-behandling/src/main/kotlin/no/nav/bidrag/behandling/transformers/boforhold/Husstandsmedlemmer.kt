@@ -44,26 +44,24 @@ fun Set<RelatertPersonGrunnlagDto>.tilBoforholdBarnRequest(
     leggeTilManglendeSøknadsbarn: Boolean = false,
 ) = this.toList().tilBoforholdBarnRequest(behandling, leggeTilManglendeSøknadsbarn)
 
-fun Set<RelatertPersonGrunnlagDto>.tilBoforholdVoksneRequest(behandling: Behandling): BoforholdVoksneRequest =
-    BoforholdVoksneRequest(
-        behandledeBostatusopplysninger = emptyList(),
-        endreBostatus = null,
-        innhentedeOffentligeOpplysninger =
-            this
-                .filter { !it.erBarn }
-                .tilHusstandsmedlemmer()
-                .filtrerUtUrelevantePerioder(behandling),
-    )
+fun Set<RelatertPersonGrunnlagDto>.tilBoforholdVoksneRequest(behandling: Behandling): BoforholdVoksneRequest = BoforholdVoksneRequest(
+    behandledeBostatusopplysninger = emptyList(),
+    endreBostatus = null,
+    innhentedeOffentligeOpplysninger =
+    this
+        .filter { !it.erBarn }
+        .tilHusstandsmedlemmer()
+        .filtrerUtUrelevantePerioder(behandling),
+)
 
-fun List<RelatertPersonGrunnlagDto>.tilHusstandsmedlemmer() =
-    this.map {
-        Husstandsmedlemmer(
-            gjelderPersonId = it.gjelderPersonId,
-            fødselsdato = it.fødselsdato ?: LocalDate.parse("9999-12-01"),
-            relasjon = it.relasjon,
-            borISammeHusstandListe = it.borISammeHusstandDtoListe.tilBostatus(it.relasjon, it.fødselsdato ?: LocalDate.now()),
-        )
-    }
+fun List<RelatertPersonGrunnlagDto>.tilHusstandsmedlemmer() = this.map {
+    Husstandsmedlemmer(
+        gjelderPersonId = it.gjelderPersonId,
+        fødselsdato = it.fødselsdato ?: LocalDate.parse("9999-12-01"),
+        relasjon = it.relasjon,
+        borISammeHusstandListe = it.borISammeHusstandDtoListe.tilBostatus(it.relasjon, it.fødselsdato ?: LocalDate.now()),
+    )
+}
 
 private fun Behandling.leggeInnManglendeSøknadsbarnSomHusstandsbarn(
     grunnlag: MutableList<RelatertPersonGrunnlagDto>,
@@ -108,38 +106,38 @@ fun List<RelatertPersonGrunnlagDto>.tilBoforholdBarnRequest(
         val barnetsRolle = behandling.roller.find { it.ident == g.gjelderPersonId }
         BoforholdBarnRequestV3(
             innhentedeOffentligeOpplysninger =
-                when (g.borISammeHusstandDtoListe.isNotEmpty()) {
-                    true -> {
-                        g.borISammeHusstandDtoListe.tilBostatus(
-                            Bostatuskode.MED_FORELDER,
-                            Kilde.OFFENTLIG,
-                        )
-                    }
+            when (g.borISammeHusstandDtoListe.isNotEmpty()) {
+                true -> {
+                    g.borISammeHusstandDtoListe.tilBostatus(
+                        Bostatuskode.MED_FORELDER,
+                        Kilde.OFFENTLIG,
+                    )
+                }
 
-                    false -> {
-                        listOf(
-                            Bostatus(
-                                bostatus = Bostatuskode.IKKE_MED_FORELDER,
-                                kilde = Kilde.OFFENTLIG,
-                                periodeFom =
-                                    maxOf(
-                                        g.fødselsdato!!.plusMonths(1).withDayOfMonth(1),
-                                        minOf(behandling.virkningstidspunktEllerSøktFomDato, LocalDate.now().withDayOfMonth(1)),
-                                    ),
-                                periodeTom = null,
+                false -> {
+                    listOf(
+                        Bostatus(
+                            bostatus = Bostatuskode.IKKE_MED_FORELDER,
+                            kilde = Kilde.OFFENTLIG,
+                            periodeFom =
+                            maxOf(
+                                g.fødselsdato!!.plusMonths(1).withDayOfMonth(1),
+                                minOf(behandling.virkningstidspunktEllerSøktFomDato, LocalDate.now().withDayOfMonth(1)),
                             ),
-                        )
-                    }
-                },
+                            periodeTom = null,
+                        ),
+                    )
+                }
+            },
             relasjon =
-                if (behandling.husstandsmedlem.find {
-                        it.ident != null && it.ident == g.gjelderPersonId
-                    } != null
-                ) {
-                    Familierelasjon.BARN
-                } else {
-                    g.relasjon
-                },
+            if (behandling.husstandsmedlem.find {
+                    it.ident != null && it.ident == g.gjelderPersonId
+                } != null
+            ) {
+                Familierelasjon.BARN
+            } else {
+                g.relasjon
+            },
             fødselsdato = g.fødselsdato!!,
             gjelderPersonId = g.gjelderPersonId,
             behandledeBostatusopplysninger = emptyList(),
@@ -149,36 +147,34 @@ fun List<RelatertPersonGrunnlagDto>.tilBoforholdBarnRequest(
     }
 }
 
-fun Husstandsmedlem.tilBoforholdBarnRequest(endreBostatus: EndreBostatus? = null): BoforholdBarnRequestV3 =
-    BoforholdBarnRequestV3(
-        gjelderPersonId = ident,
-        fødselsdato = fødselsdato ?: rolle!!.fødselsdato,
-        relasjon = Familierelasjon.BARN,
-        innhentedeOffentligeOpplysninger =
-            henteOffentligePerioder().map { it.tilBostatus() }.sortedBy { it.periodeFom },
-        behandledeBostatusopplysninger =
-            perioder.map { it.tilBostatus() }.sortedBy { it.periodeFom },
-        endreBostatus = endreBostatus,
-        erSøknadsbarn = erSøknadsbarn,
-    )
+fun Husstandsmedlem.tilBoforholdBarnRequest(endreBostatus: EndreBostatus? = null): BoforholdBarnRequestV3 = BoforholdBarnRequestV3(
+    gjelderPersonId = ident,
+    fødselsdato = fødselsdato ?: rolle!!.fødselsdato,
+    relasjon = Familierelasjon.BARN,
+    innhentedeOffentligeOpplysninger =
+    henteOffentligePerioder().map { it.tilBostatus() }.sortedBy { it.periodeFom },
+    behandledeBostatusopplysninger =
+    perioder.map { it.tilBostatus() }.sortedBy { it.periodeFom },
+    endreBostatus = endreBostatus,
+    erSøknadsbarn = erSøknadsbarn,
+)
 
 fun Husstandsmedlem.tilBoforholdVoksneRequest(
     gjelderRolle: Rolle,
     endreBostatus: EndreBostatus? = null,
 ) = BoforholdVoksneRequest(
     innhentedeOffentligeOpplysninger =
-        henteGjeldendeBoforholdsgrunnlagForAndreVoksneIHusstanden(
-            gjelderRolle,
-        ).tilHusstandsmedlemmer().filtrerUtUrelevantePerioder(behandling),
+    henteGjeldendeBoforholdsgrunnlagForAndreVoksneIHusstanden(
+        gjelderRolle,
+    ).tilHusstandsmedlemmer().filtrerUtUrelevantePerioder(behandling),
     behandledeBostatusopplysninger =
-        perioder.map { it.tilBostatus() }.sortedBy { it.periodeFom },
+    perioder.map { it.tilBostatus() }.sortedBy { it.periodeFom },
     endreBostatus = endreBostatus,
 )
 
-fun List<Husstandsmedlemmer>.filtrerUtUrelevantePerioder(behandling: Behandling): List<Husstandsmedlemmer> =
-    this.map { hm ->
-        if (behandling.erSærbidrag()) {
-            hm
+fun List<Husstandsmedlemmer>.filtrerUtUrelevantePerioder(behandling: Behandling): List<Husstandsmedlemmer> = this.map { hm ->
+    if (behandling.erSærbidrag()) {
+        hm
 //            hm.copy(
 //                borISammeHusstandListe =
 //                    hm.borISammeHusstandListe.filter {
@@ -189,53 +185,49 @@ fun List<Husstandsmedlemmer>.filtrerUtUrelevantePerioder(behandling: Behandling)
 //                            behandling.virkningstidspunktEllerSøktFomDato.plusMonths(1).withDayOfMonth(1)
 //                    },
 //            )
-        } else {
-            hm
-        }
-    }
-
-fun Husstandsmedlem.henteOffentligePerioder(): Set<Bostatusperiode> =
-    hentSisteBearbeidetBoforhold()?.tilPerioder(this) ?: if (kilde == Kilde.OFFENTLIG) {
-        log.warn {
-            "Fant ikke originale bearbeidet perioder for offentlig husstandsmedlem $id i behandling ${behandling.id}. Lagt til initiell periode "
-        }
-        setOf(opprettDefaultPeriodeForOffentligHusstandsmedlem())
     } else {
-        setOf()
+        hm
     }
+}
 
-fun Set<Bostatus>.tilBostatusperiodeDto() =
-    this
-        .map {
-            BostatusperiodeDto(
-                id = null,
-                datoFom = it.periodeFom,
-                datoTom = it.periodeTom,
-                bostatus = it.bostatus!!,
-                kilde = Kilde.OFFENTLIG,
-            )
-        }.toSet()
+fun Husstandsmedlem.henteOffentligePerioder(): Set<Bostatusperiode> = hentSisteBearbeidetBoforhold()?.tilPerioder(this) ?: if (kilde == Kilde.OFFENTLIG) {
+    log.warn {
+        "Fant ikke originale bearbeidet perioder for offentlig husstandsmedlem $id i behandling ${behandling.id}. Lagt til initiell periode "
+    }
+    setOf(opprettDefaultPeriodeForOffentligHusstandsmedlem())
+} else {
+    setOf()
+}
 
-fun Bostatusperiode.tilBostatus() =
-    Bostatus(
-        bostatus = this.bostatus,
-        kilde = this.kilde,
-        periodeFom = this.datoFom,
-        periodeTom = this.datoTom,
-    )
+fun Set<Bostatus>.tilBostatusperiodeDto() = this
+    .map {
+        BostatusperiodeDto(
+            id = null,
+            datoFom = it.periodeFom,
+            datoTom = it.periodeTom,
+            bostatus = it.bostatus!!,
+            kilde = Kilde.OFFENTLIG,
+        )
+    }.toSet()
 
-fun Set<Bostatus>.tilBostatusperiode(husstandsmedlem: Husstandsmedlem) =
-    this
-        .filter { it.bostatus != null }
-        .map {
-            Bostatusperiode(
-                husstandsmedlem = husstandsmedlem,
-                bostatus = it.bostatus!!,
-                datoFom = it.periodeFom,
-                datoTom = it.periodeTom,
-                kilde = it.kilde,
-            )
-        }.toMutableSet()
+fun Bostatusperiode.tilBostatus() = Bostatus(
+    bostatus = this.bostatus,
+    kilde = this.kilde,
+    periodeFom = this.datoFom,
+    periodeTom = this.datoTom,
+)
+
+fun Set<Bostatus>.tilBostatusperiode(husstandsmedlem: Husstandsmedlem) = this
+    .filter { it.bostatus != null }
+    .map {
+        Bostatusperiode(
+            husstandsmedlem = husstandsmedlem,
+            bostatus = it.bostatus!!,
+            datoFom = it.periodeFom,
+            datoTom = it.periodeTom,
+            kilde = it.kilde,
+        )
+    }.toMutableSet()
 
 fun List<BorISammeHusstandDto>.tilBostatus(
     bostatus: Bostatuskode,
@@ -280,62 +272,57 @@ fun List<BorISammeHusstandDto>.tilBostatus(
     }
 }
 
-fun List<BoforholdResponseV2>.tilPerioder(husstandsmedlem: Husstandsmedlem) =
-    if (this.find { it.gjelderPersonId == husstandsmedlem.ident } != null) {
-        map { boforhold ->
-            boforhold.tilPeriode(husstandsmedlem)
-        }.toMutableSet()
-    } else {
-        setOf()
-    }
+fun List<BoforholdResponseV2>.tilPerioder(husstandsmedlem: Husstandsmedlem) = if (this.find { it.gjelderPersonId == husstandsmedlem.ident } != null) {
+    map { boforhold ->
+        boforhold.tilPeriode(husstandsmedlem)
+    }.toMutableSet()
+} else {
+    setOf()
+}
 
-fun List<Bostatus>.tilPerioder(husstandsmedlem: Husstandsmedlem) =
-    this.map {
-        Bostatusperiode(
-            husstandsmedlem = husstandsmedlem,
-            bostatus = it.bostatus!!,
-            datoFom = it.periodeFom,
-            datoTom = it.periodeTom,
-            kilde = it.kilde,
-        )
-    }
-
-fun BoforholdResponseV2.tilPeriode(husstandsmedlem: Husstandsmedlem) =
+fun List<Bostatus>.tilPerioder(husstandsmedlem: Husstandsmedlem) = this.map {
     Bostatusperiode(
-        bostatus = bostatus,
-        datoFom = periodeFom,
-        datoTom = periodeTom,
-        kilde = kilde,
         husstandsmedlem = husstandsmedlem,
+        bostatus = it.bostatus!!,
+        datoFom = it.periodeFom,
+        datoTom = it.periodeTom,
+        kilde = it.kilde,
     )
+}
 
-fun List<BoforholdResponseV2>.tilHusstandsmedlem(behandling: Behandling): Set<Husstandsmedlem> =
-    this
-        .groupBy { it.gjelderPersonId }
-        .map {
-            val fødselsdatoFraRespons = it.value.first().fødselsdato
-            val husstandsmedlem =
-                Husstandsmedlem(
-                    behandling = behandling,
-                    kilde = it.value.first().kilde,
-                    ident = it.key,
-                    rolle = behandling.søknadsbarn.find { sb -> sb.ident == it.key },
-                    fødselsdato = finnFødselsdato(it.key, fødselsdatoFraRespons) ?: fødselsdatoFraRespons,
-                )
-            // TODO: Hva skjer hvis søknadsbarn finnes to ganger (18 år og ordinær bidrag)?
-            husstandsmedlem.overskriveMedBearbeidaPerioder(it.value)
-            husstandsmedlem
-        }.toSet()
+fun BoforholdResponseV2.tilPeriode(husstandsmedlem: Husstandsmedlem) = Bostatusperiode(
+    bostatus = bostatus,
+    datoFom = periodeFom,
+    datoTom = periodeTom,
+    kilde = kilde,
+    husstandsmedlem = husstandsmedlem,
+)
 
-private fun bestemmeNyBostatus(nyEllerOppdatertBostatusperiode: Bostatusperiode? = null): Bostatus? =
-    nyEllerOppdatertBostatusperiode?.let {
-        Bostatus(
-            periodeFom = it.datoFom,
-            periodeTom = it.datoTom,
-            bostatus = it.bostatus,
-            kilde = it.kilde,
-        )
-    }
+fun List<BoforholdResponseV2>.tilHusstandsmedlem(behandling: Behandling): Set<Husstandsmedlem> = this
+    .groupBy { it.gjelderPersonId }
+    .map {
+        val fødselsdatoFraRespons = it.value.first().fødselsdato
+        val husstandsmedlem =
+            Husstandsmedlem(
+                behandling = behandling,
+                kilde = it.value.first().kilde,
+                ident = it.key,
+                rolle = behandling.søknadsbarn.find { sb -> sb.ident == it.key },
+                fødselsdato = finnFødselsdato(it.key, fødselsdatoFraRespons) ?: fødselsdatoFraRespons,
+            )
+        // TODO: Hva skjer hvis søknadsbarn finnes to ganger (18 år og ordinær bidrag)?
+        husstandsmedlem.overskriveMedBearbeidaPerioder(it.value)
+        husstandsmedlem
+    }.toSet()
+
+private fun bestemmeNyBostatus(nyEllerOppdatertBostatusperiode: Bostatusperiode? = null): Bostatus? = nyEllerOppdatertBostatusperiode?.let {
+    Bostatus(
+        periodeFom = it.datoFom,
+        periodeTom = it.datoTom,
+        bostatus = it.bostatus,
+        kilde = it.kilde,
+    )
+}
 
 private fun bestemmeEndringstype(
     nyEllerOppdatertBostatusperiode: Bostatusperiode? = null,
@@ -395,10 +382,10 @@ private fun Husstandsmedlem.tilEndreBostatus(
             typeEndring = bestemmeEndringstype(nyEllerOppdatertBostatusperiode, sletteHusstandsmedlemsperiode),
             nyBostatus = bestemmeNyBostatus(nyEllerOppdatertBostatusperiode),
             originalBostatus =
-                bestemmeOriginalBostatus(
-                    nyEllerOppdatertBostatusperiode,
-                    sletteHusstandsmedlemsperiode,
-                ),
+            bestemmeOriginalBostatus(
+                nyEllerOppdatertBostatusperiode,
+                sletteHusstandsmedlemsperiode,
+            ),
         )
     } catch (_: IllegalArgumentException) {
         log.warn {
@@ -495,9 +482,9 @@ fun Husstandsmedlem.opprettDefaultPeriodeForOffentligHusstandsmedlem(): Bostatus
         husstandsmedlem = this,
         datoFom = datoFom,
         datoTom =
-            (rolle?.opphørTilDato ?: behandling.opphørTilDato)?.takeIf {
-                it.isAfter(datoFom)
-            },
+        (rolle?.opphørTilDato ?: behandling.opphørTilDato)?.takeIf {
+            it.isAfter(datoFom)
+        },
         bostatus = Bostatuskode.IKKE_MED_FORELDER,
         kilde = Kilde.OFFENTLIG,
     )

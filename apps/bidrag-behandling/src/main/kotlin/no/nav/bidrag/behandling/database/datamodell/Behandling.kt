@@ -234,10 +234,29 @@ open class Behandling(
         }
     }
 
-    fun hentSøknad(finnSøknadsid: Long) =
-        if (erIForholdsmessigFordeling) {
-            søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
-        } else if (soknadsid == finnSøknadsid) {
+    fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
+        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
+    } else if (soknadsid == finnSøknadsid) {
+        ForholdsmessigFordelingSøknadBarn(
+            mottattDato = mottattdato,
+            søknadFomDato = søktFomDato,
+            søktAvType = soknadFra,
+            behandlingstema = behandlingstema,
+            behandlingstype = søknadstype,
+            søknadsid = soknadsid,
+            saksnummer = saksnummer,
+            enhet = behandlerEnhet,
+        )
+    } else {
+        null
+    }
+
+    fun søknadForSak(saksnummer: String) = if (erIForholdsmessigFordeling) {
+        søknadsbarn
+            .filter { it.saksnummer == saksnummer }
+            .flatMap { it.forholdsmessigFordeling!!.søknaderUnderBehandling }
+    } else {
+        listOf(
             ForholdsmessigFordelingSøknadBarn(
                 mottattDato = mottattdato,
                 søknadFomDato = søktFomDato,
@@ -247,30 +266,9 @@ open class Behandling(
                 søknadsid = soknadsid,
                 saksnummer = saksnummer,
                 enhet = behandlerEnhet,
-            )
-        } else {
-            null
-        }
-
-    fun søknadForSak(saksnummer: String) =
-        if (erIForholdsmessigFordeling) {
-            søknadsbarn
-                .filter { it.saksnummer == saksnummer }
-                .flatMap { it.forholdsmessigFordeling!!.søknaderUnderBehandling }
-        } else {
-            listOf(
-                ForholdsmessigFordelingSøknadBarn(
-                    mottattDato = mottattdato,
-                    søknadFomDato = søktFomDato,
-                    søktAvType = soknadFra,
-                    behandlingstema = behandlingstema,
-                    behandlingstype = søknadstype,
-                    søknadsid = soknadsid,
-                    saksnummer = saksnummer,
-                    enhet = behandlerEnhet,
-                ),
-            )
-        }
+            ),
+        )
+    }
 
     val saker get() =
         if (erIForholdsmessigFordeling) {
@@ -314,15 +312,14 @@ open class Behandling(
         } ?: alleBidragsmottakere.firstOrNull()
     val alleBidragsmottakere get() = roller.filter { it.rolletype == Rolletype.BIDRAGSMOTTAKER }
 
-    fun søknadsbarnForSøknad(søknadsid: Long) =
-        if (forholdsmessigFordeling == null) {
-            søknadsbarn
-        } else {
-            søknadsbarn.filter {
-                it.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.søknadsid == søknadsid } ==
-                    true
-            }
+    fun søknadsbarnForSøknad(søknadsid: Long) = if (forholdsmessigFordeling == null) {
+        søknadsbarn
+    } else {
+        søknadsbarn.filter {
+            it.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.søknadsid == søknadsid } ==
+                true
         }
+    }
 
     fun bidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { it.forholdsmessigFordeling?.tilhørerSak == saksnummer }
 
@@ -424,24 +421,21 @@ open class Behandling(
                 }
             }
 
-    fun tilStønadsid(person: Person) =
-        Stønadsid(
-            stonadstype!!,
-            Personident(person.ident!!),
-            Personident(bidragspliktig!!.ident!!),
-            Saksnummer(saksnummer),
-        )
+    fun tilStønadsid(person: Person) = Stønadsid(
+        stonadstype!!,
+        Personident(person.ident!!),
+        Personident(bidragspliktig!!.ident!!),
+        Saksnummer(saksnummer),
+    )
 
-    fun tilStønadsid(søknadsbarn: Rolle) =
-        Stønadsid(
-            søknadsbarn.stønadstype ?: stonadstype!!,
-            Personident(søknadsbarn.ident!!),
-            Personident(bidragspliktig!!.ident!!),
-            Saksnummer(saksnummer),
-        )
+    fun tilStønadsid(søknadsbarn: Rolle) = Stønadsid(
+        søknadsbarn.stønadstype ?: stonadstype!!,
+        Personident(søknadsbarn.ident!!),
+        Personident(bidragspliktig!!.ident!!),
+        Saksnummer(saksnummer),
+    )
 
-    fun logInfo() =
-        "Behandling(id=$id, vedtakstype=$vedtakstype, saksnummer='$saksnummer', soknadsid=$soknadsid, stonadstype=$stonadstype, engangsbeloptype=$engangsbeloptype)"
+    fun logInfo() = "Behandling(id=$id, vedtakstype=$vedtakstype, saksnummer='$saksnummer', soknadsid=$soknadsid, stonadstype=$stonadstype, engangsbeloptype=$engangsbeloptype)"
 }
 
 val Behandling.særbidragKategori
@@ -494,5 +488,4 @@ fun Behandling.hentBeløpshistorikkForStønadstype(
     søknadsbarn: Rolle,
 ) = historiskeStønader.find { it.type == stønadstype && it.kravhaver.verdi == søknadsbarn.ident }
 
-fun Behandling.opprettUnikReferanse(postfix: String? = null) =
-    "behandling_${id}_${opprettetTidspunkt.toCompactString()}${postfix?.let { "_$it" } ?: ""}"
+fun Behandling.opprettUnikReferanse(postfix: String? = null) = "behandling_${id}_${opprettetTidspunkt.toCompactString()}${postfix?.let { "_$it" } ?: ""}"

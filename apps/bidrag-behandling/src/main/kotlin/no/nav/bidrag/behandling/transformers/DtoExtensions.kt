@@ -23,8 +23,7 @@ import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import java.time.LocalDate
 
-fun Set<Sivilstand>.toSivilstandDto() =
-    this.map { SivilstandDto(it.id, it.datoFom, it.datoTom, it.sivilstand, it.kilde) }.sortedBy { it.datoFom }.toSet()
+fun Set<Sivilstand>.toSivilstandDto() = this.map { SivilstandDto(it.id, it.datoFom, it.datoTom, it.sivilstand, it.kilde) }.sortedBy { it.datoFom }.toSet()
 
 fun Behandling.tilForsendelseRolleDto(
     saksnummer: String,
@@ -61,48 +60,48 @@ fun OpprettRolleDto.toRolle(
         fødselsdato = fødselsdatoPerson,
         navn = navn,
         beregnTil =
-            if (behandling.vedtakstype == Vedtakstype.KLAGE) {
-                BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
-            } else {
-                BeregnTil.INNEVÆRENDE_MÅNED
-            },
+        if (behandling.vedtakstype == Vedtakstype.KLAGE) {
+            BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+        } else {
+            BeregnTil.INNEVÆRENDE_MÅNED
+        },
         opphørsdato = opphørsdato,
         virkningstidspunkt =
-            if (rolletype == Rolletype.BARN) {
-                maxOfNullable(fødselsdatoPerson.withDayOfMonth(1), behandling.eldsteVirkningstidspunkt, søktFraDato)
-            } else {
-                null
-            },
+        if (rolletype == Rolletype.BARN) {
+            maxOfNullable(fødselsdatoPerson.withDayOfMonth(1), behandling.eldsteVirkningstidspunkt, søktFraDato)
+        } else {
+            null
+        },
         årsak =
-            if (rolletype == Rolletype.BARN) {
-                behandling.årsak
-            } else {
-                null
-            },
+        if (rolletype == Rolletype.BARN) {
+            behandling.årsak
+        } else {
+            null
+        },
         avslag =
-            if (rolletype == Rolletype.BARN) {
-                behandling.avslag
-            } else {
-                null
-            },
+        if (rolletype == Rolletype.BARN) {
+            behandling.avslag
+        } else {
+            null
+        },
         innbetaltBeløp = innbetaltBeløp,
         harGebyrsøknadColumn = harGebyrsøknad,
         gebyr =
-            GebyrRolle(
-                gebyrSøknader =
-                    if (harGebyrsøknad) {
-                        mutableSetOf(
-                            GebyrRolleSøknad(
-                                saksnummer = behandling.saksnummer,
-                                søknadsid = behandling.soknadsid!!,
-                                behandlingid = behandling.id,
-                                referanse = referanseGebyr,
-                            ),
-                        )
-                    } else {
-                        mutableSetOf()
-                    },
-            ),
+        GebyrRolle(
+            gebyrSøknader =
+            if (harGebyrsøknad) {
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
+                        behandlingid = behandling.id,
+                        referanse = referanseGebyr,
+                    ),
+                )
+            } else {
+                mutableSetOf()
+            },
+        ),
     )
 }
 
@@ -114,8 +113,8 @@ fun OpprettRolleDto.toHusstandsmedlem(behandling: Behandling): Husstandsmedlem {
             ident = this.ident?.verdi,
             rolle = behandling.finnRolle(ident?.verdi!!, stønadstype ?: behandling.stonadstype),
             fødselsdato =
-                this.fødselsdato ?: hentPersonFødselsdato(ident?.verdi)
-                    ?: rolleManglerFødselsdato(rolletype),
+            this.fødselsdato ?: hentPersonFødselsdato(ident?.verdi)
+                ?: rolleManglerFødselsdato(rolletype),
         )
 
     husstandsmedlem.oppdaterePerioder()

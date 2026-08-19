@@ -168,51 +168,47 @@ class ValiderBehandlingService(
         }
     }
 
-    fun kanBehandleBegrensetRevurdering(request: KanBehandlesINyLøsningRequest): Boolean =
-        if (request.erBegrensetRevurdering()) {
-            harIngenHistoriskePerioderMedUtenlandskValuta(request, Stønadstype.BIDRAG) &&
-                harIngenHistoriskePerioderMedUtenlandskValuta(request, Stønadstype.FORSKUDD)
-        } else {
-            true
-        }
+    fun kanBehandleBegrensetRevurdering(request: KanBehandlesINyLøsningRequest): Boolean = if (request.erBegrensetRevurdering()) {
+        harIngenHistoriskePerioderMedUtenlandskValuta(request, Stønadstype.BIDRAG) &&
+            harIngenHistoriskePerioderMedUtenlandskValuta(request, Stønadstype.FORSKUDD)
+    } else {
+        true
+    }
 
     private fun KanBehandlesINyLøsningRequest.erRevurdering() = this.søknadstype == Behandlingstype.REVURDERING
 
-    private fun KanBehandlesINyLøsningRequest.erBegrensetRevurdering() =
-        this.søknadstype == Behandlingstype.BEGRENSET_REVURDERING ||
-            this.søknadstype == Behandlingstype.PARAGRAF_35_C_BEGRENSET_SATS ||
-            this.søknadstype == Behandlingstype.KLAGE_BEGRENSET_SATS ||
-            this.søknadstype == Behandlingstype.OMGJØRING_BEGRENSET_SATS ||
-            this.søknadstype == Behandlingstype.REVURDERING
+    private fun KanBehandlesINyLøsningRequest.erBegrensetRevurdering() = this.søknadstype == Behandlingstype.BEGRENSET_REVURDERING ||
+        this.søknadstype == Behandlingstype.PARAGRAF_35_C_BEGRENSET_SATS ||
+        this.søknadstype == Behandlingstype.KLAGE_BEGRENSET_SATS ||
+        this.søknadstype == Behandlingstype.OMGJØRING_BEGRENSET_SATS ||
+        this.søknadstype == Behandlingstype.REVURDERING
 
     private fun harIngenHistoriskePerioderMedUtenlandskValuta(
         request: KanBehandlesINyLøsningRequest,
         stønadstype: Stønadstype,
-    ): Boolean =
-        request.søknadsbarn.filter { it.ident != null }.all {
-            bidragBeløpshistorikkConsumer
-                .hentHistoriskeStønader(
-                    HentStønadHistoriskRequest(
-                        type = stønadstype,
-                        sak = Saksnummer(request.saksnummer),
-                        skyldner = request.bidragspliktig!!.ident!!,
-                        kravhaver = it.ident!!,
-                        gyldigTidspunkt = LocalDateTime.now(),
-                    ),
-                )?.let {
-                    it.periodeListe.all {
-                        it.valutakode == "NOK" || it.valutakode.isNullOrEmpty()
-                    }
-                } != false
-        }
+    ): Boolean = request.søknadsbarn.filter { it.ident != null }.all {
+        bidragBeløpshistorikkConsumer
+            .hentHistoriskeStønader(
+                HentStønadHistoriskRequest(
+                    type = stønadstype,
+                    sak = Saksnummer(request.saksnummer),
+                    skyldner = request.bidragspliktig!!.ident!!,
+                    kravhaver = it.ident!!,
+                    gyldigTidspunkt = LocalDateTime.now(),
+                ),
+            )?.let {
+                it.periodeListe.all {
+                    it.valutakode == "NOK" || it.valutakode.isNullOrEmpty()
+                }
+            } != false
+    }
 }
 
-private fun Stønadstype.tilVisningsnavn() =
-    when (this) {
-        Stønadstype.BIDRAG -> "Barnebidrag"
-        Stønadstype.BIDRAG18AAR -> "18 års bidrag"
-        Stønadstype.EKTEFELLEBIDRAG -> "Ektefellebidrag"
-        Stønadstype.MOTREGNING -> "Motregning"
-        Stønadstype.OPPFOSTRINGSBIDRAG -> "Oppfostringbidrag"
-        Stønadstype.FORSKUDD -> "Forskudd"
-    }
+private fun Stønadstype.tilVisningsnavn() = when (this) {
+    Stønadstype.BIDRAG -> "Barnebidrag"
+    Stønadstype.BIDRAG18AAR -> "18 års bidrag"
+    Stønadstype.EKTEFELLEBIDRAG -> "Ektefellebidrag"
+    Stønadstype.MOTREGNING -> "Motregning"
+    Stønadstype.OPPFOSTRINGSBIDRAG -> "Oppfostringbidrag"
+    Stønadstype.FORSKUDD -> "Forskudd"
+}

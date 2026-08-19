@@ -17,9 +17,8 @@ class BidragDokumentProduksjonConsumer(
     private val bidragDokumentProduksjonUri
         get() = UriComponentsBuilder.fromUri(bidragDokumentProduksjonUrl).pathSegment("api", "v2", "notat", "pdf")
 
-    fun opprettNotat(request: VedtakNotatDto): ByteArray =
-        postForEntity(
-            bidragDokumentProduksjonUri.build().toUri(),
-            request,
-        )!!
+    fun opprettNotat(request: VedtakNotatDto): ByteArray = postForEntity(
+        bidragDokumentProduksjonUri.build().toUri(),
+        request,
+    )!!
 }

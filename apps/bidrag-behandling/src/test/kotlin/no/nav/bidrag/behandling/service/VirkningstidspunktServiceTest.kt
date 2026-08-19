@@ -1178,13 +1178,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     behandling = behandling,
                     id = 1,
                     person =
-                        Person(
-                            id = 1,
-                            rolle = mutableSetOf(søknadsbarn),
-                            ident = testdataBarn1.ident,
-                            navn = testdataBarn1.navn,
-                            fødselsdato = testdataBarn1.fødselsdato,
-                        ),
+                    Person(
+                        id = 1,
+                        rolle = mutableSetOf(søknadsbarn),
+                        ident = testdataBarn1.ident,
+                        navn = testdataBarn1.navn,
+                        fødselsdato = testdataBarn1.fødselsdato,
+                    ),
                 )
             underholdskostnadBarn1.faktiskeTilsynsutgifter =
                 mutableSetOf(
@@ -1285,13 +1285,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     behandling = behandling,
                     id = 1,
                     person =
-                        Person(
-                            id = 1,
-                            rolle = mutableSetOf(søknadsbarn),
-                            ident = testdataBarn1.ident,
-                            navn = testdataBarn1.navn,
-                            fødselsdato = testdataBarn1.fødselsdato,
-                        ),
+                    Person(
+                        id = 1,
+                        rolle = mutableSetOf(søknadsbarn),
+                        ident = testdataBarn1.ident,
+                        navn = testdataBarn1.navn,
+                        fødselsdato = testdataBarn1.fødselsdato,
+                    ),
                 )
             underholdskostnadBarn1.faktiskeTilsynsutgifter =
                 mutableSetOf(
@@ -1392,13 +1392,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     behandling = behandling,
                     id = 1,
                     person =
-                        Person(
-                            id = 1,
-                            rolle = mutableSetOf(søknadsbarn),
-                            ident = testdataBarn1.ident,
-                            navn = testdataBarn1.navn,
-                            fødselsdato = testdataBarn1.fødselsdato,
-                        ),
+                    Person(
+                        id = 1,
+                        rolle = mutableSetOf(søknadsbarn),
+                        ident = testdataBarn1.ident,
+                        navn = testdataBarn1.navn,
+                        fødselsdato = testdataBarn1.fødselsdato,
+                    ),
                 )
             underholdskostnadBarn1.faktiskeTilsynsutgifter =
                 mutableSetOf(

@@ -191,20 +191,20 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         every { vedtakConsumer.hentVedtak(any()) } returns
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        opprettEngangsbeløp(Engangsbeløptype.GEBYR_MOTTAKER).copy(
-                            kravhaver = personIdentNav,
-                            skyldner = Personident(testdataBM.ident),
-                        ),
-                        opprettEngangsbeløp(Engangsbeløptype.GEBYR_SKYLDNER).copy(
-                            kravhaver = personIdentNav,
-                            skyldner = Personident(testdataBP.ident),
-                        ),
-                        opprettEngangsbeløp(Engangsbeløptype.DIREKTE_OPPGJØR).copy(
-                            kravhaver = Personident(testdataBarn1.ident),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    opprettEngangsbeløp(Engangsbeløptype.GEBYR_MOTTAKER).copy(
+                        kravhaver = personIdentNav,
+                        skyldner = Personident(testdataBM.ident),
                     ),
+                    opprettEngangsbeløp(Engangsbeløptype.GEBYR_SKYLDNER).copy(
+                        kravhaver = personIdentNav,
+                        skyldner = Personident(testdataBP.ident),
+                    ),
+                    opprettEngangsbeløp(Engangsbeløptype.DIREKTE_OPPGJØR).copy(
+                        kravhaver = Personident(testdataBarn1.ident),
+                        skyldner = Personident(testdataBP.ident),
+                    ),
+                ),
             )
         stubSjablonProvider()
         stubPersonConsumer()

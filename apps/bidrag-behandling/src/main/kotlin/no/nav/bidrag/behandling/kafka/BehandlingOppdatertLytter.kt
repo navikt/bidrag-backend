@@ -59,68 +59,68 @@ class BehandlingOppdatertLytter(
                 mottattDato = behandling.mottattdato,
                 behandlerEnhet = behandling.behandlerEnhet,
                 barn =
-                    roller.filter { it.rolletype == Rolletype.BARN }.flatMap { barn ->
-                        val ff = barn.forholdsmessigFordeling
-                        val hendelseBarn =
-                            BehandlingHendelseBarn(
-                                søktAv = behandling.soknadFra,
-                                søktFraDato = behandling.søktFomDato,
-                                ident = barn.ident!!,
-                                medInnkreving = barn.innkrevingstype == Innkrevingstype.MED_INNKREVING,
-                                stønadstype = barn.stønadstype ?: behandling.stonadstype,
-                                engangsbeløptype = behandling.engangsbeloptype,
-                                behandlingstema = barn.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
-                                søknadsid = behandling.soknadsid,
-                                omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
-                                behandlerEnhet = ff?.behandlerenhet ?: behandling.behandlerEnhet,
-                                saksnummer = ff?.tilhørerSak ?: behandling.saksnummer,
-                                behandlingstype = behandling.søknadstype ?: Behandlingstype.SØKNAD,
-                                særbidragskategori = if (behandling.erSærbidrag()) behandling.særbidragKategori else null,
-                                status =
-                                    when {
-                                        barn.deleted -> Behandlingstatus.FEILREGISTRERT
-                                        erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
-                                        else -> barn.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING
-                                    },
-                            )
-                        barn.forholdsmessigFordeling?.søknader?.filter { it.status != null }?.map {
-                            hendelseBarn.copy(
-                                søktAv = it.søktAvType,
-                                søktFraDato = it.søknadFomDato ?: behandling.søktFomDato,
-                                søknadsid = it.søknadsid ?: behandling.soknadsid,
-                                omgjørSøknadsid = it.omgjørSøknadsid,
-                                medInnkreving = it.innkreving,
-                                mottattDato = it.mottattDato,
-                                status = it.status!!,
-                                behandlingstype = it.behandlingstype ?: behandling.søknadstype!!,
-                                behandlingstema =
-                                    barn.behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
-                            )
-                        } ?: listOf(hendelseBarn)
-                    },
-                sporingsdata =
-                    Sporingsdata(
-                        correlationId = "${LocalDateTime.now().toCompactString()}_behandling_søknadshendelse_${behandling.soknadsid}",
-                        brukerident = saksbehandlerIdent,
-                        enhetsnummer = behandling.behandlerEnhet,
-                        saksbehandlersNavn =
-                            saksbehandlerIdent?.let {
-                                EnhetProvider.hentSaksbehandlernavn(it)
+                roller.filter { it.rolletype == Rolletype.BARN }.flatMap { barn ->
+                    val ff = barn.forholdsmessigFordeling
+                    val hendelseBarn =
+                        BehandlingHendelseBarn(
+                            søktAv = behandling.soknadFra,
+                            søktFraDato = behandling.søktFomDato,
+                            ident = barn.ident!!,
+                            medInnkreving = barn.innkrevingstype == Innkrevingstype.MED_INNKREVING,
+                            stønadstype = barn.stønadstype ?: behandling.stonadstype,
+                            engangsbeløptype = behandling.engangsbeloptype,
+                            behandlingstema = barn.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
+                            søknadsid = behandling.soknadsid,
+                            omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                            behandlerEnhet = ff?.behandlerenhet ?: behandling.behandlerEnhet,
+                            saksnummer = ff?.tilhørerSak ?: behandling.saksnummer,
+                            behandlingstype = behandling.søknadstype ?: Behandlingstype.SØKNAD,
+                            særbidragskategori = if (behandling.erSærbidrag()) behandling.særbidragKategori else null,
+                            status =
+                            when {
+                                barn.deleted -> Behandlingstatus.FEILREGISTRERT
+                                erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
+                                else -> barn.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING
                             },
-                    ),
+                        )
+                    barn.forholdsmessigFordeling?.søknader?.filter { it.status != null }?.map {
+                        hendelseBarn.copy(
+                            søktAv = it.søktAvType,
+                            søktFraDato = it.søknadFomDato ?: behandling.søktFomDato,
+                            søknadsid = it.søknadsid ?: behandling.soknadsid,
+                            omgjørSøknadsid = it.omgjørSøknadsid,
+                            medInnkreving = it.innkreving,
+                            mottattDato = it.mottattDato,
+                            status = it.status!!,
+                            behandlingstype = it.behandlingstype ?: behandling.søknadstype!!,
+                            behandlingstema =
+                            barn.behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
+                        )
+                    } ?: listOf(hendelseBarn)
+                },
+                sporingsdata =
+                Sporingsdata(
+                    correlationId = "${LocalDateTime.now().toCompactString()}_behandling_søknadshendelse_${behandling.soknadsid}",
+                    brukerident = saksbehandlerIdent,
+                    enhetsnummer = behandling.behandlerEnhet,
+                    saksbehandlersNavn =
+                    saksbehandlerIdent?.let {
+                        EnhetProvider.hentSaksbehandlernavn(it)
+                    },
+                ),
                 status =
-                    when {
-                        erBehandlingSlettet -> BehandlingStatusType.AVBRUTT
-                        behandling.vedtakDetaljer?.vedtakstidspunkt != null -> BehandlingStatusType.VEDTAK_FATTET
-                        else -> BehandlingStatusType.UNDER_BEHANDLING
-                    },
+                when {
+                    erBehandlingSlettet -> BehandlingStatusType.AVBRUTT
+                    behandling.vedtakDetaljer?.vedtakstidspunkt != null -> BehandlingStatusType.VEDTAK_FATTET
+                    else -> BehandlingStatusType.UNDER_BEHANDLING
+                },
                 type =
-                    when {
-                        behandling.opprettetTidspunkt.isAfter(LocalDateTime.now().minusMinutes(1)) -> BehandlingHendelseType.OPPRETTET
-                        behandling.vedtakDetaljer?.vedtakstidspunkt != null -> BehandlingHendelseType.AVSLUTTET
-                        erBehandlingSlettet -> BehandlingHendelseType.AVSLUTTET
-                        else -> type
-                    },
+                when {
+                    behandling.opprettetTidspunkt.isAfter(LocalDateTime.now().minusMinutes(1)) -> BehandlingHendelseType.OPPRETTET
+                    behandling.vedtakDetaljer?.vedtakstidspunkt != null -> BehandlingHendelseType.AVSLUTTET
+                    erBehandlingSlettet -> BehandlingHendelseType.AVSLUTTET
+                    else -> type
+                },
             )
 
         behandlingKafkaPublisher.publiser(hendelse)

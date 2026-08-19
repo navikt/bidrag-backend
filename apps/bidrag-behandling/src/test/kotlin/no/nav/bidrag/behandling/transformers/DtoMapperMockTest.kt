@@ -174,13 +174,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), null), beløp = null),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), null), beløp = null),
+                ),
             )
             val opphør = behandling.finnEksisterendeVedtakMedOpphør(behandling.søknadsbarn.first())
             opphør.shouldBeNull()
@@ -192,13 +192,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2023-01"), YearMonth.parse("2023-12"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), YearMonth.parse("2024-05"))),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2023-01"), YearMonth.parse("2023-12"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), YearMonth.parse("2024-05"))),
+                ),
             )
             val opphør = behandling.finnEksisterendeVedtakMedOpphør(behandling.søknadsbarn.first())
             opphør.shouldBeNull()
@@ -210,17 +210,17 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2023-01"), YearMonth.parse("2023-12"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), YearMonth.parse("2024-06"))).copy(
-                            vedtaksid = 300,
-                            gyldigFra = LocalDate.parse("2024-01-01").atTime(0, 0),
-                            valutakode = "NOK",
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2023-01"), YearMonth.parse("2023-12"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.parse("2024-01"), YearMonth.parse("2024-06"))).copy(
+                        vedtaksid = 300,
+                        gyldigFra = LocalDate.parse("2024-01-01").atTime(0, 0),
+                        valutakode = "NOK",
+                    ),
+                ),
             )
             val opphør = behandling.finnEksisterendeVedtakMedOpphør(behandling.søknadsbarn.first())
             opphør.shouldNotBeNull()
@@ -238,13 +238,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null)),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null)),
+                ),
             )
             behandling.finnesLøpendeBidragForRolle(behandling.søknadsbarn.first()) shouldBe true
         }
@@ -255,13 +255,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-05-31"))),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-05-31"))),
+                ),
             )
             behandling.finnesLøpendeBidragForRolle(behandling.søknadsbarn.first()) shouldBe true
         }
@@ -272,13 +272,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-05-31"))),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-05-31"))),
+                ),
             )
             behandling.finnesLøpendeBidragForRolle(behandling.søknadsbarn.first()) shouldBe false
         }
@@ -288,13 +288,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2025-01-31"))),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2025-01-31"))),
+                ),
             )
             behandling.finnesLøpendeBidragForRolle(behandling.søknadsbarn.first()) shouldBe false
         }
@@ -304,13 +304,13 @@ class DtoMapperMockTest {
             behandling.leggTilGrunnlagBeløpshistorikk(
                 Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                            vedtaksid = 200,
-                            valutakode = "NOK",
-                        ),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2025-01-31"))),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                        vedtaksid = 200,
+                        valutakode = "NOK",
                     ),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2025-01-31"))),
+                ),
             )
             behandling.finnesLøpendeBidragForRolle(behandling.søknadsbarn.first()) shouldBe false
         }
@@ -374,12 +374,12 @@ class DtoMapperMockTest {
                 true,
                 "Begrunnelse",
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
                     ),
+                ),
             )
         behandling.bidragspliktig!!.gebyr =
             GebyrRolle(
@@ -387,12 +387,12 @@ class DtoMapperMockTest {
                 true,
                 "Begrunnelse",
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
                     ),
+                ),
             )
         val behandlingDto = dtomapper.tilDto(behandling)
 
@@ -461,13 +461,13 @@ class DtoMapperMockTest {
                 true,
                 "Begrunnelse",
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                            manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
+                        manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
                     ),
+                ),
             )
         behandling.bidragspliktig!!.gebyr =
             GebyrRolle(
@@ -475,13 +475,13 @@ class DtoMapperMockTest {
                 true,
                 "Begrunnelse",
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                            manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
+                        manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
                     ),
+                ),
             )
         val behandlingDto = dtomapper.tilDto(behandling)
 
@@ -567,26 +567,26 @@ class DtoMapperMockTest {
                 true,
                 true,
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                            manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = false),
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
+                        manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = false),
                     ),
+                ),
             )
         behandling.bidragspliktig!!.gebyr =
             GebyrRolle(
                 true,
                 true,
                 gebyrSøknader =
-                    mutableSetOf(
-                        GebyrRolleSøknad(
-                            saksnummer = behandling.saksnummer,
-                            søknadsid = behandling.soknadsid!!,
-                            manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
-                        ),
+                mutableSetOf(
+                    GebyrRolleSøknad(
+                        saksnummer = behandling.saksnummer,
+                        søknadsid = behandling.soknadsid!!,
+                        manueltOverstyrtGebyr = RolleManueltOverstyrtGebyr(ilagtGebyr = true),
                     ),
+                ),
             )
         val behandlingDto = dtomapper.tilDto(behandling)
 

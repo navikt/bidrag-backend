@@ -114,6 +114,5 @@ open class PrivatAvtale(
             }
         }
 
-    override fun toString(): String =
-        "PrivatAvtale(id=$id, behandling=${behandling.id}, rolle=${rolle?.id} person=${person?.id}, perioder=$perioder)"
+    override fun toString(): String = "PrivatAvtale(id=$id, behandling=${behandling.id}, rolle=${rolle?.id} person=${person?.id}, perioder=$perioder)"
 }

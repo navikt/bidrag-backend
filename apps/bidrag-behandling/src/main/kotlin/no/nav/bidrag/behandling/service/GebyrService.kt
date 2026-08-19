@@ -19,20 +19,19 @@ class GebyrService(
     private val vedtakGrunnlagMapper: VedtakGrunnlagMapper,
 ) {
     @Transactional
-    fun rekalkulerGebyr(behandling: Behandling): Boolean =
-        behandling
-            .roller
-            .filter { it.harGebyrsøknad }
-            .map { rolle ->
-                val beregning = vedtakGrunnlagMapper.beregnGebyr(behandling, rolle)
-                val manueltOverstyrtGebyr = rolle.gebyr ?: GebyrRolle()
-                val beregnetGebyrErEndret = manueltOverstyrtGebyr.beregnetIlagtGebyr != beregning.ilagtGebyr
-                // TODO: FF - Rekalkuler gebyr slik at det blir manuelt overstyrt slik at BP bare får gebyr for ett av søknadene
-                if (beregnetGebyrErEndret) {
-                    resettGebyr(rolle, behandling, beregning)
-                }
-                beregnetGebyrErEndret
-            }.any { it }
+    fun rekalkulerGebyr(behandling: Behandling): Boolean = behandling
+        .roller
+        .filter { it.harGebyrsøknad }
+        .map { rolle ->
+            val beregning = vedtakGrunnlagMapper.beregnGebyr(behandling, rolle)
+            val manueltOverstyrtGebyr = rolle.gebyr ?: GebyrRolle()
+            val beregnetGebyrErEndret = manueltOverstyrtGebyr.beregnetIlagtGebyr != beregning.ilagtGebyr
+            // TODO: FF - Rekalkuler gebyr slik at det blir manuelt overstyrt slik at BP bare får gebyr for ett av søknadene
+            if (beregnetGebyrErEndret) {
+                resettGebyr(rolle, behandling, beregning)
+            }
+            beregnetGebyrErEndret
+        }.any { it }
 
     @Transactional
     fun oppdaterGebyrEtterEndringÅrsakAvslag(behandling: Behandling) {
@@ -58,18 +57,18 @@ class GebyrService(
                     beregnetIlagtGebyr = beregning.ilagtGebyr,
                     begrunnelse = null,
                     gebyrSøknader =
-                        it.gebyrSøknader
-                            .map {
-                                it.copy(
-                                    manueltOverstyrtGebyr =
-                                        RolleManueltOverstyrtGebyr(
-                                            overstyrGebyr = false,
-                                            ilagtGebyr = beregning.ilagtGebyr,
-                                            beregnetIlagtGebyr = beregning.ilagtGebyr,
-                                            begrunnelse = null,
-                                        ),
-                                )
-                            }.toMutableSet(),
+                    it.gebyrSøknader
+                        .map {
+                            it.copy(
+                                manueltOverstyrtGebyr =
+                                RolleManueltOverstyrtGebyr(
+                                    overstyrGebyr = false,
+                                    ilagtGebyr = beregning.ilagtGebyr,
+                                    beregnetIlagtGebyr = beregning.ilagtGebyr,
+                                    begrunnelse = null,
+                                ),
+                            )
+                        }.toMutableSet(),
                 )
             }
 

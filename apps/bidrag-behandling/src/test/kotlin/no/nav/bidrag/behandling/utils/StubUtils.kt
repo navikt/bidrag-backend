@@ -89,17 +89,15 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Arrays
 
-fun enableUnleashFeature(feature: UnleashFeatures) =
-    every {
-        UnleashFeaturesProvider
-            .isEnabled(feature = eq(feature.featureName), defaultValue = any())
-    } returns true
+fun enableUnleashFeature(feature: UnleashFeatures) = every {
+    UnleashFeaturesProvider
+        .isEnabled(feature = eq(feature.featureName), defaultValue = any())
+} returns true
 
-fun disableUnleashFeature(feature: UnleashFeatures) =
-    every {
-        UnleashFeaturesProvider
-            .isEnabled(feature = eq(feature.featureName), defaultValue = any())
-    } returns false
+fun disableUnleashFeature(feature: UnleashFeatures) = every {
+    UnleashFeaturesProvider
+        .isEnabled(feature = eq(feature.featureName), defaultValue = any())
+} returns false
 
 fun stubSaksbehandlernavnProvider() {
     mockkObject(SaksbehandlernavnProvider)
@@ -287,15 +285,13 @@ fun stubHentPersonNyIdent(
 
 class StubUtils {
     companion object {
-        fun aClosedJsonResponse(): ResponseDefinitionBuilder =
-            aResponse()
-                .withHeader(HttpHeaders.CONNECTION, "close")
-                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+        fun aClosedJsonResponse(): ResponseDefinitionBuilder = aResponse()
+            .withHeader(HttpHeaders.CONNECTION, "close")
+            .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
 
-        private fun createGenericResponse() =
-            aResponse()
-                .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
-                .withStatus(HttpStatus.OK.value())
+        private fun createGenericResponse() = aResponse()
+            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString())
+            .withStatus(HttpStatus.OK.value())
     }
 
     fun stubUnleash() {
@@ -351,12 +347,12 @@ class StubUtils {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             ),
     ) {
         WireMock.stubFor(
@@ -1058,21 +1054,19 @@ class StubUtils {
         }
     }
 
-    fun toJsonString(data: Any): String =
-        try {
-            ObjectMapper().findAndRegisterModules().writeValueAsString(data)
-        } catch (e: JsonProcessingException) {
-            Assert.fail(e.message)
-            ""
-        }
+    fun toJsonString(data: Any): String = try {
+        ObjectMapper().findAndRegisterModules().writeValueAsString(data)
+    } catch (e: JsonProcessingException) {
+        Assert.fail(e.message)
+        ""
+    }
 }
 
 fun nyOpprettJournalpostResponse(
     journalpostId: String = "123123123",
     dokumenter: List<OpprettDokumentDto> =
         listOf(OpprettDokumentDto(tittel = "Tittel på dokument", dokumentreferanse = "dokref1")),
-): OpprettJournalpostResponse =
-    OpprettJournalpostResponse(
-        dokumenter = dokumenter,
-        journalpostId = journalpostId,
-    )
+): OpprettJournalpostResponse = OpprettJournalpostResponse(
+    dokumenter = dokumenter,
+    journalpostId = journalpostId,
+)

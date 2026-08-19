@@ -237,11 +237,11 @@ class ForholdsmessigFordelingSøknadService(
                     medInnkreving = medInnkreving,
                     opphørsdato = barnDetaljer.løperBidragTil ?: barnDetaljer.opphørsdato,
                     ffDetaljer =
-                        ffDetaljer.copy(
-                            løperBidragFra = barnDetaljer.løperBidragFra,
-                            løperBidragTil = barnDetaljer.løperBidragTil,
-                            søknader = søknader.toMutableSet(),
-                        ),
+                    ffDetaljer.copy(
+                        løperBidragFra = barnDetaljer.løperBidragFra,
+                        løperBidragTil = barnDetaljer.løperBidragTil,
+                        søknader = søknader.toMutableSet(),
+                    ),
                 )
             rolle.innkrevingstype = if (medInnkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING
             if (barnDetaljer.privatAvtale != null) {
@@ -447,33 +447,33 @@ class ForholdsmessigFordelingSøknadService(
                 saksnummer = saksnummer,
                 enhet = behandling.behandlerEnhet,
                 roller =
-                    barn.map {
+                barn.map {
+                    ForsendelseRolleDto(
+                        fødselsnummer = Personident(it.kravhaver),
+                        type = Rolletype.BARN,
+                    )
+                } +
+                    listOf(
                         ForsendelseRolleDto(
-                            fødselsnummer = Personident(it.kravhaver),
-                            type = Rolletype.BARN,
-                        )
-                    } +
-                        listOf(
-                            ForsendelseRolleDto(
-                                fødselsnummer = Personident(bmFødselsnummer),
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
-                            ForsendelseRolleDto(
-                                fødselsnummer = Personident(behandling.bidragspliktig!!.ident!!),
-                                type = Rolletype.BIDRAGSPLIKTIG,
-                            ),
+                            fødselsnummer = Personident(bmFødselsnummer),
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
-                behandlingInfo =
-                    BehandlingInfoDto(
-                        behandlingId = behandling.id?.toString(),
-                        soknadId = søknad.søknadsid?.toString(),
-                        soknadFra = søknad.søktAvType,
-                        behandlingType = søknad.behandlingstema?.name,
-                        soknadType = søknad.behandlingstype?.name,
-                        stonadType = søknad.behandlingstema?.tilStønadstype() ?: behandling.stonadstype,
-                        engangsBelopType = behandling.engangsbeloptype,
-                        vedtakType = søknad.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
+                        ForsendelseRolleDto(
+                            fødselsnummer = Personident(behandling.bidragspliktig!!.ident!!),
+                            type = Rolletype.BIDRAGSPLIKTIG,
+                        ),
                     ),
+                behandlingInfo =
+                BehandlingInfoDto(
+                    behandlingId = behandling.id?.toString(),
+                    soknadId = søknad.søknadsid?.toString(),
+                    soknadFra = søknad.søktAvType,
+                    behandlingType = søknad.behandlingstema?.name,
+                    soknadType = søknad.behandlingstype?.name,
+                    stonadType = søknad.behandlingstema?.tilStønadstype() ?: behandling.stonadstype,
+                    engangsBelopType = behandling.engangsbeloptype,
+                    vedtakType = søknad.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
+                ),
             ),
         )
     }
@@ -498,11 +498,11 @@ class ForholdsmessigFordelingSøknadService(
             rolle.forholdsmessigFordeling =
                 ffDetaljer.copy(
                     søknader =
-                        oppdaterLagredeSoknadsstatuserFraBbm(
-                            ffDetaljer.søknader,
-                            alleSøknaderRelevantForBehandling.filter { it.saksnummer == rolle.saksnummer },
-                            rolle,
-                        ),
+                    oppdaterLagredeSoknadsstatuserFraBbm(
+                        ffDetaljer.søknader,
+                        alleSøknaderRelevantForBehandling.filter { it.saksnummer == rolle.saksnummer },
+                        rolle,
+                    ),
                 )
         }
     }
@@ -610,23 +610,22 @@ class ForholdsmessigFordelingSøknadService(
     fun feilregistrerSøknad(
         søknad: ForholdsmessigFordelingSøknadBarn,
         behandling: Behandling,
-    ): Boolean =
-        try {
-            val søknadsid = søknad.søknadsid ?: return false
-            bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid))
-            bbmConsumer.fjernSammenknytning(søknadsid)
-            søknad.status = Behandlingstatus.FEILREGISTRERT
-            behandling.roller.forEach { rolle ->
-                val søknader = rolle.forholdsmessigFordeling?.søknaderUnderBehandling?.filter { it.søknadsid == søknadsid } ?: emptyList()
-                søknader.forEach {
-                    it.status = Behandlingstatus.FEILREGISTRERT
-                }
+    ): Boolean = try {
+        val søknadsid = søknad.søknadsid ?: return false
+        bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid))
+        bbmConsumer.fjernSammenknytning(søknadsid)
+        søknad.status = Behandlingstatus.FEILREGISTRERT
+        behandling.roller.forEach { rolle ->
+            val søknader = rolle.forholdsmessigFordeling?.søknaderUnderBehandling?.filter { it.søknadsid == søknadsid } ?: emptyList()
+            søknader.forEach {
+                it.status = Behandlingstatus.FEILREGISTRERT
             }
-            true
-        } catch (e: Exception) {
-            LOGGER.warn(e) { "Kunne ikke feilregistrere søknad ${søknad.søknadsid} i BBM" }
-            false
         }
+        true
+    } catch (e: Exception) {
+        LOGGER.warn(e) { "Kunne ikke feilregistrere søknad ${søknad.søknadsid} i BBM" }
+        false
+    }
 
     fun feilregistrerBarnFraSøknad(
         rolle: Rolle,
@@ -674,7 +673,7 @@ class ForholdsmessigFordelingSøknadService(
                                             (
                                                 !rolle.erBarn || rolle.stønadstype == null ||
                                                     it.behandlingstema.tilStønadstype() == rolle.stønadstype
-                                            )
+                                                )
                                         }
                                 søknadFraBbm?.partISøknadListe?.find { it.personident == rolle.ident }
                             } catch (e: Exception) {

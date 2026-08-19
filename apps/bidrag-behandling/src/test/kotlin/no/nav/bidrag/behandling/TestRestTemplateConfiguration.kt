@@ -35,30 +35,28 @@ class TestRestTemplateConfiguration {
     fun unleash(): Unleash = FakeUnleash()
 
     @Bean
-    fun httpHeaderTestRestTemplate(): TestRestTemplate =
-        TestRestTemplate(
-            RestTemplateBuilder()
-                .additionalInterceptors({ request, body, execution ->
-                    request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
-                    execution.execute(request, body)
-                })
-                .additionalMessageConverters(
-                    CustomJacksonHttpMessageConverter(commonObjectmapper),
-                ),
-        )
+    fun httpHeaderTestRestTemplate(): TestRestTemplate = TestRestTemplate(
+        RestTemplateBuilder()
+            .additionalInterceptors({ request, body, execution ->
+                request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
+                execution.execute(request, body)
+            })
+            .additionalMessageConverters(
+                CustomJacksonHttpMessageConverter(commonObjectmapper),
+            ),
+    )
 
     @Bean
-    fun httpHeaderTestRestTemplateNoJackson(): TestRestTemplate =
-        TestRestTemplate(
-            RestTemplateBuilder()
-                .additionalInterceptors({ request, body, execution ->
-                    request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
-                    execution.execute(request, body)
-                })
-                .additionalMessageConverters(
-                    CustomJacksonHttpMessageConverter(commonObjectmapper),
-                ),
-        )
+    fun httpHeaderTestRestTemplateNoJackson(): TestRestTemplate = TestRestTemplate(
+        RestTemplateBuilder()
+            .additionalInterceptors({ request, body, execution ->
+                request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
+                execution.execute(request, body)
+            })
+            .additionalMessageConverters(
+                CustomJacksonHttpMessageConverter(commonObjectmapper),
+            ),
+    )
 
     protected fun generateBearerToken(): String {
         val iss = mockOAuth2Server.issuerUrl("aad")

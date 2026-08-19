@@ -60,7 +60,7 @@ class AdminController(
     @GetMapping("/admin/beregning/input/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -85,7 +85,7 @@ class AdminController(
     @PostMapping("/admin/vedtak/input/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -105,7 +105,7 @@ class AdminController(
     @PostMapping("/admin/reset/fattevedtak/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -133,7 +133,7 @@ class AdminController(
     @PostMapping("/admin/avslutt/ff/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -154,7 +154,7 @@ class AdminController(
     @PostMapping("/admin/grunnlag/ignorer/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -179,7 +179,7 @@ class AdminController(
     @PostMapping("/admin/grunnlag/reset/{behandlingId}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -205,7 +205,7 @@ class AdminController(
     @PostMapping("/admin/opprett/aldersjustering/{saksnummer}")
     @Operation(
         description =
-            "Opprett aldersjustering behandling for sak",
+        "Opprett aldersjustering behandling for sak",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -231,38 +231,38 @@ class AdminController(
                 søktFomDato = LocalDate.parse("2025-07-01"),
                 mottattdato = LocalDate.parse("2025-07-01"),
                 søknadsid =
-                    BigDecimal
-                        .valueOf(Math.random())
-                        .multiply(BigDecimal.valueOf(1000))
-                        .setScale(0, RoundingMode.HALF_DOWN)
-                        .toLong(),
+                BigDecimal
+                    .valueOf(Math.random())
+                    .multiply(BigDecimal.valueOf(1000))
+                    .setScale(0, RoundingMode.HALF_DOWN)
+                    .toLong(),
                 behandlerenhet = sak.eierfogd.verdi,
                 søknadstype = Behandlingstype.ALDERSJUSTERING,
                 saksnummer = saksnummer,
                 roller =
-                    setOf(
-                        OpprettRolleDto(
-                            rolletype = Rolletype.BIDRAGSPLIKTIG,
-                            fødselsdato = null,
-                            ident =
-                                sak.roller
-                                    .find { it.type == Rolletype.BIDRAGSPLIKTIG }!!
-                                    .fødselsnummer,
-                        ),
-                        OpprettRolleDto(
-                            rolletype = Rolletype.BIDRAGSMOTTAKER,
-                            fødselsdato = null,
-                            ident =
-                                sak.roller
-                                    .find { it.type == Rolletype.BIDRAGSMOTTAKER }!!
-                                    .fødselsnummer,
-                        ),
-                        OpprettRolleDto(
-                            rolletype = Rolletype.BARN,
-                            fødselsdato = null,
-                            ident = søknadsbarn.fødselsnummer,
-                        ),
+                setOf(
+                    OpprettRolleDto(
+                        rolletype = Rolletype.BIDRAGSPLIKTIG,
+                        fødselsdato = null,
+                        ident =
+                        sak.roller
+                            .find { it.type == Rolletype.BIDRAGSPLIKTIG }!!
+                            .fødselsnummer,
                     ),
+                    OpprettRolleDto(
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        fødselsdato = null,
+                        ident =
+                        sak.roller
+                            .find { it.type == Rolletype.BIDRAGSMOTTAKER }!!
+                            .fødselsnummer,
+                    ),
+                    OpprettRolleDto(
+                        rolletype = Rolletype.BARN,
+                        fødselsdato = null,
+                        ident = søknadsbarn.fødselsnummer,
+                    ),
+                ),
             )
         return behandlingService.opprettBehandling(request)
     }
@@ -270,7 +270,7 @@ class AdminController(
     @PostMapping("/admin/feilfiks/aktivering/grunnlag/{behandlingId}")
     @Operation(
         description =
-            "Fikse feil i referanser ",
+        "Fikse feil i referanser ",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -286,7 +286,7 @@ class AdminController(
     @PostMapping("/admin/grunnlag/oppdater/boforhold/{behandlingId}")
     @Operation(
         description =
-            "Oppdater husstandsmedlemmer etter nyeste grunnlagsdata",
+        "Oppdater husstandsmedlemmer etter nyeste grunnlagsdata",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -301,7 +301,7 @@ class AdminController(
     @PostMapping("/admin/feilfiks/sivilstand/perioder/{behandlingId}")
     @Operation(
         description =
-            "Fiks feil i perioder hvor fom starter før til",
+        "Fiks feil i perioder hvor fom starter før til",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -335,7 +335,7 @@ class AdminController(
     @PostMapping("/admin/feilfiks/oppdaterInntekter/{behandlingId}")
     @Operation(
         description =
-            "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
+        "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -352,7 +352,7 @@ class AdminController(
     @PostMapping("/admin/slettbarn/{behandlingId}")
     @Operation(
         description =
-            "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
+        "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -368,7 +368,7 @@ class AdminController(
     @PostMapping("/admin/slettetbarn/feilfiks/{behandlingId}")
     @Operation(
         description =
-            "Fiks referanser i grunnlagstabellen etter barn er slettet",
+        "Fiks referanser i grunnlagstabellen etter barn er slettet",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -388,7 +388,7 @@ class AdminController(
     @PostMapping("/admin/feilfiks/boforhold/perioder/fomtom/{behandlingId}")
     @Operation(
         description =
-            "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
+        "Fiks manglende virkningstidspunkt/årsak/avslag i rolle tabellen for barn",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @Transactional
@@ -435,8 +435,8 @@ class AdminController(
     @PostMapping("/admin/feilfiks/inntekt-grunnlag-rolle/{behandlingId}")
     @Operation(
         description =
-            "Fiks inntekt og grunnlag der rolle/gjelderBarnRolle peker til en rolle i en annen behandling. " +
-                "Typisk feil etter ForholdsmessigFordeling der kopierte roller ikke ble pekt til riktig behandling.",
+        "Fiks inntekt og grunnlag der rolle/gjelderBarnRolle peker til en rolle i en annen behandling. " +
+            "Typisk feil etter ForholdsmessigFordeling der kopierte roller ikke ble pekt til riktig behandling.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(

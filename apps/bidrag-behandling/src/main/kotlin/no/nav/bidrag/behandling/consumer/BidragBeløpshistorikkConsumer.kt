@@ -41,17 +41,15 @@ class BidragBeløpshistorikkConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    override fun hentLøpendeBidrag(request: LøpendeBidragssakerRequest): LøpendeBidragssakerResponse =
-        postForNonNullEntity(
-            bidragBeløpshistorikkUri.pathSegment("hent-lopende-bidragssaker-for-skyldner").build().toUri(),
-            request,
-        )
+    override fun hentLøpendeBidrag(request: LøpendeBidragssakerRequest): LøpendeBidragssakerResponse = postForNonNullEntity(
+        bidragBeløpshistorikkUri.pathSegment("hent-lopende-bidragssaker-for-skyldner").build().toUri(),
+        request,
+    )
 
-    override fun hentAlleLøpendeStønaderIPeriode(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse =
-        postForNonNullEntity(
-            bidragBeløpshistorikkUri.pathSegment("hent-stonader-i-periode/").build().toUri(),
-            request,
-        )
+    override fun hentAlleLøpendeStønaderIPeriode(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse = postForNonNullEntity(
+        bidragBeløpshistorikkUri.pathSegment("hent-stonader-i-periode/").build().toUri(),
+        request,
+    )
 
     @Retryable(
         value = [Exception::class],
@@ -59,11 +57,10 @@ class BidragBeløpshistorikkConsumer(
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
     @BrukerCacheable(HENT_ALLE_STØNADER_CACHE)
-    fun hentAlleStønaderForBidragspliktig(personidentBidragspliktig: Personident): SkyldnerStønaderResponse =
-        postForNonNullEntity(
-            bidragBeløpshistorikkUri.pathSegment("hent-alle-stonader-for-skyldner").build().toUri(),
-            SkyldnerStønaderRequest(personidentBidragspliktig),
-        )
+    fun hentAlleStønaderForBidragspliktig(personidentBidragspliktig: Personident): SkyldnerStønaderResponse = postForNonNullEntity(
+        bidragBeløpshistorikkUri.pathSegment("hent-alle-stonader-for-skyldner").build().toUri(),
+        SkyldnerStønaderRequest(personidentBidragspliktig),
+    )
 
     @Retryable(
         value = [Exception::class],
@@ -71,16 +68,14 @@ class BidragBeløpshistorikkConsumer(
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
     @BrukerCacheable(STØNAD_HISTORIKK_CACHE)
-    override fun hentHistoriskeStønader(request: HentStønadHistoriskRequest): StønadDto? =
-        postForEntity(
-            bidragBeløpshistorikkUri.pathSegment("hent-stonad-historisk/").build().toUri(),
-            request,
-        )
+    override fun hentHistoriskeStønader(request: HentStønadHistoriskRequest): StønadDto? = postForEntity(
+        bidragBeløpshistorikkUri.pathSegment("hent-stonad-historisk/").build().toUri(),
+        request,
+    )
 
     @BrukerCacheable(STØNAD_HISTORIKK_CACHE_2)
-    override fun hentLøpendeStønad(hentStønadRequest: HentStønadRequest): StønadDto? =
-        postForEntity(
-            bidragBeløpshistorikkUri.pathSegment("hent-stonad-historisk/").build().toUri(),
-            hentStønadRequest,
-        )
+    override fun hentLøpendeStønad(hentStønadRequest: HentStønadRequest): StønadDto? = postForEntity(
+        bidragBeløpshistorikkUri.pathSegment("hent-stonad-historisk/").build().toUri(),
+        hentStønadRequest,
+    )
 }

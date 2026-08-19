@@ -56,17 +56,15 @@ fun Vedtakstype.opprettForsendelse() = !listOf(Vedtakstype.ALDERSJUSTERING).cont
 
 fun Vedtakstype.kreverGrunnlag() = !listOf(Vedtakstype.ALDERSJUSTERING, Vedtakstype.INNKREVING).contains(this)
 
-fun Behandling.skalInnkrevingKunneUtsettes() =
-    erBidrag() && !listOf(Vedtakstype.ALDERSJUSTERING, Vedtakstype.OPPHØR, Vedtakstype.INNKREVING).contains(vedtakstype) &&
-        !erKlageEllerOmgjøring && søknadsbarn.none { finnesLøpendeBidragForRolle(it) }
+fun Behandling.skalInnkrevingKunneUtsettes() = erBidrag() && !listOf(Vedtakstype.ALDERSJUSTERING, Vedtakstype.OPPHØR, Vedtakstype.INNKREVING).contains(vedtakstype) &&
+    !erKlageEllerOmgjøring && søknadsbarn.none { finnesLøpendeBidragForRolle(it) }
 
-fun StønadsendringDto.tilStønadsid() =
-    Stønadsid(
-        type = type,
-        kravhaver = kravhaver,
-        skyldner = skyldner,
-        sak = sak,
-    )
+fun StønadsendringDto.tilStønadsid() = Stønadsid(
+    type = type,
+    kravhaver = kravhaver,
+    skyldner = skyldner,
+    sak = sak,
+)
 
 val BigDecimal.nærmesteHeltall get() = this.setScale(0, RoundingMode.HALF_UP)
 val ainntekt12Og3Måneder =
@@ -117,8 +115,7 @@ fun Behandling.tilType() = bestemTypeBehandling(stonadstype, engangsbeloptype)
 
 fun BehandlingSimple.tilType() = bestemTypeBehandling(stønadstype, engangsbeløptype)
 
-fun Behandling.tilTypeBoforhold(stønadstype: Stønadstype? = null) =
-    bestemTypeBehandling18ÅrsBidrag(stønadstype ?: stonadstype, engangsbeloptype)
+fun Behandling.tilTypeBoforhold(stønadstype: Stønadstype? = null) = bestemTypeBehandling18ÅrsBidrag(stønadstype ?: stonadstype, engangsbeloptype)
 
 fun Behandling.erBidrag() = tilType() == TypeBehandling.BIDRAG_18_ÅR || tilType() == TypeBehandling.BIDRAG
 
@@ -154,13 +151,12 @@ fun bestemTypeBehandling(
     TypeBehandling.BIDRAG
 }
 
-fun Behandling.tilStønadsid(søknadsbarn: Rolle) =
-    Stønadsid(
-        stonadstype!!,
-        Personident(søknadsbarn.ident!!),
-        Personident(bidragspliktig!!.ident!!),
-        Saksnummer(saksnummer),
-    )
+fun Behandling.tilStønadsid(søknadsbarn: Rolle) = Stønadsid(
+    stonadstype!!,
+    Personident(søknadsbarn.ident!!),
+    Personident(bidragspliktig!!.ident!!),
+    Saksnummer(saksnummer),
+)
 
 fun <T : Comparable<T>> maxOfNullable(vararg values: T?): T? {
     val nonNull = values.filterNotNull()
@@ -183,39 +179,34 @@ fun finnCutoffDatoFom(
 
 fun LocalDate.erOverEllerLik18År() = plusYears(18).isBefore(LocalDate.now()) || plusYears(18).isEqual(LocalDate.now())
 
-fun LocalDate?.erUnder12År(basertPåDato: LocalDate = LocalDate.now()) =
-    Period
-        .between(
-            this,
-            basertPåDato
-                .plusYears(1)
-                .withMonth(1)
-                .withDayOfMonth(1),
-        ).years < 13
+fun LocalDate?.erUnder12År(basertPåDato: LocalDate = LocalDate.now()) = Period
+    .between(
+        this,
+        basertPåDato
+            .plusYears(1)
+            .withMonth(1)
+            .withDayOfMonth(1),
+    ).years < 13
 
-fun Behandling.finnesLøpendeForskuddForRolle(rolle: Rolle): Boolean =
-    finnSistePeriodeLøpendeForskuddPeriodeInnenforSøktFomDato(rolle) != null
+fun Behandling.finnesLøpendeForskuddForRolle(rolle: Rolle): Boolean = finnSistePeriodeLøpendeForskuddPeriodeInnenforSøktFomDato(rolle) != null
 
 fun Behandling.finnesLøpendeBidragForRolle(rolle: Rolle): Boolean = finnSistePeriodeLøpendePeriodeInnenforSøktFomDato(rolle) != null
 
-fun Behandling.finnesLøpendeBidragForRolleEldsteVirkning(rolle: Rolle): Boolean =
-    finnSistePeriodeLøpendePeriodeInnenforEldsteVirkning(rolle) != null
+fun Behandling.finnesLøpendeBidragForRolleEldsteVirkning(rolle: Rolle): Boolean = finnSistePeriodeLøpendePeriodeInnenforEldsteVirkning(rolle) != null
 
-fun Stønadstype.tilGrunnlagsdatatypeBeløpshistorikk() =
-    when (this) {
-        Stønadstype.BIDRAG -> Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG
-        Stønadstype.BIDRAG18AAR -> Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR
-        Stønadstype.FORSKUDD -> Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD
-        else -> throw IllegalArgumentException("Ukjent stønadstype: $this")
-    }
+fun Stønadstype.tilGrunnlagsdatatypeBeløpshistorikk() = when (this) {
+    Stønadstype.BIDRAG -> Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG
+    Stønadstype.BIDRAG18AAR -> Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG_18_ÅR
+    Stønadstype.FORSKUDD -> Grunnlagsdatatype.BELØPSHISTORIKK_FORSKUDD
+    else -> throw IllegalArgumentException("Ukjent stønadstype: $this")
+}
 
-fun Stønadstype.tilGrunnlagstypeBeløpshistorikk() =
-    when (this) {
-        Stønadstype.BIDRAG -> Grunnlagstype.BELØPSHISTORIKK_BIDRAG
-        Stønadstype.BIDRAG18AAR -> Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR
-        Stønadstype.FORSKUDD -> Grunnlagstype.BELØPSHISTORIKK_FORSKUDD
-        else -> throw IllegalArgumentException("Ukjent stønadstype: $this")
-    }
+fun Stønadstype.tilGrunnlagstypeBeløpshistorikk() = when (this) {
+    Stønadstype.BIDRAG -> Grunnlagstype.BELØPSHISTORIKK_BIDRAG
+    Stønadstype.BIDRAG18AAR -> Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR
+    Stønadstype.FORSKUDD -> Grunnlagstype.BELØPSHISTORIKK_FORSKUDD
+    else -> throw IllegalArgumentException("Ukjent stønadstype: $this")
+}
 
 fun Behandling.løperBidragEtterEldsteVirkning(rolle: Rolle): Boolean {
     val fraPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).minByOrNull { it.fom }?.fom
@@ -288,8 +279,7 @@ fun List<ÅrMånedsperiode>.mergePeriods(): List<ÅrMånedsperiode> {
     return mergedPeriods
 }
 
-fun Behandling.hentEtterfølgendeVedtak(rolle: Rolle) =
-    grunnlag.hentSisteGrunnlagSomGjelderBarn(rolle.ident!!, Grunnlagsdatatype.ETTERFØLGENDE_VEDTAK)
+fun Behandling.hentEtterfølgendeVedtak(rolle: Rolle) = grunnlag.hentSisteGrunnlagSomGjelderBarn(rolle.ident!!, Grunnlagsdatatype.ETTERFØLGENDE_VEDTAK)
 
 fun Behandling.hentNesteEtterfølgendeVedtakFelles(): EtterfølgendeVedtakDto? {
     val grunnlag = søknadsbarn.mapNotNull { hentNesteEtterfølgendeVedtak(it) }
@@ -321,9 +311,9 @@ fun Behandling.hentNesteEtterfølgendeVedtak(rolle: Rolle): EtterfølgendeVedtak
                 virkningstidspunkt = it.virkningstidspunkt!!,
                 sistePeriodeDatoFom = it.stønadsendring.periodeListe.maxOf { it.periode.fom },
                 opphørsdato =
-                    it.stønadsendring.periodeListe
-                        .filter { it.beløp == null }
-                        .maxOfOrNull { it.periode.fom },
+                it.stønadsendring.periodeListe
+                    .filter { it.beløp == null }
+                    .maxOfOrNull { it.periode.fom },
                 vedtaksid = it.vedtaksid,
             )
         }?.minByOrNull { it.virkningstidspunkt }
@@ -385,19 +375,15 @@ fun Behandling.finnPeriodeLøpendePeriodeInnenforSøktFomDato(rolle: Rolle): År
     )
 }
 
-fun Rolle.løperPeriodeEtterBeregnTil(periode: ÅrMånedsperiode) =
-    periode.til == null ||
-        periode.til!! > YearMonth.from(behandling.eldsteSøktFomDato)
+fun Rolle.løperPeriodeEtterBeregnTil(periode: ÅrMånedsperiode) = periode.til == null ||
+    periode.til!! > YearMonth.from(behandling.eldsteSøktFomDato)
 
-fun Rolle.løperPeriodeEtterSøktFomDato(periode: ÅrMånedsperiode) =
-    periode.til == null ||
-        periode.til!! > YearMonth.from(forholdsmessigFordeling?.eldsteSøknad?.søknadFomDato ?: behandling.eldsteSøktFomDato)
+fun Rolle.løperPeriodeEtterSøktFomDato(periode: ÅrMånedsperiode) = periode.til == null ||
+    periode.til!! > YearMonth.from(forholdsmessigFordeling?.eldsteSøknad?.søknadFomDato ?: behandling.eldsteSøktFomDato)
 
-fun Behandling.løperPeriodeEtterEldsteVirkningstidspunkt(periode: ÅrMånedsperiode) =
-    periode.til == null || periode.til!! > YearMonth.from(eldsteVirkningstidspunkt)
+fun Behandling.løperPeriodeEtterEldsteVirkningstidspunkt(periode: ÅrMånedsperiode) = periode.til == null || periode.til!! > YearMonth.from(eldsteVirkningstidspunkt)
 
-fun Behandling.løperPeriodeEtterSøktFomDato(periode: ÅrMånedsperiode) =
-    periode.til == null || periode.til!! > YearMonth.from(eldsteSøktFomDato)
+fun Behandling.løperPeriodeEtterSøktFomDato(periode: ÅrMånedsperiode) = periode.til == null || periode.til!! > YearMonth.from(eldsteSøktFomDato)
 
 fun Behandling.finnSistePeriodeLøpendePeriodeInnenforSøktFomDato(rolle: Rolle): StønadPeriodeDto? {
     val eksisterendeVedtak = hentGrunnlagBeløpshistorikkForRolle(rolle, false)
@@ -423,13 +409,12 @@ fun Behandling.finnSistePeriodeLøpendePeriodeInnenforEldsteVirkning(rolle: Roll
     }
 }
 
-fun Grunnlag?.konverterTilStønadDto() =
-    try {
-        konvertereData<StønadDto>()
-    } catch (e: KotlinInvalidNullException) {
-        secureLogger.warn(e) { "Det skjedde en feil ved konvertering av beløpshistorikk ${this?.data}" }
-        null
-    }
+fun Grunnlag?.konverterTilStønadDto() = try {
+    konvertereData<StønadDto>()
+} catch (e: KotlinInvalidNullException) {
+    secureLogger.warn(e) { "Det skjedde en feil ved konvertering av beløpshistorikk ${this?.data}" }
+    null
+}
 
 fun Rolle.harLøpendeBidragFørOpphørEllerLøpende(): Boolean {
     val løperBidragEtterEldsteVirkning = (
@@ -442,20 +427,18 @@ fun Rolle.harLøpendeBidragFørOpphørEllerLøpende(): Boolean {
                     (it.rolle != null && it.rolle!!.erSammeRolle(this)) ||
                         (it.personIdent == ident && it.stønadstype == stønadstype)
                 }
-    )
+        )
 
     return (opphørsdato == null && løperBidragEtterEldsteVirkning) ||
         // Revurderingsbarn skal
         (opphørsdato != null && løperBidragFørOpphør() && løperBidragEtterEldsteVirkning)
 }
 
-fun Rolle.løperBidragFørOpphør() =
-    opphørsdato != null && finnLøperBidragFra() != null &&
-        opphørsdato!! > behandling.eldsteSøktFomDato &&
-        opphørsdato!!.toYearMonth() > finnLøperBidragFra()!!
+fun Rolle.løperBidragFørOpphør() = opphørsdato != null && finnLøperBidragFra() != null &&
+    opphørsdato!! > behandling.eldsteSøktFomDato &&
+    opphørsdato!!.toYearMonth() > finnLøperBidragFra()!!
 
-fun Rolle.erRevurderingsbarnUtenLøpendeBidrag() =
-    finnLøperBidragFra() == null || finnLøperBidragTil() != null || finnLøperBidragTil()!! < behandling.eldsteSøktFomDato.toYearMonth()
+fun Rolle.erRevurderingsbarnUtenLøpendeBidrag() = finnLøperBidragFra() == null || finnLøperBidragTil() != null || finnLøperBidragTil()!! < behandling.eldsteSøktFomDato.toYearMonth()
 
 fun Rolle.finnLøperBidragFra() = behandling.finnPeriodeLøperBidrag(this)?.fom
 
@@ -490,38 +473,37 @@ fun Behandling.opprettStønadDto(
     stønadsid = 1,
     type = stonadstype!!,
     periodeListe =
-        grunnlag?.beløpshistorikk?.map {
-            StønadPeriodeDto(
-                periode = it.periode,
-                periodeid = 1,
-                stønadsid = 1,
-                vedtaksid = it.vedtaksid ?: 1,
-                beløp = it.beløp,
-                gyldigFra = grunnlag.tidspunktInnhentet,
-                gyldigTil = null,
-                valutakode = it.valutakode ?: "NOK",
-                resultatkode = "",
-                periodeGjortUgyldigAvVedtaksid = null,
-            )
-        } ?: emptyList(),
+    grunnlag?.beløpshistorikk?.map {
+        StønadPeriodeDto(
+            periode = it.periode,
+            periodeid = 1,
+            stønadsid = 1,
+            vedtaksid = it.vedtaksid ?: 1,
+            beløp = it.beløp,
+            gyldigFra = grunnlag.tidspunktInnhentet,
+            gyldigTil = null,
+            valutakode = it.valutakode ?: "NOK",
+            resultatkode = "",
+            periodeGjortUgyldigAvVedtaksid = null,
+        )
+    } ?: emptyList(),
 )
 
-fun opprettHentGrunnlagDto() =
-    HentGrunnlagDto(
-        ainntektListe = emptyList(),
-        skattegrunnlagListe = emptyList(),
-        arbeidsforholdListe = emptyList(),
-        barnetilsynListe = emptyList(),
-        barnetilleggListe = emptyList(),
-        kontantstøtteListe = emptyList(),
-        utvidetBarnetrygdListe = emptyList(),
-        småbarnstilleggListe = emptyList(),
-        sivilstandListe = emptyList(),
-        husstandsmedlemmerOgEgneBarnListe = emptyList(),
-        feilrapporteringListe = emptyList(),
-        hentetTidspunkt = LocalDateTime.now(),
-        tilleggsstønadBarnetilsynListe = emptyList(),
-    )
+fun opprettHentGrunnlagDto() = HentGrunnlagDto(
+    ainntektListe = emptyList(),
+    skattegrunnlagListe = emptyList(),
+    arbeidsforholdListe = emptyList(),
+    barnetilsynListe = emptyList(),
+    barnetilleggListe = emptyList(),
+    kontantstøtteListe = emptyList(),
+    utvidetBarnetrygdListe = emptyList(),
+    småbarnstilleggListe = emptyList(),
+    sivilstandListe = emptyList(),
+    husstandsmedlemmerOgEgneBarnListe = emptyList(),
+    feilrapporteringListe = emptyList(),
+    hentetTidspunkt = LocalDateTime.now(),
+    tilleggsstønadBarnetilsynListe = emptyList(),
+)
 
 fun Set<PrivatAvtale>.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode(
     beregningsperiode: ÅrMånedsperiode? = null,
@@ -545,7 +527,7 @@ fun Set<PrivatAvtale>.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode(
                 (
                     sistePeriodeTom > beregningsperiode.fom &&
                         (beregningsperiode.til == null || sistePeriodeTom <= beregningsperiode.til)
-                )
+                    )
 
         starterFørBeregningsperiodeSlutt && slutterIkkeFørBeregningsperiode
     }

@@ -132,9 +132,9 @@ class VedtakserviceForskuddTest : CommonVedtakTilBehandlingTest() {
                 behandling,
                 "grunnlagresponse.json",
                 testdataBarn =
-                    testdataBarn1.copy(
-                        fødselsdato = søknadsbarn.fødselsdato,
-                    ),
+                testdataBarn1.copy(
+                    fødselsdato = søknadsbarn.fødselsdato,
+                ),
             )
 
         every { behandlingService.hentBehandlingById(any()) } returns behandling

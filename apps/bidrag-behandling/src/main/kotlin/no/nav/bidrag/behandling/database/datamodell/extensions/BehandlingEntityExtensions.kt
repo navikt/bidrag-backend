@@ -25,9 +25,8 @@ import java.sql.ResultSet
 import java.sql.Types
 import java.time.LocalDateTime
 
-fun LasterGrunnlagAsyncStatus?.lasterGrunnlagAsync(): Boolean =
-    UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled && this != null &&
-        listOf(LasterGrunnlagAsyncStatus.BESTILT, LasterGrunnlagAsyncStatus.LASTER).contains(this)
+fun LasterGrunnlagAsyncStatus?.lasterGrunnlagAsync(): Boolean = UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled && this != null &&
+    listOf(LasterGrunnlagAsyncStatus.BESTILT, LasterGrunnlagAsyncStatus.LASTER).contains(this)
 
 data class LasterGrunnlagDetaljer(
     val status: LasterGrunnlagAsyncStatus,
@@ -36,8 +35,7 @@ data class LasterGrunnlagDetaljer(
     companion object {
         fun LasterGrunnlagDetaljer?.erBestilt() = this != null && status == LasterGrunnlagAsyncStatus.BESTILT
 
-        fun LasterGrunnlagDetaljer?.lasterGrunnlag() =
-            this != null && status.lasterGrunnlagAsync() && tidspunkt.isAfter(LocalDateTime.now().minusMinutes(2))
+        fun LasterGrunnlagDetaljer?.lasterGrunnlag() = this != null && status.lasterGrunnlagAsync() && tidspunkt.isAfter(LocalDateTime.now().minusMinutes(2))
     }
 }
 
@@ -88,15 +86,14 @@ class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
         update(lasterGrunnlagAsyncStatus, LasterGrunnlagAsyncStatus.FERDIG.name)
     }
 
-    fun hentFatteVedtakRevurderingsbarnInformasjon(): FatteVedtakRevurderingsbarn? =
-        try {
-            get(fatteVedtakRevurderingsbarnInformasjon)?.let {
-                commonObjectmapper.readValue<FatteVedtakRevurderingsbarn>(it)
-            }
-        } catch (e: Exception) {
-            secureLogger.warn(e) { "Feil ved henting av fatteVedtakRevurderingsbarnInformasjon" }
-            null
+    fun hentFatteVedtakRevurderingsbarnInformasjon(): FatteVedtakRevurderingsbarn? = try {
+        get(fatteVedtakRevurderingsbarnInformasjon)?.let {
+            commonObjectmapper.readValue<FatteVedtakRevurderingsbarn>(it)
         }
+    } catch (e: Exception) {
+        secureLogger.warn(e) { "Feil ved henting av fatteVedtakRevurderingsbarnInformasjon" }
+        null
+    }
 
     fun lagreFatteVedtakRevurderingsbarnInformasjon(
         behandlingId: Long,
@@ -143,10 +140,9 @@ class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
         vedtaksid?.let { update(følgerAutomatiskVedtak, it.toString()) }
     }
 
-    fun leggTilOpprettelseAvBehandlingFeilet(request: OpprettBehandlingRequest): MutableSet<OpprettBehandlingRequest> =
-        getOppprettelseAvBehandlingFeilet().apply {
-            add(request)
-        }
+    fun leggTilOpprettelseAvBehandlingFeilet(request: OpprettBehandlingRequest): MutableSet<OpprettBehandlingRequest> = getOppprettelseAvBehandlingFeilet().apply {
+        add(request)
+    }
 
     fun setOpprettelseAvFFBehandlingFeilet(value: String) = set(opprettelseAvFFBehandlingFeilet, value)
 
@@ -156,28 +152,25 @@ class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
 
     fun setOppdateringAvFFRollerFeilet(value: String) = set(oppdateringAvFFRollerFeilet, value)
 
-    fun getOppprettelseAvBehandlingFeilet(): MutableSet<OpprettBehandlingRequest> =
-        try {
-            get(opprettelseAvFFBehandlingFeilet)?.let {
-                commonObjectmapper.readValue<MutableSet<OpprettBehandlingRequest>>(it)
-            }
-        } catch (e: Exception) {
-            mutableSetOf()
-        } ?: mutableSetOf()
-
-    fun leggTilOppdateringAvFFRollerFeilet(request: OppdaterRollerRequest): MutableSet<OppdaterRollerRequest> =
-        getOppdateringAvFFRollerFeilet().apply {
-            add(request)
+    fun getOppprettelseAvBehandlingFeilet(): MutableSet<OpprettBehandlingRequest> = try {
+        get(opprettelseAvFFBehandlingFeilet)?.let {
+            commonObjectmapper.readValue<MutableSet<OpprettBehandlingRequest>>(it)
         }
+    } catch (e: Exception) {
+        mutableSetOf()
+    } ?: mutableSetOf()
 
-    fun getOppdateringAvFFRollerFeilet(): MutableSet<OppdaterRollerRequest> =
-        try {
-            get(oppdateringAvFFRollerFeilet)?.let {
-                commonObjectmapper.readValue<MutableSet<OppdaterRollerRequest>>(it)
-            }
-        } catch (e: Exception) {
-            mutableSetOf()
-        } ?: mutableSetOf()
+    fun leggTilOppdateringAvFFRollerFeilet(request: OppdaterRollerRequest): MutableSet<OppdaterRollerRequest> = getOppdateringAvFFRollerFeilet().apply {
+        add(request)
+    }
+
+    fun getOppdateringAvFFRollerFeilet(): MutableSet<OppdaterRollerRequest> = try {
+        get(oppdateringAvFFRollerFeilet)?.let {
+            commonObjectmapper.readValue<MutableSet<OppdaterRollerRequest>>(it)
+        }
+    } catch (e: Exception) {
+        mutableSetOf()
+    } ?: mutableSetOf()
 
     fun getFølgerAutomatiskVedtak(): Int? = get(følgerAutomatiskVedtak)?.toIntOrNull()
 
@@ -224,17 +217,16 @@ class BehandlingMetadataDoConverter : ImmutableType<BehandlingMetadataDo>(Behand
         p2: SessionFactoryImplementor?,
     ): Int = 0
 
-    override fun fromStringValue(sequence: CharSequence?): BehandlingMetadataDo? =
-        try {
-            sequence?.let { JacksonUtil.fromString(sequence as String, BehandlingMetadataDo::class.java) }
-        } catch (e: Exception) {
-            throw IllegalArgumentException(
-                String.format(
-                    "Could not transform the [%s] value to a Map!",
-                    sequence,
-                ),
-            )
-        }
+    override fun fromStringValue(sequence: CharSequence?): BehandlingMetadataDo? = try {
+        sequence?.let { JacksonUtil.fromString(sequence as String, BehandlingMetadataDo::class.java) }
+    } catch (e: Exception) {
+        throw IllegalArgumentException(
+            String.format(
+                "Could not transform the [%s] value to a Map!",
+                sequence,
+            ),
+        )
+    }
 }
 
 @Converter
@@ -247,19 +239,18 @@ open class ÅrsakConverter : AttributeConverter<VirkningstidspunktÅrsakstype?, 
 fun hentDefaultÅrsak(
     typeBehandling: TypeBehandling,
     vedtakstype: Vedtakstype,
-): VirkningstidspunktÅrsakstype? =
-    when (typeBehandling) {
-        TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> {
-            if (vedtakstype == Vedtakstype.ALDERSJUSTERING) {
-                VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING
-            } else if (vedtakstype != Vedtakstype.OPPHØR) {
-                VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
-            } else {
-                null
-            }
-        }
-
-        TypeBehandling.SÆRBIDRAG -> {
+): VirkningstidspunktÅrsakstype? = when (typeBehandling) {
+    TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> {
+        if (vedtakstype == Vedtakstype.ALDERSJUSTERING) {
+            VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING
+        } else if (vedtakstype != Vedtakstype.OPPHØR) {
+            VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+        } else {
             null
         }
     }
+
+    TypeBehandling.SÆRBIDRAG -> {
+        null
+    }
+}

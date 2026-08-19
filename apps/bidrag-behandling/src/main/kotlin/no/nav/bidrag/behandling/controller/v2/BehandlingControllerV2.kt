@@ -134,10 +134,10 @@ class BehandlingControllerV2(
             }
         return OppdatereInntektBegrunnelseRespons(
             oppdatertBegrunnelse =
-                OppdatereBegrunnelse(
-                    rolleid = begrunnelseRolle?.rolle?.id,
-                    nyBegrunnelse = begrunnelseRolle?.innhold ?: "",
-                ),
+            OppdatereBegrunnelse(
+                rolleid = begrunnelseRolle?.rolle?.id,
+                nyBegrunnelse = begrunnelseRolle?.innhold ?: "",
+            ),
         )
     }
 
@@ -176,34 +176,34 @@ class BehandlingControllerV2(
         val beregnetGebyrErEndret = gebyrService.rekalkulerGebyr(behandling)
         return OppdatereInntektResponse(
             inntekter =
-                behandling.tilInntektDtoV2(
-                    behandling.grunnlag.hentSisteAktiv(),
-                    inkluderHistoriskeInntekter = true,
-                ),
+            behandling.tilInntektDtoV2(
+                behandling.grunnlag.hentSisteAktiv(),
+                inkluderHistoriskeInntekter = true,
+            ),
             inntekterV2 = dtomapper.run { behandling.mapInntekterV2() },
             gebyr = dtomapper.run { behandling.mapGebyr() },
             gebyrV2 = dtomapper.run { behandling.mapGebyrV2() },
             gebyrV3 = dtomapper.run { behandling.mapGebyrV3() },
             beregnetGebyrErEndret = beregnetGebyrErEndret,
             beregnetInntekter =
-                behandling.roller
-                    .filter { it.ident == oppdatertInntekt?.ident?.verdi }
-                    .map {
-                        BeregnetInntekterDto(
-                            it.tilPersonident()!!,
-                            it.rolletype,
-                            behandling.hentBeregnetInntekterForRolle(it),
-                        )
-                    },
-            valideringsfeil = behandling.hentInntekterValideringsfeil(),
-            begrunnelse =
-                request.henteOppdatereBegrunnelse?.let {
-                    NotatService.henteInntektsnotat(
-                        // TODO: Fjerne setting av rolle til bidragsmottaker når frontend angir rolle for inntektsnotat
-                        behandling,
-                        it.rolleid ?: behandling.bidragsmottaker!!.id!!,
+            behandling.roller
+                .filter { it.ident == oppdatertInntekt?.ident?.verdi }
+                .map {
+                    BeregnetInntekterDto(
+                        it.tilPersonident()!!,
+                        it.rolletype,
+                        behandling.hentBeregnetInntekterForRolle(it),
                     )
                 },
+            valideringsfeil = behandling.hentInntekterValideringsfeil(),
+            begrunnelse =
+            request.henteOppdatereBegrunnelse?.let {
+                NotatService.henteInntektsnotat(
+                    // TODO: Fjerne setting av rolle til bidragsmottaker når frontend angir rolle for inntektsnotat
+                    behandling,
+                    it.rolleid ?: behandling.bidragsmottaker!!.id!!,
+                )
+            },
         )
     }
 
@@ -301,51 +301,51 @@ class BehandlingControllerV2(
             erLikForAlle = behandling.sammeVirkningstidspunktForAlle,
             rolleId = request.rolleId,
             oppdatertBegrunnelse =
-                if (notat.isEmpty() && behandling.erVirkningstidspunktLiktForAlle) {
-                    henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT)
-                } else {
-                    notat
-                },
+            if (notat.isEmpty() && behandling.erVirkningstidspunktLiktForAlle) {
+                henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT)
+            } else {
+                notat
+            },
             oppdatertBegrunnelseVurderingAvSkolegang =
-                if (rolle != null && rolle.stønadstype == Stønadstype.BIDRAG18AAR) {
-                    henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle)
-                } else {
-                    null
-                },
+            if (rolle != null && rolle.stønadstype == Stønadstype.BIDRAG18AAR) {
+                henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle)
+            } else {
+                null
+            },
             barn =
-                behandling.roller
-                    .filter {
-                        if (behandling.erForskudd()) {
-                            it.rolletype in listOf(Rolletype.BIDRAGSMOTTAKER, Rolletype.BARN)
+            behandling.roller
+                .filter {
+                    if (behandling.erForskudd()) {
+                        it.rolletype in listOf(Rolletype.BIDRAGSMOTTAKER, Rolletype.BARN)
+                    } else {
+                        it.rolletype == Rolletype.BARN
+                    }
+                }.map {
+                    OppdaterVirkningstidspunktBegrunnelseBarnResponse(
+                        rolleId = it.id,
+                        oppdatertBegrunnelse =
+                        henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT, it).ifEmpty {
+                            if (behandling.erVirkningstidspunktLiktForAlle) {
+                                henteNotatinnhold(
+                                    behandling,
+                                    NotatType.VIRKNINGSTIDSPUNKT,
+                                )
+                            } else {
+                                ""
+                            }
+                        },
+                        oppdatertBegrunnelseVurderingAvSkolegang =
+                        if (it.stønadstype == Stønadstype.BIDRAG18AAR) {
+                            henteNotatinnhold(
+                                behandling,
+                                NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                                it,
+                            )
                         } else {
-                            it.rolletype == Rolletype.BARN
-                        }
-                    }.map {
-                        OppdaterVirkningstidspunktBegrunnelseBarnResponse(
-                            rolleId = it.id,
-                            oppdatertBegrunnelse =
-                                henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT, it).ifEmpty {
-                                    if (behandling.erVirkningstidspunktLiktForAlle) {
-                                        henteNotatinnhold(
-                                            behandling,
-                                            NotatType.VIRKNINGSTIDSPUNKT,
-                                        )
-                                    } else {
-                                        ""
-                                    }
-                                },
-                            oppdatertBegrunnelseVurderingAvSkolegang =
-                                if (it.stønadstype == Stønadstype.BIDRAG18AAR) {
-                                    henteNotatinnhold(
-                                        behandling,
-                                        NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
-                                        it,
-                                    )
-                                } else {
-                                    null
-                                },
-                        )
-                    },
+                            null
+                        },
+                    )
+                },
             valideringsfeil = valideringsfeil.toList(),
         )
     }
@@ -548,18 +548,17 @@ class BehandlingControllerV2(
         @Valid
         @RequestBody(required = true)
         opprettBehandling: OpprettBehandlingRequest,
-    ): OpprettBehandlingResponse =
-        behandlingService.opprettBehandling(
-            // TODO: Dette er midlertidlig ved testing av særbidrag i prod hvor kategori ikke er satt. Skal fjernes før vi skrur på for alle
-            opprettBehandling.copy(
-                kategori =
-                    if (opprettBehandling.tilType() == TypeBehandling.SÆRBIDRAG && opprettBehandling.kategori == null) {
-                        OpprettKategoriRequestDto(kategori = Særbidragskategori.ANNET.name, "Testing av særbidrag")
-                    } else {
-                        opprettBehandling.kategori
-                    },
-            ),
-        )
+    ): OpprettBehandlingResponse = behandlingService.opprettBehandling(
+        // TODO: Dette er midlertidlig ved testing av særbidrag i prod hvor kategori ikke er satt. Skal fjernes før vi skrur på for alle
+        opprettBehandling.copy(
+            kategori =
+            if (opprettBehandling.tilType() == TypeBehandling.SÆRBIDRAG && opprettBehandling.kategori == null) {
+                OpprettKategoriRequestDto(kategori = Særbidragskategori.ANNET.name, "Testing av særbidrag")
+            } else {
+                opprettBehandling.kategori
+            },
+        ),
+    )
 
     @Suppress("unused")
     @PutMapping("/behandling/{behandlingId}/roller")

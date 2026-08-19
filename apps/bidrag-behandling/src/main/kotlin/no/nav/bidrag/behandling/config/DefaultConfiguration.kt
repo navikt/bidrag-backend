@@ -62,14 +62,13 @@ import javax.sql.DataSource
 @EnableSchedulerLock(defaultLockAtMostFor = "30m")
 class DefaultConfiguration {
     @Bean
-    fun lockProvider(dataSource: DataSource): LockProvider =
-        JdbcTemplateLockProvider(
-            JdbcTemplateLockProvider.Configuration
-                .builder()
-                .withJdbcTemplate(JdbcTemplate(dataSource))
-                .usingDbTime()
-                .build(),
-        )
+    fun lockProvider(dataSource: DataSource): LockProvider = JdbcTemplateLockProvider(
+        JdbcTemplateLockProvider.Configuration
+            .builder()
+            .withJdbcTemplate(JdbcTemplate(dataSource))
+            .usingDbTime()
+            .build(),
+    )
 
     @Bean
     fun timedAspect(registry: MeterRegistry): TimedAspect = TimedAspect(registry)

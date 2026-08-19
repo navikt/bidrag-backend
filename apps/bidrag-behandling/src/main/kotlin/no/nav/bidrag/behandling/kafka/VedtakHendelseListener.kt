@@ -191,16 +191,16 @@ class VedtakHendelseListener(
                         saksnummer = sak,
                         enhet = opprettForSøknad.enhet,
                         behandlingInfo =
-                            BehandlingInfoDto(
-                                soknadId = opprettForSøknad.søknadsid.toString(),
-                                vedtakId = vedtak.id.toString(),
-                                behandlingId = behandling.id!!.toString(),
-                                soknadFra = opprettForSøknad.søktAvType,
-                                stonadType = opprettForSøknad.behandlingstema?.tilStønadstype() ?: vedtak.stønadstype,
-                                engangsBelopType = if (vedtak.stønadstype == null) vedtak.engangsbeløptype else null,
-                                erFattetBeregnet = true,
-                                vedtakType = opprettForSøknad.behandlingstype?.tilVedtakstype() ?: vedtak.type,
-                            ),
+                        BehandlingInfoDto(
+                            soknadId = opprettForSøknad.søknadsid.toString(),
+                            vedtakId = vedtak.id.toString(),
+                            behandlingId = behandling.id!!.toString(),
+                            soknadFra = opprettForSøknad.søktAvType,
+                            stonadType = opprettForSøknad.behandlingstema?.tilStønadstype() ?: vedtak.stønadstype,
+                            engangsBelopType = if (vedtak.stønadstype == null) vedtak.engangsbeløptype else null,
+                            erFattetBeregnet = true,
+                            vedtakType = opprettForSøknad.behandlingstype?.tilVedtakstype() ?: vedtak.type,
+                        ),
                         roller = behandling.tilForsendelseRolleDto(sak, opprettForSøknad),
                     ),
                 )

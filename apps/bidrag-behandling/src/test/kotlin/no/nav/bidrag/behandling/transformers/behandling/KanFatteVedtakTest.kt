@@ -96,10 +96,10 @@ class KanFatteVedtakTest {
         val behandling =
             opprettBehandlingSimple(
                 barn =
-                    listOf(
-                        testdataBarn1.ident to VIRKNINGSTIDSPUNKT,
-                        testdataBarn2.ident to ANNEN_VIRKNINGSTIDSPUNKT,
-                    ),
+                listOf(
+                    testdataBarn1.ident to VIRKNINGSTIDSPUNKT,
+                    testdataBarn2.ident to ANNEN_VIRKNINGSTIDSPUNKT,
+                ),
             )
 
         disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
@@ -250,14 +250,14 @@ class KanFatteVedtakTest {
         forholdsmessigFordeling = null,
         privatAvtaleAndreBarnIdenter = privatAvtaleAndreBarnIdenter,
         roller =
-            buildList {
-                if (medBidragspliktig) {
-                    add(RolleSimple(Rolletype.BIDRAGSPLIKTIG, testdataBP.ident, virkningstidspunkt))
-                }
-                barn.forEach { (ident, barnVirkningstidspunkt) ->
-                    add(RolleSimple(Rolletype.BARN, ident, barnVirkningstidspunkt))
-                }
-            },
+        buildList {
+            if (medBidragspliktig) {
+                add(RolleSimple(Rolletype.BIDRAGSPLIKTIG, testdataBP.ident, virkningstidspunkt))
+            }
+            barn.forEach { (ident, barnVirkningstidspunkt) ->
+                add(RolleSimple(Rolletype.BARN, ident, barnVirkningstidspunkt))
+            }
+        },
     )
 
     private fun opprettSak(
@@ -266,38 +266,37 @@ class KanFatteVedtakTest {
     ) = BidragssakDto(
         eierfogd = Enhetsnummer(BEHANDLER_ENHET),
         saksnummer =
-            no.nav.bidrag.domene.sak
-                .Saksnummer(saksnummer),
+        no.nav.bidrag.domene.sak
+            .Saksnummer(saksnummer),
         saksstatus = Bidragssakstatus.IN,
         kategori = Sakskategori.NASJONAL,
         opprettetDato = SAK_OPPRETTET_DATO,
         levdeAdskilt = false,
         ukjentPart = false,
         roller =
-            buildList {
+        buildList {
+            add(
+                RolleDto(
+                    fødselsnummer = Personident(testdataBP.ident),
+                    type = Rolletype.BIDRAGSPLIKTIG,
+                    rollehistorikk = emptyList(),
+                ),
+            )
+            barnIdenter.forEach { ident ->
                 add(
                     RolleDto(
-                        fødselsnummer = Personident(testdataBP.ident),
-                        type = Rolletype.BIDRAGSPLIKTIG,
+                        fødselsnummer = Personident(ident),
+                        type = Rolletype.BARN,
                         rollehistorikk = emptyList(),
                     ),
                 )
-                barnIdenter.forEach { ident ->
-                    add(
-                        RolleDto(
-                            fødselsnummer = Personident(ident),
-                            type = Rolletype.BARN,
-                            rollehistorikk = emptyList(),
-                        ),
-                    )
-                }
-            },
+            }
+        },
     )
 
-    private fun opprettLøpendeBidragssakerResponse(vararg bidragssaker: LøpendeBidragssak) =
-        LøpendeBidragssakerResponse(
-            bidragssakerListe = bidragssaker.toList(),
-        )
+    private fun opprettLøpendeBidragssakerResponse(vararg bidragssaker: LøpendeBidragssak) = LøpendeBidragssakerResponse(
+        bidragssakerListe = bidragssaker.toList(),
+    )
 
     private fun opprettLøpendeBidragssak(
         saksnummer: String,
@@ -306,8 +305,8 @@ class KanFatteVedtakTest {
     ) = LøpendeBidragssak(
         valutakode = valutakode,
         sak =
-            no.nav.bidrag.domene.sak
-                .Saksnummer(saksnummer),
+        no.nav.bidrag.domene.sak
+            .Saksnummer(saksnummer),
         kravhaver = Personident(testdataBP.ident),
         type = stønadstype,
         løpendeBeløp = BigDecimal.ONE,

@@ -884,36 +884,35 @@ class AktivBoforholdSivilstandGrunnlagMappingTest : AktivGrunnlagTestFelles() {
             resultat.grunnlag shouldHaveSize 2
         }
 
-        fun opprettSivilstandGrunnlag(behandling: Behandling) =
-            Grunnlag(
-                erBearbeidet = false,
-                rolle = behandling.bidragsmottaker!!,
-                type = Grunnlagsdatatype.SIVILSTAND,
-                data =
-                    commonObjectmapper.writeValueAsString(
-                        setOf(
-                            SivilstandGrunnlagDto(
-                                personId = "213",
-                                type = SivilstandskodePDL.SKILT,
-                                gyldigFom = LocalDate.of(2005, 1, 1),
-                                historisk = true,
-                                bekreftelsesdato = LocalDate.now(),
-                                master = "PDL",
-                                registrert = LocalDateTime.now(),
-                            ),
-                            SivilstandGrunnlagDto(
-                                personId = "213",
-                                type = SivilstandskodePDL.GIFT,
-                                gyldigFom = LocalDate.of(2022, 1, 1),
-                                historisk = false,
-                                bekreftelsesdato = LocalDate.now(),
-                                master = "PDL",
-                                registrert = LocalDateTime.now(),
-                            ),
-                        ),
+        fun opprettSivilstandGrunnlag(behandling: Behandling) = Grunnlag(
+            erBearbeidet = false,
+            rolle = behandling.bidragsmottaker!!,
+            type = Grunnlagsdatatype.SIVILSTAND,
+            data =
+            commonObjectmapper.writeValueAsString(
+                setOf(
+                    SivilstandGrunnlagDto(
+                        personId = "213",
+                        type = SivilstandskodePDL.SKILT,
+                        gyldigFom = LocalDate.of(2005, 1, 1),
+                        historisk = true,
+                        bekreftelsesdato = LocalDate.now(),
+                        master = "PDL",
+                        registrert = LocalDateTime.now(),
                     ),
-                behandling = behandling,
-                innhentet = LocalDateTime.now(),
-            )
+                    SivilstandGrunnlagDto(
+                        personId = "213",
+                        type = SivilstandskodePDL.GIFT,
+                        gyldigFom = LocalDate.of(2022, 1, 1),
+                        historisk = false,
+                        bekreftelsesdato = LocalDate.now(),
+                        master = "PDL",
+                        registrert = LocalDateTime.now(),
+                    ),
+                ),
+            ),
+            behandling = behandling,
+            innhentet = LocalDateTime.now(),
+        )
     }
 }

@@ -165,37 +165,36 @@ class VedtakService(
                 vedtak.virkningstidspunkt?.toYearMonth()
             }
 
-        fun VedtakDto.tilPåklagetVedtaksliste() =
-            if (stønadsendringListe.isEmpty()) {
-                val kravhaver = engangsbeløpListe.first().kravhaver
-                setOf(
+        fun VedtakDto.tilPåklagetVedtaksliste() = if (stønadsendringListe.isEmpty()) {
+            val kravhaver = engangsbeløpListe.first().kravhaver
+            setOf(
+                PåklagetVedtak(
+                    vedtaksid,
+                    kravhaver,
+                    justerVedtakstidspunktVedtak().vedtakstidspunkt!!,
+                    virkningstidspunkt,
+                    type,
+                    BeregnTil.INNEVÆRENDE_MÅNED,
+                ),
+            )
+        } else {
+            stønadsendringListe
+                .map { se ->
+                    val virkningstidspunktGrunnlag = vedtak.finnVirkningstidspunkt(se)
                     PåklagetVedtak(
-                        vedtaksid,
-                        kravhaver,
+                        vedtak.vedtaksid,
+                        se.kravhaver,
                         justerVedtakstidspunktVedtak().vedtakstidspunkt!!,
-                        virkningstidspunkt,
+                        se.periodeListe.takeIfNotNullOrEmpty {
+                            finnVirkningstidspunktForStønad(
+                                se.tilStønadsid(),
+                            )
+                        },
                         type,
-                        BeregnTil.INNEVÆRENDE_MÅNED,
-                    ),
-                )
-            } else {
-                stønadsendringListe
-                    .map { se ->
-                        val virkningstidspunktGrunnlag = vedtak.finnVirkningstidspunkt(se)
-                        PåklagetVedtak(
-                            vedtak.vedtaksid,
-                            se.kravhaver,
-                            justerVedtakstidspunktVedtak().vedtakstidspunkt!!,
-                            se.periodeListe.takeIfNotNullOrEmpty {
-                                finnVirkningstidspunktForStønad(
-                                    se.tilStønadsid(),
-                                )
-                            },
-                            type,
-                            virkningstidspunktGrunnlag?.innhold?.beregnTil ?: BeregnTil.INNEVÆRENDE_MÅNED,
-                        )
-                    }.toSet()
-            }
+                        virkningstidspunktGrunnlag?.innhold?.beregnTil ?: BeregnTil.INNEVÆRENDE_MÅNED,
+                    )
+                }.toSet()
+        }
 
         if (refererTilVedtakId.isNotEmpty()) {
             return refererTilVedtakId
@@ -500,13 +499,13 @@ class VedtakService(
         val requestDelvedtak =
             beregning.copy(
                 delvedtak =
-                    behandlingTilVedtakMapping.opprettVedtakRequestDelvedtakV2(
-                        behandling,
-                        beregning.saker,
-                        request,
-                        beregning.beregning,
-                        klagevedtakErEnesteVedtak,
-                    ),
+                behandlingTilVedtakMapping.opprettVedtakRequestDelvedtakV2(
+                    behandling,
+                    beregning.saker,
+                    request,
+                    beregning.beregning,
+                    klagevedtakErEnesteVedtak,
+                ),
             )
 
         val endeligVedtakOrkestrering =
@@ -541,11 +540,11 @@ class VedtakService(
                                 behandlingsid = behandling.id!!,
                                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                                 resultat =
-                                    FattetVedtak(
-                                        vedtaksid = response.vedtaksid,
-                                        vedtakstype = delvedtak.request.type,
-                                        referanse = delvedtak.request.unikReferanse ?: "ukjent",
-                                    ),
+                                FattetVedtak(
+                                    vedtaksid = response.vedtaksid,
+                                    vedtakstype = delvedtak.request.type,
+                                    referanse = delvedtak.request.unikReferanse ?: "ukjent",
+                                ),
                             )
                         }
 
@@ -719,11 +718,11 @@ class VedtakService(
                 behandlingsid = behandling.id!!,
                 fattetAvEnhet = enhet ?: behandling.behandlerEnhet,
                 resultat =
-                    FattetVedtak(
-                        vedtaksid = responseInnkreving.vedtaksid,
-                        vedtakstype = innkrevingRequest.type,
-                        referanse = innkrevingRequest.unikReferanse ?: "ukjent",
-                    ),
+                FattetVedtak(
+                    vedtaksid = responseInnkreving.vedtaksid,
+                    vedtakstype = innkrevingRequest.type,
+                    referanse = innkrevingRequest.unikReferanse ?: "ukjent",
+                ),
             )
         }
     }
@@ -808,11 +807,11 @@ class VedtakService(
                         behandlingsid = behandling.id!!,
                         fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                         resultat =
-                            FattetVedtak(
-                                vedtaksid = response.vedtaksid,
-                                vedtakstype = vedtakRequest.type,
-                                referanse = vedtakRequest.unikReferanse ?: "ukjent",
-                            ),
+                        FattetVedtak(
+                            vedtaksid = response.vedtaksid,
+                            vedtakstype = vedtakRequest.type,
+                            referanse = vedtakRequest.unikReferanse ?: "ukjent",
+                        ),
                     )
                     val aldersjusteringBeregnet =
                         vedtakRequest.type == Vedtakstype.ALDERSJUSTERING &&
@@ -892,19 +891,19 @@ class VedtakService(
             }.let { vedtakRequest ->
                 vedtakRequest.copy(
                     requests =
-                        vedtakRequest.requests.map {
-                            val erAvvisning = it.stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST }
-                            it.copy(
-                                innkrevingUtsattTilDato =
-                                    if (behandling.skalInnkrevingKunneUtsettes() && !erAvvisning) {
-                                        request?.innkrevingUtsattAntallDager?.let {
-                                            LocalDate.now().plusDays(it)
-                                        }
-                                    } else {
-                                        null
-                                    },
-                            )
-                        },
+                    vedtakRequest.requests.map {
+                        val erAvvisning = it.stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST }
+                        it.copy(
+                            innkrevingUtsattTilDato =
+                            if (behandling.skalInnkrevingKunneUtsettes() && !erAvvisning) {
+                                request?.innkrevingUtsattAntallDager?.let {
+                                    LocalDate.now().plusDays(it)
+                                }
+                            } else {
+                                null
+                            },
+                        )
+                    },
                 )
             }
     }
@@ -950,22 +949,20 @@ class VedtakService(
         }
     }
 
-    private fun Behandling.vedtakAlleredeFattet(): Nothing =
-        throw HttpClientErrorException(
-            HttpStatus.BAD_REQUEST,
-            "Vedtak er allerede fattet for behandling $id med vedtakId $vedtaksid",
-        )
+    private fun Behandling.vedtakAlleredeFattet(): Nothing = throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Vedtak er allerede fattet for behandling $id med vedtakId $vedtaksid",
+    )
 
     private fun fatteVedtak(
         request: OpprettVedtakRequestDto,
         simuler: Boolean = false,
-    ): OpprettVedtakResponseDto =
-        if (simuler) {
-            OpprettVedtakResponseDto(opprettSimulerVedtaksid(), emptyList())
-        } else {
-            vedtakConsumer!!.fatteVedtak(request)
+    ): OpprettVedtakResponseDto = if (simuler) {
+        OpprettVedtakResponseDto(opprettSimulerVedtaksid(), emptyList())
+    } else {
+        vedtakConsumer!!.fatteVedtak(request)
 //            vedtakLocalConsumer!!.fatteVedtak(request)
-        }
+    }
 
     private fun opprettSimulerVedtaksid() = Math.random().times(100000).toInt()
 }

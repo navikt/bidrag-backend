@@ -70,15 +70,15 @@ class ValiderBeregning(
                                 grunnlagSomMåBekreftes.type,
                                 rolle = grunnlagSomMåBekreftes.rolle.tilDto(),
                                 husstandsmedlem =
-                                    (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
-                                        husstandsmedlem.find {
-                                            it.ident != null &&
-                                                it.erSammePerson(
-                                                    grunnlagSomMåBekreftes.gjelderBarnRolle?.ident ?: grunnlagSomMåBekreftes.gjelder!!,
-                                                    grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
-                                                )
-                                        }
-                                    },
+                                (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
+                                    husstandsmedlem.find {
+                                        it.ident != null &&
+                                            it.erSammePerson(
+                                                grunnlagSomMåBekreftes.gjelderBarnRolle?.ident ?: grunnlagSomMåBekreftes.gjelder!!,
+                                                grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
+                                            )
+                                    }
+                                },
                             )
                         }.toSet()
                 val harFeil =
@@ -230,13 +230,13 @@ class ValiderBeregning(
                 BoforholdPeriodeseringsfeil(
                     manglerPerioder = true,
                     husstandsmedlem =
-                        Husstandsmedlem(
-                            this,
-                            ident = søknadsbarn.first().ident,
-                            kilde = Kilde.OFFENTLIG,
-                            navn = søknadsbarn.first().navn ?: "",
-                            fødselsdato = søknadsbarn.first().fødselsdato,
-                        ),
+                    Husstandsmedlem(
+                        this,
+                        ident = søknadsbarn.first().ident,
+                        kilde = Kilde.OFFENTLIG,
+                        navn = søknadsbarn.first().navn ?: "",
+                        fødselsdato = søknadsbarn.first().fødselsdato,
+                    ),
                 ),
             )
         }
@@ -251,19 +251,19 @@ class ValiderBeregning(
                         grunnlagSomMåBekreftes.type,
                         rolle = grunnlagSomMåBekreftes.rolle.tilDto(),
                         underholdskostnad =
-                            (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BARNETILSYN).ifTrue {
-                                underholdskostnader.find { u -> u.rolle != null }
-                            },
+                        (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BARNETILSYN).ifTrue {
+                            underholdskostnader.find { u -> u.rolle != null }
+                        },
                         husstandsmedlem =
-                            (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
-                                husstandsmedlem.find {
-                                    it.ident != null && gjelder != null &&
-                                        it.erSammePerson(
-                                            gjelder,
-                                            grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
-                                        )
-                                }
-                            },
+                        (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
+                            husstandsmedlem.find {
+                                it.ident != null && gjelder != null &&
+                                    it.erSammePerson(
+                                        gjelder,
+                                        grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
+                                    )
+                            }
+                        },
                     )
                 }.toSet()
         val samværValideringsfeil = samvær.mapValideringsfeil()
@@ -306,17 +306,16 @@ class ValiderBeregning(
         }
     }
 
-    fun Behandling.validerForBeregningAldersjusteringBidrag(): BeregningValideringsfeil? =
-        BeregningValideringsfeil(
-            virkningstidspunkt =
-                søknadsbarn
-                    .mapNotNull {
-                        VirkningstidspunktFeilV2Dto(
-                            gjelder = it.tilDto(),
-                            måVelgeVedtakForBeregning = it.grunnlagFraVedtak == null,
-                        ).takeIf { it.harFeil }
-                    }.takeIf { it.isNotEmpty() },
-        ).takeIf { it.virkningstidspunkt != null }
+    fun Behandling.validerForBeregningAldersjusteringBidrag(): BeregningValideringsfeil? = BeregningValideringsfeil(
+        virkningstidspunkt =
+        søknadsbarn
+            .mapNotNull {
+                VirkningstidspunktFeilV2Dto(
+                    gjelder = it.tilDto(),
+                    måVelgeVedtakForBeregning = it.grunnlagFraVedtak == null,
+                ).takeIf { it.harFeil }
+            }.takeIf { it.isNotEmpty() },
+    ).takeIf { it.virkningstidspunkt != null }
 
     fun Behandling.validerForBeregningSærbidrag() {
         val feil =
@@ -343,13 +342,13 @@ class ValiderBeregning(
                         BoforholdPeriodeseringsfeil(
                             manglerPerioder = true,
                             husstandsmedlem =
-                                Husstandsmedlem(
-                                    this,
-                                    ident = søknadsbarn.first().ident,
-                                    kilde = Kilde.OFFENTLIG,
-                                    navn = søknadsbarn.first().navn ?: "",
-                                    fødselsdato = søknadsbarn.first().fødselsdato,
-                                ),
+                            Husstandsmedlem(
+                                this,
+                                ident = søknadsbarn.first().ident,
+                                kilde = Kilde.OFFENTLIG,
+                                navn = søknadsbarn.first().navn ?: "",
+                                fødselsdato = søknadsbarn.first().fødselsdato,
+                            ),
                         ),
                     )
                 }
@@ -361,15 +360,15 @@ class ValiderBeregning(
                                 grunnlagSomMåBekreftes.type,
                                 rolle = grunnlagSomMåBekreftes.rolle.tilDto(),
                                 husstandsmedlem =
-                                    (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
-                                        husstandsmedlem.find {
-                                            it.ident != null &&
-                                                it.erSammePerson(
-                                                    grunnlagSomMåBekreftes.gjelderBarnRolle?.ident ?: grunnlagSomMåBekreftes.gjelder!!,
-                                                    grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
-                                                )
-                                        }
-                                    },
+                                (grunnlagSomMåBekreftes.type == Grunnlagsdatatype.BOFORHOLD).ifTrue {
+                                    husstandsmedlem.find {
+                                        it.ident != null &&
+                                            it.erSammePerson(
+                                                grunnlagSomMåBekreftes.gjelderBarnRolle?.ident ?: grunnlagSomMåBekreftes.gjelder!!,
+                                                grunnlagSomMåBekreftes.gjelderBarnRolle?.stønadstype,
+                                            )
+                                    }
+                                },
                             )
                         }.toSet()
                 val harFeil =

@@ -19,60 +19,54 @@ import no.nav.bidrag.transport.person.PersonDto
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 
-fun hentLøpendeBidrag(bp: Personident): LøpendeBidragssakerResponse? =
-    try {
-        AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp))
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
-        null
-    }
+fun hentLøpendeBidrag(bp: Personident): LøpendeBidragssakerResponse? = try {
+    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp))
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
+    null
+}
 
-fun hentSammenknytningerHovedsøknad(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? =
-    try {
-        AppContext.getBean(BidragBBMConsumer::class.java).finnSammenknytningerHovedsøknad(søknadsid)
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $søknadsid" }
-        null
-    }
+fun hentSammenknytningerHovedsøknad(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
+    AppContext.getBean(BidragBBMConsumer::class.java).finnSammenknytningerHovedsøknad(søknadsid)
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $søknadsid" }
+    null
+}
 
-fun hentStønad(req: HentStønadHistoriskRequest): StønadDto? =
-    try {
-        AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentHistoriskeStønader(req)
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $req" }
-        null
-    }
+fun hentStønad(req: HentStønadHistoriskRequest): StønadDto? = try {
+    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentHistoriskeStønader(req)
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $req" }
+    null
+}
 
-fun hentAlleStønaderForBidragspliktig(bp: Personident): SkyldnerStønaderResponse? =
-    try {
-        AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentAlleStønaderForBidragspliktig(bp)
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
-        null
-    }
+fun hentAlleStønaderForBidragspliktig(bp: Personident): SkyldnerStønaderResponse? = try {
+    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentAlleStønaderForBidragspliktig(bp)
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
+    null
+}
 
-fun hentVedtak(vedtaksid: Int?): VedtakDto? =
-    try {
-        vedtaksid.takeIfNotNullOrEmpty {
-            AppContext.getBean(BidragVedtakConsumer::class.java).hentVedtak(it)
-        }
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av vedtak $vedtaksid" }
-        if (e is HttpStatusCodeException) {
-            throw e
-        }
-        null
+fun hentVedtak(vedtaksid: Int?): VedtakDto? = try {
+    vedtaksid.takeIfNotNullOrEmpty {
+        AppContext.getBean(BidragVedtakConsumer::class.java).hentVedtak(it)
     }
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av vedtak $vedtaksid" }
+    if (e is HttpStatusCodeException) {
+        throw e
+    }
+    null
+}
 
-fun hentPerson(ident: String?): PersonDto? =
-    try {
-        ident.takeIfNotNullOrEmpty {
-            AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
-        }
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-        null
+fun hentPerson(ident: String?): PersonDto? = try {
+    ident.takeIfNotNullOrEmpty {
+        AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
     }
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
+    null
+}
 
 fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
@@ -84,15 +78,14 @@ fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: P
 data class PersonService(
     val personConsumer: BidragPersonConsumer,
 ) {
-    fun hentPerson(ident: String?): PersonDto? =
-        try {
-            ident.takeIfNotNullOrEmpty {
-                personConsumer.hentPerson(it)
-            }
-        } catch (e: Exception) {
-            secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-            null
+    fun hentPerson(ident: String?): PersonDto? = try {
+        ident.takeIfNotNullOrEmpty {
+            personConsumer.hentPerson(it)
         }
+    } catch (e: Exception) {
+        secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
+        null
+    }
 
     fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 

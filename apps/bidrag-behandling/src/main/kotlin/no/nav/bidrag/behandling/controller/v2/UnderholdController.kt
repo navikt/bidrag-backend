@@ -44,8 +44,8 @@ class UnderholdController(
     @DeleteMapping("/behandling/{behandlingsid}/underhold")
     @Operation(
         description =
-            "Sletter fra underholdskostnad i behandling. Returnerer oppdaterte underholdsobjekt. Objektet " +
-                " vil være null dersom barn slettes.",
+        "Sletter fra underholdskostnad i behandling. Returnerer oppdaterte underholdsobjekt. Objektet " +
+            " vil være null dersom barn slettes.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -86,7 +86,7 @@ class UnderholdController(
     @PutMapping("/behandling/{behandlingsid}/underhold/{underholdsid}/barnetilsyn")
     @Operation(
         description =
-            "Oppdatere stønad til barnetilsyn for underholdskostnad i behandling. Returnerer oppdatert element.",
+        "Oppdatere stønad til barnetilsyn for underholdskostnad i behandling. Returnerer oppdatert element.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -124,8 +124,8 @@ class UnderholdController(
     @PutMapping("/behandling/{behandlingsid}/underhold/{underholdsid}/faktisk_tilsynsutgift")
     @Operation(
         description =
-            "Oppdatere faktisk tilsynsutgift for underholdskostnad i behandling. Returnerer oppdatert " +
-                "element.",
+        "Oppdatere faktisk tilsynsutgift for underholdskostnad i behandling. Returnerer oppdatert " +
+            "element.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -158,7 +158,7 @@ class UnderholdController(
     @PutMapping("/behandling/{behandlingsid}/underhold/{underholdsid}/tilleggsstonad")
     @Operation(
         description =
-            "Oppdatere tilleggsstønad for underholdskostnad i behandling. Returnerer oppdatert element.",
+        "Oppdatere tilleggsstønad for underholdskostnad i behandling. Returnerer oppdatert element.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -273,15 +273,14 @@ class UnderholdController(
         )
     }
 
-    private fun Underholdskostnad.tilRespons() =
-        dtomapper.run {
-            OppdatereUnderholdResponse(
-                faktiskTilsynsutgift = faktiskeTilsynsutgifter.tilFaktiskeTilsynsutgiftDtos(),
-                stønadTilBarnetilsyn = barnetilsyn.tilStønadTilBarnetilsynDtos(),
-                tilleggsstønad = tilleggsstønad.tilTilleggsstønadDtos(),
-                beregnetUnderholdskostnader = dtomapper.run { behandling.tilBeregnetUnderholdskostnad() },
-                valideringsfeil = behandling.underholdskostnader.valider(),
-                underholdId = id!!,
-            )
-        }
+    private fun Underholdskostnad.tilRespons() = dtomapper.run {
+        OppdatereUnderholdResponse(
+            faktiskTilsynsutgift = faktiskeTilsynsutgifter.tilFaktiskeTilsynsutgiftDtos(),
+            stønadTilBarnetilsyn = barnetilsyn.tilStønadTilBarnetilsynDtos(),
+            tilleggsstønad = tilleggsstønad.tilTilleggsstønadDtos(),
+            beregnetUnderholdskostnader = dtomapper.run { behandling.tilBeregnetUnderholdskostnad() },
+            valideringsfeil = behandling.underholdskostnader.valider(),
+            underholdId = id!!,
+        )
+    }
 }

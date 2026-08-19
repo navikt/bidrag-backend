@@ -87,10 +87,10 @@ class PrivatAvtaleServiceTest {
                 avtaleDato = LocalDate.parse("2024-01-01"),
                 skalIndeksreguleres = false,
                 oppdaterPeriode =
-                    OppdaterePrivatAvtalePeriodeDto(
-                        periode = DatoperiodeDto(LocalDate.parse("2024-01-01"), null),
-                        beløp = BigDecimal(1000),
-                    ),
+                OppdaterePrivatAvtalePeriodeDto(
+                    periode = DatoperiodeDto(LocalDate.parse("2024-01-01"), null),
+                    beløp = BigDecimal(1000),
+                ),
             ),
         )
 
@@ -134,11 +134,11 @@ class PrivatAvtaleServiceTest {
                 avtaleDato = LocalDate.parse("2024-01-01"),
                 skalIndeksreguleres = false,
                 oppdaterPeriode =
-                    OppdaterePrivatAvtalePeriodeDto(
-                        id = periode.id,
-                        periode = DatoperiodeDto(LocalDate.parse("2024-07-01"), null),
-                        beløp = BigDecimal(2000),
-                    ),
+                OppdaterePrivatAvtalePeriodeDto(
+                    id = periode.id,
+                    periode = DatoperiodeDto(LocalDate.parse("2024-07-01"), null),
+                    beløp = BigDecimal(2000),
+                ),
             ),
         )
 

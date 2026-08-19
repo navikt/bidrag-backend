@@ -86,11 +86,10 @@ class VirkningstidspunktController(
     )
     fun hentManuelleVedtak(
         @PathVariable behandlingsid: Long,
-    ): ManuellVedtakResponse =
-        virkningstidspunktService.hentManuelleVedtakForBehandling(behandlingsid).let {
-            secureLogger.info { "Hentet manuelle vedtak for behandling $behandlingsid: $it" }
-            ManuellVedtakResponse(it)
-        }
+    ): ManuellVedtakResponse = virkningstidspunktService.hentManuelleVedtakForBehandling(behandlingsid).let {
+        secureLogger.info { "Hentet manuelle vedtak for behandling $behandlingsid: $it" }
+        ManuellVedtakResponse(it)
+    }
 
     @PostMapping("/behandling/{behandlingsid}/manuelleVedtak")
     @Operation(
@@ -118,10 +117,9 @@ class VirkningstidspunktController(
         )
     }
 
-    private fun hentBeregning(behandling: Behandling) =
-        try {
-            dtomapper.beregningService!!.beregneBidrag(behandling)
-        } catch (e: Exception) {
-            ResultatBidragsberegning(vedtakstype = behandling.vedtakstype)
-        }
+    private fun hentBeregning(behandling: Behandling) = try {
+        dtomapper.beregningService!!.beregneBidrag(behandling)
+    } catch (e: Exception) {
+        ResultatBidragsberegning(vedtakstype = behandling.vedtakstype)
+    }
 }

@@ -24,74 +24,68 @@ import no.nav.bidrag.transport.behandling.inntekt.request.UtvidetBarnetrygd
 import java.math.BigDecimal
 import java.time.LocalDate
 
-fun List<AinntektspostDto>.tilAinntektsposter(rolle: Rolle) =
-    this.map {
-        Ainntektspost(
-            beløp = it.beløp,
-            beskrivelse = it.beskrivelse,
-            opptjeningsperiodeFra = it.opptjeningsperiodeFra,
-            opptjeningsperiodeTil = it.opptjeningsperiodeTil,
-            utbetalingsperiode = it.utbetalingsperiode,
-            referanse = opprettAinntektGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-            etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
-            etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
-        )
-    }
+fun List<AinntektspostDto>.tilAinntektsposter(rolle: Rolle) = this.map {
+    Ainntektspost(
+        beløp = it.beløp,
+        beskrivelse = it.beskrivelse,
+        opptjeningsperiodeFra = it.opptjeningsperiodeFra,
+        opptjeningsperiodeTil = it.opptjeningsperiodeTil,
+        utbetalingsperiode = it.utbetalingsperiode,
+        referanse = opprettAinntektGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+        etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
+        etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
+    )
+}
 
-fun List<BarnetilleggGrunnlagDto>.tilBarnetillegg(rolle: Rolle) =
-    this.map {
-        Barnetillegg(
-            periodeFra = it.periodeFra,
-            periodeTil = it.periodeTil,
-            beløp = it.beløpBrutto,
-            barnPersonId = it.barnPersonId,
-            referanse = opprettBarnetilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-        )
-    }
+fun List<BarnetilleggGrunnlagDto>.tilBarnetillegg(rolle: Rolle) = this.map {
+    Barnetillegg(
+        periodeFra = it.periodeFra,
+        periodeTil = it.periodeTil,
+        beløp = it.beløpBrutto,
+        barnPersonId = it.barnPersonId,
+        referanse = opprettBarnetilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+    )
+}
 
-fun List<KontantstøtteGrunnlagDto>.tilKontantstøtte(rolle: Rolle) =
-    this.map {
-        Kontantstøtte(
-            barnPersonId = it.barnPersonId,
-            beløp = BigDecimal(it.beløp),
-            periodeFra = it.periodeFra,
-            periodeTil = it.periodeTil,
-            referanse = opprettKontantstøtteGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-        )
-    }
+fun List<KontantstøtteGrunnlagDto>.tilKontantstøtte(rolle: Rolle) = this.map {
+    Kontantstøtte(
+        barnPersonId = it.barnPersonId,
+        beløp = BigDecimal(it.beløp),
+        periodeFra = it.periodeFra,
+        periodeTil = it.periodeTil,
+        referanse = opprettKontantstøtteGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+    )
+}
 
-fun List<SkattegrunnlagGrunnlagDto>.tilSkattegrunnlagForLigningsår(rolle: Rolle): List<SkattegrunnlagForLigningsår> =
-    this.map {
-        SkattegrunnlagForLigningsår(
-            ligningsår = it.periodeFra.year,
-            skattegrunnlagsposter = it.skattegrunnlagspostListe,
-            referanse =
-                opprettSkattegrunnlagGrunnlagsreferanse(
-                    rolle.tilGrunnlagPerson().referanse,
-                    it.periodeFra.year,
-                ),
-        )
-    }
+fun List<SkattegrunnlagGrunnlagDto>.tilSkattegrunnlagForLigningsår(rolle: Rolle): List<SkattegrunnlagForLigningsår> = this.map {
+    SkattegrunnlagForLigningsår(
+        ligningsår = it.periodeFra.year,
+        skattegrunnlagsposter = it.skattegrunnlagspostListe,
+        referanse =
+        opprettSkattegrunnlagGrunnlagsreferanse(
+            rolle.tilGrunnlagPerson().referanse,
+            it.periodeFra.year,
+        ),
+    )
+}
 
-fun List<UtvidetBarnetrygdGrunnlagDto>.tilUtvidetBarnetrygd(rolle: Rolle): List<UtvidetBarnetrygd> =
-    this.map {
-        UtvidetBarnetrygd(
-            beløp = it.beløp,
-            periodeFra = it.periodeFra,
-            periodeTil = it.periodeTil,
-            referanse = opprettUtvidetbarnetrygGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-        )
-    }
+fun List<UtvidetBarnetrygdGrunnlagDto>.tilUtvidetBarnetrygd(rolle: Rolle): List<UtvidetBarnetrygd> = this.map {
+    UtvidetBarnetrygd(
+        beløp = it.beløp,
+        periodeFra = it.periodeFra,
+        periodeTil = it.periodeTil,
+        referanse = opprettUtvidetbarnetrygGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+    )
+}
 
-fun List<SmåbarnstilleggGrunnlagDto>.tilSmåbarnstillegg(rolle: Rolle): List<Småbarnstillegg> =
-    this.map {
-        Småbarnstillegg(
-            beløp = it.beløp,
-            periodeFra = it.periodeFra,
-            periodeTil = it.periodeTil,
-            referanse = opprettSmåbarnstilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-        )
-    }
+fun List<SmåbarnstilleggGrunnlagDto>.tilSmåbarnstillegg(rolle: Rolle): List<Småbarnstillegg> = this.map {
+    Småbarnstillegg(
+        beløp = it.beløp,
+        periodeFra = it.periodeFra,
+        periodeTil = it.periodeTil,
+        referanse = opprettSmåbarnstilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+    )
+}
 
 data class TransformerInntekterRequestBuilder(
     val ainntektHentetDato: LocalDate? = LocalDate.now(),
@@ -102,14 +96,13 @@ data class TransformerInntekterRequestBuilder(
     val småbarnstillegg: List<Småbarnstillegg>? = emptyList(),
     val utvidetBarnetrygd: List<UtvidetBarnetrygd>? = emptyList(),
 ) {
-    fun bygge(): TransformerInntekterRequest =
-        TransformerInntekterRequest(
-            ainntektHentetDato = ainntektHentetDato!!,
-            ainntektsposter = ainntektsposter!!,
-            skattegrunnlagsliste = skattegrunnlag!!,
-            kontantstøtteliste = kontantstøtte!!,
-            utvidetBarnetrygdliste = utvidetBarnetrygd!!,
-            småbarnstilleggliste = småbarnstillegg!!,
-            barnetilleggsliste = barnetillegg!!,
-        )
+    fun bygge(): TransformerInntekterRequest = TransformerInntekterRequest(
+        ainntektHentetDato = ainntektHentetDato!!,
+        ainntektsposter = ainntektsposter!!,
+        skattegrunnlagsliste = skattegrunnlag!!,
+        kontantstøtteliste = kontantstøtte!!,
+        utvidetBarnetrygdliste = utvidetBarnetrygd!!,
+        småbarnstilleggliste = småbarnstillegg!!,
+        barnetilleggsliste = barnetillegg!!,
+    )
 }

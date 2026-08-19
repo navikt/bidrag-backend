@@ -42,9 +42,8 @@ fun OpprettVedtakRequestDto.hentNotat(
         it.innholdTilObjekt<NotatGrunnlag>().fraOmgjortVedtak == fraOmgjortVedtak
 }
 
-fun List<OpprettGrunnlagRequestDto>.hentPerson(ident: String) =
-    hentGrunnlagstyper("PERSON_")
-        .find { grunnlag -> grunnlag.innholdTilObjekt<Person>().ident?.verdi == ident }
+fun List<OpprettGrunnlagRequestDto>.hentPerson(ident: String) = hentGrunnlagstyper("PERSON_")
+    .find { grunnlag -> grunnlag.innholdTilObjekt<Person>().ident?.verdi == ident }
 
 fun List<OpprettGrunnlagRequestDto>.shouldContainPerson(
     ident: String,

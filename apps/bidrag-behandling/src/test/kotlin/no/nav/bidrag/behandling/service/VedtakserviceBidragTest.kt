@@ -171,10 +171,10 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             opprettStønadDto(
                 stønadstype = Stønadstype.BIDRAG,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
-                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
-                    ),
+                listOf(
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                ),
             )
 
         every { vedtakServiceBeregning.finnSisteVedtaksid(any()) } returns 1

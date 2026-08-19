@@ -105,28 +105,28 @@ class InntektServiceTest : TestContainerRunner() {
                 SummerteInntekter(
                     versjon = "xyz",
                     inntekter =
-                        listOf(
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
-                                inntektPostListe =
-                                    listOf(
-                                        InntektPost(
-                                            kode = "samletLoennsinntektUtenTrygdeavgiftspliktOgMedTrekkplikt",
-                                            beløp = BigDecimal(500000),
-                                        ),
-                                    ),
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth
-                                            .now()
-                                            .minusYears(1)
-                                            .withMonth(1)
-                                            .atDay(1),
-                                        YearMonth.now().withMonth(1).atDay(1),
-                                    ),
-                                sumInntekt = BigDecimal(500000),
+                    listOf(
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
+                            inntektPostListe =
+                            listOf(
+                                InntektPost(
+                                    kode = "samletLoennsinntektUtenTrygdeavgiftspliktOgMedTrekkplikt",
+                                    beløp = BigDecimal(500000),
+                                ),
                             ),
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth
+                                    .now()
+                                    .minusYears(1)
+                                    .withMonth(1)
+                                    .atDay(1),
+                                YearMonth.now().withMonth(1).atDay(1),
+                            ),
+                            sumInntekt = BigDecimal(500000),
                         ),
+                    ),
                 )
 
             // hvis
@@ -181,89 +181,89 @@ class InntektServiceTest : TestContainerRunner() {
                 SummerteInntekter(
                     versjon = "xyz",
                     inntekter =
-                        listOf(
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.BARNETILLEGG,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
+                    listOf(
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.BARNETILLEGG,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
                             ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2024-01"),
-                                        YearMonth.parse("2035-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        null,
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.AINNTEKT,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.AINNTEKT_BEREGNET_3MND,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth.parse("2023-01"),
-                                        YearMonth.parse("2024-01"),
-                                    ),
-                                sumInntekt = BigDecimal(500),
-                            ),
+                            sumInntekt = BigDecimal(500),
                         ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2024-01"),
+                                YearMonth.parse("2035-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                null,
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.AINNTEKT,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.AINNTEKT_BEREGNET_3MND,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth.parse("2023-01"),
+                                YearMonth.parse("2024-01"),
+                            ),
+                            sumInntekt = BigDecimal(500),
+                        ),
+                    ),
                 )
 
             // hvis
@@ -299,24 +299,24 @@ class InntektServiceTest : TestContainerRunner() {
                 SummerteInntekter(
                     versjon = "xyz",
                     inntekter =
-                        listOf(
-                            SummertÅrsinntekt(
-                                inntektRapportering = Inntektsrapportering.BARNETILLEGG,
-                                periode =
-                                    ÅrMånedsperiode(
-                                        YearMonth
-                                            .now()
-                                            .minusYears(1)
-                                            .withMonth(1)
-                                            .atDay(1),
-                                        YearMonth
-                                            .now()
-                                            .plusMonths(1)
-                                            .atDay(1),
-                                    ),
-                                sumInntekt = BigDecimal(500),
+                    listOf(
+                        SummertÅrsinntekt(
+                            inntektRapportering = Inntektsrapportering.BARNETILLEGG,
+                            periode =
+                            ÅrMånedsperiode(
+                                YearMonth
+                                    .now()
+                                    .minusYears(1)
+                                    .withMonth(1)
+                                    .atDay(1),
+                                YearMonth
+                                    .now()
+                                    .plusMonths(1)
+                                    .atDay(1),
                             ),
+                            sumInntekt = BigDecimal(500),
                         ),
+                    ),
                 )
 
             // hvis
@@ -369,23 +369,23 @@ class InntektServiceTest : TestContainerRunner() {
                 grunnlagstype = Grunnlagstype(Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER, false),
                 innhentet = LocalDate.of(YearMonth.now().minusYears(1).year, 1, 1).atStartOfDay(),
                 grunnlagsdata =
-                    SkattepliktigeInntekter(
-                        listOf(
-                            AinntektGrunnlagDto(
-                                personId = behandling.bidragsmottaker!!.ident!!,
-                                periodeFra = LocalDate.now().minusMonths(5).withDayOfMonth(1),
-                                periodeTil = LocalDate.now().minusMonths(3).withDayOfMonth(1),
-                                ainntektspostListe =
-                                    listOf(
-                                        tilAinntektspostDto(
-                                            beløp = BigDecimal(52500),
-                                            fomDato = LocalDate.now().minusMonths(5).withDayOfMonth(1),
-                                            tilDato = LocalDate.now().minusMonths(3).withDayOfMonth(1),
-                                        ),
-                                    ),
+                SkattepliktigeInntekter(
+                    listOf(
+                        AinntektGrunnlagDto(
+                            personId = behandling.bidragsmottaker!!.ident!!,
+                            periodeFra = LocalDate.now().minusMonths(5).withDayOfMonth(1),
+                            periodeTil = LocalDate.now().minusMonths(3).withDayOfMonth(1),
+                            ainntektspostListe =
+                            listOf(
+                                tilAinntektspostDto(
+                                    beløp = BigDecimal(52500),
+                                    fomDato = LocalDate.now().minusMonths(5).withDayOfMonth(1),
+                                    tilDato = LocalDate.now().minusMonths(3).withDayOfMonth(1),
+                                ),
                             ),
                         ),
                     ),
+                ),
                 aktiv = null,
             )
 
@@ -438,9 +438,9 @@ class InntektServiceTest : TestContainerRunner() {
                 TransformerInntekterRequest(
                     ainntektHentetDato = LocalDate.now(),
                     ainntektsposter =
-                        skattepliktigeInntekter.ainntekter
-                            .flatMap { it.ainntektspostListe }
-                            .tilAinntektsposter(testdataBM.tilRolle(behandling)),
+                    skattepliktigeInntekter.ainntekter
+                        .flatMap { it.ainntektspostListe }
+                        .tilAinntektsposter(testdataBM.tilRolle(behandling)),
                     kontantstøtteliste = emptyList(),
                     skattegrunnlagsliste = emptyList(),
                     småbarnstilleggliste = emptyList(),
@@ -507,9 +507,9 @@ class InntektServiceTest : TestContainerRunner() {
                 TransformerInntekterRequestBuilder(
                     ainntektHentetDato = grunnlagMedAinntekt.innhentet.toLocalDate(),
                     ainntektsposter =
-                        skattepliktigeInntekter.ainntekter
-                            .flatMap { it.ainntektspostListe }
-                            .tilAinntektsposter(testdataBM.tilRolle(behandling)),
+                    skattepliktigeInntekter.ainntekter
+                        .flatMap { it.ainntektspostListe }
+                        .tilAinntektsposter(testdataBM.tilRolle(behandling)),
                 ).bygge()
 
             behandling.inntekter.size shouldBe 0
@@ -546,10 +546,10 @@ class InntektServiceTest : TestContainerRunner() {
                 transformerteÅrsinnekterOppdatert.summertÅrsinntektListe.map {
                     it.copy(
                         periode =
-                            it.periode.lagPeriode(
-                                YearMonth.now().minusYears(3),
-                                YearMonth.now().minusYears(2),
-                            ),
+                        it.periode.lagPeriode(
+                            YearMonth.now().minusYears(3),
+                            YearMonth.now().minusYears(2),
+                        ),
                     )
                 }
 
@@ -669,8 +669,8 @@ class InntektServiceTest : TestContainerRunner() {
                 TransformerInntekterRequestBuilder(
                     ainntektHentetDato = LocalDate.now(),
                     kontantstøtte =
-                        listOf(originaltKontantstøttegrunnlag)
-                            .tilKontantstøtte(behandling.bidragsmottaker!!),
+                    listOf(originaltKontantstøttegrunnlag)
+                        .tilKontantstøtte(behandling.bidragsmottaker!!),
                 ).bygge()
 
             behandling.inntekter.size shouldBe 0
@@ -809,9 +809,9 @@ class InntektServiceTest : TestContainerRunner() {
                 TransformerInntekterRequestBuilder(
                     ainntektHentetDato = LocalDate.now(),
                     utvidetBarnetrygd =
-                        listOf(
-                            originalUtvidetBarnetrygdsgrunnlag,
-                        ).tilUtvidetBarnetrygd(behandling.bidragsmottaker!!),
+                    listOf(
+                        originalUtvidetBarnetrygdsgrunnlag,
+                    ).tilUtvidetBarnetrygd(behandling.bidragsmottaker!!),
                 ).bygge()
 
             behandling.inntekter.size shouldBe 0
@@ -872,17 +872,17 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.KONTANTSTØTTE,
                     belop = BigDecimal(14000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     gjelderBarnRolle = testdataBarn1.tilRolle(behandling),
                     kilde = Kilde.MANUELL,
@@ -900,7 +900,7 @@ class InntektServiceTest : TestContainerRunner() {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        oppretteRequestForOppdateringAvManuellInntekt(idInntekt = lagretKontantstøtte.id!!),
+                    oppretteRequestForOppdateringAvManuellInntekt(idInntekt = lagretKontantstøtte.id!!),
                 )
 
             // hvis
@@ -941,17 +941,17 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.KONTANTSTØTTE,
                     belop = BigDecimal(14000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     gjelderBarnRolle = testdataBarn1.tilRolle(behandling),
                     kilde = Kilde.MANUELL,
@@ -991,29 +991,29 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.AINNTEKT,
                     belop = BigDecimal(50000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     opprinneligFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     opprinneligTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     kilde = Kilde.OFFENTLIG,
                     taMed = true,
@@ -1033,15 +1033,15 @@ class InntektServiceTest : TestContainerRunner() {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereInntektsperiode =
-                        OppdaterePeriodeInntekt(
-                            id = lagretInntekt.id!!,
-                            taMedIBeregning = true,
-                            angittPeriode =
-                                Datoperiode(
-                                    lagretInntekt.datoFom!!.minusYears(2),
-                                    lagretInntekt.datoTom?.plusMonths(1),
-                                ),
+                    OppdaterePeriodeInntekt(
+                        id = lagretInntekt.id!!,
+                        taMedIBeregning = true,
+                        angittPeriode =
+                        Datoperiode(
+                            lagretInntekt.datoFom!!.minusYears(2),
+                            lagretInntekt.datoTom?.plusMonths(1),
                         ),
+                    ),
                 )
 
             behandling.inntekter.add(lagretInntekt)
@@ -1121,17 +1121,17 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER,
                     belop = BigDecimal(563000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     kilde = Kilde.MANUELL,
                     taMed = true,
@@ -1155,25 +1155,25 @@ class InntektServiceTest : TestContainerRunner() {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        OppdatereManuellInntekt(
-                            id = lagretManuellInntekt.id!!,
-                            taMed = true,
-                            type = Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER,
-                            beløp = BigDecimal("643000.00"),
-                            datoFom =
-                                YearMonth
-                                    .now()
-                                    .minusYears(1)
-                                    .withMonth(1)
-                                    .atDay(1),
-                            datoTom =
-                                YearMonth
-                                    .now()
-                                    .minusYears(1)
-                                    .withMonth(12)
-                                    .atDay(31),
-                            ident = Personident(testdataBM.ident),
-                        ),
+                    OppdatereManuellInntekt(
+                        id = lagretManuellInntekt.id!!,
+                        taMed = true,
+                        type = Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER,
+                        beløp = BigDecimal("643000.00"),
+                        datoFom =
+                        YearMonth
+                            .now()
+                            .minusYears(1)
+                            .withMonth(1)
+                            .atDay(1),
+                        datoTom =
+                        YearMonth
+                            .now()
+                            .minusYears(1)
+                            .withMonth(12)
+                            .atDay(31),
+                        ident = Personident(testdataBM.ident),
+                    ),
                 )
 
             // hvis
@@ -1208,17 +1208,17 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.KONTANTSTØTTE,
                     belop = BigDecimal(14000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     gjelderBarnRolle = testdataBarn1.tilRolle(behandling),
                     kilde = Kilde.MANUELL,
@@ -1282,10 +1282,10 @@ class InntektServiceTest : TestContainerRunner() {
             val oppdatereInntektRequest =
                 OppdatereInntektRequest(
                     oppdatereInntektsperiode =
-                        OppdaterePeriodeInntekt(
-                            taMedIBeregning = true,
-                            id = utvidetBarnetrygd!!.id!!,
-                        ),
+                    OppdaterePeriodeInntekt(
+                        taMedIBeregning = true,
+                        id = utvidetBarnetrygd!!.id!!,
+                    ),
                 )
 
             // hvis
@@ -1309,24 +1309,24 @@ class InntektServiceTest : TestContainerRunner() {
             val oppdatereInntektRequest =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        OppdatereManuellInntekt(
-                            taMed = true,
-                            type = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            beløp = BigDecimal("643000.00"),
-                            datoFom =
-                                YearMonth
-                                    .now()
-                                    .minusYears(1)
-                                    .withMonth(1)
-                                    .atDay(1),
-                            datoTom =
-                                YearMonth
-                                    .now()
-                                    .minusYears(1)
-                                    .withMonth(12)
-                                    .atDay(31),
-                            ident = Personident(testdataBM.ident),
-                        ),
+                    OppdatereManuellInntekt(
+                        taMed = true,
+                        type = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        beløp = BigDecimal("643000.00"),
+                        datoFom =
+                        YearMonth
+                            .now()
+                            .minusYears(1)
+                            .withMonth(1)
+                            .atDay(1),
+                        datoTom =
+                        YearMonth
+                            .now()
+                            .minusYears(1)
+                            .withMonth(12)
+                            .atDay(31),
+                        ident = Personident(testdataBM.ident),
+                    ),
                 )
             // hvis
             inntektService.oppdatereInntektManuelt(behandling.id!!, oppdatereInntektRequest)
@@ -1361,29 +1361,29 @@ class InntektServiceTest : TestContainerRunner() {
                     type = Inntektsrapportering.AINNTEKT,
                     belop = BigDecimal(50000),
                     datoFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     datoTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     opprinneligFom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(1)
-                            .atDay(1),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(1)
+                        .atDay(1),
                     opprinneligTom =
-                        YearMonth
-                            .now()
-                            .minusYears(1)
-                            .withMonth(12)
-                            .atDay(31),
+                    YearMonth
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .atDay(31),
                     rolle = testdataBM.tilRolle(behandling),
                     kilde = Kilde.OFFENTLIG,
                     taMed = true,
@@ -1404,15 +1404,15 @@ class InntektServiceTest : TestContainerRunner() {
             val oppdatereInntektRequest =
                 OppdatereInntektRequest(
                     oppdatereInntektsperiode =
-                        OppdaterePeriodeInntekt(
-                            id = lagretInntekt.id!!,
-                            taMedIBeregning = false,
-                            angittPeriode =
-                                Datoperiode(
-                                    lagretInntekt.datoFom!!.minusYears(2),
-                                    lagretInntekt.datoTom?.plusMonths(1),
-                                ),
+                    OppdaterePeriodeInntekt(
+                        id = lagretInntekt.id!!,
+                        taMedIBeregning = false,
+                        angittPeriode =
+                        Datoperiode(
+                            lagretInntekt.datoFom!!.minusYears(2),
+                            lagretInntekt.datoTom?.plusMonths(1),
                         ),
+                    ),
                 )
 
             // hvis

@@ -214,11 +214,10 @@ class ForholdsmessigFordelingKlageService(
             }
     }
 
-    private fun hentÅpneSøknaderForVedtak(behandling: Behandling): List<HentSøknad> =
-        bbmConsumer
-            .hentÅpneSøknaderForBp(behandling.bidragspliktig!!.ident!!)
-            .åpneSøknader
-            .filter { it.refVedtaksid == behandling.omgjøringsdetaljer?.omgjørVedtakId }
+    private fun hentÅpneSøknaderForVedtak(behandling: Behandling): List<HentSøknad> = bbmConsumer
+        .hentÅpneSøknaderForBp(behandling.bidragspliktig!!.ident!!)
+        .åpneSøknader
+        .filter { it.refVedtaksid == behandling.omgjøringsdetaljer?.omgjørVedtakId }
 
     private fun sammeknyttSøknadHvisNødvendig(
         hovedsøknadsid: Long,
@@ -321,9 +320,9 @@ class ForholdsmessigFordelingKlageService(
             if (søknaderOpprinneligVedtak.isNotEmpty()) {
                 tilknyttedeSøknaderOmgjortSøknad.copy(
                     søknader =
-                        tilknyttedeSøknaderOmgjortSøknad.søknader.filter { tilknyttetSøknad ->
-                            søknaderOpprinneligVedtak.any { it.søknadsid == tilknyttetSøknad.søknadsid }
-                        },
+                    tilknyttedeSøknaderOmgjortSøknad.søknader.filter { tilknyttetSøknad ->
+                        søknaderOpprinneligVedtak.any { it.søknadsid == tilknyttetSøknad.søknadsid }
+                    },
                 )
             } else {
                 tilknyttedeSøknaderOmgjortSøknad
@@ -375,24 +374,23 @@ class ForholdsmessigFordelingKlageService(
         relevanteKravhavere: Set<SakKravhaver>,
         søknadsbarn: List<Rolle>,
         hovedsøknadsid: Long,
-    ): List<HentSøknad> =
-        tilknyttedeSøknaderOmgjortSøknad.søknader
-            .filter { !it.behandlingstype.erForholdsmessigFordeling }
-            .filter { it.behandlingStatusType == BehandlingStatusType.VEDTAK_FATTET }
-            .filter { søknad ->
-                val parterISøknad = søknad.parterVedtakFattet.map { it.personident!! }
-                val søknadHarIngenRelevanteKravhavere =
-                    relevanteKravhavere.none {
-                        parterISøknad.contains(it.kravhaver) &&
-                            it.stønadstype == søknad.behandlingstema.tilStønadstype()
-                    }
-                val søknadsbarnErDelAvSøknad =
-                    søknadsbarn.any { s ->
-                        parterISøknad.contains(s.ident) &&
-                            s.stønadstype == søknad.behandlingstema.tilStønadstype()
-                    }
-                (søknad.søknadsid != hovedsøknadsid && søknadsbarnErDelAvSøknad) || søknadHarIngenRelevanteKravhavere
-            }
+    ): List<HentSøknad> = tilknyttedeSøknaderOmgjortSøknad.søknader
+        .filter { !it.behandlingstype.erForholdsmessigFordeling }
+        .filter { it.behandlingStatusType == BehandlingStatusType.VEDTAK_FATTET }
+        .filter { søknad ->
+            val parterISøknad = søknad.parterVedtakFattet.map { it.personident!! }
+            val søknadHarIngenRelevanteKravhavere =
+                relevanteKravhavere.none {
+                    parterISøknad.contains(it.kravhaver) &&
+                        it.stønadstype == søknad.behandlingstema.tilStønadstype()
+                }
+            val søknadsbarnErDelAvSøknad =
+                søknadsbarn.any { s ->
+                    parterISøknad.contains(s.ident) &&
+                        s.stønadstype == søknad.behandlingstema.tilStønadstype()
+                }
+            (søknad.søknadsid != hovedsøknadsid && søknadsbarnErDelAvSøknad) || søknadHarIngenRelevanteKravhavere
+        }
 
     /** Fjerner søknader uten omgjøringsreferanse fra alle roller */
     private fun fjernSøknaderSomIkkeErDelAvKlagebehandlingen(behandling: Behandling) {

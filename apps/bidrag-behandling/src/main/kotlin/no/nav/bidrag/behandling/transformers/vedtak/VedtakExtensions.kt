@@ -28,10 +28,9 @@ val VedtakDto.innkrevingstype get() =
         this.engangsbeløpListe.firstOrNull()?.innkreving ?: Innkrevingstype.MED_INNKREVING
     }
 
-fun VedtakDto.finnStønadsendringNyesteIdent(stønad: Stønadsid) =
-    stønadsendringListe.find {
-        hentNyesteIdent(it.kravhaver.verdi) == hentNyesteIdent(stønad.kravhaver.verdi) &&
-            hentNyesteIdent(it.skyldner.verdi) == hentNyesteIdent(stønad.skyldner.verdi) &&
-            it.type == stønad.type
-    }
+fun VedtakDto.finnStønadsendringNyesteIdent(stønad: Stønadsid) = stønadsendringListe.find {
+    hentNyesteIdent(it.kravhaver.verdi) == hentNyesteIdent(stønad.kravhaver.verdi) &&
+        hentNyesteIdent(it.skyldner.verdi) == hentNyesteIdent(stønad.skyldner.verdi) &&
+        it.type == stønad.type
+}
 // val VedtakDto.mottatDato get() = hent

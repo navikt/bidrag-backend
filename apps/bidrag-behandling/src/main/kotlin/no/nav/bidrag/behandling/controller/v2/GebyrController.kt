@@ -26,7 +26,7 @@ class GebyrController(
     @PutMapping("/behandling/{behandlingsid}/gebyr")
     @Operation(
         description =
-            "Oppdater manuelt overstyr gebyr for en behandling.",
+        "Oppdater manuelt overstyr gebyr for en behandling.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun oppdaterManueltOverstyrtGebyr(
@@ -55,7 +55,7 @@ class GebyrController(
     @PutMapping("/behandling/{behandlingsid}/gebyrV2")
     @Operation(
         description =
-            "Oppdater manuelt overstyr gebyr for en behandling.",
+        "Oppdater manuelt overstyr gebyr for en behandling.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun oppdaterManueltOverstyrtGebyrV2(

@@ -107,9 +107,9 @@ class VirkningstidspunktService(
                             grunnlagFraOmgjøringsvedtak = request.grunnlagFraOmgjøringsvedtak ?: false,
                             perioder = hentPerioderVedtak(behandling, request),
                             vedtakstidspunkt =
-                                request.vedtaksid?.let {
-                                    hentVedtak(it)?.vedtakstidspunkt
-                                },
+                            request.vedtaksid?.let {
+                                hentVedtak(it)?.vedtakstidspunkt
+                            },
                         )
                     } else {
                         null
@@ -134,9 +134,9 @@ class VirkningstidspunktService(
                                 grunnlagFraOmgjøringsvedtak = request.grunnlagFraOmgjøringsvedtak ?: false,
                                 perioder = hentPerioderVedtak(behandling, request),
                                 vedtakstidspunkt =
-                                    request.vedtaksid?.let {
-                                        hentVedtak(it)?.vedtakstidspunkt
-                                    },
+                                request.vedtaksid?.let {
+                                    hentVedtak(it)?.vedtakstidspunkt
+                                },
                             ),
                         )
                 }
@@ -170,28 +170,26 @@ class VirkningstidspunktService(
     fun oppdaterBeregnTilDato(
         behandlingsid: Long,
         request: OppdaterBeregnTilDatoRequestDto,
-    ): Behandling =
-        behandlingRepository
-            .findBehandlingById(behandlingsid)
-            .orElseThrow { behandlingNotFoundException(behandlingsid) }
-            .let { behandling ->
-                oppdaterBeregnTilDato(request, behandling)
-                behandling
-            }
+    ): Behandling = behandlingRepository
+        .findBehandlingById(behandlingsid)
+        .orElseThrow { behandlingNotFoundException(behandlingsid) }
+        .let { behandling ->
+            oppdaterBeregnTilDato(request, behandling)
+            behandling
+        }
 
     @Transactional
     fun oppdaterOpphørsdato(
         behandlingsid: Long,
         request: OppdaterOpphørsdatoRequestDto,
-    ): Behandling =
-        behandlingRepository
-            .findBehandlingById(behandlingsid)
-            .orElseThrow { behandlingNotFoundException(behandlingsid) }
-            .let { behandling ->
-                request.valider(behandling)
-                oppdaterOpphørsdato(request, behandling)
-                behandling
-            }
+    ): Behandling = behandlingRepository
+        .findBehandlingById(behandlingsid)
+        .orElseThrow { behandlingNotFoundException(behandlingsid) }
+        .let { behandling ->
+            request.valider(behandling)
+            oppdaterOpphørsdato(request, behandling)
+            behandling
+        }
 
     @Transactional
     fun oppdatereVirkningstidspunktBegrunnelse(

@@ -59,19 +59,18 @@ class BeregningEvnevurderingService(
         }
     }
 
-    private fun List<VedtakForStønad>.hentBeregningGammel(): BidragBeregningResponsDto =
-        bidragBBMConsumer.hentBeregning(
-            BidragBeregningRequestDto(
-                map {
-                    BidragBeregningRequestDto.HentBidragBeregning(
-                        stønadstype = it.stønadsendring.type,
-                        søknadsid = it.behandlingsreferanser.søknadsid.toString(),
-                        saksnummer = it.stønadsendring.sak.verdi,
-                        personidentBarn = it.stønadsendring.kravhaver,
-                    )
-                },
-            ),
-        )
+    private fun List<VedtakForStønad>.hentBeregningGammel(): BidragBeregningResponsDto = bidragBBMConsumer.hentBeregning(
+        BidragBeregningRequestDto(
+            map {
+                BidragBeregningRequestDto.HentBidragBeregning(
+                    stønadstype = it.stønadsendring.type,
+                    søknadsid = it.behandlingsreferanser.søknadsid.toString(),
+                    saksnummer = it.stønadsendring.sak.verdi,
+                    personidentBarn = it.stønadsendring.kravhaver,
+                )
+            },
+        ),
+    )
 
     private fun List<VedtakForStønad>.hentBeregning(): BidragBeregningResponsDto {
         // Henter beregningsgrunnlag fra BBM
@@ -239,21 +238,19 @@ class BeregningEvnevurderingService(
         )
     }
 
-    private fun hentSisteLøpendeStønader(bpIdent: Personident): List<LøpendeBidragssak> =
-        bidragStønadConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent)).bidragssakerListe
+    private fun hentSisteLøpendeStønader(bpIdent: Personident): List<LøpendeBidragssak> = bidragStønadConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent)).bidragssakerListe
 
-    private fun List<LøpendeBidragssak>.hentLøpendeVedtak(bpIdent: Personident): List<VedtakForStønad> =
-        mapNotNull {
-            val vedtakListe =
-                bidragVedtakConsumer
-                    .hentVedtakForStønad(
-                        HentVedtakForStønadRequest(
-                            skyldner = bpIdent,
-                            sak = it.sak,
-                            kravhaver = it.kravhaver,
-                            type = it.type,
-                        ),
-                    ).vedtakListe
-            beregingVedtaksfiltrering.finneVedtakForEvnevurderingNy(vedtakListe, it.kravhaver)
-        }
+    private fun List<LøpendeBidragssak>.hentLøpendeVedtak(bpIdent: Personident): List<VedtakForStønad> = mapNotNull {
+        val vedtakListe =
+            bidragVedtakConsumer
+                .hentVedtakForStønad(
+                    HentVedtakForStønadRequest(
+                        skyldner = bpIdent,
+                        sak = it.sak,
+                        kravhaver = it.kravhaver,
+                        type = it.type,
+                    ),
+                ).vedtakListe
+        beregingVedtaksfiltrering.finneVedtakForEvnevurderingNy(vedtakListe, it.kravhaver)
+    }
 }

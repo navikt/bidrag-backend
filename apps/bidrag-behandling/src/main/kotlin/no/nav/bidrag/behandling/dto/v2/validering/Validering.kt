@@ -152,8 +152,8 @@ data class InntektValideringsfeil(
     val ident: String? = rolle?.ident,
     @get:Schema(
         description =
-            "Er sann hvis det ikke finnes noe løpende periode. " +
-                "Det vil si en periode hvor datoTom er null. Er bare relevant for årsinntekter",
+        "Er sann hvis det ikke finnes noe løpende periode. " +
+            "Det vil si en periode hvor datoTom er null. Er bare relevant for årsinntekter",
     )
     val ingenLøpendePeriode: Boolean = if (erYtelse) false else hullIPerioder.any { it.til == null },
 ) {

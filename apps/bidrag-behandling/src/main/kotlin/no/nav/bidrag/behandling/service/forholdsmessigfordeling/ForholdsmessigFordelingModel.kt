@@ -116,40 +116,39 @@ fun HentSøknad.parterForRolle(rolletype: Rolletype) = partISøknadListe.filter 
 // region Extension functions — LøpendeBidrag
 // ═══════════════════════════════════════════════════════════════════
 
-fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> =
-    bidragListe.mapNotNull { bidrag ->
-        val beregningsperiodeTil = beregningsperiode.til
-        val periodeListe =
-            bidrag.periodeListe
-                .filter {
-                    it.periode.overlapper(beregningsperiode) &&
-                        it.periode.fom != beregningsperiode.til &&
-                        it.periode.til != beregningsperiode.fom
-                }.map { periode ->
-                    val periodeTil = periode.periode.til
-                    val justerTil = beregningsperiodeTil != null && (periodeTil == null || periodeTil.isAfter(beregningsperiodeTil))
-                    val justerFom = periode.periode.fom.isBefore(beregningsperiode.fom)
+fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> = bidragListe.mapNotNull { bidrag ->
+    val beregningsperiodeTil = beregningsperiode.til
+    val periodeListe =
+        bidrag.periodeListe
+            .filter {
+                it.periode.overlapper(beregningsperiode) &&
+                    it.periode.fom != beregningsperiode.til &&
+                    it.periode.til != beregningsperiode.fom
+            }.map { periode ->
+                val periodeTil = periode.periode.til
+                val justerTil = beregningsperiodeTil != null && (periodeTil == null || periodeTil.isAfter(beregningsperiodeTil))
+                val justerFom = periode.periode.fom.isBefore(beregningsperiode.fom)
 
-                    if (justerFom || justerTil) {
-                        val nyFom = if (justerFom) beregningsperiode.fom else periode.periode.fom
-                        val nyTil = if (justerTil) beregningsperiodeTil else periodeTil
-                        periode.copy(periode = periode.periode.copy(fom = nyFom, til = nyTil))
-                    } else {
-                        periode
-                    }
+                if (justerFom || justerTil) {
+                    val nyFom = if (justerFom) beregningsperiode.fom else periode.periode.fom
+                    val nyTil = if (justerTil) beregningsperiodeTil else periodeTil
+                    periode.copy(periode = periode.periode.copy(fom = nyFom, til = nyTil))
+                } else {
+                    periode
                 }
-        if (periodeListe.isNotEmpty()) {
-            LøpendeBidrag(
-                sak = bidrag.sak,
-                type = bidrag.type,
-                kravhaver = bidrag.kravhaver,
-                mottaker = bidrag.mottaker,
-                periodeListe = periodeListe,
-            )
-        } else {
-            null
-        }
+            }
+    if (periodeListe.isNotEmpty()) {
+        LøpendeBidrag(
+            sak = bidrag.sak,
+            type = bidrag.type,
+            kravhaver = bidrag.kravhaver,
+            mottaker = bidrag.mottaker,
+            periodeListe = periodeListe,
+        )
+    } else {
+        null
     }
+}
 
 // endregion
 

@@ -571,28 +571,28 @@ class OppdatereBehandlingTest : BehandlingControllerTest() {
         val grunnlagLagret =
             SkattegrunnlagGrunnlagDto(
                 periodeFra =
-                    YearMonth
-                        .now()
-                        .minusYears(1)
-                        .withMonth(1)
-                        .atDay(1),
+                YearMonth
+                    .now()
+                    .minusYears(1)
+                    .withMonth(1)
+                    .atDay(1),
                 periodeTil = YearMonth.now().withMonth(1).atDay(1),
                 personId = behandling.bidragsmottaker!!.ident!!,
                 skattegrunnlagspostListe =
-                    listOf(
-                        SkattegrunnlagspostDto(
-                            beløp = BigDecimal(450000),
-                            belop = BigDecimal(450000),
-                            inntektType = "renteinntektAvObligasjon",
-                            skattegrunnlagType = "Something else",
-                        ),
-                        SkattegrunnlagspostDto(
-                            beløp = BigDecimal(100000),
-                            belop = BigDecimal(100000),
-                            inntektType = "gevinstVedRealisasjonAvAksje",
-                            skattegrunnlagType = "Something else",
-                        ),
+                listOf(
+                    SkattegrunnlagspostDto(
+                        beløp = BigDecimal(450000),
+                        belop = BigDecimal(450000),
+                        inntektType = "renteinntektAvObligasjon",
+                        skattegrunnlagType = "Something else",
                     ),
+                    SkattegrunnlagspostDto(
+                        beløp = BigDecimal(100000),
+                        belop = BigDecimal(100000),
+                        inntektType = "gevinstVedRealisasjonAvAksje",
+                        skattegrunnlagType = "Something else",
+                    ),
+                ),
             )
         behandling =
             testdataManager.oppretteOgLagreGrunnlagINyTransaksjon(
@@ -607,10 +607,10 @@ class OppdatereBehandlingTest : BehandlingControllerTest() {
                 Grunnlagstype(Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER, true),
                 innhentingstidspunkt,
                 grunnlagsdata =
-                    opprettHentGrunnlagDto()
-                        .copy(
-                            skattegrunnlagListe = listOf(grunnlagLagret),
-                        ).tilSummerteInntekter(behandling.bidragsmottaker!!),
+                opprettHentGrunnlagDto()
+                    .copy(
+                        skattegrunnlagListe = listOf(grunnlagLagret),
+                    ).tilSummerteInntekter(behandling.bidragsmottaker!!),
             )
 
         val aktivereGrunnlagRequest =

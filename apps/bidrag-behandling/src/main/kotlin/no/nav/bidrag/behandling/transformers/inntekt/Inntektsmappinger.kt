@@ -42,138 +42,130 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
 
-fun Inntekt.bestemDatoFomForOffentligInntekt() =
-    skalAutomatiskSettePeriode().ifTrue {
-        maxOf(
-            opprinneligFom!!,
-            behandling!!.virkningstidspunktEllerSøktFomDato,
-        )
-    }
+fun Inntekt.bestemDatoFomForOffentligInntekt() = skalAutomatiskSettePeriode().ifTrue {
+    maxOf(
+        opprinneligFom!!,
+        behandling!!.virkningstidspunktEllerSøktFomDato,
+    )
+}
 
-fun Inntekt.bestemOpprinneligTomVisningsverdi() =
-    opprinneligTom?.let { opprinneligTom ->
-        if (this.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(this.type)) {
-            val maxDate = maxOf(YearMonth.now().atEndOfMonth(), behandling!!.virkningstidspunktEllerSøktFomDato)
-            if (opprinneligTom.plusMonths(1).isAfter(maxDate)) null else opprinneligTom
+fun Inntekt.bestemOpprinneligTomVisningsverdi() = opprinneligTom?.let { opprinneligTom ->
+    if (this.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(this.type)) {
+        val maxDate = maxOf(YearMonth.now().atEndOfMonth(), behandling!!.virkningstidspunktEllerSøktFomDato)
+        if (opprinneligTom.plusMonths(1).isAfter(maxDate)) null else opprinneligTom
+    } else {
+        opprinneligTom
+    }
+}
+
+fun Inntekt.bestemDatoTomForOffentligInntekt() = skalAutomatiskSettePeriode().ifTrue {
+    opprinneligTom?.let { tom ->
+        val maxDate =
+            maxOf(
+                YearMonth.now().atEndOfMonth(),
+                minOf(YearMonth.now().atEndOfMonth(), opphørsdato?.plusMonths(1)?.minusDays(1) ?: LocalDate.MAX),
+                behandling!!.virkningstidspunktEllerSøktFomDato,
+            )
+        if (tom.plusMonths(1).isAfter(maxDate)) {
+            justerPeriodeTomOpphørsdato(opphørsdato)
         } else {
-            opprinneligTom
+            minOfNullable(justerPeriodeTomOpphørsdato(opphørsdato), tom)
         }
     }
+}
 
-fun Inntekt.bestemDatoTomForOffentligInntekt() =
-    skalAutomatiskSettePeriode().ifTrue {
-        opprinneligTom?.let { tom ->
-            val maxDate =
-                maxOf(
-                    YearMonth.now().atEndOfMonth(),
-                    minOf(YearMonth.now().atEndOfMonth(), opphørsdato?.plusMonths(1)?.minusDays(1) ?: LocalDate.MAX),
-                    behandling!!.virkningstidspunktEllerSøktFomDato,
-                )
-            if (tom.plusMonths(1).isAfter(maxDate)) {
-                justerPeriodeTomOpphørsdato(opphørsdato)
+fun Inntekt.skalAutomatiskSettePeriode(): Boolean = kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type) && erOpprinneligPeriodeInnenforVirkningstidspunktEllerOpphør()
+
+fun Inntekt.erOpprinneligPeriodeInnenforVirkningstidspunktEllerOpphør(): Boolean = opprinneligFom?.let { fom ->
+    if (beregnTilDato != null && fom > beregnTilDato) return@let false
+    (opprinneligTom ?: LocalDate.MAX).let { tom ->
+        behandling?.eldsteVirkningstidspunkt?.let { virkningstidspunkt ->
+            val virkningstidspunktEllerStartenAvNesteMåned =
+                maxOf(YearMonth.now().atDay(1), virkningstidspunkt)
+            if (fom.isAfter(virkningstidspunktEllerStartenAvNesteMåned) &&
+                tom.isAfter(virkningstidspunktEllerStartenAvNesteMåned)
+            ) {
+                false
             } else {
-                minOfNullable(justerPeriodeTomOpphørsdato(opphørsdato), tom)
+                virkningstidspunkt in fom..tom ||
+                    virkningstidspunktEllerStartenAvNesteMåned >= fom &&
+                    tom.isAfter(virkningstidspunkt)
             }
         }
     }
+} ?: false
 
-fun Inntekt.skalAutomatiskSettePeriode(): Boolean =
-    kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type) && erOpprinneligPeriodeInnenforVirkningstidspunktEllerOpphør()
-
-fun Inntekt.erOpprinneligPeriodeInnenforVirkningstidspunktEllerOpphør(): Boolean =
-    opprinneligFom?.let { fom ->
-        if (beregnTilDato != null && fom > beregnTilDato) return@let false
-        (opprinneligTom ?: LocalDate.MAX).let { tom ->
-            behandling?.eldsteVirkningstidspunkt?.let { virkningstidspunkt ->
-                val virkningstidspunktEllerStartenAvNesteMåned =
-                    maxOf(YearMonth.now().atDay(1), virkningstidspunkt)
-                if (fom.isAfter(virkningstidspunktEllerStartenAvNesteMåned) &&
-                    tom.isAfter(virkningstidspunktEllerStartenAvNesteMåned)
+fun Set<Inntektspost>.tilInntektspostDtoV2() = this
+    .map { inntekt ->
+        InntektspostDtoV2(
+            kode = inntekt.kode,
+            visningsnavn = finnVisningsnavn(inntekt.kode),
+            inntektstype = inntekt.inntektstype,
+            beløpstype = inntekt.beløpstype,
+            skatteprosent = inntekt.skattefaktor.skattefaktorTilProsent,
+            beløp =
+            inntekt.beløp.nærmesteHeltall *
+                if (inntekt.inntekt?.type ==
+                    Inntektsrapportering.KAPITALINNTEKT
                 ) {
-                    false
+                    InntektUtil.kapitalinntektFaktor(inntekt.kode)
                 } else {
-                    virkningstidspunkt in fom..tom ||
-                        virkningstidspunktEllerStartenAvNesteMåned >= fom &&
-                        tom.isAfter(virkningstidspunkt)
-                }
-            }
-        }
-    } ?: false
+                    BigDecimal.ONE
+                },
+        )
+    }.sortedByDescending { it.beløp }
 
-fun Set<Inntektspost>.tilInntektspostDtoV2() =
-    this
-        .map { inntekt ->
+fun SummertMånedsinntekt.tilInntektDtoV2(gjelder: Rolle) = InntektDtoV2(
+    id = -1,
+    taMed = false,
+    rapporteringstype = Inntektsrapportering.AINNTEKT,
+    beløp = sumInntekt,
+    ident = Personident(gjelder.ident!!),
+    gjelderRolleId = gjelder.id ?: -1,
+    kilde = Kilde.OFFENTLIG,
+    inntektsposter =
+    inntektPostListe
+        .map {
             InntektspostDtoV2(
-                kode = inntekt.kode,
-                visningsnavn = finnVisningsnavn(inntekt.kode),
-                inntektstype = inntekt.inntektstype,
-                beløpstype = inntekt.beløpstype,
-                skatteprosent = inntekt.skattefaktor.skattefaktorTilProsent,
-                beløp =
-                    inntekt.beløp.nærmesteHeltall *
-                        if (inntekt.inntekt?.type ==
-                            Inntektsrapportering.KAPITALINNTEKT
-                        ) {
-                            InntektUtil.kapitalinntektFaktor(inntekt.kode)
-                        } else {
-                            BigDecimal.ONE
-                        },
+                kode = it.kode,
+                visningsnavn = finnVisningsnavn(it.kode),
+                inntektstype = it.inntekstype,
+                beløp = InntektUtil.kapitalinntektFaktor(it.kode) * it.beløp,
+                beløpstype = InntektBeløpstype.ÅRSBELØP,
+                skatteprosent = null,
             )
         }.sortedByDescending { it.beløp }
-
-fun SummertMånedsinntekt.tilInntektDtoV2(gjelder: Rolle) =
-    InntektDtoV2(
-        id = -1,
-        taMed = false,
-        rapporteringstype = Inntektsrapportering.AINNTEKT,
-        beløp = sumInntekt,
-        ident = Personident(gjelder.ident!!),
-        gjelderRolleId = gjelder.id ?: -1,
-        kilde = Kilde.OFFENTLIG,
-        inntektsposter =
-            inntektPostListe
-                .map {
-                    InntektspostDtoV2(
-                        kode = it.kode,
-                        visningsnavn = finnVisningsnavn(it.kode),
-                        inntektstype = it.inntekstype,
-                        beløp = InntektUtil.kapitalinntektFaktor(it.kode) * it.beløp,
-                        beløpstype = InntektBeløpstype.ÅRSBELØP,
-                        skatteprosent = null,
-                    )
-                }.sortedByDescending { it.beløp }
-                .toSet(),
-        inntektstyper = emptySet(),
-        datoFom = gjelderÅrMåned.atDay(1),
-        datoTom = gjelderÅrMåned.atEndOfMonth(),
-        opprinneligFom = gjelderÅrMåned.atDay(1),
-        opprinneligTom = gjelderÅrMåned.atEndOfMonth(),
-        gjelderBarn = null,
-        gjelderBarnId = null,
-    )
+        .toSet(),
+    inntektstyper = emptySet(),
+    datoFom = gjelderÅrMåned.atDay(1),
+    datoTom = gjelderÅrMåned.atEndOfMonth(),
+    opprinneligFom = gjelderÅrMåned.atDay(1),
+    opprinneligTom = gjelderÅrMåned.atEndOfMonth(),
+    gjelderBarn = null,
+    gjelderBarnId = null,
+)
 
 fun List<Inntekt>.tilInntektDtoV2() = this.map { it.tilInntektDtoV2() }
 
-fun Inntekt.tilInntektDtoV2() =
-    InntektDtoV2(
-        id = this.id,
-        taMed = this.taMed,
-        rapporteringstype = this.type,
-        beløp = maxOf(belop.nærmesteHeltall, BigDecimal.ZERO),
-        // Kapitalinntekt kan ha negativ verdi. Dette skal ikke vises i frontend
-        datoFom = this.datoFom,
-        datoTom = this.datoTom,
-        ident = Personident(this.gjelderIdent),
-        gjelderRolleId = this.gjelderRolle?.id,
-        gjelderBarn = this.gjelderBarnIdent?.let { it1 -> Personident(it1) },
-        gjelderBarnId = this.gjelderSøknadsbarn?.id,
-        kilde = this.kilde,
-        inntektsposter = this.inntektsposter.tilInntektspostDtoV2().toSet(),
-        inntektstyper = this.inntektsposter.mapNotNull { it.inntektstype }.toSet(),
-        opprinneligFom = this.opprinneligFom,
-        opprinneligTom = bestemOpprinneligTomVisningsverdi(),
-        historisk = erHistorisk(behandling!!.inntekter),
-    )
+fun Inntekt.tilInntektDtoV2() = InntektDtoV2(
+    id = this.id,
+    taMed = this.taMed,
+    rapporteringstype = this.type,
+    beløp = maxOf(belop.nærmesteHeltall, BigDecimal.ZERO),
+    // Kapitalinntekt kan ha negativ verdi. Dette skal ikke vises i frontend
+    datoFom = this.datoFom,
+    datoTom = this.datoTom,
+    ident = Personident(this.gjelderIdent),
+    gjelderRolleId = this.gjelderRolle?.id,
+    gjelderBarn = this.gjelderBarnIdent?.let { it1 -> Personident(it1) },
+    gjelderBarnId = this.gjelderSøknadsbarn?.id,
+    kilde = this.kilde,
+    inntektsposter = this.inntektsposter.tilInntektspostDtoV2().toSet(),
+    inntektstyper = this.inntektsposter.mapNotNull { it.inntektstype }.toSet(),
+    opprinneligFom = this.opprinneligFom,
+    opprinneligTom = bestemOpprinneligTomVisningsverdi(),
+    historisk = erHistorisk(behandling!!.inntekter),
+)
 
 fun OppdatereManuellInntekt.oppdatereEksisterendeInntekt(inntekt: Inntekt): Inntekt {
     val gjelderBarnRolle =
@@ -197,11 +189,11 @@ fun OppdatereManuellInntekt.oppdatereEksisterendeInntekt(inntekt: Inntekt): Innt
                 beløpstype = beløpstype,
                 kode = this.type.toString(),
                 skattefaktor =
-                    if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
-                        this.skatteprosent.skatteprosentTilFaktor
-                    } else {
-                        null
-                    },
+                if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
+                    this.skatteprosent.skatteprosentTilFaktor
+                } else {
+                    null
+                },
             ),
         )
     }
@@ -215,10 +207,10 @@ fun Inntekt.tilIkkeAktivInntektDto(
 ) = IkkeAktivInntektDto(
     rapporteringstype = this.type,
     beløp =
-        maxOf(
-            this.belop.nærmesteHeltall,
-            BigDecimal.ZERO,
-        ),
+    maxOf(
+        this.belop.nærmesteHeltall,
+        BigDecimal.ZERO,
+    ),
     // Kapitalinntekt kan ha negativ verdi. Dette skal ikke vises i frontend
     periode = this.opprinneligPeriode!!,
     ident = Personident(this.gjelderIdent),
@@ -227,17 +219,17 @@ fun Inntekt.tilIkkeAktivInntektDto(
     innhentetTidspunkt = innhentetTidspunkt,
     originalId = id,
     inntektsposter =
-        inntektsposter
-            .map {
-                InntektspostDtoV2(
-                    it.kode,
-                    finnVisningsnavn(it.kode),
-                    it.inntektstype,
-                    it.beløp.nærmesteHeltall,
-                    it.beløpstype,
-                    it.skattefaktor,
-                )
-            }.toSet(),
+    inntektsposter
+        .map {
+            InntektspostDtoV2(
+                it.kode,
+                finnVisningsnavn(it.kode),
+                it.inntektstype,
+                it.beløp.nærmesteHeltall,
+                it.beløpstype,
+                it.skattefaktor,
+            )
+        }.toSet(),
 )
 
 fun SummertÅrsinntekt.tilIkkeAktivInntektDto(
@@ -256,42 +248,39 @@ fun SummertÅrsinntekt.tilIkkeAktivInntektDto(
     innhentetTidspunkt = innhentetTidspunkt,
     originalId = eksisterendeInntekt?.id,
     inntektsposter =
-        inntektPostListe.map { it.toInntektpost() }.toSet(),
+    inntektPostListe.map { it.toInntektpost() }.toSet(),
     inntektsposterSomErEndret =
-        if (eksisterendeInntekt != null) {
-            mapTilInntektspostEndringer(inntektPostListe.toSet(), eksisterendeInntekt.inntektsposter)
-        } else {
-            emptySet()
-        },
+    if (eksisterendeInntekt != null) {
+        mapTilInntektspostEndringer(inntektPostListe.toSet(), eksisterendeInntekt.inntektsposter)
+    } else {
+        emptySet()
+    },
 )
 
-fun Inntektspost.tilInntektspostEndring(endringstype: GrunnlagInntektEndringstype) =
-    InntektspostEndringDto(
-        kode,
-        finnVisningsnavn(kode),
-        inntektstype,
-        beløp.nærmesteHeltall,
-        endringstype,
-    )
+fun Inntektspost.tilInntektspostEndring(endringstype: GrunnlagInntektEndringstype) = InntektspostEndringDto(
+    kode,
+    finnVisningsnavn(kode),
+    inntektstype,
+    beløp.nærmesteHeltall,
+    endringstype,
+)
 
-fun InntektPost.tilInntektspostEndring(endringstype: GrunnlagInntektEndringstype) =
-    InntektspostEndringDto(
-        kode,
-        finnVisningsnavn(kode),
-        inntekstype,
-        beløp.nærmesteHeltall,
-        endringstype,
-    )
+fun InntektPost.tilInntektspostEndring(endringstype: GrunnlagInntektEndringstype) = InntektspostEndringDto(
+    kode,
+    finnVisningsnavn(kode),
+    inntekstype,
+    beløp.nærmesteHeltall,
+    endringstype,
+)
 
-fun InntektPost.toInntektpost() =
-    InntektspostDtoV2(
-        kode,
-        finnVisningsnavn(kode),
-        inntekstype,
-        beløp.nærmesteHeltall,
-        InntektBeløpstype.ÅRSBELØP,
-        null,
-    )
+fun InntektPost.toInntektpost() = InntektspostDtoV2(
+    kode,
+    finnVisningsnavn(kode),
+    inntekstype,
+    beløp.nærmesteHeltall,
+    InntektBeløpstype.ÅRSBELØP,
+    null,
+)
 
 fun OppdatereManuellInntekt.lagreSomNyInntekt(behandling: Behandling): Inntekt {
     val rolle =
@@ -328,11 +317,11 @@ fun OppdatereManuellInntekt.lagreSomNyInntekt(behandling: Behandling): Inntekt {
                     beløpstype = this.beløpstype,
                     kode = this.type.toString(),
                     skattefaktor =
-                        if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
-                            this.skatteprosent.skatteprosentTilFaktor
-                        } else {
-                            null
-                        },
+                    if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
+                        this.skatteprosent.skatteprosentTilFaktor
+                    } else {
+                        null
+                    },
                 ),
             )
     }
@@ -350,46 +339,46 @@ fun opprettTransformerInntekterRequest(
 ) = TransformerInntekterRequest(
     ainntektHentetDato = innhentetGrunnlag.hentetTidspunkt.toLocalDate(),
     vedtakstidspunktOpprinneligeVedtak =
-        behandling.omgjøringsdetaljer?.omgjortVedtakstidspunktListe?.map { it.toLocalDate() } ?: emptyList(),
+    behandling.omgjøringsdetaljer?.omgjortVedtakstidspunktListe?.map { it.toLocalDate() } ?: emptyList(),
     ainntektsposter =
-        innhentetGrunnlag.ainntektListe.flatMap {
-            it.ainntektspostListe.tilAinntektsposter(
-                rolleInhentetFor,
-            )
-        },
+    innhentetGrunnlag.ainntektListe.flatMap {
+        it.ainntektspostListe.tilAinntektsposter(
+            rolleInhentetFor,
+        )
+    },
     barnetilleggsliste =
-        innhentetGrunnlag.barnetilleggListe
-            .filter {
-                harBarnRolleIBehandling(
-                    it.barnPersonId,
-                    behandling,
-                )
-            }.filter { it.barnetilleggType !== Inntektstype.BARNETILLEGG_TILTAKSPENGER.name }
-            .tilBarnetillegg(
-                rolleInhentetFor,
-            ),
+    innhentetGrunnlag.barnetilleggListe
+        .filter {
+            harBarnRolleIBehandling(
+                it.barnPersonId,
+                behandling,
+            )
+        }.filter { it.barnetilleggType !== Inntektstype.BARNETILLEGG_TILTAKSPENGER.name }
+        .tilBarnetillegg(
+            rolleInhentetFor,
+        ),
     kontantstøtteliste =
-        innhentetGrunnlag.kontantstøtteListe
-            .filter {
-                harBarnRolleIBehandling(
-                    it.barnPersonId,
-                    behandling,
-                )
-            }.tilKontantstøtte(
-                rolleInhentetFor,
-            ),
+    innhentetGrunnlag.kontantstøtteListe
+        .filter {
+            harBarnRolleIBehandling(
+                it.barnPersonId,
+                behandling,
+            )
+        }.tilKontantstøtte(
+            rolleInhentetFor,
+        ),
     skattegrunnlagsliste =
-        innhentetGrunnlag.skattegrunnlagListe.tilSkattegrunnlagForLigningsår(
-            rolleInhentetFor,
-        ),
+    innhentetGrunnlag.skattegrunnlagListe.tilSkattegrunnlagForLigningsår(
+        rolleInhentetFor,
+    ),
     småbarnstilleggliste =
-        innhentetGrunnlag.småbarnstilleggListe.tilSmåbarnstillegg(
-            rolleInhentetFor,
-        ),
+    innhentetGrunnlag.småbarnstilleggListe.tilSmåbarnstillegg(
+        rolleInhentetFor,
+    ),
     utvidetBarnetrygdliste =
-        innhentetGrunnlag.utvidetBarnetrygdListe.tilUtvidetBarnetrygd(
-            rolleInhentetFor,
-        ),
+    innhentetGrunnlag.utvidetBarnetrygdListe.tilUtvidetBarnetrygd(
+        rolleInhentetFor,
+    ),
 )
 
 private fun harBarnRolleIBehandling(

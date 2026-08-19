@@ -33,21 +33,19 @@ fun Behandling.finnRolleForPeriode(
     }
 }
 
-fun Rolle.finnVirkningstidspunktBeregningBoforhold(): LocalDate? =
-    if (rolletype != Rolletype.BARN) {
+fun Rolle.finnVirkningstidspunktBeregningBoforhold(): LocalDate? = if (rolletype != Rolletype.BARN) {
+    behandling.eldsteVirkningstidspunkt
+} else if (behandling.sammeBarnInkludertIBehandlingSom18ÅrOgOrdinærBidrag(ident!!)) {
+    if (stønadstype == Stønadstype.BIDRAG) {
         behandling.eldsteVirkningstidspunkt
-    } else if (behandling.sammeBarnInkludertIBehandlingSom18ÅrOgOrdinærBidrag(ident!!)) {
-        if (stønadstype == Stønadstype.BIDRAG) {
-            behandling.eldsteVirkningstidspunkt
-        } else {
-            fødselsdato.dato18ÅrsBidrag
-        }
     } else {
-        null
+        fødselsdato.dato18ÅrsBidrag
     }
+} else {
+    null
+}
 
-fun Rolle.finnOpphørsdatoBoforhold(): LocalDate? =
-    // Betyr at barnet er inkludert to ganger (18 år og ordinær bidrag)
+fun Rolle.finnOpphørsdatoBoforhold(): LocalDate? = // Betyr at barnet er inkludert to ganger (18 år og ordinær bidrag)
     if (behandling.sammeBarnInkludertIBehandlingSom18ÅrOgOrdinærBidrag(ident!!)) {
         if (stønadstype == Stønadstype.BIDRAG) {
             fødselsdato.dato18ÅrsBidrag

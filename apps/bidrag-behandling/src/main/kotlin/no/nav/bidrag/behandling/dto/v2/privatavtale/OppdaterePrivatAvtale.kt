@@ -29,8 +29,8 @@ data class OppdaterePrivatAvtaleRequest(
     val avtaleDato: LocalDate? = null,
     @get:Schema(
         description =
-            "Setter om privat avtale periodene skal indeksreguleres eller ikke. " +
-                "Dersom skalIndeksreguleres er null, vil ikke indeksregulering endres.",
+        "Setter om privat avtale periodene skal indeksreguleres eller ikke. " +
+            "Dersom skalIndeksreguleres er null, vil ikke indeksregulering endres.",
     )
     val skalIndeksreguleres: Boolean? = null,
     @get:Schema(

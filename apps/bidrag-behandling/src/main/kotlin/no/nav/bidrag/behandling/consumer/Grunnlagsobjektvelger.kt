@@ -82,11 +82,10 @@ enum class Grunnlagsobjektvelger(
         fun requestobjekter(
             behandlingstype: TypeBehandling,
             rolletype: Rolletype,
-        ): Set<GrunnlagRequestType> =
-            entries
-                .filter { it.behandlinstypeMotRolletyper.keys.contains(behandlingstype) }
-                .filter { it.behandlinstypeMotRolletyper[behandlingstype]?.contains(rolletype) ?: false }
-                .map { GrunnlagRequestType.valueOf(it.name) }
-                .toSet()
+        ): Set<GrunnlagRequestType> = entries
+            .filter { it.behandlinstypeMotRolletyper.keys.contains(behandlingstype) }
+            .filter { it.behandlinstypeMotRolletyper[behandlingstype]?.contains(rolletype) ?: false }
+            .map { GrunnlagRequestType.valueOf(it.name) }
+            .toSet()
     }
 }

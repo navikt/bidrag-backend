@@ -105,19 +105,17 @@ open class Inntekt(
         this.gjelderIdent.nullIfEmpty() == ident.nullIfEmpty()
     }
 
-    fun tilhørerSammePerson(annenInntekt: Inntekt) =
-        if (annenInntekt.rolle == null || this.rolle == null) {
-            this.gjelderIdent.nullIfEmpty() == annenInntekt.gjelderIdent.nullIfEmpty()
-        } else {
-            erSammeRolle(annenInntekt.rolle!!)
-        }
+    fun tilhørerSammePerson(annenInntekt: Inntekt) = if (annenInntekt.rolle == null || this.rolle == null) {
+        this.gjelderIdent.nullIfEmpty() == annenInntekt.gjelderIdent.nullIfEmpty()
+    } else {
+        erSammeRolle(annenInntekt.rolle!!)
+    }
 
-    fun tilhørerSammeBarn(annenInntekt: Inntekt) =
-        if (annenInntekt.gjelderBarnRolle == null || this.gjelderBarnRolle == null) {
-            this.gjelderBarnIdent.nullIfEmpty() == annenInntekt.gjelderBarnIdent.nullIfEmpty()
-        } else {
-            inntektGjelderBarn(annenInntekt.rolle!!)
-        }
+    fun tilhørerSammeBarn(annenInntekt: Inntekt) = if (annenInntekt.gjelderBarnRolle == null || this.gjelderBarnRolle == null) {
+        this.gjelderBarnIdent.nullIfEmpty() == annenInntekt.gjelderBarnIdent.nullIfEmpty()
+    } else {
+        inntektGjelderBarn(annenInntekt.rolle!!)
+    }
 
     fun tilhørerSammeBarn(
         ident: String?,
@@ -164,13 +162,12 @@ open class Inntekt(
     val opprinneligPeriode get() = opprinneligFom?.let { ÅrMånedsperiode(it, opprinneligTom) }
     val periode get() = datoFom?.let { ÅrMånedsperiode(it, datoTom) }
 
-    override fun toString(): String =
-        try {
-            "Inntekt($type, beløp=$belop, datoFom=$datoFom, " +
-                "datoTom=$datoTom, ident='$ident', gjelderBarn='$gjelderBarn'," +
-                "opprinneligFom=$opprinneligFom, opprinneligTom=$opprinneligTom, " +
-                " kilde=$kilde, taMed=$taMed, id=$id, behandling=${behandling?.id})"
-        } catch (e: Exception) {
-            "Inntekt${this.hashCode()}"
-        }
+    override fun toString(): String = try {
+        "Inntekt($type, beløp=$belop, datoFom=$datoFom, " +
+            "datoTom=$datoTom, ident='$ident', gjelderBarn='$gjelderBarn'," +
+            "opprinneligFom=$opprinneligFom, opprinneligTom=$opprinneligTom, " +
+            " kilde=$kilde, taMed=$taMed, id=$id, behandling=${behandling?.id})"
+    } catch (e: Exception) {
+        "Inntekt${this.hashCode()}"
+    }
 }

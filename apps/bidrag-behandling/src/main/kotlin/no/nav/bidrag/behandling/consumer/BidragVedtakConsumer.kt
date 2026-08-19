@@ -38,30 +38,28 @@ class BidragVedtakConsumer(
     private val bidragVedtakUri
         get() = UriComponentsBuilder.fromUri(bidragVedtakUrl).pathSegment("vedtak")
 
-    fun fatteVedtak(request: OpprettVedtakRequestDto): OpprettVedtakResponseDto =
-        try {
-            postForNonNullEntity(
-                bidragVedtakUri.build().toUri(),
-                request,
-            )
-        } catch (e: HttpStatusCodeException) {
-            if (e.statusCode == HttpStatus.CONFLICT) {
-                val resultat = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
-                secureLogger.info {
-                    "Vedtak med referanse ${request.unikReferanse} finnes allerede med vedtaksid ${resultat.vedtaksid}."
-                }
-                OpprettVedtakResponseDto(resultat.vedtaksid, emptyList())
-            } else {
-                secureLogger.error(e) { "Feil ved oppretting av vedtak med referanse ${request.unikReferanse}" }
-                throw e
+    fun fatteVedtak(request: OpprettVedtakRequestDto): OpprettVedtakResponseDto = try {
+        postForNonNullEntity(
+            bidragVedtakUri.build().toUri(),
+            request,
+        )
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.CONFLICT) {
+            val resultat = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
+            secureLogger.info {
+                "Vedtak med referanse ${request.unikReferanse} finnes allerede med vedtaksid ${resultat.vedtaksid}."
             }
+            OpprettVedtakResponseDto(resultat.vedtaksid, emptyList())
+        } else {
+            secureLogger.error(e) { "Feil ved oppretting av vedtak med referanse ${request.unikReferanse}" }
+            throw e
         }
+    }
 
     @BrukerCacheable(VEDTAK_CACHE)
-    override fun hentVedtak(vedtaksid: Int): VedtakDto? =
-        getForEntity(
-            bidragVedtakUri.pathSegment(vedtaksid.toString()).build().toUri(),
-        )
+    override fun hentVedtak(vedtaksid: Int): VedtakDto? = getForEntity(
+        bidragVedtakUri.pathSegment(vedtaksid.toString()).build().toUri(),
+    )
 
     @BrukerCacheable(VEDTAK_FOR_STØNAD_CACHE)
     @Retryable(
@@ -69,11 +67,10 @@ class BidragVedtakConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    override fun hentVedtakForStønad(request: HentVedtakForStønadRequest): HentVedtakForStønadResponse =
-        postForNonNullEntity(
-            bidragVedtakUri.pathSegment("hent-vedtak").build().toUri(),
-            request,
-        )
+    override fun hentVedtakForStønad(request: HentVedtakForStønadRequest): HentVedtakForStønadResponse = postForNonNullEntity(
+        bidragVedtakUri.pathSegment("hent-vedtak").build().toUri(),
+        request,
+    )
 
     @BrukerCacheable(MANUELLE_VEDTAK_FOR_BP)
     @Retryable(
@@ -81,11 +78,10 @@ class BidragVedtakConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    override fun hentManuelleVedtak(request: HentManuelleVedtakRequest): HentVedtakForStønadResponse =
-        postForNonNullEntity(
-            bidragVedtakUri.pathSegment("hent-manuelle-vedtak").build().toUri(),
-            request,
-        )
+    override fun hentManuelleVedtak(request: HentManuelleVedtakRequest): HentVedtakForStønadResponse = postForNonNullEntity(
+        bidragVedtakUri.pathSegment("hent-manuelle-vedtak").build().toUri(),
+        request,
+    )
 }
 
 // @Component

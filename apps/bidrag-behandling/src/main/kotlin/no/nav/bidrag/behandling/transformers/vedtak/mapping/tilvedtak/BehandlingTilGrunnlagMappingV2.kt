@@ -90,38 +90,37 @@ class BehandlingTilGrunnlagMappingV2(
                 listOf(
                     bidragspliktig?.tilGrunnlagPerson(),
                 ) + søknadsbarnListe + privatavtaleBarnSimulert
-        ).filterNotNull().toMutableSet()
+            ).filterNotNull().toMutableSet()
     }
 
-    fun Behandling.tilGrunnlagSivilstand(gjelder: BaseGrunnlag): Set<GrunnlagDto> =
-        if (engangsbeloptype == Engangsbeløptype.SÆRBIDRAG) {
-            emptySet()
-        } else {
-            sivilstand
-                .map {
-                    GrunnlagDto(
-                        referanse = "sivilstand_${gjelder.referanse}_${it.datoFom.toCompactString()}",
-                        type = Grunnlagstype.SIVILSTAND_PERIODE,
-                        gjelderReferanse = gjelder.referanse,
-                        grunnlagsreferanseListe =
-                            if (it.kilde == Kilde.OFFENTLIG) {
-                                listOf(
-                                    opprettInnhentetSivilstandGrunnlagsreferanse(gjelder.referanse),
-                                )
-                            } else {
-                                emptyList()
-                            },
-                        innhold =
-                            POJONode(
-                                SivilstandPeriode(
-                                    manueltRegistrert = it.kilde == Kilde.MANUELL,
-                                    sivilstand = it.sivilstand,
-                                    periode = ÅrMånedsperiode(it.datoFom!!, it.datoTom?.plusDays(1)),
-                                ),
-                            ),
-                    )
-                }.toSet()
-        }
+    fun Behandling.tilGrunnlagSivilstand(gjelder: BaseGrunnlag): Set<GrunnlagDto> = if (engangsbeloptype == Engangsbeløptype.SÆRBIDRAG) {
+        emptySet()
+    } else {
+        sivilstand
+            .map {
+                GrunnlagDto(
+                    referanse = "sivilstand_${gjelder.referanse}_${it.datoFom.toCompactString()}",
+                    type = Grunnlagstype.SIVILSTAND_PERIODE,
+                    gjelderReferanse = gjelder.referanse,
+                    grunnlagsreferanseListe =
+                    if (it.kilde == Kilde.OFFENTLIG) {
+                        listOf(
+                            opprettInnhentetSivilstandGrunnlagsreferanse(gjelder.referanse),
+                        )
+                    } else {
+                        emptyList()
+                    },
+                    innhold =
+                    POJONode(
+                        SivilstandPeriode(
+                            manueltRegistrert = it.kilde == Kilde.MANUELL,
+                            sivilstand = it.sivilstand,
+                            periode = ÅrMånedsperiode(it.datoFom!!, it.datoTom?.plusDays(1)),
+                        ),
+                    ),
+                )
+            }.toSet()
+    }
 
     fun Behandling.byggInnhentetGrunnlag(
         personobjekter: MutableSet<GrunnlagDto>,
@@ -171,31 +170,31 @@ class BehandlingTilGrunnlagMappingV2(
             type = grunnlagstype,
             gjelderReferanse = tilGrunnlagsreferanse(),
             innhold =
-                POJONode(
-                    Person(
-                        ident = ident.takeIf { !it.isNullOrEmpty() }?.let { personService.hentNyesteIdent(it) ?: Personident(it) },
-                        navn = if (ident.isNullOrEmpty()) navn ?: personService.hentPersonVisningsnavn(ident) else null,
-                        bidragsmottaker =
-                            if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
-                                bidragsmottaker?.tilGrunnlagsreferanse()
-                            } else {
-                                null
-                            },
-                        delAvOpprinneligBehandling =
-                            if (forholdsmessigFordeling != null) {
-                                !forholdsmessigFordeling!!.erRevurdering
-                            } else {
-                                true
-                            },
-                        stønadstype = if (rolletype == Rolletype.BARN) stønadstype else null,
-                        fødselsdato =
-                            finnFødselsdato(
-                                ident,
-                                fødselsdato,
-                            ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
-                                ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
-                    ).valider(rolletype),
-                ),
+            POJONode(
+                Person(
+                    ident = ident.takeIf { !it.isNullOrEmpty() }?.let { personService.hentNyesteIdent(it) ?: Personident(it) },
+                    navn = if (ident.isNullOrEmpty()) navn ?: personService.hentPersonVisningsnavn(ident) else null,
+                    bidragsmottaker =
+                    if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
+                        bidragsmottaker?.tilGrunnlagsreferanse()
+                    } else {
+                        null
+                    },
+                    delAvOpprinneligBehandling =
+                    if (forholdsmessigFordeling != null) {
+                        !forholdsmessigFordeling!!.erRevurdering
+                    } else {
+                        true
+                    },
+                    stønadstype = if (rolletype == Rolletype.BARN) stønadstype else null,
+                    fødselsdato =
+                    finnFødselsdato(
+                        ident,
+                        fødselsdato,
+                    ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
+                        ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
+                ).valider(rolletype),
+            ),
         )
     }
 
@@ -274,43 +273,40 @@ class BehandlingTilGrunnlagMappingV2(
         }
     }
 
-    fun Behandling.tilGrunnlagUnderholdskostnad(personobjekter: Set<GrunnlagDto> = emptySet()) =
-        listOf(
-            tilGrunnlagBarnetilsyn(),
-            tilGrunnlagTilleggsstønad(),
-            tilGrunnlagFaktiskeTilsynsutgifter(personobjekter),
-        ).flatten()
+    fun Behandling.tilGrunnlagUnderholdskostnad(personobjekter: Set<GrunnlagDto> = emptySet()) = listOf(
+        tilGrunnlagBarnetilsyn(),
+        tilGrunnlagTilleggsstønad(),
+        tilGrunnlagFaktiskeTilsynsutgifter(personobjekter),
+    ).flatten()
 
-    fun Behandling.tilGrunnlagInntektSiste12Mnd(rolle: Rolle) =
-        tilGrunnlagInntekt()
-            .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() }
-            .find {
-                it.innholdTilObjekt<InntektsrapporteringPeriode>().inntektsrapportering == Inntektsrapportering.AINNTEKT_BEREGNET_12MND
-            }
+    fun Behandling.tilGrunnlagInntektSiste12Mnd(rolle: Rolle) = tilGrunnlagInntekt()
+        .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() }
+        .find {
+            it.innholdTilObjekt<InntektsrapporteringPeriode>().inntektsrapportering == Inntektsrapportering.AINNTEKT_BEREGNET_12MND
+        }
 
     fun Behandling.tilGrunnlagInntektSimulering(personobjekter: Set<GrunnlagDto> = tilPersonobjekter()): Set<GrunnlagDto> {
-        fun opprettManuellInntekt(gjelderReferanse: String) =
-            GrunnlagDto(
-                type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
-                referanse = "inntekt_${gjelderReferanse}_${Inntektsrapportering.LØNN_MANUELT_BEREGNET}_$grunnlagsreferanseSimulert",
-                grunnlagsreferanseListe = emptyList(),
-                gjelderReferanse = gjelderReferanse,
-                gjelderBarnReferanse = null,
-                innhold =
-                    POJONode(
-                        InntektsrapporteringPeriode(
-                            beløp = BigDecimal.ZERO,
-                            versjon = null,
-                            periode = ÅrMånedsperiode(eldsteVirkningstidspunkt, null),
-                            opprinneligPeriode = null,
-                            inntektsrapportering = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
-                            manueltRegistrert = true,
-                            valgt = true,
-                            inntektspostListe = emptyList(),
-                            gjelderBarn = null,
-                        ),
-                    ),
-            )
+        fun opprettManuellInntekt(gjelderReferanse: String) = GrunnlagDto(
+            type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+            referanse = "inntekt_${gjelderReferanse}_${Inntektsrapportering.LØNN_MANUELT_BEREGNET}_$grunnlagsreferanseSimulert",
+            grunnlagsreferanseListe = emptyList(),
+            gjelderReferanse = gjelderReferanse,
+            gjelderBarnReferanse = null,
+            innhold =
+            POJONode(
+                InntektsrapporteringPeriode(
+                    beløp = BigDecimal.ZERO,
+                    versjon = null,
+                    periode = ÅrMånedsperiode(eldsteVirkningstidspunkt, null),
+                    opprinneligPeriode = null,
+                    inntektsrapportering = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    manueltRegistrert = true,
+                    valgt = true,
+                    inntektspostListe = emptyList(),
+                    gjelderBarn = null,
+                ),
+            ),
+        )
 
         val inntekterBPIkkeYtelse = inntekter.filter { it.erSammeRolle(bidragspliktig!!) && !eksplisitteYtelser.contains(it.type) }
 
@@ -396,7 +392,7 @@ class BehandlingTilGrunnlagMappingV2(
                                 (
                                     it.inntektGjelderBarn(søknadsbarn.personIdent!!, søknadsbarn.stønadstype) ||
                                         it.gjelderBarnIdent.isNullOrEmpty()
-                                )
+                                    )
                         }
                     }.groupBy { Pair(it.gjelderBarnRolle, it.gjelderBarnIdent) }
                     .map { (gjelderBarn, innhold) ->
@@ -429,56 +425,55 @@ class BehandlingTilGrunnlagMappingV2(
             type = grunnlagstype,
             gjelderReferanse = referanse,
             innhold =
-                POJONode(
-                    Person(
-                        ident = if (!ident.isNullOrEmpty()) Personident(ident!!) else null,
-                        navn = if (ident.isNullOrEmpty()) navn ?: personService.hentPersonVisningsnavn(ident) else null,
-                        stønadstype = if (rolle != null && rolle.rolletype == Rolletype.BARN) rolle.stønadstype else null,
-                        bidragsmottaker =
-                            if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
-                                rolle?.bidragsmottaker?.tilGrunnlagsreferanse()
-                            } else {
-                                null
-                            },
-                        delAvOpprinneligBehandling =
-                            if (rolle?.forholdsmessigFordeling != null) {
-                                rolle?.forholdsmessigFordeling!!.delAvOpprinneligBehandling
-                            } else {
-                                true
-                            },
-                        fødselsdato =
-                            finnFødselsdato(
-                                ident,
-                                fødselsdato,
-                            ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
-                                ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
-                    ).valider(),
-                ),
+            POJONode(
+                Person(
+                    ident = if (!ident.isNullOrEmpty()) Personident(ident!!) else null,
+                    navn = if (ident.isNullOrEmpty()) navn ?: personService.hentPersonVisningsnavn(ident) else null,
+                    stønadstype = if (rolle != null && rolle.rolletype == Rolletype.BARN) rolle.stønadstype else null,
+                    bidragsmottaker =
+                    if (grunnlagstype == Grunnlagstype.PERSON_SØKNADSBARN) {
+                        rolle?.bidragsmottaker?.tilGrunnlagsreferanse()
+                    } else {
+                        null
+                    },
+                    delAvOpprinneligBehandling =
+                    if (rolle?.forholdsmessigFordeling != null) {
+                        rolle?.forholdsmessigFordeling!!.delAvOpprinneligBehandling
+                    } else {
+                        true
+                    },
+                    fødselsdato =
+                    finnFødselsdato(
+                        ident,
+                        fødselsdato,
+                    ) // Avbryter prosesering dersom fødselsdato til søknadsbarn er ukjent
+                        ?: fantIkkeFødselsdatoTilSøknadsbarn(behandling.id ?: -1),
+                ).valider(),
+            ),
         )
     }
 
-    fun Behandling.tilGrunnlagSamværSimulering(): List<GrunnlagDto> =
-        søknadsbarn.mapNotNull { barn ->
-            val samværBarn = samvær.find { it.rolle.erSammeRolle(barn.ident!!, barn.stønadstype) }
-            if (samværBarn == null || samværBarn.perioder.isEmpty()) {
-                GrunnlagDto(
-                    referanse = "samvær_${Grunnlagstype.SAMVÆRSPERIODE}_${barn.tilGrunnlagsreferanse()}_$grunnlagsreferanseSimulert",
-                    type = Grunnlagstype.SAMVÆRSPERIODE,
-                    gjelderReferanse = bidragspliktig!!.tilGrunnlagsreferanse(),
-                    grunnlagsreferanseListe = emptyList(),
-                    gjelderBarnReferanse = barn.tilGrunnlagsreferanse(),
-                    innhold =
-                        POJONode(
-                            SamværsperiodeGrunnlag(
-                                periode = ÅrMånedsperiode(barn.finnBeregnFra(), null),
-                                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0,
-                            ),
-                        ),
-                )
-            } else {
-                null
-            }
+    fun Behandling.tilGrunnlagSamværSimulering(): List<GrunnlagDto> = søknadsbarn.mapNotNull { barn ->
+        val samværBarn = samvær.find { it.rolle.erSammeRolle(barn.ident!!, barn.stønadstype) }
+        if (samværBarn == null || samværBarn.perioder.isEmpty()) {
+            GrunnlagDto(
+                referanse = "samvær_${Grunnlagstype.SAMVÆRSPERIODE}_${barn.tilGrunnlagsreferanse()}_$grunnlagsreferanseSimulert",
+                type = Grunnlagstype.SAMVÆRSPERIODE,
+                gjelderReferanse = bidragspliktig!!.tilGrunnlagsreferanse(),
+                grunnlagsreferanseListe = emptyList(),
+                gjelderBarnReferanse = barn.tilGrunnlagsreferanse(),
+                innhold =
+                POJONode(
+                    SamværsperiodeGrunnlag(
+                        periode = ÅrMånedsperiode(barn.finnBeregnFra(), null),
+                        samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0,
+                    ),
+                ),
+            )
+        } else {
+            null
         }
+    }
 
     fun Behandling.tilGrunnlagSamvær(søknadsbarn: BaseGrunnlag? = null): List<GrunnlagDto> {
         val søknadsbarnIdent = søknadsbarn?.personIdent
@@ -497,17 +492,17 @@ class BehandlingTilGrunnlagMappingV2(
                             type = Grunnlagstype.SAMVÆRSPERIODE,
                             gjelderReferanse = bpGrunnlagsreferanse,
                             grunnlagsreferanseListe =
-                                grunnlagBeregning
-                                    .filtrerBasertPåEgenReferanse(Grunnlagstype.DELBEREGNING_SAMVÆRSKLASSE)
-                                    .map { it.referanse },
+                            grunnlagBeregning
+                                .filtrerBasertPåEgenReferanse(Grunnlagstype.DELBEREGNING_SAMVÆRSKLASSE)
+                                .map { it.referanse },
                             gjelderBarnReferanse = barnGrunnlagsreferanse,
                             innhold =
-                                POJONode(
-                                    SamværsperiodeGrunnlag(
-                                        periode = ÅrMånedsperiode(it.fom, it.tom?.plusDays(1)),
-                                        samværsklasse = it.samværsklasse,
-                                    ),
+                            POJONode(
+                                SamværsperiodeGrunnlag(
+                                    periode = ÅrMånedsperiode(it.fom, it.tom?.plusDays(1)),
+                                    samværsklasse = it.samværsklasse,
                                 ),
+                            ),
                         )
                     grunnlagBeregning + grunnlagPeriode
                 }
@@ -529,25 +524,25 @@ class BehandlingTilGrunnlagMappingV2(
                 referanse = referanse,
                 gjelderReferanse = bidragsmottaker.tilGrunnlagsreferanse(),
                 grunnlagsreferanseListe =
-                    if (kilde == Kilde.OFFENTLIG) {
-                        listOf(
-                            opprettInnhentetAnderBarnTilBidragsmottakerGrunnlagsreferanse(
-                                bidragsmottaker.tilGrunnlagsreferanse(),
-                            ),
-                        )
-                    } else {
-                        emptyList()
-                    },
+                if (kilde == Kilde.OFFENTLIG) {
+                    listOf(
+                        opprettInnhentetAnderBarnTilBidragsmottakerGrunnlagsreferanse(
+                            bidragsmottaker.tilGrunnlagsreferanse(),
+                        ),
+                    )
+                } else {
+                    emptyList()
+                },
                 type = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER,
                 innhold =
-                    POJONode(
-                        Person(
-                            ident = personIdent?.let { Personident(it) },
-                            navn = if (personIdent.isNullOrEmpty()) personNavn else null,
-                            fødselsdato = personFødselsdato,
-                            bidragsmottaker = bidragsmottaker.tilGrunnlagsreferanse(),
-                        ).valider(),
-                    ),
+                POJONode(
+                    Person(
+                        ident = personIdent?.let { Personident(it) },
+                        navn = if (personIdent.isNullOrEmpty()) personNavn else null,
+                        fødselsdato = personFødselsdato,
+                        bidragsmottaker = bidragsmottaker.tilGrunnlagsreferanse(),
+                    ).valider(),
+                ),
             )
         }
 
@@ -557,12 +552,11 @@ class BehandlingTilGrunnlagMappingV2(
             return relatertPersonGrunnlag
         }
 
-        fun Underholdskostnad.hentBidragsmottaker() =
-            if (rolle != null && rolle?.rolletype == Rolletype.BIDRAGSMOTTAKER) {
-                rolle
-            } else {
-                rolle?.bidragsmottaker ?: bidragsmottaker
-            }!!
+        fun Underholdskostnad.hentBidragsmottaker() = if (rolle != null && rolle?.rolletype == Rolletype.BIDRAGSMOTTAKER) {
+            rolle
+        } else {
+            rolle?.bidragsmottaker ?: bidragsmottaker
+        }!!
         val barnUtenPerioder =
             underholdskostnader
                 .filter { it.gjelderAndreBarn && it.faktiskeTilsynsutgifter.isEmpty() }
@@ -596,29 +590,28 @@ class BehandlingTilGrunnlagMappingV2(
                             gjelderReferanse = uBidragsmottaker!!.tilGrunnlagsreferanse(),
                             gjelderBarnReferanse = gjelderBarnReferanse,
                             innhold =
-                                POJONode(
-                                    FaktiskUtgiftPeriode(
-                                        periode = ÅrMånedsperiode(it.fom, it.tom?.plusDays(1)),
-                                        fødselsdatoBarn = gjelderBarn.personObjekt.fødselsdato,
-                                        kostpengerBeløp = it.kostpenger ?: BigDecimal.ZERO,
-                                        faktiskUtgiftBeløp = it.tilsynsutgift,
-                                        kommentar = it.kommentar,
-                                        manueltRegistrert = true,
-                                    ),
+                            POJONode(
+                                FaktiskUtgiftPeriode(
+                                    periode = ÅrMånedsperiode(it.fom, it.tom?.plusDays(1)),
+                                    fødselsdatoBarn = gjelderBarn.personObjekt.fødselsdato,
+                                    kostpengerBeløp = it.kostpenger ?: BigDecimal.ZERO,
+                                    faktiskUtgiftBeløp = it.tilsynsutgift,
+                                    kommentar = it.kommentar,
+                                    manueltRegistrert = true,
                                 ),
+                            ),
                         )
                     }
                 } + grunnlagslistePersoner + barnUtenPerioder
-        ).toSet().toList()
+            ).toSet().toList()
     }
 
     fun finnFødselsdato(
         ident: String?,
         fødselsdato: LocalDate?,
-    ): LocalDate? =
-        if (fødselsdato == null && ident != null) {
-            personService.hentPersonFødselsdato(ident)
-        } else {
-            fødselsdato
-        }
+    ): LocalDate? = if (fødselsdato == null && ident != null) {
+        personService.hentPersonFødselsdato(ident)
+    } else {
+        fødselsdato
+    }
 }

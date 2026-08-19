@@ -117,12 +117,12 @@ class VedtakHendelseTest : TestContainerRunner() {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             ),
         )
         stubUtils.stubOpprettForsendelse()
@@ -134,21 +134,21 @@ class VedtakHendelseTest : TestContainerRunner() {
             opprettVedtakhendelse(vedtakId, behandling.id!!, stonadType = Stønadstype.BIDRAG)
                 .copy(
                     stønadsendringListe =
-                        listOf(
-                            Stønadsendring(
-                                type = Stønadstype.BIDRAG,
-                                eksternReferanse = "",
-                                beslutning = Beslutningstype.ENDRING,
-                                førsteIndeksreguleringsår = 2024,
-                                innkreving = Innkrevingstype.MED_INNKREVING,
-                                kravhaver = Personident(testdataBarn1.ident),
-                                mottaker = Personident(testdataBM.ident),
-                                omgjørVedtakId = 1,
-                                periodeListe = emptyList(),
-                                sak = Saksnummer(SAKSNUMMER),
-                                skyldner = Personident(testdataBP.ident),
-                            ),
+                    listOf(
+                        Stønadsendring(
+                            type = Stønadstype.BIDRAG,
+                            eksternReferanse = "",
+                            beslutning = Beslutningstype.ENDRING,
+                            førsteIndeksreguleringsår = 2024,
+                            innkreving = Innkrevingstype.MED_INNKREVING,
+                            kravhaver = Personident(testdataBarn1.ident),
+                            mottaker = Personident(testdataBM.ident),
+                            omgjørVedtakId = 1,
+                            periodeListe = emptyList(),
+                            sak = Saksnummer(SAKSNUMMER),
+                            skyldner = Personident(testdataBP.ident),
                         ),
+                    ),
                 )
         vedtakHendelseListener.prossesserVedtakHendelse(opprettHendelseRecord(vedtakHendelse))
         stubUtils.Verify().opprettOppgaveKalt(0)
@@ -163,12 +163,12 @@ class VedtakHendelseTest : TestContainerRunner() {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             ),
         )
         stubUtils.stubOpprettForsendelse()
@@ -180,28 +180,28 @@ class VedtakHendelseTest : TestContainerRunner() {
             opprettVedtakhendelse(vedtakId, behandling.id!!, stonadType = Stønadstype.BIDRAG)
                 .copy(
                     behandlingsreferanseListe =
-                        listOf(
-                            Behandlingsreferanse(
-                                BehandlingsrefKilde.BISYS_SØKNAD.name,
-                                SOKNAD_ID.toString(),
-                            ),
+                    listOf(
+                        Behandlingsreferanse(
+                            BehandlingsrefKilde.BISYS_SØKNAD.name,
+                            SOKNAD_ID.toString(),
                         ),
+                    ),
                     stønadsendringListe =
-                        listOf(
-                            Stønadsendring(
-                                type = Stønadstype.BIDRAG,
-                                eksternReferanse = "",
-                                beslutning = Beslutningstype.ENDRING,
-                                førsteIndeksreguleringsår = 2024,
-                                innkreving = Innkrevingstype.MED_INNKREVING,
-                                kravhaver = Personident(testdataBarn1.ident),
-                                mottaker = Personident(testdataBM.ident),
-                                omgjørVedtakId = 1,
-                                periodeListe = emptyList(),
-                                sak = Saksnummer(SAKSNUMMER),
-                                skyldner = Personident(testdataBP.ident),
-                            ),
+                    listOf(
+                        Stønadsendring(
+                            type = Stønadstype.BIDRAG,
+                            eksternReferanse = "",
+                            beslutning = Beslutningstype.ENDRING,
+                            førsteIndeksreguleringsår = 2024,
+                            innkreving = Innkrevingstype.MED_INNKREVING,
+                            kravhaver = Personident(testdataBarn1.ident),
+                            mottaker = Personident(testdataBM.ident),
+                            omgjørVedtakId = 1,
+                            periodeListe = emptyList(),
+                            sak = Saksnummer(SAKSNUMMER),
+                            skyldner = Personident(testdataBP.ident),
                         ),
+                    ),
                 )
         vedtakHendelseListener.prossesserVedtakHendelse(opprettHendelseRecord(vedtakHendelse))
         stubUtils.Verify().opprettOppgaveKalt(0)
@@ -217,12 +217,12 @@ class VedtakHendelseTest : TestContainerRunner() {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             ),
         )
         stubUtils.stubOpprettForsendelse()
@@ -235,56 +235,54 @@ class VedtakHendelseTest : TestContainerRunner() {
                 .copy(
                     kilde = Vedtakskilde.AUTOMATISK,
                     behandlingsreferanseListe =
-                        listOf(
-                            Behandlingsreferanse(
-                                BehandlingsrefKilde.BISYS_SØKNAD.name,
-                                SOKNAD_ID.toString(),
-                            ),
+                    listOf(
+                        Behandlingsreferanse(
+                            BehandlingsrefKilde.BISYS_SØKNAD.name,
+                            SOKNAD_ID.toString(),
                         ),
+                    ),
                     stønadsendringListe =
-                        listOf(
-                            Stønadsendring(
-                                type = Stønadstype.BIDRAG,
-                                eksternReferanse = "",
-                                beslutning = Beslutningstype.ENDRING,
-                                førsteIndeksreguleringsår = 2024,
-                                innkreving = Innkrevingstype.MED_INNKREVING,
-                                kravhaver = Personident(testdataBarn1.ident),
-                                mottaker = Personident(testdataBM.ident),
-                                omgjørVedtakId = 1,
-                                periodeListe = emptyList(),
-                                sak = Saksnummer(SAKSNUMMER),
-                                skyldner = Personident(testdataBP.ident),
-                            ),
+                    listOf(
+                        Stønadsendring(
+                            type = Stønadstype.BIDRAG,
+                            eksternReferanse = "",
+                            beslutning = Beslutningstype.ENDRING,
+                            førsteIndeksreguleringsår = 2024,
+                            innkreving = Innkrevingstype.MED_INNKREVING,
+                            kravhaver = Personident(testdataBarn1.ident),
+                            mottaker = Personident(testdataBM.ident),
+                            omgjørVedtakId = 1,
+                            periodeListe = emptyList(),
+                            sak = Saksnummer(SAKSNUMMER),
+                            skyldner = Personident(testdataBP.ident),
                         ),
+                    ),
                 )
         vedtakHendelseListener.prossesserVedtakHendelse(opprettHendelseRecord(vedtakHendelse))
         stubUtils.Verify().opprettOppgaveKalt(0)
         stubUtils.Verify().hentBidragBeløpshistorikkHistoriskeSakerKalt(0)
     }
 
-    private fun opprettHendelseRecord(vedtakHendelse: VedtakHendelse) =
-        ConsumerRecord(
-            "",
-            1,
-            1,
-            "",
-            stubUtils.toJsonString(vedtakHendelse),
-        )
+    private fun opprettHendelseRecord(vedtakHendelse: VedtakHendelse) = ConsumerRecord(
+        "",
+        1,
+        1,
+        "",
+        stubUtils.toJsonString(vedtakHendelse),
+    )
 
-    private fun opprettBehandling() =
-        Behandling(
-            søktFomDato = LocalDate.now(),
-            saksnummer = SAKSNUMMER,
-            soknadsid = SOKNAD_ID.toLong(),
-            behandlerEnhet = "4806",
-            opprettetAv = "Z99999",
-            opprettetAvNavn = "Saksbehandler Navn",
-            kildeapplikasjon = "bisys",
-            engangsbeloptype = null,
-            mottattdato = LocalDate.now(),
-            soknadFra = SøktAvType.BIDRAGSMOTTAKER,
-            vedtakstype = Vedtakstype.FASTSETTELSE,
-            stonadstype = Stønadstype.BIDRAG18AAR,
-        )
+    private fun opprettBehandling() = Behandling(
+        søktFomDato = LocalDate.now(),
+        saksnummer = SAKSNUMMER,
+        soknadsid = SOKNAD_ID.toLong(),
+        behandlerEnhet = "4806",
+        opprettetAv = "Z99999",
+        opprettetAvNavn = "Saksbehandler Navn",
+        kildeapplikasjon = "bisys",
+        engangsbeloptype = null,
+        mottattdato = LocalDate.now(),
+        soknadFra = SøktAvType.BIDRAGSMOTTAKER,
+        vedtakstype = Vedtakstype.FASTSETTELSE,
+        stonadstype = Stønadstype.BIDRAG18AAR,
+    )
 }

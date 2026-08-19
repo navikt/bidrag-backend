@@ -20,13 +20,13 @@ fun ResultatForskuddsberegningBarn.byggStønadsendringerForVedtak(behandling: Be
             OpprettPeriodeRequestDto(
                 periode = it.periode,
                 beløp =
-                    if (behandling.stonadstype == Stønadstype.FORSKUDD &&
-                        it.resultat.belop <= BigDecimal.ZERO
-                    ) {
-                        null
-                    } else {
-                        it.resultat.belop
-                    },
+                if (behandling.stonadstype == Stønadstype.FORSKUDD &&
+                    it.resultat.belop <= BigDecimal.ZERO
+                ) {
+                    null
+                } else {
+                    it.resultat.belop
+                },
                 valutakode = "NOK",
                 resultatkode = it.resultat.kode.name,
                 grunnlagReferanseListe = it.grunnlagsreferanseListe,

@@ -59,11 +59,10 @@ class ForsendelseService(
         return opprettForsendelse(request)
     }
 
-    fun slettForsendelse(request: InitalizeForsendelseRequest): List<String> =
-        slettVarselbrevUnderOpprettelse(
-            request.saksnummer,
-            request.behandlingInfo.soknadId!!.toLong(),
-        ).map { it.toString() }
+    fun slettForsendelse(request: InitalizeForsendelseRequest): List<String> = slettVarselbrevUnderOpprettelse(
+        request.saksnummer,
+        request.behandlingInfo.soknadId!!.toLong(),
+    ).map { it.toString() }
 
     @Transactional
     fun opprettForsendelseForAldersjustering(behandling: Behandling) {
@@ -162,22 +161,22 @@ class ForsendelseService(
         val opprettRequestTemplate =
             OpprettForsendelseForespørsel(
                 behandlingInfo =
-                    request.behandlingInfo
-                        .copy(
-                            erVedtakIkkeTilbakekreving = false,
-                            barnIBehandling =
-                                request.roller
-                                    .filter { it.type == Rolletype.BARN && !it.fødselsnummer?.verdi.isNullOrEmpty() }
-                                    .map { it.fødselsnummer!!.verdi },
-                        ),
+                request.behandlingInfo
+                    .copy(
+                        erVedtakIkkeTilbakekreving = false,
+                        barnIBehandling =
+                        request.roller
+                            .filter { it.type == Rolletype.BARN && !it.fødselsnummer?.verdi.isNullOrEmpty() }
+                            .map { it.fødselsnummer!!.verdi },
+                    ),
                 saksnummer = request.saksnummer,
                 enhet = request.enhet!!,
                 gjelderIdent = "", // Placeholder: Settes i neste steg
                 opprettTittel = true,
                 språk = Språk.NB.name,
                 tema =
-                    request.tema
-                        ?: if (request.enhet == ENHET_FARSKAP && harTilgangTilTemaFar()) JournalTema.FAR else JournalTema.BID,
+                request.tema
+                    ?: if (request.enhet == ENHET_FARSKAP && harTilgangTilTemaFar()) JournalTema.FAR else JournalTema.BID,
             )
 
         val opprettForRoller = opprettForRoller(request.roller, request.behandlingInfo)
@@ -220,7 +219,7 @@ class ForsendelseService(
                     (
                         request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == true ||
                             !request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == false
-                    )
+                        )
             }
     }
 
@@ -248,7 +247,7 @@ class ForsendelseService(
         return !(
             behandlingInfo.stonadType == Stønadstype.FORSKUDD &&
                 ikkeOpprettVarslingForForskuddMedType.contains(behandlingInfo.vedtakType)
-        )
+            )
     }
 
     private fun opprettForRoller(
@@ -284,21 +283,20 @@ class ForsendelseService(
 fun ForsendelseBestilling.tilFellesForsendelseBestilling(
     behandling: Behandling,
     søknadsbarn: Rolle,
-): FellesForsendelseBestilling =
-    FellesForsendelseBestilling(
-        unikReferanse = behandling.opprettUnikReferanse("${rolletype!!.name}_${søknadsbarn.ident}"),
-        gjelder = gjelder!!,
-        mottaker = mottaker!!,
-        saksnummer = behandling.saksnummer,
-        språkkode = this.språkkode ?: Språk.NB,
-        dokumentmal = this.dokumentmal!!,
-        behandlingInfoDto =
-            FellesForsendelseMapper.byggBehandlingInfoDtoForAldersjustering(
-                behandling.vedtaksid.toString(),
-                behandling.stonadstype!!,
-                listOf(søknadsbarn.ident!!),
-            ),
-    )
+): FellesForsendelseBestilling = FellesForsendelseBestilling(
+    unikReferanse = behandling.opprettUnikReferanse("${rolletype!!.name}_${søknadsbarn.ident}"),
+    gjelder = gjelder!!,
+    mottaker = mottaker!!,
+    saksnummer = behandling.saksnummer,
+    språkkode = this.språkkode ?: Språk.NB,
+    dokumentmal = this.dokumentmal!!,
+    behandlingInfoDto =
+    FellesForsendelseMapper.byggBehandlingInfoDtoForAldersjustering(
+        behandling.vedtaksid.toString(),
+        behandling.stonadstype!!,
+        listOf(søknadsbarn.ident!!),
+    ),
+)
 
 class OpprettForsendelseForRollerListe : MutableList<ForsendelseRolleDto> by mutableListOf() {
     fun leggTil(rolle: ForsendelseRolleDto?) {
@@ -310,12 +308,10 @@ class OpprettForsendelseForRollerListe : MutableList<ForsendelseRolleDto> by mut
 
 fun BehandlingInfoDto.typeForsendelse() = if (this.erVedtakFattet()) "vedtak" else "varsel"
 
-fun List<ForsendelseRolleDto>.hentRolle(rolleType: Rolletype): ForsendelseRolleDto? =
-    this.find {
-        it.type == rolleType
-    }
+fun List<ForsendelseRolleDto>.hentRolle(rolleType: Rolletype): ForsendelseRolleDto? = this.find {
+    it.type == rolleType
+}
 
-fun List<ForsendelseRolleDto>.hentBarn(): List<ForsendelseRolleDto> =
-    this.filter {
-        it.type == Rolletype.BARN
-    }
+fun List<ForsendelseRolleDto>.hentBarn(): List<ForsendelseRolleDto> = this.filter {
+    it.type == Rolletype.BARN
+}

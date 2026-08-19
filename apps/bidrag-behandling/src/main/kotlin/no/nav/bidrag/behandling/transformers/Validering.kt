@@ -75,10 +75,9 @@ val resultatkoderSomKreverBegrunnelseVirkningstidspunkt = listOf(Resultatkode.PA
 
 fun Behandling.kanSkriveVurderingAvSkolegangAlle() = søknadsbarn.any { kanSkriveVurderingAvSkolegang(it) }
 
-fun Behandling.kanSkriveVurderingAvSkolegang(rolle: Rolle) =
-    (rolle.stønadstype ?: stonadstype) == Stønadstype.BIDRAG18AAR &&
-        vedtakstype != Vedtakstype.OPPHØR &&
-        (rolle.avslag == null || listOf(Resultatkode.IKKE_DOKUMENTERT_SKOLEGANG).contains(rolle.avslag))
+fun Behandling.kanSkriveVurderingAvSkolegang(rolle: Rolle) = (rolle.stønadstype ?: stonadstype) == Stønadstype.BIDRAG18AAR &&
+    vedtakstype != Vedtakstype.OPPHØR &&
+    (rolle.avslag == null || listOf(Resultatkode.IKKE_DOKUMENTERT_SKOLEGANG).contains(rolle.avslag))
 
 fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
     if (opphørsdato == null) return
@@ -135,34 +134,32 @@ fun MutableSet<String>.validerSann(
     }
 }
 
-fun bestemRollerSomMåHaMinstEnInntekt(typeBehandling: TypeBehandling) =
-    when (typeBehandling) {
-        TypeBehandling.FORSKUDD -> {
-            listOf(Rolletype.BIDRAGSMOTTAKER)
-        }
-
-        TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR, TypeBehandling.SÆRBIDRAG -> {
-            listOf(
-                Rolletype.BIDRAGSPLIKTIG,
-                Rolletype.BIDRAGSMOTTAKER,
-            )
-        }
+fun bestemRollerSomMåHaMinstEnInntekt(typeBehandling: TypeBehandling) = when (typeBehandling) {
+    TypeBehandling.FORSKUDD -> {
+        listOf(Rolletype.BIDRAGSMOTTAKER)
     }
 
-fun bestemRollerSomKanHaInntekter(typeBehandling: TypeBehandling) =
-    when (typeBehandling) {
-        TypeBehandling.FORSKUDD -> {
-            listOf(Rolletype.BIDRAGSMOTTAKER)
-        }
-
-        TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR, TypeBehandling.SÆRBIDRAG -> {
-            listOf(
-                Rolletype.BIDRAGSPLIKTIG,
-                Rolletype.BIDRAGSMOTTAKER,
-                Rolletype.BARN,
-            )
-        }
+    TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR, TypeBehandling.SÆRBIDRAG -> {
+        listOf(
+            Rolletype.BIDRAGSPLIKTIG,
+            Rolletype.BIDRAGSMOTTAKER,
+        )
     }
+}
+
+fun bestemRollerSomKanHaInntekter(typeBehandling: TypeBehandling) = when (typeBehandling) {
+    TypeBehandling.FORSKUDD -> {
+        listOf(Rolletype.BIDRAGSMOTTAKER)
+    }
+
+    TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR, TypeBehandling.SÆRBIDRAG -> {
+        listOf(
+            Rolletype.BIDRAGSPLIKTIG,
+            Rolletype.BIDRAGSMOTTAKER,
+            Rolletype.BARN,
+        )
+    }
+}
 
 private val inntekstrapporteringerSomKreverInnteksttype = listOf(Inntektsrapportering.BARNETILLEGG)
 val Behandling.utgiftCuttofDato get() = mottattdato.minusYears(1)
@@ -415,30 +412,30 @@ fun PrivatAvtale.validerePrivatAvtale(): PrivatAvtaleValideringsfeilDto {
         manglerAvtaledato = utledetAvtaledato == null,
         manglerAvtaletype = avtaleType == null,
         perioderOverlapperMedLøpendeBidrag =
-            if (behandling.erInnkreving) {
-                emptySet()
-            } else if (rolle != null) {
-                behandling.finnPerioderSomOverlapperMedLøpendeBidrag(
+        if (behandling.erInnkreving) {
+            emptySet()
+        } else if (rolle != null) {
+            behandling.finnPerioderSomOverlapperMedLøpendeBidrag(
+                perioder.map {
+                    it.tilDatoperiode()
+                },
+                rolle!!,
+            )
+        } else if (personIdent != null) {
+            behandling
+                .finnPerioderSomOverlapperMedLøpendeBidragForAndreBarn(
                     perioder.map {
                         it.tilDatoperiode()
                     },
-                    rolle!!,
+                    personIdent!!,
+                    stønadstype ?: Stønadstype.BIDRAG,
                 )
-            } else if (personIdent != null) {
-                behandling
-                    .finnPerioderSomOverlapperMedLøpendeBidragForAndreBarn(
-                        perioder.map {
-                            it.tilDatoperiode()
-                        },
-                        personIdent!!,
-                        stønadstype ?: Stønadstype.BIDRAG,
-                    )
-            } else {
-                emptySet()
-            },
+        } else {
+            emptySet()
+        },
         ingenLøpendePeriode =
-            when {
-                perioderInnkreving.isEmpty() -> true
+        when {
+            perioderInnkreving.isEmpty() -> true
 
 //                rolle != null &&
 //                    behandling.manglerLøpendePeriode(
@@ -447,37 +444,37 @@ fun PrivatAvtale.validerePrivatAvtale(): PrivatAvtaleValideringsfeilDto {
 //                    )
 //                -> true
 
-                else -> false
-            },
+            else -> false
+        },
         manglerBegrunnelse = if (rolle == null) false else !behandling.erKlageEllerOmgjøring && notatPrivatAvtale?.innhold.isNullOrEmpty(),
         finnesPerioderFør18Årsdag =
-            if (stønadstype == Stønadstype.BIDRAG18AAR) {
-                val minDato = personFødselsdato.tilDato18årsBidrag()
-                perioder.any {
-                    it.fom.isBefore(minDato)
-                }
-            } else {
-                false
-            },
+        if (stønadstype == Stønadstype.BIDRAG18AAR) {
+            val minDato = personFødselsdato.tilDato18årsBidrag()
+            perioder.any {
+                it.fom.isBefore(minDato)
+            }
+        } else {
+            false
+        },
         finnesPerioderEtter18Årsdag =
-            if (stønadstype == Stønadstype.BIDRAG) {
-                val maksDato = personFødselsdato.tilDato18årsBidrag()
-                perioder.any {
-                    it.fom >= maksDato || (it.tom != null && it.tom!! > maksDato)
-                }
-            } else {
-                false
-            },
+        if (stønadstype == Stønadstype.BIDRAG) {
+            val maksDato = personFødselsdato.tilDato18årsBidrag()
+            perioder.any {
+                it.fom >= maksDato || (it.tom != null && it.tom!! > maksDato)
+            }
+        } else {
+            false
+        },
         måVelgeVedtakHvisAvtaletypeErVedtakFraNav =
-            behandling.erInnkreving && avtaleType == PrivatAvtaleType.VEDTAK_FRA_NAV && valgtVedtakFraNav == null,
+        behandling.erInnkreving && avtaleType == PrivatAvtaleType.VEDTAK_FRA_NAV && valgtVedtakFraNav == null,
         overlappendePerioder =
-            if (avtaleType != PrivatAvtaleType.VEDTAK_FRA_NAV) {
-                perioder
-                    .map { Pair(it.id!!, it.tilDatoperiode()) }
-                    .finnOverlappendePerioder()
-            } else {
-                emptySet()
-            },
+        if (avtaleType != PrivatAvtaleType.VEDTAK_FRA_NAV) {
+            perioder
+                .map { Pair(it.id!!, it.tilDatoperiode()) }
+                .finnOverlappendePerioder()
+        } else {
+            emptySet()
+        },
     )
 }
 
@@ -515,9 +512,9 @@ fun Husstandsmedlem.validereBoforhold(
                 hullIPerioder,
                 overlappendePerioder = this.perioder.finneOverlappendeBostatusperioder(),
                 ugyldigSluttperiode =
-                    this.perioder
-                        .map { it.tilDatoperiode() }
-                        .ugyldigSluttperiode(opphørsdato),
+                this.perioder
+                    .map { it.tilDatoperiode() }
+                    .ugyldigSluttperiode(opphørsdato),
                 manglerPerioder = this.perioder.isEmpty(),
                 fremtidigPeriode = this.inneholderFremtidigeBoforholdsperioder(),
             ),
@@ -541,13 +538,13 @@ fun Set<Husstandsmedlem>.validerBoforhold(virkniningstidspunkt: LocalDate): Set<
                     BoforholdPeriodeseringsfeil(
                         manglerPerioder = true,
                         husstandsmedlem =
-                            Husstandsmedlem(
-                                b,
-                                fødselsdato = rolle.fødselsdato,
-                                navn = rolle.navn,
-                                ident = rolle.ident,
-                                kilde = Kilde.OFFENTLIG,
-                            ),
+                        Husstandsmedlem(
+                            b,
+                            fødselsdato = rolle.fødselsdato,
+                            navn = rolle.navn,
+                            ident = rolle.ident,
+                            kilde = Kilde.OFFENTLIG,
+                        ),
                     ),
                 )
             }
@@ -609,57 +606,54 @@ fun Behandling.finnPerioderSomOverlapperMedLøpendeBidrag(
         }.toSet()
 }
 
-fun List<Pair<Long, Datoperiode>>.finnOverlappendePerioder(): Set<no.nav.bidrag.behandling.dto.v2.felles.OverlappendePeriode> =
-    sortedBy { it.second.fom }
-        .flatMapIndexed { index, periode ->
-            sortedBy { it.second.fom }
-                .drop(index + 1)
-                .filter { nestePeriode ->
-                    nestePeriode.second.overlapper(periode.second)
-                }.map { nesteBostatusperiode ->
-                    no.nav.bidrag.behandling.dto.v2.felles.OverlappendePeriode(
-                        Datoperiode(
-                            maxOf(periode.second.fom, nesteBostatusperiode.second.fom),
-                            minOfNullable(periode.second.til, nesteBostatusperiode.second.til),
-                        ),
-                        mutableSetOf(periode.first, nesteBostatusperiode.first),
-                    )
-                }
-        }.toSet()
-
-private fun Set<Sivilstand>.finnSivilstandOverlappendePerioder() =
-    sortedBy { it.datoFom }.flatMapIndexed { index, sivilstand ->
-        sortedBy { it.datoFom }.drop(index + 1).mapNotNull { nesteSivilstand ->
-            if (sivilstand.tilDatoperiode().overlapper(nesteSivilstand.tilDatoperiode())) {
-                SivilstandOverlappendePeriode(
+fun List<Pair<Long, Datoperiode>>.finnOverlappendePerioder(): Set<no.nav.bidrag.behandling.dto.v2.felles.OverlappendePeriode> = sortedBy { it.second.fom }
+    .flatMapIndexed { index, periode ->
+        sortedBy { it.second.fom }
+            .drop(index + 1)
+            .filter { nestePeriode ->
+                nestePeriode.second.overlapper(periode.second)
+            }.map { nesteBostatusperiode ->
+                no.nav.bidrag.behandling.dto.v2.felles.OverlappendePeriode(
                     Datoperiode(
-                        maxOf(sivilstand.datoFom!!, nesteSivilstand.datoFom!!),
-                        minOfNullable(sivilstand.datoTom, nesteSivilstand.datoTom),
+                        maxOf(periode.second.fom, nesteBostatusperiode.second.fom),
+                        minOfNullable(periode.second.til, nesteBostatusperiode.second.til),
                     ),
-                    setOf(sivilstand.sivilstand, nesteSivilstand.sivilstand),
+                    mutableSetOf(periode.first, nesteBostatusperiode.first),
                 )
-            } else {
-                null
             }
+    }.toSet()
+
+private fun Set<Sivilstand>.finnSivilstandOverlappendePerioder() = sortedBy { it.datoFom }.flatMapIndexed { index, sivilstand ->
+    sortedBy { it.datoFom }.drop(index + 1).mapNotNull { nesteSivilstand ->
+        if (sivilstand.tilDatoperiode().overlapper(nesteSivilstand.tilDatoperiode())) {
+            SivilstandOverlappendePeriode(
+                Datoperiode(
+                    maxOf(sivilstand.datoFom!!, nesteSivilstand.datoFom!!),
+                    minOfNullable(sivilstand.datoTom, nesteSivilstand.datoTom),
+                ),
+                setOf(sivilstand.sivilstand, nesteSivilstand.sivilstand),
+            )
+        } else {
+            null
         }
     }
+}
 
-private fun Set<Bostatusperiode>.finneOverlappendeBostatusperioder() =
-    sortedBy { it.datoFom }.flatMapIndexed { index, bostatusperiode ->
-        sortedBy { it.datoFom }
-            .drop(index + 1)
-            .filter { nesteHusstandsperiode ->
-                nesteHusstandsperiode.tilDatoperiode().overlapper(bostatusperiode.tilDatoperiode())
-            }.map { nesteBostatusperiode ->
-                OverlappendeBostatusperiode(
-                    Datoperiode(
-                        maxOf(bostatusperiode.datoFom!!, nesteBostatusperiode.datoFom!!),
-                        minOfNullable(bostatusperiode.datoTom, nesteBostatusperiode.datoTom),
-                    ),
-                    setOf(bostatusperiode.bostatus, nesteBostatusperiode.bostatus),
-                )
-            }
-    }
+private fun Set<Bostatusperiode>.finneOverlappendeBostatusperioder() = sortedBy { it.datoFom }.flatMapIndexed { index, bostatusperiode ->
+    sortedBy { it.datoFom }
+        .drop(index + 1)
+        .filter { nesteHusstandsperiode ->
+            nesteHusstandsperiode.tilDatoperiode().overlapper(bostatusperiode.tilDatoperiode())
+        }.map { nesteBostatusperiode ->
+            OverlappendeBostatusperiode(
+                Datoperiode(
+                    maxOf(bostatusperiode.datoFom!!, nesteBostatusperiode.datoFom!!),
+                    minOfNullable(bostatusperiode.datoTom, nesteBostatusperiode.datoTom),
+                ),
+                setOf(bostatusperiode.bostatus, nesteBostatusperiode.bostatus),
+            )
+        }
+}
 
 fun List<Datoperiode>.ugyldigSluttperiode(
     opphørsdato: LocalDate? = null,
@@ -1037,30 +1031,28 @@ fun Bostatusperiode.tilDatoperiode() = Datoperiode(datoFom!!, datoTom)
 fun finnSenesteDato(
     dato1: LocalDate?,
     dato2: LocalDate?,
-): LocalDate? =
-    if (dato1 == null || dato2 == null) {
-        null
-    } else {
-        maxOf(
-            dato1,
-            dato2,
-        )
-    }
+): LocalDate? = if (dato1 == null || dato2 == null) {
+    null
+} else {
+    maxOf(
+        dato1,
+        dato2,
+    )
+}
 
 fun finnSenesteDato(
     dato1: LocalDate?,
     dato2: LocalDate?,
     dato3: LocalDate?,
-): LocalDate? =
-    if (dato1 == null || dato2 == null || dato3 == null) {
-        null
-    } else {
-        maxOf(
-            dato1,
-            dato2,
-            dato3,
-        )
-    }
+): LocalDate? = if (dato1 == null || dato2 == null || dato3 == null) {
+    null
+} else {
+    maxOf(
+        dato1,
+        dato2,
+        dato3,
+    )
+}
 
 private fun Set<OverlappendePeriode>.mergePerioder(): Set<OverlappendePeriode> {
     val sammenstiltePerioder = mutableListOf<OverlappendePeriode>()
@@ -1086,57 +1078,57 @@ private fun Set<OverlappendePeriode>.mergePerioder(): Set<OverlappendePeriode> {
                 sammenstiltePerioder.add(
                     sammenstiltePerioderSomInneholderOverlappende.copy(
                         rapporteringTyper =
-                            (
-                                annenOverlappendePeriode.rapporteringTyper + overlappendePeriode.rapporteringTyper +
-                                    sammenstiltePerioderSomInneholderOverlappende.rapporteringTyper
+                        (
+                            annenOverlappendePeriode.rapporteringTyper + overlappendePeriode.rapporteringTyper +
+                                sammenstiltePerioderSomInneholderOverlappende.rapporteringTyper
                             ).sorted()
-                                .toMutableSet(),
+                            .toMutableSet(),
                         idListe =
-                            (
-                                annenOverlappendePeriode.idListe + overlappendePeriode.idListe +
-                                    sammenstiltePerioderSomInneholderOverlappende.idListe
+                        (
+                            annenOverlappendePeriode.idListe + overlappendePeriode.idListe +
+                                sammenstiltePerioderSomInneholderOverlappende.idListe
                             ).sorted().toMutableSet(),
                         inntektstyper =
-                            (
-                                annenOverlappendePeriode.inntektstyper + overlappendePeriode.inntektstyper +
-                                    sammenstiltePerioderSomInneholderOverlappende.inntektstyper
+                        (
+                            annenOverlappendePeriode.inntektstyper + overlappendePeriode.inntektstyper +
+                                sammenstiltePerioderSomInneholderOverlappende.inntektstyper
                             ).sorted()
-                                .toMutableSet(),
+                            .toMutableSet(),
                         periode =
-                            Datoperiode(
-                                minOf(
-                                    annenOverlappendePeriode.periode.fom,
-                                    overlappendePeriode.periode.fom,
-                                    sammenstiltePerioderSomInneholderOverlappende.periode.fom,
-                                ),
-                                finnSenesteDato(
-                                    annenOverlappendePeriode.periode.til,
-                                    overlappendePeriode.periode.til,
-                                    sammenstiltePerioderSomInneholderOverlappende.periode.til,
-                                ),
+                        Datoperiode(
+                            minOf(
+                                annenOverlappendePeriode.periode.fom,
+                                overlappendePeriode.periode.fom,
+                                sammenstiltePerioderSomInneholderOverlappende.periode.fom,
                             ),
+                            finnSenesteDato(
+                                annenOverlappendePeriode.periode.til,
+                                overlappendePeriode.periode.til,
+                                sammenstiltePerioderSomInneholderOverlappende.periode.til,
+                            ),
+                        ),
                     ),
                 )
             } else {
                 sammenstiltePerioder.add(
                     annenOverlappendePeriode.copy(
                         periode =
-                            Datoperiode(
-                                minOf(annenOverlappendePeriode.periode.fom, overlappendePeriode.periode.fom),
-                                finnSenesteDato(annenOverlappendePeriode.periode.til, overlappendePeriode.periode.til),
-                            ),
+                        Datoperiode(
+                            minOf(annenOverlappendePeriode.periode.fom, overlappendePeriode.periode.fom),
+                            finnSenesteDato(annenOverlappendePeriode.periode.til, overlappendePeriode.periode.til),
+                        ),
                         rapporteringTyper =
-                            (annenOverlappendePeriode.rapporteringTyper + overlappendePeriode.rapporteringTyper)
-                                .sorted()
-                                .toMutableSet(),
+                        (annenOverlappendePeriode.rapporteringTyper + overlappendePeriode.rapporteringTyper)
+                            .sorted()
+                            .toMutableSet(),
                         idListe =
-                            (annenOverlappendePeriode.idListe + overlappendePeriode.idListe)
-                                .sorted()
-                                .toMutableSet(),
+                        (annenOverlappendePeriode.idListe + overlappendePeriode.idListe)
+                            .sorted()
+                            .toMutableSet(),
                         inntektstyper =
-                            (annenOverlappendePeriode.inntektstyper + overlappendePeriode.inntektstyper)
-                                .sorted()
-                                .toMutableSet(),
+                        (annenOverlappendePeriode.inntektstyper + overlappendePeriode.inntektstyper)
+                            .sorted()
+                            .toMutableSet(),
                     ),
                 )
             }
@@ -1157,7 +1149,7 @@ private fun Husstandsmedlem.inneholderFremtidigeBoforholdsperioder(): Boolean {
                     it.datoTom!!.isAfter(
                         kanIkkeVæreSenereEnnDato.plusMonths(1).minusDays(1),
                     )
-            )
+                )
     }
 }
 
@@ -1170,7 +1162,7 @@ private fun Husstandsmedlem.validereNyPeriode(
     if ((
             nyFomDato != null &&
                 nyFomDato.isAfter(kanIkkeVæreSenereEnnDato)
-        ) ||
+            ) ||
         (nyTomDato != null && nyTomDato.isAfter(kanIkkeVæreSenereEnnDato.plusMonths(1).minusDays(1)))
     ) {
         oppdateringAvBoforholdFeilet(

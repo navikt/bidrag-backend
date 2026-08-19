@@ -147,84 +147,76 @@ fun List<RelatertPersonGrunnlagDto>.tilGrunnlagEntity(
     }
 
 @JvmName("sivilstandGrunnlagDtoTilGrunnlagEntity")
-fun List<SivilstandGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.personId }
-        .map { (personId, grunnlag) ->
-            behandling.opprettGrunnlag(Grunnlagsdatatype.SIVILSTAND, grunnlag, personId!!)
-        }
+fun List<SivilstandGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.personId }
+    .map { (personId, grunnlag) ->
+        behandling.opprettGrunnlag(Grunnlagsdatatype.SIVILSTAND, grunnlag, personId!!)
+    }
 
 @JvmName("arbeidsforholdGrunnlagDtoTilGrunnlagEntity")
-fun List<ArbeidsforholdGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.partPersonId }
-        .map { (partPersonId, grunnlag) ->
-            behandling.opprettGrunnlag(Grunnlagsdatatype.ARBEIDSFORHOLD, grunnlag, partPersonId)
-        }
+fun List<ArbeidsforholdGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.partPersonId }
+    .map { (partPersonId, grunnlag) ->
+        behandling.opprettGrunnlag(Grunnlagsdatatype.ARBEIDSFORHOLD, grunnlag, partPersonId)
+    }
 
 @JvmName("barnetilleggGrunnlagDtoTilGrunnlagEntity")
-fun List<BarnetilleggGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.partPersonId }
-        .map { (partPersonId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.BARNETILLEGG,
-                grunnlag,
-                partPersonId,
-            )
-        }
+fun List<BarnetilleggGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.partPersonId }
+    .map { (partPersonId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.BARNETILLEGG,
+            grunnlag,
+            partPersonId,
+        )
+    }
 
 @JvmName("tilleggsstønadGrunnlagDtoTilGrunnlagEntity")
-fun List<TilleggsstønadGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.partPersonId }
-        .map { (partPersonId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.TILLEGGSSTØNAD,
-                grunnlag,
-                partPersonId,
-            )
-        }
+fun List<TilleggsstønadGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.partPersonId }
+    .map { (partPersonId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.TILLEGGSSTØNAD,
+            grunnlag,
+            partPersonId,
+        )
+    }
 
 @JvmName("barnetilsynGrunnlagDtoTilGrunnlagEntity")
-fun List<BarnetilsynGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.partPersonId }
-        .map { (partPersonId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.BARNETILSYN,
-                grunnlag,
-                partPersonId,
-            )
-        }
+fun List<BarnetilsynGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.partPersonId }
+    .map { (partPersonId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.BARNETILSYN,
+            grunnlag,
+            partPersonId,
+        )
+    }
 
 @JvmName("kontantstøtteGrunnlagDtoTilGrunnlagEntity")
-fun List<KontantstøtteGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.partPersonId }
-        .map { (partPersonId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.KONTANTSTØTTE,
-                grunnlag,
-                partPersonId,
-            )
-        }
+fun List<KontantstøtteGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.partPersonId }
+    .map { (partPersonId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.KONTANTSTØTTE,
+            grunnlag,
+            partPersonId,
+        )
+    }
 
 @JvmName("småbarnstilleggGrunnlagDtoTilGrunnlagEntity")
-fun List<SmåbarnstilleggGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.personId }
-        .map { (personId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.SMÅBARNSTILLEGG,
-                grunnlag,
-                personId,
-            )
-        }
+fun List<SmåbarnstilleggGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.personId }
+    .map { (personId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.SMÅBARNSTILLEGG,
+            grunnlag,
+            personId,
+        )
+    }
 
 @JvmName("utvidetBarnetrygdGrunnlagDtoTilGrunnlagEntity")
-fun List<UtvidetBarnetrygdGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) =
-    groupBy { it.personId }
-        .map { (personId, grunnlag) ->
-            behandling.opprettGrunnlag(
-                Grunnlagsdatatype.UTVIDET_BARNETRYGD,
-                grunnlag,
-                personId,
-            )
-        }
+fun List<UtvidetBarnetrygdGrunnlagDto>.tilGrunnlagEntity(behandling: Behandling) = groupBy { it.personId }
+    .map { (personId, grunnlag) ->
+        behandling.opprettGrunnlag(
+            Grunnlagsdatatype.UTVIDET_BARNETRYGD,
+            grunnlag,
+            personId,
+        )
+    }
 
 fun Behandling.opprettGrunnlagEntityForInntekt(
     ainntektListe: List<AinntektGrunnlagDto>,
@@ -253,22 +245,21 @@ fun Behandling.opprettGrunnlag(
     grunnlag: Any,
     personId: String,
     erBearbeidet: Boolean = false,
-): Grunnlag =
-    Grunnlag(
+): Grunnlag = Grunnlag(
+    behandling = this,
+    type = type,
+    erBearbeidet = erBearbeidet,
+    data = commonObjectmapper.writeValueAsString(grunnlag),
+    innhentet = testdataGrunnlagInnhentetTidspunkt,
+    aktiv = LocalDateTime.now(),
+    rolle =
+    roller.find { it.ident == personId } ?: Rolle(
+        ident = personId,
         behandling = this,
-        type = type,
-        erBearbeidet = erBearbeidet,
-        data = commonObjectmapper.writeValueAsString(grunnlag),
-        innhentet = testdataGrunnlagInnhentetTidspunkt,
-        aktiv = LocalDateTime.now(),
-        rolle =
-            roller.find { it.ident == personId } ?: Rolle(
-                ident = personId,
-                behandling = this,
-                rolletype = Rolletype.FEILREGISTRERT,
-                fødselsdato = LocalDate.parse("2020-01-01"),
-            ),
-    )
+        rolletype = Rolletype.FEILREGISTRERT,
+        fødselsdato = LocalDate.parse("2020-01-01"),
+    ),
+)
 
 fun HentGrunnlagDto.tilTransformerInntekterRequest(
     rolle: Rolle,
@@ -276,77 +267,77 @@ fun HentGrunnlagDto.tilTransformerInntekterRequest(
 ) = TransformerInntekterRequest(
     ainntektHentetDato = fraDato,
     ainntektsposter =
-        this.ainntektListe.filter { it.personId == rolle.ident }.flatMap { ainntektGrunnlag ->
-            ainntektGrunnlag.ainntektspostListe.map {
-                Ainntektspost(
-                    utbetalingsperiode = it.utbetalingsperiode,
-                    opptjeningsperiodeFra = it.opptjeningsperiodeFra,
-                    opptjeningsperiodeTil = it.opptjeningsperiodeTil,
-                    etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
-                    etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
-                    beskrivelse = it.beskrivelse,
-                    beløp = it.beløp,
-                    referanse = opprettAinntektGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-                )
-            }
-        },
+    this.ainntektListe.filter { it.personId == rolle.ident }.flatMap { ainntektGrunnlag ->
+        ainntektGrunnlag.ainntektspostListe.map {
+            Ainntektspost(
+                utbetalingsperiode = it.utbetalingsperiode,
+                opptjeningsperiodeFra = it.opptjeningsperiodeFra,
+                opptjeningsperiodeTil = it.opptjeningsperiodeTil,
+                etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
+                etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
+                beskrivelse = it.beskrivelse,
+                beløp = it.beløp,
+                referanse = opprettAinntektGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+            )
+        }
+    },
     skattegrunnlagsliste =
-        this.skattegrunnlagListe.filter { it.personId == rolle.ident }.map {
-            SkattegrunnlagForLigningsår(
-                ligningsår = it.periodeFra.year,
-                skattegrunnlagsposter = it.skattegrunnlagspostListe,
-                referanse =
-                    opprettSkattegrunnlagGrunnlagsreferanse(
-                        rolle.tilGrunnlagPerson().referanse,
-                        it.periodeFra.year,
-                    ),
-            )
-        },
+    this.skattegrunnlagListe.filter { it.personId == rolle.ident }.map {
+        SkattegrunnlagForLigningsår(
+            ligningsår = it.periodeFra.year,
+            skattegrunnlagsposter = it.skattegrunnlagspostListe,
+            referanse =
+            opprettSkattegrunnlagGrunnlagsreferanse(
+                rolle.tilGrunnlagPerson().referanse,
+                it.periodeFra.year,
+            ),
+        )
+    },
     barnetilleggsliste =
-        this.barnetilleggListe.filter { it.partPersonId == rolle.ident }.map {
-            Barnetillegg(
-                periodeFra = it.periodeFra,
-                periodeTil = it.periodeTil,
-                beløp = it.beløpBrutto,
-                barnPersonId = it.barnPersonId,
-                referanse =
-                    opprettBarnetilleggGrunnlagsreferanse(
-                        rolle.tilGrunnlagPerson().referanse,
-                        GrunnlagDatakilde.PENSJON,
-                    ),
-            )
-        },
+    this.barnetilleggListe.filter { it.partPersonId == rolle.ident }.map {
+        Barnetillegg(
+            periodeFra = it.periodeFra,
+            periodeTil = it.periodeTil,
+            beløp = it.beløpBrutto,
+            barnPersonId = it.barnPersonId,
+            referanse =
+            opprettBarnetilleggGrunnlagsreferanse(
+                rolle.tilGrunnlagPerson().referanse,
+                GrunnlagDatakilde.PENSJON,
+            ),
+        )
+    },
     kontantstøtteliste =
-        this.kontantstøtteListe.filter { it.partPersonId == rolle.ident }.map {
-            Kontantstøtte(
-                periodeFra = it.periodeFra,
-                periodeTil = it.periodeTil,
-                beløp = it.beløp.toBigDecimal(),
-                barnPersonId = it.barnPersonId,
-                referanse =
-                    opprettKontantstøtteGrunnlagsreferanse(
-                        rolle.tilGrunnlagPerson().referanse,
-                    ),
-            )
-        },
+    this.kontantstøtteListe.filter { it.partPersonId == rolle.ident }.map {
+        Kontantstøtte(
+            periodeFra = it.periodeFra,
+            periodeTil = it.periodeTil,
+            beløp = it.beløp.toBigDecimal(),
+            barnPersonId = it.barnPersonId,
+            referanse =
+            opprettKontantstøtteGrunnlagsreferanse(
+                rolle.tilGrunnlagPerson().referanse,
+            ),
+        )
+    },
     utvidetBarnetrygdliste =
-        this.utvidetBarnetrygdListe.filter { it.personId == rolle.ident }.map {
-            UtvidetBarnetrygd(
-                periodeFra = it.periodeFra,
-                periodeTil = it.periodeTil,
-                beløp = it.beløp,
-                referanse = opprettUtvidetbarnetrygGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-            )
-        },
+    this.utvidetBarnetrygdListe.filter { it.personId == rolle.ident }.map {
+        UtvidetBarnetrygd(
+            periodeFra = it.periodeFra,
+            periodeTil = it.periodeTil,
+            beløp = it.beløp,
+            referanse = opprettUtvidetbarnetrygGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+        )
+    },
     småbarnstilleggliste =
-        this.småbarnstilleggListe.filter { it.personId == rolle.ident }.map {
-            Småbarnstillegg(
-                periodeFra = it.periodeFra,
-                periodeTil = it.periodeTil,
-                beløp = it.beløp,
-                referanse = opprettSmåbarnstilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
-            )
-        },
+    this.småbarnstilleggListe.filter { it.personId == rolle.ident }.map {
+        Småbarnstillegg(
+            periodeFra = it.periodeFra,
+            periodeTil = it.periodeTil,
+            beløp = it.beløp,
+            referanse = opprettSmåbarnstilleggGrunnlagsreferanse(rolle.tilGrunnlagPerson().referanse),
+        )
+    },
 )
 
 fun List<Grunnlag>.filtrerEtterTypeOgIdent(
@@ -367,18 +358,18 @@ fun Behandling.initGrunnlagRespons(
                 stubUtils.stubHenteGrunnlag(
                     rolleIdent = bmIdent,
                     responsobjekt =
-                        lagGrunnlagsdata(
-                            if (tilType() ==
-                                TypeBehandling.FORSKUDD
-                            ) {
-                                "vedtak/vedtak-grunnlagrespons-forskudd-bm.json"
-                            } else {
-                                "vedtak/vedtak-grunnlagrespons-sb-bm.json"
-                            },
-                            YearMonth.from(virkningstidspunkt),
-                            bmIdent!!,
-                            baIdent!!,
-                        ),
+                    lagGrunnlagsdata(
+                        if (tilType() ==
+                            TypeBehandling.FORSKUDD
+                        ) {
+                            "vedtak/vedtak-grunnlagrespons-forskudd-bm.json"
+                        } else {
+                            "vedtak/vedtak-grunnlagrespons-sb-bm.json"
+                        },
+                        YearMonth.from(virkningstidspunkt),
+                        bmIdent!!,
+                        baIdent!!,
+                    ),
                 )
             }
 
@@ -386,12 +377,12 @@ fun Behandling.initGrunnlagRespons(
                 stubUtils.stubHenteGrunnlag(
                     rolleIdent = bpIdent,
                     responsobjekt =
-                        lagGrunnlagsdata(
-                            "vedtak/vedtak-grunnlagrespons-sb-bp.json",
-                            YearMonth.from(virkningstidspunkt),
-                            bpIdent!!,
-                            baIdent!!,
-                        ),
+                    lagGrunnlagsdata(
+                        "vedtak/vedtak-grunnlagrespons-sb-bp.json",
+                        YearMonth.from(virkningstidspunkt),
+                        bpIdent!!,
+                        baIdent!!,
+                    ),
                 )
             }
 
@@ -399,11 +390,11 @@ fun Behandling.initGrunnlagRespons(
                 stubUtils.stubHenteGrunnlag(
                     rolleIdent = baIdent,
                     responsobjekt =
-                        lagGrunnlagsdata(
-                            "vedtak/vedtak-grunnlagrespons-barn1.json",
-                            YearMonth.from(virkningstidspunkt),
-                            baIdent!!,
-                        ),
+                    lagGrunnlagsdata(
+                        "vedtak/vedtak-grunnlagrespons-barn1.json",
+                        YearMonth.from(virkningstidspunkt),
+                        baIdent!!,
+                    ),
                 )
             }
 

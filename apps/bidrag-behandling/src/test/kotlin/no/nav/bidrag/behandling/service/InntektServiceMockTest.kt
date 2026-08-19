@@ -295,89 +295,89 @@ class InntektServiceMockTest {
             SummerteInntekter(
                 versjon = "xyz",
                 inntekter =
-                    listOf(
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.BARNETILLEGG,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
+                listOf(
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.BARNETILLEGG,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
                         ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2024-01"),
-                                    YearMonth.parse("2035-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    null,
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.AINNTEKT,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.AINNTEKT_BEREGNET_3MND,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
+                        sumInntekt = BigDecimal(500),
                     ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2024-01"),
+                            YearMonth.parse("2035-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.SMÅBARNSTILLEGG,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            null,
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.AINNTEKT,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.AINNTEKT_BEREGNET_3MND,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.LIGNINGSINNTEKT,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                ),
             )
         every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
 
@@ -437,35 +437,35 @@ class InntektServiceMockTest {
             SummerteInntekter(
                 versjon = "xyz",
                 inntekter =
-                    listOf(
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2023-01"),
-                                    YearMonth.parse("2024-01"),
-                                ),
-                            sumInntekt = BigDecimal(500),
+                listOf(
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2023-01"),
+                            YearMonth.parse("2024-01"),
                         ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            periode =
-                                ÅrMånedsperiode(
-                                    virkningstidspunkt.minusMonths(1),
-                                    virkningstidspunkt.plusMonths(5),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
-                        SummertÅrsinntekt(
-                            inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
-                            periode =
-                                ÅrMånedsperiode(
-                                    YearMonth.parse("2024-01").atDay(1),
-                                    virkningstidspunkt.plusYears(5),
-                                ),
-                            sumInntekt = BigDecimal(500),
-                        ),
+                        sumInntekt = BigDecimal(500),
                     ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        periode =
+                        ÅrMånedsperiode(
+                            virkningstidspunkt.minusMonths(1),
+                            virkningstidspunkt.plusMonths(5),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                    SummertÅrsinntekt(
+                        inntektRapportering = Inntektsrapportering.UTVIDET_BARNETRYGD,
+                        periode =
+                        ÅrMånedsperiode(
+                            YearMonth.parse("2024-01").atDay(1),
+                            virkningstidspunkt.plusYears(5),
+                        ),
+                        sumInntekt = BigDecimal(500),
+                    ),
+                ),
             )
         every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
 
@@ -511,19 +511,19 @@ class InntektServiceMockTest {
         val forespørselOmOppdateringAvInntekter =
             OppdatereInntektRequest(
                 oppdatereManuellInntekt =
-                    OppdatereManuellInntekt(
-                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
-                        beløp = BigDecimal(3052003),
-                        datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
-                        datoTom =
-                            LocalDate
-                                .now()
-                                .minusYears(1)
-                                .withMonth(12)
-                                .withDayOfMonth(31),
-                        ident = Personident(behandling.bidragsmottaker!!.ident!!),
-                        gjelderBarn = null,
-                    ),
+                OppdatereManuellInntekt(
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    beløp = BigDecimal(3052003),
+                    datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
+                    datoTom =
+                    LocalDate
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .withDayOfMonth(31),
+                    ident = Personident(behandling.bidragsmottaker!!.ident!!),
+                    gjelderBarn = null,
+                ),
             )
 
         // hvis
@@ -557,19 +557,19 @@ class InntektServiceMockTest {
         val forespørselOmOppdateringAvInntekter =
             OppdatereInntektRequest(
                 oppdatereManuellInntekt =
-                    OppdatereManuellInntekt(
-                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
-                        beløp = BigDecimal(3052003),
-                        datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
-                        datoTom =
-                            LocalDate
-                                .now()
-                                .minusYears(1)
-                                .withMonth(12)
-                                .withDayOfMonth(31),
-                        ident = Personident(behandling.bidragsmottaker!!.ident!!),
-                        gjelderBarn = null,
-                    ),
+                OppdatereManuellInntekt(
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    beløp = BigDecimal(3052003),
+                    datoFom = LocalDate.now().minusYears(1).withDayOfYear(1),
+                    datoTom =
+                    LocalDate
+                        .now()
+                        .minusYears(1)
+                        .withMonth(12)
+                        .withDayOfMonth(31),
+                    ident = Personident(behandling.bidragsmottaker!!.ident!!),
+                    gjelderBarn = null,
+                ),
             )
 
         // hvis
@@ -649,14 +649,14 @@ class InntektServiceMockTest {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        OppdatereManuellInntekt(
-                            type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
-                            beløp = BigDecimal(3052003),
-                            datoFom = LocalDate.parse("2024-12-01"),
-                            datoTom = null,
-                            ident = Personident(behandling.bidragsmottaker!!.ident!!),
-                            gjelderBarn = null,
-                        ),
+                    OppdatereManuellInntekt(
+                        type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
+                        beløp = BigDecimal(3052003),
+                        datoFom = LocalDate.parse("2024-12-01"),
+                        datoTom = null,
+                        ident = Personident(behandling.bidragsmottaker!!.ident!!),
+                        gjelderBarn = null,
+                    ),
                 )
 
             // hvis
@@ -685,14 +685,14 @@ class InntektServiceMockTest {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        OppdatereManuellInntekt(
-                            type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
-                            beløp = BigDecimal(3052003),
-                            datoFom = LocalDate.parse("2025-01-01"),
-                            datoTom = LocalDate.parse("2025-02-01"),
-                            ident = Personident(behandling.bidragspliktig!!.ident!!),
-                            gjelderBarn = null,
-                        ),
+                    OppdatereManuellInntekt(
+                        type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
+                        beløp = BigDecimal(3052003),
+                        datoFom = LocalDate.parse("2025-01-01"),
+                        datoTom = LocalDate.parse("2025-02-01"),
+                        ident = Personident(behandling.bidragspliktig!!.ident!!),
+                        gjelderBarn = null,
+                    ),
                 )
 
             // hvis
@@ -792,15 +792,15 @@ class InntektServiceMockTest {
             val forespørselOmOppdateringAvInntekter =
                 OppdatereInntektRequest(
                     oppdatereManuellInntekt =
-                        OppdatereManuellInntekt(
-                            type = Inntektsrapportering.BARNETILLEGG,
-                            beløp = BigDecimal(3052003),
-                            datoFom = LocalDate.parse("2024-12-01"),
-                            datoTom = null,
-                            inntektstype = Inntektstype.BARNETILLEGG_AAP,
-                            ident = Personident(behandling.bidragsmottaker!!.ident!!),
-                            gjelderBarn = Personident(behandling.søknadsbarn.first().ident!!),
-                        ),
+                    OppdatereManuellInntekt(
+                        type = Inntektsrapportering.BARNETILLEGG,
+                        beløp = BigDecimal(3052003),
+                        datoFom = LocalDate.parse("2024-12-01"),
+                        datoTom = null,
+                        inntektstype = Inntektstype.BARNETILLEGG_AAP,
+                        ident = Personident(behandling.bidragsmottaker!!.ident!!),
+                        gjelderBarn = Personident(behandling.søknadsbarn.first().ident!!),
+                    ),
                 )
 
             // hvis
@@ -890,14 +890,14 @@ class InntektServiceMockTest {
         val forespørselOmOppdateringAvInntekter =
             OppdatereInntektRequest(
                 oppdatereManuellInntekt =
-                    OppdatereManuellInntekt(
-                        type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
-                        beløp = BigDecimal(3052003),
-                        datoFom = LocalDate.parse("2023-12-01"),
-                        datoTom = LocalDate.parse("2023-12-31"),
-                        ident = Personident(behandling.bidragsmottaker!!.ident!!),
-                        gjelderBarn = null,
-                    ),
+                OppdatereManuellInntekt(
+                    type = Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT,
+                    beløp = BigDecimal(3052003),
+                    datoFom = LocalDate.parse("2023-12-01"),
+                    datoTom = LocalDate.parse("2023-12-31"),
+                    ident = Personident(behandling.bidragsmottaker!!.ident!!),
+                    gjelderBarn = null,
+                ),
             )
 
         // hvis

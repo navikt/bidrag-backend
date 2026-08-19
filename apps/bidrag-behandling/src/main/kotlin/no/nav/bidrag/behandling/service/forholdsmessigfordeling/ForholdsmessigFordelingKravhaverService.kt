@@ -52,25 +52,24 @@ class ForholdsmessigFordelingKravhaverService(
     fun hentSisteLøpendeStønader(
         bpIdent: Personident,
         periode: ÅrMånedsperiode,
-    ): List<LøpendeBidragSakPeriode> =
-        beløpshistorikkConsumer
-            .hentAlleLøpendeStønaderIPeriode(
-                LøpendeBidragPeriodeRequest(skyldner = bpIdent, periode = periode),
-            ).filtrerForPeriode(periode.copy(til = null))
-            .map { sak ->
-                LøpendeBidragSakPeriode(
-                    sak = sak.sak,
-                    kravhaver = sak.kravhaver,
-                    type = sak.type,
-                    valutakode = sak.periodeListe.firstOrNull()?.valutakode ?: Valutakode.NOK.name,
-                    periodeFra = sak.periodeListe.minOf { it.periode.fom },
-                    periodeTil =
-                        sak.periodeListe
-                            .maxBy { it.periode.fom }
-                            .periode.til,
-                    perioderLøperBidrag = sak.periodeListe.map { it.periode },
-                )
-            }
+    ): List<LøpendeBidragSakPeriode> = beløpshistorikkConsumer
+        .hentAlleLøpendeStønaderIPeriode(
+            LøpendeBidragPeriodeRequest(skyldner = bpIdent, periode = periode),
+        ).filtrerForPeriode(periode.copy(til = null))
+        .map { sak ->
+            LøpendeBidragSakPeriode(
+                sak = sak.sak,
+                kravhaver = sak.kravhaver,
+                type = sak.type,
+                valutakode = sak.periodeListe.firstOrNull()?.valutakode ?: Valutakode.NOK.name,
+                periodeFra = sak.periodeListe.minOf { it.periode.fom },
+                periodeTil =
+                sak.periodeListe
+                    .maxBy { it.periode.fom }
+                    .periode.til,
+                perioderLøperBidrag = sak.periodeListe.map { it.periode },
+            )
+        }
 
     fun hentAlleRelevanteKravhavere(behandling: Behandling): Set<SakKravhaver> {
         val åpneEllerLøpendeSakerBp = hentAlleÅpneEllerLøpendeBidraggsakerForBP(behandling)
@@ -99,8 +98,8 @@ class ForholdsmessigFordelingKravhaverService(
                         it.erKlageEllerOmgjøring && behandling.erKlageEllerOmgjøring && (
                             it.omgjøringsdetaljer?.omgjørVedtakId == behandling.omgjøringsdetaljer?.omgjørVedtakId ||
                                 it.omgjøringsdetaljer?.soknadRefId == behandling.omgjøringsdetaljer?.soknadRefId
-                        )
-                    ) ||
+                            )
+                        ) ||
                         !it.erKlageEllerOmgjøring
                 }
         val åpneSøknader =
@@ -150,7 +149,7 @@ class ForholdsmessigFordelingKravhaverService(
                             }
                         } &&
                             !behandlingRepository.erIForholdsmessigFordeling(søknad.behandlingsid!!)
-                    )
+                        )
             }.forEach { åpenSøknad ->
                 åpenSøknad.parterUnderBehandling
                     .filter { it.rolletype == Rolletype.BARN }
@@ -272,11 +271,10 @@ class ForholdsmessigFordelingKravhaverService(
                 it.behandlingstema.tilStønadstype() == stønadstype
         }
 
-    fun hentÅpneSøknaderRevurdering(bidragspliktigFnr: String): List<HentSøknad> =
-        bbmConsumer
-            .hentÅpneSøknaderForBp(bidragspliktigFnr)
-            .åpneSøknader
-            .filter { it.behandlingstype == Behandlingstype.REVURDERING && it.søktAvType == SøktAvType.NAV_BIDRAG }
+    fun hentÅpneSøknaderRevurdering(bidragspliktigFnr: String): List<HentSøknad> = bbmConsumer
+        .hentÅpneSøknaderForBp(bidragspliktigFnr)
+        .åpneSøknader
+        .filter { it.behandlingstype == Behandlingstype.REVURDERING && it.søktAvType == SøktAvType.NAV_BIDRAG }
 
     fun hentÅpneSøknader(
         bidragspliktigFnr: String,
@@ -294,7 +292,7 @@ class ForholdsmessigFordelingKravhaverService(
             (
                 erKlageEllerOmgjøring &&
                     ((it.refVedtaksid == omgjøringsdetaljer?.omgjørVedtakId) || (it.refSøknadsid == omgjøringsdetaljer?.soknadRefId))
-            ) ||
+                ) ||
                 !erKlageEllerOmgjøring
         }.sortedWith(
             compareByDescending<HentSøknad> { it.behandlingstype == behandlingstypeForFF }
@@ -329,7 +327,7 @@ class ForholdsmessigFordelingKravhaverService(
                                 ?.forholdsmessigFordeling
                                 ?.søknaderUnderBehandling
                                 ?.isEmpty() == true
-                    )
+                        )
                 }.map {
                     val barnFødselsdato = hentPersonFødselsdato(it.personIdent!!)
                     val dato18ÅrsBidrag = barnFødselsdato!!.tilDato18årsBidrag()

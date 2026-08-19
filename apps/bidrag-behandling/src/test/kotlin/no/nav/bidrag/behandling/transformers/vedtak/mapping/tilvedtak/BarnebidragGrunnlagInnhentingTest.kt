@@ -61,19 +61,19 @@ class BarnebidragGrunnlagInnhentingTest {
                 aktiv = LocalDateTime.now(),
                 gjelder = behandling.søknadsbarn.first().ident,
                 data =
-                    commonObjectmapper.writeValueAsString(
-                        opprettStønadDto(
-                            stønadstype = Stønadstype.BIDRAG18AAR,
-                            periodeListe =
-                                listOf(
-                                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
-                                        vedtaksid = 200,
-                                        valutakode = "NOK",
-                                    ),
-                                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
-                                ),
+                commonObjectmapper.writeValueAsString(
+                    opprettStønadDto(
+                        stønadstype = Stønadstype.BIDRAG18AAR,
+                        periodeListe =
+                        listOf(
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), LocalDate.parse("2023-12-31"))).copy(
+                                vedtaksid = 200,
+                                valutakode = "NOK",
+                            ),
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), null), beløp = null),
                         ),
                     ),
+                ),
             ),
         )
         behandling.søknadstype = Behandlingstype.SØKNAD
@@ -140,18 +140,18 @@ class BarnebidragGrunnlagInnhentingTest {
                 aktiv = LocalDateTime.now(),
                 gjelder = behandling.søknadsbarn.first().ident,
                 data =
-                    commonObjectmapper.writeValueAsString(
-                        opprettStønadDto(
-                            stønadstype = Stønadstype.FORSKUDD,
-                            periodeListe =
-                                listOf(
-                                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
-                                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
-                                ),
-                        ).copy(
-                            førsteIndeksreguleringsår = null,
+                commonObjectmapper.writeValueAsString(
+                    opprettStønadDto(
+                        stønadstype = Stønadstype.FORSKUDD,
+                        periodeListe =
+                        listOf(
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
                         ),
+                    ).copy(
+                        førsteIndeksreguleringsår = null,
                     ),
+                ),
             ),
         )
         behandling.grunnlag.add(
@@ -163,18 +163,18 @@ class BarnebidragGrunnlagInnhentingTest {
                 aktiv = LocalDateTime.now(),
                 gjelder = behandling.søknadsbarn.first().ident,
                 data =
-                    commonObjectmapper.writeValueAsString(
-                        opprettStønadDto(
-                            stønadstype = Stønadstype.BIDRAG,
-                            periodeListe =
-                                listOf(
-                                    opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
-                                        vedtaksid = 200,
-                                        valutakode = "NOK",
-                                    ),
-                                ),
+                commonObjectmapper.writeValueAsString(
+                    opprettStønadDto(
+                        stønadstype = Stønadstype.BIDRAG,
+                        periodeListe =
+                        listOf(
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2023-01-01"), null)).copy(
+                                vedtaksid = 200,
+                                valutakode = "NOK",
+                            ),
                         ),
                     ),
+                ),
             ),
         )
         val grunnlagsliste = barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(behandling, behandling.søknadsbarn.first())

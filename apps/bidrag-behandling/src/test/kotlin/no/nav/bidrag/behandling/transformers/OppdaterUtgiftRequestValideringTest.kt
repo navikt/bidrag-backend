@@ -51,13 +51,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.OPTIKK.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.OPTIKK.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -71,13 +71,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         shouldNotThrow<HttpClientErrorException> { request.valider(behandling) }
     }
@@ -89,13 +89,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = "Utgift batteri",
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = "Utgift batteri",
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         shouldNotThrow<HttpClientErrorException> { request.valider(behandling) }
     }
@@ -107,13 +107,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.OPTIKK.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.OPTIKK.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -128,10 +128,10 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        beløp = BigDecimal(2000),
-                        begrunnelse = "Test",
-                    ),
+                MaksGodkjentBeløpDto(
+                    beløp = BigDecimal(2000),
+                    begrunnelse = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -147,10 +147,10 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        beløp = BigDecimal(2000),
-                        begrunnelse = "Test",
-                    ),
+                MaksGodkjentBeløpDto(
+                    beløp = BigDecimal(2000),
+                    begrunnelse = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -164,13 +164,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.TANNREGULERING.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.TANNREGULERING.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -184,13 +184,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.parse("2021-01-01"),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.parse("2021-01-01"),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -204,13 +204,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().plusDays(1),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().plusDays(1),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -224,13 +224,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now(),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now(),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -244,13 +244,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.parse("2021-01-01"),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(2500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.parse("2021-01-01"),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(2500),
+                    kommentar = "Test",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -264,12 +264,12 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -285,14 +285,14 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        betaltAvBp = true,
-                        kommentar = "Begrunnelse",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    betaltAvBp = true,
+                    kommentar = "Begrunnelse",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -325,14 +325,14 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        id = 2,
-                        dato = LocalDate.parse("2022-01-01"),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "asd",
-                    ),
+                OppdatereUtgift(
+                    id = 2,
+                    dato = LocalDate.parse("2022-01-01"),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "asd",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -347,13 +347,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.parse("2022-01-01"),
-                        type = Utgiftstype.KONFIRMASJONSLEIR.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Begrunnelse",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.parse("2022-01-01"),
+                    type = Utgiftstype.KONFIRMASJONSLEIR.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Begrunnelse",
+                ),
             )
 
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
@@ -368,13 +368,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = "",
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "asdsad",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = "",
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "asdsad",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -388,13 +388,13 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(2),
-                        type = "",
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "asdsad",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(2),
+                    type = "",
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "asdsad",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 
@@ -421,10 +421,10 @@ class OppdaterUtgiftRequestValideringTest {
         val request =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        beløp = BigDecimal(-100),
-                        begrunnelse = "Test",
-                    ),
+                MaksGodkjentBeløpDto(
+                    beløp = BigDecimal(-100),
+                    begrunnelse = "Test",
+                ),
             )
         val exception = shouldThrow<HttpClientErrorException> { request.valider(behandling) }
 

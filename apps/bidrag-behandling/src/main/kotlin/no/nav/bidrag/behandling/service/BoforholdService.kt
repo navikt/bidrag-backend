@@ -126,12 +126,12 @@ class BoforholdService(
         return OppdatereBoforholdResponse(
             begrunnelse = NotatService.henteNotatinnhold(behandling, Notattype.BOFORHOLD),
             valideringsfeil =
-                BoforholdValideringsfeil(
-                    husstandsmedlem =
-                        behandling.husstandsmedlem
-                            .validerBoforhold(behandling.eldsteVirkningstidspunkt)
-                            .filter { it.harFeil },
-                ),
+            BoforholdValideringsfeil(
+                husstandsmedlem =
+                behandling.husstandsmedlem
+                    .validerBoforhold(behandling.eldsteVirkningstidspunkt)
+                    .filter { it.harFeil },
+            ),
         )
     }
 
@@ -260,9 +260,9 @@ class BoforholdService(
                     behandling.eldsteVirkningstidspunkt,
                     periodiseringsrequest.copy(
                         innhentedeOffentligeOpplysninger =
-                            ikkeaktivertGrunnlag.tilHusstandsmedlemmer().filtrerUtUrelevantePerioder(
-                                behandling,
-                            ),
+                        ikkeaktivertGrunnlag.tilHusstandsmedlemmer().filtrerUtUrelevantePerioder(
+                            behandling,
+                        ),
                     ),
                     behandling.globalOpphørsdato,
                     beregnTilDato = behandling.finnBeregnTilDatoBehandling(),
@@ -344,13 +344,13 @@ class BoforholdService(
             if (offentligePerioder.isNullOrEmpty()) {
                 husstandsmedlem.oppdaterePerioder(
                     nyEllerOppdatertBostatusperiode =
-                        Bostatusperiode(
-                            husstandsmedlem = husstandsmedlem,
-                            bostatus = Bostatuskode.MED_FORELDER,
-                            datoFom = behandling.eldsteVirkningstidspunkt,
-                            datoTom = null,
-                            kilde = Kilde.MANUELL,
-                        ),
+                    Bostatusperiode(
+                        husstandsmedlem = husstandsmedlem,
+                        bostatus = Bostatuskode.MED_FORELDER,
+                        datoFom = behandling.eldsteVirkningstidspunkt,
+                        datoTom = null,
+                        kilde = Kilde.MANUELL,
+                    ),
                 )
             }
             behandling.husstandsmedlem.add(husstandsmedlem)
@@ -380,14 +380,14 @@ class BoforholdService(
 
             eksisterendeHusstandsmedlem.oppdaterePerioder(
                 nyEllerOppdatertBostatusperiode =
-                    Bostatusperiode(
-                        id = bostatusperiode.idPeriode,
-                        husstandsmedlem = eksisterendeHusstandsmedlem,
-                        bostatus = bostatusperiode.bostatus,
-                        datoFom = bostatusperiode.datoFom,
-                        datoTom = bostatusperiode.datoTom,
-                        kilde = Kilde.MANUELL,
-                    ),
+                Bostatusperiode(
+                    id = bostatusperiode.idPeriode,
+                    husstandsmedlem = eksisterendeHusstandsmedlem,
+                    bostatus = bostatusperiode.bostatus,
+                    datoFom = bostatusperiode.datoFom,
+                    datoTom = bostatusperiode.datoTom,
+                    kilde = Kilde.MANUELL,
+                ),
             )
 
             loggeEndringHusstandsmedlem(behandling, oppdatereHusstandsmedlem, eksisterendeHusstandsmedlem)
@@ -462,16 +462,16 @@ class BoforholdService(
             husstandsmedlemSomSkalOppdateres.oppdaterePerioderVoksne(
                 gjelderRolle = rolleMedAndreVoksneIHusstaden,
                 nyEllerOppdatertBostatusperiode =
-                    Bostatusperiode(
-                        id = oppdatereStatus.idPeriode,
-                        husstandsmedlem = husstandsmedlemSomSkalOppdateres,
-                        bostatus = nyBostatus,
-                        datoFom =
-                            nyPeriode.fom.atDay(1)
-                                ?: behandling.virkningstidspunkt!!,
-                        datoTom = nyPeriode.til?.atEndOfMonth(),
-                        kilde = Kilde.MANUELL,
-                    ),
+                Bostatusperiode(
+                    id = oppdatereStatus.idPeriode,
+                    husstandsmedlem = husstandsmedlemSomSkalOppdateres,
+                    bostatus = nyBostatus,
+                    datoFom =
+                    nyPeriode.fom.atDay(1)
+                        ?: behandling.virkningstidspunkt!!,
+                    datoTom = nyPeriode.til?.atEndOfMonth(),
+                    kilde = Kilde.MANUELL,
+                ),
             )
 
             loggeEndringAndreVoksneIHusstanden(
@@ -597,14 +597,14 @@ class BoforholdService(
             loggeEndringSivilstand(behandling, oppdatereSivilstand, behandling.sivilstand)
             return OppdatereBoforholdResponse(
                 oppdatertSivilstandshistorikk =
-                    sivilstandRepository
-                        .saveAll(behandling.sivilstand)
-                        .toSet()
-                        .tilSivilstandDto(),
+                sivilstandRepository
+                    .saveAll(behandling.sivilstand)
+                    .toSet()
+                    .tilSivilstandDto(),
                 valideringsfeil =
-                    BoforholdValideringsfeil(
-                        sivilstand = behandling.sivilstand.validereSivilstand(behandling.eldsteVirkningstidspunkt),
-                    ),
+                BoforholdValideringsfeil(
+                    sivilstand = behandling.sivilstand.validereSivilstand(behandling.eldsteVirkningstidspunkt),
+                ),
             )
         }
         oppdatereSivilstand.nyEllerEndretSivilstandsperiode?.let {
@@ -613,11 +613,11 @@ class BoforholdService(
             loggeEndringSivilstand(behandling, oppdatereSivilstand, behandling.sivilstand)
             return OppdatereBoforholdResponse(
                 oppdatertSivilstandshistorikk =
-                    sivilstandRepository.saveAll(behandling.sivilstand).toSet().tilSivilstandDto(),
+                sivilstandRepository.saveAll(behandling.sivilstand).toSet().tilSivilstandDto(),
                 valideringsfeil =
-                    BoforholdValideringsfeil(
-                        sivilstand = behandling.sivilstand.validereSivilstand(behandling.eldsteVirkningstidspunkt),
-                    ),
+                BoforholdValideringsfeil(
+                    sivilstand = behandling.sivilstand.validereSivilstand(behandling.eldsteVirkningstidspunkt),
+                ),
             )
         }
 
@@ -762,13 +762,13 @@ class BoforholdService(
                     BoforholdBarnRequestV3(
                         gjelderPersonId = offisieltHusstandsmedlem.ident,
                         fødselsdato =
-                            offisieltHusstandsmedlem.fødselsdato
-                                ?: offisieltHusstandsmedlem.rolle!!.fødselsdato,
+                        offisieltHusstandsmedlem.fødselsdato
+                            ?: offisieltHusstandsmedlem.rolle!!.fødselsdato,
                         relasjon = Familierelasjon.BARN,
                         innhentedeOffentligeOpplysninger =
-                            offisieltHusstandsmedlem.perioder
-                                .map { it.tilBostatus() }
-                                .sortedBy { it.periodeFom },
+                        offisieltHusstandsmedlem.perioder
+                            .map { it.tilBostatus() }
+                            .sortedBy { it.periodeFom },
                         behandledeBostatusopplysninger = emptyList(),
                         erSøknadsbarn = offisieltHusstandsmedlem.erSøknadsbarn,
                         endreBostatus = null,
@@ -852,23 +852,21 @@ class BoforholdService(
                 }
         }
 
-        private fun Husstandsmedlem.opprettDefaultPeriodeForOffentligHusstandsmedlem() =
-            Bostatusperiode(
-                husstandsmedlem = this,
-                datoFom = maxOf(behandling.eldsteVirkningstidspunkt, fødselsdato ?: rolle!!.fødselsdato),
-                datoTom = null,
-                bostatus = Bostatuskode.IKKE_MED_FORELDER,
-                kilde = Kilde.OFFENTLIG,
-            )
+        private fun Husstandsmedlem.opprettDefaultPeriodeForOffentligHusstandsmedlem() = Bostatusperiode(
+            husstandsmedlem = this,
+            datoFom = maxOf(behandling.eldsteVirkningstidspunkt, fødselsdato ?: rolle!!.fødselsdato),
+            datoTom = null,
+            bostatus = Bostatuskode.IKKE_MED_FORELDER,
+            kilde = Kilde.OFFENTLIG,
+        )
 
-        fun Husstandsmedlem.opprettDefaultPeriodeForAndreVoksneIHusstand() =
-            Bostatusperiode(
-                husstandsmedlem = this,
-                datoFom = maxOf(behandling.eldsteVirkningstidspunkt, fødselsdato ?: rolle!!.fødselsdato),
-                datoTom = null,
-                bostatus = Bostatuskode.BOR_IKKE_MED_ANDRE_VOKSNE,
-                kilde = Kilde.OFFENTLIG,
-            )
+        fun Husstandsmedlem.opprettDefaultPeriodeForAndreVoksneIHusstand() = Bostatusperiode(
+            husstandsmedlem = this,
+            datoFom = maxOf(behandling.eldsteVirkningstidspunkt, fødselsdato ?: rolle!!.fødselsdato),
+            datoTom = null,
+            bostatus = Bostatuskode.BOR_IKKE_MED_ANDRE_VOKSNE,
+            kilde = Kilde.OFFENTLIG,
+        )
 
         private fun Husstandsmedlem.oppdaterTilForrigeLagredePerioder() {
             val lagredePerioder = commonObjectmapper.writeValueAsString(perioder)
@@ -1135,16 +1133,15 @@ class BoforholdService(
      * Henter eksisterende boforholdsgrunnlag i gitt behandling for oppgitt personident. Setter relasjon til BARN.
      * Brukes til å hente evnt. husstandsmedlem som mangler relasjon til BM.
      */
-    private fun Behandling.henteGrunnlagHusstandsmedlemMedHarkodetBmBpRelasjon(personident: Personident): Set<RelatertPersonGrunnlagDto> =
-        this.grunnlag
-            .filter { !it.erBearbeidet }
-            .filter { it.aktiv != null }
-            .filter { Grunnlagsdatatype.BOFORHOLD == it.type }
-            .maxByOrNull { it.aktiv!! }
-            .konvertereData<Set<RelatertPersonGrunnlagDto>>()
-            ?.filter { personident.verdi == it.gjelderPersonId }
-            ?.map { it.copy(relasjon = Familierelasjon.BARN) }
-            ?.toSet() ?: emptySet()
+    private fun Behandling.henteGrunnlagHusstandsmedlemMedHarkodetBmBpRelasjon(personident: Personident): Set<RelatertPersonGrunnlagDto> = this.grunnlag
+        .filter { !it.erBearbeidet }
+        .filter { it.aktiv != null }
+        .filter { Grunnlagsdatatype.BOFORHOLD == it.type }
+        .maxByOrNull { it.aktiv!! }
+        .konvertereData<Set<RelatertPersonGrunnlagDto>>()
+        ?.filter { personident.verdi == it.gjelderPersonId }
+        ?.map { it.copy(relasjon = Familierelasjon.BARN) }
+        ?.toSet() ?: emptySet()
 
     private fun lagreBearbeidaBoforholdsgrunnlag(
         behandling: Behandling,

@@ -34,7 +34,6 @@ open class Utgiftspost(
     @JoinColumn(name = "utgift_id", nullable = false)
     open var utgift: Utgift,
 ) {
-    override fun toString(): String =
-        "Utgiftspost(id=$id, dato=$dato, type=$type, kravbeløp=$kravbeløp, betaltAvBp=$betaltAvBp" +
-            "godkjentBeløp=$godkjentBeløp, kommentar=$kommentar)"
+    override fun toString(): String = "Utgiftspost(id=$id, dato=$dato, type=$type, kravbeløp=$kravbeløp, betaltAvBp=$betaltAvBp" +
+        "godkjentBeløp=$godkjentBeløp, kommentar=$kommentar)"
 }

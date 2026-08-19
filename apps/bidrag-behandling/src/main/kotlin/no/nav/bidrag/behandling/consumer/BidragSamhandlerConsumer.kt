@@ -27,12 +27,11 @@ class BidragSamhandlerConsumer(
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-samhandler"),
     FellesSamhandlerConsumer {
-    private fun createUri(path: String?) =
-        UriComponentsBuilder
-            .fromUri(url)
-            .path(path ?: "")
-            .build()
-            .toUri()
+    private fun createUri(path: String?) = UriComponentsBuilder
+        .fromUri(url)
+        .path(path ?: "")
+        .build()
+        .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     @Cacheable(SAMHANDLER_CACHE)

@@ -60,13 +60,12 @@ class TilgangskontrollService(
     fun harTilgang(
         personident: Personident,
         saksnummer: Saksnummer,
-    ): Boolean =
-        try {
-            sjekkTilgangPersonISak(personident, saksnummer)
-            true
-        } catch (hcee: HttpClientErrorException) {
-            false
-        }
+    ): Boolean = try {
+        sjekkTilgangPersonISak(personident, saksnummer)
+        true
+    } catch (hcee: HttpClientErrorException) {
+        false
+    }
 
     fun harBeskyttelse(personident: Personident): Boolean {
         val diskresjonskode =

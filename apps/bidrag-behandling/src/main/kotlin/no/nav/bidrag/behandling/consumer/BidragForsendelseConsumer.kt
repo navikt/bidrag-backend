@@ -48,18 +48,16 @@ class BidragForsendelseConsumer(
         }
     }
 
-    fun opprettForsendelse(opprettForsendelseForespørsel: OpprettForsendelseForespørsel): OpprettForsendelseRespons =
-        postForNonNullEntity(bidragForsendelsedUri.build().toUri(), opprettForsendelseForespørsel)
+    fun opprettForsendelse(opprettForsendelseForespørsel: OpprettForsendelseForespørsel): OpprettForsendelseRespons = postForNonNullEntity(bidragForsendelsedUri.build().toUri(), opprettForsendelseForespørsel)
 
-    fun hentForsendelserISak(saksnummer: String): List<ForsendelseResponsTo> =
-        getForNonNullEntity(
-            bidragForsendelsedUri
-                .pathSegment("sak")
-                .pathSegment(saksnummer)
-                .pathSegment("forsendelser")
-                .build()
-                .toUri(),
-        )
+    fun hentForsendelserISak(saksnummer: String): List<ForsendelseResponsTo> = getForNonNullEntity(
+        bidragForsendelsedUri
+            .pathSegment("sak")
+            .pathSegment(saksnummer)
+            .pathSegment("forsendelser")
+            .build()
+            .toUri(),
+    )
 
     fun slettForsendelse(forsendelseId: Long) {
         postForEntity<Void>(

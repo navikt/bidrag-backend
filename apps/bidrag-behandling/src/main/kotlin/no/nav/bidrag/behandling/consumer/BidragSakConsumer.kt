@@ -31,12 +31,11 @@ class BidragSakConsumer(
 ) : AbstractRestClient(restTemplate, "bidrag-sak"),
     BeregningSakConsumer,
     FellesSakConsumer {
-    private fun createUri(path: String?) =
-        UriComponentsBuilder
-            .fromUri(url)
-            .path(path ?: "")
-            .build()
-            .toUri()
+    private fun createUri(path: String?) = UriComponentsBuilder
+        .fromUri(url)
+        .path(path ?: "")
+        .build()
+        .toUri()
 
     @BrukerCacheable(SAK_CACHE)
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))

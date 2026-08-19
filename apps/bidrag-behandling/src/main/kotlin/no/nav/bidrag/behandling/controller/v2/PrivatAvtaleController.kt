@@ -33,7 +33,7 @@ class PrivatAvtaleController(
     @DeleteMapping("/behandling/{behandlingsid}/privatavtale/{privatavtaleid}")
     @Operation(
         description =
-            "Sletter privat avtale.",
+        "Sletter privat avtale.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -55,7 +55,7 @@ class PrivatAvtaleController(
     @PutMapping("/behandling/{behandlingsid}/privatavtale/{privatavtaleid}")
     @Operation(
         description =
-            "Oppdatere privat avtale. Returnerer oppdatert element.",
+        "Oppdatere privat avtale. Returnerer oppdatert element.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -78,7 +78,7 @@ class PrivatAvtaleController(
     @PutMapping("/behandling/{behandlingsid}/privatavtale/begrunnelse")
     @Operation(
         description =
-            "Oppdatere privat avtale. Returnerer oppdatert element.",
+        "Oppdatere privat avtale. Returnerer oppdatert element.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     @ApiResponses(
@@ -128,20 +128,20 @@ class PrivatAvtaleController(
         return OppdaterePrivatAvtaleResponsDto(
             mangleBegrunnelseAndreBarn = behandling.manglerPrivatAvtaleBegrunnelseAndreBarn(),
             begrunnelseAndreBarn =
-                henteNotatinnhold(
-                    behandling,
-                    NotatType.PRIVAT_AVTALE,
-                    behandling.bidragspliktig!!,
-                    true,
-                ),
+            henteNotatinnhold(
+                behandling,
+                NotatType.PRIVAT_AVTALE,
+                behandling.bidragspliktig!!,
+                true,
+            ),
             privatAvtale =
-                dtomapper.run {
-                    behandling.tilPrivatAvtaleDtoV3()
-                },
+            dtomapper.run {
+                behandling.tilPrivatAvtaleDtoV3()
+            },
             oppdatertPrivatAvtale =
-                dtomapper.run {
-                    privatAvtale?.tilDto()
-                },
+            dtomapper.run {
+                privatAvtale?.tilDto()
+            },
         )
     }
 }

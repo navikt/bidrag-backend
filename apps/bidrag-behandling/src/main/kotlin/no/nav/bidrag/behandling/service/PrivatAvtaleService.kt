@@ -69,7 +69,7 @@ class PrivatAvtaleService(
                 person = person,
                 avtaleType = PrivatAvtaleType.PRIVAT_AVTALE,
                 stønadstype =
-                    rolle?.stønadstype ?: stønadstype,
+                rolle?.stønadstype ?: stønadstype,
             )
         behandling.privatAvtale.add(privatAvtale)
         return privatAvtale
@@ -265,7 +265,7 @@ class PrivatAvtaleService(
                 gjelderBarn.personident?.let { personRepository.findFirstByIdent(it.verdi) } ?: Person(
                     navn = gjelderBarn.navn,
                     fødselsdato =
-                        gjelderBarn.fødselsdato ?: hentPersonFødselsdato(gjelderBarn.personident!!.verdi)!!,
+                    gjelderBarn.fødselsdato ?: hentPersonFødselsdato(gjelderBarn.personident!!.verdi)!!,
                     ident = gjelderBarn.personident?.verdi,
                 )
             lagrePrivatAvtale(

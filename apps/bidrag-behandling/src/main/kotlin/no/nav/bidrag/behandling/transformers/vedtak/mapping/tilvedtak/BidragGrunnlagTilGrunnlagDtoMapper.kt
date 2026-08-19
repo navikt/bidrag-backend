@@ -73,18 +73,18 @@ fun RelatertPersonGrunnlagDto.tilPersonGrunnlagAndreBarnTilBidragsmottaker(
         grunnlagsreferanseListe = listOf(innhentetReferanse),
         type = Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER,
         innhold =
-            POJONode(
-                Person(
-                    ident = gjelderPersonId?.let { Personident(it) },
-                    navn = if (gjelderPersonId.isNullOrEmpty()) personnavn else null,
-                    bidragsmottaker = gjelderReferanse,
-                    fødselsdato =
-                        finnFødselsdato(
-                            gjelderPersonId,
-                            fødselsdato,
-                        ) ?: LocalDate.MAX,
-                ).valider(),
-            ),
+        POJONode(
+            Person(
+                ident = gjelderPersonId?.let { Personident(it) },
+                navn = if (gjelderPersonId.isNullOrEmpty()) personnavn else null,
+                bidragsmottaker = gjelderReferanse,
+                fødselsdato =
+                finnFødselsdato(
+                    gjelderPersonId,
+                    fødselsdato,
+                ) ?: LocalDate.MAX,
+            ).valider(),
+        ),
     )
 }
 
@@ -106,17 +106,17 @@ fun RelatertPersonGrunnlagDto.tilPersonGrunnlag(): GrunnlagDto {
         gjelderReferanse = referanse,
         type = Grunnlagstype.PERSON_HUSSTANDSMEDLEM,
         innhold =
-            POJONode(
-                Person(
-                    ident = nyesteIdent,
-                    navn = if (gjelderPersonId.isNullOrEmpty()) personnavn else null,
-                    fødselsdato =
-                        finnFødselsdato(
-                            gjelderPersonId,
-                            fødselsdato,
-                        ) ?: LocalDate.MAX,
-                ).valider(),
-            ),
+        POJONode(
+            Person(
+                ident = nyesteIdent,
+                navn = if (gjelderPersonId.isNullOrEmpty()) personnavn else null,
+                fødselsdato =
+                finnFødselsdato(
+                    gjelderPersonId,
+                    fødselsdato,
+                ) ?: LocalDate.MAX,
+            ).valider(),
+        ),
     )
 }
 
@@ -126,21 +126,21 @@ fun RelatertPersonGrunnlagDto.tilGrunnlagsobjektInnhold(
 ) = InnhentetHusstandsmedlem(
     hentetTidspunkt = hentetTidspunkt,
     grunnlag =
-        InnhentetHusstandsmedlem.HusstandsmedlemPDL(
-            relatertPerson = gjelderPersonReferanse,
-            gjelderPerson = gjelderPersonReferanse,
-            erBarnAvBmBp = erBarn,
-            relasjon = relasjon,
-            navn = navn,
-            fødselsdato = fødselsdato,
-            perioder =
-                borISammeHusstandDtoListe.map {
-                    Datoperiode(
-                        it.periodeFra ?: LocalDate.MIN,
-                        it.periodeTil,
-                    )
-                },
-        ),
+    InnhentetHusstandsmedlem.HusstandsmedlemPDL(
+        relatertPerson = gjelderPersonReferanse,
+        gjelderPerson = gjelderPersonReferanse,
+        erBarnAvBmBp = erBarn,
+        relasjon = relasjon,
+        navn = navn,
+        fødselsdato = fødselsdato,
+        perioder =
+        borISammeHusstandDtoListe.map {
+            Datoperiode(
+                it.periodeFra ?: LocalDate.MIN,
+                it.periodeTil,
+            )
+        },
+    ),
 )
 
 fun RelatertPersonGrunnlagDto.tilGrunnlagsobjekt(
@@ -149,19 +149,19 @@ fun RelatertPersonGrunnlagDto.tilGrunnlagsobjekt(
     gjelderPersonReferanse: String,
 ) = GrunnlagDto(
     referanse =
-        opprettInnhentetHusstandsmedlemGrunnlagsreferanse(
-            gjelderReferanse,
-            referanseRelatertTil = gjelderPersonReferanse,
-        ),
+    opprettInnhentetHusstandsmedlemGrunnlagsreferanse(
+        gjelderReferanse,
+        referanseRelatertTil = gjelderPersonReferanse,
+    ),
     type = Grunnlagstype.INNHENTET_HUSSTANDSMEDLEM,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            tilGrunnlagsobjektInnhold(
-                hentetTidspunkt,
-                gjelderPersonReferanse,
-            ),
+    POJONode(
+        tilGrunnlagsobjektInnhold(
+            hentetTidspunkt,
+            gjelderPersonReferanse,
         ),
+    ),
 )
 
 @JvmName("tilGrunnlagsobjektSivilstandInnhentetGrunnlag")
@@ -173,22 +173,22 @@ fun List<SivilstandGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_SIVILSTAND,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetSivilstand(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    this.map {
-                        InnhentetSivilstand.SivilstandPDL(
-                            sivilstand = it.type,
-                            bekreftelsesdato = it.bekreftelsesdato,
-                            master = it.master,
-                            historisk = it.historisk,
-                            gyldigFom = it.gyldigFom,
-                            registrert = it.registrert,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetSivilstand(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            this.map {
+                InnhentetSivilstand.SivilstandPDL(
+                    sivilstand = it.type,
+                    bekreftelsesdato = it.bekreftelsesdato,
+                    master = it.master,
+                    historisk = it.historisk,
+                    gyldigFom = it.gyldigFom,
+                    registrert = it.registrert,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilGrunnlagsobjektArbeidsforhold")
@@ -200,56 +200,56 @@ fun List<ArbeidsforholdGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_ARBEIDSFORHOLD,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetArbeidsforhold(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    this.map {
-                        InnhentetArbeidsforhold.Arbeidsforhold(
-                            startdato = it.startdato,
-                            sluttdato = it.sluttdato,
-                            arbeidsgiverNavn = it.arbeidsgiverNavn,
-                            arbeidsgiverOrgnummer = it.arbeidsgiverOrgnummer,
-                            permisjonListe =
-                                it.permisjonListe?.map { permisjon ->
-                                    InnhentetArbeidsforhold.Arbeidsforhold.Permisjon(
-                                        startdato = permisjon.startdato,
-                                        sluttdato = permisjon.sluttdato,
-                                        beskrivelse = permisjon.beskrivelse,
-                                        prosent = permisjon.prosent,
-                                    )
-                                } ?: emptyList(),
-                            permitteringListe =
-                                it.permitteringListe?.map { permittering ->
-                                    InnhentetArbeidsforhold.Arbeidsforhold.Permittering(
-                                        startdato = permittering.startdato,
-                                        sluttdato = permittering.sluttdato,
-                                        beskrivelse = permittering.beskrivelse,
-                                        prosent = permittering.prosent,
-                                    )
-                                } ?: emptyList(),
-                            ansettelsesdetaljerListe =
-                                it.ansettelsesdetaljerListe?.map { ansettelsesdetalj ->
-                                    InnhentetArbeidsforhold.Ansettelsesdetaljer(
-                                        periodeFra = ansettelsesdetalj.periodeFra,
-                                        periodeTil = ansettelsesdetalj.periodeTil,
-                                        arbeidsforholdType = ansettelsesdetalj.arbeidsforholdType,
-                                        arbeidstidsordningBeskrivelse =
-                                            ansettelsesdetalj.arbeidstidsordningBeskrivelse,
-                                        ansettelsesformBeskrivelse =
-                                            ansettelsesdetalj.ansettelsesformBeskrivelse,
-                                        yrkeBeskrivelse = ansettelsesdetalj.yrkeBeskrivelse,
-                                        antallTimerPrUke = ansettelsesdetalj.antallTimerPrUke,
-                                        avtaltStillingsprosent =
-                                            ansettelsesdetalj.avtaltStillingsprosent,
-                                        sisteStillingsprosentendringDato = ansettelsesdetalj.sisteStillingsprosentendringDato,
-                                        sisteLønnsendringDato = ansettelsesdetalj.sisteLønnsendringDato,
-                                    )
-                                } ?: emptyList(),
+    POJONode(
+        InnhentetArbeidsforhold(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            this.map {
+                InnhentetArbeidsforhold.Arbeidsforhold(
+                    startdato = it.startdato,
+                    sluttdato = it.sluttdato,
+                    arbeidsgiverNavn = it.arbeidsgiverNavn,
+                    arbeidsgiverOrgnummer = it.arbeidsgiverOrgnummer,
+                    permisjonListe =
+                    it.permisjonListe?.map { permisjon ->
+                        InnhentetArbeidsforhold.Arbeidsforhold.Permisjon(
+                            startdato = permisjon.startdato,
+                            sluttdato = permisjon.sluttdato,
+                            beskrivelse = permisjon.beskrivelse,
+                            prosent = permisjon.prosent,
                         )
-                    },
-            ),
+                    } ?: emptyList(),
+                    permitteringListe =
+                    it.permitteringListe?.map { permittering ->
+                        InnhentetArbeidsforhold.Arbeidsforhold.Permittering(
+                            startdato = permittering.startdato,
+                            sluttdato = permittering.sluttdato,
+                            beskrivelse = permittering.beskrivelse,
+                            prosent = permittering.prosent,
+                        )
+                    } ?: emptyList(),
+                    ansettelsesdetaljerListe =
+                    it.ansettelsesdetaljerListe?.map { ansettelsesdetalj ->
+                        InnhentetArbeidsforhold.Ansettelsesdetaljer(
+                            periodeFra = ansettelsesdetalj.periodeFra,
+                            periodeTil = ansettelsesdetalj.periodeTil,
+                            arbeidsforholdType = ansettelsesdetalj.arbeidsforholdType,
+                            arbeidstidsordningBeskrivelse =
+                            ansettelsesdetalj.arbeidstidsordningBeskrivelse,
+                            ansettelsesformBeskrivelse =
+                            ansettelsesdetalj.ansettelsesformBeskrivelse,
+                            yrkeBeskrivelse = ansettelsesdetalj.yrkeBeskrivelse,
+                            antallTimerPrUke = ansettelsesdetalj.antallTimerPrUke,
+                            avtaltStillingsprosent =
+                            ansettelsesdetalj.avtaltStillingsprosent,
+                            sisteStillingsprosentendringDato = ansettelsesdetalj.sisteStillingsprosentendringDato,
+                            sisteLønnsendringDato = ansettelsesdetalj.sisteLønnsendringDato,
+                        )
+                    } ?: emptyList(),
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetBarnetilsynGrunnlag")
@@ -262,22 +262,22 @@ fun List<BarnetilsynGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_BARNETILSYN,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetBarnetilsyn(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        val søknadsbarn = personobjekter.hentPersonNyesteIdent(it.barnPersonId)!!
-                        InnhentetBarnetilsyn.Barnetilsyn(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            beløp = it.beløp,
-                            tilsynstype = it.tilsynstype,
-                            skolealder = it.skolealder,
-                            gjelderBarn = søknadsbarn.referanse,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetBarnetilsyn(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                val søknadsbarn = personobjekter.hentPersonNyesteIdent(it.barnPersonId)!!
+                InnhentetBarnetilsyn.Barnetilsyn(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    beløp = it.beløp,
+                    tilsynstype = it.tilsynstype,
+                    skolealder = it.skolealder,
+                    gjelderBarn = søknadsbarn.referanse,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetAinntektGrunnlag")
@@ -289,33 +289,33 @@ fun List<AinntektGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetAinntekt(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        InnhentetAinntekt.AinntektInnhentet(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            ainntektspostListe =
-                                it.ainntektspostListe.map { post ->
-                                    InnhentetAinntekt.Ainntektspost(
-                                        utbetalingsperiode = post.utbetalingsperiode,
-                                        opptjeningsperiodeFra = post.opptjeningsperiodeFra,
-                                        opptjeningsperiodeTil = post.opptjeningsperiodeTil,
-                                        kategori = post.kategori,
-                                        fordelType = post.fordelType,
-                                        beløp = post.beløp,
-                                        etterbetalingsperiodeFra = post.etterbetalingsperiodeFra,
-                                        etterbetalingsperiodeTil = post.etterbetalingsperiodeTil,
-                                        beskrivelse = post.beskrivelse,
-                                        opplysningspliktigId = post.opplysningspliktigId,
-                                        virksomhetId = post.virksomhetId,
-                                    )
-                                },
+    POJONode(
+        InnhentetAinntekt(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                InnhentetAinntekt.AinntektInnhentet(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    ainntektspostListe =
+                    it.ainntektspostListe.map { post ->
+                        InnhentetAinntekt.Ainntektspost(
+                            utbetalingsperiode = post.utbetalingsperiode,
+                            opptjeningsperiodeFra = post.opptjeningsperiodeFra,
+                            opptjeningsperiodeTil = post.opptjeningsperiodeTil,
+                            kategori = post.kategori,
+                            fordelType = post.fordelType,
+                            beløp = post.beløp,
+                            etterbetalingsperiodeFra = post.etterbetalingsperiodeFra,
+                            etterbetalingsperiodeTil = post.etterbetalingsperiodeTil,
+                            beskrivelse = post.beskrivelse,
+                            opplysningspliktigId = post.opplysningspliktigId,
+                            virksomhetId = post.virksomhetId,
                         )
                     },
-            ),
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetSmåbarnstilleggGrunnlag")
@@ -327,19 +327,19 @@ fun List<SmåbarnstilleggGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_INNTEKT_SMÅBARNSTILLEGG,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetSmåbarnstillegg(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        InnhentetSmåbarnstillegg.Småbarnstillegg(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            beløp = it.beløp,
-                            manueltBeregnet = it.manueltBeregnet,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetSmåbarnstillegg(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                InnhentetSmåbarnstillegg.Småbarnstillegg(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    beløp = it.beløp,
+                    manueltBeregnet = it.manueltBeregnet,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetUtvidetbarnetrygdGrunnlag")
@@ -351,19 +351,19 @@ fun List<UtvidetBarnetrygdGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_INNTEKT_UTVIDETBARNETRYGD,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetUtvidetBarnetrygd(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        InnhentetUtvidetBarnetrygd.UtvidetBarnetrygd(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            beløp = it.beløp,
-                            manueltBeregnet = it.manueltBeregnet,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetUtvidetBarnetrygd(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                InnhentetUtvidetBarnetrygd.UtvidetBarnetrygd(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    beløp = it.beløp,
+                    manueltBeregnet = it.manueltBeregnet,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetBarnetilleggGrunnlag")
@@ -373,33 +373,33 @@ fun List<BarnetilleggGrunnlagDto>.tilGrunnlagsobjekt(
     personobjekter: Set<GrunnlagDto>,
 ) = GrunnlagDto(
     referanse =
-        opprettBarnetilleggGrunnlagsreferanse(
-            gjelderReferanse,
-            kilde = GrunnlagDatakilde.PENSJON,
-        ),
+    opprettBarnetilleggGrunnlagsreferanse(
+        gjelderReferanse,
+        kilde = GrunnlagDatakilde.PENSJON,
+    ),
     type = Grunnlagstype.INNHENTET_INNTEKT_BARNETILLEGG,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetBarnetillegg(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        val søknadsbarn =
-                            personobjekter.hentPersonNyesteIdent(it.barnPersonId) ?: manglerRolleIGrunnlag(
-                                Rolletype.BARN,
-                                fødselsnummer = it.barnPersonId,
-                            )
-                        InnhentetBarnetillegg.Barnetillegg(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            gjelderBarn = søknadsbarn.referanse,
-                            barnetilleggType = it.barnetilleggType,
-                            barnType = it.barnType,
-                            beløpBrutto = it.beløpBrutto,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetBarnetillegg(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                val søknadsbarn =
+                    personobjekter.hentPersonNyesteIdent(it.barnPersonId) ?: manglerRolleIGrunnlag(
+                        Rolletype.BARN,
+                        fødselsnummer = it.barnPersonId,
+                    )
+                InnhentetBarnetillegg.Barnetillegg(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    gjelderBarn = søknadsbarn.referanse,
+                    barnetilleggType = it.barnetilleggType,
+                    barnType = it.barnType,
+                    beløpBrutto = it.beløpBrutto,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetTilleggsstønadGrunnlag")
@@ -409,22 +409,22 @@ fun List<TilleggsstønadGrunnlagDto>.tilGrunnlagsobjekt(
     søktFomDato: LocalDate,
 ) = GrunnlagDto(
     referanse =
-        "innhentet_tilleggsstønad_begrenset_$gjelderReferanse",
+    "innhentet_tilleggsstønad_begrenset_$gjelderReferanse",
     type = Grunnlagstype.INNHENTET_TILLEGGSSTØNAD_BEGRENSET,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetTilleggstønad(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        InnhentetTilleggstønad.Tilleggsstønad(
-                            periode = Datoperiode(søktFomDato, null),
-                            harInnvilgetVedtak = it.harInnvilgetVedtak,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetTilleggstønad(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                InnhentetTilleggstønad.Tilleggsstønad(
+                    periode = Datoperiode(søktFomDato, null),
+                    harInnvilgetVedtak = it.harInnvilgetVedtak,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetKontantstøtteGrunnlag")
@@ -437,24 +437,24 @@ fun List<KontantstøtteGrunnlagDto>.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_INNTEKT_KONTANTSTØTTE,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetKontantstøtte(
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    map {
-                        val søknadsbarn =
-                            personobjekter.hentPersonNyesteIdent(it.barnPersonId) ?: manglerRolleIGrunnlag(
-                                Rolletype.BARN,
-                                fødselsnummer = it.barnPersonId,
-                            )
-                        InnhentetKontantstøtte.Kontantstøtte(
-                            periode = Datoperiode(it.periodeFra, it.periodeTil),
-                            gjelderBarn = søknadsbarn.referanse,
-                            beløp = it.beløp,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetKontantstøtte(
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            map {
+                val søknadsbarn =
+                    personobjekter.hentPersonNyesteIdent(it.barnPersonId) ?: manglerRolleIGrunnlag(
+                        Rolletype.BARN,
+                        fødselsnummer = it.barnPersonId,
+                    )
+                InnhentetKontantstøtte.Kontantstøtte(
+                    periode = Datoperiode(it.periodeFra, it.periodeTil),
+                    gjelderBarn = søknadsbarn.referanse,
+                    beløp = it.beløp,
+                )
+            },
         ),
+    ),
 )
 
 @JvmName("tilInnhentetSkattegrunnlagGrunnlag")
@@ -466,18 +466,18 @@ fun SkattegrunnlagGrunnlagDto.tilGrunnlagsobjekt(
     type = Grunnlagstype.INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE,
     gjelderReferanse = gjelderReferanse,
     innhold =
-        POJONode(
-            InnhentetSkattegrunnlag(
-                periode = Datoperiode(periodeFra, periodeTil),
-                hentetTidspunkt = hentetTidspunkt,
-                grunnlag =
-                    skattegrunnlagspostListe.map { post ->
-                        InnhentetSkattegrunnlag.Skattegrunnlagspost(
-                            skattegrunnlagType = post.skattegrunnlagType,
-                            kode = post.kode,
-                            beløp = post.beløp,
-                        )
-                    },
-            ),
+    POJONode(
+        InnhentetSkattegrunnlag(
+            periode = Datoperiode(periodeFra, periodeTil),
+            hentetTidspunkt = hentetTidspunkt,
+            grunnlag =
+            skattegrunnlagspostListe.map { post ->
+                InnhentetSkattegrunnlag.Skattegrunnlagspost(
+                    skattegrunnlagType = post.skattegrunnlagType,
+                    kode = post.kode,
+                    beløp = post.beløp,
+                )
+            },
         ),
+    ),
 )

@@ -135,16 +135,14 @@ open class Rolle(
             harGebyrsøknadColumn = value
         }
 
-    fun erSammeRolle(gjelder: PersonStønad) =
-        (gjelder.rolleId != null && this.id == gjelder.rolleId) ||
-            (gjelder.rolleId == null && erSammeRolle(gjelder.personident!!.verdi, gjelder.stønadstype))
+    fun erSammeRolle(gjelder: PersonStønad) = (gjelder.rolleId != null && this.id == gjelder.rolleId) ||
+        (gjelder.rolleId == null && erSammeRolle(gjelder.personident!!.verdi, gjelder.stønadstype))
 
-    fun erSammeRolle(annenRolle: Rolle) =
-        if (rolletype == Rolletype.BARN) {
-            erSammeRolle(annenRolle.ident!!, annenRolle.stønadstype)
-        } else {
-            erSammeRolle(annenRolle.ident!!, null)
-        }
+    fun erSammeRolle(annenRolle: Rolle) = if (rolletype == Rolletype.BARN) {
+        erSammeRolle(annenRolle.ident!!, annenRolle.stønadstype)
+    } else {
+        erSammeRolle(annenRolle.ident!!, null)
+    }
 
     fun erSammeRolle(
         ident: String,
@@ -179,18 +177,16 @@ open class Rolle(
 
     val søknader get() = forholdsmessigFordeling?.søknaderUnderBehandling ?: listOf(behandling.tilFFBarnDetaljer())
 
-    fun finnSøknad(søknadsid: Long) =
-        forholdsmessigFordeling
-            ?.søknaderUnderBehandling
-            ?.find { it.søknadsid == søknadsid }
+    fun finnSøknad(søknadsid: Long) = forholdsmessigFordeling
+        ?.søknaderUnderBehandling
+        ?.find { it.søknadsid == søknadsid }
 
     fun harSøknad(søknadsid: Long) = !behandling.erIForholdsmessigFordeling || finnSøknad(søknadsid) != null
 
-    fun sakForSøknad(søknadsid: Long) =
-        forholdsmessigFordeling
-            ?.søknader
-            ?.find { it.søknadsid == søknadsid }
-            ?.saksnummer ?: saksnummer
+    fun sakForSøknad(søknadsid: Long) = forholdsmessigFordeling
+        ?.søknader
+        ?.find { it.søknadsid == søknadsid }
+        ?.saksnummer ?: saksnummer
 
     val saksnummer get() = forholdsmessigFordeling?.tilhørerSak ?: behandling.saksnummer
     val gebyrSøknader get() =
@@ -201,12 +197,12 @@ open class Rolle(
                         saksnummer = behandling.saksnummer,
                         søknadsid = behandling.soknadsid!!,
                         manueltOverstyrtGebyr =
-                            RolleManueltOverstyrtGebyr(
-                                overstyrGebyr = gebyr?.overstyrGebyr == true,
-                                ilagtGebyr = gebyr?.ilagtGebyr,
-                                begrunnelse = gebyr?.begrunnelse,
-                                beregnetIlagtGebyr = gebyr?.beregnetIlagtGebyr,
-                            ),
+                        RolleManueltOverstyrtGebyr(
+                            overstyrGebyr = gebyr?.overstyrGebyr == true,
+                            ilagtGebyr = gebyr?.ilagtGebyr,
+                            begrunnelse = gebyr?.begrunnelse,
+                            beregnetIlagtGebyr = gebyr?.beregnetIlagtGebyr,
+                        ),
                     ),
                 )
         } else {
@@ -287,8 +283,7 @@ open class Rolle(
 
     fun gebyrForSak(saksnummer: String) = hentEllerOpprettGebyr().finnGebyrForSak(saksnummer)
 
-    fun gebyrForSøknad(søknadsid: Long): GebyrRolleSøknad =
-        hentEllerOpprettGebyr().finnEllerOpprettGebyrForSøknad(søknadsid, sakForSøknad(søknadsid))
+    fun gebyrForSøknad(søknadsid: Long): GebyrRolleSøknad = hentEllerOpprettGebyr().finnEllerOpprettGebyrForSøknad(søknadsid, sakForSøknad(søknadsid))
 
     fun hentEllerOpprettGebyr() = opppdaterGebyrTilNyVersjon()
 
@@ -326,10 +321,9 @@ open class Rolle(
     val henteFødselsdato get() = person?.fødselsdato ?: this.fødselsdato
     val opphørSistePeriode get() = opphørTilDato != null
 
-    override fun toString(): String =
-        "Rolle(id=$id, behandling=${behandling.id}, stønadstype=$stønadstype, behandlingstema=$behandlingstema, " +
-            "rolletype=$rolletype, ident=$ident, fødselsdato=$fødselsdato, opprettet=$opprettet, navn=$navn, " +
-            "deleted=$deleted, innbetaltBeløp=$innbetaltBeløp, virkningstidspunkt=$virkningstidspunkt, opphørsdato=$opphørsdato, årsak=$årsak, avslag=$avslag)"
+    override fun toString(): String = "Rolle(id=$id, behandling=${behandling.id}, stønadstype=$stønadstype, behandlingstema=$behandlingstema, " +
+        "rolletype=$rolletype, ident=$ident, fødselsdato=$fødselsdato, opprettet=$opprettet, navn=$navn, " +
+        "deleted=$deleted, innbetaltBeløp=$innbetaltBeløp, virkningstidspunkt=$virkningstidspunkt, opphørsdato=$opphørsdato, årsak=$årsak, avslag=$avslag)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -339,47 +333,46 @@ open class Rolle(
 
     override fun hashCode(): Int = (ident?.hashCode() ?: 0) * 31 + rolletype.hashCode() + stønadstype.hashCode()
 
-    fun copy(behandling: Behandling): Rolle =
-        Rolle(
-            behandling = behandling,
-            rolletype = this.rolletype,
-            ident = this.ident,
-            fødselsdato = this.fødselsdato,
-            opprettet = this.opprettet,
-            id = null, // Reset ID for new entity
-            navn = this.navn,
-            deleted = this.deleted,
-            harGebyrsøknadColumn = this.harGebyrsøknad,
-            gebyr = this.gebyr?.copy(gebyrSøknader = this.gebyr!!.gebyrSøknader.toMutableSet()),
-            innbetaltBeløp = this.innbetaltBeløp,
-            forrigeSivilstandshistorikk = this.forrigeSivilstandshistorikk,
-            grunnlag = this.grunnlag.toMutableSet(),
-            notat = this.notat.toMutableSet(),
-            person = this.person,
-            opphørsdato = this.opphørsdato,
-            behandlingstema = this.behandlingstema,
-            behandlingstatus = this.behandlingstatus,
-            beregnTil = this.beregnTil,
-            virkningstidspunkt = this.virkningstidspunkt,
-            opprinneligVirkningstidspunkt = this.opprinneligVirkningstidspunkt,
-            årsak = this.årsak,
-            avslag = this.avslag,
-            grunnlagFraVedtak = this.grunnlagFraVedtak,
-            grunnlagFraVedtakListe = this.grunnlagFraVedtakListe.toList(),
-            innkrevingstype = this.innkrevingstype,
-            innkrevesFraDato = this.innkrevesFraDato,
-            stønadstype = this.stønadstype,
-            forholdsmessigFordeling = this.forholdsmessigFordeling,
-        )
+    fun copy(behandling: Behandling): Rolle = Rolle(
+        behandling = behandling,
+        rolletype = this.rolletype,
+        ident = this.ident,
+        fødselsdato = this.fødselsdato,
+        opprettet = this.opprettet,
+        id = null, // Reset ID for new entity
+        navn = this.navn,
+        deleted = this.deleted,
+        harGebyrsøknadColumn = this.harGebyrsøknad,
+        gebyr = this.gebyr?.copy(gebyrSøknader = this.gebyr!!.gebyrSøknader.toMutableSet()),
+        innbetaltBeløp = this.innbetaltBeløp,
+        forrigeSivilstandshistorikk = this.forrigeSivilstandshistorikk,
+        grunnlag = this.grunnlag.toMutableSet(),
+        notat = this.notat.toMutableSet(),
+        person = this.person,
+        opphørsdato = this.opphørsdato,
+        behandlingstema = this.behandlingstema,
+        behandlingstatus = this.behandlingstatus,
+        beregnTil = this.beregnTil,
+        virkningstidspunkt = this.virkningstidspunkt,
+        opprinneligVirkningstidspunkt = this.opprinneligVirkningstidspunkt,
+        årsak = this.årsak,
+        avslag = this.avslag,
+        grunnlagFraVedtak = this.grunnlagFraVedtak,
+        grunnlagFraVedtakListe = this.grunnlagFraVedtakListe.toList(),
+        innkrevingstype = this.innkrevingstype,
+        innkrevesFraDato = this.innkrevesFraDato,
+        stønadstype = this.stønadstype,
+        forholdsmessigFordeling = this.forholdsmessigFordeling,
+    )
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class GrunnlagFraVedtak(
     @get:Schema(
         description =
-            "Årstall for aldersjustering av grunnlag. " +
-                "Brukes hvis det er et vedtak som skal brukes for aldersjustering av grunnlag. " +
-                "Dette er relevant ved omgjøring/klagebehanding i bidrag ellers aldersjusteres det for inneværende år eller ikke er relevant",
+        "Årstall for aldersjustering av grunnlag. " +
+            "Brukes hvis det er et vedtak som skal brukes for aldersjustering av grunnlag. " +
+            "Dette er relevant ved omgjøring/klagebehanding i bidrag ellers aldersjusteres det for inneværende år eller ikke er relevant",
     )
     val aldersjusteringForÅr: Int? = null,
     val vedtak: Int? = null,
@@ -387,8 +380,8 @@ data class GrunnlagFraVedtak(
     val vedtakstidspunkt: LocalDateTime? = null,
     @get:Schema(
         description =
-            "Perioder i vedtaket som er valgt. " +
-                "Brukes når vedtakstype er innkreving og det er valgt å innkreve en vedtak fra NAV som opprinnelig var uten innkreving",
+        "Perioder i vedtaket som er valgt. " +
+            "Brukes når vedtakstype er innkreving og det er valgt å innkreve en vedtak fra NAV som opprinnelig var uten innkreving",
     )
     val perioder: List<VedtakPeriodeDto> = emptyList(),
 )
@@ -432,16 +425,15 @@ data class GebyrRolle(
     fun finnEllerOpprettGebyrForSøknad(
         søknadsid: Long,
         saksnummer: String,
-    ): GebyrRolleSøknad =
-        finnGebyrForSøknad(søknadsid)
-            ?: GebyrRolleSøknad(
-                saksnummer = saksnummer,
-                søknadsid = søknadsid,
-                false,
-                null,
-                null,
-                RolleManueltOverstyrtGebyr(overstyrGebyr = false),
-            )
+    ): GebyrRolleSøknad = finnGebyrForSøknad(søknadsid)
+        ?: GebyrRolleSøknad(
+            saksnummer = saksnummer,
+            søknadsid = søknadsid,
+            false,
+            null,
+            null,
+            RolleManueltOverstyrtGebyr(overstyrGebyr = false),
+        )
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -464,9 +456,8 @@ data class GebyrRolleSøknad(
             manueltOverstyrtGebyr == other.manueltOverstyrtGebyr && gjelder18ÅrSøknad == other.gjelder18ÅrSøknad
     }
 
-    override fun hashCode(): Int =
-        saksnummer.hashCode() * 31 + søknadsid.hashCode() + (behandlingid?.hashCode() ?: 0) + (referanse?.hashCode() ?: 0) +
-            (manueltOverstyrtGebyr?.hashCode() ?: 0) + gjelder18ÅrSøknad.hashCode()
+    override fun hashCode(): Int = saksnummer.hashCode() * 31 + søknadsid.hashCode() + (behandlingid?.hashCode() ?: 0) + (referanse?.hashCode() ?: 0) +
+        (manueltOverstyrtGebyr?.hashCode() ?: 0) + gjelder18ÅrSøknad.hashCode()
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -487,10 +478,9 @@ fun Rolle.lagreSivilstandshistorikk(historikk: Set<Sivilstand>) {
     forrigeSivilstandshistorikk = commonObjectmapper.writeValueAsString(historikk.tilSerialiseringsformat())
 }
 
-fun Collection<GebyrRolleSøknad>.removeDuplicates(): MutableSet<GebyrRolleSøknad> =
-    sortedByDescending { it.manueltOverstyrtGebyr != null }
-        .distinctBy { Pair(it.saksnummer, it.søknadsid) }
-        .toMutableSet()
+fun Collection<GebyrRolleSøknad>.removeDuplicates(): MutableSet<GebyrRolleSøknad> = sortedByDescending { it.manueltOverstyrtGebyr != null }
+    .distinctBy { Pair(it.saksnummer, it.søknadsid) }
+    .toMutableSet()
 
 fun Rolle.leggTilGebyr(fraRolle: Rolle) {
     val gebyr = gebyr ?: GebyrRolle()
@@ -516,15 +506,14 @@ fun Rolle.leggTilGebyr(gebyrSøknader: List<GebyrRolleSøknad>) {
         }
 }
 
-fun Set<Sivilstand>.tilSerialiseringsformat() =
-    this.map {
-        SivilstandUtenBehandling(
-            datoFom = it.datoFom,
-            datoTom = it.datoTom,
-            kilde = it.kilde,
-            sivilstand = it.sivilstand,
-        )
-    }
+fun Set<Sivilstand>.tilSerialiseringsformat() = this.map {
+    SivilstandUtenBehandling(
+        datoFom = it.datoFom,
+        datoTom = it.datoTom,
+        kilde = it.kilde,
+        sivilstand = it.sivilstand,
+    )
+}
 
 fun Rolle.henteLagretSivilstandshistorikk(behandling: Behandling): Set<Sivilstand> {
     val sivilstand =

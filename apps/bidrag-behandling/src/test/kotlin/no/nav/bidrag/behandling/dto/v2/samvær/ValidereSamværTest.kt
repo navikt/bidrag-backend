@@ -40,20 +40,20 @@ class ValidereSamværTest {
                 behandling = behandling,
                 gjelderBarn = barn1Ident,
                 perioder =
-                    listOf(
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
-                    ),
+                listOf(
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
+                ),
             )
         val samværBarn2 =
             opprettSamvær(
                 behandling = behandling,
                 gjelderBarn = barn2Ident,
                 perioder =
-                    listOf(
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
-                    ),
+                listOf(
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
+                ),
             )
         assertSoftly(samværBarn1) {
             val valideringsfeil = it.mapValideringsfeil()
@@ -88,10 +88,10 @@ class ValidereSamværTest {
                 behandling = behandling,
                 gjelderBarn = barn1Ident,
                 perioder =
-                    listOf(
-                        ÅrMånedsperiode(behandling.virkningstidspunkt!!.withDayOfMonth(1), YearMonth.now().minusMonths(4).atEndOfMonth()),
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(3).atDay(1), YearMonth.now().atDay(1).minusDays(1)),
-                    ),
+                listOf(
+                    ÅrMånedsperiode(behandling.virkningstidspunkt!!.withDayOfMonth(1), YearMonth.now().minusMonths(4).atEndOfMonth()),
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(3).atDay(1), YearMonth.now().atDay(1).minusDays(1)),
+                ),
             )
 
         assertSoftly(samværBarn1) {
@@ -124,10 +124,10 @@ class ValidereSamværTest {
                 behandling = behandling,
                 gjelderBarn = barn1Ident,
                 perioder =
-                    listOf(
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
-                        ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
-                    ),
+                listOf(
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(5), YearMonth.now().minusMonths(4)),
+                    ÅrMånedsperiode(YearMonth.now().minusMonths(3), YearMonth.now().minusMonths(2)),
+                ),
             )
         assertSoftly(samværBarn1) {
             val valideringsfeil = it.mapValideringsfeil()

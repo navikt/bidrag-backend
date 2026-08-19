@@ -35,14 +35,13 @@ class HendelseCorrelationAspect {
         }
     }
 
-    private fun hentSporingFraHendelse(hendelse: ConsumerRecord<String, String>): String? =
-        try {
-            val vedtakHendelse = commonObjectmapper.readValue(hendelse.value(), VedtakHendelse::class.java)
-            vedtakHendelse.sporingsdata.correlationId
-        } catch (e: Exception) {
-            log.error(e) { "Det skjedde en feil ved konverting av melding fra hendelse" }
-            null
-        }
+    private fun hentSporingFraHendelse(hendelse: ConsumerRecord<String, String>): String? = try {
+        val vedtakHendelse = commonObjectmapper.readValue(hendelse.value(), VedtakHendelse::class.java)
+        vedtakHendelse.sporingsdata.correlationId
+    } catch (e: Exception) {
+        log.error(e) { "Det skjedde en feil ved konverting av melding fra hendelse" }
+        null
+    }
 
     @After(value = "execution(* no.nav.bidrag.behandling.kafka.VedtakHendelseListener.*(..))")
     fun clearCorrelationIdFromKafkaListener(joinPoint: JoinPoint) {

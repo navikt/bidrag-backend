@@ -20,16 +20,45 @@ import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDate
 
 class ValideringOpprettBehandlingTest {
-    private fun opprettOpprettBehandlingRequest() =
-        OpprettBehandlingRequest(
-            vedtakstype = Vedtakstype.FASTSETTELSE,
-            engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
-            søktFomDato = LocalDate.now().minusMonths(4),
-            mottattdato = LocalDate.now(),
-            søknadFra = SøktAvType.BIDRAGSMOTTAKER,
-            saksnummer = SAKSNUMMER,
-            behandlerenhet = "4806",
-            roller =
+    private fun opprettOpprettBehandlingRequest() = OpprettBehandlingRequest(
+        vedtakstype = Vedtakstype.FASTSETTELSE,
+        engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
+        søktFomDato = LocalDate.now().minusMonths(4),
+        mottattdato = LocalDate.now(),
+        søknadFra = SøktAvType.BIDRAGSMOTTAKER,
+        saksnummer = SAKSNUMMER,
+        behandlerenhet = "4806",
+        roller =
+        setOf(
+            OpprettRolleDto(
+                Rolletype.BARN,
+                Personident(testdataBarn1.ident),
+                fødselsdato = LocalDate.now().minusMonths(136),
+            ),
+            OpprettRolleDto(
+                Rolletype.BIDRAGSMOTTAKER,
+                Personident(testdataBM.ident),
+                fødselsdato = LocalDate.now().minusMonths(555),
+            ),
+            OpprettRolleDto(
+                Rolletype.BIDRAGSPLIKTIG,
+                Personident(testdataBP.ident),
+                fødselsdato = LocalDate.now().minusMonths(555),
+            ),
+        ),
+        søknadsid = 123213,
+    )
+
+    @Test
+    fun `Skal BP er satt for særbidrag`() {
+        val request =
+            opprettOpprettBehandlingRequest().copy(
+                kategori =
+                OpprettKategoriRequestDto(
+                    kategori = Særbidragskategori.KONFIRMASJON.name,
+                    beskrivelse = null,
+                ),
+                roller =
                 setOf(
                     OpprettRolleDto(
                         Rolletype.BARN,
@@ -41,37 +70,7 @@ class ValideringOpprettBehandlingTest {
                         Personident(testdataBM.ident),
                         fødselsdato = LocalDate.now().minusMonths(555),
                     ),
-                    OpprettRolleDto(
-                        Rolletype.BIDRAGSPLIKTIG,
-                        Personident(testdataBP.ident),
-                        fødselsdato = LocalDate.now().minusMonths(555),
-                    ),
                 ),
-            søknadsid = 123213,
-        )
-
-    @Test
-    fun `Skal BP er satt for særbidrag`() {
-        val request =
-            opprettOpprettBehandlingRequest().copy(
-                kategori =
-                    OpprettKategoriRequestDto(
-                        kategori = Særbidragskategori.KONFIRMASJON.name,
-                        beskrivelse = null,
-                    ),
-                roller =
-                    setOf(
-                        OpprettRolleDto(
-                            Rolletype.BARN,
-                            Personident(testdataBarn1.ident),
-                            fødselsdato = LocalDate.now().minusMonths(136),
-                        ),
-                        OpprettRolleDto(
-                            Rolletype.BIDRAGSMOTTAKER,
-                            Personident(testdataBM.ident),
-                            fødselsdato = LocalDate.now().minusMonths(555),
-                        ),
-                    ),
             )
 
         val exception = assertThrows<HttpStatusCodeException> { request.valider() }
@@ -94,10 +93,10 @@ class ValideringOpprettBehandlingTest {
         val request =
             opprettOpprettBehandlingRequest().copy(
                 kategori =
-                    OpprettKategoriRequestDto(
-                        kategori = Særbidragskategori.ANNET.name,
-                        beskrivelse = null,
-                    ),
+                OpprettKategoriRequestDto(
+                    kategori = Særbidragskategori.ANNET.name,
+                    beskrivelse = null,
+                ),
             )
 
         val exception = assertThrows<HttpStatusCodeException> { request.valider() }
@@ -109,10 +108,10 @@ class ValideringOpprettBehandlingTest {
         val request =
             opprettOpprettBehandlingRequest().copy(
                 kategori =
-                    OpprettKategoriRequestDto(
-                        kategori = "ADasdsad",
-                        beskrivelse = null,
-                    ),
+                OpprettKategoriRequestDto(
+                    kategori = "ADasdsad",
+                    beskrivelse = null,
+                ),
             )
 
         val exception = assertThrows<HttpStatusCodeException> { request.valider() }

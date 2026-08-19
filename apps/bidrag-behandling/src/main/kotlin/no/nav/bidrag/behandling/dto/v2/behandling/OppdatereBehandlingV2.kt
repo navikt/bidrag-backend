@@ -22,8 +22,8 @@ data class AktivereGrunnlagRequestV2(
     val overskriveManuelleOpplysninger: Boolean = true,
     @get:Schema(
         description =
-            "Ident på person grunnlag gjelder." +
-                " Er relevant for blant annet Barnetillegg, Kontantstøtte og Boforhold",
+        "Ident på person grunnlag gjelder." +
+            " Er relevant for blant annet Barnetillegg, Kontantstøtte og Boforhold",
     )
     val gjelderIdent: Personident? = null,
     val gjelderRolleId: Long? = null,

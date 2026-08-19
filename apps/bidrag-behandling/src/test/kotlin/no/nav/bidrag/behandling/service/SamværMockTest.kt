@@ -66,10 +66,10 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
-                                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0,
-                            ),
+                        OppdaterSamværsperiodeDto(
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
+                            samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0,
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 
@@ -109,11 +109,11 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                id = samvær.perioder.first().id,
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!, behandling.virkningstidspunkt!!.plusMonths(2)),
-                                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
-                            ),
+                        OppdaterSamværsperiodeDto(
+                            id = samvær.perioder.first().id,
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!, behandling.virkningstidspunkt!!.plusMonths(2)),
+                            samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 
@@ -154,10 +154,10 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!.plusMonths(2), null),
-                                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
-                            ),
+                        OppdaterSamværsperiodeDto(
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!.plusMonths(2), null),
+                            samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 
@@ -205,10 +205,10 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!.plusMonths(2), null),
-                                samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
-                            ),
+                        OppdaterSamværsperiodeDto(
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!.plusMonths(2), null),
+                            samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2,
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 
@@ -256,23 +256,23 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                id = samvær.perioder.first().id,
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
-                                beregning =
-                                    SamværskalkulatorDetaljer(
-                                        regelmessigSamværNetter = BigDecimal(4),
-                                        ferier =
-                                            listOf(
-                                                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                                                    type = SamværskalkulatorFerietype.SOMMERFERIE,
-                                                    bidragsmottakerNetter = BigDecimal(14),
-                                                    bidragspliktigNetter = BigDecimal(1),
-                                                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                                                ),
-                                            ),
+                        OppdaterSamværsperiodeDto(
+                            id = samvær.perioder.first().id,
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
+                            beregning =
+                            SamværskalkulatorDetaljer(
+                                regelmessigSamværNetter = BigDecimal(4),
+                                ferier =
+                                listOf(
+                                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                                        type = SamværskalkulatorFerietype.SOMMERFERIE,
+                                        bidragsmottakerNetter = BigDecimal(14),
+                                        bidragspliktigNetter = BigDecimal(1),
+                                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
                                     ),
+                                ),
                             ),
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 
@@ -303,22 +303,22 @@ class SamværMockTest : TestContainerRunner() {
                     OppdaterSamværDto(
                         gjelderBarn = søknadsbarn.ident!!,
                         periode =
-                            OppdaterSamværsperiodeDto(
-                                periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
-                                beregning =
-                                    SamværskalkulatorDetaljer(
-                                        regelmessigSamværNetter = BigDecimal(4),
-                                        ferier =
-                                            listOf(
-                                                SamværskalkulatorDetaljer.SamværskalkulatorFerie(
-                                                    type = SamværskalkulatorFerietype.SOMMERFERIE,
-                                                    bidragsmottakerNetter = BigDecimal(14),
-                                                    bidragspliktigNetter = BigDecimal(1),
-                                                    frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
-                                                ),
-                                            ),
+                        OppdaterSamværsperiodeDto(
+                            periode = DatoperiodeDto(behandling.virkningstidspunkt!!, null),
+                            beregning =
+                            SamværskalkulatorDetaljer(
+                                regelmessigSamværNetter = BigDecimal(4),
+                                ferier =
+                                listOf(
+                                    SamværskalkulatorDetaljer.SamværskalkulatorFerie(
+                                        type = SamværskalkulatorFerietype.SOMMERFERIE,
+                                        bidragsmottakerNetter = BigDecimal(14),
+                                        bidragspliktigNetter = BigDecimal(1),
+                                        frekvens = SamværskalkulatorNetterFrekvens.HVERT_ÅR,
                                     ),
+                                ),
                             ),
+                        ),
                     ),
                 ).tilOppdaterSamværResponseDto()
 

@@ -111,8 +111,7 @@ data class OppgaveSokRequest(
         return this
     }
 
-    fun hentParametre(): String =
-        "$parametre&tema=BID&tema=FAR&statuskategori=AAPEN&sorteringsrekkefolge=ASC&sorteringsfelt=FRIST&limit=100"
+    fun hentParametre(): String = "$parametre&tema=BID&tema=FAR&statuskategori=AAPEN&sorteringsrekkefolge=ASC&sorteringsfelt=FRIST&limit=100"
 }
 
 enum class OppgaveStatus {

@@ -61,14 +61,13 @@ data class InntektDtoV2(
     val inntektstyper: Set<Inntektstype> = emptySet(),
     val historisk: Boolean? = false,
 ) {
-    fun gjelderRolle(rolle: no.nav.bidrag.behandling.database.datamodell.Rolle) =
-        if (gjelderRolleId !=
-            null
-        ) {
-            rolle.id == gjelderRolleId
-        } else {
-            ident?.verdi == rolle.ident
-        }
+    fun gjelderRolle(rolle: no.nav.bidrag.behandling.database.datamodell.Rolle) = if (gjelderRolleId !=
+        null
+    ) {
+        rolle.id == gjelderRolleId
+    } else {
+        ident?.verdi == rolle.ident
+    }
 
     val skatteprosent get() =
         if (rapporteringstype == Inntektsrapportering.BARNETILLEGG) {
@@ -308,8 +307,8 @@ data class OppdatereManuellInntekt(
     val gjelderId: Long? = null,
     @get:Schema(
         description =
-            "Ident til barnet en ytelse gjelder for. " +
-                "sBenyttes kun for ytelser som er koblet til ett spesifikt barn, f.eks kontantstøtte",
+        "Ident til barnet en ytelse gjelder for. " +
+            "sBenyttes kun for ytelser som er koblet til ett spesifikt barn, f.eks kontantstøtte",
         type = "String",
         example = "12345678910",
         required = false,
@@ -319,8 +318,8 @@ data class OppdatereManuellInntekt(
     val gjelderBarn: Personident? = null,
     @get:Schema(
         description =
-            "Id til rollen til barnet en ytelse gjelder for. " +
-                "sBenyttes kun for ytelser som er koblet til ett spesifikt barn, f.eks kontantstøtte",
+        "Id til rollen til barnet en ytelse gjelder for. " +
+            "sBenyttes kun for ytelser som er koblet til ett spesifikt barn, f.eks kontantstøtte",
         type = "String",
         example = "12345678910",
         required = false,

@@ -179,10 +179,10 @@ class VedtakTilBehandlingMapping(
                 søktFomDato = søktFomDato ?: hentSøknad().søktFraDato,
                 soknadFra = soknadFra ?: hentSøknad().søktAv,
                 mottattdato =
-                    when (typeBehandling) {
-                        TypeBehandling.SÆRBIDRAG -> hentSøknad().mottattDato
-                        else -> mottattdato ?: hentSøknad().mottattDato
-                    },
+                when (typeBehandling) {
+                    TypeBehandling.SÆRBIDRAG -> hentSøknad().mottattDato
+                    else -> mottattdato ?: hentSøknad().mottattDato
+                },
                 // TODO: Er dette riktig? Hva skjer hvis det finnes flere stønadsendringer/engangsbeløp? Fungerer for Forskudd men todo fram fremtiden
                 stonadstype = stønadsendringstype,
                 engangsbeloptype = if (stønadsendringstype == null) engangsbeløpListe.firstOrNull()?.type else null,
@@ -230,18 +230,18 @@ class VedtakTilBehandlingMapping(
                     sisteVedtakstidspunktBeregnetUtNåværendeMåned = sisteVedtakBeregnetUtNåværendeMåned?.vedtakstidspunkt,
                     omgjortVedtakstidspunktListe = vedtakstidspunktListe.toMutableSet(),
                     fatteVedtakDetaljerRevurderingsbarn =
-                        if (stønadsendringerRevurderingsbarn.isNotEmpty()) {
-                            val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
-                            FatteVedtakDetaljerFraOmgjortVedtakForRevurderingsbarn(
-                                bleFattetVedtakForRevurderingsbarn =
-                                    stønadsendringerRevurderingsbarn.any {
-                                        it.beslutning == Beslutningstype.ENDRING
-                                    },
-                                fatteVedtakRevurderingsbarn = behandlingDetaljer?.fatteVedtakRevurderingsbarn,
-                            )
-                        } else {
-                            null
-                        },
+                    if (stønadsendringerRevurderingsbarn.isNotEmpty()) {
+                        val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
+                        FatteVedtakDetaljerFraOmgjortVedtakForRevurderingsbarn(
+                            bleFattetVedtakForRevurderingsbarn =
+                            stønadsendringerRevurderingsbarn.any {
+                                it.beslutning == Beslutningstype.ENDRING
+                            },
+                            fatteVedtakRevurderingsbarn = behandlingDetaljer?.fatteVedtakRevurderingsbarn,
+                        )
+                    } else {
+                        null
+                    },
                 )
         }
         if (!lesemodus) {
@@ -449,24 +449,23 @@ class VedtakTilBehandlingMapping(
         }
     }
 
-    fun VedtakDto.tilBeregningResultatSærbidrag(): ResultatSærbidragsberegningDto? =
-        engangsbeløpListe.firstOrNull()?.let { engangsbeløp ->
-            val behandling =
-                tilBehandling(1, innkrevingstype = engangsbeløp.innkreving)
-            grunnlagListe.byggResultatSærbidragsberegning(
-                behandling.virkningstidspunkt!!,
-                engangsbeløp.beløp,
-                Resultatkode.fraKode(engangsbeløp.resultatkode)!!,
-                engangsbeløp.grunnlagReferanseListe,
-                behandling.utgift?.tilBeregningDto() ?: UtgiftBeregningDto(),
-                behandling.utgift
-                    ?.utgiftsposter
-                    ?.sorter()
-                    ?.map { it.tilDto() } ?: emptyList(),
-                behandling.utgift?.maksGodkjentBeløpTaMed.ifTrue { behandling.utgift?.maksGodkjentBeløp },
-                behandling.finnBeregnTilDatoBehandling(),
-            )
-        }
+    fun VedtakDto.tilBeregningResultatSærbidrag(): ResultatSærbidragsberegningDto? = engangsbeløpListe.firstOrNull()?.let { engangsbeløp ->
+        val behandling =
+            tilBehandling(1, innkrevingstype = engangsbeløp.innkreving)
+        grunnlagListe.byggResultatSærbidragsberegning(
+            behandling.virkningstidspunkt!!,
+            engangsbeløp.beløp,
+            Resultatkode.fraKode(engangsbeløp.resultatkode)!!,
+            engangsbeløp.grunnlagReferanseListe,
+            behandling.utgift?.tilBeregningDto() ?: UtgiftBeregningDto(),
+            behandling.utgift
+                ?.utgiftsposter
+                ?.sorter()
+                ?.map { it.tilDto() } ?: emptyList(),
+            behandling.utgift?.maksGodkjentBeløpTaMed.ifTrue { behandling.utgift?.maksGodkjentBeløp },
+            behandling.finnBeregnTilDatoBehandling(),
+        )
+    }
 
     private fun List<GrunnlagDto>.mapUtgifter(
         behandling: Behandling,
@@ -506,85 +505,84 @@ class VedtakTilBehandlingMapping(
     private fun List<GrunnlagDto>.mapPrivatAvtale(
         behandling: Behandling,
         lesemodus: Boolean,
-    ): MutableSet<PrivatAvtale> =
-        filtrerBasertPåEgenReferanse(Grunnlagstype.PRIVAT_AVTALE_PERIODE_GRUNNLAG)
-            .groupBy { if (it.gjelderBarnReferanse.isNullOrEmpty()) it.gjelderReferanse else it.gjelderBarnReferanse }
-            .filterBarnIBehandling(this, behandling)
-            .map {
-                val privatAvtaleGrunnlag =
-                    filtrerOgKonverterBasertPåFremmedReferanse<PrivatAvtaleGrunnlagV2>(
-                        Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG,
-                        gjelderBarnReferanse = it.key,
-                    ).firstOrNull()
-                val personGrunnlag = hentPersonMedReferanse(it.key)!!
-                val personFraVedtak = personGrunnlag.personObjekt
-                val rolleSøknadsbarn =
-                    behandling.søknadsbarn.find {
-                        it.erSammeRolle(
-                            personFraVedtak.ident!!.verdi,
-                            personFraVedtak.stønadstype,
-                        )
-                    }
-                if (rolleSøknadsbarn != null && privatAvtaleGrunnlag?.innhold?.avtaleType == PrivatAvtaleType.VEDTAK_FRA_NAV) {
-                    val manuelleVedtak =
-                        (this as List<BaseGrunnlag>)
-                            .filtrerBasertPåFremmedReferanse(
-                                grunnlagType = Grunnlagstype.MANUELLE_VEDTAK,
-                                gjelderBarnReferanse = it.key,
-                            ).firstOrNull()
-                            ?.innholdTilObjektListe<List<ManuellVedtakGrunnlag>>()
-                    val manuellVedtak = manuelleVedtak?.find { it.vedtaksid == privatAvtaleGrunnlag.innhold.vedtaksid }
-
-                    val vedtaksid = privatAvtaleGrunnlag.innhold.vedtaksid
-                    val vedtakPeriodeliste =
-                        vedtaksid?.let {
-                            val vedtak = hentVedtak(privatAvtaleGrunnlag.innhold.vedtaksid) ?: return@let null
-                            val stønadsendring = vedtak.finnStønadsendring(behandling.tilStønadsid(rolleSøknadsbarn))
-                            stønadsendring!!.periodeListe
-                        } ?: emptyList()
-
-                    rolleSøknadsbarn.grunnlagFraVedtakListe =
-                        listOf(
-                            GrunnlagFraVedtak(
-                                vedtak = privatAvtaleGrunnlag.innhold.vedtaksid,
-                                vedtakstidspunkt = manuellVedtak?.fattetTidspunkt,
-                                perioder = vedtakPeriodeliste,
-                            ),
-                        )
+    ): MutableSet<PrivatAvtale> = filtrerBasertPåEgenReferanse(Grunnlagstype.PRIVAT_AVTALE_PERIODE_GRUNNLAG)
+        .groupBy { if (it.gjelderBarnReferanse.isNullOrEmpty()) it.gjelderReferanse else it.gjelderBarnReferanse }
+        .filterBarnIBehandling(this, behandling)
+        .map {
+            val privatAvtaleGrunnlag =
+                filtrerOgKonverterBasertPåFremmedReferanse<PrivatAvtaleGrunnlagV2>(
+                    Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG,
+                    gjelderBarnReferanse = it.key,
+                ).firstOrNull()
+            val personGrunnlag = hentPersonMedReferanse(it.key)!!
+            val personFraVedtak = personGrunnlag.personObjekt
+            val rolleSøknadsbarn =
+                behandling.søknadsbarn.find {
+                    it.erSammeRolle(
+                        personFraVedtak.ident!!.verdi,
+                        personFraVedtak.stønadstype,
+                    )
                 }
-                val privatAvtale =
-                    if (lesemodus) {
-                        PrivatAvtale(
-                            id = 1,
-                            avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
-                            skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
-                            avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
-                            behandling = behandling,
-                            rolle = rolleSøknadsbarn,
-                        )
-                    } else {
-                        PrivatAvtale(
-                            avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
-                            avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
-                            skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
-                            behandling = behandling,
-                            rolle = rolleSøknadsbarn,
-                        )
-                    }
-                it.value.forEach {
-                    val grunnlag = it.innholdTilObjekt<PrivatAvtalePeriodeGrunnlag>()
-                    val paPeriode =
-                        PrivatAvtalePeriode(
-                            id = if (lesemodus) (Math.random() * 10000).toLong() else null,
-                            privatAvtale = privatAvtale,
-                            fom = grunnlag.periode.fom.atDay(1),
-                            tom = grunnlag.periode.til?.atEndOfMonth(),
-                            beløp = grunnlag.beløp,
-                        )
-                    privatAvtale.perioder.add(paPeriode)
+            if (rolleSøknadsbarn != null && privatAvtaleGrunnlag?.innhold?.avtaleType == PrivatAvtaleType.VEDTAK_FRA_NAV) {
+                val manuelleVedtak =
+                    (this as List<BaseGrunnlag>)
+                        .filtrerBasertPåFremmedReferanse(
+                            grunnlagType = Grunnlagstype.MANUELLE_VEDTAK,
+                            gjelderBarnReferanse = it.key,
+                        ).firstOrNull()
+                        ?.innholdTilObjektListe<List<ManuellVedtakGrunnlag>>()
+                val manuellVedtak = manuelleVedtak?.find { it.vedtaksid == privatAvtaleGrunnlag.innhold.vedtaksid }
+
+                val vedtaksid = privatAvtaleGrunnlag.innhold.vedtaksid
+                val vedtakPeriodeliste =
+                    vedtaksid?.let {
+                        val vedtak = hentVedtak(privatAvtaleGrunnlag.innhold.vedtaksid) ?: return@let null
+                        val stønadsendring = vedtak.finnStønadsendring(behandling.tilStønadsid(rolleSøknadsbarn))
+                        stønadsendring!!.periodeListe
+                    } ?: emptyList()
+
+                rolleSøknadsbarn.grunnlagFraVedtakListe =
+                    listOf(
+                        GrunnlagFraVedtak(
+                            vedtak = privatAvtaleGrunnlag.innhold.vedtaksid,
+                            vedtakstidspunkt = manuellVedtak?.fattetTidspunkt,
+                            perioder = vedtakPeriodeliste,
+                        ),
+                    )
+            }
+            val privatAvtale =
+                if (lesemodus) {
+                    PrivatAvtale(
+                        id = 1,
+                        avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
+                        skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
+                        avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
+                        behandling = behandling,
+                        rolle = rolleSøknadsbarn,
+                    )
+                } else {
+                    PrivatAvtale(
+                        avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
+                        avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
+                        skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
+                        behandling = behandling,
+                        rolle = rolleSøknadsbarn,
+                    )
                 }
-                privatAvtale
-            }.toMutableSet()
+            it.value.forEach {
+                val grunnlag = it.innholdTilObjekt<PrivatAvtalePeriodeGrunnlag>()
+                val paPeriode =
+                    PrivatAvtalePeriode(
+                        id = if (lesemodus) (Math.random() * 10000).toLong() else null,
+                        privatAvtale = privatAvtale,
+                        fom = grunnlag.periode.fom.atDay(1),
+                        tom = grunnlag.periode.til?.atEndOfMonth(),
+                        beløp = grunnlag.beløp,
+                    )
+                privatAvtale.perioder.add(paPeriode)
+            }
+            privatAvtale
+        }.toMutableSet()
 
     private fun List<GrunnlagDto>.mapUnderholdskostnad(
         behandling: Behandling,
@@ -682,12 +680,12 @@ class VedtakTilBehandlingMapping(
                                 kilde = kilde,
                                 rolle = behandling.alleBidragsmottakere.find { it.ident == bidragsmottakerIdent },
                                 person =
-                                    Person(
-                                        id = indexU,
-                                        ident = gjelderBarn.ident?.verdi,
-                                        navn = gjelderBarn.navn,
-                                        fødselsdato = gjelderBarn.fødselsdato,
-                                    ),
+                                Person(
+                                    id = indexU,
+                                    ident = gjelderBarn.ident?.verdi,
+                                    navn = gjelderBarn.navn,
+                                    fødselsdato = gjelderBarn.fødselsdato,
+                                ),
                             )
                         } else {
                             underholdService.oppretteUnderholdskostnad(
@@ -732,12 +730,12 @@ class VedtakTilBehandlingMapping(
                             behandling = behandling,
                             rolle = behandling.alleBidragsmottakere.find { it.ident == bidragsmottakerIdent },
                             person =
-                                Person(
-                                    id = indexU,
-                                    ident = gjelderBarn.ident?.verdi,
-                                    navn = gjelderBarn.navn,
-                                    fødselsdato = gjelderBarn.fødselsdato,
-                                ),
+                            Person(
+                                id = indexU,
+                                ident = gjelderBarn.ident?.verdi,
+                                navn = gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
                         )
                     } else {
                         underholdService.oppretteUnderholdskostnad(
@@ -775,12 +773,12 @@ class VedtakTilBehandlingMapping(
                             behandling = behandling,
                             rolle = behandling.alleBidragsmottakere.find { bm -> bm.ident == bidragsmottakerIdent },
                             person =
-                                Person(
-                                    id = indexU,
-                                    ident = gjelderBarn.ident?.verdi,
-                                    navn = gjelderBarn.navn,
-                                    fødselsdato = gjelderBarn.fødselsdato,
-                                ),
+                            Person(
+                                id = indexU,
+                                ident = gjelderBarn.ident?.verdi,
+                                navn = gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
                         )
                     } else {
                         underholdService.oppretteUnderholdskostnad(
@@ -838,70 +836,66 @@ class VedtakTilBehandlingMapping(
             underholdskostnad.tilleggsstønad.isNotEmpty()
     }
 
-    private fun List<GrunnlagDto>.hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt: LocalDate) =
-        filtrerBasertPåEgenReferanse(
-            Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER,
-        ).firstOrNull()
-            ?.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
-            ?.grunnlag
-            ?.filter { it.fødselsdato.erUnder12År(virkningstidspunkt) }
-            ?: emptyList()
+    private fun List<GrunnlagDto>.hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt: LocalDate) = filtrerBasertPåEgenReferanse(
+        Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER,
+    ).firstOrNull()
+        ?.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
+        ?.grunnlag
+        ?.filter { it.fødselsdato.erUnder12År(virkningstidspunkt) }
+        ?: emptyList()
 
     private fun List<TilleggsstønadPeriode>.mapTillegsstønad(
         underholdskostnad: Underholdskostnad,
         lesemodus: Boolean,
-    ): List<Tilleggsstønad> =
-        mapIndexed { index, it ->
-            Tilleggsstønad(
-                id = if (lesemodus) index.toLong() else null,
-                underholdskostnad = underholdskostnad,
-                fom = it.periode.fom.atDay(1),
-                tom =
-                    it.periode.til
-                        ?.minusMonths(1)
-                        ?.atEndOfMonth(),
-                beløp = it.beløp,
-                beløpstype = it.beløpstype,
-            )
-        }
+    ): List<Tilleggsstønad> = mapIndexed { index, it ->
+        Tilleggsstønad(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            beløp = it.beløp,
+            beløpstype = it.beløpstype,
+        )
+    }
 
     private fun List<FaktiskUtgiftPeriode>.mapFaktiskTilsynsutgift(
         underholdskostnad: Underholdskostnad,
         lesemodus: Boolean,
-    ): List<FaktiskTilsynsutgift> =
-        mapIndexed { index, it ->
-            FaktiskTilsynsutgift(
-                id = if (lesemodus) index.toLong() else null,
-                underholdskostnad = underholdskostnad,
-                fom = it.periode.fom.atDay(1),
-                tom =
-                    it.periode.til
-                        ?.minusMonths(1)
-                        ?.atEndOfMonth(),
-                tilsynsutgift = it.faktiskUtgiftBeløp,
-                kostpenger = it.kostpengerBeløp,
-                kommentar = it.kommentar,
-            )
-        }
+    ): List<FaktiskTilsynsutgift> = mapIndexed { index, it ->
+        FaktiskTilsynsutgift(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            tilsynsutgift = it.faktiskUtgiftBeløp,
+            kostpenger = it.kostpengerBeløp,
+            kommentar = it.kommentar,
+        )
+    }
 
     private fun List<BarnetilsynMedStønadPeriode>.mapBarnetilsyn(
         underholdskostnad: Underholdskostnad,
         lesemodus: Boolean,
-    ): List<Barnetilsyn> =
-        mapIndexed { index, it ->
-            Barnetilsyn(
-                id = if (lesemodus) index.toLong() else null,
-                underholdskostnad = underholdskostnad,
-                fom = it.periode.fom.atDay(1),
-                tom =
-                    it.periode.til
-                        ?.minusMonths(1)
-                        ?.atEndOfMonth(),
-                under_skolealder = it.skolealder == Skolealder.UNDER,
-                omfang = it.tilsynstype,
-                kilde = if (it.manueltRegistrert) Kilde.MANUELL else Kilde.OFFENTLIG,
-            )
-        }
+    ): List<Barnetilsyn> = mapIndexed { index, it ->
+        Barnetilsyn(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            under_skolealder = it.skolealder == Skolealder.UNDER,
+            omfang = it.tilsynstype,
+            kilde = if (it.manueltRegistrert) Kilde.MANUELL else Kilde.OFFENTLIG,
+        )
+    }
 
     private fun List<GrunnlagDto>.mapSamvær(
         behandling: Behandling,
@@ -936,9 +930,9 @@ class VedtakTilBehandlingMapping(
                                 samvær = samvær,
                                 fom = periodeInnhold.periode.fom.atDay(1),
                                 tom =
-                                    periodeInnhold.periode.til
-                                        ?.minusMonths(1)
-                                        ?.atEndOfMonth(),
+                                periodeInnhold.periode.til
+                                    ?.minusMonths(1)
+                                    ?.atEndOfMonth(),
                                 samværsklasse = periodeInnhold.samværsklasse,
                                 beregningJson = beregning?.let { commonObjectmapper.writeValueAsString(it) },
                             )

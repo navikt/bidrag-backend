@@ -136,13 +136,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        type = Utgiftstype.KLÆR.name,
-                        kravbeløp = BigDecimal(1000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Ny post",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    type = Utgiftstype.KLÆR.name,
+                    kravbeløp = BigDecimal(1000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Ny post",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -156,14 +156,14 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel2 =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusDays(1),
-                        type = Utgiftstype.KLÆR.name,
-                        id = response.oppdatertUtgiftspost?.id,
-                        kravbeløp = BigDecimal(1000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Ny post",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusDays(1),
+                    type = Utgiftstype.KLÆR.name,
+                    id = response.oppdatertUtgiftspost?.id,
+                    kravbeløp = BigDecimal(1000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Ny post",
+                ),
             )
         val response2 = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel2)
         assertSoftly(response2.utgiftposter) {
@@ -182,13 +182,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        type = Utgiftstype.KLÆR.name,
-                        kravbeløp = BigDecimal(3000),
-                        godkjentBeløp = BigDecimal(3000),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    type = Utgiftstype.KLÆR.name,
+                    kravbeløp = BigDecimal(3000),
+                    godkjentBeløp = BigDecimal(3000),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -219,12 +219,12 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        kravbeløp = BigDecimal(1000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    kravbeløp = BigDecimal(1000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -270,12 +270,12 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        kravbeløp = BigDecimal(1000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    kravbeløp = BigDecimal(1000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -321,13 +321,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        type = "Kvittering for medisiner 2",
-                        kravbeløp = BigDecimal(1000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    type = "Kvittering for medisiner 2",
+                    kravbeløp = BigDecimal(1000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -377,14 +377,14 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        id = utgiftspostId,
-                        dato = LocalDate.now().minusMonths(1),
-                        type = Utgiftstype.KONFIRMASJONSAVGIFT.name,
-                        kravbeløp = BigDecimal(7000),
-                        godkjentBeløp = BigDecimal(5000),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    id = utgiftspostId,
+                    dato = LocalDate.now().minusMonths(1),
+                    type = Utgiftstype.KONFIRMASJONSAVGIFT.name,
+                    kravbeløp = BigDecimal(7000),
+                    godkjentBeløp = BigDecimal(5000),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -433,14 +433,14 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(1),
-                        type = Utgiftstype.REISEUTGIFT.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                        betaltAvBp = true,
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(1),
+                    type = Utgiftstype.REISEUTGIFT.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                    betaltAvBp = true,
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -546,9 +546,9 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        taMed = true,
-                    ),
+                MaksGodkjentBeløpDto(
+                    taMed = true,
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -598,10 +598,10 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        beløp = BigDecimal(6000),
-                        begrunnelse = "Kommentar maks godkjent",
-                    ),
+                MaksGodkjentBeløpDto(
+                    beløp = BigDecimal(6000),
+                    begrunnelse = "Kommentar maks godkjent",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -653,9 +653,9 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 maksGodkjentBeløp =
-                    MaksGodkjentBeløpDto(
-                        taMed = false,
-                    ),
+                MaksGodkjentBeløpDto(
+                    taMed = false,
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -869,13 +869,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = behandling.mottattdato.minusYears(3),
-                        type = Utgiftstype.REISEUTGIFT.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(0),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = behandling.mottattdato.minusYears(3),
+                    type = Utgiftstype.REISEUTGIFT.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(0),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -913,13 +913,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(3),
-                        type = Utgiftstype.REISEUTGIFT.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(100),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(3),
+                    type = Utgiftstype.REISEUTGIFT.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(100),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 
@@ -958,13 +958,13 @@ class UtgiftserviceTest : TestContainerRunner() {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        dato = LocalDate.now().minusMonths(3),
-                        type = Utgiftstype.REISEUTGIFT.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(100),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    dato = LocalDate.now().minusMonths(3),
+                    type = Utgiftstype.REISEUTGIFT.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(100),
+                    kommentar = "Test",
+                ),
             )
         val response = utgiftService.oppdatereUtgift(behandling.id!!, forespørsel)
 

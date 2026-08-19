@@ -73,8 +73,8 @@ data class OppdatereUnderholdRequest(
 data class OppdatereBegrunnelseRequest(
     @get:Schema(
         description =
-            "Id til underhold begrunnelsen gjelder for hvis søknadsbarn. " +
-                "Bidragsmottaker må være satt for andre barn hvis det finnes flere BMer",
+        "Id til underhold begrunnelsen gjelder for hvis søknadsbarn. " +
+            "Bidragsmottaker må være satt for andre barn hvis det finnes flere BMer",
     )
     val underholdsid: Long? = null,
     val bidragsmottakerId: Long? = null,
@@ -109,7 +109,7 @@ data class UnderholdskostnadValideringsfeil(
             gjelderUnderholdskostnad?.let {
                 UnderholdBarnDto(
                     navn =
-                        gjelderUnderholdskostnad.personNavn ?: hentPersonVisningsnavn(gjelderUnderholdskostnad.personIdent),
+                    gjelderUnderholdskostnad.personNavn ?: hentPersonVisningsnavn(gjelderUnderholdskostnad.personIdent),
                     ident = gjelderUnderholdskostnad.personIdent,
                     fødselsdato = gjelderUnderholdskostnad.personFødselsdato,
                     medIBehandlingen = !gjelderUnderholdskostnad.gjelderAndreBarn,

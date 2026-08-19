@@ -141,10 +141,10 @@ class ValiderBehandlingServiceTest {
                 opprettStønadDto(
                     stønadstype = Stønadstype.FORSKUDD,
                     periodeListe =
-                        listOf(
-                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
-                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
-                        ),
+                    listOf(
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                    ),
                 )
             every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
                 opprettStønadDto(
@@ -171,10 +171,10 @@ class ValiderBehandlingServiceTest {
                 opprettStønadDto(
                     stønadstype = Stønadstype.FORSKUDD,
                     periodeListe =
-                        listOf(
-                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
-                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
-                        ),
+                    listOf(
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                    ),
                 )
             every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
                 opprettStønadDto(
@@ -259,11 +259,11 @@ class ValiderBehandlingServiceTest {
                     validerBehandlingService.validerKanBehandlesINyLøsning(
                         opprettBidragKanBehandlesINyLøsningRequest().copy(
                             roller =
-                                listOf(
-                                    SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = null, true),
-                                    SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident("123"), false),
-                                    SjekkRolleDto(Rolletype.BARN, ident = Personident("123213"), false),
-                                ),
+                            listOf(
+                                SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = null, true),
+                                SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident("123"), false),
+                                SjekkRolleDto(Rolletype.BARN, ident = Personident("123213"), false),
+                            ),
                         ),
                     )
                 }
@@ -306,61 +306,57 @@ private fun HttpClientErrorException.validerInneholderMelding(melding: String) {
     response.begrunnelser.joinToString("") shouldContain melding
 }
 
-private fun oppretLøpendeBidragListeMedUtenlandskValuta() =
-    listOf(
-        LøpendeBidragssak(
-            valutakode = "NOK",
-            sak = Saksnummer(SAKSNUMMER),
-            kravhaver = Personident("12345678901"),
-            type = Stønadstype.BIDRAG,
-            løpendeBeløp = BigDecimal.ONE,
-        ),
-        LøpendeBidragssak(
-            valutakode = "USD",
-            sak = Saksnummer(SAKSNUMMER),
-            kravhaver = Personident("12345678901"),
-            type = Stønadstype.BIDRAG,
-            løpendeBeløp = BigDecimal.ONE,
-        ),
-    )
+private fun oppretLøpendeBidragListeMedUtenlandskValuta() = listOf(
+    LøpendeBidragssak(
+        valutakode = "NOK",
+        sak = Saksnummer(SAKSNUMMER),
+        kravhaver = Personident("12345678901"),
+        type = Stønadstype.BIDRAG,
+        løpendeBeløp = BigDecimal.ONE,
+    ),
+    LøpendeBidragssak(
+        valutakode = "USD",
+        sak = Saksnummer(SAKSNUMMER),
+        kravhaver = Personident("12345678901"),
+        type = Stønadstype.BIDRAG,
+        løpendeBeløp = BigDecimal.ONE,
+    ),
+)
 
 private fun opprettSkyldnerStønad(type: Stønadstype = Stønadstype.BIDRAG) = SkyldnerStønad(sak = Saksnummer("123"), kravhaver = Personident(testdataBarn1.ident), type = type)
 
-private fun oppretLøpendeBidragListeMedBareNorskValuta() =
+private fun oppretLøpendeBidragListeMedBareNorskValuta() = listOf(
+    LøpendeBidragssak(
+        valutakode = "NOK",
+        sak = Saksnummer(SAKSNUMMER),
+        kravhaver = Personident(testdataBarn1.ident),
+        type = Stønadstype.BIDRAG,
+        løpendeBeløp = BigDecimal.ONE,
+    ),
+)
+
+private fun opprettKanBehandlesINyLøsningRequest() = KanBehandlesINyLøsningRequest(
+    engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
+    stønadstype = null,
+    roller =
     listOf(
-        LøpendeBidragssak(
-            valutakode = "NOK",
-            sak = Saksnummer(SAKSNUMMER),
-            kravhaver = Personident(testdataBarn1.ident),
-            type = Stønadstype.BIDRAG,
-            løpendeBeløp = BigDecimal.ONE,
-        ),
-    )
+        SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident("12345678901"), false),
+    ),
+    saksnummer = SAKSNUMMER,
+)
 
-private fun opprettKanBehandlesINyLøsningRequest() =
-    KanBehandlesINyLøsningRequest(
-        engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
-        stønadstype = null,
-        roller =
-            listOf(
-                SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident("12345678901"), false),
-            ),
-        saksnummer = SAKSNUMMER,
-    )
-
-private fun opprettBidragKanBehandlesINyLøsningRequest() =
-    KanBehandlesINyLøsningRequest(
-        engangsbeløpstype = null,
-        vedtakstype = Vedtakstype.FASTSETTELSE,
-        stønadstype = Stønadstype.BIDRAG,
-        roller =
-            listOf(
-                SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident(testdataBP.ident), false),
-                SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident(testdataBM.ident), false),
-                SjekkRolleDto(Rolletype.BARN, ident = Personident(testdataBarn1.ident), false),
-            ),
-        saksnummer = SAKSNUMMER,
-    )
+private fun opprettBidragKanBehandlesINyLøsningRequest() = KanBehandlesINyLøsningRequest(
+    engangsbeløpstype = null,
+    vedtakstype = Vedtakstype.FASTSETTELSE,
+    stønadstype = Stønadstype.BIDRAG,
+    roller =
+    listOf(
+        SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident(testdataBP.ident), false),
+        SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident(testdataBM.ident), false),
+        SjekkRolleDto(Rolletype.BARN, ident = Personident(testdataBarn1.ident), false),
+    ),
+    saksnummer = SAKSNUMMER,
+)
 
 private fun opprettBehandlingSimpleForBisysValidering(
     stønadstype: Stønadstype,

@@ -13,12 +13,12 @@ class InnhentetGrunnlagMappingTest {
             korrigerPersonreferanse(
                 currentRef = "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_20000301_-1180923499_2024",
                 personobjekter =
-                    setOf(
-                        opprettPersonGrunnlag(
-                            referanse = "person_PERSON_BIDRAGSPLIKTIG_20000301_-42",
-                            type = Grunnlagstype.PERSON_BIDRAGSPLIKTIG,
-                        ),
+                setOf(
+                    opprettPersonGrunnlag(
+                        referanse = "person_PERSON_BIDRAGSPLIKTIG_20000301_-42",
+                        type = Grunnlagstype.PERSON_BIDRAGSPLIKTIG,
                     ),
+                ),
             )
 
         correctedReference shouldBe "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_20000301_-42_2024"
@@ -30,12 +30,12 @@ class InnhentetGrunnlagMappingTest {
             korrigerPersonreferanse(
                 currentRef = "innhentet_barnetillegg_person_PERSON_BIDRAGSMOTTAKER_19780825_BIDRAG_1303789909_PENSJON",
                 personobjekter =
-                    setOf(
-                        opprettPersonGrunnlag(
-                            referanse = "person_PERSON_BIDRAGSMOTTAKER_19780825_BIDRAG_999",
-                            type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
-                        ),
+                setOf(
+                    opprettPersonGrunnlag(
+                        referanse = "person_PERSON_BIDRAGSMOTTAKER_19780825_BIDRAG_999",
+                        type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
                     ),
+                ),
             )
 
         correctedReference shouldBe
@@ -49,14 +49,13 @@ class InnhentetGrunnlagMappingTest {
 private fun opprettPersonGrunnlag(
     referanse: String,
     type: Grunnlagstype,
-): GrunnlagDto =
-    GrunnlagDto(
-        referanse = referanse,
-        gjelderReferanse = referanse,
-        grunnlagsreferanseListe = emptyList(),
-        type = type,
-        innhold = POJONode("test"),
-    )
+): GrunnlagDto = GrunnlagDto(
+    referanse = referanse,
+    gjelderReferanse = referanse,
+    grunnlagsreferanseListe = emptyList(),
+    type = type,
+    innhold = POJONode("test"),
+)
 
 /**
  * Kaller den private mapper-funksjonen via refleksjon for å kunne teste konkrete referansevarianter.

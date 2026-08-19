@@ -112,275 +112,270 @@ class BeregningEvnevurderingServiceTest {
     }
 
     @Test
-    fun `skal opprette grunnlag for løpende bidrag`(): Unit =
-        vedtakGrunnlagMapper.run {
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
-            val personobjekter = behandling.tilPersonobjekter().toList().toMutableList()
-            val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
+    fun `skal opprette grunnlag for løpende bidrag`(): Unit = vedtakGrunnlagMapper.run {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
+        val personobjekter = behandling.tilPersonobjekter().toList().toMutableList()
+        val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
 
-            resultat shouldHaveSize 3
-            personobjekter.addAll(resultat.filter { it.erPerson() })
-            val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
-            assertSoftly(løpendeBidrag!!) {
-                it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
-                it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
-                it.grunnlagsreferanseListe.shouldBeEmpty()
-                val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
-                innhold.løpendeBidragListe shouldHaveSize 3
-                val barn1Objekt = personobjekter.hentPerson(testdataBarn1.ident)
-                val barn2Objekt = personobjekter.hentPerson(testdataBarn2.ident)
-                val husstandsmedlemObjekt = personobjekter.hentPerson(testdataHusstandsmedlem1.ident)
-                assertSoftly(
-                    innhold.løpendeBidragListe.find { it.gjelderBarn == barn1Objekt!!.referanse }!!,
-                ) {
-                    type shouldBe Stønadstype.BIDRAG
-                    løpendeBeløp shouldBe BigDecimal(5111)
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
-                    beregnetBeløp shouldBe BigDecimal(4515)
-                    faktiskBeløp shouldBe BigDecimal(5160)
-                    gjelderBarn shouldBe barn1Objekt!!.referanse
-                }
-                assertSoftly(
-                    innhold.løpendeBidragListe.find { it.gjelderBarn == barn2Objekt!!.referanse }!!,
-                ) {
-                    type shouldBe Stønadstype.BIDRAG
-                    løpendeBeløp shouldBe BigDecimal(5222)
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
-                    beregnetBeløp shouldBe BigDecimal(5934)
-                    faktiskBeløp shouldBe BigDecimal(5930)
-                    gjelderBarn shouldBe barn2Objekt!!.referanse
-                }
-                assertSoftly(
-                    innhold.løpendeBidragListe.find {
-                        it.gjelderBarn == husstandsmedlemObjekt!!.referanse
-                    }!!,
-                ) {
-                    type shouldBe Stønadstype.BIDRAG18AAR
-                    løpendeBeløp shouldBe BigDecimal(5333)
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                    beregnetBeløp shouldBe BigDecimal(7533)
-                    faktiskBeløp shouldBe BigDecimal(4433)
-                    gjelderBarn shouldBe husstandsmedlemObjekt!!.referanse
-                }
+        resultat shouldHaveSize 3
+        personobjekter.addAll(resultat.filter { it.erPerson() })
+        val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
+        assertSoftly(løpendeBidrag!!) {
+            it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
+            it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
+            it.grunnlagsreferanseListe.shouldBeEmpty()
+            val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
+            innhold.løpendeBidragListe shouldHaveSize 3
+            val barn1Objekt = personobjekter.hentPerson(testdataBarn1.ident)
+            val barn2Objekt = personobjekter.hentPerson(testdataBarn2.ident)
+            val husstandsmedlemObjekt = personobjekter.hentPerson(testdataHusstandsmedlem1.ident)
+            assertSoftly(
+                innhold.løpendeBidragListe.find { it.gjelderBarn == barn1Objekt!!.referanse }!!,
+            ) {
+                type shouldBe Stønadstype.BIDRAG
+                løpendeBeløp shouldBe BigDecimal(5111)
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
+                beregnetBeløp shouldBe BigDecimal(4515)
+                faktiskBeløp shouldBe BigDecimal(5160)
+                gjelderBarn shouldBe barn1Objekt!!.referanse
             }
-
-            verify(exactly = 1) {
-                bidragBBMConsumer.hentBeregning(
-                    withArg {
-                        it.hentBeregningerFor shouldHaveSize 3
-                        it.hentBeregningerFor[0].personidentBarn shouldBe Personident(testdataBarn1.ident)
-                        it.hentBeregningerFor[0].søknadsid shouldBe SOKNAD_ID.toString()
-                        it.hentBeregningerFor[1].personidentBarn shouldBe Personident(testdataBarn2.ident)
-                        it.hentBeregningerFor[1].søknadsid shouldBe SOKNAD_ID_2.toString()
-                        it.hentBeregningerFor[2].personidentBarn shouldBe Personident(testdataHusstandsmedlem1.ident)
-                        it.hentBeregningerFor[2].søknadsid shouldBe SOKNAD_ID_3.toString()
-                    },
-                )
+            assertSoftly(
+                innhold.løpendeBidragListe.find { it.gjelderBarn == barn2Objekt!!.referanse }!!,
+            ) {
+                type shouldBe Stønadstype.BIDRAG
+                løpendeBeløp shouldBe BigDecimal(5222)
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
+                beregnetBeløp shouldBe BigDecimal(5934)
+                faktiskBeløp shouldBe BigDecimal(5930)
+                gjelderBarn shouldBe barn2Objekt!!.referanse
             }
-            verify(exactly = 3) { bidragVedtakConsumer.hentVedtakForStønad(any()) }
-            verify(exactly = 1) {
-                bidragVedtakConsumer.hentVedtakForStønad(
-                    withArg {
-                        it.type shouldBe Stønadstype.BIDRAG
-                        it.kravhaver shouldBe Personident(testdataBarn1.ident)
-                    },
-                )
-            }
-            verify(exactly = 1) {
-                bidragVedtakConsumer.hentVedtakForStønad(
-                    withArg {
-                        it.type shouldBe Stønadstype.BIDRAG
-                        it.kravhaver shouldBe Personident(testdataBarn2.ident)
-                    },
-                )
-            }
-            verify(exactly = 1) {
-                bidragVedtakConsumer.hentVedtakForStønad(
-                    withArg {
-                        it.type shouldBe Stønadstype.BIDRAG18AAR
-                        it.kravhaver shouldBe Personident(testdataHusstandsmedlem1.ident)
-                    },
-                )
-            }
-            verify(exactly = 1) {
-                bidragStønadConsumer.hentLøpendeBidrag(
-                    withArg {
-                        it.skyldner shouldBe Personident(testdataBP.ident)
-                    },
-                )
+            assertSoftly(
+                innhold.løpendeBidragListe.find {
+                    it.gjelderBarn == husstandsmedlemObjekt!!.referanse
+                }!!,
+            ) {
+                type shouldBe Stønadstype.BIDRAG18AAR
+                løpendeBeløp shouldBe BigDecimal(5333)
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+                beregnetBeløp shouldBe BigDecimal(7533)
+                faktiskBeløp shouldBe BigDecimal(4433)
+                gjelderBarn shouldBe husstandsmedlemObjekt!!.referanse
             }
         }
 
-    @Test
-    fun `skal opprette grunnlag for barn som ikke er i personobjekter listen`(): Unit =
-        vedtakGrunnlagMapper.run {
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
-            val personobjekter = behandling.tilPersonobjekter().toList().toMutableList()
-            val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
-
-            resultat shouldHaveSize 3
-            personobjekter.addAll(resultat.filter { it.erPerson() })
-            val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
-            assertSoftly(løpendeBidrag!!) {
-                it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
-                it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
-                it.grunnlagsreferanseListe.shouldBeEmpty()
-                val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
-                innhold.løpendeBidragListe shouldHaveSize 3
-
-                val barn1Objekt = personobjekter.hentPerson(testdataBarn1.ident)
-                barn1Objekt shouldNotBe null
-                assertSoftly(barn1Objekt!!) {
-                    it.type shouldBe Grunnlagstype.PERSON_SØKNADSBARN
-                    val personobjekt = it.personObjekt
-                    personobjekt.ident shouldBe Personident(testdataBarn1.ident)
-                    personobjekt.fødselsdato shouldBe testdataBarn1.fødselsdato
-                    personobjekt.navn shouldBe null
-                }
-
-                val barn2Objekt = personobjekter.hentPerson(testdataBarn2.ident)
-                barn2Objekt shouldNotBe null
-                assertSoftly(barn2Objekt!!) {
-                    it.type shouldBe Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG
-                    val personobjekt = it.personObjekt
-                    personobjekt.ident shouldBe Personident(testdataBarn2.ident)
-                    personobjekt.fødselsdato shouldBe testdataBarn2.fødselsdato
-                    personobjekt.navn shouldBe null
-                }
-
-                val husstandsmedlemObjekt = personobjekter.hentPerson(testdataHusstandsmedlem1.ident)
-                husstandsmedlemObjekt shouldNotBe null
-                assertSoftly(husstandsmedlemObjekt!!) {
-                    it.type shouldBe Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG
-                    val personobjekt = it.personObjekt
-                    personobjekt.ident shouldBe Personident(testdataHusstandsmedlem1.ident)
-                    personobjekt.fødselsdato shouldBe testdataHusstandsmedlem1.fødselsdato
-                    personobjekt.navn shouldBe null
-                }
-            }
+        verify(exactly = 1) {
+            bidragBBMConsumer.hentBeregning(
+                withArg {
+                    it.hentBeregningerFor shouldHaveSize 3
+                    it.hentBeregningerFor[0].personidentBarn shouldBe Personident(testdataBarn1.ident)
+                    it.hentBeregningerFor[0].søknadsid shouldBe SOKNAD_ID.toString()
+                    it.hentBeregningerFor[1].personidentBarn shouldBe Personident(testdataBarn2.ident)
+                    it.hentBeregningerFor[1].søknadsid shouldBe SOKNAD_ID_2.toString()
+                    it.hentBeregningerFor[2].personidentBarn shouldBe Personident(testdataHusstandsmedlem1.ident)
+                    it.hentBeregningerFor[2].søknadsid shouldBe SOKNAD_ID_3.toString()
+                },
+            )
         }
-
-    @Test
-    fun `skal opprette grunnlag for løpende bidrag hvis vedtakfilter returnerer null`(): Unit =
-        vedtakGrunnlagMapper.run {
-            val response = opprettVedtakForStønadRespons(testdataBarn2.ident, Stønadstype.BIDRAG)
-            every {
-                bidragVedtakConsumer.hentVedtakForStønad(
-                    coMatch {
-                        it.kravhaver.verdi == testdataBarn2.ident
-                    },
-                )
-            } returns
-                response.copy(
-                    vedtakListe =
-                        listOf(
-                            response.vedtakListe.first().copy(
-                                stønadsendring =
-                                    response.vedtakListe.first().stønadsendring.copy(
-                                        beslutning = Beslutningstype.STADFESTELSE,
-                                    ),
-                            ),
-                        ),
-                )
-
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
-            val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
-
-            resultat shouldHaveSize 3
-            val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
-            assertSoftly(løpendeBidrag!!) {
-                it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
-                it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
-                it.grunnlagsreferanseListe.shouldBeEmpty()
-                val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
-                innhold.løpendeBidragListe shouldHaveSize 3
-                assertSoftly(innhold.løpendeBidragListe[0]) {
-                    type shouldBe Stønadstype.BIDRAG
-                    faktiskBeløp shouldNotBe BigDecimal.ZERO
-                    beregnetBeløp shouldNotBe BigDecimal.ZERO
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
-                }
-                assertSoftly(innhold.løpendeBidragListe[1]) {
-                    type shouldBe Stønadstype.BIDRAG
-                    faktiskBeløp shouldBe BigDecimal.ZERO
-                    beregnetBeløp shouldBe BigDecimal.ZERO
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                }
-                assertSoftly(innhold.løpendeBidragListe[2]) {
-                    type shouldBe Stønadstype.BIDRAG18AAR
-                    faktiskBeløp shouldNotBe BigDecimal.ZERO
-                    beregnetBeløp shouldNotBe BigDecimal.ZERO
-                    samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                }
-            }
-        }
-
-    @Test
-    fun `skal opprette grunnlag for løpende bidrag hvis BP ikke har noen løpende bidrag`(): Unit =
-        vedtakGrunnlagMapper.run {
-            every {
-                bidragStønadConsumer.hentLøpendeBidrag(any())
-            } returns LøpendeBidragssakerResponse(emptyList())
-
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
-            val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
-
-            resultat shouldHaveSize 1
-            val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
-            assertSoftly(løpendeBidrag!!) {
-                val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
-                innhold.løpendeBidragListe shouldHaveSize 0
-            }
-        }
-
-    @Test
-    fun `skal opprette grunnlag for løpende bidrag hvis det ikke finnes noen beregning i BBM`(): Unit =
-        vedtakGrunnlagMapper.run {
-            every {
-                bidragBBMConsumer.hentBeregning(any())
-            } returns BidragBeregningResponsDto(emptyList())
-
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
-            val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
-
-            resultat shouldHaveSize 3
-            val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
-            val personer = resultat.hentAllePersoner().toList()
-            val person1 = personer.find { testdataBarn2.ident == it.personIdent }
-            val person2 = personer.find { testdataHusstandsmedlem1.ident == it.personIdent }
-            val søknadsbarn = behandling.søknadsbarn.first()
-            assertSoftly(løpendeBidrag!!) {
-                val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
-                innhold.løpendeBidragListe shouldHaveSize 3
-                assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(person1!!.referanse)!!) {
+        verify(exactly = 3) { bidragVedtakConsumer.hentVedtakForStønad(any()) }
+        verify(exactly = 1) {
+            bidragVedtakConsumer.hentVedtakForStønad(
+                withArg {
                     it.type shouldBe Stønadstype.BIDRAG
-                    it.gjelderBarn shouldBe person1.referanse
-                    it.faktiskBeløp shouldBe BigDecimal.ZERO
-                    it.beregnetBeløp shouldBe BigDecimal.ZERO
-                    it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                    it.løpendeBeløp shouldBe BigDecimal(5222)
-                    it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
-                }
-                assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(person2!!.referanse)!!) {
+                    it.kravhaver shouldBe Personident(testdataBarn1.ident)
+                },
+            )
+        }
+        verify(exactly = 1) {
+            bidragVedtakConsumer.hentVedtakForStønad(
+                withArg {
+                    it.type shouldBe Stønadstype.BIDRAG
+                    it.kravhaver shouldBe Personident(testdataBarn2.ident)
+                },
+            )
+        }
+        verify(exactly = 1) {
+            bidragVedtakConsumer.hentVedtakForStønad(
+                withArg {
                     it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.gjelderBarn shouldBe person2.referanse
-                    it.faktiskBeløp shouldBe BigDecimal.ZERO
-                    it.beregnetBeløp shouldBe BigDecimal.ZERO
-                    it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                    it.løpendeBeløp shouldBe BigDecimal(5333)
-                    it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
-                }
-                assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(søknadsbarn.tilGrunnlagsreferanse())!!) {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.gjelderBarn shouldBe søknadsbarn.tilGrunnlagsreferanse()
-                    it.faktiskBeløp shouldBe BigDecimal.ZERO
-                    it.beregnetBeløp shouldBe BigDecimal.ZERO
-                    it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
-                    it.løpendeBeløp shouldBe BigDecimal(5111)
-                    it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
-                }
+                    it.kravhaver shouldBe Personident(testdataHusstandsmedlem1.ident)
+                },
+            )
+        }
+        verify(exactly = 1) {
+            bidragStønadConsumer.hentLøpendeBidrag(
+                withArg {
+                    it.skyldner shouldBe Personident(testdataBP.ident)
+                },
+            )
+        }
+    }
+
+    @Test
+    fun `skal opprette grunnlag for barn som ikke er i personobjekter listen`(): Unit = vedtakGrunnlagMapper.run {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
+        val personobjekter = behandling.tilPersonobjekter().toList().toMutableList()
+        val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
+
+        resultat shouldHaveSize 3
+        personobjekter.addAll(resultat.filter { it.erPerson() })
+        val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
+        assertSoftly(løpendeBidrag!!) {
+            it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
+            it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
+            it.grunnlagsreferanseListe.shouldBeEmpty()
+            val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
+            innhold.løpendeBidragListe shouldHaveSize 3
+
+            val barn1Objekt = personobjekter.hentPerson(testdataBarn1.ident)
+            barn1Objekt shouldNotBe null
+            assertSoftly(barn1Objekt!!) {
+                it.type shouldBe Grunnlagstype.PERSON_SØKNADSBARN
+                val personobjekt = it.personObjekt
+                personobjekt.ident shouldBe Personident(testdataBarn1.ident)
+                personobjekt.fødselsdato shouldBe testdataBarn1.fødselsdato
+                personobjekt.navn shouldBe null
+            }
+
+            val barn2Objekt = personobjekter.hentPerson(testdataBarn2.ident)
+            barn2Objekt shouldNotBe null
+            assertSoftly(barn2Objekt!!) {
+                it.type shouldBe Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG
+                val personobjekt = it.personObjekt
+                personobjekt.ident shouldBe Personident(testdataBarn2.ident)
+                personobjekt.fødselsdato shouldBe testdataBarn2.fødselsdato
+                personobjekt.navn shouldBe null
+            }
+
+            val husstandsmedlemObjekt = personobjekter.hentPerson(testdataHusstandsmedlem1.ident)
+            husstandsmedlemObjekt shouldNotBe null
+            assertSoftly(husstandsmedlemObjekt!!) {
+                it.type shouldBe Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG
+                val personobjekt = it.personObjekt
+                personobjekt.ident shouldBe Personident(testdataHusstandsmedlem1.ident)
+                personobjekt.fødselsdato shouldBe testdataHusstandsmedlem1.fødselsdato
+                personobjekt.navn shouldBe null
             }
         }
+    }
+
+    @Test
+    fun `skal opprette grunnlag for løpende bidrag hvis vedtakfilter returnerer null`(): Unit = vedtakGrunnlagMapper.run {
+        val response = opprettVedtakForStønadRespons(testdataBarn2.ident, Stønadstype.BIDRAG)
+        every {
+            bidragVedtakConsumer.hentVedtakForStønad(
+                coMatch {
+                    it.kravhaver.verdi == testdataBarn2.ident
+                },
+            )
+        } returns
+            response.copy(
+                vedtakListe =
+                listOf(
+                    response.vedtakListe.first().copy(
+                        stønadsendring =
+                        response.vedtakListe.first().stønadsendring.copy(
+                            beslutning = Beslutningstype.STADFESTELSE,
+                        ),
+                    ),
+                ),
+            )
+
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
+        val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
+
+        resultat shouldHaveSize 3
+        val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
+        assertSoftly(løpendeBidrag!!) {
+            it.referanse shouldBe grunnlagsreferanse_løpende_bidrag
+            it.gjelderReferanse shouldBe behandling.tilPersonobjekter().bidragspliktig!!.referanse
+            it.grunnlagsreferanseListe.shouldBeEmpty()
+            val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
+            innhold.løpendeBidragListe shouldHaveSize 3
+            assertSoftly(innhold.løpendeBidragListe[0]) {
+                type shouldBe Stønadstype.BIDRAG
+                faktiskBeløp shouldNotBe BigDecimal.ZERO
+                beregnetBeløp shouldNotBe BigDecimal.ZERO
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_1
+            }
+            assertSoftly(innhold.løpendeBidragListe[1]) {
+                type shouldBe Stønadstype.BIDRAG
+                faktiskBeløp shouldBe BigDecimal.ZERO
+                beregnetBeløp shouldBe BigDecimal.ZERO
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+            }
+            assertSoftly(innhold.løpendeBidragListe[2]) {
+                type shouldBe Stønadstype.BIDRAG18AAR
+                faktiskBeløp shouldNotBe BigDecimal.ZERO
+                beregnetBeløp shouldNotBe BigDecimal.ZERO
+                samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+            }
+        }
+    }
+
+    @Test
+    fun `skal opprette grunnlag for løpende bidrag hvis BP ikke har noen løpende bidrag`(): Unit = vedtakGrunnlagMapper.run {
+        every {
+            bidragStønadConsumer.hentLøpendeBidrag(any())
+        } returns LøpendeBidragssakerResponse(emptyList())
+
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
+        val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
+
+        resultat shouldHaveSize 1
+        val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
+        assertSoftly(løpendeBidrag!!) {
+            val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
+            innhold.løpendeBidragListe shouldHaveSize 0
+        }
+    }
+
+    @Test
+    fun `skal opprette grunnlag for løpende bidrag hvis det ikke finnes noen beregning i BBM`(): Unit = vedtakGrunnlagMapper.run {
+        every {
+            bidragBBMConsumer.hentBeregning(any())
+        } returns BidragBeregningResponsDto(emptyList())
+
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.SÆRBIDRAG, generateId = true)
+        val resultat = evnevurderingService.hentLøpendeBidragForBehandling(behandling).tilGrunnlagDto(behandling.tilPersonobjekter())
+
+        resultat shouldHaveSize 3
+        val løpendeBidrag = resultat.find { it.type == Grunnlagstype.LØPENDE_BIDRAG }
+        val personer = resultat.hentAllePersoner().toList()
+        val person1 = personer.find { testdataBarn2.ident == it.personIdent }
+        val person2 = personer.find { testdataHusstandsmedlem1.ident == it.personIdent }
+        val søknadsbarn = behandling.søknadsbarn.first()
+        assertSoftly(løpendeBidrag!!) {
+            val innhold = this.innholdTilObjekt<LøpendeBidragGrunnlag>()
+            innhold.løpendeBidragListe shouldHaveSize 3
+            assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(person1!!.referanse)!!) {
+                it.type shouldBe Stønadstype.BIDRAG
+                it.gjelderBarn shouldBe person1.referanse
+                it.faktiskBeløp shouldBe BigDecimal.ZERO
+                it.beregnetBeløp shouldBe BigDecimal.ZERO
+                it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+                it.løpendeBeløp shouldBe BigDecimal(5222)
+                it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
+            }
+            assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(person2!!.referanse)!!) {
+                it.type shouldBe Stønadstype.BIDRAG18AAR
+                it.gjelderBarn shouldBe person2.referanse
+                it.faktiskBeløp shouldBe BigDecimal.ZERO
+                it.beregnetBeløp shouldBe BigDecimal.ZERO
+                it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+                it.løpendeBeløp shouldBe BigDecimal(5333)
+                it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
+            }
+            assertSoftly(innhold.løpendeBidragListe.finnForKravhaver(søknadsbarn.tilGrunnlagsreferanse())!!) {
+                it.type shouldBe Stønadstype.BIDRAG
+                it.gjelderBarn shouldBe søknadsbarn.tilGrunnlagsreferanse()
+                it.faktiskBeløp shouldBe BigDecimal.ZERO
+                it.beregnetBeløp shouldBe BigDecimal.ZERO
+                it.samværsklasse shouldBe Samværsklasse.SAMVÆRSKLASSE_0
+                it.løpendeBeløp shouldBe BigDecimal(5111)
+                it.saksnummer shouldBe Saksnummer(SAKSNUMMER)
+            }
+        }
+    }
 
     private fun initMockTestdata() {
         every { bidragStønadConsumer.hentLøpendeBidrag(any()) } returns
@@ -448,37 +443,37 @@ fun opprettBidragBeregning(
     stønadstype = stønadstype,
     personidentBarn = Personident(kravhaver),
     beregnetBeløp =
-        if (kravhaver == testdataBarn1.ident) {
-            BigDecimal(4515)
-        } else if (kravhaver == testdataBarn2.ident) {
-            BigDecimal(5934)
-        } else {
-            BigDecimal(7533)
-        },
+    if (kravhaver == testdataBarn1.ident) {
+        BigDecimal(4515)
+    } else if (kravhaver == testdataBarn2.ident) {
+        BigDecimal(5934)
+    } else {
+        BigDecimal(7533)
+    },
     faktiskBeløp =
-        if (kravhaver == testdataBarn1.ident) {
-            BigDecimal(5160)
-        } else if (kravhaver == testdataBarn2.ident) {
-            BigDecimal(5930)
-        } else {
-            BigDecimal(4433)
-        },
+    if (kravhaver == testdataBarn1.ident) {
+        BigDecimal(5160)
+    } else if (kravhaver == testdataBarn2.ident) {
+        BigDecimal(5930)
+    } else {
+        BigDecimal(4433)
+    },
     beløpSamvær =
-        if (kravhaver == testdataBarn1.ident) {
-            BigDecimal(450)
-        } else if (kravhaver == testdataBarn2.ident) {
-            BigDecimal(489)
-        } else {
-            BigDecimal(0)
-        },
+    if (kravhaver == testdataBarn1.ident) {
+        BigDecimal(450)
+    } else if (kravhaver == testdataBarn2.ident) {
+        BigDecimal(489)
+    } else {
+        BigDecimal(0)
+    },
     samværsklasse =
-        if (kravhaver == testdataBarn1.ident) {
-            Samværsklasse.SAMVÆRSKLASSE_1
-        } else if (kravhaver == testdataBarn2.ident) {
-            Samværsklasse.SAMVÆRSKLASSE_1
-        } else {
-            Samværsklasse.SAMVÆRSKLASSE_0
-        },
+    if (kravhaver == testdataBarn1.ident) {
+        Samværsklasse.SAMVÆRSKLASSE_1
+    } else if (kravhaver == testdataBarn2.ident) {
+        Samværsklasse.SAMVÆRSKLASSE_1
+    } else {
+        Samværsklasse.SAMVÆRSKLASSE_0
+    },
     datoSøknad = LocalDate.parse("2024-07-01"),
 )
 
@@ -500,46 +495,46 @@ fun opprettVedtakForStønad(
     kilde = Vedtakskilde.MANUELT,
     vedtakstidspunkt = LocalDateTime.parse("2024-01-01T00:00:00"),
     behandlingsreferanser =
-        listOf(
-            BehandlingsreferanseDto(
-                kilde = BehandlingsrefKilde.BISYS_SØKNAD,
-                referanse =
-                    if (kravhaver == testdataBarn1.ident) {
-                        SOKNAD_ID.toString()
-                    } else if (kravhaver == testdataBarn2.ident) {
-                        SOKNAD_ID_2.toString()
-                    } else {
-                        SOKNAD_ID_3.toString()
-                    },
-            ),
+    listOf(
+        BehandlingsreferanseDto(
+            kilde = BehandlingsrefKilde.BISYS_SØKNAD,
+            referanse =
+            if (kravhaver == testdataBarn1.ident) {
+                SOKNAD_ID.toString()
+            } else if (kravhaver == testdataBarn2.ident) {
+                SOKNAD_ID_2.toString()
+            } else {
+                SOKNAD_ID_3.toString()
+            },
         ),
+    ),
     kildeapplikasjon = "",
     stønadsendring =
-        StønadsendringDto(
-            type = stønadstype,
-            sak = Saksnummer(SAKSNUMMER),
-            skyldner = Personident(testdataBP.ident),
-            kravhaver = Personident(kravhaver),
-            mottaker = Personident(testdataBM.ident),
-            førsteIndeksreguleringsår = 0,
-            innkreving = Innkrevingstype.MED_INNKREVING,
-            beslutning = Beslutningstype.ENDRING,
-            omgjørVedtakId = null,
-            eksternReferanse = "123456",
-            grunnlagReferanseListe = emptyList(),
-            sisteVedtaksid = null,
-            periodeListe =
-                listOf(
-                    VedtakPeriodeDto(
-                        periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
-                        beløp = BigDecimal(5160),
-                        valutakode = "NOK",
-                        resultatkode = "KBB",
-                        delytelseId = null,
-                        grunnlagReferanseListe = emptyList(),
-                    ),
-                ),
+    StønadsendringDto(
+        type = stønadstype,
+        sak = Saksnummer(SAKSNUMMER),
+        skyldner = Personident(testdataBP.ident),
+        kravhaver = Personident(kravhaver),
+        mottaker = Personident(testdataBM.ident),
+        førsteIndeksreguleringsår = 0,
+        innkreving = Innkrevingstype.MED_INNKREVING,
+        beslutning = Beslutningstype.ENDRING,
+        omgjørVedtakId = null,
+        eksternReferanse = "123456",
+        grunnlagReferanseListe = emptyList(),
+        sisteVedtaksid = null,
+        periodeListe =
+        listOf(
+            VedtakPeriodeDto(
+                periode = ÅrMånedsperiode(LocalDate.parse("2024-07-01"), null),
+                beløp = BigDecimal(5160),
+                valutakode = "NOK",
+                resultatkode = "KBB",
+                delytelseId = null,
+                grunnlagReferanseListe = emptyList(),
+            ),
         ),
+    ),
 )
 
 fun opprettLøpendeBidraggsak(

@@ -164,37 +164,37 @@ class BehandlingService(
                     saksnummer = saksnummer,
                     enhet = søknad.behandlerenhet,
                     roller =
-                        søknad.barnAlle.map {
-                            ForsendelseRolleDto(
-                                fødselsnummer = Personident(it.personident!!),
-                                type = Rolletype.BARN,
-                            )
-                        } +
-                            listOfNotNull(
-                                søknad.bidragsmottaker?.let {
-                                    ForsendelseRolleDto(
-                                        fødselsnummer = Personident(it.personident!!),
-                                        type = Rolletype.BIDRAGSMOTTAKER,
-                                    )
-                                },
-                                søknad.bidragspliktig?.let {
-                                    ForsendelseRolleDto(
-                                        fødselsnummer = Personident(it.personident!!),
-                                        type = Rolletype.BIDRAGSPLIKTIG,
-                                    )
-                                },
-                            ),
-                    behandlingInfo =
-                        BehandlingInfoDto(
-                            behandlingId = behandlingsid?.toString(),
-                            soknadId = søknad.søknadsid.toString(),
-                            soknadFra = søknad.søktAvType,
-                            behandlingType = søknad.behandlingstema.name,
-                            soknadType = søknad.behandlingstype.name,
-                            stonadType = søknad.behandlingstema.tilStønadstype(),
-                            engangsBelopType = null,
-                            vedtakType = søknad.behandlingstype.tilVedtakstype(),
+                    søknad.barnAlle.map {
+                        ForsendelseRolleDto(
+                            fødselsnummer = Personident(it.personident!!),
+                            type = Rolletype.BARN,
+                        )
+                    } +
+                        listOfNotNull(
+                            søknad.bidragsmottaker?.let {
+                                ForsendelseRolleDto(
+                                    fødselsnummer = Personident(it.personident!!),
+                                    type = Rolletype.BIDRAGSMOTTAKER,
+                                )
+                            },
+                            søknad.bidragspliktig?.let {
+                                ForsendelseRolleDto(
+                                    fødselsnummer = Personident(it.personident!!),
+                                    type = Rolletype.BIDRAGSPLIKTIG,
+                                )
+                            },
                         ),
+                    behandlingInfo =
+                    BehandlingInfoDto(
+                        behandlingId = behandlingsid?.toString(),
+                        soknadId = søknad.søknadsid.toString(),
+                        soknadFra = søknad.søktAvType,
+                        behandlingType = søknad.behandlingstema.name,
+                        soknadType = søknad.behandlingstype.name,
+                        stonadType = søknad.behandlingstema.tilStønadstype(),
+                        engangsBelopType = null,
+                        vedtakType = søknad.behandlingstype.tilVedtakstype(),
+                    ),
                 ),
             )
         } else if (erFeilregistrert) {
@@ -202,9 +202,9 @@ class BehandlingService(
                 InitalizeForsendelseRequest(
                     saksnummer = saksnummer,
                     behandlingInfo =
-                        BehandlingInfoDto(
-                            soknadId = søknadsid.toString(),
-                        ),
+                    BehandlingInfoDto(
+                        soknadId = søknadsid.toString(),
+                    ),
                 ),
             )
         }
@@ -263,9 +263,9 @@ class BehandlingService(
                         InitalizeForsendelseRequest(
                             saksnummer = saksnummer,
                             behandlingInfo =
-                                BehandlingInfoDto(
-                                    soknadId = it.søknadsid?.toString(),
-                                ),
+                            BehandlingInfoDto(
+                                soknadId = it.søknadsid?.toString(),
+                            ),
                         ),
                     )
                 }
@@ -313,13 +313,12 @@ class BehandlingService(
         return lagretBehandling
     }
 
-    fun opprettBehandlingHvisIkkeEksisterer(behandling: Behandling) =
-        hentEksisteredenBehandling(behandling.soknadsid!!)?.let {
-            log.debug { "Fant eksisterende behandling ${it.id} for søknadsId ${behandling.soknadsid}. Oppretter ikke ny behandling" }
-            return it
-        } ?: run {
-            lagreBehandling(behandling)
-        }
+    fun opprettBehandlingHvisIkkeEksisterer(behandling: Behandling) = hentEksisteredenBehandling(behandling.soknadsid!!)?.let {
+        log.debug { "Fant eksisterende behandling ${it.id} for søknadsId ${behandling.soknadsid}. Oppretter ikke ny behandling" }
+        return it
+    } ?: run {
+        lagreBehandling(behandling)
+    }
 
     @Transactional
     fun opprettBehandling(opprettBehandling: OpprettBehandlingRequest): OpprettBehandlingResponse {
@@ -431,10 +430,10 @@ class BehandlingService(
                 vedtakstype = opprettBehandling.vedtakstype,
                 søktFomDato = opprettBehandling.søktFomDato,
                 innkrevingstype =
-                    when (opprettBehandling.tilType()) {
-                        TypeBehandling.FORSKUDD -> Innkrevingstype.MED_INNKREVING
-                        else -> opprettBehandling.innkrevingstype
-                    },
+                when (opprettBehandling.tilType()) {
+                    TypeBehandling.FORSKUDD -> Innkrevingstype.MED_INNKREVING
+                    else -> opprettBehandling.innkrevingstype
+                },
                 virkningstidspunkt = virkningstidspunkt,
                 årsak = årsak,
                 avslag = avslag,
@@ -529,15 +528,15 @@ class BehandlingService(
                 enhet = behandling.behandlerEnhet,
                 roller = behandling.tilForsendelseRolleDto(behandling.saksnummer),
                 behandlingInfo =
-                    BehandlingInfoDto(
-                        behandlingId = behandling.id?.toString(),
-                        soknadId = behandling.soknadsid?.toString(),
-                        soknadFra = behandling.soknadFra,
-                        behandlingType = behandling.tilBehandlingstype(),
-                        stonadType = behandling.stonadstype,
-                        engangsBelopType = behandling.engangsbeloptype,
-                        vedtakType = behandling.vedtakstype,
-                    ),
+                BehandlingInfoDto(
+                    behandlingId = behandling.id?.toString(),
+                    soknadId = behandling.soknadsid?.toString(),
+                    soknadFra = behandling.soknadFra,
+                    behandlingType = behandling.tilBehandlingstype(),
+                    stonadType = behandling.stonadstype,
+                    engangsBelopType = behandling.engangsbeloptype,
+                    vedtakType = behandling.vedtakstype,
+                ),
             ),
         )
     }
@@ -579,10 +578,10 @@ class BehandlingService(
                             vedtakFattetAvEnhet = fattetAvEnhet,
                             vedtakstidspunkt = LocalDateTime.now(),
                             vedtakFattetAv =
-                                eksisterendeDetaljer.vedtakFattetAv ?: TokenUtils.hentSaksbehandlerIdent()
-                                    ?: TokenUtils.hentApplikasjonsnavn(),
+                            eksisterendeDetaljer.vedtakFattetAv ?: TokenUtils.hentSaksbehandlerIdent()
+                                ?: TokenUtils.hentApplikasjonsnavn(),
                             fattetVedtak =
-                                (eksisterendeDetaljer.fattetVedtak + setOf(resultat)).toSet(),
+                            (eksisterendeDetaljer.fattetVedtak + setOf(resultat)).toSet(),
                         )
             }
     }
@@ -613,8 +612,8 @@ class BehandlingService(
                             vedtakstidspunkt = eksisterendeDetaljer.vedtakstidspunkt ?: LocalDateTime.now(),
                             unikreferanse = unikreferanse,
                             vedtakFattetAv =
-                                eksisterendeDetaljer.vedtakFattetAv ?: TokenUtils.hentSaksbehandlerIdent()
-                                    ?: TokenUtils.hentApplikasjonsnavn(),
+                            eksisterendeDetaljer.vedtakFattetAv ?: TokenUtils.hentSaksbehandlerIdent()
+                                ?: TokenUtils.hentApplikasjonsnavn(),
                         )
 
                 // TODO: Fjern disse verdiene når migreringen er over
@@ -675,41 +674,39 @@ class BehandlingService(
     }
 
     @Transactional(readOnly = true)
-    fun hentÅpneBehandlingerMedFF(bpIdent: String): List<ÅpenBehandling> =
-        behandlingRepository
-            .finnÅpneBidragsbehandlingerForBpMedFF(bpIdent)
-            .filter { it.stonadstype != null }
-            .map {
-                ÅpenBehandling(
-                    it.stonadstype!!,
-                    it.id!!,
-                    it.søknadsbarn.map {
-                        ÅpenBehandlingBarn(
-                            saksnummer = it.forholdsmessigFordeling!!.tilhørerSak,
-                            ident = it.ident!!,
-                            bidragsmottakerIdent = it.bidragsmottaker?.ident!!,
-                            søknader =
-                                it.forholdsmessigFordeling!!.søknaderUnderBehandling.map {
-                                    ÅpenBehandlingBarnSøknad(
-                                        mottattDato = it.mottattDato,
-                                        søknadsid = it.søknadsid!!,
-                                        søktAvType = it.søktAvType,
-                                        søktFraDato = it.søknadFomDato,
-                                        behandlingstema = it.behandlingstema,
-                                        behandlingstype = it.behandlingstype,
-                                    )
-                                },
-                        )
-                    },
-                )
-            }
+    fun hentÅpneBehandlingerMedFF(bpIdent: String): List<ÅpenBehandling> = behandlingRepository
+        .finnÅpneBidragsbehandlingerForBpMedFF(bpIdent)
+        .filter { it.stonadstype != null }
+        .map {
+            ÅpenBehandling(
+                it.stonadstype!!,
+                it.id!!,
+                it.søknadsbarn.map {
+                    ÅpenBehandlingBarn(
+                        saksnummer = it.forholdsmessigFordeling!!.tilhørerSak,
+                        ident = it.ident!!,
+                        bidragsmottakerIdent = it.bidragsmottaker?.ident!!,
+                        søknader =
+                        it.forholdsmessigFordeling!!.søknaderUnderBehandling.map {
+                            ÅpenBehandlingBarnSøknad(
+                                mottattDato = it.mottattDato,
+                                søknadsid = it.søknadsid!!,
+                                søktAvType = it.søktAvType,
+                                søktFraDato = it.søknadFomDato,
+                                behandlingstema = it.behandlingstema,
+                                behandlingstype = it.behandlingstype,
+                            )
+                        },
+                    )
+                },
+            )
+        }
 
     @Transactional(readOnly = true)
-    fun hentÅpneBehandlinger(barnIdent: String): List<ÅpenBehandling> =
-        behandlingRepository
-            .finnÅpneBidragsbehandlingerForBarn(barnIdent)
-            .filter { it.stonadstype != null }
-            .map { ÅpenBehandling(it.stonadstype!!, it.id!!, emptyList()) }
+    fun hentÅpneBehandlinger(barnIdent: String): List<ÅpenBehandling> = behandlingRepository
+        .finnÅpneBidragsbehandlingerForBarn(barnIdent)
+        .filter { it.stonadstype != null }
+        .map { ÅpenBehandling(it.stonadstype!!, it.id!!, emptyList()) }
 
     @Transactional(readOnly = true)
     fun hentBehandlingById(behandlingId: Long): Behandling {

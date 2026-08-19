@@ -75,12 +75,11 @@ class BidragGrunnlagConsumer(
             personident: Personident,
             rolletype: Rolletype,
             behandling: Behandling,
-        ): List<GrunnlagRequestDto> =
-            henteGrunnlag(
-                personident,
-                Grunnlagsobjektvelger.requestobjekter(behandling.tilType(), rolletype),
-                behandling.virkningstidspunktEllerSøktFomDato,
-            )
+        ): List<GrunnlagRequestDto> = henteGrunnlag(
+            personident,
+            Grunnlagsobjektvelger.requestobjekter(behandling.tilType(), rolletype),
+            behandling.virkningstidspunktEllerSøktFomDato,
+        )
 
         private fun henteGrunnlag(
             personident: Personident,

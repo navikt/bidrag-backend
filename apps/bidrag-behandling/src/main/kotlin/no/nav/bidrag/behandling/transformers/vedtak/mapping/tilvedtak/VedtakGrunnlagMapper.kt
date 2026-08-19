@@ -79,65 +79,64 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
-fun Behandling.finnSkalInnkrevesPeriode(søknadsbarnRolle: Rolle): List<ÅrMånedsperiode> =
-    if (innkrevingstype == Innkrevingstype.UTEN_INNKREVING && !søknadsbarnRolle.erRevurderingsbarn) {
-        val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
-        val sistePeriode = beløpshistorikk.periodeListe.maxByOrNull { it.periode.fom }
-        val virkningstidspunkt = søknadsbarnRolle.virkningstidspunktRolle.toYearMonth()
-        val beregnTil = søknadsbarnRolle.finnBeregnTil()
-        val perioderFraVirkningstidspunkt =
-            beløpshistorikk.periodeListe
-                .map { it.periode }
-                .filtrerOgJusterFraVirkningstidspunkt(ÅrMånedsperiode(virkningstidspunkt.toLocalDate(), søknadsbarnRolle.opphørsdato))
-        val harPerioderUtenInnkreving =
-            perioderFraVirkningstidspunkt
-                .inneholderPerioderUtenInnkreving(virkningstidspunkt, beregnTil)
-        if (sistePeriode?.periode?.til != null && sistePeriode.periode.til!! <= beregnTil && !harPerioderUtenInnkreving) {
-            emptyList()
-        } else {
-            perioderFraVirkningstidspunkt
-        }
-    } else if (søknadsbarnRolle.erRevurderingsbarn) {
-        val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
-        val førstePeriodeFom =
-            beløpshistorikk.periodeListe
-                .minByOrNull { it.periode.fom }
-                ?.periode
-                ?.fom
-        val virkningstidspunkt = maxOf(søknadsbarnRolle.virkningstidspunktRolle.toYearMonth(), søknadsbarnRolle.finnBeregnFra())
-        val perioderFraVirkningstidspunkt =
-            beløpshistorikk.periodeListe
-                .map { it.periode }
-                .filtrerOgJusterFraVirkningstidspunkt(
-                    ÅrMånedsperiode(
-                        virkningstidspunkt.toLocalDate(),
-                        if (søknadsbarnRolle.opphørsdato != null) {
-                            maxOfNullable(søknadsbarnRolle.opphørsdato, virkningstidspunkt.toLocalDate())
-                        } else {
-                            null
-                        },
-                    ),
-                )
-
-        val harPerioderUtenInnkreving =
-            perioderFraVirkningstidspunkt
-                .inneholderPerioderUtenInnkreving(virkningstidspunkt, søknadsbarnRolle.finnBeregnTil())
-        // Hvis det skal innkreves fra virkningtidspunkt så returnerer metoden null mtp at det er med innkreving
-        // Dette brukes for å innkreve deler av periodene
-        if (førstePeriodeFom == null || !harPerioderUtenInnkreving) {
-            emptyList()
-        } else {
-            perioderFraVirkningstidspunkt
-                .map {
-                    ÅrMånedsperiode(
-                        it.fom,
-                        minOfNullable(it.til, søknadsbarnRolle.opphørsdato?.toYearMonth()) ?: it.til,
-                    )
-                }.slåSammenEtterfølgendePerioder()
-        }
-    } else {
+fun Behandling.finnSkalInnkrevesPeriode(søknadsbarnRolle: Rolle): List<ÅrMånedsperiode> = if (innkrevingstype == Innkrevingstype.UTEN_INNKREVING && !søknadsbarnRolle.erRevurderingsbarn) {
+    val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
+    val sistePeriode = beløpshistorikk.periodeListe.maxByOrNull { it.periode.fom }
+    val virkningstidspunkt = søknadsbarnRolle.virkningstidspunktRolle.toYearMonth()
+    val beregnTil = søknadsbarnRolle.finnBeregnTil()
+    val perioderFraVirkningstidspunkt =
+        beløpshistorikk.periodeListe
+            .map { it.periode }
+            .filtrerOgJusterFraVirkningstidspunkt(ÅrMånedsperiode(virkningstidspunkt.toLocalDate(), søknadsbarnRolle.opphørsdato))
+    val harPerioderUtenInnkreving =
+        perioderFraVirkningstidspunkt
+            .inneholderPerioderUtenInnkreving(virkningstidspunkt, beregnTil)
+    if (sistePeriode?.periode?.til != null && sistePeriode.periode.til!! <= beregnTil && !harPerioderUtenInnkreving) {
         emptyList()
+    } else {
+        perioderFraVirkningstidspunkt
     }
+} else if (søknadsbarnRolle.erRevurderingsbarn) {
+    val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
+    val førstePeriodeFom =
+        beløpshistorikk.periodeListe
+            .minByOrNull { it.periode.fom }
+            ?.periode
+            ?.fom
+    val virkningstidspunkt = maxOf(søknadsbarnRolle.virkningstidspunktRolle.toYearMonth(), søknadsbarnRolle.finnBeregnFra())
+    val perioderFraVirkningstidspunkt =
+        beløpshistorikk.periodeListe
+            .map { it.periode }
+            .filtrerOgJusterFraVirkningstidspunkt(
+                ÅrMånedsperiode(
+                    virkningstidspunkt.toLocalDate(),
+                    if (søknadsbarnRolle.opphørsdato != null) {
+                        maxOfNullable(søknadsbarnRolle.opphørsdato, virkningstidspunkt.toLocalDate())
+                    } else {
+                        null
+                    },
+                ),
+            )
+
+    val harPerioderUtenInnkreving =
+        perioderFraVirkningstidspunkt
+            .inneholderPerioderUtenInnkreving(virkningstidspunkt, søknadsbarnRolle.finnBeregnTil())
+    // Hvis det skal innkreves fra virkningtidspunkt så returnerer metoden null mtp at det er med innkreving
+    // Dette brukes for å innkreve deler av periodene
+    if (førstePeriodeFom == null || !harPerioderUtenInnkreving) {
+        emptyList()
+    } else {
+        perioderFraVirkningstidspunkt
+            .map {
+                ÅrMånedsperiode(
+                    it.fom,
+                    minOfNullable(it.til, søknadsbarnRolle.opphørsdato?.toYearMonth()) ?: it.til,
+                )
+            }.slåSammenEtterfølgendePerioder()
+    }
+} else {
+    emptyList()
+}
 
 internal fun List<ÅrMånedsperiode>.inneholderPerioderUtenInnkreving(
     fraOgMed: YearMonth,
@@ -201,64 +200,60 @@ internal fun List<ÅrMånedsperiode>.slåSammenEtterfølgendePerioder(): List<Å
 
 fun Behandling.finnInnkrevesFraDato(søknadsbarnRolle: Rolle) = finnSkalInnkrevesPeriode(søknadsbarnRolle).firstOrNull()?.fom
 
-fun Behandling.finnBeregningsperiode() =
-    ÅrMånedsperiode(
-        eldsteVirkningstidspunkt,
-        finnBeregnTilDato(),
-    )
+fun Behandling.finnBeregningsperiode() = ÅrMånedsperiode(
+    eldsteVirkningstidspunkt,
+    finnBeregnTilDato(),
+)
 
-fun Behandling.finnBeregnTilDato() =
-    if (erBidrag()) {
-        søknadsbarn.maxOf { finnBeregnTilDatoBehandling(it) }
-    } else {
-        finnBeregnTilDatoBehandling()
-    }
+fun Behandling.finnBeregnTilDato() = if (erBidrag()) {
+    søknadsbarn.maxOf { finnBeregnTilDatoBehandling(it) }
+} else {
+    finnBeregnTilDatoBehandling()
+}
 
-fun Rolle.finnBeregnTil(): YearMonth =
-    if (rolletype == Rolletype.BARN) {
-        behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
-    } else if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-        behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.maxOfOrNull {
-            behandling.finnBeregnTilDatoBehandling(it).toYearMonth()
-        } ?: behandling.finnBeregnTilDato().toYearMonth()
-    } else {
-        behandling.finnBeregnTilDato().toYearMonth()
-    }
+fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
+    behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
+} else if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
+    behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.maxOfOrNull {
+        behandling.finnBeregnTilDatoBehandling(it).toYearMonth()
+    } ?: behandling.finnBeregnTilDato().toYearMonth()
+} else {
+    behandling.finnBeregnTilDato().toYearMonth()
+}
 
-fun Rolle.finnBeregnFra(): YearMonth =
-    if (behandling.erBidrag()) {
-        val tidligsteBeregnFra =
-            if (stønadstype == Stønadstype.BIDRAG18AAR) {
-                maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
-            } else {
-                behandling.eldsteVirkningstidspunkt.toYearMonth()
-            }
-        if (behandling.erIForholdsmessigFordeling) {
-            if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-                behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
-                    it.finnBeregnFra()
-                } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
-            } else if (erRevurderingsbarn) {
-                behandling
-                    .finnPeriodeLøperBidrag(this)
-                    ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
-                    ?.fom
-                    ?.let {
-                        maxOf(
-                            it,
-                            tidligsteBeregnFra,
-                        )
-                    }
-                    ?: run { tidligsteBeregnFra }
-            } else {
-                tidligsteBeregnFra
-            }
+fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
+    val tidligsteBeregnFra =
+        if (stønadstype == Stønadstype.BIDRAG18AAR) {
+            maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
         } else {
-            virkningstidspunktRolle.toYearMonth()
+            behandling.eldsteVirkningstidspunkt.toYearMonth()
+        }
+    if (behandling.erIForholdsmessigFordeling) {
+        if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
+            behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
+                it.finnBeregnFra()
+            } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+        } else if (erRevurderingsbarn) {
+            behandling
+                .finnPeriodeLøperBidrag(this)
+                ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
+                ?.fom
+                ?.let {
+                    maxOf(
+                        it,
+                        tidligsteBeregnFra,
+                    )
+                }
+                ?: run { tidligsteBeregnFra }
+        } else {
+            tidligsteBeregnFra
         }
     } else {
-        behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+        virkningstidspunktRolle.toYearMonth()
     }
+} else {
+    behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+}
 
 fun Behandling.finnBeregnTilDatoBehandling(
     søknadsbarnRolle: Rolle? = null,
@@ -387,36 +382,32 @@ class VedtakGrunnlagMapper(
 
     fun Behandling.tilPersonobjekter(søknadsbarnRolle: Rolle? = null) = mapper.run { tilPersonobjekter(søknadsbarnRolle) }
 
-    fun List<BidragssakDto>.hentRolleMedFnr(fnr: String): RolleDto =
-        flatMap { it.roller }.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-            personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-                personService.hentNyesteIdent(fnr)
-        }
-            ?: fantIkkeRolleISak(joinToString { it.saksnummer?.verdi ?: "" }, fnr)
+    fun List<BidragssakDto>.hentRolleMedFnr(fnr: String): RolleDto = flatMap { it.roller }.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
+        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
+            personService.hentNyesteIdent(fnr)
+    }
+        ?: fantIkkeRolleISak(joinToString { it.saksnummer?.verdi ?: "" }, fnr)
 
-    fun BidragssakDto.hentRolleMedFnr(fnr: String): RolleDto =
-        roller.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-            personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-                personService.hentNyesteIdent(fnr)
-        }
-            ?: fantIkkeRolleISak(saksnummer.verdi, fnr)
+    fun BidragssakDto.hentRolleMedFnr(fnr: String): RolleDto = roller.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
+        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
+            personService.hentNyesteIdent(fnr)
+    }
+        ?: fantIkkeRolleISak(saksnummer.verdi, fnr)
 
-    fun Behandling.byggGrunnlagForAvslagUgyldigUtgifter() =
-        mapper.run {
-            listOf(
-                tilPersonobjekter() + byggGrunnlagUtgiftsposter() +
-                    byggGrunnlagUtgiftDirekteBetalt() +
-                    byggGrunnlagUtgiftMaksGodkjentBeløp(),
-                byggGrunnlagGenereltAvslag(),
-            )
-        }
+    fun Behandling.byggGrunnlagForAvslagUgyldigUtgifter() = mapper.run {
+        listOf(
+            tilPersonobjekter() + byggGrunnlagUtgiftsposter() +
+                byggGrunnlagUtgiftDirekteBetalt() +
+                byggGrunnlagUtgiftMaksGodkjentBeløp(),
+            byggGrunnlagGenereltAvslag(),
+        )
+    }
 
-    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) =
-        if (avslag != null) {
-            emptyList()
-        } else {
-            beregnetInntekterGrunnlagForRolle(rolle)
-        }
+    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) = if (avslag != null) {
+        emptyList()
+    } else {
+        beregnetInntekterGrunnlagForRolle(rolle)
+    }
 
     fun beregnGebyr(
         behandling: Behandling,
@@ -446,36 +437,35 @@ class VedtakGrunnlagMapper(
         val inntektSiste12Mnd = gebyrBeregning.finnInntektSiste12Mnd(rolle)
         return BeregnGebyrResultat(
             skattepliktigInntekt =
-                delberegningSumInntekt?.skattepliktigInntekt ?: inntektSiste12Mnd?.innhold?.beløp ?: BigDecimal.ZERO,
+            delberegningSumInntekt?.skattepliktigInntekt ?: inntektSiste12Mnd?.innhold?.beløp ?: BigDecimal.ZERO,
             maksBarnetillegg = delberegningSumInntekt?.barnetillegg,
             resultatkode = gebyrBeregning.sluttberegningGebyr!!.innhold.tilResultatkode(),
             beløpGebyrsats = gebyrBeregning.gebyrBeløp!!,
             grunnlagsreferanseListeEngangsbeløp =
-                listOfNotNull(
-                    gebyrBeregning.sluttberegningGebyr!!.referanse,
-                    inntektSiste12Mnd?.referanse,
-                ),
+            listOfNotNull(
+                gebyrBeregning.sluttberegningGebyr!!.referanse,
+                inntektSiste12Mnd?.referanse,
+            ),
             ilagtGebyr = gebyrBeregning.sluttberegningGebyr!!.innhold.ilagtGebyr,
             grunnlagsliste = gebyrBeregning,
         )
     }
 
-    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle) =
-        BeregnApi()
-            .beregnInntekt(tilInntektberegningDto(rolle))
-            .inntektPerBarnListe
-            .filter { it.inntektGjelderBarn?.ident != null }
-            .flatMap { beregningBarn ->
-                beregningBarn.summertInntektListe.map {
-                    GrunnlagDto(
-                        referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
-                        type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                        innhold = POJONode(it),
-                        gjelderReferanse = rolle.tilGrunnlagsreferanse(),
-                        gjelderBarnReferanse = beregningBarn.inntektGjelderBarn!!.ident,
-                    )
-                }
+    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle) = BeregnApi()
+        .beregnInntekt(tilInntektberegningDto(rolle))
+        .inntektPerBarnListe
+        .filter { it.inntektGjelderBarn?.ident != null }
+        .flatMap { beregningBarn ->
+            beregningBarn.summertInntektListe.map {
+                GrunnlagDto(
+                    referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                    type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+                    innhold = POJONode(it),
+                    gjelderReferanse = rolle.tilGrunnlagsreferanse(),
+                    gjelderBarnReferanse = beregningBarn.inntektGjelderBarn!!.ident,
+                )
             }
+        }
 
     fun tilBeregnetPrivatAvtale(
         behandling: Behandling,
@@ -523,10 +513,10 @@ class VedtakGrunnlagMapper(
                 val beregningTilDato = finnBeregnTilDatoBehandling(person)
                 return BeregnGrunnlag(
                     periode =
-                        ÅrMånedsperiode(
-                            beregnFraDato,
-                            beregningTilDato,
-                        ),
+                    ÅrMånedsperiode(
+                        beregnFraDato,
+                        beregningTilDato,
+                    ),
                     opphørsdato = opphørsdato,
                     stønadstype = stonadstype ?: Stønadstype.BIDRAG,
                     søknadsbarnReferanse = personObjekt.referanse,
@@ -539,12 +529,11 @@ class VedtakGrunnlagMapper(
     fun byggGrunnlagForSimuleringPrivatAvtale(
         behandling: Behandling,
         grunnlagsliste: Set<GrunnlagDto>,
-    ): Set<GrunnlagDto> =
-        mapper.run {
-            behandling.run {
-                tilPrivatAvtaleGrunnlag(grunnlagsliste)
-            }
+    ): Set<GrunnlagDto> = mapper.run {
+        behandling.run {
+            tilPrivatAvtaleGrunnlag(grunnlagsliste)
         }
+    }
 
     fun byggGrunnlagForBeregning(
         behandling: Behandling,
@@ -588,9 +577,9 @@ class VedtakGrunnlagMapper(
                             opphørsdato = søknadsbarnRolle.opphørsdatoYearMonth,
                             søknadsbarnReferanse = søknadsbarn.referanse,
                             grunnlagListe =
-                                (
-                                    personobjekter + byggGrunnlagSøknad() +
-                                        byggGrunnlagVirkningsttidspunkt(grunnlagFraBeregning = personobjekter.map { it.tilDto() })
+                            (
+                                personobjekter + byggGrunnlagSøknad() +
+                                    byggGrunnlagVirkningsttidspunkt(grunnlagFraBeregning = personobjekter.map { it.tilDto() })
                                 ).toList(),
                         )
                     } else {
@@ -606,7 +595,7 @@ class VedtakGrunnlagMapper(
                             (
                                 personobjekter + bostatusBarn + inntekter + byggGrunnlagSøknad() + byggGrunnlagVirkningsttidspunkt() +
                                     simulertGrunnlag
-                            ).toMutableSet()
+                                ).toMutableSet()
 
                         when (tilType()) {
                             TypeBehandling.FORSKUDD -> {
@@ -661,23 +650,23 @@ class VedtakGrunnlagMapper(
                             gjelderKlage = behandling.vedtakstype == Vedtakstype.KLAGE,
                             skalInnkreves = skalInnkreves,
                             erBeregningsperiodeLøpende =
-                                søknadsbarnRolle.beregnTil == BeregnTil.INNEVÆRENDE_MÅNED || søknadsbarnRolle.erDirekteAvslag,
+                            søknadsbarnRolle.beregnTil == BeregnTil.INNEVÆRENDE_MÅNED || søknadsbarnRolle.erDirekteAvslag,
                             gjelderParagraf35c =
-                                listOf(
-                                    Behandlingstype.PARAGRAF_35_C,
-                                    Behandlingstype.PARAGRAF_35_C_BEGRENSET_SATS,
-                                ).contains(behandling.søknadstype),
+                            listOf(
+                                Behandlingstype.PARAGRAF_35_C,
+                                Behandlingstype.PARAGRAF_35_C_BEGRENSET_SATS,
+                            ).contains(behandling.søknadstype),
                             skalFatteVedtakForRevurderingsbarn = skalFatteVedtakForRevurderingsbarn,
                             manuellAldersjustering =
-                                søknadsbarnRolle.grunnlagFraVedtakListe
-                                    .filter { it.aldersjusteringForÅr != null && (it.vedtak != null || it.grunnlagFraOmgjøringsvedtak) }
-                                    .map {
-                                        OmgjøringorkestratorManuellAldersjustering(
-                                            it.aldersjusteringForÅr!!,
-                                            it.vedtak,
-                                            it.grunnlagFraOmgjøringsvedtak,
-                                        )
-                                    },
+                            søknadsbarnRolle.grunnlagFraVedtakListe
+                                .filter { it.aldersjusteringForÅr != null && (it.vedtak != null || it.grunnlagFraOmgjøringsvedtak) }
+                                .map {
+                                    OmgjøringorkestratorManuellAldersjustering(
+                                        it.aldersjusteringForÅr!!,
+                                        it.vedtak,
+                                        it.grunnlagFraOmgjøringsvedtak,
+                                    )
+                                },
                         )
                     } else {
                         null
@@ -687,19 +676,19 @@ class VedtakGrunnlagMapper(
                     omgjøringOrkestratorGrunnlag = klageBeregning,
                     erDirekteAvslag = erDirekteAvslag(),
                     beregningstype =
-                        when {
-                            behandling.erKlageEllerOmgjøring -> {
-                                if (endeligBeregning) {
-                                    Beregningstype.OMGJØRING_ENDELIG
-                                } else {
-                                    Beregningstype.OMGJØRING
-                                }
+                    when {
+                        behandling.erKlageEllerOmgjøring -> {
+                            if (endeligBeregning) {
+                                Beregningstype.OMGJØRING_ENDELIG
+                            } else {
+                                Beregningstype.OMGJØRING
                             }
+                        }
 
-                            else -> {
-                                Beregningstype.BIDRAG
-                            }
-                        },
+                        else -> {
+                            Beregningstype.BIDRAG
+                        }
+                    },
                 )
             }
         }
@@ -793,12 +782,12 @@ class VedtakGrunnlagMapper(
                 type = Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG,
                 gjelderReferanse = referanse,
                 innhold =
-                    POJONode(
-                        Person(
-                            ident = nyesteIdent,
-                            fødselsdato = fødselsdato,
-                        ).valider(),
-                    ),
+                POJONode(
+                    Person(
+                        ident = nyesteIdent,
+                        fødselsdato = fødselsdato,
+                    ).valider(),
+                ),
             )
         }
 
@@ -814,32 +803,32 @@ class VedtakGrunnlagMapper(
                 gjelderReferanse = personGrunnlagListe.bidragspliktig!!.referanse,
                 type = Grunnlagstype.LØPENDE_BIDRAG,
                 innhold =
-                    POJONode(
-                        LøpendeBidragGrunnlag(
-                            løpendeBidragListe =
-                                løpendeBidragsaker.map { løpendeStønad ->
-                                    val beregning = beregnetBeløpListe.beregningListe.find { it.personidentBarn == løpendeStønad.kravhaver }
-                                    val personObjekt =
-                                        personGrunnlagListe.hentPerson(løpendeStønad.kravhaver.verdi)
-                                            ?: løpendeStønad.opprettPersonGrunnlag()
-                                    LøpendeBidrag(
-                                        faktiskBeløp = beregning?.faktiskBeløp ?: BigDecimal.ZERO,
-                                        samværsklasse = beregning?.samværsklasse ?: Samværsklasse.SAMVÆRSKLASSE_0,
-                                        beregnetBeløp = beregning?.beregnetBeløp ?: BigDecimal.ZERO,
-                                        løpendeBeløp = løpendeStønad.løpendeBeløp,
-                                        type = løpendeStønad.type,
-                                        gjelderBarn = personObjekt.referanse,
-                                        saksnummer = Saksnummer(løpendeStønad.sak.verdi),
-                                        valutakode = løpendeStønad.valutakode,
-                                        erVedtakKildeBBM = beregning?.erVedtakKildeBBM ?: true,
-                                        vedtaksid = beregning?.vedtaksid,
-                                        bruttoBidragEtterBarnetilleggBP = beregning?.bruttoBidragEtterBarnetilleggBP,
-                                        bruttoBidragEtterBarnetilleggBM = beregning?.bruttoBidragEtterBarnetilleggBM,
-                                        bidragJustertForNettoBarnetilleggBP = beregning?.bidragJustertForNettoBarnetilleggBP,
-                                    )
-                                },
-                        ),
+                POJONode(
+                    LøpendeBidragGrunnlag(
+                        løpendeBidragListe =
+                        løpendeBidragsaker.map { løpendeStønad ->
+                            val beregning = beregnetBeløpListe.beregningListe.find { it.personidentBarn == løpendeStønad.kravhaver }
+                            val personObjekt =
+                                personGrunnlagListe.hentPerson(løpendeStønad.kravhaver.verdi)
+                                    ?: løpendeStønad.opprettPersonGrunnlag()
+                            LøpendeBidrag(
+                                faktiskBeløp = beregning?.faktiskBeløp ?: BigDecimal.ZERO,
+                                samværsklasse = beregning?.samværsklasse ?: Samværsklasse.SAMVÆRSKLASSE_0,
+                                beregnetBeløp = beregning?.beregnetBeløp ?: BigDecimal.ZERO,
+                                løpendeBeløp = løpendeStønad.løpendeBeløp,
+                                type = løpendeStønad.type,
+                                gjelderBarn = personObjekt.referanse,
+                                saksnummer = Saksnummer(løpendeStønad.sak.verdi),
+                                valutakode = løpendeStønad.valutakode,
+                                erVedtakKildeBBM = beregning?.erVedtakKildeBBM ?: true,
+                                vedtaksid = beregning?.vedtaksid,
+                                bruttoBidragEtterBarnetilleggBP = beregning?.bruttoBidragEtterBarnetilleggBP,
+                                bruttoBidragEtterBarnetilleggBM = beregning?.bruttoBidragEtterBarnetilleggBM,
+                                bidragJustertForNettoBarnetilleggBP = beregning?.bidragJustertForNettoBarnetilleggBP,
+                            )
+                        },
                     ),
+                ),
             )
         return grunnlagslistePersoner + mutableListOf(grunnlag)
     }

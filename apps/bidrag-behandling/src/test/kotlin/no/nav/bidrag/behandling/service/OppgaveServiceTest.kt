@@ -75,32 +75,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 1) {
@@ -152,32 +152,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4291"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 1) {
@@ -225,32 +225,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4865"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 1) {
@@ -279,32 +279,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4860"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 1) {
@@ -333,32 +333,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.FORSKUDD,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = personIdentNav,
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.FORSKUDD,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = personIdentNav,
                     ),
+                ),
             ),
         )
 
@@ -390,32 +390,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
 
@@ -432,32 +432,32 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), LocalDate.now().minusMonths(3)),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), LocalDate.now().minusMonths(3)),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
 
@@ -474,45 +474,45 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
-                        Stønadsendring(
-                            type = Stønadstype.BIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn2.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                    Stønadsendring(
+                        type = Stønadstype.BIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn2.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
+                    ),
+                ),
             ),
         )
 
@@ -542,36 +542,36 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe = emptyList(),
                 engangsbeløpListe =
-                    listOf(
-                        Engangsbeløp(
-                            type = Engangsbeløptype.SÆRBIDRAG,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            beløp = BigDecimal(100),
-                            sak = Saksnummer(SAKSNUMMER),
-                            valutakode = "NOK",
-                            resultatkode = "",
-                            referanse = "",
-                            delytelseId = "",
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Engangsbeløp(
+                        type = Engangsbeløptype.SÆRBIDRAG,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        beløp = BigDecimal(100),
+                        sak = Saksnummer(SAKSNUMMER),
+                        valutakode = "NOK",
+                        resultatkode = "",
+                        referanse = "",
+                        delytelseId = "",
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 1) {
@@ -619,51 +619,51 @@ class OppgaveServiceTest {
             opprettStønadDto(
                 stønadstype = Stønadstype.FORSKUDD,
                 periodeListe =
-                    listOf(
-                        opprettStønadPeriodeDto(
-                            ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
-                            beløp = BigDecimal("5600"),
-                        ),
+                listOf(
+                    opprettStønadPeriodeDto(
+                        ÅrMånedsperiode(LocalDate.now().minusMonths(4), null),
+                        beløp = BigDecimal("5600"),
                     ),
+                ),
             )
         oppgaveService.opprettRevurderForskuddOppgave(
             opprettVedtakhendelse(1, 1).copy(
                 enhetsnummer = Enhetsnummer("4806"),
                 stønadsendringListe =
-                    listOf(
-                        Stønadsendring(
-                            type = Stønadstype.FORSKUDD,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            førsteIndeksreguleringsår = 2024,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            periodeListe = emptyList(),
-                            sak = Saksnummer(SAKSNUMMER),
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Stønadsendring(
+                        type = Stønadstype.FORSKUDD,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        førsteIndeksreguleringsår = 2024,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        periodeListe = emptyList(),
+                        sak = Saksnummer(SAKSNUMMER),
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
                 engangsbeløpListe =
-                    listOf(
-                        Engangsbeløp(
-                            type = Engangsbeløptype.GEBYR_MOTTAKER,
-                            eksternReferanse = "",
-                            beslutning = Beslutningstype.ENDRING,
-                            innkreving = Innkrevingstype.MED_INNKREVING,
-                            kravhaver = Personident(testdataBarn1.ident),
-                            mottaker = Personident(testdataBM.ident),
-                            omgjørVedtakId = 1,
-                            beløp = BigDecimal(100),
-                            sak = Saksnummer(SAKSNUMMER),
-                            valutakode = "NOK",
-                            resultatkode = "",
-                            referanse = "",
-                            delytelseId = "",
-                            skyldner = Personident(testdataBP.ident),
-                        ),
+                listOf(
+                    Engangsbeløp(
+                        type = Engangsbeløptype.GEBYR_MOTTAKER,
+                        eksternReferanse = "",
+                        beslutning = Beslutningstype.ENDRING,
+                        innkreving = Innkrevingstype.MED_INNKREVING,
+                        kravhaver = Personident(testdataBarn1.ident),
+                        mottaker = Personident(testdataBM.ident),
+                        omgjørVedtakId = 1,
+                        beløp = BigDecimal(100),
+                        sak = Saksnummer(SAKSNUMMER),
+                        valutakode = "NOK",
+                        resultatkode = "",
+                        referanse = "",
+                        delytelseId = "",
+                        skyldner = Personident(testdataBP.ident),
                     ),
+                ),
             ),
         )
         verify(exactly = 0) {

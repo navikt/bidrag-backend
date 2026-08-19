@@ -65,25 +65,23 @@ class BehandlingTilVedtakMappingTest {
     private fun opprettPeriode(
         fom: YearMonth,
         til: YearMonth?,
-    ): OpprettPeriodeRequestDto =
-        OpprettPeriodeRequestDto(
-            periode = ÅrMånedsperiode(fom, til),
-            beløp = BigDecimal.ONE,
-            valutakode = VALUTAKODE,
-            resultatkode = Resultatkode.BEREGNET_BIDRAG.name,
-            grunnlagReferanseListe = GRUNNLAGSREFERANSE_LISTE,
-        )
+    ): OpprettPeriodeRequestDto = OpprettPeriodeRequestDto(
+        periode = ÅrMånedsperiode(fom, til),
+        beløp = BigDecimal.ONE,
+        valutakode = VALUTAKODE,
+        resultatkode = Resultatkode.BEREGNET_BIDRAG.name,
+        grunnlagReferanseListe = GRUNNLAGSREFERANSE_LISTE,
+    )
 
     private fun opprettOpphørsperiode(
         fom: YearMonth,
         til: YearMonth?,
-    ): OpprettPeriodeRequestDto =
-        OpprettPeriodeRequestDto(
-            periode = ÅrMånedsperiode(fom, til),
-            beløp = null,
-            resultatkode = Resultatkode.OPPHØR.name,
-            grunnlagReferanseListe = GRUNNLAGSREFERANSE_LISTE,
-        )
+    ): OpprettPeriodeRequestDto = OpprettPeriodeRequestDto(
+        periode = ÅrMånedsperiode(fom, til),
+        beløp = null,
+        resultatkode = Resultatkode.OPPHØR.name,
+        grunnlagReferanseListe = GRUNNLAGSREFERANSE_LISTE,
+    )
 
     private companion object {
         const val VALUTAKODE = "NOK"

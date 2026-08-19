@@ -133,10 +133,9 @@ fun List<Grunnlag>.henteEndringerIBarnetilsyn(
 ): StønadTilBarnetilsynIkkeAktiveGrunnlagDto? {
     fun Personident.erSøknadsbarn() = behandling.søknadsbarn.find { it.personident == this } != null
 
-    fun Behandling.henteUnderholdskostnadPersonident(personident: Personident) =
-        this.underholdskostnader.filter {
-            it.personIdent == personident.verdi
-        }
+    fun Behandling.henteUnderholdskostnadPersonident(personident: Personident) = this.underholdskostnader.filter {
+        it.personIdent == personident.verdi
+    }
 
     val innhentaForRolle = behandling.bidragsmottaker!!
 
@@ -175,25 +174,25 @@ fun List<Grunnlag>.henteEndringerIBarnetilsyn(
     if (aktiveBarnetilsynsdata.values.isNotEmpty() && nyeBarnetilsynsdataTilknyttetSøknadsbarn.values.isNotEmpty()) {
         return StønadTilBarnetilsynIkkeAktiveGrunnlagDto(
             stønadTilBarnetilsyn =
-                nyeBarnetilsynsdataTilknyttetSøknadsbarn
-                    .flatMap {
-                        behandling.henteUnderholdskostnadPersonident(it.key).map { u ->
-                            it.key to
-                                it.value
-                                    .tilBarnetilsyn(u)
-                                    .toSet()
-                                    .tilStønadTilBarnetilsynDtos()
-                        }
-                    }.toMap(),
+            nyeBarnetilsynsdataTilknyttetSøknadsbarn
+                .flatMap {
+                    behandling.henteUnderholdskostnadPersonident(it.key).map { u ->
+                        it.key to
+                            it.value
+                                .tilBarnetilsyn(u)
+                                .toSet()
+                                .tilStønadTilBarnetilsynDtos()
+                    }
+                }.toMap(),
             grunnlag =
-                nyeBarnetilsyn
-                    .groupBy { it.barnPersonId }
-                    .map { (personidentBarn, barnetilsyn) ->
-                        Personident(personidentBarn) to barnetilsyn.toSet()
-                    }.toMap(),
+            nyeBarnetilsyn
+                .groupBy { it.barnPersonId }
+                .map { (personidentBarn, barnetilsyn) ->
+                    Personident(personidentBarn) to barnetilsyn.toSet()
+                }.toMap(),
             innhentetTidspunkt =
-                find { Grunnlagsdatatype.BARNETILSYN == it.type && it.erBearbeidet }?.innhentet
-                    ?: LocalDateTime.now(),
+            find { Grunnlagsdatatype.BARNETILSYN == it.type && it.erBearbeidet }?.innhentet
+                ?: LocalDateTime.now(),
         )
     }
     return null
@@ -323,21 +322,21 @@ fun List<Grunnlag>.hentEndringerSivilstand(
         ) {
             return SivilstandIkkeAktivGrunnlagDto(
                 sivilstand =
-                    nyeSivilstandsdata.map {
-                        SivilstandDto(
-                            null,
-                            it.periodeFom,
-                            it.periodeTom,
-                            it.sivilstandskode,
-                            Kilde.OFFENTLIG,
-                        )
-                    },
+                nyeSivilstandsdata.map {
+                    SivilstandDto(
+                        null,
+                        it.periodeFom,
+                        it.periodeTom,
+                        it.sivilstandskode,
+                        Kilde.OFFENTLIG,
+                    )
+                },
                 innhentetTidspunkt = nyttBearbeidaSivilstandsgrunnlag!!.innhentet,
                 grunnlag =
-                    nyttSivilstandsgrunnlag
-                        ?.konvertereData<List<SivilstandGrunnlagDto>>()
-                        ?.filtrerSivilstandGrunnlagEtterVirkningstidspunkt(virkniningstidspunkt)
-                        ?.toSet() ?: emptySet(),
+                nyttSivilstandsgrunnlag
+                    ?.konvertereData<List<SivilstandGrunnlagDto>>()
+                    ?.filtrerSivilstandGrunnlagEtterVirkningstidspunkt(virkniningstidspunkt)
+                    ?.toSet() ?: emptySet(),
             )
         }
         return null
@@ -384,12 +383,11 @@ fun Set<BarnetilsynGrunnlagDto>.erLik(
 ): Boolean {
     if (this.size != detAndreSettet.size) return false
 
-    fun BarnetilsynGrunnlagDto.justereFradato() =
-        if (virkningsdato.isAfter(LocalDate.now())) {
-            maxOf(virkningsdato.withDayOfMonth(1))
-        } else {
-            maxOf(virkningsdato.withDayOfMonth(1), periodeFra)
-        }
+    fun BarnetilsynGrunnlagDto.justereFradato() = if (virkningsdato.isAfter(LocalDate.now())) {
+        maxOf(virkningsdato.withDayOfMonth(1))
+    } else {
+        maxOf(virkningsdato.withDayOfMonth(1), periodeFra)
+    }
     return this.all { barnetilsyn ->
         detAndreSettet.any {
             it.justereFradato() == barnetilsyn.justereFradato() &&
@@ -407,12 +405,11 @@ fun List<BoforholdResponseV2>.erDetSammeSom(
 ): Boolean {
     if (this.size != other.size) return false
 
-    fun BoforholdResponseV2.justertDatoFom() =
-        if (virkniningstidspunkt.isAfter(LocalDate.now())) {
-            maxOf(fødselsdato, virkniningstidspunkt.withDayOfMonth(1))
-        } else {
-            maxOf(virkniningstidspunkt.withDayOfMonth(1), periodeFom)
-        }
+    fun BoforholdResponseV2.justertDatoFom() = if (virkniningstidspunkt.isAfter(LocalDate.now())) {
+        maxOf(fødselsdato, virkniningstidspunkt.withDayOfMonth(1))
+    } else {
+        maxOf(virkniningstidspunkt.withDayOfMonth(1), periodeFom)
+    }
     return this.all { boforhold ->
         other.any {
             it.justertDatoFom() == boforhold.justertDatoFom() &&
@@ -488,14 +485,13 @@ fun List<Grunnlag>.hentEndringerInntekter(
         .toSet() + slettedeInntekter
 }
 
-fun Grunnlagsdatatype.inneholder(type: Inntektsrapportering) =
-    when (this) {
-        Grunnlagsdatatype.KONTANTSTØTTE -> type == Inntektsrapportering.KONTANTSTØTTE
-        Grunnlagsdatatype.BARNETILLEGG -> type == Inntektsrapportering.BARNETILLEGG
-        Grunnlagsdatatype.SMÅBARNSTILLEGG -> type == Inntektsrapportering.SMÅBARNSTILLEGG
-        Grunnlagsdatatype.UTVIDET_BARNETRYGD -> type == Inntektsrapportering.UTVIDET_BARNETRYGD
-        else -> !eksplisitteYtelser.contains(type)
-    }
+fun Grunnlagsdatatype.inneholder(type: Inntektsrapportering) = when (this) {
+    Grunnlagsdatatype.KONTANTSTØTTE -> type == Inntektsrapportering.KONTANTSTØTTE
+    Grunnlagsdatatype.BARNETILLEGG -> type == Inntektsrapportering.BARNETILLEGG
+    Grunnlagsdatatype.SMÅBARNSTILLEGG -> type == Inntektsrapportering.SMÅBARNSTILLEGG
+    Grunnlagsdatatype.UTVIDET_BARNETRYGD -> type == Inntektsrapportering.UTVIDET_BARNETRYGD
+    else -> !eksplisitteYtelser.contains(type)
+}
 
 fun Inntekt.erDetSammeSom(grunnlag: SummertÅrsinntekt): Boolean {
     if (opprinneligPeriode == null || type != grunnlag.inntektRapportering) return false
@@ -514,22 +510,20 @@ fun Behandling.henteUaktiverteGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolle: Rolle,
     gjelderBarnRolle: Rolle? = null,
-): Set<Grunnlag> =
-    grunnlag
-        .hentAlleIkkeAktiv()
-        .filter {
-            it.type == grunnlagstype.type && it.rolle.id == rolle.id && grunnlagstype.erBearbeidet == it.erBearbeidet &&
-                (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id)
-        }.toSet()
+): Set<Grunnlag> = grunnlag
+    .hentAlleIkkeAktiv()
+    .filter {
+        it.type == grunnlagstype.type && it.rolle.id == rolle.id && grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id)
+    }.toSet()
 
 fun Behandling.henteAktiverteGrunnlag(
     grunnlagstype: Grunnlagstype,
     rolle: Rolle,
     gjelderBarnRolle: Rolle? = null,
-): Set<Grunnlag> =
-    grunnlag
-        .hentAlleAktiv()
-        .filter {
-            it.type == grunnlagstype.type && it.rolle.id == rolle.id && grunnlagstype.erBearbeidet == it.erBearbeidet &&
-                (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id)
-        }.toSet()
+): Set<Grunnlag> = grunnlag
+    .hentAlleAktiv()
+    .filter {
+        it.type == grunnlagstype.type && it.rolle.id == rolle.id && grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            (gjelderBarnRolle == null || gjelderBarnRolle.id == it.gjelderBarnRolle?.id)
+    }.toSet()

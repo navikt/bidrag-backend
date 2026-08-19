@@ -147,31 +147,31 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-02-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = 123,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = 123,
+                    )
+                },
             )
         val vedtak2 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-03-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = 124,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = 124,
+                    )
+                },
             )
         val vedtak3 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-04-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = null,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = null,
+                    )
+                },
             )
         every { vedtakConsumer.hentVedtak(eq(12333)) } returns vedtak1
         every { vedtakConsumer.hentVedtak(eq(123)) } returns vedtak2
@@ -206,31 +206,31 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-02-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = 123,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = 123,
+                    )
+                },
             )
         val vedtak2 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-03-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = 124,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = 124,
+                    )
+                },
             )
         val vedtak3 =
             originalVedtak.copy(
                 vedtakstidspunkt = LocalDate.parse("2024-04-01").atStartOfDay(),
                 stønadsendringListe =
-                    originalVedtak.stønadsendringListe.map {
-                        it.copy(
-                            omgjørVedtakId = null,
-                        )
-                    },
+                originalVedtak.stønadsendringListe.map {
+                    it.copy(
+                        omgjørVedtakId = null,
+                    )
+                },
             )
         every { vedtakConsumer.hentVedtak(eq(12333)) } returns vedtak1
         every { vedtakConsumer.hentVedtak(eq(123)) } returns vedtak2
@@ -481,11 +481,10 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
         }
     }
 
-    fun filTilVedtakDto(filnavn: String): VedtakDto =
-        commonObjectmapper.readValue(
-            erstattVariablerITestFil(filnavn),
-            VedtakDto::class.java,
-        )
+    fun filTilVedtakDto(filnavn: String): VedtakDto = commonObjectmapper.readValue(
+        erstattVariablerITestFil(filnavn),
+        VedtakDto::class.java,
+    )
 
     private fun Behandling.validerInntekter() {
         assertSoftly(inntekter) {

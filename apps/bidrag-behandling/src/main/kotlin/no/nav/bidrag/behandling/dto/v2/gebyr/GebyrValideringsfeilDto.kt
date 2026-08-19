@@ -8,23 +8,22 @@ import no.nav.bidrag.behandling.dto.v2.behandling.SøknadDetaljerDto
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
 import no.nav.bidrag.behandling.transformers.behandling.tilSøknadsdetaljerDto
 
-fun Behandling.validerGebyr() =
-    roller
-        .filter { it.harGebyrsøknad }
-        .flatMap { rolle ->
-            rolle.hentEllerOpprettGebyr().gebyrSøknader.map {
-                GebyrValideringsfeilDto(
-                    gjelder = rolle.tilDto(),
-                    søknad = rolle.tilSøknadsdetaljerDto(it.søknadsid),
-                    manglerBegrunnelse =
-                        if (it.manueltOverstyrtGebyr?.overstyrGebyr == true) {
-                            it.manueltOverstyrtGebyr?.begrunnelse.isNullOrEmpty()
-                        } else {
-                            false
-                        },
-                )
-            }
-        }.filter { it.harFeil }
+fun Behandling.validerGebyr() = roller
+    .filter { it.harGebyrsøknad }
+    .flatMap { rolle ->
+        rolle.hentEllerOpprettGebyr().gebyrSøknader.map {
+            GebyrValideringsfeilDto(
+                gjelder = rolle.tilDto(),
+                søknad = rolle.tilSøknadsdetaljerDto(it.søknadsid),
+                manglerBegrunnelse =
+                if (it.manueltOverstyrtGebyr?.overstyrGebyr == true) {
+                    it.manueltOverstyrtGebyr?.begrunnelse.isNullOrEmpty()
+                } else {
+                    false
+                },
+            )
+        }
+    }.filter { it.harFeil }
 
 data class GebyrValideringsfeilDto(
     @get:Schema(deprecated = true, description = "Skal fjernes")

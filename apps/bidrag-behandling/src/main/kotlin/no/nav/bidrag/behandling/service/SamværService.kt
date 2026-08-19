@@ -66,7 +66,7 @@ class SamværService(
                     oppdaterSamvær,
                     erPerioderOppdatert = request.periode != null,
                     erBegrunnelseOppdatert =
-                        request.oppdatereBegrunnelse != null,
+                    request.oppdatereBegrunnelse != null,
                 )
             }
         }
@@ -220,8 +220,7 @@ class SamværService(
         return oppdatertSamvar.tilOppdaterSamværResponseDto()
     }
 
-    fun beregnSamværsklasse(kalkulator: SamværskalkulatorDetaljer): DelberegningSamværsklasse =
-        beregnSamværsklasseApi.beregnSamværsklasse(kalkulator).delberegningSamværsklasse
+    fun beregnSamværsklasse(kalkulator: SamværskalkulatorDetaljer): DelberegningSamværsklasse = beregnSamværsklasseApi.beregnSamværsklasse(kalkulator).delberegningSamværsklasse
 
     private fun SamværskalkulatorDetaljer?.tilJsonString() = this?.let { commonObjectmapper.writeValueAsString(it) }
 
@@ -231,9 +230,8 @@ class SamværService(
     ) = find { (barnId == null && it.rolle.ident == gjelderBarn) || it.rolle.id == barnId }
         ?: ugyldigForespørsel("Fant ikke samvær for barn $gjelderBarn i behandling med id ${firstOrNull()?.behandling?.id}")
 
-    private fun Samvær.hentPeriode(id: Long) =
-        perioder.find { it.id == id }
-            ?: ugyldigForespørsel("Fant ikke samværsperiode med id $id i samvær $id")
+    private fun Samvær.hentPeriode(id: Long) = perioder.find { it.id == id }
+        ?: ugyldigForespørsel("Fant ikke samværsperiode med id $id i samvær $id")
 
     fun rekalkulerPerioderSamvær(
         behandling: Behandling,

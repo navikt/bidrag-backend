@@ -118,14 +118,14 @@ class UtgiftserviceMockTest {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        id = 1,
-                        dato = LocalDate.now().minusDays(1),
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                        betaltAvBp = true,
-                    ),
+                OppdatereUtgift(
+                    id = 1,
+                    dato = LocalDate.now().minusDays(1),
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                    betaltAvBp = true,
+                ),
             )
         shouldNotThrow<HttpClientErrorException> { utgiftService.oppdatereUtgift(behandling.id!!, forespørsel) }
     }
@@ -155,14 +155,14 @@ class UtgiftserviceMockTest {
         val forespørsel =
             OppdatereUtgiftRequest(
                 nyEllerEndretUtgift =
-                    OppdatereUtgift(
-                        id = 1,
-                        dato = LocalDate.now().minusDays(1),
-                        type = Utgiftstype.OPTIKK.name,
-                        kravbeløp = BigDecimal(2000),
-                        godkjentBeløp = BigDecimal(500),
-                        kommentar = "Test",
-                    ),
+                OppdatereUtgift(
+                    id = 1,
+                    dato = LocalDate.now().minusDays(1),
+                    type = Utgiftstype.OPTIKK.name,
+                    kravbeløp = BigDecimal(2000),
+                    godkjentBeløp = BigDecimal(500),
+                    kommentar = "Test",
+                ),
             )
         val exception =
             shouldThrow<HttpClientErrorException> { utgiftService.oppdatereUtgift(behandling.id!!, forespørsel) }

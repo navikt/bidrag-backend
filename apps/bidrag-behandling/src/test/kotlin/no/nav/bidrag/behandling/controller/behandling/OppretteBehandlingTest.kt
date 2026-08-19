@@ -139,9 +139,9 @@ class OppretteBehandlingTest : BehandlingControllerTest() {
                         vedtakstype = Vedtakstype.FASTSETTELSE,
                         innkrevingstype = Innkrevingstype.UTEN_INNKREVING,
                         kategori =
-                            OpprettKategoriRequestDto(
-                                kategori = Særbidragskategori.KONFIRMASJON.name,
-                            ),
+                        OpprettKategoriRequestDto(
+                            kategori = Særbidragskategori.KONFIRMASJON.name,
+                        ),
                     )
 
             stubUtils.stubHenteGrunnlag()
@@ -195,10 +195,10 @@ class OppretteBehandlingTest : BehandlingControllerTest() {
                         stønadstype = null,
                         vedtakstype = Vedtakstype.FASTSETTELSE,
                         kategori =
-                            OpprettKategoriRequestDto(
-                                kategori = Særbidragskategori.ANNET.name,
-                                beskrivelse = "Batteri til høreapparat",
-                            ),
+                        OpprettKategoriRequestDto(
+                            kategori = Særbidragskategori.ANNET.name,
+                            beskrivelse = "Batteri til høreapparat",
+                        ),
                     )
 
             stubUtils.stubHenteGrunnlag()
@@ -661,9 +661,9 @@ class OppretteBehandlingTest : BehandlingControllerTest() {
                         vedtakstype = Vedtakstype.FASTSETTELSE,
                         innkrevingstype = Innkrevingstype.UTEN_INNKREVING,
                         kategori =
-                            OpprettKategoriRequestDto(
-                                kategori = Særbidragskategori.KONFIRMASJON.name,
-                            ),
+                        OpprettKategoriRequestDto(
+                            kategori = Særbidragskategori.KONFIRMASJON.name,
+                        ),
                     )
             val r =
                 httpHeaderTestRestTemplate.exchange(

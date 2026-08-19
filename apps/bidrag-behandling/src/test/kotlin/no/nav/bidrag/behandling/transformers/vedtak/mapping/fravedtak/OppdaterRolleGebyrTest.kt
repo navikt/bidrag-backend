@@ -108,14 +108,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_SKYLDNER,
-                            testdataBP.ident,
-                            "gebyr-bp-ref",
-                            grunnlagReferanseListe = listOf(bpSluttberegningRef),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_SKYLDNER,
+                        testdataBP.ident,
+                        "gebyr-bp-ref",
+                        grunnlagReferanseListe = listOf(bpSluttberegningRef),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -153,14 +153,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_MOTTAKER,
-                            testdataBM.ident,
-                            "gebyr-bm-ref",
-                            grunnlagReferanseListe = listOf(bmSluttberegningRef),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_MOTTAKER,
+                        testdataBM.ident,
+                        "gebyr-bm-ref",
+                        grunnlagReferanseListe = listOf(bmSluttberegningRef),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -211,14 +211,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_SKYLDNER,
-                            testdataBP.ident,
-                            engangsbeløpRef,
-                            grunnlagReferanseListe = listOf(bpSluttberegningRef),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_SKYLDNER,
+                        testdataBP.ident,
+                        engangsbeløpRef,
+                        grunnlagReferanseListe = listOf(bpSluttberegningRef),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -251,14 +251,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_SKYLDNER,
-                            testdataBP.ident,
-                            engangsbeløpRef,
-                            grunnlagReferanseListe = emptyList(),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_SKYLDNER,
+                        testdataBP.ident,
+                        engangsbeløpRef,
+                        grunnlagReferanseListe = emptyList(),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -286,14 +286,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_SKYLDNER,
-                            "annen-ident-12345",
-                            "ukjent-ref",
-                            grunnlagReferanseListe = listOf("ukjent-grunnlag-ref"),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_SKYLDNER,
+                        "annen-ident-12345",
+                        "ukjent-ref",
+                        grunnlagReferanseListe = listOf("ukjent-grunnlag-ref"),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -330,20 +330,20 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_SKYLDNER,
-                            testdataBP.ident,
-                            "gebyr-bp-ref",
-                            grunnlagReferanseListe = listOf(bpSluttberegningRef),
-                        ),
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_MOTTAKER,
-                            testdataBM.ident,
-                            "gebyr-bm-ref",
-                            grunnlagReferanseListe = listOf(bmSluttberegningRef),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_SKYLDNER,
+                        testdataBP.ident,
+                        "gebyr-bp-ref",
+                        grunnlagReferanseListe = listOf(bpSluttberegningRef),
                     ),
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_MOTTAKER,
+                        testdataBM.ident,
+                        "gebyr-bm-ref",
+                        grunnlagReferanseListe = listOf(bmSluttberegningRef),
+                    ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)
@@ -389,14 +389,14 @@ class OppdaterRolleGebyrTest {
         val vedtakDto =
             opprettVedtakDto().copy(
                 engangsbeløpListe =
-                    listOf(
-                        byggEngangsbeløp(
-                            Engangsbeløptype.GEBYR_MOTTAKER,
-                            testdataBM.ident,
-                            "gebyr-bm-ref-2",
-                            grunnlagReferanseListe = listOf(bmSluttberegningRef),
-                        ),
+                listOf(
+                    byggEngangsbeløp(
+                        Engangsbeløptype.GEBYR_MOTTAKER,
+                        testdataBM.ident,
+                        "gebyr-bm-ref-2",
+                        grunnlagReferanseListe = listOf(bmSluttberegningRef),
                     ),
+                ),
             )
 
         grunnlagListe.oppdaterRolleGebyr(behandling, vedtakDto)

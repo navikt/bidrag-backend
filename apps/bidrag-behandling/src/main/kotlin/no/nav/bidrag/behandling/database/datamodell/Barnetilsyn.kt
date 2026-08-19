@@ -29,6 +29,5 @@ open class Barnetilsyn(
     @Enumerated(EnumType.STRING)
     open var kilde: Kilde,
 ) {
-    override fun toString(): String =
-        "Barnetilsyn(id=$id, underholdskostnad=${underholdskostnad.id}, fom=$fom, tom=$tom, under_skolealder=$under_skolealder, omfang=$omfang, kilde=$kilde)"
+    override fun toString(): String = "Barnetilsyn(id=$id, underholdskostnad=${underholdskostnad.id}, fom=$fom, tom=$tom, under_skolealder=$under_skolealder, omfang=$omfang, kilde=$kilde)"
 }

@@ -94,18 +94,18 @@ class BeregningDtoMappingTest {
                     løperForskudd = false,
                     BeregnetForskuddResultat(
                         beregnetForskuddPeriodeListe =
-                            listOf(
-                                ResultatPeriode(
-                                    periode = ÅrMånedsperiode(LocalDate.parse("2022-01-01"), null),
-                                    grunnlagsreferanseListe = emptyList(),
-                                    resultat =
-                                        ResultatBeregning(
-                                            belop = BigDecimal.ZERO,
-                                            kode = Resultatkode.BARNETS_INNTEKT,
-                                            regel = "",
-                                        ),
+                        listOf(
+                            ResultatPeriode(
+                                periode = ÅrMånedsperiode(LocalDate.parse("2022-01-01"), null),
+                                grunnlagsreferanseListe = emptyList(),
+                                resultat =
+                                ResultatBeregning(
+                                    belop = BigDecimal.ZERO,
+                                    kode = Resultatkode.BARNETS_INNTEKT,
+                                    regel = "",
                                 ),
                             ),
+                        ),
                     ),
                 ),
             )
@@ -162,50 +162,50 @@ class BeregningDtoMappingTest {
             listOf(
                 ResultatForskuddsberegningBarn(
                     barn =
-                        ResultatRolle(
-                            Personident(testdataBarn1.ident),
-                            testdataBarn1.navn,
-                            testdataBarn1.fødselsdato,
-                            referanse = testdataBarn1.tilRolle().tilGrunnlagsreferanse(),
-                            erRevurderingsbarn = false,
-                        ),
+                    ResultatRolle(
+                        Personident(testdataBarn1.ident),
+                        testdataBarn1.navn,
+                        testdataBarn1.fødselsdato,
+                        referanse = testdataBarn1.tilRolle().tilGrunnlagsreferanse(),
+                        erRevurderingsbarn = false,
+                    ),
                     resultat =
-                        BeregnetForskuddResultat(
-                            beregnetForskuddPeriodeListe =
-                                listOf(
-                                    ResultatPeriode(
-                                        periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                        grunnlagsreferanseListe = listOf("sluttberegning1"),
-                                        resultat =
-                                            ResultatBeregning(
-                                                belop = BigDecimal(1000),
-                                                kode = Resultatkode.REDUSERT_FORSKUDD_50_PROSENT,
-                                                regel = "regel",
-                                            ),
-                                    ),
+                    BeregnetForskuddResultat(
+                        beregnetForskuddPeriodeListe =
+                        listOf(
+                            ResultatPeriode(
+                                periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                                grunnlagsreferanseListe = listOf("sluttberegning1"),
+                                resultat =
+                                ResultatBeregning(
+                                    belop = BigDecimal(1000),
+                                    kode = Resultatkode.REDUSERT_FORSKUDD_50_PROSENT,
+                                    regel = "regel",
                                 ),
-                            grunnlagListe =
-                                listOf(
-                                    GrunnlagDto(
-                                        type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
-                                        referanse = "sluttberegning1",
-                                        innhold = POJONode(""),
-                                        grunnlagsreferanseListe = listOf("sivilstandPeriode1"),
-                                    ),
-                                    GrunnlagDto(
-                                        type = Grunnlagstype.SIVILSTAND_PERIODE,
-                                        referanse = "sivilstandPeriode1",
-                                        innhold =
-                                            POJONode(
-                                                SivilstandPeriode(
-                                                    periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                                    sivilstand = Sivilstandskode.BOR_ALENE_MED_BARN,
-                                                    manueltRegistrert = false,
-                                                ),
-                                            ),
-                                    ),
-                                ),
+                            ),
                         ),
+                        grunnlagListe =
+                        listOf(
+                            GrunnlagDto(
+                                type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
+                                referanse = "sluttberegning1",
+                                innhold = POJONode(""),
+                                grunnlagsreferanseListe = listOf("sivilstandPeriode1"),
+                            ),
+                            GrunnlagDto(
+                                type = Grunnlagstype.SIVILSTAND_PERIODE,
+                                referanse = "sivilstandPeriode1",
+                                innhold =
+                                POJONode(
+                                    SivilstandPeriode(
+                                        periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                                        sivilstand = Sivilstandskode.BOR_ALENE_MED_BARN,
+                                        manueltRegistrert = false,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
                 ),
             )
         val resultatDto = resultat1.tilDto()
@@ -329,17 +329,17 @@ class BeregningDtoMappingTest {
         val beregnetResultat =
             BeregnetSærbidragResultat(
                 beregnetSærbidragPeriodeListe =
-                    listOf(
-                        no.nav.bidrag.transport.behandling.beregning.særbidrag.ResultatPeriode(
-                            periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
-                            resultat =
-                                no.nav.bidrag.transport.behandling.beregning.særbidrag.ResultatBeregning(
-                                    beløp = BigDecimal(2500),
-                                    resultatkode = Resultatkode.SÆRBIDRAG_INNVILGET,
-                                ),
-                            grunnlagsreferanseListe = emptyList(),
+                listOf(
+                    no.nav.bidrag.transport.behandling.beregning.særbidrag.ResultatPeriode(
+                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                        resultat =
+                        no.nav.bidrag.transport.behandling.beregning.særbidrag.ResultatBeregning(
+                            beløp = BigDecimal(2500),
+                            resultatkode = Resultatkode.SÆRBIDRAG_INNVILGET,
                         ),
+                        grunnlagsreferanseListe = emptyList(),
                     ),
+                ),
                 grunnlagListe = emptyList(),
             )
 
@@ -361,129 +361,128 @@ class BeregningDtoMappingTest {
         avslagskode: Resultatkode? = null,
     ) = ResultatBidragsberegningBarn(
         barn =
-            ResultatRolle(
-                ident = Personident(testDataPerson.ident),
-                navn = testDataPerson.navn,
-                fødselsdato = testDataPerson.fødselsdato,
-                referanse = referanse,
-                stønadstype = Stønadstype.BIDRAG,
-                erRevurderingsbarn = erRevurderingsbarn,
-            ),
+        ResultatRolle(
+            ident = Personident(testDataPerson.ident),
+            navn = testDataPerson.navn,
+            fødselsdato = testDataPerson.fødselsdato,
+            referanse = referanse,
+            stønadstype = Stønadstype.BIDRAG,
+            erRevurderingsbarn = erRevurderingsbarn,
+        ),
         resultat =
-            BeregnetBarnebidragResultat(
-                beregnetBarnebidragPeriodeListe = emptyList(),
-                grunnlagListe = emptyList(),
-            ),
+        BeregnetBarnebidragResultat(
+            beregnetBarnebidragPeriodeListe = emptyList(),
+            grunnlagListe = emptyList(),
+        ),
         avslagskode = avslagskode,
         opphørsdato = null,
         `løperBidrag` = true,
     )
 
-    private fun opprettGyldigBeregning(testDataPerson: TestDataPerson) =
-        ResultatForskuddsberegningBarn(
-            barn =
-                ResultatRolle(
-                    Personident(testDataPerson.ident),
-                    testDataPerson.navn,
-                    testDataPerson.fødselsdato,
-                    referanse = testdataBarn1.tilRolle().tilGrunnlagsreferanse(),
-                    erRevurderingsbarn = false,
+    private fun opprettGyldigBeregning(testDataPerson: TestDataPerson) = ResultatForskuddsberegningBarn(
+        barn =
+        ResultatRolle(
+            Personident(testDataPerson.ident),
+            testDataPerson.navn,
+            testDataPerson.fødselsdato,
+            referanse = testdataBarn1.tilRolle().tilGrunnlagsreferanse(),
+            erRevurderingsbarn = false,
+        ),
+        resultat =
+        BeregnetForskuddResultat(
+            beregnetForskuddPeriodeListe =
+            listOf(
+                ResultatPeriode(
+                    periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                    grunnlagsreferanseListe = listOf("sluttberegning1"),
+                    resultat =
+                    ResultatBeregning(
+                        belop = BigDecimal(1000),
+                        kode = Resultatkode.REDUSERT_FORSKUDD_50_PROSENT,
+                        regel = "Regel beregning",
+                    ),
                 ),
-            resultat =
-                BeregnetForskuddResultat(
-                    beregnetForskuddPeriodeListe =
-                        listOf(
-                            ResultatPeriode(
-                                periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                grunnlagsreferanseListe = listOf("sluttberegning1"),
-                                resultat =
-                                    ResultatBeregning(
-                                        belop = BigDecimal(1000),
-                                        kode = Resultatkode.REDUSERT_FORSKUDD_50_PROSENT,
-                                        regel = "Regel beregning",
-                                    ),
-                            ),
-                            ResultatPeriode(
-                                periode = ÅrMånedsperiode("2022-01", "2022-12"),
-                                grunnlagsreferanseListe = listOf("sluttberegning2"),
-                                resultat =
-                                    ResultatBeregning(
-                                        belop = BigDecimal(2000),
-                                        kode = Resultatkode.FORHØYET_FORSKUDD_100_PROSENT,
-                                        regel = "Regel beregning",
-                                    ),
-                            ),
-                        ),
-                    grunnlagListe =
-                        listOf(
-                            GrunnlagDto(
-                                type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
-                                referanse = "sluttberegning1",
-                                innhold = POJONode(""),
-                                grunnlagsreferanseListe =
-                                    listOf(
-                                        "delberegningInntekt1",
-                                        "delberegningBarnIHusstand1",
-                                        "sivilstandPeriode1",
-                                    ),
-                            ),
-                            GrunnlagDto(
-                                type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
-                                referanse = "sluttberegning2",
-                                innhold = POJONode(""),
-                                grunnlagsreferanseListe =
-                                    listOf(
-                                        "delberegningInntekt2",
-                                        "delberegningBarnIHusstand1",
-                                        "sivilstandPeriode1",
-                                    ),
-                            ),
-                            GrunnlagDto(
-                                type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                                referanse = "delberegningInntekt1",
-                                innhold =
-                                    POJONode(
-                                        DelberegningSumInntekt(
-                                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                            totalinntekt = BigDecimal(2000),
-                                        ),
-                                    ),
-                            ),
-                            GrunnlagDto(
-                                type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                                referanse = "delberegningInntekt2",
-                                innhold =
-                                    POJONode(
-                                        DelberegningSumInntekt(
-                                            periode = ÅrMånedsperiode("2022-01", "2022-12"),
-                                            totalinntekt = BigDecimal(3400),
-                                        ),
-                                    ),
-                            ),
-                            GrunnlagDto(
-                                type = Grunnlagstype.DELBEREGNING_BARN_I_HUSSTAND,
-                                referanse = "delberegningBarnIHusstand1",
-                                innhold =
-                                    POJONode(
-                                        DelberegningBarnIHusstand(
-                                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                            antallBarn = 3.0,
-                                        ),
-                                    ),
-                            ),
-                            GrunnlagDto(
-                                type = Grunnlagstype.SIVILSTAND_PERIODE,
-                                referanse = "sivilstandPeriode1",
-                                innhold =
-                                    POJONode(
-                                        SivilstandPeriode(
-                                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
-                                            sivilstand = Sivilstandskode.BOR_ALENE_MED_BARN,
-                                            manueltRegistrert = false,
-                                        ),
-                                    ),
-                            ),
-                        ),
+                ResultatPeriode(
+                    periode = ÅrMånedsperiode("2022-01", "2022-12"),
+                    grunnlagsreferanseListe = listOf("sluttberegning2"),
+                    resultat =
+                    ResultatBeregning(
+                        belop = BigDecimal(2000),
+                        kode = Resultatkode.FORHØYET_FORSKUDD_100_PROSENT,
+                        regel = "Regel beregning",
+                    ),
                 ),
-        )
+            ),
+            grunnlagListe =
+            listOf(
+                GrunnlagDto(
+                    type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
+                    referanse = "sluttberegning1",
+                    innhold = POJONode(""),
+                    grunnlagsreferanseListe =
+                    listOf(
+                        "delberegningInntekt1",
+                        "delberegningBarnIHusstand1",
+                        "sivilstandPeriode1",
+                    ),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
+                    referanse = "sluttberegning2",
+                    innhold = POJONode(""),
+                    grunnlagsreferanseListe =
+                    listOf(
+                        "delberegningInntekt2",
+                        "delberegningBarnIHusstand1",
+                        "sivilstandPeriode1",
+                    ),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+                    referanse = "delberegningInntekt1",
+                    innhold =
+                    POJONode(
+                        DelberegningSumInntekt(
+                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                            totalinntekt = BigDecimal(2000),
+                        ),
+                    ),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+                    referanse = "delberegningInntekt2",
+                    innhold =
+                    POJONode(
+                        DelberegningSumInntekt(
+                            periode = ÅrMånedsperiode("2022-01", "2022-12"),
+                            totalinntekt = BigDecimal(3400),
+                        ),
+                    ),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.DELBEREGNING_BARN_I_HUSSTAND,
+                    referanse = "delberegningBarnIHusstand1",
+                    innhold =
+                    POJONode(
+                        DelberegningBarnIHusstand(
+                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                            antallBarn = 3.0,
+                        ),
+                    ),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.SIVILSTAND_PERIODE,
+                    referanse = "sivilstandPeriode1",
+                    innhold =
+                    POJONode(
+                        SivilstandPeriode(
+                            periode = ÅrMånedsperiode("2021-01", "2021-12"),
+                            sivilstand = Sivilstandskode.BOR_ALENE_MED_BARN,
+                            manueltRegistrert = false,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
 }

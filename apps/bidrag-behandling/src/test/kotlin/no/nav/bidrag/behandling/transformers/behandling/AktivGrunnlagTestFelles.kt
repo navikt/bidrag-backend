@@ -28,25 +28,24 @@ abstract class AktivGrunnlagTestFelles {
         stubKodeverkProvider()
     }
 
-    fun opprettHusstandsmedlemmer(behandling: Behandling) =
-        setOf(
-            behandling.oppretteHusstandsmedlem(
-                null,
-                testdataBarn1.ident,
-                testdataBarn1.navn,
-                testdataBarn1.fødselsdato,
-                behandling.virkningstidspunkt,
-                behandling.virkningstidspunkt!!.plusMonths(5),
-            ),
-            behandling.oppretteHusstandsmedlem(
-                null,
-                testdataBarn2.ident,
-                testdataBarn2.navn,
-                LocalDate.now().plusMonths(5),
-                behandling.virkningstidspunkt,
-                behandling.virkningstidspunkt!!.plusMonths(5),
-            ),
-        )
+    fun opprettHusstandsmedlemmer(behandling: Behandling) = setOf(
+        behandling.oppretteHusstandsmedlem(
+            null,
+            testdataBarn1.ident,
+            testdataBarn1.navn,
+            testdataBarn1.fødselsdato,
+            behandling.virkningstidspunkt,
+            behandling.virkningstidspunkt!!.plusMonths(5),
+        ),
+        behandling.oppretteHusstandsmedlem(
+            null,
+            testdataBarn2.ident,
+            testdataBarn2.navn,
+            LocalDate.now().plusMonths(5),
+            behandling.virkningstidspunkt,
+            behandling.virkningstidspunkt!!.plusMonths(5),
+        ),
+    )
 
     fun byggBehandling(): Behandling {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak()
@@ -63,15 +62,14 @@ abstract class AktivGrunnlagTestFelles {
     fun beregnYtelser(
         behandling: Behandling,
         inntekter: Set<Inntekt>,
-    ): Set<IkkeAktivInntektDto> =
-        grunnlagsdataTyperYtelser
-            .flatMap {
-                behandling.grunnlag.toList().hentEndringerInntekter(
-                    behandling.bidragsmottaker!!,
-                    inntekter,
-                    it,
-                )
-            }.toSet()
+    ): Set<IkkeAktivInntektDto> = grunnlagsdataTyperYtelser
+        .flatMap {
+            behandling.grunnlag.toList().hentEndringerInntekter(
+                behandling.bidragsmottaker!!,
+                inntekter,
+                it,
+            )
+        }.toSet()
 
     fun opprettInntekt(
         datoFom: YearMonth,
@@ -96,21 +94,21 @@ abstract class AktivGrunnlagTestFelles {
         taMed = taMed,
         type = type,
         inntektsposter =
-            (
-                inntektstyper.map {
+        (
+            inntektstyper.map {
+                Inntektspost(
+                    beløp = it.second,
+                    inntektstype = it.first,
+                    kode = "",
+                )
+            } +
+                inntektstyperKode.map {
                     Inntektspost(
                         beløp = it.second,
-                        inntektstype = it.first,
-                        kode = "",
+                        inntektstype = null,
+                        kode = it.first,
                     )
-                } +
-                    inntektstyperKode.map {
-                        Inntektspost(
-                            beløp = it.second,
-                            inntektstype = null,
-                            kode = it.first,
-                        )
-                    }
+                }
             ).toMutableSet(),
     )
 }

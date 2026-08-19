@@ -34,8 +34,8 @@ data class BoforholdDtoV2(
     val valideringsfeil: BoforholdValideringsfeil = BoforholdValideringsfeil(),
     @get:Schema(
         description =
-            "Er sann hvis status på andre voksne i husstanden er 'BOR_IKKE_MED_ANDRE_VOKSNE'," +
-                " men det er 18 åring i husstanden som regnes som voksen i husstanden",
+        "Er sann hvis status på andre voksne i husstanden er 'BOR_IKKE_MED_ANDRE_VOKSNE'," +
+            " men det er 18 åring i husstanden som regnes som voksen i husstanden",
     )
     val egetBarnErEnesteVoksenIHusstanden: Boolean? = false,
     val beregnetBoforhold: List<DelberegningBoforhold> = emptyList(),

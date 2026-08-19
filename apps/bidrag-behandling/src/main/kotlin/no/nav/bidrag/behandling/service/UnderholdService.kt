@@ -59,9 +59,8 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatTyp
 
 private val log = KotlinLogging.logger {}
 
-private fun periodeFomJuli(year: Int) =
-    LocalDate
-        .of(year, 7, 1)
+private fun periodeFomJuli(year: Int) = LocalDate
+    .of(year, 7, 1)
 
 @Service
 class UnderholdService(
@@ -125,7 +124,7 @@ class UnderholdService(
                 underholdskostnad.barnetilsyn.isNotEmpty() ||
                     underholdskostnad.tilleggsstønad.isNotEmpty() ||
                     underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
-            )
+                )
         ) {
             ugyldigForespørsel(
                 "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, eller faktiske tilsynsutgift",
@@ -156,8 +155,8 @@ class UnderholdService(
                 personRepository.findFirstByIdent(gjelderRolle.ident!!.verdi) ?: Person(
                     ident = gjelderRolle.ident.verdi,
                     fødselsdato =
-                        hentPersonFødselsdato(gjelderRolle.ident.verdi)
-                            ?: fantIkkeFødselsdatoTilPerson(behandling.id!!),
+                    hentPersonFødselsdato(gjelderRolle.ident.verdi)
+                        ?: fantIkkeFødselsdatoTilPerson(behandling.id!!),
                 )
             eksisterendeUnderholdskostnad.person = person
             eksisterendeUnderholdskostnad.barnetilsyn.clear()
@@ -214,8 +213,8 @@ class UnderholdService(
                         Person(
                             ident = personidentBarn.verdi,
                             fødselsdato =
-                                hentPersonFødselsdato(personidentBarn.verdi)
-                                    ?: fantIkkeFødselsdatoTilPerson(behandling.id!!),
+                            hentPersonFødselsdato(personidentBarn.verdi)
+                                ?: fantIkkeFødselsdatoTilPerson(behandling.id!!),
                         )
                     person.rolle.forEach { it.person = person }
 
@@ -241,8 +240,8 @@ class UnderholdService(
             Person(
                 ident = rolle!!.ident,
                 fødselsdato =
-                    hentPersonFødselsdato(rolle.ident!!)
-                        ?: fantIkkeFødselsdatoTilPerson(underholdskostnad.behandling.id!!),
+                hentPersonFødselsdato(rolle.ident!!)
+                    ?: fantIkkeFødselsdatoTilPerson(underholdskostnad.behandling.id!!),
             )
         }
         underholdskostnad.tilleggsstønad.clear()
@@ -357,13 +356,13 @@ class UnderholdService(
                 Barnetilsyn(
                     fom = periodeJustert.fom,
                     tom =
-                        underholdskostnad.begrensTomDatoForTolvÅr(periodeJustert),
+                    underholdskostnad.begrensTomDatoForTolvÅr(periodeJustert),
                     under_skolealder =
-                        when (request.skolealder) {
-                            Skolealder.UNDER -> true
-                            Skolealder.OVER -> false
-                            else -> null
-                        },
+                    when (request.skolealder) {
+                        Skolealder.UNDER -> true
+                        Skolealder.OVER -> false
+                        else -> null
+                    },
                     omfang = request.tilsynstype ?: Tilsynstype.IKKE_ANGITT,
                     kilde = kilde,
                     underholdskostnad = underholdskostnad,
@@ -379,11 +378,11 @@ class UnderholdService(
                         fom = periodeFomJuli(årstallNårBarnFyllerTolvÅr(underholdskostnad.personFødselsdato)),
                         tom = periodeJustert.tom,
                         under_skolealder =
-                            when (request.skolealder) {
-                                Skolealder.UNDER -> true
-                                Skolealder.OVER -> false
-                                else -> null
-                            },
+                        when (request.skolealder) {
+                            Skolealder.UNDER -> true
+                            Skolealder.OVER -> false
+                            else -> null
+                        },
                         omfang = request.tilsynstype ?: Tilsynstype.IKKE_ANGITT,
                         kilde = kilde,
                         underholdskostnad = underholdskostnad,
@@ -528,15 +527,13 @@ class UnderholdService(
         }
     }
 
-    private fun Underholdskostnad.begrensTomDatoForTolvÅr(periode: DatoperiodeDto): LocalDate? =
-        if (erPeriodeFørOgEtterFyltTolvÅr(periode)) {
-            periodeFomJuli(årstallNårBarnFyllerTolvÅr(personFødselsdato)).minusDays(1)
-        } else {
-            periode.tom
-        }
+    private fun Underholdskostnad.begrensTomDatoForTolvÅr(periode: DatoperiodeDto): LocalDate? = if (erPeriodeFørOgEtterFyltTolvÅr(periode)) {
+        periodeFomJuli(årstallNårBarnFyllerTolvÅr(personFødselsdato)).minusDays(1)
+    } else {
+        periode.tom
+    }
 
-    private fun Underholdskostnad.erPeriodeFørOgEtterFyltTolvÅr(periode: DatoperiodeDto) =
-        !erBarnOverTolvÅrForDato(periode.fom) && erBarnOverTolvÅrForDato(periode.tom ?: LocalDate.now())
+    private fun Underholdskostnad.erPeriodeFørOgEtterFyltTolvÅr(periode: DatoperiodeDto) = !erBarnOverTolvÅrForDato(periode.fom) && erBarnOverTolvÅrForDato(periode.tom ?: LocalDate.now())
 
     private fun årstallNårBarnFyllerTolvÅr(fødselsdato: LocalDate) = fødselsdato.plusYears(12).year
 

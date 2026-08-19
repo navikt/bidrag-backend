@@ -37,16 +37,16 @@ class ForsendelseControllerTest : KontrollerTestRunner() {
                         saksnummer = SAKSNUMMER,
                         enhet = BidragEnhet.ENHET_FARSKAP,
                         behandlingInfo =
-                            BehandlingInfoDto(
-                                soknadId = SOKNAD_ID,
-                                stonadType = Stønadstype.FORSKUDD,
-                            ),
+                        BehandlingInfoDto(
+                            soknadId = SOKNAD_ID,
+                            stonadType = Stønadstype.FORSKUDD,
+                        ),
                         roller =
-                            listOf(
-                                testdataBM.tilForsendelseRolleDto(),
-                                testdataBP.tilForsendelseRolleDto(),
-                                testdataBarn1.tilForsendelseRolleDto(),
-                            ),
+                        listOf(
+                            testdataBM.tilForsendelseRolleDto(),
+                            testdataBP.tilForsendelseRolleDto(),
+                            testdataBarn1.tilForsendelseRolleDto(),
+                        ),
                     ),
                 ),
                 List::class.java,
@@ -189,17 +189,17 @@ class ForsendelseControllerTest : KontrollerTestRunner() {
                         saksnummer = SAKSNUMMER,
                         enhet = BidragEnhet.ENHET_FARSKAP,
                         behandlingInfo =
-                            BehandlingInfoDto(
-                                soknadId = SOKNAD_ID,
-                                stonadType = Stønadstype.FORSKUDD,
-                                vedtakId = "1",
-                            ),
+                        BehandlingInfoDto(
+                            soknadId = SOKNAD_ID,
+                            stonadType = Stønadstype.FORSKUDD,
+                            vedtakId = "1",
+                        ),
                         roller =
-                            listOf(
-                                testdataBM.tilForsendelseRolleDto(),
-                                testdataBP.tilForsendelseRolleDto(),
-                                testdataBarn1.tilForsendelseRolleDto(),
-                            ),
+                        listOf(
+                            testdataBM.tilForsendelseRolleDto(),
+                            testdataBP.tilForsendelseRolleDto(),
+                            testdataBarn1.tilForsendelseRolleDto(),
+                        ),
                     ),
                 ),
                 List::class.java,
@@ -238,17 +238,17 @@ class ForsendelseControllerTest : KontrollerTestRunner() {
                         behandlingStatus = BehandlingStatus.FEILREGISTRERT,
                         enhet = BidragEnhet.ENHET_FARSKAP,
                         behandlingInfo =
-                            BehandlingInfoDto(
-                                soknadId = SOKNAD_ID,
-                                stonadType = Stønadstype.FORSKUDD,
-                                vedtakId = "1",
-                            ),
+                        BehandlingInfoDto(
+                            soknadId = SOKNAD_ID,
+                            stonadType = Stønadstype.FORSKUDD,
+                            vedtakId = "1",
+                        ),
                         roller =
-                            listOf(
-                                testdataBM.tilForsendelseRolleDto(),
-                                testdataBP.tilForsendelseRolleDto(),
-                                testdataBarn1.tilForsendelseRolleDto(),
-                            ),
+                        listOf(
+                            testdataBM.tilForsendelseRolleDto(),
+                            testdataBP.tilForsendelseRolleDto(),
+                            testdataBarn1.tilForsendelseRolleDto(),
+                        ),
                     ),
                 ),
                 List::class.java,

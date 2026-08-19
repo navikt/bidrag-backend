@@ -87,7 +87,6 @@ jobs:
 
   deploy_q1:
     needs: sjekk_sync_med_main
-    if: success()
     name: "Build and deploy to Q1"
     concurrency:
       group: deploy-behandling-q1-${{ github.ref }}
@@ -129,30 +128,6 @@ jobs:
       ktlint_paths: apps/bidrag-behandling/src/**/*.kt
       docker_context: ./apps/bidrag-behandling
       nais_variabler_filnavn: bidrag-behandling/q2.yaml
-      nais_hovedfil_navn: bidrag-behandling/nais.yaml
-      image_suffix: bidrag-behandling
-      tag: bidrag-behandling
-
-  deploy_q4:
-    needs: sjekk_sync_med_main
-    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q4/') || startsWith(github.ref, 'refs/heads/Q4/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q4'))
-    name: "Build and deploy to Q4"
-    concurrency:
-      group: deploy-behandling-q4-${{ github.ref }}
-      cancel-in-progress: true
-    permissions:
-      contents: "read"
-      id-token: "write"
-    uses: ./.github/workflows/bygg_og_deploy.yaml
-    secrets: inherit
-    with:
-      maven_options: -B -fae -pl apps/bidrag-behandling -am
-      maven_cache_paths: |
-        pom.xml
-        apps/bidrag-behandling/pom.xml
-      ktlint_paths: apps/bidrag-behandling/src/**/*.kt
-      docker_context: ./apps/bidrag-behandling
-      nais_variabler_filnavn: bidrag-behandling/q4.yaml
       nais_hovedfil_navn: bidrag-behandling/nais.yaml
       image_suffix: bidrag-behandling
       tag: bidrag-behandling

@@ -161,14 +161,13 @@ class OppgaveService(
     private fun hentLøpendeForskuddForSak(
         saksnummer: String,
         søknadsbarnIdent: String,
-    ): StønadDto? =
-        bidragStønadConsumer.hentHistoriskeStønader(
-            HentStønadHistoriskRequest(
-                type = Stønadstype.FORSKUDD,
-                sak = Saksnummer(saksnummer),
-                skyldner = personIdentNav,
-                kravhaver = Personident(søknadsbarnIdent),
-                gyldigTidspunkt = LocalDateTime.now(),
-            ),
-        )
+    ): StønadDto? = bidragStønadConsumer.hentHistoriskeStønader(
+        HentStønadHistoriskRequest(
+            type = Stønadstype.FORSKUDD,
+            sak = Saksnummer(saksnummer),
+            skyldner = personIdentNav,
+            kravhaver = Personident(søknadsbarnIdent),
+            gyldigTidspunkt = LocalDateTime.now(),
+        ),
+    )
 }

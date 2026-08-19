@@ -66,15 +66,14 @@ class TestdataManager(
         inkludereBp: Boolean = false,
         behandlingstype: TypeBehandling = TypeBehandling.FORSKUDD,
         inkludereVoksneIBpsHusstand: Boolean = true,
-    ): Behandling =
-        oppretteBehandling(
-            inkluderInntekter,
-            inkludereSivilstand,
-            inkludereBoforhold,
-            inkludereBp,
-            behandlingstype,
-            inkludereVoksneIBpsHusstand,
-        )
+    ): Behandling = oppretteBehandling(
+        inkluderInntekter,
+        inkludereSivilstand,
+        inkludereBoforhold,
+        inkludereBp,
+        behandlingstype,
+        inkludereVoksneIBpsHusstand,
+    )
 
     @Transactional
     fun oppretteBehandling(
@@ -138,15 +137,15 @@ class TestdataManager(
                 grunnlagstype.type.getOrMigrate(),
                 grunnlagstype.erBearbeidet,
                 data =
-                    if (grunnlagsdata != null) {
-                        tilJson(grunnlagsdata)
-                    } else {
-                        oppretteGrunnlagInntektsdata(
-                            grunnlagstype.type.getOrMigrate(),
-                            rolle!!.ident!!,
-                            behandling.søktFomDato,
-                        )
-                    },
+                if (grunnlagsdata != null) {
+                    tilJson(grunnlagsdata)
+                } else {
+                    oppretteGrunnlagInntektsdata(
+                        grunnlagstype.type.getOrMigrate(),
+                        rolle!!.ident!!,
+                        behandling.søktFomDato,
+                    )
+                },
                 innhentet = innhentet,
                 aktiv = aktiv,
                 rolle = rolle!!,
@@ -169,13 +168,13 @@ class TestdataManager(
                             periodeFra = søktFomDato.withDayOfMonth(1),
                             periodeTil = søktFomDato.plusMonths(1).withDayOfMonth(1),
                             ainntektspostListe =
-                                listOf(
-                                    tilAinntektspostDto(
-                                        beløp = BigDecimal(70000),
-                                        fomDato = søktFomDato,
-                                        tilDato = søktFomDato.plusMonths(1).withDayOfMonth(1),
-                                    ),
+                            listOf(
+                                tilAinntektspostDto(
+                                    beløp = BigDecimal(70000),
+                                    fomDato = søktFomDato,
+                                    tilDato = søktFomDato.plusMonths(1).withDayOfMonth(1),
                                 ),
+                            ),
                         ),
                     ),
                 ),
@@ -187,11 +186,10 @@ class TestdataManager(
         }
     }
 
-    fun hentBehandling(id: Long): Behandling? =
-        entityManager
-            .createNativeQuery(
-                "SELECT * FROM behandling WHERE id = $id",
-                Behandling::class.java,
-            ).resultList
-            .firstOrNull() as Behandling?
+    fun hentBehandling(id: Long): Behandling? = entityManager
+        .createNativeQuery(
+            "SELECT * FROM behandling WHERE id = $id",
+            Behandling::class.java,
+        ).resultList
+        .firstOrNull() as Behandling?
 }

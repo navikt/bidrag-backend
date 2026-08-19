@@ -32,7 +32,7 @@ class SamværController(
     @PutMapping("/behandling/{behandlingsid}/samvar")
     @Operation(
         description =
-            "Oppdater samvær for en behandling.",
+        "Oppdater samvær for en behandling.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun oppdaterSamvær(
@@ -69,7 +69,7 @@ class SamværController(
     @DeleteMapping("/behandling/{behandlingsid}/samvar/periode")
     @Operation(
         description =
-            "Slett samværsperiode",
+        "Slett samværsperiode",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun slettSamværsperiode(
@@ -91,7 +91,7 @@ class SamværController(
     @PostMapping("/samvar/beregn")
     @Operation(
         description =
-            "Oppdater samvær for en behandling.",
+        "Oppdater samvær for en behandling.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun beregnSamværsklasse(

@@ -150,7 +150,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 32160000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 1),
@@ -159,10 +159,10 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 16000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf(
-                                "annenArbeidsinntekt" to BigDecimal(6000),
-                                "arbeidsavklaringspenger" to BigDecimal(10000),
-                            ),
+                        listOf(
+                            "annenArbeidsinntekt" to BigDecimal(6000),
+                            "arbeidsavklaringspenger" to BigDecimal(10000),
+                        ),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2022, 1),
@@ -171,7 +171,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 5000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("annenArbeidsinntekt" to BigDecimal(5000)),
+                        listOf("annenArbeidsinntekt" to BigDecimal(5000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 2),
@@ -180,7 +180,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 0.toBigDecimal(),
                         ident = barnIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 1),
@@ -189,10 +189,10 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 16000.toBigDecimal(),
                         ident = barnIdent,
                         inntektstyperKode =
-                            listOf(
-                                "annenArbeidsinntekt" to BigDecimal(6000),
-                                "arbeidsavklaringspenger" to BigDecimal(10000),
-                            ),
+                        listOf(
+                            "annenArbeidsinntekt" to BigDecimal(6000),
+                            "arbeidsavklaringspenger" to BigDecimal(10000),
+                        ),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2022, 1),
@@ -201,7 +201,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 5000.toBigDecimal(),
                         ident = barnIdent,
                         inntektstyperKode =
-                            listOf("annenArbeidsinntekt" to BigDecimal(5000)),
+                        listOf("annenArbeidsinntekt" to BigDecimal(5000)),
                     ),
                 )
 
@@ -273,7 +273,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 32160000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 1),
@@ -282,10 +282,10 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 16000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf(
-                                "annenArbeidsinntekt" to BigDecimal(6000),
-                                "arbeidsavklaringspenger" to BigDecimal(10000),
-                            ),
+                        listOf(
+                            "annenArbeidsinntekt" to BigDecimal(6000),
+                            "arbeidsavklaringspenger" to BigDecimal(10000),
+                        ),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2022, 1),
@@ -294,7 +294,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 5000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("annenArbeidsinntekt" to BigDecimal(5000)),
+                        listOf("annenArbeidsinntekt" to BigDecimal(5000)),
                     ),
                 )
 
@@ -328,7 +328,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 32160000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 1),
@@ -337,10 +337,10 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 17000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf(
-                                "annenArbeidsinntekt" to BigDecimal(6000),
-                                "arbeidsavklaringspenger" to BigDecimal(11000),
-                            ),
+                        listOf(
+                            "annenArbeidsinntekt" to BigDecimal(6000),
+                            "arbeidsavklaringspenger" to BigDecimal(11000),
+                        ),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2022, 1),
@@ -349,7 +349,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 5000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("arbeidsavklaringspenger" to BigDecimal(5000)),
+                        listOf("arbeidsavklaringspenger" to BigDecimal(5000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2024, 1),
@@ -465,7 +465,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 32160000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                     opprettInntekt(
                         datoFom = YearMonth.of(2023, 10),
@@ -474,7 +474,7 @@ class AktivInntektEndringerTest : AktivGrunnlagTestFelles() {
                         beløp = 32160000.toBigDecimal(),
                         ident = bmIdent,
                         inntektstyperKode =
-                            listOf("fastloenn" to BigDecimal(32160000)),
+                        listOf("fastloenn" to BigDecimal(32160000)),
                     ),
                 )
 

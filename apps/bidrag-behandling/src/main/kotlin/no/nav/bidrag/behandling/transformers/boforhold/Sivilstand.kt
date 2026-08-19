@@ -30,11 +30,10 @@ fun Set<SivilstandGrunnlagDto>.tilSivilstandRequest(
     endreSivilstand = null,
 )
 
-fun Behandling.henteNyesteSivilstandGrunnlagsdata(): List<SivilstandGrunnlagDto> =
-    grunnlag
-        .hentSisteAktiv()
-        .find { !it.erBearbeidet && Grunnlagsdatatype.SIVILSTAND == it.type }
-        .konvertereData<List<SivilstandGrunnlagDto>>() ?: emptyList()
+fun Behandling.henteNyesteSivilstandGrunnlagsdata(): List<SivilstandGrunnlagDto> = grunnlag
+    .hentSisteAktiv()
+    .find { !it.erBearbeidet && Grunnlagsdatatype.SIVILSTAND == it.type }
+    .konvertereData<List<SivilstandGrunnlagDto>>() ?: emptyList()
 
 fun Set<Sivilstand>.tilSvilstandRequest(
     nyttEllerEndretInnslag: Sivilstandsperiode? = null,
@@ -48,54 +47,49 @@ fun Set<Sivilstand>.tilSvilstandRequest(
     fødselsdatoBM = fødselsdatoBm,
 )
 
-fun Sivilstandskode.tilSivilstandskodePDL() =
-    when (this) {
-        Sivilstandskode.BOR_ALENE_MED_BARN -> SivilstandskodePDL.SKILT
-        Sivilstandskode.GIFT_SAMBOER -> SivilstandskodePDL.GIFT
-        Sivilstandskode.SAMBOER -> SivilstandskodePDL.GIFT
-        Sivilstandskode.ENSLIG -> SivilstandskodePDL.SKILT
-        Sivilstandskode.UKJENT -> SivilstandskodePDL.UOPPGITT
-    }
+fun Sivilstandskode.tilSivilstandskodePDL() = when (this) {
+    Sivilstandskode.BOR_ALENE_MED_BARN -> SivilstandskodePDL.SKILT
+    Sivilstandskode.GIFT_SAMBOER -> SivilstandskodePDL.GIFT
+    Sivilstandskode.SAMBOER -> SivilstandskodePDL.GIFT
+    Sivilstandskode.ENSLIG -> SivilstandskodePDL.SKILT
+    Sivilstandskode.UKJENT -> SivilstandskodePDL.UOPPGITT
+}
 
-fun List<Sivilstand>.tilSivilstandBeregnV2Dto() =
-    this.map {
-        SivilstandBeregnV2Dto(
-            periodeFom = it.datoFom,
-            periodeTom = it.datoTom,
-            kilde = it.kilde,
-            sivilstandskode = it.sivilstand,
-        )
-    }
-
-fun Sivilstand.tilSivilstandBeregnV2Dto() =
+fun List<Sivilstand>.tilSivilstandBeregnV2Dto() = this.map {
     SivilstandBeregnV2Dto(
-        periodeFom = this.datoFom,
-        periodeTom = this.datoTom,
-        kilde = this.kilde,
-        sivilstandskode = this.sivilstand,
+        periodeFom = it.datoFom,
+        periodeTom = it.datoTom,
+        kilde = it.kilde,
+        sivilstandskode = it.sivilstand,
     )
+}
 
-fun Set<SivilstandBeregnV2Dto>.tilSivilstand(behandling: Behandling): List<Sivilstand> =
-    this.map {
-        Sivilstand(
-            behandling = behandling,
-            kilde = it.kilde,
-            datoFom = it.periodeFom,
-            datoTom = it.periodeTom,
-            sivilstand = it.sivilstandskode,
-        )
-    }
+fun Sivilstand.tilSivilstandBeregnV2Dto() = SivilstandBeregnV2Dto(
+    periodeFom = this.datoFom,
+    periodeTom = this.datoTom,
+    kilde = this.kilde,
+    sivilstandskode = this.sivilstand,
+)
 
-fun List<no.nav.bidrag.sivilstand.response.SivilstandV1>.tilSivilstand(behandling: Behandling): List<Sivilstand> =
-    this.map {
-        Sivilstand(
-            behandling = behandling,
-            kilde = Kilde.OFFENTLIG,
-            datoFom = it.periodeFom,
-            datoTom = it.periodeTom,
-            sivilstand = it.sivilstandskode,
-        )
-    }
+fun Set<SivilstandBeregnV2Dto>.tilSivilstand(behandling: Behandling): List<Sivilstand> = this.map {
+    Sivilstand(
+        behandling = behandling,
+        kilde = it.kilde,
+        datoFom = it.periodeFom,
+        datoTom = it.periodeTom,
+        sivilstand = it.sivilstandskode,
+    )
+}
+
+fun List<no.nav.bidrag.sivilstand.response.SivilstandV1>.tilSivilstand(behandling: Behandling): List<Sivilstand> = this.map {
+    Sivilstand(
+        behandling = behandling,
+        kilde = Kilde.OFFENTLIG,
+        datoFom = it.periodeFom,
+        datoTom = it.periodeTom,
+        sivilstand = it.sivilstandskode,
+    )
+}
 
 fun Behandling.overskriveMedBearbeidaSivilstandshistorikk(nyHistorikk: Set<SivilstandBeregnV2Dto>) {
     this.sivilstand.clear()
@@ -141,15 +135,14 @@ fun Set<Sivilstand>.bestemmmeOriginalSivilstand(
     sletteInnslag?.let { id -> return this.find { it.id == id }?.tilSivilstandBeregnV2Dto() } ?: return null
 }
 
-fun bestemmeNySivilstand(nyttEllerEndretInnslag: Sivilstandsperiode?): SivilstandBeregnV2Dto? =
-    nyttEllerEndretInnslag?.let {
-        SivilstandBeregnV2Dto(
-            periodeFom = it.fraOgMed,
-            periodeTom = it.tilOgMed,
-            kilde = Kilde.MANUELL,
-            sivilstandskode = it.sivilstand,
-        )
-    }
+fun bestemmeNySivilstand(nyttEllerEndretInnslag: Sivilstandsperiode?): SivilstandBeregnV2Dto? = nyttEllerEndretInnslag?.let {
+    SivilstandBeregnV2Dto(
+        periodeFom = it.fraOgMed,
+        periodeTom = it.tilOgMed,
+        kilde = Kilde.MANUELL,
+        sivilstandskode = it.sivilstand,
+    )
+}
 
 private fun bestemmeEndringstype(
     nyttEllerEndretInnslag: Sivilstandsperiode? = null,
