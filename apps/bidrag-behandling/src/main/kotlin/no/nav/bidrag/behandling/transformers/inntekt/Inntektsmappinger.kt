@@ -88,8 +88,10 @@ fun Inntekt.erOpprinneligPeriodeInnenforVirkningstidspunktEllerOpphør(): Boolea
                 false
             } else {
                 virkningstidspunkt in fom..tom ||
-                    virkningstidspunktEllerStartenAvNesteMåned >= fom &&
-                    tom.isAfter(virkningstidspunkt)
+                    (
+                        virkningstidspunktEllerStartenAvNesteMåned >= fom &&
+                            tom.isAfter(virkningstidspunkt)
+                        )
             }
         }
     }

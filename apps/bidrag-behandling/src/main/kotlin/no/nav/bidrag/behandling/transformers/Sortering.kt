@@ -163,7 +163,7 @@ fun Set<Inntekt>.årsinntekterSortert(
             årsinntekterPrioriteringsliste.indexOf(
                 it.type,
             )
-        if (index == -1 || it.taMed && sorterTaMed) 1000 else index
+        if (index == -1 || (it.taMed && sorterTaMed)) 1000 else index
     }.thenBy {
         val manuelleInntekterPrioritering = manuelleInntekter.map { it.name }.sorted()
         val index =

@@ -338,7 +338,7 @@ open class Behandling(
     val minstEnRolleHarBegrensetBeregnTilDato get() =
         søknadsbarn.any {
             it.opphørsdato != null ||
-                it.beregnTil != null && it.beregnTil != BeregnTil.INNEVÆRENDE_MÅNED
+                (it.beregnTil != null && it.beregnTil != BeregnTil.INNEVÆRENDE_MÅNED)
         }
     val globalOpphørsdatoYearMonth get() = globalOpphørsdato?.let { YearMonth.from(it) }
 

@@ -217,8 +217,8 @@ class ForsendelseService(
             .any {
                 it.behandlingInfo?.soknadId == request.behandlingInfo.soknadId &&
                     (
-                        request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == true ||
-                            !request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == false
+                        (request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == true) ||
+                            (!request.behandlingInfo.erVedtakFattet() && it.behandlingInfo?.erFattet == false)
                         )
             }
     }

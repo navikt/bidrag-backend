@@ -253,12 +253,14 @@ fun VedtakDto.tilBeregningResultatBidrag(vedtakBeregning: VedtakDto?): ResultatB
 )
 
 fun VedtakDto.erVedtakUtenBeregning() = type == Vedtakstype.INDEKSREGULERING ||
-    !this.erVedtakAvvistRevurderingsøknad() &&
-    stønadsendringListe
-        .all {
-            it.periodeListe.isEmpty() || it.finnSistePeriode()?.resultatkode == "IV" ||
-                (erOrkestrertVedtak && type == Vedtakstype.INNKREVING)
-        }
+    (
+        !this.erVedtakAvvistRevurderingsøknad() &&
+            stønadsendringListe
+                .all {
+                    it.periodeListe.isEmpty() || it.finnSistePeriode()?.resultatkode == "IV" ||
+                        (erOrkestrertVedtak && type == Vedtakstype.INNKREVING)
+                }
+        )
 
 internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<DelvedtakDto> {
     val søknadsbarnGrunnlag = grunnlagListe.hentPerson(stønadsendring.kravhaver.verdi)

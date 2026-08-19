@@ -98,10 +98,14 @@ fun Set<Rolle>.reelMottakerEllerBidragsmottaker(rolle: RolleDto): Personident {
 fun String?.nullIfEmpty() = if (this.isNullOrEmpty()) null else this
 
 fun <T, R> T?.takeIfNotNullOrEmpty(block: (T) -> R): R? = if (this == null ||
-    this is String &&
-    this.trim().isEmpty() ||
-    this is List<*> &&
-    this.isEmpty()
+    (
+        this is String &&
+            this.trim().isEmpty()
+        ) ||
+    (
+        this is List<*> &&
+            this.isEmpty()
+        )
 ) {
     null
 } else {
