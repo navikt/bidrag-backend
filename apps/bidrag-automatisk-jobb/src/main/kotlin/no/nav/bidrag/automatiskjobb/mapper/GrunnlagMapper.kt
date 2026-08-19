@@ -123,7 +123,7 @@ object GrunnlagMapper {
         vedtak: VedtakDto,
         stønadsendring: StønadsendringDto,
     ): List<GrunnlagDto> {
-        val periode = stønadsendring.periodeListe.hentSisteBeregnetPeriode(vedtak)
+        val periode = stønadsendring.periodeListe.hentSisteBeregnetPeriode(vedtak) ?: return emptyList()
         val bidragsmottaker = vedtak.grunnlagListe.bidragsmottaker!!
         val søknadsbarn = vedtak.grunnlagListe.hentPersonNyesteIdent(stønadsendring.kravhaver.verdi)!!
         val inntekter =
@@ -191,7 +191,7 @@ object GrunnlagMapper {
         .filter { it.resultatkode != Resultatkode.OPPHØR.name }
         .filter {
             !erBidragResultatAvslagEllerManglerInntekterTilParter(vedtak, it)
-        }.maxBy { it.periode.fom }
+        }.maxByOrNull { it.periode.fom }
 
     // Det under brukes for debugging og logging av siste inntekter
     fun hentSisteDelberegningInntektFraForskudd(
@@ -199,7 +199,7 @@ object GrunnlagMapper {
         gjelderBarn: Personident,
     ): DelberegningSumInntekt? = try {
         vedtak.stønadsendringListe.find { it.kravhaver == gjelderBarn && it.type == Stønadstype.FORSKUDD }?.let {
-            val periode = it.periodeListe.hentSisteBeregnetPeriode(vedtak)
+            val periode = it.periodeListe.hentSisteBeregnetPeriode(vedtak) ?: return@let null
             val bidragsmottaker = vedtak.grunnlagListe.bidragsmottaker!!
             vedtak.grunnlagListe.hentDelberegningSumInntekt(
                 periode.grunnlagReferanseListe,
@@ -252,7 +252,7 @@ object GrunnlagMapper {
         vedtak: VedtakDto,
         gjelderBarn: Personident,
     ): DelberegningSumInntekt? = vedtak.stønadsendringListe.find { it.kravhaver == gjelderBarn && it.erBidrag }?.let {
-        val periode = it.periodeListe.hentSisteBeregnetPeriode(vedtak)
+        val periode = it.periodeListe.hentSisteBeregnetPeriode(vedtak) ?: return@let null
         val bidragsmottaker = vedtak.grunnlagListe.bidragsmottaker!!
         vedtak.grunnlagListe.hentDelberegningSumInntekt(
             periode.grunnlagReferanseListe,
