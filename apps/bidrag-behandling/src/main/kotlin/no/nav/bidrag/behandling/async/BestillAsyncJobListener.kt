@@ -1,0 +1,53 @@
+package no.nav.bidrag.behandling.async
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import jakarta.transaction.Transactional
+import no.nav.bidrag.behandling.async.dto.BehandlingOppdateringBestilling
+import no.nav.bidrag.behandling.async.dto.GrunnlagInnhentingBestilling
+import no.nav.bidrag.behandling.async.dto.OpprettForsendelseBestilling
+import no.nav.bidrag.behandling.async.dto.SøknadSlettetBestilling
+import no.nav.bidrag.behandling.service.BehandlingService
+import no.nav.bidrag.behandling.service.GrunnlagService
+import no.nav.bidrag.transport.felles.tilJsonString
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Async
+import org.springframework.stereotype.Component
+
+private val log = KotlinLogging.logger {}
+
+@Component
+class BestillAsyncJobListener(
+    private val behandlingService: BehandlingService,
+    private val grunnlagService: GrunnlagService,
+) {
+    @EventListener
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    @Async
+    fun bestillInnhentingAvGrunnlag(bestilling: GrunnlagInnhentingBestilling) {
+        if (bestilling.waitForCommit) return
+        log.info { "Async: Henter grunnlag for behandling ${bestilling.behandlingId}" }
+        grunnlagService.oppdatereGrunnlagForBehandling(bestilling.behandlingId)
+    }
+
+    @EventListener
+    @Async
+    fun behandleBestillingAvOppdateringAvRoller(bestilling: BehandlingOppdateringBestilling) {
+        log.info { "Async: Oppdaterer roller for behandling ${bestilling.behandlingId} og request ${tilJsonString(bestilling.request)}" }
+        behandlingService.oppdaterRoller(bestilling.behandlingId, bestilling.request)
+    }
+
+    @EventListener
+    @Async
+    fun behandleBestillingAvForsendelse(bestilling: OpprettForsendelseBestilling) {
+        if (bestilling.waitForCommit) return
+        log.info { "Async: Oppretter forsendelse for behandling ${bestilling.behandlingId}" }
+        behandlingService.opprettForsendelseForBehandling(bestilling.behandlingId)
+    }
+
+    @EventListener
+    @Async
+    fun behandleBestillingEtterSøknadSlettet(bestilling: SøknadSlettetBestilling) {
+        log.info { "Async: Behandler etter søknad slettet for søknadsid ${bestilling.søknadsid}" }
+        behandlingService.behandleEtterSøknadSlettet(bestilling.søknadsid, bestilling.behandlingsid)
+    }
+}

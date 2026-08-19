@@ -1,0 +1,46 @@
+package no.nav.bidrag.behandling.config
+
+import io.getunleash.variant.Variant
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
+
+enum class UnleashFeatures(
+    val featureName: String,
+    defaultValue: Boolean,
+) {
+    DEBUG_LOGGING("debug_logging", false),
+
+    // I Q1 ved opprettelse av klage så blir alle inntekter fjernet fordi de ikke finnes i testmiljøene.
+    // Dette er for å unngå de slettes ved grunnlagsinnhenting
+    GRUNNLAGSINNHENTING_FUNKSJONELL_FEIL_TEKNISK("behandling.grunnlag_behandle_funksjonell_feil_som_teknisk", false),
+    FATTE_VEDTAK("behandling.fattevedtak_klage", false),
+
+    BIDRAG_KLAGE("behandling.bidrag_klage", false),
+    BEGRENSET_REVURDERING("behandling.begrenset_revurdering", false),
+    VEDTAKSSPERRE("vedtakssperre", false),
+
+    TILGANG_BEHANDLE_INNKREVINGSGRUNNLAG("behandling.behandle_innkrevingsgrunnlag", false),
+    TILGANG_OPPRETTE_FF("behandling.opprette_ff", false),
+    SEND_BEHANDLING_HENDELSE("bisys.send_behandling_hendelse", false),
+    HENT_GRUNNLAG_ASYNC("behandling.hent_grunnlag_async", false),
+    FEILHÅNDTERING_INNTEKT_SOM_MANGLER("behandling.opprett_inntekt_som_mangler", false),
+
+    // Forhodlsmessig fordeling
+    BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG("behandling.behandle_bidrag_flere_barn_lopende_bidrag", false),
+    FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG("behandling.fattevedtak_flere_barn_lopende_bidrag", false),
+    FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER("behandling.behandle_bidrag_bp_har_flere_saker", false),
+    FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA("behandling.fattevedtak_barnebidrag_utenlandskvaluta", false),
+    FATTE_VEDTAK_BARNEBIDRAG_OPPFOSTRINGSBIDRAG("behandling.fattevedtak_barnebidrag_oppfostringsbidrag", false),
+    ;
+
+    private var defaultValue = false
+
+    init {
+        this.defaultValue = defaultValue
+    }
+
+    val isEnabled: Boolean
+        get() = UnleashFeaturesProvider.isEnabled(feature = featureName, defaultValue = defaultValue)
+
+    val variant: Variant?
+        get() = UnleashFeaturesProvider.getVariant(featureName)
+}

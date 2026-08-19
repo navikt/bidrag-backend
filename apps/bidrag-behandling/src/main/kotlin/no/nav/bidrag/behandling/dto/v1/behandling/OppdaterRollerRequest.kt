@@ -1,0 +1,27 @@
+package no.nav.bidrag.behandling.dto.v1.behandling
+
+import io.swagger.v3.oas.annotations.media.Schema
+
+data class OppdaterRollerRequest(
+    @get:Schema(required = true) val roller: List<OpprettRolleDto>,
+    val søknadsid: Long? = null,
+    val saksnummer: String? = null,
+) {
+    val rollerUnderBehandling get() =
+        roller.map {
+            if (it.behandlingstatus?.lukketStatus == true) {
+                it.copy(erSlettet = true)
+            } else {
+                it
+            }
+        }
+}
+
+data class OppdaterRollerResponse(
+    @get:Schema(required = true) val status: OppdaterRollerStatus,
+)
+
+enum class OppdaterRollerStatus {
+    BEHANDLING_SLETTET,
+    ROLLER_OPPDATERT,
+}

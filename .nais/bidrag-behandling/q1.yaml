@@ -1,0 +1,97 @@
+name: bidrag-behandling-q1
+ingresses:
+  - https://bidrag-behandling-q1.intern.dev.nav.no
+min_replicas: 1
+env:
+  SPRING_PROFILES_ACTIVE: live,nais,database-new
+  BIDRAG_PERSON_URL: https://bidrag-person-q1.dev-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q1
+  BIDRAG_GRUNNLAG_URL: http://bidrag-grunnlag-feature
+  BIDRAG_GRUNNLAG_SCOPE: dev-gcp.bidrag.bidrag-grunnlag-feature
+  BIDRAG_FORSENDELSE_URL: http://bidrag-dokument-forsendelse-feature
+  BIDRAG_FORSENDELSE_SCOPE: dev-gcp.bidrag.bidrag-dokument-forsendelse-feature
+  BIDRAG_SAMHANDLER_URL: http://bidrag-samhandler-q1
+  BIDRAG_SAMHANDLER_SCOPE: dev-gcp.bidrag.bidrag-samhandler-q1
+  BIDRAG_TILGANGSKONTROLL_URL: http://bidrag-tilgangskontroll-feature
+  BIDRAG_TILGANGGSKONTROLL_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll-feature
+  BIDRAG_BELOPSHISTORIKK_URL: http://bidrag-belopshistorikk-q1
+  BIDRAG_BELOPSHISTORIKK_SCOPE: dev-gcp.bidrag.bidrag-belopshistorikk-q1
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak-q1
+  BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q1
+  BIDRAG_BBM_URL: https://bidrag-bbm-feature.dev-fss-pub.nais.io
+  BIDRAG_BBM_SCOPE: dev-fss.bidrag.bidrag-bbm-feature
+  BIDRAG_DOKUMENT_PRODUKSJON_URL: http://bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_PRODUKSJON_SCOPE: dev-gcp.bidrag.bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument-feature.dev-fss-pub.nais.io/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument-feature
+  BIDRAG_SAK_URL: https://bidrag-sak-q1.dev-fss-pub.nais.io
+  BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q1
+  TOPIC_VEDTAK: bidrag.vedtak-q1
+  TOPIC_JOURNALPOST: bidrag.journalpost-feature
+  TOPIC_BEHANDLING: bidrag.behandling-q1
+  BIDRAG_ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon-feature
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon-feature.dev-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_SJABLON_URL: https://bidrag-sjablon.dev-fss-pub.nais.io/bidrag-sjablon
+  ARBEID_OG_INNTEKT_URL: https://arbeid-og-inntekt-q1.dev-fss-pub.nais.io/api/v2
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_SYNKRONISER_FF: 1
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_FORRIGE_INNHENTING: 60
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_FORRIGE_INNHENTING_BELOPSHISTORIKK: 5
+  KODEVERK_URL: http://bidrag-kodeverk
+  OPPGAVE_URL: https://oppgave-q1.dev-fss-pub.nais.io
+  OPPGAVE_SCOPE: dev-fss.oppgavehandtering.oppgave-q1
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+kafka:
+  pool: nav-dev
+azure_access_inbound:
+  - application: bidrag-ui-feature
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-dokument-bestilling-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-automatisk-jobb-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-arbeidsflyt-feature
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-frontend-q1
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+database:
+  dbname: bidrag-behandling-q1
+  autoResize: true
+  tier: db-f1-micro
+  auditlog: "on"
+outbound-access-apps:
+  - bidrag-belopshistorikk-q1
+  - bidrag-vedtak-q1
+  - bidrag-samhandler-q1
+  - bidrag-dokument-produksjon
+  - bidrag-grunnlag-feature
+  - bidrag-dokument-forsendelse-feature
+  - bidrag-tilgangskontroll-feature
+  - bidrag-dokument-produksjon-feature
+  - bidrag-kodeverk
+outbound-access-hosts:
+  - bidrag-dokument-feature.dev-fss-pub.nais.io
+  - bidrag-person-feature.dev-fss-pub.nais.io
+  - bidrag-organisasjon-feature.dev-fss-pub.nais.io
+  - bidrag-sjablon-feature.dev-fss-pub.nais.io
+  - arbeid-og-inntekt-q1.dev-fss-pub.nais.io
+  - oppgave-q1.dev-fss-pub.nais.io
+  - kodeverk-api.nav.no
+  - bidrag-unleash-api.nav.cloud.nais.io
+  - bidrag-bbm-feature.dev-fss-pub.nais.io
+unleash:
+  env: development
+  secret_name: bidrag-behandling-unleash-api-token

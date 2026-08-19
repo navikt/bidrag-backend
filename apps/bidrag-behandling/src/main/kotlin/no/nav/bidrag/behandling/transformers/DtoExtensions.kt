@@ -1,0 +1,124 @@
+package no.nav.bidrag.behandling.transformers
+
+import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
+import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
+import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
+import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
+import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.database.datamodell.Sivilstand
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
+import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
+import no.nav.bidrag.behandling.dto.v1.behandling.SivilstandDto
+import no.nav.bidrag.behandling.rolleManglerFødselsdato
+import no.nav.bidrag.behandling.service.hentPersonFødselsdato
+import no.nav.bidrag.behandling.transformers.behandling.finnRolle
+import no.nav.bidrag.behandling.transformers.boforhold.oppdaterePerioder
+import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.person.Bostatuskode
+import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.BeregnTil
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
+import java.time.LocalDate
+
+fun Set<Sivilstand>.toSivilstandDto() =
+    this.map { SivilstandDto(it.id, it.datoFom, it.datoTom, it.sivilstand, it.kilde) }.sortedBy { it.datoFom }.toSet()
+
+fun Behandling.tilForsendelseRolleDto(
+    saksnummer: String,
+    opprettForSøknad: ForholdsmessigFordelingSøknadBarn? = null,
+) = roller
+    .filter { r -> !(r.rolletype == Rolletype.BARN && r.ident == null) }
+    .filter { r -> r.rolletype != Rolletype.BARN || opprettForSøknad?.søknadsid == null || r.harSøknad(opprettForSøknad.søknadsid!!) }
+    .filter { it.saksnummer == saksnummer }
+    .map {
+        no.nav.bidrag.behandling.dto.v1.forsendelse.ForsendelseRolleDto(
+            fødselsnummer = Personident(it.ident!!),
+            type = it.rolletype,
+        )
+    }
+
+fun OpprettRolleDto.toRolle(
+    behandling: Behandling,
+    `stønadstype`: Stønadstype? = null,
+    søktFraDato: LocalDate? = behandling.søktFomDato,
+): Rolle {
+    val fødselsdatoPerson =
+        fødselsdato ?: hentPersonFødselsdato(ident?.verdi)
+            ?: rolleManglerFødselsdato(rolletype)
+
+    return Rolle(
+        behandling = behandling,
+        behandlingstema = behandlingstema,
+        behandlingstatus = behandlingstatus,
+        innkrevingstype = behandling.innkrevingstype,
+        rolletype = rolletype,
+        stønadstype = stønadstype ?: behandling.stonadstype,
+        ident = ident?.verdi,
+        opprinneligVirkningstidspunkt = opprinneligVirkningstidspunkt,
+        fødselsdato = fødselsdatoPerson,
+        navn = navn,
+        beregnTil =
+            if (behandling.vedtakstype == Vedtakstype.KLAGE) {
+                BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+            } else {
+                BeregnTil.INNEVÆRENDE_MÅNED
+            },
+        opphørsdato = opphørsdato,
+        virkningstidspunkt =
+            if (rolletype == Rolletype.BARN) {
+                maxOfNullable(fødselsdatoPerson.withDayOfMonth(1), behandling.eldsteVirkningstidspunkt, søktFraDato)
+            } else {
+                null
+            },
+        årsak =
+            if (rolletype == Rolletype.BARN) {
+                behandling.årsak
+            } else {
+                null
+            },
+        avslag =
+            if (rolletype == Rolletype.BARN) {
+                behandling.avslag
+            } else {
+                null
+            },
+        innbetaltBeløp = innbetaltBeløp,
+        harGebyrsøknadColumn = harGebyrsøknad,
+        gebyr =
+            GebyrRolle(
+                gebyrSøknader =
+                    if (harGebyrsøknad) {
+                        mutableSetOf(
+                            GebyrRolleSøknad(
+                                saksnummer = behandling.saksnummer,
+                                søknadsid = behandling.soknadsid!!,
+                                behandlingid = behandling.id,
+                                referanse = referanseGebyr,
+                            ),
+                        )
+                    } else {
+                        mutableSetOf()
+                    },
+            ),
+    )
+}
+
+fun OpprettRolleDto.toHusstandsmedlem(behandling: Behandling): Husstandsmedlem {
+    val husstandsmedlem =
+        Husstandsmedlem(
+            behandling,
+            Kilde.OFFENTLIG,
+            ident = this.ident?.verdi,
+            rolle = behandling.finnRolle(ident?.verdi!!, stønadstype ?: behandling.stonadstype),
+            fødselsdato =
+                this.fødselsdato ?: hentPersonFødselsdato(ident?.verdi)
+                    ?: rolleManglerFødselsdato(rolletype),
+        )
+
+    husstandsmedlem.oppdaterePerioder()
+
+    return husstandsmedlem
+}

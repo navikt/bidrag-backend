@@ -1,0 +1,48 @@
+package no.nav.bidrag.behandling.dto.v1.behandling
+
+import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.media.Schema
+import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
+import no.nav.bidrag.domene.enums.behandling.tilStønadstype
+import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.ident.Personident
+import java.math.BigDecimal
+import java.time.LocalDate
+
+@Schema(description = "Rolle beskrivelse som er brukte til å opprette nye roller")
+data class OpprettRolleDto(
+    @get:Schema(required = true, enumAsRef = true)
+    val rolletype: Rolletype,
+    @get:Schema(
+        type = "String",
+        description = "F.eks fødselsnummer. Påkrevd for alle rolletyper utenom for barn som ikke inngår i beregning.",
+        required = false,
+        nullable = true,
+    )
+    val ident: Personident?,
+    @get:Schema(
+        type = "String",
+        description = "Navn på rolleinnehaver hvis ident er ukjent. Gjelder kun barn som ikke inngår i beregning",
+        required = false,
+        nullable = true,
+    )
+    val navn: String? = null,
+    @get:Schema(type = "String", format = "date", description = "F.eks fødselsdato")
+    val fødselsdato: LocalDate?,
+    val innbetaltBeløp: BigDecimal? = null,
+    val erSlettet: Boolean = false,
+    val erUkjent: Boolean = false,
+    val harGebyrsøknad: Boolean = false,
+    val referanseGebyr: String? = null,
+    val behandlingstatus: Behandlingstatus? = null,
+    val behandlingstema: Behandlingstema? = null,
+    val bidragsmottakerId: Long? = null,
+    // Brukes bare intern når det opprettes klage
+    @JsonIgnore
+    val opprinneligVirkningstidspunkt: LocalDate? = null,
+    @JsonIgnore
+    val opphørsdato: LocalDate? = null,
+) {
+    val stønadstype get() = behandlingstema?.tilStønadstype()
+}

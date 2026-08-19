@@ -1,0 +1,383 @@
+package no.nav.bidrag.behandling.service
+
+import com.fasterxml.jackson.module.kotlin.readValue
+import io.kotest.assertions.throwables.shouldNotThrow
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.mockk.every
+import io.mockk.junit5.MockKExtension
+import io.mockk.mockkClass
+import io.mockk.mockkObject
+import no.nav.bidrag.behandling.config.UnleashFeatures
+import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
+import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
+import no.nav.bidrag.behandling.database.repository.BehandlingRepository
+import no.nav.bidrag.behandling.dto.v2.behandling.KanBehandlesINyLøsningRequest
+import no.nav.bidrag.behandling.dto.v2.behandling.KanBehandlesINyLøsningResponse
+import no.nav.bidrag.behandling.dto.v2.behandling.SjekkRolleDto
+import no.nav.bidrag.behandling.utils.disableUnleashFeature
+import no.nav.bidrag.behandling.utils.enableUnleashFeature
+import no.nav.bidrag.behandling.utils.mockAppContext
+import no.nav.bidrag.behandling.utils.testdata.SAKSNUMMER
+import no.nav.bidrag.behandling.utils.testdata.opprettRolle
+import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadDto
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
+import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
+import no.nav.bidrag.behandling.utils.testdata.testdataBM
+import no.nav.bidrag.behandling.utils.testdata.testdataBP
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssak
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssakerResponse
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.SkyldnerStønad
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.SkyldnerStønaderResponse
+import no.nav.bidrag.transport.felles.commonObjectmapper
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
+import java.math.BigDecimal
+import java.time.LocalDate
+
+@ExtendWith(MockKExtension::class)
+class ValiderBehandlingServiceTest {
+    val bidragStønadConsumer: BidragBeløpshistorikkConsumer = mockkClass(BidragBeløpshistorikkConsumer::class)
+    val bidragSakConsumer: BidragSakConsumer = mockkClass(BidragSakConsumer::class)
+    val behandlingRepository: BehandlingRepository = mockkClass(BehandlingRepository::class)
+
+    val validerBehandlingService: ValiderBehandlingService = ValiderBehandlingService(bidragStønadConsumer, bidragSakConsumer)
+
+    @BeforeEach
+    fun initMock() {
+        mockkObject(UnleashFeaturesProvider)
+        mockAppContext(bidragSakConsumer, bidragStønadConsumer)
+        val behandling = oppretteBehandling()
+        behandling.roller =
+            mutableSetOf(
+                opprettRolle(behandling, testdataBP, 1),
+                opprettRolle(behandling, testdataBM, 2),
+                opprettRolle(behandling, testdataBarn2, 3),
+            )
+        every { bidragSakConsumer.hentSak(any()) } returns opprettSakForBehandling(behandling)
+        every { bidragStønadConsumer.hentLøpendeBidrag(any()) } returns
+            LøpendeBidragssakerResponse(
+                bidragssakerListe = oppretLøpendeBidragListeMedBareNorskValuta(),
+            )
+    }
+
+    @Test
+    fun `skal validere gyldig SÆRBIDRAG behandling hvis BP har bare løpende bidrag i NOK`() {
+        validerBehandlingService.validerKanBehandlesINyLøsning(opprettKanBehandlesINyLøsningRequest())
+    }
+
+    @Test
+    fun `skal ikke validere hvis ikke SÆRBIDRAG behandling`() {
+        every { bidragStønadConsumer.hentLøpendeBidrag(any()) } returns
+            LøpendeBidragssakerResponse(
+                bidragssakerListe = oppretLøpendeBidragListeMedUtenlandskValuta(),
+            )
+        validerBehandlingService.validerKanBehandlesINyLøsning(
+            opprettKanBehandlesINyLøsningRequest().copy(
+                engangsbeløpstype = null,
+                stønadstype = Stønadstype.FORSKUDD,
+            ),
+        )
+    }
+
+    @Test
+    fun `skal ikke validere gyldig SÆRBIDRAG behandling hvis BP har bare løpende bidrag i utenlandsk valuta`() {
+        every { bidragStønadConsumer.hentLøpendeBidrag(any()) } returns
+            LøpendeBidragssakerResponse(
+                bidragssakerListe = oppretLøpendeBidragListeMedUtenlandskValuta(),
+            )
+        val expection =
+            shouldThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesINyLøsning(
+                    opprettKanBehandlesINyLøsningRequest(),
+                )
+            }
+        expection.statusCode shouldBe HttpStatus.PRECONDITION_FAILED
+        expection.validerInneholderMelding("Bidragspliktig har løpende bidrag i utenlandsk valuta")
+    }
+
+    @Nested
+    inner class BidragValideringMVP1 {
+        @Test
+        fun `skal validere gyldig BIDRAG`() {
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = listOf(),
+                )
+            shouldNotThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesINyLøsning(
+                    opprettBidragKanBehandlesINyLøsningRequest(),
+                )
+            }
+        }
+
+        @Test
+        fun `skal ikke validere gyldig BIDRAG hvis begrenset revurdering hvis feature toggle av`() {
+            disableUnleashFeature(UnleashFeatures.BEGRENSET_REVURDERING)
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = listOf(opprettSkyldnerStønad()),
+                )
+            every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.FORSKUDD }) } returns
+                opprettStønadDto(
+                    stønadstype = Stønadstype.FORSKUDD,
+                    periodeListe =
+                        listOf(
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                        ),
+                )
+            every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
+                opprettStønadDto(
+                    listOf(
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                    ),
+                )
+            val request = opprettBidragKanBehandlesINyLøsningRequest()
+
+            shouldThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesINyLøsning(request.copy(søknadstype = Behandlingstype.BEGRENSET_REVURDERING))
+            }
+        }
+
+        @Test
+        fun `skal validere gyldig BIDRAG hvis begrenset revurdering og har historisk bidrag med norsk valuta`() {
+            enableUnleashFeature(UnleashFeatures.BEGRENSET_REVURDERING)
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = listOf(opprettSkyldnerStønad()),
+                )
+            every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.FORSKUDD }) } returns
+                opprettStønadDto(
+                    stønadstype = Stønadstype.FORSKUDD,
+                    periodeListe =
+                        listOf(
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                            opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                        ),
+                )
+            every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
+                opprettStønadDto(
+                    listOf(
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null)),
+                    ),
+                )
+            val request = opprettBidragKanBehandlesINyLøsningRequest()
+            shouldNotThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesINyLøsning(request.copy(søknadstype = Behandlingstype.BEGRENSET_REVURDERING))
+            }
+        }
+
+        @Test
+        fun `skal ikke validere gyldig BIDRAG hvis begrenset revurdering men har historisk bidrag med utenlandsk valuta`() {
+            enableUnleashFeature(UnleashFeatures.BEGRENSET_REVURDERING)
+
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = listOf(opprettSkyldnerStønad()),
+                )
+
+            every { bidragStønadConsumer.hentHistoriskeStønader(match { it.type == Stønadstype.BIDRAG }) } returns
+                opprettStønadDto(
+                    listOf(
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-01-01"), LocalDate.parse("2024-07-31"))),
+                        opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2024-08-01"), null), valutakode = "USD"),
+                    ),
+                )
+            val request = opprettBidragKanBehandlesINyLøsningRequest()
+
+            val expection =
+                shouldThrow<HttpClientErrorException> {
+                    validerBehandlingService.validerKanBehandlesINyLøsning(request.copy(søknadstype = Behandlingstype.BEGRENSET_REVURDERING))
+                }
+            expection.statusCode shouldBe HttpStatus.PRECONDITION_FAILED
+            expection.validerInneholderMelding("Kan ikke behandle begrenset revurdering. Minst en løpende forskudd eller bidrag periode har utenlandsk valuta")
+        }
+
+        @Test
+        fun `skal ikke validere gyldig BIDRAG behandling hvis søkt fra dato er før mars 2023`() {
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = emptyList(),
+                )
+            val expection =
+                shouldThrow<HttpClientErrorException> {
+                    validerBehandlingService.validerKanBehandlesINyLøsning(
+                        opprettBidragKanBehandlesINyLøsningRequest().copy(
+                            søktFomDato = LocalDate.parse("2023-02-01"),
+                        ),
+                    )
+                }
+            expection.statusCode shouldBe HttpStatus.PRECONDITION_FAILED
+            expection.validerInneholderMelding("Behandlingen er registrert med søkt fra dato før mars 2023")
+        }
+
+        @Test
+        fun `skal validere gyldig BIDRAG behandling hvis søkt fra dato er mars 2023`() {
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = emptyList(),
+                )
+            shouldNotThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesINyLøsning(
+                    opprettBidragKanBehandlesINyLøsningRequest().copy(
+                        søktFomDato = LocalDate.parse("2023-03-01"),
+                    ),
+                )
+            }
+        }
+
+        @Test
+        fun `skal ikke validere gyldig BIDRAG behandling hvis BP mangler`() {
+            every { bidragStønadConsumer.hentAlleStønaderForBidragspliktig(any()) } returns
+                SkyldnerStønaderResponse(
+                    stønader = emptyList(),
+                )
+            val expection =
+                shouldThrow<HttpClientErrorException> {
+                    validerBehandlingService.validerKanBehandlesINyLøsning(
+                        opprettBidragKanBehandlesINyLøsningRequest().copy(
+                            roller =
+                                listOf(
+                                    SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = null, true),
+                                    SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident("123"), false),
+                                    SjekkRolleDto(Rolletype.BARN, ident = Personident("123213"), false),
+                                ),
+                        ),
+                    )
+                }
+            expection.statusCode shouldBe HttpStatus.PRECONDITION_FAILED
+            expection.validerInneholderMelding("Behandlingen mangler bidragspliktig")
+        }
+    }
+
+    @Nested
+    inner class BisysValidering {
+        @Test
+        fun `skal ikke kaste exception hvis behandling ikke er bidrag`() {
+            shouldNotThrow<HttpClientErrorException> {
+                validerBehandlingService.validerKanBehandlesIBisys(
+                    opprettBehandlingSimpleForBisysValidering(stønadstype = Stønadstype.FORSKUDD, forholdsmessigFordeling = ForholdsmessigFordeling()),
+                )
+            }
+        }
+
+        @Test
+        fun `skal kaste exception hvis forholdsmessig fordeling er opprettet i ny løsning`() {
+            val exception =
+                shouldThrow<HttpClientErrorException> {
+                    validerBehandlingService.validerKanBehandlesIBisys(
+                        opprettBehandlingSimpleForBisysValidering(
+                            stønadstype = Stønadstype.BIDRAG,
+                            forholdsmessigFordeling = ForholdsmessigFordeling(),
+                        ),
+                    )
+                }
+
+            exception.statusCode shouldBe HttpStatus.PRECONDITION_FAILED
+            exception.validerInneholderMelding("Forholdsmessig fordeling er opprettet i ny løsning")
+        }
+    }
+}
+
+private fun HttpClientErrorException.validerInneholderMelding(melding: String) {
+    val response: KanBehandlesINyLøsningResponse = commonObjectmapper.readValue(responseBodyAsByteArray)
+    response.begrunnelser.joinToString("") shouldContain melding
+}
+
+private fun oppretLøpendeBidragListeMedUtenlandskValuta() =
+    listOf(
+        LøpendeBidragssak(
+            valutakode = "NOK",
+            sak = Saksnummer(SAKSNUMMER),
+            kravhaver = Personident("12345678901"),
+            type = Stønadstype.BIDRAG,
+            løpendeBeløp = BigDecimal.ONE,
+        ),
+        LøpendeBidragssak(
+            valutakode = "USD",
+            sak = Saksnummer(SAKSNUMMER),
+            kravhaver = Personident("12345678901"),
+            type = Stønadstype.BIDRAG,
+            løpendeBeløp = BigDecimal.ONE,
+        ),
+    )
+
+private fun opprettSkyldnerStønad(type: Stønadstype = Stønadstype.BIDRAG) = SkyldnerStønad(sak = Saksnummer("123"), kravhaver = Personident(testdataBarn1.ident), type = type)
+
+private fun oppretLøpendeBidragListeMedBareNorskValuta() =
+    listOf(
+        LøpendeBidragssak(
+            valutakode = "NOK",
+            sak = Saksnummer(SAKSNUMMER),
+            kravhaver = Personident(testdataBarn1.ident),
+            type = Stønadstype.BIDRAG,
+            løpendeBeløp = BigDecimal.ONE,
+        ),
+    )
+
+private fun opprettKanBehandlesINyLøsningRequest() =
+    KanBehandlesINyLøsningRequest(
+        engangsbeløpstype = Engangsbeløptype.SÆRBIDRAG,
+        stønadstype = null,
+        roller =
+            listOf(
+                SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident("12345678901"), false),
+            ),
+        saksnummer = SAKSNUMMER,
+    )
+
+private fun opprettBidragKanBehandlesINyLøsningRequest() =
+    KanBehandlesINyLøsningRequest(
+        engangsbeløpstype = null,
+        vedtakstype = Vedtakstype.FASTSETTELSE,
+        stønadstype = Stønadstype.BIDRAG,
+        roller =
+            listOf(
+                SjekkRolleDto(Rolletype.BIDRAGSPLIKTIG, ident = Personident(testdataBP.ident), false),
+                SjekkRolleDto(Rolletype.BIDRAGSMOTTAKER, ident = Personident(testdataBM.ident), false),
+                SjekkRolleDto(Rolletype.BARN, ident = Personident(testdataBarn1.ident), false),
+            ),
+        saksnummer = SAKSNUMMER,
+    )
+
+private fun opprettBehandlingSimpleForBisysValidering(
+    stønadstype: Stønadstype,
+    forholdsmessigFordeling: ForholdsmessigFordeling? = null,
+) = BehandlingSimple(
+    id = 1,
+    søknadsid = 1,
+    virkningstidspunkt = LocalDate.parse("2024-01-01"),
+    søktFomDato = LocalDate.parse("2024-01-01"),
+    mottattdato = LocalDate.parse("2024-01-01"),
+    saksnummer = SAKSNUMMER,
+    harPrivatAvtaleAndreBarn = false,
+    vedtakstype = Vedtakstype.ALDERSJUSTERING,
+    søknadstype = Behandlingstype.REVURDERING,
+    omgjøringsdetaljer = null,
+    stønadstype = stønadstype,
+    engangsbeløptype = null,
+    forholdsmessigFordeling = forholdsmessigFordeling,
+    roller = emptyList(),
+)
