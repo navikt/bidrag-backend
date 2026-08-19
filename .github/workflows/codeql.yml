@@ -66,9 +66,18 @@ jobs:
         build-mode: ${{ matrix.build-mode }}
 
     - name: Run manual build steps
+      # Bygger hele Maven-reactoren (alle moduler) fremfor kun én app, siden CodeQL
+      # analyserer hele monorepoet i ett pass.
+      #
+      # kotlin.compiler.execution.strategy=in-process og kotlin.incremental=false:
+      # moduler som blander Java og Kotlin i samme modul (f.eks. bidrag-dokument-journalpost)
+      # løser Java-referanser via "joint compilation" i kotlin-maven-plugin. Kotlin-daemonen
+      # kjører dette i en frakoblet bakgrunnsprosess som CodeQL sin build-tracer ikke ser inn i,
+      # noe som ga falske "Unresolved reference"-feil under sporet bygg. In-process-strategien
+      # tvinger kompilering til å skje i samme JVM-prosess som mvn, slik at tracer'en fanger den opp.
       if: matrix.build-mode == 'manual'
       shell: bash
-      run: mvn -B -fae install -DskipTests -Dmaven.antrun.skip=true -Dparallel=all -DperCoreThreadCount=true -DthreadCount=10
+      run: mvn -B -fae install -DskipTests -Dmaven.antrun.skip=true -Dparallel=all -DperCoreThreadCount=true -DthreadCount=10 -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
