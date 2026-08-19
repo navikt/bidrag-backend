@@ -125,7 +125,6 @@ import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import java.math.BigDecimal
-import java.nio.charset.Charset
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -987,7 +986,7 @@ fun opprettAlleAktiveGrunnlagFraFil(
 ): MutableSet<Grunnlag> {
     val filJsonString =
         try {
-            hentFil("/__files/$filnavn").readText(Charset.defaultCharset())
+            erstattVariablerITestFil(filnavn.removeSuffix(".json"))
         } catch (e: Exception) {
             filnavn
         }
