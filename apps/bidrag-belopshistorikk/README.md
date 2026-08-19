@@ -22,7 +22,7 @@ Start opp proxy mot Q2 databasen med følgende kommando
 ```bash
 nais postgres proxy -p 5598 bidrag-belopshistorikk-q2 --reason "Koble til databasen for lokal kjøring" --team bidrag --environment dev-gcp
 
-```
+```2
 Deretter start opp BidragBeløpshistorikkLokalNais med følgende miljøvariaber
 
 ``DB_USERNAME=<din Nav epost>``
