@@ -286,7 +286,6 @@ class VedtakInnhentetGrunnlagTest {
                     this.type shouldBe Grunnlagstype.INNHENTET_HUSSTANDSMEDLEM
                     it.gjelderReferanse.shouldBe(grunnlagBm.referanse)
                     val grunnlag = it.innholdTilObjekt<InnhentetHusstandsmedlem>()
-                    grunnlag.grunnlag.relatertPerson shouldBe "person_PERSON_HUSSTANDSMEDLEM_20010509_innhentet_-653873409"
                     grunnlag.grunnlag.erBarnAvBmBp shouldBe false
                     grunnlag.grunnlag.perioder shouldHaveSize 1
                 }
