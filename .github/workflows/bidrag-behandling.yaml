@@ -86,7 +86,6 @@ jobs:
       tag: bidrag-behandling
 
   deploy_q1:
-    needs: sjekk_sync_med_main
     name: "Build and deploy to Q1"
     concurrency:
       group: deploy-behandling-q1-${{ github.ref }}
