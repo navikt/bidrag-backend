@@ -29,6 +29,7 @@ jobs:
     permissions:
       contents: "read"
       pull-requests: "write"
+      copilot-requests: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -57,23 +58,7 @@ jobs:
         env:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
 
-      - name: Sjekk om Copilot-PAT er tilgjengelig
-        id: pat
-        # Prosa-sammendraget krever GitHub Copilot CLI, som må autentiseres med
-        # en PAT med Copilot-tilgang. Mangler den, faller vi tilbake til bare
-        # modultabellen framfor å feile jobben.
-        run: |
-          if [[ -n "$COPILOT_PAT" ]]; then
-            echo "tilgjengelig=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "tilgjengelig=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::COPILOT_PAT er ikke satt. PR-beskrivelsen får kun modultabell, uten AI-generert sammendrag."
-          fi
-        env:
-          COPILOT_PAT: ${{ secrets.COPILOT_PAT }}
-
       - name: Lag prompt
-        if: steps.pat.outputs.tilgjengelig == 'true'
         run: |
           {
             echo "Tittel på pull requesten: $PR_TITTEL"
@@ -90,19 +75,17 @@ jobs:
           PR_TITTEL: ${{ github.event.pull_request.title }}
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        if: steps.pat.outputs.tilgjengelig == 'true'
         with:
           node-version: '24'
 
       - name: Installer Copilot CLI
-        if: steps.pat.outputs.tilgjengelig == 'true'
         run: npm install -g @github/copilot
 
       - name: Generer sammendrag
         id: sammendrag
-        if: steps.pat.outputs.tilgjengelig == 'true'
         # Et feilende sammendrag skal ikke blokkere PR-en; tabellen legges inn
-        # uansett i steget under.
+        # uansett i steget under. Dette fanger blant annet at org-policyen
+        # "Allow use of Copilot CLI billed to the organization" er slått av.
         continue-on-error: true
         uses: actions/ai-inference@2c43c91ae16266ca159d311430343c67a5ffa222 # v3
         with:
@@ -125,7 +108,10 @@ jobs:
             - Bruk ingen markdown-overskrifter, kun tekst og kulepunkter.
             - Hvis diffen er avkortet, si det i en avsluttende setning.
         env:
-          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          # Copilot CLI autentiseres med det innebygde Actions-tokenet, som
+          # krever permissionen copilot-requests: write. Bruken billes til
+          # organisasjonen, så ingen PAT eller lagret secret er nødvendig.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Oppdater PR-beskrivelse
         run: |
