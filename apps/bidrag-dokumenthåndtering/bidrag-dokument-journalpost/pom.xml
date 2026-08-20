@@ -339,6 +339,28 @@
                             </sourceDirs>
                         </configuration>
                     </execution>
+                    <!-- kotlin-maven-plugin sin lifecycle-extension (extensions=true i root-pom) legger
+                         automatisk til egne "default-compile"/"default-testCompile"-executions i tillegg
+                         til de over. Uten sourceDirs her bruker de kun standard src/main/kotlin og finner
+                         ikke Java-kildene i src/main/java, som feiler kompileringen. -->
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <sourceDirs>
+                                <source>src/main/java</source>
+                                <source>src/main/kotlin</source>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <sourceDirs>
+                                <source>src/test/java</source>
+                                <source>src/test/kotlin</source>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 

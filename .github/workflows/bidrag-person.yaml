@@ -56,12 +56,6 @@ jobs:
       - name: Bygg og kjør tester (inkl. ktlint)
         run: mvn -B -fae verify -pl apps/bidrag-person -am
 
-  sjekk_sync_med_main:
-    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment != 'prod')
-    permissions:
-      contents: "read"
-    uses: ./.github/workflows/sjekk_sync_med_main.yaml
-
   deploy_prod:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
     name: "Build and deploy to prod"
@@ -88,7 +82,6 @@ jobs:
       tag: bidrag-person
 
   deploy_q1:
-    needs: sjekk_sync_med_main
     if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q1' || github.event.inputs.environment == 'q1+q2')))
     name: "Build and deploy to Q1"
     concurrency:
@@ -114,7 +107,6 @@ jobs:
       tag: bidrag-person
 
   deploy_q2:
-    needs: sjekk_sync_med_main
     if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q2/') || startsWith(github.ref, 'refs/heads/Q2/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q2' || github.event.inputs.environment == 'q1+q2')))
     name: "Build and deploy to Q2"
     concurrency:
