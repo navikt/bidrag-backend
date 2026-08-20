@@ -14,8 +14,10 @@ permissions:
   contents: "read"
 
 env:
-  # Copilot CLI bruker modellnavn uten leverandørprefiks.
-  MODELL: gpt-4.1
+  # Tom verdi lar Copilot CLI velge sin egen default-modell. Det er med vilje:
+  # et hardkodet modellnavn råtner når modeller utfases (gpt-4.1 gjorde nettopp
+  # det). Sett et navn her kun hvis du trenger en bestemt modell.
+  MODELL: ""
   MAKS_DIFF_TEGN: "60000"
 
 jobs:
@@ -98,11 +100,16 @@ jobs:
           SAMMENDRAG_FIL="$ARBEIDSKATALOG/rasammendrag.md"
           STDERR_FIL="$ARBEIDSKATALOG/copilot-stderr.txt"
 
+          MODELL_ARGUMENT=()
+          if [[ -n "$MODELL" ]]; then
+            MODELL_ARGUMENT=(--model "$MODELL")
+          fi
+
           if copilot \
             -p "$(cat "$ARBEIDSKATALOG/prompt.txt")" \
             -s \
             --no-ask-user \
-            --model "$MODELL" \
+            "${MODELL_ARGUMENT[@]}" \
             > "$SAMMENDRAG_FIL" 2> "$STDERR_FIL"; then
             echo "sammendrag-fil=$SAMMENDRAG_FIL" >> "$GITHUB_OUTPUT"
           else
