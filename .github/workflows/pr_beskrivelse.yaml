@@ -14,7 +14,6 @@ permissions:
   contents: "read"
 
 env:
-  ARBEIDSKATALOG: ${{ runner.temp }}/pr-beskrivelse
   MODELL: openai/gpt-4.1
   MAKS_DIFF_TEGN: "60000"
 
@@ -35,6 +34,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+
+      - name: Sett arbeidskatalog
+        # runner-konteksten er kun tilgjengelig på steg-nivå, så variabelen
+        # eksporteres via GITHUB_ENV for å kunne brukes i resten av jobben.
+        run: echo "ARBEIDSKATALOG=$RUNNER_TEMP/pr-beskrivelse" >> "$GITHUB_ENV"
 
       - name: Kjør tester for hjelpeskriptene
         run: |
