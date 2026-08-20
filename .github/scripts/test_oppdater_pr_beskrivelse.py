@@ -2,6 +2,10 @@
 """Tester for oppdater_pr_beskrivelse."""
 
 import unittest
+import io
+import os
+import tempfile
+import unittest.mock
 
 from oppdater_pr_beskrivelse import (
     MARKOR_SLUTT,
@@ -9,6 +13,8 @@ from oppdater_pr_beskrivelse import (
     OVERSKRIFT,
     bygg_blokk,
     flett_inn,
+    hent_eksisterende_sammendrag,
+    main,
 )
 
 TABELL = "| Modul | Filer | Linjer |\n| --- | ---: | --- |\n| `apps/bidrag-sak` | 2 | +10 / -3 |"
@@ -98,6 +104,97 @@ class FlettInnTest(unittest.TestCase):
         self.assertIn("men ingen slutt", andre)
         self.assertIn("Nytt sammendrag", andre)
         self.assertEqual(andre.count(MARKOR_SLUTT), 1, andre)
+
+
+class HentEksisterendeSammendragTest(unittest.TestCase):
+    def test_henter_prosa_fra_eksisterende_blokk(self):
+        beskrivelse = flett_inn("Min egen tekst.", bygg_blokk(SAMMENDRAG, TABELL))
+        self.assertEqual(hent_eksisterende_sammendrag(beskrivelse), SAMMENDRAG)
+
+    def test_henter_flerlinjes_prosa(self):
+        prosa = "Første linje.\n\n- punkt 1\n- punkt 2"
+        beskrivelse = flett_inn("", bygg_blokk(prosa, TABELL))
+        self.assertEqual(hent_eksisterende_sammendrag(beskrivelse), prosa)
+
+    def test_tom_streng_uten_blokk(self):
+        self.assertEqual(hent_eksisterende_sammendrag("Bare min tekst."), "")
+
+    def test_tom_streng_nar_blokken_ikke_har_prosa(self):
+        beskrivelse = flett_inn("", bygg_blokk("", TABELL))
+        self.assertEqual(hent_eksisterende_sammendrag(beskrivelse), "")
+
+    def test_tom_streng_ved_none(self):
+        self.assertEqual(hent_eksisterende_sammendrag(None), "")
+
+    def test_plukker_ikke_opp_tabellen(self):
+        beskrivelse = flett_inn("", bygg_blokk(SAMMENDRAG, TABELL))
+        self.assertNotIn("bidrag-sak", hent_eksisterende_sammendrag(beskrivelse))
+
+
+class MainTest(unittest.TestCase):
+    """Verifiserer CLI-en, som er det workflowen faktisk kaller."""
+
+    def _skriv(self, katalog, navn, innhold):
+        sti = os.path.join(katalog, navn)
+        with open(sti, "w", encoding="utf-8") as fil:
+            fil.write(innhold)
+        return sti
+
+    def _kjor(self, argv):
+        stdout = io.StringIO()
+        with unittest.mock.patch("sys.stdout", stdout):
+            self.assertEqual(main(argv), 0)
+        return stdout.getvalue()
+
+    def test_gjenbruker_prosa_nar_sammendrag_mangler(self):
+        """Dette er synchronize-scenarioet: tabellen oppdateres, prosaen beholdes."""
+        with tempfile.TemporaryDirectory() as katalog:
+            gammel_body = flett_inn("Min egen tekst.", bygg_blokk(SAMMENDRAG, TABELL))
+            ny_tabell = TABELL.replace("+10 / -3", "+99 / -7")
+            body_fil = self._skriv(katalog, "body.md", gammel_body)
+            tabell_fil = self._skriv(katalog, "tabell.md", ny_tabell)
+
+            resultat = self._kjor([
+                "--beskrivelse-fil", body_fil,
+                "--tabell-fil", tabell_fil,
+            ])
+
+            self.assertIn(SAMMENDRAG, resultat)
+            self.assertIn("+99 / -7", resultat)
+            self.assertNotIn("+10 / -3", resultat)
+            self.assertIn("Min egen tekst.", resultat)
+            self.assertEqual(resultat.count(MARKOR_START), 1, resultat)
+
+    def test_nytt_sammendrag_overstyrer_det_gamle(self):
+        with tempfile.TemporaryDirectory() as katalog:
+            gammel_body = flett_inn("", bygg_blokk("Gammel prosa", TABELL))
+            body_fil = self._skriv(katalog, "body.md", gammel_body)
+            tabell_fil = self._skriv(katalog, "tabell.md", TABELL)
+            sammendrag_fil = self._skriv(katalog, "sammendrag.md", "Ny prosa")
+
+            resultat = self._kjor([
+                "--beskrivelse-fil", body_fil,
+                "--tabell-fil", tabell_fil,
+                "--sammendrag-fil", sammendrag_fil,
+            ])
+
+            self.assertIn("Ny prosa", resultat)
+            self.assertNotIn("Gammel prosa", resultat)
+
+    def test_tomt_sammendrag_faller_tilbake_til_eksisterende(self):
+        with tempfile.TemporaryDirectory() as katalog:
+            gammel_body = flett_inn("", bygg_blokk("Gammel prosa", TABELL))
+            body_fil = self._skriv(katalog, "body.md", gammel_body)
+            tabell_fil = self._skriv(katalog, "tabell.md", TABELL)
+            sammendrag_fil = self._skriv(katalog, "sammendrag.md", "  \n ")
+
+            resultat = self._kjor([
+                "--beskrivelse-fil", body_fil,
+                "--tabell-fil", tabell_fil,
+                "--sammendrag-fil", sammendrag_fil,
+            ])
+
+            self.assertIn("Gammel prosa", resultat)
 
 
 if __name__ == "__main__":

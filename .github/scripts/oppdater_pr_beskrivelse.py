@@ -13,6 +13,7 @@ import sys
 MARKOR_START = "<!-- pr-beskrivelse:start -->"
 MARKOR_SLUTT = "<!-- pr-beskrivelse:slutt -->"
 OVERSKRIFT = "## Automatisk endringsoversikt"
+UNDEROVERSKRIFT_TABELL = "### Berørte moduler"
 FOTNOTE = (
     "_Generert automatisk. Rediger gjerne teksten utenfor blokken - "
     "innholdet i blokken blir overskrevet ved neste push._"
@@ -31,7 +32,7 @@ def bygg_blokk(sammendrag: str, tabell: str) -> str:
         deler += [sammendrag.strip(), ""]
 
     deler += [
-        "### Berørte moduler",
+        UNDEROVERSKRIFT_TABELL,
         tabell.strip(),
         "",
         FOTNOTE,
@@ -40,19 +41,57 @@ def bygg_blokk(sammendrag: str, tabell: str) -> str:
     return "\n".join(deler)
 
 
+def _finn_blokk(beskrivelse: str) -> tuple[int, int]:
+    """Returnerer (start, slutt) for den markerte blokken, eller (-1, -1).
+
+    Leter etter den siste startmarkøren som har en tilhørende sluttmarkør, slik
+    at en løs markør i utviklerens egen tekst ikke fører til at tekst mellom
+    markørene blir spist opp.
+    """
+    start = beskrivelse.rfind(MARKOR_START)
+    if start == -1:
+        return -1, -1
+    slutt = beskrivelse.find(MARKOR_SLUTT, start)
+    if slutt == -1:
+        return -1, -1
+    return start, slutt
+
+
+def hent_eksisterende_sammendrag(beskrivelse: str) -> str:
+    """Henter prosa-delen ut av en blokk som allerede står i beskrivelsen.
+
+    Brukes når kjøringen ikke har generert et nytt sammendrag, typisk ved push
+    til en åpen PR. Da beholdes prosaen fra forrige kjøring i stedet for at den
+    forsvinner når tabellen oppdateres.
+    """
+    beskrivelse = beskrivelse or ""
+    start, slutt = _finn_blokk(beskrivelse)
+    if start == -1:
+        return ""
+
+    blokk = beskrivelse[start:slutt]
+    overskrift_slutt = blokk.find(OVERSKRIFT)
+    if overskrift_slutt == -1:
+        return ""
+    overskrift_slutt += len(OVERSKRIFT)
+
+    tabell_start = blokk.find(UNDEROVERSKRIFT_TABELL, overskrift_slutt)
+    if tabell_start == -1:
+        return ""
+
+    return blokk[overskrift_slutt:tabell_start].strip()
+
+
 def flett_inn(beskrivelse: str, blokk: str) -> str:
     """Erstatter en eksisterende markert blokk, eller legger blokken til slutt.
 
     Beholder posisjonen til en eksisterende blokk slik at beskrivelsen ikke
-    stokkes om ved hver push. Leter etter den siste startmarkøren som har en
-    tilhørende sluttmarkør, slik at en løs markør i utviklerens egen tekst
-    ikke fører til at tekst mellom markørene blir spist opp.
+    stokkes om ved hver push.
     """
     beskrivelse = beskrivelse or ""
-    start = beskrivelse.rfind(MARKOR_START)
-    slutt = beskrivelse.find(MARKOR_SLUTT, start) if start != -1 else -1
+    start, slutt = _finn_blokk(beskrivelse)
 
-    if start != -1 and slutt != -1:
+    if start != -1:
         foran = beskrivelse[:start]
         bak = beskrivelse[slutt + len(MARKOR_SLUTT):]
         return f"{foran}{blokk}{bak}"
@@ -78,13 +117,19 @@ def main(argv: list[str] | None = None) -> int:
                         help="Fil med nåværende PR-beskrivelse")
     parser.add_argument("--sammendrag-fil", default="",
                         help="Fil med generert prosa-sammendrag. Utelates når "
-                             "sammendrag ikke er generert.")
+                             "sammendrag ikke er generert; da gjenbrukes prosaen "
+                             "fra en eventuell eksisterende blokk.")
     parser.add_argument("--tabell-fil", required=True,
                         help="Fil med markdown-tabell over berørte moduler")
     args = parser.parse_args(argv)
 
-    blokk = bygg_blokk(_les(args.sammendrag_fil), _les(args.tabell_fil))
-    sys.stdout.write(flett_inn(_les(args.beskrivelse_fil), blokk))
+    beskrivelse = _les(args.beskrivelse_fil)
+    sammendrag = _les(args.sammendrag_fil)
+    if not sammendrag.strip():
+        sammendrag = hent_eksisterende_sammendrag(beskrivelse)
+
+    blokk = bygg_blokk(sammendrag, _les(args.tabell_fil))
+    sys.stdout.write(flett_inn(beskrivelse, blokk))
     return 0
 
 

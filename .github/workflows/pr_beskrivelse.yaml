@@ -4,7 +4,9 @@ on:
     types:
       - opened
       - reopened
+      - ready_for_review
       - synchronize
+      - labeled
 
 concurrency:
   group: pr-beskrivelse-${{ github.event.pull_request.number }}
@@ -23,15 +25,27 @@ env:
 jobs:
   beskriv_endringer:
     # Fork-PR-er får et read-only token og kan ikke oppdatere beskrivelsen.
+    # Etikett-hendelser er kun relevante for etiketten "oppdater-beskrivelse",
+    # som lar en utvikler be om et nytt AI-sammendrag på forespørsel.
     if: >-
       github.actor != 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' ||
+       github.event.label.name == 'oppdater-beskrivelse')
     name: "Oppdater PR-beskrivelse med endringsoversikt"
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
       pull-requests: "write"
       copilot-requests: "write"
+    env:
+      # Modultabellen bygges av rene git-kommandoer og oppdateres derfor på hver
+      # push. AI-prosaen koster en Copilot-request og en npm-installasjon, så den
+      # kjøres kun når beskrivelsen faktisk trenger nytt innhold. Prosaen fra
+      # forrige kjøring beholdes i mellomtiden.
+      GENERER_PROSA: >-
+        ${{ github.event.pull_request.draft == false &&
+            github.event.action != 'synchronize' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -61,6 +75,7 @@ jobs:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
 
       - name: Lag prompt
+        if: env.GENERER_PROSA == 'true'
         run: |
           {
             cat "$SYSTEMPROMPT_FIL"
@@ -80,14 +95,17 @@ jobs:
           SYSTEMPROMPT_FIL: .github/prompts/pr-beskrivelse-system.txt
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: env.GENERER_PROSA == 'true'
         with:
           node-version: '24'
 
       - name: Installer Copilot CLI
+        if: env.GENERER_PROSA == 'true'
         run: npm install -g @github/copilot
 
       - name: Generer sammendrag
         id: sammendrag
+        if: env.GENERER_PROSA == 'true'
         # Kaller Copilot CLI direkte framfor actions/ai-inference, fordi den
         # actionen skriver CLI-ens stderr til core.debug og dermed skjuler
         # årsaken til feil i vanlige kjøringer. Flaggene er de samme som
@@ -134,7 +152,11 @@ jobs:
                 "$SAMMENDRAG_FIL" > "$ARBEIDSKATALOG/sammendrag.md"
             SAMMENDRAG_ARGUMENT=(--sammendrag-fil "$ARBEIDSKATALOG/sammendrag.md")
           else
-            echo "::warning::Sammendrag ble ikke generert. Legger inn kun modultabellen."
+            if [[ "$GENERER_PROSA" == "true" ]]; then
+              echo "::warning::Sammendrag ble ikke generert. Beholder eventuelt tidligere sammendrag."
+            else
+              echo "::notice::Hopper over AI-sammendrag for denne hendelsen. Tabellen oppdateres, og et eventuelt tidligere sammendrag beholdes."
+            fi
           fi
 
           gh pr view "$PR_NUMMER" --json body --jq '.body' \
