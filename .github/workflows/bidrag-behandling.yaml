@@ -86,7 +86,9 @@ jobs:
       tag: bidrag-behandling
 
   deploy_q1:
+    needs: sjekk_sync_med_main
     name: "Build and deploy to Q1"
+    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q1' || github.event.inputs.environment == 'q1+q2')))
     concurrency:
       group: deploy-behandling-q1-${{ github.ref }}
       cancel-in-progress: true
