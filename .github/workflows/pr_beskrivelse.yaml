@@ -61,6 +61,8 @@ jobs:
       - name: Lag prompt
         run: |
           {
+            cat "$SYSTEMPROMPT_FIL"
+            echo
             echo "Tittel på pull requesten: $PR_TITTEL"
             echo
             echo "Berørte moduler:"
@@ -73,6 +75,7 @@ jobs:
           } > "$ARBEIDSKATALOG/prompt.txt"
         env:
           PR_TITTEL: ${{ github.event.pull_request.title }}
+          SYSTEMPROMPT_FIL: .github/prompts/pr-beskrivelse-system.txt
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -83,30 +86,30 @@ jobs:
 
       - name: Generer sammendrag
         id: sammendrag
+        # Kaller Copilot CLI direkte framfor actions/ai-inference, fordi den
+        # actionen skriver CLI-ens stderr til core.debug og dermed skjuler
+        # årsaken til feil i vanlige kjøringer. Flaggene er de samme som
+        # actionen bruker internt.
+        #
         # Et feilende sammendrag skal ikke blokkere PR-en; tabellen legges inn
-        # uansett i steget under. Dette fanger blant annet at org-policyen
-        # "Allow use of Copilot CLI billed to the organization" er slått av.
+        # uansett i steget under.
         continue-on-error: true
-        uses: actions/ai-inference@2c43c91ae16266ca159d311430343c67a5ffa222 # v3
-        with:
-          model: ${{ env.MODELL }}
-          prompt-file: ${{ env.ARBEIDSKATALOG }}/prompt.txt
-          system-prompt: |
-            Du er en erfaren utvikler som skriver sammendrag av pull requests
-            i monorepoet bidrag-backend hos Nav. Repoet inneholder Kotlin/Java
-            Spring Boot-tjenester under apps/, delte biblioteker under libs/ og
-            Nais-konfigurasjon under .nais/ og nais/.
+        run: |
+          SAMMENDRAG_FIL="$ARBEIDSKATALOG/rasammendrag.md"
+          STDERR_FIL="$ARBEIDSKATALOG/copilot-stderr.txt"
 
-            Skriv et kort sammendrag på norsk bokmål ut fra diffen du får:
-            - 1-2 setninger om hva endringen gjør og hvorfor.
-            - Deretter maks 6 kulepunkter med de konkrete endringene.
-            - Nevn eksplisitt endringer i API-kontrakter, databasemigrasjoner,
-              Nais-konfigurasjon, avhengigheter og sikkerhet hvis de finnes.
-            - Beskriv bare det som faktisk står i diffen. Ikke gjett, ikke fyll
-              på med generelle råd, og ikke foreslå forbedringer.
-            - Ikke gjenta modultabellen, den legges inn separat.
-            - Bruk ingen markdown-overskrifter, kun tekst og kulepunkter.
-            - Hvis diffen er avkortet, si det i en avsluttende setning.
+          if copilot \
+            -p "$(cat "$ARBEIDSKATALOG/prompt.txt")" \
+            -s \
+            --no-ask-user \
+            --model "$MODELL" \
+            > "$SAMMENDRAG_FIL" 2> "$STDERR_FIL"; then
+            echo "sammendrag-fil=$SAMMENDRAG_FIL" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Copilot CLI feilet. stderr følger:"
+            cat "$STDERR_FIL"
+            exit 1
+          fi
         env:
           # Copilot CLI autentiseres med det innebygde Actions-tokenet, som
           # krever permissionen copilot-requests: write. Bruken billes til
@@ -140,4 +143,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMMER: ${{ github.event.pull_request.number }}
-          SAMMENDRAG_FIL: ${{ steps.sammendrag.outputs.response-file }}
+          SAMMENDRAG_FIL: ${{ steps.sammendrag.outputs.sammendrag-fil }}
