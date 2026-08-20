@@ -4,12 +4,11 @@ import no.nav.bidrag.automatiskjobb.persistence.entity.Indeksregulering
 import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Behandlingstype
 import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Status
 import no.nav.bidrag.automatiskjobb.persistence.repository.IndeksreguleringRepository
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import org.springframework.batch.core.listener.StepExecutionListener
 import org.springframework.batch.core.step.StepExecution
 import org.springframework.batch.infrastructure.item.ItemReader
-import org.springframework.batch.infrastructure.item.data.RepositoryItemReader
-import org.springframework.batch.infrastructure.item.data.builder.RepositoryItemReaderBuilder
-import org.springframework.data.domain.Sort
+import org.springframework.data.domain.PageRequest
 import java.time.Year
 
 class FattVedtakIndeksreguleringBidragBatchReader(
@@ -18,24 +17,34 @@ class FattVedtakIndeksreguleringBidragBatchReader(
 ) : ItemReader<Indeksregulering>,
     StepExecutionListener {
     private var år: Int = Year.now().value
-
-    private var delegate: RepositoryItemReader<Indeksregulering>? = null
+    private var sisteId: Int = 0
+    private var side: Iterator<Indeksregulering> = emptyList<Indeksregulering>().iterator()
 
     override fun beforeStep(stepExecution: StepExecution) {
         år = stepExecution.jobParameters.getString("aar")?.toInt() ?: Year.now().value
+        sisteId = 0
+        side = emptyList<Indeksregulering>().iterator()
     }
 
-    private fun delegate(): RepositoryItemReader<Indeksregulering> = delegate ?: byggDelegate().also { delegate = it }
+    override fun read(): Indeksregulering? {
+        if (!side.hasNext()) {
+            side = hentNesteSide().iterator()
+        }
+        return if (side.hasNext()) side.next() else null
+    }
 
-    private fun byggDelegate(): RepositoryItemReader<Indeksregulering> = RepositoryItemReaderBuilder<Indeksregulering>()
-        .name("fattVedtakIndeksreguleringBidragBatchReader")
-        .repository(indeksreguleringRepository)
-        .saveState(false)
-        .pageSize(pageSize)
-        .sorts(mapOf("id" to Sort.Direction.ASC))
-        .methodName("findAllByStatusAndBehandlingstypeAndVedtakIsNotNullAndÅr")
-        .arguments(listOf(Status.BEHANDLET, Behandlingstype.FATTET_FORSLAG, år))
-        .build()
-
-    override fun read(): Indeksregulering? = delegate().read()
+    // Keyset-paginering (id > sisteId) i stedet for offset-paginering. Prosessoren endrer status bort
+    // fra BEHANDLET for hver rad som behandles, og med offset-paginering ville treffmengden krympe
+    // mellom hver side slik at halvparten av radene ble hoppet over.
+    private fun hentNesteSide(): List<Indeksregulering> = indeksreguleringRepository
+        .findAllByStatusAndBehandlingstypeAndVedtakIsNotNullAndÅrAndStønadstypeInAndIdGreaterThanOrderByIdAsc(
+            Status.BEHANDLET,
+            Behandlingstype.FATTET_FORSLAG,
+            år,
+            listOf(Stønadstype.BIDRAG, Stønadstype.OPPFOSTRINGSBIDRAG, Stønadstype.BIDRAG18AAR),
+            sisteId,
+            PageRequest.of(0, pageSize),
+        ).also { nesteSide ->
+            nesteSide.lastOrNull()?.id?.let { sisteId = it }
+        }
 }
