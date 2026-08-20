@@ -1,4 +1,4 @@
-# Bidrag Behandling API2
+# Bidrag Behandling API
 
 ## Beskrivelse2
 

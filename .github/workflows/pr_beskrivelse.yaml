@@ -1,0 +1,118 @@
+name: PR-beskrivelse
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+concurrency:
+  group: pr-beskrivelse-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: "read"
+
+env:
+  ARBEIDSKATALOG: ${{ runner.temp }}/pr-beskrivelse
+  MODELL: openai/gpt-4.1
+  MAKS_DIFF_TEGN: "60000"
+
+jobs:
+  beskriv_endringer:
+    # Fork-PR-er får et read-only token og kan ikke oppdatere beskrivelsen.
+    if: >-
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    name: "Oppdater PR-beskrivelse med endringsoversikt"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      pull-requests: "write"
+      models: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Kjør tester for hjelpeskriptene
+        run: |
+          bash .github/scripts/test-pr-endringsoversikt.sh
+          python3 .github/scripts/test_oppdater_pr_beskrivelse.py
+
+      - name: Bygg endringsoversikt
+        run: |
+          git fetch origin "$BASE_BRANCH" --quiet
+          BASE_SHA="$(git merge-base "origin/$BASE_BRANCH" HEAD)"
+          echo "Sammenligner $BASE_SHA..${{ github.event.pull_request.head.sha }}"
+          .github/scripts/pr-endringsoversikt.sh \
+            "$BASE_SHA" \
+            "${{ github.event.pull_request.head.sha }}" \
+            "$ARBEIDSKATALOG"
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+
+      - name: Lag prompt
+        run: |
+          {
+            echo "Tittel på pull requesten: $PR_TITTEL"
+            echo
+            echo "Berørte moduler:"
+            cat "$ARBEIDSKATALOG/tabell.md"
+            echo
+            echo "Diff:"
+            echo '```diff'
+            cat "$ARBEIDSKATALOG/diff.txt"
+            echo '```'
+          } > "$ARBEIDSKATALOG/prompt.txt"
+        env:
+          PR_TITTEL: ${{ github.event.pull_request.title }}
+
+      - name: Generer sammendrag
+        id: sammendrag
+        uses: actions/ai-inference@a7805884c80886efc241e94a5351df715968a0ad # v2.1.1
+        with:
+          model: ${{ env.MODELL }}
+          max-completion-tokens: "800"
+          temperature: "0.2"
+          prompt-file: ${{ env.ARBEIDSKATALOG }}/prompt.txt
+          system-prompt: |
+            Du er en erfaren utvikler som skriver sammendrag av pull requests
+            i monorepoet bidrag-backend hos Nav. Repoet inneholder Kotlin/Java
+            Spring Boot-tjenester under apps/, delte biblioteker under libs/ og
+            Nais-konfigurasjon under .nais/ og nais/.
+
+            Skriv et kort sammendrag på norsk bokmål ut fra diffen du får:
+            - 1-2 setninger om hva endringen gjør og hvorfor.
+            - Deretter maks 6 kulepunkter med de konkrete endringene.
+            - Nevn eksplisitt endringer i API-kontrakter, databasemigrasjoner,
+              Nais-konfigurasjon, avhengigheter og sikkerhet hvis de finnes.
+            - Beskriv bare det som faktisk står i diffen. Ikke gjett, ikke fyll
+              på med generelle råd, og ikke foreslå forbedringer.
+            - Ikke gjenta modultabellen, den legges inn separat.
+            - Bruk ingen markdown-overskrifter, kun tekst og kulepunkter.
+            - Hvis diffen er avkortet, si det i en avsluttende setning.
+
+      - name: Oppdater PR-beskrivelse
+        run: |
+          # Fjern eventuelle markører modellen måtte ha funnet på å gjenta,
+          # slik at blokkstrukturen i beskrivelsen ikke ødelegges.
+          sed -e 's/<!-- pr-beskrivelse:start -->//g' \
+              -e 's/<!-- pr-beskrivelse:slutt -->//g' \
+              "$SAMMENDRAG_FIL" > "$ARBEIDSKATALOG/sammendrag.md"
+
+          gh pr view "$PR_NUMMER" --json body --jq '.body' \
+            > "$ARBEIDSKATALOG/beskrivelse.md"
+
+          python3 .github/scripts/oppdater_pr_beskrivelse.py \
+            --beskrivelse-fil "$ARBEIDSKATALOG/beskrivelse.md" \
+            --sammendrag-fil "$ARBEIDSKATALOG/sammendrag.md" \
+            --tabell-fil "$ARBEIDSKATALOG/tabell.md" \
+            > "$ARBEIDSKATALOG/ny-beskrivelse.md"
+
+          gh pr edit "$PR_NUMMER" --body-file "$ARBEIDSKATALOG/ny-beskrivelse.md"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMMER: ${{ github.event.pull_request.number }}
+          SAMMENDRAG_FIL: ${{ steps.sammendrag.outputs.response-file }}
