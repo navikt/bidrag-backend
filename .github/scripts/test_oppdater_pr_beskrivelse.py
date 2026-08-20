@@ -27,6 +27,18 @@ class ByggBlokkTest(unittest.TestCase):
         self.assertIn("apps/bidrag-sak", blokk)
         self.assertIn(OVERSKRIFT, blokk)
 
+    def test_tomt_sammendrag_gir_blokk_med_bare_tabell(self):
+        blokk = bygg_blokk("", TABELL)
+        self.assertIn("apps/bidrag-sak", blokk)
+        self.assertIn("### Berørte moduler", blokk)
+        self.assertTrue(blokk.startswith(MARKOR_START), blokk)
+        self.assertTrue(blokk.endswith(MARKOR_SLUTT), blokk)
+        # Ingen tom linje mellom overskrift og tabelloverskrift.
+        self.assertNotIn("\n\n\n", blokk)
+
+    def test_sammendrag_med_bare_blanktegn_behandles_som_tomt(self):
+        self.assertEqual(bygg_blokk("   \n\n ", TABELL), bygg_blokk("", TABELL))
+
 
 class FlettInnTest(unittest.TestCase):
     def test_tom_beskrivelse_gir_bare_blokken(self):

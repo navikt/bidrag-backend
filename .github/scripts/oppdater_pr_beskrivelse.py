@@ -20,12 +20,17 @@ FOTNOTE = (
 
 
 def bygg_blokk(sammendrag: str, tabell: str) -> str:
-    """Setter sammen den markerte blokken av sammendrag og modultabell."""
-    deler = [
-        MARKOR_START,
-        OVERSKRIFT,
-        sammendrag.strip(),
-        "",
+    """Setter sammen den markerte blokken av sammendrag og modultabell.
+
+    Sammendraget er valgfritt: mangler det (typisk fordi AI-steget ble hoppet
+    over), tas kun modultabellen med.
+    """
+    deler = [MARKOR_START, OVERSKRIFT]
+
+    if sammendrag and sammendrag.strip():
+        deler += [sammendrag.strip(), ""]
+
+    deler += [
         "### Berørte moduler",
         tabell.strip(),
         "",
@@ -59,6 +64,8 @@ def flett_inn(beskrivelse: str, blokk: str) -> str:
 
 
 def _les(sti: str) -> str:
+    if not sti:
+        return ""
     if sti == "-":
         return sys.stdin.read()
     with open(sti, encoding="utf-8") as fil:
@@ -69,8 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--beskrivelse-fil", required=True,
                         help="Fil med nåværende PR-beskrivelse")
-    parser.add_argument("--sammendrag-fil", required=True,
-                        help="Fil med generert prosa-sammendrag")
+    parser.add_argument("--sammendrag-fil", default="",
+                        help="Fil med generert prosa-sammendrag. Utelates når "
+                             "sammendrag ikke er generert.")
     parser.add_argument("--tabell-fil", required=True,
                         help="Fil med markdown-tabell over berørte moduler")
     args = parser.parse_args(argv)
