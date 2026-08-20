@@ -23,12 +23,6 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Klient mot team oppgave sitt oppgave-api (upstream) -->
-        <dependency>
-            <groupId>no.nav.bidrag</groupId>
-            <artifactId>oppgave-api-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- Spring Boot -->
         <dependency>
@@ -56,7 +50,7 @@
             <artifactId>kotlin-reflect</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
+            <groupId>tools.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 

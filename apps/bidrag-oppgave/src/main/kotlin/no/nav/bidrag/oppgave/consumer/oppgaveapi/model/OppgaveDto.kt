@@ -1,10 +1,5 @@
-package no.nav.oppgave.model
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
-import no.nav.bidrag.oppgaveapiclient.AktorId
-import no.nav.bidrag.oppgaveapiclient.EksternJournalpostId
-import no.nav.bidrag.oppgaveapiclient.EksternOppgaveId
-import no.nav.bidrag.oppgaveapiclient.Enhetsnummer
-import no.nav.bidrag.oppgaveapiclient.NavIdent
 import java.time.LocalDate
 import java.time.OffsetDateTime
 

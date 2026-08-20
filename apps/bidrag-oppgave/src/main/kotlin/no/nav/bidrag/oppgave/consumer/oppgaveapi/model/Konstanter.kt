@@ -1,4 +1,4 @@
-package no.nav.bidrag.oppgaveapiclient
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 /**
  * Applikasjonsnavn brukt bl.a. som `X-Correlation-ID`-prefiks / consumer-id mot oppgave-apiet.

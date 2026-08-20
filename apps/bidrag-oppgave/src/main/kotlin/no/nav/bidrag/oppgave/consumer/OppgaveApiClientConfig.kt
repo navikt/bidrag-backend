@@ -1,6 +1,6 @@
 package no.nav.bidrag.oppgave.consumer
 
-import no.nav.oppgave.OppgaveClient
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
