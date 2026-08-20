@@ -559,6 +559,7 @@ class VedtakTilBehandlingMapping(
                         avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
                         behandling = behandling,
                         rolle = rolleSøknadsbarn,
+                        stønadstype = rolleSøknadsbarn?.stønadstype,
                     )
                 } else {
                     PrivatAvtale(
@@ -567,6 +568,7 @@ class VedtakTilBehandlingMapping(
                         skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
                         behandling = behandling,
                         rolle = rolleSøknadsbarn,
+                        stønadstype = rolleSøknadsbarn?.stønadstype,
                     )
                 }
             it.value.forEach {

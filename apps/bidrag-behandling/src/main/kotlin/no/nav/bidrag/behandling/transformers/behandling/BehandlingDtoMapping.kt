@@ -475,6 +475,19 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
         return "Kan ikke fatte vedtak hvor BP har løpende oppfostringsbidrag"
     }
 
+    val virkningstidspunktFremITid =
+        roller.mapNotNull { it.virkningstidspunkt }.any {
+            it >
+                LocalDate
+                    .now()
+                    .plusMonths(
+                        1,
+                    ).withDayOfMonth(1)
+        }
+    if (forholdsmessigFordeling != null && virkningstidspunktFremITid) {
+        return "Kan ikke fatte vedtak når virkningstidspunkt er satt til etter neste måned"
+    }
+
     return null
 }
 
