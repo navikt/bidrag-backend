@@ -14,40 +14,9 @@
   <name>bidrag-behandling</name>
   <properties>
     <!-- bidrag-behandling trenger en nyere bidrag-beregn-felles enn resten av monorepoet -->
-    <bidrag-beregn-felles.version>2026.08.18.133526</bidrag-beregn-felles.version>
-    <h2.version>2.3.232</h2.version>
-    <springframework-cloud.version>5.0.2</springframework-cloud.version>
-    <asm.version>9.10</asm.version>
+    <bidrag-beregn-felles.version>2026.08.20.125605</bidrag-beregn-felles.version>
     <jetbrains.annotations.version>26.0.2</jetbrains.annotations.version>
   </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <!-- Force consistent versions for transitive dependencies (dependencyConvergence) -->
-      <!-- unleash-client-java (via launchdarkly okhttp-eventsource) drar inn okhttp 4.x, som kolliderer
-           med mock-oauth2-server sin okhttp-jvm 5.x på testclasspath (NoSuchMethodError: TaskRunner.<init>) -->
-      <dependency>
-        <groupId>com.squareup.okhttp3</groupId>
-        <artifactId>okhttp</artifactId>
-        <version>${okhttp.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.retry</groupId>
-        <artifactId>spring-retry</artifactId>
-        <version>${spring-retry.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.ow2.asm</groupId>
-        <artifactId>asm</artifactId>
-        <version>${asm.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.jetbrains</groupId>
-        <artifactId>annotations</artifactId>
-        <version>${jetbrains.annotations.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -134,7 +103,6 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <scope>test</scope>
-      <version>${h2.version}</version>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
@@ -493,7 +461,6 @@
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
-      <version>${springframework-cloud.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
