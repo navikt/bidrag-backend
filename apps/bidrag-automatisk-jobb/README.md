@@ -14,8 +14,10 @@ Kun bidrag som løper i norske kroner (NOK) støttes p.t. Se full dokumentasjon:
 [docs/indeksregulering-bidrag.md](docs/indeksregulering-bidrag.md).
 
 ### Revurdering forskudd
-Bidrag-automatisk-jobb henter ut alle løpende forskudd det ikke har blitt gjort manuelle endringer på i løpet av x 
-siste måneder og utfører en beregning for å sjekke om forskudded skal settes ned. 
+Bidrag-automatisk-jobb henter ut alle løpende forskudd det ikke har blitt gjort manuelle endringer
+på i løpet av de siste månedene og utfører en beregning for å sjekke om forskuddet skal settes ned.
+Erstatter Bisys-batchen FB110. Se full dokumentasjon:
+[docs/revurdering-forskudd.md](docs/revurdering-forskudd.md).
 
 ## Kjøre applikasjonen lokalt
 
@@ -28,3 +30,4 @@ Detaljert dokumentasjon for de årlige batch-jobbene ligger i [docs/](docs):
 
 - [docs/aldersjustering-bidrag.md](docs/aldersjustering-bidrag.md) – aldersjustering av bidrag (erstatter FB260)
 - [docs/indeksregulering-bidrag.md](docs/indeksregulering-bidrag.md) – indeksregulering av bidrag (erstatter FB020)
+- [docs/revurdering-forskudd.md](docs/revurdering-forskudd.md) – revurdering av forskudd (erstatter FB110)
