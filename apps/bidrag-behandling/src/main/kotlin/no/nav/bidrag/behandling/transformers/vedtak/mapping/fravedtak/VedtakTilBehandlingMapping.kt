@@ -1,0 +1,960 @@
+package no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak
+
+import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
+import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
+import no.nav.bidrag.behandling.database.datamodell.Person
+import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
+import no.nav.bidrag.behandling.database.datamodell.PrivatAvtalePeriode
+import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.database.datamodell.Samvær
+import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
+import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
+import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.database.datamodell.Utgift
+import no.nav.bidrag.behandling.database.datamodell.Utgiftspost
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.json.FatteVedtakDetaljerFraOmgjortVedtakForRevurderingsbarn
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
+import no.nav.bidrag.behandling.database.repository.BehandlingRepository
+import no.nav.bidrag.behandling.dto.v1.beregning.ResultatSærbidragsberegningDto
+import no.nav.bidrag.behandling.dto.v2.behandling.LesemodusVedtak
+import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftBeregningDto
+import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
+import no.nav.bidrag.behandling.service.UnderholdService
+import no.nav.bidrag.behandling.service.hentSak
+import no.nav.bidrag.behandling.service.hentVedtak
+import no.nav.bidrag.behandling.transformers.behandling.tilNotat
+import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
+import no.nav.bidrag.behandling.transformers.beregning.erAvslagSomInneholderUtgifter
+import no.nav.bidrag.behandling.transformers.byggResultatSærbidragsberegning
+import no.nav.bidrag.behandling.transformers.dto.PåklagetVedtak
+import no.nav.bidrag.behandling.transformers.erAldersjusteringNyLøsning
+import no.nav.bidrag.behandling.transformers.erUnder12År
+import no.nav.bidrag.behandling.transformers.finnAldersjusteringDetaljerGrunnlag
+import no.nav.bidrag.behandling.transformers.harOpprettetForholdsmessigFordeling
+import no.nav.bidrag.behandling.transformers.sorter
+import no.nav.bidrag.behandling.transformers.tilType
+import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
+import no.nav.bidrag.behandling.transformers.utgift.tilDto
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
+import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
+import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
+import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.vedtak.BeregnTil
+import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.beregning.samvær.SamværskalkulatorDetaljer
+import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.InnhentetAndreBarnTilBidragsmottaker
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
+import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtaleGrunnlagV2
+import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtalePeriodeGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.TilleggsstønadPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåFremmedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjektListe
+import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
+import no.nav.bidrag.transport.behandling.felles.grunnlag.personObjekt
+import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.særbidragskategori
+import no.nav.bidrag.transport.behandling.felles.grunnlag.utgiftDirekteBetalt
+import no.nav.bidrag.transport.behandling.felles.grunnlag.utgiftMaksGodkjentBeløp
+import no.nav.bidrag.transport.behandling.felles.grunnlag.utgiftsposter
+import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
+import no.nav.bidrag.transport.behandling.vedtak.response.behandlingId
+import no.nav.bidrag.transport.behandling.vedtak.response.finnStønadsendring
+import no.nav.bidrag.transport.behandling.vedtak.response.saksnummer
+import no.nav.bidrag.transport.behandling.vedtak.response.søknadId
+import no.nav.bidrag.transport.behandling.vedtak.response.tilhørerRevurderingsbarn
+import no.nav.bidrag.transport.behandling.vedtak.response.typeBehandling
+import no.nav.bidrag.transport.behandling.vedtak.response.virkningstidspunkt
+import no.nav.bidrag.transport.felles.commonObjectmapper
+import no.nav.bidrag.transport.felles.ifTrue
+import org.springframework.stereotype.Component
+import java.time.LocalDate
+import java.time.LocalDateTime
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
+
+@Component
+class VedtakTilBehandlingMapping(
+    val validerBeregning: ValiderBeregning,
+    private val underholdService: UnderholdService,
+    private val behandlingRepository: BehandlingRepository,
+) {
+    fun VedtakDto.tilBehandling(
+        omgjørVedtakId: Int,
+        lesemodus: Boolean = true,
+        inkluderKlagedetaljer: Boolean = true,
+        vedtakType: Vedtakstype? = null,
+        mottattdato: LocalDate? = null,
+        søktFomDato: LocalDate? = null,
+        soknadFra: SøktAvType? = null,
+        søknadRefId: Long? = null,
+        søknadId: Long? = null,
+        enhet: String? = null,
+        omgjortVedtakVedtakstidspunkt: LocalDateTime? = null,
+        søknadstype: Behandlingstype? = null,
+        behandlingstema: Behandlingstema? = null,
+        erBisysVedtak: Boolean = false,
+        erOrkestrertVedtak: Boolean = false,
+        omgjørVedtaksliste: Set<PåklagetVedtak> = emptySet(),
+        innkrevingstype: Innkrevingstype,
+        påklagetVedtak: VedtakDto? = null,
+    ): Behandling {
+        val opprinneligVedtak = omgjørVedtaksliste.minByOrNull { it.vedtakstidspunkt }?.vedtaksid ?: omgjørVedtakId
+        val vedtakstidspunktListe = omgjørVedtaksliste.map { it.vedtakstidspunkt }.toSet()
+        val sisteVedtakBeregnetUtNåværendeMåned =
+            omgjørVedtaksliste
+                .filter {
+                    it.beregnTil == BeregnTil.INNEVÆRENDE_MÅNED
+                }.maxByOrNull { it.vedtakstidspunkt }
+        val opprinneligVedtakstype = omgjørVedtaksliste.minByOrNull { it.vedtakstidspunkt }?.vedtakstype
+        val opprettetAv =
+            if (lesemodus) {
+                this.opprettetAv
+            } else {
+                TokenUtils.hentSaksbehandlerIdent()
+                    ?: TokenUtils.hentApplikasjonsnavn()!!
+            }
+        val opprettetAvNavn =
+            if (lesemodus) {
+                this.opprettetAvNavn
+            } else {
+                TokenUtils
+                    .hentSaksbehandlerIdent()
+                    ?.let { SaksbehandlernavnProvider.hentSaksbehandlernavn(it) }
+            }
+        // TODO: Hvordan håndteres dette når vi begynner med flere stønadsendringer i samme vedtak?
+        val stønadsendringstype = stønadsendringListe.firstOrNull()?.type
+        val omgjortVedtakVirkningstidspunkt = virkningstidspunkt ?: hentSøknad().søktFraDato
+        val forholdsmessigFordeling =
+            grunnlagListe.harOpprettetForholdsmessigFordeling().ifTrue {
+                ForholdsmessigFordeling(
+                    erHovedbehandling = true,
+                    opprettetAvSaksbehandler = TokenUtils.hentSaksbehandlerIdent(),
+                    oppprettetAvEnhet = enhet,
+                )
+            }
+        val inneholderBareRevurderingsbarn = stønadsendringListe.isNotEmpty() && stønadsendringListe.all { tilhørerRevurderingsbarn(it) }
+        val behandling =
+            Behandling(
+                id = if (lesemodus) 1 else null,
+                søknadstype = søknadstype,
+                vedtaksid = if (lesemodus) vedtaksid else null,
+                behandlingstema = behandlingstema,
+                vedtakstype = vedtakType ?: type,
+                virkningstidspunkt = omgjortVedtakVirkningstidspunkt,
+                kategori = grunnlagListe.særbidragskategori?.kategori?.name,
+                kategoriBeskrivelse = grunnlagListe.særbidragskategori?.beskrivelse,
+                innkrevingstype = innkrevingstype,
+                årsak = hentVirkningstidspunkt()?.årsak,
+                avslag = avslagskode(),
+                søktFomDato = søktFomDato ?: hentSøknad().søktFraDato,
+                soknadFra = soknadFra ?: hentSøknad().søktAv,
+                mottattdato =
+                when (typeBehandling) {
+                    TypeBehandling.SÆRBIDRAG -> hentSøknad().mottattDato
+                    else -> mottattdato ?: hentSøknad().mottattDato
+                },
+                // TODO: Er dette riktig? Hva skjer hvis det finnes flere stønadsendringer/engangsbeløp? Fungerer for Forskudd men todo fram fremtiden
+                stonadstype = stønadsendringstype,
+                engangsbeloptype = if (stønadsendringstype == null) engangsbeløpListe.firstOrNull()?.type else null,
+                behandlerEnhet = enhet ?: enhetsnummer?.verdi!!,
+                opprettetAv = opprettetAv,
+                opprettetAvNavn = opprettetAvNavn,
+                kildeapplikasjon = if (lesemodus) kildeapplikasjon else TokenUtils.hentApplikasjonsnavn()!!,
+                saksnummer = saksnummer!!,
+                soknadsid = søknadId ?: this.søknadId,
+                forholdsmessigFordeling = forholdsmessigFordeling,
+            )
+
+        val sak = hentSak(behandling.saksnummer)
+        behandling.roller =
+            grunnlagListe.mapRoller(
+                påklagetVedtak ?: this,
+                behandling,
+                lesemodus,
+                omgjortVedtakVirkningstidspunkt,
+                sak,
+                inneholderBareRevurderingsbarn,
+                inneholderBareRevurderingsbarn || forholdsmessigFordeling != null,
+            )
+
+        val skalLagreOmgjøringsdetaljer = !lesemodus || inkluderKlagedetaljer
+        if (skalLagreOmgjøringsdetaljer) {
+            val stønadsendringerRevurderingsbarn =
+                stønadsendringListe.filter {
+                    val person = grunnlagListe.hentPerson(it.kravhaver.verdi, it.type)
+                    person != null && !person.personObjekt.delAvOpprinneligBehandling
+                }
+            behandling.omgjøringsdetaljer =
+                Omgjøringsdetaljer(
+                    opprinneligVedtakstype = opprinneligVedtakstype,
+                    opprinneligVedtakId = opprinneligVedtak,
+                    innkrevingstype = innkrevingstype,
+                    erKlageEllerOmgjøring = if (lesemodus) opprinneligVedtak != omgjørVedtakId else true,
+                    omgjørVedtakId = if (!lesemodus) omgjørVedtakId else null,
+                    klageMottattdato = if (!lesemodus) mottattdato else hentSøknad().klageMottattDato,
+                    soknadRefId = søknadRefId,
+                    omgjortVedtaksliste = omgjørVedtaksliste,
+                    omgjortVedtakVedtakstidspunkt = omgjortVedtakVedtakstidspunkt,
+                    opprinneligVirkningstidspunkt = omgjortVedtakVirkningstidspunkt,
+                    sisteVedtakBeregnetUtNåværendeMåned = sisteVedtakBeregnetUtNåværendeMåned?.vedtaksid,
+                    sisteVedtakstidspunktBeregnetUtNåværendeMåned = sisteVedtakBeregnetUtNåværendeMåned?.vedtakstidspunkt,
+                    omgjortVedtakstidspunktListe = vedtakstidspunktListe.toMutableSet(),
+                    fatteVedtakDetaljerRevurderingsbarn =
+                    if (stønadsendringerRevurderingsbarn.isNotEmpty()) {
+                        val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
+                        FatteVedtakDetaljerFraOmgjortVedtakForRevurderingsbarn(
+                            bleFattetVedtakForRevurderingsbarn =
+                            stønadsendringerRevurderingsbarn.any {
+                                it.beslutning == Beslutningstype.ENDRING
+                            },
+                            fatteVedtakRevurderingsbarn = behandlingDetaljer?.fatteVedtakRevurderingsbarn,
+                        )
+                    } else {
+                        null
+                    },
+                )
+        }
+        if (!lesemodus) {
+            behandlingRepository.save(behandling)
+        }
+
+        if (lesemodus) {
+            behandling.lesemodusVedtak =
+                LesemodusVedtak(
+                    erAvvist = stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST },
+                    opprettetAvBatch = kilde == Vedtakskilde.AUTOMATISK,
+                    erOrkestrertVedtak = erOrkestrertVedtak,
+                    inneholderBareRevurderingsbarn = inneholderBareRevurderingsbarn,
+                    fattetTidspunkt = this.vedtakstidspunkt ?: LocalDateTime.now(),
+                )
+            behandling.grunnlagslisteFraVedtak = grunnlagListe
+            behandling.erBisysVedtak = behandlingId == null && this.søknadId != null
+            behandling.erVedtakUtenBeregning = erVedtakUtenBeregning()
+        }
+
+        oppdaterDirekteOppgjørBeløp(behandling, lesemodus)
+        grunnlagListe.oppdaterRolleGebyr(behandling, this)
+
+        behandling.inntekter = grunnlagListe.mapInntekter(behandling, lesemodus)
+        behandling.husstandsmedlem = grunnlagListe.mapHusstandsmedlem(behandling, lesemodus)
+        behandling.sivilstand = grunnlagListe.mapSivilstand(behandling, lesemodus)
+        behandling.utgift = grunnlagListe.mapUtgifter(behandling, lesemodus)
+        behandling.samvær = grunnlagListe.mapSamvær(behandling, lesemodus)
+        behandling.underholdskostnader = grunnlagListe.mapUnderholdskostnad(behandling, lesemodus, omgjortVedtakVirkningstidspunkt)
+        behandling.privatAvtale = grunnlagListe.mapPrivatAvtale(behandling, lesemodus)
+        behandling.metadata = BehandlingMetadataDo()
+        if (erBisysVedtak) {
+            behandling.metadata!!.setKlagePåBisysVedtak()
+        }
+        behandling.grunnlag =
+            if (type == Vedtakstype.INDEKSREGULERING) mutableSetOf() else grunnlagListe.mapGrunnlag(behandling, lesemodus)
+
+        mapBegrunnelser(behandling, lesemodus)
+        return behandling
+    }
+
+    private fun VedtakDto.mapBegrunnelser(
+        behandling: Behandling,
+        lesemodus: Boolean,
+    ) {
+        if (lesemodus) {
+            notatMedType(NotatType.BOFORHOLD, false)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.BOFORHOLD, it, delAvBehandling = lesemodus))
+            }
+
+            notatMedType(Notattype.UTGIFTER, false)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.UTGIFTER, it, delAvBehandling = lesemodus))
+            }
+            notatMedType(NotatType.BOFORHOLD, true)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.BOFORHOLD, it, delAvBehandling = false))
+            }
+            notatMedType(Notattype.UTGIFTER, true)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.UTGIFTER, it, delAvBehandling = false))
+            }
+        } else {
+            notatMedTypeBegge(NotatType.BOFORHOLD)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.BOFORHOLD, it, delAvBehandling = lesemodus))
+            }
+
+            notatMedTypeBegge(Notattype.UTGIFTER)?.let {
+                behandling.notater.add(behandling.tilNotat(NotatType.UTGIFTER, it, delAvBehandling = lesemodus))
+            }
+        }
+
+        behandling.roller.forEach { r ->
+            if (lesemodus) {
+                notatMedType(NotatType.VIRKNINGSTIDSPUNKT, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = lesemodus),
+                    )
+                }
+                notatMedType(NotatType.VIRKNINGSTIDSPUNKT, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(NotatType.VIRKNINGSTIDSPUNKT, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = lesemodus),
+                    )
+                }
+            }
+        }
+
+        behandling.roller.forEach { r ->
+
+            if (lesemodus) {
+                notatMedType(
+                    NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                    false,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = lesemodus),
+                    )
+                }
+                notatMedType(
+                    NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                    true,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(
+                    NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = lesemodus),
+                    )
+                }
+            }
+        }
+        behandling.roller.forEach { r ->
+
+            if (lesemodus) {
+                notatMedType(NotatType.INNTEKT, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = lesemodus))
+                }
+                notatMedType(NotatType.INNTEKT, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(NotatType.INNTEKT, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = lesemodus))
+                }
+            }
+        }
+        behandling.roller.forEach { r ->
+
+            if (lesemodus) {
+                notatMedType(NotatType.SAMVÆR, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = lesemodus))
+                }
+                notatMedType(NotatType.SAMVÆR, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(NotatType.SAMVÆR, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = lesemodus))
+                }
+            }
+        }
+
+        behandling.roller.forEach { r ->
+
+            if (lesemodus) {
+                notatMedType(
+                    NotatType.UNDERHOLDSKOSTNAD,
+                    false,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = lesemodus))
+                }
+                notatMedType(NotatType.UNDERHOLDSKOSTNAD, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(
+                    NotatType.UNDERHOLDSKOSTNAD,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = lesemodus))
+                }
+            }
+        }
+        behandling.roller.forEach { r ->
+
+            if (lesemodus) {
+                notatMedType(
+                    NotatType.PRIVAT_AVTALE,
+                    false,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = lesemodus))
+                }
+                notatMedType(NotatType.PRIVAT_AVTALE, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
+                    behandling.notater.add(
+                        behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = false),
+                    )
+                }
+            } else {
+                notatMedTypeBegge(
+                    NotatType.PRIVAT_AVTALE,
+                    grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
+                )?.let {
+                    behandling.notater.add(behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = lesemodus))
+                }
+            }
+        }
+    }
+
+    fun VedtakDto.tilBeregningResultatSærbidrag(): ResultatSærbidragsberegningDto? = engangsbeløpListe.firstOrNull()?.let { engangsbeløp ->
+        val behandling =
+            tilBehandling(1, innkrevingstype = engangsbeløp.innkreving)
+        grunnlagListe.byggResultatSærbidragsberegning(
+            behandling.virkningstidspunkt!!,
+            engangsbeløp.beløp,
+            Resultatkode.fraKode(engangsbeløp.resultatkode)!!,
+            engangsbeløp.grunnlagReferanseListe,
+            behandling.utgift?.tilBeregningDto() ?: UtgiftBeregningDto(),
+            behandling.utgift
+                ?.utgiftsposter
+                ?.sorter()
+                ?.map { it.tilDto() } ?: emptyList(),
+            behandling.utgift?.maksGodkjentBeløpTaMed.ifTrue { behandling.utgift?.maksGodkjentBeløp },
+            behandling.finnBeregnTilDatoBehandling(),
+        )
+    }
+
+    private fun List<GrunnlagDto>.mapUtgifter(
+        behandling: Behandling,
+        lesemodus: Boolean,
+    ): Utgift? {
+        if (behandling.tilType() !== TypeBehandling.SÆRBIDRAG ||
+            validerBeregning.run { behandling.tilSærbidragAvslagskode() }?.erAvslagSomInneholderUtgifter() == false
+        ) {
+            return null
+        }
+        val utgift =
+            Utgift(
+                behandling,
+                beløpDirekteBetaltAvBp = utgiftDirekteBetalt!!.beløpDirekteBetalt,
+                maksGodkjentBeløpTaMed = utgiftMaksGodkjentBeløp != null,
+                maksGodkjentBeløp = utgiftMaksGodkjentBeløp?.beløp,
+                maksGodkjentBeløpBegrunnelse = utgiftMaksGodkjentBeløp?.begrunnelse,
+            )
+        utgift.utgiftsposter =
+            utgiftsposter
+                .mapIndexed { index, it ->
+                    Utgiftspost(
+                        id = if (lesemodus) index.toLong() else null,
+                        utgift = utgift,
+                        dato = it.dato,
+                        type = it.type,
+                        godkjentBeløp = it.godkjentBeløp,
+                        kravbeløp = it.kravbeløp,
+                        kommentar = it.kommentar,
+                        betaltAvBp = it.betaltAvBp,
+                    )
+                }.toMutableSet()
+
+        return utgift
+    }
+
+    private fun List<GrunnlagDto>.mapPrivatAvtale(
+        behandling: Behandling,
+        lesemodus: Boolean,
+    ): MutableSet<PrivatAvtale> = filtrerBasertPåEgenReferanse(Grunnlagstype.PRIVAT_AVTALE_PERIODE_GRUNNLAG)
+        .groupBy { if (it.gjelderBarnReferanse.isNullOrEmpty()) it.gjelderReferanse else it.gjelderBarnReferanse }
+        .filterBarnIBehandling(this, behandling)
+        .map {
+            val privatAvtaleGrunnlag =
+                filtrerOgKonverterBasertPåFremmedReferanse<PrivatAvtaleGrunnlagV2>(
+                    Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG,
+                    gjelderBarnReferanse = it.key,
+                ).firstOrNull()
+            val personGrunnlag = hentPersonMedReferanse(it.key)!!
+            val personFraVedtak = personGrunnlag.personObjekt
+            val rolleSøknadsbarn =
+                behandling.søknadsbarn.find {
+                    it.erSammeRolle(
+                        personFraVedtak.ident!!.verdi,
+                        personFraVedtak.stønadstype,
+                    )
+                }
+            if (rolleSøknadsbarn != null && privatAvtaleGrunnlag?.innhold?.avtaleType == PrivatAvtaleType.VEDTAK_FRA_NAV) {
+                val manuelleVedtak =
+                    (this as List<BaseGrunnlag>)
+                        .filtrerBasertPåFremmedReferanse(
+                            grunnlagType = Grunnlagstype.MANUELLE_VEDTAK,
+                            gjelderBarnReferanse = it.key,
+                        ).firstOrNull()
+                        ?.innholdTilObjektListe<List<ManuellVedtakGrunnlag>>()
+                val manuellVedtak = manuelleVedtak?.find { it.vedtaksid == privatAvtaleGrunnlag.innhold.vedtaksid }
+
+                val vedtaksid = privatAvtaleGrunnlag.innhold.vedtaksid
+                val vedtakPeriodeliste =
+                    vedtaksid?.let {
+                        val vedtak = hentVedtak(privatAvtaleGrunnlag.innhold.vedtaksid) ?: return@let null
+                        val stønadsendring = vedtak.finnStønadsendring(behandling.tilStønadsid(rolleSøknadsbarn))
+                        stønadsendring!!.periodeListe
+                    } ?: emptyList()
+
+                rolleSøknadsbarn.grunnlagFraVedtakListe =
+                    listOf(
+                        GrunnlagFraVedtak(
+                            vedtak = privatAvtaleGrunnlag.innhold.vedtaksid,
+                            vedtakstidspunkt = manuellVedtak?.fattetTidspunkt,
+                            perioder = vedtakPeriodeliste,
+                        ),
+                    )
+            }
+            val privatAvtale =
+                if (lesemodus) {
+                    PrivatAvtale(
+                        id = 1,
+                        avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
+                        skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
+                        avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
+                        behandling = behandling,
+                        rolle = rolleSøknadsbarn,
+                        stønadstype = rolleSøknadsbarn?.stønadstype,
+                    )
+                } else {
+                    PrivatAvtale(
+                        avtaleDato = privatAvtaleGrunnlag?.innhold?.avtaleInngåttDato,
+                        avtaleType = privatAvtaleGrunnlag?.innhold?.avtaleType ?: PrivatAvtaleType.PRIVAT_AVTALE,
+                        skalIndeksreguleres = privatAvtaleGrunnlag?.innhold?.skalIndeksreguleres ?: false,
+                        behandling = behandling,
+                        rolle = rolleSøknadsbarn,
+                        stønadstype = rolleSøknadsbarn?.stønadstype,
+                    )
+                }
+            it.value.forEach {
+                val grunnlag = it.innholdTilObjekt<PrivatAvtalePeriodeGrunnlag>()
+                val paPeriode =
+                    PrivatAvtalePeriode(
+                        id = if (lesemodus) (Math.random() * 10000).toLong() else null,
+                        privatAvtale = privatAvtale,
+                        fom = grunnlag.periode.fom.atDay(1),
+                        tom = grunnlag.periode.til?.atEndOfMonth(),
+                        beløp = grunnlag.beløp,
+                    )
+                privatAvtale.perioder.add(paPeriode)
+            }
+            privatAvtale
+        }.toMutableSet()
+
+    private fun List<GrunnlagDto>.mapUnderholdskostnad(
+        behandling: Behandling,
+        lesemodus: Boolean,
+        virkningstidspunkt: LocalDate,
+    ): MutableSet<Underholdskostnad> {
+        if (behandling.tilType() != TypeBehandling.BIDRAG) return mutableSetOf()
+        val underholdskostnadSøknadsbarn =
+            behandling.roller
+                .filter { Rolletype.BARN == it.rolletype }
+                .mapIndexed { index, rolle ->
+                    val underholdskostnad =
+                        if (lesemodus) {
+                            Underholdskostnad(
+                                id = index.toLong(),
+                                behandling = behandling,
+                                rolle = rolle,
+                            )
+                        } else {
+                            underholdService.oppretteUnderholdskostnad(
+                                behandling,
+                                BarnDto(personident = Personident(rolle.ident!!), stønadstype = rolle.stønadstype),
+                            )
+                        }
+
+                    if (erAldersjusteringNyLøsning()) {
+                        val detaljer = finnAldersjusteringDetaljerGrunnlag()!!
+                        if (detaljer.grunnlagFraVedtak == null) {
+                            return@mapIndexed underholdskostnad
+                        }
+                        val grunnlagFraVedtak = hentVedtak(detaljer.grunnlagFraVedtak)!!
+                        grunnlagFraVedtak.grunnlagListe.hentUnderholdskostnadPerioder(underholdskostnad, lesemodus, rolle)
+                    } else {
+                        hentUnderholdskostnadPerioder(underholdskostnad, lesemodus, rolle)
+                    }
+                    underholdskostnad
+                }.toMutableSet()
+        val underholdskostnadAndreBarn =
+            if (erAldersjusteringNyLøsning()) {
+                val detaljer = finnAldersjusteringDetaljerGrunnlag()!!
+                if (detaljer.grunnlagFraVedtak == null) {
+                    return mutableSetOf()
+                }
+                val grunnlagFraVedtak = hentVedtak(detaljer.grunnlagFraVedtak)!!
+                grunnlagFraVedtak.grunnlagListe.hentAndreBarnUnderholdskostnadPerioder(behandling, lesemodus, virkningstidspunkt)
+            } else {
+                hentAndreBarnUnderholdskostnadPerioder(
+                    behandling,
+                    lesemodus,
+                    virkningstidspunkt,
+                )
+            }
+        return (underholdskostnadAndreBarn + underholdskostnadSøknadsbarn).toMutableSet()
+    }
+
+    private fun List<GrunnlagDto>.hentAndreBarnUnderholdskostnadPerioder(
+        behandling: Behandling,
+        lesemodus: Boolean,
+        virkningstidspunkt: LocalDate,
+    ): MutableSet<Underholdskostnad> {
+        val andreBarnTilBidragsmottakerGrunnlag = hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt)
+        val andreBarnTilBidragsmottakerIdenter =
+            andreBarnTilBidragsmottakerGrunnlag.mapNotNull {
+                hentPersonMedReferanse(it.gjelderPerson)!!.personIdent
+            }
+
+        var indexU = 100L
+        val underholdskostnadAndreBarn =
+            filtrerBasertPåEgenReferanse(Grunnlagstype.FAKTISK_UTGIFT_PERIODE)
+                .filter {
+                    val gjelderBarnIdent = hentPersonMedReferanse(it.gjelderBarnReferanse)!!.personIdent
+                    behandling.roller.none { it.ident == gjelderBarnIdent }
+                }.groupBy { it.gjelderBarnReferanse }
+                .map { (gjelderBarnReferanse, grunnlag) ->
+                    val innhold = grunnlag.innholdTilObjekt<FaktiskUtgiftPeriode>()
+                    val personGrunnlag = hentPersonMedReferanse(gjelderBarnReferanse)
+                    val gjelderBarn = personGrunnlag!!.personObjekt
+
+                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
+                    val bidragsmottakerIdent =
+                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
+                            ?: behandling.bidragsmottaker!!.ident
+                    val kilde =
+                        if (andreBarnTilBidragsmottakerIdenter.contains(gjelderBarn.ident?.verdi)) {
+                            Kilde.OFFENTLIG
+                        } else {
+                            Kilde.MANUELL
+                        }
+                    indexU += 1L
+                    val underholdskostnad =
+                        if (lesemodus) {
+                            Underholdskostnad(
+                                id = indexU,
+                                behandling = behandling,
+                                kilde = kilde,
+                                rolle = behandling.alleBidragsmottakere.find { it.ident == bidragsmottakerIdent },
+                                person =
+                                Person(
+                                    id = indexU,
+                                    ident = gjelderBarn.ident?.verdi,
+                                    navn = gjelderBarn.navn,
+                                    fødselsdato = gjelderBarn.fødselsdato,
+                                ),
+                            )
+                        } else {
+                            underholdService.oppretteUnderholdskostnad(
+                                behandling,
+                                BarnDto(
+                                    personident = gjelderBarn.ident,
+                                    navn = if (gjelderBarn.ident == null) gjelderBarn.navn else null,
+                                    fødselsdato = gjelderBarn.fødselsdato,
+                                ),
+                                kilde = kilde,
+                            )
+                        }
+                    underholdskostnad.faktiskeTilsynsutgifter.addAll(
+                        innhold.mapFaktiskTilsynsutgift(
+                            underholdskostnad,
+                            lesemodus,
+                        ),
+                    )
+                    underholdskostnad
+                }.toMutableSet()
+
+        val faktiskPeriodeGjelderReferanser =
+            filtrerBasertPåEgenReferanse(
+                Grunnlagstype.FAKTISK_UTGIFT_PERIODE,
+            ).map { it.gjelderBarnReferanse }
+
+        val underholdskostnadAndreBarnBMUtenTilsynsutgifer =
+            andreBarnTilBidragsmottakerGrunnlag
+                .filter { !faktiskPeriodeGjelderReferanser.contains(it.gjelderPerson) }
+                .filter { hentPersonMedReferanse(it.gjelderPerson)?.type != Grunnlagstype.PERSON_SØKNADSBARN }
+                .map {
+                    val personGrunnlag = hentPersonMedReferanse(it.gjelderPerson)
+                    val gjelderBarn = personGrunnlag!!.personObjekt
+                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
+                    val bidragsmottakerIdent =
+                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
+                            ?: behandling.bidragsmottaker!!.ident
+                    indexU += 1L
+                    if (lesemodus) {
+                        Underholdskostnad(
+                            id = indexU,
+                            behandling = behandling,
+                            rolle = behandling.alleBidragsmottakere.find { it.ident == bidragsmottakerIdent },
+                            person =
+                            Person(
+                                id = indexU,
+                                ident = gjelderBarn.ident?.verdi,
+                                navn = gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
+                        )
+                    } else {
+                        underholdService.oppretteUnderholdskostnad(
+                            behandling,
+                            BarnDto(
+                                personident = gjelderBarn.ident,
+                                navn = if (gjelderBarn.ident != null) null else gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
+                        )
+                    }
+                }
+
+        val underholdskostnader = (underholdskostnadAndreBarn + underholdskostnadAndreBarnBMUtenTilsynsutgifer).toMutableSet()
+
+        val barnUnder12ÅrManuell =
+            hentAllePersoner()
+                .filter { it.type == Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER }
+                .filter { it.personObjekt.fødselsdato.erUnder12År(virkningstidspunkt) }
+        val underholdskostnadAndreBarnBMUtenTilsynsutgifterManuell =
+            barnUnder12ÅrManuell
+                .filter {
+                    underholdskostnader.none { uk -> uk.person?.ident == it.personIdent }
+                }.map {
+                    val personGrunnlag = hentPersonMedReferanse(it.referanse)
+                    val gjelderBarn = personGrunnlag!!.personObjekt
+                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
+                    val bidragsmottakerIdent =
+                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
+                            ?: behandling.bidragsmottaker!!.ident
+                    indexU += 1L
+                    if (lesemodus) {
+                        Underholdskostnad(
+                            id = indexU,
+                            behandling = behandling,
+                            rolle = behandling.alleBidragsmottakere.find { bm -> bm.ident == bidragsmottakerIdent },
+                            person =
+                            Person(
+                                id = indexU,
+                                ident = gjelderBarn.ident?.verdi,
+                                navn = gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
+                        )
+                    } else {
+                        underholdService.oppretteUnderholdskostnad(
+                            behandling,
+                            BarnDto(
+                                personident = gjelderBarn.ident,
+                                navn = if (gjelderBarn.ident != null) null else gjelderBarn.navn,
+                                fødselsdato = gjelderBarn.fødselsdato,
+                            ),
+                            kilde = Kilde.MANUELL,
+                        )
+                    }
+                }
+        return (underholdskostnader + underholdskostnadAndreBarnBMUtenTilsynsutgifterManuell).toMutableSet()
+    }
+
+    fun List<GrunnlagDto>.hentUnderholdskostnadPerioder(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+        rolle: Rolle,
+        filtrerEtterPeriode: ÅrMånedsperiode? = null,
+    ) {
+        underholdskostnad.tilleggsstønad.addAll(
+            filtrerBasertPåEgenReferanse(Grunnlagstype.TILLEGGSSTØNAD_PERIODE)
+                .filter {
+                    val personGrunnlag = hentPersonMedReferanse(it.gjelderBarnReferanse)!!
+                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                }.map { it.innholdTilObjekt<TilleggsstønadPeriode>() }
+                .mapTillegsstønad(underholdskostnad, lesemodus)
+                .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
+        )
+
+        underholdskostnad.faktiskeTilsynsutgifter.addAll(
+            filtrerBasertPåEgenReferanse(Grunnlagstype.FAKTISK_UTGIFT_PERIODE)
+                .filter {
+                    val personGrunnlag = hentPersonMedReferanse(it.gjelderBarnReferanse)!!
+                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                }.map { it.innholdTilObjekt<FaktiskUtgiftPeriode>() }
+                .mapFaktiskTilsynsutgift(underholdskostnad, lesemodus)
+                .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
+        )
+
+        underholdskostnad.barnetilsyn.addAll(
+            filtrerBasertPåEgenReferanse(Grunnlagstype.BARNETILSYN_MED_STØNAD_PERIODE)
+                .filter { ts ->
+                    val personGrunnlag = hentPersonMedReferanse(ts.gjelderBarnReferanse)!!
+                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                }.map { it.innholdTilObjekt<BarnetilsynMedStønadPeriode>() }
+                .mapBarnetilsyn(underholdskostnad, lesemodus)
+                .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
+        )
+        underholdskostnad.harTilsynsordning =
+            underholdskostnad.barnetilsyn.isNotEmpty() ||
+            underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
+            underholdskostnad.tilleggsstønad.isNotEmpty()
+    }
+
+    private fun List<GrunnlagDto>.hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt: LocalDate) = filtrerBasertPåEgenReferanse(
+        Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER,
+    ).firstOrNull()
+        ?.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
+        ?.grunnlag
+        ?.filter { it.fødselsdato.erUnder12År(virkningstidspunkt) }
+        ?: emptyList()
+
+    private fun List<TilleggsstønadPeriode>.mapTillegsstønad(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+    ): List<Tilleggsstønad> = mapIndexed { index, it ->
+        Tilleggsstønad(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            beløp = it.beløp,
+            beløpstype = it.beløpstype,
+        )
+    }
+
+    private fun List<FaktiskUtgiftPeriode>.mapFaktiskTilsynsutgift(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+    ): List<FaktiskTilsynsutgift> = mapIndexed { index, it ->
+        FaktiskTilsynsutgift(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            tilsynsutgift = it.faktiskUtgiftBeløp,
+            kostpenger = it.kostpengerBeløp,
+            kommentar = it.kommentar,
+        )
+    }
+
+    private fun List<BarnetilsynMedStønadPeriode>.mapBarnetilsyn(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+    ): List<Barnetilsyn> = mapIndexed { index, it ->
+        Barnetilsyn(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            under_skolealder = it.skolealder == Skolealder.UNDER,
+            omfang = it.tilsynstype,
+            kilde = if (it.manueltRegistrert) Kilde.MANUELL else Kilde.OFFENTLIG,
+        )
+    }
+
+    private fun List<GrunnlagDto>.mapSamvær(
+        behandling: Behandling,
+        lesemodus: Boolean,
+    ): MutableSet<Samvær> {
+        val samværBarn =
+            filtrerBasertPåEgenReferanse(
+                Grunnlagstype.SAMVÆRSPERIODE,
+            ).groupBy { it.gjelderBarnReferanse }
+                .filterBarnIBehandling(this, behandling)
+                .map { (gjelderReferanse, perioder) ->
+                    val person = hentPersonMedReferanse(gjelderReferanse)!!
+                    val samvær =
+                        Samvær(
+                            id = if (lesemodus) (Math.random() * 10000).toLong() else null,
+                            behandling = behandling,
+                            rolle = behandling.roller.find { it.erSammeRolle(person.personIdent!!, person.stønadstype) }!!,
+                            perioder = mutableSetOf(),
+                        )
+
+                    samvær.perioder.addAll(
+                        perioder.mapIndexed { index, it ->
+                            val periodeInnhold = it.innholdTilObjekt<SamværsperiodeGrunnlag>()
+                            val beregning =
+                                finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
+                                    Grunnlagstype.SAMVÆRSKALKULATOR,
+                                    it.grunnlagsreferanseListe,
+                                ).firstOrNull()
+                                    ?.innholdTilObjekt<SamværskalkulatorDetaljer>()
+                            Samværsperiode(
+                                id = if (lesemodus) index.toLong() else null,
+                                samvær = samvær,
+                                fom = periodeInnhold.periode.fom.atDay(1),
+                                tom =
+                                periodeInnhold.periode.til
+                                    ?.minusMonths(1)
+                                    ?.atEndOfMonth(),
+                                samværsklasse = periodeInnhold.samværsklasse,
+                                beregningJson = beregning?.let { commonObjectmapper.writeValueAsString(it) },
+                            )
+                        },
+                    )
+                    samvær
+                }.toMutableSet()
+
+        return if (samværBarn.isEmpty()) {
+            behandling.søknadsbarn
+                .map {
+                    Samvær(
+                        id = if (lesemodus) (Math.random() * 10000).toLong() else null,
+                        behandling = behandling,
+                        rolle = it,
+                        perioder = mutableSetOf(),
+                    )
+                }.toMutableSet()
+        } else {
+            samværBarn
+        }
+    }
+}

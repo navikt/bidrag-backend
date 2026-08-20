@@ -17,3 +17,7 @@ target/
 
 # Lokale nais-secrets
 application-lokal-nais-secrets*
+
+# Lokale utviklerfiler generert av initEnv.sh
+.env.file
+debugging/
