@@ -25,7 +25,7 @@ private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     tittel = "$tema - $oppgavetype",
     beskrivelse = beskrivelse,
     status = status.tilBidragStatus(),
-    opprettet = opprettetTidspunkt ?: OffsetDateTime.now(),
+    opprettet = opprettetTidspunkt,
 )
 
 private fun OppgaveApiDto.Status.tilBidragStatus(): OppgaveStatus = when (this) {

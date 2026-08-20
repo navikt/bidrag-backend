@@ -7,7 +7,7 @@ data class OppgaveDto(
     val tittel: String,
     val beskrivelse: String? = null,
     val status: OppgaveStatus = OppgaveStatus.OPPRETTET,
-    val opprettet: OffsetDateTime = OffsetDateTime.now(),
+    val opprettet: OffsetDateTime? = null,
 )
 
 enum class OppgaveStatus {
