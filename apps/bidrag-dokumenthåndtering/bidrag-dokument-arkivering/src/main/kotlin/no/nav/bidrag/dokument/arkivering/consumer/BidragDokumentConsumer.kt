@@ -103,8 +103,9 @@ class BidragDokumentConsumer(
     }
 
     fun hentBidragJournalpost(id: String): HttpResponse<JournalpostResponse> {
+        val safeId = id.toLongOrNull()?.toString() ?: throw IllegalArgumentException("Ugyldig journalpostId: $id")
         val bidragPrefix = "BID-"
-        val path = String.format(HENTE_JOURNALPOST_PATH, bidragPrefix + id)
+        val path = String.format(HENTE_JOURNALPOST_PATH, bidragPrefix + safeId)
         log.info { "Henter journalpost fra bidrag-dokument$path" }
         val responsFraBdjp =
             restTemplate.exchange(path, HttpMethod.GET, null, JournalpostResponse::class.java)
@@ -113,8 +114,9 @@ class BidragDokumentConsumer(
     }
 
     fun kanArkivereJournalpost(journalpostId: String): ArkiverDecision {
+        val safeId = journalpostId.toLongOrNull()?.toString() ?: throw IllegalArgumentException("Ugyldig journalpostId: $journalpostId")
         val bidragPrefix = "BID-"
-        val path = String.format(KAN_DISTRIBUERE_JOURNALPOST_PATH, bidragPrefix + journalpostId)
+        val path = String.format(KAN_DISTRIBUERE_JOURNALPOST_PATH, bidragPrefix + safeId)
         val headers = HttpHeaders()
         headers.add(EnhetFilter.X_ENHET_HEADER, "")
         return try {
@@ -147,7 +149,8 @@ class BidragDokumentConsumer(
         enhet: String,
         avvikshendelse: Avvikshendelse,
     ) {
-        val path = String.format(AVVIK_PATH, journalpostId)
+        val safeId = journalpostId.toLongOrNull()?.toString() ?: throw IllegalArgumentException("Ugyldig journalpostId: $journalpostId")
+        val path = String.format(AVVIK_PATH, safeId)
         log.info { "Sender avvik ${avvikshendelse.avvikType} til bidrag-dokument$path" }
         val headers = HttpHeaders()
         headers.add(EnhetFilter.X_ENHET_HEADER, enhet)
