@@ -1,12 +1,13 @@
 # Indeksregulering bidrag
 
-| | |
-|---|---|
-| **Applikasjon** | `bidrag-automatisk-jobb` |
-| **Pakke** | `no.nav.bidrag.automatiskjobb.batch.indeksregulering.bidrag` |
+|                  | Beskrivelse                                                                                                                  |
+|------------------|------------------------------------------------------------------------------------------------------------------------------|
+| **Applikasjon**  | `bidrag-automatisk-jobb`                                                                                                     |
+| **Pakke**        | `no.nav.bidrag.automatiskjobb.batch.indeksregulering.bidrag`                                                                 |
 | **Kjøremønster** | Årlig, startes manuelt via API-endepunkter (schedulert kjøring er teknisk støttet, men cron er p.t. deaktivert i alle miljø) |
-| **Auth** | Azure AD (`@Protected`), kalt av andre Nav-tjenester/team |
-| **Status** | Kun norske bidragssaker (NOK) støttes p.t. |
+| **Auth**         | Azure AD (`@Protected`)                                                                                                      |
+| **Erstatter**    | Bisys-batch **FB020**                                                                                                        |
+| **Status**       | Kun norske bidragssaker (NOK) støttes p.t.                                                                                   |
 
 > Denne batchen er en erstatning av den gamle FB020 fra Bisys-batch.
 > Funksjonelt skal jobben oppføre seg på samme måte som FB020, men er teknisk fullstendig

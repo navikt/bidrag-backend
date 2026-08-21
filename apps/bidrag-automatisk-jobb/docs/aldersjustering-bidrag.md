@@ -1,12 +1,12 @@
 # Aldersjustering bidrag
 
-| | |
-|---|---|
-| **Applikasjon** | `bidrag-automatisk-jobb` |
-| **Pakke** | `no.nav.bidrag.automatiskjobb.batch.aldersjustering.bidrag` |
-| **Kjøremønster** | Årlig. Opprett, beregn, fatt vedtak og opprett oppgave kan trigges automatisk via schedulert cron (p.t. deaktivert i alle miljø), i tillegg til manuell start via API-endepunkter |
-| **Auth** | Azure AD (`@Protected`), kalt av andre Nav-tjenester/team |
-| **Erstatter** | Bisys-batch **FB260** |
+| | Beskrivelse                                                                                                                                                                       |
+|---|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Applikasjon** | `bidrag-automatisk-jobb`                                                                                                                                                          |
+| **Pakke** | `no.nav.bidrag.automatiskjobb.batch.aldersjustering.bidrag`                                                                                                                       |
+| **Kjøremønster** | Årlig, startes manuelt via API-endepunkter (schedulert kjøring er teknisk støttet, men cron er p.t. deaktivert i alle miljø) |
+| **Auth** | Azure AD (`@Protected`)                                                                                                                        |
+| **Erstatter** | Bisys-batch **FB260**                                                                                                                                                             |
 
 > Denne batchen er en erstatning av den gamle FB260 fra Bisys-batch.
 > Funksjonelt skal jobben oppføre seg på samme måte som FB260 (aldersjustering av bidrag ved 6, 11
