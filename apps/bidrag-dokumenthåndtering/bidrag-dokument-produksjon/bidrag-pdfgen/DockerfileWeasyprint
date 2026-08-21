@@ -1,0 +1,110 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.13-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    LANG=nb_NO.UTF-8 \
+    LANGUAGE=nb_NO:nb \
+    LC_ALL=nb_NO.UTF-8 \
+    # Nais runs the container as uid 1001, which has no home directory. Without
+    # these, fontconfig fails with "No writable cache directories" and rescans
+    # every font on every single request.
+    HOME=/tmp \
+    XDG_CACHE_HOME=/tmp/.cache \
+    XDG_CONFIG_HOME=/tmp/.config \
+    FONTCONFIG_PATH=/etc/fonts \
+    PORT=8080
+
+RUN apt-get update -qq \
+    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        # WeasyPrint's rendering stack
+        libpango-1.0-0 \
+        libpangoft2-1.0-0 \
+        libharfbuzz0b \
+        libcairo2 \
+        libgdk-pixbuf-2.0-0 \
+        libffi8 \
+        shared-mime-info \
+        # PDF post-processing (flatten/merge)
+        qpdf \
+        # Fonts: Source Sans is the NAV/Aksel typeface used by the templates.
+        # The others provide fallbacks so missing glyphs render as text, not tofu.
+        fonts-open-sans \
+        fonts-dejavu-core \
+        fonts-liberation2 \
+        fonts-noto-core \
+        fonts-noto-color-emoji \
+        locales \
+    && sed -i '/^# *nb_NO.UTF-8/s/^# *//' /etc/locale.gen \
+    && locale-gen \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# style.css asks for both "Source Sans 3" (the NAV/Aksel typeface) and the older
+# "Source Sans Pro" name. Debian packages neither, so fetch upstream. The
+# checksum pins the artefact: without it the build silently accepts whatever
+# that URL serves. fonts.conf aliases the old family name onto the new one -
+# otherwise h1/p fall back to DejaVu Sans and look wrong next to everything else.
+ADD --checksum=sha256:a4ebbdea20b08ccbd7bf3665a9462454eefdd01d9a6307129d3b3d4672981074 \
+    https://github.com/adobe-fonts/source-sans/releases/download/3.052R/OTF-source-sans-3.052R.zip \
+    /tmp/source-sans.zip
+RUN apt-get update -qq \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends unzip \
+    && mkdir -p /usr/share/fonts/opentype/source-sans \
+    && unzip -j -o /tmp/source-sans.zip '*.otf' -d /usr/share/fonts/opentype/source-sans \
+    && rm -f /tmp/source-sans.zip \
+    && apt-get purge -y -qq unzip \
+    && apt-get autoremove -y -qq \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY fonts.conf /etc/fonts/local.conf
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --requirement requirements.txt
+
+COPY weasyprint_server.py ./
+
+# Warm the fontconfig cache into a world-readable location so the first request
+# after a cold start is not several seconds slower than the rest.
+RUN fc-cache -f && chmod -R a+rX /usr/share/fonts /var/cache/fontconfig
+
+USER 1001
+
+EXPOSE 8080
+
+# Rendering is CPU-bound, so scale with processes rather than threads.
+#
+# The `gthread` worker class is deliberate: with the default sync worker a pod
+# that is busy rendering cannot answer GET /health at all, so Kubernetes'
+# readiness probe fails and the pod is pulled out of the service under exactly
+# the load it is supposed to handle. WeasyPrint spends most of its time in
+# Pango/cairo, which release the GIL, so a spare thread lets the trivial health
+# handler be scheduled promptly without hurting render throughput.
+#
+# Thread count is 2, not 4. Each in-flight render holds a full document tree,
+# so memory scales with threads while throughput does not. Measured with a
+# 15-page saksbehandlingsnotat (2 workers, resident set of the whole container):
+#
+#   threads=1 -> 327 MiB, /health 0.58s under 2 concurrent renders
+#   threads=2 -> 486 MiB, /health 0.007s
+#   threads=4 -> 758 MiB, /health 0.007s
+#
+# 2 keeps a thread free to answer probes at a third less memory than 4; going
+# higher only buys memory pressure. Note that under *saturation* (more requests
+# than worker slots) /health queues and times out in every configuration - the
+# Nais probes are tuned to tolerate that rather than restart a busy pod.
+CMD exec gunicorn \
+    --worker-class gthread \
+    --bind "0.0.0.0:${PORT}" \
+    --workers "${GUNICORN_WORKERS:-2}" \
+    --threads "${GUNICORN_THREADS:-2}" \
+    --timeout "${GUNICORN_TIMEOUT:-120}" \
+    --graceful-timeout 30 \
+    --keep-alive 15 \
+    --max-requests 200 \
+    --max-requests-jitter 50 \
+    --access-logfile - \
+    --error-logfile - \
+    weasyprint_server:app

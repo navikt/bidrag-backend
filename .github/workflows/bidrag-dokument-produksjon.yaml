@@ -1,0 +1,108 @@
+name: Bidrag-dokument-produksjon
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - prod
+          - q1
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - '.nais/bidrag-dokument-produksjon/**.yaml'
+#      - '.github/workflows/bidrag-dokument-produksjon.yaml' //TODO(Slå på etter migrering)
+#      - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/**'
+      - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml'
+      - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/Dockerfile'
+      - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/data/**'
+
+jobs:
+  bygg_og_test:
+    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    name: "Bygg og test"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
+      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
+      # invalideres av endringer i moduler denne jobben ikke bygger.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bidrag-dokument-produksjon-${{ hashFiles('pom.xml', 'apps/bidrag-dokumenthåndtering/pom.xml', 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml') }}
+          restore-keys: |
+            maven-bidrag-dokument-produksjon-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+      - name: Bygg og kjør tester (inkl. ktlint)
+        run: mvn -B -fae verify -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon -am
+
+  deploy_prod:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    name: "Build and deploy to prod"
+    concurrency:
+      group: deploy-dokument-produksjon-prod-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-dokumenthåndtering/pom.xml
+        apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml
+      ktlint_paths: apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/src/**/*.kt
+      docker_context: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon
+      dockerfile_with_path: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/Dockerfile
+      nais_variabler_filnavn: bidrag-dokument-produksjon/prod.yaml
+      nais_hovedfil_navn: bidrag-dokument-produksjon/nais.yaml
+      image_suffix: bidrag-dokument-produksjon
+      tag: bidrag-dokument-produksjon
+
+  deploy_q1:
+    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q1'))
+    name: "Build and deploy to Q1"
+    concurrency:
+      group: deploy-dokument-produksjon-q1-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: "read"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      maven_options: -B -fae -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon -am
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-dokumenthåndtering/pom.xml
+        apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml
+      ktlint_paths: apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/src/**/*.kt
+      docker_context: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon
+      dockerfile_with_path: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/Dockerfile
+      nais_variabler_filnavn: bidrag-dokument-produksjon/q1.yaml
+      nais_hovedfil_navn: bidrag-dokument-produksjon/nais.yaml
+      image_suffix: bidrag-dokument-produksjon
+      tag: bidrag-dokument-produksjon

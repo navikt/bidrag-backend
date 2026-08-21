@@ -1,0 +1,29 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+bidrag-dokumentmal:
+  url:  ${BIDRAG_DOKUMENTMAL_URL:http://bidrag-dokumentmal}
+bidrag-pdfgen:
+  url: ${BIDRAG_PDFGEN_URL:http://bidrag-pdfgen}
+spring:
+  devtools:
+    livereload:
+      port: 35730
+    restart:
+      enabled: false
+  jackson:
+    deserialization:
+      fail-on-missing-creator-properties: false
+      fail-on-ignored-properties: false
+  main:
+    lazy-initialization: true
+
+
+springdoc:
+  packages-to-scan: no.nav.bidrag.dokument.produksjon.api
+  swagger-ui:
+    path: /
+spring.threads.virtual.enabled: true
+spring.main.banner-mode: off
