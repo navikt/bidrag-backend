@@ -1,4 +1,4 @@
-package no.nav.bidrag.oppgaveapiclient
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 /**
  * Utvalg av tema fra Navs felles kodeverk som brukes ved søk i oppgave-apiet.

@@ -1,7 +1,6 @@
-package no.nav.oppgave.model
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import no.nav.bidrag.oppgaveapiclient.EksternJournalpostId
 import java.time.LocalDate
 import java.util.*
 

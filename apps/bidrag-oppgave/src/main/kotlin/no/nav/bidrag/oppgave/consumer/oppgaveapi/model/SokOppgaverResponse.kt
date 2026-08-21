@@ -1,4 +1,4 @@
-package no.nav.oppgave.model
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 data class SokOppgaverResponse(
     /** Totalt antall oppgaver funnet med dette søket */

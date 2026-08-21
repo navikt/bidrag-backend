@@ -1,4 +1,4 @@
-package no.nav.bidrag.oppgaveapiclient
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonValue

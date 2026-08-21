@@ -1,11 +1,11 @@
 package no.nav.bidrag.oppgave.service
 
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
-import no.nav.bidrag.oppgaveapiclient.EksternOppgaveId
-import no.nav.bidrag.oppgaveapiclient.Enhetsnummer
-import no.nav.oppgave.OppgaveClient
-import no.nav.oppgave.model.OppgaveDto
-import no.nav.oppgave.model.SokOppgaverResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.Test

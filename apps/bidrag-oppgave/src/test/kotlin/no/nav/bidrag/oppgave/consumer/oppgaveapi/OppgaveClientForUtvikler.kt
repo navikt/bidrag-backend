@@ -1,12 +1,11 @@
-package no.nav.oppgave
+package no.nav.bidrag.oppgave.consumer.oppgaveapi
 
-import no.nav.bidrag.oppgaveapiclient.APP_NAVN
-import no.nav.bidrag.oppgaveapiclient.EksternOppgaveId
-import no.nav.bidrag.oppgaveapiclient.FellesKodeverkTema
-import no.nav.bidrag.oppgaveapiclient.NavIdent
-import no.nav.oppgave.model.FinnOppgaverParams
-import no.nav.oppgave.model.OpprettOppgaveRequest
-import no.nav.oppgave.model.PatchOppgaveRequest
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.APP_NAVN
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpRequest

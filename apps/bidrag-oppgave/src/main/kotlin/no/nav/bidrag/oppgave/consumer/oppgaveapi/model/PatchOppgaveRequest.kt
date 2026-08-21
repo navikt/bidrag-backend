@@ -1,10 +1,7 @@
-package no.nav.oppgave.model
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
-import no.nav.bidrag.oppgaveapiclient.EksternJournalpostId
-import no.nav.bidrag.oppgaveapiclient.Enhetsnummer
-import no.nav.bidrag.oppgaveapiclient.NavIdent
 import java.time.LocalDate
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
