@@ -36,6 +36,7 @@
         <module>apps/bidrag-behandling</module>
         <module>apps/bidrag-belopshistorikk</module>
         <module>apps/bidrag-bbm</module>
+        <module>apps/bidrag-bidragskalkulator</module>
         <module>apps/bidrag-grunnlag</module>
         <module>apps/bidrag-organisasjon</module>
         <module>apps/bidrag-samhandler</module>

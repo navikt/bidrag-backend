@@ -1,0 +1,105 @@
+package no.nav.bidrag.bidragskalkulator.config
+
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.models.Components
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.media.Schema
+import no.nav.bidrag.bidragskalkulator.dto.BidragsType
+import no.nav.bidrag.bidragskalkulator.dto.Oppgjørsform
+import no.nav.bidrag.bidragskalkulator.dto.Vedleggskrav
+import no.nav.bidrag.bidragskalkulator.dto.VoksneOver18Type
+import no.nav.bidrag.bidragskalkulator.dto.førstesidegenerator.NavSkjemaId
+import no.nav.bidrag.bidragskalkulator.dto.førstesidegenerator.Språkkode
+import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
+import no.nav.bidrag.domene.enums.beregning.Samværsklasse
+import org.springdoc.core.customizers.OpenApiCustomizer
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+
+@OpenAPIDefinition(
+    info = io.swagger.v3.oas.annotations.info.Info(title = "bidrag-bidragskalkulator-api", version = "v1"),
+    security = [SecurityRequirement(name = SecurityConstants.BEARER_KEY)],
+)
+@io.swagger.v3.oas.annotations.security.SecurityScheme(
+    bearerFormat = "JWT",
+    name = SecurityConstants.BEARER_KEY,
+    scheme = "bearer",
+    type = SecuritySchemeType.HTTP,
+)
+@Configuration
+class SwaggerConfig {
+
+    @Bean
+    fun customOpenApi(): OpenApiCustomizer = OpenApiCustomizer { openApi: OpenAPI ->
+        val samværsklasseSchema = Schema<String>()
+            .description("Samværsklasse for barnet")
+            .example(Samværsklasse.SAMVÆRSKLASSE_1.name)
+            .apply {
+                enum = Samværsklasse.entries.map { it.name }
+            }
+
+        val tilsynstypeSchema = Schema<String>()
+            .description("Plass-type (heltid/deltid) når det mottas stønad til barnetilsyn.")
+            .example(Tilsynstype.HELTID.name)
+            .apply {
+                enum = Tilsynstype.entries.map { it.name }
+            }
+
+        val oppgjørsformSchema = Schema<String>()
+            .description(
+                "Angir hvordan bidraget skal betales eller innkreves." +
+                    "PRIVATE = bidraget gjøres opp privat, " +
+                    "INNKREVING = bidraget betales via Skatteetaten/Nav Innkreving.",
+            )
+            .example(Oppgjørsform.INNKREVING.name)
+            .apply {
+                enum = Oppgjørsform.entries.map { it.name }
+            }
+
+        val vedleggskravSchema = Schema<String>()
+            .description("Tilleggsdokumentasjon som følger saken")
+            .example(Vedleggskrav.INGEN_EKSTRA_DOKUMENTASJON.name)
+            .apply {
+                enum = Vedleggskrav.entries.map { it.name }
+            }
+
+        val språkkodeSchema = Schema<String>()
+            .description("Språkkode som angir hvilket språk dokumentet skal genereres på")
+            .example(Språkkode.NB.name)
+            .apply {
+                enum = Språkkode.entries.map { it.name }
+            }
+
+        val navSkjemaIdSchema = Schema<String>()
+            .description("Nav-skjema som benyttes, identifisert ved skjema-ID")
+            .example(NavSkjemaId.AVTALE_OM_BARNEBIDRAG_UNDER_18.name)
+            .apply {
+                enum = NavSkjemaId.entries.map { it.name }
+            }
+
+        val bidragsTypeSchema = Schema<String>()
+            .description("Typen bidrag – man skal betale eller motta bidrag")
+            .example(BidragsType.MOTTAKER.name)
+            .apply {
+                enum = BidragsType.entries.map { it.name }
+            }
+
+        val voksneOver18TypeSchema = Schema<String>().description("Type voksne over 18 år i husholdningen")
+            .example("SAMBOER_ELLER_EKTEFELLE")
+            .apply {
+                enum = VoksneOver18Type.entries.map { it.name }
+            }
+
+        openApi.components = (openApi.components ?: Components())
+            .addSchemas("Samværsklasse", samværsklasseSchema)
+            .addSchemas("Tilsynstype", tilsynstypeSchema)
+            .addSchemas("Oppgjørsform", oppgjørsformSchema)
+            .addSchemas("Vedleggskrav", vedleggskravSchema)
+            .addSchemas("Språkkode", språkkodeSchema)
+            .addSchemas("NavSkjemaId", navSkjemaIdSchema)
+            .addSchemas("bidragsTypeSchema", bidragsTypeSchema)
+            .addSchemas("voksneOver18TypeSchema", voksneOver18TypeSchema)
+    }
+}
