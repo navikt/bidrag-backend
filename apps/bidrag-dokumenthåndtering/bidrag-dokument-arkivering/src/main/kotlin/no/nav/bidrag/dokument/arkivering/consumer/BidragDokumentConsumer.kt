@@ -146,11 +146,12 @@ class BidragDokumentConsumer(
 
     fun sendAvvikHendelse(
         journalpostId: String,
+        prefix: String,
         enhet: String,
         avvikshendelse: Avvikshendelse,
     ) {
         val safeId = journalpostId.toLongOrNull()?.toString() ?: throw IllegalArgumentException("Ugyldig journalpostId: $journalpostId")
-        val path = String.format(AVVIK_PATH, safeId)
+        val path = String.format(AVVIK_PATH, prefix + safeId)
         log.info { "Sender avvik ${avvikshendelse.avvikType} til bidrag-dokument$path" }
         val headers = HttpHeaders()
         headers.add(EnhetFilter.X_ENHET_HEADER, enhet)

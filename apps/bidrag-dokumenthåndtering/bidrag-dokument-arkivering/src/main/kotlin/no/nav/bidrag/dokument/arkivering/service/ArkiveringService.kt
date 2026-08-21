@@ -198,7 +198,8 @@ class ArkiveringService(
                             "${avvikHendelseRequest.detaljer[AvvikHendelseIntern.AVVIK_DETAIL_JOARK_STATUS]}"
                     }
                     bidragDokumentConsumer.sendAvvikHendelse(
-                        "BID-$jpId",
+                        jpId,
+                        "BID-",
                         journalforendeEnhet,
                         avvikHendelseRequest,
                     )
