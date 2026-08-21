@@ -16,6 +16,7 @@ interface IndeksreguleringRepository : JpaRepository<Indeksregulering, Int> {
         år: Int,
     ): Indeksregulering?
 
+    @Suppress("Brukt i batch")
     fun findAllByStønadstypeInAndÅr(
         stønadstyper: Collection<Stønadstype>,
         år: Int,
@@ -29,12 +30,17 @@ interface IndeksreguleringRepository : JpaRepository<Indeksregulering, Int> {
         år: Int,
     ): List<Indeksregulering>
 
-    fun findAllByStatusAndBehandlingstypeAndVedtakIsNotNullAndÅr(
+    // Keyset-paginering (id > sisteId) i stedet for offset, siden status endres av batch-prosessoren
+    // under kjøring. Offset-paginering ville da hoppe over rader mellom sidene, se
+    // FattVedtakIndeksreguleringBidragBatchReader.
+    fun findAllByStatusAndBehandlingstypeAndVedtakIsNotNullAndÅrAndStønadstypeInAndIdGreaterThanOrderByIdAsc(
         status: Status,
         behandlingstype: Behandlingstype,
         år: Int,
+        stønadstyper: Collection<Stønadstype>,
+        id: Int,
         pageable: Pageable,
-    ): Page<Indeksregulering>
+    ): List<Indeksregulering>
 
     fun deleteAllByÅr(år: Int)
 

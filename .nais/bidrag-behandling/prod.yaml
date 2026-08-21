@@ -1,0 +1,95 @@
+name: bidrag-behandling
+ingresses:
+  - https://bidrag-behandling.intern.nav.no
+min_replicas: 2
+env:
+  SPRING_PROFILES_ACTIVE: live,nais,database-legacy
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_GRUNNLAG_URL: http://bidrag-grunnlag
+  BIDRAG_GRUNNLAG_SCOPE: prod-gcp.bidrag.bidrag-grunnlag
+  BIDRAG_FORSENDELSE_URL: http://bidrag-dokument-forsendelse
+  BIDRAG_FORSENDELSE_SCOPE: prod-gcp.bidrag.bidrag-dokument-forsendelse
+  BIDRAG_TILGANGSKONTROLL_URL: http://bidrag-tilgangskontroll
+  BIDRAG_TILGANGGSKONTROLL_SCOPE: prod-gcp.bidrag.bidrag-tilgangskontroll
+  BIDRAG_BELOPSHISTORIKK_URL: http://bidrag-belopshistorikk
+  BIDRAG_BELOPSHISTORIKK_SCOPE: prod-gcp.bidrag.bidrag-belopshistorikk
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak
+  BIDRAG_VEDTAK_SCOPE: prod-gcp.bidrag.bidrag-vedtak
+  BIDRAG_BBM_URL: https://bidrag-bbm.prod-fss-pub.nais.io
+  BIDRAG_BBM_SCOPE: prod-fss.bidrag.bidrag-bbm
+  BIDRAG_DOKUMENT_PRODUKSJON_URL: http://bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_PRODUKSJON_SCOPE: prod-gcp.bidrag.bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.prod-fss-pub.nais.io/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_SJABLON_URL: https://bidrag-sjablon.prod-fss-pub.nais.io/bidrag-sjablon
+  ARBEID_OG_INNTEKT_URL: https://arbeid-og-inntekt.prod-fss-pub.nais.io/api/v2
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_FORRIGE_INNHENTING: 300
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_SYNKRONISER_FF: 5
+  GRUNNLAG_MIN_ANT_MINUTTER_SIDEN_FORRIGE_INNHENTING_BELOPSHISTORIKK: 5
+  KODEVERK_URL: http://bidrag-kodeverk
+  OPPGAVE_URL: https://oppgave.prod-fss-pub.nais.io
+  OPPGAVE_SCOPE: prod-fss.oppgavehandtering.oppgave
+  TOPIC_VEDTAK: bidrag.vedtak
+  TOPIC_JOURNALPOST: bidrag.journalpost
+  TOPIC_BEHANDLING: bidrag.behandling
+  BIDRAG_SAMHANDLER_URL: http://bidrag-samhandler
+  BIDRAG_SAMHANDLER_SCOPE: prod-gcp.bidrag.bidrag-samhandler-q1
+  DB_MAX_POOL_SIZE: 70
+  DB_MIN_IDLE: 5
+  JAVA_TOOL_OPTIONS: -Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+kafka:
+  pool: nav-prod
+azure_access_inbound:
+  - application: bidrag-ui
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-dokument-bestilling
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-automatisk-jobb
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-arbeidsflyt
+    namespace: bidrag
+    cluster: prod-gcp
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+database:
+  dbname: bidrag-behandling
+  autoResize: true
+  tier: db-custom-10-15360
+  auditlog: "on"
+outbound-access-apps:
+  - bidrag-grunnlag
+  - bidrag-belopshistorikk
+  - bidrag-samhandler
+  - bidrag-dokument-forsendelse
+  - bidrag-tilgangskontroll
+  - bidrag-vedtak
+  - bidrag-dokument-produksjon
+  - bidrag-kodeverk
+outbound-access-hosts:
+  - bidrag-dokument.prod-fss-pub.nais.io
+  - bidrag-person.prod-fss-pub.nais.io
+  - bidrag-organisasjon.prod-fss-pub.nais.io
+  - bidrag-sjablon.prod-fss-pub.nais.io
+  - oppgave.prod-fss-pub.nais.io
+  - arbeid-og-inntekt.prod-fss-pub.nais.io
+  - bidrag-unleash-api.nav.cloud.nais.io
+  - kodeverk-api.nav.no
+  - bidrag-bbm.prod-fss-pub.nais.io
+unleash:
+  env: production
+  secret_name: bidrag-behandling-unleash-api-token

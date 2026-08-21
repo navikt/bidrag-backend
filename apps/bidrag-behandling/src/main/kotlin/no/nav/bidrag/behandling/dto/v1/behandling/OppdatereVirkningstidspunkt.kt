@@ -1,0 +1,96 @@
+package no.nav.bidrag.behandling.dto.v1.behandling
+
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
+import io.swagger.v3.oas.annotations.media.Schema
+import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
+import no.nav.bidrag.behandling.dto.v2.validering.VirkningstidspunktFeilV2Dto
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import java.time.LocalDate
+
+data class OppdatereVirkningstidspunktBegrunnelseResponseDto(
+    val rolleId: Long? = null,
+    @get:Schema(description = "Oppdatere saksbehandlers begrunnelse", deprecated = true)
+    var oppdatertBegrunnelse: String? = null,
+    @get:Schema(
+        description =
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
+        deprecated = true,
+    )
+    var oppdatertBegrunnelseVurderingAvSkolegang: String? = null,
+    val barn: List<OppdaterVirkningstidspunktBegrunnelseBarnResponse>,
+    val erLikForAlle: Boolean = false,
+    val valideringsfeil: List<VirkningstidspunktFeilV2Dto> = emptyList(),
+)
+
+data class OppdaterVirkningstidspunktBegrunnelseBarnResponse(
+    val rolleId: Long? = null,
+    @get:Schema(description = "Oppdatere saksbehandlers begrunnelse")
+    var oppdatertBegrunnelse: String? = null,
+    @get:Schema(
+        description =
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
+    )
+    var oppdatertBegrunnelseVurderingAvSkolegang: String? = null,
+)
+
+data class OppdatereVirkningstidspunktBegrunnelseDto(
+    val rolleId: Long? = null,
+    @get:Schema(description = "Oppdatere saksbehandlers begrunnelse")
+    var oppdatereBegrunnelse: OppdatereBegrunnelse? = null,
+    @get:Schema(
+        description =
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
+    )
+    var oppdaterBegrunnelseVurderingAvSkolegang: OppdatereBegrunnelse? = null,
+)
+
+data class OppdatereVirkningstidspunkt(
+    val rolleId: Long? = null,
+    @get:JsonProperty("årsak")
+    @get:Schema(
+        name = "årsak",
+        description =
+        "Oppdater årsak. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
+            "Hvis verdien er satt så vil årsak settes til samme verdi fra forespørsel og avslag settes til null",
+        enumAsRef = true,
+    )
+    @JsonSetter(nulls = Nulls.SKIP)
+    val årsak: VirkningstidspunktÅrsakstype? = null,
+    @get:Schema(
+        description =
+        "Oppdater avslag. Hvis verdien er satt til null så vil det ikke bli gjort noe endringer. " +
+            "Hvis verdien er satt så vil avslag settes til samme verdi fra forespørsel og årsak settes til null",
+        enumAsRef = true,
+    )
+    val avslag: Resultatkode? = null,
+    @get:Schema(
+        type = "string",
+        format = "date",
+        example = "2025-01-25",
+        description =
+        "Oppdater virkningsdato. Hvis verdien er satt til null vil det ikke bli gjort noe endringer",
+    )
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonSetter(nulls = Nulls.SKIP)
+    val virkningstidspunkt: LocalDate? = null,
+    val beregnTilDato: LocalDate? = null,
+    @get:Schema(description = "Oppdatere saksbehandlers begrunnelse")
+    var oppdatereBegrunnelse: OppdatereBegrunnelse? = null,
+    @get:Schema(
+        description =
+        "Oppdatere saksbehandlers begrunnelse for vurdering av skolegang." +
+            " Dette kan bare settes hvis det er 18 års bidrag",
+    )
+    var oppdaterBegrunnelseVurderingAvSkolegang: OppdatereBegrunnelse? = null,
+    @get:Schema(description = "Deprekert - Bruk oppdatereBegrunnelse i stedet")
+    val notat: OppdatereBegrunnelse? = oppdatereBegrunnelse,
+) {
+    fun henteOppdatereNotat() = oppdatereBegrunnelse ?: notat
+}

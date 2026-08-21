@@ -1,0 +1,305 @@
+package no.nav.bidrag.behandling.database.datamodell
+
+import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import no.nav.bidrag.behandling.database.datamodell.model.BpsBarnUtenBidragsakEllerLøpendeBidrag
+import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
+import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessigFordeling
+import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
+import no.nav.bidrag.behandling.dto.v1.beregning.BeregnetBidragBarnDto
+import no.nav.bidrag.behandling.dto.v1.grunnlag.BpsBarnUtenLøpendeBidragDto
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
+import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
+import no.nav.bidrag.behandling.objectmapper
+import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
+import no.nav.bidrag.behandling.transformers.erBidrag
+import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.sivilstand.dto.Sivilstand
+import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto
+import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
+import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
+import org.hibernate.annotations.ColumnTransformer
+import java.time.LocalDateTime
+
+@Entity(name = "grunnlag")
+@Schema(name = "GrunnlagEntity")
+open class Grunnlag(
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "behandling_id", nullable = false)
+    open val behandling: Behandling,
+    @Enumerated(EnumType.STRING)
+    open val type: Grunnlagsdatatype,
+    open val erBearbeidet: Boolean = false,
+    open val grunnlagFraVedtakSomSkalOmgjøres: Boolean = false,
+    @Column(name = "data", columnDefinition = "jsonb")
+    @ColumnTransformer(write = "?::jsonb")
+    open var data: String,
+    open var innhentet: LocalDateTime,
+    open var aktiv: LocalDateTime? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rolle_id", nullable = false)
+    open var rolle: Rolle,
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "gjelder_barn_rolle_id", nullable = true)
+    // Gjelder barn rolle hvis grunnlag gjelder en rolle i behandlingen
+    open var gjelderBarnRolle: Rolle? = null,
+    // Gjelder ident hvis grunnlaget gjelder en person som ikke er del av behandlingen. Feks i boforhold
+    open var gjelder: String? = null,
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    open val id: Long? = null,
+) {
+    fun gjelderBarn(person: PersonStønad) = (person.rolleId != null && gjelderBarnRolle != null && gjelderBarnRolle!!.id == person.rolleId) ||
+        (
+            person.rolleId == null && gjelderBarnRolle != null &&
+                gjelderBarnRolle!!
+                    .erSammeRolle(person.personident!!.verdi, person.stønadstype)
+            ) ||
+        (person.rolleId == null && person.personident?.verdi == gjelder) ||
+        (gjelderBarnRolle == null && gjelder == person.personident?.verdi)
+
+    override fun toString(): String = try {
+        "Grunnlag($type, erBearbeidet=$erBearbeidet, rolle=${rolle.rolletype}, ident=${rolle.ident}, aktiv=$aktiv, " +
+            "id=$id, behandling=${behandling.id}, innhentet=$innhentet, gjelder=$gjelder)"
+    } catch (e: Exception) {
+        "Grunnlag($type, erBearbeidet=$erBearbeidet, aktiv=$aktiv, id=$id, innhentet=$innhentet, gjelder=$gjelder)"
+    }
+
+    val identifikator get() = type.name + rolle.ident + erBearbeidet + gjelder + gjelderBarnRolle?.identifikator
+    val identifikatorAlle get() =
+        type.name + rolle.ident + erBearbeidet + gjelder + grunnlagFraVedtakSomSkalOmgjøres +
+            gjelderBarnRolle?.identifikator
+}
+
+fun Set<Grunnlag>.hentAlleIkkeAktiv() = sortedByDescending { it.innhentet }.filter { g -> g.aktiv == null }
+
+fun Set<Grunnlag>.hentAlleAktiv() = sortedByDescending { it.innhentet }.filter { g -> g.aktiv != null }
+
+fun Set<Grunnlag>.hentSisteGrunnlagBpsBarnUtenBidragsak() = hentSisteAktiv()
+    .find { it.type == Grunnlagsdatatype.BARN_TIL_BP_UTEN_BIDRAGSAK && !it.erBearbeidet }
+    .konvertereData<List<BpsBarnUtenBidragsakEllerLøpendeBidrag>>()
+
+fun Set<Grunnlag>.henteNyesteGrunnlag(
+    grunnlagstype: Grunnlagstype,
+    rolleInnhentetFor: Rolle,
+): Grunnlag? = filter {
+    it.type == grunnlagstype.type && it.rolle.id == rolleInnhentetFor.id && grunnlagstype.erBearbeidet == it.erBearbeidet
+}.toSet().maxByOrNull { it.innhentet }
+
+fun Set<Grunnlag>.hentSisteIkkeAktiv() = hentAlleIkkeAktiv()
+    .groupBy { it.identifikator }
+    .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
+    .values
+    .filterNotNull()
+
+fun Set<Grunnlag>.hentSisteAktiv(inkluderGrunnlagFraVedtakSomSkalOmgjøres: Boolean = false) = hentAlleAktiv()
+    .groupBy { if (inkluderGrunnlagFraVedtakSomSkalOmgjøres) it.identifikatorAlle else it.identifikator }
+    .mapValues { (_, grunnlagList) -> grunnlagList.maxByOrNull { it.innhentet } }
+    .values
+    .filterNotNull()
+
+fun Set<Grunnlag>.hentIdenterForEgneBarnIHusstandFraGrunnlagForRolle(rolleInnhentetFor: Rolle) = henteNyesteGrunnlag(
+    Grunnlagstype(Grunnlagsdatatype.BOFORHOLD, false),
+    rolleInnhentetFor,
+)?.data
+    ?.let { jsonListeTilObjekt<RelatertPersonGrunnlagDto>(it) }
+    ?.filter { it.erBarn && it.gjelderPersonId != null }
+    ?.groupBy { it.gjelderPersonId!! }
+    ?.map { Personident(it.key) }
+    ?.toSet()
+
+fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderBarn(
+    gjelderBarnIdent: String?,
+    type: Grunnlagsdatatype,
+    grunnlagFraVedtakSomSkalOmgjøres: Boolean? = null,
+) = hentSisteAktiv(true)
+    .find {
+        (it.gjelder == gjelderBarnIdent || it.rolle.ident == gjelderBarnIdent) && type == it.type &&
+            // Hvis det ikke er spesifikt valgt å hente grunnlag fra vedtak som omgjøres så hent det første som finnes. Kan hende siste grunnlag er grunnlag hentet fra vedtak som omgjøres
+            if (grunnlagFraVedtakSomSkalOmgjøres == null) true else it.grunnlagFraVedtakSomSkalOmgjøres == grunnlagFraVedtakSomSkalOmgjøres
+    }
+
+fun Set<Grunnlag>.hentSisteGrunnlagLøpendeBidragFF(behandling: Behandling): List<LøpendeBidragGrunnlagForholdsmessigFordeling> {
+    if (!behandling.erBidrag() || behandling.bidragspliktig == null) return emptyList()
+    val løpendeBidragListe =
+        hentSisteGrunnlagSomGjelderRolleListe(
+            behandling.bidragspliktig!!,
+            Grunnlagsdatatype.LØPENDE_BIDRAG_OPPRETT_FORHOLDSMESSIG_FORDELING,
+        )
+    return løpendeBidragListe.sortedBy { it.gjelder }.map {
+        LøpendeBidragGrunnlagForholdsmessigFordeling(
+            gjelderBarnIdent = it.gjelderBarnRolle?.ident ?: it.gjelder!!,
+            gjelderStønadstype = it.gjelderBarnRolle?.stønadstype,
+            løpendeBidragPerioder = it.konvertereData<List<BeregnetBidragBarnDto>>()!!,
+        )
+    }
+}
+
+fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderRolleListe(
+    rolle: Rolle,
+    type: Grunnlagsdatatype,
+    grunnlagFraVedtakSomSkalOmgjøres: Boolean? = null,
+) = hentSisteAktiv(true)
+    .filter {
+        it.rolle.erSammeRolle(rolle) && type == it.type &&
+            // Hvis det ikke er spesifikt valgt å hente grunnlag fra vedtak som omgjøres så hent det første som finnes. Kan hende siste grunnlag er grunnlag hentet fra vedtak som omgjøres
+            if (grunnlagFraVedtakSomSkalOmgjøres == null) {
+                true
+            } else {
+                it.grunnlagFraVedtakSomSkalOmgjøres == grunnlagFraVedtakSomSkalOmgjøres
+            }
+    }
+
+fun Behandling.bpsBarnUtenLøpendeBidrag(): Set<BpsBarnUtenLøpendeBidragDto> = grunnlag
+    .hentSisteGrunnlagBpsBarnUtenBidragsak()
+    ?.map {
+        BpsBarnUtenLøpendeBidragDto(
+            ident = it.ident.verdi,
+            fødselsdato = it.fødselsdato,
+            navn = it.navn,
+            saksnummer = it.saksnummer,
+            enhet = it.enhet,
+            beløpshistorikkBidrag = it.beløpshistorikkBidrag,
+            beløpshistorikkBidrag18År = it.beløpshistorikkBidrag18År,
+        )
+    }?.toSet() ?: emptySet()
+
+fun Set<Grunnlag>.hentSisteGrunnlagSomGjelderRolle(
+    rolle: Rolle,
+    type: Grunnlagsdatatype,
+    grunnlagFraVedtakSomSkalOmgjøres: Boolean? = null,
+) = hentSisteAktiv(false)
+    .find {
+        it.rolle.erSammeRolle(rolle) && type == it.type &&
+            // Hvis det ikke er spesifikt valgt å hente grunnlag fra vedtak som omgjøres så hent det første som finnes. Kan hende siste grunnlag er grunnlag hentet fra vedtak som omgjøres
+            if (grunnlagFraVedtakSomSkalOmgjøres == null) {
+                true
+            } else {
+                it.grunnlagFraVedtakSomSkalOmgjøres == grunnlagFraVedtakSomSkalOmgjøres
+            }
+    } ?: hentSisteAktiv(true)
+    .find {
+        it.gjelder == rolle.ident && type == it.type &&
+            // Hvis det ikke er spesifikt valgt å hente grunnlag fra vedtak som omgjøres så hent det første som finnes. Kan hende siste grunnlag er grunnlag hentet fra vedtak som omgjøres
+            if (grunnlagFraVedtakSomSkalOmgjøres == null) {
+                true
+            } else {
+                it.grunnlagFraVedtakSomSkalOmgjøres == grunnlagFraVedtakSomSkalOmgjøres
+            }
+    }
+
+fun Set<Grunnlag>.henteSisteSivilstand(erBearbeidet: Boolean) = hentSisteAktiv()
+    .find { it.erBearbeidet == erBearbeidet && Grunnlagsdatatype.SIVILSTAND == it.type }
+    .konvertereData<Set<Sivilstand>>()
+
+fun Husstandsmedlem.hentSisteBearbeidetBoforhold() = behandling.grunnlag
+    .hentSisteAktiv()
+    .find {
+        it.erBearbeidet && it.type == Grunnlagsdatatype.BOFORHOLD &&
+            (
+                (
+                    it.gjelderBarnRolle != null && this.rolle != null &&
+                        it.gjelderBarnRolle!!.erSammeRolle(this.rolle!!)
+                    ) ||
+                    (it.gjelderBarnRolle == null && it.gjelder == this.ident)
+                )
+    }.konvertereData<List<BoforholdResponseV2>>()
+
+fun Underholdskostnad.hentSisteBearbeidetBarnetilsyn() = behandling.grunnlag
+    .hentSisteAktiv()
+    .find { it.erBearbeidet && it.type == Grunnlagsdatatype.BARNETILSYN && it.gjelder == this.personIdent }
+    .konvertereData<List<BarnetilsynGrunnlagDto>>()
+
+fun Husstandsmedlem.henteGjeldendeBoforholdsgrunnlagForAndreVoksneIHusstanden(gjelderRolle: Rolle): List<RelatertPersonGrunnlagDto> {
+    val nyesteIkkebearbeidaBoforholdsgrunnlag =
+        behandling.henteNyesteAktiveGrunnlag(Grunnlagstype(Grunnlagsdatatype.BOFORHOLD_ANDRE_VOKSNE_I_HUSSTANDEN, false), gjelderRolle)
+
+    return nyesteIkkebearbeidaBoforholdsgrunnlag.konvertereData<List<RelatertPersonGrunnlagDto>>() ?: emptyList()
+}
+
+fun List<Grunnlag>.hentGrunnlagForType(
+    type: Grunnlagsdatatype,
+    ident: String,
+) = filter {
+    it.type == type && it.rolle.ident == ident
+}
+
+fun List<Grunnlag>.henteBearbeidaInntekterForType(
+    type: Grunnlagsdatatype,
+    rolle: Rolle,
+) = find {
+    it.type == type && it.erBearbeidet && it.rolle.erSammeRolle(rolle)
+}.konvertereData<SummerteInntekter<SummertÅrsinntekt>>()
+
+fun Behandling.hentNyesteGrunnlagForAktiv(
+    grunnlagsdatatype: Grunnlagsdatatype,
+    hentesForRolle: Rolle? = null,
+): Grunnlag? = henteNyesteAktiveGrunnlag(
+    Grunnlagstype(grunnlagsdatatype, false),
+    hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
+)
+
+fun Behandling.hentNyesteGrunnlagForIkkeAktiv(
+    grunnlagsdatatype: Grunnlagsdatatype,
+    hentesForRolle: Rolle? = null,
+): Grunnlag? {
+    val grunnlag =
+        henteNyesteIkkeAktiveGrunnlag(
+            Grunnlagstype(grunnlagsdatatype, false),
+            hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
+        )
+
+    if (grunnlag == null) {
+        val grunnlagIkkeAktivBearbeidet =
+            henteNyesteIkkeAktiveGrunnlag(
+                Grunnlagstype(grunnlagsdatatype, true),
+                hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
+            )
+        // Hent bare nyeste aktiv hvis det finnes en ikke-aktiv bearbeidet grunnlag
+        if (grunnlagIkkeAktivBearbeidet != null) {
+            return henteNyesteAktiveGrunnlag(
+                Grunnlagstype(grunnlagsdatatype, false),
+                hentesForRolle ?: grunnlagsdatatype.innhentesForRolle(this)!!,
+            )
+        }
+    }
+    return grunnlag
+}
+
+fun Behandling.henteNyesteIkkeAktiveGrunnlag(
+    grunnlagstype: Grunnlagstype,
+    rolleInnhentetFor: Rolle,
+): Grunnlag? = grunnlag
+    .filter {
+        it.type == grunnlagstype.type &&
+            it.rolle.erSammeRolle(rolleInnhentetFor) &&
+            grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            it.aktiv == null
+    }.toSet()
+    .maxByOrNull { it.innhentet }
+
+fun Behandling.henteNyesteAktiveGrunnlag(
+    grunnlagstype: Grunnlagstype,
+    rolleInnhentetFor: Rolle,
+) = grunnlag
+    .filter {
+        it.type == grunnlagstype.type &&
+            it.rolle.erSammeRolle(rolleInnhentetFor) &&
+            grunnlagstype.erBearbeidet == it.erBearbeidet &&
+            it.aktiv != null
+    }.toSet()
+    .maxByOrNull { it.innhentet }
+
+inline fun <reified T> Grunnlag?.konvertereData(): T? = this?.data?.let { objectmapper.readValue(it) }

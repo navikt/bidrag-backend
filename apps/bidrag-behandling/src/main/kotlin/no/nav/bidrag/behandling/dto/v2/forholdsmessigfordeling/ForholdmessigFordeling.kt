@@ -1,0 +1,93 @@
+package no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling
+
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.swagger.v3.oas.annotations.media.Schema
+import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessigFordeling
+import no.nav.bidrag.behandling.dto.v1.behandling.RolleDto
+import no.nav.bidrag.behandling.service.forholdsmessigfordeling.SimulertInntektGrunnlag
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
+import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import java.time.LocalDate
+import java.time.YearMonth
+
+data class ForholdmessigFordelingDetaljerDto(
+    val barn: List<ForholdsmessigFordelingBarnDto>,
+    val opprettetAvSaksbehandler: String? = null,
+    val opprettetAvEnhet: String? = null,
+)
+
+data class OpprettFFRequest(
+    @JsonFormat(pattern = "dd.MM.yyyy")
+    val revurderingFraDato: LocalDate? = null,
+    val opprettetAvEnhet: String? = null,
+    val detaljerBarn: List<OpprettFFRequestBarnDetaljer> = emptyList(),
+) {
+    data class OpprettFFRequestBarnDetaljer(
+        val manueltOverstyrtRevurderingFraDato: LocalDate? = null,
+        val ident: String,
+        val stønadstype: Stønadstype,
+    )
+}
+
+data class SjekkForholdmessigFordelingResponse(
+    val skalBehandlesAvEnhet: String,
+    val kanOppretteForholdsmessigFordeling: Boolean = false,
+    val måOppretteForholdsmessigFordeling: Boolean = false,
+    val simulertGrunnlag: List<SimulertInntektGrunnlag> = emptyList(),
+    val harSlåttUtTilForholdsmessigFordeling: Boolean = false,
+    val eldsteSøktFraDato: LocalDate,
+    val barn: List<ForholdsmessigFordelingBarnDto> = emptyList(),
+    val løpendeBidragBarn: List<LøpendeBidragGrunnlagForholdsmessigFordeling> = emptyList(),
+    val søknaderRevurdering: List<SøknadRevurdering> = emptyList(),
+)
+
+data class SøknadRevurdering(
+    val søknad: HentSøknad,
+    val hovedsøknadsid: Long? = null,
+    val erDelAvFF: Boolean,
+)
+
+data class ForholdsmessigFordelingBarnDto(
+    val ident: String,
+    val bidragsmottaker: RolleDto?,
+    val navn: String,
+    val fødselsdato: LocalDate?,
+    val saksnr: String?,
+    val enhet: String,
+    val erRevurdering: Boolean,
+    val harOpprettetForholdsmessigFordeling: Boolean,
+    val stønadstype: Stønadstype?,
+    val eldsteSøktFraDato: LocalDate?,
+    val harLøpendeBidrag: Boolean,
+    val innkrevesFraDato: YearMonth?,
+    val opphørsdato: YearMonth?,
+    val sammeSakSomBehandling: Boolean,
+    @get:Schema(name = "åpneBehandlinger")
+    val åpneBehandlinger: List<ForholdsmessigFordelingÅpenBehandlingDto> = emptyList(),
+    val privateAvtale: ForholdsmessigFordelingPrivateAvtaleDto? = null,
+)
+
+data class ForholdsmessigFordelingPrivateAvtaleDto(
+    val avtaleDato: LocalDate? = null,
+    val utenlandsk: Boolean = false,
+    val avtaleType: PrivatAvtaleType? = null,
+    val stønadstype: Stønadstype? = null,
+)
+
+data class ForholdsmessigFordelingÅpenBehandlingDto(
+    val søktFraDato: LocalDate?,
+    val mottattDato: LocalDate?,
+    val stønadstype: Stønadstype,
+    val behandlingstema: Behandlingstema?,
+    val behandlingstype: Behandlingstype? = null,
+    val søktAvType: SøktAvType,
+    val medInnkreving: Boolean,
+    val behandlerEnhet: String,
+    val behandlingId: Long?,
+    val søknadsid: Long?,
+)

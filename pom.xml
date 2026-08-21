@@ -32,6 +32,7 @@
         <module>apps/bidrag-kodeverk</module>
         <module>apps/bidrag-maskinporten-client</module>
         <module>apps/bidrag-automatisk-jobb</module>
+        <module>apps/bidrag-behandling</module>
         <module>apps/bidrag-belopshistorikk</module>
         <module>apps/bidrag-bbm</module>
         <module>apps/bidrag-grunnlag</module>
@@ -171,7 +172,16 @@
         <finalName>app</finalName>
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+
         <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <environmentVariables>
+                <TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>/var/run/docker.sock</TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE>
+              </environmentVariables>
+            </configuration>
+          </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
@@ -267,6 +277,7 @@
                     </dependency>
                 </dependencies>
             </plugin>
+
         </plugins>
         <pluginManagement>
             <plugins>
