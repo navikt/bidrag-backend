@@ -1,0 +1,21 @@
+{
+  "bidragsmottakerInntekt": {
+    "inntekt": 50000
+  },
+  "bidragspliktigInntekt": {
+    "inntekt": 60000
+  },
+  "bidragstype": "MOTTAKER",
+  "barn": [
+    {
+      "alder":  1,
+      "samværsklasse": "SAMVÆRSKLASSE_2",
+      "barnetilsyn": {
+        "månedligUtgift": 2000
+      }
+    }
+  ],
+  "dittBoforhold": {
+    "antallBarnUnder18BorFast": 2
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "bidragsmottakerInntekt": {
+    "inntekt": 700000
+  },
+  "bidragspliktigInntekt": {
+    "inntekt": 1000000
+  },
+  "bidragstype": "PLIKTIG",
+  "barn": [
+    {
+      "alder": 1,
+      "samværsklasse": "SAMVÆRSKLASSE_1"
+    },
+    {
+      "alder": 2,
+      "samværsklasse": "SAMVÆRSKLASSE_1"
+    }
+  ],
+  "dittBoforhold": {
+    "antallBarnUnder18BorFast": 0
+  }
+}
