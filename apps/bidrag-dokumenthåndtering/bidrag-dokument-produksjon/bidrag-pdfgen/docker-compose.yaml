@@ -1,0 +1,32 @@
+services:
+  weasyprint:
+    build:
+      context: .
+      dockerfile: DockerfileWeasyprint
+    # The container listens on 8080 (same as the Nais `port:`); 3054 is what
+    # bidrag-dokument-produksjon expects via `bidrag-pdfgen.url` locally.
+    ports:
+      - "3054:8080"
+    # Without this the container stays down after any exit and has to be
+    # started by hand. Rendering is memory-hungry, and Docker Desktop's VM is
+    # shared with every other bidrag compose stack, so an OOM kill here is
+    # realistic rather than theoretical.
+    restart: unless-stopped
+    # Cap the container so it cannot starve the rest of the VM. Two workers at
+    # two threads sit around 490 MiB under concurrent load; 768m leaves room to
+    # spike without letting a runaway render take the whole machine down.
+    mem_limit: 768m
+    environment:
+      LOG_LEVEL: INFO
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;urllib.request.urlopen('http://localhost:8080/health').read()",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s

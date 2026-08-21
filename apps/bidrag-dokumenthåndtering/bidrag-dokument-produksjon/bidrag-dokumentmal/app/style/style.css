@@ -1,0 +1,620 @@
+* {
+  /* A4 er 595 x 842 *punkter*, som tilsvarer 793,7 x 1122,5 CSS-px ved 96 dpi.
+     Å deklarere 595px x 842px ga en side som var 25 % for liten, med bare
+     595 - 128 = 467px innholdsbredde for et oppsett bygget rundt
+     --content-width: 670px. Chromium skjulte dette ved å skalere innholdet ned
+     til det passet (~2/3); WeasyPrint rendrer det tro mot CSS, så innholdet
+     rant over sidekantene. Bruk ekte A4 slik at siden matcher oppsettet. */
+  --paper-width: 210mm;
+  --paper-height: 297mm;
+  /* Må følge den faktiske innholdsbredden på siden. En fast 670px var bredere
+     enn A4 minus sidemargene (210mm - 128px ≈ 666px) og container-paddingen,
+     så innhold med w-[--content-width] rant ut over høyremargen og fikk
+     venstre- og høyremarg til å se ulike ut. */
+  --content-width: 100%;
+  --a-blue-800: rgba(0, 52, 125, 1);
+  --a-blue-600: rgba(0, 86, 180, 1);
+  --a-blue-700: rgba(0, 69, 156, 1);
+  --a-font-size-large: 1.125rem;
+  --a-font-size-medium: 1rem;
+  --a-font-weight-bold: 600;
+  --a-font-weight-regular: 400;
+}
+
+@page {
+  size: var(--paper-width) var(--paper-height);
+  margin: 64px 64px 74px 64px;
+  padding-bottom: 0cm;
+  padding-top: 0cm;
+
+  @top-center {
+    content: element(header);
+    /* Uten eksplisitt bredde blir marginboksen shrink-to-fit og innholdet
+       midtstilt. 100% = bredden på marginbåndet mellom hjørneboksene, som er
+       nøyaktig lik innholdsbredden på siden. */
+    width: 100%;
+    vertical-align: top;
+  }
+  @bottom-center {
+    content: element(footer);
+    width: 100%;
+    vertical-align: bottom;
+  }
+}
+
+* {
+  font-family: "Source Sans 3", sans-serif;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.footnote {
+  float: footnote;
+  footnote-style-position: inside; /* forces marker inside footnote area */
+}
+
+.footnote::footnote-call {
+  /* controls the footnote markers in the main page text */
+  content: counter(footnote, symbols("*", "†", "‡"));
+  font-size: 11px;
+  vertical-align: super;
+  line-height: 0;
+  color: red;
+}
+
+.footnote::footnote-marker {
+  /* controls the footnote markers in the footnote section */
+  content: counter(footnote, symbols("*", "†", "‡"));
+}
+
+@media print {
+  /* `div { break-inside: avoid }` traff *alle* divs, også de ytterste
+     container-divene. En container som er høyere enn én side kan ikke unngå
+     sidebrudd; Chromium ignorerte regelen da, mens WeasyPrint tegnet innholdet
+     oppå hverandre nederst på siden. Begrens derfor til de innerste divene
+     (de som ikke selv inneholder en div), som er de vi faktisk vil holde samlet. */
+  div:not(:has(div)) {
+    break-inside: avoid;
+  }
+
+  .page {
+    margin: 0;
+    border: initial;
+    border-radius: initial;
+    width: initial;
+    min-height: initial;
+    box-shadow: initial;
+    background: initial;
+  }
+}
+
+.table_container {
+  margin: 0;
+  padding: 0;
+}
+
+.two_column_view {
+  float: left;
+  width: 50%;
+}
+
+.two_column_view_v2 {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 16px;
+}
+
+.three_column_view {
+  float: left;
+  width: 33%;
+}
+
+#footer {
+  position: running(footer);
+}
+
+/* Header og footer er running elements som hentes inn i @top-center /
+   @bottom-center. De legges ut som en sidebred flex-rad: saksreferanse til
+   venstre, sidetall til høyre. */
+#header,
+#footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  font-family: "Source Sans 3";
+  font-size: 8px;
+  line-height: 16px;
+}
+
+#header > span,
+#footer > span {
+  white-space: nowrap;
+}
+
+.pageSeparator {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+body {
+  background-color: white;
+  height: 100%;
+  color: black;
+}
+
+:root {
+  --test: "123123";
+}
+
+dt:before {
+  content: "";
+  display: block;
+}
+
+.datarow dt:after {
+  content: ":  ";
+}
+
+.table_row_details dl {
+  margin: 0;
+}
+
+/*dl {*/
+/*  margin: 0 0 16px 0;*/
+/*}*/
+
+dt,
+dd {
+  display: inline;
+}
+
+.elements_inline :first-child {
+  display: inline;
+  margin-right: 16px;
+}
+
+.elements_inline :last-child {
+  display: inline;
+  vertical-align: middle;
+}
+
+dd {
+  margin-inline-start: 0px;
+  margin: 0;
+  margin-left: 3px;
+}
+
+dt {
+  /*font-weight: bold;*/
+  display: inline-block;
+}
+
+#header {
+  /* Må være et running element slik at @top-center-marginboksen kan hente det
+     inn på hver side. Med `position: relative` ble det liggende i den normale
+     flyten og la beslag på hele første side. Den gamle høyden på 80px reserverte
+     plass i Gotenbergs separate header-dokument og trengs ikke lenger. */
+  position: running(header);
+}
+
+.title2 {
+  display: inline-block;
+  top: 0rem;
+  left: 0;
+  font-weight: bold;
+}
+
+.title {
+  display: inline-block;
+  position: absolute;
+  top: 0rem;
+  left: 0.5cm;
+  font-size: 32px;
+}
+.navlogo_new {
+  position: relative;
+  right: 0;
+  top: 20px;
+  scale: 4;
+  margin-top: -15px;
+  margin-right: 90px;
+  margin-bottom: 44px;
+  width: 80px;
+  height: 80px;
+}
+.navlogo2 {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin-top: -15px;
+  margin-right: 90px;
+  margin-bottom: 44px;
+  width: 80px;
+  height: 80px;
+}
+
+.navlogo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin-top: -30px;
+  margin-right: 90px;
+  width: 180px;
+  height: 180px;
+}
+
+.container {
+  /* Tailwind gir .container `width: 100%`. Kombinert med horisontale marginer
+     flyter boksen 1cm ut til høyre for sideområdet, slik at venstre- og
+     høyremargen i PDF-en ble ulike. Bruk padding + border-box i stedet. */
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0cm 0.5cm;
+  height: 100%;
+}
+
+.flex-inline {
+  display: inline-flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table thead {
+  display: table-header-group;
+}
+
+.table tr {
+  display: table-row;
+}
+
+.table thead tr th {
+  display: table-cell;
+  text-align: left;
+}
+
+.table tbody {
+  display: table-row-group;
+}
+
+.table tbody tr th {
+  display: table-cell;
+  text-align: left;
+  font-weight: bold;
+}
+
+.table tbody tr td {
+  display: table-cell;
+  /*text-align: left;*/
+}
+
+.table_head_periode {
+  width: 150px;
+}
+
+.table_head_beskrivelse {
+  width: 200px;
+}
+
+.table_head_belop {
+  width: 20px;
+}
+
+.subsection {
+  margin-top: 16px;
+}
+
+.horizontal-line {
+  border-top: 0.8px solid black;
+  width: 100%;
+  margin-top: 13px;
+  margin-bottom: 8px;
+}
+
+#pagenumber:before {
+  content: counter(page);
+}
+
+#pagecount:before {
+  content: counter(pages);
+}
+
+#pageFooter {
+  display: table-footer-group;
+}
+
+#pageFooter:after {
+  counter-increment: page;
+  content: counter(page);
+}
+
+.text-heading-small p,
+.text-heading-small {
+  font-size: 14px;
+}
+
+.text-heading-medium {
+  font-size: 16px;
+}
+
+.text-heading-large {
+  font-size: 18px;
+}
+
+.mt-medium {
+  margin-top: 16px;
+}
+
+.mb-medium {
+  margin-bottom: 16px;
+}
+
+.mt-large {
+  margin-top: 32px;
+}
+
+.bold-600 {
+  font-weight: var(--a-font-weight-bold);
+}
+
+.bold-400 {
+  font-weight: var(--a-font-weight-regular);
+}
+
+h1 {
+  font-weight: 700;
+  font-style: normal;
+  font-size: 18px;
+  font-family: "Source Sans Pro";
+}
+
+h2 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+h3 {
+  margin-bottom: 4px;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+h4 {
+  margin-bottom: 4px;
+  margin-top: 0px;
+  font-size: 12px;
+}
+
+h5 {
+  margin-bottom: 8px;
+  margin-top: 8px;
+  font-size: 10px;
+}
+
+h6 {
+  margin-bottom: 8px;
+  margin-top: 8px;
+  font-size: 8px;
+}
+
+p {
+  margin-top: 3px;
+  margin-bottom: 3px;
+  font-family: "Source Sans Pro";
+}
+
+/**
+
+Topp og bunntekst
+ */
+
+.custom-next-page-info:after {
+  text-align: left;
+  float: left;
+
+  content: attr(data-content);
+}
+
+div.top_bottom_text div {
+  float: left;
+  width: 100%;
+}
+
+div.footer {
+  display: block;
+  text-align: right;
+  position: running(footer);
+}
+
+div.footer_last_page {
+  display: block;
+  text-align: right;
+  position: running(footer_last_page);
+}
+
+div.header {
+  display: block;
+  text-align: right;
+  position: running(header);
+}
+
+.custom-top_bottom_content:after {
+  text-align: left;
+  float: left;
+  font-size: 12px;
+  position: absolute;
+  padding-left: 0.7cm;
+  content: attr(data-content);
+}
+
+.custom-page-number:after {
+  text-align: right;
+  content: counter(page) " av " counter(pages);
+}
+
+/**
+###########
+ */
+
+/*
+Custom components
+ */
+
+.soknad_detaljer {
+  margin-bottom: 52px;
+}
+
+.text-red-500 {
+  --tw-text-opacity: 1;
+  /*color: rgb(239 68 68 / var(--tw-text-opacity));*/
+  color: red;
+}
+
+.text-blue-800 {
+  color: var(--a-blue-800);
+}
+
+.text-blue-600 {
+  color: var(--a-blue-600);
+}
+
+.begrunnelse p {
+  padding: 0;
+  margin: 0;
+}
+
+/* Privat avtale for bidragskalkulator */
+.bidragskalkulatorContainer {
+  width: 100%;
+
+  h1,
+  h2,
+  h3,
+  p,
+  dt,
+  dd {
+    font-family: "Source Sans Pro", "Source Sans 3", Arial, sans-serif;
+    letter-spacing: normal;
+    color: #000;
+  }
+
+  /* Main title */
+  h1 {
+    font-weight: 600;
+    color: var(--a-blue-800);
+    font-size: 24px;
+    line-height: 26px;
+  }
+
+  /* Section headings */
+  h2 {
+    font-size: 18px;
+    line-height: 22px;
+    font-weight: 600;
+    color: var(--a-blue-800);
+  }
+
+  /* Subheadings (SignaturBoks titles) */
+  h3 {
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 600;
+    color: var(--a-blue-700);
+  }
+
+  /* Definition list labels */
+  dt {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+  }
+
+  /* Definition list values */
+  dd {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 400;
+    margin-left: 0;
+  }
+
+  /* Paragraph text */
+  p {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 400;
+  }
+
+  .underskrifter h3 {
+    margin-top: 16px;
+    margin-bottom: 12px;
+  }
+
+  .signatur-seksjon {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+  }
+
+  .signatur-element {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .signature-label {
+    font-size: 11px;
+    line-height: 16px;
+    white-space: nowrap;
+  }
+
+  .signature-line {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 1.2em;
+    border-bottom: 1px dotted #000;
+    line-height: 0;
+  }
+}
+
+@media print {
+  .bidragskalkulatorContainer {
+    page: bidragskalkulatorPage;
+
+    .flex {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+  }
+}
+
+@page bidragskalkulatorPage {
+  size: auto;
+  margin: 64px 64px 74px 64px;
+  padding-bottom: 0cm;
+  padding-top: 0cm;
+
+  @top-center {
+    content: element(header);
+    /* Uten eksplisitt bredde blir marginboksen shrink-to-fit og innholdet
+       midtstilt. 100% = bredden på marginbåndet mellom hjørneboksene, som er
+       nøyaktig lik innholdsbredden på siden. */
+    width: 100%;
+    vertical-align: top;
+  }
+  @bottom-center {
+    content: element(footer);
+    width: 100%;
+    vertical-align: bottom;
+  }
+}
