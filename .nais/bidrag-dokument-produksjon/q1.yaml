@@ -1,0 +1,17 @@
+ingresses:
+  - https://bidrag-dokument-produksjon.intern.dev.nav.no
+azure_access_inbound:
+  - application: bidrag-ui-feature
+  - application: bidrag-ui
+  - application: bidrag-behandling
+  - application: bidrag-behandling-feature
+  - application: bidrag-behandling-q1
+  - application: bidrag-behandling-q2
+  - application: bidrag-dokument-bestilling-feature
+  - application: bidrag-dokument-bestilling
+  - application: bidrag-bidragskalkulator-api
+outbound-access-apps:
+  - bidrag-dokumentmal
+  - bidrag-pdfgen
+env:
+  PDFGEN_VERSION: V2
