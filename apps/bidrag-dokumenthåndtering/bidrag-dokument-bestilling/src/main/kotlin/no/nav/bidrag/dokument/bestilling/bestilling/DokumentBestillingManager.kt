@@ -21,17 +21,15 @@ class DokumentBestillingManager(
         return dokumentProducer.produser(bestillingData, dokumentMal)
     }
 
-    private fun fetchProducer(dokumentMal: DokumentMal): DokumentProducer =
-        applicationContext.getBean(
-            dokumentMal.bestillingSystem,
-            DokumentProducer::class.java,
-        )
+    private fun fetchProducer(dokumentMal: DokumentMal): DokumentProducer = applicationContext.getBean(
+        dokumentMal.bestillingSystem,
+        DokumentProducer::class.java,
+    )
 
     private fun buildDokumentBestilling(
         dokumentBestilling: DokumentBestillingForespørsel,
         dokumentMal: DokumentMal,
-    ): DokumentBestilling =
-        applicationContext
-            .getBean(DokumentMetadataCollector::class.java)
-            .collect(dokumentBestilling, dokumentMal)
+    ): DokumentBestilling = applicationContext
+        .getBean(DokumentMetadataCollector::class.java)
+        .collect(dokumentBestilling, dokumentMal)
 }

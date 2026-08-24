@@ -28,10 +28,10 @@ class DokumentBestillingService(
             dokumentId = result.dokumentReferanse,
             journalpostId = result.journalpostId!!,
             arkivSystem =
-                when (result.bestillingSystem) {
-                    BestillingSystem.BREVSERVER -> DokumentArkivSystemDto.MIDLERTIDLIG_BREVLAGER
-                    else -> null
-                },
+            when (result.bestillingSystem) {
+                BestillingSystem.BREVSERVER -> DokumentArkivSystemDto.MIDLERTIDLIG_BREVLAGER
+                else -> null
+            },
         )
     }
 

@@ -659,26 +659,24 @@ class PeriodDateAdapter : XmlAdapter<String, LocalDate?>() {
 }
 
 class BelopAdapterToDesimaler : XmlAdapter<String, BigDecimal?>() {
-    override fun marshal(value: BigDecimal?): String? =
-        value
-            ?.round(MathContext(10))
-            ?.multiply(BigDecimal(100))
-            ?.setScale(0, RoundingMode.HALF_UP)
-            ?.toString()
-            ?.padStart(13, '0')
-            ?.let { it.substring(0, 11) + "." + it.substring(11) } ?: "00000000000"
+    override fun marshal(value: BigDecimal?): String? = value
+        ?.round(MathContext(10))
+        ?.multiply(BigDecimal(100))
+        ?.setScale(0, RoundingMode.HALF_UP)
+        ?.toString()
+        ?.padStart(13, '0')
+        ?.let { it.substring(0, 11) + "." + it.substring(11) } ?: "00000000000"
 
     @Throws(ParseException::class)
     override fun unmarshal(value: String?): BigDecimal? = value?.toBigDecimal()
 }
 
 class BelopAdapter : XmlAdapter<String, BigDecimal?>() {
-    override fun marshal(value: BigDecimal?): String? =
-        value
-            ?.setScale(0, RoundingMode.HALF_UP)
-            ?.toBigInteger()
-            ?.toString()
-            ?.padStart(11, '0')
+    override fun marshal(value: BigDecimal?): String? = value
+        ?.setScale(0, RoundingMode.HALF_UP)
+        ?.toBigInteger()
+        ?.toString()
+        ?.padStart(11, '0')
 
     @Throws(ParseException::class)
     override fun unmarshal(value: String?): BigDecimal? = value?.toBigDecimal()
@@ -692,13 +690,12 @@ class BelopDecimalSatsAdapter : XmlAdapter<String, BigDecimal?>() {
 }
 
 class BelopNoDecimalAdapter : XmlAdapter<String, BigDecimal?>() {
-    override fun marshal(value: BigDecimal?): String? =
-        value
-            ?.multiply(BigDecimal.TEN)
-            ?.setScale(0, RoundingMode.FLOOR)
-            ?.divide(BigDecimal.TEN)
-            ?.toString()
-            ?.padStart(11, '0')
+    override fun marshal(value: BigDecimal?): String? = value
+        ?.multiply(BigDecimal.TEN)
+        ?.setScale(0, RoundingMode.FLOOR)
+        ?.divide(BigDecimal.TEN)
+        ?.toString()
+        ?.padStart(11, '0')
 
     @Throws(ParseException::class)
     override fun unmarshal(value: String?): BigDecimal? = value?.toBigDecimal()
@@ -712,14 +709,13 @@ class BelopDecimalAdapter : XmlAdapter<String, BigDecimal?>() {
 }
 
 class PercentageAdapter : XmlAdapter<String, BigDecimal?>() {
-    override fun marshal(value: BigDecimal?): String =
-        value
-            ?.round(MathContext(10))
-            ?.multiply(BigDecimal(100))
-            ?.setScale(0, RoundingMode.HALF_UP)
-            ?.toString()
-            ?.padStart(5, '0')
-            ?.let { it.substring(0, 4) + "." + it.substring(4) } ?: "0000"
+    override fun marshal(value: BigDecimal?): String = value
+        ?.round(MathContext(10))
+        ?.multiply(BigDecimal(100))
+        ?.setScale(0, RoundingMode.HALF_UP)
+        ?.toString()
+        ?.padStart(5, '0')
+        ?.let { it.substring(0, 4) + "." + it.substring(4) } ?: "0000"
 
     @Throws(ParseException::class)
     override fun unmarshal(value: String?): BigDecimal? = value?.toBigDecimal()

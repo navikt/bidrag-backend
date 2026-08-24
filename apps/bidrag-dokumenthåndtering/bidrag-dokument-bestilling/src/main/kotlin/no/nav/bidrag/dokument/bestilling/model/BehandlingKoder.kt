@@ -31,30 +31,29 @@ enum class SoknadType(
     companion object {
         fun fromKode(kode: String): SoknadType? = entries.find { it.kode == kode }
 
-        fun fromVedtakType(vedtakType: Vedtakstype): SoknadType =
-            when (vedtakType) {
-                Vedtakstype.INDEKSREGULERING -> INDEKSREGULERING
+        fun fromVedtakType(vedtakType: Vedtakstype): SoknadType = when (vedtakType) {
+            Vedtakstype.INDEKSREGULERING -> INDEKSREGULERING
 
-                Vedtakstype.FASTSETTELSE -> SOKNAD
+            Vedtakstype.FASTSETTELSE -> SOKNAD
 
-                Vedtakstype.ENDRING, Vedtakstype.ENDRING_MOTTAKER -> ENDRING
+            Vedtakstype.ENDRING, Vedtakstype.ENDRING_MOTTAKER -> ENDRING
 
-                Vedtakstype.INNKREVING -> INNKREVINGSGRUNNL
+            Vedtakstype.INNKREVING -> INNKREVINGSGRUNNL
 
-                // Kan være INNKREVINGSGRUNNL, PRIVAT_AVTALE
-                Vedtakstype.KLAGE -> KLAGE
+            // Kan være INNKREVINGSGRUNNL, PRIVAT_AVTALE
+            Vedtakstype.KLAGE -> KLAGE
 
-                // Kan være KLAGE_BEGR_SATS, KLAGE, FOLGER_KLAGE
-                Vedtakstype.REVURDERING -> REVURDERING
+            // Kan være KLAGE_BEGR_SATS, KLAGE, FOLGER_KLAGE
+            Vedtakstype.REVURDERING -> REVURDERING
 
-                // Kan være REVURDERING, BEGR_REVURD, EGET_TILTAK
-                Vedtakstype.ALDERSOPPHØR, Vedtakstype.OPPHØR -> OPPHØR
+            // Kan være REVURDERING, BEGR_REVURD, EGET_TILTAK
+            Vedtakstype.ALDERSOPPHØR, Vedtakstype.OPPHØR -> OPPHØR
 
-                Vedtakstype.ALDERSJUSTERING -> OPPJUST_FORSK
+            Vedtakstype.ALDERSJUSTERING -> OPPJUST_FORSK
 
-                // Kan være EGET_TILTAK, OPPJUST_FORSK
-                else -> ENDRING
-            }
+            // Kan være EGET_TILTAK, OPPJUST_FORSK
+            else -> ENDRING
+        }
     }
 }
 
@@ -97,44 +96,43 @@ enum class BehandlingType(
         fun from(
             stonadType: Stønadstype?,
             engangsbelopType: Engangsbeløptype?,
-        ): BehandlingType? =
-            when (stonadType) {
-                Stønadstype.FORSKUDD -> {
-                    FORSKUDD
-                }
+        ): BehandlingType? = when (stonadType) {
+            Stønadstype.FORSKUDD -> {
+                FORSKUDD
+            }
 
-                Stønadstype.BIDRAG -> {
-                    BIDRAG
-                }
+            Stønadstype.BIDRAG -> {
+                BIDRAG
+            }
 
-                // Inneholder BIDRAG, BIDRAG_TILLEGGSBIDRAG, TILLEGGSBIDRAG
-                Stønadstype.BIDRAG18AAR -> {
-                    BIDRAG_18_AR
-                }
+            // Inneholder BIDRAG, BIDRAG_TILLEGGSBIDRAG, TILLEGGSBIDRAG
+            Stønadstype.BIDRAG18AAR -> {
+                BIDRAG_18_AR
+            }
 
-                // Inneholder BIDRAG_18_AR_TILLEGGSBBI, BIDRAG_18_AR
-                Stønadstype.EKTEFELLEBIDRAG -> {
-                    EKTEFELLEBIDRAG
-                }
+            // Inneholder BIDRAG_18_AR_TILLEGGSBBI, BIDRAG_18_AR
+            Stønadstype.EKTEFELLEBIDRAG -> {
+                EKTEFELLEBIDRAG
+            }
 
-                Stønadstype.MOTREGNING -> {
-                    MOTREGNING
-                }
+            Stønadstype.MOTREGNING -> {
+                MOTREGNING
+            }
 
-                Stønadstype.OPPFOSTRINGSBIDRAG -> {
-                    OPPFOSTRINGSBIDRAG
-                }
+            Stønadstype.OPPFOSTRINGSBIDRAG -> {
+                OPPFOSTRINGSBIDRAG
+            }
 
-                else -> {
-                    when (engangsbelopType) {
-                        Engangsbeløptype.SAERTILSKUDD, Engangsbeløptype.SÆRTILSKUDD, Engangsbeløptype.SÆRBIDRAG -> SARTILSKUDD
-                        Engangsbeløptype.GEBYR_SKYLDNER, Engangsbeløptype.GEBYR_MOTTAKER -> GEBYR
-                        Engangsbeløptype.ETTERGIVELSE -> ETTERGIVELSE
-                        Engangsbeløptype.TILBAKEKREVING -> TILBAKEKREVING
-                        Engangsbeløptype.ETTERGIVELSE_TILBAKEKREVING -> TILBAKEKR_ETTERGIVELSE
-                        else -> null
-                    }
+            else -> {
+                when (engangsbelopType) {
+                    Engangsbeløptype.SAERTILSKUDD, Engangsbeløptype.SÆRTILSKUDD, Engangsbeløptype.SÆRBIDRAG -> SARTILSKUDD
+                    Engangsbeløptype.GEBYR_SKYLDNER, Engangsbeløptype.GEBYR_MOTTAKER -> GEBYR
+                    Engangsbeløptype.ETTERGIVELSE -> ETTERGIVELSE
+                    Engangsbeløptype.TILBAKEKREVING -> TILBAKEKREVING
+                    Engangsbeløptype.ETTERGIVELSE_TILBAKEKREVING -> TILBAKEKR_ETTERGIVELSE
+                    else -> null
                 }
             }
+        }
     }
 }

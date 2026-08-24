@@ -36,10 +36,10 @@ class BehandlingService(
             søknadFra = behandlingDto.søktAv,
             soktFraDato = behandlingDto.søktFomDato,
             saksbehandlerInfo =
-                VedtakSaksbehandlerInfo(
-                    navn = behandlingDto.opprettetAv.navn ?: "",
-                    ident = behandlingDto.opprettetAv.ident,
-                ),
+            VedtakSaksbehandlerInfo(
+                navn = behandlingDto.opprettetAv.navn ?: "",
+                ident = behandlingDto.opprettetAv.ident,
+            ),
             engangsbeløptype = behandlingDto.engangsbeløptype,
             stønadstype = behandlingDto.stønadstype,
             vedtakstype = behandlingDto.vedtakstype,

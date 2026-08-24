@@ -52,26 +52,26 @@ class DokumentBestillingControllerForskuddTest : AbstractControllerTest() {
                 stønadstype = Stønadstype.FORSKUDD,
                 årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
                 roller =
-                    setOf(
-                        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-                            rolletype = Rolletype.BIDRAGSMOTTAKER,
-                            ident = BM1.ident.verdi,
-                            navn = BM1.navn,
-                            fødselsdato = BM1.fødselsdato,
-                        ),
-                        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-                            rolletype = Rolletype.BARN,
-                            ident = BARN1.ident.verdi,
-                            navn = BARN1.navn,
-                            fødselsdato = BARN1.fødselsdato,
-                        ),
-                        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-                            rolletype = Rolletype.BARN,
-                            ident = BARN2.ident.verdi,
-                            navn = BARN2.navn,
-                            fødselsdato = BARN2.fødselsdato,
-                        ),
+                setOf(
+                    no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        ident = BM1.ident.verdi,
+                        navn = BM1.navn,
+                        fødselsdato = BM1.fødselsdato,
                     ),
+                    no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                        rolletype = Rolletype.BARN,
+                        ident = BARN1.ident.verdi,
+                        navn = BARN1.navn,
+                        fødselsdato = BARN1.fødselsdato,
+                    ),
+                    no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                        rolletype = Rolletype.BARN,
+                        ident = BARN2.ident.verdi,
+                        navn = BARN2.navn,
+                        fødselsdato = BARN2.fødselsdato,
+                    ),
+                ),
             )
         stubUtils.stubHentBehandling(behandlingResponse)
         val enhetKontaktInfo = createEnhetKontaktInformasjon()

@@ -118,23 +118,23 @@ class BrevserverProducer(
                         journalførendeEnhet = dokumentBestilling.enhet,
                         tilknyttSaker = listOf(dokumentBestilling.saksnummer!!),
                         dokumenter =
-                            listOf(
-                                OpprettDokumentDto(
-                                    tittel = tittel,
-                                    brevkode = dokumentMal.kode,
-                                ),
+                        listOf(
+                            OpprettDokumentDto(
+                                tittel = tittel,
+                                brevkode = dokumentMal.kode,
                             ),
+                        ),
                         gjelderIdent = dokumentBestilling.gjelder?.fodselsnummer!!,
                         avsenderMottaker =
-                            AvsenderMottakerDto(
-                                dokumentBestilling.mottaker?.navn,
-                                dokumentBestilling.mottaker?.fodselsnummer!!,
-                            ),
+                        AvsenderMottakerDto(
+                            dokumentBestilling.mottaker?.navn,
+                            dokumentBestilling.mottaker?.fodselsnummer!!,
+                        ),
                         journalposttype =
-                            when (dokumentMal.type) {
-                                DokumentMalType.NOTAT -> JournalpostType.NOTAT
-                                else -> JournalpostType.UTGÅENDE
-                            },
+                        when (dokumentMal.type) {
+                            DokumentMalType.NOTAT -> JournalpostType.NOTAT
+                            else -> JournalpostType.UTGÅENDE
+                        },
                         saksbehandlerIdent = dokumentBestilling.saksbehandler?.ident,
                     ),
                 )
@@ -591,24 +591,23 @@ class BrevserverProducer(
         }
     }
 
-    fun Brev.mapInnteksgrenseSjabloner(forskuddInntektgrensePeriode: List<ForskuddInntektgrensePeriode>) =
-        forskuddInntektgrensePeriode.map {
-            inntektGrunnlagForskuddPeriode {
-                fomDato = it.fomDato
-                tomDato = it.tomDato ?: MAX_DATE
-                antallBarn = it.antallBarn
-                forsorgerKode =
-                    when (it.forsorgerType) {
-                        Sivilstandskode.ENSLIG -> "EN"
-                        Sivilstandskode.GIFT_SAMBOER -> "GS"
-                        else -> ""
-                    }
-                belop50fra = it.beløp50Prosent.fraVerdi()
-                belop50til = it.beløp50Prosent.tilVerdi()
-                belop75fra = it.beløp75Prosent.fraVerdi()
-                belop75til = it.beløp75Prosent.tilVerdi()
-            }
+    fun Brev.mapInnteksgrenseSjabloner(forskuddInntektgrensePeriode: List<ForskuddInntektgrensePeriode>) = forskuddInntektgrensePeriode.map {
+        inntektGrunnlagForskuddPeriode {
+            fomDato = it.fomDato
+            tomDato = it.tomDato ?: MAX_DATE
+            antallBarn = it.antallBarn
+            forsorgerKode =
+                when (it.forsorgerType) {
+                    Sivilstandskode.ENSLIG -> "EN"
+                    Sivilstandskode.GIFT_SAMBOER -> "GS"
+                    else -> ""
+                }
+            belop50fra = it.beløp50Prosent.fraVerdi()
+            belop50til = it.beløp50Prosent.tilVerdi()
+            belop75fra = it.beløp75Prosent.fraVerdi()
+            belop75til = it.beløp75Prosent.tilVerdi()
         }
+    }
 
     fun mapKontaktInfo(
         brev: Brev,
@@ -640,30 +639,28 @@ class BrevserverProducer(
     fun mapBrevmottaker(
         brev: Brev,
         mottaker: Mottaker,
-    ): BrevMottaker =
-        brev.brevmottaker {
-            navn = mottaker.navn
-            spraak = mottaker.spraak
-            fodselsnummer = mottaker.fodselsnummer
-            rolle = mottaker.rolle?.toKode()
-            fodselsdato = mottaker.fodselsdato
+    ): BrevMottaker = brev.brevmottaker {
+        navn = mottaker.navn
+        spraak = mottaker.spraak
+        fodselsnummer = mottaker.fodselsnummer
+        rolle = mottaker.rolle?.toKode()
+        fodselsdato = mottaker.fodselsdato
 
-            val adresse = mottaker.adresse
-            if (adresse != null) {
-                adresselinje1 = adresse.adresselinje1
-                adresselinje2 = adresse.adresselinje2
-                adresselinje3 = adresse.adresselinje3
-                adresselinje4 = adresse.adresselinje4
-                boligNr = adresse.bruksenhetsnummer
-                postnummer = adresse.postnummer ?: ""
+        val adresse = mottaker.adresse
+        if (adresse != null) {
+            adresselinje1 = adresse.adresselinje1
+            adresselinje2 = adresse.adresselinje2
+            adresselinje3 = adresse.adresselinje3
+            adresselinje4 = adresse.adresselinje4
+            boligNr = adresse.bruksenhetsnummer
+            postnummer = adresse.postnummer ?: ""
 //            landkode = adresse.landkode3
-            }
         }
+    }
 }
 
-fun Resultatkode.tilForskuddKode() =
-    when (this) {
-        Resultatkode.AVSLAG_OVER_18_ÅR -> "BOA"
-        Resultatkode.AVSLAG_IKKE_REGISTRERT_PÅ_ADRESSE -> "BAF"
-        else -> null
-    }
+fun Resultatkode.tilForskuddKode() = when (this) {
+    Resultatkode.AVSLAG_OVER_18_ÅR -> "BOA"
+    Resultatkode.AVSLAG_IKKE_REGISTRERT_PÅ_ADRESSE -> "BAF"
+    else -> null
+}

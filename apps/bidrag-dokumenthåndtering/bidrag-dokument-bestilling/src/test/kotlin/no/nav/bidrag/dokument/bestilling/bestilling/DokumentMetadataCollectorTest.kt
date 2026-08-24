@@ -131,17 +131,16 @@ internal class DokumentMetadataCollectorTest {
         metadataCollector = withMetadataCollector()
     }
 
-    private fun withMetadataCollector() =
-        DokumentMetadataCollector(
-            personService,
-            sakService,
-            kodeverkService,
-            vedtakService,
-            behandlingService,
-            sjablongService,
-            saksbehandlerInfoManager,
-            organisasjonService,
-        )
+    private fun withMetadataCollector() = DokumentMetadataCollector(
+        personService,
+        sakService,
+        kodeverkService,
+        vedtakService,
+        behandlingService,
+        sjablongService,
+        saksbehandlerInfoManager,
+        organisasjonService,
+    )
 
     @AfterEach
     fun resetMocks() {
@@ -407,12 +406,12 @@ internal class DokumentMetadataCollectorTest {
         val request =
             DokumentBestillingForespørsel(
                 mottaker =
-                    MottakerTo(
-                        ident = SAMHANDLER_IDENT,
-                        navn = "Samhandler samhandlersen",
-                        språk = "NB",
-                        adresse = SAMHANDLER_MOTTAKER_ADRESSE,
-                    ),
+                MottakerTo(
+                    ident = SAMHANDLER_IDENT,
+                    navn = "Samhandler samhandlersen",
+                    språk = "NB",
+                    adresse = SAMHANDLER_MOTTAKER_ADRESSE,
+                ),
                 gjelderId = BM1.ident.verdi,
                 saksnummer = DEFAULT_SAKSNUMMER,
                 tittel = DEFAULT_TITLE_DOKUMENT,
@@ -482,10 +481,10 @@ internal class DokumentMetadataCollectorTest {
         val samhandlerInfo =
             SAMHANDLER_INFO.copy(
                 adresse =
-                    SAMHANDLER_INFO.adresse?.copy(
-                        adresselinje3 = "En veldig lang adresselinje3 som er litt lenger",
-                        landkode = "TUR",
-                    ),
+                SAMHANDLER_INFO.adresse?.copy(
+                    adresselinje3 = "En veldig lang adresselinje3 som er litt lenger",
+                    landkode = "TUR",
+                ),
             )
         val request =
             DokumentBestillingForespørsel(
@@ -592,20 +591,20 @@ internal class DokumentMetadataCollectorTest {
         val sak =
             createSakResponse().copy(
                 roller =
-                    listOf(
-                        RolleDto(
-                            fødselsnummer = BP1.ident,
-                            type = Rolletype.BIDRAGSPLIKTIG,
-                        ),
-                        RolleDto(
-                            fødselsnummer = barn1Dod.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = BARN2.ident,
-                            type = Rolletype.BARN,
-                        ),
+                listOf(
+                    RolleDto(
+                        fødselsnummer = BP1.ident,
+                        type = Rolletype.BIDRAGSPLIKTIG,
                     ),
+                    RolleDto(
+                        fødselsnummer = barn1Dod.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = BARN2.ident,
+                        type = Rolletype.BARN,
+                    ),
+                ),
             )
         every { sakService.hentSak(saksnummer) } returns sak
         every { personService.hentPerson(barn1Dod.ident.verdi, any()) } returns barn1Dod
@@ -658,11 +657,11 @@ internal class DokumentMetadataCollectorTest {
                 spraak = "NB",
                 samhandlerInformasjon = null,
                 mottaker =
-                    MottakerTo(
-                        ident = SAMHANDLER_IDENT,
-                        navn = SAKSBEHANDLER_NAVN,
-                        adresse = SAMHANDLER_MOTTAKER_ADRESSE,
-                    ),
+                MottakerTo(
+                    ident = SAMHANDLER_IDENT,
+                    navn = SAKSBEHANDLER_NAVN,
+                    adresse = SAMHANDLER_MOTTAKER_ADRESSE,
+                ),
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {
@@ -691,10 +690,10 @@ internal class DokumentMetadataCollectorTest {
                 spraak = "NB",
                 samhandlerInformasjon = null,
                 mottaker =
-                    MottakerTo(
-                        ident = SAMHANDLER_IDENT,
-                        navn = SAKSBEHANDLER_NAVN,
-                    ),
+                MottakerTo(
+                    ident = SAMHANDLER_IDENT,
+                    navn = SAKSBEHANDLER_NAVN,
+                ),
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {
@@ -897,20 +896,20 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BP1.ident,
-                                type = Rolletype.BIDRAGSPLIKTIG,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN1.ident,
-                                type = Rolletype.BARN,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN2.ident,
-                                type = Rolletype.BARN,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BP1.ident,
+                            type = Rolletype.BIDRAGSPLIKTIG,
                         ),
+                        RolleDto(
+                            fødselsnummer = BARN1.ident,
+                            type = Rolletype.BARN,
+                        ),
+                        RolleDto(
+                            fødselsnummer = BARN2.ident,
+                            type = Rolletype.BARN,
+                        ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
 
@@ -936,20 +935,20 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BM1.ident,
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN1.ident,
-                                type = Rolletype.BARN,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN2.ident,
-                                type = Rolletype.BARN,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BM1.ident,
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
+                        RolleDto(
+                            fødselsnummer = BARN1.ident,
+                            type = Rolletype.BARN,
+                        ),
+                        RolleDto(
+                            fødselsnummer = BARN2.ident,
+                            type = Rolletype.BARN,
+                        ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
 
@@ -975,12 +974,12 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BM1.ident,
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BM1.ident,
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
 
@@ -1007,20 +1006,20 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BM1.ident,
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
-                            RolleDto(
-                                fødselsnummer = barn1Dod.ident,
-                                type = Rolletype.BARN,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN2.ident,
-                                type = Rolletype.BARN,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BM1.ident,
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
+                        RolleDto(
+                            fødselsnummer = barn1Dod.ident,
+                            type = Rolletype.BARN,
+                        ),
+                        RolleDto(
+                            fødselsnummer = BARN2.ident,
+                            type = Rolletype.BARN,
+                        ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
             every { personService.hentPerson(barn1Dod.ident.verdi, any()) } returns barn1Dod
@@ -1047,20 +1046,20 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BM1.ident,
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN1.ident,
-                                type = Rolletype.BARN,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN2.ident,
-                                type = Rolletype.BARN,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BM1.ident,
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
+                        RolleDto(
+                            fødselsnummer = BARN1.ident,
+                            type = Rolletype.BARN,
+                        ),
+                        RolleDto(
+                            fødselsnummer = BARN2.ident,
+                            type = Rolletype.BARN,
+                        ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
 
@@ -1088,20 +1087,20 @@ internal class DokumentMetadataCollectorTest {
             val sak =
                 createSakResponse().copy(
                     roller =
-                        listOf(
-                            RolleDto(
-                                fødselsnummer = BM1.ident,
-                                type = Rolletype.BIDRAGSMOTTAKER,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN1.ident,
-                                type = Rolletype.BARN,
-                            ),
-                            RolleDto(
-                                fødselsnummer = BARN2.ident,
-                                type = Rolletype.BARN,
-                            ),
+                    listOf(
+                        RolleDto(
+                            fødselsnummer = BM1.ident,
+                            type = Rolletype.BIDRAGSMOTTAKER,
                         ),
+                        RolleDto(
+                            fødselsnummer = BARN1.ident,
+                            type = Rolletype.BARN,
+                        ),
+                        RolleDto(
+                            fødselsnummer = BARN2.ident,
+                            type = Rolletype.BARN,
+                        ),
+                    ),
                 )
             every { sakService.hentSak(saksnummer) } returns sak
 
@@ -1138,28 +1137,28 @@ internal class DokumentMetadataCollectorTest {
         val sak =
             createSakResponse().copy(
                 roller =
-                    listOf(
-                        RolleDto(
-                            fødselsnummer = BM1.ident,
-                            type = Rolletype.BIDRAGSMOTTAKER,
-                        ),
-                        RolleDto(
-                            fødselsnummer = barn1.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = barn2.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = barn3.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = barn4.ident,
-                            type = Rolletype.BARN,
-                        ),
+                listOf(
+                    RolleDto(
+                        fødselsnummer = BM1.ident,
+                        type = Rolletype.BIDRAGSMOTTAKER,
                     ),
+                    RolleDto(
+                        fødselsnummer = barn1.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = barn2.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = barn3.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = barn4.ident,
+                        type = Rolletype.BARN,
+                    ),
+                ),
             )
         every { sakService.hentSak(saksnummer) } returns sak
         every { personService.hentPerson(barn1.ident.verdi, any()) } returns barn1
@@ -1207,19 +1206,19 @@ internal class DokumentMetadataCollectorTest {
                 enhet = "4806",
                 spraak = "NB",
                 mottaker =
-                    MottakerTo(
-                        navn = "Mottaker Mottakersen",
-                        språk = "NB",
-                        adresse =
-                            MottakerAdresseTo(
-                                adresselinje1 = "adresselinje 1",
-                                adresselinje2 = "adresselinje 2",
-                                adresselinje3 = "adresselinje 3",
-                                postnummer = "3030",
-                                poststed = "Drammen",
-                                landkode = "NO",
-                            ),
+                MottakerTo(
+                    navn = "Mottaker Mottakersen",
+                    språk = "NB",
+                    adresse =
+                    MottakerAdresseTo(
+                        adresselinje1 = "adresselinje 1",
+                        adresselinje2 = "adresselinje 2",
+                        adresselinje3 = "adresselinje 3",
+                        postnummer = "3030",
+                        poststed = "Drammen",
+                        landkode = "NO",
                     ),
+                ),
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {

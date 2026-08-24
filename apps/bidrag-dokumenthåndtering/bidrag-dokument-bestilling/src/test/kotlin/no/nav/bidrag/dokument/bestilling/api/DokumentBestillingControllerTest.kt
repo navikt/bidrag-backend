@@ -906,10 +906,10 @@ class DokumentBestillingControllerTest : AbstractControllerTest() {
                 saksnummer = "123213",
                 enhet = "4806",
                 mottaker =
-                    MottakerTo(
-                        ident = SAMHANDLER_IDENT,
-                        navn = SAKSBEHANDLER_NAVN,
-                    ),
+                MottakerTo(
+                    ident = SAMHANDLER_IDENT,
+                    navn = SAKSBEHANDLER_NAVN,
+                ),
             )
 
         jmsTestConsumer.withOnlinebrev {
@@ -946,9 +946,9 @@ class DokumentBestillingControllerTest : AbstractControllerTest() {
                 saksnummer = "123213",
                 enhet = "4806",
                 mottaker =
-                    MottakerTo(
-                        ident = BM1.ident.verdi,
-                    ),
+                MottakerTo(
+                    ident = BM1.ident.verdi,
+                ),
             )
 
         jmsTestConsumer.withOnlinebrev {
@@ -1034,28 +1034,28 @@ class DokumentBestillingControllerTest : AbstractControllerTest() {
         val sak =
             createSakResponse().copy(
                 roller =
-                    listOf(
-                        RolleDto(
-                            fødselsnummer = BM1.ident,
-                            type = Rolletype.BIDRAGSMOTTAKER,
-                        ),
-                        RolleDto(
-                            fødselsnummer = BP1.ident,
-                            type = Rolletype.BIDRAGSPLIKTIG,
-                        ),
-                        RolleDto(
-                            fødselsnummer = BARN1.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = BARN2.ident,
-                            type = Rolletype.BARN,
-                        ),
-                        RolleDto(
-                            fødselsnummer = ANNEN_MOTTAKER.ident,
-                            type = Rolletype.REELMOTTAKER,
-                        ),
+                listOf(
+                    RolleDto(
+                        fødselsnummer = BM1.ident,
+                        type = Rolletype.BIDRAGSMOTTAKER,
                     ),
+                    RolleDto(
+                        fødselsnummer = BP1.ident,
+                        type = Rolletype.BIDRAGSPLIKTIG,
+                    ),
+                    RolleDto(
+                        fødselsnummer = BARN1.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = BARN2.ident,
+                        type = Rolletype.BARN,
+                    ),
+                    RolleDto(
+                        fødselsnummer = ANNEN_MOTTAKER.ident,
+                        type = Rolletype.REELMOTTAKER,
+                    ),
+                ),
             )
         stubDefaultValues()
         stubUtils.stubHentSak(sak)

@@ -208,31 +208,31 @@ class VedtakService(
             gebyr = vedtakDto.hentGebyrInfo(),
             sivilstandPerioder = vedtakDto.grunnlagListe.mapSivilstand(),
             resultat =
-                if (erVedtakProduksjon) {
-                    vedtakBarnInfo
-                        .distinctBy { it.personIdent }
-                        .sortedBy { it.personObjekt.fødselsdato }
-                        .map {
-                            mapVedtakResultatBarn(
-                                it,
-                                vedtakDto,
-                                hentRiktigSpråkkode,
-                                true,
-                            )
-                        }
-                } else {
-                    emptyList()
-                },
+            if (erVedtakProduksjon) {
+                vedtakBarnInfo
+                    .distinctBy { it.personIdent }
+                    .sortedBy { it.personObjekt.fødselsdato }
+                    .map {
+                        mapVedtakResultatBarn(
+                            it,
+                            vedtakDto,
+                            hentRiktigSpråkkode,
+                            true,
+                        )
+                    }
+            } else {
+                emptyList()
+            },
             vedtakBarn =
-                if (!erVedtakProduksjon) {
-                    vedtakBarnInfo
-                        .distinctBy { it.personIdent }
-                        .sortedBy { it.personObjekt.fødselsdato }
-                        .map { mapVedtakBarn(it, vedtakDto, hentRiktigSpråkkode) }
-                        .sortedBy { it.stønadsendringer.flatMap { it.vedtakPerioder.map { it.fomDato } }.minOrNull() }
-                } else {
-                    emptyList()
-                },
+            if (!erVedtakProduksjon) {
+                vedtakBarnInfo
+                    .distinctBy { it.personIdent }
+                    .sortedBy { it.personObjekt.fødselsdato }
+                    .map { mapVedtakBarn(it, vedtakDto, hentRiktigSpråkkode) }
+                    .sortedBy { it.stønadsendringer.flatMap { it.vedtakPerioder.map { it.fomDato } }.minOrNull() }
+            } else {
+                emptyList()
+            },
             barnIHusstandPerioder = vedtakDto.grunnlagListe.mapBarnIHusstandPerioder(),
         )
     }
@@ -275,18 +275,18 @@ class VedtakService(
         val endeligVedtak = delvedtak.find { it.endeligVedtak }
         return DokumentmalResultatBidragsberegningBarnDto(
             barn =
-                DokumentmalPersonDto(
-                    rolle = Rolletype.BARN,
-                    fødselsdato = personInfo.hentFodselsdato(),
-                    ident = personInfo.ident,
-                    navn = personInfo.tilVisningsnavnBarn(hentRiktigSpråkkode),
-                    erBeskyttet = personInfo.isKode6(),
-                ),
+            DokumentmalPersonDto(
+                rolle = Rolletype.BARN,
+                fødselsdato = personInfo.hentFodselsdato(),
+                ident = personInfo.ident,
+                navn = personInfo.tilVisningsnavnBarn(hentRiktigSpråkkode),
+                erBeskyttet = personInfo.isKode6(),
+            ),
             orkestrertVedtak =
-                EndeligOrkestrertVedtak(
-                    type = endeligVedtak?.type,
-                    perioder = endeligVedtak?.perioder ?: vedtak.hentBeregningsperioder(stønadsendring),
-                ),
+            EndeligOrkestrertVedtak(
+                type = endeligVedtak?.type,
+                perioder = endeligVedtak?.perioder ?: vedtak.hentBeregningsperioder(stønadsendring),
+            ),
             perioder = endeligVedtak?.perioder ?: vedtak.hentBeregningsperioder(stønadsendring),
         )
     }
@@ -316,10 +316,10 @@ class VedtakService(
             fødselsnummer = barnIdent,
             navn = personInfo.tilVisningsnavnBarn(hentRiktigSpråkkode),
             løpendeBidrag =
-                stønadsendring
-                    ?.periodeListe
-                    ?.maxByOrNull { it.periode.fom }
-                    ?.beløp,
+            stønadsendring
+                ?.periodeListe
+                ?.maxByOrNull { it.periode.fom }
+                ?.beløp,
             bostatusPerioder = bostatusSøknadsbarn?.bostatus ?: emptyList(),
             stønadsendringer = hentStønadsendringerForBarn(barnIdent, vedtak),
             engangsbeløper = hentEngagsbeløpForBarn(barnIdent, vedtak),
@@ -347,20 +347,20 @@ class VedtakService(
             VedtakBarnEngangsbeløp(
                 type = engangsbeløp.type,
                 sjablon =
-                    BrevSjablonVerdier(
-                        forskuddSats = sjablonForskudd,
-                        inntektsgrense = inntektsgrense,
-                    ),
+                BrevSjablonVerdier(
+                    forskuddSats = sjablonForskudd,
+                    inntektsgrense = inntektsgrense,
+                ),
                 periode = periode,
                 erDirekteAvslag = erDirekteAvslag,
                 medInnkreving = engangsbeløp.innkreving == Innkrevingstype.MED_INNKREVING,
                 inntekter = grunnlagListe.mapInntekter(VedtakPeriodeReferanse(periode, vedtakDto.typeBehandling, engangsbeløp.grunnlagReferanseListe), BigDecimal.ZERO),
                 særbidragBeregning =
-                    if (engangsbeløp.type == Engangsbeløptype.SÆRBIDRAG) {
-                        engangsbeløp.hentSærbidragBeregning(erDirekteAvslag, grunnlagListe)
-                    } else {
-                        null
-                    },
+                if (engangsbeløp.type == Engangsbeløptype.SÆRBIDRAG) {
+                    engangsbeløp.hentSærbidragBeregning(erDirekteAvslag, grunnlagListe)
+                } else {
+                    null
+                },
             )
         }
     }
@@ -380,22 +380,22 @@ class VedtakService(
                 kravbeløp = utgiftsposter.sumOf { it.kravbeløp },
                 godkjentbeløp = delberegningUtgift.sumGodkjent,
                 andelProsent =
-                    if (sluttberegning.resultatKode.erAvslag()) {
-                        BigDecimal.ZERO
-                    } else if (delberegning.andelProsent < BigDecimal.ONE) {
-                        delberegning.andelProsent.multiply(BigDecimal(100))
-                    } else {
-                        delberegning.andelProsent
-                    },
+                if (sluttberegning.resultatKode.erAvslag()) {
+                    BigDecimal.ZERO
+                } else if (delberegning.andelProsent < BigDecimal.ONE) {
+                    delberegning.andelProsent.multiply(BigDecimal(100))
+                } else {
+                    delberegning.andelProsent
+                },
                 resultat = sluttberegning.resultatBeløp ?: BigDecimal.ZERO,
                 resultatKode = sluttberegning.resultatKode,
                 beløpDirekteBetaltAvBp = delberegningUtgift.sumBetaltAvBp,
                 inntekt =
-                    SærbidragBeregning.Inntekt(
-                        bmInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BIDRAGSMOTTAKER),
-                        bpInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BIDRAGSPLIKTIG),
-                        barnInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BARN),
-                    ),
+                SærbidragBeregning.Inntekt(
+                    bmInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BIDRAGSMOTTAKER),
+                    bpInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BIDRAGSPLIKTIG),
+                    barnInntekt = grunnlagListe.finnTotalInntektForRolleEllerIdent(grunnlagReferanseListe, Rolletype.BARN),
+                ),
             )
         } else if (erDirekteAvslagskoderSomInneholderUtgifter) {
             val utgiftsposter = grunnlagListe.utgiftsposter
@@ -492,18 +492,18 @@ class VedtakService(
                                 beregnet = true,
                                 indeksår = 1,
                                 perioder =
-                                    listOf(
-                                        ResultatBarnebidragsberegningPeriodeDto(
-                                            periode.periode,
-                                            vedtakstype = if (erMalRettetMotBruker) type else Vedtakstype.OPPHØR,
-                                            resultatKode = Resultatkode.OPPHØR,
-                                            erOpphør = true,
-                                            resultatFraVedtak =
-                                                it.copy(
-                                                    omgjøringsvedtak = erMalRettetMotBruker,
-                                                ),
+                                listOf(
+                                    ResultatBarnebidragsberegningPeriodeDto(
+                                        periode.periode,
+                                        vedtakstype = if (erMalRettetMotBruker) type else Vedtakstype.OPPHØR,
+                                        resultatKode = Resultatkode.OPPHØR,
+                                        erOpphør = true,
+                                        resultatFraVedtak =
+                                        it.copy(
+                                            omgjøringsvedtak = erMalRettetMotBruker,
                                         ),
                                     ),
+                                ),
                             )
                         }
                         val vedtak = hentVedtak(it.vedtaksid!!)
@@ -536,32 +536,32 @@ class VedtakService(
                             resultatFraVedtakVedtakstidspunkt = vedtak.vedtakstidspunkt,
                             indeksår = vedtak.stønadsendringListe.first().førsteIndeksreguleringsår ?: 1,
                             perioder =
-                                listOf(
-                                    vedtak.grunnlagListe
-                                        .byggResultatBidragsberegning(
-                                            vedtakPeriode.periode,
-                                            vedtakPeriode.beløp,
-                                            try {
-                                                Resultatkode.fraKode(vedtakPeriode.resultatkode)!!
-                                            } catch (_: Exception) {
-                                                Resultatkode.BEREGNET_BIDRAG
-                                            },
-                                            vedtakPeriode.grunnlagReferanseListe,
-                                            Resultatkode.fraKode(vedtakPeriode.resultatkode) == Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
-                                            vedtak.type,
-                                            barnIdent = stønadsendring.kravhaver,
-                                        ).copy(
-                                            resultatFraVedtak =
-                                                it.copy(
-                                                    vedtakstidspunkt = it.vedtakstidspunkt ?: vedtak.vedtakstidspunkt,
-                                                ),
-                                            klageOmgjøringDetaljer =
-                                                ResultatBarnebidragsberegningPeriodeDto.KlageOmgjøringDetaljer(
-                                                    beregnTilDato = orkestreringDetaljer?.beregnTilDato,
-                                                    resultatFraVedtakVedtakstidspunkt = it.vedtakstidspunkt,
-                                                ),
+                            listOf(
+                                vedtak.grunnlagListe
+                                    .byggResultatBidragsberegning(
+                                        vedtakPeriode.periode,
+                                        vedtakPeriode.beløp,
+                                        try {
+                                            Resultatkode.fraKode(vedtakPeriode.resultatkode)!!
+                                        } catch (_: Exception) {
+                                            Resultatkode.BEREGNET_BIDRAG
+                                        },
+                                        vedtakPeriode.grunnlagReferanseListe,
+                                        Resultatkode.fraKode(vedtakPeriode.resultatkode) == Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
+                                        vedtak.type,
+                                        barnIdent = stønadsendring.kravhaver,
+                                    ).copy(
+                                        resultatFraVedtak =
+                                        it.copy(
+                                            vedtakstidspunkt = it.vedtakstidspunkt ?: vedtak.vedtakstidspunkt,
                                         ),
-                                ),
+                                        klageOmgjøringDetaljer =
+                                        ResultatBarnebidragsberegningPeriodeDto.KlageOmgjøringDetaljer(
+                                            beregnTilDato = orkestreringDetaljer?.beregnTilDato,
+                                            resultatFraVedtakVedtakstidspunkt = it.vedtakstidspunkt,
+                                        ),
+                                    ),
+                            ),
                         )
                     }
                 }.groupBy { it.vedtaksid }
@@ -569,18 +569,18 @@ class VedtakService(
                     val første = delvedtakListe.first()
                     første.copy(
                         perioder =
-                            delvedtakListe
-                                .flatMap { it.perioder }
-                                .map {
-                                    it.copy(
-                                        periode =
-                                            stønadsendring.periodeListe
-                                                .find { st ->
-                                                    it.periode.inneholder(st.periode)
-                                                }!!
-                                                .periode,
-                                    )
-                                },
+                        delvedtakListe
+                            .flatMap { it.perioder }
+                            .map {
+                                it.copy(
+                                    periode =
+                                    stønadsendring.periodeListe
+                                        .find { st ->
+                                            it.periode.inneholder(st.periode)
+                                        }!!
+                                        .periode,
+                                )
+                            },
                     )
                 }
 
@@ -593,14 +593,14 @@ class VedtakService(
                 beregnet = false,
                 indeksår = 1,
                 perioder =
-                    delvedtak
-                        .flatMap { it.perioder }
-                        .map { p ->
-                            val periodeVedtak = delvedtak.find { it.perioder.any { it.periode.inneholder(p.periode) } }
-                            p.copy(
-                                vedtakstype = periodeVedtak?.type ?: p.vedtakstype,
-                            )
-                        },
+                delvedtak
+                    .flatMap { it.perioder }
+                    .map { p ->
+                        val periodeVedtak = delvedtak.find { it.perioder.any { it.periode.inneholder(p.periode) } }
+                        p.copy(
+                            vedtakstype = periodeVedtak?.type ?: p.vedtakstype,
+                        )
+                    },
             )
         return delvedtak + listOf(endeligVedtak)
     }
@@ -677,25 +677,25 @@ class VedtakService(
                 faktiskBidrag = resultat ?: BigDecimal.ZERO,
                 erOpphør = resultat == null,
                 resultatKode =
-                    if (erResultatEndringUnderGrense) {
-                        Resultatkode.INGEN_ENDRING_UNDER_GRENSE
-                    } else {
-                        resultatkode
-                    },
+                if (erResultatEndringUnderGrense) {
+                    Resultatkode.INGEN_ENDRING_UNDER_GRENSE
+                } else {
+                    resultatkode
+                },
                 beregningsdetaljer =
-                    if (vedtakstype == Vedtakstype.INNKREVING) {
-                        null
-                    } else if (resultatkode?.erAvslag() == true) {
-                        ResultatBarnebidragsberegningPeriodeDto.BidragPeriodeBeregningsdetaljer(
-                            sluttberegning = sluttberegning,
-                            bpHarEvne = false,
-                        )
-                    } else {
-                        ResultatBarnebidragsberegningPeriodeDto.BidragPeriodeBeregningsdetaljer(
-                            sluttberegning = sluttberegning,
-                            bpHarEvne = sluttberegning?.bidragJustertNedTilEvne == false,
-                        )
-                    },
+                if (vedtakstype == Vedtakstype.INNKREVING) {
+                    null
+                } else if (resultatkode?.erAvslag() == true) {
+                    ResultatBarnebidragsberegningPeriodeDto.BidragPeriodeBeregningsdetaljer(
+                        sluttberegning = sluttberegning,
+                        bpHarEvne = false,
+                    )
+                } else {
+                    ResultatBarnebidragsberegningPeriodeDto.BidragPeriodeBeregningsdetaljer(
+                        sluttberegning = sluttberegning,
+                        bpHarEvne = sluttberegning?.bidragJustertNedTilEvne == false,
+                    )
+                },
             )
         }
     }
@@ -744,25 +744,25 @@ class VedtakService(
                         tomDato = stønadperiode.periode.til?.atEndOfMonth(),
                         // Bruker beløp 0.1 for å få alle beløpene i samme tabell hvis det er miks mellom perioder med avslag og innvilgelse
                         beløp =
-                            stønadperiode.beløp?.let { if (it.setScale(0) == BigDecimal.ZERO) BigDecimal("0.4") else it }
-                                ?: if (erDirekteAvslag || allePerioderAvslag || erForskudd || erResultatPeriodeOpphør) BigDecimal.ZERO else BigDecimal("0.4"),
+                        stønadperiode.beløp?.let { if (it.setScale(0) == BigDecimal.ZERO) BigDecimal("0.4") else it }
+                            ?: if (erDirekteAvslag || allePerioderAvslag || erForskudd || erResultatPeriodeOpphør) BigDecimal.ZERO else BigDecimal("0.4"),
                         andelUnderhold = if (!erAvslagUtenGrunnlag && !erInnkreving) grunnlagListe.tilAndelUnderholdskostnadPeriode(referanse) else null,
                         underhold = if (!erAvslagUtenGrunnlag && !erInnkreving) grunnlagListe.tilUnderholdskostnadPeriode(referanse) else null,
                         bidragsevne = if (!erAvslagUtenGrunnlag && !erAldersjustering && !erInnkreving && !erResultatPeriodeOpphør) grunnlagListe.finnDelberegningBidragsevne(referanse) else null,
                         samvær =
-                            if (erAldersjustering) {
-                                grunnlagListe.mapSamværAldersjustering(referanse)
-                            } else if (!erAvslagUtenGrunnlag && !erInnkreving && !erResultatPeriodeOpphør) {
-                                grunnlagListe.mapSamvær(referanse)
-                            } else {
-                                null
-                            },
+                        if (erAldersjustering) {
+                            grunnlagListe.mapSamværAldersjustering(referanse)
+                        } else if (!erAvslagUtenGrunnlag && !erInnkreving && !erResultatPeriodeOpphør) {
+                            grunnlagListe.mapSamvær(referanse)
+                        } else {
+                            null
+                        },
                         resultatKode =
-                            if (stønadsendring.type.erBidrag) {
-                                grunnlagListe.tilBisysResultatkode(referanse, vedtakDto.type, barnGrunnlag) ?: Resultatkode.fraKode(stønadperiode.resultatkode)?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: stønadperiode.resultatkode
-                            } else {
-                                resultatKode?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: Resultatkode.fraKode(stønadperiode.resultatkode)?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: stønadperiode.resultatkode
-                            },
+                        if (stønadsendring.type.erBidrag) {
+                            grunnlagListe.tilBisysResultatkode(referanse, vedtakDto.type, barnGrunnlag) ?: Resultatkode.fraKode(stønadperiode.resultatkode)?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: stønadperiode.resultatkode
+                        } else {
+                            resultatKode?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: Resultatkode.fraKode(stønadperiode.resultatkode)?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: stønadperiode.resultatkode
+                        },
                         inntekter = if (!erInnkreving && !erResultatPeriodeOpphør) grunnlagListe.mapInntekter(referanse, innteksgrense) else emptyList(),
                         inntektGrense = innteksgrense,
                         maksInntekt = sjablongService.hentMaksInntektForPeriode(getLastDayOfPreviousMonth(stønadperiode.periode.til?.atEndOfMonth())),
@@ -807,15 +807,15 @@ fun List<GrunnlagDto>.tilAndelUnderholdskostnadPeriode(periode: VedtakPeriodeRef
         beløpUnderholdskostnad = delberegningU.innhold.underholdskostnad,
         beløpBpsAndel = bpsAndel.innhold.andelBeløp,
         inntektBP =
-            finnTotalInntektForRolle(
-                periode.grunnlagReferanseListe,
-                Rolletype.BIDRAGSPLIKTIG,
-            ),
+        finnTotalInntektForRolle(
+            periode.grunnlagReferanseListe,
+            Rolletype.BIDRAGSPLIKTIG,
+        ),
         inntektBM =
-            finnTotalInntektForRolle(
-                periode.grunnlagReferanseListe,
-                Rolletype.BIDRAGSMOTTAKER,
-            ),
+        finnTotalInntektForRolle(
+            periode.grunnlagReferanseListe,
+            Rolletype.BIDRAGSMOTTAKER,
+        ),
     )
 }
 
@@ -862,39 +862,39 @@ fun List<GrunnlagDto>.finnDelberegningBidragsevne(periode: VedtakPeriodeReferans
         periode = periode.periode,
         beløpBidrag = sluttberegning?.resultatBeløp ?: BigDecimal.ZERO,
         sjabloner =
-            BidragsevnePeriode.BidragsevneSjabloner(
-                beløpKlassfradrag = sjablonKlasseFradrag!!.innhold.verdi,
-                underholdBeløp = sjablonBidragsevne.innhold.underholdBeløp,
-                boutgiftBeløp = sjablonBidragsevne.innhold.boutgiftBeløp,
-                beløpMinstefradrag =
-                    sjabloner
-                        .find { it.innhold.sjablon == SjablonTallNavn.MINSTEFRADRAG_INNTEKT_BELØP }!!
-                        .innhold.verdi,
-                beløpUnderholdEgneBarnIHusstanden =
-                    sjabloner
-                        .find { it.innhold.sjablon == SjablonTallNavn.UNDERHOLD_EGNE_BARN_I_HUSSTAND_BELØP }!!
-                        .innhold.verdi,
-            ),
+        BidragsevnePeriode.BidragsevneSjabloner(
+            beløpKlassfradrag = sjablonKlasseFradrag!!.innhold.verdi,
+            underholdBeløp = sjablonBidragsevne.innhold.underholdBeløp,
+            boutgiftBeløp = sjablonBidragsevne.innhold.boutgiftBeløp,
+            beløpMinstefradrag =
+            sjabloner
+                .find { it.innhold.sjablon == SjablonTallNavn.MINSTEFRADRAG_INNTEKT_BELØP }!!
+                .innhold.verdi,
+            beløpUnderholdEgneBarnIHusstanden =
+            sjabloner
+                .find { it.innhold.sjablon == SjablonTallNavn.UNDERHOLD_EGNE_BARN_I_HUSSTAND_BELØP }!!
+                .innhold.verdi,
+        ),
         bidragsevne = delberegningBidragsevne.innhold.beløp,
         underholdEgneBarnIHusstand =
-            UnderholdEgneBarnIHusstand(
-                årsbeløp = delberegningBidragsevne.innhold.underholdBarnEgenHusstand,
-                sjablon = sjablonUnderholdEgnebarnIHusstand.verdi,
-                antallBarnIHusstanden = delberegningBarnIHusstanden.innhold.antallBarn,
-                antallBarnDeltBossted = antallBarnDeltBossted,
-            ),
+        UnderholdEgneBarnIHusstand(
+            årsbeløp = delberegningBidragsevne.innhold.underholdBarnEgenHusstand,
+            sjablon = sjablonUnderholdEgnebarnIHusstand.verdi,
+            antallBarnIHusstanden = delberegningBarnIHusstanden.innhold.antallBarn,
+            antallBarnDeltBossted = antallBarnDeltBossted,
+        ),
         harFullEvne = sluttberegning.resultat != Resultatkode.INGEN_BIDRAGSEVNE && !sluttberegning.bidragJustertNedTilEvne,
         harDelvisEvne = sluttberegning.resultat != Resultatkode.INGEN_BIDRAGSEVNE && sluttberegning.bidragJustertNedTilEvne && sluttberegning.bruttoBidragJustertForEvneOg25Prosent!! > BigDecimal.ZERO,
         inntektBP = finnTotalInntektForRolle(periode.grunnlagReferanseListe, Rolletype.BIDRAGSPLIKTIG),
         borMedAndreVoksne = delberegningVoksneIHusstand.innhold.borMedAndreVoksne,
         skatt =
-            Skatt(
-                sumSkattFaktor = delberegningBidragsevne.innhold.skatt.sumSkattFaktor,
-                sumSkatt = delberegningBidragsevne.innhold.skatt.sumSkatt,
-                skattAlminneligInntekt = delberegningBidragsevne.innhold.skatt.skattAlminneligInntekt,
-                trinnskatt = delberegningBidragsevne.innhold.skatt.trinnskatt,
-                trygdeavgift = delberegningBidragsevne.innhold.skatt.trygdeavgift,
-            ),
+        Skatt(
+            sumSkattFaktor = delberegningBidragsevne.innhold.skatt.sumSkattFaktor,
+            sumSkatt = delberegningBidragsevne.innhold.skatt.sumSkatt,
+            skattAlminneligInntekt = delberegningBidragsevne.innhold.skatt.skattAlminneligInntekt,
+            trinnskatt = delberegningBidragsevne.innhold.skatt.trinnskatt,
+            trygdeavgift = delberegningBidragsevne.innhold.skatt.trygdeavgift,
+        ),
     )
 }
 
@@ -920,29 +920,27 @@ fun List<GrunnlagDto>.finnTotalInntektForRolle(
         ?: BigDecimal.ZERO
 }
 
-fun List<GrunnlagDto>.mapSamværAldersjustering(periode: VedtakPeriodeReferanse): Samværsperiode? =
-    if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
-        Samværsperiode(
-            samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
-            samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
-            aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
-            periode = periode.periode,
-        )
-    } else {
-        null
-    }
+fun List<GrunnlagDto>.mapSamværAldersjustering(periode: VedtakPeriodeReferanse): Samværsperiode? = if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
+    Samværsperiode(
+        samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
+        samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
+        aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
+        periode = periode.periode,
+    )
+} else {
+    null
+}
 
-fun List<GrunnlagDto>.mapSamvær(periode: VedtakPeriodeReferanse): Samværsperiode? =
-    if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
-        Samværsperiode(
-            samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
-            samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
-            aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
-            periode = periode.periode,
-        )
-    } else {
-        null
-    }
+fun List<GrunnlagDto>.mapSamvær(periode: VedtakPeriodeReferanse): Samværsperiode? = if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
+    Samværsperiode(
+        samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
+        samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
+        aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
+        periode = periode.periode,
+    )
+} else {
+    null
+}
 
 fun List<GrunnlagDto>.finnSamværsklasse(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
@@ -1018,45 +1016,42 @@ fun List<GrunnlagDto>.mapInntekter(
     return inntekter + hentTotalInntektForPeriode(periode, innteksgrense)
 }
 
-fun List<AndelUnderholdskostnadPeriode>.sammenstillDeMedSammeVerdiAndelUnderhold() =
-    this
-        .grupperPerioder()
-        .map {
+fun List<AndelUnderholdskostnadPeriode>.sammenstillDeMedSammeVerdiAndelUnderhold() = this
+    .grupperPerioder()
+    .map {
+        it.reduce { acc, underhold ->
+            underhold.copy(
+                periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
+            )
+        }
+    }.sortedBy { it.periode.fom }
+
+fun List<UnderholdskostnaderPeriode>.sammenstillDeMedSammeVerdiUnderhold() = this
+    .groupBy { it.rolletype }
+    .flatMap { (_, underholdList) ->
+        underholdList.grupperPerioder().map {
             it.reduce { acc, underhold ->
                 underhold.copy(
                     periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
                 )
             }
-        }.sortedBy { it.periode.fom }
+        }
+    }.sortedBy { it.periode.fom }
 
-fun List<UnderholdskostnaderPeriode>.sammenstillDeMedSammeVerdiUnderhold() =
-    this
-        .groupBy { it.rolletype }
-        .flatMap { (_, underholdList) ->
-            underholdList.grupperPerioder().map {
-                it.reduce { acc, underhold ->
-                    underhold.copy(
-                        periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
-                    )
-                }
+fun List<InntektPeriode>.sammenstillDeMedSammeVerdiInntekter() = this
+    .groupBy { it.rolle }
+    .flatMap { (_, rolleInntektList) ->
+        rolleInntektList.grupperPerioder().map {
+            it.reduce { acc, inntekt ->
+                inntekt.copy(
+                    periode = ÅrMånedsperiode(acc.periode.fom, inntekt.periode.til),
+                    innteksgrense = maxOf(acc.innteksgrense, inntekt.innteksgrense),
+                    beløpÅr = acc.beløpÅr,
+                    inntektPerioder = acc.inntektPerioder,
+                )
             }
-        }.sortedBy { it.periode.fom }
-
-fun List<InntektPeriode>.sammenstillDeMedSammeVerdiInntekter() =
-    this
-        .groupBy { it.rolle }
-        .flatMap { (_, rolleInntektList) ->
-            rolleInntektList.grupperPerioder().map {
-                it.reduce { acc, inntekt ->
-                    inntekt.copy(
-                        periode = ÅrMånedsperiode(acc.periode.fom, inntekt.periode.til),
-                        innteksgrense = maxOf(acc.innteksgrense, inntekt.innteksgrense),
-                        beløpÅr = acc.beløpÅr,
-                        inntektPerioder = acc.inntektPerioder,
-                    )
-                }
-            }
-        }.sortedWith(compareBy({ it.rolle }, { it.periode.fom }, { it.beløp }))
+        }
+    }.sortedWith(compareBy({ it.rolle }, { it.periode.fom }, { it.beløp }))
 
 fun <T : DataPeriode> List<T>.grupperPerioder(): List<List<T>> {
     if (this.isEmpty()) return emptyList()
@@ -1079,35 +1074,33 @@ fun <T : DataPeriode> List<T>.grupperPerioder(): List<List<T>> {
     return result
 }
 
-fun List<Samværsperiode>.sammenstillDeMedSammeVerdi() =
-    this
-        .grupperPerioder()
-        .map { samværList ->
-            samværList.reduce { acc, samvær ->
-                Samværsperiode(
-                    samværsfradragBeløp = acc.samværsfradragBeløp,
-                    samværsklasse = acc.samværsklasse,
-                    aldersgruppe = acc.aldersgruppe,
-                    periode = ÅrMånedsperiode(acc.periode.fom, samvær.periode.til),
-                )
-            }
-        }.sortedBy { it.periode.fom }
-
-fun List<InntektPeriode>.sammenstillDeMedSammeBeskrivelse() =
-    groupBy { Pair(it.beskrivelse, it.rolle) }.map { (_, inntekter) ->
-        inntekter.reduce { acc, inntekt ->
-            InntektPeriode(
-                inntektPerioder = acc.inntektPerioder + inntekt.inntektPerioder,
-                inntektOpprinneligPerioder = acc.inntektOpprinneligPerioder + inntekt.inntektOpprinneligPerioder,
-                periode = acc.periode,
-                typer = acc.typer + inntekt.typer,
-                periodeTotalinntekt = acc.periodeTotalinntekt,
-                nettoKapitalInntekt = acc.nettoKapitalInntekt,
-                beløpÅr = acc.beløpÅr,
-                fødselsnummer = acc.fødselsnummer,
-                beløp = acc.beløp + inntekt.beløp,
-                rolle = acc.rolle,
-                innteksgrense = acc.innteksgrense,
+fun List<Samværsperiode>.sammenstillDeMedSammeVerdi() = this
+    .grupperPerioder()
+    .map { samværList ->
+        samværList.reduce { acc, samvær ->
+            Samværsperiode(
+                samværsfradragBeløp = acc.samværsfradragBeløp,
+                samværsklasse = acc.samværsklasse,
+                aldersgruppe = acc.aldersgruppe,
+                periode = ÅrMånedsperiode(acc.periode.fom, samvær.periode.til),
             )
         }
+    }.sortedBy { it.periode.fom }
+
+fun List<InntektPeriode>.sammenstillDeMedSammeBeskrivelse() = groupBy { Pair(it.beskrivelse, it.rolle) }.map { (_, inntekter) ->
+    inntekter.reduce { acc, inntekt ->
+        InntektPeriode(
+            inntektPerioder = acc.inntektPerioder + inntekt.inntektPerioder,
+            inntektOpprinneligPerioder = acc.inntektOpprinneligPerioder + inntekt.inntektOpprinneligPerioder,
+            periode = acc.periode,
+            typer = acc.typer + inntekt.typer,
+            periodeTotalinntekt = acc.periodeTotalinntekt,
+            nettoKapitalInntekt = acc.nettoKapitalInntekt,
+            beløpÅr = acc.beløpÅr,
+            fødselsnummer = acc.fødselsnummer,
+            beløp = acc.beløp + inntekt.beløp,
+            rolle = acc.rolle,
+            innteksgrense = acc.innteksgrense,
+        )
     }
+}

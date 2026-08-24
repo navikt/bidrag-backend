@@ -17,9 +17,8 @@ class DokumentFetchingManager(
         return dokumentProducer.fetch(dokumentMal)
     }
 
-    private fun getFetcher(dokumentMal: DokumentMal): DocumentFetcher =
-        applicationContext.getBean(
-            dokumentMal.bestillingSystem,
-            DocumentFetcher::class.java,
-        )
+    private fun getFetcher(dokumentMal: DokumentMal): DocumentFetcher = applicationContext.getBean(
+        dokumentMal.bestillingSystem,
+        DocumentFetcher::class.java,
+    )
 }
