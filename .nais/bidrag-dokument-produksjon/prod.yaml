@@ -2,6 +2,7 @@ ingresses:
   - https://bidrag-dokument-produksjon.intern.nav.no
 azure_access_inbound:
   - application: bidrag-ui
+  - application: bidrag-frontend
   - application: bidrag-behandling
   - application: bidrag-bidragskalkulator-api
   - application: bidrag-dokument-bestilling
