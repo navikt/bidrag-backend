@@ -15,7 +15,7 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-dokumentmal/**.yaml'
-      - '.github/workflows/bidrag-dokumentmal.yaml'
+#      - '.github/workflows/bidrag-dokumentmal.yaml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal/**'
 
 # bidrag-dokumentmal er en Node/React-app, ikke et Maven-prosjekt, og kan derfor ikke bruke
