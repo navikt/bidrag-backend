@@ -1,0 +1,10 @@
+BISYS:
+  adgruppe: 0000-GA-Bisys
+LESE:
+  adgruppe: 0000-GA-Bisys-Lese-sak
+BEHANDLE:
+  adgruppe: 0000-GA-Bisys-Behandle-sak
+UTLAND:
+  adgruppe: 0000-GA-Bisys-Utland
+ADMINISTRASJON:
+  adgruppe: 0000-GA-Bisys-Administrasjon

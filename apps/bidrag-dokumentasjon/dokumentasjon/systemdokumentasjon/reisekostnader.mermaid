@@ -1,0 +1,43 @@
+---
+config:
+  layout: dagre
+---
+graph TB
+
+    classDef frontend fill:#4A90D9,color:#fff,stroke:#2c6fad
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+    classDef docSystem fill:#8E44AD,color:#fff,stroke:#6c3483
+
+    subgraph Reisekostnader["🚗 Reisekostnader"]
+        direction TB
+        BidragReisekostnadApi["<b>Bidrag-Reisekostnad-API</b> 🛢️<br/>Reisekostnader-backend"]
+        BidragReisekostnadUi["<b>Bidrag-Reisekostnad-UI</b><br/>Reisekostnader-frontend"]
+
+        BidragPerson["<b>Bidrag-Person</b><br/>Personinformasjon"]
+        DokumentHandtering["<b>📄 Dokumenthåndtering</b><br/>Se eget diagram"]
+    end
+
+    BidragReisekostnadUi --> BidragReisekostnadApi
+
+
+    BidragReisekostnadApi -->|Henter personopplysninger| BidragPerson
+    BidragReisekostnadApi -->| Opprette/hente dokumenter | DokumentHandtering
+
+    %% Color assignments
+    class BidragReisekostnadUi frontend
+    class BidragPerson legacyFSS
+    class DokumentHandtering docSystem
+
+    click BidragReisekostnadApi visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragReisekostnadUi visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPerson visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click DokumentHandtering visDiagram "Åpne dokumenthåndteringsdiagram"
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendFrontend["🔵 = Frontend/UI-applikasjon"]
+        LegendDb["🛢= Applikasjon med database"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendDoc["🟣 = Eget diagram"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end
+

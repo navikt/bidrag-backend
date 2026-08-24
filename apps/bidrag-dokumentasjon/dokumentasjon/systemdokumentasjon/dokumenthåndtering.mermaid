@@ -1,0 +1,73 @@
+---
+config:
+  layout: fixed
+---
+graph LR
+
+    classDef frontend fill:#4A90D9,color:#fff,stroke:#2c6fad
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+    classDef legacyApp fill:#C0392B,color:#fff,stroke:#922b21
+    classDef utility fill:#27AE60,color:#fff,stroke:#1e8449
+    classDef external fill:#BDC3C7,color:#333,stroke:#95A5A6,stroke-dasharray: 5 5
+
+    subgraph Dokumenthåndtering["📄 Dokumenthåndtering"]
+        direction LR
+
+        BidragDokument["<b>Bidrag-Dokument</b> ☕<br/>Bisys/JOARK-integrasjon"]
+        BidragDokumentArkiv["<b>Bidrag-Dokument-Arkiv</b> ☕<br/>Fagarkiv-facade (JOARK)"]
+        BidragDokumentJournalpost["<b>Bidrag-Dokument-Journalpost</b> ☕<br/>Brevlager-metadata"]
+        BidragDokumentArkivering["<b>Bidrag-Dokument-Arkivering</b><br/>Dokumentarkivering"]
+
+        subgraph Forsendelse["Forsendelsesflyt"]
+            direction LR
+            BidragDokumentForsendelse["<b>Bidrag-Dokument-Forsendelse</b> ☕ 🛢️<br/>Oppretter og oppdaterer forsendelser"]
+            BidragDokumentBestilling["<b>Bidrag-Dokument-Bestilling</b><br/>Bestiller dokumenter"]
+        end
+
+        subgraph Produksjon["Dokumentproduksjon"]
+            direction LR
+            BidragDokumentProduksjon["<b>Bidrag-Dokument-Produksjon</b><br/>Produserer dokumenter"]
+            BidragDokumentmal["<b>Bidrag-Dokumentmal</b><br/>Dokumentmaler"]
+            BidragPdfgen["<b>Bidrag-PDFgen</b><br/>PDF-generering"]
+        end
+    end
+
+
+    %% Interne koblinger i dokumenthåndtering
+    BidragDokument -->|Oppretter forsendelse| BidragDokumentForsendelse
+    BidragDokumentArkivering -->|Henter dokumenter| BidragDokument
+    BidragDokumentArkiv -->|Henter dokumenter| BidragDokument
+
+    BidragDokumentForsendelse -->|Bestiller dokumenter| BidragDokumentBestilling
+    BidragDokumentForsendelse -->|Henter journalpostmetadata| BidragDokumentJournalpost
+    BidragDokumentForsendelse -->|Henter dokumenter| BidragDokument
+
+    BidragDokumentBestilling -->|Produserer dokumenter| BidragDokumentProduksjon
+    BidragDokumentBestilling -->|Henter dokumenter| BidragDokument
+
+    BidragDokumentProduksjon -->|Genererer PDF| BidragPdfgen
+    BidragDokumentProduksjon -->|Henter dokumentmaler| BidragDokumentmal
+
+
+    %% Color assignments
+    class BidragDokumentArkiv,BidragDokumentJournalpost legacyFSS
+    class BidragDokumentArkivering,BidragDokumentBestilling,BidragDokumentProduksjon,BidragDokumentmal,BidragPdfgen utility
+
+    click BidragDokument visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentArkiv visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentJournalpost visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentArkivering visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentBestilling visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentForsendelse visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentProduksjon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentmal visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPdfgen visApplikasjon "Åpne applikasjonsbeskrivelse"
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendDb["🛢 = Applikasjon med database"]
+        LegendKafka["☕ = Applikasjon med Kafka topic"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendUtility["🟢 = Støttetjeneste"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end
+

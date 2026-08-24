@@ -1,0 +1,86 @@
+---
+config:
+  layout: fixed
+---
+graph LR
+
+    classDef frontend fill:#4A90D9,color:#fff,stroke:#2c6fad
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+    classDef legacyApp fill:#C0392B,color:#fff,stroke:#922b21
+    classDef utility fill:#27AE60,color:#fff,stroke:#1e8449
+    classDef external fill:#BDC3C7,color:#333,stroke:#95A5A6,stroke-dasharray: 5 5
+
+    subgraph Kommunikasjon["Kommunikasjon mot Skatteetaten"]
+        direction LR
+
+        Bisys["<b>Bisys</b><br/>Fatter vedtak"]
+        BidragRegnskap["<b>Bidrag-Regnskap</b> 🛢️<br/>Transformerer bidragsvedtak<br/>til krav"]
+        BidragReskontro["<b>Bidrag-Reskontro</b><br/>Henter og transformerer informasjon fra reskontro"]
+        BidragAktoerregister["<b>Bidrag-Aktørregister</b> 🛢️<br/>Innholder informasjon om alle aktører i bidragssaker. Involverer samhandlere, personer, og HAAG/Utlands informasjon som ikke finnes i folkeregisteret/PDL."]
+        BidragPerson["<b>Bidrag-Person</b><br/>Sammenstiller personinformasjon"]
+        BidragSamhandler["<b>Bidrag-Samhandler</b> ☕ 🛢️<br/>Informasjon om bidragssamhandlere (Tidligere TSS-identer)"]
+
+        subgraph Skatt
+            BisysReskRest["<b>BisysReskRest</b>"]
+            AvstemOppdrag["<b>AvstemOppdrag</b>"]
+            TolkingClient["<b>TolkingClient</b>"]
+            Tolking2Predator["<b>Tolking2Predator</b><br/>Mottar krav via /api/krav fra bidrag-regnskap"]
+        end
+
+        SFTPFilsluse["<b>SFTP-filsluse</b><br/>Område for å laste opp filer"]
+
+        subgraph Eksterne Tjenester
+            KKR["<b>Kontakt og reservasjonsregisteret</b><br/>Informasjon om språk"]
+            SokosKontoregister["<b>Sokos-kontoregister</b><br/>Informasjon om registrerte kontoopplysninger"]
+            PDL["<b>PDL</b><br/>Informasjon om personopplysninger, herunder identer, adresser, dødsbo mm."]
+        end
+    end
+
+
+    Bisys -->|Sender vedtak| BidragRegnskap
+
+    SFTPFilsluse -->|påløpsfil| TolkingClient
+    BidragRegnskap -->|Sender kravliste gruppert per vedtak| Tolking2Predator
+    BidragRegnskap -->|Oppretter påløpsfil| SFTPFilsluse
+    BidragRegnskap -->|Oppretter avstemningfiler avstdet/avstsum| SFTPFilsluse
+    SFTPFilsluse -->|avstemning| AvstemOppdrag
+
+
+    BidragReskontro -->| Henter informasjon om reskontro | BisysReskRest
+    Bisys --> | Etterspør informasjon om reskontro | BidragReskontro
+    BidragReskontro -->| Kaller /endreRm | BisysReskRest
+    Bisys --> | Endrer RM | BidragReskontro
+
+
+    BidragAktoerregister <--> | Utleverer informasjon om aktører | Tolking2Predator
+    BidragPerson --> | Personhendelser | BidragAktoerregister
+    BidragPerson --> | Personhendelser | BidragRegnskap
+    PDL --> | Personinformasjon| BidragPerson
+    SokosKontoregister --> | Kontoopplysninger | BidragPerson
+    KKR --> | Språk | BidragPerson
+
+    Bisys --> | Oppretter og endrer samhandlere | BidragSamhandler
+    BidragSamhandler --> | Samhandlere | BidragAktoerregister
+
+    click BidragSamhandler visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click Bisys visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPerson visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragAktoerregister visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragReskontro visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragRegnskap visApplikasjon "Åpne applikasjonsbeskrivelse"
+
+    %% Color assignments
+    class Bisys legacyApp
+    class BidragPerson legacyFSS
+    class BidragReskontro utility
+    class BisysReskRest,AvstemOppdrag,TolkingClient,Tolking2Predator,SFTPFilsluse,KKR,SokosKontoregister,PDL external
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendDb["🛢 = Applikasjon med database"]
+        LegendLegacy["🔴 = Legacy-applikasjon"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendUtility["🟢 = Støttetjeneste"]
+        LegendExternal["⬜ = Eksternt system (utenfor Bidrag)"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end
+
