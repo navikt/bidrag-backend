@@ -6,6 +6,25 @@ registries:
     username: x-access-token
     password: no-secret-required
 updates:
+  - package-ecosystem: "npm"
+    directory: "/util/bidrag-cli"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+    commit-message:
+      prefix: "[dependency] "
   - package-ecosystem: "maven"
     directories:
       - "/"
