@@ -184,17 +184,31 @@ og tilpasset til hva som er relevant for et Kotlin/Spring Boot/Postgres-backend 
 
 `bidrag-backend` har allerede et svært konsistent oppsett på tvers av alle apper:
 én workflow-fil per app (f.eks. `bidrag-aktoerregister.yaml`) som delegerer til delte,
-gjenbrukbare workflows: `bygg_og_deploy.yaml`, `bygg_og_deploy_prod.yaml`,
-`sjekk_sync_med_main.yaml`, i tillegg til de repo-globale
-`codeql.yml`, `dependabot_bygg_og_test.yaml`, `libs_bygg_og_test.yaml`, `tag_utgivelse.yaml`.
+gjenbrukbare workflows: `bygg_og_deploy.yaml`, `bygg_og_deploy_prod.yaml`, i tillegg til de
+repo-globale `codeql.yml`, `dependabot_bygg_og_test.yaml`, `libs_bygg_og_test.yaml`,
+`tag_utgivelse.yaml`.
 
 **Ikke innfør nye, avvikende mønstre uten god grunn.** En ny app-workflow skal normalt
 kun bestå av jobbene:
 
+- `detect_changes` (bruker `.github/actions/utled-app-endringer` til å avgjøre om appen
+  faktisk har en reell diff mot `main` siden merge-base, uavhengig av eventuelle
+  merge-commits inn i branchen — se begrunnelse under)
 - `bygg_og_test`
-- `sjekk_sync_med_main` (delegerer til `sjekk_sync_med_main.yaml`)
 - `deploy_prod` (delegerer til `bygg_og_deploy_prod.yaml`)
 - `deploy_q1` / `deploy_q2` (delegerer til `bygg_og_deploy.yaml`)
+
+Alle jobber utover `detect_changes` skal ha `needs: detect_changes` og
+`if: needs.detect_changes.outputs.changed == 'true' && (...)` (AND'et med den eksisterende
+`if`-betingelsen), slik at bygg/deploy skippes når appen ikke faktisk er endret.
+
+**Historikk:** Et tidligere forsøk på et beslektet problem var
+`sjekk_sync_med_main.yaml`, som *krevde* at branchen hadde main som ancestor (blokkerte
+deploy til Q1/Q2 med feilmelding hvis ikke). Denne ble fjernet igjen (commit
+"Fjerner sync med main") — trolig fordi den løste feil problem: den tvang fram sync med
+main i stedet for å håndtere at en *reell* diff-sjekk mot main var det som egentlig
+manglet. `detect_changes`/`utled-app-endringer`-mønsteret erstatter denne løsningen med en
+presis merge-base-diff i stedet for et hardt sync-krav.
 
 Avvik (f.eks. at en app kjører på FSS i stedet for GCP, eller har ressurser i begge
 miljøer) skal begrunnes eksplisitt og ikke bare
@@ -245,8 +259,8 @@ Sikkerhetskrav til selve workflow-filene (jf.
 - [ ] Parameteriserte SQL-spørringer, ingen strengkonkatenering av brukerinput.
 - [ ] Tilgangsstyring bruker riktig token-flyt (TokenX ved brukerkontekst,
       Client Credentials for ren M2M).
-- [ ] GitHub Actions-workflow følger standardmønsteret (`bygg_og_test` →
-      `sjekk_sync_med_main` → `deploy_prod`/`deploy_q1`/`deploy_q2`), actions pinnet
+- [ ] GitHub Actions-workflow følger standardmønsteret (`detect_changes` →
+      `bygg_og_test` → `deploy_prod`/`deploy_q1`/`deploy_q2`), actions pinnet
       til SHA, minimum permissions.
 - [ ] Ny/endret kode har tilhørende tester, `mvn verify` er grønn.
 

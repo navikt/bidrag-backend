@@ -23,8 +23,23 @@ on:
       - 'apps/bidrag-person-hendelse/**'
 
 jobs:
+  detect_changes:
+    name: "Sjekk om appen faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
   bygg_og_test:
-    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && (github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main')
     name: "Bygg og test"
     runs-on: ubuntu-latest
     permissions:
@@ -58,7 +73,8 @@ jobs:
         run: mvn -B -fae verify -pl apps/bidrag-person-hendelse -am
 
   deploy_preprod:
-    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod'))
     name: "Build and deploy to preprod"
     concurrency:
       group: deploy-person-hendelse-preprod-${{ github.ref }}
@@ -81,7 +97,8 @@ jobs:
       tag: bidrag-person-hendelse
 
   deploy_prod:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-person-hendelse-prod-${{ github.ref }}
@@ -105,7 +122,8 @@ jobs:
 
 
   deploy_kafka_topic_preprod:
-    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod'))
     name: "Deploy Kafka-topic til preprod"
     runs-on: ubuntu-latest
     permissions:
@@ -121,7 +139,8 @@ jobs:
           PRINT_PAYLOAD: true
 
   deploy_kafka_topic_prod:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Deploy Kafka-topic til prod"
     runs-on: ubuntu-latest
     permissions:

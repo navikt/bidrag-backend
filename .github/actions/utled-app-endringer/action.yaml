@@ -1,0 +1,68 @@
+name: 'Utled app-endringer'
+description: >-
+  Avgjør om denne workflowen faktisk skal bygge/deploye, basert på diff mot main
+  (merge-base), i stedet for GitHub sitt innebygde push before/after-diff.
+  Dette må gjøres siden `on.push.paths` trigger workflowen basert på alle filer som inngår i pushen. 
+  Når man merger main inn i en feature-/q1-/q2-branch, drar man samtidig inn
+  commits som potensielt endrer andre apper. GitHub sitt paths-filter ser da ut som om "denne pushen" endret
+  de appene også, selv om branchen ikke har noen reell diff mot main for de. Denne actionen
+  beregner i stedet den faktiske diffen siden branchen sist var i sync med main, slik at
+  bygg/deploy kun kjører når appen selv er endret.
+  Push til `main` og andre trigger-typer (workflow_dispatch, schedule) er ikke berørt av dette og
+  behandles derfor alltid som "endret".
+  Pathsene som sjekkes leses automatisk fra `on.push.paths` i workflow-filen som kaller denne
+  actionen.
+outputs:
+  changed:
+    description: "'true' hvis appens paths er reelt endret siden main, ellers 'false'"
+    value: ${{ steps.detect.outputs.changed }}
+runs:
+  using: composite
+  steps:
+    - name: Beregn om paths er reelt endret siden main
+      id: detect
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        REF: ${{ github.ref }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+      run: |
+        set -euo pipefail
+
+        if [ "$EVENT_NAME" != "push" ] || [ "$REF" = "refs/heads/main" ]; then
+          # workflow_dispatch/schedule og push til main kjører alltid i disse tilfellene.
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::Hopper over merge-base-sjekk (event=${EVENT_NAME}, ref=${REF})."
+          exit 0
+        fi
+
+        # github.workflow_ref har formen "owner/repo/.github/workflows/<fil>@<ref>".
+        # Vi trenger kun selve filnavnet for å finne igjen paths-blokken workflowen selv trigges av
+        WORKFLOW_FILE=".github/workflows/$(echo "$WORKFLOW_REF" | sed -E 's#.*/\.github/workflows/([^@]+)@.*#\1#')"
+
+        if [ ! -f "$WORKFLOW_FILE" ]; then
+          echo "::error::Fant ikke workflow-filen '$WORKFLOW_FILE' (utledet fra github.workflow_ref='$WORKFLOW_REF')." >&2
+          exit 1
+        fi
+
+        # Hent ut on.push.paths-blokken fra workflow-filen
+        mapfile -t PATHSPECS < <(
+          awk '/^    paths:$/{flag=1; next} flag && /^jobs:$/{exit} flag' "$WORKFLOW_FILE" \
+            | grep -E "^      - '" \
+            | sed -E "s/^      - '(.*)'\$/\1/"
+        )
+
+        if [ "${#PATHSPECS[@]}" -eq 0 ]; then
+          echo "::error::Fant ingen on.push.paths i $WORKFLOW_FILE - kan ikke avgjøre om appen er endret." >&2
+          exit 1
+        fi
+
+        git fetch --no-tags --quiet origin main
+        BASE_SHA="$(git merge-base HEAD origin/main)"
+
+        if git diff --quiet "$BASE_SHA" HEAD -- "${PATHSPECS[@]}"; then
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Ingen reelle endringer i angitte paths siden main (merge-base ${BASE_SHA}) - hopper over bygg/deploy."
+        else
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi

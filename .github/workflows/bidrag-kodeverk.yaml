@@ -20,8 +20,23 @@ on:
       - 'apps/bidrag-kodeverk/**'
 
 jobs:
+  detect_changes:
+    name: "Sjekk om appen faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
   bygg_og_test:
-    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && (github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main')
     name: "Bygg og test"
     runs-on: ubuntu-latest
     permissions:
@@ -55,7 +70,8 @@ jobs:
         run: mvn -B -fae verify -pl apps/bidrag-kodeverk -am
 
   deploy_dev:
-    if: (github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
     name: "Build and deploy to dev"
     concurrency:
       group: deploy-kodeverk-dev-${{ github.ref }}
@@ -78,7 +94,8 @@ jobs:
       tag: bidrag-kodeverk
 
   deploy_prod:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-kodeverk-prod-${{ github.ref }}
