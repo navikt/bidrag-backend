@@ -1,0 +1,32 @@
+---
+config:
+  layout: dagre
+---
+graph LR
+    subgraph Farskapsportalen
+        direction LR
+        classDef internal fill: #4A90D9, color: #fff, stroke: #2c6fad
+        classDef external fill: #7F8C8D, color: #fff, stroke: #566573
+        classDef api fill: #27AE60, color: #fff, stroke: #1e8449
+        FarskapsportalenUi["<b>farskapsportal-ui</b><br/>"]
+        FarskapsportalenApi["<b>farskapsportal-api</b><br/>"]:::api
+        Statuspoll["<b>statuspoll</b><br/>"]:::external
+        Oppgave["<b>oppgave</b><br/>"]:::external
+        Signering["<b>api.signering.posten.no</b><br/>Ekstern – Posten/Brings signeringstjeneste"]:::external
+        Folkeregisteret["<b>folkeregisteret.api.skatteetaten.no</b><br/>Ekstern – Skatteetaten folkeregister"]:::external
+        FarskapsportalenUi --> FarskapsportalenApi
+        Statuspoll --> FarskapsportalenApi
+        FarskapsportalenApi --> Signering
+        FarskapsportalenApi --> Folkeregisteret
+        FarskapsportalenApi --> Oppgave
+        class FarskapsportalenUi internal
+        class FarskapsportalenApi api
+        click FarskapsportalenUi visApplikasjon "Åpne applikasjonsbeskrivelse"
+        click FarskapsportalenApi visApplikasjon "Åpne applikasjonsbeskrivelse"
+
+        subgraph Legend["📋 Systemforklaring"]
+            LegendInternal["🔵 = Intern NAV-applikasjon"]
+            LegendApi["🟢 = Hoveddtjeneste (farskapsportal-api)"]
+            LegendExternal["⬛ = Ekstern tjeneste / annet team"]
+        end
+    end

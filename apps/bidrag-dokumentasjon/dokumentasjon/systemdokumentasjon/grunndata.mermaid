@@ -1,0 +1,36 @@
+---
+config:
+  layout: dagre
+---
+graph LR
+
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+
+    subgraph Grunndata["🗄️ Grunndata og Masterdata"]
+        direction LR
+
+        BidragSjablon["<b>Bidrag-Sjablon</b><br/>Sjablon-satser"]
+        BidragPerson["<b>Bidrag-Person</b><br/>Personinformasjon"]
+        BidragSak["<b>Bidrag-Sak</b><br/>Saksinformasjon"]
+        BidragBbm["<b>Bidrag-BBM</b> 🛢️<br/>Beregningsbeløp"]
+        BidragOrganisasjon["<b>Bidrag-Organisasjon</b><br/>Saksbehandlerinfo via LDAP"]
+        BidragGrunnlag["<b>Bidrag-Grunnlag</b> 🛢️<br/>Innhenting av grunnlag"]
+
+        BidragGrunnlag -->|Henter saksbehandlerinformasjon| BidragOrganisasjon
+        BidragSak -->|Henter saksbehandlerinformasjon| BidragOrganisasjon
+    end
+
+    class BidragSjablon,BidragPerson,BidragBbm,BidragOrganisasjon legacyFSS
+
+    click BidragSjablon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPerson visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragSak visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragBbm visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragOrganisasjon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragGrunnlag visApplikasjon "Åpne applikasjonsbeskrivelse"
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendDb["🛢 = Applikasjon med database️"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end

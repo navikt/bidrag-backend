@@ -1,0 +1,144 @@
+---
+config:
+  layout: dagre
+---
+graph LR
+
+    classDef frontend fill:#4A90D9,color:#fff,stroke:#2c6fad
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+    classDef legacyApp fill:#C0392B,color:#fff,stroke:#922b21
+    classDef utility fill:#27AE60,color:#fff,stroke:#1e8449
+    classDef docSystem fill:#8E44AD,color:#fff,stroke:#6c3483
+    classDef kalkulatorSystem fill:#1A7A4A,color:#fff,stroke:#145f38
+
+    subgraph Bidragsområdet["Bidragsområdet"]
+        direction LR
+
+        subgraph Applikasjonsflyt
+            direction LR
+            Grunndata["<b>🗄️ Grunndata</b><br/>Se eget diagram"]
+            BidragUi["<b>Bidrag-UI</b><br/>Hovedgrensesnitt"]
+            DokumentHandtering["<b>📄 Dokumenthåndtering</b><br/>Se eget diagram"]
+            Bisys["<b>Bisys</b><br/>Fatter vedtak"]
+            BidragArbeidsflyt["<b>Bidrag-Arbeidsflyt</b> 🛢️<br/>Hendelse-tjeneste"]
+            BidragBehandling["<b>Bidrag-Behandling</b> ☕ 🛢️<br/>Saksbehandlingsløsning"]
+            BidragBelopshistorikk["<b>Bidrag-Belopshistorikk</b> 🛢️<br/>Beløpshistorikk"]
+            BidragRegnskap["<b>Bidrag-Regnskap</b> 🛢️<br/>Transformerer vedtak til krav"]
+            BidragReskontro["<b>Bidrag-Reskontro</b><br/>Reskontro-integrasjon"]
+            BidragAktoerregister["<b>Bidrag-Aktørregister</b> 🛢️<br/>Aktørinformasjon"]
+            BidragSamhandler["<b>Bidrag-Samhandler</b> ☕ 🛢️<br/>Bidragssamhandlere"]
+            BidragAutomatiskJobb["<b>Bidrag-Automatisk-Jobb</b> 🛢️<br/>Automatiske batcher"]
+            BidragVedtak["<b>Bidrag-Vedtak</b> ☕ 🛢️<br/>Vedtaksbehandling"]
+        end
+
+        subgraph Utility["⚙️ Utility og støtteapplikasjoner"]
+            direction TB
+            BidragAdmin["<b>Bidrag-Admin</b> 🛢️<br/>Administrasjonspanel"]
+            BidragKafkaManager["<b>Bidrag-Kafka-Manager</b><br/>Kafka-administrasjon"]
+            BidragDokumentasjon["<b>Bidrag-Dokumentasjon</b><br/>Teknisk dokumentasjon"]
+            BidragKodeverk["<b>Bidrag-Kodeverk</b><br/>Nav kode verk"]
+            BidragStatistikk["<b>Bidrag-Statistikk</b> ☕<br/>Statistikkbehandling"]
+            BidragTilgangskontroll["<b>Bidrag-Tilgangskontroll</b><br/>Tilgangskontroll"]
+            BidragPersonHendelse["<b>Bidrag-Person-Hendelse</b> ☕ 🛢️<br/>PDL-hendelser"]
+        end
+    end
+
+%% Bisys
+    Bisys -->|Etterspør reskontro & endrer RM| BidragReskontro
+    Bisys -->|Oppretter/endrer samhandlere| BidragSamhandler
+    Bisys -->|Henter feilede transaksjoner| BidragRegnskap
+    Bisys -->|Henter grunndata| Grunndata
+    Bisys -->|Henter beløpshistorikk| BidragBelopshistorikk
+    Bisys -->|Henter behandlingsinformasjon| BidragBehandling
+    Bisys -->|Starter automatiske jobber| BidragAutomatiskJobb
+    Bisys -->|Dokumenthåndtering| DokumentHandtering
+%% Bidrag-UI
+    BidragUi -->|Brukergrensesnitt| Bisys
+    BidragUi -->|Henter grunndata| Grunndata
+    BidragUi -->|Henter behandlingsinformasjon| BidragBehandling
+    BidragUi -->|Dokumenthåndtering| DokumentHandtering
+%% Bidrag-Regnskap
+    BidragRegnskap -->|Henter grunndata| Grunndata
+    BidragRegnskap -->|Henter reskontroinfromasjon| BidragReskontro
+%% Bidrag-Samhandler
+    BidragSamhandler -->|Oppretter/endrer samhandlere| BidragAktoerregister
+%% Bidrag-Arbeidsflyt
+    BidragArbeidsflyt -->|Henter grunndata| Grunndata
+    BidragArbeidsflyt -->|Henter dokumenter| DokumentHandtering
+%% Bidrag-Behandling
+    BidragBehandling -->|Henter grunndata| Grunndata
+    BidragBehandling -->|Henter beløpshistorikk| BidragBelopshistorikk
+    BidragBehandling -->|Henter samhandlerinformasjon| BidragSamhandler
+    BidragBehandling -->|Henter vedtak| BidragVedtak
+    BidragBehandling -->|Dokumenthåndtering| DokumentHandtering
+%% Bidrag-Automatisk-Jobb
+    BidragAutomatiskJobb -->|Henter grunndata| Grunndata
+    BidragAutomatiskJobb -->|Henter reskontroinfo| BidragReskontro
+    BidragAutomatiskJobb -->|Henter beløpshistorikk| BidragBelopshistorikk
+    BidragAutomatiskJobb -->|Henter behandlingsinformasjon| BidragBehandling
+    BidragAutomatiskJobb -->|Henter vedtak| BidragVedtak
+    BidragAutomatiskJobb -->|Henter samhandlerinformasjon| BidragSamhandler
+    BidragAutomatiskJobb -->|Oppretter forsendelse| DokumentHandtering
+%% Dokumenthåndtering (utgående til kjernesystemer)
+    DokumentHandtering -->|Henter grunndata| Grunndata
+    DokumentHandtering -->|Henter vedtak| BidragVedtak
+    DokumentHandtering -->|Henter behandling| BidragBehandling
+    DokumentHandtering -->|Henter samhandlerinformasjon| BidragSamhandler
+    DokumentHandtering -->|Henter reskontroinfo| BidragReskontro
+%% Bidrag-Grunnlag
+%% Bidrag-Vedtak
+    BidragVedtak -->|Henter grunndata| Grunndata
+    BidragVedtak -->|Vedtakhendelser | BidragRegnskap
+%% Bidrag-Sak
+%% Bidrag-Organisasjon
+%% Bidrag-Tilgangskontroll
+%% Bidrag-Statistikk
+%% Bidrag-Aktørregister
+%% Bidrag-Belopshistorikk
+    BidragBelopshistorikk -->|Henter grunndata| Grunndata
+
+    %% Color assignments
+    class BidragUi frontend
+    class Bisys legacyApp
+    class BidragKodeverk,BidragTilgangskontroll,BidragStatistikk,BidragReskontro,BidragKafkaManager,BidragDokumentasjon utility
+    class DokumentHandtering,Grunndata docSystem
+
+    click BidragUi visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragSjablon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPerson visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragSak visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragBbm visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragOrganisasjon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragUi visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click Bisys visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragAdmin visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragArbeidsflyt visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragBehandling visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragBelopshistorikk visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragRegnskap visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragReskontro visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragAktoerregister visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragSamhandler visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPersonHendelse visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragAutomatiskJobb visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragGrunnlag visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragKafkaManager visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragKodeverk visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragStatistikk visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragTilgangskontroll visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragVedtak visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragDokumentasjon visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click DokumentHandtering visDiagram "Åpne dokumenthåndteringsdiagram"
+    click Grunndata visDiagram "Åpne grunndata-diagram"
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendFrontend["🔵 = Frontend/UI-applikasjon"]
+        LegendDb["🛢 = Applikasjon med database"]
+        LegendKafka["☕ = Applikasjon med Kafka topic"]
+        LegendLegacy["🔴 = Legacy-applikasjon"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendUtility["🟢 = Støttetjeneste/Utility"]
+        LegendDoc["🟣 = Eget diagram"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end
+

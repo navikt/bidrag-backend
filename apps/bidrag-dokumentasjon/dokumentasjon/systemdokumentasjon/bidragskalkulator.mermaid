@@ -1,0 +1,47 @@
+---
+config:
+  layout: dagre
+---
+graph TB
+
+    classDef frontend fill:#4A90D9,color:#fff,stroke:#2c6fad
+    classDef withDb fill:#E8A838,color:#fff,stroke:#b5852a
+    classDef legacyFSS fill:#7F8C8D,color:#fff,stroke:#566573
+    classDef utility fill:#27AE60,color:#fff,stroke:#1e8449
+    classDef external fill:#BDC3C7,color:#333,stroke:#95A5A6,stroke-dasharray: 5 5
+
+    subgraph Bidragskalkulator["🧮 Bidragskalkulator"]
+        direction TB
+
+        BidragskalkulatorApi["<b>Bidragskalkulator-api</b><br/>Kalkulator-backend"]
+        BidragskalkulatorV2["<b>Bidragskalkulator-V2</b><br/>Kalkulator-frontend v2"]
+
+        %% Eksterne avhengigheter
+        BidragPerson["<b>Bidrag-Person</b><br/>Personinformasjon"]
+        BidragSjablon["<b>Bidrag-Sjablon</b><br/>Sjablon-satser"]
+    end
+
+
+
+    %% Interne koblinger
+    BidragskalkulatorV2 -->|Kaller API| BidragskalkulatorApi
+
+    %% Utgående koblinger
+    BidragskalkulatorApi -->|Henter personopplysninger| BidragPerson
+    BidragskalkulatorApi -->|Henter sjablon satser| BidragSjablon
+
+    %% Color assignments
+    class BidragskalkulatorV2 frontend
+    class BidragPerson,BidragSjablon legacyFSS
+
+    click BidragskalkulatorApi visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragskalkulatorV2 visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragPerson visApplikasjon "Åpne applikasjonsbeskrivelse"
+    click BidragSjablon visApplikasjon "Åpne applikasjonsbeskrivelse"
+
+    subgraph Legend["📋 Systemforklaring"]
+        LegendFrontend["🔵 = Frontend/UI-applikasjon"]
+        LegendFSS["⬛ = FSS-applikasjon"]
+        LegendArrows["➜ = Integrasjon/kommunikasjon"]
+    end
+
