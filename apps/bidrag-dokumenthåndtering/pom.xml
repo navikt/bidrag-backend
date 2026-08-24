@@ -20,5 +20,6 @@
         <module>bidrag-dokument-arkiv</module>
         <module>bidrag-dokument-journalpost</module>
         <module>bidrag-dokument-arkivering</module>
+        <module>bidrag-dokument-produksjon</module>
     </modules>
 </project>
