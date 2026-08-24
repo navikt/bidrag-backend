@@ -18,8 +18,6 @@ WORKDIR /app
 COPY ./target/app.jar app.jar
 # Egne ressurser (avviker fra Dockerfile i root): dokumentmaler, statiske ressurser og
 # testdata for hot-template/debug-endepunktene i ProduserDokumentmalApi/ProduserNotatApi.
-COPY templates templates
-COPY resources resources
 COPY data data
 
 EXPOSE 8080
