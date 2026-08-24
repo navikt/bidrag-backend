@@ -1,0 +1,83 @@
+{
+  "name": "bidrag-dokumentmal",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "npm run tailwind_build && react-router build",
+    "dev2": "run-p dev:*",
+    "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc",
+    "icons": "npx @svgr/cli --out-dir app/components/icons -- app/icons",
+    "icons:watch": "npm-watch icons",
+    "dev3:svg": "run-s icons icons:watch",
+    "dev": "react-router dev",
+    "tailwind_dev": "tailwindcss build -i app/tailwind.css -o app/style/tw_output.css --watch",
+    "dev:tailwind_dev": "tailwindcss build -i app/tailwind.css -o app/style/tw_output.css --watch",
+    "tailwind_build": "tailwindcss build -i app/tailwind.css -o app/style/tw_output.css",
+    "gen_api": "swagger-typescript-api -p http://localhost:8183/v3/api-docs --no-client -n Api.ts -o app/types"
+  },
+  "dependencies": {
+    "@navikt/aksel-icons": "^7.33.5",
+    "@navikt/ds-css": "^7.33.5",
+    "@navikt/ds-react": "^7.33.5",
+    "@react-router/node": "^8.3.0",
+    "@react-router/serve": "^8.3.0",
+    "isbot": "^5.1.32",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router": "^8.3.0",
+    "undici": "^7.16.0",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^2.0.0",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.1",
+    "@react-router/dev": "^8.3.0",
+    "@react-router/fs-routes": "^8.3.0",
+    "@svgr/cli": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@svgr/plugin-prettier": "^8.1.0",
+    "@svgr/plugin-svgo": "^8.1.0",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "globals": "^16.5.0",
+    "npm-run-all": "^4.1.5",
+    "npm-watch": "^0.13.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.7.3",
+    "swagger-typescript-api": "^13.0.22",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.2",
+    "vite-plugin-singlefile": "^2.3.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "watch": {
+    "icons": {
+      "patterns": [
+        "icons"
+      ],
+      "extensions": "svg",
+      "quiet": false
+    }
+  }
+}

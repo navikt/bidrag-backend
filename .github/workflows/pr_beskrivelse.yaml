@@ -94,7 +94,7 @@ jobs:
           PR_TITTEL: ${{ github.event.pull_request.title }}
           SYSTEMPROMPT_FIL: .github/prompts/pr-beskrivelse-system.txt
 
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: env.GENERER_PROSA == 'true'
         with:
           node-version: '24'

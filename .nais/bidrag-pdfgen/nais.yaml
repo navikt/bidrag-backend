@@ -1,0 +1,73 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: "bidrag-pdfgen"
+  namespace: "bidrag"
+  labels:
+    team: bidrag
+  annotations:
+    nais.io/read-only-file-system: "false"
+    nais.io/run-as-user: "1001"
+    nais.io/run-as-group: "1001"
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: python
+    logging:
+        destinations:
+          - id: loki
+          - id: elastic
+  image: {{ image }}
+  port: 8080
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azure_access_inbound}}
+         - application: {{this.application}}
+      {{/each}}
+    outbound:
+      rules:
+      {{#each outbound-access-apps}}
+         - application: {{this}}
+      {{/each}}
+         - application: logging
+           namespace: nais-system
+  # WeasyPrint + fontconfig need a few seconds before the first request is served.
+  startup:
+    path: /health
+    initialDelay: 5
+    timeout: 2
+    periodSeconds: 3
+    failureThreshold: 20
+  liveness:
+    path: /health
+    initialDelay: 10
+    # A 1s timeout is too tight: a pod busy rendering answered /health in >1s
+    # with gunicorn's sync worker, so Kubernetes restarted healthy pods under
+    # load. The gthread worker class fixes the underlying cause; this is margin.
+    timeout: 5
+    periodSeconds: 10
+    failureThreshold: 10
+  readiness:
+    path: /health
+    initialDelay: 10
+    timeout: 3
+    periodSeconds: 10
+    failureThreshold: 3
+  resources:
+    limits:
+      # Two gunicorn workers at two threads each. Measured ~490Mi resident for
+      # the whole container under concurrent load with a 15-page notat, so
+      # 1000Mi leaves roughly 2x headroom. (An earlier 4-thread configuration
+      # sat at ~780Mi, which was uncomfortably close to this limit.)
+      memory: 1000Mi
+    requests:
+      # Bumped from 50m: a full saksbehandlingsnotat takes ~1.5s of solid CPU,
+      # and a 50m request means the pod is throttled hard on a busy node.
+      cpu: 500m
+      memory: 512Mi
+  ingresses:
+  {{#each ingresses as |url|}}
+     - {{url}}
+  {{/each}}

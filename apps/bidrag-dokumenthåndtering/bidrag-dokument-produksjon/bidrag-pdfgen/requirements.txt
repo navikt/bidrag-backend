@@ -1,0 +1,6 @@
+# Pinned so a rebuild of an old commit produces the same renderer.
+# WeasyPrint 69 is the version whose behaviour the templates and the
+# compatibility stylesheet in weasyprint_server.py were verified against.
+WeasyPrint==69.0
+Flask==3.1.2
+gunicorn==23.0.0
