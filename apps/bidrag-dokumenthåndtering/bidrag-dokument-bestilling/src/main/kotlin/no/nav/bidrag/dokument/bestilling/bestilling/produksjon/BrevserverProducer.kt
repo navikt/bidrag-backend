@@ -591,24 +591,23 @@ class BrevserverProducer(
         }
     }
 
-    fun Brev.mapInnteksgrenseSjabloner(forskuddInntektgrensePeriode: List<ForskuddInntektgrensePeriode>) =
-        forskuddInntektgrensePeriode.map {
-            inntektGrunnlagForskuddPeriode {
-                fomDato = it.fomDato
-                tomDato = it.tomDato ?: MAX_DATE
-                antallBarn = it.antallBarn
-                forsorgerKode =
-                    when (it.forsorgerType) {
-                        Sivilstandskode.ENSLIG -> "EN"
-                        Sivilstandskode.GIFT_SAMBOER -> "GS"
-                        else -> ""
-                    }
-                belop50fra = it.beløp50Prosent.fraVerdi()
-                belop50til = it.beløp50Prosent.tilVerdi()
-                belop75fra = it.beløp75Prosent.fraVerdi()
-                belop75til = it.beløp75Prosent.tilVerdi()
-            }
+    fun Brev.mapInnteksgrenseSjabloner(forskuddInntektgrensePeriode: List<ForskuddInntektgrensePeriode>) = forskuddInntektgrensePeriode.map {
+        inntektGrunnlagForskuddPeriode {
+            fomDato = it.fomDato
+            tomDato = it.tomDato ?: MAX_DATE
+            antallBarn = it.antallBarn
+            forsorgerKode =
+                when (it.forsorgerType) {
+                    Sivilstandskode.ENSLIG -> "EN"
+                    Sivilstandskode.GIFT_SAMBOER -> "GS"
+                    else -> ""
+                }
+            belop50fra = it.beløp50Prosent.fraVerdi()
+            belop50til = it.beløp50Prosent.tilVerdi()
+            belop75fra = it.beløp75Prosent.fraVerdi()
+            belop75til = it.beløp75Prosent.tilVerdi()
         }
+    }
 
     fun mapKontaktInfo(
         brev: Brev,
@@ -640,13 +639,12 @@ class BrevserverProducer(
     fun mapBrevmottaker(
         brev: Brev,
         mottaker: Mottaker,
-    ): BrevMottaker =
-        brev.brevmottaker {
-            navn = mottaker.navn
-            spraak = mottaker.spraak
-            fodselsnummer = mottaker.fodselsnummer
-            rolle = mottaker.rolle?.toKode()
-            fodselsdato = mottaker.fodselsdato
+    ): BrevMottaker = brev.brevmottaker {
+        navn = mottaker.navn
+        spraak = mottaker.spraak
+        fodselsnummer = mottaker.fodselsnummer
+        rolle = mottaker.rolle?.toKode()
+        fodselsdato = mottaker.fodselsdato
 
         val adresse = mottaker.adresse
         if (adresse != null) {
@@ -661,9 +659,8 @@ class BrevserverProducer(
     }
 }
 
-fun Resultatkode.tilForskuddKode() =
-    when (this) {
-        Resultatkode.AVSLAG_OVER_18_ÅR -> "BOA"
-        Resultatkode.AVSLAG_IKKE_REGISTRERT_PÅ_ADRESSE -> "BAF"
-        else -> null
-    }
+fun Resultatkode.tilForskuddKode() = when (this) {
+    Resultatkode.AVSLAG_OVER_18_ÅR -> "BOA"
+    Resultatkode.AVSLAG_IKKE_REGISTRERT_PÅ_ADRESSE -> "BAF"
+    else -> null
+}

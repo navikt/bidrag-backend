@@ -6,24 +6,23 @@ import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.util.visningsnavn
 
-fun Inntektsrapportering.tilLegacyKode() =
-    when (this) {
-        Inntektsrapportering.KONTANTSTØTTE -> "KONT"
-        Inntektsrapportering.LIGNINGSINNTEKT -> "LIGS"
-        Inntektsrapportering.KAPITALINNTEKT -> "KAPS"
-        Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER -> "KIEO"
-        Inntektsrapportering.SKJØNN_MANGLER_DOKUMENTASJON -> "MDOK"
-        Inntektsrapportering.SKJØNN_MANGLENDE_BRUK_AV_EVNE -> "EVNE"
-        Inntektsrapportering.SYKEPENGER -> "SP"
-        Inntektsrapportering.PENSJON -> "PE"
-        Inntektsrapportering.INNTEKTSOPPLYSNINGER_FRA_ARBEIDSGIVER -> "AG"
-        Inntektsrapportering.SMÅBARNSTILLEGG -> "ESBT"
-        Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER -> "PIEO"
-        Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT -> "SAK"
-        Inntektsrapportering.UTVIDET_BARNETRYGD -> "UBAT"
-        Inntektsrapportering.OVERGANGSSTØNAD -> "EFOS"
-        else -> this.legacyKode ?: name
-    }
+fun Inntektsrapportering.tilLegacyKode() = when (this) {
+    Inntektsrapportering.KONTANTSTØTTE -> "KONT"
+    Inntektsrapportering.LIGNINGSINNTEKT -> "LIGS"
+    Inntektsrapportering.KAPITALINNTEKT -> "KAPS"
+    Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER -> "KIEO"
+    Inntektsrapportering.SKJØNN_MANGLER_DOKUMENTASJON -> "MDOK"
+    Inntektsrapportering.SKJØNN_MANGLENDE_BRUK_AV_EVNE -> "EVNE"
+    Inntektsrapportering.SYKEPENGER -> "SP"
+    Inntektsrapportering.PENSJON -> "PE"
+    Inntektsrapportering.INNTEKTSOPPLYSNINGER_FRA_ARBEIDSGIVER -> "AG"
+    Inntektsrapportering.SMÅBARNSTILLEGG -> "ESBT"
+    Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER -> "PIEO"
+    Inntektsrapportering.SAKSBEHANDLER_BEREGNET_INNTEKT -> "SAK"
+    Inntektsrapportering.UTVIDET_BARNETRYGD -> "UBAT"
+    Inntektsrapportering.OVERGANGSSTØNAD -> "EFOS"
+    else -> this.legacyKode ?: name
+}
 
 val visningsnavnSomKreverÅrstall = listOf(Inntektsrapportering.LIGNINGSINNTEKT)
 

@@ -147,13 +147,12 @@ class SjablongService(
     }
 }
 
-fun hentSjablonListe(): SjablongerDto? =
-    try {
-        AppContext.getBean(SjablonConsumer::class.java).hentSjablonger()
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av sjabloner" }
-        null
-    }
+fun hentSjablonListe(): SjablongerDto? = try {
+    AppContext.getBean(SjablonConsumer::class.java).hentSjablonger()
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av sjabloner" }
+    null
+}
 
 fun hentInnslagKapitalinntekt(periodeTomDato: LocalDate?): BigDecimal {
     val sjablonger = hentSjablonListe()!!

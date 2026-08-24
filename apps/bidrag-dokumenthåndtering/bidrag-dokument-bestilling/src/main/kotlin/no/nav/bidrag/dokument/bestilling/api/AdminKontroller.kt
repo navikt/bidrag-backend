@@ -61,11 +61,10 @@ class AdminKontroller(
         }
     }
 
-    private fun isValidXml(xml: String): Boolean =
-        try {
-            DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(java.io.ByteArrayInputStream(xml.toByteArray()))
-            true
-        } catch (e: Exception) {
-            false
-        }
+    private fun isValidXml(xml: String): Boolean = try {
+        DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(java.io.ByteArrayInputStream(xml.toByteArray()))
+        true
+    } catch (e: Exception) {
+        false
+    }
 }

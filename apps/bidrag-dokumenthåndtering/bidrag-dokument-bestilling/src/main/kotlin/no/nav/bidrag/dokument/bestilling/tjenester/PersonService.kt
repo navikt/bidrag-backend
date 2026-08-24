@@ -14,20 +14,18 @@ class PersonService(
     fun hentPerson(
         personId: String,
         rolle: String? = "UKJENT",
-    ): PersonDto =
-        bidragPersonConsumer.hentPerson(personId) ?: run {
-            SIKKER_LOGG.warn("Fant ikke person med fnr $personId og rolle $rolle")
-            throw FantIkkePersonException("Fant ikke person med rolle $rolle")
-        }
+    ): PersonDto = bidragPersonConsumer.hentPerson(personId) ?: run {
+        SIKKER_LOGG.warn("Fant ikke person med fnr $personId og rolle $rolle")
+        throw FantIkkePersonException("Fant ikke person med rolle $rolle")
+    }
 
     fun hentPersonAdresse(
         personId: String,
         rolle: String? = "UKJENT",
-    ): PersonAdresseDto? =
-        bidragPersonConsumer.hentAdresse(personId) ?: run {
-            SIKKER_LOGG.warn("Fant ikke adresse for person $personId med rolle $rolle")
-            null
-        }
+    ): PersonAdresseDto? = bidragPersonConsumer.hentAdresse(personId) ?: run {
+        SIKKER_LOGG.warn("Fant ikke adresse for person $personId med rolle $rolle")
+        null
+    }
 
     fun hentSpråk(personId: String): String = bidragPersonConsumer.hentSpraak(personId)?.uppercase() ?: "NB"
 }

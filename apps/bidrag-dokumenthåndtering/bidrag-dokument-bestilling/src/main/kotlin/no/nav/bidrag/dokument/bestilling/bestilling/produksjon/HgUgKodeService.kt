@@ -40,20 +40,19 @@ class HgUgKodeService {
         return hgUgList.find { it.behandlingType == behandlingTypeConverted && it.soknadType == soknadType && it.soknadFra == soknadFra }
     }
 
-    private fun fetchHgUgKodeListFromFile(): List<HgUgDtoFromJson> =
-        try {
-            val objectMapper = ObjectMapper(YAMLFactory())
-            objectMapper.findAndRegisterModules()
-            val inputstream = ClassPathResource("files/hg_ug.json").inputStream
-            val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
-            objectMapper.readValue(
-                text,
-                objectMapper.typeFactory.constructCollectionType(
-                    MutableList::class.java,
-                    HgUgDtoFromJson::class.java,
-                ),
-            )
-        } catch (e: IOException) {
-            throw RuntimeException("Kunne ikke laste fil", e)
-        }
+    private fun fetchHgUgKodeListFromFile(): List<HgUgDtoFromJson> = try {
+        val objectMapper = ObjectMapper(YAMLFactory())
+        objectMapper.findAndRegisterModules()
+        val inputstream = ClassPathResource("files/hg_ug.json").inputStream
+        val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
+        objectMapper.readValue(
+            text,
+            objectMapper.typeFactory.constructCollectionType(
+                MutableList::class.java,
+                HgUgDtoFromJson::class.java,
+            ),
+        )
+    } catch (e: IOException) {
+        throw RuntimeException("Kunne ikke laste fil", e)
+    }
 }

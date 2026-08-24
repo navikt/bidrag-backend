@@ -51,9 +51,8 @@ class GcpCloudStorage(
         }
     }
 
-    private fun lagBlobinfo(filnavn: String): BlobInfo =
-        BlobInfo
-            .newBuilder(bucketNavn, filnavn)
-            .setContentType("application/pdf")
-            .build()
+    private fun lagBlobinfo(filnavn: String): BlobInfo = BlobInfo
+        .newBuilder(bucketNavn, filnavn)
+        .setContentType("application/pdf")
+        .build()
 }

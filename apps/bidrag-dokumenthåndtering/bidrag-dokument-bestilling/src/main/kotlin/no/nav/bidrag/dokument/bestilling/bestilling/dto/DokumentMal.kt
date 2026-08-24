@@ -67,15 +67,14 @@ abstract class DokumentMal(
         !listOf(DokumentMalType.NOTAT, DokumentMalType.VEDLEGG_VARSEL, DokumentMalType.VEDLEGG_VEDTAK, DokumentMalType.SKJEMA).contains(type) ||
             kreverEkstraData.isNotEmpty()
 
-    fun inneholderDatagrunnlag(dataGrunnlag: DataGrunnlag) =
-        kreverEkstraData.contains(dataGrunnlag).takeIf { it }
-            ?: when (dataGrunnlag) {
-                DataGrunnlag.VEDTAK -> type == DokumentMalType.VEDTAK
-                DataGrunnlag.BEHANDLING -> type == DokumentMalType.VARSEL
-                DataGrunnlag.ROLLER -> listOf(DokumentMalType.VARSEL, DokumentMalType.VEDTAK, DokumentMalType.VARSEL_STANDARD).contains(type)
-                DataGrunnlag.ENHET_KONTAKT_INFO -> listOf(DokumentMalType.VARSEL, DokumentMalType.VEDTAK, DokumentMalType.VARSEL_STANDARD).contains(type)
-                else -> kreverEkstraData.contains(dataGrunnlag)
-            }
+    fun inneholderDatagrunnlag(dataGrunnlag: DataGrunnlag) = kreverEkstraData.contains(dataGrunnlag).takeIf { it }
+        ?: when (dataGrunnlag) {
+            DataGrunnlag.VEDTAK -> type == DokumentMalType.VEDTAK
+            DataGrunnlag.BEHANDLING -> type == DokumentMalType.VARSEL
+            DataGrunnlag.ROLLER -> listOf(DokumentMalType.VARSEL, DokumentMalType.VEDTAK, DokumentMalType.VARSEL_STANDARD).contains(type)
+            DataGrunnlag.ENHET_KONTAKT_INFO -> listOf(DokumentMalType.VARSEL, DokumentMalType.VEDTAK, DokumentMalType.VARSEL_STANDARD).contains(type)
+            else -> kreverEkstraData.contains(dataGrunnlag)
+        }
 }
 
 enum class DataGrunnlag {
@@ -211,31 +210,30 @@ private inline fun <reified T : DokumentMal> lastDokumentMalerFraFil(
     prefiks: String? = null,
     type: FilType = FilType.JSON,
     groupname: String? = null,
-): List<T> =
-    try {
-        val fileending = if (type == FilType.JSON) "json" else "yaml"
-        val objectMapper = ObjectMapper(YAMLFactory())
-        objectMapper
-            .findAndRegisterModules()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        val inputstream = ClassPathResource("files/dokumentmaler/$filnavn.$fileending").inputStream
-        val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
-        val textConverted =
-            if (groupname != null) {
-                konverterGruppeNavnTilParameter(text, groupname)
-            } else {
-                text
+): List<T> = try {
+    val fileending = if (type == FilType.JSON) "json" else "yaml"
+    val objectMapper = ObjectMapper(YAMLFactory())
+    objectMapper
+        .findAndRegisterModules()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    val inputstream = ClassPathResource("files/dokumentmaler/$filnavn.$fileending").inputStream
+    val text = String(inputstream.readAllBytes(), StandardCharsets.UTF_8)
+    val textConverted =
+        if (groupname != null) {
+            konverterGruppeNavnTilParameter(text, groupname)
+        } else {
+            text
+        }
+    val textWithPrefiks =
+        if (prefiks != null) {
+            val json = objectMapper.readTree(textConverted)
+            json.asSequence().forEach {
+                (it as ObjectNode).put("kode", "${prefiks}_${it.get("kode").asText()}")
             }
-        val textWithPrefiks =
-            if (prefiks != null) {
-                val json = objectMapper.readTree(textConverted)
-                json.asSequence().forEach {
-                    (it as ObjectNode).put("kode", "${prefiks}_${it.get("kode").asText()}")
-                }
-                json.toString()
-            } else {
-                textConverted
-            }
+            json.toString()
+        } else {
+            textConverted
+        }
 
     val listType: JavaType =
         objectMapper.typeFactory.constructCollectionType(MutableList::class.java, T::class.java)
@@ -253,24 +251,23 @@ private inline fun <reified T : DokumentMal> lastDokumentMalerFraFil(
 private fun konverterGruppeNavnTilParameter(
     payload: String,
     parameterName: String,
-): String =
-    try {
-        val objectMapper = ObjectMapper(YAMLFactory())
-        objectMapper
-            .findAndRegisterModules()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
-        val mapType: JavaType =
-            objectMapper.typeFactory.constructMapType(
-                Map::class.java,
-                String::class.java,
-                ArrayNode::class.java,
-            )
-        val payloadMap: Map<String, ArrayNode> =
-            objectMapper.readValue(
-                payload,
-                mapType,
-            )
+): String = try {
+    val objectMapper = ObjectMapper(YAMLFactory())
+    objectMapper
+        .findAndRegisterModules()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+    val mapType: JavaType =
+        objectMapper.typeFactory.constructMapType(
+            Map::class.java,
+            String::class.java,
+            ArrayNode::class.java,
+        )
+    val payloadMap: Map<String, ArrayNode> =
+        objectMapper.readValue(
+            payload,
+            mapType,
+        )
 
     objectMapper.writeValueAsString(
         payloadMap.keys.flatMap { key ->

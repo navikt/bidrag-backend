@@ -70,9 +70,8 @@ private val resultatkoderSomIkkeErStøttetAvBrev =
 // INCLUDE
 // ENDIF
 // "
-fun Resultatkode.tilBisysResultatkodeForBrev(type: Vedtakstype) =
-    if (resultatkoderSomIkkeErStøttetAvBrev.contains(this) && this.erAvslag()) {
-        Resultatkode.AVSLAG.tilBisysResultatkode(type)
-    } else {
-        this.tilBisysResultatkode(type)
-    }
+fun Resultatkode.tilBisysResultatkodeForBrev(type: Vedtakstype) = if (resultatkoderSomIkkeErStøttetAvBrev.contains(this) && this.erAvslag()) {
+    Resultatkode.AVSLAG.tilBisysResultatkode(type)
+} else {
+    this.tilBisysResultatkode(type)
+}

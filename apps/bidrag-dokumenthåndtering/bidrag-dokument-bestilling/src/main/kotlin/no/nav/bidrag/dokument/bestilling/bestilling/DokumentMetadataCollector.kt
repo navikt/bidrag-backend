@@ -308,11 +308,10 @@ class DokumentMetadataCollector(
         }
     }
 
-    private fun hentGjelderData(forespørsel: DokumentBestillingForespørsel): Gjelder =
-        Gjelder(
-            fodselsnummer = forespørsel.actualGjelderId,
-            rolle = hentRolle(forespørsel.actualGjelderId),
-        )
+    private fun hentGjelderData(forespørsel: DokumentBestillingForespørsel): Gjelder = Gjelder(
+        fodselsnummer = forespørsel.actualGjelderId,
+        rolle = hentRolle(forespørsel.actualGjelderId),
+    )
 
     private fun hentMottakerData(forespørsel: DokumentBestillingForespørsel): Mottaker {
         if (forespørsel.erMottakerSamhandler() && !forespørsel.harMottakerKontaktinformasjon() && forespørsel.samhandlerInformasjon != null) {
@@ -421,11 +420,10 @@ class DokumentMetadataCollector(
 
     private fun hentRolle(ident: String?): Rolletype? = sak.roller.find { it.fødselsnummer?.verdi == ident }?.type
 
-    private fun hentIdentForRolle(rolle: Rolletype): String? =
-        sak.roller
-            .find { it.type == rolle }
-            ?.fødselsnummer
-            ?.verdi
+    private fun hentIdentForRolle(rolle: Rolletype): String? = sak.roller
+        .find { it.type == rolle }
+        ?.fødselsnummer
+        ?.verdi
 
     private fun hentBidragsmottaker(): PersonDto? {
         val bmFnr = hentIdentForRolle(Rolletype.BIDRAGSMOTTAKER)
@@ -502,10 +500,9 @@ class DokumentMetadataCollector(
         }
     }
 
-    private fun hentGjelderFraRoller(): Ident? =
-        hentIdentForRolle(Rolletype.BIDRAGSMOTTAKER)
-            ?: hentIdentForRolle(Rolletype.BIDRAGSPLIKTIG)
-            ?: hentIdentForRolle(Rolletype.BARN)
+    private fun hentGjelderFraRoller(): Ident? = hentIdentForRolle(Rolletype.BIDRAGSMOTTAKER)
+        ?: hentIdentForRolle(Rolletype.BIDRAGSPLIKTIG)
+        ?: hentIdentForRolle(Rolletype.BARN)
 
     private fun hentSaksbehandler(request: DokumentBestillingForespørsel): Saksbehandler {
         if (request.saksbehandler != null && !request.saksbehandler.ident.isNullOrEmpty()) {
