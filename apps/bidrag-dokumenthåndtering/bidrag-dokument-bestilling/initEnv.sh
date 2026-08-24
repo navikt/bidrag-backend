@@ -1,0 +1,2 @@
+kubectx dev-gcp
+kubectl exec --tty deployment/bidrag-dokument-bestilling -- printenv | grep -E 'AZURE_|_URL|SCOPE' | grep -v -e 'BIDRAG_VEDTAK_URL' > src/test/resources/application-lokal-nais-secrets.properties

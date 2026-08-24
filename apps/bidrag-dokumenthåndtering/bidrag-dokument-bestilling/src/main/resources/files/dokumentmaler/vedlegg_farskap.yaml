@@ -1,0 +1,172 @@
+Innkalling:
+  - kode: INFO_OM_SAKSGANG_TIMEBESTILLING
+    filsti: ikke_redigerbar/Informasjon om saksgang og timebestilling i farskapssaker.pdf
+    tittel: Informasjon om saksgang og timebestilling i farskapssaker
+    type: VEDLEGG_VARSEL
+  - kode: BIDRAGFORSKUDD_BOR_IKKE_SAMMEN
+    filsti: ikke_redigerbar/Informasjon om bidrag og bidragsforskudd – gjelder foreldre som ikke bor sammen.pdf
+    tittel: Informasjon om bidrag og bidragsforskudd – gjelder foreldre som ikke bor sammen
+    type: VEDLEGG_VARSEL
+  - kode: FASTSETTELSE_OG_RETTSVIRKNINGER
+    filsti: ikke_redigerbar/NAV 55-00.05 - Fastsettelse og rettsvirkninger av farskap når foreldrene ikke er gift med hverandre.pdf
+    tittel: NAV 55-00.05 Fastsettelse og rettsvirkninger av farskap når foreldrene ikke er gift med hverandre
+    type: VEDLEGG_VARSEL
+Erklæring:
+  - kode: ERKLARING_FARSKAP_NB
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.10 - Erklæring om farskap (bokmål).pdf
+    tittel: NAV 55-00.10 - Erklæring om farskap (bokmål)
+    redigerbar: true
+    type: SKJEMA
+  - kode: ERKLARING_FARSKAP_NN
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.10 - Erklæring om farskap (nynorsk).pdf
+    tittel: NAV 55-00.10 - Erklæring om farskap (nynorsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: ERKLARING_FARSKAP_EN
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.10 - DECLARATION OF PATERNITY.pdf
+    tittel: NAV 55-00.10 - DECLARATION OF PATERNITY (engelsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: ERKLARING_FARSKAP_UP_FRAMMOTE
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.18 - Erklæring om farskap uten personlig fremmøte.pdf
+    tittel: NAV 55-00.18 - Erklæring om farskap uten personlig fremmøte
+    redigerbar: true
+    type: SKJEMA
+  - kode: MELDING_PERSONREG_BFOGD_OM_FARSKAP
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.25 - Melding til Personregisteret fra bidragsfogden (NAV) om farskap.pdf
+    tittel: NAV 55-00.25 - Melding til Personregisteret fra bidragsfogden (NAV) om farskap
+    redigerbar: true
+    type: SKJEMA
+Svarslipper:
+  - kode: SVARSLIPP_OPPLYSNING_OPPGITT_FAR
+    filsti: redigerbar_skjema/intern_skjema/Svarslipp for opplysninger om oppgitt far.pdf
+    tittel: Svarslipp for opplysninger om oppgitt far
+    redigerbar: true
+    type: SKJEMA
+  - kode: SVARSLIPP_OPPLYSNING_OPPGITT_MOR
+    filsti: redigerbar_skjema/intern_skjema/Svarslipp for opplysninger om mor.pdf
+    tittel: Svarslipp for opplysninger om mor
+    redigerbar: true
+    type: SKJEMA
+  - kode: SVARSLIPP_OPPLYSNING_OPPGITT_JURIDISK_FAR
+    filsti: redigerbar_skjema/intern_skjema/Svarslipp for opplysninger om juridiske far.pdf
+    tittel: Svarslipp for opplysninger om juridiske far
+    redigerbar: true
+    type: SKJEMA
+  - kode: SVARSLIPP_SAMTYKKE_HENLEGGELSE
+    filsti: redigerbar_skjema/intern_skjema/Svarslipp for samtykke til henleggelse.pdf
+    tittel: Svarslipp for samtykke til henleggelse
+    redigerbar: true
+    type: SKJEMA
+Henleggelse:
+  - kode: BIDRAGFORSKUDD_BM_FARSKAP_HENLAGT
+    filsti: ikke_redigerbar/Informasjon om forskudd til BM hvor farskap er henlagt.pdf
+    tittel: Informasjon om forskudd til bidragsmottaker hvor farskap er henlagt
+    type: VEDLEGG_VARSEL
+  - kode: VEDLEGG_BARNELOVEN_11
+    filsti: ikke_redigerbar/Utdrag fra barneloven § 11.pdf
+    tittel: 'Vedlegg: Utdrag fra barneloven § 11'
+    type: VEDLEGG_VARSEL
+Endring:
+  - kode: BARNELOVEN_6_7
+    filsti: ikke_redigerbar/Utdrag fra barnelova §§ 6 og 7.pdf
+    tittel: Utdrag fra barnelova §§ 6 og 7
+    type: VEDLEGG_VEDTAK
+  - kode: PROVETAKING_JURIDSK_FARSKAP
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.28 - Godkjenning av erklæring om farskap (juridiske far).pdf
+    tittel: NAV 55-00.28 - Godkjenning av erklæring om farskap (juridiske far)
+    redigerbar: true
+    type: SKJEMA
+  - kode: SAMTYKKE_ENDRING_FARSKAP_18_AAR_NB
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.29 - Samtykke til endring av farskap (barn over 18 år).pdf
+    tittel: NAV 55-00.29 - Samtykke til endring av farskap (barn over 18 år)
+    redigerbar: true
+    type: SKJEMA
+  - kode: SAMTYKKE_ENDRING_FARSKAP_EN
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.30 - Approval of acknowledgement of paternity at a norwegian foreign service mission.pdf
+    tittel: NAV 55-00.30 - Approval of acknowledgement of paternity at a norwegian foreign service mission
+    redigerbar: true
+    type: SKJEMA
+Fastsettelse av farskap i Norge:
+  - kode: VEDLEGG_BARNELOVEN_81
+    filsti: ikke_redigerbar/Vedlegg Barneloven § 81.pdf
+    tittel: 'Vedlegg: Barneloven § 81'
+    type: VEDLEGG_VEDTAK
+  - kode: VEDLEGG_BARNELOVEN_4_81
+    filsti: ikke_redigerbar/Vedlegg Barneloven § 4 og § 81.pdf
+    tittel: 'Vedlegg: Barneloven § 4 og § 81'
+    type: VEDLEGG_VEDTAK
+  - kode: VEDLEGG_BARNELOVEN_81_ANDRE_LEDD
+    filsti: ikke_redigerbar/Vedlegg Barneloven § 81 andre ledd.pdf
+    tittel: 'Vedlegg: Barneloven § 81 annet ledd'
+    type: VEDLEGG_VEDTAK
+  - kode: VEDLEGG_BARNELOVEN_4_FEMTE_LEDD
+    filsti: ikke_redigerbar/Vedlegg Barneloven § 4 femte ledd.pdf
+    tittel: 'Vedlegg: Barneloven § 4 femte ledd'
+    type: VEDLEGG_VEDTAK
+Klage:
+  - kode: VEDLEGG_KLAGE
+    filsti: ikke_redigerbar/Klage vedlegg.pdf
+    tittel: Klage vedlegg
+    type: VEDLEGG_VEDTAK
+  - kode: VEDLEGG_KLAGE_EN
+    filsti: ikke_redigerbar/Vedlegg orientering om klagerett (engelsk).pdf
+    tittel: 'Notification of the right to appeal against an administrative decision'
+    beskrivelse: 'Klage vedlegg (engelsk)'
+    type: VEDLEGG_VEDTAK
+DNA:
+  - kode: PROVETAKING_FARSKAP
+    filsti: redigerbar_skjema/intern_skjema/Refusjonsskjema for prøvetaking i farskapssak.pdf
+    tittel: Refusjonsskjema for prøvetaking i farskapssak
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_BIOLOGISK_FAR_NB
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.34 - Prøve til DNA-analyse i sak om biologisk farskap (norsk).pdf
+    tittel: NAV 55-00.34 - Prøve til DNA-analyse i sak om biologisk farskap (norsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_BIOLOGISK_FAR_EN
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.34 - Prøve til DNA-analyse i sak om biologisk farskap (engelsk).pdf
+    tittel: NAV 55-00.34 - Prøve til DNA-analyse i sak om biologisk farskap (engelsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_UTENRIKSSTASJON_NB
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.37 - Prøvetaking for DNA-analyse ved norsk utenriksstasjon (norsk).pdf
+    tittel: NAV 55-00.37 - Prøvetaking for DNA-analyse ved norsk utenriksstasjon (norsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_UTENRIKSSTASJON_EN
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.37 - Prøvetaking for DNA-analyse ved norsk utenriksstasjon (engelsk).pdf
+    tittel: NAV 55-00.37 - Prøvetaking for DNA-analyse ved norsk utenriksstasjon (engelsk)
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_UTENRIKSSTASJON_BIOLOGISK_FAR
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.38 - Tilbud om å gi prøve til DNA-analyse ved norsk utenriksstasjon i sak om biologisk farskap.pdf
+    tittel: NAV 55-00.38 - Tilbud om å gi prøve til DNA-analyse ved norsk utenriksstasjon i sak om biologisk farskap
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_PALEGG_BIOLOGISK_FAR
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.39 - Pålegg om å gi prøve til DNA-analyse i sak om biologisk farskap.pdf
+    tittel: NAV 55-00.39 - Pålegg om å gi prøve til DNA-analyse i sak om biologisk farskap
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_MELDING_BIOLOGISK_FAR
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.56 - Melding om prøver til DNA-analyse i sak om biologisk farskap.pdf
+    tittel: NAV 55-00.56 - Melding om prøver til DNA-analyse i sak om biologisk farskap
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_PROVE_ANALYSE
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.64 - Prøve til DNA – analyse i farskapssak.pdf
+    tittel: NAV 55-00.64 - Prøve til DNA – analyse i farskapssak
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_PROVE_ANMODNING_ANALYSE_BARN_UTLAND
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.65 - Anmodning om å gi prøve til DNA - analyse i farskapssak når barnet er født i utlandet.pdf
+    tittel: NAV 55-00.65 - Anmodning om å gi prøve til DNA – analyse i farskapssak når barnet er født i utlandet
+    redigerbar: true
+    type: SKJEMA
+  - kode: DNA_PROVE_MELDING_ANALYSE_BARN_UTLAND
+    filsti: redigerbar_skjema/nav_skjema/NAV 55-00.66 - Melding om prøve til DNA - analyse i farskapssak når barnet er født i utlandet.pdf
+    tittel: NAV 55-00.66 - Melding om prøve til DNA – analyse i farskapssak når barnet er født i utlandet
+    redigerbar: true
+    type: SKJEMA

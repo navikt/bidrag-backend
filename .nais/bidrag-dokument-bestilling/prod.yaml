@@ -1,0 +1,63 @@
+name: bidrag-dokument-bestilling
+bucket_name: bidrag-dokument-bestilling-prod
+min_replicas: 2
+ingresses:
+  - https://bidrag-dokument-bestilling.intern.nav.no
+env:
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.prod-fss-pub.nais.io/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
+
+  BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io/bidrag-sak
+  BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
+  KODEVERK_URL: http://bidrag-kodeverk
+
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak
+  BIDRAG_VEDTAK_SCOPE: prod-gcp.bidrag.bidrag-vedtak
+
+  BIDRAG_DOKUMENT_PRODUKSJON_URL: http://bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_PRODUKSJON_SCOPE: prod-gcp.bidrag.bidrag-dokument-produksjon
+
+  BIDRAG_RESKONTRO_URL: http://bidrag-reskontro
+  BIDRAG_RESKONTRO_SCOPE: prod-gcp.bidrag.bidrag-reskontro
+
+  BIDRAG_BEHANDLING_URL: http://bidrag-behandling
+  BIDRAG_BEHANDLING_SCOPE: prod-gcp.bidrag.bidrag-behandling
+
+  SJABLON_URL: https://bidrag-sjablon.prod-fss-pub.nais.io/bidrag-sjablon
+
+  BREVSERVER_BATCHBREV_QUEUE: QA.P_EDP.BISYS_BATCH
+  BREVSERVER_ONLINEBREV_QUEUE: QA.P475.BREVSERVER_ONLINEBREV
+  BREVSERVER_KVITTERING_QUEUE: QA.P464.BISYS_REPLY_QUE
+  MQ_QUEUE_MANAGER: MPLS02
+  MQ_PORT: 1414
+  MQ_HOSTNAME: mpls02.adeo.no
+  MQ_CHANNEL: P_BDBESTILLING
+outbound-access-apps:
+  - bidrag-vedtak
+  - bidrag-behandling
+  - bidrag-kodeverk
+  - bidrag-reskontro
+  - bidrag-dokument-produksjon
+outbound-access-hosts:
+  - bidrag-dokument.prod-fss-pub.nais.io
+  - bidrag-person.prod-fss-pub.nais.io
+  - bidrag-sak.prod-fss-pub.nais.io
+  - bidrag-organisasjon.prod-fss-pub.nais.io
+  - bidrag-sjablon.prod-fss-pub.nais.io
+  - kodeverk-api.nav.no
+azure_access_inbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: prod-fss
+  - application: bidrag-dokument-forsendelse
+    namespace: bidrag
+    cluster: prod-gcp
+unleash:
+  env: production
+  secret_name: bidrag-dokument-bestilling-unleash-api-token

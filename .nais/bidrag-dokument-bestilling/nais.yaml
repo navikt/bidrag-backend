@@ -1,0 +1,88 @@
+apiVersion: "nais.io/v1alpha1"
+kind: "Application"
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+  azure:
+    application:
+      allowAllUsers: true
+      enabled: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
+  accessPolicy:
+    inbound:
+      rules:
+      {{#each azure_access_inbound}}
+          - application: {{this.application}}
+            namespace: {{this.namespace}}
+            cluster: {{this.cluster}}
+      {{/each}}
+    outbound:
+      external:
+      {{#each outbound-access-hosts}}
+          - host: {{this}}
+      {{/each}}
+          - host: {{env.MQ_HOSTNAME}}
+            ports:
+               - port: {{env.MQ_PORT}}
+      rules:
+      {{#each outbound-access-apps}}
+          - application: {{this}}
+      {{/each}}
+          - application: logging
+            namespace: nais-system
+  image: {{ image }}
+  replicas:
+    min: {{min_replicas}}
+    max: 2
+  liveness:
+    path: /actuator/health
+    initialDelay: 60
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+  readiness:
+    path: /actuator/health
+    initialDelay: 60
+    timeout: 1
+    failureThreshold: 10
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+  resources:
+    limits:
+      memory: 1024Mi
+    requests:
+      cpu: 50m
+      memory: 512Mi
+  gcp:
+    buckets:
+      - name: {{bucket_name}}
+  envFrom:
+    - secret: bidrag-dokument-bestilling-secrets
+    - secret: {{unleash.secret_name}}
+  ingresses:
+  {{#each ingresses as |url|}}
+    - {{url}}
+  {{/each}}
+  env:
+  {{#each env}}
+     - name: {{@key}}
+       value: "{{this}}"
+  {{/each}}
+     - name: BUCKET_NAME
+       value: {{ bucket_name }}
+

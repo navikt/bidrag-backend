@@ -1,0 +1,141 @@
+{
+  "kilde": "MANUELT",
+  "type": "ENDRING",
+  "opprettetAv": "Z99999",
+  "opprettetAvNavn": "Saksbehandlersen, Saksbehandler Mellomnavn",
+  "kildeapplikasjon": "bidrag-behandling",
+  "vedtakstidspunkt": "2024-08-12T09:22:38.853875",
+  "enhetsnummer": "4806",
+  "innkrevingUtsattTilDato": null,
+  "fastsattILand": null,
+  "opprettetTidspunkt": "2024-08-12T09:22:39.854346",
+  "grunnlagListe": [
+    {
+      "referanse": "søknad",
+      "type": "SØKNAD",
+      "innhold": {
+        "søktAv": "BIDRAGSMOTTAKER",
+        "mottattDato": "2024-01-28",
+        "søktFraDato": "2023-01-01",
+        "klageMottattDato": null
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "virkningstidspunkt",
+      "type": "VIRKNINGSTIDSPUNKT",
+      "innhold": {
+        "avslag": "IKKE_OMSORG",
+        "årsak": null,
+        "virkningstidspunkt": "2023-01-01"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2178",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "navn": null,
+        "ident": "{bmIdent}",
+        "fødselsdato": "{bmfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_SØKNADSBARN_20050916_2177",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "navn": null,
+        "ident": "{barnId}",
+        "fødselsdato": "{barnfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_SØKNADSBARN_20170707_2179",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "navn": null,
+        "ident": "{barnId2}",
+        "fødselsdato": "{barn2fDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    }
+  ],
+  "stønadsendringListe": [
+    {
+      "type": "FORSKUDD",
+      "sak": "2400066",
+      "skyldner": "NAV",
+      "kravhaver": "{barnId}",
+      "mottaker": "{bmfDato}",
+      "førsteIndeksreguleringsår": null,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "omgjørVedtakId": null,
+      "eksternReferanse": null,
+      "grunnlagReferanseListe": [
+        "søknad",
+        "virkningstidspunkt"
+      ],
+      "periodeListe": [
+        {
+          "periode": {
+            "fom": "2023-01",
+            "til": null
+          },
+          "beløp": null,
+          "valutakode": "NOK",
+          "resultatkode": "IKKE_OMSORG",
+          "delytelseId": null,
+          "grunnlagReferanseListe": []
+        }
+      ]
+    },
+    {
+      "type": "FORSKUDD",
+      "sak": "2400066",
+      "skyldner": "NAV",
+      "kravhaver": "{barnId2}",
+      "mottaker": "{bmIdent}",
+      "førsteIndeksreguleringsår": null,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "omgjørVedtakId": null,
+      "eksternReferanse": null,
+      "grunnlagReferanseListe": [
+        "søknad",
+        "virkningstidspunkt"
+      ],
+      "periodeListe": [
+        {
+          "periode": {
+            "fom": "2023-01",
+            "til": null
+          },
+          "beløp": null,
+          "valutakode": "NOK",
+          "resultatkode": "IKKE_OMSORG",
+          "delytelseId": null,
+          "grunnlagReferanseListe": []
+        }
+      ]
+    }
+  ],
+  "engangsbeløpListe": [],
+  "behandlingsreferanseListe": [
+    {
+      "kilde": "BEHANDLING_ID",
+      "referanse": "788"
+    },
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "50003563"
+    }
+  ]
+}

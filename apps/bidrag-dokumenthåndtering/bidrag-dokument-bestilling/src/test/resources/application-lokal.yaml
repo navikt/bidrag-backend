@@ -1,0 +1,54 @@
+#BIDRAG_PERSON_URL: https://bidrag-person-feature.dev-fss-pub.nais.io/bidrag-person
+#BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-feature
+#
+#BIDRAG_DOKUMENT_URL: https://bidrag-dokument-feature.dev-fss-pub.nais.io/bidrag-dokument
+#BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument-feature
+#
+#BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon-feature.dev-fss-pub.nais.io/bidrag-organisasjon
+#BIDRAG_ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon-feature
+#
+#BIDRAG_SAK_URL: https://bidrag-sak-feature.dev-fss-pub.nais.io/bidrag-sak
+#BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-feature
+#KODEVERK_URL: https://kodeverk.dev.adeo.no
+SJABLON_URL: https://bidrag-sjablon.intern.dev.nav.no/bidrag-sjablon
+BIDRAG_VEDTAK_URL: https://bidrag-vedtak-q2.intern.dev.nav.no
+BIDRAG_DOKUMENT_PRODUKSJON_URL2: https://bidrag-dokument-produksjon.intern.dev.nav.no
+BIDRAG_DOKUMENT_PRODUKSJON_URL: http://localhost:8183
+KODEVERK_URL: https://bidrag-kodeverk.intern.dev.nav.no
+BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q2
+#BIDRAG_VEDTAK_UR2L: http://localhost:8889
+EXSTREAM_URL: https://dokument-test-354.adeo.no
+EXSTREAM_USERNAME: test
+EXSTREAM_PASSWORD: test
+BIDRAG_BEHANDLING_URL: https://bidrag-behandling-q2.intern.dev.nav.no
+BIDRAG_BEHANDLING_SCOPE: dev-gcp.bidrag.bidrag-behandling-q2
+BIDRAG_RESKONTRO_URL: https://bidrag-reskontro-q2.intern.dev.nav.no
+BIDRAG_RESKONTRO_SCOPE: dev-gcp.bidrag.bidrag-reskontro-q2
+BIDRAG_DOKUMENT_PRODUKSJON_SCOPE: dev-gcp.bidrag.bidrag-dokument-produksjon
+BIDRAG_BEHANDLING_UR2L: http://localhost:8990
+BIDRAG_DOKUMENT_JOURNALPOST_URL: https://bidrag-dokument-journalpost-feature.intern.dev.nav.no/bidrag-dokument-journalpost
+BIDRAG_DOKUMENT_JOURNALPOST_SCOPE: dev-fss.bidrag.bidrag-dokument-journalpost-feature
+AZURE_APP_TENANT_ID: <changeme>
+
+server.port: 8998
+NAIS_APP_NAME: bidrag-dokument-bestilling
+
+MQ_QUEUE_MANAGER: MQLS02
+MQ_PORT: 1413
+MQ_HOSTNAME: b27apvl220.preprod.local
+MQ_CHANNEL: Q1_BDJOURNALPOST
+BREVSERVER_BATCHBREV_QUEUE: QA.Q475.BISYS_BATCH
+BREVSERVER_ONLINEBREV_QUEUE: QA.Q475.BREVSERVER_ONLINEBREV
+BREVSERVER_KVITTERING_QUEUE: QA.Q464.BISYS_REPLY_QUE
+BREVSERVER_PASSORD: test
+MQ_USER_USERNAME: srvbdjournalpost
+BUCKET_NAME: bidrag-dokument-bestilling-local
+GCP_HOST: http://0.0.0.0:4446
+#MQ_USER_PASSWORD: srvbdjournalpost
+#AZURE_APP_CLIENT_ID: <app_client_id>
+#AZURE_APP_CLIENT_SECRET: unset
+
+DOKUMENT_URL: https://dokument-test-354.adeo.no
+OTDS_TENANT_URL: ${OTDS_TENANT_URL}
+OTDS_USERNAME: bidrag_rest_user@strs.role
+OTDS_PASSWORD: SnartVinter2024!
