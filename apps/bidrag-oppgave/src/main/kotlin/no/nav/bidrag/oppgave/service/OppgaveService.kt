@@ -5,7 +5,6 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
 import org.springframework.stereotype.Service
-import java.time.OffsetDateTime
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto as OppgaveApiDto
 
 @Service
