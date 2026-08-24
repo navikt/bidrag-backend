@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  bucket:
+    image: fsouza/fake-gcs-server:latest
+    command: [ "-scheme", "http" ]
+    ports:
+      - "4446:4443"
+    volumes:
+      - ${PWD}/src/test/resources/bucket:/data
+
+volumes:
+  db:
+    driver: local
+  storage:
+    driver: local

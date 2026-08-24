@@ -1,0 +1,65 @@
+name: bidrag-dokument-bestilling-feature
+bucket_name: bidrag-dokument-bestilling-dev
+min_replicas: 1
+ingresses:
+  - https://bidrag-dokument-bestilling-feature.intern.dev.nav.no
+env:
+  BIDRAG_PERSON_URL: https://bidrag-person-q1.dev-fss-pub.nais.io/bidrag-person
+  BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q1
+
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument-feature.dev-fss-pub.nais.io/bidrag-dokument
+  BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument-feature
+
+  BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon-feature.dev-fss-pub.nais.io/bidrag-organisasjon
+  BIDRAG_ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon-feature
+
+  BIDRAG_SAK_URL: https://bidrag-sak-q1.dev-fss-pub.nais.io/bidrag-sak
+  BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q1
+
+  BIDRAG_RESKONTRO_URL: http://bidrag-reskontro-q1
+  BIDRAG_RESKONTRO_SCOPE: dev-gcp.bidrag.bidrag-reskontro-q1
+
+  BIDRAG_DOKUMENT_PRODUKSJON_URL: http://bidrag-dokument-produksjon
+  BIDRAG_DOKUMENT_PRODUKSJON_SCOPE: dev-gcp.bidrag.bidrag-dokument-produksjon
+
+  BIDRAG_VEDTAK_URL: http://bidrag-vedtak-q1
+  BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q1
+
+  BIDRAG_BEHANDLING_URL: http://bidrag-behandling-q1
+  BIDRAG_BEHANDLING_SCOPE: dev-gcp.bidrag.bidrag-behandling-q1
+
+  SJABLON_URL: https://bidrag-sjablon.dev-fss-pub.nais.io/bidrag-sjablon
+
+  KODEVERK_URL: http://bidrag-kodeverk
+  BREVSERVER_BATCHBREV_QUEUE: QA.Q1_EDP.BISYS_BATCH
+  BREVSERVER_ONLINEBREV_QUEUE: QA.Q475.BREVSERVER_ONLINEBREV
+  BREVSERVER_KVITTERING_QUEUE: QA.Q464.BISYS_REPLY_QUE
+  MQ_QUEUE_MANAGER: MQLS02
+  MQ_PORT: 1413
+  MQ_HOSTNAME: mqls02.preprod.local
+  MQ_CHANNEL: Q1_BDBESTILLING
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+outbound-access-apps:
+  - bidrag-vedtak-q1
+  - bidrag-behandling-q1
+  - bidrag-kodeverk
+  - bidrag-reskontro-q1
+  - bidrag-dokument-produksjon
+outbound-access-hosts:
+  - bidrag-dokument-feature.dev-fss-pub.nais.io
+  - bidrag-person-q1.dev-fss-pub.nais.io
+  - bidrag-sak-q1.dev-fss-pub.nais.io
+  - bidrag-organisasjon-feature.dev-fss-pub.nais.io
+  - bidrag-sjablon.dev-fss-pub.nais.io
+  - kodeverk-api.nav.no
+  - bidrag-unleash-api.nav.cloud.nais.io
+azure_access_inbound:
+  - application: bisys
+    namespace: bidrag
+    cluster: dev-fss
+  - application: bidrag-dokument-forsendelse-feature
+    namespace: bidrag
+    cluster: dev-gcp
+unleash:
+  env: development
+  secret_name: bidrag-dokument-bestilling-unleash-api-token

@@ -1,0 +1,1611 @@
+{
+  "kilde": "MANUELT",
+  "type": "ENDRING",
+  "opprettetAv": "Z99999",
+  "opprettetAvNavn": "Saksbehandlersen, Saksbehandler Mellomnavn",
+  "kildeapplikasjon": "bidrag-behandling",
+  "vedtakstidspunkt": "2024-08-09T15:59:45.876835",
+  "enhetsnummer": "4806",
+  "innkrevingUtsattTilDato": null,
+  "fastsattILand": null,
+  "opprettetTidspunkt": "2024-08-09T15:59:46.717095",
+  "grunnlagListe": [
+    {
+      "referanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "navn": null,
+        "ident": "{bmIdent}",
+        "fødselsdato": "{bmfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "navn": null,
+        "ident": "{bpIdent}",
+        "fødselsdato": "{bpfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_SØKNADSBARN_20050916_2156",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "navn": null,
+        "ident": "{barnId2}",
+        "fødselsdato": "{barn2fDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "bostatus_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_20240801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "bostatus": "BOR_MED_ANDRE_VOKSNE",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_HUSSTANDSMEDLEM_20170707_4669_20240801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "bostatus": "IKKE_MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20170707_4669"
+      ],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20170707_4669"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_SØKNADSBARN_20050916_2156_20240801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "bostatus": "REGNES_IKKE_SOM_BARN",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_SØKNADSBARN_20050916_2156"
+      ],
+      "gjelderReferanse": "person_PERSON_SØKNADSBARN_20050916_2156"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_HUSSTANDSMEDLEM_20220726_4672_20240801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "bostatus": "MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20220726_4672"
+      ],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20220726_4672"
+    },
+    {
+      "referanse": "bostatus_person_PERSON_HUSSTANDSMEDLEM_20150513_4670_20240801",
+      "type": "BOSTATUS_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "bostatus": "MED_FORELDER",
+        "relatertTilPart": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20150513_4670"
+      ],
+      "gjelderReferanse": "person_PERSON_HUSSTANDSMEDLEM_20150513_4670"
+    },
+    {
+      "referanse": "person_PERSON_HUSSTANDSMEDLEM_20170707_4669",
+      "type": "PERSON_HUSSTANDSMEDLEM",
+      "innhold": {
+        "navn": null,
+        "ident": "07471780639",
+        "fødselsdato": "2017-07-07"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_HUSSTANDSMEDLEM_20220726_4672",
+      "type": "PERSON_HUSSTANDSMEDLEM",
+      "innhold": {
+        "navn": null,
+        "ident": "26472252274",
+        "fødselsdato": "2022-07-26"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_HUSSTANDSMEDLEM_20150513_4670",
+      "type": "PERSON_HUSSTANDSMEDLEM",
+      "innhold": {
+        "navn": null,
+        "ident": "13451585880",
+        "fødselsdato": "2015-05-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "inntekt_AINNTEKT_BEREGNET_12MND_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_20230801_20240731_8539",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 300000,
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "fastloenn",
+            "beløp": 300000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-08",
+          "til": "2024-08"
+        },
+        "inntektsrapportering": "AINNTEKT_BEREGNET_12MND"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_ainntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "inntekt_KAPITALINNTEKT_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_20230101_20231231_8542",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 25000,
+        "periode": {
+          "fom": "2023-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 25000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-01",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "KAPITALINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_2023"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "inntekt_LIGNINGSINNTEKT_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_20230101_20231231_8541",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 6500000,
+        "periode": {
+          "fom": "2023-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "loennsinntektUtenTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 6500000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-01",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "LIGNINGSINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_2023"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "inntekt_AINNTEKT_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_20230101_20231231_8538",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 125000,
+        "periode": {
+          "fom": "2023-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "fastloenn",
+            "beløp": 125000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-01",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "AINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_ainntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "inntekt_AINNTEKT_BEREGNET_3MND_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_20240501_20240731_8540",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 300000,
+        "periode": {
+          "fom": "2024-05",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "fastloenn",
+            "beløp": 300000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2024-05",
+          "til": "2024-08"
+        },
+        "inntektsrapportering": "AINNTEKT_BEREGNET_3MND"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_ainntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "inntekt_KAPITALINNTEKT_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_20220101_20221231_8545",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 25000,
+        "periode": {
+          "fom": "2022-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 45000,
+            "inntekstype": null
+          },
+          {
+            "kode": "gevinstVedRealisasjonAvAksje",
+            "beløp": 10000,
+            "inntekstype": null
+          },
+          {
+            "kode": "tapVedRealisasjonAvAnnetFinansprodukt",
+            "beløp": 30000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2022-01",
+          "til": "2023-01"
+        },
+        "inntektsrapportering": "KAPITALINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2022"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "inntekt_LIGNINGSINNTEKT_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_20220101_20221231_8543",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 850000,
+        "periode": {
+          "fom": "2022-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "samletLoennsinntektMedTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 850000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2022-01",
+          "til": "2023-01"
+        },
+        "inntektsrapportering": "LIGNINGSINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2022"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "inntekt_KAPITALINNTEKT_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_20230101_20231231_8546",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": false,
+        "beløp": 155000,
+        "periode": {
+          "fom": "2023-01",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "annenSkattepliktigKapitalinntektFraAnnetFinansprodukt",
+            "beløp": 15000,
+            "inntekstype": null
+          },
+          {
+            "kode": "dagpengerForNaeringsdrivende",
+            "beløp": 30000,
+            "inntekstype": null
+          },
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 60000,
+            "inntekstype": null
+          },
+          {
+            "kode": "naeringsinntektFraKompensasjonsytelseUtbetaltAvNavInnenAnnenNaering",
+            "beløp": 50000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-01",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "KAPITALINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2023"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "inntekt_LIGNINGSINNTEKT_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_20230101_20231231_8544",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "valgt": true,
+        "beløp": 38000,
+        "periode": {
+          "fom": "2024-08",
+          "til": null
+        },
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "gjelderBarn": null,
+        "inntekstpostListe": [
+          {
+            "kode": "overgangsstoenadTilEnsligForelder",
+            "beløp": 12000,
+            "inntekstype": null
+          },
+          {
+            "kode": "samletLoennsinntektMedTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 20000,
+            "inntekstype": null
+          },
+          {
+            "kode": "arbeidsavklaringspenger",
+            "beløp": 6000,
+            "inntekstype": null
+          }
+        ],
+        "manueltRegistrert": false,
+        "opprinneligPeriode": {
+          "fom": "2023-01",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "LIGNINGSINNTEKT"
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2023"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2021",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2021,
+        "periode": {
+          "fom": "2021-01-01",
+          "til": "2022-01-01"
+        },
+        "grunnlag": [],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:59:08.118391"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2022",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2022,
+        "periode": {
+          "fom": "2022-01-01",
+          "til": "2023-01-01"
+        },
+        "grunnlag": [
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 45000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "gevinstVedRealisasjonAvAksje",
+            "beløp": 10000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "samletLoennsinntektMedTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 850000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "tapVedRealisasjonAvAnnetFinansprodukt",
+            "beløp": 30000,
+            "skattegrunnlagType": "ORDINÆR"
+          }
+        ],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:59:08.118391"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_2023",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2023,
+        "periode": {
+          "fom": "2023-01-01",
+          "til": "2024-01-01"
+        },
+        "grunnlag": [
+          {
+            "kode": "annenSkattepliktigKapitalinntektFraAnnetFinansprodukt",
+            "beløp": 15000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "arbeidsavklaringspenger",
+            "beløp": 6000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "dagpengerForNaeringsdrivende",
+            "beløp": 30000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 60000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "naeringsinntektFraKompensasjonsytelseUtbetaltAvNavInnenAnnenNaering",
+            "beløp": 50000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "overgangsstoenadTilEnsligForelder",
+            "beløp": 12000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "samletLoennsinntektMedTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 20000,
+            "skattegrunnlagType": "ORDINÆR"
+          }
+        ],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:59:08.118391"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_2021",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2021,
+        "periode": {
+          "fom": "2021-01-01",
+          "til": "2022-01-01"
+        },
+        "grunnlag": [],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:58:59.854687"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_2022",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2022,
+        "periode": {
+          "fom": "2022-01-01",
+          "til": "2023-01-01"
+        },
+        "grunnlag": [],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:58:59.854687"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "innhentet_skattegrunnlag_person_PERSON_BIDRAGSMOTTAKER_19720829_2154_2023",
+      "type": "INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE",
+      "innhold": {
+        "år": 2023,
+        "periode": {
+          "fom": "2023-01-01",
+          "til": "2024-01-01"
+        },
+        "grunnlag": [
+          {
+            "kode": "gevinstOgAnnenInntektFraVirtuellEiendel",
+            "beløp": 25000,
+            "skattegrunnlagType": "ORDINÆR"
+          },
+          {
+            "kode": "loennsinntektUtenTrygdeavgiftspliktOgMedTrekkplikt",
+            "beløp": 6500000,
+            "skattegrunnlagType": "ORDINÆR"
+          }
+        ],
+        "datakilde": "SIGRUN",
+        "hentetTidspunkt": "2024-08-09T15:58:59.854687"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "innhentet_ainntekt_person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+      "type": "INNHENTET_INNTEKT_AINNTEKT",
+      "innhold": {
+        "grunnlag": [],
+        "datakilde": "INNTEKSKOMPONENTEN",
+        "hentetTidspunkt": "2024-08-09T15:59:08.118391"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_ainntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154",
+      "type": "INNHENTET_INNTEKT_AINNTEKT",
+      "innhold": {
+        "grunnlag": [
+          {
+            "periode": {
+              "fom": "2023-08-01",
+              "til": "2023-09-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2023-08",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2023-09-01",
+              "til": "2023-10-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2023-09",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2023-10-01",
+              "til": "2023-11-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2023-10",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2023-11-01",
+              "til": "2023-12-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2023-11",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2023-12-01",
+              "til": "2024-01-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2023-12",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-01-01",
+              "til": "2024-02-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-01",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-02-01",
+              "til": "2024-03-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-02",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-03-01",
+              "til": "2024-04-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-03",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-04-01",
+              "til": "2024-05-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-04",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-05-01",
+              "til": "2024-06-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-05",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-06-01",
+              "til": "2024-07-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-06",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          },
+          {
+            "periode": {
+              "fom": "2024-07-01",
+              "til": "2024-08-01"
+            },
+            "ainntektspostListe": [
+              {
+                "beløp": 25000.0,
+                "kategori": "LOENNSINNTEKT",
+                "fordelType": "kontantytelse",
+                "beskrivelse": "fastloenn",
+                "virksomhetId": "896929119",
+                "utbetalingsperiode": "2024-07",
+                "opplysningspliktigId": "963743254",
+                "opptjeningsperiodeFra": null,
+                "opptjeningsperiodeTil": null,
+                "etterbetalingsperiodeFra": null,
+                "etterbetalingsperiodeTil": null
+              }
+            ]
+          }
+        ],
+        "datakilde": "INNTEKSKOMPONENTEN",
+        "hentetTidspunkt": "2024-08-09T15:58:59.854687"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "innhentet_arbeidsforhold_person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+      "type": "INNHENTET_ARBEIDSFORHOLD",
+      "innhold": {
+        "grunnlag": [
+          {
+            "sluttdato": null,
+            "startdato": "2022-12-07",
+            "permisjonListe": [],
+            "arbeidsgiverNavn": "SAUEFABRIKK",
+            "permitteringListe": [],
+            "arbeidsgiverOrgnummer": "896929119",
+            "ansettelsesdetaljerListe": [
+              {
+                "periodeFra": "2024-08",
+                "periodeTil": null,
+                "yrkeBeskrivelse": "BYGNINGSSNEKKER",
+                "antallTimerPrUke": null,
+                "arbeidsforholdType": "Forenklet",
+                "avtaltStillingsprosent": null,
+                "sisteLønnsendringDato": null,
+                "ansettelsesformBeskrivelse": null,
+                "arbeidstidsordningBeskrivelse": null,
+                "sisteStillingsprosentendringDato": null
+              }
+            ]
+          }
+        ],
+        "datakilde": "AAREG",
+        "hentetTidspunkt": "2024-08-09T15:59:08.528392"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_arbeidsforhold_person_PERSON_BIDRAGSMOTTAKER_19720829_2154",
+      "type": "INNHENTET_ARBEIDSFORHOLD",
+      "innhold": {
+        "grunnlag": [
+          {
+            "sluttdato": null,
+            "startdato": "2023-06-22",
+            "permisjonListe": [],
+            "arbeidsgiverNavn": "SJOKKERENDE ELEKTRIKER",
+            "permitteringListe": [],
+            "arbeidsgiverOrgnummer": "947064649",
+            "ansettelsesdetaljerListe": [
+              {
+                "periodeFra": "2023-06",
+                "periodeTil": null,
+                "yrkeBeskrivelse": "ADVOKAT",
+                "antallTimerPrUke": 37.5,
+                "arbeidsforholdType": "Ordinaer",
+                "avtaltStillingsprosent": 80.0,
+                "sisteLønnsendringDato": null,
+                "ansettelsesformBeskrivelse": "Fast ansettelse",
+                "arbeidstidsordningBeskrivelse": "Ikke skift",
+                "sisteStillingsprosentendringDato": null
+              }
+            ]
+          },
+          {
+            "sluttdato": null,
+            "startdato": "2024-07-03",
+            "permisjonListe": [],
+            "arbeidsgiverNavn": "SJOKKERENDE ELEKTRIKER",
+            "permitteringListe": [],
+            "arbeidsgiverOrgnummer": "947064649",
+            "ansettelsesdetaljerListe": [
+              {
+                "periodeFra": "2024-07",
+                "periodeTil": null,
+                "yrkeBeskrivelse": "ADVOKAT",
+                "antallTimerPrUke": 37.5,
+                "arbeidsforholdType": "Ordinaer",
+                "avtaltStillingsprosent": 100.0,
+                "sisteLønnsendringDato": null,
+                "ansettelsesformBeskrivelse": "Fast ansettelse",
+                "arbeidstidsordningBeskrivelse": "Ikke skift",
+                "sisteStillingsprosentendringDato": null
+              }
+            ]
+          }
+        ],
+        "datakilde": "AAREG",
+        "hentetTidspunkt": "2024-08-09T15:59:04.493952"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20170707_4669",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "Usensuell Fallende Pyramide",
+          "perioder": [],
+          "relasjon": "BARN",
+          "fødselsdato": "2017-07-07",
+          "gjelderPerson": "person_PERSON_HUSSTANDSMEDLEM_20170707_4669"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2024-08-09T15:59:08.56665"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20150513_4670",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "NORMAL UTNYTTENDE PAKKE",
+          "perioder": [
+            {
+              "fom": "2022-07-26",
+              "til": null
+            }
+          ],
+          "relasjon": "BARN",
+          "fødselsdato": "2015-05-13",
+          "gjelderPerson": "person_PERSON_HUSSTANDSMEDLEM_20150513_4670"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2024-08-09T15:59:08.56665"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_SØKNADSBARN_20050916_2156",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "FIRKANTET LEVENDE SKIVE",
+          "perioder": [
+            {
+              "fom": "2022-07-26",
+              "til": null
+            }
+          ],
+          "relasjon": "BARN",
+          "fødselsdato": "2005-09-16",
+          "gjelderPerson": "person_PERSON_SØKNADSBARN_20050916_2156"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2024-08-09T15:59:08.56665"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_HUSSTANDSMEDLEM_20220726_4672",
+      "type": "INNHENTET_HUSSTANDSMEDLEM",
+      "innhold": {
+        "grunnlag": {
+          "navn": "GEOMETRISK DETALJ",
+          "perioder": [
+            {
+              "fom": "2022-07-26",
+              "til": null
+            }
+          ],
+          "relasjon": "BARN",
+          "fødselsdato": "2022-07-26",
+          "gjelderPerson": "person_PERSON_HUSSTANDSMEDLEM_20220726_4672"
+        },
+        "datakilde": "PDL",
+        "hentetTidspunkt": "2024-08-09T15:59:08.56665"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "innhentet_husstandsmedlem_person_PERSON_BIDRAGSPLIKTIG_19781115_2155_person_PERSON_BIDRAGSPLIKTIG_19781115_2155",
+      "type": "INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN",
+      "innhold": [
+        {
+          "grunnlag": {
+            "navn": "SYMPATISK TOMMEL",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "MOR",
+            "fødselsdato": "1963-11-02",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "MOTIVERT FYRSTIKK",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1978-12-04",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "STORARTET KILOMETER",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "FAR",
+            "fødselsdato": "1953-09-10",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "LØSNINGSORIENTERT OLDEFAR",
+            "perioder": [
+              {
+                "fom": "2024-07-01",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1977-07-12",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "KOMPLISERT OPPFYLLENDE PANIKKANGST",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1978-06-13",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "MINIMALISTISK KRYDDERMÅL",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1980-09-16",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "LEGITIM JAPP",
+            "perioder": [
+              {
+                "fom": "2024-07-02",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1979-02-19",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "SUBJEKTIV KONKURRANSE",
+            "perioder": [
+              {
+                "fom": "2024-07-01",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1976-11-19",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "ULASTELIG JOURNALIST",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1978-10-22",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "FORNØYD AKTUAR",
+            "perioder": [
+              {
+                "fom": "2022-07-26",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "2014-03-23",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "PRAGMATISK ROSIN",
+            "perioder": [
+              {
+                "fom": "2023-07-31",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1979-01-24",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "KLOK IDÉ",
+            "perioder": [
+              {
+                "fom": "2024-04-01",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1978-08-25",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "SNAKKESALIG BUSS",
+            "perioder": [
+              {
+                "fom": "2024-02-01",
+                "til": null
+              }
+            ],
+            "relasjon": "MOTPART_TIL_FELLES_BARN",
+            "fødselsdato": "1972-08-29",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        },
+        {
+          "grunnlag": {
+            "navn": "ETTERPÅKLOK OVERSTRÅLENDE BJØRNEBÆR",
+            "perioder": [
+              {
+                "fom": "2024-07-01",
+                "til": null
+              }
+            ],
+            "relasjon": "INGEN",
+            "fødselsdato": "1978-03-31",
+            "gjelderPerson": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+          },
+          "datakilde": "PDL",
+          "hentetTidspunkt": "2024-08-09T15:59:08.571412"
+        }
+      ],
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_2155"
+    },
+    {
+      "referanse": "beregnet_inntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154",
+      "type": "BEREGNET_INNTEKT",
+      "innhold": {
+        "versjon": "2024.08.09.104856_ede4bf8",
+        "summertMånedsinntektListe": [
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2023-08",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2023-09",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2023-10",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2023-11",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2023-12",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-01",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-02",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-03",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-04",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-05",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-06",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          },
+          {
+            "sumInntekt": 25000.0,
+            "gjelderÅrMåned": "2024-07",
+            "inntektPostListe": [
+              {
+                "kode": "fastloenn",
+                "beløp": 25000.0,
+                "inntekstype": null
+              }
+            ]
+          }
+        ]
+      },
+      "grunnlagsreferanseListe": [
+        "innhentet_ainntekt_person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+      ],
+      "gjelderReferanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_2154"
+    },
+    {
+      "referanse": "utgiftsposter",
+      "type": "UTGIFTSPOSTER",
+      "innhold": [
+        {
+          "dato": "2024-08-05",
+          "type": "TANNREGULERING",
+          "betaltAvBp": false,
+          "kravbeløp": 30000,
+          "begrunnelse": "asd",
+          "godkjentBeløp": 300
+        }
+      ],
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "utgift_direkte_betalt",
+      "type": "UTGIFT_DIREKTE_BETALT",
+      "innhold": {
+        "beløpDirekteBetalt": 0
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "søknad",
+      "type": "SØKNAD",
+      "innhold": {
+        "søktAv": "BIDRAGSMOTTAKER",
+        "mottattDato": "2024-07-04",
+        "søktFraDato": "2024-08-01",
+        "klageMottattDato": null
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "virkningstidspunkt",
+      "type": "VIRKNINGSTIDSPUNKT",
+      "innhold": {
+        "avslag": null,
+        "årsak": null,
+        "virkningstidspunkt": "2024-08-01"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "særbidrag_kategori",
+      "type": "SÆRBIDRAG_KATEGORI",
+      "innhold": {
+        "kategori": "TANNREGULERING",
+        "beskrivelse": null
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "delberegning_utgift",
+      "type": "DELBEREGNING_UTGIFT",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": "2024-09"
+        },
+        "sumGodkjent": 300,
+        "sumBetaltAvBp": 0
+      },
+      "grunnlagsreferanseListe": [
+        "utgiftsposter",
+        "utgift_direkte_betalt"
+      ],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "sluttberegning_person_PERSON_SØKNADSBARN_20050916_2156_202408_202409",
+      "type": "SLUTTBEREGNING_SÆRBIDRAG",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": "2024-09"
+        },
+        "resultatKode": "GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS",
+        "beregnetBeløp": 0,
+        "resultatBeløp": 0
+      },
+      "grunnlagsreferanseListe": [
+        "sjablon_ForskuddssatsBeløp_200301_200405",
+        "delberegning_utgift"
+      ],
+      "gjelderReferanse": "person_PERSON_SØKNADSBARN_20050916_2156"
+    },
+    {
+      "referanse": "sjablon_ForskuddssatsBeløp_200301_200405",
+      "type": "SJABLON",
+      "innhold": {
+        "verdi": 1240.0,
+        "periode": {
+          "fom": "2003-01",
+          "til": "2004-05"
+        },
+        "sjablon": "FORSKUDDSSATS_BELØP"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    }
+  ],
+  "stønadsendringListe": [],
+  "engangsbeløpListe": [
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2400066",
+      "skyldner": "{bpIdent}",
+      "kravhaver": "{barnId2}",
+      "mottaker": "{bmIdent}",
+      "beløp": 0,
+      "valutakode": "NOK",
+      "resultatkode": "GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "omgjørVedtakId": null,
+      "referanse": "92edb1e9-ab43-41a8-b8de-befd6b5418c7",
+      "delytelseId": null,
+      "eksternReferanse": null,
+      "grunnlagReferanseListe": [
+        "søknad",
+        "virkningstidspunkt",
+        "særbidrag_kategori",
+        "sluttberegning_person_PERSON_SØKNADSBARN_20050916_2156_202408_202409"
+      ],
+      "betaltBeløp": 0
+    }
+  ],
+  "behandlingsreferanseListe": [
+    {
+      "kilde": "BEHANDLING_ID",
+      "referanse": "780"
+    },
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "50003542"
+    }
+  ]
+}

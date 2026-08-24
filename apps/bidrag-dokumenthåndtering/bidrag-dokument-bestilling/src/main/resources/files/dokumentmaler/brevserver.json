@@ -1,0 +1,926 @@
+[
+  {
+    "kode": "BI01P11",
+    "tittel": "Notat - innhentede opplysninger",
+    "enabled": true,
+    "type": "NOTAT",
+    "kreverEkstraData": [
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01P17",
+    "enabled": true,
+    "tittel": "Uttalelse til klageinstans",
+    "kreverEkstraData": [
+      "ENHET_KONTAKT_INFO"
+    ],
+    "type": "NOTAT",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01P18",
+    "tittel": "Saksbehandlingsnotat",
+    "enabled": true,
+    "type": "NOTAT",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01X01",
+    "tittel": "Referat fra samtale",
+    "enabled": true,
+    "type": "NOTAT",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01X02",
+    "tittel": "Elektronisk dialog",
+    "enabled": true,
+    "type": "NOTAT",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S10",
+    "tittel": "Oversendelse av informasjon",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S67",
+    "tittel": "ADRESSEFORESPØRSEL",
+    "enabled": true,
+    "type": "VARSEL_STANDARD",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S02",
+    "tittel": "Fritekstbrev",
+    "enabled": true,
+    "type": "VARSEL_STANDARD",
+    "støttetSpråk": [
+      "NB",
+      "DE",
+      "FR",
+      "NN",
+      "EN",
+      "ES"
+    ]
+  },
+  {
+    "kode": "BI01A50",
+    "tittel": "Klage - Vedtak bidragsforskudd",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01A01",
+    "tittel": "Vedtak bidragsforskudd",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01A04",
+    "tittel": "Revurdering av bidragsforskudd",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01A08",
+    "batchbrev": true,
+    "tittel": "Revurdering av bidragsforskudd",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S08",
+    "tittel": "Varsel revurd forskudd",
+    "kreverEkstraData": [
+      "SJABLON"
+    ],
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S27",
+    "tittel": "Varsel om ny beregning av bidragsforskudd og varsel om mulig tilbakebetaling",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S28",
+    "tittel": "Varsel opphør av bidragsforskudd tilbake i tid",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S29",
+    "tittel": "Varsel opphør av bidragsforskudd tilbake i tid",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S30",
+    "tittel": "Varsel opphør av bidragsforskudd tilbake i tid",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01G01",
+    "tittel": "Vedtak innkreving av bidragsgjeld",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01G02",
+    "tittel": "Vedtak innkreving opphør",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S19",
+    "tittel": "Innkreving varsel til motparten",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B50",
+    "tittel": "Klage - Vedtak barnebidrag",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01G50",
+    "tittel": "Klage - vedtak innkreving",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S20",
+    "tittel": "Nav har mottatt klage på vedtak",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S21",
+    "tittel": "Du har klaget på vedtaket",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S60",
+    "tittel": "Klagen er sendt til Nav klageinstans",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S61",
+    "tittel": "Innhenting opplysninger paragraf 10 i barnelova",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S64",
+    "tittel": "Varsel klage fvt 35",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S65",
+    "tittel": "Varsel om motregning",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B10",
+    "tittel": "Opphørsvedtak",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S07",
+    "beskrivelse": "Varsel om fastsettelse begrenset revurdering barnebidrag",
+    "tittel": "Vi skal fastsette barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B01",
+    "tittel": "Vedtak barnebidrag",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B04",
+    "beskrivelse": "Vedtak begrenset revurdering",
+    "tittel": "Vedtak barnebidrag",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B20",
+    "tittel": "Vedtak utland skjønn fastsettelse",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B21",
+    "tittel": "Vedtak utland skjønn endring",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S06",
+    "beskrivelse": "Varsel om fastsettelse av barnebidrag fra barnets fødsel",
+    "tittel": "Vi skal fastsette barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S31",
+    "tittel": "Fasts. eget tiltak uten innkr varsel til partene",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S32",
+    "tittel": "Fastsettelse eget tiltak varsel til Bidragsmottaker",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S33",
+    "tittel": "Endring varsel eget tiltak pga 25%",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S34",
+    "tittel": "Endring varsel eget tiltak pga barnetillegg",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S35",
+    "beskrivelse": "Varsel om endring av barnebidraget på grunn av forholdsmessig fordeling",
+    "tittel": "Vi skal endre barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S36",
+    "tittel": "Endring varsel eget tiltak pga forsørgingstillegg",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S46",
+    "beskrivelse": "Varsel om endring av oppfostringsbidraget på grunn av forholdsmessig fordeling",
+    "tittel": "Vi skal endre oppfostringsbidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S62",
+    "beskrivelse": "Varsel om fastsettelse av barnebidrag til den bidragspliktiges barnetillegg",
+    "tittel": "Vi skal endre barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S63",
+    "tittel": "Fastsettelse bidrag forsørgingstillegg varsel",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S22",
+    "beskrivelse": "Varsel om endring begrenset revurdering barnebidrag",
+    "tittel": "Vi skal endre barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S23",
+    "beskrivelse": "Varsel om endring begrenset revurdering barnebidrag",
+    "tittel": "Vi skal endre barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S01",
+    "tittel": "Nav har mottatt søknad om barnebidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S12",
+    "tittel": "Du har søkt om barnebidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S52",
+    "tittel": "Forhåndsvarsel om mottatt søknad om oppfostringsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S53",
+    "tittel": "Forhåndsvarsel om mottatt søknad om oppfostringsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S13",
+    "tittel": "Du har søkt om barnebidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B02",
+    "tittel": "Vedtak tilleggsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S05",
+    "tittel": "Nav har mottatt søknad om sletting av bidragsgjeld",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S14",
+    "tittel": "Du har søkt om endring av barnebidraget",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S26",
+    "tittel": "Endring varsel til motparten",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S47",
+    "tittel": "Forhåndsvarsel om mottatt søknad om endring av oppfostringsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S48",
+    "tittel": "Forhåndsvarsel om mottatt søknad om endring av oppfostringsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S49",
+    "tittel": "Forhåndsvarsel om mottatt søknad om endring av oppfostringsbidrag",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01I50",
+    "tittel": "Klage - vedtak ektefellebidrag",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01I01",
+    "tittel": "Vedtak ektefellebidrag",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S43",
+    "tittel": "Fastsettelse ektefellebidrag orientering",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S44",
+    "tittel": "Fastsettelse ektefellebidrag varsel til Bidragspliktig",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S37",
+    "tittel": "Bortfall ektefellebidrag Bidragspliktig død orientering til Bidragsmottaker",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S38",
+    "tittel": "Bortfall ektefellebidrag orientering til partene",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S39",
+    "tittel": "Bortfall ektefellebidrag nytt ekteskap orientering",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S41",
+    "tittel": "Vedtak - bortfall nytt ekteskap",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S42",
+    "tittel": "Endring ektefellebidrag orientering til søkeren",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S45",
+    "tittel": "Varsel om ny beregning av bidragsforskudd og varsel om mulig tilbakebetaling",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01H01",
+    "tittel": "Farskap innkalling mor",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01H03",
+    "tittel": "Melding om blodprøver i farskapsak",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01H04",
+    "tittel": "Pålegg om å framstille barn for å gi blodprøve",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01H05",
+    "tittel": "Pålegg om blodprøve i farskapssak",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01H02",
+    "tittel": "Innkalling farskapssak oppgitt far",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01J50",
+    "tittel": "Klage - vedtak gebyr",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S03",
+    "tittel": "Nav har mottatt søknad om barnebidrag etter fylte 18 år - forhåndsvarsel",
+    "type": "VARSEL",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01K50",
+    "tittel": "Klage - vedtak tilbakekreving",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01A05",
+    "tittel": "Vedtak ikke tilbakekreving",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01G04",
+    "tittel": "Vedtak innkreving særbidrag",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01E50",
+    "tittel": "Klage - vedtak særbidrag",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01E01",
+    "tittel": "Vedtak særbidrag",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01E02",
+    "tittel": "Vedtak særbidrag avslag",
+    "avslagsbrev": true,
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01E03",
+    "tittel": "Vedtak særbidrag tannregulering",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S04",
+    "tittel": "Nav har mottatt søknad om særbidrag",
+    "type": "VARSEL",
+    "kreverEkstraData": [
+      "SJABLON"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S18",
+    "tittel": "Du har søkt om særbidrag",
+    "type": "VARSEL",
+    "kreverEkstraData": [
+      "SJABLON"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01F50",
+    "tittel": "Klage - vedtak ettergivelse gjeld",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01F01",
+    "tittel": "Vedtak ettergivelse innvilget",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01F02",
+    "tittel": "Vedtak ettergivelse avslag",
+    "type": "VEDTAK",
+    "inneholderData": [
+      "ROLLER",
+      "ENHET_KONTAKT_INFO"
+    ],
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S17",
+    "tittel": "Informasjon om din søknad om sletting av bidragsgjeld",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S50",
+    "tittel": "Ettergivelse oppfostringsbidrag orientering til Bidragspliktig",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S51",
+    "tittel": "Ettergivelse oppfostringsbidrag varsel kommune",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01A02",
+    "tittel": "Vedtak tilbakekreving",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S54",
+    "tittel": "Varsel om tilbakekreving av bidragsforskudd - inntekt",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S55",
+    "tittel": "Varsel tilbakekreving av bidragsforskudd - partene bor sammen",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S56",
+    "tittel": "Varsel tilbakekreving av bidragsforskudd - ikke opphold i Riket",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S57",
+    "tittel": "Varsel tilbakekreving av bidragsforskudd - direkte betalinger",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S58",
+    "tittel": "Varsel tilbakekreving av bidragsforskudd - ikke omsorg",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S59",
+    "tittel": "Informasjon om din søknad om sletting av bidragsgjeld",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S24",
+    "tittel": "Nav har mottatt søknad om barnebidrag etter fylte 18 år - innhenting av opplysninger",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B03",
+    "tittel": "Vedtak barnebidrag etter fylte 18 år",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S15",
+    "tittel": "Du har søkt om barnebidrag etter fylte 18 år",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S16",
+    "tittel": "Du har søkt om barnebidrag etter fylte 18 år",
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B11",
+    "tittel": "Vedtak tilleggsbidrag over 18 år",
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01B05",
+    "tittel": "Vedtak automatisk justering av barnebidrag",
+    "batchbrev": true,
+    "type": "VEDTAK",
+    "støttetSpråk": [
+      "NB"
+    ]
+  },
+  {
+    "kode": "BI01S09",
+    "tittel": "Varsel om opphør barnebidrag etter fylte 18 år",
+    "batchbrev": true,
+    "type": "VARSEL",
+    "støttetSpråk": [
+      "NB"
+    ]
+  }
+]

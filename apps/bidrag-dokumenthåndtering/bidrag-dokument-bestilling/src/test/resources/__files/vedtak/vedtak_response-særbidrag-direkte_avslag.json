@@ -1,0 +1,128 @@
+{
+  "kilde": "MANUELT",
+  "type": "FASTSETTELSE",
+  "opprettetAv": "Z994977",
+  "opprettetAvNavn": "F_Z994977 E_Z994977",
+  "kildeapplikasjon": "bidrag-behandling",
+  "vedtakstidspunkt": "2024-08-27T11:55:03.837908",
+  "enhetsnummer": "4806",
+  "innkrevingUtsattTilDato": null,
+  "fastsattILand": null,
+  "opprettetTidspunkt": "2024-08-27T11:55:05.585536",
+  "grunnlagListe": [
+    {
+      "referanse": "notat_UTGIFTER_kun_i_notat",
+      "type": "NOTAT",
+      "innhold": {
+        "type": "UTGIFTER",
+        "innhold": "Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. Utgifter dette er en kommentar på utgifter. ",
+        "erMedIVedtaksdokumentet": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "søknad",
+      "type": "SØKNAD",
+      "innhold": {
+        "søktAv": "BIDRAGSPLIKTIG",
+        "mottattDato": "2024-01-15",
+        "søktFraDato": "2021-01-01",
+        "klageMottattDato": null,
+        "opprinneligVedtakstype": null
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "virkningstidspunkt",
+      "type": "VIRKNINGSTIDSPUNKT",
+      "innhold": {
+        "avslag": "PRIVAT_AVTALE",
+        "årsak": null,
+        "virkningstidspunkt": "2024-08-01"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "særbidrag_kategori",
+      "type": "SÆRBIDRAG_KATEGORI",
+      "innhold": {
+        "kategori": "KONFIRMASJON",
+        "beskrivelse": null
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_BIDRAGSMOTTAKER_19720829_100",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "navn": null,
+        "ident": "{bmIdent}",
+        "fødselsdato": "{bmfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_BIDRAGSPLIKTIG_19781115_99",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "navn": null,
+        "ident": "{bpIdent}",
+        "fødselsdato": "{bpfDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "person_PERSON_SØKNADSBARN_20050916_101",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "navn": null,
+        "ident": "{barnId2}",
+        "fødselsdato": "{barn2fDato}"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    }
+  ],
+  "stønadsendringListe": [],
+  "engangsbeløpListe": [
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2400066",
+      "skyldner": "{bpIdent}",
+      "kravhaver": "{barnId2}",
+      "mottaker": "{bmIdent}",
+      "beløp": null,
+      "valutakode": "NOK",
+      "resultatkode": "AVSLAG_PRIVAT_AVTALE_OM_SÆRBIDRAG",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "omgjørVedtakId": null,
+      "referanse": "393d7a33-2cac-4d16-973e-1d3034dfe6c1",
+      "delytelseId": null,
+      "eksternReferanse": null,
+      "grunnlagReferanseListe": [
+        "notat_UTGIFTER_kun_i_notat",
+        "søknad",
+        "virkningstidspunkt",
+        "særbidrag_kategori"
+      ],
+      "betaltBeløp": null
+    }
+  ],
+  "behandlingsreferanseListe": [
+    {
+      "kilde": "BEHANDLING_ID",
+      "referanse": "31"
+    },
+    {
+      "kilde": "BISYS_SØKNAD",
+      "referanse": "55312311"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+Skjema:
+      # Bidragsmottaker
+    - kode: VARSEL_BM_NB
+      beskrivelse: Svar på forhåndsvarsel i sak om barnebidrag til bidragsmottaker
+      filsti: 54-00.04 Svar på varsel_bidragsmottaker_NORSK.pdf
+      språk: NB
+      tittel: Svar på forhåndsvarsel i sak om barnebidrag til bidragsmottaker
+      type: SKJEMA
+    - kode: VARSEL_BM_EN
+      beskrivelse: Svar på forhåndsvarsel i sak om barnebidrag til bidragsmottaker
+      språk: EN
+      filsti: 54-00.04 Svar på varsel_bidragsmottaker_ENGELSK.pdf
+      tittel: Response to Advance Notice Regarding Child Support Form for Custodial Parent
+      type: SKJEMA
+      # Bidragspliktig
+    - kode: VARSEL_BP_NB
+      beskrivelse: Svar på forhåndsvarsel i sak om barnebidrag til bidragspliktig
+      filsti: 54-00.07 Svar på varsel_bidragspliktig_NORSK.pdf
+      språk: NB
+      tittel: Svar på forhåndsvarsel i sak om barnebidrag til bidragspliktig
+      type: SKJEMA
+    - kode: VARSEL_BP_EN
+      beskrivelse: Svar på forhåndsvarsel i sak om barnebidrag til bidragspliktig
+      filsti: 54-00.07 Svar på varsel_bidragspliktig_ENGELSK.pdf
+      språk: EN
+      tittel: Response to Advance Notice Regarding Child Support Form for Non-Custodial Parent
+      type: SKJEMA
+      # Bidragspliktig svarskjema
+    - kode: SVARSKJEMA_BP_DE
+      beskrivelse: Svarskjema bidragspliktig
+      filsti: Svarskjema_bidragspliktig_TYSK.pdf
+      språk: DE
+      tittel: Antwortformular für Unterhaltspflichtige
+      type: SKJEMA
+    - kode: SVARSKJEMA_BP_FR
+      beskrivelse: Svarskjema bidragspliktig
+      filsti: Svarskjema_bidragspliktig_FRANSK.pdf
+      språk: FR
+      tittel: Réponse à l’avis concernant pension alimentaire pour enfant(s) - formulaire de réponse pour le parent débiteur
+      type: SKJEMA
+    - kode: SVARSKJEMA_BP_PL
+      beskrivelse: Svarskjema bidragspliktig
+      filsti: Svarskjema_bidragspliktig_POLSK.pdf
+      språk: PL
+      tittel: Formularz dla rodzica zobowiązanego do płacenia alimentów
+      type: SKJEMA
+Vedlegg til varselbrev:
+    - kode: VEDLEGG_VARSEL_NB
+      beskrivelse: Vedlegg til forhåndsvarsel
+      filsti: Vedlegg til forhåndsvarsel NORSK.pdf
+      språk: NB
+      tittel: Vedlegg til forhåndsvarsel. Krav om barnebidrag når en av partene bor i utlandet
+      type: VEDLEGG_VARSEL
+    - kode: VEDLEGG_VARSEL_EN
+      beskrivelse: Vedlegg til forhåndsvarsel
+      filsti: Vedlegg til forhåndsvarsel ENGELSK.pdf
+      språk: EN
+      tittel: Attachment to advance notice. Claim for child support when one of the parties resides abroad
+      type: VEDLEGG_VARSEL
+    - kode: VEDLEGG_VARSEL_DE
+      beskrivelse: Vedlegg til forhåndsvarsel
+      filsti: Vedlegg til forhåndsvarsel TYSK.pdf
+      språk: DE
+      tittel: Anlage Zur Mitteilung. Festsetzung von Kindesunterhalt wenn eine Partei im Ausland lebt
+      type: VEDLEGG_VARSEL
+Vedlegg til vedtakbrev:
+      # Bidragsmottaker
+    - kode: VEDLEGG_VEDTAK_BM_NB
+      beskrivelse: Vedlegg til vedtak bidragsmottaker
+      filsti: Vedlegg til vedtak_bidragsmottaker_NORSK.pdf
+      språk: NB
+      tittel: Orientering til bidragsmottakeren når en av partene bor i utlandet
+      type: VEDLEGG_VEDTAK
+    - kode: VEDLEGG_VEDTAK_BM_EN
+      beskrivelse: Vedlegg til vedtak bidragsmottaker
+      filsti: Vedlegg til vedtak_bidragsmottaker_ENGELSK.pdf
+      språk: EN
+      tittel: Information to the custodial parent when one of the parties is living abroad
+      type: VEDLEGG_VEDTAK
+    - kode: VEDLEGG_VEDTAK_BM_DE
+      beskrivelse: Vedlegg til vedtak bidragsmottaker
+      filsti: Vedlegg til vedtak_bidragsmottaker_TYSK.pdf
+      språk: DE
+      tittel: Orientierung für den Unterhaltsempfänger, wenn eine der Parteien im Ausland lebt
+      type: VEDLEGG_VEDTAK
+      # Bidragspliktig
+    - kode: VEDLEGG_VEDTAK_BP_NB
+      beskrivelse: Vedlegg til vedtak bidragspliktig
+      filsti: Vedlegg til vedtak_bidragspliktig_NORSK.pdf
+      språk: NB
+      tittel: Orientering til den bidragspliktige når en av partene bor i utlandet
+      type: VEDLEGG_VEDTAK
+    - kode: VEDLEGG_VEDTAK_BP_EN
+      beskrivelse: Vedlegg til vedtak bidragspliktig
+      filsti: Vedlegg til vedtak_bidragspliktig_ENGELSK.pdf
+      språk: EN
+      tittel: Information to the non−custodial parent when one of the parties is living abroad
+      type: VEDLEGG_VEDTAK
+    - kode: VEDLEGG_VEDTAK_BP_DE
+      beskrivelse: Vedlegg til vedtak bidragspliktig
+      filsti: Vedlegg til vedtak_bidragspliktig_TYSK.pdf
+      språk: DE
+      tittel: Orientierung für den Unterhaltspflichtigen, wenn eine der Parteien im Ausland lebt
+      type: VEDLEGG_VEDTAK
+    - kode: VEDLEGG_VEDTAK_BP_FR
+      beskrivelse: Vedlegg til vedtak bidragspliktig
+      filsti: Vedlegg til vedtak_bidragspliktig_ FRANSK.pdf
+      språk: FR
+      tittel: INFORMATIONS RELATIVES AUX PENSIONS ALIMENTAIRES
+      type: VEDLEGG_VEDTAK
+
