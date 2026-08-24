@@ -12,6 +12,10 @@ target/
 # OS
 .DS_Store
 
+# Node (util/bidrag-cli)
+node_modules/
+dist/
+
 # Logs
 *.log
 
