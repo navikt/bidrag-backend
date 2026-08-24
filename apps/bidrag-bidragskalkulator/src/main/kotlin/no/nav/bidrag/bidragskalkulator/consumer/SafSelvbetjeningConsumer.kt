@@ -88,8 +88,7 @@ class SafSelvbetjeningConsumer(
         }
     }
 
-    private fun sanitizePathSegment(value: String, errorMessage: String) =
-        safePathSegment.matchEntire(value)?.value ?: throw IllegalArgumentException(errorMessage)
+    private fun sanitizePathSegment(value: String, errorMessage: String) = safePathSegment.matchEntire(value)?.value ?: throw IllegalArgumentException(errorMessage)
 
     fun hentDokumenterForIdent(
         ident: String,
