@@ -7,7 +7,9 @@ registries:
     password: no-secret-required
 updates:
   - package-ecosystem: "npm"
-    directory: "/util/bidrag-cli"
+    directories:
+      - "/util/bidrag-cli"
+      - "/apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon"
     cooldown:
       default-days: 7
     schedule:
