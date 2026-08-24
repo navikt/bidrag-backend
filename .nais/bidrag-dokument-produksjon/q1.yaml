@@ -5,6 +5,7 @@ azure_access_inbound:
   - application: bidrag-ui
   - application: bidrag-frontend-q2
   - application: bidrag-frontend-q1
+  - application: bidrag-localauth
   - application: bidrag-behandling
   - application: bidrag-behandling-feature
   - application: bidrag-behandling-q1
