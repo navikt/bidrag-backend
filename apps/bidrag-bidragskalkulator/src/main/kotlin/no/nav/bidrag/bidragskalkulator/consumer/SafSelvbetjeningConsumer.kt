@@ -41,11 +41,11 @@ class SafSelvbetjeningConsumer(
         .toUri()
 
     fun hentDokument(journalpostId: String, dokumentInfoId: String, variantFormat: String): HentDokumentRespons {
-        require(isSafePathSegment(journalpostId)) { "Ugyldig journalpostId" }
-        require(isSafePathSegment(dokumentInfoId)) { "Ugyldig dokumentInfoId" }
-        require(isSafePathSegment(variantFormat)) { "Ugyldig variantFormat" }
+        val safeJournalpostId = sanitizePathSegment(journalpostId, "Ugyldig journalpostId")
+        val safeDokumentInfoId = sanitizePathSegment(dokumentInfoId, "Ugyldig dokumentInfoId")
+        val safeVariantFormat = sanitizePathSegment(variantFormat, "Ugyldig variantFormat")
 
-        val url = hentDokumentUrl(journalpostId, dokumentInfoId, variantFormat)
+        val url = hentDokumentUrl(safeJournalpostId, safeDokumentInfoId, safeVariantFormat)
 
         return try {
             val (respons, varighet) = measureTimedValue {
@@ -88,7 +88,8 @@ class SafSelvbetjeningConsumer(
         }
     }
 
-    private fun isSafePathSegment(value: String) = safePathSegment.matches(value)
+    private fun sanitizePathSegment(value: String, errorMessage: String) =
+        safePathSegment.matchEntire(value)?.value ?: throw IllegalArgumentException(errorMessage)
 
     fun hentDokumenterForIdent(
         ident: String,
