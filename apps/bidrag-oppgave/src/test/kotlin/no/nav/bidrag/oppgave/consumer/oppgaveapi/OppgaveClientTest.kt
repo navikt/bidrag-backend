@@ -1,14 +1,14 @@
-package no.nav.oppgave
+package no.nav.bidrag.oppgave.consumer.oppgaveapi
 
-import no.nav.bidrag.oppgaveapiclient.EksternOppgaveId
-import no.nav.bidrag.oppgaveapiclient.Enhetsnummer
-import no.nav.bidrag.oppgaveapiclient.FellesKodeverkTema
-import no.nav.bidrag.oppgaveapiclient.NavIdent
-import no.nav.oppgave.model.FinnOppgaverParams
-import no.nav.oppgave.model.OppgaveDto
-import no.nav.oppgave.model.OpprettOppgaveRequest
-import no.nav.oppgave.model.PatchOppgaveRequest
-import no.nav.oppgave.model.SokOppgaverResponse
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OpprettOppgaveRequest
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.hamcrest.CoreMatchers.startsWith

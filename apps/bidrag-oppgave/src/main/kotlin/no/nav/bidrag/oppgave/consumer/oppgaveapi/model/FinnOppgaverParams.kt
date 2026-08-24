@@ -1,10 +1,4 @@
-package no.nav.oppgave.model
-
-import no.nav.bidrag.oppgaveapiclient.AktorId
-import no.nav.bidrag.oppgaveapiclient.EksternJournalpostId
-import no.nav.bidrag.oppgaveapiclient.Enhetsnummer
-import no.nav.bidrag.oppgaveapiclient.FellesKodeverkTema
-import no.nav.bidrag.oppgaveapiclient.NavIdent
+package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 
 data class FinnOppgaverParams(
     /** Statuskategori er en kategorisering av statuser internt i oppgave, dvs at det kan søkes på enten AAPEN eller AVSLUTTET og de relevante oppgave vil returneres uten at konsument trenger å spesifisere alle statuser som representerer åpne oppgaver eller motsatt (avsluttede oppgaver) */

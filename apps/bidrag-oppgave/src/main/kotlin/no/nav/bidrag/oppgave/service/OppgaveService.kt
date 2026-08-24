@@ -1,12 +1,11 @@
 package no.nav.bidrag.oppgave.service
 
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
-import no.nav.oppgave.OppgaveClient
-import no.nav.oppgave.model.FinnOppgaverParams
 import org.springframework.stereotype.Service
-import java.time.OffsetDateTime
-import no.nav.oppgave.model.OppgaveDto as OppgaveApiDto
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto as OppgaveApiDto
 
 @Service
 class OppgaveService(
@@ -25,7 +24,7 @@ private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     tittel = "$tema - $oppgavetype",
     beskrivelse = beskrivelse,
     status = status.tilBidragStatus(),
-    opprettet = opprettetTidspunkt ?: OffsetDateTime.now(),
+    opprettet = opprettetTidspunkt,
 )
 
 private fun OppgaveApiDto.Status.tilBidragStatus(): OppgaveStatus = when (this) {
