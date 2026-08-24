@@ -1,0 +1,21 @@
+{
+  "extends": "@tsconfig/node16/tsconfig.json",
+  "buildOptions": {
+  },
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
+    "strict": false,
+    "strictNullChecks": false,
+    "target": "es2022",
+    "lib": [
+      "dom"
+    ]
+  },
+  "exclude": [
+    "dist",
+    "node_modules"
+  ],
+}
