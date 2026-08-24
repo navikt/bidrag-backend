@@ -1,0 +1,328 @@
+{
+  "bestillBatch" : false,
+  "mottaker" : {
+    "fodselsnummer" : "02528529286",
+    "navn" : "Kompleks Aristokrat",
+    "spraak" : "NB",
+    "adresse" : {
+      "adresselinje1" : "Reinsdyrveien 21",
+      "adresselinje2" : null,
+      "adresselinje3" : "4373 EGERSUND",
+      "adresselinje4" : null,
+      "bruksenhetsnummer" : null,
+      "postnummer" : "4373",
+      "poststed" : "EGERSUND",
+      "landkode" : "NO",
+      "landkode3" : "NOR",
+      "land" : "NORGE"
+    },
+    "rolle" : "BP",
+    "fodselsdato" : "1985-12-02"
+  },
+  "gjelder" : {
+    "fodselsnummer" : "02528529286",
+    "navn" : null,
+    "adresse" : null,
+    "rolle" : "BP"
+  },
+  "kontaktInfo" : {
+    "navn" : "Nav familie- og pensjonsytelser Bergen",
+    "telefonnummer" : "55553333",
+    "postadresse" : {
+      "adresselinje1" : "Postboks 6244",
+      "adresselinje2" : "Bedriftssenter",
+      "adresselinje3" : null,
+      "adresselinje4" : null,
+      "bruksenhetsnummer" : null,
+      "postnummer" : "5893",
+      "poststed" : "Bergen",
+      "landkode" : null,
+      "landkode3" : null,
+      "land" : null
+    },
+    "enhetId" : "4812"
+  },
+  "saksbehandler" : {
+    "ident" : "Z994977",
+    "navn" : "F_Z994977 E_Z994977",
+    "fornavnEtternavn" : "F_Z994977 E_Z994977"
+  },
+  "dokumentreferanse" : "BIF100000104",
+  "tittel" : "Fritekstbrev",
+  "enhet" : "4812",
+  "saksnummer" : "2600616",
+  "datoSakOpprettet" : "2026-02-18",
+  "spraak" : "NB",
+  "roller" : [ {
+    "type" : null,
+    "rolle" : "BM",
+    "fodselsnummer" : "03448539996",
+    "navn" : "Topp Lomme",
+    "fodselsdato" : "1985-04-03",
+    "doedsdato" : null,
+    "landkode" : "NO",
+    "landkode3" : "NOR",
+    "datoDod" : null,
+    "gebyr" : null,
+    "kravFremAv" : null
+  }, {
+    "type" : null,
+    "rolle" : "BP",
+    "fodselsnummer" : "02528529286",
+    "navn" : "Kompleks Aristokrat",
+    "fodselsdato" : "1985-12-02",
+    "doedsdato" : null,
+    "landkode" : "NO",
+    "landkode3" : "NOR",
+    "datoDod" : null,
+    "gebyr" : null,
+    "kravFremAv" : null
+  }, {
+    "type" : "BA",
+    "rolle" : "BA",
+    "fodselsnummer" : "25490961030",
+    "navn" : "Dogmatisk Agent",
+    "fodselsdato" : "2009-09-25",
+    "fornavn" : "Dogmatisk",
+    "bidragsbelop" : null,
+    "forskuddsbelop" : null,
+    "gebyrRm" : null,
+    "fodselsnummerRm" : null
+  }, {
+    "type" : "BA",
+    "rolle" : "BA",
+    "fodselsnummer" : "27471095775",
+    "navn" : "Svensk Innestemme",
+    "fodselsdato" : "2010-07-27",
+    "fornavn" : "Svensk",
+    "bidragsbelop" : null,
+    "forskuddsbelop" : null,
+    "gebyrRm" : null,
+    "fodselsnummerRm" : null
+  }, {
+    "type" : "BA",
+    "rolle" : "BA",
+    "fodselsnummer" : "12440786578",
+    "navn" : "Umotivert Galopp",
+    "fodselsdato" : "2007-04-12",
+    "fornavn" : "Umotivert",
+    "bidragsbelop" : null,
+    "forskuddsbelop" : null,
+    "gebyrRm" : null,
+    "fodselsnummerRm" : "12440786578"
+  }, {
+    "type" : "BA",
+    "rolle" : "BA",
+    "fodselsnummer" : "12471472105",
+    "navn" : "Vennlig Kontorbygg",
+    "fodselsdato" : "2014-07-12",
+    "fornavn" : "Vennlig",
+    "bidragsbelop" : null,
+    "forskuddsbelop" : null,
+    "gebyrRm" : null,
+    "fodselsnummerRm" : null
+  } ],
+  "rollerV2" : [ {
+    "rolle" : "BM",
+    "navn" : "Topp Lomme",
+    "fødselsdato" : "1985-04-03",
+    "ident" : "03448539996",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  }, {
+    "rolle" : "BP",
+    "navn" : "Kompleks Aristokrat",
+    "fødselsdato" : "1985-12-02",
+    "ident" : "02528529286",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  }, {
+    "rolle" : "BA",
+    "navn" : "Dogmatisk Agent",
+    "fødselsdato" : "2009-09-25",
+    "ident" : "25490961030",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  }, {
+    "rolle" : "BA",
+    "navn" : "Svensk Innestemme",
+    "fødselsdato" : "2010-07-27",
+    "ident" : "27471095775",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  }, {
+    "rolle" : "BA",
+    "navn" : "Umotivert Galopp",
+    "fødselsdato" : "2007-04-12",
+    "ident" : "12440786578",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  }, {
+    "rolle" : "BA",
+    "navn" : "Vennlig Kontorbygg",
+    "fødselsdato" : "2014-07-12",
+    "ident" : "12471472105",
+    "erBeskyttet" : false,
+    "innbetaltBeløp" : null,
+    "opphørsdato" : null,
+    "virkningstidspunkt" : null,
+    "saksnummer" : null,
+    "bidragsmottakerIdent" : null,
+    "revurdering" : false
+  } ],
+  "rmISak" : false,
+  "vedtakDetaljer" : null,
+  "sjablonDetaljer" : {
+    "multiplikatorInntekstgrenseForskudd" : 330.0,
+    "fastsettelseGebyr" : 1345.0,
+    "forskuddInntektIntervall" : 76600.0,
+    "forskuddSats" : 2010.0,
+    "inntektsintervallTillegsbidrag" : 50000.0,
+    "multiplikatorHøyInntektBp" : 550.0,
+    "multiplikatorMaksBidrag" : 5.0,
+    "multiplikatorInnteksinslagBarn" : 30.0,
+    "multiplikatorMaksInntekBarn" : 100.0,
+    "nedreInntekstgrenseGebyr" : 354600.0,
+    "prosentsatsTilleggsbidrag" : 0.0,
+    "maksProsentAvInntektBp" : 25.0,
+    "forskuddInntektgrensePerioder" : [ {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "ENSLIG",
+      "antallBarn" : 1,
+      "beløp50Prosent" : {
+        "first" : 556901.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 556900.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "ENSLIG",
+      "antallBarn" : 2,
+      "beløp50Prosent" : {
+        "first" : 633501.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 633500.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "ENSLIG",
+      "antallBarn" : 3,
+      "beløp50Prosent" : {
+        "first" : 663300.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 663300.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "ENSLIG",
+      "antallBarn" : 4,
+      "beløp50Prosent" : {
+        "first" : 663300.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 663300.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "GIFT_SAMBOER",
+      "antallBarn" : 1,
+      "beløp50Prosent" : {
+        "first" : 459301.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 459300.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "GIFT_SAMBOER",
+      "antallBarn" : 2,
+      "beløp50Prosent" : {
+        "first" : 535901.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 535900.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "GIFT_SAMBOER",
+      "antallBarn" : 3,
+      "beløp50Prosent" : {
+        "first" : 612501.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 612500.0
+      }
+    }, {
+      "fomDato" : "2026-02-21",
+      "tomDato" : null,
+      "forsorgerType" : "GIFT_SAMBOER",
+      "antallBarn" : 4,
+      "beløp50Prosent" : {
+        "first" : 663300.0,
+        "second" : 663300.0
+      },
+      "beløp75Prosent" : {
+        "first" : 375901.0,
+        "second" : 663300.0
+      }
+    } ],
+    "maksgrenseHøyInntekt" : 1105500.0,
+    "maksBidragsgrense" : 10050.0,
+    "maksInntektsgrense" : 201000.0,
+    "maksForskuddsgrense" : 663300.0,
+    "maksInntektsgebyr" : 7.12746E8
+  },
+  "sakDetaljer" : {
+    "harUkjentPart" : false,
+    "levdeAdskilt" : false
+  }
+}
