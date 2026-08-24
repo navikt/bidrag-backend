@@ -1,0 +1,268 @@
+package no.nav.bidrag.oppgave.consumer.oppgaveapi
+
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OpprettOppgaveRequest
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.hamcrest.CoreMatchers.startsWith
+import org.junit.jupiter.api.Test
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.content
+import org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath
+import org.springframework.test.web.client.match.MockRestRequestMatchers.method
+import org.springframework.test.web.client.match.MockRestRequestMatchers.queryParam
+import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestTemplate
+import tools.jackson.databind.json.JsonMapper
+import java.time.LocalDate
+
+class OppgaveClientTest {
+
+    private val objectMapper = JsonMapper.builder()
+        .findAndAddModules()
+        .build()
+
+    private val restTemplate: RestTemplate = RestTemplate()
+    private var mockServer: MockRestServiceServer = MockRestServiceServer.bindTo(restTemplate).build()
+
+    private val restClient = RestClient.builder(restTemplate).build()
+    private val oppgaveClient = OppgaveClient(restClient)
+
+    private val oppgave = OppgaveDto(
+        id = EksternOppgaveId(123456789),
+        tildeltEnhetsnr = Enhetsnummer("4100"),
+        tema = "OPP",
+        oppgavetype = "JFR",
+        versjon = 1,
+        prioritet = OppgaveDto.Prioritet.NORM,
+        status = OppgaveDto.Status.OPPRETTET,
+        aktivDato = LocalDate.now(),
+    )
+    // ==================== opprettOppgave tests ====================
+
+    @Test
+    fun `opprettOppgave returnerer opprettet oppgave`() {
+        // Arrange
+        val request = OpprettOppgaveRequest(
+            personident = "12345678901",
+            tema = "OPP",
+            oppgavetype = "JFR",
+        )
+
+        mockServer.expect(requestTo("/api/v1/oppgaver"))
+            .andExpect(method(HttpMethod.POST))
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.personident").value("12345678901"))
+            .andExpect(jsonPath("$.tema").value("OPP"))
+            .andExpect(jsonPath("$.oppgavetype").value("JFR"))
+            .andRespond(
+                withStatus(HttpStatus.CREATED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(oppgave)),
+            )
+
+        // Act
+        oppgaveClient.opprettOppgave(request)
+
+        // Assert
+        mockServer.verify()
+    }
+
+    // ==================== hentOppgave tests ====================
+
+    @Test
+    fun `hentOppgave returnerer oppgave`() {
+        // Arrange
+        val oppgaveId = EksternOppgaveId(123456789)
+
+        val oppgave = OppgaveDto(
+            id = oppgaveId,
+            tildeltEnhetsnr = Enhetsnummer("4100"),
+            tema = "OPP",
+            oppgavetype = "JFR",
+            versjon = 1,
+            prioritet = OppgaveDto.Prioritet.NORM,
+            status = OppgaveDto.Status.AAPNET,
+            aktivDato = LocalDate.now(),
+        )
+
+        mockServer.expect(requestTo("/api/v1/oppgaver/$oppgaveId"))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(oppgave)),
+            )
+
+        // Act
+        oppgaveClient.hentOppgave(oppgaveId)
+
+        // Assert
+        mockServer.verify()
+    }
+
+    @Test
+    fun `hentOppgave returnerer null ved oppgave ikke funnet`() {
+        // Arrange
+        val oppgaveId = EksternOppgaveId(123456789)
+
+        mockServer.expect(requestTo("/api/v1/oppgaver/$oppgaveId"))
+            .andExpect(method(HttpMethod.GET))
+            .andRespond(
+                withStatus(HttpStatus.NOT_FOUND),
+            )
+
+        // Act
+        val oppgave = oppgaveClient.hentOppgave(oppgaveId)
+
+        assertThat(oppgave).isNull()
+
+        // Assert
+        mockServer.verify()
+    }
+
+    // ==================== patchOppgave tests ====================
+
+    @Test
+    fun `patchOppgave oppdaterer oppgave`() {
+        // Arrange
+        val oppgaveId = EksternOppgaveId(123456789)
+        val request = PatchOppgaveRequest(
+            versjon = 1,
+            status = OppgaveDto.Status.FERDIGSTILT,
+        )
+
+        mockServer.expect(requestTo("/api/v1/oppgaver/$oppgaveId"))
+            .andExpect(method(HttpMethod.PATCH))
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.versjon").value(1))
+            .andExpect(jsonPath("$.status").value("FERDIGSTILT"))
+            .andExpect(jsonPath("$.beskrivelse").doesNotExist())
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(oppgave)),
+            )
+
+        // Act
+        oppgaveClient.patchOppgave(oppgaveId, request)
+
+        // Assert
+        mockServer.verify()
+    }
+
+    @Test
+    fun `patchOppgave kaster exception ved konflikt (409 Conflict)`() {
+        // Arrange
+        val oppgaveId = EksternOppgaveId(123456789)
+        val request = PatchOppgaveRequest(
+            versjon = 1,
+            status = OppgaveDto.Status.FERDIGSTILT,
+        )
+
+        mockServer.expect(requestTo("/api/v1/oppgaver/$oppgaveId"))
+            .andExpect(method(HttpMethod.PATCH))
+            .andExpect(jsonPath("$.versjon").value(1))
+            .andExpect(jsonPath("$.status").value("FERDIGSTILT"))
+            .andRespond(withStatus(HttpStatus.CONFLICT))
+
+        // Act & Assert
+        assertThatThrownBy {
+            oppgaveClient.patchOppgave(oppgaveId, request)
+        }.isInstanceOf(RuntimeException::class.java)
+        mockServer.verify()
+    }
+
+    // ==================== finnOppgaver tests ====================
+
+    @Test
+    fun `finnOppgaver returnerer liste med oppgaver`() {
+        // Arrange
+        val params = FinnOppgaverParams(
+            statuskategori = "AAPEN",
+            tema = listOf(FellesKodeverkTema.HEL),
+            limit = 10,
+        )
+
+        val oppgaver = listOf(
+            oppgave.copy(id = EksternOppgaveId(1)),
+            oppgave.copy(id = EksternOppgaveId(2)),
+        )
+
+        val response = SokOppgaverResponse(
+            antallTreffTotalt = 2,
+            oppgaver = oppgaver,
+        )
+
+        mockServer.expect(requestTo(startsWith("/api/v1/oppgaver?")))
+            .andExpect(method(HttpMethod.GET))
+            .andExpect(queryParam("statuskategori", "AAPEN"))
+            .andExpect(queryParam("tema", "HEL"))
+            .andExpect(queryParam("limit", "10"))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(response)),
+            )
+
+        // Act
+        oppgaveClient.finnOppgaver(params)
+
+        // Assert
+        mockServer.verify()
+    }
+
+    @Test
+    fun `finnOppgaver med flere søkeparametere returnerer filtrerte oppgaver`() {
+        // Arrange
+        val params = FinnOppgaverParams(
+            statuskategori = "AAPEN",
+            tema = listOf(FellesKodeverkTema.HEL, FellesKodeverkTema.HJE),
+            oppgavetype = listOf("JFR", "KONT"),
+            tildeltEnhetsnr = Enhetsnummer("4100"),
+            tilordnetRessurs = NavIdent("Z999999"),
+            limit = 20,
+            offset = 0,
+        )
+
+        val response = SokOppgaverResponse(
+            antallTreffTotalt = 1,
+            oppgaver = listOf(
+                oppgave,
+            ),
+        )
+
+        mockServer.expect(requestTo(startsWith("/api/v1/oppgaver?")))
+            .andExpect(method(HttpMethod.GET))
+            .andExpect(queryParam("statuskategori", "AAPEN"))
+            .andExpect(queryParam("tema", "HEL", "HJE"))
+            .andExpect(queryParam("oppgavetype", "JFR", "KONT"))
+            .andExpect(queryParam("tildeltEnhetsnr", "4100"))
+            .andExpect(queryParam("tilordnetRessurs", "Z999999"))
+            .andExpect(queryParam("limit", "20"))
+            .andExpect(queryParam("offset", "0"))
+            .andRespond(
+                withStatus(HttpStatus.OK)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(objectMapper.writeValueAsString(response)),
+            )
+
+        // Act
+        oppgaveClient.finnOppgaver(params)
+
+        // Assert
+        mockServer.verify()
+    }
+}

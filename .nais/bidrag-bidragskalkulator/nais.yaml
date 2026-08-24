@@ -1,0 +1,81 @@
+apiVersion: nais.io/v1alpha1
+kind: Application
+
+metadata:
+  name: {{ name }}
+  namespace: bidrag
+  labels:
+    team: bidrag
+
+spec:
+  ingresses:
+    {{#each ingresses}}
+    - {{this}}
+    {{/each}}
+
+  image: {{ image }}
+  port: 8080
+
+  azure:
+    application:
+      enabled: true
+
+  tokenx:
+    enabled: true
+
+  replicas:
+    max: 2
+    min: 2
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 384Mi
+
+  env:
+    {{#each env}}
+    - name: {{@key}}
+      value: "{{this}}"
+    {{/each}}
+
+  prometheus:
+    enabled: true
+    path: /actuator/prometheus
+
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
+    logging:
+      destinations:
+        - id: loki
+        - id: elastic
+
+  accessPolicy:
+    inbound:
+      rules:
+        {{#each inbound_application}}
+        - application: "{{application}}"
+          namespace: "{{namespace}}"
+          cluster: "{{cluster}}"
+        {{/each}}
+    outbound:
+      external:
+        {{#each outbound_external_host}}
+        - host: "{{this}}"
+        {{/each}}
+      rules:
+        - application: logging
+          namespace: nais-system
+
+  liveness:
+    path: /actuator/health
+    initialDelay: 15
+    timeout: 1
+    periodSeconds: 5
+    failureThreshold: 10
+
+  readiness:
+    path: /actuator/health
+    initialDelay: 15
+    timeout: 1

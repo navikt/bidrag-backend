@@ -22,7 +22,6 @@
         <module>apps/bidrag-oppgave</module>
         <module>libs/bidrag-oppgave-client</module>
         <module>libs/bidrag-oppgave-dto</module>
-        <module>libs/oppgave-api-client</module>
         <module>apps/bidrag-regnskap</module>
         <module>apps/bidrag-aktoerregister</module>
         <module>apps/bidrag-arbeidsflyt</module>
@@ -36,6 +35,7 @@
         <module>apps/bidrag-behandling</module>
         <module>apps/bidrag-belopshistorikk</module>
         <module>apps/bidrag-bbm</module>
+        <module>apps/bidrag-bidragskalkulator</module>
         <module>apps/bidrag-grunnlag</module>
         <module>apps/bidrag-organisasjon</module>
         <module>apps/bidrag-samhandler</module>

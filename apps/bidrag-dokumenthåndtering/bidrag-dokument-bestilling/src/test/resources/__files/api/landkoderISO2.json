@@ -1,0 +1,3004 @@
+{
+  "betydninger": {
+    "PR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PUERTO RICO",
+            "tekst": "PUERTO RICO"
+          }
+        }
+      }
+    ],
+    "PS": [
+      {
+        "gyldigFra": "1999-10-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PALESTINA",
+            "tekst": "PALESTINA"
+          }
+        }
+      }
+    ],
+    "PT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PORTUGAL",
+            "tekst": "PORTUGAL"
+          }
+        }
+      }
+    ],
+    "PW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PALAU",
+            "tekst": "PALAU"
+          }
+        }
+      }
+    ],
+    "PY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PARAGUAY",
+            "tekst": "PARAGUAY"
+          }
+        }
+      }
+    ],
+    "QA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "QATAR",
+            "tekst": "QATAR"
+          }
+        }
+      }
+    ],
+    "AD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ANDORRA",
+            "tekst": "ANDORRA"
+          }
+        }
+      }
+    ],
+    "AE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DE FORENTE ARABISKE EMIRATER",
+            "tekst": "DE FORENTE ARABISKE EMIRATER"
+          }
+        }
+      }
+    ],
+    "AF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "AFGHANISTAN",
+            "tekst": "AFGHANISTAN"
+          }
+        }
+      }
+    ],
+    "AG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ANTIGUA OG BARBUDA",
+            "tekst": "ANTIGUA OG BARBUDA"
+          }
+        }
+      }
+    ],
+    "AI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ANGUILLA",
+            "tekst": "ANGUILLA"
+          }
+        }
+      }
+    ],
+    "AL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ALBANIA",
+            "tekst": "ALBANIA"
+          }
+        }
+      }
+    ],
+    "AM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ARMENIA",
+            "tekst": "ARMENIA"
+          }
+        }
+      }
+    ],
+    "AO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ANGOLA",
+            "tekst": "ANGOLA"
+          }
+        }
+      }
+    ],
+    "AR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ARGENTINA",
+            "tekst": "ARGENTINA"
+          }
+        }
+      }
+    ],
+    "AS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "AM. SAMOA",
+            "tekst": "AM. SAMOA"
+          }
+        }
+      }
+    ],
+    "RE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "REUNION",
+            "tekst": "REUNION"
+          }
+        }
+      }
+    ],
+    "AT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ØSTERRIKE",
+            "tekst": "ØSTERRIKE"
+          }
+        }
+      }
+    ],
+    "AU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "AUSTRALIA",
+            "tekst": "AUSTRALIA"
+          }
+        }
+      }
+    ],
+    "AW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ARUBA",
+            "tekst": "ARUBA"
+          }
+        }
+      }
+    ],
+    "AX": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ÅLAND",
+            "tekst": "ÅLAND"
+          }
+        }
+      }
+    ],
+    "AZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ASERBAJDSJAN",
+            "tekst": "ASERBAJDSJAN"
+          }
+        }
+      }
+    ],
+    "RO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ROMANIA",
+            "tekst": "ROMANIA"
+          }
+        }
+      }
+    ],
+    "BA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BOSNIA-HERCEGOVINA",
+            "tekst": "BOSNIA-HERCEGOVINA"
+          }
+        }
+      }
+    ],
+    "BB": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BARBADOS",
+            "tekst": "BARBADOS"
+          }
+        }
+      }
+    ],
+    "RS": [
+      {
+        "gyldigFra": "2006-11-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SERBIA",
+            "tekst": "SERBIA"
+          }
+        }
+      }
+    ],
+    "BD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BANGLADESH",
+            "tekst": "BANGLADESH"
+          }
+        }
+      }
+    ],
+    "RU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "RUSSLAND",
+            "tekst": "RUSSLAND"
+          }
+        }
+      }
+    ],
+    "BE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BELGIA",
+            "tekst": "BELGIA"
+          }
+        }
+      }
+    ],
+    "BF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BURKINA FASO",
+            "tekst": "BURKINA FASO"
+          }
+        }
+      }
+    ],
+    "BG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BULGARIA",
+            "tekst": "BULGARIA"
+          }
+        }
+      }
+    ],
+    "RW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "RWANDA",
+            "tekst": "RWANDA"
+          }
+        }
+      }
+    ],
+    "BH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BAHRAIN",
+            "tekst": "BAHRAIN"
+          }
+        }
+      }
+    ],
+    "BI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BURUNDI",
+            "tekst": "BURUNDI"
+          }
+        }
+      }
+    ],
+    "BJ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BENIN",
+            "tekst": "BENIN"
+          }
+        }
+      }
+    ],
+    "BL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT BARTHELEMY",
+            "tekst": "SAINT BARTHELEMY"
+          }
+        }
+      }
+    ],
+    "BM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BERMUDA",
+            "tekst": "BERMUDA"
+          }
+        }
+      }
+    ],
+    "BN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BRUNEI",
+            "tekst": "BRUNEI"
+          }
+        }
+      }
+    ],
+    "BO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BOLIVIA",
+            "tekst": "BOLIVIA"
+          }
+        }
+      }
+    ],
+    "SA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAUDI-ARABIA",
+            "tekst": "SAUDI-ARABIA"
+          }
+        }
+      }
+    ],
+    "SB": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SALOMONØYENE",
+            "tekst": "SALOMONØYENE"
+          }
+        }
+      }
+    ],
+    "BQ": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BONAIRE, SINT EUSTATIUS OG SABA",
+            "tekst": "BONAIRE, SINT EUSTATIUS OG SABA"
+          }
+        }
+      }
+    ],
+    "SC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SEYCHELLENE",
+            "tekst": "SEYCHELLENE"
+          }
+        }
+      }
+    ],
+    "BR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BRASIL",
+            "tekst": "BRASIL"
+          }
+        }
+      }
+    ],
+    "SD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SUDAN",
+            "tekst": "SUDAN"
+          }
+        }
+      }
+    ],
+    "BS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BAHAMAS",
+            "tekst": "BAHAMAS"
+          }
+        }
+      }
+    ],
+    "SE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SVERIGE",
+            "tekst": "SVERIGE"
+          }
+        }
+      }
+    ],
+    "BT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BHUTAN",
+            "tekst": "BHUTAN"
+          }
+        }
+      }
+    ],
+    "BV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BOUVETØYA",
+            "tekst": "BOUVETØYA"
+          }
+        }
+      }
+    ],
+    "SG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SINGAPORE",
+            "tekst": "SINGAPORE"
+          }
+        }
+      }
+    ],
+    "BW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BOTSWANA",
+            "tekst": "BOTSWANA"
+          }
+        }
+      }
+    ],
+    "SH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SANKT HELENA, ASCENSION OG TRISTAN DA CUNHA",
+            "tekst": "SANKT HELENA, ASCENSION OG TRISTAN DA CUNHA"
+          }
+        }
+      }
+    ],
+    "SI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SLOVENIA",
+            "tekst": "SLOVENIA"
+          }
+        }
+      }
+    ],
+    "SJ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SVALBARD OG JAN MAYEN",
+            "tekst": "SVALBARD OG JAN MAYEN"
+          }
+        }
+      }
+    ],
+    "BY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HVITERUSSLAND",
+            "tekst": "HVITERUSSLAND"
+          }
+        }
+      }
+    ],
+    "BZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "BELIZE",
+            "tekst": "BELIZE"
+          }
+        }
+      }
+    ],
+    "SK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SLOVAKIA",
+            "tekst": "SLOVAKIA"
+          }
+        }
+      }
+    ],
+    "SL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SIERRA LEONE",
+            "tekst": "SIERRA LEONE"
+          }
+        }
+      }
+    ],
+    "SM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAN MARINO",
+            "tekst": "SAN MARINO"
+          }
+        }
+      }
+    ],
+    "SN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SENEGAL",
+            "tekst": "SENEGAL"
+          }
+        }
+      }
+    ],
+    "SO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SOMALIA",
+            "tekst": "SOMALIA"
+          }
+        }
+      }
+    ],
+    "CA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CANADA",
+            "tekst": "CANADA"
+          }
+        }
+      }
+    ],
+    "SR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SURINAM",
+            "tekst": "SURINAM"
+          }
+        }
+      }
+    ],
+    "???": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "UOPPGITT/UKJENT",
+            "tekst": "UOPPGITT/UKJENT"
+          }
+        }
+      }
+    ],
+    "SS": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SØR-SUDAN",
+            "tekst": "SØR-SUDAN"
+          }
+        }
+      }
+    ],
+    "CC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KOKOSØYENE (KEELINGØYENE)",
+            "tekst": "KOKOSØYENE (KEELINGØYENE)"
+          }
+        }
+      }
+    ],
+    "ST": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAO TOME OG PRINCIPE",
+            "tekst": "SAO TOME OG PRINCIPE"
+          }
+        }
+      }
+    ],
+    "CD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KONGO",
+            "tekst": "KONGO"
+          }
+        }
+      }
+    ],
+    "SV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "EL SALVADOR",
+            "tekst": "EL SALVADOR"
+          }
+        }
+      }
+    ],
+    "CF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DEN SENTRALAFRIKANSKE REPUBLIKK",
+            "tekst": "DEN SENTRALAFRIKANSKE REPUBLIKK"
+          }
+        }
+      }
+    ],
+    "CG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KONGO-BRAZZAVILLE",
+            "tekst": "KONGO-BRAZZAVILLE"
+          }
+        }
+      }
+    ],
+    "CH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SVEITS",
+            "tekst": "SVEITS"
+          }
+        }
+      }
+    ],
+    "SX": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SINT MAARTEN",
+            "tekst": "SINT MAARTEN"
+          }
+        }
+      }
+    ],
+    "SY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SYRIA",
+            "tekst": "SYRIA"
+          }
+        }
+      }
+    ],
+    "CI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ELFENBENSKYSTEN",
+            "tekst": "ELFENBENSKYSTEN"
+          }
+        }
+      }
+    ],
+    "SZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ESWATINI",
+            "tekst": "ESWATINI"
+          }
+        }
+      }
+    ],
+    "CK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "COOKØYENE",
+            "tekst": "COOKØYENE"
+          }
+        }
+      }
+    ],
+    "CL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CHILE",
+            "tekst": "CHILE"
+          }
+        }
+      }
+    ],
+    "CM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KAMERUN",
+            "tekst": "KAMERUN"
+          }
+        }
+      }
+    ],
+    "CN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KINA",
+            "tekst": "KINA"
+          }
+        }
+      }
+    ],
+    "CO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "COLOMBIA",
+            "tekst": "COLOMBIA"
+          }
+        }
+      }
+    ],
+    "CR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "COSTA RICA",
+            "tekst": "COSTA RICA"
+          }
+        }
+      }
+    ],
+    "TC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TURKS- OG CAICOSØYENE",
+            "tekst": "TURKS- OG CAICOSØYENE"
+          }
+        }
+      }
+    ],
+    "TD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TSJAD",
+            "tekst": "TSJAD"
+          }
+        }
+      }
+    ],
+    "CS": [
+      {
+        "gyldigFra": "2003-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SERBIA OG MONTENEGRO",
+            "tekst": "SERBIA OG MONTENEGRO"
+          }
+        }
+      }
+    ],
+    "CU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CUBA",
+            "tekst": "CUBA"
+          }
+        }
+      }
+    ],
+    "TG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TOGO",
+            "tekst": "TOGO"
+          }
+        }
+      }
+    ],
+    "CV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KAPP VERDE",
+            "tekst": "KAPP VERDE"
+          }
+        }
+      }
+    ],
+    "CW": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CURACAO",
+            "tekst": "CURACAO"
+          }
+        }
+      }
+    ],
+    "TH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "THAILAND",
+            "tekst": "THAILAND"
+          }
+        }
+      }
+    ],
+    "CX": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CHRISTMASØYA",
+            "tekst": "CHRISTMASØYA"
+          }
+        }
+      }
+    ],
+    "CY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KYPROS",
+            "tekst": "KYPROS"
+          }
+        }
+      }
+    ],
+    "TJ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TADSJIKISTAN",
+            "tekst": "TADSJIKISTAN"
+          }
+        }
+      }
+    ],
+    "TK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TOKELAU",
+            "tekst": "TOKELAU"
+          }
+        }
+      }
+    ],
+    "CZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TSJEKKIA",
+            "tekst": "TSJEKKIA"
+          }
+        }
+      }
+    ],
+    "TL": [
+      {
+        "gyldigFra": "2002-05-20",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ØST-TIMOR",
+            "tekst": "ØST-TIMOR"
+          }
+        }
+      }
+    ],
+    "TM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TURKMENISTAN",
+            "tekst": "TURKMENISTAN"
+          }
+        }
+      }
+    ],
+    "TN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TUNISIA",
+            "tekst": "TUNISIA"
+          }
+        }
+      }
+    ],
+    "TO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TONGA",
+            "tekst": "TONGA"
+          }
+        }
+      }
+    ],
+    "TR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TYRKIA",
+            "tekst": "TYRKIA"
+          }
+        }
+      }
+    ],
+    "TT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TRINIDAD OG TOBAGO",
+            "tekst": "TRINIDAD OG TOBAGO"
+          }
+        }
+      }
+    ],
+    "DE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TYSKLAND",
+            "tekst": "TYSKLAND"
+          }
+        }
+      }
+    ],
+    "TV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TUVALU",
+            "tekst": "TUVALU"
+          }
+        }
+      }
+    ],
+    "TW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TAIWAN",
+            "tekst": "TAIWAN"
+          }
+        }
+      }
+    ],
+    "TZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "TANZANIA",
+            "tekst": "TANZANIA"
+          }
+        }
+      }
+    ],
+    "DJ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DJIBOUTI",
+            "tekst": "DJIBOUTI"
+          }
+        }
+      }
+    ],
+    "DK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DANMARK",
+            "tekst": "DANMARK"
+          }
+        }
+      }
+    ],
+    "DM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DOMINICA",
+            "tekst": "DOMINICA"
+          }
+        }
+      }
+    ],
+    "DO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DEN DOMINIKANSKE REPUBLIKK",
+            "tekst": "DEN DOMINIKANSKE REPUBLIKK"
+          }
+        }
+      }
+    ],
+    "UA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "UKRAINA",
+            "tekst": "UKRAINA"
+          }
+        }
+      }
+    ],
+    "UG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "UGANDA",
+            "tekst": "UGANDA"
+          }
+        }
+      }
+    ],
+    "DZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ALGERIE",
+            "tekst": "ALGERIE"
+          }
+        }
+      }
+    ],
+    "UM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "USAS YTRE SMÅØYER",
+            "tekst": "USAS YTRE SMÅØYER"
+          }
+        }
+      }
+    ],
+    "EC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ECUADOR",
+            "tekst": "ECUADOR"
+          }
+        }
+      }
+    ],
+    "US": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "USA",
+            "tekst": "USA"
+          }
+        }
+      }
+    ],
+    "EE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ESTLAND",
+            "tekst": "ESTLAND"
+          }
+        }
+      }
+    ],
+    "EG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "EGYPT",
+            "tekst": "EGYPT"
+          }
+        }
+      }
+    ],
+    "EH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "VEST-SAHARA",
+            "tekst": "VEST-SAHARA"
+          }
+        }
+      }
+    ],
+    "UY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "URUGUAY",
+            "tekst": "URUGUAY"
+          }
+        }
+      }
+    ],
+    "UZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "USBEKISTAN",
+            "tekst": "USBEKISTAN"
+          }
+        }
+      }
+    ],
+    "VA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "VATIKANSTATEN",
+            "tekst": "VATIKANSTATEN"
+          }
+        }
+      }
+    ],
+    "ER": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ERITREA",
+            "tekst": "ERITREA"
+          }
+        }
+      }
+    ],
+    "VC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT VINCENT OG GRENADINENE",
+            "tekst": "SAINT VINCENT OG GRENADINENE"
+          }
+        }
+      }
+    ],
+    "ES": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SPANIA",
+            "tekst": "SPANIA"
+          }
+        }
+      }
+    ],
+    "ET": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ETIOPIA",
+            "tekst": "ETIOPIA"
+          }
+        }
+      }
+    ],
+    "VE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "VENEZUELA",
+            "tekst": "VENEZUELA"
+          }
+        }
+      }
+    ],
+    "VG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DE BRITISKE JOMFRUØYER",
+            "tekst": "DE BRITISKE JOMFRUØYER"
+          }
+        }
+      }
+    ],
+    "VI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DE AMERIKANSKE JOMFRUØYER",
+            "tekst": "DE AMERIKANSKE JOMFRUØYER"
+          }
+        }
+      }
+    ],
+    "VN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "VIETNAM",
+            "tekst": "VIETNAM"
+          }
+        }
+      }
+    ],
+    "VU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "VANUATU",
+            "tekst": "VANUATU"
+          }
+        }
+      }
+    ],
+    "FI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FINLAND",
+            "tekst": "FINLAND"
+          }
+        }
+      }
+    ],
+    "FJ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FIJI",
+            "tekst": "FIJI"
+          }
+        }
+      }
+    ],
+    "FK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FALKLANDSØYENE",
+            "tekst": "FALKLANDSØYENE"
+          }
+        }
+      }
+    ],
+    "FM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MIKRONESIAFØDERASJONEN",
+            "tekst": "MIKRONESIAFØDERASJONEN"
+          }
+        }
+      }
+    ],
+    "FO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FÆRØYENE",
+            "tekst": "FÆRØYENE"
+          }
+        }
+      }
+    ],
+    "FR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FRANKRIKE",
+            "tekst": "FRANKRIKE"
+          }
+        }
+      }
+    ],
+    "WF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "WALLIS OG FUTUNA",
+            "tekst": "WALLIS OG FUTUNA"
+          }
+        }
+      }
+    ],
+    "GA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GABON",
+            "tekst": "GABON"
+          }
+        }
+      }
+    ],
+    "GB": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "STORBRITANNIA",
+            "tekst": "STORBRITANNIA"
+          }
+        }
+      }
+    ],
+    "WS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAMOA",
+            "tekst": "SAMOA"
+          }
+        }
+      }
+    ],
+    "GD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GRENADA",
+            "tekst": "GRENADA"
+          }
+        }
+      }
+    ],
+    "GE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GEORGIA",
+            "tekst": "GEORGIA"
+          }
+        }
+      }
+    ],
+    "GF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FRANSK GUYANA",
+            "tekst": "FRANSK GUYANA"
+          }
+        }
+      }
+    ],
+    "GG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUERNSEY",
+            "tekst": "GUERNSEY"
+          }
+        }
+      }
+    ],
+    "GH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GHANA",
+            "tekst": "GHANA"
+          }
+        }
+      }
+    ],
+    "GI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GIBRALTAR",
+            "tekst": "GIBRALTAR"
+          }
+        }
+      }
+    ],
+    "GL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GRØNLAND",
+            "tekst": "GRØNLAND"
+          }
+        }
+      }
+    ],
+    "GM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GAMBIA",
+            "tekst": "GAMBIA"
+          }
+        }
+      }
+    ],
+    "GN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUINEA",
+            "tekst": "GUINEA"
+          }
+        }
+      }
+    ],
+    "GP": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUADELOUPE",
+            "tekst": "GUADELOUPE"
+          }
+        }
+      }
+    ],
+    "GQ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "EKVATORIAL-GUINEA",
+            "tekst": "EKVATORIAL-GUINEA"
+          }
+        }
+      }
+    ],
+    "GR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HELLAS",
+            "tekst": "HELLAS"
+          }
+        }
+      }
+    ],
+    "GS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SØR-GEORGIA OG SØR-SANDWICHØYENE",
+            "tekst": "SØR-GEORGIA OG SØR-SANDWICHØYENE"
+          }
+        }
+      }
+    ],
+    "GT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUATEMALA",
+            "tekst": "GUATEMALA"
+          }
+        }
+      }
+    ],
+    "GU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUAM",
+            "tekst": "GUAM"
+          }
+        }
+      }
+    ],
+    "GW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUINEA-BISSAU",
+            "tekst": "GUINEA-BISSAU"
+          }
+        }
+      }
+    ],
+    "GY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "GUYANA",
+            "tekst": "GUYANA"
+          }
+        }
+      }
+    ],
+    "XK": [
+      {
+        "gyldigFra": "2009-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KOSOVO",
+            "tekst": "KOSOVO"
+          }
+        }
+      }
+    ],
+    "HK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HONGKONG",
+            "tekst": "HONGKONG"
+          }
+        }
+      }
+    ],
+    "HM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HEARD- OG MCDONALD-ØYENE",
+            "tekst": "HEARD- OG MCDONALD-ØYENE"
+          }
+        }
+      }
+    ],
+    "HN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HONDURAS",
+            "tekst": "HONDURAS"
+          }
+        }
+      }
+    ],
+    "HR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KROATIA",
+            "tekst": "KROATIA"
+          }
+        }
+      }
+    ],
+    "HT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "HAITI",
+            "tekst": "HAITI"
+          }
+        }
+      }
+    ],
+    "YE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "JEMEN",
+            "tekst": "JEMEN"
+          }
+        }
+      }
+    ],
+    "HU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "UNGARN",
+            "tekst": "UNGARN"
+          }
+        }
+      }
+    ],
+    "YT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MAYOTTE",
+            "tekst": "MAYOTTE"
+          }
+        }
+      }
+    ],
+    "ID": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "INDONESIA",
+            "tekst": "INDONESIA"
+          }
+        }
+      }
+    ],
+    "IE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "IRLAND",
+            "tekst": "IRLAND"
+          }
+        }
+      }
+    ],
+    "IL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ISRAEL",
+            "tekst": "ISRAEL"
+          }
+        }
+      }
+    ],
+    "IM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ISLE OF MAN",
+            "tekst": "ISLE OF MAN"
+          }
+        }
+      }
+    ],
+    "IN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "INDIA",
+            "tekst": "INDIA"
+          }
+        }
+      }
+    ],
+    "IO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "DET BRITISKE TERRITORIET I INDIAHAVET",
+            "tekst": "DET BRITISKE TERRITORIET I INDIAHAVET"
+          }
+        }
+      }
+    ],
+    "ZA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SØR-AFRIKA",
+            "tekst": "SØR-AFRIKA"
+          }
+        }
+      }
+    ],
+    "IQ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "IRAK",
+            "tekst": "IRAK"
+          }
+        }
+      }
+    ],
+    "IR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "IRAN",
+            "tekst": "IRAN"
+          }
+        }
+      }
+    ],
+    "IS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ISLAND",
+            "tekst": "ISLAND"
+          }
+        }
+      }
+    ],
+    "IT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ITALIA",
+            "tekst": "ITALIA"
+          }
+        }
+      }
+    ],
+    "ZM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ZAMBIA",
+            "tekst": "ZAMBIA"
+          }
+        }
+      }
+    ],
+    "JE": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "JERSEY",
+            "tekst": "JERSEY"
+          }
+        }
+      }
+    ],
+    "ZW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "ZIMBABWE",
+            "tekst": "ZIMBABWE"
+          }
+        }
+      }
+    ],
+    "JM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "JAMAICA",
+            "tekst": "JAMAICA"
+          }
+        }
+      }
+    ],
+    "JO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "JORDAN",
+            "tekst": "JORDAN"
+          }
+        }
+      }
+    ],
+    "JP": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "JAPAN",
+            "tekst": "JAPAN"
+          }
+        }
+      }
+    ],
+    "KE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KENYA",
+            "tekst": "KENYA"
+          }
+        }
+      }
+    ],
+    "KG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KIRGISISTAN",
+            "tekst": "KIRGISISTAN"
+          }
+        }
+      }
+    ],
+    "KH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KAMBODSJA",
+            "tekst": "KAMBODSJA"
+          }
+        }
+      }
+    ],
+    "KI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KIRIBATI",
+            "tekst": "KIRIBATI"
+          }
+        }
+      }
+    ],
+    "KM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KOMORENE",
+            "tekst": "KOMORENE"
+          }
+        }
+      }
+    ],
+    "KN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT KITTS OG NEVIS",
+            "tekst": "SAINT KITTS OG NEVIS"
+          }
+        }
+      }
+    ],
+    "KP": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NORD-KOREA",
+            "tekst": "NORD-KOREA"
+          }
+        }
+      }
+    ],
+    "KR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SØR-KOREA",
+            "tekst": "SØR-KOREA"
+          }
+        }
+      }
+    ],
+    "KW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KUWAIT",
+            "tekst": "KUWAIT"
+          }
+        }
+      }
+    ],
+    "KY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "CAYMANØYENE",
+            "tekst": "CAYMANØYENE"
+          }
+        }
+      }
+    ],
+    "KZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "KASAKHSTAN",
+            "tekst": "KASAKHSTAN"
+          }
+        }
+      }
+    ],
+    "LA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LAOS",
+            "tekst": "LAOS"
+          }
+        }
+      }
+    ],
+    "LB": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LIBANON",
+            "tekst": "LIBANON"
+          }
+        }
+      }
+    ],
+    "LC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT LUCIA",
+            "tekst": "SAINT LUCIA"
+          }
+        }
+      }
+    ],
+    "LI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LIECHTENSTEIN",
+            "tekst": "LIECHTENSTEIN"
+          }
+        }
+      }
+    ],
+    "LK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SRI LANKA",
+            "tekst": "SRI LANKA"
+          }
+        }
+      }
+    ],
+    "LR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LIBERIA",
+            "tekst": "LIBERIA"
+          }
+        }
+      }
+    ],
+    "LS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LESOTHO",
+            "tekst": "LESOTHO"
+          }
+        }
+      }
+    ],
+    "LT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LITAUEN",
+            "tekst": "LITAUEN"
+          }
+        }
+      }
+    ],
+    "LU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LUXEMBOURG",
+            "tekst": "LUXEMBOURG"
+          }
+        }
+      }
+    ],
+    "LV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LATVIA",
+            "tekst": "LATVIA"
+          }
+        }
+      }
+    ],
+    "LY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "LIBYA",
+            "tekst": "LIBYA"
+          }
+        }
+      }
+    ],
+    "MA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MAROKKO",
+            "tekst": "MAROKKO"
+          }
+        }
+      }
+    ],
+    "MC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MONACO",
+            "tekst": "MONACO"
+          }
+        }
+      }
+    ],
+    "MD": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MOLDOVA",
+            "tekst": "MOLDOVA"
+          }
+        }
+      }
+    ],
+    "ME": [
+      {
+        "gyldigFra": "2006-11-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MONTENEGRO",
+            "tekst": "MONTENEGRO"
+          }
+        }
+      }
+    ],
+    "MF": [
+      {
+        "gyldigFra": "2011-12-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT MARTIN",
+            "tekst": "SAINT MARTIN"
+          }
+        }
+      }
+    ],
+    "MG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MADAGASKAR",
+            "tekst": "MADAGASKAR"
+          }
+        }
+      }
+    ],
+    "MH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MARSHALLØYENE",
+            "tekst": "MARSHALLØYENE"
+          }
+        }
+      }
+    ],
+    "MK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NORD-MAKEDONIA",
+            "tekst": "NORD-MAKEDONIA"
+          }
+        }
+      }
+    ],
+    "ML": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MALI",
+            "tekst": "MALI"
+          }
+        }
+      }
+    ],
+    "MM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MYANMAR (BURMA)",
+            "tekst": "MYANMAR (BURMA)"
+          }
+        }
+      }
+    ],
+    "MN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MONGOLIA",
+            "tekst": "MONGOLIA"
+          }
+        }
+      }
+    ],
+    "MO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MACAO",
+            "tekst": "MACAO"
+          }
+        }
+      }
+    ],
+    "MP": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NORD-MARIANENE",
+            "tekst": "NORD-MARIANENE"
+          }
+        }
+      }
+    ],
+    "MQ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MARTINIQUE",
+            "tekst": "MARTINIQUE"
+          }
+        }
+      }
+    ],
+    "MR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MAURITANIA",
+            "tekst": "MAURITANIA"
+          }
+        }
+      }
+    ],
+    "MS": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MONTSERRAT",
+            "tekst": "MONTSERRAT"
+          }
+        }
+      }
+    ],
+    "MT": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MALTA",
+            "tekst": "MALTA"
+          }
+        }
+      }
+    ],
+    "MU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MAURITIUS",
+            "tekst": "MAURITIUS"
+          }
+        }
+      }
+    ],
+    "MV": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MALDIVENE",
+            "tekst": "MALDIVENE"
+          }
+        }
+      }
+    ],
+    "MW": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MALAWI",
+            "tekst": "MALAWI"
+          }
+        }
+      }
+    ],
+    "MX": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MEXICO",
+            "tekst": "MEXICO"
+          }
+        }
+      }
+    ],
+    "MY": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MALAYSIA",
+            "tekst": "MALAYSIA"
+          }
+        }
+      }
+    ],
+    "MZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "MOSAMBIK",
+            "tekst": "MOSAMBIK"
+          }
+        }
+      }
+    ],
+    "NA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NAMIBIA",
+            "tekst": "NAMIBIA"
+          }
+        }
+      }
+    ],
+    "NC": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NY-CALEDONIA",
+            "tekst": "NY-CALEDONIA"
+          }
+        }
+      }
+    ],
+    "NE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NIGER",
+            "tekst": "NIGER"
+          }
+        }
+      }
+    ],
+    "NF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NORFOLKØYA",
+            "tekst": "NORFOLKØYA"
+          }
+        }
+      }
+    ],
+    "NG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NIGERIA",
+            "tekst": "NIGERIA"
+          }
+        }
+      }
+    ],
+    "NI": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NICARAGUA",
+            "tekst": "NICARAGUA"
+          }
+        }
+      }
+    ],
+    "NL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NEDERLAND",
+            "tekst": "NEDERLAND"
+          }
+        }
+      }
+    ],
+    "NO": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NORGE",
+            "tekst": "NORGE"
+          }
+        }
+      }
+    ],
+    "NP": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NEPAL",
+            "tekst": "NEPAL"
+          }
+        }
+      }
+    ],
+    "NR": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NAURU",
+            "tekst": "NAURU"
+          }
+        }
+      }
+    ],
+    "NU": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NIUE",
+            "tekst": "NIUE"
+          }
+        }
+      }
+    ],
+    "NZ": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "NEW ZEALAND",
+            "tekst": "NEW ZEALAND"
+          }
+        }
+      }
+    ],
+    "OM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "OMAN",
+            "tekst": "OMAN"
+          }
+        }
+      }
+    ],
+    "PA": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PANAMA",
+            "tekst": "PANAMA"
+          }
+        }
+      }
+    ],
+    "PE": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PERU",
+            "tekst": "PERU"
+          }
+        }
+      }
+    ],
+    "PF": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FRANSK POLYNESIA",
+            "tekst": "FRANSK POLYNESIA"
+          }
+        }
+      }
+    ],
+    "PG": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PAPUA NY-GUINEA",
+            "tekst": "PAPUA NY-GUINEA"
+          }
+        }
+      }
+    ],
+    "PH": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "FILIPPINENE",
+            "tekst": "FILIPPINENE"
+          }
+        }
+      }
+    ],
+    "PK": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PAKISTAN",
+            "tekst": "PAKISTAN"
+          }
+        }
+      }
+    ],
+    "PL": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "POLEN",
+            "tekst": "POLEN"
+          }
+        }
+      }
+    ],
+    "PM": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "SAINT-PIERRE OG MIQUELON",
+            "tekst": "SAINT-PIERRE OG MIQUELON"
+          }
+        }
+      }
+    ],
+    "PN": [
+      {
+        "gyldigFra": "1900-01-01",
+        "gyldigTil": "9999-12-31",
+        "beskrivelser": {
+          "nb": {
+            "term": "PITCAIRN",
+            "tekst": "PITCAIRN"
+          }
+        }
+      }
+    ]
+  }
+}

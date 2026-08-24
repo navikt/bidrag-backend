@@ -29,24 +29,26 @@ class BisysConsumer(
     fun getJobNames(): List<String> = getRestTemplate().getForEntity(urlBuilder.pathSegment("jobs").build().toUri(), List::class.java).body as List<String>
 
     fun getRunningExecutions(jobName: String): List<Long> {
-        // [\w\-]+ – kun bokstaver, tall, understrek og bindestrek, minst ett tegn. Valideres her (ikke i en delt funksjon)
-        // slik at statisk analyse kan verifisere at verdien er sanert før den brukes i URL-en under.
-        require(jobName.matches(Regex("[\\w\\-]+"))) { "Ugyldig jobName: $jobName" }
+        val safeJobName =
+            Regex("[\\w\\-]+").matchEntire(jobName)?.value
+                ?: throw IllegalArgumentException("Ugyldig jobName: $jobName")
         return getRestTemplate()
             .getForEntity(
                 urlBuilder.pathSegment("running", "executions", "{jobName}").build().toUriString(),
                 List::class.java,
-                jobName,
+                safeJobName,
             ).body as List<Long>
     }
 
     fun launchJob(jobName: String): Long? {
-        require(jobName.matches(Regex("[\\w\\-]+"))) { "Ugyldig jobName: $jobName" }
+        val safeJobName =
+            Regex("[\\w\\-]+").matchEntire(jobName)?.value
+                ?: throw IllegalArgumentException("Ugyldig jobName: $jobName")
         return getRestTemplate()
             .getForEntity(
                 urlBuilder.pathSegment("launch", "{jobName}").build().toUriString(),
                 Long::class.java,
-                jobName,
+                safeJobName,
             ).body
     }
 

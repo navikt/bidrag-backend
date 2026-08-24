@@ -1,0 +1,4 @@
+server.port: 8183
+BIDRAG_DOKUMENTMAL_URL: http://localhost:3000
+BIDRAG_PDFGEN_URL: http://localhost:3054
+PDFGEN_VERSION: V1

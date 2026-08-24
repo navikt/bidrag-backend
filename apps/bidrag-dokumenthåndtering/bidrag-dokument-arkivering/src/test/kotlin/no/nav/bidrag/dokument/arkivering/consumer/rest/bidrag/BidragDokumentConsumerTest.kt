@@ -38,10 +38,11 @@ class BidragDokumentConsumerTest {
     fun skalHenteJournalpostDersomJournalpostIdEksisterer() {
         // given
         val journalpostResponse = mockJournalpostResponse()
+        val journalpostId = "31712692"
         val path =
             String.format(
                 BidragDokumentConsumer.HENTE_JOURNALPOST_PATH,
-                "BID-" + journalpostResponse.journalpost!!.journalpostId,
+                "BID-$journalpostId",
             )
         Mockito
             .`when`(
@@ -54,10 +55,7 @@ class BidragDokumentConsumerTest {
             ).thenReturn(ResponseEntity(journalpostResponse, HttpStatus.OK))
 
         // when
-        val respons =
-            bidragDokumentConsumer!!.hentBidragJournalpost(
-                journalpostResponse.journalpost!!.journalpostId!!,
-            )
+        val respons = bidragDokumentConsumer!!.hentBidragJournalpost(journalpostId)
         assert(respons.fetchBody().isPresent)
         val (journalpost) = respons.fetchBody().get()
         org.junit.jupiter.api.Assertions.assertAll(

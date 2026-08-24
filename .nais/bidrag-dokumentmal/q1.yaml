@@ -1,0 +1,6 @@
+ingresses:
+  - https://bidrag-dokumentmal.intern.dev.nav.no
+azure_access_inbound:
+  - application: bidrag-ui-feature
+  - application: bidrag-ui
+  - application: bidrag-dokument-produksjon
