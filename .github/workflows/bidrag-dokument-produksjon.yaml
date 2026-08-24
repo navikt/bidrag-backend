@@ -23,8 +23,23 @@ on:
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/data/**'
 
 jobs:
+  detect_changes:
+    name: "Sjekk om appen faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
   bygg_og_test:
-    if: github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && (github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main')
     name: "Bygg og test"
     runs-on: ubuntu-latest
     permissions:
@@ -58,7 +73,8 @@ jobs:
         run: mvn -B -fae verify -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon -am
 
   deploy_prod:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-dokument-produksjon-prod-${{ github.ref }}
@@ -83,7 +99,8 @@ jobs:
       tag: bidrag-dokument-produksjon
 
   deploy_q1:
-    if: success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q1'))
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && (success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q1')))
     name: "Build and deploy to Q1"
     concurrency:
       group: deploy-dokument-produksjon-q1-${{ github.ref }}

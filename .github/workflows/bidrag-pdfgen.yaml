@@ -15,15 +15,30 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-pdfgen/**.yaml'
-      - '.github/workflows/bidrag-pdfgen.yaml'
+#      - '.github/workflows/bidrag-pdfgen.yaml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/**'
 
 # bidrag-pdfgen er en Python/WeasyPrint-app, ikke et Maven-prosjekt, og kan derfor ikke bruke
 # den delte bygg_og_deploy(_prod).yaml-workflowen, som alltid kjører et `mvn ... clean install`-steg.
 # Denne workflowen er derfor selvstendig, tilsvarende bidrag-dokumentmal.yaml.
 jobs:
+  detect_changes:
+    name: "Sjekk om appen faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
   deploy_prod:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-pdfgen-prod-${{ github.ref }}
@@ -53,7 +68,8 @@ jobs:
           IMAGE: ${{ steps.docker-push.outputs.image }}
 
   deploy_q1:
-    if: success() && ((github.event_name == 'push' && github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q1'))
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && (success() && ((github.event_name == 'push' && github.ref != 'refs/heads/main' && github.actor != 'dependabot[bot]') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'q1')))
     name: "Build and deploy to Q1"
     concurrency:
       group: deploy-pdfgen-q1-${{ github.ref }}

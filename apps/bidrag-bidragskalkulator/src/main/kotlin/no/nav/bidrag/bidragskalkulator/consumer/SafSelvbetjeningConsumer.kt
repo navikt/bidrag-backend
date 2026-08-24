@@ -22,6 +22,7 @@ class SafSelvbetjeningConsumer(
     private val properties: SafSelvbetjeningConfigurationProperties,
     private val restTemplate: RestTemplate,
 ) : BaseConsumer(restTemplate, "saf.selvbetjening") {
+    private val safePathSegment = Regex("^[A-Za-z0-9_-]+$")
 
     init {
         check(properties.url.isNotEmpty()) { "saf.selvbetjening.url mangler i konfigurasjon" }
@@ -40,7 +41,11 @@ class SafSelvbetjeningConsumer(
         .toUri()
 
     fun hentDokument(journalpostId: String, dokumentInfoId: String, variantFormat: String): HentDokumentRespons {
-        val url = hentDokumentUrl(journalpostId, dokumentInfoId, variantFormat)
+        val safeJournalpostId = sanitizePathSegment(journalpostId, "Ugyldig journalpostId")
+        val safeDokumentInfoId = sanitizePathSegment(dokumentInfoId, "Ugyldig dokumentInfoId")
+        val safeVariantFormat = sanitizePathSegment(variantFormat, "Ugyldig variantFormat")
+
+        val url = hentDokumentUrl(safeJournalpostId, safeDokumentInfoId, safeVariantFormat)
 
         return try {
             val (respons, varighet) = measureTimedValue {
@@ -82,6 +87,8 @@ class SafSelvbetjeningConsumer(
             throw RuntimeException("Kunne ikke hente dokument", e)
         }
     }
+
+    private fun sanitizePathSegment(value: String, errorMessage: String) = safePathSegment.matchEntire(value)?.value ?: throw IllegalArgumentException(errorMessage)
 
     fun hentDokumenterForIdent(
         ident: String,
