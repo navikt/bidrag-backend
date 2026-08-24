@@ -131,16 +131,17 @@ internal class DokumentMetadataCollectorTest {
         metadataCollector = withMetadataCollector()
     }
 
-    private fun withMetadataCollector() = DokumentMetadataCollector(
-        personService,
-        sakService,
-        kodeverkService,
-        vedtakService,
-        behandlingService,
-        sjablongService,
-        saksbehandlerInfoManager,
-        organisasjonService,
-    )
+    private fun withMetadataCollector() =
+        DokumentMetadataCollector(
+            personService,
+            sakService,
+            kodeverkService,
+            vedtakService,
+            behandlingService,
+            sjablongService,
+            saksbehandlerInfoManager,
+            organisasjonService,
+        )
 
     @AfterEach
     fun resetMocks() {

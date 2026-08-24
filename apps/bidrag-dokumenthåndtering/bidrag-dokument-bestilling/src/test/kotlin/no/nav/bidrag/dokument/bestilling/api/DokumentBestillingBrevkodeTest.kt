@@ -49,9 +49,10 @@ class DokumentBestillingBrevkodeTest : AbstractControllerTest() {
         fun brevkoderUtgaaende() = alleDokumentmaler.filter { it.type != DokumentMalType.NOTAT }
 
         @JvmStatic
-        fun brevkoderEnhetKontaktinfo() = brevkoderUtgaaende()
-            .filter { it !is DokumentMalBucket }
-            .filter { it.inneholderDatagrunnlag(DataGrunnlag.ENHET_KONTAKT_INFO) }
+        fun brevkoderEnhetKontaktinfo() =
+            brevkoderUtgaaende()
+                .filter { it !is DokumentMalBucket }
+                .filter { it.inneholderDatagrunnlag(DataGrunnlag.ENHET_KONTAKT_INFO) }
 
         @JvmStatic
         fun brevkoderVedtak() = brevkoderUtgaaende().filter { it.type == DokumentMalType.VEDTAK }

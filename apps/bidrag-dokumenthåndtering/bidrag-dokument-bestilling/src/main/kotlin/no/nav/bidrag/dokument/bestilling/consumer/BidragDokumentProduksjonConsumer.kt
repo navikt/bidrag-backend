@@ -20,19 +20,21 @@ class BidragDokumentProduksjonConsumer(
     @Value($$"${BIDRAG_DOKUMENT_PRODUKSJON_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-dokument-produksjon") {
-    private fun createUri(path: String?) = UriComponentsBuilder
-        .fromUri(url)
-        .path(path ?: "")
-        .build()
-        .toUri()
+    private fun createUri(path: String?) =
+        UriComponentsBuilder
+            .fromUri(url)
+            .path(path ?: "")
+            .build()
+            .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     fun opprettPDF(
         malId: String,
         request: DokumentBestilling,
-    ): ByteArray = try {
-        postForNonNullEntity(createUri("/api/v2/dokumentmal/pdf/$malId"), request)
-    } catch (e: HttpStatusCodeException) {
-        throw e
-    }
+    ): ByteArray =
+        try {
+            postForNonNullEntity(createUri("/api/v2/dokumentmal/pdf/$malId"), request)
+        } catch (e: HttpStatusCodeException) {
+            throw e
+        }
 }

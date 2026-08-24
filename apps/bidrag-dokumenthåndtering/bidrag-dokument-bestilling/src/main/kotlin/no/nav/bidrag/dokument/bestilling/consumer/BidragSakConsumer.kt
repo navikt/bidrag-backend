@@ -24,11 +24,12 @@ class BidragSakConsumer(
         private val LOGGER = LoggerFactory.getLogger(BidragSakConsumer::class.java)
     }
 
-    private fun createUri(path: String?) = UriComponentsBuilder
-        .fromUri(url)
-        .path(path ?: "")
-        .build()
-        .toUri()
+    private fun createUri(path: String?) =
+        UriComponentsBuilder
+            .fromUri(url)
+            .path(path ?: "")
+            .build()
+            .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     fun hentSak(saksnr: String): BidragssakDto? {

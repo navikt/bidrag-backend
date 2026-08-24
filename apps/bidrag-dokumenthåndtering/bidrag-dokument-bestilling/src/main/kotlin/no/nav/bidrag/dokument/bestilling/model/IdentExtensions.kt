@@ -10,17 +10,19 @@ typealias Ident = String
 val Ident.erDødfødt get() = this.matches("^[0-9]{6}000[0-1][0-9]".toRegex())
 val Ident.erSamhandler get() = this.matches("^[8-9][0-9]{10}$".toRegex())
 
-fun PersonDto.tilVisningsnavnVoksen() = if (isKode6()) {
-    ""
-} else {
-    fornavnEtternavn()
-}
+fun PersonDto.tilVisningsnavnVoksen() =
+    if (isKode6()) {
+        ""
+    } else {
+        fornavnEtternavn()
+    }
 
-fun PersonDto.tilVisningsnavnBarn(språk: String) = if (isKode6()) {
-    hentKode6NavnBarn(språk)
-} else {
-    fornavnEtternavn()
-}
+fun PersonDto.tilVisningsnavnBarn(språk: String) =
+    if (isKode6()) {
+        hentKode6NavnBarn(språk)
+    } else {
+        fornavnEtternavn()
+    }
 
 fun PersonDto.hentFodselsdato(): LocalDate? = if (isKode6()) null else fødselsdato
 

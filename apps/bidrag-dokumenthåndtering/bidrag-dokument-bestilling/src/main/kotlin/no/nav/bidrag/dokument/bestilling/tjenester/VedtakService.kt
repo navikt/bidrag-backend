@@ -920,27 +920,29 @@ fun List<GrunnlagDto>.finnTotalInntektForRolle(
         ?: BigDecimal.ZERO
 }
 
-fun List<GrunnlagDto>.mapSamværAldersjustering(periode: VedtakPeriodeReferanse): Samværsperiode? = if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
-    Samværsperiode(
-        samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
-        samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
-        aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
-        periode = periode.periode,
-    )
-} else {
-    null
-}
+fun List<GrunnlagDto>.mapSamværAldersjustering(periode: VedtakPeriodeReferanse): Samværsperiode? =
+    if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
+        Samværsperiode(
+            samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
+            samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
+            aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
+            periode = periode.periode,
+        )
+    } else {
+        null
+    }
 
-fun List<GrunnlagDto>.mapSamvær(periode: VedtakPeriodeReferanse): Samværsperiode? = if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
-    Samværsperiode(
-        samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
-        samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
-        aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
-        periode = periode.periode,
-    )
-} else {
-    null
-}
+fun List<GrunnlagDto>.mapSamvær(periode: VedtakPeriodeReferanse): Samværsperiode? =
+    if (periode.typeBehandling == TypeBehandling.BIDRAG && periode.resultatKode?.erDirekteAvslag() == false) {
+        Samværsperiode(
+            samværsfradragBeløp = finnSamværsfradrag(periode.grunnlagReferanseListe),
+            samværsklasse = finnSamværsklasse(periode.grunnlagReferanseListe),
+            aldersgruppe = finnSamværAldersgruppe(periode.grunnlagReferanseListe),
+            periode = periode.periode,
+        )
+    } else {
+        null
+    }
 
 fun List<GrunnlagDto>.finnSamværsklasse(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
@@ -1016,42 +1018,45 @@ fun List<GrunnlagDto>.mapInntekter(
     return inntekter + hentTotalInntektForPeriode(periode, innteksgrense)
 }
 
-fun List<AndelUnderholdskostnadPeriode>.sammenstillDeMedSammeVerdiAndelUnderhold() = this
-    .grupperPerioder()
-    .map {
-        it.reduce { acc, underhold ->
-            underhold.copy(
-                periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
-            )
-        }
-    }.sortedBy { it.periode.fom }
-
-fun List<UnderholdskostnaderPeriode>.sammenstillDeMedSammeVerdiUnderhold() = this
-    .groupBy { it.rolletype }
-    .flatMap { (_, underholdList) ->
-        underholdList.grupperPerioder().map {
+fun List<AndelUnderholdskostnadPeriode>.sammenstillDeMedSammeVerdiAndelUnderhold() =
+    this
+        .grupperPerioder()
+        .map {
             it.reduce { acc, underhold ->
                 underhold.copy(
                     periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
                 )
             }
-        }
-    }.sortedBy { it.periode.fom }
+        }.sortedBy { it.periode.fom }
 
-fun List<InntektPeriode>.sammenstillDeMedSammeVerdiInntekter() = this
-    .groupBy { it.rolle }
-    .flatMap { (_, rolleInntektList) ->
-        rolleInntektList.grupperPerioder().map {
-            it.reduce { acc, inntekt ->
-                inntekt.copy(
-                    periode = ÅrMånedsperiode(acc.periode.fom, inntekt.periode.til),
-                    innteksgrense = maxOf(acc.innteksgrense, inntekt.innteksgrense),
-                    beløpÅr = acc.beløpÅr,
-                    inntektPerioder = acc.inntektPerioder,
-                )
+fun List<UnderholdskostnaderPeriode>.sammenstillDeMedSammeVerdiUnderhold() =
+    this
+        .groupBy { it.rolletype }
+        .flatMap { (_, underholdList) ->
+            underholdList.grupperPerioder().map {
+                it.reduce { acc, underhold ->
+                    underhold.copy(
+                        periode = ÅrMånedsperiode(acc.periode.fom, underhold.periode.til),
+                    )
+                }
             }
-        }
-    }.sortedWith(compareBy({ it.rolle }, { it.periode.fom }, { it.beløp }))
+        }.sortedBy { it.periode.fom }
+
+fun List<InntektPeriode>.sammenstillDeMedSammeVerdiInntekter() =
+    this
+        .groupBy { it.rolle }
+        .flatMap { (_, rolleInntektList) ->
+            rolleInntektList.grupperPerioder().map {
+                it.reduce { acc, inntekt ->
+                    inntekt.copy(
+                        periode = ÅrMånedsperiode(acc.periode.fom, inntekt.periode.til),
+                        innteksgrense = maxOf(acc.innteksgrense, inntekt.innteksgrense),
+                        beløpÅr = acc.beløpÅr,
+                        inntektPerioder = acc.inntektPerioder,
+                    )
+                }
+            }
+        }.sortedWith(compareBy({ it.rolle }, { it.periode.fom }, { it.beløp }))
 
 fun <T : DataPeriode> List<T>.grupperPerioder(): List<List<T>> {
     if (this.isEmpty()) return emptyList()
@@ -1074,33 +1079,35 @@ fun <T : DataPeriode> List<T>.grupperPerioder(): List<List<T>> {
     return result
 }
 
-fun List<Samværsperiode>.sammenstillDeMedSammeVerdi() = this
-    .grupperPerioder()
-    .map { samværList ->
-        samværList.reduce { acc, samvær ->
-            Samværsperiode(
-                samværsfradragBeløp = acc.samværsfradragBeløp,
-                samværsklasse = acc.samværsklasse,
-                aldersgruppe = acc.aldersgruppe,
-                periode = ÅrMånedsperiode(acc.periode.fom, samvær.periode.til),
+fun List<Samværsperiode>.sammenstillDeMedSammeVerdi() =
+    this
+        .grupperPerioder()
+        .map { samværList ->
+            samværList.reduce { acc, samvær ->
+                Samværsperiode(
+                    samværsfradragBeløp = acc.samværsfradragBeløp,
+                    samværsklasse = acc.samværsklasse,
+                    aldersgruppe = acc.aldersgruppe,
+                    periode = ÅrMånedsperiode(acc.periode.fom, samvær.periode.til),
+                )
+            }
+        }.sortedBy { it.periode.fom }
+
+fun List<InntektPeriode>.sammenstillDeMedSammeBeskrivelse() =
+    groupBy { Pair(it.beskrivelse, it.rolle) }.map { (_, inntekter) ->
+        inntekter.reduce { acc, inntekt ->
+            InntektPeriode(
+                inntektPerioder = acc.inntektPerioder + inntekt.inntektPerioder,
+                inntektOpprinneligPerioder = acc.inntektOpprinneligPerioder + inntekt.inntektOpprinneligPerioder,
+                periode = acc.periode,
+                typer = acc.typer + inntekt.typer,
+                periodeTotalinntekt = acc.periodeTotalinntekt,
+                nettoKapitalInntekt = acc.nettoKapitalInntekt,
+                beløpÅr = acc.beløpÅr,
+                fødselsnummer = acc.fødselsnummer,
+                beløp = acc.beløp + inntekt.beløp,
+                rolle = acc.rolle,
+                innteksgrense = acc.innteksgrense,
             )
         }
-    }.sortedBy { it.periode.fom }
-
-fun List<InntektPeriode>.sammenstillDeMedSammeBeskrivelse() = groupBy { Pair(it.beskrivelse, it.rolle) }.map { (_, inntekter) ->
-    inntekter.reduce { acc, inntekt ->
-        InntektPeriode(
-            inntektPerioder = acc.inntektPerioder + inntekt.inntektPerioder,
-            inntektOpprinneligPerioder = acc.inntektOpprinneligPerioder + inntekt.inntektOpprinneligPerioder,
-            periode = acc.periode,
-            typer = acc.typer + inntekt.typer,
-            periodeTotalinntekt = acc.periodeTotalinntekt,
-            nettoKapitalInntekt = acc.nettoKapitalInntekt,
-            beløpÅr = acc.beløpÅr,
-            fødselsnummer = acc.fødselsnummer,
-            beløp = acc.beløp + inntekt.beløp,
-            rolle = acc.rolle,
-            innteksgrense = acc.innteksgrense,
-        )
     }
-}

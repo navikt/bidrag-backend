@@ -47,29 +47,34 @@ class BestillingManglerMottaker : RuntimeException("Bestilling mangler mottaker"
 
 fun fantIkkeVedtak(vedtakId: Int): Nothing = throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Fant ikke vedtak med id $vedtakId")
 
-fun manglerBehandlingId(): Nothing = throw HttpClientErrorException(
-    HttpStatus.BAD_REQUEST,
-    "Forespørsel for opprettelse av varselbrev mangler behandlingId",
-)
+fun manglerBehandlingId(): Nothing =
+    throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Forespørsel for opprettelse av varselbrev mangler behandlingId",
+    )
 
-fun manglerVedtakId(): Nothing = throw HttpClientErrorException(
-    HttpStatus.BAD_REQUEST,
-    "Forespørsel for opprettelse av vedtaksbrev mangler vedtakId",
-)
+fun manglerVedtakId(): Nothing =
+    throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Forespørsel for opprettelse av vedtaksbrev mangler vedtakId",
+    )
 
 fun fantIkkeSak(saksnummer: String): Nothing = throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Fant ikke sak med id $saksnummer")
 
-fun dokumentMalEksistererIkke(dokumentmalKode: String): Nothing = throw HttpClientErrorException(
-    HttpStatus.BAD_REQUEST,
-    "Dokumentmal $dokumentmalKode eksisterer ikke",
-)
+fun dokumentMalEksistererIkke(dokumentmalKode: String): Nothing =
+    throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Dokumentmal $dokumentmalKode eksisterer ikke",
+    )
 
-fun kanIkkeBestilleDokumentMal(kode: String): Nothing = throw HttpClientErrorException(
-    HttpStatus.BAD_REQUEST,
-    "Kan ikke bestille dokumentmal $kode.",
-)
+fun kanIkkeBestilleDokumentMal(kode: String): Nothing =
+    throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Kan ikke bestille dokumentmal $kode.",
+    )
 
-fun manglerDataGrunnlag(dokumentMal: DokumentMal): Nothing = throw HttpClientErrorException(
-    HttpStatus.BAD_REQUEST,
-    "Forespørsel mangler informasjon for å opprette dokumentmal ${dokumentMal.kode}.",
-)
+fun manglerDataGrunnlag(dokumentMal: DokumentMal): Nothing =
+    throw HttpClientErrorException(
+        HttpStatus.BAD_REQUEST,
+        "Forespørsel mangler informasjon for å opprette dokumentmal ${dokumentMal.kode}.",
+    )

@@ -135,48 +135,50 @@ class DokumentBestillingKontroller(
         description = "Henter brevkoder som er støttet av applikasjonen",
         security = [SecurityRequirement(name = "bearer-key")],
     )
-    fun hentStottedeBrevkoder(): List<String> = alleDokumentmaler
-        .filter { it.enabled && it !is DokumentMalBucket }
-        .map { it.kode }
-        .let {
-            LOGGER.info("Hentet støttede brevkoder $it")
-            it
-        }
+    fun hentStottedeBrevkoder(): List<String> =
+        alleDokumentmaler
+            .filter { it.enabled && it !is DokumentMalBucket }
+            .map { it.kode }
+            .let {
+                LOGGER.info("Hentet støttede brevkoder $it")
+                it
+            }
 
     @GetMapping("/dokumentmal/detaljer")
     @Operation(
         description = "Henter detaljer om alle støttede dokumentmaler",
         security = [SecurityRequirement(name = "bearer-key")],
     )
-    fun hentDokumentmalDetaljer(): Map<String, DokumentMalDetaljer> = alleDokumentmaler
-        .associate {
-            it.kode to
-                DokumentMalDetaljer(
-                    malId = it.kode,
-                    beskrivelse = it.beskrivelse,
-                    tittel = it.tittel,
-                    type =
-                    when (it.type) {
-                        DokumentMalType.NOTAT -> DokumentType.NOTAT
-                        else -> DokumentType.UTGÅENDE
-                    },
-                    kanBestilles = it.enabled,
-                    redigerbar = it.redigerbar,
-                    kreverBehandling = it.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING) && listOf("BI01S04", "BI01S18", "BI01S08", "BI01S27").contains(it.kode),
-                    kreverVedtak = it.inneholderDatagrunnlag(DataGrunnlag.VEDTAK),
-                    språk =
-                    if (it is DokumentMalBucket) {
-                        listOf(it.språk)
-                    } else if (it is DokumentMalBrevserver) {
-                        it.støttetSpråk
-                    } else {
-                        emptyList()
-                    },
-                    innholdType = it.type,
-                    nyDokumentProduksjon = it is DokumentMalProduksjon,
-                    statiskInnhold = it is DokumentMalBucket,
-                    gruppeVisningsnavn = if (it is DokumentMalBucket) it.gruppeVisningsnavn else null,
-                    tilhorerEnheter = if (it is DokumentMalBucket) it.tilhørerEnheter else emptyList(),
-                )
-        }
+    fun hentDokumentmalDetaljer(): Map<String, DokumentMalDetaljer> =
+        alleDokumentmaler
+            .associate {
+                it.kode to
+                    DokumentMalDetaljer(
+                        malId = it.kode,
+                        beskrivelse = it.beskrivelse,
+                        tittel = it.tittel,
+                        type =
+                            when (it.type) {
+                                DokumentMalType.NOTAT -> DokumentType.NOTAT
+                                else -> DokumentType.UTGÅENDE
+                            },
+                        kanBestilles = it.enabled,
+                        redigerbar = it.redigerbar,
+                        kreverBehandling = it.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING) && listOf("BI01S04", "BI01S18", "BI01S08", "BI01S27").contains(it.kode),
+                        kreverVedtak = it.inneholderDatagrunnlag(DataGrunnlag.VEDTAK),
+                        språk =
+                            if (it is DokumentMalBucket) {
+                                listOf(it.språk)
+                            } else if (it is DokumentMalBrevserver) {
+                                it.støttetSpråk
+                            } else {
+                                emptyList()
+                            },
+                        innholdType = it.type,
+                        nyDokumentProduksjon = it is DokumentMalProduksjon,
+                        statiskInnhold = it is DokumentMalBucket,
+                        gruppeVisningsnavn = if (it is DokumentMalBucket) it.gruppeVisningsnavn else null,
+                        tilhorerEnheter = if (it is DokumentMalBucket) it.tilhørerEnheter else emptyList(),
+                    )
+            }
 }

@@ -6,6 +6,7 @@ import jakarta.jms.MessageConsumer
 import jakarta.jms.Queue
 import jakarta.jms.Session
 import jakarta.xml.bind.JAXB
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.activemq.artemis.jms.client.ActiveMQTextMessage
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Profile

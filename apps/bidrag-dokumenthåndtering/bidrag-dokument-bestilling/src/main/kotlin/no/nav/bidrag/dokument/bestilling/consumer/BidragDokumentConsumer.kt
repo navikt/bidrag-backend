@@ -17,11 +17,12 @@ class BidragDokumentConsumer(
     @Value($$"${BIDRAG_DOKUMENT_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-dokument") {
-    private fun createUri(path: String?) = UriComponentsBuilder
-        .fromUri(url)
-        .path(path ?: "")
-        .build()
-        .toUri()
+    private fun createUri(path: String?) =
+        UriComponentsBuilder
+            .fromUri(url)
+            .path(path ?: "")
+            .build()
+            .toUri()
 
     fun opprettJournalpost(opprettJournalpostRequest: OpprettJournalpostRequest): OpprettJournalpostResponse? = postForEntity(createUri("/journalpost/BIDRAG"), opprettJournalpostRequest)
 
@@ -50,12 +51,13 @@ class BidragDokumentConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun hentDokument(dokumentId: String?): ByteArray? = getForEntity(
-        UriComponentsBuilder
-            .fromUri(url)
-            .path("/dokumentreferanse/$dokumentId")
-            .queryParam("optimizeForPrint", "false")
-            .build()
-            .toUri(),
-    )
+    fun hentDokument(dokumentId: String?): ByteArray? =
+        getForEntity(
+            UriComponentsBuilder
+                .fromUri(url)
+                .path("/dokumentreferanse/$dokumentId")
+                .queryParam("optimizeForPrint", "false")
+                .build()
+                .toUri(),
+        )
 }

@@ -22,5 +22,6 @@
         <module>bidrag-dokument-arkivering</module>
         <module>bidrag-dokument-bestilling</module>
         <module>bidrag-dokument-produksjon</module>
+        <module>bidrag-dokument-bestilling</module>
     </modules>
 </project>

@@ -113,33 +113,34 @@ val BARN3 =
         fodselsdato = LocalDate.parse("2014-03-20"),
     )
 
-fun createSakResponse(): BidragssakDto = BidragssakDto(
-    saksnummer = Saksnummer(DEFAULT_SAKSNUMMER),
-    eierfogd = Enhetsnummer("4806"),
-    roller =
-    listOf(
-        RolleDto(
-            fødselsnummer = BM1.ident,
-            type = Rolletype.BIDRAGSMOTTAKER,
-        ),
-        RolleDto(
-            fødselsnummer = BP1.ident,
-            type = Rolletype.BIDRAGSPLIKTIG,
-        ),
-        RolleDto(
-            fødselsnummer = BARN1.ident,
-            type = Rolletype.BARN,
-        ),
-        RolleDto(
-            fødselsnummer = BARN2.ident,
-            type = Rolletype.BARN,
-        ),
-    ),
-    saksstatus = Bidragssakstatus.IN,
-    kategori = Sakskategori.NASJONAL,
-    opprettetDato = SAK_OPPRETTET_DATO,
-    levdeAdskilt = false,
-    ukjentPart = false,
+fun createSakResponse(): BidragssakDto =
+    BidragssakDto(
+        saksnummer = Saksnummer(DEFAULT_SAKSNUMMER),
+        eierfogd = Enhetsnummer("4806"),
+        roller =
+            listOf(
+                RolleDto(
+                    fødselsnummer = BM1.ident,
+                    type = Rolletype.BIDRAGSMOTTAKER,
+                ),
+                RolleDto(
+                    fødselsnummer = BP1.ident,
+                    type = Rolletype.BIDRAGSPLIKTIG,
+                ),
+                RolleDto(
+                    fødselsnummer = BARN1.ident,
+                    type = Rolletype.BARN,
+                ),
+                RolleDto(
+                    fødselsnummer = BARN2.ident,
+                    type = Rolletype.BARN,
+                ),
+            ),
+        saksstatus = Bidragssakstatus.IN,
+        kategori = Sakskategori.NASJONAL,
+        opprettetDato = SAK_OPPRETTET_DATO,
+        levdeAdskilt = false,
+        ukjentPart = false,
 //        arbeidsfordeling = Arbeidsfordeling.EEN,
 )
 
@@ -151,65 +152,70 @@ fun createPersonResponse(
     dodsdato: LocalDate? = null,
     aktorId: String? = "313213",
     diskresjonskode: Diskresjonskode? = null,
-): PersonDto = PersonDto(
-    ident = Personident(ident),
-    navn = navn,
-    kortnavn = kortNavn,
-    visningsnavn = navn,
-    fødselsdato = fodselsdato,
-    dødsdato = dodsdato,
-    aktørId = aktorId,
-    diskresjonskode = diskresjonskode,
-)
+): PersonDto =
+    PersonDto(
+        ident = Personident(ident),
+        navn = navn,
+        kortnavn = kortNavn,
+        visningsnavn = navn,
+        fødselsdato = fodselsdato,
+        dødsdato = dodsdato,
+        aktørId = aktorId,
+        diskresjonskode = diskresjonskode,
+    )
 
-fun createPostAdresseResponse(): PersonAdresseDto = PersonAdresseDto(
-    adresselinje1 = "Adresselinje1",
-    adresselinje2 = "Adresselinje2",
-    postnummer = "3030",
-    poststed = "Drammen",
-    land = Landkode2("NO"),
-    land3 = Landkode3("NOR"),
-    bruksenhetsnummer = "H0201",
-    adressetype = Adressetype.BOSTEDSADRESSE,
-)
+fun createPostAdresseResponse(): PersonAdresseDto =
+    PersonAdresseDto(
+        adresselinje1 = "Adresselinje1",
+        adresselinje2 = "Adresselinje2",
+        postnummer = "3030",
+        poststed = "Drammen",
+        land = Landkode2("NO"),
+        land3 = Landkode3("NOR"),
+        bruksenhetsnummer = "H0201",
+        adressetype = Adressetype.BOSTEDSADRESSE,
+    )
 
-fun createPostAdresseResponseUtenlandsk(): PersonAdresseDto = PersonAdresseDto(
-    adresselinje1 = "Utenlandsk Adresselinje1",
-    adresselinje2 = "Utenlandsk Adresselinje2",
-    adresselinje3 = "United states of America",
-    land = Landkode2("US"),
-    land3 = Landkode3("USA"),
-    adressetype = Adressetype.BOSTEDSADRESSE,
-)
+fun createPostAdresseResponseUtenlandsk(): PersonAdresseDto =
+    PersonAdresseDto(
+        adresselinje1 = "Utenlandsk Adresselinje1",
+        adresselinje2 = "Utenlandsk Adresselinje2",
+        adresselinje3 = "United states of America",
+        land = Landkode2("US"),
+        land3 = Landkode3("USA"),
+        adressetype = Adressetype.BOSTEDSADRESSE,
+    )
 
 fun createOpprettJournalpostResponse(
     tittel: String = "Tittel på dokument",
     journalpostId: String = "123123",
     dokumentReferanse: String = "dokref1",
-): OpprettJournalpostResponse = OpprettJournalpostResponse(
-    dokumenter =
-    listOf(
-        OpprettDokumentDto(
-            tittel = tittel,
-            dokumentreferanse = dokumentReferanse,
-        ),
-    ),
-    journalpostId = journalpostId,
-)
+): OpprettJournalpostResponse =
+    OpprettJournalpostResponse(
+        dokumenter =
+            listOf(
+                OpprettDokumentDto(
+                    tittel = tittel,
+                    dokumentreferanse = dokumentReferanse,
+                ),
+            ),
+        journalpostId = journalpostId,
+    )
 
-fun createEnhetKontaktInformasjon(land: String = "Norge"): EnhetKontaktInfoDto = EnhetKontaktInfoDto(
-    enhetIdent = "4806",
-    enhetNavn = "NAV Familie- og pensjonsytelser Drammen",
-    telefonnummer = "55553333",
-    postadresse =
-    EnhetPostadresseDto(
-        adresselinje1 = "Postboks 1583",
-        adresselinje2 = "Linje2",
-        postnummer = "3040",
-        poststed = "Drammen",
-        land = land,
-    ),
-)
+fun createEnhetKontaktInformasjon(land: String = "Norge"): EnhetKontaktInfoDto =
+    EnhetKontaktInfoDto(
+        enhetIdent = "4806",
+        enhetNavn = "NAV Familie- og pensjonsytelser Drammen",
+        telefonnummer = "55553333",
+        postadresse =
+            EnhetPostadresseDto(
+                adresselinje1 = "Postboks 1583",
+                adresselinje2 = "Linje2",
+                postnummer = "3040",
+                poststed = "Drammen",
+                land = land,
+            ),
+    )
 
 fun lagVedtaksdata(
     filnavn: String,
@@ -231,48 +237,49 @@ fun lagVedtaksdata(
     return grunnlag
 }
 
-fun opprettBehandlingDetaljer() = BehandlingDetaljerDtoV2(
-    id = 1,
-    type = TypeBehandling.SÆRBIDRAG,
-    engangsbeløptype = Engangsbeløptype.SÆRBIDRAG,
-    årsak = null,
-    avslag = null,
-    vedtakstype = Vedtakstype.ENDRING,
-    opprettetAv =
-    SaksbehandlerDto(
-        SAKSBEHANDLER_IDENT,
-        SAKSBEHANDLER_NAVN,
-    ),
-    mottattdato = LocalDate.parse("2024-07-15"),
-    søktFomDato = LocalDate.parse("2024-08-01"),
-    opprettetTidspunkt = LocalDateTime.now(),
-    søktAv = SøktAvType.BIDRAGSMOTTAKER,
-    søknadsid = 1,
-    søknadRefId = 1,
-    vedtakRefId = 1,
-    erVedtakFattet = false,
-    behandlerenhet = "4806",
-    saksnummer = DEFAULT_SAKSNUMMER,
-    erKlageEllerOmgjøring = false,
-    roller =
-    setOf(
-        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-            rolletype = Rolletype.BIDRAGSMOTTAKER,
-            ident = BM1.ident.verdi,
-            navn = BM1.navn,
-            fødselsdato = BM1.fødselsdato,
-        ),
-        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-            rolletype = Rolletype.BIDRAGSPLIKTIG,
-            ident = BP1.ident.verdi,
-            navn = BP1.navn,
-            fødselsdato = BP1.fødselsdato,
-        ),
-        no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
-            rolletype = Rolletype.BARN,
-            ident = BARN1.ident.verdi,
-            navn = BARN1.navn,
-            fødselsdato = BARN1.fødselsdato,
-        ),
-    ),
-)
+fun opprettBehandlingDetaljer() =
+    BehandlingDetaljerDtoV2(
+        id = 1,
+        type = TypeBehandling.SÆRBIDRAG,
+        engangsbeløptype = Engangsbeløptype.SÆRBIDRAG,
+        årsak = null,
+        avslag = null,
+        vedtakstype = Vedtakstype.ENDRING,
+        opprettetAv =
+            SaksbehandlerDto(
+                SAKSBEHANDLER_IDENT,
+                SAKSBEHANDLER_NAVN,
+            ),
+        mottattdato = LocalDate.parse("2024-07-15"),
+        søktFomDato = LocalDate.parse("2024-08-01"),
+        opprettetTidspunkt = LocalDateTime.now(),
+        søktAv = SøktAvType.BIDRAGSMOTTAKER,
+        søknadsid = 1,
+        søknadRefId = 1,
+        vedtakRefId = 1,
+        erVedtakFattet = false,
+        behandlerenhet = "4806",
+        saksnummer = DEFAULT_SAKSNUMMER,
+        erKlageEllerOmgjøring = false,
+        roller =
+            setOf(
+                no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                    rolletype = Rolletype.BIDRAGSMOTTAKER,
+                    ident = BM1.ident.verdi,
+                    navn = BM1.navn,
+                    fødselsdato = BM1.fødselsdato,
+                ),
+                no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                    rolletype = Rolletype.BIDRAGSPLIKTIG,
+                    ident = BP1.ident.verdi,
+                    navn = BP1.navn,
+                    fødselsdato = BP1.fødselsdato,
+                ),
+                no.nav.bidrag.dokument.bestilling.consumer.dto.RolleDto(
+                    rolletype = Rolletype.BARN,
+                    ident = BARN1.ident.verdi,
+                    navn = BARN1.navn,
+                    fødselsdato = BARN1.fødselsdato,
+                ),
+            ),
+    )

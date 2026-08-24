@@ -45,9 +45,10 @@ class KodeverkConsumer(
         cacheManager.getCache(LANDKODER_CACHE)?.put(DEFAULT_CACHE, kommuner)
     }
 
-    fun hentLandkoder(): KodeverkResponse? = cacheManager
-        .getCache(LANDKODER_CACHE)
-        ?.get(DEFAULT_CACHE, KodeverkResponse::class.java)
+    fun hentLandkoder(): KodeverkResponse? =
+        cacheManager
+            .getCache(LANDKODER_CACHE)
+            ?.get(DEFAULT_CACHE, KodeverkResponse::class.java)
 
     private fun loadLandkoderISO2() {
         LOGGER.info("Henter LandkoderISO2 fra kodeverk")
@@ -62,9 +63,10 @@ class KodeverkConsumer(
         cacheManager.getCache(LANDKODER_ISO2_CACHE)?.put(DEFAULT_CACHE, landkoder)
     }
 
-    fun hentLandkoderISO2(): KodeverkResponse? = cacheManager
-        .getCache(LANDKODER_ISO2_CACHE)
-        ?.get(DEFAULT_CACHE, KodeverkResponse::class.java)
+    fun hentLandkoderISO2(): KodeverkResponse? =
+        cacheManager
+            .getCache(LANDKODER_ISO2_CACHE)
+            ?.get(DEFAULT_CACHE, KodeverkResponse::class.java)
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(KodeverkConsumer::class.java)

@@ -28,11 +28,12 @@ class BidragPersonConsumer(
     @Value($$"${BIDRAG_PERSON_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-person") {
-    private fun createUri(path: String?) = UriComponentsBuilder
-        .fromUri(url)
-        .path(path ?: "")
-        .build()
-        .toUri()
+    private fun createUri(path: String?) =
+        UriComponentsBuilder
+            .fromUri(url)
+            .path(path ?: "")
+            .build()
+            .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     @BrukerCacheable(PERSON_CACHE)
@@ -49,15 +50,16 @@ class BidragPersonConsumer(
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     @BrukerCacheable(PERSON_ADRESSE_CACHE)
-    fun hentAdresse(id: String): PersonAdresseDto? = try {
-        postForEntity(createUri("/adresse/post"), PersonRequest(Personident(id)))
-    } catch (e: HttpStatusCodeException) {
-        if (e.statusCode == HttpStatus.NOT_FOUND) {
-            null
-        } else {
-            throw HentPersonFeiletException("Henting av språk for person $id feilet", e)
+    fun hentAdresse(id: String): PersonAdresseDto? =
+        try {
+            postForEntity(createUri("/adresse/post"), PersonRequest(Personident(id)))
+        } catch (e: HttpStatusCodeException) {
+            if (e.statusCode == HttpStatus.NOT_FOUND) {
+                null
+            } else {
+                throw HentPersonFeiletException("Henting av språk for person $id feilet", e)
+            }
         }
-    }
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     @BrukerCacheable(PERSON_SPRAAK_CACHE)

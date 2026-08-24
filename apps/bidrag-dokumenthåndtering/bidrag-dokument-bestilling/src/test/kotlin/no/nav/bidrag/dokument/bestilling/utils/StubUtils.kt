@@ -35,9 +35,10 @@ class StubUtils {
     var objectMapper: ObjectMapper = commonObjectmapper
 
     companion object {
-        fun aClosedJsonResponse(): ResponseDefinitionBuilder = aResponse()
-            .withHeader(HttpHeaders.CONNECTION, "close")
-            .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+        fun aClosedJsonResponse(): ResponseDefinitionBuilder =
+            aResponse()
+                .withHeader(HttpHeaders.CONNECTION, "close")
+                .withHeader(HttpHeaders.CONTENT_TYPE, "application/json")
     }
 
     fun stubHentPerson(
@@ -222,10 +223,11 @@ class StubUtils {
         }
     }
 
-    fun <T> convertObjectToString(o: T): String = try {
-        objectMapper.writeValueAsString(o)
-    } catch (e: JsonProcessingException) {
-        Assert.fail(e.message)
-        ""
-    }
+    fun <T> convertObjectToString(o: T): String =
+        try {
+            objectMapper.writeValueAsString(o)
+        } catch (e: JsonProcessingException) {
+            Assert.fail(e.message)
+            ""
+        }
 }

@@ -25,17 +25,18 @@ class TestRestTemplateConfiguration {
     private lateinit var clientId: String
 
     @Bean
-    fun httpHeaderTestRestTemplate(): TestRestTemplate = TestRestTemplate(
-        RestTemplateBuilder()
-            .additionalInterceptors({ request, body, execution ->
-                request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
-                execution.execute(request, body)
-            })
-            .defaultMessageConverters()
-            .additionalMessageConverters(
-                CustomJacksonHttpMessageConverter(commonObjectmapper),
-            ),
-    )
+    fun httpHeaderTestRestTemplate(): TestRestTemplate =
+        TestRestTemplate(
+            RestTemplateBuilder()
+                .additionalInterceptors({ request, body, execution ->
+                    request.headers.add(HttpHeaders.AUTHORIZATION, generateBearerToken())
+                    execution.execute(request, body)
+                })
+                .defaultMessageConverters()
+                .additionalMessageConverters(
+                    CustomJacksonHttpMessageConverter(commonObjectmapper),
+                ),
+        )
 
     fun generateBearerToken(): String {
         val iss = mockOAuth2Server.issuerUrl("aad")

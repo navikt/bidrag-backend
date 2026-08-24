@@ -9,6 +9,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldHaveMaxLength
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.dokument.bestilling.bestilling.dto.DokumentMalBrevserver
 import no.nav.bidrag.dokument.bestilling.bestilling.dto.alleDokumentmaler
 import no.nav.bidrag.dokument.bestilling.bestilling.dto.dokumentmalerBrevserver

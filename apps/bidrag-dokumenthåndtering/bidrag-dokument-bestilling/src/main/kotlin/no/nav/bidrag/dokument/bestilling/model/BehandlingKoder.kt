@@ -31,8 +31,9 @@ enum class SoknadType(
     companion object {
         fun fromKode(kode: String): SoknadType? = entries.find { it.kode == kode }
 
-        fun fromVedtakType(vedtakType: Vedtakstype): SoknadType = when (vedtakType) {
-            Vedtakstype.INDEKSREGULERING -> INDEKSREGULERING
+        fun fromVedtakType(vedtakType: Vedtakstype): SoknadType =
+            when (vedtakType) {
+                Vedtakstype.INDEKSREGULERING -> INDEKSREGULERING
 
             Vedtakstype.FASTSETTELSE -> SOKNAD
 
@@ -96,10 +97,11 @@ enum class BehandlingType(
         fun from(
             stonadType: Stønadstype?,
             engangsbelopType: Engangsbeløptype?,
-        ): BehandlingType? = when (stonadType) {
-            Stønadstype.FORSKUDD -> {
-                FORSKUDD
-            }
+        ): BehandlingType? =
+            when (stonadType) {
+                Stønadstype.FORSKUDD -> {
+                    FORSKUDD
+                }
 
             Stønadstype.BIDRAG -> {
                 BIDRAG

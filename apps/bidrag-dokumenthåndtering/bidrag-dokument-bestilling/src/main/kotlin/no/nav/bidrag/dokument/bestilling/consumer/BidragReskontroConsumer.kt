@@ -20,11 +20,12 @@ class BidragReskontroConsumer(
     @Value($$"${BIDRAG_RESKONTRO_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-reskontro") {
-    private fun createUri(path: String?) = UriComponentsBuilder
-        .fromUri(url)
-        .path(path ?: "")
-        .build()
-        .toUri()
+    private fun createUri(path: String?) =
+        UriComponentsBuilder
+            .fromUri(url)
+            .path(path ?: "")
+            .build()
+            .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
     fun transaksjoner(saksnr: String): TransaksjonerDto? {
