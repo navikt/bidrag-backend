@@ -344,7 +344,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             GrunnlagsdataBidrag(
                 bidragsevne = grunnlagListe.finnBidragevneForPeriode(grunnlagsreferanseListePeriode),
                 underholdskostnad = grunnlagListe.finnUnderholdskostnadForPeriode(grunnlagsreferanseListePeriode),
-                skyldnersAndelUnderholdskostnad = grunnlagListe.finnskyldnersAndelUnderholdskostnadForPeriode(
+                skyldnersAndelUnderholdskostnad = grunnlagListe.finnSkyldnersAndelUnderholdskostnadForPeriode(
                     vedtakErAldersjustering,
                     vedtakFraBisys,
                     grunnlagsreferanseListePeriode,
@@ -481,7 +481,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return underholdskostand?.innhold?.underholdskostnad
     }
 
-    fun List<GrunnlagDto>.finnskyldnersAndelUnderholdskostnadForPeriode(
+    fun List<GrunnlagDto>.finnSkyldnersAndelUnderholdskostnadForPeriode(
         vedtakErAldersjustering: Boolean,
         vedtakFraBisys: Boolean,
         grunnlagsreferanseListe: List<Grunnlagsreferanse>,
