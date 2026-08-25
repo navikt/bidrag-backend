@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import org.springframework.context.annotation.Configuration
 
-// Gjør at swagger-ui viser "Authorize"-knappen slik at man kan sende med et bearer-token på try-it-out.
 @Configuration
 @OpenAPIDefinition(
     info = Info(title = "bidrag-oppgave", version = "v1"),
