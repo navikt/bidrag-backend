@@ -24,6 +24,13 @@ spring:
 oppgave-api:
   base-url: ${OPPGAVE_API_URL}
 
+springdoc:
+  packages-to-scan: no.nav.bidrag.oppgave.controller
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    try-it-out-enabled: true
+
 server:
   port: 8080
   shutdown: graceful
