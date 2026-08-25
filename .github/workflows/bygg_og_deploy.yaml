@@ -132,6 +132,10 @@ jobs:
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
       - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
         with:
+          # githubServer: false - vi definerer selv en "github"-server under, actionen
+          # legger ellers automatisk til en egen "github"-server (med GITHUB_TOKEN),
+          # som kolliderer med vår og gir "duplicate server with id github".
+          githubServer: false
           servers: |
             [
               {
