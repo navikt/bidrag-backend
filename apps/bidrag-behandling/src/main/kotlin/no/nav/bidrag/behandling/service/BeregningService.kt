@@ -297,7 +297,7 @@ class BeregningService(
                 minstEnPerioderHarSlåttUtTilFF = resultat.grunnlagListe.perioderSlåttUtTilFF().isNotEmpty(),
                 bpHarFullEvneIAllePerioder = bpHarFullEvneIAllePerioder,
                 inneholderBeregningForRevurderingsbarn =
-                resultatRevurderingsbarn.isNotEmpty() && resultatRevurderingsbarn.none { it.avvistRevurderingsbarn },
+                resultatRevurderingsbarn.isNotEmpty() && !resultatRevurderingsbarn.all { it.avvistRevurderingsbarn },
                 vedtakstype = behandling.vedtakstype,
                 fatteVedtakDetaljerFraOmgjortVedtak = behandling.omgjøringsdetaljer?.fatteVedtakDetaljerRevurderingsbarn,
             )

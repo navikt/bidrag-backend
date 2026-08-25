@@ -246,6 +246,7 @@ class RevurderForskuddService(
 
         val vedtakForskudd =
             hentSisteManuelleForskuddVedtak(sistePeriode.vedtaksid, stønadEngangsbeløpId.sak, gjelderBarn)
+                ?.takeIf { it.vedtak.type != Vedtakstype.OPPHØR }
                 ?: return null
         val (beregnetForskudd, grunnlagsliste) = beregnForskudd(vedtakFattet.vedtak, vedtakForskudd.vedtak, gjelderBarn)
 
