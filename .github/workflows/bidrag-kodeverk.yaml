@@ -12,6 +12,7 @@ on:
   pull_request:
     types: [labeled, unlabeled]
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-kodeverk/**.yaml'
       - 'apps/bidrag-kodeverk/**'
   push:
@@ -19,6 +20,7 @@ on:
       - '**'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-kodeverk/**.yaml'
       - 'apps/bidrag-kodeverk/**'
 

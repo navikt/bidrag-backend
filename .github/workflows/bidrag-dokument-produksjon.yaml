@@ -12,6 +12,7 @@ on:
   pull_request:
     types: [labeled, unlabeled]
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-dokument-produksjon/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/**'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml'
@@ -22,6 +23,7 @@ on:
       - '**'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-dokument-produksjon/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/**'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml'

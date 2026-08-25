@@ -13,6 +13,7 @@ on:
   pull_request:
     types: [labeled, unlabeled]
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-automatisk-jobb/**.yaml'
       - 'apps/bidrag-automatisk-jobb/**'
   push:
@@ -20,6 +21,7 @@ on:
       - '**'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-automatisk-jobb/**.yaml'
       - 'apps/bidrag-automatisk-jobb/**'
 

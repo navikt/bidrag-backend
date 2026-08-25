@@ -13,6 +13,7 @@ on:
   pull_request:
     types: [labeled, unlabeled]
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-oppgave/**.yaml'
       - 'apps/bidrag-oppgave/**'
       - 'libs/bidrag-oppgave-dto/**'
@@ -22,6 +23,7 @@ on:
       - '**'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-oppgave/**.yaml'
       - 'apps/bidrag-oppgave/**'
       - 'libs/bidrag-oppgave-dto/**'
