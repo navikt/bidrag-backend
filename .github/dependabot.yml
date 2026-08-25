@@ -51,7 +51,11 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/"
+      - "/apps/*"
+    cooldown:
+      default-days: 7
     schedule:
       interval: "weekly"
       day: "monday"
@@ -61,6 +65,7 @@ updates:
       docker-dependencies:
         patterns:
           - "*"
+    open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "docker"
