@@ -5,11 +5,18 @@ registries:
     url: https://github-package-registry-mirror.gc.nav.no/cached/maven-release
     username: x-access-token
     password: no-secret-required
+  npm-github:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{secrets.READER_TOKEN}}
+    scope: "@navikt"
 updates:
   - package-ecosystem: "npm"
     directories:
       - "/util/bidrag-cli"
       - "/apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon"
+    registries:
+      - "npm-github"
     cooldown:
       default-days: 7
     schedule:
