@@ -15,6 +15,12 @@ class SecurityConfig {
         http {
             authorizeHttpRequests {
                 authorize("/internal/**", permitAll)
+                // Swagger-ui (base path /) og OpenAPI-dokumentasjon skal være tilgjengelig uten autentisering
+                authorize("/", permitAll)
+                authorize("/swagger-ui/**", permitAll)
+                authorize("/swagger-ui.html", permitAll)
+                authorize("/v3/api-docs/**", permitAll)
+                authorize("/v3/api-docs.yaml", permitAll)
                 authorize(anyRequest, authenticated)
             }
             oauth2ResourceServer {
