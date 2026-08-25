@@ -13,3 +13,10 @@ env:
   OPPGAVE_API_URL: https://oppgave.dev-fss-pub.nais.io
   OPPGAVE_API_SCOPE: api://dev-fss.oppgavehandtering.oppgave/.default
   OPPGAVE_API_HOST: oppgave.dev-fss-pub.nais.io
+accessPolicyInbound:
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: azure-token-generator
+    namespace: nais
+    cluster: dev-gcp

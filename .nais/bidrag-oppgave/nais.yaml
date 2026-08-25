@@ -44,9 +44,12 @@ spec:
   {{/each}}
   accessPolicy:
     inbound:
-      # Apper som kaller bidrag-oppgave sitt /api/**. Legg til konsument-app(er)
-      # her når de er bekreftet (f.eks. bidrag-behandling/frontend).
-      rules: []
+      rules:
+      {{#each accessPolicyInbound as |rule|}}
+        - application: {{rule.application}}
+          namespace: {{rule.namespace}}
+          cluster: {{rule.cluster}}
+      {{/each}}
     outbound:
       external:
         - host: {{ env.OPPGAVE_API_HOST }}

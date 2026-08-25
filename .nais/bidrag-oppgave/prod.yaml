@@ -13,3 +13,7 @@ env:
   OPPGAVE_API_URL: https://oppgave.prod-fss-pub.nais.io
   OPPGAVE_API_SCOPE: api://prod-fss.oppgavehandtering.oppgave/.default
   OPPGAVE_API_HOST: oppgave.prod-fss-pub.nais.io
+accessPolicyInbound:
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
