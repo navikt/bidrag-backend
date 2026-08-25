@@ -354,7 +354,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 samværsfradrag = grunnlagListe.finnSamværsfradragForPeriode(grunnlagsreferanseListePeriode),
                 nettoBarnetilleggSkyldner = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBP),
                 nettoBarnetilleggMottaker = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBM),
-                skyldnerBorMedAndreVoksne = grunnlagListe.finnskyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
+                skyldnerBorMedAndreVoksne = grunnlagListe.finnSkyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
                 samværsklasse = grunnlagListe.finnSamværsklasseIPeriode(vedtakErAldersjustering, vedtakFraBisys, grunnlagsreferanseListePeriode),
                 skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
                 mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
@@ -575,7 +575,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return nettoBarnetillegg?.innhold?.summertNettoBarnetillegg
     }
 
-    fun List<GrunnlagDto>.finnskyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
+    fun List<GrunnlagDto>.finnSkyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
         val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
         val bostatusPeriode = finnOgKonverterGrunnlagSomErReferertAv<DelberegningVoksneIHustand>(
             Grunnlagstype.DELBEREGNING_VOKSNE_I_HUSSTAND,
