@@ -12,7 +12,7 @@ on:
 jobs:
   bygg_og_test:
     name: "Bygg og test alle moduler"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     concurrency:
       group: dependabot-bygg-test-${{ github.ref }}
       cancel-in-progress: true
@@ -41,4 +41,4 @@ jobs:
               }
             ]
       - name: Bygg og kjør tester for hele reactoren (inkl. ktlint og IT)
-        run: mvn -B -fae verify -Pit
+        run: mvn -B -fae -T 1C verify -Pit

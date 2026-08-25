@@ -11,7 +11,7 @@ on:
 jobs:
   bygg_og_test:
     name: "Bygg og test alle moduler"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     concurrency:
       group: libs-bygg-test-${{ github.ref }}
       cancel-in-progress: true
@@ -35,4 +35,4 @@ jobs:
               }
             ]
       - name: Bygg og test alle moduler
-        run: mvn -B -q -fae verify
+        run: mvn -B -q -fae -T 1C verify
