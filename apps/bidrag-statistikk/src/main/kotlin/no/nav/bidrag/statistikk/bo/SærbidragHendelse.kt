@@ -23,6 +23,6 @@ data class SærbidragHendelse(
     val kravbeløp: BigDecimal?, // Beløpet mottaker ba om
     val godkjentBeløp: BigDecimal?, // Beløpet som ble godkjent av saksbehandler
     val betaltBeløp: BigDecimal?, // Beløpet som eventuelt er betalt tidligere av skyldner
-    val bPInntektListe: List<Inntekt>?,
-    val bMInntektListe: List<Inntekt>?,
+    val skyldnerInntektListe: List<Inntekt>?,
+    val mottakerInntektListe: List<Inntekt>?,
 )

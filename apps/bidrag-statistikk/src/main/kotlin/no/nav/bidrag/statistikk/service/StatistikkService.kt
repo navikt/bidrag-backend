@@ -98,8 +98,8 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                                 grunnlagsdata?.barnetsAldersgruppe == null ||
                                     grunnlagsdata.antallBarnIEgenHusstand == null ||
                                     grunnlagsdata.sivilstand == null ||
-                                    grunnlagsdata.barnBorMedBM == null ||
-                                    grunnlagsdata.inntektListe?.isEmpty() == true
+                                    grunnlagsdata.barnBorMedMottaker == null ||
+                                    grunnlagsdata.mottakerInntektListe?.isEmpty() == true
                                 ) &&
                             !vedtakDto.kildeapplikasjon.contains(bisys)
                         ) {
@@ -128,8 +128,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             barnetsAldersgruppe = grunnlagsdata?.barnetsAldersgruppe,
                             antallBarnIEgenHusstand = grunnlagsdata?.antallBarnIEgenHusstand,
                             sivilstand = grunnlagsdata?.sivilstand,
-                            barnBorMedBM = grunnlagsdata?.barnBorMedBM,
-                            inntektListe = grunnlagsdata?.inntektListe ?: emptyList(),
+                            barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
+                            mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                            kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
                         )
                     },
                 )
@@ -175,11 +176,11 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                         if ((
                                 grunnlagsdata?.bidragsevne == null ||
                                     grunnlagsdata.underholdskostnad == null ||
-                                    grunnlagsdata.bPsAndelUnderholdskostnad == null ||
-                                    grunnlagsdata.bPBorMedAndreVoksne == null ||
+                                    grunnlagsdata.skyldnersAndelUnderholdskostnad == null ||
+                                    grunnlagsdata.skyldnerBorMedAndreVoksne == null ||
                                     grunnlagsdata.samværsklasse == null ||
-                                    grunnlagsdata.bPInntektListe?.isEmpty() == true ||
-                                    grunnlagsdata.bMInntektListe?.isEmpty() == true
+                                    grunnlagsdata.skyldnerInntektListe?.isEmpty() == true ||
+                                    grunnlagsdata.mottakerInntektListe?.isEmpty() == true
                                 ) &&
                             !vedtakFraBisys &&
                             !vedtakErAldersjustering
@@ -208,16 +209,17 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             resultat = periode.resultatkode,
                             bidragsevne = grunnlagsdata?.bidragsevne,
                             underholdskostnad = grunnlagsdata?.underholdskostnad,
-                            bPsAndelUnderholdskostnad = grunnlagsdata?.bPsAndelUnderholdskostnad,
+                            skyldnersAndelUnderholdskostnad = grunnlagsdata?.skyldnersAndelUnderholdskostnad,
                             nettoTilsynsutgift = grunnlagsdata?.nettoTilsynsutgift,
                             faktiskUtgift = grunnlagsdata?.faktiskUtgift,
                             samværsfradrag = grunnlagsdata?.samværsfradrag,
-                            nettoBarnetilleggBP = grunnlagsdata?.nettoBarnetilleggBP,
-                            nettoBarnetilleggBM = grunnlagsdata?.nettoBarnetilleggBM,
-                            bPBorMedAndreVoksne = grunnlagsdata?.bPBorMedAndreVoksne,
+                            nettoBarnetilleggSkyldner = grunnlagsdata?.nettoBarnetilleggSkyldner,
+                            nettoBarnetilleggMottaker = grunnlagsdata?.nettoBarnetilleggMottaker,
+                            skyldnerBorMedAndreVoksne = grunnlagsdata?.skyldnerBorMedAndreVoksne,
                             samværsklasse = grunnlagsdata?.samværsklasse,
-                            bPInntektListe = grunnlagsdata?.bPInntektListe ?: emptyList(),
-                            bMInntektListe = grunnlagsdata?.bMInntektListe ?: emptyList(),
+                            skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
+                            mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                            kravhaverInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
                         )
                     },
                 )
@@ -256,8 +258,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                     kravbeløp = grunnlagsdata?.kravbeløp,
                     godkjentBeløp = grunnlagsdata?.godkjentBeløp,
                     betaltBeløp = særbidrag.betaltBeløp,
-                    bPInntektListe = grunnlagsdata?.bPInntektListe ?: emptyList(),
-                    bMInntektListe = grunnlagsdata?.bMInntektListe ?: emptyList(),
+                    skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
+                    mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                    kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
                 )
                 hendelserService.opprettSærbidragshendelse(særbidragshendelse)
             }
@@ -283,20 +286,24 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
     private fun finnGrunnlagsdataForskudd(
         grunnlagListe: List<GrunnlagDto>,
-        grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+        grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
     ): GrunnlagsdataForskudd? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
             return null
         }
 
+        val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
+        val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
+
         // Finn grunnlagsdata
         val respons = GrunnlagsdataForskudd(
-            barnetsAldersgruppe = grunnlagListe.finnBarnetsAldersgruppeForPeriode(grunnlagsreferanseListe),
-            antallBarnIEgenHusstand = grunnlagListe.finnAntallBarnIEgenHusstandForPeriode(grunnlagsreferanseListe),
-            sivilstand = grunnlagListe.finnSivilstandForPeriode(grunnlagsreferanseListe),
-            barnBorMedBM = grunnlagListe.finnOmBarnBorMedBMIPeriode(grunnlagsreferanseListe),
-            inntektListe = grunnlagListe.finnInntekterForskudd(grunnlagsreferanseListe),
+            barnetsAldersgruppe = grunnlagListe.finnBarnetsAldersgruppeForPeriode(grunnlagsreferanseListePeriode),
+            antallBarnIEgenHusstand = grunnlagListe.finnAntallBarnIEgenHusstandForPeriode(grunnlagsreferanseListePeriode),
+            sivilstand = grunnlagListe.finnSivilstandForPeriode(grunnlagsreferanseListePeriode),
+            barnBorMedMottaker = grunnlagListe.finnOmbarnBorMedMottakerIPeriode(grunnlagsreferanseListePeriode),
+            mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
+            kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
         )
 
         return respons
@@ -318,16 +325,17 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             GrunnlagsdataBidrag(
                 bidragsevne = null,
                 underholdskostnad = null,
-                bPsAndelUnderholdskostnad = null,
+                skyldnersAndelUnderholdskostnad = null,
                 nettoTilsynsutgift = null,
                 faktiskUtgift = null,
                 samværsfradrag = null,
-                nettoBarnetilleggBP = null,
-                nettoBarnetilleggBM = null,
-                bPBorMedAndreVoksne = null,
+                nettoBarnetilleggSkyldner = null,
+                nettoBarnetilleggMottaker = null,
+                skyldnerBorMedAndreVoksne = null,
                 samværsklasse = null,
-                bPInntektListe = null,
-                bMInntektListe = null,
+                skyldnerInntektListe = null,
+                mottakerInntektListe = null,
+                kravhaverInntektListe = null,
             )
         } else {
             val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
@@ -337,7 +345,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             GrunnlagsdataBidrag(
                 bidragsevne = grunnlagListe.finnBidragevneForPeriode(grunnlagsreferanseListePeriode),
                 underholdskostnad = grunnlagListe.finnUnderholdskostnadForPeriode(grunnlagsreferanseListePeriode),
-                bPsAndelUnderholdskostnad = grunnlagListe.finnBpsAndelUnderholdskostnadForPeriode(
+                skyldnersAndelUnderholdskostnad = grunnlagListe.finnskyldnersAndelUnderholdskostnadForPeriode(
                     vedtakErAldersjustering,
                     vedtakFraBisys,
                     grunnlagsreferanseListePeriode,
@@ -345,12 +353,13 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 nettoTilsynsutgift = grunnlagListe.finnNettoTilsynsutgiftForPeriode(grunnlagsreferanseListePeriode),
                 faktiskUtgift = grunnlagListe.finnFaktiskUtgiftForPeriode(grunnlagsreferanseListePeriode),
                 samværsfradrag = grunnlagListe.finnSamværsfradragForPeriode(grunnlagsreferanseListePeriode),
-                nettoBarnetilleggBP = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBP),
-                nettoBarnetilleggBM = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBM),
-                bPBorMedAndreVoksne = grunnlagListe.finnBPBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
+                nettoBarnetilleggSkyldner = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBP),
+                nettoBarnetilleggMottaker = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBM),
+                skyldnerBorMedAndreVoksne = grunnlagListe.finnskyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
                 samværsklasse = grunnlagListe.finnSamværsklasseIPeriode(vedtakErAldersjustering, vedtakFraBisys, grunnlagsreferanseListePeriode),
-                bPInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
-                bMInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
             )
         }
 
@@ -373,19 +382,22 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 kategori = null,
                 kravbeløp = null,
                 godkjentBeløp = null,
-                bPInntektListe = null,
-                bMInntektListe = null,
+                skyldnerInntektListe = null,
+                mottakerInntektListe = null,
+                kravhaverInntektListe = null,
             )
         } else {
             val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
             val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
+            val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
 
             GrunnlagsdataSærbidrag(
                 kategori = grunnlagListe.særbidragskategori?.kategori,
                 kravbeløp = grunnlagListe.utgiftsposter.sumOf { it.kravbeløp },
                 godkjentBeløp = grunnlagListe.utgiftsposter.sumOf { it.godkjentBeløp },
-                bPInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
-                bMInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
             )
         }
 
@@ -416,7 +428,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return sivilstandPeriode?.innhold?.sivilstand?.name
     }
 
-    fun List<GrunnlagDto>.finnOmBarnBorMedBMIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
+    fun List<GrunnlagDto>.finnOmbarnBorMedMottakerIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
         val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
         val bostatusPeriode = finnOgKonverterGrunnlagSomErReferertAv<BostatusPeriode>(
             Grunnlagstype.BOSTATUS_PERIODE,
@@ -470,7 +482,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return underholdskostand?.innhold?.underholdskostnad
     }
 
-    fun List<GrunnlagDto>.finnBpsAndelUnderholdskostnadForPeriode(
+    fun List<GrunnlagDto>.finnskyldnersAndelUnderholdskostnadForPeriode(
         vedtakErAldersjustering: Boolean,
         vedtakFraBisys: Boolean,
         grunnlagsreferanseListe: List<Grunnlagsreferanse>,
@@ -545,7 +557,10 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return samværsfradrag?.innhold?.beløp
     }
 
-    fun List<GrunnlagDto>.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>, referanseTilRolle: String): BigDecimal? {
+    fun List<GrunnlagDto>.finnNettoBarnetilleggForPeriode(
+        grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+        referanseTilRolle: String?,
+    ): BigDecimal? {
         val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
         val nettoBarnetillegg = finnOgKonverterGrunnlagSomErReferertAv<DelberegningNettoBarnetillegg>(
             Grunnlagstype.DELBEREGNING_NETTO_BARNETILLEGG,
@@ -561,7 +576,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         return nettoBarnetillegg?.innhold?.summertNettoBarnetillegg
     }
 
-    fun List<GrunnlagDto>.finnBPBorMedAndreVoksneIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
+    fun List<GrunnlagDto>.finnskyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean? {
         val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
         val bostatusPeriode = finnOgKonverterGrunnlagSomErReferertAv<DelberegningVoksneIHustand>(
             Grunnlagstype.DELBEREGNING_VOKSNE_I_HUSSTAND,
@@ -593,7 +608,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
     fun List<GrunnlagDto>.finnInntekterRolle(
         grunnlagsreferanseListe: List<Grunnlagsreferanse>,
-        referanseTilRolle: String,
+        referanseTilRolle: String?,
         grunnlagListe: List<GrunnlagDto>,
     ): List<Inntekt>? {
         val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
@@ -615,7 +630,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     }
 
     fun finnReferanseTilRolle(grunnlagListe: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) = grunnlagListe
-        .firstOrNull { it.type == grunnlagstype }?.referanse ?: throw NoSuchElementException("Grunnlagstype $grunnlagstype mangler i input")
+        .firstOrNull { it.type == grunnlagstype }?.referanse
 
     fun finnIdentTilReferanse(grunnlagListe: List<GrunnlagDto>, gjelderKravhaver: String?) = grunnlagListe.hentPersonMedReferanseKonvertert(gjelderKravhaver)?.ident?.verdi
 
@@ -628,29 +643,32 @@ data class GrunnlagsdataForskudd(
     val barnetsAldersgruppe: String?,
     val antallBarnIEgenHusstand: Double?,
     val sivilstand: String?,
-    val barnBorMedBM: Boolean?,
-    val inntektListe: List<Inntekt>?,
+    val barnBorMedMottaker: Boolean?,
+    val mottakerInntektListe: List<Inntekt>?,
+    val kravhaverInntektListe: List<Inntekt>?,
 )
 
 data class GrunnlagsdataBidrag(
     val bidragsevne: BigDecimal?,
     val underholdskostnad: BigDecimal?,
-    val bPsAndelUnderholdskostnad: BigDecimal?,
+    val skyldnersAndelUnderholdskostnad: BigDecimal?,
     val nettoTilsynsutgift: BigDecimal?,
     val faktiskUtgift: BigDecimal?,
     val samværsfradrag: BigDecimal?,
-    val nettoBarnetilleggBP: BigDecimal?,
-    val nettoBarnetilleggBM: BigDecimal?,
-    val bPBorMedAndreVoksne: Boolean?,
+    val nettoBarnetilleggSkyldner: BigDecimal?,
+    val nettoBarnetilleggMottaker: BigDecimal?,
+    val skyldnerBorMedAndreVoksne: Boolean?,
     val samværsklasse: Samværsklasse?,
-    val bPInntektListe: List<Inntekt>?,
-    val bMInntektListe: List<Inntekt>?,
+    val skyldnerInntektListe: List<Inntekt>?,
+    val mottakerInntektListe: List<Inntekt>?,
+    val kravhaverInntektListe: List<Inntekt>?,
 )
 
 data class GrunnlagsdataSærbidrag(
     val kategori: Særbidragskategori?, // "type": "SÆRBIDRAG_KATEGORI",
     val kravbeløp: BigDecimal?, // "type": "UTGIFTSPOSTER", kravbeløp
     val godkjentBeløp: BigDecimal?, // "type": "UTGIFTSPOSTER", godkjentBeløp
-    val bPInntektListe: List<Inntekt>?,
-    val bMInntektListe: List<Inntekt>?,
+    val skyldnerInntektListe: List<Inntekt>?,
+    val mottakerInntektListe: List<Inntekt>?,
+    val kravhaverInntektListe: List<Inntekt>?,
 )
