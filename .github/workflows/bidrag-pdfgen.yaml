@@ -15,7 +15,6 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-pdfgen/**.yaml'
-#      - '.github/workflows/bidrag-pdfgen.yaml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/**'
 
 # bidrag-pdfgen er en Python/WeasyPrint-app, ikke et Maven-prosjekt, og kan derfor ikke bruke
