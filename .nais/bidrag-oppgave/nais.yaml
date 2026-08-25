@@ -11,6 +11,11 @@ spec:
   azure:
     application:
       enabled: true
+      allowAllUsers: true
+      claims:
+        extra:
+          - "NAVident"
+          - "azp_name"
   observability:
     autoInstrumentation:
       enabled: true
