@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>no.nav.bidrag</groupId>
+    <artifactId>bidrag-backend</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>bidrag-reisekostnad-api</artifactId>
+  <packaging>jar</packaging>
+  <name>bidrag-reisekostnad-api</name>
+  <description>Backend for å fordele reisekostnader ved samvær med barn</description>
+
+  <properties>
+    <!-- PDF-generering -->
+    <apache-pdfbox.version>2.0.35</apache-pdfbox.version>
+    <openhtml.version>1.0.10</openhtml.version>
+    <jsoup.version>1.20.1</jsoup.version>
+
+    <!-- Brukernotifikasjoner -->
+    <tms-varsel.version>2.1.1</tms-varsel.version>
+
+    <!-- Diverse -->
+    <commons-compress.version>1.28.0</commons-compress.version>
+    <modelmapper.version>3.2.6</modelmapper.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger-annotations.version}</version>
+    </dependency>
+    <!-- Kompresjonsverktøy for håndtering av komprimerte filer -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <version>${commons-compress.version}</version>
+    </dependency>
+    <!-- Nav sine delte biblioteker for felles funksjonalitet -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-commons-felles</artifactId>
+      <version>${bidrag-felles.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>no.nav.bidrag</groupId>
+          <artifactId>bidrag-generer-testdata-felles</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- Nav sine domenemodeller -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-domene-felles</artifactId>
+      <version>${bidrag-felles.version}</version>
+    </dependency>
+    <!-- Nav sine transport/DTO-klasser for API-kommunikasjon -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-transport-felles</artifactId>
+      <version>${bidrag-felles.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+    </dependency>
+    <!-- Spring Boot -->
+    <!-- Sikrer API-endepunkter og integrerer med Nav sin token-validering (TokenX, ID-porten) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <!-- Health checks, metrikker og overvåkingsendepunkter -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-actuator-autoconfigure</artifactId>
+    </dependency>
+    <!-- Caching (Caffeine) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+    <!-- REST API-støtte med embedded webserver -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <!-- Bean-validering med Hibernate Validator -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <!-- JPA/Hibernate for databasetilgang -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <!-- Embedded Tomcat webserver -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+    </dependency>
+    <!-- Kafka-meldinger for brukernotifikasjoner -->
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
+    </dependency>
+    <!-- Hot reload under utvikling -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+    <!-- Genererer metadata for konfigurasjonsegenskaper -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- Nav Security - Token-håndtering -->
+    <!-- OAuth2-klient for tjeneste-til-tjeneste-autentisering -->
+    <dependency>
+      <groupId>no.nav.security</groupId>
+      <artifactId>token-client-spring</artifactId>
+      <version>${nav-token-support.version}</version>
+    </dependency>
+    <!-- JWT-tokenvalidering for innkommende requests (TokenX, ID-porten) -->
+    <dependency>
+      <groupId>no.nav.security</groupId>
+      <artifactId>token-validation-spring</artifactId>
+      <version>${nav-token-support.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.tomcat.embed</groupId>
+          <artifactId>tomcat-embed-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <!-- Nav sine brukernotifikasjoner via Kafka -->
+    <dependency>
+      <groupId>no.nav.tms.varsel</groupId>
+      <artifactId>java-builder</artifactId>
+      <version>${tms-varsel.version}</version>
+    </dependency>
+
+    <!-- Database -->
+    <!-- Flyway databasemigrering for PostgreSQL. Versjon styres av spring-boot-dependencies BOM. -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- PostgreSQL JDBC-driver -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+    </dependency>
+    <!-- Connection pooling -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+    </dependency>
+    <!-- Database-skjemaversjonering og -migrering. Versjon styres av spring-boot-dependencies BOM. -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+      <scope>compile</scope>
+    </dependency>
+
+    <!-- Diverse -->
+    <!-- In-memory caching -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+    <!-- Objekt-til-objekt-mapping (entitet til DTO) -->
+    <dependency>
+      <groupId>org.modelmapper</groupId>
+      <artifactId>modelmapper</artifactId>
+      <version>${modelmapper.version}</version>
+    </dependency>
+    <!-- Reduserer boilerplate-kode (getters, setters, builders) -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <!-- Kotlin logging facade -->
+    <dependency>
+      <groupId>io.github.oshai</groupId>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>${kotlin-logging-jvm.version}</version>
+    </dependency>
+    <!-- Distribuert lås for skedulerte oppgaver (hindrer duplikat kjøring) -->
+    <dependency>
+      <groupId>net.javacrumbs.shedlock</groupId>
+      <artifactId>shedlock-spring</artifactId>
+      <version>${shedlock.version}</version>
+    </dependency>
+    <!-- ShedLock JDBC-provider for lagring av låser i database -->
+    <dependency>
+      <groupId>net.javacrumbs.shedlock</groupId>
+      <artifactId>shedlock-provider-jdbc-template</artifactId>
+      <version>${shedlock.version}</version>
+    </dependency>
+
+    <!-- API-dokumentasjon -->
+    <!-- Swagger UI og OpenAPI 3.0-dokumentasjon -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc-openapi-ui.version}</version>
+    </dependency>
+
+    <!-- PDF-generering -->
+    <!-- Kjernebibliotek for HTML til PDF-konvertering -->
+    <dependency>
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-core</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+    <!-- PDF-rendering med Apache PDFBox -->
+    <dependency>
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-pdfbox</artifactId>
+      <version>${openhtml.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.pdfbox</groupId>
+          <artifactId>pdfbox</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- PDF-manipulering -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>${apache-pdfbox.version}</version>
+    </dependency>
+    <!-- HTML-parsing for PDF-mal-prosessering -->
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>${jsoup.version}</version>
+    </dependency>
+    <!-- Java2D-rendering for bildeoutput -->
+    <dependency>
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-java2d</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+    <!-- SLF4J-loggingintegrasjon for OpenHTMLToPDF -->
+    <dependency>
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-slf4j</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <!-- Test -->
+    <!-- Nav sine testverktøy og hjelpefunksjoner -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-commons-test-felles</artifactId>
+      <version>${bidrag-felles.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Generering av gyldige testdata (bl.a. fødselsnummer via genererFødselsnummer) -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-generer-testdata-felles</artifactId>
+      <version>${bidrag-felles.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Spring Boot test-støtte (JUnit, Mockito, AssertJ) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Test-støtte for REST-klienter (RestTemplate, WebClient), gir RestTemplateBuilder -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-restclient</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Test-støtte for Spring MVC-controllere/REST-endepunkter, gir TestRestTemplate -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-resttestclient</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Spring Data JPA test-støtte (in-memory database, repositories) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Embedded Kafka for integrasjonstester -->
+    <dependency>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- WireMock standalone for mocking av eksterne HTTP-tjenester i tester -->
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>${wiremock-standalone.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- WireMock for mocking av eksterne HTTP-tjenester i tester -->
+    <dependency>
+      <groupId>org.wiremock.integrations</groupId>
+      <artifactId>wiremock-spring-boot</artifactId>
+      <version>${wiremock-spring-boot.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- In-memory database for tester -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- H2 web-konsoll (eget modul i Spring Boot 4) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-h2console</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Mock OAuth2-server for lokal utvikling og tester -->
+    <dependency>
+      <groupId>no.nav.security</groupId>
+      <artifactId>token-validation-spring-test</artifactId>
+      <version>${nav-token-support.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Kotlin mocking-bibliotek -->
+    <dependency>
+      <groupId>io.mockk</groupId>
+      <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Kotlin assertion-bibliotek -->
+    <dependency>
+      <groupId>io.kotest</groupId>
+      <artifactId>kotest-assertions-core-jvm</artifactId>
+      <version>${kotest.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <!-- Denne appen er hovedsakelig Java, med et fåtall ekte .kt-filer i en egen src/main/kotlin-
+       og src/test/kotlin-mappe (samme mønster som bidrag-dokument-journalpost). Kotlin-
+       kompilatoren må derfor eksplisitt få oppgitt begge kildemappene i sourceDirs, og kjøre i
+       process-sources/process-test-sources før javac sin default-compile i compile/test-compile-
+       fasen, slik at javac finner de allerede kompilerte Kotlin-klassene på classpath (flere
+       .java-filer refererer til klasser definert i .kt-filer, bl.a. Tokeninfo, Egenskaper,
+       UserCacheKey(Generator), CacheEvictBeforeWorkingHours, Arkiveringstjeneste,
+       BidragDokumentkonsument), og Kotlin-kompilatoren kan lese Java-kildene for symboloppslag. -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>compile</id>
+            <phase>process-sources</phase>
+            <configuration>
+              <sourceDirs>
+                <source>src/main/java</source>
+                <source>src/main/kotlin</source>
+              </sourceDirs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>test-compile</id>
+            <phase>process-test-sources</phase>
+            <configuration>
+              <sourceDirs>
+                <source>src/test/java</source>
+                <source>src/test/kotlin</source>
+              </sourceDirs>
+            </configuration>
+          </execution>
+          <!-- kotlin-maven-plugin sin lifecycle-extension (extensions=true i root-pom) legger
+               automatisk til egne "default-compile"/"default-testCompile"-executions i tillegg
+               til de over. Uten sourceDirs her bruker de kun standard src/main/kotlin og finner
+               ikke Java-kildene i src/main/java, som feiler kompileringen. -->
+          <execution>
+            <id>default-compile</id>
+            <configuration>
+              <sourceDirs>
+                <source>src/main/java</source>
+                <source>src/main/kotlin</source>
+              </sourceDirs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-test-compile</id>
+            <configuration>
+              <sourceDirs>
+                <source>src/test/java</source>
+                <source>src/test/kotlin</source>
+              </sourceDirs>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <jvmTarget>${java.version}</jvmTarget>
+          <compilerPlugins>
+            <plugin>spring</plugin>
+            <plugin>jpa</plugin>
+            <plugin>lombok</plugin>
+          </compilerPlugins>
+          <pluginOptions>
+            <option>lombok:config=${project.basedir}/lombok.config</option>
+          </pluginOptions>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-allopen</artifactId>
+            <version>${kotlin.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-noarg</artifactId>
+            <version>${kotlin.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-maven-lombok</artifactId>
+            <version>${kotlin.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <!-- javac skal kun kompilere Java-kildene fra src/main/java (Kotlin-kildene er allerede
+           kompilert av kotlin-maven-plugin over og havner på classpath). default-compile/
+           default-testCompile fra parent-pomen deaktiveres og erstattes med egne executions som
+           peker eksplisitt på src/main/java og src/test/java, siden root-pomen sin globale
+           <sourceDirectory> peker på src/main/kotlin. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>default-testCompile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>java-compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <compileSourceRoots>
+                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+              </compileSourceRoots>
+            </configuration>
+          </execution>
+          <execution>
+            <id>java-test-compile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <configuration>
+              <compileSourceRoots>
+                <compileSourceRoot>${project.basedir}/src/test/java</compileSourceRoot>
+              </compileSourceRoots>
+            </configuration>
+          </execution>
+        </executions>
+        <!-- Enkelte javac-versjoner auto-oppdager ikke lenger annotasjonsprosessorer via
+             classpath. Uten eksplisitt annotationProcessorPaths ville Lomboks getter/setter/
+             builder-generering blitt hoppet over uten feilmelding, som gir kryptiske
+             "cannot find symbol"-feil i klasser som bruker Lombok-annotasjoner. -->
+        <configuration>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <!-- Flyway migreringsplugin. Versjon styres av spring-boot-dependencies BOM. -->
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

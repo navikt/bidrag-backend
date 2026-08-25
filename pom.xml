@@ -45,6 +45,7 @@
         <module>apps/bidrag-person</module>
         <module>apps/bidrag-statistikk</module>
         <module>apps/bidrag-tilgangskontroll</module>
+        <module>apps/bidrag-reisekostnad-api</module>
         <module>apps/bidrag-vedtak</module>
     </modules>
 

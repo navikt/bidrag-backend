@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/bidrag-person/informasjon",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "ident": "MYNDIG_IDENT"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "body": "{ \"ident\": \"MYNDIG_IDENT\", \"kortnavn\": \"Myndig Bamse\", \"fornavn\": \"Myndig\", \"foedselsdato\": \"{{now offset='-18 years'}}\" }",
+    "transformers": [
+      "response-template"
+    ],
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
