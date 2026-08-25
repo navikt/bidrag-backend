@@ -184,6 +184,12 @@ fun hotTemplateData(
     foldername: String,
     template: String,
 ): String {
+    require(!foldername.contains("..") && !foldername.contains("/") && !foldername.contains("\\")) {
+        "Invalid foldername: $foldername"
+    }
+    require(!template.contains("..") && !template.contains("/") && !template.contains("\\")) {
+        "Invalid template: $template"
+    }
     val dataFile = getPath("$foldername/$template.json")
     val data =
         commonObjectmapper.readValue(

@@ -62,7 +62,12 @@ class AdminKontroller(
     }
 
     private fun isValidXml(xml: String): Boolean = try {
-        DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(java.io.ByteArrayInputStream(xml.toByteArray()))
+        val factory = DocumentBuilderFactory.newInstance()
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+        factory.isExpandEntityReferences = false
+        factory.newDocumentBuilder().parse(java.io.ByteArrayInputStream(xml.toByteArray()))
         true
     } catch (e: Exception) {
         false
