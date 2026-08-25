@@ -80,4 +80,18 @@ class SecurityTest {
         assertThat(swaggerUi.statusCode.value()).isEqualTo(200)
         assertThat(apiDocs.statusCode.value()).isEqualTo(200)
     }
+
+    @Test
+    fun `openapi-doc tilbyr bearer-autorisering`() {
+        val apiDocs = RestClient.builder()
+            .baseUrl("http://localhost:$port")
+            .build()
+            .get().uri("/v3/api-docs")
+            .retrieve()
+            .body(String::class.java)
+
+        assertThat(apiDocs).contains("\"bearer-key\"")
+        assertThat(apiDocs).contains("\"scheme\":\"bearer\"")
+        assertThat(apiDocs).contains("\"bearerFormat\":\"JWT\"")
+    }
 }
