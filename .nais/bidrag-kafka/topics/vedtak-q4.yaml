@@ -1,0 +1,45 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Vedtak Hendelser
+    dcat.data.nav.no/description: Intern kø av hendelser på vedtak som oppstår i saksbehandlingen under team bidrag
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+  name: vedtak-q4
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: 720
+  acl:
+    - team: bidrag
+      application: bidrag-vedtak-q4
+      access: readwrite
+    - team: bidrag
+      application: bidrag-behandling-q4
+      access: read
+    - team: bidrag
+      application: bidrag-regnskap-q4
+      access: read
+    - team: bidrag
+      application: bidrag-automatisk-jobb-q4
+      access: read
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: read
+    - team: bidrag
+      application: bisys
+      access: read
+    - team: bidrag
+      application: bidrag-cli
+      access: readwrite
+    - team: bidrag
+      application: bidrag-belopshistorikk-q4
+      access: read

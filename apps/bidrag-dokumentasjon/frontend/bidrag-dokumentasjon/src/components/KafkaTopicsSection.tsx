@@ -3,24 +3,15 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import yaml from "js-yaml";
 import {useAppContext} from "../App.tsx";
 
-const KAFKA_TOPICS_API_URL = "https://api.github.com/repos/navikt/bidrag-kafka/contents/topics";
-const KAFKA_RAW_BASE_URL = "https://raw.githubusercontent.com/navikt/bidrag-kafka/main/topics";
+const KAFKA_TOPICS_API_URL = "https://api.github.com/repos/navikt/bidrag-backend/contents/.nais/bidrag-kafka/topics";
+const KAFKA_RAW_BASE_URL = "https://raw.githubusercontent.com/navikt/bidrag-backend/main/.nais/bidrag-kafka/topics";
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 export const KAFKA_FOLDER_ID = "folder_kafkatopics";
-
-/** Extra topic files from other repos – fetched in addition to bidrag-kafka/topics */
-const EXTRA_TOPICS: Array<{name: string; rawUrl: string}> = [
-    {
-        name: "personhendelse.v1-prod.yaml",
-        rawUrl: "https://raw.githubusercontent.com/navikt/bidrag-person-hendelse/main/.nais/kafka/personhendelse.v1/topic_prod.yml",
-    },
-];
 
 interface GithubFileEntry {
     name: string;
     download_url: string | null;
     type: string;
-    rawUrl?: string; // set for extra topics from other repos
 }
 
 interface NaisAclEntry {
@@ -114,8 +105,7 @@ export function KafkaTopicsFolderItem() {
     const isExpanded = expandedFolders.includes(KAFKA_FOLDER_ID);
 
     const {data: topicFiles = [], isLoading, error} = useQuery<GithubFileEntry[]>({
-        // Include extra topic names in the key so cache is invalidated when EXTRA_TOPICS changes
-        queryKey: ["kafkaTopicsList", ...EXTRA_TOPICS.map((t) => t.name)],
+        queryKey: ["kafkaTopicsList"],
         enabled: isExpanded,
         staleTime: ONE_DAY_MS,
         gcTime: ONE_DAY_MS,
@@ -124,23 +114,16 @@ export function KafkaTopicsFolderItem() {
             const response = await fetch(KAFKA_TOPICS_API_URL);
             if (!response.ok) throw new Error(`GitHub svarte med ${response.status}`);
             const data = await response.json() as GithubFileEntry[];
-            const main = data
+            return data
                 .filter((f) => f.type === "file" && f.name.endsWith("-prod.yaml"))
                 .sort((a, b) => a.name.localeCompare(b.name, "nb"));
-            const extras: GithubFileEntry[] = EXTRA_TOPICS.map((t) => ({
-                name: t.name,
-                download_url: t.rawUrl,
-                type: "file",
-                rawUrl: t.rawUrl,
-            }));
-            return [...main, ...extras];
         },
     });
 
     async function handleTopicClick(file: GithubFileEntry) {
         setSelectedItem(`kafkatopic_${file.name}`);
         try {
-            const rawUrl = file.rawUrl ?? `${KAFKA_RAW_BASE_URL}/${encodeURIComponent(file.name)}`;
+            const rawUrl = `${KAFKA_RAW_BASE_URL}/${encodeURIComponent(file.name)}`;
             const content = await queryClient.fetchQuery<string>({
                 queryKey: ["kafkaTopicContent", file.name],
                 staleTime: ONE_DAY_MS,

@@ -1,0 +1,38 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Behandling/Søknad hendelser
+    dcat.data.nav.no/description: Intern kø av hendelser for opprettelse og endring av behandling/søknad i bisys eller ny løsning
+  name: behandling-q1
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: -1
+  acl:
+    - team: bidrag
+      application: bidrag-arbeidsflyt-feature
+      access: readwrite
+    - team: bidrag
+      application: bidrag-bbm-feature
+      access: readwrite
+    - team: bidrag
+      application: bidrag-behandling-q1
+      access: readwrite
+    - team: bidrag
+      application: bisys
+      access: readwrite
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: readwrite
+    - team: bidrag
+      application: bidrag-cli
+      access: readwrite

@@ -17,7 +17,6 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-person-hendelse/**.yaml'
-      - '.nais/bidrag-person-hendelse/**.yml'
 #      - '.github/workflows/bidrag-person-hendelse.yaml' //TODO(Slå på etter migrering)
 #      - 'pom.xml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-person-hendelse/**'
@@ -119,38 +118,3 @@ jobs:
       nais_hovedfil_navn: bidrag-person-hendelse/nais.yaml
       image_suffix: bidrag-person-hendelse
       tag: bidrag-person-hendelse
-
-
-  deploy_kafka_topic_preprod:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod'))
-    name: "Deploy Kafka-topic til preprod"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      id-token: "write"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Deploy personhendelse Kafka-topic til dev
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
-        env:
-          CLUSTER: dev-gcp
-          RESOURCE: .nais/bidrag-person-hendelse/kafka/personhendelse.v1/topic_preprod.yml
-          PRINT_PAYLOAD: true
-
-  deploy_kafka_topic_prod:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
-    name: "Deploy Kafka-topic til prod"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      id-token: "write"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Deploy personhendelse Kafka-topic til prod
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
-        env:
-          CLUSTER: prod-gcp
-          RESOURCE: .nais/bidrag-person-hendelse/kafka/personhendelse.v1/topic_prod.yml
-          PRINT_PAYLOAD: true

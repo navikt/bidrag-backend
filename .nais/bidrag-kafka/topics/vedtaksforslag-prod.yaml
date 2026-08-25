@@ -1,0 +1,35 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Vedtaksforslag Hendelser
+    dcat.data.nav.no/description: Intern kø av hendelser for vedtaksforslag som oppstår i saksbehandlingen under team bidrag
+  name: vedtaksforslag
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: -1
+  acl:
+    - team: bidrag
+      application: bidrag-vedtak
+      access: readwrite
+    - team: bidrag
+      application: bidrag-automatisk-jobb
+      access: read
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: read
+    - team: bidrag
+      application: bidrag-behandling
+      access: read
+    - team: bidrag
+      application: bisys
+      access: read

@@ -1,0 +1,50 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Journalpost Hendelser
+    dcat.data.nav.no/description: Intern kø av hendelser som oppstår i saksbehandlingen av journalposter under team bidrag
+  name: journalpost-feature
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: -1
+  acl:
+    - team: bidrag
+      application: bidrag-dokument-journalpost-feature
+      access: readwrite
+    - team: bidrag
+      application: bidrag-dokument-arkiv-feature
+      access: write
+    - team: bidrag
+      application: bidrag-arbeidsflyt-feature
+      access: read
+    - team: bidrag
+      application: bidrag-testdata-feature
+      access: readwrite
+    - team: bidrag
+      application: bidrag-cucumber-cloud-feature
+      access: write
+    - team: bidrag
+      application: bidrag-cli
+      access: readwrite
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: read
+    - team: bidrag
+      application: bidrag-dokument-forsendelse-feature
+      access: readwrite
+    - team: bidrag
+      application: bisys
+      access: read
+    - team: bidrag
+      application: bidrag-behandling-q1
+      access: readwrite

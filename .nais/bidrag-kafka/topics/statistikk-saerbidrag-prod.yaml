@@ -1,0 +1,32 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Vedtakshendelser statistikk særbidrag
+    dcat.data.nav.no/description: Intern kø av vedtakshendelser for særbidrag omformet og tilpasset behovet for statistikk, team bidrag
+  name: statistikk-saerbidrag
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-prod
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: 720
+  acl:
+    - team: bidrag
+      application: bidrag-statistikk
+      access: readwrite
+    - team: dv-familie
+      application: dvh-familie-konsument
+      access: read
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: readwrite
+    - team: bidrag
+      application: bidrag-cli
+      access: readwrite

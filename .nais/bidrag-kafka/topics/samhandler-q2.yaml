@@ -1,0 +1,36 @@
+apiVersion: kafka.nais.io/v1
+kind: Topic
+metadata:
+  annotations:
+    dcat.data.nav.no/title: Samhandler Hendelser
+    dcat.data.nav.no/description: Intern kø av hendelser på samhandlere som oppstår i bidrag-samhandler under team bidrag
+    kafka.nais.io/removeDataWhenResourceIsDeleted: "true"
+  name: samhandler-q2
+  namespace: bidrag
+  labels:
+    team: bidrag
+spec:
+  pool: nav-dev
+  config:
+    cleanupPolicy: compact
+    minimumInSyncReplicas: 1
+    partitions: 1
+    replication: 3
+    retentionBytes: -1
+    retentionHours: 720
+  acl:
+    - team: bidrag
+      application: bidrag-samhandler-q2
+      access: readwrite
+    - team: bidrag
+      application: bidrag-aktoerregister-q2
+      access: read
+    - team: bidrag
+      application: bisys
+      access: read
+    - team: bidrag
+      application: bidrag-kafka-manager
+      access: read
+    - team: bidrag
+      application: bidrag-cli
+      access: readwrite
