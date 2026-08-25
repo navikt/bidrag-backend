@@ -1,0 +1,70 @@
+AZURE_APP_TENANT_ID: tokenx
+TOKEN_X_CLIENT_ID: tokenx
+AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: http://localhost:${mock-oauth2-server.port}/aad/token
+TOKEN_X_WELL_KNOWN_URL: http://localhost:${mock-oauth2-server.port}/tokenx/.well-known/openid-configuration
+
+no.nav.security.jwt:
+  client.registration:
+    bidrag-person:
+      token-endpoint-url: ${AZURE_OPENID_CONFIG_TOKEN_ENDPOINT}
+      grant-type: client_credentials
+      authentication:
+        client-id: ${AZURE_APP_CLIENT_ID}
+        client-secret: ${AZURE_APP_CLIENT_SECRET}
+        client-auth-method: client_secret_basic
+    bidrag-dokument:
+      token-endpoint-url: ${AZURE_OPENID_CONFIG_TOKEN_ENDPOINT}
+      grant-type: client_credentials
+      authentication:
+        client-id: ${AZURE_APP_CLIENT_ID}
+        client-secret: ${AZURE_APP_CLIENT_SECRET}
+        client-auth-method: client_secret_basic
+  expirythreshold: 1
+  issuer:
+    tokenx:
+      discoveryurl: ${TOKEN_X_WELL_KNOWN_URL}
+      accepted_audience: aud-localhost
+
+spring:
+  cloud.gcp:
+    secretmanager.enabled: false
+    sql.enabled: false
+  main.allow-bean-definition-overriding: true
+  ### H2 ###
+  flyway.enabled: false
+  datasource.type: com.zaxxer.hikari.HikariDataSource
+  datasource.url: jdbc:h2:mem:default
+  spring.datasource.initialization-mode: always
+  data.jpa.repositories.bootstrap-mode: default
+  h2.console.enabled: true
+  jpa:
+    hibernate.ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+
+springdoc:
+  show-login-endpoint: false
+# Encryption settings for tests. Used by Krypteringsverktøy to encrypt/decrypt
+# sensitive identifiers (such as personident) so that test data follows the
+# same code paths as production. These values are only for local/testing.
+KRYPTERINGSPASSORD: "The owls Are N0T what tHey seeM"
+KRYPTERINGSSALT: "iwianRpIjoiZDBhN2YyNWEtNGI2ZS00MDQyL"
+
+#### Mocks
+WIREMOCK_URL: http://localhost:${wiremock.server.port}
+BIDRAG_PERSON_URL: ${WIREMOCK_URL}
+BIDRAG_DOKUMENT_URL: ${WIREMOCK_URL}
+KJOEREPLAN_ARKIVERING: "0 0 7 * * ?"
+
+### Brukernotifikasjon
+BRUKERNOTIFIKASJON_PAA: true
+KAFKA_TRUSTSTORE_PATH: src/test/java/resources/cert/server-selfsigned.jks
+KAFKA_CREDSTORE_PASSWORD: qwer1234
+KAFKA_SCHEMA_REGISTRY_USER: user
+KAFKA_SCHEMA_REGISTRY_PASSWORD: secret
+KAFKA_KEYSTORE_PATH: src/test/java/resources/cert/server-selfsigned.jks
+KAFKA_BROKERS: 127.0.0.1:9092
+KAFKA_SCHEMA_REGISTRY: http://localhost:8081
+BIDRAG_REISEKOSTNAD_UI_URL: https://bidrag-reisekostnad.intern.dev.nav.no
+egenskaper.brukernotifikasjon.skruddPaa: false

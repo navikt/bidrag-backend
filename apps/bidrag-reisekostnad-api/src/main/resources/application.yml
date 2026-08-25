@@ -1,0 +1,79 @@
+logging.config: classpath:logback-spring.xml
+spring.main.banner-mode: off
+spring:
+  config.activate.on-profile: nais
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}
+    hikari:
+      idle-timeout: 10001
+      max-lifetime: 30001
+      connectionTimeout: 1000
+      maximum-pool-size: 10
+      minimum-idle: 1
+  flyway:
+    enabled: false
+    locations: classpath:/db/migration
+  jpa:
+    database: postgresql
+
+no.nav.security.jwt:
+  dont-propagate-bearertoken: true
+  client.registration:
+    bidrag-person:
+      token-endpoint-url: ${AZURE_OPENID_CONFIG_TOKEN_ENDPOINT}
+      grant-type: client_credentials
+      scope: api://${BIDRAG_PERSON_SCOPE}/.default
+      authentication:
+        client-id: ${AZURE_APP_CLIENT_ID}
+        client-secret: ${AZURE_APP_CLIENT_SECRET}
+        client-auth-method: client_secret_basic
+    bidrag-dokument:
+      token-endpoint-url: ${AZURE_OPENID_CONFIG_TOKEN_ENDPOINT}
+      grant-type: client_credentials
+      scope: api://${BIDRAG_DOKUMENT_SCOPE}/.default
+      authentication:
+        client-id: ${AZURE_APP_CLIENT_ID}
+        client-secret: ${AZURE_APP_CLIENT_SECRET}
+        client-auth-method: client_secret_basic
+  issuer:
+    tokenx:
+      discoveryurl: ${TOKEN_X_WELL_KNOWN_URL}
+      accepted_audience: ${TOKEN_X_CLIENT_ID}
+
+management:
+  endpoints.web:
+    exposure.include: info, health, metrics, prometheus
+    base-path: /actuator
+  endpoint.health.show-details: always
+
+---
+### Alle andre profiler enn "nais" ###
+springdoc:
+  packages-to-scan: { no.nav.bidrag.reisekostnad.api}
+  show-login-endpoint: false
+  swagger-ui:
+    path: /
+
+integrasjon.bidrag:
+  dokument.url: ${BIDRAG_DOKUMENT_URL}
+  person.url: ${BIDRAG_PERSON_URL}
+
+kjøreplan.databehandling:
+  anonymisere: ${KJOEREPLAN_ANONYMISERING}
+  arkivere: ${KJOEREPLAN_ARKIVERING}
+  deaktivere: ${KJOEREPLAN_DEAKTIVERING}
+  fylt_15: ${KJOEREPLAN_FYLT_15}
+
+egenskaper:
+  appnavn-reisekostnad: bidrag-reisekostnad
+  url-reisekostnad: ${BIDRAG_REISEKOSTNAD_UI_URL}
+  brukernotifikasjon:
+    emne-brukernotifikasjon: "min-side.aapen-brukervarsel-v1"
+    grupperingsid-reisekostnad: reisekostnad,
+    synlighet-beskjed-antall-maaneder: 1
+    levetid-oppgave-antall-dager: 30
+    sikkerhetsnivaa-beskjed: Substantial
+    sikkerhetsnivaa-oppgave: Substantial

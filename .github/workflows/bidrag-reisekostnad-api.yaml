@@ -1,4 +1,4 @@
-name: Bidrag-person-hendelse
+name: Bidrag-reisekostnad-api
 on:
   workflow_dispatch:
     inputs:
@@ -14,10 +14,10 @@ on:
       - '**'
       - '!dependabot/**'
     paths:
-      - '.nais/bidrag-person-hendelse/**.yaml'
-#      - '.github/workflows/bidrag-person-hendelse.yaml' //TODO(Slå på etter migrering)
-#      - 'pom.xml' //TODO(Slå på etter migrering)
-      - 'apps/bidrag-person-hendelse/**'
+      - '.nais/bidrag-reisekostnad-api/**.yaml'
+#      - '.github/workflows/bidrag-reisekostnad-api.yaml' //TODO(Slå på etter migrering)
+#     - 'pom.xml' //TODO(Slå på etter migrering)
+      - 'apps/bidrag-reisekostnad-api/**'
 
 jobs:
   detect_changes:
@@ -53,9 +53,9 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.m2/repository
-          key: maven-bidrag-person-hendelse-${{ hashFiles('pom.xml', 'apps/bidrag-person-hendelse/pom.xml') }}
+          key: maven-bidrag-reisekostnad-api-${{ hashFiles('pom.xml', 'apps/bidrag-reisekostnad-api/pom.xml') }}
           restore-keys: |
-            maven-bidrag-person-hendelse-
+            maven-bidrag-reisekostnad-api-
       - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
         with:
           servers: |
@@ -67,14 +67,14 @@ jobs:
               }
             ]
       - name: Bygg og kjør tester (inkl. ktlint)
-        run: mvn -B -fae verify -pl apps/bidrag-person-hendelse -am
+        run: mvn -B -fae verify -pl apps/bidrag-reisekostnad-api -am
 
   deploy_preprod:
     needs: detect_changes
     if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'preprod'))
     name: "Build and deploy to preprod"
     concurrency:
-      group: deploy-person-hendelse-preprod-${{ github.ref }}
+      group: deploy-reisekostnad-api-preprod-${{ github.ref }}
       cancel-in-progress: true
     permissions:
       contents: "read"
@@ -82,23 +82,23 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
-      maven_options: -B -fae -pl apps/bidrag-person-hendelse -am
+      maven_options: -B -fae -pl apps/bidrag-reisekostnad-api -am
       maven_cache_paths: |
         pom.xml
-        apps/bidrag-person-hendelse/pom.xml
-      ktlint_paths: apps/bidrag-person-hendelse/src/**/*.kt
-      docker_context: ./apps/bidrag-person-hendelse
-      nais_variabler_filnavn: bidrag-person-hendelse/preprod.yaml
-      nais_hovedfil_navn: bidrag-person-hendelse/nais.yaml
-      image_suffix: bidrag-person-hendelse
-      tag: bidrag-person-hendelse
+        apps/bidrag-reisekostnad-api/pom.xml
+      ktlint_paths: apps/bidrag-reisekostnad-api/src/**/*.kt
+      docker_context: ./apps/bidrag-reisekostnad-api
+      nais_variabler_filnavn: bidrag-reisekostnad-api/preprod.yaml
+      nais_hovedfil_navn: bidrag-reisekostnad-api/nais.yaml
+      image_suffix: bidrag-reisekostnad-api
+      tag: bidrag-reisekostnad-api
 
   deploy_prod:
     needs: detect_changes
     if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
     name: "Build and deploy to prod"
     concurrency:
-      group: deploy-person-hendelse-prod-${{ github.ref }}
+      group: deploy-reisekostnad-api-prod-${{ github.ref }}
       cancel-in-progress: true
     permissions:
       contents: "write"
@@ -106,13 +106,13 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy_prod.yaml
     secrets: inherit
     with:
-      maven_options: -B -fae -pl apps/bidrag-person-hendelse -am
+      maven_options: -B -fae -pl apps/bidrag-reisekostnad-api -am
       maven_cache_paths: |
         pom.xml
-        apps/bidrag-person-hendelse/pom.xml
-      ktlint_paths: apps/bidrag-person-hendelse/src/**/*.kt
-      docker_context: ./apps/bidrag-person-hendelse
-      nais_variabler_filnavn: bidrag-person-hendelse/prod.yaml
-      nais_hovedfil_navn: bidrag-person-hendelse/nais.yaml
-      image_suffix: bidrag-person-hendelse
-      tag: bidrag-person-hendelse
+        apps/bidrag-reisekostnad-api/pom.xml
+      ktlint_paths: apps/bidrag-reisekostnad-api/src/**/*.kt
+      docker_context: ./apps/bidrag-reisekostnad-api
+      nais_variabler_filnavn: bidrag-reisekostnad-api/prod.yaml
+      nais_hovedfil_navn: bidrag-reisekostnad-api/nais.yaml
+      image_suffix: bidrag-reisekostnad-api
+      tag: bidrag-reisekostnad-api
