@@ -179,8 +179,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                                     grunnlagsdata.skyldnersAndelUnderholdskostnad == null ||
                                     grunnlagsdata.skyldnerBorMedAndreVoksne == null ||
                                     grunnlagsdata.samværsklasse == null ||
-                                    grunnlagsdata.skyldnerInntektListe?.isEmpty() == true ||
-                                    grunnlagsdata.mottakerInntektListe?.isEmpty() == true
+                                    grunnlagsdata.skyldnerInntektListe?.isEmpty() == true
                                 ) &&
                             !vedtakFraBisys &&
                             !vedtakErAldersjustering
