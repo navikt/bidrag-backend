@@ -72,10 +72,12 @@ class SecurityTest {
     fun `swagger-ui og api-docs er apent uten token`() {
         val client = RestClient.builder().baseUrl("http://localhost:$port").build()
 
+        val basePath = client.get().uri("/").retrieve().toBodilessEntity()
         val swaggerUi = client.get().uri("/swagger-ui/index.html").retrieve().toBodilessEntity()
         val apiDocs = client.get().uri("/v3/api-docs").retrieve().toBodilessEntity()
 
-        assertThat(swaggerUi.statusCode.is2xxSuccessful).isTrue()
-        assertThat(apiDocs.statusCode.is2xxSuccessful).isTrue()
+        assertThat(basePath.statusCode.value()).isEqualTo(302)
+        assertThat(swaggerUi.statusCode.value()).isEqualTo(200)
+        assertThat(apiDocs.statusCode.value()).isEqualTo(200)
     }
 }
