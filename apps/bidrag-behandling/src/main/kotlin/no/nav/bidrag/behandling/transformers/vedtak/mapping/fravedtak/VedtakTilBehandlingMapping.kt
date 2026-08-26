@@ -817,7 +817,7 @@ class VedtakTilBehandlingMapping(
             filtrerBasertPåEgenReferanse(Grunnlagstype.FAKTISK_UTGIFT_PERIODE)
                 .filter {
                     val personGrunnlag = hentPersonMedReferanse(it.gjelderBarnReferanse)!!
-                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                    personGrunnlag.personIdent?.let { rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype) } == true
                 }.map { it.innholdTilObjekt<FaktiskUtgiftPeriode>() }
                 .mapFaktiskTilsynsutgift(underholdskostnad, lesemodus)
                 .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
