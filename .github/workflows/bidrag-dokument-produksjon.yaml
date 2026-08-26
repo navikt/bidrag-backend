@@ -13,6 +13,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-dokument-produksjon/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/**'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml'
@@ -24,6 +25,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-dokument-produksjon/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokument-produksjon/**'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/pom.xml'
@@ -78,7 +80,7 @@ jobs:
       deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-dokument-produksjon/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon -am
+      maven_options: -B -fae -pl apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon
       maven_cache_paths: |
         pom.xml
         apps/bidrag-dokumenthåndtering/pom.xml

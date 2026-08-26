@@ -185,8 +185,7 @@ og tilpasset til hva som er relevant for et Kotlin/Spring Boot/Postgres-backend 
 `bidrag-backend` har allerede et svært konsistent oppsett på tvers av alle apper:
 én workflow-fil per app (f.eks. `bidrag-aktoerregister.yaml`) som delegerer til delte,
 gjenbrukbare workflows: `bygg_og_deploy.yaml`, `bygg_og_deploy_prod.yaml`, i tillegg til de
-repo-globale `codeql.yml`, `dependabot_bygg_og_test.yaml`, `libs_bygg_og_test.yaml`,
-`tag_utgivelse.yaml`.
+repo-globale `codeql.yml`, `dependabot_bygg_og_test.yaml`, `tag_utgivelse.yaml`.
 
 **Ikke innfør nye, avvikende mønstre uten god grunn.** En ny app-workflow skal normalt
 kun bestå av jobbene:

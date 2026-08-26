@@ -106,6 +106,16 @@ on:
         description: "Docker image digest"
         value: ${{ jobs.bygg_test_og_image.outputs.digest }}
 
+env:
+  # De 5 bidrag-felles-modulene som (nesten) alle app-moduler avhenger av med
+  # ${project.version} (SNAPSHOT, aldri reelt publisert). Uten dette måtte hver av de
+  # 32 app-pipelinene kompilert (og delvis testet) disse fra kildekode på nytt via
+  # `-pl app -am`, uansett om bidrag-felles faktisk var endret. Nå caches ferdig
+  # installerte jar-er på tvers av alle app-workflows, nøkkelet på innholdet i
+  # libs/bidrag-felles/**, og bygges kun på nytt når det innholdet faktisk endres.
+  FELLES_MODULER: >-
+    libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
+
 jobs:
   # Bygger, kjører tester og lager Docker-image. Kjører uansett om det skal deploye eller ikke, slik at
   # PR-er alltid får bygg+test-feedback.
@@ -149,6 +159,29 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
+      # Delt cache for de ferdig installerte bidrag-felles-artefaktene, nøkkelet på
+      # innholdet i libs/bidrag-felles/** uavhengig av hvilken app som bygges. Denne
+      # cachen gjenbrukes på tvers av alle workflows, slik at bidrag-felles kun
+      # bygges fra kildekode når den faktisk endres.
+      - name: Gjenopprett cache for bidrag-felles-artefakter
+        id: felles_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository/no/nav/bidrag/bidrag-domene-felles
+            ~/.m2/repository/no/nav/bidrag/bidrag-transport-felles
+            ~/.m2/repository/no/nav/bidrag/bidrag-commons-felles
+            ~/.m2/repository/no/nav/bidrag/bidrag-commons-test-felles
+            ~/.m2/repository/no/nav/bidrag/bidrag-generer-testdata-felles
+          key: felles-m2-${{ hashFiles('libs/bidrag-felles/**') }}
+      # Bygger, installerer og tester bidrag-felles-modulene i det lokale Maven-repoet
+      # ved cache-miss Merk: siden alle app-workflows som avhenger av
+      # bidrag-felles trigges av samme push når libs/bidrag-felles/** endres, vil flere
+      # av dem kunne cache-misse og bygge+teste felles samtidig. De neste urelaterte
+      # app-pushene vil deretter treffe den nå varme cachen.
+      - name: Installer bidrag-felles i lokalt repo (kun ved cache-miss)
+        if: steps.felles_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am install
       # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
       # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
       # feiler for moduler med interne avhengigheter
@@ -169,7 +202,7 @@ jobs:
         # -Dmaven.antrun.skip=true: hopper over ktlint-antrun-executionen som er bundet til
         # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og
         # maven-antrun-plugin brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
-        run: mvn ${{ inputs.maven_options }} clean verify -Dmaven.antrun.skip=true
+        run: mvn -T 1C ${{ inputs.maven_options }} clean verify -Dmaven.antrun.skip=true
       - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
         if: github.actor != 'dependabot[bot]'
         id: docker-push

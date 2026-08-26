@@ -1,4 +1,8 @@
 change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+# Monorepoet inneholder mange andre apper/biblioteker. Uten dette ville
+# release-drafter dratt inn PR-er som ikke rører bidrag-felles i det hele tatt.
+include-paths:
+  - 'libs/bidrag-felles/**'
 categories:
   - title: '🍩 Bidrag domene'
     labels:
@@ -41,19 +45,19 @@ categories:
 autolabeler:
   - label: 'bidrag-commons'
     files:
-      - 'bidrag-commons/**'
+      - 'libs/bidrag-felles/bidrag-commons/**'
   - label: 'bidrag-domene'
     files:
-      - 'bidrag-domene/**'
+      - 'libs/bidrag-felles/bidrag-domene/**'
   - label: 'bidrag-transport'
     files:
-      - 'bidrag-transport/**'
+      - 'libs/bidrag-felles/bidrag-transport/**'
   - label: 'bidrag-commons-test'
     files:
-      - 'bidrag-commons-test/**'
+      - 'libs/bidrag-felles/bidrag-commons-test/**'
   - label: 'bidrag-generer-testdata'
     files:
-      - 'bidrag-generer-testdata/**'
+      - 'libs/bidrag-felles/bidrag-generer-testdata/**'
   - label: 'chore'
     branch:
       - '/chore\/.+/'
@@ -77,7 +81,7 @@ autolabeler:
       - '/avhengigheter\/.+/'
   - label: 'documentation'
     files:
-      - '*.md'
+      - 'libs/bidrag-felles/**/*.md'
 template: |
   ## What's Changed
   $CHANGES

@@ -88,7 +88,6 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk-jvm</artifactId>
-      <version>${mockk.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

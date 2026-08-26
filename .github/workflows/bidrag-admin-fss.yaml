@@ -13,6 +13,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-admin-fss/**.yaml'
       - 'apps/bidrag-admin/pom.xml'
       - 'apps/bidrag-admin/bidrag-admin-fss/**'
@@ -22,6 +23,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-admin-fss/**.yaml'
       - 'apps/bidrag-admin/pom.xml'
       - 'apps/bidrag-admin/bidrag-admin-fss/**'
@@ -75,7 +77,7 @@ jobs:
       deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-admin-fss/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-admin/bidrag-admin-fss -am
+      maven_options: -B -fae -pl apps/bidrag-admin/bidrag-admin-fss
       maven_cache_paths: |
         pom.xml
         apps/bidrag-admin/pom.xml

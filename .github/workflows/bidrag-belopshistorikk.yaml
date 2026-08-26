@@ -14,6 +14,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-belopshistorikk/**.yaml'
       - 'apps/bidrag-belopshistorikk/**'
   push:
@@ -22,6 +23,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-belopshistorikk/**.yaml'
       - 'apps/bidrag-belopshistorikk/**'
 
@@ -76,7 +78,7 @@ jobs:
       deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-belopshistorikk/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-belopshistorikk -am
+      maven_options: -B -fae -pl apps/bidrag-belopshistorikk
       maven_cache_paths: |
         pom.xml
         apps/bidrag-belopshistorikk/pom.xml

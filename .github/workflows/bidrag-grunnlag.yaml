@@ -14,6 +14,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-grunnlag/**.yaml'
       - 'apps/bidrag-grunnlag/**'
   push:
@@ -22,6 +23,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-grunnlag/**.yaml'
       - 'apps/bidrag-grunnlag/**'
 
@@ -76,7 +78,7 @@ jobs:
       deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-grunnlag/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-grunnlag -am
+      maven_options: -B -fae -pl apps/bidrag-grunnlag
       maven_cache_paths: |
         pom.xml
         apps/bidrag-grunnlag/pom.xml

@@ -73,7 +73,7 @@ jobs:
       deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-sjablon/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-sjablon -am
+      maven_options: -B -fae -pl apps/bidrag-sjablon
       maven_cache_paths: |
         pom.xml
         apps/bidrag-sjablon/pom.xml

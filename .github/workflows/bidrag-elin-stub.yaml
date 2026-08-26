@@ -12,6 +12,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-elin-stub/**.yaml'
       - 'apps/bidrag-elin-stub/**'
   push:
@@ -20,6 +21,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-elin-stub/**.yaml'
       - 'apps/bidrag-elin-stub/**'
 
@@ -68,7 +70,7 @@ jobs:
       nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
       nais_variabler_filnavn_q2: bidrag-elin-stub/main.yaml
       deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-elin-stub -am
+      maven_options: -B -fae -pl apps/bidrag-elin-stub
       maven_cache_paths: |
         pom.xml
         apps/bidrag-elin-stub/pom.xml

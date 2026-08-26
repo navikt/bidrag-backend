@@ -13,6 +13,7 @@ on:
     types: [labeled, unlabeled]
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-reisekostnad-api/**.yaml'
       - 'apps/bidrag-reisekostnad-api/**'
   push:
@@ -21,6 +22,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-reisekostnad-api/**.yaml'
       - 'apps/bidrag-reisekostnad-api/**'
 
@@ -73,7 +75,7 @@ jobs:
       deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
       nais_variabler_filnavn_prod: bidrag-reisekostnad-api/prod.yaml
       deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-reisekostnad-api -am
+      maven_options: -B -fae -pl apps/bidrag-reisekostnad-api
       maven_cache_paths: |
         pom.xml
         apps/bidrag-reisekostnad-api/pom.xml

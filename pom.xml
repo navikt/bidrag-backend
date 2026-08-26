@@ -111,6 +111,41 @@
         <mock-oauth2-server.version>2.1.10</mock-oauth2-server.version>
     </properties>
 
+    <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
+         mockk.version. Uten dette kan f.eks. springmockk trekke inn en eldre
+         mockk-dsl-jvm enn den bidrag-commons-test-felles sin Stubs.kt kompileres
+         mot, noe som kan gi NoClassDefFoundError for klasser som er lagt til i
+         nyere mockk-versjoner (f.eks. AnyTypedMatcher, introdusert i 1.14.9). -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-dsl-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-agent-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-agent-api-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-core-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <!-- Kotlin-stdlib må være inkludert for maven-plugin -->
     <dependencies>
         <dependency>
