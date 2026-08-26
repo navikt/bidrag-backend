@@ -1,6 +1,6 @@
 import {TreeItem} from "@mui/x-tree-view";
 import {useQueryClient} from "@tanstack/react-query";
-import yaml from "js-yaml";
+import {load} from "js-yaml";
 import {useAppContext} from "../App.tsx";
 
 const TILGANG_BASE_PATH = "dokumentasjon/tilgangskontroll";
@@ -31,7 +31,7 @@ function getLocalFileUrl(path: string): string {
 }
 
 function parseYamlEntries(content: string): TilgangEntry[] {
-    const parsed = yaml.load(content) as Record<string, {adgruppe?: string}> | null;
+    const parsed = load(content) as Record<string, {adgruppe?: string}> | null;
     return Object.entries(parsed ?? {}).map(([kode, val]) => ({
         kode,
         adgruppe: val?.adgruppe ?? "-",

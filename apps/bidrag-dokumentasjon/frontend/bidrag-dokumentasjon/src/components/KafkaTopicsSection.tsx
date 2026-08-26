@@ -1,6 +1,6 @@
 import {TreeItem} from "@mui/x-tree-view";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
-import yaml from "js-yaml";
+import {load} from "js-yaml";
 import {useAppContext} from "../App.tsx";
 
 const KAFKA_TOPICS_API_URL = "https://api.github.com/repos/navikt/bidrag-backend/contents/.nais/bidrag-kafka/topics";
@@ -135,7 +135,7 @@ export function KafkaTopicsFolderItem() {
                 },
             });
 
-            const parsed = yaml.load(content) as NaisTopic;
+            const parsed = load(content) as NaisTopic;
             const topicName = parsed?.metadata?.name ?? formatTopicDisplayName(file.name);
             const acl = parsed?.spec?.acl ?? [];
 
