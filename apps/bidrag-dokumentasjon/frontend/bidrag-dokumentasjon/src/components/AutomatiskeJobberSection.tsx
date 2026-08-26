@@ -1,6 +1,6 @@
 import {TreeItem} from "@mui/x-tree-view";
 import {useQuery} from "@tanstack/react-query";
-import yaml from "js-yaml";
+import {load} from "js-yaml";
 import cronstrue from "cronstrue";
 import {useAppContext} from "../App.tsx";
 
@@ -80,7 +80,7 @@ async function fetchAllBatchJobs(): Promise<BatchJob[]> {
     ]);
 
     // 3. Parse prod.yaml — flat map under the "env:" key
-    const prodYaml = yaml.load(prodYamlText) as Record<string, unknown>;
+    const prodYaml = load(prodYamlText) as Record<string, unknown>;
     const envSection = (prodYaml?.env ?? {}) as Record<string, string>;
     const envMap = new Map(Object.entries(envSection));
 
