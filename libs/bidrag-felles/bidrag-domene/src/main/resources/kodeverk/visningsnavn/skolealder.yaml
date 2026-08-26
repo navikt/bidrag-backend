@@ -1,0 +1,6 @@
+OVER:
+  intern: "Over skolealder"
+UNDER:
+  intern: "Under skolealder"
+IKKE_ANGITT:
+  intern: "Ikke angitt"

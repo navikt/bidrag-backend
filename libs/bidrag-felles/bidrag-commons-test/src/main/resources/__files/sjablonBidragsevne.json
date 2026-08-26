@@ -1,0 +1,434 @@
+﻿[
+  {
+    "bostatus": "EN",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBoutgift": 4313,
+    "belopUnderhold": 6245,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:38.987772"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2004-01-01",
+    "datoTom": "2004-06-30",
+    "belopBoutgift": 4313,
+    "belopUnderhold": 6565,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2003-12-22T15:39:50.603452"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2004-07-01",
+    "datoTom": "2005-06-30",
+    "belopBoutgift": 4761,
+    "belopUnderhold": 6565,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-06-22T13:14:57.103194"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2005-07-01",
+    "datoTom": "2006-06-30",
+    "belopBoutgift": 4544,
+    "belopUnderhold": 6637,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2005-06-20T14:19:46.249513"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2006-07-01",
+    "datoTom": "2007-06-30",
+    "belopBoutgift": 4556,
+    "belopUnderhold": 6756,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2006-06-28T16:00:00"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2007-07-01",
+    "datoTom": "2008-06-30",
+    "belopBoutgift": 4638,
+    "belopUnderhold": 6837,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2007-06-06T16:00:00"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2008-07-01",
+    "datoTom": "2009-06-30",
+    "belopBoutgift": 5243,
+    "belopUnderhold": 7090,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:32:37.159264"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBoutgift": 6113,
+    "belopUnderhold": 7246,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:33:53.997"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBoutgift": 6495,
+    "belopUnderhold": 7427,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T10:59:49.8"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBoutgift": 7259,
+    "belopUnderhold": 7576,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:26:38.535"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBoutgift": 7295,
+    "belopUnderhold": 7614,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T16:06:28.308"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBoutgift": 7390,
+    "belopUnderhold": 7713,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:18:30.215"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBoutgift": 7560,
+    "belopUnderhold": 7890,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T10:03:13.973"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBoutgift": 7711,
+    "belopUnderhold": 8048,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:34:50.582"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBoutgift": 8907,
+    "belopUnderhold": 8289,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:05:13.464"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBoutgift": 9156,
+    "belopUnderhold": 8521,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-16T13:36:14.944"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBoutgift": 9303,
+    "belopUnderhold": 8657,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:24:09.358"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBoutgift": 9591,
+    "belopUnderhold": 8925,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:09:39.571"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBoutgift": 9764,
+    "belopUnderhold": 9818,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:34:32.554"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBoutgift": 10008,
+    "belopUnderhold": 10063,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2022-06-21T15:47:41.25"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBoutgift": 10328,
+    "belopUnderhold": 10385,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2022-06-21T15:47:41.219"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBoutgift": 11051,
+    "belopUnderhold": 11112,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-06-29T13:10:12.816251"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBoutgift": 11708,
+    "belopUnderhold": 11634,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:47:34.552144"
+  },
+  {
+    "bostatus": "EN",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBoutgift": 11977,
+    "belopUnderhold": 11902,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T01:00:23.814127"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBoutgift": 2631,
+    "belopUnderhold": 5287,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:38.987871"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2004-01-01",
+    "datoTom": "2004-06-30",
+    "belopBoutgift": 2631,
+    "belopUnderhold": 5558,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2003-12-22T15:45:29.565553"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2004-07-01",
+    "datoTom": "2005-06-30",
+    "belopBoutgift": 2826,
+    "belopUnderhold": 5558,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-06-22T13:16:02.975628"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2005-07-01",
+    "datoTom": "2006-06-30",
+    "belopBoutgift": 2806,
+    "belopUnderhold": 5619,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2005-06-20T14:21:26.814148"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2006-07-01",
+    "datoTom": "2007-06-30",
+    "belopBoutgift": 3040,
+    "belopUnderhold": 5720,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2006-06-28T16:00:00"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2007-07-01",
+    "datoTom": "2008-06-30",
+    "belopBoutgift": 3364,
+    "belopUnderhold": 5789,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2007-06-06T16:00:00"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2008-07-01",
+    "datoTom": "2009-06-30",
+    "belopBoutgift": 3906,
+    "belopUnderhold": 6003,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:32:37.262353"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBoutgift": 4323,
+    "belopUnderhold": 6135,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:34:41.575"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBoutgift": 4488,
+    "belopUnderhold": 6288,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T11:00:30.139"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBoutgift": 4776,
+    "belopUnderhold": 6414,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:27:21.868"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBoutgift": 4800,
+    "belopUnderhold": 6446,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T16:07:16.448"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBoutgift": 4862,
+    "belopUnderhold": 6530,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:19:12.006"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBoutgift": 4974,
+    "belopUnderhold": 6680,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T10:04:00.457"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBoutgift": 5073,
+    "belopUnderhold": 6814,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:35:34.285"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBoutgift": 5456,
+    "belopUnderhold": 7018,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:05:55.052"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBoutgift": 5609,
+    "belopUnderhold": 7215,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-16T13:36:50.205"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBoutgift": 5698,
+    "belopUnderhold": 7330,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:24:45.207"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBoutgift": 5875,
+    "belopUnderhold": 7557,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:10:53.033"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBoutgift": 5981,
+    "belopUnderhold": 8313,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:35:58.965"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBoutgift": 6131,
+    "belopUnderhold": 8521,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2022-06-21T15:48:22.104"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBoutgift": 6327,
+    "belopUnderhold": 8794,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2022-06-21T15:48:22.1"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBoutgift": 6770,
+    "belopUnderhold": 9410,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-06-29T13:10:12.818843"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBoutgift": 7391,
+    "belopUnderhold": 9852,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:48:11.899633"
+  },
+  {
+    "bostatus": "GS",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBoutgift": 7561,
+    "belopUnderhold": 10079,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T01:00:23.822029"
+  }
+]

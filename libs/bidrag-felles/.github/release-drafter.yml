@@ -1,0 +1,83 @@
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+categories:
+  - title: '🍩 Bidrag domene'
+    labels:
+      - 'bidrag-domene'
+  - title: '🚌 Bidrag transport'
+    labels:
+      - 'bidrag-transport'
+  - title: '🔭 Bidrag commons'
+    labels:
+      - 'bidrag-commons'
+  - title: '🛠️ Bidrag commons-test'
+    labels:
+      - 'bidrag-commons-test'
+  - title: '🛠️ Bidrag generer-testdata'
+    labels:
+      - 'bidrag-generer-testdata'
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '⚠️ Breaking Changes'
+    labels:
+      - 'breaking'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+      - 'changes'
+  - title: '⬆️ Dependency upgrades'
+    labels:
+      - 'bump'
+      - 'dependencies'
+  - title: '📄 Documentation'
+    labels:
+      - 'documentation'
+autolabeler:
+  - label: 'bidrag-commons'
+    files:
+      - 'bidrag-commons/**'
+  - label: 'bidrag-domene'
+    files:
+      - 'bidrag-domene/**'
+  - label: 'bidrag-transport'
+    files:
+      - 'bidrag-transport/**'
+  - label: 'bidrag-commons-test'
+    files:
+      - 'bidrag-commons-test/**'
+  - label: 'bidrag-generer-testdata'
+    files:
+      - 'bidrag-generer-testdata/**'
+  - label: 'chore'
+    branch:
+      - '/chore\/.+/'
+  - label: 'feature'
+    branch:
+      - '/feature\/.+/'
+  - label: 'bugfix'
+    title:
+      - '/fix/i'
+      - '/bugfix/i'
+    branch:
+      - '/bugfix\/.+/'
+      - '/fix\/.+/'
+  - label: 'breaking'
+    branch:
+      - '/breaking\/.+/'
+  - label: 'dependencies'
+    branch:
+      - '/dependencies\/.+/'
+      - '/deps\/.+/'
+      - '/avhengigheter\/.+/'
+  - label: 'documentation'
+    files:
+      - '*.md'
+template: |
+  ## What's Changed
+  $CHANGES

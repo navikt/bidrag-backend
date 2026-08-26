@@ -1,0 +1,187 @@
+AINNTEKT:
+  intern: "A-inntekt"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_3MND:
+  intern: "A-inntekt siste 3 måneder"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_12MND:
+  intern: "A-inntekt siste 12 måneder"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_LAVESTE_MÅNEDSINNTEKT_SISTE_3MND_GANGET_TOLV:
+  intern: "A-inntekt laveste månedsinntekt siste 3 måneder ganget med 12"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_3MND_FRA_OPPRINNELIG_VEDTAK:
+  intern: "A-inntekt siste 3 måneder (opprinnelig vedtak)"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_12MND_FRA_OPPRINNELIG_VEDTAK:
+  intern: "A-inntekt siste 12 måneder (opprinnelig vedtak)"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_3MND_FRA_OPPRINNELIG_VEDTAKSTIDSPUNKT:
+  intern: "A-inntekt siste 3 måneder (fra opprinnelig vedtakstidspunkt)"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+AINNTEKT_BEREGNET_12MND_FRA_OPPRINNELIG_VEDTAKSTIDSPUNKT:
+  intern: "A-inntekt siste 12 måneder (fra opprinnelig vedtakstidspunkt)"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+    EN: "Personal income reported by employer"
+KAPITALINNTEKT:
+  intern: "Kapitalinntekt"
+  bruker:
+    NB: "Kapitalinntekt"
+LIGNINGSINNTEKT:
+  intern: "Ligningsinntekt"
+  bruker:
+    NB: "Skattemelding"
+    EN: "Tax information"
+KONTANTSTØTTE:
+  intern: "Kontantstøtte"
+  bruker:
+    NB: "Kontantstøtte"
+SMÅBARNSTILLEGG:
+  intern: "Småbarnstillegg"
+  bruker:
+    NB: "Småbarnstillegg"
+UTVIDET_BARNETRYGD:
+  intern: "Utvidet barnetrygd"
+  bruker:
+    NB: "Utvidet barnetrygd"
+BARNETILSYN:
+  intern: "Barnetilsyn"
+PERSONINNTEKT_EGNE_OPPLYSNINGER:
+  intern: "Personinntekt egne opplysninger"
+  bruker:
+    NB: "Personinntekt egne opplysninger"
+KAPITALINNTEKT_EGNE_OPPLYSNINGER:
+  intern: "Kapitalinntekt egne opplysninger"
+  bruker:
+    NB: "Kapitalinntekt egne opplysninger"
+SAKSBEHANDLER_BEREGNET_INNTEKT:
+  intern: "Saksbehandlers beregnede inntekt"
+  bruker:
+    NB: "Vår beregnede inntekt"
+LØNN_MANUELT_BEREGNET:
+  intern: "Lønn manuelt beregnet"
+  bruker:
+    NB: "Vår beregnede inntekt"
+NÆRINGSINNTEKT_MANUELT_BEREGNET:
+  intern: "Næringsinntekt manuelt beregnet"
+  bruker:
+    NB: "Næringsinntekt"
+YTELSE_FRA_OFFENTLIG_MANUELT_BEREGNET:
+  intern: "Ytelse fra det offentlige manuelt beregnet"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+AAP:
+  intern: "Arbeidsavklaringspenger"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+AINNTEKT_KORRIGERT_FOR_BARNETILLEGG:
+  intern: "A-inntekt korrigert for barnetillegg"
+  bruker:
+    NB: "A-inntekt korrigert for barnetillegg"
+BARNETRYGD_MANUELL_VURDERING:
+  intern: "Barnetrygd manuell vurdering"
+  bruker:
+    NB: "Barnetrygd manuell vurdering"
+BARNS_SYKDOM:
+  intern: "Barns sykdom"
+  bruker:
+    NB: "Barns sykdom"
+DAGPENGER:
+  intern: "Dagpenger"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+SKJØNN_MANGLER_DOKUMENTASJON:
+  intern: "Skjønn mangler dokumentasjon"
+  bruker:
+    NB: "Skjønn - mangler dokumentasjon"
+FORDEL_SÆRFRADRAG_ENSLIG_FORSØRGER:
+  intern: "Fordel særfradrag enslig forsørger"
+  bruker:
+    NB: "Fordel særfradrag enslig forsørger"
+FØDSEL_ADOPSJON:
+  intern: "Fødsels- og adopsjonspenger"
+  bruker:
+    NB: "Fødsels- og adopsjonspenger"
+INNTEKTSOPPLYSNINGER_FRA_ARBEIDSGIVER:
+  intern: "Inntektsopplysninger fra arbeidsgiver"
+  bruker:
+    NB: "Opplysninger fra arbeidsgiver"
+LIGNINGSOPPLYSNINGER_MANGLER:
+  intern: "Ingen ligningsopplysninger finnes"
+  bruker:
+    NB: "Ingen ligningsopplysninger finnes"
+LIGNING_FRA_SKATTEETATEN:
+  intern: "Ligning fra Skatteetaten"
+  bruker:
+    NB: "Ligning fra Skatteetaten"
+LØNNSOPPGAVE_FRA_SKATTEETATEN:
+  intern: "Lønnsoppgave fra Skatteetaten"
+  bruker:
+    NB: "Lønnsoppgave fra Skatteetaten"
+LØNNSOPPGAVE_FRA_SKATTEETATEN_KORRIGERT_FOR_BARNETILLEGG:
+  intern: "Lønnsoppgave fra Skatteetaten korrigert for barnetillegg"
+  bruker:
+    NB: "Lønnsoppgave fra Skatteetaten korrigert for barnetillegg"
+SKJØNN_MANGLENDE_BRUK_AV_EVNE:
+  intern: "Skjønn manglende bruk av evne"
+  bruker:
+    NB: "Skjønn - manglende bruk av evne (inntektsevne)"
+NETTO_KAPITALINNTEKT:
+  intern: "Netto kapitalinntekt"
+  bruker:
+    NB: "Netto kapitalinntekt"
+OVERGANGSSTØNAD:
+  intern: "Overgangsstønad"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+PENSJON:
+  intern: "Pensjon"
+  bruker:
+    NB: "Pensjon"
+PENSJON_KORRIGERT_FOR_BARNETILLEGG:
+  intern: "Pensjon korrigert for barnetillegg"
+  bruker:
+    NB: "Pensjon korrigert for barnetillegg"
+REHABILITERINGSPENGER:
+  intern: "Rehabiliteringspenger"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+SKATTEGRUNNLAG_KORRIGERT_FOR_BARNETILLEGG:
+  intern: "Skattegrunnlag korrigert for barnetillegg"
+  bruker:
+    NB: "Skattegrunnlag korrigert for barnetillegg"
+SYKEPENGER:
+  intern: "Sykepenger"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+FORELDREPENGER:
+  intern: "Foreldrepenger"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+INTRODUKSJONSSTØNAD:
+  intern: "Introduksjonsstønad"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+KVALIFISERINGSSTØNAD:
+  intern: "Kvalifiseringsstønad"
+  bruker:
+    NB: "Ytelse fra det offentlige"
+BARNETILLEGG:
+  intern: "Barnetillegg"
+  bruker:
+    NB: "Barnetillegg"

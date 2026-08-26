@@ -1,0 +1,23 @@
+name: Release Drafter
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  build-release:
+    name: "Build and release package"
+    uses: navikt/bidrag-workflow/.github/workflows/maven_release_drafter.yaml@main
+    secrets: inherit
+    with:
+      publish: ${{github.ref == 'refs/heads/main' && !startsWith(github.ref, 'refs/dependabot')}}

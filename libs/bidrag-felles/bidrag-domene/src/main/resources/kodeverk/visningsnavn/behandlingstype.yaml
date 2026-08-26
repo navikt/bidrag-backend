@@ -1,0 +1,87 @@
+ENDRING:
+  intern: "Endring"
+  bruker:
+    NB: "Endring"
+EGET_TILTAK:
+  intern: "Eget tiltak"
+  bruker:
+    NB: "Eget tiltak"
+SØKNAD:
+  intern: "Søknad"
+  bruker:
+    NB: "Søknad"
+INNKREVINGSGRUNNLAG:
+  intern: "Innkrevingsgrunnlag"
+  bruker:
+    NB: "Innkrevingsgrunnlag"
+ALDERSJUSTERING:
+  intern: "Aldersjustering"
+  bruker:
+    NB: "Aldersjustering"
+INDEKSREGULERING:
+  intern: "Indeksregulering"
+  bruker:
+    NB: "Indeksregulering"
+KLAGE_BEGRENSET_SATS:
+  intern: "Klage begrenset sats"
+  bruker:
+    NB: "Klage begrenset sats"
+KLAGE:
+  intern: "Klage"
+  bruker:
+    NB: "Klage"
+FØLGER_KLAGE:
+  intern: "Følger klage"
+  bruker:
+    NB: "Følger klage"
+KORRIGERING:
+  intern: "Korrigering"
+  bruker:
+    NB: "Korrigering"
+OPPHØR:
+  intern: "Opphør"
+  bruker:
+    NB: "Opphør"
+PRIVAT_AVTALE:
+  intern: "Privat avtale"
+  bruker:
+    NB: "Privat avtale"
+BEGRENSET_REVURDERING:
+  intern: "Begrenset revurdering"
+  bruker:
+    NB: "Begrenset revurdering"
+REVURDERING:
+  intern: "Revurdering"
+  bruker:
+    NB: "Revurdering"
+OPPJUSTERT_FORSKUDD:
+  intern: "Oppjustert forskudd"
+  bruker:
+    NB: "Oppjustert forskudd"
+OMGJØRING:
+  intern: "Omgjøring"
+  bruker:
+    NB: "Omgjøring"
+OMGJØRING_BEGRENSET_SATS:
+  intern: "Omgjøring begrenset sats"
+  bruker:
+    NB: "Omgjøring begrenset sats"
+PARAGRAF_35_C:
+  intern: "§ 35c"
+  bruker:
+    NB: "§ 35c"
+PARAGRAF_35_C_BEGRENSET_SATS:
+  intern: "§ 35c begrenset sats"
+  bruker:
+    NB: "§ 35c begrenset sats"
+MÅNEDLIG_PÅLOP:
+  intern: "Månedlig påløp"
+  bruker:
+    NB: "Månedlig påløp"
+KONVERTERING:
+  intern: "Konvertering"
+FORHOLDSMESSIG_FORDELING:
+  intern: "Forholdsmessig fordeling"
+
+FORHOLDSMESSIG_FORDELING_KLAGE:
+  intern: "Forholdsmessig fordeling klage"

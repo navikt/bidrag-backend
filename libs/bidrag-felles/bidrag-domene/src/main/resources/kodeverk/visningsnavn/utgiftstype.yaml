@@ -1,0 +1,16 @@
+KONFIRMASJONSAVGIFT:
+  intern: "Konfirmasjonsavgift"
+KONFIRMASJONSLEIR:
+  intern: "Konfirmasjonsleir"
+SELSKAP:
+  intern: "Selskap"
+KLÆR:
+  intern: "Klær"
+REISEUTGIFT:
+  intern: "Reiseutgift"
+TANNREGULERING:
+  intern: "Tannregulering"
+OPTIKK:
+  intern: "Optikk"
+ANNET:
+  intern: "Annet"

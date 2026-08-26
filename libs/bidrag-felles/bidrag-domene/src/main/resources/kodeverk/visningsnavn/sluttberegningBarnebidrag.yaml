@@ -1,0 +1,22 @@
+bidragJustertNedTil25ProsentAvInntekt:
+  intern: "Bidrag redusert til 25 prosent av inntekt"
+bidragJustertForNettoBarnetilleggBP:
+  intern: "Bidrag satt til barnetillegg fra BP"
+bidragJustertForNettoBarnetilleggBM:
+  intern: "Bidrag satt til underholdskostnad minus barnetillegg BM"
+bidragJustertNedTilEvne:
+  intern: "Bidrag redusert til evne"
+bidragJustertForDeltBosted:
+  intern: "Bidrag justert for delt bosted"
+barnetErSelvforsørget:
+  intern: "Barnet er selvforsørget"
+ingenEndringUnderGrense:
+  intern: "Ingen endring under grense"
+ikkeOmsorgForBarnet:
+  intern: "Ikke omsorg for barnet"
+kostnadsberegnet:
+  intern: "Kostnadsberegnet bidrag"
+bidragJustertTilForskuddssats:
+  intern: "Bidrag justert til forskuddssats"
+bidragJustertManueltTilForskuddssats:
+  intern: "Bidrag justert manuelt til forskuddssats"
