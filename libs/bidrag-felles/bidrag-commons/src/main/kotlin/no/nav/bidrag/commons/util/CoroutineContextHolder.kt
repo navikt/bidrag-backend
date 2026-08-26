@@ -52,16 +52,15 @@ class SecurityCoroutineContext(
     }
 }
 
-private fun getServletRequestAttributes(): ServletRequestAttributes? =
-    RequestContextHolder
-        .getRequestAttributes()
-        ?.let {
-            if (ServletRequestAttributes::class.java.isAssignableFrom(it.javaClass)) {
-                it as ServletRequestAttributes
-            } else {
-                null
-            }
+private fun getServletRequestAttributes(): ServletRequestAttributes? = RequestContextHolder
+    .getRequestAttributes()
+    ?.let {
+        if (ServletRequestAttributes::class.java.isAssignableFrom(it.javaClass)) {
+            it as ServletRequestAttributes
+        } else {
+            null
         }
+    }
 
 class RequestContextAsyncContext(
     private val contextMap: Map<String, String> = MDC.getCopyOfContextMap() ?: emptyMap(),

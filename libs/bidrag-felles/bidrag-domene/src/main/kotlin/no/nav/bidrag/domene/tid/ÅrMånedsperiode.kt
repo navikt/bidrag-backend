@@ -33,8 +33,7 @@ data class ÅrMånedsperiode(
 
     override fun tilEllerMax(): YearMonth = til ?: YearMonth.from(LocalDate.MAX)
 
-    override fun lengdeIHeleMåneder(): Long =
-        (tilEllerMax().minusMonths(1).year * 12 + tilEllerMax().monthValue) - (fom.year * 12 + fom.monthValue) + 1L
+    override fun lengdeIHeleMåneder(): Long = (tilEllerMax().minusMonths(1).year * 12 + tilEllerMax().monthValue) - (fom.year * 12 + fom.monthValue) + 1L
 
     fun toDatoperiode() = Datoperiode(fom, til)
 }

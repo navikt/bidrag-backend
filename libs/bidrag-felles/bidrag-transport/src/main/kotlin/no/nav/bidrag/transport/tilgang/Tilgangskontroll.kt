@@ -7,14 +7,14 @@ import no.nav.bidrag.domene.sak.Saksnummer
 data class TilgangskontrollResponse(
     @param:Schema(
         description =
-            "Indikerer om brukeren har tilgang. " +
-                "Hvis tilgang er avslått, vil detaljer inneholde mer informasjon.",
+        "Indikerer om brukeren har tilgang. " +
+            "Hvis tilgang er avslått, vil detaljer inneholde mer informasjon.",
     )
     val harTilgang: Boolean,
     @param:Schema(
         description =
-            "Liste over detaljer om tilgangsbeslutninger, inkludert opprinnelse og begrunnelse. " +
-                "Vil kun settes om tilgang avslås.",
+        "Liste over detaljer om tilgangsbeslutninger, inkludert opprinnelse og begrunnelse. " +
+            "Vil kun settes om tilgang avslås.",
     )
     val detaljer: List<TilgangskontrollResponseDetaljer> = emptyList(),
 )

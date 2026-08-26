@@ -39,13 +39,12 @@ data class JournalpostHendelse(
 
     fun harAktorId() = aktorId != null
 
-    fun hentJournalposttype(): JournalpostType? =
-        when (journalposttype) {
-            JournalpostType.UTGÅENDE.name, DokumentType.UTGÅENDE -> JournalpostType.UTGÅENDE
-            JournalpostType.NOTAT.name, DokumentType.NOTAT -> JournalpostType.NOTAT
-            JournalpostType.INNGÅENDE.name, DokumentType.INNGÅENDE -> JournalpostType.INNGÅENDE
-            else -> null
-        }
+    fun hentJournalposttype(): JournalpostType? = when (journalposttype) {
+        JournalpostType.UTGÅENDE.name, DokumentType.UTGÅENDE -> JournalpostType.UTGÅENDE
+        JournalpostType.NOTAT.name, DokumentType.NOTAT -> JournalpostType.NOTAT
+        JournalpostType.INNGÅENDE.name, DokumentType.INNGÅENDE -> JournalpostType.INNGÅENDE
+        else -> null
+    }
 
     fun harJournalpostIdPrefix() = journalpostId.contains("-")
 
@@ -67,17 +66,16 @@ data class JournalpostHendelse(
 
     fun hentSaksbehandlerInfo() = sporing?.lagSaksbehandlerInfo() ?: "ukjent saksbehandler"
 
-    fun printSummary() =
-        "{journalpostId=$journalpostId," +
-            "tema=$tema," +
-            "enhet=$enhet," +
-            "saksbehandlerEnhet=${sporing?.enhetsnummer}," +
-            "journalstatus=$status," +
-            "saker=$sakstilknytninger," +
-            "dokumentDato=$dokumentDato," +
-            "journalfortDato=$journalfortDato," +
-            "tittel=$tittel," +
-            "behandlingstema=$behandlingstema....}"
+    fun printSummary() = "{journalpostId=$journalpostId," +
+        "tema=$tema," +
+        "enhet=$enhet," +
+        "saksbehandlerEnhet=${sporing?.enhetsnummer}," +
+        "journalstatus=$status," +
+        "saker=$sakstilknytninger," +
+        "dokumentDato=$dokumentDato," +
+        "journalfortDato=$journalfortDato," +
+        "tittel=$tittel," +
+        "behandlingstema=$behandlingstema....}"
 }
 
 data class Sporingsdata(
@@ -86,15 +84,13 @@ data class Sporingsdata(
     val saksbehandlersNavn: String? = "ukjent saksbehandler",
     val enhetsnummer: String? = null,
 ) {
-    fun lagSaksbehandlerInfo(saksbehandlerEnhet: String? = null) =
-        if (brukerident == null && saksbehandlersNavn == null) {
-            "ukjent saksbehandler"
-        } else {
-            hentBrukeridentMedSaksbehandler(
-                saksbehandlerEnhet ?: enhetsnummer ?: "ukjent enhet",
-            )
-        }
+    fun lagSaksbehandlerInfo(saksbehandlerEnhet: String? = null) = if (brukerident == null && saksbehandlersNavn == null) {
+        "ukjent saksbehandler"
+    } else {
+        hentBrukeridentMedSaksbehandler(
+            saksbehandlerEnhet ?: enhetsnummer ?: "ukjent enhet",
+        )
+    }
 
-    private fun hentBrukeridentMedSaksbehandler(enhetsnummer: String) =
-        "${saksbehandlersNavn ?: "Ukjent"} ${brukerident?.let { "($it, $enhetsnummer)" } ?: "($enhetsnummer)"}"
+    private fun hentBrukeridentMedSaksbehandler(enhetsnummer: String) = "${saksbehandlersNavn ?: "Ukjent"} ${brukerident?.let { "($it, $enhetsnummer)" } ?: "($enhetsnummer)"}"
 }

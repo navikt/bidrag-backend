@@ -5,8 +5,8 @@ import no.nav.bidrag.domene.sak.Saksnummer
 
 @Schema(
     description =
-        "Metadata for pip tjeneste " +
-            "(fnr for involverte roller)",
+    "Metadata for pip tjeneste " +
+        "(fnr for involverte roller)",
 )
 data class BidragssakPipDto(
     @Schema(description = "Saksnummeret til bidragssaken")

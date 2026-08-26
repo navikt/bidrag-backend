@@ -23,8 +23,8 @@ class OpprettSakRequest(
     val arbeidsfordeling: Arbeidsfordeling = Arbeidsfordeling.EIERENHET,
     @field:Schema(
         description =
-            "Rollene som skal opprettes i saken. " +
-                "Hvis BM mangler, må alle barn (BA) ha reell mottaker (RM).",
+        "Rollene som skal opprettes i saken. " +
+            "Hvis BM mangler, må alle barn (BA) ha reell mottaker (RM).",
     )
     val roller: Set<RolleDto> = emptySet(),
 )

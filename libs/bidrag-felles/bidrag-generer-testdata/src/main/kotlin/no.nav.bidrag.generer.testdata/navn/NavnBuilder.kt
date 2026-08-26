@@ -80,11 +80,10 @@ class NavnBuilder(
             navnBuilderListe: MutableCollection<NavnBuilder>,
             kjønn: Kjønn?,
             fraDato: LocalDate?,
-        ): MutableList<TestNavn?> =
-            periodiser(navnBuilderListe, fraDato)
-                .stream()
-                .map { b: NavnBuilder? -> b!!.opprett(kjønn, fraDato) }
-                .collect(Collectors.toList())
+        ): MutableList<TestNavn?> = periodiser(navnBuilderListe, fraDato)
+            .stream()
+            .map { b: NavnBuilder? -> b!!.opprett(kjønn, fraDato) }
+            .collect(Collectors.toList())
 
         private fun periodiser(
             navnBuilderListe: MutableCollection<NavnBuilder>,

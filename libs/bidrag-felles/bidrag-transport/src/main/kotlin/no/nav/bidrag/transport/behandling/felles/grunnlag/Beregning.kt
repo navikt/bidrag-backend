@@ -182,7 +182,7 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
         }
 
         bidragTilFordeling?.innhold?.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM
-            -> {
+        -> {
             Resultatkode.BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM
         }
 
@@ -192,14 +192,11 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
     }
 }
 
-fun List<GrunnlagDto>.tilResultatVisningsnavn(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Visningsnavn? =
-    resultatSluttberegning(grunnlagsreferanseListe)?.visningsnavn
+fun List<GrunnlagDto>.tilResultatVisningsnavn(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Visningsnavn? = resultatSluttberegning(grunnlagsreferanseListe)?.visningsnavn
 
-fun List<GrunnlagDto>.tilBisysResultatkode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): String =
-    resultatSluttberegning(grunnlagsreferanseListe)?.legacyKode ?: "KBB"
+fun List<GrunnlagDto>.tilBisysResultatkode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): String = resultatSluttberegning(grunnlagsreferanseListe)?.legacyKode ?: "KBB"
 
-fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean =
-    sluttberegningAvslagResultaterV2.contains(resultatSluttberegning(grunnlagsreferanseListe))
+fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = sluttberegningAvslagResultaterV2.contains(resultatSluttberegning(grunnlagsreferanseListe))
 
 data class SluttberegningBarnebidragAldersjustering(
     override val periode: ÅrMånedsperiode,
@@ -504,9 +501,8 @@ data class FatteVedtakResultat(
 
 data class DelberegningFatteVedtak(
     override val periode: ÅrMånedsperiode,
-    val fatteVedtakResultat: FatteVedtakResultat
+    val fatteVedtakResultat: FatteVedtakResultat,
 ) : Delberegning
-
 
 // ---------- Deprekerte verdier. Skal ikke slettes helt til vedtak databasen er konvertert i PROD --------------------------
 

@@ -3,24 +3,23 @@ package no.nav.bidrag.generer.testdata.navn
 import no.nav.bidrag.generer.testdata.person.Kjønn
 import kotlin.random.Random
 
-fun genererFornavn(kjønn: Kjønn? = null): String =
-    when (kjønn) {
-        Kjønn.MANN -> {
-            fornavnMann.random()
-        }
+fun genererFornavn(kjønn: Kjønn? = null): String = when (kjønn) {
+    Kjønn.MANN -> {
+        fornavnMann.random()
+    }
 
-        Kjønn.KVINNE -> {
+    Kjønn.KVINNE -> {
+        fornavnKvinne.random()
+    }
+
+    else -> {
+        if (Random.nextBoolean()) {
+            fornavnMann.random()
+        } else {
             fornavnKvinne.random()
         }
-
-        else -> {
-            if (Random.nextBoolean()) {
-                fornavnMann.random()
-            } else {
-                fornavnKvinne.random()
-            }
-        }
     }
+}
 
 fun genererEtternavn(): String = etternavn.random()
 

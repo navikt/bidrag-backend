@@ -39,39 +39,35 @@ enum class Behandlingstype(
     MÅNEDLIG_PÅLOP("MP", "Månedlig påløp", false),
     ;
 
-    fun tilVedtakstype() =
-        when (this) {
-            INDEKSREGULERING -> Vedtakstype.INDEKSREGULERING
-            ALDERSJUSTERING -> Vedtakstype.ALDERSJUSTERING
-            OPPHØR -> Vedtakstype.OPPHØR
-            SØKNAD -> Vedtakstype.FASTSETTELSE
-            INNKREVINGSGRUNNLAG, PRIVAT_AVTALE -> Vedtakstype.INNKREVING
-            KLAGE_BEGRENSET_SATS, KLAGE, FØLGER_KLAGE -> Vedtakstype.KLAGE
-            REVURDERING, FORHOLDSMESSIG_FORDELING, FORHOLDSMESSIG_FORDELING_KLAGE -> Vedtakstype.REVURDERING
-            else -> Vedtakstype.ENDRING
-        }
+    fun tilVedtakstype() = when (this) {
+        INDEKSREGULERING -> Vedtakstype.INDEKSREGULERING
+        ALDERSJUSTERING -> Vedtakstype.ALDERSJUSTERING
+        OPPHØR -> Vedtakstype.OPPHØR
+        SØKNAD -> Vedtakstype.FASTSETTELSE
+        INNKREVINGSGRUNNLAG, PRIVAT_AVTALE -> Vedtakstype.INNKREVING
+        KLAGE_BEGRENSET_SATS, KLAGE, FØLGER_KLAGE -> Vedtakstype.KLAGE
+        REVURDERING, FORHOLDSMESSIG_FORDELING, FORHOLDSMESSIG_FORDELING_KLAGE -> Vedtakstype.REVURDERING
+        else -> Vedtakstype.ENDRING
+    }
 
-    fun erBegrensetRevurdering() =
-        listOf(
-            PARAGRAF_35_C_BEGRENSET_SATS,
-            OMGJØRING_BEGRENSET_SATS,
-            KLAGE_BEGRENSET_SATS,
-            REVURDERING,
-            BEGRENSET_REVURDERING,
-        ).contains(this)
+    fun erBegrensetRevurdering() = listOf(
+        PARAGRAF_35_C_BEGRENSET_SATS,
+        OMGJØRING_BEGRENSET_SATS,
+        KLAGE_BEGRENSET_SATS,
+        REVURDERING,
+        BEGRENSET_REVURDERING,
+    ).contains(this)
 
-    fun erForholdsmessigFordeling() =
-        listOf(
-            FORHOLDSMESSIG_FORDELING,
-            FORHOLDSMESSIG_FORDELING_KLAGE,
-        ).contains(this)
+    fun erForholdsmessigFordeling() = listOf(
+        FORHOLDSMESSIG_FORDELING,
+        FORHOLDSMESSIG_FORDELING_KLAGE,
+    ).contains(this)
 
     companion object {
-        fun fraKode(kode: String): Behandlingstype? =
-            try {
-                enumValues<Behandlingstype>().find { res -> res.bisysKode == kode } ?: Behandlingstype.valueOf(kode)
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): Behandlingstype? = try {
+            enumValues<Behandlingstype>().find { res -> res.bisysKode == kode } ?: Behandlingstype.valueOf(kode)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

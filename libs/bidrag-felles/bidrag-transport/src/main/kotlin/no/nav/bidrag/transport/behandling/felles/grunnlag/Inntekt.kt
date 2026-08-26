@@ -17,8 +17,8 @@ data class InntektsrapporteringPeriode(
     val opprinneligPeriode: ÅrMånedsperiode? = null,
     @Schema(
         description =
-            "Settes bare hvis manueltRegistrert = false. " +
-                "Versjon bidrag-inntekt beregner inntekt basert på offentlig informasjon",
+        "Settes bare hvis manueltRegistrert = false. " +
+            "Versjon bidrag-inntekt beregner inntekt basert på offentlig informasjon",
     )
     val versjon: String? = null,
     @Schema(description = "Type inntektsrapportering")

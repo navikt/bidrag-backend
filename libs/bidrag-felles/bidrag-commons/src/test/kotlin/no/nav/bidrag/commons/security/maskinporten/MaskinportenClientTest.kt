@@ -16,17 +16,16 @@ class MaskinportenClientTest {
         hengendeServer.close()
     }
 
-    private fun maskinportenConfig(requestTimeoutInSeconds: Long) =
-        MaskinportenConfig(
-            tokenUrl = "http://localhost:${hengendeServer.localPort}/token",
-            audience = "http://localhost:${hengendeServer.localPort}",
-            clientId = "17b3e4e8-8203-4463-a947-5c24021b7742",
-            privateKey = RSAKeyGenerator(2048).keyID("123").generate().toString(),
-            validInSeconds = 120,
-            scope = "skatt:testscope.read",
-            connectTimeoutInSeconds = 1,
-            requestTimeoutInSeconds = requestTimeoutInSeconds,
-        )
+    private fun maskinportenConfig(requestTimeoutInSeconds: Long) = MaskinportenConfig(
+        tokenUrl = "http://localhost:${hengendeServer.localPort}/token",
+        audience = "http://localhost:${hengendeServer.localPort}",
+        clientId = "17b3e4e8-8203-4463-a947-5c24021b7742",
+        privateKey = RSAKeyGenerator(2048).keyID("123").generate().toString(),
+        validInSeconds = 120,
+        scope = "skatt:testscope.read",
+        connectTimeoutInSeconds = 1,
+        requestTimeoutInSeconds = requestTimeoutInSeconds,
+    )
 
     @Test
     fun `Skal kaste MaskinportenClientException ved timeout mot server som ikke svarer`() {

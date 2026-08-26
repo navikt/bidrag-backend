@@ -42,27 +42,25 @@ class FamilieBuilder {
         return this
     }
 
-    fun barnMedRelasjonTilPartner(barnVisitor: TestPersonBuilder.() -> Unit): FamilieBuilder =
-        barnMedRelasjonTilPartner(relasjoner = emptyArray(), barnVisitor = barnVisitor)
+    fun barnMedRelasjonTilPartner(barnVisitor: TestPersonBuilder.() -> Unit): FamilieBuilder = barnMedRelasjonTilPartner(relasjoner = emptyArray(), barnVisitor = barnVisitor)
 
     fun get(person: TestPerson) {
         val partner = getPartner(person)
         barnListe.forEach { it.get(person, partner) }
     }
 
-    private fun getPartner(person: TestPerson): TestPerson? =
-        partnerVisitor?.let {
-            val builder =
-                genererPerson()
-                    .fødtDato(
-                        RandomTestData
-                            .random()
-                            .dateBetween(person.fodselsdato.minusYears(2), person.fodselsdato.plusYears(2)),
-                    ).kjønn(if (Kjønn.MANN == person.kjønn) Kjønn.KVINNE else Kjønn.MANN)
+    private fun getPartner(person: TestPerson): TestPerson? = partnerVisitor?.let {
+        val builder =
+            genererPerson()
+                .fødtDato(
+                    RandomTestData
+                        .random()
+                        .dateBetween(person.fodselsdato.minusYears(2), person.fodselsdato.plusYears(2)),
+                ).kjønn(if (Kjønn.MANN == person.kjønn) Kjønn.KVINNE else Kjønn.MANN)
 
-            Relasjon.relater(person, builder, partnerRelasjoner)
-            builder.apply(it).opprett()
-        }
+        Relasjon.relater(person, builder, partnerRelasjoner)
+        builder.apply(it).opprett()
+    }
 
     private class BarnBuilder(
         private val visitor: TestPersonBuilder.() -> Unit,

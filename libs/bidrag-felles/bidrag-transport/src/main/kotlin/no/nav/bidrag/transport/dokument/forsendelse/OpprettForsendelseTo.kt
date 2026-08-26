@@ -34,20 +34,20 @@ data class OpprettForsendelseForespørsel(
     @Schema(description = "Språk forsendelsen skal være på") val språk: String? = null,
     @Schema(
         description =
-            "Ident til saksbehandler som oppretter journalpost. " +
-                "Dette vil prioriteres over ident som tilhører tokenet til kallet.",
+        "Ident til saksbehandler som oppretter journalpost. " +
+            "Dette vil prioriteres over ident som tilhører tokenet til kallet.",
     ) val saksbehandlerIdent: String? = null,
     @Schema(
         description =
-            "Opprett tittel på forsendelse automatisk basert på behandling detaljer. " +
-                "Skal bare settes til false hvis gamle brevmeny (Bisys) brukes",
+        "Opprett tittel på forsendelse automatisk basert på behandling detaljer. " +
+            "Skal bare settes til false hvis gamle brevmeny (Bisys) brukes",
     ) val opprettTittel: Boolean? = false,
     val unikReferanse: String? = null,
     @Schema(
         description =
-            "Distribuer forsendelse automatisk etter ferdigstilling. " +
-                "Dette kan brukes hvis det er opprettet av batch " +
-                "eller en vedtaksbrev som skal automatisk distribueres etter fattet vedtak (feks manuell aldersjustering)",
+        "Distribuer forsendelse automatisk etter ferdigstilling. " +
+            "Dette kan brukes hvis det er opprettet av batch " +
+            "eller en vedtaksbrev som skal automatisk distribueres etter fattet vedtak (feks manuell aldersjustering)",
     )
     val distribuerAutomatiskEtterFerdigstilling: Boolean = false,
 )
@@ -80,8 +80,8 @@ data class OpprettForsendelseRespons(
 
 @Schema(
     description =
-        "Metadata for dokument som skal knyttes til forsendelsen. " +
-            "Første dokument i listen blir automatisk satt som hoveddokument i forsendelsen",
+    "Metadata for dokument som skal knyttes til forsendelsen. " +
+        "Første dokument i listen blir automatisk satt som hoveddokument i forsendelsen",
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class OpprettDokumentForespørsel(
@@ -93,22 +93,21 @@ data class OpprettDokumentForespørsel(
     override val dokumentDato: LocalDateTime? = null,
     @Schema(
         description =
-            "Referansen til dokumentet hvis det er allerede er lagret i arkivsystem. " +
-                "Hvis dette ikke settes opprettes det en ny dokumentreferanse som kan brukes ved opprettelse av dokument",
+        "Referansen til dokumentet hvis det er allerede er lagret i arkivsystem. " +
+            "Hvis dette ikke settes opprettes det en ny dokumentreferanse som kan brukes ved opprettelse av dokument",
     ) override val dokumentreferanse: String? = null,
-    @Schema(description = "JournalpostId til dokumentet hvis det er allerede er lagret i arkivsystem") override val journalpostId:
-        JournalpostId? = null,
+    @Schema(description = "JournalpostId til dokumentet hvis det er allerede er lagret i arkivsystem") override val journalpostId: JournalpostId? = null,
     @Schema(
         description = "DokumentmalId sier noe om dokumentets innhold og oppbygning. (Også kjent som brevkode)",
     ) override val dokumentmalId: String? = null,
     @Schema(
         description =
-            "Om dokumentet med dokumentmalId skal bestilles. " +
-                "Hvis dette er satt til false så antas det at kallende system bestiller dokumentet selv.",
+        "Om dokumentet med dokumentmalId skal bestilles. " +
+            "Hvis dette er satt til false så antas det at kallende system bestiller dokumentet selv.",
     ) val bestillDokument: Boolean = true,
     @Schema(
         description =
-            "Om dokumentet skal automatisk ferdigstilles etter bestilling",
+        "Om dokumentet skal automatisk ferdigstilles etter bestilling",
     ) val ferdigstill: Boolean = false,
 ) : DokumentForespørsel()
 

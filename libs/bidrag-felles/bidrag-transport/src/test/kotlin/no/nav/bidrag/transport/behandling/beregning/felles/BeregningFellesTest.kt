@@ -27,16 +27,16 @@ class BeregningFellesTest {
                 periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
                 søknadsbarnReferanse = "",
                 grunnlagListe =
-                    listOf(
-                        GrunnlagDto(
-                            referanse = personreferanse,
-                            type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
-                            innhold =
-                                POJONode(
-                                    Person(Personident("123123123"), fødselsdato = LocalDate.parse("2023-01-01")),
-                                ),
+                listOf(
+                    GrunnlagDto(
+                        referanse = personreferanse,
+                        type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
+                        innhold =
+                        POJONode(
+                            Person(Personident("123123123"), fødselsdato = LocalDate.parse("2023-01-01")),
                         ),
                     ),
+                ),
             )
 
         val person =
@@ -60,60 +60,60 @@ class BeregningFellesTest {
                 periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
                 søknadsbarnReferanse = "",
                 grunnlagListe =
-                    listOf(
-                        GrunnlagDto(
-                            referanse = personreferanse,
-                            type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
-                            innhold =
-                                POJONode(
-                                    Person(Personident("123123123"), fødselsdato = LocalDate.parse("2023-01-01")),
-                                ),
-                        ),
-                        GrunnlagDto(
-                            referanse = "inntekt_1",
-                            type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
-                            gjelderReferanse = personreferanse,
-                            innhold =
-                                POJONode(
-                                    InntektsrapporteringPeriode(
-                                        periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
-                                        beløp = BigDecimal.ONE,
-                                        inntektsrapportering = Inntektsrapportering.AINNTEKT,
-                                        manueltRegistrert = false,
-                                        valgt = true,
-                                    ),
-                                ),
-                        ),
-                        GrunnlagDto(
-                            referanse = "inntekt_2",
-                            type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
-                            gjelderReferanse = personreferanse,
-                            innhold =
-                                POJONode(
-                                    InntektsrapporteringPeriode(
-                                        periode = ÅrMånedsperiode(LocalDate.parse("2022-01-01"), null),
-                                        beløp = BigDecimal.ONE,
-                                        inntektsrapportering = Inntektsrapportering.AINNTEKT,
-                                        manueltRegistrert = false,
-                                        valgt = true,
-                                    ),
-                                ),
-                        ),
-                        GrunnlagDto(
-                            referanse = personreferanse,
-                            type = Grunnlagstype.BOSTATUS_PERIODE,
-                            gjelderReferanse = personreferanse,
-                            innhold =
-                                POJONode(
-                                    BostatusPeriode(
-                                        periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
-                                        manueltRegistrert = false,
-                                        bostatus = Bostatuskode.MED_FORELDER,
-                                        relatertTilPart = "person_bm_2",
-                                    ),
-                                ),
+                listOf(
+                    GrunnlagDto(
+                        referanse = personreferanse,
+                        type = Grunnlagstype.PERSON_BIDRAGSMOTTAKER,
+                        innhold =
+                        POJONode(
+                            Person(Personident("123123123"), fødselsdato = LocalDate.parse("2023-01-01")),
                         ),
                     ),
+                    GrunnlagDto(
+                        referanse = "inntekt_1",
+                        type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+                        gjelderReferanse = personreferanse,
+                        innhold =
+                        POJONode(
+                            InntektsrapporteringPeriode(
+                                periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
+                                beløp = BigDecimal.ONE,
+                                inntektsrapportering = Inntektsrapportering.AINNTEKT,
+                                manueltRegistrert = false,
+                                valgt = true,
+                            ),
+                        ),
+                    ),
+                    GrunnlagDto(
+                        referanse = "inntekt_2",
+                        type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+                        gjelderReferanse = personreferanse,
+                        innhold =
+                        POJONode(
+                            InntektsrapporteringPeriode(
+                                periode = ÅrMånedsperiode(LocalDate.parse("2022-01-01"), null),
+                                beløp = BigDecimal.ONE,
+                                inntektsrapportering = Inntektsrapportering.AINNTEKT,
+                                manueltRegistrert = false,
+                                valgt = true,
+                            ),
+                        ),
+                    ),
+                    GrunnlagDto(
+                        referanse = personreferanse,
+                        type = Grunnlagstype.BOSTATUS_PERIODE,
+                        gjelderReferanse = personreferanse,
+                        innhold =
+                        POJONode(
+                            BostatusPeriode(
+                                periode = ÅrMånedsperiode(LocalDate.parse("2020-01-01"), null),
+                                manueltRegistrert = false,
+                                bostatus = Bostatuskode.MED_FORELDER,
+                                relatertTilPart = "person_bm_2",
+                            ),
+                        ),
+                    ),
+                ),
             )
 
         val grunnlagListe =

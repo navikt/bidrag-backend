@@ -64,10 +64,9 @@ interface BaseGrunnlag {
     @get:Schema(description = "Liste over grunnlagsreferanser")
     val grunnlagsreferanseListe: List<Grunnlagsreferanse>
 
-    fun asString(): String =
-        "$type - ${::referanse.name}=$referanse, ${::gjelderReferanse.name}=$gjelderReferanse, " +
-            "${::grunnlagsreferanseListe.name}=${grunnlagsreferanseListe.ifEmpty { listOf("<tomt>") }.joinToString(",")}, " +
-            "${::innhold.name}=${commonObjectmapper.writeValueAsString(innhold)}"
+    fun asString(): String = "$type - ${::referanse.name}=$referanse, ${::gjelderReferanse.name}=$gjelderReferanse, " +
+        "${::grunnlagsreferanseListe.name}=${grunnlagsreferanseListe.ifEmpty { listOf("<tomt>") }.joinToString(",")}, " +
+        "${::innhold.name}=${commonObjectmapper.writeValueAsString(innhold)}"
 
     fun valider() {
         require(innhold.asText() != "null" && !innhold.isNull) { "innhold kan ikke være null" }
@@ -92,8 +91,8 @@ interface GrunnlagPeriodeInnhold : GrunnlagInnhold {
 
     @get:Schema(
         description =
-            "Om grunnlaget er manuelt registrert av saksbehandler " +
-                "eller om det er innhentet fra ekstern kilde (skatt/folkregisteret...)",
+        "Om grunnlaget er manuelt registrert av saksbehandler " +
+            "eller om det er innhentet fra ekstern kilde (skatt/folkregisteret...)",
     )
     val manueltRegistrert: Boolean
 }

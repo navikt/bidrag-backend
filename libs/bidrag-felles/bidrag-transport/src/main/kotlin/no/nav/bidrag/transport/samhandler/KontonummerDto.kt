@@ -6,8 +6,8 @@ import no.nav.bidrag.domene.land.Landkode3
 
 @Schema(
     description =
-        "Representerer kontonummer, primært samhandlere spesielt for utenlandske kontonummer. For norske kontonummer " +
-            "er det kun norskKontonummer som er utfyllt, ellers benyttes de andre feltene for utlandske kontonummer.",
+    "Representerer kontonummer, primært samhandlere spesielt for utenlandske kontonummer. For norske kontonummer " +
+        "er det kun norskKontonummer som er utfyllt, ellers benyttes de andre feltene for utlandske kontonummer.",
 )
 data class KontonummerDto(
     @param:Schema(description = "Norsk kontonummer, 11 siffer.")

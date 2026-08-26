@@ -19,8 +19,8 @@ data class BidragBeregningRequestDto(
     @GyldigBidragBeregningRequest
     @Schema(
         description =
-            "Hent bidrag beregning. Enten datoSøknad eller søknadsid må settes. " +
-                "Hvis søknadsid settes så vil mottattDato på søknaden benyttes som datoSøknad.",
+        "Hent bidrag beregning. Enten datoSøknad eller søknadsid må settes. " +
+            "Hvis søknadsid settes så vil mottattDato på søknaden benyttes som datoSøknad.",
     )
     data class HentBidragBeregning(
         @field:NotBlank(message = "Saksnummer kan ikke være blank")

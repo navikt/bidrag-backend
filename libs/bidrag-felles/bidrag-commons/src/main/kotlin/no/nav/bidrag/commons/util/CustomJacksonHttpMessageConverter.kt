@@ -40,9 +40,9 @@ import java.util.Optional
 open class CustomJacksonHttpMessageConverter(
     private val objectMapper: ObjectMapper = commonObjectmapper,
 ) : AbstractGenericHttpMessageConverter<Any>(
-        MediaType.APPLICATION_JSON,
-        MediaType("application", "*+json"),
-    ) {
+    MediaType.APPLICATION_JSON,
+    MediaType("application", "*+json"),
+) {
     companion object {
         /**
          * Charset names that Jackson can auto-detect from the byte-order mark or JSON
@@ -247,6 +247,5 @@ open class CustomJacksonHttpMessageConverter(
      * Maps the [MediaType] charset to a Jackson [JsonEncoding], defaulting to UTF-8.
      * Mirrors `AbstractJacksonHttpMessageConverter.getJsonEncoding`.
      */
-    private fun resolveJsonEncoding(contentType: MediaType?): JsonEncoding =
-        contentType?.charset?.let { JSON_ENCODINGS[it.name()] } ?: JsonEncoding.UTF8
+    private fun resolveJsonEncoding(contentType: MediaType?): JsonEncoding = contentType?.charset?.let { JSON_ENCODINGS[it.name()] } ?: JsonEncoding.UTF8
 }

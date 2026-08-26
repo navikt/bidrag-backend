@@ -5,8 +5,8 @@ import no.nav.bidrag.domene.ident.Personident
 
 @Schema(
     description =
-        "Representerer en person med tilhørende informasjon om navn, " +
-            "fødselsdato, adresse, gradering, språk, dødsdato, dødsbo og tidligere identer",
+    "Representerer en person med tilhørende informasjon om navn, " +
+        "fødselsdato, adresse, gradering, språk, dødsdato, dødsbo og tidligere identer",
 )
 data class PersondetaljerDto(
     val person: PersonDto,

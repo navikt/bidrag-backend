@@ -8,8 +8,8 @@ import java.time.LocalDate
 data class NavnFødselDødDto(
     @Schema(
         description =
-            "Gir navn, fødselsdato og fødselsår for angitt person. " +
-                "Fødselsår finnes for alle i PDL(men ikke opphørte personer), mens noen ikke har utfyllt fødselsdato",
+        "Gir navn, fødselsdato og fødselsår for angitt person. " +
+            "Fødselsår finnes for alle i PDL(men ikke opphørte personer), mens noen ikke har utfyllt fødselsdato",
     )
     val navn: String,
     val fødselsdato: LocalDate?,

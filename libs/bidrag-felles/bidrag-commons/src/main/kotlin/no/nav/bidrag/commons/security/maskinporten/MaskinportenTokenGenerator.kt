@@ -11,22 +11,20 @@ import java.util.Date
 class MaskinportenTokenGenerator(
     val maskinportenConfig: MaskinportenConfig,
 ) {
-    internal fun genererJwtToken(scope: String): String =
-        SignedJWT(opprettJwsHeader(), generateJWTClaimSet(scope))
-            .apply {
-                sign(RSASSASigner(opprettRsaKey()))
-            }.serialize()
+    internal fun genererJwtToken(scope: String): String = SignedJWT(opprettJwsHeader(), generateJWTClaimSet(scope))
+        .apply {
+            sign(RSASSASigner(opprettRsaKey()))
+        }.serialize()
 
-    private fun generateJWTClaimSet(scope: String): JWTClaimsSet =
-        JWTClaimsSet
-            .Builder()
-            .apply {
-                audience(maskinportenConfig.audience)
-                issuer(maskinportenConfig.clientId)
-                claim("scope", scope)
-                issueTime(Date(Date().time))
-                expirationTime(Date(Date().time + (maskinportenConfig.validInSeconds * 1000)))
-            }.build()
+    private fun generateJWTClaimSet(scope: String): JWTClaimsSet = JWTClaimsSet
+        .Builder()
+        .apply {
+            audience(maskinportenConfig.audience)
+            issuer(maskinportenConfig.clientId)
+            claim("scope", scope)
+            issueTime(Date(Date().time))
+            expirationTime(Date(Date().time + (maskinportenConfig.validInSeconds * 1000)))
+        }.build()
 
     private fun opprettJwsHeader(): JWSHeader = JWSHeader.Builder(JWSAlgorithm.RS256).keyID(opprettRsaKey().keyID).build()
 

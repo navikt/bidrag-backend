@@ -44,19 +44,17 @@ enum class SøknadGruppeKombinasjon(
     ;
 
     companion object {
-        fun fraKode(kode: String): SøknadGruppeKombinasjon? =
-            try {
-                enumValues<SøknadGruppeKombinasjon>().find { it.kode == kode }
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): SøknadGruppeKombinasjon? = try {
+            enumValues<SøknadGruppeKombinasjon>().find { it.kode == kode }
+        } catch (e: Exception) {
+            null
+        }
 
         fun fraBehandlingstemaOgInnkreving(
             behandlingstema: Behandlingstema,
             medInnkreving: Boolean,
-        ): SøknadGruppeKombinasjon? =
-            enumValues<SøknadGruppeKombinasjon>().find {
-                it.behandlingstema == behandlingstema && it.innkreving == medInnkreving
-            }
+        ): SøknadGruppeKombinasjon? = enumValues<SøknadGruppeKombinasjon>().find {
+            it.behandlingstema == behandlingstema && it.innkreving == medInnkreving
+        }
     }
 }

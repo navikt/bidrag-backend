@@ -14,37 +14,37 @@ data class RolleDto(
     val fødselsnummer: Personident? = null,
     @field:Schema(
         description =
-            "Kode for rolletype tilsvarende kodene i T_KODE_ROLLETYPE. " +
-                "Gyldige verdier er f.eks. BM (bidragsmottaker), BP (bidragspliktig) og BA (barn).",
+        "Kode for rolletype tilsvarende kodene i T_KODE_ROLLETYPE. " +
+            "Gyldige verdier er f.eks. BM (bidragsmottaker), BP (bidragspliktig) og BA (barn).",
     )
     val type: Rolletype,
     @field:Schema(
         description =
-            "Internt felt som identifiserer objektet i fagsystemet. " +
-                "Brukes ikke eksternt og skal normalt ikke sendes inn.",
+        "Internt felt som identifiserer objektet i fagsystemet. " +
+            "Brukes ikke eksternt og skal normalt ikke sendes inn.",
         deprecated = true,
     )
     @Deprecated("Internlogisk felt, burde ikke brukes utenfor back end.")
     val objektnummer: String? = null,
     @field:Schema(
         description =
-            "Tidligere brukt felt for reell mottaker. " +
-                "Erstattes av 'reellMottaker'.",
+        "Tidligere brukt felt for reell mottaker. " +
+            "Erstattes av 'reellMottaker'.",
         deprecated = true,
     )
     @Deprecated("Bruk heller reellMottaker", replaceWith = ReplaceWith("reellMottaker"))
     val reellMottager: ReellMottaker? = null,
     @field:Schema(
         description =
-            "Reell mottaker (RM) for barnet. " +
-                "Kan kun registreres for barn (BA), og kan representere både person eller samhandler (organisasjon/verge). " +
-                "Dette feltet brukes i stedet for samhandlerIdent når bidrag skal utbetales til annen part enn barnets BM.",
+        "Reell mottaker (RM) for barnet. " +
+            "Kan kun registreres for barn (BA), og kan representere både person eller samhandler (organisasjon/verge). " +
+            "Dette feltet brukes i stedet for samhandlerIdent når bidrag skal utbetales til annen part enn barnets BM.",
     )
     val reellMottaker: ReellMottakerDto? = null,
     @field:Schema(
         description =
-            "Angir om mottaker samtidig er verge for barnet. " +
-                "Settes til true dersom mottaker også er verge.",
+        "Angir om mottaker samtidig er verge for barnet. " +
+            "Settes til true dersom mottaker også er verge.",
     )
     val mottagerErVerge: Boolean = false,
     @field:Schema(
@@ -70,11 +70,10 @@ data class RolleDto(
 
     fun rmFødselsnummer() = reellMottaker?.ident?.personIdent() ?: reellMottager?.personIdent()
 
-    fun harRM(): Boolean =
-        listOf(
-            rmFødselsnummer()?.verdi,
-            rmSamhandlerId()?.verdi,
-        ).any { !it.isNullOrBlank() }
+    fun harRM(): Boolean = listOf(
+        rmFødselsnummer()?.verdi,
+        rmSamhandlerId()?.verdi,
+    ).any { !it.isNullOrBlank() }
 }
 
 data class ReellMottakerDto(

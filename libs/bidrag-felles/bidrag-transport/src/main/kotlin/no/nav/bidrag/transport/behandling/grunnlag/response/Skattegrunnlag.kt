@@ -48,8 +48,8 @@ data class SkattegrunnlagspostDto(
     val beløp: BigDecimal = belop,
     @Schema(
         description =
-            "Tekniske navnet på inntektsposten. Er samme verdi som \"Summert skattegrunnlag\"" +
-                " fra NAV kodeverk ( https://kodeverk-web.dev.adeo.no/kodeverksoversikt/kodeverk/Summert%20skattegrunnlag )",
+        "Tekniske navnet på inntektsposten. Er samme verdi som \"Summert skattegrunnlag\"" +
+            " fra NAV kodeverk ( https://kodeverk-web.dev.adeo.no/kodeverksoversikt/kodeverk/Summert%20skattegrunnlag )",
     )
     val kode: String = inntektType,
 )

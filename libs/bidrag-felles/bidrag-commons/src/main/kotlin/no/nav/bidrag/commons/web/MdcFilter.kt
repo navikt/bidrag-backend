@@ -42,11 +42,10 @@ class MdcFilter(
         }
     }
 
-    private fun resolveCallId(httpServletRequest: HttpServletRequest): String =
-        NAV_CALL_ID_HEADER_NAMES
-            .mapNotNull { httpServletRequest.getHeader(it) }
-            .firstOrNull { it.isNotEmpty() }
-            ?: idUtils.generateId()
+    private fun resolveCallId(httpServletRequest: HttpServletRequest): String = NAV_CALL_ID_HEADER_NAMES
+        .mapNotNull { httpServletRequest.getHeader(it) }
+        .firstOrNull { it.isNotEmpty() }
+        ?: idUtils.generateId()
 
     companion object {
         // there is no consensus in NAV about header-names for correlation ids, so we support 'em all!

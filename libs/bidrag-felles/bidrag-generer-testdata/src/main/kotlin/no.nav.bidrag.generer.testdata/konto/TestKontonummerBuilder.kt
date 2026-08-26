@@ -61,28 +61,27 @@ class TestKontonummerBuilder {
         return this
     }
 
-    fun opprett(): TestKontonummer =
-        if (norskKontonummer) {
-            TestKontonummer(
-                norskKontonummer =
-                    NorskKontonummerBuilder()
-                        .bankNummer(bankNummer ?: Random.nextInt(10000))
-                        .kontotype(kontotype ?: Random.nextInt(100))
-                        .randomKundenummer()
-                        .toString(),
-            )
-        } else {
-            val landkodeBank = landkodeBank ?: genererLandkodeIso3()
-            val bankCode = bankCode ?: genererBankcode()
-            TestKontonummer(
-                iban = iban ?: genererIban(landkodeBank, bankCode),
-                swift = swift ?: genererSwift(landkodeBank, bankCode),
-                bankNavn = banknavn ?: "BANK OF ${landkodeBank.visningsnavn}",
-                landkodeBank = landkodeBank,
-                bankCode = bankCode,
-                valutakode = valutakode ?: genererValutakode(),
-            )
-        }
+    fun opprett(): TestKontonummer = if (norskKontonummer) {
+        TestKontonummer(
+            norskKontonummer =
+            NorskKontonummerBuilder()
+                .bankNummer(bankNummer ?: Random.nextInt(10000))
+                .kontotype(kontotype ?: Random.nextInt(100))
+                .randomKundenummer()
+                .toString(),
+        )
+    } else {
+        val landkodeBank = landkodeBank ?: genererLandkodeIso3()
+        val bankCode = bankCode ?: genererBankcode()
+        TestKontonummer(
+            iban = iban ?: genererIban(landkodeBank, bankCode),
+            swift = swift ?: genererSwift(landkodeBank, bankCode),
+            bankNavn = banknavn ?: "BANK OF ${landkodeBank.visningsnavn}",
+            landkodeBank = landkodeBank,
+            bankCode = bankCode,
+            valutakode = valutakode ?: genererValutakode(),
+        )
+    }
 }
 
 fun genererKontonummer(): TestKontonummerBuilder = TestKontonummerBuilder()

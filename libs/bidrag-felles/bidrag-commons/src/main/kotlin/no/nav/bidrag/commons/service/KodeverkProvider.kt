@@ -41,8 +41,7 @@ private val kodeverkCache: Cache<String, KodeverkKoderBetydningerResponse> =
         .build()
 private val log = LoggerFactory.getLogger(KodeverkProvider::class.java)
 
-fun finnVisningsnavnSkattegrunnlag(fulltNavnInntektspost: String): String =
-    finnVisningsnavnForKode(fulltNavnInntektspost, SUMMERT_SKATTEGRUNNLAG) ?: ""
+fun finnVisningsnavnSkattegrunnlag(fulltNavnInntektspost: String): String = finnVisningsnavnForKode(fulltNavnInntektspost, SUMMERT_SKATTEGRUNNLAG) ?: ""
 
 fun finnPoststedForPostnummer(postnummer: String): String? = finnVisningsnavnForKode(postnummer, POSTNUMMER)
 
@@ -54,8 +53,7 @@ fun finnSpråknavnForSpråkkode(språkkode: String): String? = finnVisningsnavnF
 
 fun finnValutanavnForValutakode(valutakode: String): String? = finnVisningsnavnForKode(valutakode, VALUTAER)
 
-fun finnVisningsnavnLønnsbeskrivelse(fulltNavnInntektspost: String): String =
-    finnVisningsnavnForKode(fulltNavnInntektspost, LOENNSBESKRIVELSE) ?: ""
+fun finnVisningsnavnLønnsbeskrivelse(fulltNavnInntektspost: String): String = finnVisningsnavnForKode(fulltNavnInntektspost, LOENNSBESKRIVELSE) ?: ""
 
 fun hentNavSkjemaKodeverk() = hentKodeverkKodeBeskrivelseMap(NAV_SKJEMA)
 
@@ -64,15 +62,14 @@ fun finnVisningsnavnKodeverk(
     kodeverk: String,
 ): String = finnVisningsnavnForKode(fulltNavnInntektspost, kodeverk) ?: ""
 
-fun finnVisningsnavn(fulltNavnInntektspost: String): String =
-    finnVisningsnavnFraFil(fulltNavnInntektspost)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, SUMMERT_SKATTEGRUNNLAG)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, LOENNSBESKRIVELSE)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, YTELSEFRAOFFENTLIGE)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, PENSJONELLERTRYGDEBESKRIVELSE)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, NAERINGSINNTEKTSBESKRIVELSE)
-        ?: finnVisningsnavnForKode(fulltNavnInntektspost, SPESIFISERT_SUMMERT_SKATTEGRUNNLAG)
-        ?: ""
+fun finnVisningsnavn(fulltNavnInntektspost: String): String = finnVisningsnavnFraFil(fulltNavnInntektspost)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, SUMMERT_SKATTEGRUNNLAG)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, LOENNSBESKRIVELSE)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, YTELSEFRAOFFENTLIGE)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, PENSJONELLERTRYGDEBESKRIVELSE)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, NAERINGSINNTEKTSBESKRIVELSE)
+    ?: finnVisningsnavnForKode(fulltNavnInntektspost, SPESIFISERT_SUMMERT_SKATTEGRUNNLAG)
+    ?: ""
 
 class KodeverkProvider {
     companion object {
@@ -102,17 +99,16 @@ class KodeverkProvider {
     }
 }
 
-fun hentKodeverkKodeBeskrivelseMap(kodeverk: String): Map<String, String> =
-    kodeverkCache
-        .get(kodeverk) { hentKodeverk(kodeverk) }
-        ?.betydninger
-        ?.map {
-            it.key to
-                run {
-                    val betydning = it.value.maxBy { it.gyldigFra }.beskrivelser["nb"]
-                    if (betydning?.tekst.isNullOrEmpty()) betydning?.term ?: "" else betydning.tekst
-                }
-        }?.toMap() ?: emptyMap()
+fun hentKodeverkKodeBeskrivelseMap(kodeverk: String): Map<String, String> = kodeverkCache
+    .get(kodeverk) { hentKodeverk(kodeverk) }
+    ?.betydninger
+    ?.map {
+        it.key to
+            run {
+                val betydning = it.value.maxBy { it.gyldigFra }.beskrivelser["nb"]
+                if (betydning?.tekst.isNullOrEmpty()) betydning?.term ?: "" else betydning.tekst
+            }
+    }?.toMap() ?: emptyMap()
 
 fun finnVisningsnavnForKode(
     kode: String,
@@ -165,7 +161,6 @@ private fun lastVisningsnavnFraFil(filnavn: String): Map<String, String> {
     )
 }
 
-private fun hentFil(filsti: String) =
-    Visningsnavn::class.java.getResource(
-        filsti,
-    ) ?: throw RuntimeException("Fant ingen fil på sti $filsti")
+private fun hentFil(filsti: String) = Visningsnavn::class.java.getResource(
+    filsti,
+) ?: throw RuntimeException("Fant ingen fil på sti $filsti")

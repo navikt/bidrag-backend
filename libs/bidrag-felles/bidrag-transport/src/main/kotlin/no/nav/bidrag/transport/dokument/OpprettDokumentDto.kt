@@ -21,7 +21,6 @@ data class OpprettDokumentDto(
     @Schema(description = "Selve PDF dokumentet formatert som Base64")
     val fysiskDokument: ByteArray? = dokument?.toByteArray(),
 ) {
-    override fun toString(): String =
-        "(tittel=$tittel, brevkode=$brevkode, dokumentmalId=$dokumentmalId, dokumentreferanse=$dokumentreferanse, " +
-            "fysiskDokument(lengde)=${fysiskDokument?.size}"
+    override fun toString(): String = "(tittel=$tittel, brevkode=$brevkode, dokumentmalId=$dokumentmalId, dokumentreferanse=$dokumentreferanse, " +
+        "fysiskDokument(lengde)=${fysiskDokument?.size}"
 }

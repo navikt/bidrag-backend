@@ -33,32 +33,31 @@ class SlackService(
         melding: String,
         threadTs: String? = null,
         markdownTekst: String? = null,
-    ): SlackMelding =
-        try {
-            val response =
-                client.chatPostMessage { req ->
-                    req.channel(channel).threadTs(threadTs).text(melding).also {
-                        if (markdownTekst != null) {
-                            it.blocks(
-                                listOf(
-                                    section { s -> s.text(markdownText(melding)) },
-                                    section { s -> s.text(markdownText(markdownTekst)) },
-                                ),
-                            )
-                        }
+    ): SlackMelding = try {
+        val response =
+            client.chatPostMessage { req ->
+                req.channel(channel).threadTs(threadTs).text(melding).also {
+                    if (markdownTekst != null) {
+                        it.blocks(
+                            listOf(
+                                section { s -> s.text(markdownText(melding)) },
+                                section { s -> s.text(markdownText(markdownTekst)) },
+                            ),
+                        )
                     }
                 }
-
-            if (response.isOk) {
-                LOGGER.debug { "Slack melding sendt: $melding" }
-            } else {
-                LOGGER.error { "Feil ved sending av slackmelding: ${response.error}" }
             }
-            SlackMelding(slackService = this, ts = response.ts, threadTs = threadTs ?: response.ts, channel = response.channel ?: channel)
-        } catch (e: Exception) {
-            LOGGER.error(e) { "Uventet feil ved sending av slackmelding" }
-            SlackMelding(slackService = this, ts = null, threadTs = threadTs, channel = channel)
+
+        if (response.isOk) {
+            LOGGER.debug { "Slack melding sendt: $melding" }
+        } else {
+            LOGGER.error { "Feil ved sending av slackmelding: ${response.error}" }
         }
+        SlackMelding(slackService = this, ts = response.ts, threadTs = threadTs ?: response.ts, channel = response.channel ?: channel)
+    } catch (e: Exception) {
+        LOGGER.error(e) { "Uventet feil ved sending av slackmelding" }
+        SlackMelding(slackService = this, ts = null, threadTs = threadTs, channel = channel)
+    }
 }
 
 class SlackMelding(

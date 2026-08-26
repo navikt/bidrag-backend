@@ -22,6 +22,11 @@
         <module>apps/bidrag-oppgave</module>
         <module>libs/bidrag-oppgave-client</module>
         <module>libs/bidrag-oppgave-dto</module>
+        <module>libs/bidrag-felles/bidrag-domene</module>
+        <module>libs/bidrag-felles/bidrag-transport</module>
+        <module>libs/bidrag-felles/bidrag-commons</module>
+        <module>libs/bidrag-felles/bidrag-commons-test</module>
+        <module>libs/bidrag-felles/bidrag-generer-testdata</module>
         <module>apps/bidrag-regnskap</module>
         <module>apps/bidrag-aktoerregister</module>
         <module>apps/bidrag-arbeidsflyt</module>
@@ -55,7 +60,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Nav moduler -->
-        <bidrag-felles.version>2026.08.25.110026</bidrag-felles.version>
         <bidrag-beregn-felles.version>2026.08.21.075458</bidrag-beregn-felles.version>
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>

@@ -18,14 +18,13 @@ class BidragDebugLogFilter : Filter<ILoggingEvent>() {
         return true
     }
 
-    override fun decide(event: ILoggingEvent): FilterReply =
-        if (event.level == Level.DEBUG) {
-            if (FellesUnleashFeatures.DEBUG_LOGGING.isEnabled && logPackage(event)) {
-                FilterReply.NEUTRAL
-            } else {
-                FilterReply.DENY
-            }
-        } else {
+    override fun decide(event: ILoggingEvent): FilterReply = if (event.level == Level.DEBUG) {
+        if (FellesUnleashFeatures.DEBUG_LOGGING.isEnabled && logPackage(event)) {
             FilterReply.NEUTRAL
+        } else {
+            FilterReply.DENY
         }
+    } else {
+        FilterReply.NEUTRAL
+    }
 }

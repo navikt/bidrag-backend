@@ -12,11 +12,10 @@ enum class ResultatkodeForskudd(
     ;
 
     companion object {
-        fun fraKode(kode: String): ResultatkodeForskudd? =
-            try {
-                entries.find { it.legacyKode == kode } ?: ResultatkodeForskudd.valueOf(kode)
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): ResultatkodeForskudd? = try {
+            entries.find { it.legacyKode == kode } ?: ResultatkodeForskudd.valueOf(kode)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

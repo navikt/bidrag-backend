@@ -153,14 +153,11 @@ class TestPersonBuilder {
 
     fun boadresse(boadresse: TestAdresse?): TestPersonBuilder = med(AdressetilknytningBuilder(boadresse, null, Adressetype.BOSTEDSADRESSE))
 
-    fun boadresse(adresseBuilder: TestAdresseBuilder?): TestPersonBuilder =
-        med(AdressetilknytningBuilder(null, adresseBuilder, Adressetype.BOSTEDSADRESSE))
+    fun boadresse(adresseBuilder: TestAdresseBuilder?): TestPersonBuilder = med(AdressetilknytningBuilder(null, adresseBuilder, Adressetype.BOSTEDSADRESSE))
 
-    fun postadresse(boadresse: TestAdresse?): TestPersonBuilder =
-        med(AdressetilknytningBuilder(boadresse, null, Adressetype.KONTAKTADRESSE))
+    fun postadresse(boadresse: TestAdresse?): TestPersonBuilder = med(AdressetilknytningBuilder(boadresse, null, Adressetype.KONTAKTADRESSE))
 
-    fun postadresse(adresseBuilder: TestAdresseBuilder?): TestPersonBuilder =
-        med(AdressetilknytningBuilder(null, adresseBuilder, Adressetype.KONTAKTADRESSE))
+    fun postadresse(adresseBuilder: TestAdresseBuilder?): TestPersonBuilder = med(AdressetilknytningBuilder(null, adresseBuilder, Adressetype.KONTAKTADRESSE))
 
     fun med(adressetilknytningBuilder: AdressetilknytningBuilder): TestPersonBuilder {
         this.adresser.add(adressetilknytningBuilder)
@@ -266,12 +263,11 @@ class TestPersonBuilder {
         return personer
     }
 
-    private fun finnForeldre(tmpPerson: TestPerson): Foreldre =
-        if (foreldreBuilder != null) {
-            foreldreBuilder!!.get(tmpPerson)
-        } else {
-            Foreldre(null, null)
-        }
+    private fun finnForeldre(tmpPerson: TestPerson): Foreldre = if (foreldreBuilder != null) {
+        foreldreBuilder!!.get(tmpPerson)
+    } else {
+        Foreldre(null, null)
+    }
 
     private fun beregnFødtDato(): LocalDate {
         if (fødtDato != null) {

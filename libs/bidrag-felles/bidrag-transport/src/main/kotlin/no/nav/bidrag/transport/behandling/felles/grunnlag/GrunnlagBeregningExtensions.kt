@@ -22,17 +22,16 @@ fun List<GrunnlagDto>.finnDelberegningBidragspliktigesAndelSærbidrag(
     return delberegningBidragspliktigesAndel.innholdTilObjekt<DelberegningBidragspliktigesAndel>()
 }
 
-fun List<GrunnlagDto>.finnSluttberegningIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    find {
-        listOf(
-            Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
-            Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
-            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
-            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
-            Grunnlagstype.SLUTTBEREGNING_INDEKSREGULERING,
-        ).contains(it.type) &&
-            grunnlagsreferanseListe.contains(it.referanse)
-    }
+fun List<GrunnlagDto>.finnSluttberegningIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = find {
+    listOf(
+        Grunnlagstype.SLUTTBEREGNING_FORSKUDD,
+        Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
+        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+        Grunnlagstype.SLUTTBEREGNING_INDEKSREGULERING,
+    ).contains(it.type) &&
+        grunnlagsreferanseListe.contains(it.referanse)
+}
 
 fun List<GrunnlagDto>.finnTotalInntektForRolleEllerIdent(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
@@ -62,48 +61,42 @@ fun List<GrunnlagDto>.finnTotalInntektForRolleEllerIdent(
         ?: BigDecimal.ZERO
 }
 
-fun GrunnlagDto.sluttberegningPeriode(): ÅrMånedsperiode =
-    if (erSluttberegningGammelStruktur()) {
-        val sluttberegningObjekt = innholdTilObjekt<SluttberegningBarnebidrag>()
-        sluttberegningObjekt.periode
+fun GrunnlagDto.sluttberegningPeriode(): ÅrMånedsperiode = if (erSluttberegningGammelStruktur()) {
+    val sluttberegningObjekt = innholdTilObjekt<SluttberegningBarnebidrag>()
+    sluttberegningObjekt.periode
+} else {
+    val sluttberegningObjekt = innholdTilObjekt<SluttberegningBarnebidragV2>()
+    sluttberegningObjekt.periode
+}
+
+fun GrunnlagDto.hentBeregnetBeløp(): BigDecimal? = if (erSluttberegningNyStruktur()) {
+    innholdTilObjekt<SluttberegningBarnebidragV2>().beregnetBeløp
+} else {
+    innholdTilObjekt<SluttberegningBarnebidrag>().beregnetBeløp
+}
+
+fun GrunnlagDto.hentResultatBeløp(): BigDecimal? = if (erSluttberegningNyStruktur()) {
+    innholdTilObjekt<SluttberegningBarnebidragV2>().resultatBeløp
+} else {
+    innholdTilObjekt<SluttberegningBarnebidrag>().resultatBeløp
+}
+
+fun GrunnlagDto.erSluttberegningNyStruktur(): Boolean = type == Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG && !erSluttberegningGammelStruktur()
+
+fun GrunnlagDto.erSluttberegningGammelStruktur(): Boolean = type == Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG &&
+    if (innhold is POJONode) {
+        innhold.pojo is SluttberegningBarnebidrag
     } else {
-        val sluttberegningObjekt = innholdTilObjekt<SluttberegningBarnebidragV2>()
-        sluttberegningObjekt.periode
-    }
-
-fun GrunnlagDto.hentBeregnetBeløp(): BigDecimal? =
-    if (erSluttberegningNyStruktur()) {
-        innholdTilObjekt<SluttberegningBarnebidragV2>().beregnetBeløp
-    } else {
-        innholdTilObjekt<SluttberegningBarnebidrag>().beregnetBeløp
-    }
-
-fun GrunnlagDto.hentResultatBeløp(): BigDecimal? =
-    if (erSluttberegningNyStruktur()) {
-        innholdTilObjekt<SluttberegningBarnebidragV2>().resultatBeløp
-    } else {
-        innholdTilObjekt<SluttberegningBarnebidrag>().resultatBeløp
-    }
-
-fun GrunnlagDto.erSluttberegningNyStruktur(): Boolean =
-    type == Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG && !erSluttberegningGammelStruktur()
-
-fun GrunnlagDto.erSluttberegningGammelStruktur(): Boolean =
-    type == Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG &&
-        if (innhold is POJONode) {
-            innhold.pojo is SluttberegningBarnebidrag
-        } else {
-            (
-                innhold.has("bruttoBidragEtterBarnetilleggBM") ||
-                    innhold.has("bruttoBidragJustertForEvneOg25Prosent")
+        (
+            innhold.has("bruttoBidragEtterBarnetilleggBM") ||
+                innhold.has("bruttoBidragJustertForEvneOg25Prosent")
             )
-        }
+    }
 
-fun List<GrunnlagDto>.finnSamværsklasse(sluttberegningGrunnlag: GrunnlagDto): Samværsklasse =
-    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SamværsperiodeGrunnlag>(
-        Grunnlagstype.SAMVÆRSPERIODE,
-        sluttberegningGrunnlag.grunnlagsreferanseListe,
-    ).first().innhold.samværsklasse
+fun List<GrunnlagDto>.finnSamværsklasse(sluttberegningGrunnlag: GrunnlagDto): Samværsklasse = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SamværsperiodeGrunnlag>(
+    Grunnlagstype.SAMVÆRSPERIODE,
+    sluttberegningGrunnlag.grunnlagsreferanseListe,
+).first().innhold.samværsklasse
 
 fun List<GrunnlagDto>.finnBidragTilFordeling(sluttberegningGrunnlag: GrunnlagDto): BigDecimal {
     if (sluttberegningGrunnlag.erSluttberegningGammelStruktur()) {

@@ -43,9 +43,8 @@ class AdressetilknytningBuilder(
         return this
     }
 
-    fun opprett(): Adressetilknytning =
-        opprett(null)
-            ?: throw IllegalArgumentException("PeriodeTil er ikke etter PeriodeFra.")
+    fun opprett(): Adressetilknytning = opprett(null)
+        ?: throw IllegalArgumentException("PeriodeTil er ikke etter PeriodeFra.")
 
     fun opprett(tidligsteFra: LocalDate?): Adressetilknytning? {
         val adresse = this.adresse ?: adresseBuilder?.opprett() ?: return null

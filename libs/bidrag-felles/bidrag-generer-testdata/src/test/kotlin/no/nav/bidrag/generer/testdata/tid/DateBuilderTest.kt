@@ -5,7 +5,7 @@ import no.nav.bidrag.generer.testdata.tid.DateBuilder.Companion.sisteDag
 import org.hamcrest.Matcher
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class DateBuilderTest {

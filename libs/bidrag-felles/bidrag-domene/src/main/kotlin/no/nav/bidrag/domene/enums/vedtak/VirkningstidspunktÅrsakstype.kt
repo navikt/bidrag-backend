@@ -45,19 +45,18 @@ enum class VirkningstidspunktÅrsakstype(
         fun fraLegacyKode(
             legacyKode: String,
             stønadstype: Stønadstype? = null,
-        ): VirkningstidspunktÅrsakstype? =
-            try {
-                enumValues<VirkningstidspunktÅrsakstype>().find {
-                    it.legacyKode.contains(legacyKode) &&
-                        (stønadstype == null || it.stønadstype == stønadstype)
-                } ?: enumValues<VirkningstidspunktÅrsakstype>().find {
-                    it.legacyKode.contains(legacyKode)
-                }
-                    ?: VirkningstidspunktÅrsakstype.valueOf(
-                        legacyKode,
-                    )
-            } catch (e: Exception) {
-                null
+        ): VirkningstidspunktÅrsakstype? = try {
+            enumValues<VirkningstidspunktÅrsakstype>().find {
+                it.legacyKode.contains(legacyKode) &&
+                    (stønadstype == null || it.stønadstype == stønadstype)
+            } ?: enumValues<VirkningstidspunktÅrsakstype>().find {
+                it.legacyKode.contains(legacyKode)
             }
+                ?: VirkningstidspunktÅrsakstype.valueOf(
+                    legacyKode,
+                )
+        } catch (e: Exception) {
+            null
+        }
     }
 }

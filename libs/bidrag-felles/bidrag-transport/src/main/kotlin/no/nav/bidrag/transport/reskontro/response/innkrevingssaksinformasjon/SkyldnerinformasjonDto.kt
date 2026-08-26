@@ -23,12 +23,12 @@ data class SkyldnerinformasjonDto(
     val innkrevingssaksstatus: String?,
     @field:Schema(
         description =
-            "Fakturamåte. \nGyldige verdier er følgende:\n" +
-                "Vanlig giro\n" +
-                "Avtalegiro m/orientering\n" +
-                "Avtalegiro u/orientering\n" +
-                "Ingen med purring/arbeidsflyt\n" +
-                "Ingen uten purring/arbeidsflyt\n",
+        "Fakturamåte. \nGyldige verdier er følgende:\n" +
+            "Vanlig giro\n" +
+            "Avtalegiro m/orientering\n" +
+            "Avtalegiro u/orientering\n" +
+            "Ingen med purring/arbeidsflyt\n" +
+            "Ingen uten purring/arbeidsflyt\n",
     )
     val fakturamåte: String?,
     @field:Schema(

@@ -52,12 +52,11 @@ open class HttpHeaderRestTemplate : RestTemplate {
         return HttpEntity(null, combineHeaders(HttpHeaders()))
     }
 
-    private fun <T : Any> mapToHttpEntity(o: Any): HttpEntity<T> =
-        if (o is HttpEntity<*>) {
-            o as HttpEntity<T>
-        } else {
-            HttpEntity(o as T)
-        }
+    private fun <T : Any> mapToHttpEntity(o: Any): HttpEntity<T> = if (o is HttpEntity<*>) {
+        o as HttpEntity<T>
+    } else {
+        HttpEntity(o as T)
+    }
 
     private fun combineHeaders(existingHeaders: HttpHeaders): HttpHeaders {
         val allHeaders = HttpHeaders()

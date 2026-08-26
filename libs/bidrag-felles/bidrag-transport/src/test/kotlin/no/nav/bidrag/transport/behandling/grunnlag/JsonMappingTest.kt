@@ -168,12 +168,12 @@ class JsonMappingTest {
                     partPersonId = "1234",
                     relatertPersonPersonId = "55555",
                     borISammeHusstandDtoListe =
-                        listOf(
-                            BorISammeHusstandDto(
-                                periodeFra = LocalDate.parse("2023-01-01"),
-                                periodeTil = LocalDate.parse("2024-01-01"),
-                            ),
+                    listOf(
+                        BorISammeHusstandDto(
+                            periodeFra = LocalDate.parse("2023-01-01"),
+                            periodeTil = LocalDate.parse("2024-01-01"),
                         ),
+                    ),
                 ),
                 RelatertPersonGrunnlagDto(
                     navn = "Testperson2",
@@ -182,12 +182,12 @@ class JsonMappingTest {
                     partPersonId = "1234",
                     relatertPersonPersonId = "666666",
                     borISammeHusstandDtoListe =
-                        listOf(
-                            BorISammeHusstandDto(
-                                periodeFra = LocalDate.parse("2023-01-01"),
-                                periodeTil = LocalDate.parse("2024-01-01"),
-                            ),
+                    listOf(
+                        BorISammeHusstandDto(
+                            periodeFra = LocalDate.parse("2023-01-01"),
+                            periodeTil = LocalDate.parse("2024-01-01"),
                         ),
+                    ),
                 ),
             )
         val jsonString = commonObjectmapper.writerWithDefaultPrettyPrinter().writeValueAsString(relatertPersonGrunnlagListe)
@@ -304,12 +304,12 @@ class JsonMappingTest {
                     fødselsdato = LocalDate.parse("2023-01-01"),
                     relatertPerson = "REF1",
                     perioder =
-                        listOf(
-                            Datoperiode(
-                                LocalDate.parse("2023-01-01"),
-                                null,
-                            ),
+                    listOf(
+                        Datoperiode(
+                            LocalDate.parse("2023-01-01"),
+                            null,
                         ),
+                    ),
                 ),
                 InnhentetHusstandsmedlem.HusstandsmedlemPDL(
                     navn = "Testperson2",
@@ -317,12 +317,12 @@ class JsonMappingTest {
                     fødselsdato = LocalDate.parse("2023-01-01"),
                     relatertPerson = "REF2",
                     perioder =
-                        listOf(
-                            Datoperiode(
-                                LocalDate.parse("2023-01-01"),
-                                null,
-                            ),
+                    listOf(
+                        Datoperiode(
+                            LocalDate.parse("2023-01-01"),
+                            null,
                         ),
+                    ),
                 ),
             )
         val jsonString = commonObjectmapper.writerWithDefaultPrettyPrinter().writeValueAsString(relatertPersonGrunnlagListe)

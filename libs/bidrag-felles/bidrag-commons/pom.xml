@@ -4,11 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>no.nav.bidrag</groupId>
-    <artifactId>bidrag-felles</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>bidrag-backend</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
 
   <artifactId>bidrag-commons-felles</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <name>bidrag-commons</name>
     <packaging>jar</packaging>
 
@@ -32,29 +34,11 @@
   </description>
 
   <properties>
-    <revision>1.0-SNAPSHOT</revision>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
     <!-- dependencies -->
-    <logback-encoder.version>9.0</logback-encoder.version>
     <javax-activation.version>1.1.1</javax-activation.version>
-    <spring-retry.version>2.0.5</spring-retry.version>
     <httpclient5.version>5.5.1</httpclient5.version>
-    <token-support.version>6.0.8</token-support.version>
-    <jackson.fasterXml.version>2.16.0</jackson.fasterXml.version>
     <aspectj.version>1.9.24</aspectj.version>
     <micrometer-registry.version>1.15.2</micrometer-registry.version>
-    <slack-api.version>1.49.0</slack-api.version>
-
-      <!-- language -->
-    <kotlin.code.style>official</kotlin.code.style>
-
-    <java.version>21</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
-    <kotlin.compiler.jvmTarget>${java.version}</kotlin.compiler.jvmTarget>
-
   </properties>
 
   <dependencies>
@@ -88,13 +72,13 @@
     <dependency>
       <groupId>no.nav.security</groupId>
       <artifactId>token-validation-spring</artifactId>
-      <version>${token-support.version}</version>
+      <version>${nav-token-support.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>no.nav.security</groupId>
       <artifactId>token-client-spring</artifactId>
-      <version>${token-support.version}</version>
+      <version>${nav-token-support.version}</version>
       <scope>compile</scope>
     </dependency>
 
@@ -102,6 +86,7 @@
     <dependency>
       <groupId>io.github.oshai</groupId>
       <artifactId>kotlin-logging-jvm</artifactId>
+      <version>${kotlin-logging-jvm.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
@@ -164,28 +149,30 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-transport-felles</artifactId>
-      <version>${project.parent.version}</version>
+      <version>${project.version}</version>
     </dependency>
       <dependency>
           <groupId>no.nav.bidrag</groupId>
           <artifactId>bidrag-generer-testdata-felles</artifactId>
-          <version>${project.parent.version}</version>
+          <version>${project.version}</version>
       </dependency>
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc-openapi-ui.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.getunleash</groupId>
       <artifactId>unleash-client-java</artifactId>
-      <version>11.0.2</version>
+      <version>${unleash-client-java.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- test -->
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -197,40 +184,39 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-test-junit5</artifactId>
+      <version>${kotlin.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-runner-junit5-jvm</artifactId>
+      <version>${kotest.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
 
   </dependencies>
 
-  <build>
-    <sourceDirectory>src/main/kotlin</sourceDirectory>
-    <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+  <distributionManagement>
+      <repository>
+          <id>github-bidrag-backend</id>
+          <url>https://maven.pkg.github.com/navikt/bidrag-backend</url>
+      </repository>
+  </distributionManagement>
 
+  <build>
     <plugins>
+      <!-- Vanlig biblioteks-jar uten main-class: skru av spring-boot-maven-plugin (arvet fra rot-pom) -->
       <plugin>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-maven-plugin</artifactId>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <compilerPlugins>
-            <plugin>spring</plugin>
-          </compilerPlugins>
+          <skip>true</skip>
         </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-maven-allopen</artifactId>
-            <version>${kotlin.version}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

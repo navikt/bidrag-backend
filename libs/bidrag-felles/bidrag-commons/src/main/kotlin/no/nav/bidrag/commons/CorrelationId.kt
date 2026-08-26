@@ -15,12 +15,11 @@ class CorrelationId private constructor(
 
         fun fetchCorrelationIdForThread(): String = CORRELATION_ID_VALUE.get() ?: generateTimestamped("UNKNOWN").get()
 
-        fun existing(value: String?): CorrelationId =
-            if (value.isNullOrBlank()) {
-                generateTimestamped("correlationId")
-            } else {
-                CorrelationId(value)
-            }
+        fun existing(value: String?): CorrelationId = if (value.isNullOrBlank()) {
+            generateTimestamped("correlationId")
+        } else {
+            CorrelationId(value)
+        }
 
         fun generateTimestamped(value: String): CorrelationId {
             val currentTimeAsString = java.lang.Long.toHexString(System.currentTimeMillis())

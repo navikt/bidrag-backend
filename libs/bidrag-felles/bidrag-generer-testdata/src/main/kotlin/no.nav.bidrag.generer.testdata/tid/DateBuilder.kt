@@ -35,26 +35,23 @@ class DateBuilder internal constructor(
 
         fun iNesteMaaned(): AarBuilder = AarBuilder(DateBuilder(Function { d: LocalDate? -> d!!.plusMonths(1) }, dateBuilder, null))
 
-        fun omNMaaneder(antallMaaneder: Int): AarBuilder =
-            AarBuilder(
-                DateBuilder(
-                    Function { d: LocalDate -> d.plusMonths(antallMaaneder.toLong()) },
-                    dateBuilder,
-                    null,
-                ),
-            )
+        fun omNMaaneder(antallMaaneder: Int): AarBuilder = AarBuilder(
+            DateBuilder(
+                Function { d: LocalDate -> d.plusMonths(antallMaaneder.toLong()) },
+                dateBuilder,
+                null,
+            ),
+        )
     }
 
     class AarBuilder(
         private val dateBuilder: DateBuilder?,
     ) {
-        fun nAarSiden(antallAarSiden: Int): DateBuilder =
-            DateBuilder(Function { d: LocalDate -> d.minusYears(antallAarSiden.toLong()) }, dateBuilder, null)
+        fun nAarSiden(antallAarSiden: Int): DateBuilder = DateBuilder(Function { d: LocalDate -> d.minusYears(antallAarSiden.toLong()) }, dateBuilder, null)
 
         fun detteAaret(): DateBuilder = dateBuilder!!
 
-        fun omNAar(antallAar: Int): DateBuilder =
-            DateBuilder(Function { d: LocalDate -> d.plusYears(antallAar.toLong()) }, dateBuilder, null)
+        fun omNAar(antallAar: Int): DateBuilder = DateBuilder(Function { d: LocalDate -> d.plusYears(antallAar.toLong()) }, dateBuilder, null)
     }
 
     fun get(): LocalDate? {
@@ -72,27 +69,25 @@ class DateBuilder internal constructor(
         fun denneDag(): MaanedBuilder = MaanedBuilder(DateBuilder(null, null, null))
 
         @JvmStatic
-        fun sisteDag(): MaanedBuilder =
-            MaanedBuilder(
-                DateBuilder(
-                    Function { d: LocalDate -> d.withDayOfMonth(d.lengthOfMonth()) },
-                    null,
-                    null,
-                ),
-            )
+        fun sisteDag(): MaanedBuilder = MaanedBuilder(
+            DateBuilder(
+                Function { d: LocalDate -> d.withDayOfMonth(d.lengthOfMonth()) },
+                null,
+                null,
+            ),
+        )
 
-        fun tilfeldigDag(): MaanedBuilder =
-            MaanedBuilder(
-                DateBuilder(
-                    Function { d: LocalDate ->
-                        d.withDayOfMonth(
-                            Random.nextInt(d.lengthOfMonth() + 1),
-                        )
-                    },
-                    null,
-                    null,
-                ),
-            )
+        fun tilfeldigDag(): MaanedBuilder = MaanedBuilder(
+            DateBuilder(
+                Function { d: LocalDate ->
+                    d.withDayOfMonth(
+                        Random.nextInt(d.lengthOfMonth() + 1),
+                    )
+                },
+                null,
+                null,
+            ),
+        )
 
         fun dag(dagNr: Int): MaanedBuilder = MaanedBuilder(DateBuilder(Function { d: LocalDate? -> d!!.withDayOfMonth(dagNr) }, null, null))
 

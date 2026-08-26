@@ -11,8 +11,8 @@ import java.net.URI
 @ConfigurationProperties("no.nav.security.jwt.client")
 data class ClientConfigurationWellknownProperties(
     val registration:
-        @NotEmpty @Valid
-        Map<String, ClientPropertiesWellknown>,
+    @NotEmpty @Valid
+    Map<String, ClientPropertiesWellknown>,
 )
 
 class ClientPropertiesWellknown(

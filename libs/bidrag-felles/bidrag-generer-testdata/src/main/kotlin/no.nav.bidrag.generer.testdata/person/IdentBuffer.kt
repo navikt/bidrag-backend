@@ -41,28 +41,27 @@ class IdentBuffer {
     private fun randomPersonnummer(
         kjønn: Kjønn?,
         fodtAar: Int,
-    ): Int =
-        when (fodtAar) {
-            in 1940..1999 -> {
-                randomPersonnummer(kjønn, 900, 999)
-            }
-
-            in 1854..1899 -> {
-                randomPersonnummer(kjønn, 500, 749)
-            }
-
-            in 1900..1999 -> {
-                randomPersonnummer(kjønn, 0, 499)
-            }
-
-            in 2000..2039 -> {
-                randomPersonnummer(kjønn, 500, 999)
-            }
-
-            else -> {
-                throw IllegalArgumentException("Fant ikke gyldig serie for årstallet $fodtAar")
-            }
+    ): Int = when (fodtAar) {
+        in 1940..1999 -> {
+            randomPersonnummer(kjønn, 900, 999)
         }
+
+        in 1854..1899 -> {
+            randomPersonnummer(kjønn, 500, 749)
+        }
+
+        in 1900..1999 -> {
+            randomPersonnummer(kjønn, 0, 499)
+        }
+
+        in 2000..2039 -> {
+            randomPersonnummer(kjønn, 500, 999)
+        }
+
+        else -> {
+            throw IllegalArgumentException("Fant ikke gyldig serie for årstallet $fodtAar")
+        }
+    }
 
     private fun randomPersonnummer(
         kjønn: Kjønn?,
@@ -74,7 +73,7 @@ class IdentBuffer {
             (RandomTestData.random().random.nextInt(antall) * 2) +
                 fraInklusiv +
                 (if (Kjønn.MANN == kjønn) 1 else 0)
-        )
+            )
     }
 
     fun beregnKontrollsiffer(): IdentBuffer {

@@ -89,14 +89,13 @@ internal class KildesystemIdenfikatorTest {
     companion object {
         @JvmStatic
         @MethodSource
-        private fun initPrefixsetIdForTest(): Stream<Arguments> =
-            Stream.of(
-                Arguments.of("BID-3757282865", true),
-                Arguments.of("BID-9999999", false),
-                Arguments.of("JOARK-3757282443", true),
-                Arguments.of("JOARK-9999999", false),
-                Arguments.of("UKJENT-3757282443", false),
-                Arguments.of("UKJENT-9999999", false),
-            )
+        private fun initPrefixsetIdForTest(): Stream<Arguments> = Stream.of(
+            Arguments.of("BID-3757282865", true),
+            Arguments.of("BID-9999999", false),
+            Arguments.of("JOARK-3757282443", true),
+            Arguments.of("JOARK-9999999", false),
+            Arguments.of("UKJENT-3757282443", false),
+            Arguments.of("UKJENT-9999999", false),
+        )
     }
 }

@@ -44,7 +44,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>no.nav.bidrag</groupId>
@@ -56,13 +56,13 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-domene-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
     </dependency>
     <!-- Nav sine transport/DTO-klasser for API-kommunikasjon -->
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-transport-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -269,14 +269,14 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-test-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <!-- Generering av gyldige testdata (bl.a. fødselsnummer via genererFødselsnummer) -->
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-generer-testdata-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <!-- Spring Boot test-støtte (JUnit, Mockito, AssertJ) -->

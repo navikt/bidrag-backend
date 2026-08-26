@@ -25,10 +25,9 @@ enum class Sakskategori(
 
     override fun toString(): String = beskrivelse
 
-    fun finnBehandlingstypekode(behandlingstype: Behandlingstype): String? =
-        when (behandlingstype) {
-            Behandlingstype.FORVALTNING -> this.behandlingstypeForvaltning
-            Behandlingstype.KLAGE -> this.behandlingstypeKlage
-            Behandlingstype.SØKNAD -> this.behandlingstypeSøknad
-        }
+    fun finnBehandlingstypekode(behandlingstype: Behandlingstype): String? = when (behandlingstype) {
+        Behandlingstype.FORVALTNING -> this.behandlingstypeForvaltning
+        Behandlingstype.KLAGE -> this.behandlingstypeKlage
+        Behandlingstype.SØKNAD -> this.behandlingstypeSøknad
+    }
 }

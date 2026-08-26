@@ -8,8 +8,8 @@ import java.time.LocalDateTime
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(
     description =
-        "Representerer kontonummer for en person. " +
-            "For norske kontonummer er det kun norskKontornr som er utfyllt, ellers benyttes de andre feltene for utlandske kontonummer.",
+    "Representerer kontonummer for en person. " +
+        "For norske kontonummer er det kun norskKontornr som er utfyllt, ellers benyttes de andre feltene for utlandske kontonummer.",
 )
 data class KontonummerDto(
     @Schema(description = "Norsk kontonummer, 11 siffer.")

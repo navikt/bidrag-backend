@@ -63,23 +63,20 @@ internal class BidragOrganisasjonConsumer(
     @Value("\${BIDRAG_ORGANISASJON_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "bidrag-organisasjon") {
-    private fun createUri(path: String?) =
-        UriComponentsBuilder
-            .fromUri(url)
-            .path(path ?: "")
-            .build()
-            .toUri()
+    private fun createUri(path: String?) = UriComponentsBuilder
+        .fromUri(url)
+        .path(path ?: "")
+        .build()
+        .toUri()
 
     @Cacheable(EnhetProvider.SAKSBEHANDLERINFO_CACHE)
-    fun hentSaksbehandlerInfo(saksbehandlerIdent: String): SaksbehandlerInfoResponse? =
-        getForEntity(createUri("/saksbehandler/info/$saksbehandlerIdent"))
+    fun hentSaksbehandlerInfo(saksbehandlerIdent: String): SaksbehandlerInfoResponse? = getForEntity(createUri("/saksbehandler/info/$saksbehandlerIdent"))
 
     @Cacheable(EnhetProvider.GEOGRAFISK_TILKNYTNING_CACHE)
-    fun hentArbeidsfordelingGeografiskTilknytningEnhet(ident: String): EnhetDto? =
-        postForNonNullEntity(
-            createUri("/arbeidsfordeling/enhet/geografisktilknytning"),
-            HentEnhetRequest(Personident(ident)),
-        )
+    fun hentArbeidsfordelingGeografiskTilknytningEnhet(ident: String): EnhetDto? = postForNonNullEntity(
+        createUri("/arbeidsfordeling/enhet/geografisktilknytning"),
+        HentEnhetRequest(Personident(ident)),
+    )
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -96,20 +93,19 @@ class SaksbehandlernavnProvider {
         /**
          * Hent navn på personen som tilhører en NAV-ident (feks Z994977)
          */
-        fun hentSaksbehandlernavn(saksbehandlerIdent: String): String? =
-            try {
-                retryTemplateSynchronous(
-                    "SaksbehandlernavnProvider.hentSaksbehandlernavn for ident $saksbehandlerIdent",
-                ).execute<String, HttpClientErrorException> {
-                    AppContext
-                        .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
-                        .hentSaksbehandlerInfo(saksbehandlerIdent)
-                        ?.navn
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av saksbehandlernavn for saksbehandler $saksbehandlerIdent" }
-                null
+        fun hentSaksbehandlernavn(saksbehandlerIdent: String): String? = try {
+            retryTemplateSynchronous(
+                "SaksbehandlernavnProvider.hentSaksbehandlernavn for ident $saksbehandlerIdent",
+            ).execute<String, HttpClientErrorException> {
+                AppContext
+                    .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
+                    .hentSaksbehandlerInfo(saksbehandlerIdent)
+                    ?.navn
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av saksbehandlernavn for saksbehandler $saksbehandlerIdent" }
+            null
+        }
     }
 }
 
@@ -121,38 +117,36 @@ class EnhetProvider {
         /**
          * Hent navn på personen som tilhører en NAV-ident (feks Z994977)
          */
-        fun hentSaksbehandlernavn(saksbehandlerIdent: String): String? =
-            try {
-                retryTemplateSynchronous(
-                    "EnhetProvider.hentSaksbehandlernavn for ident $saksbehandlerIdent",
-                ).execute<String, HttpClientErrorException> {
-                    AppContext
-                        .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
-                        .hentSaksbehandlerInfo(saksbehandlerIdent)
-                        ?.navn
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av saksbehandlernavn for saksbehandler $saksbehandlerIdent" }
-                null
+        fun hentSaksbehandlernavn(saksbehandlerIdent: String): String? = try {
+            retryTemplateSynchronous(
+                "EnhetProvider.hentSaksbehandlernavn for ident $saksbehandlerIdent",
+            ).execute<String, HttpClientErrorException> {
+                AppContext
+                    .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
+                    .hentSaksbehandlerInfo(saksbehandlerIdent)
+                    ?.navn
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av saksbehandlernavn for saksbehandler $saksbehandlerIdent" }
+            null
+        }
 
         /**
          * Hent geografisk tilknytning (enhet) for person
          */
-        fun hentGeografiskTilknytningPerson(personident: String): String? =
-            try {
-                retryTemplateSynchronous(
-                    "EnhetProvider.hentGeografiskTilknytningPerson for ident $personident",
-                ).execute<String, HttpClientErrorException> {
-                    AppContext
-                        .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
-                        .hentArbeidsfordelingGeografiskTilknytningEnhet(personident)
-                        ?.nummer
-                        ?.verdi
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av enhet for $personident" }
-                null
+        fun hentGeografiskTilknytningPerson(personident: String): String? = try {
+            retryTemplateSynchronous(
+                "EnhetProvider.hentGeografiskTilknytningPerson for ident $personident",
+            ).execute<String, HttpClientErrorException> {
+                AppContext
+                    .getBean("CommonsBidragOrganisasjonConsumer", BidragOrganisasjonConsumer::class.java)
+                    .hentArbeidsfordelingGeografiskTilknytningEnhet(personident)
+                    ?.nummer
+                    ?.verdi
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av enhet for $personident" }
+            null
+        }
     }
 }

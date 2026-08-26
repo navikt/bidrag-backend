@@ -174,7 +174,7 @@ class TilgangAdviceTest {
     @Test
     fun `sjekkTilgang sjekker tilgang for navngitt saksnummerstring`() {
         val joinPoint: JoinPoint = mockk()
-        every { joinPoint.args } returns arrayOf("sdf", 321, "0123456")
+        every { joinPoint.args } returns arrayOf<Any>("sdf", 321, "0123456")
         val codeSignature: CodeSignature = mockk()
         every { codeSignature.parameterNames } returns arrayOf("dill", "dall", "id")
         every { joinPoint.signature } returns codeSignature
@@ -188,7 +188,7 @@ class TilgangAdviceTest {
     fun `sjekkTilgang sjekker tilgang for navngitt personIdentstring`() {
         val joinPoint: JoinPoint = mockk(relaxed = true)
         val fnr = Personident(genererFødselsnummer())
-        every { joinPoint.args } returns arrayOf("sdf", 321, fnr.verdi)
+        every { joinPoint.args } returns arrayOf<Any>("sdf", 321, fnr.verdi)
         val codeSignature: CodeSignature = mockk()
         every { codeSignature.parameterNames } returns arrayOf("dill", "dall", "id")
         every { joinPoint.signature } returns codeSignature
@@ -201,7 +201,7 @@ class TilgangAdviceTest {
     @Test
     fun `sjekkTilgang feiler ved navngitt ugyldig id-string`() {
         val joinPoint: JoinPoint = mockk(relaxed = true)
-        every { joinPoint.args } returns arrayOf("sdf", 321, "654987")
+        every { joinPoint.args } returns arrayOf<Any>("sdf", 321, "654987")
         val codeSignature: CodeSignature = mockk()
         every { codeSignature.parameterNames } returns arrayOf("dill", "dall", "id")
         every { joinPoint.signature } returns codeSignature

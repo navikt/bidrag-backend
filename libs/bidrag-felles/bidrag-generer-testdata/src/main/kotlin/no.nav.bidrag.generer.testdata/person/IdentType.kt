@@ -10,9 +10,8 @@ interface IdentType {
         kjønn: Kjønn?,
     ): String?
 
-    fun generer(): String? =
-        generer(
-            RandomTestData.random().dateBetween(LocalDate.of(1900, 1, 1), LocalDate.now()),
-            Kjønn.entries.random(),
-        )
+    fun generer(): String? = generer(
+        RandomTestData.random().dateBetween(LocalDate.of(1900, 1, 1), LocalDate.now()),
+        Kjønn.entries.random(),
+    )
 }

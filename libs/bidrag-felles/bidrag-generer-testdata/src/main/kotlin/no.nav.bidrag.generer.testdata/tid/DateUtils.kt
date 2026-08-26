@@ -7,10 +7,9 @@ import java.time.format.DateTimeFormatter
 object DateUtils {
     val DEFAULT_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
-    fun parseDate(dateStr: String?): LocalDate? =
-        if (dateStr != null) {
-            LocalDate.parse(dateStr, DEFAULT_DATE_FORMAT)
-        } else {
-            null
-        }
+    fun parseDate(dateStr: String?): LocalDate? = if (dateStr != null) {
+        LocalDate.parse(dateStr, DEFAULT_DATE_FORMAT)
+    } else {
+        null
+    }
 }

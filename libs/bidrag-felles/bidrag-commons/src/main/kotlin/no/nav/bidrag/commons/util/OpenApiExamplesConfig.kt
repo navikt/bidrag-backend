@@ -12,15 +12,14 @@ import org.springframework.http.MediaType
 @Configuration
 class OpenApiExamplesConfig {
     @Bean
-    fun openApiCustomiser(examples: Collection<OpenApiExample>): OpenApiCustomizer =
-        OpenApiCustomizer { openAPI ->
-            examples.forEach { example ->
-                openAPI.components.addExamples(example.name, example.example)
-                examples.groupBy { Pair(it.path, it.method) }.entries.forEach {
-                    openAPI.addExamplesToPath(it.key, it.value)
-                }
+    fun openApiCustomiser(examples: Collection<OpenApiExample>): OpenApiCustomizer = OpenApiCustomizer { openAPI ->
+        examples.forEach { example ->
+            openAPI.components.addExamples(example.name, example.example)
+            examples.groupBy { Pair(it.path, it.method) }.entries.forEach {
+                openAPI.addExamplesToPath(it.key, it.value)
             }
         }
+    }
 
     fun OpenAPI.addExamplesToPath(
         operation: Pair<String, HttpMethod>,
@@ -39,16 +38,15 @@ class OpenApiExamplesConfig {
             }
     }
 
-    fun PathItem.getOperation(httpMethod: HttpMethod) =
-        when (httpMethod) {
-            HttpMethod.POST -> post
-            HttpMethod.PUT -> put
-            HttpMethod.PATCH -> patch
-            HttpMethod.DELETE -> delete
-            HttpMethod.OPTIONS -> options
-            HttpMethod.GET -> get
-            else -> null
-        }
+    fun PathItem.getOperation(httpMethod: HttpMethod) = when (httpMethod) {
+        HttpMethod.POST -> post
+        HttpMethod.PUT -> put
+        HttpMethod.PATCH -> patch
+        HttpMethod.DELETE -> delete
+        HttpMethod.OPTIONS -> options
+        HttpMethod.GET -> get
+        else -> null
+    }
 }
 
 data class OpenApiExample(

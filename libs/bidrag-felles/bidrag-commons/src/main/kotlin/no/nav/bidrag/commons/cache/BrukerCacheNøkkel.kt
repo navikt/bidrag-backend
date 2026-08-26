@@ -13,18 +13,16 @@ class BrukerCacheNøkkel(
         return false
     }
 
-    override fun hashCode(): Int =
-        HashCodeBuilder()
-            .append(userId)
-            .append(key)
-            .toHashCode()
+    override fun hashCode(): Int = HashCodeBuilder()
+        .append(userId)
+        .append(key)
+        .toHashCode()
 
-    override fun toString(): String =
-        StringBuilder()
-            .append(userId)
-            .append(" - ")
-            .append(key)
-            .toString()
+    override fun toString(): String = StringBuilder()
+        .append(userId)
+        .append(" - ")
+        .append(key)
+        .toString()
 
     companion object {
         const val GENERATOR_BØNNE = "BrukerCacheNøkkelGenerator"

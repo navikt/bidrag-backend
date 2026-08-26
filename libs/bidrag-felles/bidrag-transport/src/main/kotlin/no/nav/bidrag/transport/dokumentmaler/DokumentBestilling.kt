@@ -184,8 +184,7 @@ data class AndelUnderholdskostnadPeriode(
     val beløpUnderholdskostnad: BigDecimal? = null,
     val beløpBpsAndel: BigDecimal,
 ) : DataPeriode {
-    override fun kopierTilGenerisk() =
-        copy(periode = ÅrMånedsperiode(LocalDate.now(), null), beløpUnderholdskostnad = BigDecimal.ZERO, beløpBpsAndel = BigDecimal.ZERO)
+    override fun kopierTilGenerisk() = copy(periode = ÅrMånedsperiode(LocalDate.now(), null), beløpUnderholdskostnad = BigDecimal.ZERO, beløpBpsAndel = BigDecimal.ZERO)
 
     val totalEndeligInntekt get() =
         (inntektBM ?: BigDecimal.ZERO) + (inntektBP ?: BigDecimal.ZERO) +
@@ -300,14 +299,13 @@ data class VedtakDetaljer(
 ) {
     val erDirekteAvslagForAlleBarn: Boolean get() = vedtakBarn.all { it.erDirekteAvslag }
 
-    fun hentForskuddBarn(fodselsnummer: String): BigDecimal? =
-        vedtakBarn
-            .find { it.fødselsnummer == fodselsnummer }
-            ?.stønadsendringer
-            ?.find { it.type == Stønadstype.FORSKUDD }
-            ?.vedtakPerioder
-            ?.find { it.tomDato == null }
-            ?.beløp
+    fun hentForskuddBarn(fodselsnummer: String): BigDecimal? = vedtakBarn
+        .find { it.fødselsnummer == fodselsnummer }
+        ?.stønadsendringer
+        ?.find { it.type == Stønadstype.FORSKUDD }
+        ?.vedtakPerioder
+        ?.find { it.tomDato == null }
+        ?.beløp
 }
 
 data class GebyrInfoDto(
@@ -455,9 +453,9 @@ data class DelvedtakDto(
 data class GrunnlagFraVedtak(
     @Schema(
         description =
-            "Årstall for aldersjustering av grunnlag. " +
-                "Brukes hvis det er et vedtak som skal brukes for aldersjustering av grunnlag. " +
-                "Dette er relevant ved omgjøring/klagebehanding i bidrag ellers aldersjusteres det for inneværende år eller ikke er relevant",
+        "Årstall for aldersjustering av grunnlag. " +
+            "Brukes hvis det er et vedtak som skal brukes for aldersjustering av grunnlag. " +
+            "Dette er relevant ved omgjøring/klagebehanding i bidrag ellers aldersjusteres det for inneværende år eller ikke er relevant",
     )
     val aldersjusteringForÅr: Int? = null,
     val vedtak: Int? = null,
@@ -465,8 +463,8 @@ data class GrunnlagFraVedtak(
     val vedtakstidspunkt: LocalDateTime? = null,
     @Schema(
         description =
-            "Perioder i vedtaket som er valgt. " +
-                "Brukes når vedtakstype er innkreving og det er valgt å innkreve en vedtak fra NAV som opprinnelig var uten innkreving",
+        "Perioder i vedtaket som er valgt. " +
+            "Brukes når vedtakstype er innkreving og det er valgt å innkreve en vedtak fra NAV som opprinnelig var uten innkreving",
     )
     val perioder: List<VedtakPeriodeDto> = emptyList(),
 )

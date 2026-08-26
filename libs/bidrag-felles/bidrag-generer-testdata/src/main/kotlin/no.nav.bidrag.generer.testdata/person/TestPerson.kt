@@ -78,11 +78,10 @@ data class TestPerson(
         fun denAndreForelderen(
             forelder1: TestPerson,
             barn: TestPerson,
-        ): TestPerson? =
-            if (forelder1 == barn.far) {
-                barn.mor
-            } else {
-                barn.far
-            }
+        ): TestPerson? = if (forelder1 == barn.far) {
+            barn.mor
+        } else {
+            barn.far
+        }
     }
 }

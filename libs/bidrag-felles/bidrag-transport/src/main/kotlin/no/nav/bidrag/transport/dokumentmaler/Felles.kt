@@ -163,42 +163,41 @@ data class DokumentmalResultatBidragsberegningBarnDto(
         }
 
         @Suppress("unused")
-        fun tilResultatkodeVisningsnavn(): String =
-            when {
-                erOpphør -> {
-                    if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
-                        beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true
-                    ) {
-                        beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
-                    } else if (resultatFraVedtak?.omgjøringsvedtak == true && resultatKode != null) {
-                        resultatKode.visningsnavn.intern
-                    } else {
-                        "Opphør"
-                    }
-                }
-
-                vedtakstype == Vedtakstype.INNKREVING -> {
-                    "Innkreving"
-                }
-
-                vedtakstype == Vedtakstype.ALDERSJUSTERING -> {
-                    "Aldersjustering"
-                }
-
-                vedtakstype == Vedtakstype.INDEKSREGULERING -> {
-                    "Indeksregulering"
-                }
-
-                resultatKode?.erDirekteAvslag() == true ||
-                    resultatKode == Resultatkode.INGEN_ENDRING_UNDER_GRENSE ||
-                    resultatKode == Resultatkode.INNVILGET_VEDTAK -> {
-                    resultatKode.visningsnavnIntern(vedtakstype)
-                }
-
-                else -> {
-                    beregningsdetaljer?.sluttberegning?.resultatVisningsnavn?.intern ?: ""
+        fun tilResultatkodeVisningsnavn(): String = when {
+            erOpphør -> {
+                if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
+                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true
+                ) {
+                    beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
+                } else if (resultatFraVedtak?.omgjøringsvedtak == true && resultatKode != null) {
+                    resultatKode.visningsnavn.intern
+                } else {
+                    "Opphør"
                 }
             }
+
+            vedtakstype == Vedtakstype.INNKREVING -> {
+                "Innkreving"
+            }
+
+            vedtakstype == Vedtakstype.ALDERSJUSTERING -> {
+                "Aldersjustering"
+            }
+
+            vedtakstype == Vedtakstype.INDEKSREGULERING -> {
+                "Indeksregulering"
+            }
+
+            resultatKode?.erDirekteAvslag() == true ||
+                resultatKode == Resultatkode.INGEN_ENDRING_UNDER_GRENSE ||
+                resultatKode == Resultatkode.INNVILGET_VEDTAK -> {
+                resultatKode.visningsnavnIntern(vedtakstype)
+            }
+
+            else -> {
+                beregningsdetaljer?.sluttberegning?.resultatVisningsnavn?.intern ?: ""
+            }
+        }
 
         data class KlageOmgjøringDetaljer(
             val resultatFraVedtakVedtakstidspunkt: LocalDateTime? = null,
@@ -432,10 +431,9 @@ data class DokumentmalForholdsmessigFordelingBidragTilFordelingBarn(
     )
 }
 
-fun InntektBeløpstype?.tilVisningsnavn() =
-    when (this) {
-        InntektBeløpstype.MÅNEDSBELØP_11_MÅNEDER, InntektBeløpstype.MÅNEDSBELØP -> "Måned"
-        InntektBeløpstype.DAGSATS -> "Dagsats"
-        InntektBeløpstype.ÅRSBELØP -> "Dagsats"
-        else -> ""
-    }
+fun InntektBeløpstype?.tilVisningsnavn() = when (this) {
+    InntektBeløpstype.MÅNEDSBELØP_11_MÅNEDER, InntektBeløpstype.MÅNEDSBELØP -> "Måned"
+    InntektBeløpstype.DAGSATS -> "Dagsats"
+    InntektBeløpstype.ÅRSBELØP -> "Dagsats"
+    else -> ""
+}

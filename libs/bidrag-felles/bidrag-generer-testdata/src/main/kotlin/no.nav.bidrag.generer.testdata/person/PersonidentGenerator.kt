@@ -51,14 +51,13 @@ private fun opprettTilfeldigFodselsdato(): LocalDate = LocalDate.now().minus(Per
 private fun genererIndividnummer(
     fodselsAr: Int,
     kjønn: Kjønn,
-): String =
-    when (fodselsAr) {
-        in 1940..1999 -> opprettTilfeldigIndividnummer(kjønn, 900, 999)
-        in 1854..1899 -> opprettTilfeldigIndividnummer(kjønn, 500, 749)
-        in 1900..1999 -> opprettTilfeldigIndividnummer(kjønn, 0, 499)
-        in 2000..2039 -> opprettTilfeldigIndividnummer(kjønn, 500, 999)
-        else -> throw IllegalArgumentException("Fant ikke gyldig serie for årstallet $fodselsAr")
-    }
+): String = when (fodselsAr) {
+    in 1940..1999 -> opprettTilfeldigIndividnummer(kjønn, 900, 999)
+    in 1854..1899 -> opprettTilfeldigIndividnummer(kjønn, 500, 749)
+    in 1900..1999 -> opprettTilfeldigIndividnummer(kjønn, 0, 499)
+    in 2000..2039 -> opprettTilfeldigIndividnummer(kjønn, 500, 999)
+    else -> throw IllegalArgumentException("Fant ikke gyldig serie for årstallet $fodselsAr")
+}
 
 private fun opprettTilfeldigIndividnummer(
     kjønn: Kjønn,

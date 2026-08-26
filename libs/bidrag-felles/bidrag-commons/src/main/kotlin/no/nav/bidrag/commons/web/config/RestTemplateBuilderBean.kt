@@ -57,10 +57,9 @@ class RestTemplateBuilderBean {
         observationRestTemplateCustomizer: ObservationRestTemplateCustomizer,
         @Value($$"${bidrag.rest.read.timeout.seconds:15}") readTimeoutSeconds: Long,
         @Value($$"${bidrag.rest.connect.timeout.seconds:15}") connectTimeoutSeconds: Long,
-    ): RestTemplateBuilder =
-        RestTemplateBuilder()
-            .additionalInterceptors(consumerIdClientInterceptor, mdcValuesPropagatingClientInterceptor)
-            .additionalCustomizers(observationRestTemplateCustomizer)
-            .connectTimeout(Duration.of(connectTimeoutSeconds, ChronoUnit.SECONDS))
-            .readTimeout(Duration.of(readTimeoutSeconds, ChronoUnit.SECONDS))
+    ): RestTemplateBuilder = RestTemplateBuilder()
+        .additionalInterceptors(consumerIdClientInterceptor, mdcValuesPropagatingClientInterceptor)
+        .additionalCustomizers(observationRestTemplateCustomizer)
+        .connectTimeout(Duration.of(connectTimeoutSeconds, ChronoUnit.SECONDS))
+        .readTimeout(Duration.of(readTimeoutSeconds, ChronoUnit.SECONDS))
 }

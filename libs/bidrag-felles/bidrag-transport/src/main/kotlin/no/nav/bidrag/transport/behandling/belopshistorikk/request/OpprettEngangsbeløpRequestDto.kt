@@ -40,8 +40,8 @@ data class OpprettEngangsbeløpRequestDto(
     val innkreving: Innkrevingstype,
     @Schema(
         description =
-            "Referanse til engangsbeløp, brukes for å kunne omgjøre engangsbeløp senere i et klagevedtak. Unik innenfor et vedtak. " +
-                "Unik referanse blir generert av bidrag-vedtak hvis den ikke er angitt i requesten.",
+        "Referanse til engangsbeløp, brukes for å kunne omgjøre engangsbeløp senere i et klagevedtak. Unik innenfor et vedtak. " +
+            "Unik referanse blir generert av bidrag-vedtak hvis den ikke er angitt i requesten.",
     )
     val referanse: String? = null,
     @Schema(description = "Opprettet av")

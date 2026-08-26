@@ -96,14 +96,13 @@ abstract class AzureTokenClientInterceptor(
         .firstOrNull { uri.toString().startsWith(it.resourceUrl.toString()) }
         ?: error("could not find oauth2 client config for uri=$uri")
 
-    private fun clientCredentialOrJwtBearer() =
-        if (erSystembruker()) {
-            GrantType.CLIENT_CREDENTIALS
-        } else if (TokenUtils.erTokenUtstedtAv(TokenUtsteder.TOKENX)) {
-            GrantType.TOKEN_EXCHANGE
-        } else {
-            GrantType.JWT_BEARER
-        }
+    private fun clientCredentialOrJwtBearer() = if (erSystembruker()) {
+        GrantType.CLIENT_CREDENTIALS
+    } else if (TokenUtils.erTokenUtstedtAv(TokenUtsteder.TOKENX)) {
+        GrantType.TOKEN_EXCHANGE
+    } else {
+        GrantType.JWT_BEARER
+    }
 
     private fun erSystembruker(): Boolean {
         return try {

@@ -78,19 +78,17 @@ val SamværskalkulatorNetterFrekvens.visningsnavn get() =
     lastVisningsnavnFraFil("samværskalkulatornetterfrekvens.yaml")[name]
         ?: visningsnavnMangler(name)
 
-fun Vedtakstype.visningsnavnIntern(opprinneligVedtakstype: Vedtakstype? = null) =
-    opprinneligVedtakstype?.let {
-        if (it == Vedtakstype.FASTSETTELSE && this == Vedtakstype.ENDRING) {
-            it.visningsnavn.intern
-        } else {
-            "${it.visningsnavn.intern} (${this.visningsnavn.intern})"
-        }
-    } ?: this.visningsnavn.intern
+fun Vedtakstype.visningsnavnIntern(opprinneligVedtakstype: Vedtakstype? = null) = opprinneligVedtakstype?.let {
+    if (it == Vedtakstype.FASTSETTELSE && this == Vedtakstype.ENDRING) {
+        it.visningsnavn.intern
+    } else {
+        "${it.visningsnavn.intern} (${this.visningsnavn.intern})"
+    }
+} ?: this.visningsnavn.intern
 
 fun Inntektsrapportering.visningsnavnIntern(årstall: Int?) = "${visningsnavn.intern} $årstall".trim()
 
-fun Inntektsrapportering.visningsnavnPeriode(periode: ÅrMånedsperiode) =
-    "${visningsnavn.intern} ${periode.fom.toMontYear()} - ${periode.til.toMontYear()}".trim()
+fun Inntektsrapportering.visningsnavnPeriode(periode: ÅrMånedsperiode) = "${visningsnavn.intern} ${periode.fom.toMontYear()} - ${periode.til.toMontYear()}".trim()
 
 fun Inntektsrapportering.visningsnavnMedÅrstall(
     årstall: Int?,
@@ -142,12 +140,11 @@ fun Resultatkode.visningsnavnIntern(
     }
 }
 
-fun String?.fjernAvslagOpphørPrefiks() =
-    this
-        ?.replace("Avslag, ", "", ignoreCase = true)
-        ?.replace("Avslag ", "", ignoreCase = true)
-        ?.replace("Opphør, ", "", ignoreCase = true)
-        ?.replace("Opphør ", "", ignoreCase = true)
+fun String?.fjernAvslagOpphørPrefiks() = this
+    ?.replace("Avslag, ", "", ignoreCase = true)
+    ?.replace("Avslag ", "", ignoreCase = true)
+    ?.replace("Opphør, ", "", ignoreCase = true)
+    ?.replace("Opphør ", "", ignoreCase = true)
 
 fun lastVisningsnavnFraFil(
     filnavn: String,
@@ -168,7 +165,6 @@ private fun lastVisningsnavnFraFilForKategori(
     return jsonNode[kategori] ?: throw RuntimeException("Fant ikke visningsnavn for kategori $kategori i filsti $fil")
 }
 
-private fun hentFil(filsti: String) =
-    Visningsnavn::class.java.getResource(
-        filsti,
-    ) ?: throw RuntimeException("Fant ingen fil på sti $filsti")
+private fun hentFil(filsti: String) = Visningsnavn::class.java.getResource(
+    filsti,
+) ?: throw RuntimeException("Fant ingen fil på sti $filsti")

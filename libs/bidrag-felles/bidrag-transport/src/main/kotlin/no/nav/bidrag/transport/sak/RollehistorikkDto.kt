@@ -15,30 +15,30 @@ data class RollehistorikkDto(
     val fødselsnummer: Personident? = null,
     @field:Schema(
         description =
-            "Kode for rolletype tilsvarende kodene i T_KODE_ROLLETYPE. " +
-                "Gyldige verdier er f.eks. BM (bidragsmottaker), BP (bidragspliktig) og BA (barn).",
+        "Kode for rolletype tilsvarende kodene i T_KODE_ROLLETYPE. " +
+            "Gyldige verdier er f.eks. BM (bidragsmottaker), BP (bidragspliktig) og BA (barn).",
     )
     val type: Rolletype,
     @field:Schema(
         description =
-            "Reell mottaker (RM) for barnet. " +
-                "Kan kun registreres for barn (BA), og kan representere både person eller samhandler (organisasjon/verge). " +
-                "Dette feltet brukes i stedet for samhandlerIdent når bidrag skal utbetales til annen part enn barnets BM.",
+        "Reell mottaker (RM) for barnet. " +
+            "Kan kun registreres for barn (BA), og kan representere både person eller samhandler (organisasjon/verge). " +
+            "Dette feltet brukes i stedet for samhandlerIdent når bidrag skal utbetales til annen part enn barnets BM.",
     )
     val reellMottaker: ReellMottakerDto? = null,
     @field:Schema(
         description =
-            "Beskrivelse av hva slags type endring som er gjort for rolle",
+        "Beskrivelse av hva slags type endring som er gjort for rolle",
     )
     val typeEndring: TypeEndring? = null,
     @field:Schema(
         description =
-            "Rollen er oppdatert av angitt saksbehandler eller applikasjon ",
+        "Rollen er oppdatert av angitt saksbehandler eller applikasjon ",
     )
     val opprettetAv: String? = null,
     @field:Schema(
         description =
-            "Tidspunkt rollen ble endret ",
+        "Tidspunkt rollen ble endret ",
     )
     val opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
 )

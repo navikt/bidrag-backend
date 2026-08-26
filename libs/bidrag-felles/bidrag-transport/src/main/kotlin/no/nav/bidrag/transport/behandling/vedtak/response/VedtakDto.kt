@@ -91,8 +91,8 @@ data class StønadsendringDto(
     val innkreving: Innkrevingstype,
     @Schema(
         description =
-            "Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endring" +
-                "Gyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING'",
+        "Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endring" +
+            "Gyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING'",
     )
     val beslutning: Beslutningstype,
     @Schema(description = "Id for vedtaket det er klaget på")
@@ -147,17 +147,17 @@ data class EngangsbeløpDto(
     val innkreving: Innkrevingstype,
     @Schema(
         description =
-            "Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endring" +
-                "Gyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING'",
+        "Angir om søknaden om engangsbeløp er besluttet avvist, stadfestet eller skal medføre endring" +
+            "Gyldige verdier er 'AVVIST', 'STADFESTELSE' og 'ENDRING'",
     )
     val beslutning: Beslutningstype,
     @Schema(description = "Id for vedtaket det er klaget på. Utgjør sammen med referanse en unik id for et engangsbeløp")
     val omgjørVedtakId: Int?,
     @Schema(
         description =
-            "Referanse til engangsbeløp, brukes for å kunne omgjøre engangsbeløp senere i et klagevedtak. Unik innenfor et vedtak." +
-                "Referansen er enten angitt i requesten for opprettelse av vedtak " +
-                "eller generert av bidrag-vedtak hvis den ikke var angitt i requesten.",
+        "Referanse til engangsbeløp, brukes for å kunne omgjøre engangsbeløp senere i et klagevedtak. Unik innenfor et vedtak." +
+            "Referansen er enten angitt i requesten for opprettelse av vedtak " +
+            "eller generert av bidrag-vedtak hvis den ikke var angitt i requesten.",
     )
     val referanse: String,
     @Schema(description = "Referanse - delytelsesId/beslutningslinjeId -> bidrag-regnskap. Skal fjernes senere")

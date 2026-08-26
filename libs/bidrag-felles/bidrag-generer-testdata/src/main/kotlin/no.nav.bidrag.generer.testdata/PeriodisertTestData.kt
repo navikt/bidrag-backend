@@ -8,9 +8,8 @@ interface PeriodisertTestData {
 
     val periodeTil: LocalDate?
 
-    fun overlapperMed(dag: LocalDate?): Boolean =
-        !this.periodeFra!!.isAfter(dag) &&
-            (this.periodeTil == null || this.periodeTil!!.isAfter(dag))
+    fun overlapperMed(dag: LocalDate?): Boolean = !this.periodeFra!!.isAfter(dag) &&
+        (this.periodeTil == null || this.periodeTil!!.isAfter(dag))
 
     fun overlapperMedIdag(): Boolean = overlapperMed(LocalDate.now())
 }

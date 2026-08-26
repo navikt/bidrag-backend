@@ -17,17 +17,13 @@ class OidcTokenManager {
 
     private fun hasIssuers(): Boolean = SpringTokenValidationContextHolder().getTokenValidationContext().issuers.isNotEmpty()
 
-    fun isValidTokenIssuedByAzure(): Boolean =
-        hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(AZURE_ISSUER) != null
+    fun isValidTokenIssuedByAzure(): Boolean = hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(AZURE_ISSUER) != null
 
-    fun isValidTokenIssuedByTokenX(): Boolean =
-        hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(TOKENX_ISSUER) != null
+    fun isValidTokenIssuedByTokenX(): Boolean = hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(TOKENX_ISSUER) != null
 
-    fun isValidTokenIssuedByOpenAm(): Boolean =
-        hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(ISSO_ISSUER) != null
+    fun isValidTokenIssuedByOpenAm(): Boolean = hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(ISSO_ISSUER) != null
 
-    fun isValidTokenIssuedBySTS(): Boolean =
-        hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(STS_ISSUER) != null
+    fun isValidTokenIssuedBySTS(): Boolean = hasIssuers() && SpringTokenValidationContextHolder().getTokenValidationContext().getJwtToken(STS_ISSUER) != null
 
     fun hentToken(): String? {
         if (SikkerhetsKontekst.erIApplikasjonKontekst()) return null
@@ -48,7 +44,6 @@ class OidcTokenManager {
 
     fun getIssuer(): String = fetchToken().issuer
 
-    fun fetchToken(): JwtToken =
-        SpringTokenValidationContextHolder().getTokenValidationContext().firstValidToken
-            ?: throw IllegalStateException("Fant ingen gyldig token i kontekst")
+    fun fetchToken(): JwtToken = SpringTokenValidationContextHolder().getTokenValidationContext().firstValidToken
+        ?: throw IllegalStateException("Fant ingen gyldig token i kontekst")
 }

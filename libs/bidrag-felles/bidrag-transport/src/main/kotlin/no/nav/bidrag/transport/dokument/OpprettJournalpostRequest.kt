@@ -10,8 +10,8 @@ import java.time.LocalDateTime
 data class OpprettJournalpostRequest(
     @Schema(
         description =
-            "Om journalposten skal journalføres etter opprettelse. " +
-                "Journalføring betyr at journalpost låses for framtidige endringer",
+        "Om journalposten skal journalføres etter opprettelse. " +
+            "Journalføring betyr at journalpost låses for framtidige endringer",
     )
     val skalFerdigstilles: Boolean = false,
     @Schema(description = "Tittel på journalposten (Tittel settes til hoveddokumentes tittel for Joark journalposter)", deprecated = true)
@@ -50,9 +50,9 @@ data class OpprettJournalpostRequest(
     val journalposttype: JournalpostType,
     @Schema(
         description =
-            "Referanse for journalpost. " +
-                "Hvis journalpost med samme referanse finnes vil tjenesten gå videre uten å opprette journalpost. " +
-                "Kan brukes for å lage løsninger idempotent",
+        "Referanse for journalpost. " +
+            "Hvis journalpost med samme referanse finnes vil tjenesten gå videre uten å opprette journalpost. " +
+            "Kan brukes for å lage løsninger idempotent",
     )
     val referanseId: String? = null,
     @Schema(description = "NAV-enheten som oppretter journalposten", deprecated = true)
@@ -62,8 +62,8 @@ data class OpprettJournalpostRequest(
     val journalførendeEnhet: String? = null,
     @Schema(
         description =
-            "Ident til saksbehandler som oppretter journalpost. " +
-                "Dette vil prioriteres over ident som tilhører tokenet til kallet.",
+        "Ident til saksbehandler som oppretter journalpost. " +
+            "Dette vil prioriteres over ident som tilhører tokenet til kallet.",
     )
     val saksbehandlerIdent: String? = null,
     val ettersendingsoppgave: OpprettEttersendingsppgaveDto? = null,

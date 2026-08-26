@@ -31,7 +31,7 @@ class Personident(
                     } else {
                         0
                     }
-                )
+                    )
         val år = verdi.substring(4, 6).toInt()
         val datoUtenÅrhundre = LocalDate.of(år, måned, dag)
         val individnummer = verdi.substring(6, 9).toInt()

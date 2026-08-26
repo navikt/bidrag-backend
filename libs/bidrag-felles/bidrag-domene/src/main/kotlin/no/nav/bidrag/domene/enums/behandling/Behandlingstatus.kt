@@ -40,11 +40,10 @@ enum class Behandlingstatus(
     ;
 
     companion object {
-        fun fraKode(kode: String): Behandlingstatus? =
-            try {
-                enumValues<Behandlingstatus>().find { res -> res.bisysKode == kode } ?: Behandlingstatus.valueOf(kode)
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): Behandlingstatus? = try {
+            enumValues<Behandlingstatus>().find { res -> res.bisysKode == kode } ?: Behandlingstatus.valueOf(kode)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

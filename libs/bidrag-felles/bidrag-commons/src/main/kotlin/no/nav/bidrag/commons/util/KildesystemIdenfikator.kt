@@ -47,11 +47,10 @@ class KildesystemIdenfikator(
         return kildesystem.idErStorreEnnIntegerMax(prefiksetJournalpostId)
     }
 
-    override fun toString(): String =
-        ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-            .append("prefiksetJournalpostId", prefiksetJournalpostId)
-            .append("kildesystem", kildesystem)
-            .toString()
+    override fun toString(): String = ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+        .append("prefiksetJournalpostId", prefiksetJournalpostId)
+        .append("kildesystem", kildesystem)
+        .toString()
 
     enum class Kildesystem(
         private val prefixMedDelimiter: String,
@@ -101,16 +100,15 @@ class KildesystemIdenfikator(
             private const val NON_DIGITS = "\\D+"
             private val LOGGER = LoggerFactory.getLogger(Kildesystem::class.java)
 
-            fun hentKildesystem(prefiksetJournalpostId: String): Kildesystem =
-                if (prefiksetJournalpostId.startsWith(BIDRAG.prefixMedDelimiter)) {
-                    BIDRAG
-                } else if (prefiksetJournalpostId.startsWith(JOARK.prefixMedDelimiter)) {
-                    JOARK
-                } else if (prefiksetJournalpostId.startsWith(FORSENDELSE.prefixMedDelimiter)) {
-                    FORSENDELSE
-                } else {
-                    UKJENT
-                }
+            fun hentKildesystem(prefiksetJournalpostId: String): Kildesystem = if (prefiksetJournalpostId.startsWith(BIDRAG.prefixMedDelimiter)) {
+                BIDRAG
+            } else if (prefiksetJournalpostId.startsWith(JOARK.prefixMedDelimiter)) {
+                JOARK
+            } else if (prefiksetJournalpostId.startsWith(FORSENDELSE.prefixMedDelimiter)) {
+                FORSENDELSE
+            } else {
+                UKJENT
+            }
         }
     }
 

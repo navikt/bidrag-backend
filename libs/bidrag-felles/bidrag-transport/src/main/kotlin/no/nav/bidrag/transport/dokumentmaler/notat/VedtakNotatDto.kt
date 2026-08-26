@@ -520,8 +520,7 @@ data class NotatSivilstand(
 )
 
 data class NotatAndreVoksneIHusstanden(
-    val opplysningerFraFolkeregisteret:
-        List<OpplysningerFraFolkeregisteretMedDetaljer<Bostatuskode, NotatAndreVoksneIHusstandenDetaljerDto>> =
+    val opplysningerFraFolkeregisteret: List<OpplysningerFraFolkeregisteretMedDetaljer<Bostatuskode, NotatAndreVoksneIHusstandenDetaljerDto>> =
         emptyList(),
     val opplysningerBruktTilBeregning: List<OpplysningerBruktTilBeregning<Bostatuskode>> =
         emptyList(),
@@ -566,62 +565,61 @@ data class OpplysningerBruktTilBeregning<T>(
     val statusVisningsnavn get() = toVisningsnavn(status)
 }
 
-private fun <T> toVisningsnavn(value: T): String? =
-    when (val enum = value) {
-        is Særbidragskategori -> {
-            enum.visningsnavn.intern
-        }
+private fun <T> toVisningsnavn(value: T): String? = when (val enum = value) {
+    is Særbidragskategori -> {
+        enum.visningsnavn.intern
+    }
 
-        is Utgiftstype -> {
-            enum.visningsnavn.intern
-        }
+    is Utgiftstype -> {
+        enum.visningsnavn.intern
+    }
 
-        is Bostatuskode -> {
-            enum.visningsnavn.intern
-        }
+    is Bostatuskode -> {
+        enum.visningsnavn.intern
+    }
 
-        is Inntektsrapportering -> {
-            enum.visningsnavn.intern
-        }
+    is Inntektsrapportering -> {
+        enum.visningsnavn.intern
+    }
 
-        is Resultatkode -> {
-            enum.visningsnavn.intern
-        }
+    is Resultatkode -> {
+        enum.visningsnavn.intern
+    }
 
-        is Sivilstandskode -> {
-            enum.visningsnavn.intern
-        }
+    is Sivilstandskode -> {
+        enum.visningsnavn.intern
+    }
 
-        is SivilstandskodePDL -> {
-            enum.name.lowercase().replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            }
-        }
-
-        is Kilde -> {
-            enum.name.lowercase().replaceFirstChar { it.uppercase() }
-        }
-
-        is VirkningstidspunktÅrsakstype -> {
-            enum.visningsnavn.intern
-        }
-
-        is SøktAvType -> {
-            enum.name.lowercase().replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            }
-        }
-
-        is Behandlingstema -> {
-            enum.name.lowercase().replace("_", " ").replace("pluss", "+").replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            }
-        }
-
-        else -> {
-            null
+    is SivilstandskodePDL -> {
+        enum.name.lowercase().replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
         }
     }
+
+    is Kilde -> {
+        enum.name.lowercase().replaceFirstChar { it.uppercase() }
+    }
+
+    is VirkningstidspunktÅrsakstype -> {
+        enum.visningsnavn.intern
+    }
+
+    is SøktAvType -> {
+        enum.name.lowercase().replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+        }
+    }
+
+    is Behandlingstema -> {
+        enum.name.lowercase().replace("_", " ").replace("pluss", "+").replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+        }
+    }
+
+    else -> {
+        null
+    }
+}
 
 data class NotatInntekterDto(
     val inntekterPerRolle: List<InntekterPerRolle>,

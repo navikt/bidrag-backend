@@ -35,12 +35,11 @@ class NaisProxyCustomizer(
                         public override fun determineProxy(
                             target: HttpHost,
                             context: HttpContext,
-                        ): HttpHost? =
-                            if (target.hostName.contains("microsoft")) {
-                                super.determineProxy(target, context)
-                            } else {
-                                null
-                            }
+                        ): HttpHost? = if (target.hostName.contains("microsoft")) {
+                            super.determineProxy(target, context)
+                        } else {
+                            null
+                        }
                     },
                 ).build()
 

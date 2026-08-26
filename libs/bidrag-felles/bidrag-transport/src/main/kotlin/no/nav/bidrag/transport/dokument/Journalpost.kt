@@ -67,8 +67,8 @@ data class JournalpostDto(
     val opprettetAvIdent: String? = null,
     @Schema(
         description =
-            "Referanse til originale kilden til journalposten. Kan være referanse til forsendelse " +
-                "eller bidrag journalpost med prefiks. Feks BID_12323 eller BIF_123213",
+        "Referanse til originale kilden til journalposten. Kan være referanse til forsendelse " +
+            "eller bidrag journalpost med prefiks. Feks BID_12323 eller BIF_123213",
     )
     val eksternReferanseId: String? = null,
     val ettersendingsppgave: EttersendingsppgaveDto? = null,
@@ -222,8 +222,8 @@ data class DokumentDto(
     val dokumentreferanse: String? = null,
     @Schema(
         description =
-            "Journalpost hvor dokumentet er arkivert. Dette brukes hvis dokumentet er arkivert i annen arkivsystem " +
-                "enn det som er sendt med i forespørsel.",
+        "Journalpost hvor dokumentet er arkivert. Dette brukes hvis dokumentet er arkivert i annen arkivsystem " +
+            "enn det som er sendt med i forespørsel.",
     )
     val journalpostId: String? = null,
     @Schema(description = "Inngående (I), utgående (U) dokument, (X) internt notat", deprecated = true)
@@ -247,10 +247,9 @@ data class DokumentDto(
     @Schema(description = "Metadata om dokumentet")
     val metadata: Map<String, String> = emptyMap(),
 ) {
-    override fun toString(): String =
-        "(dokumentreferanse=$dokumentreferanse,journalpostId=$journalpostId, dokumentType=$dokumentType, " +
-            "tittel=$tittel, status=$status, arkivSystem=$arkivSystem " +
-            "dokumentmal=$dokumentmalId, metadata=$metadata"
+    override fun toString(): String = "(dokumentreferanse=$dokumentreferanse,journalpostId=$journalpostId, dokumentType=$dokumentType, " +
+        "tittel=$tittel, status=$status, arkivSystem=$arkivSystem " +
+        "dokumentmal=$dokumentmalId, metadata=$metadata"
 }
 
 @Schema(description = "Journalposten ble mottatt/sendt ut i kanal")
@@ -278,8 +277,8 @@ enum class Kanal {
 
     @Schema(
         description =
-            "Digital postkasse til innbyggere. " +
-                "Brevet er sendt via digital post til innbyggere. Brukes for utgående journalposter",
+        "Digital postkasse til innbyggere. " +
+            "Brevet er sendt via digital post til innbyggere. Brukes for utgående journalposter",
     )
     SDP,
 

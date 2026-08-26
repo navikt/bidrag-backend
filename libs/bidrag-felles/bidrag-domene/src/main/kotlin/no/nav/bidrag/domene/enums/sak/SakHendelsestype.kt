@@ -123,10 +123,9 @@ enum class SakHendelsestype(
 
     companion object {
         @JsonCreator
-        fun parse(kode: String): SakHendelsestype =
-            requireNotNull(entries.find { it.name == kode }) {
-                "${SakHendelsestype::class.java.simpleName}: inneholder ikke $kode"
-            }
+        fun parse(kode: String): SakHendelsestype = requireNotNull(entries.find { it.name == kode }) {
+            "${SakHendelsestype::class.java.simpleName}: inneholder ikke $kode"
+        }
     }
 
     override fun toString(): String = beskrivelse

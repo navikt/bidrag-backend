@@ -36,11 +36,10 @@ enum class JournalpostStatus(
     ;
 
     companion object {
-        fun fraKode(kode: String?): JournalpostStatus? =
-            try {
-                JournalpostStatus.values().firstOrNull { it.kode == kode } ?: kode?.let { JournalpostStatus.valueOf(it) }
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String?): JournalpostStatus? = try {
+            JournalpostStatus.values().firstOrNull { it.kode == kode } ?: kode?.let { JournalpostStatus.valueOf(it) }
+        } catch (e: Exception) {
+            null
+        }
     }
 }

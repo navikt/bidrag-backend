@@ -17,24 +17,21 @@ val Grunnlagstype.erIndeksEllerAldersjustering get() =
         Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
     ).contains(this)
 
-inline fun <reified T : List<GrunnlagInnhold>> BaseGrunnlag.innholdTilObjektListe(): T =
-    try {
-        commonObjectmapper.treeToValue(innhold)
-    } catch (e: Exception) {
-        commonObjectmapper.readValue(commonObjectmapper.writeValueAsString(innhold))
-    }
+inline fun <reified T : List<GrunnlagInnhold>> BaseGrunnlag.innholdTilObjektListe(): T = try {
+    commonObjectmapper.treeToValue(innhold)
+} catch (e: Exception) {
+    commonObjectmapper.readValue(commonObjectmapper.writeValueAsString(innhold))
+}
 
-inline fun <reified T : GrunnlagInnhold> BaseGrunnlag.innholdTilObjekt(): T =
-    try {
-        commonObjectmapper.treeToValue(innhold)
-    } catch (e: Exception) {
-        commonObjectmapper.readValue(commonObjectmapper.writeValueAsString(innhold))
-    }
+inline fun <reified T : GrunnlagInnhold> BaseGrunnlag.innholdTilObjekt(): T = try {
+    commonObjectmapper.treeToValue(innhold)
+} catch (e: Exception) {
+    commonObjectmapper.readValue(commonObjectmapper.writeValueAsString(innhold))
+}
 
 inline fun <reified T : GrunnlagInnhold> List<BaseGrunnlag>.innholdTilObjekt(): List<T> = map(BaseGrunnlag::innholdTilObjekt)
 
-inline fun <reified T : List<GrunnlagInnhold>> List<BaseGrunnlag>.innholdTilObjektListe(): List<T> =
-    map(BaseGrunnlag::innholdTilObjektListe)
+inline fun <reified T : List<GrunnlagInnhold>> List<BaseGrunnlag>.innholdTilObjektListe(): List<T> = map(BaseGrunnlag::innholdTilObjektListe)
 
 fun List<BaseGrunnlag>.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
     type: Grunnlagstype,
@@ -77,39 +74,35 @@ fun List<BaseGrunnlag>.finnGrunnlagSomErReferertAv(
 fun List<BaseGrunnlag>.filtrerBasertPåEgenReferanser(
     type: Grunnlagstype,
     referanser: List<Grunnlagsreferanse>,
-): List<BaseGrunnlag> =
-    filtrerBasertPåEgenReferanse(type)
-        .filter { referanser.contains(it.referanse) }
+): List<BaseGrunnlag> = filtrerBasertPåEgenReferanse(type)
+    .filter { referanser.contains(it.referanse) }
 
 fun List<BaseGrunnlag>.filtrerBasertPåFremmedReferanse(
     grunnlagType: Grunnlagstype? = null,
     referanse: String? = null,
     gjelderBarnReferanse: String? = null,
-): List<BaseGrunnlag> =
-    filter { grunnlagType == null || it.type == grunnlagType }
-        .filter {
-            (
-                referanse.isNullOrEmpty() &&
-                    gjelderBarnReferanse.isNullOrEmpty()
+): List<BaseGrunnlag> = filter { grunnlagType == null || it.type == grunnlagType }
+    .filter {
+        (
+            referanse.isNullOrEmpty() &&
+                gjelderBarnReferanse.isNullOrEmpty()
             ) ||
-                it.grunnlagsreferanseListe.contains(referanse) ||
-                (
-                    (referanse.isNullOrEmpty() || (referanse == it.gjelderReferanse)) &&
-                        (gjelderBarnReferanse.isNullOrEmpty() || (gjelderBarnReferanse == it.gjelderBarnReferanse))
+            it.grunnlagsreferanseListe.contains(referanse) ||
+            (
+                (referanse.isNullOrEmpty() || (referanse == it.gjelderReferanse)) &&
+                    (gjelderBarnReferanse.isNullOrEmpty() || (gjelderBarnReferanse == it.gjelderBarnReferanse))
                 )
-        }
+    }
 
 fun List<BaseGrunnlag>.filtrerBasertPåEgenReferanse(
     grunnlagType: Grunnlagstype? = null,
     referanse: String = "",
-): List<BaseGrunnlag> =
-    filter { grunnlagType == null || it.type == grunnlagType }
-        .filter { referanse.isEmpty() || referanse == it.referanse }
+): List<BaseGrunnlag> = filter { grunnlagType == null || it.type == grunnlagType }
+    .filter { referanse.isEmpty() || referanse == it.referanse }
 
-fun List<BaseGrunnlag>.hentInntekter(): List<InntektsrapporteringPeriode> =
-    filtrerBasertPåEgenReferanse(
-        Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
-    ).innholdTilObjekt()
+fun List<BaseGrunnlag>.hentInntekter(): List<InntektsrapporteringPeriode> = filtrerBasertPåEgenReferanse(
+    Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+).innholdTilObjekt()
 
 data class InnholdMedReferanse<T>(
     val referanse: String,
@@ -122,46 +115,41 @@ data class InnholdMedReferanse<T>(
 inline fun <reified T : GrunnlagInnhold> List<BaseGrunnlag>.finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe(
     type: Grunnlagstype,
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
-): List<InnholdMedReferanse<T>> =
-    finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(type, grunnlagsreferanseListe).map {
-        it.tilInnholdMedReferanse<T>()
-    }
+): List<InnholdMedReferanse<T>> = finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(type, grunnlagsreferanseListe).map {
+    it.tilInnholdMedReferanse<T>()
+}
 
 inline fun <reified T : GrunnlagInnhold> List<BaseGrunnlag>.finnOgKonverterGrunnlagSomErReferertAv(
     type: Grunnlagstype,
     fraGrunnlag: BaseGrunnlag,
-): List<InnholdMedReferanse<T>> =
-    finnGrunnlagSomErReferertAv(type, fraGrunnlag).map {
-        it.tilInnholdMedReferanse<T>()
-    }
+): List<InnholdMedReferanse<T>> = finnGrunnlagSomErReferertAv(type, fraGrunnlag).map {
+    it.tilInnholdMedReferanse<T>()
+}
 
 inline fun <reified T : GrunnlagInnhold> List<BaseGrunnlag>.filtrerOgKonverterBasertPåEgenReferanse(
     grunnlagType: Grunnlagstype? = null,
     referanse: String = "",
-): List<InnholdMedReferanse<T>> =
-    filtrerBasertPåEgenReferanse(grunnlagType, referanse)
-        .map {
-            it.tilInnholdMedReferanse<T>()
-        }
+): List<InnholdMedReferanse<T>> = filtrerBasertPåEgenReferanse(grunnlagType, referanse)
+    .map {
+        it.tilInnholdMedReferanse<T>()
+    }
 
 inline fun <reified T : GrunnlagInnhold> List<BaseGrunnlag>.filtrerOgKonverterBasertPåFremmedReferanse(
     grunnlagType: Grunnlagstype? = null,
     referanse: String? = null,
     gjelderBarnReferanse: String? = null,
-): List<InnholdMedReferanse<T>> =
-    filtrerBasertPåFremmedReferanse(grunnlagType, referanse, gjelderBarnReferanse)
-        .map {
-            it.tilInnholdMedReferanse<T>()
-        }
-
-fun Rolletype.tilGrunnlagstype() =
-    when (this) {
-        Rolletype.BIDRAGSPLIKTIG -> Grunnlagstype.PERSON_BIDRAGSPLIKTIG
-        Rolletype.BARN -> Grunnlagstype.PERSON_SØKNADSBARN
-        Rolletype.BIDRAGSMOTTAKER -> Grunnlagstype.PERSON_BIDRAGSMOTTAKER
-        Rolletype.REELMOTTAKER -> Grunnlagstype.PERSON_REELL_MOTTAKER
-        else -> throw RuntimeException("Mangler grunnlagsmapping for rolletype $this")
+): List<InnholdMedReferanse<T>> = filtrerBasertPåFremmedReferanse(grunnlagType, referanse, gjelderBarnReferanse)
+    .map {
+        it.tilInnholdMedReferanse<T>()
     }
+
+fun Rolletype.tilGrunnlagstype() = when (this) {
+    Rolletype.BIDRAGSPLIKTIG -> Grunnlagstype.PERSON_BIDRAGSPLIKTIG
+    Rolletype.BARN -> Grunnlagstype.PERSON_SØKNADSBARN
+    Rolletype.BIDRAGSMOTTAKER -> Grunnlagstype.PERSON_BIDRAGSMOTTAKER
+    Rolletype.REELMOTTAKER -> Grunnlagstype.PERSON_REELL_MOTTAKER
+    else -> throw RuntimeException("Mangler grunnlagsmapping for rolletype $this")
+}
 
 // Hjelpefunksjoner for personobjekter
 
@@ -214,20 +202,18 @@ fun Collection<BaseGrunnlag>.hentPersonMedIdent(
     }
 }
 
-fun Collection<BaseGrunnlag>.hentSøknadFraGrunnlagsreferanseListe(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    toList()
-        .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SøknadGrunnlag>(
-            Grunnlagstype.SØKNAD,
-            grunnlagsreferanseListe = grunnlagsreferanseListe,
-        ).firstOrNull()
-        ?.innhold
+fun Collection<BaseGrunnlag>.hentSøknadFraGrunnlagsreferanseListe(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = toList()
+    .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SøknadGrunnlag>(
+        Grunnlagstype.SØKNAD,
+        grunnlagsreferanseListe = grunnlagsreferanseListe,
+    ).firstOrNull()
+    ?.innhold
 
-fun Collection<BaseGrunnlag>.hentPersonMedReferanse(referanse: Grunnlagsreferanse?) =
-    referanse?.let {
-        toList()
-            .filtrerBasertPåEgenReferanse(referanse = referanse)
-            .firstOrNull()
-    }
+fun Collection<BaseGrunnlag>.hentPersonMedReferanse(referanse: Grunnlagsreferanse?) = referanse?.let {
+    toList()
+        .filtrerBasertPåEgenReferanse(referanse = referanse)
+        .firstOrNull()
+}
 
 fun Collection<BaseGrunnlag>.hentSøknadsiderForPerson(
     personident: Personident,
@@ -264,13 +250,12 @@ fun Collection<BaseGrunnlag>.hentPersonMedIdentKonvertert(
             (stønadstype == null || it.stønadstype == null || stønadstype == it.stønadstype)
     }?.innholdTilObjekt<Person>()
 
-fun Collection<BaseGrunnlag>.hentPersonMedReferanseKonvertert(referanse: Grunnlagsreferanse?) =
-    referanse?.let {
-        toList()
-            .filtrerBasertPåEgenReferanse(referanse = referanse)
-            .firstOrNull()
-            ?.innholdTilObjekt<Person>()
-    }
+fun Collection<BaseGrunnlag>.hentPersonMedReferanseKonvertert(referanse: Grunnlagsreferanse?) = referanse?.let {
+    toList()
+        .filtrerBasertPåEgenReferanse(referanse = referanse)
+        .firstOrNull()
+        ?.innholdTilObjekt<Person>()
+}
 
 // Særbidrag grunnlag
 val List<BaseGrunnlag>.særbidragskategori get() =
@@ -297,17 +282,15 @@ val List<BaseGrunnlag>.delberegningSamværsklasse get() =
     }!!
         .innholdTilObjekt<DelberegningSamværsklasse>()
 
-fun List<BaseGrunnlag>.finnSluttberegningBarnebidragAldersjusteringGrunnlagIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidrag>(
-        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
-        grunnlagsreferanseListe,
-    ).firstOrNull()
+fun List<BaseGrunnlag>.finnSluttberegningBarnebidragAldersjusteringGrunnlagIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidrag>(
+    Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+    grunnlagsreferanseListe,
+).firstOrNull()
 
-fun List<BaseGrunnlag>.finnSluttberegningBarnebidragGrunnlagIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidrag>(
-        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
-        grunnlagsreferanseListe,
-    ).firstOrNull()
+fun List<BaseGrunnlag>.finnSluttberegningBarnebidragGrunnlagIReferanser(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidrag>(
+    Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+    grunnlagsreferanseListe,
+).firstOrNull()
 
 fun List<GrunnlagDto>.erResultatEndringUnderGrense(
     søknadsbarnReferanse: String,
@@ -322,10 +305,9 @@ fun List<GrunnlagDto>.erResultatEndringUnderGrense(
     return delberegningGrense?.innhold?.endringErOverGrense == false
 }
 
-fun List<GrunnlagDto>.hentVirkningstidspunktGrunnlagForBarn(gjelderBarnReferanse: String? = null): VirkningstidspunktGrunnlag? =
-    filtrerBasertPåEgenReferanse(Grunnlagstype.VIRKNINGSTIDSPUNKT)
-        .firstOrNull { gjelderBarnReferanse.isNullOrEmpty() || it.gjelderBarnReferanse == gjelderBarnReferanse }
-        ?.innholdTilObjekt<VirkningstidspunktGrunnlag>()
+fun List<GrunnlagDto>.hentVirkningstidspunktGrunnlagForBarn(gjelderBarnReferanse: String? = null): VirkningstidspunktGrunnlag? = filtrerBasertPåEgenReferanse(Grunnlagstype.VIRKNINGSTIDSPUNKT)
+    .firstOrNull { gjelderBarnReferanse.isNullOrEmpty() || it.gjelderBarnReferanse == gjelderBarnReferanse }
+    ?.innholdTilObjekt<VirkningstidspunktGrunnlag>()
 
 fun List<GrunnlagDto>.erResultatEndringUnderGrenseForPeriode(
     periode: ÅrMånedsperiode,
@@ -357,21 +339,19 @@ fun List<GrunnlagDto>.finnDelberegningSjekkGrenseForPeriode(
     gjelderBarnReferanse = søknadsbarnReferanse,
 ).find { it.innhold.periode.inneholder(periode) }
 
-fun List<GrunnlagDto>.finnDelberegningSjekkGrense(søknadsbarnReferanse: String) =
-    filtrerOgKonverterBasertPåFremmedReferanse<DelberegningEndringSjekkGrense>(
-        Grunnlagstype.DELBEREGNING_ENDRING_SJEKK_GRENSE,
-        gjelderBarnReferanse = søknadsbarnReferanse,
-    ).firstOrNull()
+fun List<GrunnlagDto>.finnDelberegningSjekkGrense(søknadsbarnReferanse: String) = filtrerOgKonverterBasertPåFremmedReferanse<DelberegningEndringSjekkGrense>(
+    Grunnlagstype.DELBEREGNING_ENDRING_SJEKK_GRENSE,
+    gjelderBarnReferanse = søknadsbarnReferanse,
+).firstOrNull()
 
 // Filtrerer ut grunnlag som er gyldige for en gitt BM/BP/Barn kombinasjon
 fun List<GrunnlagDto>.finnGyldigeGrunnlagForBarn(
     bmRef: Grunnlagsreferanse,
     bpRef: Grunnlagsreferanse,
     barnRef: Grunnlagsreferanse,
-): List<GrunnlagDto> =
-    this.filter {
-        it.erGyldigForBarn(bmRef, bpRef, barnRef)
-    }
+): List<GrunnlagDto> = this.filter {
+    it.erGyldigForBarn(bmRef, bpRef, barnRef)
+}
 
 fun GrunnlagDto.personBmRef(): String? {
     if (!erPerson()) return null
@@ -417,20 +397,17 @@ fun GrunnlagDto.erGyldigForBarn(
     }
 }
 
-inline fun <reified T : GrunnlagInnhold> BaseGrunnlag.tilInnholdMedReferanse() =
-    InnholdMedReferanse(
-        referanse,
-        gjelderBarnReferanse,
-        gjelderReferanse,
-        innholdTilObjekt<T>(),
-        this,
-    )
+inline fun <reified T : GrunnlagInnhold> BaseGrunnlag.tilInnholdMedReferanse() = InnholdMedReferanse(
+    referanse,
+    gjelderBarnReferanse,
+    gjelderReferanse,
+    innholdTilObjekt<T>(),
+    this,
+)
 
-fun List<BaseGrunnlag>.hentAldersjusteringDetaljerGrunnlag(grunnlagsreferanseListe: List<Grunnlagsreferanse>) =
-    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<AldersjusteringDetaljerGrunnlag>(
-        Grunnlagstype.ALDERSJUSTERING_DETALJER,
-        grunnlagsreferanseListe = grunnlagsreferanseListe,
-    ).firstOrNull()
+fun List<BaseGrunnlag>.hentAldersjusteringDetaljerGrunnlag(grunnlagsreferanseListe: List<Grunnlagsreferanse>) = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<AldersjusteringDetaljerGrunnlag>(
+    Grunnlagstype.ALDERSJUSTERING_DETALJER,
+    grunnlagsreferanseListe = grunnlagsreferanseListe,
+).firstOrNull()
 
-fun List<BaseGrunnlag>.hentBehandlingDetaljer(): BehandlingDetaljerGrunnlag? =
-    filtrerOgKonverterBasertPåEgenReferanse<BehandlingDetaljerGrunnlag>(Grunnlagstype.BEHANDLING_DETALJER).firstOrNull()?.innhold
+fun List<BaseGrunnlag>.hentBehandlingDetaljer(): BehandlingDetaljerGrunnlag? = filtrerOgKonverterBasertPåEgenReferanse<BehandlingDetaljerGrunnlag>(Grunnlagstype.BEHANDLING_DETALJER).firstOrNull()?.innhold

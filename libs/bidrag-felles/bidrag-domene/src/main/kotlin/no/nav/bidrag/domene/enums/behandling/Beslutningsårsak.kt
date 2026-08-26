@@ -161,12 +161,11 @@ enum class Beslutningsårsak(
     ;
 
     companion object {
-        fun fraKode(kode: String): Beslutningsårsak? =
-            try {
-                Beslutningsårsak.entries.find { res -> res.bisysKode == kode }
-                    ?: Beslutningsårsak.valueOf(kode)
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): Beslutningsårsak? = try {
+            Beslutningsårsak.entries.find { res -> res.bisysKode == kode }
+                ?: Beslutningsårsak.valueOf(kode)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

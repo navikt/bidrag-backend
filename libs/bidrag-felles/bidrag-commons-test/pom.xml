@@ -3,11 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>no.nav.bidrag</groupId>
-    <artifactId>bidrag-felles</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>bidrag-backend</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
 
   <artifactId>bidrag-commons-test-felles</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <name>bidrag-commons-test</name>
   <packaging>jar</packaging>
 
@@ -28,20 +30,11 @@
 
   <description>Bibliotek for test-komponenter som brukes på tvers av applikasjoner i no.nav.bidrag</description>
 
-  <properties>
-    <revision>1.0-SNAPSHOT</revision>
-    <!-- build -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-    <!-- language -->
-    <java.version>21</java.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-felles</artifactId>
+      <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -90,31 +83,38 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-test-junit</artifactId>
+      <version>${kotlin.version}</version>
     </dependency>
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.kotest</groupId>
       <artifactId>kotest-runner-junit5-jvm</artifactId>
+      <version>${kotest.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
 
-  <build>
-    <sourceDirectory>src/main/kotlin</sourceDirectory>
-    <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+  <distributionManagement>
+      <repository>
+          <id>github-bidrag-backend</id>
+          <url>https://maven.pkg.github.com/navikt/bidrag-backend</url>
+      </repository>
+  </distributionManagement>
 
+  <build>
     <plugins>
+      <!-- Vanlig biblioteks-jar uten main-class: skru av spring-boot-maven-plugin (arvet fra rot-pom) -->
       <plugin>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
       </plugin>
     </plugins>
   </build>

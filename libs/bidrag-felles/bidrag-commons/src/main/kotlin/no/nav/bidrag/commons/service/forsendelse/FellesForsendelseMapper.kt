@@ -63,16 +63,15 @@ class FellesForsendelseMapper(
             vedtakId: String,
             stønadstype: Stønadstype,
             barnIBehandling: List<String>,
-        ): BehandlingInfoDto =
-            BehandlingInfoDto(
-                vedtakId = vedtakId,
-                stonadType = stønadstype,
-                barnIBehandling = barnIBehandling,
-                erFattetBeregnet = true,
-                soknadType = "EGET_TILTAK",
-                soknadFra = SøktAvType.NAV_BIDRAG,
-                vedtakType = Vedtakstype.ALDERSJUSTERING,
-            )
+        ): BehandlingInfoDto = BehandlingInfoDto(
+            vedtakId = vedtakId,
+            stonadType = stønadstype,
+            barnIBehandling = barnIBehandling,
+            erFattetBeregnet = true,
+            soknadType = "EGET_TILTAK",
+            soknadFra = SøktAvType.NAV_BIDRAG,
+            vedtakType = Vedtakstype.ALDERSJUSTERING,
+        )
     }
 
     fun tilOpprettForsendelseRequest(
@@ -89,11 +88,11 @@ class FellesForsendelseMapper(
                 språk = forsendelseBestilling.språkkode.name,
                 navn = navn,
                 identType =
-                    if (mottakerErSamhandler) {
-                        MottakerIdentTypeTo.SAMHANDLER
-                    } else {
-                        MottakerIdentTypeTo.FNR
-                    },
+                if (mottakerErSamhandler) {
+                    MottakerIdentTypeTo.SAMHANDLER
+                } else {
+                    MottakerIdentTypeTo.FNR
+                },
             )
 
         return OpprettForsendelseForespørsel(
@@ -107,13 +106,13 @@ class FellesForsendelseMapper(
             behandlingInfo = forsendelseBestilling.behandlingInfoDto,
             distribuerAutomatiskEtterFerdigstilling = distribuerAutomatisk,
             dokumenter =
-                listOf(
-                    OpprettDokumentForespørsel(
-                        dokumentmalId = forsendelseBestilling.dokumentmal,
-                        bestillDokument = true,
-                        ferdigstill = true,
-                    ),
+            listOf(
+                OpprettDokumentForespørsel(
+                    dokumentmalId = forsendelseBestilling.dokumentmal,
+                    bestillDokument = true,
+                    ferdigstill = true,
                 ),
+            ),
         )
     }
 

@@ -88,35 +88,32 @@ class MaskinportenClient(
         maxAttempts = 3,
         backoff = Backoff(delay = 2000),
     )
-    private fun hentNyttJwtToken(scope: String): String =
-        try {
-            httpClient.send(opprettMaskinportenTokenRequest(scope), ofString()).run {
-                if (statusCode() != 200) {
-                    throw MaskinportenClientException(
-                        "Feil ved henting av token: Status: ${statusCode()} , Body: ${body()}",
-                    )
-                }
-                mapTilMaskinportenResponseBody(body()).access_token
+    private fun hentNyttJwtToken(scope: String): String = try {
+        httpClient.send(opprettMaskinportenTokenRequest(scope), ofString()).run {
+            if (statusCode() != 200) {
+                throw MaskinportenClientException(
+                    "Feil ved henting av token: Status: ${statusCode()} , Body: ${body()}",
+                )
             }
-        } catch (e: HttpTimeoutException) {
-            throw MaskinportenClientException("Timeout ved henting av token fra maskinporten: ${e.message}")
+            mapTilMaskinportenResponseBody(body()).access_token
         }
+    } catch (e: HttpTimeoutException) {
+        throw MaskinportenClientException("Timeout ved henting av token fra maskinporten: ${e.message}")
+    }
 
-    private fun mapTilMaskinportenResponseBody(body: String): MaskinportenTokenResponse =
-        try {
-            objectMapper.readValue(body)
-        } catch (e: Exception) {
-            throw MaskinportenClientException("Feil ved deserialisering av response fra maskinporten: $e.message")
-        }
+    private fun mapTilMaskinportenResponseBody(body: String): MaskinportenTokenResponse = try {
+        objectMapper.readValue(body)
+    } catch (e: Exception) {
+        throw MaskinportenClientException("Feil ved deserialisering av response fra maskinporten: $e.message")
+    }
 
-    private fun opprettMaskinportenTokenRequest(scope: String): HttpRequest =
-        HttpRequest
-            .newBuilder()
-            .uri(URI.create(maskinportenConfig.tokenUrl))
-            .timeout(Duration.ofSeconds(maskinportenConfig.requestTimeoutInSeconds))
-            .header("Content-Type", CONTENT_TYPE)
-            .POST(ofString(opprettRequestBody(maskinportenTokenGenerator.genererJwtToken(scope))))
-            .build()
+    private fun opprettMaskinportenTokenRequest(scope: String): HttpRequest = HttpRequest
+        .newBuilder()
+        .uri(URI.create(maskinportenConfig.tokenUrl))
+        .timeout(Duration.ofSeconds(maskinportenConfig.requestTimeoutInSeconds))
+        .header("Content-Type", CONTENT_TYPE)
+        .POST(ofString(opprettRequestBody(maskinportenTokenGenerator.genererJwtToken(scope))))
+        .build()
 
     private fun opprettRequestBody(jwt: String) = "grant_type=$GRANT_TYPE&assertion=$jwt"
 }

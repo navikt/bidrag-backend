@@ -88,12 +88,11 @@ class AuditAdvice(
         }
     }
 
-    private fun finnSporingsdataForString(s: String): Sporingsdata =
-        when {
-            Saksnummer(s).gyldig() -> tilgangClient.hentSporingsdataSak(Saksnummer(s))
-            Personident(s).gyldig() -> tilgangClient.hentSporingsdataPerson(Personident(s))
-            else -> error("Type på oppslagsfelt ikke støttet av audit-log")
-        }
+    private fun finnSporingsdataForString(s: String): Sporingsdata = when {
+        Saksnummer(s).gyldig() -> tilgangClient.hentSporingsdataSak(Saksnummer(s))
+        Personident(s).gyldig() -> tilgangClient.hentSporingsdataPerson(Personident(s))
+        else -> error("Type på oppslagsfelt ikke støttet av audit-log")
+    }
 
     private fun finnSporingsdataForPersonIdent(personIdent: Personident): Sporingsdata = tilgangClient.hentSporingsdataPerson(personIdent)
 

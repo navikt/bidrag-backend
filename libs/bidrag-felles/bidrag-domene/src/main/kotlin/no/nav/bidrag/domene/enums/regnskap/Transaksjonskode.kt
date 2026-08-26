@@ -77,26 +77,25 @@ enum class Transaksjonskode(
     companion object {
         fun hentAlle(): List<Transaksjonskode> = entries.toList()
 
-        fun hentTransaksjonskodeForType(type: String): Transaksjonskode =
-            when (type) {
-                Stønadstype.FORSKUDD.name -> A1
-                Stønadstype.BIDRAG.name -> B1
-                Stønadstype.OPPFOSTRINGSBIDRAG.name -> B1
-                Stønadstype.BIDRAG18AAR.name -> D1
-                Stønadstype.EKTEFELLEBIDRAG.name -> F1
-                Stønadstype.MOTREGNING.name -> I1
-                Engangsbeløptype.SAERTILSKUDD.name -> E1
-                Engangsbeløptype.SÆRTILSKUDD.name -> E1
-                Engangsbeløptype.SÆRBIDRAG.name -> E1
-                Engangsbeløptype.GEBYR_MOTTAKER.name -> G1
-                Engangsbeløptype.GEBYR_SKYLDNER.name -> G1
-                Engangsbeløptype.TILBAKEKREVING.name -> H1
-                Engangsbeløptype.ETTERGIVELSE.name -> K1
-                Engangsbeløptype.DIREKTE_OPPGJOR.name -> K2
-                Engangsbeløptype.DIREKTE_OPPGJØR.name -> K2
-                Engangsbeløptype.ETTERGIVELSE_TILBAKEKREVING.name -> K3
-                Engangsbeløptype.TILBAKEKREVING_BIDRAG.name -> M1
-                else -> throw IllegalStateException("Ugyldig type for transaksjonskode funnet!")
-            }
+        fun hentTransaksjonskodeForType(type: String): Transaksjonskode = when (type) {
+            Stønadstype.FORSKUDD.name -> A1
+            Stønadstype.BIDRAG.name -> B1
+            Stønadstype.OPPFOSTRINGSBIDRAG.name -> B1
+            Stønadstype.BIDRAG18AAR.name -> D1
+            Stønadstype.EKTEFELLEBIDRAG.name -> F1
+            Stønadstype.MOTREGNING.name -> I1
+            Engangsbeløptype.SAERTILSKUDD.name -> E1
+            Engangsbeløptype.SÆRTILSKUDD.name -> E1
+            Engangsbeløptype.SÆRBIDRAG.name -> E1
+            Engangsbeløptype.GEBYR_MOTTAKER.name -> G1
+            Engangsbeløptype.GEBYR_SKYLDNER.name -> G1
+            Engangsbeløptype.TILBAKEKREVING.name -> H1
+            Engangsbeløptype.ETTERGIVELSE.name -> K1
+            Engangsbeløptype.DIREKTE_OPPGJOR.name -> K2
+            Engangsbeløptype.DIREKTE_OPPGJØR.name -> K2
+            Engangsbeløptype.ETTERGIVELSE_TILBAKEKREVING.name -> K3
+            Engangsbeløptype.TILBAKEKREVING_BIDRAG.name -> M1
+            else -> throw IllegalStateException("Ugyldig type for transaksjonskode funnet!")
+        }
     }
 }

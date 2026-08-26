@@ -28,22 +28,20 @@ class RestOperationsAzure {
     fun restOperationsJwtBearer(
         restTemplateBuilder: RestTemplateBuilder,
         bearerTokenClientInterceptor: BearerTokenClientInterceptor,
-    ): RestTemplate =
-        restTemplateBuilder
-            .additionalInterceptors(bearerTokenClientInterceptor)
-            .messageConverters(createMessageConverters())
-            .build()
+    ): RestTemplate = restTemplateBuilder
+        .additionalInterceptors(bearerTokenClientInterceptor)
+        .messageConverters(createMessageConverters())
+        .build()
 
     @Bean("azureService")
     @Scope("prototype")
     fun restOperationsServiceJwtBearer(
         restTemplateBuilder: RestTemplateBuilder,
         bearerTokenClientInterceptor: ServiceUserAuthTokenInterceptor,
-    ): RestTemplate =
-        restTemplateBuilder
-            .additionalInterceptors(bearerTokenClientInterceptor)
-            .messageConverters(createMessageConverters())
-            .build()
+    ): RestTemplate = restTemplateBuilder
+        .additionalInterceptors(bearerTokenClientInterceptor)
+        .messageConverters(createMessageConverters())
+        .build()
 
     /**
      * Creates a complete list of message converters that replaces Spring defaults.
@@ -54,15 +52,14 @@ class RestOperationsAzure {
      * [ByteArrayHttpMessageConverter] is configured to also accept [MediaType.APPLICATION_PDF]
      * so that PDF responses can be consumed as raw bytes.
      */
-    private fun createMessageConverters(): List<HttpMessageConverter<*>> =
-        listOf(
-            ByteArrayHttpMessageConverter(),
-            StringHttpMessageConverter(),
-            ResourceHttpMessageConverter(false),
-            AllEncompassingFormHttpMessageConverter(),
-            CustomJacksonHttpMessageConverter(commonObjectmapper),
-            Jaxb2RootElementHttpMessageConverter(),
-            MarshallingHttpMessageConverter(),
-            FormHttpMessageConverter(),
-        )
+    private fun createMessageConverters(): List<HttpMessageConverter<*>> = listOf(
+        ByteArrayHttpMessageConverter(),
+        StringHttpMessageConverter(),
+        ResourceHttpMessageConverter(false),
+        AllEncompassingFormHttpMessageConverter(),
+        CustomJacksonHttpMessageConverter(commonObjectmapper),
+        Jaxb2RootElementHttpMessageConverter(),
+        MarshallingHttpMessageConverter(),
+        FormHttpMessageConverter(),
+    )
 }

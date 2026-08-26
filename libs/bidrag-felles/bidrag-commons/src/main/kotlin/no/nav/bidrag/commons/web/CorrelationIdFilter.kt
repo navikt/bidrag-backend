@@ -54,12 +54,11 @@ class CorrelationIdFilter : Filter {
         return correlationId
     }
 
-    private fun fetchLastPartOfRequestUri(requestUri: String): String =
-        if (requestUri.contains("/")) {
-            fetchLastPartOfRequestUriContainingPlainText(requestUri)
-        } else {
-            requestUri
-        }
+    private fun fetchLastPartOfRequestUri(requestUri: String): String = if (requestUri.contains("/")) {
+        fetchLastPartOfRequestUriContainingPlainText(requestUri)
+    } else {
+        requestUri
+    }
 
     private fun fetchLastPartOfRequestUriContainingPlainText(requestUri: String): String {
         val reversedUriParts = reverseUriPartsBySlash(requestUri)
@@ -71,12 +70,11 @@ class CorrelationIdFilter : Filter {
         }
     }
 
-    private fun reverseUriPartsBySlash(requestUri: String): List<String> =
-        requestUri
-            .split("/".toRegex())
-            .dropLastWhile {
-                it.isEmpty()
-            }.reversed()
+    private fun reverseUriPartsBySlash(requestUri: String): List<String> = requestUri
+        .split("/".toRegex())
+        .dropLastWhile {
+            it.isEmpty()
+        }.reversed()
 
     companion object {
         @JvmStatic

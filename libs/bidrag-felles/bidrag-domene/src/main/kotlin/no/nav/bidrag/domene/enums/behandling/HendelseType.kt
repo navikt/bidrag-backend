@@ -128,11 +128,10 @@ enum class HendelseType(
     ;
 
     companion object {
-        fun fraKode(kode: String): HendelseType? =
-            try {
-                HendelseType.entries.find { it.kode == kode } ?: HendelseType.valueOf(kode)
-            } catch (e: Exception) {
-                null
-            }
+        fun fraKode(kode: String): HendelseType? = try {
+            HendelseType.entries.find { it.kode == kode } ?: HendelseType.valueOf(kode)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

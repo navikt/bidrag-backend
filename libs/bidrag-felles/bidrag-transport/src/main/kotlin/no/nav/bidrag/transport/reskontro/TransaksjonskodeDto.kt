@@ -30,9 +30,8 @@ data class TransaksjonskodeDto(
 
 fun List<Transaksjonskode>.tilDto(): List<TransaksjonskodeDto> = this.map { it.tilDto() }
 
-fun Transaksjonskode.tilDto(): TransaksjonskodeDto =
-    TransaksjonskodeDto(
-        kode = this.name,
-        korreksjonskode = this.korreksjonskode,
-        beskrivelse = this.beskrivelse,
-    )
+fun Transaksjonskode.tilDto(): TransaksjonskodeDto = TransaksjonskodeDto(
+    kode = this.name,
+    korreksjonskode = this.korreksjonskode,
+    beskrivelse = this.beskrivelse,
+)

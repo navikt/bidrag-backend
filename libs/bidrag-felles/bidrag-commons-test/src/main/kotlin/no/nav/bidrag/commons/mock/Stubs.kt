@@ -150,7 +150,6 @@ fun sjablonMaksTilsynResponse(): List<MaksTilsyn> {
     return commonObjectmapper.readValue(fil)
 }
 
-fun hentFil(filsti: String) =
-    Stubs::class.java.getResource(
-        filsti,
-    ) ?: throw RuntimeException("Fant ingen fil på sti $filsti")
+fun hentFil(filsti: String) = Stubs::class.java.getResource(
+    filsti,
+) ?: throw RuntimeException("Fant ingen fil på sti $filsti")

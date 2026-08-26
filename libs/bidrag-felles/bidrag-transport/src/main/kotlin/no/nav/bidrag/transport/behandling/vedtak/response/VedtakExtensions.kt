@@ -73,11 +73,10 @@ val VedtakDto.søknadsider
                 it.kilde == BehandlingsrefKilde.BISYS_SØKNAD
             }.map { it.referanse.toLong() }
 
-fun VedtakDto.erVedtakAvvistRevurderingsøknad(): Boolean =
-    stønadsendringListe.all { s ->
-        gjelderRevurderingsbarn(s) &&
-            s.beslutning == Beslutningstype.AVVIST
-    }
+fun VedtakDto.erVedtakAvvistRevurderingsøknad(): Boolean = stønadsendringListe.all { s ->
+    gjelderRevurderingsbarn(s) &&
+        s.beslutning == Beslutningstype.AVVIST
+}
 
 fun VedtakDto.gjelderRevurderingsbarn(stønadsendringDto: StønadsendringDto): Boolean {
     val barn = grunnlagListe.hentPersonMedIdent(stønadsendringDto.kravhaver.verdi, stønadsendringDto.type)
@@ -150,12 +149,11 @@ fun VedtakDto.tilBatchHendelseResultattekst(): String {
     return "$vedtakstype${stønadstype.let { " $it" }}"
 }
 
-fun VedtakDto.finnStønadsendring(stønad: Stønadsid) =
-    stønadsendringListe.find {
-        it.kravhaver == stønad.kravhaver &&
-            it.skyldner == stønad.skyldner &&
-            it.type == stønad.type
-    }
+fun VedtakDto.finnStønadsendring(stønad: Stønadsid) = stønadsendringListe.find {
+    it.kravhaver == stønad.kravhaver &&
+        it.skyldner == stønad.skyldner &&
+        it.type == stønad.type
+}
 
 fun tilAldersjusteringResultattekst(
     vedtak: VedtakDto,
@@ -188,28 +186,25 @@ fun tilAldersjusteringResultattekst(
     return vedtak.tilBatchHendelseResultattekst()
 }
 
-fun VedtakDto.finnVirkningstidspunkt(stønadsendringDto: StønadsendringDto): InnholdMedReferanse<VirkningstidspunktGrunnlag>? =
-    grunnlagListe
-        .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<VirkningstidspunktGrunnlag>(
-            Grunnlagstype.VIRKNINGSTIDSPUNKT,
-            stønadsendringDto.grunnlagReferanseListe,
-        ).firstOrNull()
+fun VedtakDto.finnVirkningstidspunkt(stønadsendringDto: StønadsendringDto): InnholdMedReferanse<VirkningstidspunktGrunnlag>? = grunnlagListe
+    .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<VirkningstidspunktGrunnlag>(
+        Grunnlagstype.VIRKNINGSTIDSPUNKT,
+        stønadsendringDto.grunnlagReferanseListe,
+    ).firstOrNull()
 
-fun VedtakDto.finnSøknadGrunnlag(): SøknadGrunnlag? =
-    grunnlagListe
-        .filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
-            Grunnlagstype.SØKNAD,
-        ).firstOrNull()
-        ?.innhold
+fun VedtakDto.finnSøknadGrunnlag(): SøknadGrunnlag? = grunnlagListe
+    .filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
+        Grunnlagstype.SØKNAD,
+    ).firstOrNull()
+    ?.innhold
 
 fun VedtakDto.finnAldersjusteringDetaljerGrunnlag(
     stønadsendringDto: StønadsendringDto,
-): InnholdMedReferanse<AldersjusteringDetaljerGrunnlag>? =
-    grunnlagListe
-        .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<AldersjusteringDetaljerGrunnlag>(
-            Grunnlagstype.ALDERSJUSTERING_DETALJER,
-            stønadsendringDto.grunnlagReferanseListe,
-        ).firstOrNull()
+): InnholdMedReferanse<AldersjusteringDetaljerGrunnlag>? = grunnlagListe
+    .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<AldersjusteringDetaljerGrunnlag>(
+        Grunnlagstype.ALDERSJUSTERING_DETALJER,
+        stønadsendringDto.grunnlagReferanseListe,
+    ).firstOrNull()
 
 fun VedtakDto.finnVirkningstidspunktForStønad(stønadsid: Stønadsid): YearMonth? {
     val stønadsendring = finnStønadsendring(stønadsid)!!
@@ -217,67 +212,59 @@ fun VedtakDto.finnVirkningstidspunktForStønad(stønadsid: Stønadsid): YearMont
         ?: stønadsendring.periodeListe.minOfOrNull { it.periode.fom }
 }
 
-fun Stønadsendring.tilStønadsid() =
-    Stønadsid(
-        kravhaver = kravhaver,
-        skyldner = skyldner,
-        type = type,
-        sak = sak,
-    )
+fun Stønadsendring.tilStønadsid() = Stønadsid(
+    kravhaver = kravhaver,
+    skyldner = skyldner,
+    type = type,
+    sak = sak,
+)
 
-fun StønadsendringDto.tilStønadsid() =
-    Stønadsid(
-        kravhaver = kravhaver,
-        skyldner = skyldner,
-        type = type,
-        sak = sak,
-    )
+fun StønadsendringDto.tilStønadsid() = Stønadsid(
+    kravhaver = kravhaver,
+    skyldner = skyldner,
+    type = type,
+    sak = sak,
+)
 
 fun StønadsendringDto.finnSistePeriode() = periodeListe.maxByOrNull { it.periode.fom }
 
-fun StønadsendringDto.hentSisteLøpendePeriode() =
-    periodeListe
-        .maxByOrNull { it.periode.fom }
-        ?.takeIf { it.periode.til == null || it.periode.til!!.isAfter(YearMonth.now()) }
+fun StønadsendringDto.hentSisteLøpendePeriode() = periodeListe
+    .maxByOrNull { it.periode.fom }
+    ?.takeIf { it.periode.til == null || it.periode.til!!.isAfter(YearMonth.now()) }
 
-fun VedtakDto.finnSluttberegningBarnebidragIndeksreguleringIPeriode(periode: VedtakPeriodeDto) =
-    grunnlagListe
-        .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningIndeksregulering>(
-            Grunnlagstype.SLUTTBEREGNING_INDEKSREGULERING,
-            periode.grunnlagReferanseListe,
-        ).firstOrNull()
-        ?.innhold
+fun VedtakDto.finnSluttberegningBarnebidragIndeksreguleringIPeriode(periode: VedtakPeriodeDto) = grunnlagListe
+    .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningIndeksregulering>(
+        Grunnlagstype.SLUTTBEREGNING_INDEKSREGULERING,
+        periode.grunnlagReferanseListe,
+    ).firstOrNull()
+    ?.innhold
 
-fun VedtakDto.finnSluttberegningBarnebidragAldersjusteringIPeriode(periode: VedtakPeriodeDto) =
-    grunnlagListe
-        .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidragAldersjustering>(
-            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
-            periode.grunnlagReferanseListe,
-        ).firstOrNull()
-        ?.innhold
+fun VedtakDto.finnSluttberegningBarnebidragAldersjusteringIPeriode(periode: VedtakPeriodeDto) = grunnlagListe
+    .finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidragAldersjustering>(
+        Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+        periode.grunnlagReferanseListe,
+    ).firstOrNull()
+    ?.innhold
 
-fun VedtakDto.finnPeriodeReferanseliste(periode: VedtakPeriodeDto) =
-    periode.grunnlagReferanseListe.takeIf { it.isNotEmpty() }
-        ?: run {
-            stønadsendringListe
-                .flatMap { it.periodeListe }
-                .firstOrNull { p -> p.periode.overlapper(periode.periode) }
-                ?.grunnlagReferanseListe ?: emptyList()
-        }
+fun VedtakDto.finnPeriodeReferanseliste(periode: VedtakPeriodeDto) = periode.grunnlagReferanseListe.takeIf { it.isNotEmpty() }
+    ?: run {
+        stønadsendringListe
+            .flatMap { it.periodeListe }
+            .firstOrNull { p -> p.periode.overlapper(periode.periode) }
+            ?.grunnlagReferanseListe ?: emptyList()
+    }
 
 @Deprecated("Ikke bruk dette da den returner gammel SluttberegningBarnebidrag objekt")
-fun VedtakDto.finnSluttberegningBarnebidragIPeriode(periode: VedtakPeriodeDto) =
-    grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periode.grunnlagReferanseListe)?.innhold
-        ?: run {
-            val periodeFraVedtak =
-                stønadsendringListe
-                    .flatMap { it.periodeListe }
-                    .firstOrNull { p -> p.periode.overlapper(periode.periode) } ?: return@run null
-            grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periodeFraVedtak.grunnlagReferanseListe)?.innhold
-        }
+fun VedtakDto.finnSluttberegningBarnebidragIPeriode(periode: VedtakPeriodeDto) = grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periode.grunnlagReferanseListe)?.innhold
+    ?: run {
+        val periodeFraVedtak =
+            stønadsendringListe
+                .flatMap { it.periodeListe }
+                .firstOrNull { p -> p.periode.overlapper(periode.periode) } ?: return@run null
+        grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periodeFraVedtak.grunnlagReferanseListe)?.innhold
+    }
 
-fun VedtakDto.finnSluttberegningBarnebidragGrunnlagIPeriode(periode: VedtakPeriodeDto) =
-    grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periode.grunnlagReferanseListe)
+fun VedtakDto.finnSluttberegningBarnebidragGrunnlagIPeriode(periode: VedtakPeriodeDto) = grunnlagListe.finnSluttberegningBarnebidragGrunnlagIReferanser(periode.grunnlagReferanseListe)
 
 val VedtakDto.typeBehandling get() =
     when {
@@ -293,22 +280,19 @@ fun StønadsendringDto.finnSøknadsbarnReferanse(grunnlagListe: List<GrunnlagDto
 
 fun VedtakDto.erVedtaksforslag() = vedtakstidspunkt == null
 
-fun List<GrunnlagDto>.finnSøknadGrunnlagForSøknadsid(søknadsid: Long): SøknadGrunnlag? =
-    filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
-        Grunnlagstype.SØKNAD,
-    ).find { it.innhold.søknadsid == søknadsid }?.innhold
+fun List<GrunnlagDto>.finnSøknadGrunnlagForSøknadsid(søknadsid: Long): SøknadGrunnlag? = filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
+    Grunnlagstype.SØKNAD,
+).find { it.innhold.søknadsid == søknadsid }?.innhold
 
-fun List<GrunnlagDto>.finnSøknadGrunnlag(): SøknadGrunnlag? =
-    filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
-        Grunnlagstype.SØKNAD,
-    ).firstOrNull()?.innhold
+fun List<GrunnlagDto>.finnSøknadGrunnlag(): SøknadGrunnlag? = filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(
+    Grunnlagstype.SØKNAD,
+).firstOrNull()?.innhold
 
-fun List<GrunnlagDto>.finnSøknadGrunnlagForBarn(søknadsbarnreferanse: String): SøknadGrunnlag? =
-    filtrerOgKonverterBasertPåFremmedReferanse<SøknadGrunnlag>(
-        Grunnlagstype.SØKNAD,
-        gjelderBarnReferanse = søknadsbarnreferanse,
-    ).firstOrNull()
-        ?.innhold ?: finnSøknadGrunnlag()
+fun List<GrunnlagDto>.finnSøknadGrunnlagForBarn(søknadsbarnreferanse: String): SøknadGrunnlag? = filtrerOgKonverterBasertPåFremmedReferanse<SøknadGrunnlag>(
+    Grunnlagstype.SØKNAD,
+    gjelderBarnReferanse = søknadsbarnreferanse,
+).firstOrNull()
+    ?.innhold ?: finnSøknadGrunnlag()
 
 fun VedtakDto.erInnkrevingsgrunnlag(): Boolean {
     val søknad = this.grunnlagListe.finnSøknadGrunnlag()
@@ -317,61 +301,58 @@ fun VedtakDto.erInnkrevingsgrunnlag(): Boolean {
 
 fun List<GrunnlagDto>.finnOrkestreringDetaljer(
     grunnlagsreferanseListe: List<Grunnlagsreferanse> = emptyList(),
-): VedtakOrkestreringDetaljerGrunnlag? =
-    if (grunnlagsreferanseListe.isEmpty()) {
-        filtrerOgKonverterBasertPåEgenReferanse<VedtakOrkestreringDetaljerGrunnlag>(
-            Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
-        ).firstOrNull()?.innhold
-    } else {
-        finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<VedtakOrkestreringDetaljerGrunnlag>(
-            Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
-            grunnlagsreferanseListe,
-        ).firstOrNull()?.innhold
-    }
+): VedtakOrkestreringDetaljerGrunnlag? = if (grunnlagsreferanseListe.isEmpty()) {
+    filtrerOgKonverterBasertPåEgenReferanse<VedtakOrkestreringDetaljerGrunnlag>(
+        Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
+    ).firstOrNull()?.innhold
+} else {
+    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<VedtakOrkestreringDetaljerGrunnlag>(
+        Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
+        grunnlagsreferanseListe,
+    ).firstOrNull()?.innhold
+}
 
 fun List<GrunnlagDto>.finnResultatFraAnnenVedtak(
     grunnlagsreferanseListe: List<Grunnlagsreferanse> = emptyList(),
     finnFørsteTreff: Boolean = false,
-): ResultatFraVedtakGrunnlag? =
-    if (!finnFørsteTreff && grunnlagsreferanseListe.isEmpty()) {
-        null
-    } else if (grunnlagsreferanseListe.isEmpty()) {
-        filtrerOgKonverterBasertPåEgenReferanse<ResultatFraVedtakGrunnlag>(Grunnlagstype.RESULTAT_FRA_VEDTAK).firstOrNull()?.innhold
-    } else {
-        finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<ResultatFraVedtakGrunnlag>(
-            Grunnlagstype.RESULTAT_FRA_VEDTAK,
-            grunnlagsreferanseListe,
-        ).firstOrNull()?.innhold
-    }
+): ResultatFraVedtakGrunnlag? = if (!finnFørsteTreff && grunnlagsreferanseListe.isEmpty()) {
+    null
+} else if (grunnlagsreferanseListe.isEmpty()) {
+    filtrerOgKonverterBasertPåEgenReferanse<ResultatFraVedtakGrunnlag>(Grunnlagstype.RESULTAT_FRA_VEDTAK).firstOrNull()?.innhold
+} else {
+    finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<ResultatFraVedtakGrunnlag>(
+        Grunnlagstype.RESULTAT_FRA_VEDTAK,
+        grunnlagsreferanseListe,
+    ).firstOrNull()?.innhold
+}
 
-fun VedtakDto.finnAldersjusteringVedtaksidForStønad(stønadsid: Stønadsid? = null) =
-    if (erOrkestrertVedtak) {
-        if (stønadsid != null) {
-            finnStønadsendring(stønadsid)
-                ?.periodeListe
-                ?.firstNotNullOfOrNull { p ->
-                    val resultatFraAnnenVedtak = grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
-                    if (resultatFraAnnenVedtak?.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
-                        resultatFraAnnenVedtak.vedtaksid
-                    } else {
-                        null
-                    }
+fun VedtakDto.finnAldersjusteringVedtaksidForStønad(stønadsid: Stønadsid? = null) = if (erOrkestrertVedtak) {
+    if (stønadsid != null) {
+        finnStønadsendring(stønadsid)
+            ?.periodeListe
+            ?.firstNotNullOfOrNull { p ->
+                val resultatFraAnnenVedtak = grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
+                if (resultatFraAnnenVedtak?.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
+                    resultatFraAnnenVedtak.vedtaksid
+                } else {
+                    null
                 }
-        } else {
-            stønadsendringListe.firstNotNullOfOrNull { p ->
-                p.periodeListe.firstNotNullOfOrNull { p ->
-                    val resultatFraAnnenVedtak = grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
-                    if (resultatFraAnnenVedtak?.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
-                        resultatFraAnnenVedtak.vedtaksid
-                    } else {
-                        null
-                    }
+            }
+    } else {
+        stønadsendringListe.firstNotNullOfOrNull { p ->
+            p.periodeListe.firstNotNullOfOrNull { p ->
+                val resultatFraAnnenVedtak = grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
+                if (resultatFraAnnenVedtak?.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
+                    resultatFraAnnenVedtak.vedtaksid
+                } else {
+                    null
                 }
             }
         }
-    } else {
-        null
     }
+} else {
+    null
+}
 
 val VedtakDto.referertVedtaksid get() =
     if (erOrkestrertVedtak) {
@@ -406,21 +387,19 @@ val VedtakDto.referertVedtaksid get() =
 
 val VedtakDto.harResultatFraAnnenVedtak get() = this.grunnlagListe.finnResultatFraAnnenVedtak(finnFørsteTreff = true) != null
 
-fun VedtakDto.erPeriodeFraOmgjøringsvedtak(periode: ÅrMånedsperiode): Boolean =
-    stønadsendringListe.any { se ->
-        se.periodeListe.isNotEmpty() &&
-            se.periodeListe.any { p ->
-                val resultatFraAnnenVedtak = this.grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
-                p.periode == periode && resultatFraAnnenVedtak != null && resultatFraAnnenVedtak.omgjøringsvedtak
-            }
-    }
-
-fun VedtakDto.finnSistePeriodeOmgjøringsvedtak(stønadsendringDto: StønadsendringDto) =
-    stønadsendringDto.periodeListe
-        .filter { p ->
+fun VedtakDto.erPeriodeFraOmgjøringsvedtak(periode: ÅrMånedsperiode): Boolean = stønadsendringListe.any { se ->
+    se.periodeListe.isNotEmpty() &&
+        se.periodeListe.any { p ->
             val resultatFraAnnenVedtak = this.grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
-            resultatFraAnnenVedtak != null && resultatFraAnnenVedtak.omgjøringsvedtak
-        }.maxByOrNull { it.periode.fom }
+            p.periode == periode && resultatFraAnnenVedtak != null && resultatFraAnnenVedtak.omgjøringsvedtak
+        }
+}
+
+fun VedtakDto.finnSistePeriodeOmgjøringsvedtak(stønadsendringDto: StønadsendringDto) = stønadsendringDto.periodeListe
+    .filter { p ->
+        val resultatFraAnnenVedtak = this.grunnlagListe.finnResultatFraAnnenVedtak(p.grunnlagReferanseListe)
+        resultatFraAnnenVedtak != null && resultatFraAnnenVedtak.omgjøringsvedtak
+    }.maxByOrNull { it.periode.fom }
 
 val VedtakDto.erDelvedtak get() =
     this.stønadsendringListe.isNotEmpty() &&
@@ -452,33 +431,32 @@ val VedtakDto.erOrkestrertVedtak get(): Boolean {
         }
 }
 
-fun List<GrunnlagDto>.hentGrunnlagBeløpshistorikkForRolle(stønadsid: Stønadsid) =
-    when (stønadsid.type) {
-        Stønadstype.FORSKUDD -> {
-            filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
-                Grunnlagstype.BELØPSHISTORIKK_FORSKUDD,
-                gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
-            )
-        }
-
-        Stønadstype.BIDRAG -> {
-            filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
-                Grunnlagstype.BELØPSHISTORIKK_BIDRAG,
-                gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
-            )
-        }
-
-        Stønadstype.BIDRAG18AAR -> {
-            filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
-                Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
-                gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
-            )
-        }
-
-        else -> {
-            null
-        }
+fun List<GrunnlagDto>.hentGrunnlagBeløpshistorikkForRolle(stønadsid: Stønadsid) = when (stønadsid.type) {
+    Stønadstype.FORSKUDD -> {
+        filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
+            Grunnlagstype.BELØPSHISTORIKK_FORSKUDD,
+            gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
+        )
     }
+
+    Stønadstype.BIDRAG -> {
+        filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
+            Grunnlagstype.BELØPSHISTORIKK_BIDRAG,
+            gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
+        )
+    }
+
+    Stønadstype.BIDRAG18AAR -> {
+        filtrerOgKonverterBasertPåFremmedReferanse<BeløpshistorikkGrunnlag>(
+            Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR,
+            gjelderBarnReferanse = hentPersonMedIdent(stønadsid.kravhaver.verdi, stønadsid.type)?.referanse,
+        )
+    }
+
+    else -> {
+        null
+    }
+}
 
 fun VedtakDto.finnSistePeriodeLøpendePeriodeInnenforVirkningstidspunkt(stønadsid: Stønadsid): `BeløpshistorikkPeriode`? {
     val virkningstidspunkt = finnVirkningstidspunktForStønad(stønadsid) ?: return null
@@ -491,14 +469,12 @@ fun VedtakDto.finnSistePeriodeLøpendePeriodeInnenforVirkningstidspunkt(stønads
     }
 }
 
-fun VedtakDto.hentStønadsendringForSøknad(søknadsid: Long?) =
-    stønadsendringListe.filter {
-        val søknad = grunnlagListe.hentSøknadForPerson(it.kravhaver, it.type)
-        søknad == null || søknadsid == null || søknadsid == søknad.søknadsid
-    }
+fun VedtakDto.hentStønadsendringForSøknad(søknadsid: Long?) = stønadsendringListe.filter {
+    val søknad = grunnlagListe.hentSøknadForPerson(it.kravhaver, it.type)
+    søknad == null || søknadsid == null || søknadsid == søknad.søknadsid
+}
 
-fun VedtakDto.løpteBidragEllerForskuddFraVirkningstidspunkt(stønadsid: Stønadsid): Boolean =
-    finnSistePeriodeLøpendePeriodeInnenforVirkningstidspunkt(stønadsid) != null
+fun VedtakDto.løpteBidragEllerForskuddFraVirkningstidspunkt(stønadsid: Stønadsid): Boolean = finnSistePeriodeLøpendePeriodeInnenforVirkningstidspunkt(stønadsid) != null
 
 fun VedtakDto.søknadGjelderRevurdering(søknadsId: Long?): Boolean {
     if (søknadsId == null) return false
@@ -532,7 +508,7 @@ fun VedtakDto.erTrukketFFRevurdering(søknadsid: Long? = null): Boolean {
                     it.beslutning == Beslutningstype.AVVIST
                 } || // Hvis alle tilhører R-barn så betyr det at vedtaket er splittet pga trukket FF
                     stønadsendringListe.all { tilhørerRevurderingsbarn(it) }
-            )
+                )
     }
 }
 

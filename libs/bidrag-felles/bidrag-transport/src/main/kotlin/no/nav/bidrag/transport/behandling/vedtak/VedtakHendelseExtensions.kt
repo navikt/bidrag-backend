@@ -38,10 +38,9 @@ val VedtakHendelse.behandlingId
             }?.referanse
             ?.toLong()
 
-fun VedtakHendelse.erDelvedtak() =
-    this.stønadsendringListe?.any { se ->
-        se.beslutning == Beslutningstype.DELVEDTAK
-    } == true
+fun VedtakHendelse.erDelvedtak() = this.stønadsendringListe?.any { se ->
+    se.beslutning == Beslutningstype.DELVEDTAK
+} == true
 
 fun VedtakHendelse.erFattetGjennomBidragBehandling() = behandlingId != null
 

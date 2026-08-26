@@ -133,27 +133,26 @@ class IdentConsumer(
     }
 
     @Cacheable(value = ["bidrag-commons_hentFødselsdato_cache"], key = "#ident")
-    fun hentPersonInformasjon(ident: Personident): PersonDto? =
-        try {
-            restTemplate
-                .postForEntity(
-                    "$personUrl$INFORMASJON_PATH",
-                    PersonDto(ident),
-                    PersonDto::class.java,
-                ).body
-        } catch (e: NoSuchElementException) {
-            LOGGER.warn(
-                "Bidrag-person fant ingen person på kalt ident. " +
-                    "\nFeilmelding: ${e.message} CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-            )
-            null
-        } catch (e: Exception) {
-            LOGGER.error(
-                "Noe gikk galt i kall mot bidrag-person: ${e.message} " +
-                    "CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-            )
-            null
-        }
+    fun hentPersonInformasjon(ident: Personident): PersonDto? = try {
+        restTemplate
+            .postForEntity(
+                "$personUrl$INFORMASJON_PATH",
+                PersonDto(ident),
+                PersonDto::class.java,
+            ).body
+    } catch (e: NoSuchElementException) {
+        LOGGER.warn(
+            "Bidrag-person fant ingen person på kalt ident. " +
+                "\nFeilmelding: ${e.message} CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
+        )
+        null
+    } catch (e: Exception) {
+        LOGGER.error(
+            "Noe gikk galt i kall mot bidrag-person: ${e.message} " +
+                "CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
+        )
+        null
+    }
 
     @Cacheable(value = ["bidrag-commons_hentAlleIdenter_cache"], key = "#ident")
     fun hentAlleIdenter(ident: String): List<String> {

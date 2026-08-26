@@ -31,20 +31,19 @@ data class EnhetKontaktinfoDto(
     val postadresse: EnhetPostadresseDto? = null,
 ) {
     companion object {
-        fun medStandardadresse(enhetsnummer: Enhetsnummer) =
-            EnhetKontaktinfoDto(
-                nummer = enhetsnummer,
-                navn = "Nav Familie- og pensjonsytelser",
-                telefonnummer = "55553333",
-                postadresse =
-                    EnhetPostadresseDto(
-                        postnummer = "0603",
-                        adresselinje1 = "Postboks 6215 Etterstad",
-                        poststed = "Oslo",
-                        land = "Norway",
-                        kommunenr = "0301",
-                    ),
-            )
+        fun medStandardadresse(enhetsnummer: Enhetsnummer) = EnhetKontaktinfoDto(
+            nummer = enhetsnummer,
+            navn = "Nav Familie- og pensjonsytelser",
+            telefonnummer = "55553333",
+            postadresse =
+            EnhetPostadresseDto(
+                postnummer = "0603",
+                adresselinje1 = "Postboks 6215 Etterstad",
+                poststed = "Oslo",
+                land = "Norway",
+                kommunenr = "0301",
+            ),
+        )
     }
 }
 

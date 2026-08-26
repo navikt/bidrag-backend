@@ -25,26 +25,24 @@ class UnleashFeaturesProvider(
             updateContext: Boolean = false,
         ): Boolean = isEnabled(feature, false, updateContext)
 
-        fun getVariant(feature: String): Variant? =
-            try {
-                getInstance().getVariant(feature)
-            } catch (e: Exception) {
-                null
-            }
+        fun getVariant(feature: String): Variant? = try {
+            getInstance().getVariant(feature)
+        } catch (e: Exception) {
+            null
+        }
 
         fun isEnabled(
             feature: String,
             defaultValue: Boolean,
             updateContext: Boolean = false,
-        ): Boolean =
-            try {
-                if (updateContext) {
-                    getInstance().isEnabled(feature, DefaultUnleashContextProvider.generateUnleashContext(), defaultValue)
-                } else {
-                    getInstance().isEnabled(feature, defaultValue)
-                }
-            } catch (e: Exception) {
-                defaultValue
+        ): Boolean = try {
+            if (updateContext) {
+                getInstance().isEnabled(feature, DefaultUnleashContextProvider.generateUnleashContext(), defaultValue)
+            } else {
+                getInstance().isEnabled(feature, defaultValue)
             }
+        } catch (e: Exception) {
+            defaultValue
+        }
     }
 }

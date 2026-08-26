@@ -380,12 +380,11 @@ enum class Resultatkode(
     val legacyKode get() = bisysKode.firstOrNull()?.resultatKode
 
     companion object {
-        fun fraKode(kode: String): Resultatkode? =
-            try {
-                enumValues<Resultatkode>().find { res -> res.bisysKode.any { it.resultatKode == kode } } ?: Resultatkode.valueOf(kode)
-            } catch (e: Exception) {
-                konverterteVerdier[kode]
-            }
+        fun fraKode(kode: String): Resultatkode? = try {
+            enumValues<Resultatkode>().find { res -> res.bisysKode.any { it.resultatKode == kode } } ?: Resultatkode.valueOf(kode)
+        } catch (e: Exception) {
+            konverterteVerdier[kode]
+        }
 
         fun Resultatkode.tilBisysResultatkode() = tilBisysResultatkode(null)
 
@@ -403,16 +402,15 @@ enum class Resultatkode(
         fun fraVisningsnavn(
             visningsnavn: String,
             vedtakstype: Vedtakstype? = null,
-        ): Resultatkode? =
-            try {
-                enumValues<Resultatkode>().find {
-                    it.visningsnavnIntern(vedtakstype).equals(visningsnavn, ignoreCase = true) ||
-                        it.visningsnavn.intern.equals(visningsnavn, ignoreCase = true) ||
-                        it.visningsnavn.intern.equals(visningsnavn.fjernAvslagOpphørPrefiks(), ignoreCase = true)
-                }
-            } catch (e: Exception) {
-                null
+        ): Resultatkode? = try {
+            enumValues<Resultatkode>().find {
+                it.visningsnavnIntern(vedtakstype).equals(visningsnavn, ignoreCase = true) ||
+                    it.visningsnavn.intern.equals(visningsnavn, ignoreCase = true) ||
+                    it.visningsnavn.intern.equals(visningsnavn.fjernAvslagOpphørPrefiks(), ignoreCase = true)
             }
+        } catch (e: Exception) {
+            null
+        }
 
         fun Resultatkode.erType(type: ResultatkodeType): Boolean = Resultatkode.alleMedType(type).contains(this)
 
@@ -422,16 +420,14 @@ enum class Resultatkode(
 
         fun Resultatkode.erOpphør(): Boolean = erType(ResultatkodeType.OPPHØR)
 
-        fun Resultatkode.erAvslag(): Boolean =
-            erType(ResultatkodeType.AVSLAG) ||
-                erType(ResultatkodeType.DIREKTE_AVSLAG)
+        fun Resultatkode.erAvslag(): Boolean = erType(ResultatkodeType.AVSLAG) ||
+            erType(ResultatkodeType.DIREKTE_AVSLAG)
 
-        fun alleMedType(type: ResultatkodeType): List<Resultatkode> =
-            try {
-                enumValues<Resultatkode>().filter { it.type.contains(type) }
-            } catch (e: Exception) {
-                emptyList()
-            }
+        fun alleMedType(type: ResultatkodeType): List<Resultatkode> = try {
+            enumValues<Resultatkode>().filter { it.type.contains(type) }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     data class BisysResultatkode(

@@ -1,7 +1,7 @@
 package no.nav.bidrag.generer.testdata.sak
 
 import io.kotest.matchers.shouldNotBe
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.Year
 
 class GenererSaksnummerTest {

@@ -4,8 +4,7 @@ import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidrag
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 
-fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> =
-    // Fjerner perioder som ikke overlapper med beregningsperioden
+fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> = // Fjerner perioder som ikke overlapper med beregningsperioden
     bidragListe.mapNotNull { bidrag ->
         val beregningsperiodeTil = beregningsperiode.til
         val periodeListe =

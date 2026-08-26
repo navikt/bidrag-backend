@@ -244,100 +244,92 @@ class SjablonProvider {
         /**
          * Hent liste over alle sjablonverdier
          */
-        fun hentSjablontall(): List<Sjablontall> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablontall",
-                ).execute<List<Sjablontall>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablontall().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablontall" }
-                emptyList()
+        fun hentSjablontall(): List<Sjablontall> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablontall",
+            ).execute<List<Sjablontall>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablontall().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablontall" }
+            emptyList()
+        }
 
-        fun hentSjablonSamværsfradrag(): List<Samværsfradrag> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonSamværsfradrag",
-                ).execute<List<Samværsfradrag>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonSamværsfradrag().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for samværsfradrag" }
-                emptyList()
+        fun hentSjablonSamværsfradrag(): List<Samværsfradrag> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonSamværsfradrag",
+            ).execute<List<Samværsfradrag>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonSamværsfradrag().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for samværsfradrag" }
+            emptyList()
+        }
 
-        fun hentSjablonBidragsevne(): List<Bidragsevne> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonBidragsevne",
-                ).execute<List<Bidragsevne>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonBidragsevne().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for bidragsevne" }
-                emptyList()
+        fun hentSjablonBidragsevne(): List<Bidragsevne> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonBidragsevne",
+            ).execute<List<Bidragsevne>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonBidragsevne().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for bidragsevne" }
+            emptyList()
+        }
 
-        fun hentSjablonTrinnvisSkattesats(): List<TrinnvisSkattesats> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonTrinnvisSkattesats",
-                ).execute<List<TrinnvisSkattesats>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonTrinnvisSkattesats().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for trinnvis skattesats" }
-                emptyList()
+        fun hentSjablonTrinnvisSkattesats(): List<TrinnvisSkattesats> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonTrinnvisSkattesats",
+            ).execute<List<TrinnvisSkattesats>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonTrinnvisSkattesats().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for trinnvis skattesats" }
+            emptyList()
+        }
 
-        fun hentSjablonBarnetilsyn(): List<Barnetilsyn> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonBarnetilsyn",
-                ).execute<List<Barnetilsyn>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonBarnetilsyn().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for barnetilsyn" }
-                emptyList()
+        fun hentSjablonBarnetilsyn(): List<Barnetilsyn> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonBarnetilsyn",
+            ).execute<List<Barnetilsyn>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonBarnetilsyn().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for barnetilsyn" }
+            emptyList()
+        }
 
-        fun hentSjablonForbruksutgifter(): List<Forbruksutgifter> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonForbruksutgifter",
-                ).execute<List<Forbruksutgifter>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonForbruksutgifter().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for forbruksutgifter" }
-                emptyList()
+        fun hentSjablonForbruksutgifter(): List<Forbruksutgifter> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonForbruksutgifter",
+            ).execute<List<Forbruksutgifter>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonForbruksutgifter().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for forbruksutgifter" }
+            emptyList()
+        }
 
-        fun hentSjablonMaksFradrag(): List<MaksFradrag> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonMaksFradrag",
-                ).execute<List<MaksFradrag>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonMaksFradrag().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for maks fradrag" }
-                emptyList()
+        fun hentSjablonMaksFradrag(): List<MaksFradrag> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonMaksFradrag",
+            ).execute<List<MaksFradrag>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonMaksFradrag().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for maks fradrag" }
+            emptyList()
+        }
 
-        fun hentSjablonMaksTilsyn(): List<MaksTilsyn> =
-            try {
-                retryTemplateSynchronous(
-                    "SjablonProvider.hentSjablonMaksTilsyn",
-                ).execute<List<MaksTilsyn>, HttpClientErrorException> {
-                    AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonMaksTilsyn().body
-                }
-            } catch (e: Exception) {
-                secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for maks tilsyn" }
-                emptyList()
+        fun hentSjablonMaksTilsyn(): List<MaksTilsyn> = try {
+            retryTemplateSynchronous(
+                "SjablonProvider.hentSjablonMaksTilsyn",
+            ).execute<List<MaksTilsyn>, HttpClientErrorException> {
+                AppContext.getBean("CommonsSjablonConsumer", SjablonConsumer::class.java).hentSjablonMaksTilsyn().body
             }
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved henting av sjablon for maks tilsyn" }
+            emptyList()
+        }
     }
 }

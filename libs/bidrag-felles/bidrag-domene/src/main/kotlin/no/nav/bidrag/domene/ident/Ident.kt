@@ -7,10 +7,9 @@ import no.nav.bidrag.domene.felles.Verdiobjekt
 class Ident(
     override val verdi: String,
 ) : Verdiobjekt<String>() {
-    override fun gyldig(): Boolean =
-        Organisasjonsnummer(verdi).gyldig() ||
-            Personident(verdi).gyldig() ||
-            SamhandlerId(verdi).gyldig()
+    override fun gyldig(): Boolean = Organisasjonsnummer(verdi).gyldig() ||
+        Personident(verdi).gyldig() ||
+        SamhandlerId(verdi).gyldig()
 
     fun erOrganisasjonsnummer() = Organisasjonsnummer(verdi).gyldig()
 
@@ -18,20 +17,18 @@ class Ident(
 
     fun erSamhandlerId() = SamhandlerId(verdi).gyldig()
 
-    fun type() =
-        when {
-            Organisasjonsnummer(verdi).gyldig() -> Identtype.Organisasjonsnummer
-            Personident(verdi).gyldig() -> Identtype.PersonIdent
-            SamhandlerId(verdi).gyldig() -> Identtype.SamhandlerId
-            else -> Identtype.Ukjent
-        }
+    fun type() = when {
+        Organisasjonsnummer(verdi).gyldig() -> Identtype.Organisasjonsnummer
+        Personident(verdi).gyldig() -> Identtype.PersonIdent
+        SamhandlerId(verdi).gyldig() -> Identtype.SamhandlerId
+        else -> Identtype.Ukjent
+    }
 
-    override fun toString(): String =
-        if (erPersonIdent()) {
-            verdi.mapIndexed { index, c -> if (index % 2 == 0) c else '*' }.joinToString("")
-        } else {
-            super.toString()
-        }
+    override fun toString(): String = if (erPersonIdent()) {
+        verdi.mapIndexed { index, c -> if (index % 2 == 0) c else '*' }.joinToString("")
+    } else {
+        super.toString()
+    }
 }
 
 enum class Identtype {
