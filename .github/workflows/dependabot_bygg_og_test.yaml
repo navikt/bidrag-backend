@@ -41,4 +41,4 @@ jobs:
               }
             ]
       - name: Bygg og kjør tester for hele reactoren (inkl. ktlint og IT)
-        run: mvn -B -fae verify -Pit
+        run: mvn -B -q -fae verify -Pit
