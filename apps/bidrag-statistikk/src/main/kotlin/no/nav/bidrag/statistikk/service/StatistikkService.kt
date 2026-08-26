@@ -218,7 +218,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             samværsklasse = grunnlagsdata?.samværsklasse,
                             skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
                             mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                            kravhaverInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                            kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
                         )
                     },
                 )
