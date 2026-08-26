@@ -44,7 +44,7 @@ class KanFatteVedtakTest {
 
         disableUnleashFeature(UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
         disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
-        disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER)
+        disableUnleashFeature(UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_SAKER)
         disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA)
         disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_OPPFOSTRINGSBIDRAG)
 
@@ -157,7 +157,7 @@ class KanFatteVedtakTest {
         val behandling = opprettBehandlingSimple()
 
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
-        disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER)
+        disableUnleashFeature(UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_SAKER)
         every {
             hentAlleSaker(testdataBP.ident)
         } returns
@@ -181,7 +181,7 @@ class KanFatteVedtakTest {
             )
 
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
-        disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER)
+        disableUnleashFeature(UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_SAKER)
         every {
             hentAlleSaker(testdataBP.ident)
         } returns
