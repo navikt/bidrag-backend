@@ -7,7 +7,6 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-kafka/**.yaml'
-      - '.github/workflows/bidrag-kafka.yaml'
       - 'apps/bidrag-kafka/**'
 
 # Felles workflow for alle kafka.nais.io/v1 Topic-manifester i .nais/bidrag-kafka/topics,
