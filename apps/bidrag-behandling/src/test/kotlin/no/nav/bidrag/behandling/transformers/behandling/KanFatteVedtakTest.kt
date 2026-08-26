@@ -327,7 +327,7 @@ class KanFatteVedtakTest {
         private const val BEGRUNNELSE_ULIKE_VIRKNINGSTIDSPUNKT = "Kan ikke fatte vedtak når søknadsbarna har ulike virkningstidspunkt"
         private const val BEGRUNNELSE_MANGLER_BARN_I_SAKEN = "Kan ikke fatte vedtak for behandling som ikke inneholder alle barna i saken"
         private const val BEGRUNNELSE_PRIVAT_AVTALE_ANDRE_BARN = "Kan ikke fatte vedtak når det er lagt inn privat avtale for andre barn"
-        private const val BEGRUNNELSE_FLERE_SAKER = "Kan ikke fatte vedtak når BP har flere saker"
+        private const val BEGRUNNELSE_FLERE_SAKER = "Kan ikke behandle eller fatte vedtak når BP har flere saker"
         private const val BEGRUNNELSE_PRIVAT_AVTALE_ANDRE_SAKER = "Kan ikke fatte vedtak når BP har privat avtale for barn i andre saker"
         private const val BEGRUNNELSE_UTENLANDSK_VALUTA = "Kan ikke fatte vedtak hvor BP har løpende bidrag med utenlandsk valuta"
         private const val BEGRUNNELSE_OPPFOSTRINGSBIDRAG = "Kan ikke fatte vedtak hvor BP har løpende oppfostringsbidrag"
