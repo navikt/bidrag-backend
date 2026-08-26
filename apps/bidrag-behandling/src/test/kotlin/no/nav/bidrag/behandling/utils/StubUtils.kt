@@ -77,6 +77,7 @@ import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import no.nav.bidrag.transport.dokument.forsendelse.OpprettForsendelseRespons
 import no.nav.bidrag.transport.felles.commonObjectmapper
+import no.nav.bidrag.transport.felles.tilJsonString
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
@@ -357,6 +358,17 @@ class StubUtils {
     ) {
         WireMock.stubFor(
             WireMock.post(urlMatching("/stonad/hent-stonad-historisk/")).willReturn(
+                aClosedJsonResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withBody(
+                        commonObjectmapper.writeValueAsString(
+                            stønadDto,
+                        ),
+                    ),
+            ),
+        )
+        WireMock.stubFor(
+            WireMock.post(urlMatching("/stonad/hent-stonad-historisk")).willReturn(
                 aClosedJsonResponse()
                     .withStatus(HttpStatus.OK.value())
                     .withBody(
