@@ -2,7 +2,7 @@ name: Dependabot - bygg og test
 on:
   push:
     branches:
-      - 'dependabot/**'
+      - 'dependabot/maven/**'
     paths:
       - 'pom.xml'
       - 'apps/**/pom.xml'
