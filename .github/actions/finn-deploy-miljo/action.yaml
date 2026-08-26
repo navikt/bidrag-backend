@@ -1,0 +1,67 @@
+name: "Finn deploy-miljø"
+description: >-
+  Bestemmer hvilke miljøer (q1/q2/prod) som skal deployes for denne kjøringen.
+  Kilde til avgjørelsen, i prioritert rekkefølge:
+    1. workflow_dispatch: bruker det manuelt valgte miljøet (input `dispatch-miljo`).
+    2. push til main: alltid prod.
+    3. pull_request (labeled/unlabeled) eller push til en feature-branch: PR-ens
+       labels avgjør - "q1"-label gir deploy til q1, "q2"-label gir deploy til q2.
+       Ved push (ikke selve pull_request-eventen) slås labels opp via GitHub sitt
+       API, siden push-eventen selv ikke inneholder PR-informasjon.
+inputs:
+  github-token:
+    required: true
+    description: Token med lesetilgang til pull requests (brukes til å slå opp labels ved push-hendelser).
+  dispatch-miljo:
+    required: false
+    default: ''
+    description: Verdien av workflow_dispatch sin miljø-input ("q1", "q2" eller "prod"), hvis relevant.
+outputs:
+  deploy_q1:
+    description: "'true' hvis q1 skal deployes"
+    value: ${{ steps.bestem.outputs.deploy_q1 }}
+  deploy_q2:
+    description: "'true' hvis q2 skal deployes"
+    value: ${{ steps.bestem.outputs.deploy_q2 }}
+  deploy_prod:
+    description: "'true' hvis prod skal deployes"
+    value: ${{ steps.bestem.outputs.deploy_prod }}
+runs:
+  using: composite
+  steps:
+    - id: bestem
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        EVENT_NAME: ${{ github.event_name }}
+        REF: ${{ github.ref }}
+        REPO: ${{ github.repository }}
+        HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        DISPATCH_MILJO: ${{ inputs.dispatch-miljo }}
+        PR_LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+      run: |
+        set -euo pipefail
+        deploy_q1=false
+        deploy_q2=false
+        deploy_prod=false
+
+        if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+          [ "$DISPATCH_MILJO" = "q1" ] && deploy_q1=true
+          [ "$DISPATCH_MILJO" = "q2" ] && deploy_q2=true
+          [ "$DISPATCH_MILJO" = "prod" ] && deploy_prod=true
+        elif [ "$EVENT_NAME" = "push" ] && [ "$REF" = "refs/heads/main" ]; then
+          deploy_prod=true
+        elif [ "$EVENT_NAME" = "pull_request" ]; then
+          echo "$PR_LABELS_JSON" | jq -e 'any(. == "q1")' > /dev/null && deploy_q1=true
+          echo "$PR_LABELS_JSON" | jq -e 'any(. == "q2")' > /dev/null && deploy_q2=true
+        elif [ "$EVENT_NAME" = "push" ]; then
+          # Push til en branch. Her vil ikke eventuelle labels ligge i selve
+          # push-eventet, så vi må sjekke etter åpen PR for branchen.
+          labels="$(gh pr list --repo "$REPO" --head "$HEAD_REF" --state open --json labels --jq '[.[0].labels[]?.name] // []' 2>/dev/null || echo '[]')"
+          echo "$labels" | jq -e 'any(. == "q1")' > /dev/null && deploy_q1=true
+          echo "$labels" | jq -e 'any(. == "q2")' > /dev/null && deploy_q2=true
+        fi
+
+        echo "deploy_q1=$deploy_q1" | tee -a "$GITHUB_OUTPUT"
+        echo "deploy_q2=$deploy_q2" | tee -a "$GITHUB_OUTPUT"
+        echo "deploy_prod=$deploy_prod" | tee -a "$GITHUB_OUTPUT"

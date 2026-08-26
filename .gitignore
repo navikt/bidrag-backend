@@ -25,3 +25,9 @@ application-lokal-nais-secrets*
 # Lokale utviklerfiler generert av initEnv.sh
 .env.file
 debugging/
+
+# bidrag-reisekostnad-api: lokalt genererte testartefakter og hemmeligheter
+apps/bidrag-reisekostnad-api/*.pdf
+apps/bidrag-reisekostnad-api/test_VS_decrypt_*
+apps/bidrag-reisekostnad-api/dependencies.txt
+apps/bidrag-reisekostnad-api/src/main/resources/application-lokal-sky-secrets.properties

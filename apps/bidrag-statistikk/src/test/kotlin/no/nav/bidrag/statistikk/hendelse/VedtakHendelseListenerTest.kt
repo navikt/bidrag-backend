@@ -1245,65 +1245,132 @@ class VedtakHendelseListenerTest {
     }
 
     @Test
-    fun `skal lese vedtakshendelse med inntekt for søknadsbarn`() {
-        val captor = argumentCaptor<SærbidragHendelse>()
-        stubHenteVedtak(lesVedtakDtoFraFil("src/test/resources/fil/vedtakMedInntektSøknadsbarn.json"))
+    fun `skal lese vedtakshendelse med inntekt for flere søknadsbarn`() {
+        val captor = argumentCaptor<BidragHendelse>()
+        stubHenteVedtak(lesVedtakDtoFraFil("src/test/resources/fil/vedtakMedInntektFlereSøknadsbarn.json"))
         vedtakHendelseListener.lesHendelse(
             """
-    {
+{
 	"kilde": "MANUELT",
-	"type": "FASTSETTELSE",
-	"id": 1,
+	"type": "ENDRING",
+	"id": 1447,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bidrag-behandling-q2",
-	"vedtakstidspunkt": "2026-08-25T13:19:44.560359",
+	"vedtakstidspunkt": "2026-08-25T14:25:37.945130823",
 	"enhetsnummer": "4806",
-	"innkrevingUtsattTilDato": null,
+	"innkrevingUtsattTilDato": "2026-08-28",
 	"fastsattILand": null,
-	"opprettetTidspunkt": "2026-08-25T13:19:45.29089",
-	"stønadsendringListe": [],
-	"engangsbeløpListe": [
+	"opprettetTidspunkt": "2026-08-25T14:25:38.189819882",
+	"stønadsendringListe": [
 		{
-			"type": "SÆRBIDRAG",
-			"sak": "2500050",
+			"type": "BIDRAG",
+			"sak": "2600125",
 			"skyldner": "1",
-			"kravhaver": "3",
+			"kravhaver": "4",
 			"mottaker": "2",
-			"beløp": null,
-			"valutakode": "NOK",
-			"resultatkode": "SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE",
+			"førsteIndeksreguleringsår": 2027,
 			"innkreving": "MED_INNKREVING",
 			"beslutning": "ENDRING",
 			"omgjørVedtakId": null,
-			"referanse": "behandling_1967_20260825131732_SÆRBIDRAG",
+			"eksternReferanse": null,
+			"periodeListe": [
+				{
+					"periode": {
+						"fom": "2026-08",
+						"til": null
+					},
+					"beløp": 1350,
+					"valutakode": "NOK",
+					"resultatkode": "BEREGNET_BIDRAG",
+					"delytelseId": null
+				}
+			]
+		},
+		{
+			"type": "BIDRAG",
+			"sak": "2600125",
+			"skyldner": "1",
+			"kravhaver": "3",
+			"mottaker": "2",
+			"førsteIndeksreguleringsår": 2027,
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"eksternReferanse": null,
+			"periodeListe": [
+				{
+					"periode": {
+						"fom": "2026-08",
+						"til": null
+					},
+					"beløp": 1350,
+					"valutakode": "NOK",
+					"resultatkode": "BEREGNET_BIDRAG",
+					"delytelseId": null
+				}
+			]
+		}
+	],
+	"engangsbeløpListe": [
+		{
+			"type": "GEBYR_SKYLDNER",
+			"sak": "2600125",
+			"skyldner": "1",
+			"kravhaver": "NAV",
+			"mottaker": "NAV",
+			"beløp": null,
+			"valutakode": null,
+			"resultatkode": "GEBYR_FRITATT",
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"referanse": "Bisys_gebyr_BP_c6559d27-9123-40e9-b56a-3e6d82769cea",
 			"delytelseId": null,
 			"eksternReferanse": null,
-			"betaltBeløp": 0
+			"betaltBeløp": null
+		},
+		{
+			"type": "GEBYR_MOTTAKER",
+			"sak": "2600125",
+			"skyldner": "2",
+			"kravhaver": "NAV",
+			"mottaker": "NAV",
+			"beløp": null,
+			"valutakode": null,
+			"resultatkode": "GEBYR_FRITATT",
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"referanse": "Bisys_gebyr_BM_c294b22a-7177-4c21-98f2-e7b826c5f3ee",
+			"delytelseId": null,
+			"eksternReferanse": null,
+			"betaltBeløp": null
 		}
 	],
 	"behandlingsreferanseListe": [
 		{
 			"kilde": "BEHANDLING_ID",
-			"referanse": "1967"
+			"referanse": "1971"
 		},
 		{
 			"kilde": "BISYS_SØKNAD",
-			"referanse": "50014397"
+			"referanse": "50014413"
 		}
 	],
 	"sporingsdata": {
-		"correlationId": "690012ce05e24b3f87f55819f11ea5d2-bidrag-behandling-q2",
+		"correlationId": "c134742e089e40439227674666aed644-bidrag-behandling-q2",
 		"brukerident": null,
-		"opprettet": "2026-04-30T08:33:05.273650684",
+		"opprettet": "2026-08-25T14:25:38.794429033",
 		"opprettetAv": null
 	}
 }
             """.trimIndent(),
         )
 
-        verify(statistikkKafkaEventProducerMock, times(1)).publishSærbidrag((captor.capture()))
+        verify(statistikkKafkaEventProducerMock, times(2)).publishBidrag(captor.capture())
         val hendelser = captor.allValues
-        assertThat(hendelser[0].kravhaverInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(560000))
+        assertThat(hendelser[0].bidragPeriodeListe[0].kravhaverInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(60000))
+        assertThat(hendelser[1].bidragPeriodeListe[0].kravhaverInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(50000))
     }
 }

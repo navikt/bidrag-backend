@@ -2,7 +2,7 @@ name: Bidrag-oppgave
 on:
   workflow_dispatch:
     inputs:
-      environment:
+      miljo:
         description: "Miljø som skal deployes til"
         required: true
         type: choice
@@ -10,15 +10,21 @@ on:
           - prod
           - q1
           - q2
-          - q1+q2
+  pull_request:
+    types: [labeled, unlabeled]
+    paths:
+      - 'pom.xml'
+      - '.nais/bidrag-oppgave/**.yaml'
+      - 'apps/bidrag-oppgave/**'
+      - 'libs/bidrag-oppgave-dto/**'
+      - 'libs/bidrag-oppgave-client/**'
   push:
     branches:
       - '**'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-oppgave/**.yaml'
-#      - '.github/workflows/bidrag-oppgave.yaml' //TODO(Slå på etter migrering)
-#     - 'pom.xml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-oppgave/**'
       - 'libs/bidrag-oppgave-dto/**'
       - 'libs/bidrag-oppgave-client/**'
@@ -38,109 +44,47 @@ jobs:
       - uses: ./.github/actions/utled-app-endringer
         id: detect
 
-  bygg_og_test:
+  finn_miljo:
+    name: "Bestem hvilke miljø som skal deployes"
     needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && (github.event_name == 'push' && github.actor != 'dependabot[bot]' && github.ref != 'refs/heads/main')
-    name: "Bygg og test"
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
+      pull-requests: "read"
+    outputs:
+      deploy_q1: ${{ steps.finn.outputs.deploy_q1 }}
+      deploy_q2: ${{ steps.finn.outputs.deploy_q2 }}
+      deploy_prod: ${{ steps.finn.outputs.deploy_prod }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: ./.github/actions/finn-deploy-miljo
+        id: finn
         with:
-          distribution: temurin
-          java-version: '21'
-      # Egen, smal cache-nøkkel (kun denne appens pom-kjede) istedenfor setup-java sin
-      # innebygde `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed
-      # invalideres av endringer i moduler denne jobben ikke bygger.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.m2/repository
-          key: maven-bidrag-oppgave-${{ hashFiles('pom.xml', 'apps/bidrag-oppgave/pom.xml') }}
-          restore-keys: |
-            maven-bidrag-oppgave-
-      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
-        with:
-          servers: |
-            [
-              {
-                "id": "github",
-                "username": "x-access-token",
-                "password": "${{ secrets.READER_TOKEN }}"
-              }
-            ]
-      - name: Bygg og kjør tester (inkl. ktlint)
-        run: mvn -B -fae verify -pl apps/bidrag-oppgave -am
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          dispatch-miljo: ${{ inputs.miljo }}
 
-  deploy_prod:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'))
-    name: "Build and deploy to prod"
-    concurrency:
-      group: deploy-oppgave-prod-${{ github.ref }}
-      cancel-in-progress: true
+  bygg_test_og_deploy:
+    name: "Bygg, test og deploy"
+    needs: finn_miljo
     permissions:
       contents: "write"
       id-token: "write"
-    uses: ./.github/workflows/bygg_og_deploy_prod.yaml
-    secrets: inherit
-    with:
-      maven_options: -B -fae -pl apps/bidrag-oppgave -am
-      maven_cache_paths: |
-        pom.xml
-        apps/bidrag-oppgave/pom.xml
-      ktlint_paths: apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt libs/bidrag-oppgave-client/src/**/*.kt
-      docker_context: ./apps/bidrag-oppgave
-      nais_variabler_filnavn: bidrag-oppgave/prod.yaml
-      nais_hovedfil_navn: bidrag-oppgave/nais.yaml
-      image_suffix: bidrag-oppgave
-      tag: bidrag-oppgave
-
-  deploy_q1:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && (success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q1/') || startsWith(github.ref, 'refs/heads/Q1/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q1' || github.event.inputs.environment == 'q1+q2'))))
-    name: "Build and deploy to Q1"
-    concurrency:
-      group: deploy-oppgave-q1-${{ github.ref }}
-      cancel-in-progress: true
-    permissions:
-      contents: "read"
-      id-token: "write"
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
+      nais_hovedfil_navn: bidrag-oppgave/nais.yaml
+      nais_variabler_filnavn_q1: bidrag-oppgave/q1.yaml
+      deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
+      nais_variabler_filnavn_q2: bidrag-oppgave/q2.yaml
+      deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
+      nais_variabler_filnavn_prod: bidrag-oppgave/prod.yaml
+      deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
       maven_options: -B -fae -pl apps/bidrag-oppgave -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-oppgave/pom.xml
       ktlint_paths: apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt libs/bidrag-oppgave-client/src/**/*.kt
       docker_context: ./apps/bidrag-oppgave
-      nais_variabler_filnavn: bidrag-oppgave/q1.yaml
-      nais_hovedfil_navn: bidrag-oppgave/nais.yaml
-      image_suffix: bidrag-oppgave
-      tag: bidrag-oppgave
-
-  deploy_q2:
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && (success() && ((github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/q2/') || startsWith(github.ref, 'refs/heads/Q2/'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.environment == 'q2' || github.event.inputs.environment == 'q1+q2'))))
-    name: "Build and deploy to Q2"
-    concurrency:
-      group: deploy-oppgave-q2-${{ github.ref }}
-      cancel-in-progress: true
-    permissions:
-      contents: "read"
-      id-token: "write"
-    uses: ./.github/workflows/bygg_og_deploy.yaml
-    secrets: inherit
-    with:
-      maven_options: -B -fae -pl apps/bidrag-oppgave -am
-      maven_cache_paths: |
-        pom.xml
-        apps/bidrag-oppgave/pom.xml
-      ktlint_paths: apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt libs/bidrag-oppgave-client/src/**/*.kt
-      docker_context: ./apps/bidrag-oppgave
-      nais_variabler_filnavn: bidrag-oppgave/q2.yaml
-      nais_hovedfil_navn: bidrag-oppgave/nais.yaml
       image_suffix: bidrag-oppgave
       tag: bidrag-oppgave

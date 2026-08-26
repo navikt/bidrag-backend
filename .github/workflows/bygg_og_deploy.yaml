@@ -11,37 +11,53 @@ on:
         required: false
         type: string
         default: ubuntu-latest
-        description: Runner build-jobben skal kjøre på. Kan settes til en større GitHub-hosted runner for tyngre Maven/Docker-bygg.
-      produksjon:
-        required: false
-        type: boolean
-        default: false
-        description: Skal være true hvis det skal deployes til produksjon
+        description: >-
+          Runner build-jobben skal kjøre på. Kan settes til en større GitHub-hosted
+          runner (f.eks. ubuntu-latest-4-cores eller ubuntu-latest-8-cores) for tyngre
+          Maven/Docker-bygg.
       nais_cluster:
         required: false
         type: string
         default: gcp
         description: Nais cluster som applikasjonen skal deployes til. Skal enten være 'gcp' eller 'fss'
-      nais_variabler_filnavn:
-        required: false
-        type: string
-        default: feature.yaml
-        description: Navnet på miljøvariabler filen som skal brukes ved deploy. Parameter skal inkludere filending som feks .yaml
       nais_hovedfil_navn:
         required: false
         type: string
         default: nais.yaml
         description: Navnet på nais filen som skal brukes. Parameter skal inkludere filending og evt path om det ikke ligger på root i .nais folder.
+      nais_variabler_filnavn_q1:
+        required: false
+        type: string
+        description: Navnet på miljøvariabler-filen for q1. Kun nødvendig når `deploy_q1` kan bli true.
+      nais_variabler_filnavn_q2:
+        required: false
+        type: string
+        description: Navnet på miljøvariabler-filen for q2. Kun nødvendig når `deploy_q2` kan bli true.
+      nais_variabler_filnavn_prod:
+        required: false
+        type: string
+        default: prod.yaml
+        description: Navnet på miljøvariabler-filen for prod. Kun nødvendig når `deploy_prod` kan bli true.
+      deploy_q1:
+        required: false
+        type: boolean
+        default: false
+        description: Om denne kjøringen skal deploye til q1 (etter en vellykket bygg+test).
+      deploy_q2:
+        required: false
+        type: boolean
+        default: false
+        description: Om denne kjøringen skal deploye til q2 (etter en vellykket bygg+test).
+      deploy_prod:
+        required: false
+        type: boolean
+        default: false
+        description: Om denne kjøringen skal deploye til prod (etter en vellykket bygg+test), samt tagge en utgivelse.
       maven_options:
         required: false
         type: string
         default: -B -fae
         description: Ekstra options ved kjøring av maven bygget. Dette kan være lag eller profiler. Default -B (Batchmode, non-interactive), -fae (Fail at end).
-      maven_test_lifecycle:
-        required: false
-        type: string
-        default: install
-        description: Mulighet for å endre hvilken maven lifecycle som kjøres sammen med testene. For å kunne kjøre integrasjonstester må verify/install/deploy brukes.
       maven_cache_paths:
         required: false
         type: string
@@ -55,7 +71,7 @@ on:
         required: false
         type: string
         default: src/**/*.kt
-        description: Path relativt til repo-rot hovr ktlint skal kjøre, f.eks. "apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt".
+        description: Path relativt til repo-rot hvor ktlint skal kjøre, f.eks. "apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt".
       ktlint_version:
         required: false
         type: string
@@ -79,33 +95,22 @@ on:
         required: false
         type: string
         description: Custom docker tag
-      skip_tester:
-        required: false
-        type: boolean
-        default: true
-        description: >-
-          Om tester skal hoppes over ved deploy til testmiljø (q1/q2). Gjelder kun når produksjon=false
-          og nais_variabler_filnavn peker på q1/q2. Deploy til prod kjører alltid tester.
-          Sett til false for å tvinge tester også i q1/q2.
     outputs:
-      deploy_suksess:
-        description: "Om deploy har gått gjennom OK"
-        value: ${{ jobs.deploy.outputs.deploy_suksess }}
       image:
-        description: "Docker Image navnet som blir deployet til miljø"
-        value: ${{ jobs.build.outputs.image }}
+        description: "Docker Image navnet som ble bygget og deployet"
+        value: ${{ jobs.bygg_test_og_image.outputs.image }}
       tag:
-        description: "Docker tag som blir deployet til miljø"
-        value: ${{ jobs.build.outputs.tag }}
-env:
-  GITHUB_TOKEN: ${{ secrets.READER_TOKEN }}
-  CLUSTER: ${{ inputs.produksjon && 'prod' || 'dev' }}-${{ inputs.nais_cluster }}
-  # Hopp over tester kun ved deploy til q1/q2. Prod (produksjon=true) kjører alltid tester.
-  SKIP_TESTER: ${{ inputs.skip_tester && !inputs.produksjon && (contains(inputs.nais_variabler_filnavn, 'q1.') || contains(inputs.nais_variabler_filnavn, 'q2.')) }}
+        description: "Docker tag som ble bygget og deployet"
+        value: ${{ jobs.bygg_test_og_image.outputs.tag }}
+      digest:
+        description: "Docker image digest"
+        value: ${{ jobs.bygg_test_og_image.outputs.digest }}
 
 jobs:
-  build:
-    name: Build with maven and docker
+  # Bygger, kjører tester og lager Docker-image. Kjører uansett om det skal deploye eller ikke, slik at
+  # PR-er alltid får bygg+test-feedback.
+  bygg_test_og_image:
+    name: Bygg, test og lag image
     runs-on: ${{ inputs.runner }}
     permissions:
       contents: "read"
@@ -127,6 +132,10 @@ jobs:
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
       - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
         with:
+          # githubServer: false - vi definerer selv en "github"-server under, actionen
+          # legger ellers automatisk til en egen "github"-server (med GITHUB_TOKEN),
+          # som kolliderer med vår og gir "duplicate server with id github".
+          githubServer: false
           servers: |
             [
               {
@@ -158,14 +167,9 @@ jobs:
           ~/.local/bin/ktlint ${{ inputs.ktlint_paths }}
       - name: Bygg og kjør tester
         # -Dmaven.antrun.skip=true: hopper over ktlint-antrun-executionen som er bundet til
-        # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og maven-antrun-plugin
-        # brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
-        # -DskipTests=${SKIP_TESTER}: tester hoppes over ved deploy til q1/q2 (testkode kompileres fortsatt).
-        run: |
-          if [ "$SKIP_TESTER" = "true" ]; then
-            echo "::notice::Hopper over tester fordi dette er en deploy til q1/q2 (${{ inputs.nais_variabler_filnavn }})"
-          fi
-          mvn ${{ inputs.maven_options }} clean ${{ inputs.maven_test_lifecycle }} -Dmaven.antrun.skip=true -DskipTests=$SKIP_TESTER -Dparallel=all -DperCoreThreadCount=true -DthreadCount=10
+        # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og
+        # maven-antrun-plugin brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
+        run: mvn ${{ inputs.maven_options }} clean verify -Dmaven.antrun.skip=true
       - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
         if: github.actor != 'dependabot[bot]'
         id: docker-push
@@ -187,7 +191,7 @@ jobs:
 
   salsa:
     name: Generate SBOM, attest and sign image
-    needs: [ build ]
+    needs: bygg_test_og_image
     runs-on: ubuntu-latest
     permissions:
       id-token: "write"
@@ -211,32 +215,84 @@ jobs:
         id: attest-sign
         uses: nais/attest-sign@65d1aaa8b7dc5913ae02b80f16f7c1cf9bad6491 # v2.0.17
         with:
-          image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.build.outputs.digest }}
+          image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
     outputs:
         description: "SBOM.json in cyclonedx format"
         value: ${{ steps.attest-sign.outputs.sbom }}
 
-  deploy:
+  # De tre deploy-jobbene under trenger alle et vellykket bygg,
+  # og kjører kun når kalleren faktisk ber om det aktuelle miljøet (deploy_q1/q2/prod-input).
+  deploy_q1:
+    name: Deploy til q1
+    needs: bygg_test_og_image
+    if: inputs.deploy_q1
     runs-on: ubuntu-latest
-    name: Deploy ${{ inputs.nais_variabler_filnavn }}
-    if: github.actor != 'dependabot[bot]'
-    needs: build
     permissions:
       contents: "read"
       id-token: "write"
-
+    concurrency:
+      group: deploy-${{ github.workflow }}-q1
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          path: deploy
-      - name: Deploy to ${{ env.CLUSTER }} with ${{ inputs.nais_variabler_filnavn }}
+      - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
         uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
         env:
-          CLUSTER: ${{ env.CLUSTER }}
-          RESOURCE: deploy/.nais/${{ inputs.nais_hovedfil_navn }}
-          VARS: deploy/.nais/${{ inputs.nais_variabler_filnavn }}
-          IMAGE: ${{ needs.build.outputs.image }}
-      - id: generate_outputs
-        run: echo "deploy_suksess=true" >> $GITHUB_OUTPUT
-    outputs:
-      deploy_suksess: ${{ steps.generate_outputs.outputs.deploy_suksess }}
+          CLUSTER: dev-${{ inputs.nais_cluster }}
+          RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
+          VARS: .nais/${{ inputs.nais_variabler_filnavn_q1 }}
+          IMAGE: ${{ needs.bygg_test_og_image.outputs.image }}
+
+  deploy_q2:
+    name: Deploy til q2
+    needs: bygg_test_og_image
+    if: inputs.deploy_q2
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    concurrency:
+      group: deploy-${{ github.workflow }}-q2
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
+        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        env:
+          CLUSTER: dev-${{ inputs.nais_cluster }}
+          RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
+          VARS: .nais/${{ inputs.nais_variabler_filnavn_q2 }}
+          IMAGE: ${{ needs.bygg_test_og_image.outputs.image }}
+
+  deploy_prod:
+    name: Deploy til prod
+    needs: bygg_test_og_image
+    if: inputs.deploy_prod
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      id-token: "write"
+    concurrency:
+      group: deploy-${{ github.workflow }}-prod
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
+        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        env:
+          CLUSTER: prod-${{ inputs.nais_cluster }}
+          RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
+          VARS: .nais/${{ inputs.nais_variabler_filnavn_prod }}
+          IMAGE: ${{ needs.bygg_test_og_image.outputs.image }}
+
+  tag_utgivelse:
+    name: "Tag utgivelse"
+    needs: [ bygg_test_og_image, deploy_prod ]
+    if: inputs.deploy_prod
+    permissions:
+      contents: "write"
+    uses: ./.github/workflows/tag_utgivelse.yaml
+    with:
+      tag: ${{ needs.bygg_test_og_image.outputs.tag }}
+      app_navn: ${{ inputs.tag }}
+    secrets: inherit

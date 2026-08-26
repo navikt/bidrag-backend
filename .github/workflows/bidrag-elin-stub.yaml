@@ -1,15 +1,26 @@
 name: Bidrag-elin-stub
 on:
   workflow_dispatch:
+    inputs:
+      miljo:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - q2
+  pull_request:
+    types: [labeled, unlabeled]
+    paths:
+      - 'pom.xml'
+      - '.nais/bidrag-elin-stub/**.yaml'
+      - 'apps/bidrag-elin-stub/**'
   push:
     branches:
       - '**'
-      - '!main'
       - '!dependabot/**'
     paths:
+      - 'pom.xml'
       - '.nais/bidrag-elin-stub/**.yaml'
-#      - '.github/workflows/bidrag-elin-stub.yaml' //TODO(Slå på etter migrering)
-#     - 'pom.xml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-elin-stub/**'
 
 jobs:
@@ -27,22 +38,40 @@ jobs:
       - uses: ./.github/actions/utled-app-endringer
         id: detect
 
-  build_and_deploy:
+  finn_miljo:
+    name: "Bestem hvilke miljø som skal deployes"
     needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true'
-    name: "Build and deploy"
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      pull-requests: "read"
+    outputs:
+      deploy_q2: ${{ steps.finn.outputs.deploy_q2 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/finn-deploy-miljo
+        id: finn
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          dispatch-miljo: ${{ inputs.miljo }}
+
+  bygg_test_og_deploy:
+    name: "Bygg, test og deploy"
+    needs: finn_miljo
     permissions:
       contents: "read"
       id-token: "write"
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
+      nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
+      nais_variabler_filnavn_q2: bidrag-elin-stub/main.yaml
+      deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
       maven_options: -B -fae -pl apps/bidrag-elin-stub -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-elin-stub/pom.xml
       ktlint_paths: apps/bidrag-elin-stub/src/**/*.kt
       docker_context: ./apps/bidrag-elin-stub
-      nais_variabler_filnavn: bidrag-elin-stub/main.yaml
-      nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
       image_suffix: bidrag-elin-stub

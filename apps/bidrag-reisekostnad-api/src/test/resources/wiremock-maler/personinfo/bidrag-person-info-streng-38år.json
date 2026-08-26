@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/bidrag-person/informasjon",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "ident": "STRENG_IDENT"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "body": "{ \"ident\": \"STRENG_IDENT\", \"kortnavn\": \"Streng Menneske\", \"fornavn\": \"Streng\", \"foedselsdato\": \"{{now offset='-38 years'}}\" }",
+    "transformers": ["response-template"],
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

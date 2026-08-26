@@ -1,0 +1,34 @@
+name: bidrag-reisekostnad-api
+ingresses: 
+  - https://bidrag-reisekostnad-api.intern.nav.no
+database:
+  navn: reisekostnad-prod
+  tier: db-g1-small
+  auditlog: "on"
+kafka:
+  pool: nav-prod
+replicas:
+  min: 2
+  max: 2
+limits:
+  memory: 2048Mi
+  cpu: 800m
+requests:
+  memory: 1024Mi
+  cpu: 200m
+env:
+  SPRING_PROFILES_ACTIVE: prod, nais
+  BIDRAG_DOKUMENT_SCOPE: prod-fss.bidrag.bidrag-dokument
+  BIDRAG_DOKUMENT_URL: https://bidrag-dokument.prod-fss-pub.nais.io
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  BIDRAG_PERSON_HOST: bidrag-person.prod-fss-pub.nais.io
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io
+  BIDRAG_REISEKOSTNAD_UI_URL: https://bidrag-reisekostnad.nav.no
+  KJOEREPLAN_ARKIVERING: "0 0 6 * * ?"
+  KJOEREPLAN_DEAKTIVERING: "0 * 7 * * ?"
+  KJOEREPLAN_FYLT_15: "0 30 6 * * ?"
+  KJOEREPLAN_ANONYMISERING: "0 30 5 * * ?"
+azure_access_inbound:
+  - application: bidrag-reisekostnad-ui
+    namespace: bidrag
+    cluster: prod-gcp

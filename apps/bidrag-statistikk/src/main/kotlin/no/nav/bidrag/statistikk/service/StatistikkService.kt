@@ -32,6 +32,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebid
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningForskudd
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnOgKonverterGrunnlagSomErReferertAv
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnSluttberegningIReferanser
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedReferanseKonvertert
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.særbidragskategori
@@ -92,7 +93,8 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                     mottaker = stønadsendring.mottaker.verdi,
                     historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
                     forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
-                        val grunnlagsdata = finnGrunnlagsdataForskudd(vedtakDto.grunnlagListe, periode.grunnlagReferanseListe)
+                        val grunnlagsdata =
+                            finnGrunnlagsdataForskudd(vedtakDto.grunnlagListe, periode.grunnlagReferanseListe, stønadsendring.skyldner.verdi)
 
                         if ((
                                 grunnlagsdata?.barnetsAldersgruppe == null ||
@@ -170,6 +172,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                                 vedtakFraBisys,
                                 vedtakDto.grunnlagListe,
                                 periode.grunnlagReferanseListe,
+                                stønadsendring.kravhaver.verdi,
                             )
 
                         // Sjekker på de grunnlagstypene som alltid skal være med og logger hvis noen av de mangler
@@ -237,6 +240,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                         vedtakFraBisys = vedtakFraBisys,
                         vedtakDto.grunnlagListe,
                         særbidrag.grunnlagReferanseListe,
+                        særbidrag.kravhaver.verdi,
                     )
                 val særbidragshendelse = SærbidragHendelse(
                     vedtaksid = vedtakHendelse.id,
@@ -286,6 +290,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     private fun finnGrunnlagsdataForskudd(
         grunnlagListe: List<GrunnlagDto>,
         grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
+        kravhaver: String,
     ): GrunnlagsdataForskudd? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
@@ -293,7 +298,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         }
 
         val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-        val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
+        val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
         // Finn grunnlagsdata
         val respons = GrunnlagsdataForskudd(
@@ -313,6 +318,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         vedtakFraBisys: Boolean,
         grunnlagListe: List<GrunnlagDto>,
         grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
+        kravhaver: String,
     ): GrunnlagsdataBidrag? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
@@ -339,7 +345,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         } else {
             val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
             val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-            val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
+            val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
             GrunnlagsdataBidrag(
                 bidragsevne = grunnlagListe.finnBidragevneForPeriode(grunnlagsreferanseListePeriode),
@@ -369,6 +375,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         vedtakFraBisys: Boolean,
         grunnlagListe: List<GrunnlagDto>,
         grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
+        kravhaver: String,
     ): GrunnlagsdataSærbidrag? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
@@ -388,7 +395,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         } else {
             val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
             val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-            val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
+            val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
             GrunnlagsdataSærbidrag(
                 kategori = grunnlagListe.særbidragskategori?.kategori,
@@ -631,7 +638,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     fun finnReferanseTilRolle(grunnlagListe: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) = grunnlagListe
         .firstOrNull { it.type == grunnlagstype }?.referanse
 
-    fun finnIdentTilReferanse(grunnlagListe: List<GrunnlagDto>, gjelderKravhaver: String?) = grunnlagListe.hentPersonMedReferanseKonvertert(gjelderKravhaver)?.ident?.verdi
+    fun finnIdentTilReferanse(grunnlagListe: List<GrunnlagDto>, referanse: String?) = grunnlagListe.hentPersonMedReferanseKonvertert(referanse)?.ident?.verdi
+
+    fun finnReferanseTilIdent(grunnlagListe: List<GrunnlagDto>, ident: String) = grunnlagListe.hentPersonMedIdent(ident)?.referanse
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(StatistikkService::class.java)
