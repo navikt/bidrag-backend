@@ -15,7 +15,6 @@ on:
       - '!dependabot/**'
     paths:
       - '.nais/bidrag-kafka-manager/**.yaml'
-#      - '.github/workflows/bidrag-kafka-manager.yaml' //TODO(Slå på etter migrering)
       - 'apps/bidrag-kafka-manager/**'
 
 jobs:

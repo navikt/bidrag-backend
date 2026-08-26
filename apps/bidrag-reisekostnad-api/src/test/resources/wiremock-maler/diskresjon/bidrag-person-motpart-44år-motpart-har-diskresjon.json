@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/bidrag-person/motpartbarnrelasjon",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "ident": "TORDIVEL_IDENT"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 200,
+    "body": "{ \"person\": { \"ident\":\"TORDIVEL_IDENT\", \"fornavn\": \"Tordivel\", \"foedselsdato\": \"{{now offset='-44 years' format='yyyy-MM-dd'}}\" }, \"personensMotpartBarnRelasjon\": [{ \"motpart\": { \"ident\": \"STRENG_IDENT\", \"fornavn\": \"Streng\", \"diskresjonskode\":\"SPSF\", \"foedselsdato\": \"{{now offset='-38 years' format='yyyy-MM-dd'}}\" }, \"fellesBarn\": [{ \"ident\": \"SMÅSTEIN_IDENT\", \"fornavn\": \"Småstein\", \"foedselsdato\": \"{{now offset='-10 years' format='yyyy-MM-dd'}}\" }, { \"ident\": \"GRUS_IDENT\", \"fornavn\": \"Grus\", \"foedselsdato\": \"{{now offset='-16 years' format='yyyy-MM-dd'}}\" }]}]}",
+    "transformers": ["response-template"],
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

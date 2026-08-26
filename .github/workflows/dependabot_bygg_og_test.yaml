@@ -12,7 +12,7 @@ on:
 jobs:
   bygg_og_test:
     name: "Bygg og test alle moduler"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-cores
     concurrency:
       group: dependabot-bygg-test-${{ github.ref }}
       cancel-in-progress: true
@@ -27,6 +27,10 @@ jobs:
           cache: maven
       - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
         with:
+          # githubServer: false - vi definerer selv en "github"-server under, actionen
+          # legger ellers automatisk til en egen "github"-server (med GITHUB_TOKEN),
+          # som kolliderer med vår og gir "duplicate server with id github".
+          githubServer: false
           servers: |
             [
               {
@@ -41,4 +45,4 @@ jobs:
               }
             ]
       - name: Bygg og kjør tester for hele reactoren (inkl. ktlint og IT)
-        run: mvn -B -q -fae verify -Pit
+        run: mvn -B -q -fae -T 1C verify -Pit

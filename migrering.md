@@ -57,23 +57,59 @@ Erstattet det gamle, frittstående workflow-oppsettet
 som kalte gjenbrukbare workflows i `navikt/bidrag-workflow`) med én fil:
 `.github/workflows/bidrag-tilgangskontroll.yaml`.
 
-Ny workflow er skrevet i samme format som `bidrag-aktoerregister.yaml`:
+Ny workflow er skrevet i samme format som `bidrag-belopshistorikk.yaml`/
+`bidrag-aktoerregister.yaml` (dette er nå det etablerte mønsteret for **alle** apper i
+monorepoet — de gamle beskrivelsene med `bygg_og_test`/`sjekk_sync_med_main`/separate
+branch-triggere for q1/q2 og `bygg_og_deploy_prod.yaml` finnes ikke lenger noe sted):
 
-- `bygg_og_test` — bygger og kjører tester (inkl. ktlint) på push til feature-branches.
-- `sjekk_sync_med_main` — sjekker at branchen er synket med `main` før deploy til test-miljø.
-- `deploy_prod` — bruker `bygg_og_deploy_prod.yaml`, trigges av push til `main` eller
-  manuelt dispatch med `environment: prod`.
-- `deploy_q1` / `deploy_q2` — bruker `bygg_og_deploy.yaml`, trigges av push til
-  `q1/**`/`Q1/**` og `q2/**`/`Q2/**`, eller manuelt dispatch.
-- `deploy_unleash_prod` / `deploy_unleash_q1` / `deploy_unleash_q2` — deployer
-  `unleash.yaml` (ApiToken-ressursen) til riktig cluster, etter mønster fra
-  `bidrag-automatisk-jobb.yaml` (den andre appen med lokal unleash-instans).
+- `on`: `workflow_dispatch` (velg `miljo`: `prod`/`q1`/`q2`), `pull_request`
+  (`types: [labeled, unlabeled]`) og `push` på **alle** branches (`'**'`, unntatt
+  `dependabot/**`) — ikke lenger egne `q1/**`/`q2/**`-branch-triggere. Begge
+  event-typene filtreres på `paths` (appens `apps/**` og `.nais/<app>/**.yaml`).
+- `detect_changes` — kjører `./.github/actions/utled-app-endringer`, som regner ut den
+  faktiske diffen mot `main` (merge-base) fremfor GitHubs innebygde push-diff. Dette
+  hindrer at en `main`-merge inn i en branch trigger bygg/deploy for apper som ikke
+  faktisk er endret på branchen.
+- `finn_miljo` — kjører kun hvis `detect_changes.outputs.changed == 'true'` og aktøren
+  ikke er `dependabot[bot]`. Bruker `./.github/actions/finn-deploy-miljo` til å avgjøre
+  `deploy_q1`/`deploy_q2`/`deploy_prod` (prioritert: `workflow_dispatch`-input → push
+  til `main` = alltid prod → PR-labels `q1`/`q2` → for push på andre branches, slår opp
+  labels på evt. åpen PR via `gh pr list`).
+- `bygg_test_og_deploy` — ett enkelt kall til den gjenbrukbare
+  `.github/workflows/bygg_og_deploy.yaml` (ingen egen `bygg_og_deploy_prod.yaml`
+  lenger — samme fil håndterer q1/q2/prod). Sentrale inputs: `nais_hovedfil_navn`,
+  `nais_variabler_filnavn_q1`/`_q2`/`_prod`, `deploy_q1`/`_q2`/`_prod` (booleans fra
+  `finn_miljo`), `maven_options` (typisk `-B -fae -pl apps/<app> -am`),
+  `maven_cache_paths` (root-`pom.xml` + appens egen `pom.xml`, for en presis
+  Maven-cache-nøkkel i stedet for å hashe alle pom.xml i monorepoet), `ktlint_paths`,
+  `docker_context` og `image_suffix`/`tag`.
+
+Selve `bygg_og_deploy.yaml` bygger/tester/lager Docker-image i én jobb (kjører alltid,
+også på PR-er, for rask feedback), signerer/attesterer image (SBOM via `salsa`-jobben),
+og har deretter tre **egne** `deploy_q1`/`deploy_q2`/`deploy_prod`-jobber som hver kun
+kjører når kalleren faktisk ba om det miljøet (`if: inputs.deploy_q1` osv.) — ekte
+`needs`-gating, ikke branch-navn-baserte `if`-betingelser som konkurrerte om å starte
+samtidig slik det var i det gamle oppsettet. Ved vellykket prod-deploy trigges i tillegg
+`tag_utgivelse.yaml` for å tagge en utgivelse.
 
 `docker_context` peker på `./apps/bidrag-tilgangskontroll`, og `dockerfile_with_path`
 er **ikke** satt — bruker dermed default (root sin `Dockerfile`), se punkt 4.
 
 Gammel `apps/bidrag-tilgangskontroll/.github/` (inkl. egen `dependabot.yml`) er slettet.
 Root sin `.github/dependabot.yml` dekker allerede `/apps/*`.
+
+**⚠️ Åpent spørsmål — unleash-deploy:** Det gamle oppsettet hadde egne
+`deploy_unleash_prod`/`_q1`/`_q2`-jobber som deployet `unleash.yaml`
+(ApiToken-ressursen) separat, etter mønster fra `bidrag-automatisk-jobb.yaml`. Ingen av
+de nye app-workflowene (inkl. `bidrag-automatisk-jobb.yaml`, som fortsatt har en
+`.nais/bidrag-automatisk-jobb/unleash.yaml`-fil liggende) deployer lenger `unleash.yaml`
+i det hele tatt — det finnes ingen `unleash`-referanser igjen i noen workflow, og ingen
+commit i historikken forklarer hvorfor jobben ble fjernet (trolig falt den bort under
+den historieløse migreringen av eksisterende apper). `bidrag-tilgangskontroll` har også
+en `.nais/bidrag-tilgangskontroll/unleash.yaml`. **Avklar med teamet før migrering** om
+unleash-ApiToken for denne appen (a) skal deployes manuelt/allerede er deployet og ikke
+endres, eller (b) bør legges til på nytt som en input/jobb i `bygg_og_deploy.yaml` —
+ikke anta at det ene eller andre er riktig uten bekreftelse.
 
 ## 4. Dockerfile
 
