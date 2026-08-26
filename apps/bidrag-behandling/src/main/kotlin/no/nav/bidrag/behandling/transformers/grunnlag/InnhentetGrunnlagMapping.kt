@@ -138,8 +138,8 @@ fun List<Grunnlag>.tilInnhentetAndreBarnTilBidragsmottaker(personobjekter: Set<G
 fun List<Grunnlag>.tilInnhentetHusstandsmedlemmer(
     personobjekter: Set<GrunnlagDto>,
     behandling: Behandling,
-    byggForSøknadsbarn: List<Rolle> = behandling.søknadsbarn,
 ): Set<GrunnlagDto> {
+    val byggForSøknadsbarn = behandling.søknadsbarn
     val personobjekterInnhentetHusstandsmedlem = mutableSetOf<GrunnlagDto>()
 
     fun RelatertPersonGrunnlagDto.opprettPersonGrunnlag(): GrunnlagDto {
