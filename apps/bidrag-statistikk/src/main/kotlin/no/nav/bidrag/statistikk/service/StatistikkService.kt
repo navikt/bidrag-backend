@@ -94,7 +94,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                     historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
                     forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
                         val grunnlagsdata =
-                            finnGrunnlagsdataForskudd(vedtakDto.grunnlagListe, periode.grunnlagReferanseListe, stønadsendring.skyldner.verdi)
+                            finnGrunnlagsdataForskudd(vedtakDto.grunnlagListe, periode.grunnlagReferanseListe, stønadsendring.kravhaver.verdi)
 
                         if ((
                                 grunnlagsdata?.barnetsAldersgruppe == null ||
@@ -297,8 +297,8 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             return null
         }
 
-        val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-        val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
+        val referanseMottaker = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
+        val referanseKravhaver = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
         // Finn grunnlagsdata
         val respons = GrunnlagsdataForskudd(
@@ -306,8 +306,8 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             antallBarnIEgenHusstand = grunnlagListe.finnAntallBarnIEgenHusstandForPeriode(grunnlagsreferanseListePeriode),
             sivilstand = grunnlagListe.finnSivilstandForPeriode(grunnlagsreferanseListePeriode),
             barnBorMedMottaker = grunnlagListe.finnOmbarnBorMedMottakerIPeriode(grunnlagsreferanseListePeriode),
-            mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
-            kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
+            mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
+            kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
         )
 
         return respons
@@ -343,9 +343,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 kravhaverInntektListe = null,
             )
         } else {
-            val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
-            val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-            val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
+            val referanseSkyldner = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
+            val referanseMottaker = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
+            val referanseKravhaver = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
             GrunnlagsdataBidrag(
                 bidragsevne = grunnlagListe.finnBidragevneForPeriode(grunnlagsreferanseListePeriode),
@@ -358,13 +358,13 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 nettoTilsynsutgift = grunnlagListe.finnNettoTilsynsutgiftForPeriode(grunnlagsreferanseListePeriode),
                 faktiskUtgift = grunnlagListe.finnFaktiskUtgiftForPeriode(grunnlagsreferanseListePeriode),
                 samværsfradrag = grunnlagListe.finnSamværsfradragForPeriode(grunnlagsreferanseListePeriode),
-                nettoBarnetilleggSkyldner = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBP),
-                nettoBarnetilleggMottaker = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseBM),
+                nettoBarnetilleggSkyldner = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseSkyldner),
+                nettoBarnetilleggMottaker = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseMottaker),
                 skyldnerBorMedAndreVoksne = grunnlagListe.finnSkyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
                 samværsklasse = grunnlagListe.finnSamværsklasseIPeriode(vedtakErAldersjustering, vedtakFraBisys, grunnlagsreferanseListePeriode),
-                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
-                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
-                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
             )
         }
 
@@ -393,17 +393,17 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 kravhaverInntektListe = null,
             )
         } else {
-            val referanseBP = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
-            val referanseBM = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
-            val søknadsbarnReferanse = finnReferanseTilIdent(grunnlagListe, kravhaver)
+            val referanseSkyldner = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG)
+            val referanseMottaker = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER)
+            val referanseKravhaver = finnReferanseTilIdent(grunnlagListe, kravhaver)
 
             GrunnlagsdataSærbidrag(
                 kategori = grunnlagListe.særbidragskategori?.kategori,
                 kravbeløp = grunnlagListe.utgiftsposter.sumOf { it.kravbeløp },
                 godkjentBeløp = grunnlagListe.utgiftsposter.sumOf { it.godkjentBeløp },
-                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBP, grunnlagListe),
-                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseBM, grunnlagListe),
-                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, søknadsbarnReferanse, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
             )
         }
 
