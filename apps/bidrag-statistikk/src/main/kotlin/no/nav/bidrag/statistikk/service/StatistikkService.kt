@@ -130,7 +130,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             sivilstand = grunnlagsdata?.sivilstand,
                             barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
                             mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                            kravhaverInntektListe = null //TODO(Magnus - Finne denne?)
+                            kravhaverInntektListe = null, // TODO(Magnus - Finne denne?)
                         )
                     },
                 )
@@ -219,7 +219,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             samværsklasse = grunnlagsdata?.samværsklasse,
                             skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
                             mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                            kravhaverInntektListe = null //TODO(Magnus - Finne denne?)
+                            kravhaverInntektListe = null, // TODO(Magnus - Finne denne?)
                         )
                     },
                 )
@@ -260,7 +260,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                     betaltBeløp = særbidrag.betaltBeløp,
                     skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
                     mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                    kravhaverInntektListe = null //TODO(Magnus - Finne denne?
+                    kravhaverInntektListe = null, // TODO(Magnus - Finne denne?
                 )
                 hendelserService.opprettSærbidragshendelse(særbidragshendelse)
             }

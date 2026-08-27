@@ -182,7 +182,7 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
         }
 
         bidragTilFordeling?.innhold?.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM
-        -> {
+            -> {
             Resultatkode.BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM
         }
 
