@@ -23,13 +23,13 @@
     "commander": "^15.0.0",
     "conf": "^15.1.0",
     "dotenv": "^17.4.2",
-    "electron": "^43.4.0",
+    "electron": "^43.4.1",
     "electron-store": "^11.0.2",
     "formdata-node": "^6.0.3",
     "got": "^15.1.0",
     "kafkajs": "^2.2.4",
     "node-fetch": "^3.3.2",
-    "uuid": "^14.0.1"
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
