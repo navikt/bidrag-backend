@@ -1253,7 +1253,7 @@ class VedtakHendelseListenerTest {
 {
 	"kilde": "MANUELT",
 	"type": "ENDRING",
-	"id": 1447,
+	"id": 99999999,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bidrag-behandling-q2",

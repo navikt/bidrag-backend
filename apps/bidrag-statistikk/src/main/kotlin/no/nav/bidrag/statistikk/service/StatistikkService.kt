@@ -74,6 +74,32 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         LOGGER.info("Henter komplett vedtak for vedtaksid: ${vedtakHendelse.id}")
         SECURE_LOGGER.debug("Henter komplett vedtak for vedtaksid: {} vedtak: {}", vedtakHendelse.id, vedtakDto)
 
+        val forskuddsvedtak =
+            !vedtakHendelse.stønadsendringListe.isNullOrEmpty() &&
+                vedtakHendelse.stønadsendringListe?.all { it.type == Stønadstype.FORSKUDD } ?: false
+
+        val bidragsvedtak =
+            !vedtakHendelse.stønadsendringListe.isNullOrEmpty() &&
+                vedtakHendelse.stønadsendringListe?.all {
+                    it.type in setOf(
+                        Stønadstype.OPPFOSTRINGSBIDRAG,
+                        Stønadstype.BIDRAG18AAR,
+                        Stønadstype.BIDRAG,
+                    )
+                } ?: false
+
+        if (forskuddsvedtak && vedtakHendelse.id <= 5367078) {
+            LOGGER.info("Forskuddsvedtak med vedtaksid ${vedtakHendelse.id} lavere eller lik enn 5367078 er allerede behandlet")
+            SECURE_LOGGER.debug("Forskuddsvedtak med vedtaksid ${vedtakHendelse.id} lavere enn 5150003 er allerede behandlet")
+            return
+        }
+
+        if (bidragsvedtak && vedtakHendelse.id <= 5367078) {
+            LOGGER.info("Bidragsvedtak med vedtaksid ${vedtakHendelse.id} lavere eller lik enn 5367078 er allerede behandlet")
+            SECURE_LOGGER.debug("Bidragsvedtak med vedtaksid ${vedtakHendelse.id} lavere enn 5150003 er allerede behandlet")
+            return
+        }
+
         behandleVedtakHendelseForskudd(vedtakHendelse, vedtakDto)
 
         behandleVedtakHendelseBidrag(vedtakHendelse, vedtakDto)
