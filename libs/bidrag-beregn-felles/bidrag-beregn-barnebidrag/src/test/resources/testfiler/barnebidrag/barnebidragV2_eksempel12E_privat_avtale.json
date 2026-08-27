@@ -1,0 +1,75 @@
+[
+  {
+    "periode": {
+      "fom": "2024-05",
+      "til": "2024-12"
+    },
+    "opphørsdato": null,
+    "stønadstype": "BIDRAG",
+    "søknadsbarnReferanse": "Person_Barn_Bidragspliktig_01",
+    "grunnlagListe": [
+      {
+        "referanse": "Person_Barn_Bidragspliktig_01",
+        "type": "PERSON_BARN_BIDRAGSPLIKTIG",
+        "innhold": {
+          "ident": "{FNR_HM1}",
+          "navn": "Privat Søknadsbarn",
+          "fødselsdato": "2013-09-16"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": null
+      },
+      {
+        "referanse": "Person_Bidragspliktig",
+        "type": "PERSON_BIDRAGSPLIKTIG",
+        "innhold": {
+          "ident": "{FNR_BP1}",
+          "navn": "Motvillig Bidragspliktig",
+          "fødselsdato": "1981-07-13"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": null
+      },
+      {
+        "referanse": "Person_Bidragsmottaker_02",
+        "type": "PERSON_BIDRAGSMOTTAKER",
+        "innhold": {
+          "ident": "{FNR_BM2}",
+          "navn": "Privat Bidragsmottaker",
+          "fødselsdato": "1981-01-05"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": null
+      },
+      {
+        "referanse": "Mottatt_Privat_Avtale_Grunnlag_Person_Bidragsmottaker_02_202205",
+        "type": "PRIVAT_AVTALE_GRUNNLAG",
+        "innhold": {
+          "avtaleInngåttDato": "2022-05-01",
+          "skalIndeksreguleres": true,
+          "sakskategori": "U"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderBarnReferanse": "Person_Barn_Bidragspliktig_01",
+        "gjelderReferanse": "Person_Bidragsmottaker_02"
+      },
+      {
+        "referanse": "Mottatt_Privat_Avtale_Periode_Grunnlag_Person_Bidragsmottaker_02_202205",
+        "type": "PRIVAT_AVTALE_PERIODE_GRUNNLAG",
+        "innhold": {
+          "periode": {
+            "fom": "2022-05",
+            "til": null
+          },
+          "beløp": 480.00,
+          "samværsklasse": "SAMVÆRSKLASSE_1",
+          "valutakode": "EUR",
+          "manueltRegistrert": true
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderBarnReferanse": "Person_Barn_Bidragspliktig_01",
+        "gjelderReferanse": "Person_Bidragsmottaker_02"
+      }
+    ]
+  }
+]

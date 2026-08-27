@@ -107,9 +107,9 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.inneholder
 import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.behandling.transformers.vedtakstyperIkkeBeregning
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
-import no.nav.bidrag.boforhold.BoforholdApi
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
-import no.nav.bidrag.boforhold.dto.Bostatus
+import no.nav.bidrag.beregn.boforhold.BoforholdApi
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.boforhold.dto.Bostatus
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.RequestContextAsyncContext
 import no.nav.bidrag.commons.util.SecurityCoroutineContext
@@ -134,9 +134,9 @@ import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.util.visningsnavn
-import no.nav.bidrag.inntekt.InntektApi
-import no.nav.bidrag.sivilstand.SivilstandApi
-import no.nav.bidrag.sivilstand.dto.Sivilstand
+import no.nav.bidrag.beregn.inntekt.InntektApi
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
@@ -170,7 +170,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDate
 import java.time.LocalDateTime
-import no.nav.bidrag.sivilstand.dto.Sivilstand as SivilstandBeregnV2Dto
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand as SivilstandBeregnV2Dto
 
 private val log = KotlinLogging.logger {}
 

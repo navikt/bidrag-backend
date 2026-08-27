@@ -61,7 +61,7 @@
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-beregn-core</artifactId>
-            <version>${bidrag-beregn-felles.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds</groupId>
@@ -89,14 +89,6 @@
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger-annotations.version}</version>
-        </dependency>
-
-        <!-- Avhengigheter for lokal kjøring -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
         </dependency>
 
         <!-- test -->

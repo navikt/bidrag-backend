@@ -104,12 +104,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>com.zaxxer</groupId>
       <artifactId>HikariCP</artifactId>
     </dependency>
@@ -224,8 +218,8 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-inntekt</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <artifactId>bidrag-beregn-inntekt</artifactId>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -240,7 +234,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-beregn-core</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -250,27 +244,8 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-sivilstand</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.errorprone</groupId>
-          <artifactId>error_prone_annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>no.nav.bidrag</groupId>
-          <artifactId>bidrag-backend-domene</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.github.oshai</groupId>
-          <artifactId>kotlin-logging-jvm</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-vedtak</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <artifactId>bidrag-beregn-sivilstand</artifactId>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -288,8 +263,27 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-boforhold</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <artifactId>bidrag-beregn-vedtak</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.errorprone</groupId>
+          <artifactId>error_prone_annotations</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>no.nav.bidrag</groupId>
+          <artifactId>bidrag-backend-domene</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.github.oshai</groupId>
+          <artifactId>kotlin-logging-jvm</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-beregn-boforhold</artifactId>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -308,7 +302,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-beregn-forskudd</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -323,7 +317,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-beregn-saerbidrag</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -337,8 +331,8 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-indeksregulering</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <artifactId>bidrag-beregn-indeksregulering</artifactId>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -353,7 +347,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-beregn-barnebidrag</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>

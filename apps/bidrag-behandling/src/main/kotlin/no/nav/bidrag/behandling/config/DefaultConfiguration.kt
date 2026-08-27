@@ -20,7 +20,7 @@ import no.nav.bidrag.commons.util.EnableSjekkForNyIdent
 import no.nav.bidrag.commons.web.CorrelationIdFilter
 import no.nav.bidrag.commons.web.DefaultCorsFilter
 import no.nav.bidrag.commons.web.UserMdcFilter
-import no.nav.bidrag.inntekt.InntektApi
+import no.nav.bidrag.beregn.inntekt.InntektApi
 import no.nav.security.token.support.client.spring.oauth2.EnableOAuth2Client
 import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
 import org.springframework.context.annotation.Bean

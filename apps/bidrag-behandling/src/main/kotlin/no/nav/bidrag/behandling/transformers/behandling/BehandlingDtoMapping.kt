@@ -88,7 +88,7 @@ import no.nav.bidrag.behandling.transformers.årsinntekterSortert
 import no.nav.bidrag.beregn.core.BeregnApi
 import no.nav.bidrag.beregn.core.util.avrundetTilToDesimaler
 import no.nav.bidrag.beregn.core.util.sluttenAvForrigeMåned
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.commons.service.forsendelse.bidragspliktig
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -107,8 +107,8 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.util.visningsnavn
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
-import no.nav.bidrag.sivilstand.dto.Sivilstand
-import no.nav.bidrag.sivilstand.response.SivilstandBeregnet
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
+import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto

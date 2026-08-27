@@ -110,13 +110,6 @@
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka</artifactId>
     </dependency>
-    <!-- Hot reload under utvikling -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
     <!-- Genererer metadata for konfigurasjonsegenskaper -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
