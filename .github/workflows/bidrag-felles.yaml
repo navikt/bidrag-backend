@@ -8,10 +8,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'libs/bidrag-felles/**'
-  pull_request:
-    types: [opened, reopened, synchronize]
-    paths:
-      - 'libs/bidrag-felles/**'
+  workflow_dispatch:
 
 env:
   FELLES_MODULER: >-
