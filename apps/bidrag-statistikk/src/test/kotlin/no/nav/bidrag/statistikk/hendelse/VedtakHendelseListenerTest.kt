@@ -303,7 +303,6 @@ class VedtakHendelseListenerTest {
             """.trimIndent(),
         )
         verify(statistikkKafkaEventProducerMock, times(1)).publishBidrag(captor.capture())
-        val hendelser = captor.allValues
     }
 
     @Test

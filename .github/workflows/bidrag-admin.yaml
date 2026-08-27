@@ -9,19 +9,20 @@ on:
         options:
           - prod
           - q1
-  pull_request:
-    types: [labeled, unlabeled]
-    paths:
-      - 'pom.xml'
-      - '.nais/bidrag-admin/**.yaml'
-      - 'apps/bidrag-admin/pom.xml'
-      - 'apps/bidrag-admin/bidrag-admin-gcp/**'
+      hopp_over_tester:
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy.
+          Fungerer kun for q1/q2 - ignoreres for prod.
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - '**'
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-admin/**.yaml'
       - 'apps/bidrag-admin/pom.xml'
       - 'apps/bidrag-admin/bidrag-admin-gcp/**'
@@ -41,28 +42,10 @@ jobs:
       - uses: ./.github/actions/utled-app-endringer
         id: detect
 
-  finn_miljo:
-    name: "Bestem hvilke miljø som skal deployes"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      pull-requests: "read"
-    outputs:
-      deploy_q1: ${{ steps.finn.outputs.deploy_q1 }}
-      deploy_prod: ${{ steps.finn.outputs.deploy_prod }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/finn-deploy-miljo
-        id: finn
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          dispatch-miljo: ${{ inputs.miljo }}
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: finn_miljo
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
     permissions:
       contents: "write"
       id-token: "write"
@@ -71,10 +54,11 @@ jobs:
     with:
       nais_hovedfil_navn: bidrag-admin/nais.yaml
       nais_variabler_filnavn_q1: bidrag-admin/dev.yaml
-      deploy_q1: ${{ needs.finn_miljo.outputs.deploy_q1 == 'true' }}
+      deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
       nais_variabler_filnavn_prod: bidrag-admin/prod.yaml
-      deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-admin/bidrag-admin-gcp -am
+      deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+      skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
+      maven_options: -B -fae -pl apps/bidrag-admin/bidrag-admin-gcp
       maven_cache_paths: |
         pom.xml
         apps/bidrag-admin/pom.xml

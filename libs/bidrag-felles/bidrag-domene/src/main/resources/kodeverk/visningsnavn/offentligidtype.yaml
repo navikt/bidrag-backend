@@ -1,0 +1,12 @@
+ORG:
+  intern: "Norsk organisasjonsnummer"
+FNR:
+  intern: "Norsk personnummer"
+UTOR:
+  intern: "Utenlandsk organisasjonsnummer"
+UTPE:
+  intern: "Utenlandsk personnummer"
+DNR:
+  intern: "D-nummer"
+HPR:
+  intern: "Helsepersonellregisteret"

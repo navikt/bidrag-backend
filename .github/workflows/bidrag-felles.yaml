@@ -1,0 +1,90 @@
+name: Bidrag-felles - release og publisering
+# Denne workflowen tar for seg release-draft og publisering av bidrag-felles-modulene
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!dependabot/**'
+    paths:
+      - 'libs/bidrag-felles/**'
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - 'libs/bidrag-felles/**'
+
+env:
+  FELLES_MODULER: >-
+    libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
+
+jobs:
+  oppdater_release_draft:
+    name: "Oppdater release-draft"
+    # Publiseringen skal kun skje ved push til main, ikke fra dependabot-brancher.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "write"
+      pull-requests: "write"
+    outputs:
+      version: ${{ steps.sett_versjon.outputs.version }}
+      publish: ${{ steps.sett_versjon.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Bestem kalenderversjon
+        id: sett_versjon
+        run: |
+          VERSION="$(git log -1 --pretty='%ad' --date=format:'%Y.%m.%d.%H%M%S')"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          PUBLISH="${{ github.ref == 'refs/heads/main' }}"
+          echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
+          echo "Kalenderversjon: ${VERSION} (publish=${PUBLISH})"
+      - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6.1.0
+        with:
+          config-name: release-drafter-bidrag-felles.yml
+          version: ${{ steps.sett_versjon.outputs.version }}
+          tag: ${{ steps.sett_versjon.outputs.version }}
+          name: "bidrag-felles ${{ steps.sett_versjon.outputs.version }}"
+          publish: ${{ steps.sett_versjon.outputs.publish }}
+          commitish: ${{ github.head_ref || github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publiser:
+    name: "Publiser til GitHub Packages"
+    needs: oppdater_release_draft
+    if: needs.oppdater_release_draft.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+      packages: "write"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          githubServer: false
+          servers: |
+            [
+              {
+                "id": "github-bidrag-backend",
+                "username": "x-access-token",
+                "password": "${{ secrets.GITHUB_TOKEN }}"
+              }
+            ]
+      - name: Installer reactoren lokalt
+        run: |
+          mvn -B -q -pl ${{ env.FELLES_MODULER }} -am install -DskipTests
+
+      - name: Sett kalenderversjon på bidrag-felles-modulene
+        run: |
+          mvn -B -q -pl ${{ env.FELLES_MODULER }} versions:set -DnewVersion="${{ needs.oppdater_release_draft.outputs.version }}"
+          mvn -B -q -pl ${{ env.FELLES_MODULER }} versions:commit
+
+      - name: Publiser til GitHub Packages (navikt/bidrag-backend)
+        run: |
+          mvn -B -q -pl ${{ env.FELLES_MODULER }} source:jar-no-fork deploy -Dmaven.test.skip=true -DdeployAtEnd=true -Dmaven.wagon.http.pool=false

@@ -83,7 +83,7 @@
 		<dependency>
 			<groupId>no.nav.bidrag</groupId>
 			<artifactId>bidrag-commons-felles</artifactId>
-			<version>${bidrag-felles.version}</version>
+			<version>${project.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>io.github.oshai</groupId>
@@ -94,7 +94,7 @@
 		<dependency>
 			<groupId>no.nav.bidrag</groupId>
 			<artifactId>bidrag-commons-test-felles</artifactId>
-			<version>${bidrag-felles.version}</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
@@ -106,7 +106,7 @@
 		<dependency>
 			<groupId>no.nav.bidrag</groupId>
 			<artifactId>bidrag-transport-felles</artifactId>
-			<version>${bidrag-felles.version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

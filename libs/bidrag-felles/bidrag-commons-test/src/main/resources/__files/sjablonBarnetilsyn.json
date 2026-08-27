@@ -1,0 +1,785 @@
+[
+  {
+    "typeStonad": "33",
+    "typeTilsyn": "D ",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBarnetilsyn": 470,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:34.793595"
+  },
+  {
+    "typeStonad": "33",
+    "typeTilsyn": "H ",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBarnetilsyn": 1170,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:34.72885"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "D ",
+    "datoFom": "2004-01-01",
+    "datoTom": "2004-06-30",
+    "belopBarnetilsyn": 240,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2003-12-22T15:03:12.695166"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "D ",
+    "datoFom": "2004-07-01",
+    "datoTom": "2006-06-30",
+    "belopBarnetilsyn": 220,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-06-22T13:12:14.496089"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "D ",
+    "datoFom": "2006-07-01",
+    "datoTom": "2007-06-30",
+    "belopBarnetilsyn": 190,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2006-06-28T16:00:00.0"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "D ",
+    "datoFom": "2007-07-01",
+    "datoTom": "2008-06-30",
+    "belopBarnetilsyn": 180,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2007-06-06T16:00:00.0"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "D ",
+    "datoFom": "2008-07-01",
+    "datoTom": "2008-12-31",
+    "belopBarnetilsyn": 200,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:08:28.065783"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2009-01-01",
+    "datoTom": "2009-06-30",
+    "belopBarnetilsyn": 232,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:05:33.465387"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBarnetilsyn": 241,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:26:19.706"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBarnetilsyn": 253,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T10:54:47.593"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBarnetilsyn": 263,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:08:26.42"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBarnetilsyn": 324,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T15:55:21.897"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBarnetilsyn": 281,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:13:27.178"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBarnetilsyn": 296,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T09:55:31.265"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBarnetilsyn": 308,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:37:10.697"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBarnetilsyn": 324,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:01:19.196"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBarnetilsyn": 330,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-16T13:34:01.46"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBarnetilsyn": 335,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:28:25.414"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBarnetilsyn": 355,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:13:17.034"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBarnetilsyn": 358,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:11:46.679"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBarnetilsyn": 382,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:17:07.829"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBarnetilsyn": 406,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:17:07.796"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBarnetilsyn": 355,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-05-12T15:08:29.111581"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBarnetilsyn": 422,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:45:35.811491"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DO",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBarnetilsyn": 408,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T00:59:46.077731"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2009-01-01",
+    "datoTom": "2009-06-30",
+    "belopBarnetilsyn": 200,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:05:33.367598"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBarnetilsyn": 199,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:27:04.177"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBarnetilsyn": 203,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T10:55:14.491"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBarnetilsyn": 201,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:09:28.112"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBarnetilsyn": 198,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T15:58:22.483"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBarnetilsyn": 203,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:13:51.614"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBarnetilsyn": 203,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T09:56:32.734"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBarnetilsyn": 210,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:37:39.774"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBarnetilsyn": 219,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:01:54.642"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBarnetilsyn": 210,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-24T14:35:31.057"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBarnetilsyn": 249,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:28:50.969"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBarnetilsyn": 258,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:14:13.807"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBarnetilsyn": 257,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:12:37.611"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBarnetilsyn": 267,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:17:49.319"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBarnetilsyn": 275,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:17:49.315"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBarnetilsyn": 252,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-05-12T15:08:29.109697"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBarnetilsyn": 248,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:45:35.795716"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "DU",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBarnetilsyn": 171,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T00:59:46.062424"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2004-01-01",
+    "datoTom": "2004-06-30",
+    "belopBarnetilsyn": 600,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2003-12-22T15:03:56.289528"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2004-07-01",
+    "datoTom": "2005-06-30",
+    "belopBarnetilsyn": 560,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-06-22T13:11:33.64736"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2005-07-01",
+    "datoTom": "2006-06-30",
+    "belopBarnetilsyn": 540,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2005-06-20T14:17:09.347069"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2006-07-01",
+    "datoTom": "2007-06-30",
+    "belopBarnetilsyn": 470,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2006-06-28T16:00:00.0"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2007-07-01",
+    "datoTom": "2008-06-30",
+    "belopBarnetilsyn": 450,
+    "brukerid": "ABB9101 ",
+    "tidspktEndret": "2007-06-06T16:00:00.0"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "H ",
+    "datoFom": "2008-07-01",
+    "datoTom": "2008-12-31",
+    "belopBarnetilsyn": 490,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:08:28.091216"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2009-01-01",
+    "datoTom": "2009-06-30",
+    "belopBarnetilsyn": 408,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:05:33.465549"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBarnetilsyn": 428,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:28:06.255"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBarnetilsyn": 420,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T10:55:52.45"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBarnetilsyn": 436,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:10:06.959"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBarnetilsyn": 519,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T15:59:25.917"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBarnetilsyn": 463,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:14:41.238"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBarnetilsyn": 484,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T09:57:37.027"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBarnetilsyn": 501,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:38:09.621"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBarnetilsyn": 522,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:02:17.09"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBarnetilsyn": 542,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-16T13:35:06.995"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBarnetilsyn": 546,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:29:19.589"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBarnetilsyn": 579,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:14:53.81"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBarnetilsyn": 589,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:13:14.75"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBarnetilsyn": 633,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:19:11.035"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBarnetilsyn": 668,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:19:11.032"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBarnetilsyn": 664,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-05-12T15:08:29.107838"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBarnetilsyn": 686,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:45:35.791395"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HO",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBarnetilsyn": 521,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T00:59:46.061089"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2009-01-01",
+    "datoTom": "2009-06-30",
+    "belopBarnetilsyn": 490,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-12-18T12:05:33.465008"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2009-07-01",
+    "datoTom": "2010-06-30",
+    "belopBarnetilsyn": 498,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2010-05-14T09:29:02.272"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2010-07-01",
+    "datoTom": "2011-06-30",
+    "belopBarnetilsyn": 507,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2011-05-10T10:56:25.846"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2011-07-01",
+    "datoTom": "2012-06-30",
+    "belopBarnetilsyn": 502,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2012-05-14T14:10:48.562"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2012-07-01",
+    "datoTom": "2013-06-30",
+    "belopBarnetilsyn": 495,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2013-05-10T16:00:30.337"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2013-07-01",
+    "datoTom": "2014-06-30",
+    "belopBarnetilsyn": 506,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2014-05-15T14:15:01.518"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2014-07-01",
+    "datoTom": "2015-06-30",
+    "belopBarnetilsyn": 508,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2015-05-11T09:58:29.416"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2015-07-01",
+    "datoTom": "2016-06-30",
+    "belopBarnetilsyn": 524,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2016-05-13T09:38:31.061"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2016-07-01",
+    "datoTom": "2017-06-30",
+    "belopBarnetilsyn": 547,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2017-05-11T11:02:39.469"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2017-07-01",
+    "datoTom": "2018-06-30",
+    "belopBarnetilsyn": 526,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2018-05-24T14:36:32.965"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2018-07-01",
+    "datoTom": "2019-06-30",
+    "belopBarnetilsyn": 624,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2019-05-13T09:29:42.393"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2019-07-01",
+    "datoTom": "2020-06-30",
+    "belopBarnetilsyn": 644,
+    "brukerid": "A100364 ",
+    "tidspktEndret": "2020-05-17T14:15:49.241"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2020-07-01",
+    "datoTom": "2021-06-30",
+    "belopBarnetilsyn": 643,
+    "brukerid": "R128631 ",
+    "tidspktEndret": "2021-05-14T11:13:51.302"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2021-07-01",
+    "datoTom": "2022-06-30",
+    "belopBarnetilsyn": 668,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:19:46.729"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2022-07-01",
+    "datoTom": "2023-06-30",
+    "belopBarnetilsyn": 687,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2022-05-16T13:19:46.726"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2023-07-01",
+    "datoTom": "2024-06-30",
+    "belopBarnetilsyn": 630,
+    "brukerid": "H139831 ",
+    "tidspktEndret": "2023-05-12T15:08:29.094114"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2024-07-01",
+    "datoTom": "2025-06-30",
+    "belopBarnetilsyn": 621,
+    "brukerid": "H139831",
+    "tidspktEndret": "2024-06-22T17:45:35.781179"
+  },
+  {
+    "typeStonad": "64",
+    "typeTilsyn": "HU",
+    "datoFom": "2025-07-01",
+    "datoTom": "9999-12-31",
+    "belopBarnetilsyn": 428,
+    "brukerid": "H139831",
+    "tidspktEndret": "2025-06-03T00:59:46.053482"
+  },
+  {
+    "typeStonad": "66",
+    "typeTilsyn": "D ",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBarnetilsyn": 250,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:34.793604"
+  },
+  {
+    "typeStonad": "66",
+    "typeTilsyn": "H ",
+    "datoFom": "2003-01-01",
+    "datoTom": "2003-12-31",
+    "belopBarnetilsyn": 620,
+    "brukerid": "TUB2970 ",
+    "tidspktEndret": "2003-09-25T08:29:34.79358"
+  }
+]

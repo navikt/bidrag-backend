@@ -1,0 +1,24 @@
+MED_FORELDER:
+  intern: "Registrert på adresse"
+DOKUMENTERT_SKOLEGANG:
+  intern: "Dokumentert skolegang"
+IKKE_MED_FORELDER:
+  intern: "Ikke registrert på adresse"
+MED_VERGE:
+  intern: "Bor med verge"
+ALENE:
+  intern: "Bor alene"
+DELT_BOSTED:
+  intern: "Delt bosted"
+REGNES_IKKE_SOM_BARN:
+  intern: "Regnes ikke som barn"
+BOR_MED_ANDRE_VOKSNE:
+  intern: "Bor med andre voksne"
+BOR_IKKE_MED_ANDRE_VOKSNE:
+  intern: "Bor ikke med andre voksne"
+UNNTAK_HOS_ANDRE:
+  intern: "Unntak - bor hos andre"
+UNNTAK_ALENE:
+  intern: "Unntak - bor alene"
+UNNTAK_ENSLIG_ASYLSØKER:
+  intern: "Unntak - enslig asylsøker"

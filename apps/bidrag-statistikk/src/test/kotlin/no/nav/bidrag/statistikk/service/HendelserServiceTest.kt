@@ -1,6 +1,5 @@
 package no.nav.bidrag.statistikk.service
 
-import com.github.tomakehurst.wiremock.WireMockServer
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
@@ -24,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.wiremock.spring.ConfigureWireMock
 import org.wiremock.spring.EnableWireMock
-import org.wiremock.spring.InjectWireMock
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,8 +33,6 @@ import java.time.LocalDateTime
 @EnableMockOAuth2Server
 @EnableWireMock(ConfigureWireMock(name = "my-service", port = 0))
 class HendelserServiceTest {
-    @InjectWireMock("my-service")
-    var wireMock: WireMockServer? = null
 
     @Autowired
     private lateinit var hendelserService: HendelserService

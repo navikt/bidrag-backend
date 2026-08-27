@@ -1,0 +1,146 @@
+[
+  {
+    "antBarnTom": 1,
+    "datoFom": "2001-01-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 2083.33,
+    "brukerid": "MASTER  ",
+    "tidspktEndret": "2003-09-25T08:29:46.671131"
+  },
+  {
+    "antBarnTom": 2,
+    "datoFom": "2001-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 2500,
+    "brukerid": "MASTER  ",
+    "tidspktEndret": "2003-09-25T08:29:46.671235"
+  },
+  {
+    "antBarnTom": 2,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 3333,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.879881"
+  },
+  {
+    "antBarnTom": 3,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 2917,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:45:10.2533"
+  },
+  {
+    "antBarnTom": 3,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 4583,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.898534"
+  },
+  {
+    "antBarnTom": 4,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 3333,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:45:53.446054"
+  },
+  {
+    "antBarnTom": 4,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 5833,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.913499"
+  },
+  {
+    "antBarnTom": 5,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 3750,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:46:28.973832"
+  },
+  {
+    "antBarnTom": 5,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 7083,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.931492"
+  },
+  {
+    "antBarnTom": 6,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 4167,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:47:00.744496"
+  },
+  {
+    "antBarnTom": 6,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 8333,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.949767"
+  },
+  {
+    "antBarnTom": 7,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 4583,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:47:39.282057"
+  },
+  {
+    "antBarnTom": 7,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 9583,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.967053"
+  },
+  {
+    "antBarnTom": 8,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 5000,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:48:14.78812"
+  },
+  {
+    "antBarnTom": 8,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 10833,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:51.98459"
+  },
+  {
+    "antBarnTom": 99,
+    "datoFom": "2001-01-01",
+    "datoTom": "2004-12-31",
+    "maksBelopFradrag": 2500,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2003-09-25T08:29:46.671246"
+  },
+  {
+    "antBarnTom": 99,
+    "datoFom": "2005-01-01",
+    "datoTom": "2008-06-30",
+    "maksBelopFradrag": 5417,
+    "brukerid": "JAA2920 ",
+    "tidspktEndret": "2004-12-21T11:49:22.040753"
+  },
+  {
+    "antBarnTom": 99,
+    "datoFom": "2008-07-01",
+    "datoTom": "9999-12-31",
+    "maksBelopFradrag": 12083,
+    "brukerid": "HBB9101 ",
+    "tidspktEndret": "2008-06-11T13:55:52.0065"
+  }
+]

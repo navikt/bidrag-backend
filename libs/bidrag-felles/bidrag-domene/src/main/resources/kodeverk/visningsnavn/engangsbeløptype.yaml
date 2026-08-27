@@ -1,0 +1,24 @@
+DIREKTE_OPPGJOR:
+  intern: "Deprecated - use DIREKTE_OPPGJØR instead"
+SAERTILSKUDD:
+  intern: "Deprecated - use SÆRTILSKUDD instead"
+DIREKTE_OPPGJØR:
+  intern: "Direkte oppgjør"
+ETTERGIVELSE:
+  intern: "Ettergivelse"
+ETTERGIVELSE_TILBAKEKREVING:
+  intern: "Ettergivelse tilbakekreving"
+GEBYR_MOTTAKER:
+  intern: "Gebyr mottaker"
+GEBYR_SKYLDNER:
+  intern: "Gebyr skyldner"
+INNKREVING_GJELD:
+  intern: "Innkreving gjeld"
+TILBAKEKREVING:
+  intern: "Tilbakekreving"
+TILBAKEKREVING_BIDRAG:
+  intern: "Tilbakekreving bidrag"
+SÆRTILSKUDD:
+  intern: "Særtilskudd"
+SÆRBIDRAG:
+  intern: "Særbidrag"

@@ -8,18 +8,20 @@ on:
         type: choice
         options:
           - q2
-  pull_request:
-    types: [labeled, unlabeled]
-    paths:
-      - 'pom.xml'
-      - '.nais/bidrag-elin-stub/**.yaml'
-      - 'apps/bidrag-elin-stub/**'
+      hopp_over_tester:
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy.
+          Fungerer kun for q1/q2 - ignoreres for prod.
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - '**'
       - '!dependabot/**'
     paths:
       - 'pom.xml'
+      - 'libs/bidrag-felles/**'
       - '.nais/bidrag-elin-stub/**.yaml'
       - 'apps/bidrag-elin-stub/**'
 
@@ -38,27 +40,10 @@ jobs:
       - uses: ./.github/actions/utled-app-endringer
         id: detect
 
-  finn_miljo:
-    name: "Bestem hvilke miljø som skal deployes"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      pull-requests: "read"
-    outputs:
-      deploy_q2: ${{ steps.finn.outputs.deploy_q2 }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/finn-deploy-miljo
-        id: finn
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          dispatch-miljo: ${{ inputs.miljo }}
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: finn_miljo
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
     permissions:
       contents: "write"
       id-token: "write"
@@ -67,8 +52,9 @@ jobs:
     with:
       nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
       nais_variabler_filnavn_q2: bidrag-elin-stub/main.yaml
-      deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
-      maven_options: -B -fae -pl apps/bidrag-elin-stub -am
+      deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
+      skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
+      maven_options: -B -fae -pl apps/bidrag-elin-stub
       maven_cache_paths: |
         pom.xml
         apps/bidrag-elin-stub/pom.xml

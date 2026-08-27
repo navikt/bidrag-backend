@@ -58,17 +58,17 @@
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-commons-felles</artifactId>
-            <version>${bidrag-felles.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-transport-felles</artifactId>
-            <version>${bidrag-felles.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-generer-testdata-felles</artifactId>
-            <version>${bidrag-felles.version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -152,7 +152,7 @@
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-commons-test-felles</artifactId>
-            <version>${bidrag-felles.version}</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

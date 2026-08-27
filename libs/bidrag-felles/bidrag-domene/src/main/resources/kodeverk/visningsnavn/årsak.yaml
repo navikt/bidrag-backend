@@ -1,0 +1,89 @@
+ANNET:
+  intern: "Annet"
+
+ENDRING_3_MÅNEDER_TILBAKE:
+  intern: "Endring 3 måneder tilbake"
+
+ENDRING_3_ÅRS_REGELEN:
+  intern: "Endring 3 års regelen"
+
+FRA_BARNETS_FØDSEL:
+  intern: "Fra barnets fødsel"
+
+FRA_BARNETS_FLYTTEMÅNED:
+  intern: "Fra barnets flyttemåned"
+
+FRA_KRAVFREMSETTELSE:
+  intern: "Fra kravfremsettelse"
+
+FRA_MÅNED_ETTER_INNTEKTEN_ØKTE:
+  intern: "Fra måned etter inntekten økte"
+
+FRA_OPPHOLDSTILLATELSE:
+  intern: "Fra oppholdstillatelse"
+
+FRA_SØKNADSTIDSPUNKT:
+  intern: "Fra søknadstidspunkt"
+
+FRA_SAMLIVSBRUDD:
+  intern: "Fra samlivsbrudd"
+
+FRA_SAMME_MÅNED_SOM_INNTEKTEN_BLE_REDUSERT:
+  intern: "Fra samme måned som inntekten ble redusert"
+
+PRIVAT_AVTALE:
+  intern: "Privat avtale"
+
+REVURDERING_MÅNEDEN_ETTER:
+  intern: "Revurdering måneden etter"
+
+SØKNADSTIDSPUNKT_ENDRING:
+  intern: "Søknadstidspunkt endring"
+
+TIDLIGERE_FEILAKTIG_AVSLAG:
+  intern: "Tidligere feilaktig avslag"
+
+TRE_MÅNEDER_TILBAKE:
+  intern: "Tre måneder tilbake"
+
+TRE_ÅRS_REGELEN:
+  intern: "Tre års regelen"
+
+FRA_MÅNEDEN_ETTER_I_PÅVENTE_AV_BIDRAGSSAK:
+  intern: "Fra måneden etter i påvente av bidragssak"
+
+FRA_MÅNEDEN_ETTER_PRIVAT_AVTALE:
+  intern: "Fra etter privat avtale"
+
+FRA_MÅNEDEN_ETTER_FYLTE_18_ÅR:
+  intern: "Fra måneden etter fylte 18 år"
+
+BIDRAGSPLIKTIG_HAR_IKKE_BIDRATT_TIL_FORSØRGELSE:
+  intern: "Bidragspliktig har ikke bidratt til forsørgelse"
+
+FRA_ENDRINGSTIDSPUNKT:
+  intern: "Fra endringstidspunkt"
+
+MÅNED_ETTER_BETALT_FORFALT_BIDRAG:
+  intern: "Måned etter betalt/forfalt bidrag"
+
+FRA_MÅNED_ETTER_ENDRET_SØKNAD:
+  intern: "Fra måneden etter endret søknad"
+
+FORHØYELSE_TILBAKE_I_TID:
+  intern: "Forhøyelse tilbake i tid"
+
+AVSLAG_FORHØYELSE_TILBAKE:
+  intern: "Avslag forhøyelse tilbake"
+
+AVSLAG_NEDSETTELSE_TILBAKE:
+  intern: "Avslag nedsettelse tilbake"
+
+OMREGNING:
+  intern: "Omregning"
+
+AUTOMATISK_JUSTERING:
+  intern: "Automatisk justering"
+
+NEDSETTELSE_TILBAKE_I_TID:
+  intern: "Nedsettelse tilbake i tid"

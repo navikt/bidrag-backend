@@ -1,0 +1,55 @@
+AAP:
+  intern: "AAP"
+DAGPENGER:
+  intern: "Dagpenger"
+FORELDREPENGER:
+  intern: "Foreldrepenger"
+INTRODUKSJONSSTØNAD:
+  intern: "Introduksjonsstønad"
+KVALIFISERINGSSTØNAD:
+  intern: "Kvalifiseringsstønad"
+OVERGANGSSTØNAD:
+  intern: "Overgangsstønad"
+PENSJON:
+  intern: "Pensjon"
+SYKEPENGER:
+  intern: "Sykepenger"
+KONTANTSTØTTE:
+  intern: "Kontantstøtte"
+SMÅBARNSTILLEGG:
+  intern: "Småbarnstillegg"
+UTVIDET_BARNETRYGD:
+  intern: "Utvidet barnetrygd"
+KAPITALINNTEKT:
+  intern: "Kapitalinntekt"
+LØNNSINNTEKT:
+  intern: "Lønnsinntekt"
+NÆRINGSINNTEKT:
+  intern: "Næringsinntekt"
+BARNETILSYN:
+  intern: "Barnetilsyn"
+
+BARNETILLEGG_PENSJON:
+  intern: "Pensjon"
+BARNETILLEGG_UFØRETRYGD:
+  intern: "Uføretrygd"
+BARNETILLEGG_DAGPENGER:
+  intern: "Dagpenger"
+BARNETILLEGG_KVALIFISERINGSSTØNAD:
+  intern: "Kvalifiseringsstønad"
+BARNETILLEGG_AAP:
+  intern: "AAP"
+BARNETILLEGG_DNB:
+  intern: "DNB"
+BARNETILLEGG_NORDEA:
+  intern: "Nordea"
+BARNETILLEGG_STOREBRAND:
+  intern: "Storebrand"
+BARNETILLEGG_KLP:
+  intern: "KLP"
+BARNETILLEGG_SPK:
+  intern: "SPK"
+BARNETILLEGG_TILTAKSPENGER:
+  intern: "Tiltakspenger"
+BARNETILLEGG_SUMMERT:
+  intern: "Summert (fra Bisys)"

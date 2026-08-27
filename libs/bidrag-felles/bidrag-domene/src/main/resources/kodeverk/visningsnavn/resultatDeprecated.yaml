@@ -1,0 +1,91 @@
+FORSKUDD:
+  AVSLAG:
+    intern: "Avslag"
+    bruker:
+      NB: "Avslag"
+  REDUSERT_FORSKUDD_50_PROSENT:
+    intern: "Redusert forskudd"
+    bruker:
+      NB: "Redusert forskudd"
+  ORDINÆRT_FORSKUDD_75_PROSENT:
+    intern: "Ordinært forskudd"
+    bruker:
+      NB: "Ordinært forskudd"
+  FORHØYET_FORSKUDD_100_PROSENT:
+    intern: "Forhøyet forskudd"
+    bruker:
+      NB: "Forhøyet forskudd"
+  FORHØYET_FORSKUDD_11_ÅR_125_PROSENT:
+    intern: "Forhøyet forskudd ved 11 år"
+    bruker:
+      NB: "Forhøyet forskudd ved 11 år"
+BARNEBIDRAG:
+  BARNET_ER_SELVFORSØRGET:
+    intern: "Barnet er selvforsørget"
+    bruker:
+      NB: "Barnet er selvforsørget"
+  BEGRENSET_EVNE_FLERE_SAKER_UTFØR_FORHOLDSMESSIG_FORDELING:
+    intern: "Begrenset evne, flere saker, utfør forholdsmessig fordeling"
+    bruker:
+      NB: "Begrenset evne, flere saker, utfør forholdsmessig fordeling"
+  BEGRENSET_REVURDERING:
+    intern: "Begrenset revurdering"
+    bruker:
+      NB: "Begrenset revurdering"
+  BIDRAG_IKKE_BEREGNET_DELT_BOSTED:
+    intern: "Bidrag ikke beregnet, delt bosted"
+    bruker:
+      NB: "Bidrag ikke beregnet, delt bosted"
+  BIDRAG_REDUSERT_AV_EVNE:
+    intern: "Bidrag redusert av evne"
+    bruker:
+      NB: "Bidrag redusert av evne"
+  BIDRAG_REDUSERT_TIL_25_PROSENT_AV_INNTEKT:
+    intern: "Bidrag redusert til 25 prosent av inntekt"
+    bruker:
+      NB: "Bidrag redusert til 25 prosent av inntekt"
+  BIDRAG_SATT_TIL_BARNETILLEGG_BP:
+    intern: "Bidrag satt til barnetillegg fra BP"
+    bruker:
+      NB: "Bidrag satt til barnetillegg fra BP"
+  BIDRAG_SATT_TIL_BARNETILLEGG_FORSVARET:
+    intern: "Bidrag satt til barnetillegg fra forsvaret"
+    bruker:
+      NB: "Bidrag satt til barnetillegg fra forsvaret"
+  BIDRAG_SATT_TIL_UNDERHOLDSKOSTNAD_MINUS_BARNETILLEGG_BM:
+    intern: "Bidrag satt til underholdskostnad minus barnetillegg BM"
+    bruker:
+      NB: "Bidrag satt til underholdskostnad minus barnetillegg BM"
+  DELT_BOSTED:
+    intern: "Delt bosted"
+    bruker:
+      NB: "Delt bosted"
+  FORHOLDSMESSIG_FORDELING_BIDRAGSBELØP_ENDRET:
+    intern: "Forholdsmessig fordeling, bidragsbeløp endret"
+    bruker:
+      NB: "Forholdsmessig fordeling, bidragsbeløp endret"
+  FORHOLDSMESSIG_FORDELING_INGEN_ENDRING:
+    intern: "Forholdsmessig fordeling, ingen endring"
+    bruker:
+      NB: "Forholdsmessig fordeling, ingen endring"
+  INGEN_EVNE:
+    intern: "Ingen evne"
+    bruker:
+      NB: "Ingen evne"
+  KOSTNADSBEREGNET_BIDRAG:
+    intern: "Kostnadsberegnet bidrag"
+    bruker:
+      NB: "Kostnadsberegnet bidrag"
+SÆRTILSKUDD:
+  BARNET_ER_SELVFORSØRGET:
+    intern: "Barnet er selvforsørget"
+    bruker:
+      NB: "Barnet er selvforsørget"
+  SÆRTILSKUDD_INNVILGET:
+    intern: "Særtilskudd innvilget"
+    bruker:
+      NB: "Særtilskudd innvilget"
+  SÆRTILSKUDD_IKKE_FULL_BIDRAGSEVNE:
+    intern: "Særtilskudd ikke full bidragsevne"
+    bruker:
+      NB: "Særtilskudd ikke full bidragsevne"
