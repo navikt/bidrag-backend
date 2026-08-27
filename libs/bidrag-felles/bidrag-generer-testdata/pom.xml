@@ -10,8 +10,7 @@
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>bidrag-generer-testdata-felles</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>bidrag-backend-generer-testdata</artifactId>
     <name>bidrag-generer-testdata</name>
     <packaging>jar</packaging>
 
@@ -39,7 +38,7 @@
     <dependencies>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-domene-felles</artifactId>
+            <artifactId>bidrag-backend-domene</artifactId>
             <version>${project.version}</version>
             <exclusions>
                 <exclusion>

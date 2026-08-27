@@ -78,10 +78,6 @@ jobs:
                 "password": "${{ secrets.GITHUB_TOKEN }}"
               }
             ]
-      - name: Installer reactoren lokalt
-        run: |
-          mvn -B -q -pl ${{ env.FELLES_MODULER }} -am install -DskipTests
-
       - name: Sett kalenderversjon på bidrag-felles-modulene
         run: |
           mvn -B -q -pl ${{ env.FELLES_MODULER }} versions:set -DnewVersion="${{ needs.oppdater_release_draft.outputs.version }}"

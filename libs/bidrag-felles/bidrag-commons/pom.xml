@@ -9,8 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>bidrag-commons-felles</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <artifactId>bidrag-backend-commons</artifactId>
   <name>bidrag-commons</name>
     <packaging>jar</packaging>
 
@@ -148,12 +147,12 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-transport-felles</artifactId>
+      <artifactId>bidrag-backend-transport</artifactId>
       <version>${project.version}</version>
     </dependency>
       <dependency>
           <groupId>no.nav.bidrag</groupId>
-          <artifactId>bidrag-generer-testdata-felles</artifactId>
+          <artifactId>bidrag-backend-generer-testdata</artifactId>
           <version>${project.version}</version>
       </dependency>
     <dependency>

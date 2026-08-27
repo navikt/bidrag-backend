@@ -157,12 +157,12 @@
         <!-- bidrag-felles -->
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-transport-felles</artifactId>
+            <artifactId>bidrag-backend-transport</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-commons-felles</artifactId>
+            <artifactId>bidrag-backend-commons</artifactId>
             <version>${project.version}</version>
         </dependency>
 

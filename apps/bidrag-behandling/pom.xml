@@ -182,7 +182,7 @@
     <!--NAV-->
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-commons-felles</artifactId>
+      <artifactId>bidrag-backend-commons</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -201,7 +201,7 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-commons-test-felles</artifactId>
+      <artifactId>bidrag-backend-commons-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
@@ -213,7 +213,7 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-transport-felles</artifactId>
+      <artifactId>bidrag-backend-transport</artifactId>
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
@@ -259,7 +259,7 @@
         </exclusion>
         <exclusion>
           <groupId>no.nav.bidrag</groupId>
-          <artifactId>bidrag-domene-felles</artifactId>
+          <artifactId>bidrag-backend-domene</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.github.oshai</groupId>
@@ -278,7 +278,7 @@
         </exclusion>
         <exclusion>
           <groupId>no.nav.bidrag</groupId>
-          <artifactId>bidrag-domene-felles</artifactId>
+          <artifactId>bidrag-backend-domene</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.github.oshai</groupId>
@@ -297,7 +297,7 @@
         </exclusion>
         <exclusion>
           <groupId>no.nav.bidrag</groupId>
-          <artifactId>bidrag-domene-felles</artifactId>
+          <artifactId>bidrag-backend-domene</artifactId>
         </exclusion>
         <exclusion>
           <groupId>io.github.oshai</groupId>

@@ -10,8 +10,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>bidrag-domene-felles</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <artifactId>bidrag-backend-domene</artifactId>
   <name>bidrag-domene</name>
   <packaging>jar</packaging>
 
