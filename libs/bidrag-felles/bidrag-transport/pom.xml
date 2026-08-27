@@ -12,6 +12,7 @@
   </parent>
 
   <artifactId>bidrag-backend-transport</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
   <name>bidrag-transport</name>
   <packaging>jar</packaging>
 
