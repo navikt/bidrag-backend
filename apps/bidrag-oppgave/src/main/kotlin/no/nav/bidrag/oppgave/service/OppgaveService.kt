@@ -38,6 +38,12 @@ private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     id = id.verdi,
     tittel = "$tema - $oppgavetype",
     beskrivelse = beskrivelse,
+    beskrivelseshistorikk = OppgaveBeskrivelseParser.parse(
+        beskrivelse = beskrivelse,
+        sistEndretTidspunkt = endretTidspunkt ?: opprettetTidspunkt,
+        sistEndretAv = endretAv ?: opprettetAv,
+        sistEndretEnhetsnr = endretAvEnhetsnr ?: opprettetAvEnhetsnr,
+    ),
     status = status.tilBidragStatus(),
     opprettet = opprettetTidspunkt,
 )

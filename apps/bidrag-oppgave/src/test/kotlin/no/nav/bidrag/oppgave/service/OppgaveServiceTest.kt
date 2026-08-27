@@ -70,6 +70,8 @@ class OppgaveServiceTest {
         val oppgave = oppgaver.single()
         assertThat(oppgave.id).isEqualTo(123)
         assertThat(oppgave.beskrivelse).isEqualTo("En bidragsoppgave")
+        assertThat(oppgave.beskrivelseshistorikk).hasSize(1)
+        assertThat(oppgave.beskrivelseshistorikk.single().kommentar).isEqualTo("En bidragsoppgave")
         assertThat(oppgave.status).isEqualTo(OppgaveStatus.UNDER_BEHANDLING)
         assertThat(oppgave.opprettet).isEqualTo(opprettet)
         mockServer.verify()
