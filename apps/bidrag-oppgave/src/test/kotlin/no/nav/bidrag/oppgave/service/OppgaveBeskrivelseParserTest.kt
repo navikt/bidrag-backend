@@ -1,11 +1,9 @@
 package no.nav.bidrag.oppgave.service
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
-import java.time.format.DateTimeParseException
 
 class OppgaveBeskrivelseParserTest {
 
@@ -24,7 +22,7 @@ class OppgaveBeskrivelseParserTest {
 
     @Test
     fun `parser flere innslag og beholder rekkefolgen fra kilden`() {
-        val innslag = OppgaveBeskrivelseParser.parse(beskrivelseMedFlereInnslag)
+        val innslag = OppgaveBeskrivelseParser.parse(beskrivelseMedFlereInnslag)!!
 
         assertThat(innslag).hasSize(3)
 
@@ -50,7 +48,7 @@ class OppgaveBeskrivelseParserTest {
     fun `handterer bade LF og CRLF som linjeskift`() {
         val innslag = OppgaveBeskrivelseParser.parse(
             "--- 28.12.2016 20:17 Automatisk jobb ---\r\nEn kommentar\r\n· En endring",
-        )
+        )!!
 
         assertThat(innslag).hasSize(1)
         assertThat(innslag.single().kommentar).isEqualTo("En kommentar")
@@ -61,7 +59,7 @@ class OppgaveBeskrivelseParserTest {
     fun `header med enhetsnavn i tillegg til enhetsnr gir kun enhetsnr`() {
         val innslag = OppgaveBeskrivelseParser.parse(
             "--- 31.12.2016 23:59 Gjøresak, Iver (G161234, 4802 NAV Familie og pensjonsytelser) ---",
-        )
+        )!!
 
         assertThat(innslag.single().enhetsnr).isEqualTo("4802")
         assertThat(innslag.single().saksbehandlerId).isEqualTo("G161234")
@@ -71,7 +69,7 @@ class OppgaveBeskrivelseParserTest {
     fun `linje som starter med bindestreker men ikke er gyldig header blir kommentar`() {
         val innslag = OppgaveBeskrivelseParser.parse(
             "--- 28.12.2016 20:17 Automatisk jobb ---\n--- ikke en header ---",
-        )
+        )!!
 
         assertThat(innslag).hasSize(1)
         assertThat(innslag.single().kommentar).isEqualTo("--- ikke en header ---")
@@ -84,7 +82,7 @@ class OppgaveBeskrivelseParserTest {
             sistEndretTidspunkt = OffsetDateTime.parse("2026-01-15T10:30:00+01:00"),
             sistEndretAv = "Z999999",
             sistEndretEnhetsnr = "4806",
-        )
+        )!!
 
         val enkeltinnslag = innslag.single()
         assertThat(enkeltinnslag.tidspunkt).isEqualTo(LocalDateTime.of(2026, 1, 15, 10, 30))
@@ -99,7 +97,7 @@ class OppgaveBeskrivelseParserTest {
             beskrivelse = "Opprettet av en autojobb",
             sistEndretTidspunkt = OffsetDateTime.parse("2026-01-15T10:30:00+01:00"),
             sistEndretAv = "srvbisys",
-        )
+        )!!
 
         assertThat(innslag.single().saksbehandlerNavn).isEqualTo("Automatisk jobb")
         assertThat(innslag.single().saksbehandlerId).isNull()
@@ -112,22 +110,22 @@ class OppgaveBeskrivelseParserTest {
             sistEndretTidspunkt = OffsetDateTime.parse("2026-01-15T10:30:00+01:00"),
             sistEndretAv = "Z999999",
             sistEndretEnhetsnr = "4806 NAV Familie og pensjonsytelser",
-        )
+        )!!
 
         assertThat(innslag.single().enhetsnr).isNull()
     }
 
     @Test
-    fun `tom eller manglende beskrivelse gir tom liste`() {
+    fun `tom eller manglende beskrivelse gir tom liste og ikke null`() {
         assertThat(OppgaveBeskrivelseParser.parse(null)).isEmpty()
         assertThat(OppgaveBeskrivelseParser.parse("")).isEmpty()
         assertThat(OppgaveBeskrivelseParser.parse("   \n  ")).isEmpty()
     }
 
     @Test
-    fun `ugyldig dato i header kaster exception`() {
-        assertThatThrownBy {
-            OppgaveBeskrivelseParser.parse("--- 31.02.2017 23:59 Automatisk jobb ---")
-        }.isInstanceOf(DateTimeParseException::class.java)
+    fun `ugyldig dato i header gir null istedenfor exception`() {
+        val innslag = OppgaveBeskrivelseParser.parse("--- 31.02.2017 23:59 Automatisk jobb ---")
+
+        assertThat(innslag).isNull()
     }
 }

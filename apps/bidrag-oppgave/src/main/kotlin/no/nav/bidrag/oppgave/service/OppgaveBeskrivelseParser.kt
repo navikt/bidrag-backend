@@ -1,9 +1,11 @@
 package no.nav.bidrag.oppgave.service
 
 import no.nav.bidrag.oppgave.dto.Beskrivelseinnslag
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
 
 /**
@@ -20,10 +22,12 @@ import java.time.format.ResolverStyle
  * Mottatt melding om utflytting for BM i sak.
  * ```
  *
- * Rekkefølgen fra kilden beholdes (nyeste først). Ugyldig tidsstempel i en header
- * gir [java.time.format.DateTimeParseException] – vi maskerer ikke feil i kildedata.
+ * Rekkefølgen fra kilden beholdes (nyeste først). Klarer vi ikke å tolke innholdet – typisk et
+ * ugyldig tidsstempel i en header – logges det som warning og [parse] returnerer `null`.
  */
 object OppgaveBeskrivelseParser {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     private const val HEADER_PREFIX = "---"
     private const val ENDRING_PREFIX = "\u00B7"
@@ -45,9 +49,30 @@ object OppgaveBeskrivelseParser {
         sistEndretTidspunkt: OffsetDateTime? = null,
         sistEndretAv: String? = null,
         sistEndretEnhetsnr: String? = null,
-    ): List<Beskrivelseinnslag> {
+        oppgaveId: Long? = null,
+    ): List<Beskrivelseinnslag>? {
         if (beskrivelse.isNullOrBlank()) return emptyList()
 
+        return try {
+            tolkLinjer(beskrivelse, sistEndretTidspunkt, sistEndretAv, sistEndretEnhetsnr)
+        } catch (e: DateTimeParseException) {
+            // Beskrivelsen kan inneholde personopplysninger og skal ikke logges. Meldingen fra
+            // DateTimeParseException inneholder kun tidsstempelet fra headeren, som er trygt å logge.
+            logger.warn(
+                "Kunne ikke tolke beskrivelseshistorikk for oppgave {}, setter historikken til null. Årsak: {}",
+                oppgaveId,
+                e.message,
+            )
+            null
+        }
+    }
+
+    private fun tolkLinjer(
+        beskrivelse: String,
+        sistEndretTidspunkt: OffsetDateTime?,
+        sistEndretAv: String?,
+        sistEndretEnhetsnr: String?,
+    ): List<Beskrivelseinnslag> {
         val innslag = mutableListOf<Innslag>()
 
         fun gjeldendeInnslag(): Innslag = innslag.lastOrNull()

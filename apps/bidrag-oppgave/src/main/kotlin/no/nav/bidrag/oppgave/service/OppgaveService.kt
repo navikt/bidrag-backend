@@ -43,6 +43,7 @@ private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
         sistEndretTidspunkt = endretTidspunkt ?: opprettetTidspunkt,
         sistEndretAv = endretAv ?: opprettetAv,
         sistEndretEnhetsnr = endretAvEnhetsnr ?: opprettetAvEnhetsnr,
+        oppgaveId = id.verdi,
     ),
     status = status.tilBidragStatus(),
     opprettet = opprettetTidspunkt,
