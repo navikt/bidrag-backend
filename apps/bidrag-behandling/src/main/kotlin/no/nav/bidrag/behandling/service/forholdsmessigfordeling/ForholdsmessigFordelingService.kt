@@ -31,6 +31,7 @@ import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
+import no.nav.bidrag.behandling.service.hentSak
 import no.nav.bidrag.behandling.transformers.behandling.erSamme
 import no.nav.bidrag.behandling.transformers.behandling.oppdaterBehandlingEtterOppdatertRoller
 import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
@@ -67,6 +68,7 @@ import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.behandling.vedtak.Periode
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.toYearMonth
+import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -433,7 +435,28 @@ class ForholdsmessigFordelingService(
     }
 
     /** Synkroniserer søknadsbarn, revurderingsbarn og søknadsstatus mot BBM for en FF-behandling */
-    @Transactional
+    private fun opprettForholdsmessigFordelingForRollerUtenFF(
+        behandling: Behandling,
+        alleSøknaderRelevantForBehandling: List<HentSøknad>,
+    ) {
+        val alleSaker = alleSøknaderRelevantForBehandling.map { it.saksnummer }.distinct()
+        val alleSakerDetaljer = mutableListOf<BidragssakDto>()
+        behandling.roller.filter { it.forholdsmessigFordeling == null }.forEach { rolle ->
+            alleSakerDetaljer.addAll(alleSaker.mapNotNull { hentSak(it) })
+            val sakRolle = alleSakerDetaljer.find { it.roller.any { it.fødselsnummer?.verdi == rolle.ident } } ?: return@forEach
+            val sakBm = sakRolle.roller.find { it.type == Rolletype.BIDRAGSMOTTAKER }
+            rolle.forholdsmessigFordeling = ForholdsmessigFordelingRolle(
+                delAvOpprinneligBehandling = true,
+                tilhørerSak = sakRolle.saksnummer.verdi,
+                behandlingsid = behandling.id,
+                behandlerenhet = sakRolle.eierfogd.verdi,
+                bidragsmottaker = sakBm?.fødselsnummer?.verdi,
+                erRevurdering = false,
+                søknader = mutableSetOf(),
+            )
+        }
+    }
+
     fun synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(
         behandling: Behandling,
         ignorerSynkTimer: Boolean = false,
@@ -453,6 +476,8 @@ class ForholdsmessigFordelingService(
                 behandling.behandlingstypeForFF,
                 behandling.omgjøringsdetaljer,
             )
+
+        opprettForholdsmessigFordelingForRollerUtenFF(behandling, alleSøknaderRelevantForBehandling)
 
         // Feilhåndtering hvis opprettelse av FF feilet
         if (behandling.metadata?.getOpprettelseEllerOppdateringAvFFFeilet() == true) {
