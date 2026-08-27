@@ -424,7 +424,7 @@ fun ResultatBidragsberegning.tilDto(kanFatteVedtakBegrunnelse: String?): Resulta
     perioderSlåttUtTilFF = grunnlagslisteList.perioderSlåttUtTilFF(),
     fatteVedtakDetaljerFraOmgjortVedtak = fatteVedtakDetaljerFraOmgjortVedtak,
     perioderSlåttUtTilFFRevurderingsbarn = grunnlagslisteList.perioderSlåttUtTilFFForRevurderingsbarn(),
-    resultatBarn = resultatBarn.map { it.tilDto(vedtakstype) }.sortedBy { it.barn.fødselsdatoSortering },
+    resultatBarn = resultatBarn.parallelStream().map { it.tilDto(vedtakstype) }.toList().sortedBy { it.barn.fødselsdatoSortering },
 )
 
 private fun ResultatBidragsberegningBarn.tilDto(vedtakstype: Vedtakstype): ResultatBidragsberegningBarnDto {
@@ -506,6 +506,7 @@ private fun ResultatBidragsberegningBarn.byggPerioderForBarn(
     )
 } else {
     resultat.beregnetBarnebidragPeriodeListe
+        .parallelStream()
         .map {
             val periodeAvslagskode = if (it.resultat.beløp == null) avslagskode else null
             grunnlagsListe
@@ -523,7 +524,7 @@ private fun ResultatBidragsberegningBarn.byggPerioderForBarn(
                     vedtakstype,
                     barn,
                 ).copy()
-        }.sortedBy { it.periode.fom }
+        }.toList().sortedBy { it.periode.fom }
         .markerSistePeriode()
 }
 

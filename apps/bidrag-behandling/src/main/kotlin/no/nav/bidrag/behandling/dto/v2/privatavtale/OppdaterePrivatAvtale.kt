@@ -143,7 +143,6 @@ data class PrivatAvtalePeriodeDto(
 
 data class PrivatAvtaleValideringsfeilDto(
     val privatAvtaleId: Long,
-    @JsonIgnore
     val gjelderPerson: RolleDto,
     val perioderOverlapperMedLøpendeBidrag: Set<Datoperiode>,
     val manglerBegrunnelse: Boolean = false,

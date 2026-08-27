@@ -115,11 +115,13 @@ data class UnderholdskostnadValideringsfeil(
                     medIBehandlingen = !gjelderUnderholdskostnad.gjelderAndreBarn,
                     kilde = gjelderUnderholdskostnad.kilde,
                     id = gjelderUnderholdskostnad.person?.id,
+                    rolleId = gjelderUnderholdskostnad.rolle?.id,
                 )
-            } ?: UnderholdBarnDto(null, null, null, LocalDate.now(), false)
+            } ?: UnderholdBarnDto(null, null, null, null, LocalDate.now(), false)
 
     data class UnderholdBarnDto(
         val id: Long?,
+        val rolleId: Long?,
         val navn: String?,
         val ident: String?,
         val fødselsdato: LocalDate,

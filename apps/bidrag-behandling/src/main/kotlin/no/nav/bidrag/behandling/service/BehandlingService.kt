@@ -882,8 +882,6 @@ class BehandlingService(
             it.gjelderBarnRolle?.grunnlagGjelderBarn?.remove(it)
         }
         behandling.grunnlag.removeAll(grunnlagSomSkalSlettes)
-        rolle.grunnlag.clear()
-        rolle.grunnlagGjelderBarn.clear()
 
         // Keep both sides in sync so JPA deletes notes instead of nulling rolle_id.
         val notaterForRolle = behandling.notater.filter { it.rolle.id == rolle.id }.toList()

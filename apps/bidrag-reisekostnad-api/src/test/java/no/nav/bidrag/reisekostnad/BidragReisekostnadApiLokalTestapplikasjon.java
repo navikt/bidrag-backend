@@ -152,10 +152,14 @@ class LocalCookieController {
     Cookie cookie = new Cookie("localhost-idtoken", tokenString);
     cookie.setPath("/");
     cookie.setMaxAge(3600);
+    cookie.setSecure(true);
+    cookie.setHttpOnly(true);
     response.addCookie(cookie);
 
     log.info("Cookie set with token for issuer: {}, audience: {}", issuerId, audience);
-    return "Cookie set with token for issuer: " + issuerId + ", audience: " + audience +
+    String safeIssuerId = org.springframework.web.util.HtmlUtils.htmlEscape(issuerId);
+    String safeAudience = org.springframework.web.util.HtmlUtils.htmlEscape(audience);
+    return "Cookie set with token for issuer: " + safeIssuerId + ", audience: " + safeAudience +
         "\n\nToken (for Authorization header): Bearer " + tokenString;
   }
 }
