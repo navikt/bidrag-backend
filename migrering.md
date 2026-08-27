@@ -62,27 +62,33 @@ Ny workflow er skrevet i samme format som `bidrag-belopshistorikk.yaml`/
 monorepoet — de gamle beskrivelsene med `bygg_og_test`/`sjekk_sync_med_main`/separate
 branch-triggere for q1/q2 og `bygg_og_deploy_prod.yaml` finnes ikke lenger noe sted):
 
-- `on`: `workflow_dispatch` (velg `miljo`: `prod`/`q1`/`q2`), `pull_request`
-  (`types: [labeled, unlabeled]`) og `push` på **alle** branches (`'**'`, unntatt
-  `dependabot/**`) — ikke lenger egne `q1/**`/`q2/**`-branch-triggere. Begge
-  event-typene filtreres på `paths` (appens `apps/**` og `.nais/<app>/**.yaml`).
+- `on`: `workflow_dispatch` (velg `miljo`: `prod`/`q1`/`q2`) og `push` på **alle**
+  branches (`'**'`, unntatt `dependabot/**`) — ikke lenger egne `q1/**`/`q2/**`-
+  branch-triggere, og ikke lenger noen `pull_request`-trigger. Push filtreres på
+  `paths` (appens `apps/**` og `.nais/<app>/**.yaml`) og gir alltid bygg+test-
+  feedback; deploy til q1/q2 for en feature-/PR-branch skjer utelukkende via
+  manuell `workflow_dispatch` (tidligere PR-labels `q1`/`q2` fjernet — ga
+  redundante rebuilds av samme commit, se historikk under).
 - `detect_changes` — kjører `./.github/actions/utled-app-endringer`, som regner ut den
   faktiske diffen mot `main` (merge-base) fremfor GitHubs innebygde push-diff. Dette
   hindrer at en `main`-merge inn i en branch trigger bygg/deploy for apper som ikke
   faktisk er endret på branchen.
-- `finn_miljo` — kjører kun hvis `detect_changes.outputs.changed == 'true'` og aktøren
-  ikke er `dependabot[bot]`. Bruker `./.github/actions/finn-deploy-miljo` til å avgjøre
-  `deploy_q1`/`deploy_q2`/`deploy_prod` (prioritert: `workflow_dispatch`-input → push
-  til `main` = alltid prod → PR-labels `q1`/`q2` → for push på andre branches, slår opp
-  labels på evt. åpen PR via `gh pr list`).
-- `bygg_test_og_deploy` — ett enkelt kall til den gjenbrukbare
-  `.github/workflows/bygg_og_deploy.yaml` (ingen egen `bygg_og_deploy_prod.yaml`
-  lenger — samme fil håndterer q1/q2/prod). Sentrale inputs: `nais_hovedfil_navn`,
-  `nais_variabler_filnavn_q1`/`_q2`/`_prod`, `deploy_q1`/`_q2`/`_prod` (booleans fra
-  `finn_miljo`), `maven_options` (typisk `-B -fae -pl apps/<app> -am`),
-  `maven_cache_paths` (root-`pom.xml` + appens egen `pom.xml`, for en presis
-  Maven-cache-nøkkel i stedet for å hashe alle pom.xml i monorepoet), `ktlint_paths`,
-  `docker_context` og `image_suffix`/`tag`.
+- `bygg_test_og_deploy` — `needs: detect_changes`, samme
+  `if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'`
+  som tidligere satt på en egen `finn_miljo`-jobb. Denne jobben (og den
+  underliggende `./.github/actions/finn-deploy-miljo`-actionen) er fjernet —
+  logikken var kun tre trivielle boolske uttrykk uten behov for en egen jobb
+  eller `gh`-oppslag, og beregnes nå direkte i `with:`-blokken:
+  `deploy_q1`/`deploy_q2`: `github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1'`/`'q2'`.
+  `deploy_prod`: samme dispatch-sjekk for `'prod'`, **eller** push til `main`.
+  Ett enkelt kall til den gjenbrukbare `.github/workflows/bygg_og_deploy.yaml`
+  (ingen egen `bygg_og_deploy_prod.yaml` lenger — samme fil håndterer
+  q1/q2/prod). Øvrige sentrale inputs: `nais_hovedfil_navn`,
+  `nais_variabler_filnavn_q1`/`_q2`/`_prod`, `maven_options` (typisk
+  `-B -fae -pl apps/<app> -am`), `maven_cache_paths` (root-`pom.xml` + appens
+  egen `pom.xml`, for en presis Maven-cache-nøkkel i stedet for å hashe alle
+  pom.xml i monorepoet), `ktlint_paths`, `docker_context` og
+  `image_suffix`/`tag`.
 
 Selve `bygg_og_deploy.yaml` bygger/tester/lager Docker-image i én jobb (kjører alltid,
 også på PR-er, for rask feedback), signerer/attesterer image (SBOM via `salsa`-jobben),

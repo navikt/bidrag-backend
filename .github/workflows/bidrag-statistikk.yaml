@@ -9,13 +9,6 @@ on:
         options:
           - prod
           - q2
-  pull_request:
-    types: [labeled, unlabeled]
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - '.nais/bidrag-statistikk/**.yaml'
-      - 'apps/bidrag-statistikk/**'
   push:
     branches:
       - '**'
@@ -41,28 +34,10 @@ jobs:
       - uses: ./.github/actions/utled-app-endringer
         id: detect
 
-  finn_miljo:
-    name: "Bestem hvilke miljø som skal deployes"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-      pull-requests: "read"
-    outputs:
-      deploy_q2: ${{ steps.finn.outputs.deploy_q2 }}
-      deploy_prod: ${{ steps.finn.outputs.deploy_prod }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/finn-deploy-miljo
-        id: finn
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          dispatch-miljo: ${{ inputs.miljo }}
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: finn_miljo
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
     permissions:
       contents: "write"
       id-token: "write"
@@ -71,9 +46,9 @@ jobs:
     with:
       nais_hovedfil_navn: bidrag-statistikk/nais.yaml
       nais_variabler_filnavn_q2: bidrag-statistikk/q2.yaml
-      deploy_q2: ${{ needs.finn_miljo.outputs.deploy_q2 == 'true' }}
+      deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
       nais_variabler_filnavn_prod: bidrag-statistikk/prod.yaml
-      deploy_prod: ${{ needs.finn_miljo.outputs.deploy_prod == 'true' }}
+      deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       maven_options: -B -fae -pl apps/bidrag-statistikk
       maven_cache_paths: |
         pom.xml
