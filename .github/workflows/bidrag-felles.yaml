@@ -8,10 +8,7 @@ on:
       - '!dependabot/**'
     paths:
       - 'libs/bidrag-felles/**'
-  pull_request:
-    types: [opened, reopened, synchronize]
-    paths:
-      - 'libs/bidrag-felles/**'
+  workflow_dispatch:
 
 env:
   FELLES_MODULER: >-
@@ -71,15 +68,16 @@ jobs:
           servers: |
             [
               {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              },
+              {
                 "id": "github-bidrag-backend",
                 "username": "x-access-token",
                 "password": "${{ secrets.GITHUB_TOKEN }}"
               }
             ]
-      - name: Installer reactoren lokalt
-        run: |
-          mvn -B -q -pl ${{ env.FELLES_MODULER }} -am install -DskipTests
-
       - name: Sett kalenderversjon på bidrag-felles-modulene
         run: |
           mvn -B -q -pl ${{ env.FELLES_MODULER }} versions:set -DnewVersion="${{ needs.oppdater_release_draft.outputs.version }}"

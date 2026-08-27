@@ -196,7 +196,7 @@ repoet, ellers vil hele appfamilier med æøå i stien bli oversett.
    (`saksnummer`, `journalpostId`, `dokumentreferanse` o.l.). Sjekk feltnavn og type
    der verdien brukes — ikke anta ut fra regex-treff alene.
 3. Ekte fødselsnummer-literals erstattes med `genererFødselsnummer()` fra
-   `no.nav.bidrag.generer.testdata.person` (krever `bidrag-commons-test-felles` som
+   `no.nav.bidrag.generer.testdata.person` (krever `bidrag-backend-commons-test` som
    testavhengighet — sjekk at appens `pom.xml` allerede har denne).
    - `const val` må endres til `val` siden funksjonskall ikke er en
      kompileringstidskonstant.

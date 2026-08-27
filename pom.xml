@@ -113,7 +113,7 @@
 
     <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
          mockk.version. Uten dette kan f.eks. springmockk trekke inn en eldre
-         mockk-dsl-jvm enn den bidrag-commons-test-felles sin Stubs.kt kompileres
+         mockk-dsl-jvm enn den bidrag-backend-commons-test sin Stubs.kt kompileres
          mot, noe som kan gi NoClassDefFoundError for klasser som er lagt til i
          nyere mockk-versjoner (f.eks. AnyTypedMatcher, introdusert i 1.14.9). -->
     <dependencyManagement>
