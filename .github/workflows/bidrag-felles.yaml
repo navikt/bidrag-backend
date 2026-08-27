@@ -76,11 +76,6 @@ jobs:
                 "password": "${{ secrets.READER_TOKEN }}"
               },
               {
-                "id": "github2",
-                "username": "x-access-token",
-                "password": "${{ secrets.READER_TOKEN }}"
-              },
-              {
                 "id": "github-bidrag-backend",
                 "username": "x-access-token",
                 "password": "${{ secrets.GITHUB_TOKEN }}"
