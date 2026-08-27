@@ -34,6 +34,7 @@ import no.nav.bidrag.behandling.utils.testdata.synkSøknadsbarnVirkningstidspunk
 import no.nav.bidrag.behandling.utils.testdata.testdataBM
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.tilAinntektspostDto
+import no.nav.bidrag.beregn.inntekt.InntektApi
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.diverse.Kilde
@@ -42,7 +43,6 @@ import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.inntekt.InntektApi
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilleggGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.KontantstøtteGrunnlagDto

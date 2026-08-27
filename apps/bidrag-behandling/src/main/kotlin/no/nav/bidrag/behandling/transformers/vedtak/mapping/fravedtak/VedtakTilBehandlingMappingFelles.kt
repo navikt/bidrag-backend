@@ -58,8 +58,9 @@ import no.nav.bidrag.behandling.transformers.tilTypeBoforhold
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak.filterBarnIBehandling
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.vedtakmappingFeilet
-import no.nav.bidrag.boforhold.BoforholdApi
-import no.nav.bidrag.boforhold.dto.BoforholdVoksneRequest
+import no.nav.bidrag.beregn.boforhold.BoforholdApi
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdVoksneRequest
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -76,7 +77,6 @@ import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
-import no.nav.bidrag.sivilstand.SivilstandApi
 import no.nav.bidrag.transport.behandling.felles.grunnlag.AldersjusteringDetaljerGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BehandlingDetaljerGrunnlag

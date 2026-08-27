@@ -1,0 +1,79 @@
+[
+  {
+    "periode": {
+      "fom": "2024-05",
+      "til": "2024-12"
+    },
+    "opphørsdato": null,
+    "stønadstype": "BIDRAG",
+    "søknadsbarnReferanse": "Person_Søknadsbarn_03",
+    "grunnlagListe": [
+      {
+        "referanse": "Person_Søknadsbarn_03",
+        "type": "PERSON_SØKNADSBARN",
+        "innhold": {
+          "ident": "{FNR_SB3}",
+          "navn": "Løpende Søknadsbarn",
+          "fødselsdato": "2013-09-16"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": null
+      },
+      {
+        "referanse": "Person_Bidragspliktig",
+        "type": "PERSON_BIDRAGSPLIKTIG",
+        "innhold": {
+          "ident": "{FNR_BP1}",
+          "navn": "Motvillig Bidragspliktig",
+          "fødselsdato": "1981-07-13"
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": null
+      },
+      {
+        "referanse": "innhentet_løpende_bidrag_Person_Bidragspliktig_Person_Søknadsbarn_03_202405_202407",
+        "type": "LØPENDE_BIDRAG_PERIODE",
+        "innhold": {
+          "periode": {
+            "fom": "2024-05",
+            "til": "2024-07"
+          },
+          "saksnummer": "{SAKSNUMMER}",
+          "stønadstype": "BIDRAG",
+          "løpendeBeløp": 2000,
+          "valutakode": "NOK",
+          "samværsklasse": "SAMVÆRSKLASSE_1",
+          "beregnetBeløp": 2160,
+          "faktiskBeløp": 2000,
+          "sakskategori": "N",
+          "manueltRegistrert": false
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": "Person_Bidragspliktig",
+        "gjelderBarnReferanse": "Person_Søknadsbarn_03"
+      },
+      {
+        "referanse": "innhentet_løpende_bidrag_Person_Bidragspliktig_Person_Søknadsbarn_03_202407_202412",
+        "type": "LØPENDE_BIDRAG_PERIODE",
+        "innhold": {
+          "periode": {
+            "fom": "2024-07",
+            "til": "2024-12"
+          },
+          "saksnummer": "{SAKSNUMMER}",
+          "stønadstype": "BIDRAG",
+          "løpendeBeløp": 2500,
+          "valutakode": "NOK",
+          "samværsklasse": "SAMVÆRSKLASSE_1",
+          "beregnetBeløp": 2660,
+          "faktiskBeløp": 2500,
+          "sakskategori": "N",
+          "manueltRegistrert": false
+        },
+        "grunnlagsreferanseListe": [],
+        "gjelderReferanse": "Person_Bidragspliktig",
+        "gjelderBarnReferanse": "Person_Søknadsbarn_03"
+      }
+    ]
+  }
+]

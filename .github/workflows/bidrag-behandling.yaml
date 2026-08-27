@@ -24,6 +24,7 @@ on:
     paths:
       - 'pom.xml'
       - 'libs/bidrag-felles/**'
+      - 'libs/bidrag-beregn-felles/**'
       - '.nais/bidrag-behandling/**.yaml'
       - 'apps/bidrag-behandling/**'
 
@@ -61,11 +62,11 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-behandling/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-behandling
+      maven_options: -B -fae -pl apps/bidrag-behandling -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-behandling/pom.xml
-      ktlint_paths: apps/bidrag-behandling/src/**/*.kt
+      ktlint_paths: apps/bidrag-behandling/src/**/*.kt libs/bidrag-beregn-felles/**/src/**/*.kt
       docker_context: ./apps/bidrag-behandling
       image_suffix: bidrag-behandling
       tag: bidrag-behandling

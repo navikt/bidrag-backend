@@ -1,0 +1,100 @@
+{
+  "periode": {
+    "fom": "2024-08",
+    "til": "2024-09"
+  },
+  "søknadsbarnReferanse": "Person_Søknadsbarn",
+  "grunnlagListe": [
+    {
+      "referanse": "Person_Søknadsbarn",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "{FNR_SB1}",
+        "navn": "Trengende Søknadsbarn",
+        "fødselsdato": "2012-09-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragsmottaker",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "ident": "{FNR_BM1}",
+        "navn": "Søkende Bidragsmottaker",
+        "fødselsdato": "1982-05-05"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragspliktig",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "ident": "{FNR_BP1}",
+        "navn": "Motvillig Bidragspliktig",
+        "fødselsdato": "1981-07-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Barnetillegg_Bidragspliktig_202408",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": "2024-09"
+        },
+        "inntektsrapportering": "BARNETILLEGG",
+        "gjelderBarn": "Person_Søknadsbarn",
+        "beløp": 20400,
+        "manueltRegistrert": false,
+        "valgt": true,
+        "inntekstpostListe": [
+          {
+            "kode": "Inntekt",
+            "inntekstype": "BARNETILLEGG_PENSJON",
+            "beløp": 20400,
+            "skattefaktor": 0.35
+          }
+        ]
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragspliktig"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Barnetillegg_Bidragsmottaker_202408",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": "2024-09"
+        },
+        "inntektsrapportering": "BARNETILLEGG",
+        "gjelderBarn": "Person_Søknadsbarn",
+        "beløp": 9600,
+        "manueltRegistrert": false,
+        "valgt": true,
+        "inntekstpostListe": [
+          {
+            "kode": "Inntekt",
+            "inntekstype": "BARNETILLEGG_PENSJON",
+            "beløp": 3600,
+            "skattefaktor": 0.30
+          },
+          {
+            "kode": "Inntekt",
+            "inntekstype": "BARNETILLEGG_DAGPENGER",
+            "beløp": 6000,
+            "skattefaktor": 0.30
+          }
+        ]
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    }
+  ]
+}

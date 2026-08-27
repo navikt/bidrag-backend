@@ -1,0 +1,74 @@
+{
+  "periode": {
+    "fom": "2024-08",
+    "til": "2024-11"
+  },
+  "søknadsbarnReferanse": "Person_Søknadsbarn",
+  "grunnlagListe": [
+    {
+      "referanse": "Person_Søknadsbarn",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "{FNR_SB1}",
+        "navn": "Trengende Søknadsbarn",
+        "fødselsdato": "2012-09-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE_Person_Søknadsbarn_202409",
+      "type": "DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-08",
+          "til": "2024-09"
+        },
+        "løpendeBidragBeløp": 1000,
+        "løpendeBidragFraPrivatAvtale": false,
+        "beregnetBidragBeløp": 1216.00,
+        "faktiskEndringFaktor": 0.2160000000,
+        "endringErOverGrense": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": "Person_Søknadsbarn"
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE_Person_Søknadsbarn_202408",
+      "type": "DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-09",
+          "til": "2024-10"
+        },
+        "løpendeBidragBeløp": 1000,
+        "løpendeBidragFraPrivatAvtale": false,
+        "beregnetBidragBeløp": 1015.00,
+        "faktiskEndringFaktor": 0.0150000000,
+        "endringErOverGrense": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": "Person_Søknadsbarn"
+    },
+    {
+      "referanse": "delberegning_DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE_Person_Søknadsbarn_202410",
+      "type": "DELBEREGNING_ENDRING_SJEKK_GRENSE_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-10",
+          "til": null
+        },
+        "løpendeBidragBeløp": 1000,
+        "løpendeBidragFraPrivatAvtale": false,
+        "beregnetBidragBeløp": 1100.00,
+        "faktiskEndringFaktor": 0.1000000000,
+        "endringErOverGrense": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null,
+      "gjelderBarnReferanse": "Person_Søknadsbarn"
+    }
+  ]
+}

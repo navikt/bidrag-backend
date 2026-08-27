@@ -1,0 +1,72 @@
+{
+  "periode": {
+    "fom": "2021-05",
+    "til": "2024-10"
+  },
+  "søknadsbarnReferanse": "Person_Søknadsbarn",
+  "grunnlagListe": [
+    {
+      "referanse": "Person_Søknadsbarn",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "{FNR_SB1}",
+        "navn": "Trengende Søknadsbarn",
+        "fødselsdato": "2012-09-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragsmottaker",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "ident": "{FNR_BM1}",
+        "navn": "Søkende Bidragsmottaker",
+        "fødselsdato": "1982-05-05"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragspliktig",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "ident": "{FNR_BP1}",
+        "navn": "Motvillig Bidragspliktig",
+        "fødselsdato": "1981-07-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Mottatt_Samværsperiode_202105",
+      "type": "SAMVÆRSPERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2021-05",
+          "til": "2023-01"
+        },
+        "samværsklasse": "SAMVÆRSKLASSE_1",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragspliktig"
+    },
+    {
+      "referanse": "Mottatt_Samværsperiode_202301",
+      "type": "SAMVÆRSPERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-01",
+          "til": null
+        },
+        "samværsklasse": "SAMVÆRSKLASSE_2",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragspliktig"
+    }
+  ]
+}
