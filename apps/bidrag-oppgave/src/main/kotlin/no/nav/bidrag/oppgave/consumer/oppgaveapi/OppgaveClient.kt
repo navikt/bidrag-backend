@@ -44,6 +44,7 @@ class OppgaveClient(
         .uri { uriBuilder ->
             val builder = uriBuilder.path("/api/v1/oppgaver")
             params.statuskategori?.let { builder.queryParam("statuskategori", it) }
+            params.statuser?.let { builder.queryParam("status", *it.map { s -> s.name }.toTypedArray()) }
             params.tema?.let { builder.queryParam("tema", *it.toTypedArray()) }
             params.oppgavetype?.let { builder.queryParam("oppgavetype", *it.toTypedArray()) }
             params.tildeltEnhetsnr?.let { builder.queryParam("tildeltEnhetsnr", it) }

@@ -222,7 +222,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.springframework.boot</groupId>
@@ -241,7 +241,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-transport-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
     </dependency>
 
     <!--Diverse-->

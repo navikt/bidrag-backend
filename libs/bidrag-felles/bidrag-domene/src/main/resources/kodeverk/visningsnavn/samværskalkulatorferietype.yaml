@@ -1,0 +1,12 @@
+JUL_NYTTÅR:
+  intern: "Jul og nyttår"
+VINTERFERIE:
+  intern: "Vinterferie"
+PÅSKE:
+  intern: "Påske"
+SOMMERFERIE:
+  intern: "Sommerferie"
+HØSTFERIE:
+  intern: "Høstferie"
+ANNET:
+  intern: "Annet"

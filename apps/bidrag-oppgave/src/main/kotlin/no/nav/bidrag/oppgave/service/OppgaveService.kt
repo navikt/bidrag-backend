@@ -13,11 +13,19 @@ class OppgaveService(
 ) {
 
     fun hentOppgaverForSak(saksnummer: String): List<OppgaveDto> = oppgaveClient
-        .finnOppgaver(FinnOppgaverParams(saksreferanse = listOf(saksnummer)))
+        .finnOppgaver(FinnOppgaverParams(saksreferanse = listOf(saksnummer), statuser = statuserViSokerEtter))
         .oppgaver
         .orEmpty()
         .map { it.tilBidragOppgave() }
 }
+
+private val statuserViSokerEtter = listOf(
+    OppgaveApiDto.Status.OPPRETTET,
+    OppgaveApiDto.Status.AAPNET,
+    OppgaveApiDto.Status.UNDER_BEHANDLING,
+    OppgaveApiDto.Status.FERDIGSTILT,
+    OppgaveApiDto.Status.FEILREGISTRERT,
+)
 
 private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     id = id.verdi,

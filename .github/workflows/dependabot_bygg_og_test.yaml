@@ -2,7 +2,7 @@ name: Dependabot - bygg og test
 on:
   push:
     branches:
-      - 'dependabot/**'
+      - 'dependabot/maven/**'
     paths:
       - 'pom.xml'
       - 'apps/**/pom.xml'
@@ -45,4 +45,4 @@ jobs:
               }
             ]
       - name: Bygg og kjør tester for hele reactoren (inkl. ktlint og IT)
-        run: mvn -B -fae -T 1C verify -Pit
+        run: mvn -B -q -fae -T 1C verify -Pit

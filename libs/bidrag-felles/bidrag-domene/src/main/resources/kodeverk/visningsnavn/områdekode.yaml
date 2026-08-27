@@ -1,0 +1,18 @@
+UTENRIKSSTASJON:
+  intern: "Utenriksstasjon"
+ADVOKAT:
+  intern: "Advokat"
+ARBEIDSGIVER:
+  intern: "Arbeidsgiver"
+REELL_MOTTAKER:
+  intern: "Reell mottaker"
+UTENLANDSK_PERSON:
+  intern: "Utenlandsk person"
+UTENLANDSK_FOGD:
+  intern: "Utenlandsk fogd"
+SOSIALKONTO:
+  intern: "Sosialkontor"
+BARNEVERNSINSTITUSJON:
+  intern: "Barnevernsinstitusjon"
+VERGE:
+  intern: "Verge"

@@ -38,6 +38,8 @@ updates:
     directories:
       - "/"
       - "/apps/*"
+      - "/libs/*"
+      - "/libs/bidrag-felles/*"
     cooldown:
       default-days: 7
     registries:

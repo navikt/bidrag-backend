@@ -963,6 +963,7 @@ fun Rolle.hentVirkningstidspunktValideringsfeilRolle(): VirkningstidspunktFeilV2
             ?: NotatService.henteNotatinnhold(behandling, NotatType.VIRKNINGSTIDSPUNKT).normalizeForComparison()
     val avslagRolle = if (avslag == null && årsak == null) behandling.avslag else avslag
     val årsakRolle = if (avslag == null && årsak == null) behandling.årsak else årsak
+    val stønadstype = stønadstype ?: behandling.stonadstype
     return VirkningstidspunktFeilV2Dto(
         gjelder = tilDto(),
         manglerÅrsakEllerAvslag = avslagRolle == null && årsakRolle == null,

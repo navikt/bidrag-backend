@@ -1,0 +1,29 @@
+INDEKSREGULERING:
+  intern: "Indeksregulering"
+
+ALDERSJUSTERING:
+  intern: "Aldersjustering"
+
+OPPHØR:
+  intern: "Opphør"
+
+ALDERSOPPHØR:
+  intern: "Aldersopphør"
+
+REVURDERING:
+  intern: "Revurdering"
+
+FASTSETTELSE:
+  intern: "Fastsettelse"
+
+INNKREVING:
+  intern: "Innkreving"
+
+KLAGE:
+  intern: "Klage"
+
+ENDRING:
+  intern: "Endring"
+
+ENDRING_MOTTAKER:
+  intern: "Endring mottaker"

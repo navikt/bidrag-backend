@@ -1,0 +1,22 @@
+GIFT_SAMBOER:
+  intern: "Gift/samboer"
+  bruker:
+    NB: "Gift/samboer"
+    EN: "Married/Cohabitation"
+BOR_ALENE_MED_BARN:
+  intern: "Bor alene med barn"
+  bruker:
+    NB: "Enslig"
+    EN: "Single"
+SAMBOER:
+  intern: "Samboer"
+  bruker:
+    NB: "Samboer"
+    EN: "Cohabitation"
+ENSLIG:
+  intern: "Enslig"
+  bruker:
+    NB: "Enslig"
+    EN: "Single"
+UKJENT:
+  intern: "Ukjent"

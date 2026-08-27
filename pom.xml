@@ -22,6 +22,11 @@
         <module>apps/bidrag-oppgave</module>
         <module>libs/bidrag-oppgave-client</module>
         <module>libs/bidrag-oppgave-dto</module>
+        <module>libs/bidrag-felles/bidrag-domene</module>
+        <module>libs/bidrag-felles/bidrag-transport</module>
+        <module>libs/bidrag-felles/bidrag-commons</module>
+        <module>libs/bidrag-felles/bidrag-commons-test</module>
+        <module>libs/bidrag-felles/bidrag-generer-testdata</module>
         <module>apps/bidrag-regnskap</module>
         <module>apps/bidrag-aktoerregister</module>
         <module>apps/bidrag-arbeidsflyt</module>
@@ -55,7 +60,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Nav moduler -->
-        <bidrag-felles.version>2026.08.25.110026</bidrag-felles.version>
         <bidrag-beregn-felles.version>2026.08.26.151129</bidrag-beregn-felles.version>
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>
@@ -106,6 +110,41 @@
         <!-- Test-avhengigheter -->
         <mock-oauth2-server.version>2.1.10</mock-oauth2-server.version>
     </properties>
+
+    <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
+         mockk.version. Uten dette kan f.eks. springmockk trekke inn en eldre
+         mockk-dsl-jvm enn den bidrag-commons-test-felles sin Stubs.kt kompileres
+         mot, noe som kan gi NoClassDefFoundError for klasser som er lagt til i
+         nyere mockk-versjoner (f.eks. AnyTypedMatcher, introdusert i 1.14.9). -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-dsl-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-agent-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-agent-api-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mockk</groupId>
+                <artifactId>mockk-core-jvm</artifactId>
+                <version>${mockk.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!-- Kotlin-stdlib må være inkludert for maven-plugin -->
     <dependencies>

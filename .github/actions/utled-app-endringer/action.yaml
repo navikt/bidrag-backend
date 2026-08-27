@@ -45,10 +45,20 @@ runs:
           exit 1
         fi
 
-        # Hent ut on.push.paths-blokken fra workflow-filen
+        # Hent ut on.push.paths-blokken fra workflow-filen.
+        # Vi må skope oss til selve `push:`-triggeren (ikke bare første "paths:" i filen,
+        # som gjerne tilhører `pull_request:`), og stoppe innsamlingen så snart listen med
+        # path-elementer tar slutt. Ellers plukker vi feilaktig opp `on.push.branches`
+        # (f.eks. '**' og '!dependabot/**') som om de var paths, siden de har samme
+        # YAML-liste-syntaks og innrykk - noe som gjør at git diff alltid finner "endringer".
         mapfile -t PATHSPECS < <(
-          awk '/^    paths:$/{flag=1; next} flag && /^jobs:$/{exit} flag' "$WORKFLOW_FILE" \
-            | grep -E "^      - '" \
+          awk '
+            /^  push:$/ { in_push=1; in_paths=0; next }
+            in_push && /^  [A-Za-z]/ { in_push=0; in_paths=0 }
+            in_push && /^    paths:$/ { in_paths=1; next }
+            in_paths && /^      - .*$/ { print; next }
+            in_paths { exit }
+          ' "$WORKFLOW_FILE" \
             | sed -E "s/^      - '(.*)'\$/\1/"
         )
 

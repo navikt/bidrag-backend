@@ -1,0 +1,211 @@
+REDUSERT_FORSKUDD_50_PROSENT:
+  intern: "Redusert forskudd"
+  bruker:
+    NB: "Redusert forskudd"
+ORDINÆRT_FORSKUDD_75_PROSENT:
+  intern: "Ordinært forskudd"
+  bruker:
+    NB: "Ordinært forskudd"
+FORHØYET_FORSKUDD_100_PROSENT:
+  intern: "Forhøyet forskudd"
+  bruker:
+    NB: "Forhøyet forskudd"
+FORHØYET_FORSKUDD_11_ÅR_125_PROSENT:
+  intern: "Forhøyet forskudd ved 11 år"
+  bruker:
+    NB: "Forhøyet forskudd ved 11 år"
+BARNET_ER_SELVFORSØRGET:
+  intern: "Barnet er selvforsørget"
+  bruker:
+    NB: "Barnet er selvforsørget"
+SÆRTILSKUDD_INNVILGET:
+  intern: "Særtilskudd innvilget"
+  bruker:
+    NB: "Særtilskudd innvilget"
+SÆRBIDRAG_INNVILGET:
+  intern: "Særbidrag innvilget"
+  bruker:
+    NB: "Særbidrag innvilget"
+SÆRTILSKUDD_IKKE_FULL_BIDRAGSEVNE:
+  intern: "Særtilskudd ikke full bidragsevne"
+  bruker:
+    NB: "Særtilskudd ikke full bidragsevne"
+SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE:
+  intern: "Ikke full bidragsevne"
+  bruker:
+    NB: "Ikke full bidragsevne"
+SÆRBIDRAG_MANGLER_BIDRAGSEVNE:
+  intern: "Mangler bidragsevne"
+  bruker:
+    NB: "Mangler bidragsevne"
+#Avslagskoder
+AVSLAG:
+  intern: "Avslag"
+  bruker:
+    NB: "Avslag"
+AVSLAG2:
+  intern: "Avslag"
+  bruker:
+    NB: "Avslag"
+AVSLAG_OVER_18_ÅR:
+  intern: "Avslag, over 18 år"
+  bruker:
+    NB: "Avslag, over 18 år"
+AVSLAG_IKKE_REGISTRERT_PÅ_ADRESSE:
+  intern: "Avslag, ikke registrert på adresse"
+  bruker:
+    NB: "Avslag, ikke registrert på adresse"
+AVSLAG_HØY_INNTEKT:
+  intern: "Avslag, høy inntekt"
+  bruker:
+    NB: "Avslag, høy inntekt"
+
+PÅ_GRUNN_AV_BARNEPENSJON:
+  intern: "På grunn av barnepensjon"
+
+BARNETS_EKTESKAP:
+  intern: "Barnets ekteskap"
+
+BARNETS_INNTEKT:
+  intern: "Barnets inntekt"
+
+PÅ_GRUNN_AV_YTELSE_FRA_FOLKETRYGDEN:
+  intern: "På grunn av ytelse fra folketrygden"
+
+FULLT_UNDERHOLDT_AV_OFFENTLIG:
+  intern: "Fullt underholdt av offentlig"
+
+IKKE_OMSORG:
+  intern: "Ikke omsorg"
+
+IKKE_OPPHOLD_I_RIKET:
+  intern: "Ikke opphold i riket"
+
+MANGLENDE_DOKUMENTASJON:
+  intern: "Manglende dokumentasjon"
+
+BARNET_ANSES_Å_BO_SAMMEN_MED_BEGGE_FORELDRE:
+  intern: "Barnet anses å bo sammen med begge foreldrene"
+
+OPPHOLD_I_UTLANDET:
+  intern: "Opphold i utlandet"
+
+UTENLANDSK_YTELSE:
+  intern: "Utenlandsk ytelse"
+
+AVSLAG_PRIVAT_AVTALE_BIDRAG:
+  intern: "På grunn av privat avtale om bidrag"
+
+IKKE_SØKT_OM_INNKREVING_AV_BIDRAG:
+  intern: "Ikke søkt om innkreving av bidrag"
+IKKE_INNKREVING_AV_BIDRAG:
+  intern: "Ikke innkreving av bidrag"
+UTGIFTER_DEKKES_AV_BARNEBIDRAGET:
+  intern: "Utgifter dekkes av barnebidraget"
+
+IKKE_NØDVENDIGE_UTGIFTER:
+  intern: "Ikke nødvendige utgifter"
+
+PRIVAT_AVTALE:
+  intern: "Privat avtale"
+ALLE_UTGIFTER_ER_FORELDET:
+  intern: "Alle utgifter er foreldet"
+
+GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS:
+  intern: "Godkjent beløp er lavere enn forskuddssats"
+
+AVSLAG_PRIVAT_AVTALE_OM_SÆRBIDRAG:
+  intern: "Privat avtale om særbidrag"
+
+IKKE_DOKUMENTERT_SKOLEGANG:
+  intern: "Ikke dokumentert skolegang"
+
+AVSLUTTET_SKOLEGANG:
+  intern: "Avsluttet skolegang"
+
+IKKE_OMSORG_FOR_BARNET:
+  intern: "Ikke omsorg for barnet"
+
+PARTENE_BOR_SAMMEN:
+  intern: "Partene bor sammen"
+
+BARNET_ER_DØDT:
+  intern: "Barnet er dødt"
+
+BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET:
+  intern: "Bidragsmottaker har omsorg for barnet"
+
+BIDRAGSPLIKTIG_ER_DØD:
+  intern: "Bidragspliktig er død"
+
+BEREGNET_BIDRAG:
+  intern: "Beregnet bidrag"
+
+DIREKTE_OPPGJØR:
+  intern: "Direkte oppjør"
+
+GEBYR_FRITATT:
+  intern: "Gebyr fritatt"
+
+GEBYR_ILAGT:
+  intern: "Gebyr ilagt"
+
+PARTEN_BER_OM_OPPHØR:
+  intern: "Parten ber om opphør"
+
+OPPHØR:
+  intern: "Opphør"
+
+INGEN_ENDRING_UNDER_GRENSE:
+  intern: "Ingen endring under grense"
+
+IKKE_STERK_NOK_GRUNN_OG_BIDRAGET_HAR_OPPHØRT:
+  intern: "Ikke sterk nok grunn og bidraget har opphørt"
+
+INNVILGET_VEDTAK:
+  intern: "Innvilget vedtak"
+
+SKJØNN_UTLANDET:
+  intern: "Skjønn utlandet"
+
+LAVERE_ENN_INNTEKTSEVNE_BEGGE_PARTER:
+  intern: "Lavere enn inntektsevne begge parter"
+LAVERE_ENN_INNTEKTSEVNE_BIDRAGSPLIKTIG:
+  intern: "Lavere enn inntektsevne bidragspliktig"
+LAVERE_ENN_INNTEKTSEVNE_BIDRAGSMOTTAKER:
+  intern: "Lavere enn inntektsevne bidragsmottaker"
+MANGLER_DOKUMENTASJON_AV_INNTEKT_BEGGE_PARTER:
+  intern: "Mangler dokumentasjon av inntekt begge parter"
+MANGLER_DOKUMENTASJON_AV_INNTEKT_BIDRAGSPLIKTIG:
+  intern: "Mangler dokumentasjon av inntekt bidragspliktig"
+MANGLER_DOKUMENTASJON_AV_INNTEKT_BIDRAGSMOTTAKER:
+  intern: "Mangler dokumentasjon av inntekt bidragsmottaker"
+INNTIL_1_ÅR_TILBAKE:
+  intern: "Inntil 1 år tilbake"
+MAKS_25_PROSENT_AV_INNTEKT:
+  intern: "Maks 25 prosent av inntekt"
+MANGLER_BIDRAGSEVNE:
+    intern: "Mangler bidragsevne"
+INGEN_BIDRAGSEVNE:
+    intern: "Ingen bidragsevne"
+KOSTNADSBEREGNET_BIDRAG:
+  intern: "Kostnadsberegnet bidrag"
+
+INDEKSREGULERING:
+  intern: "Indeksregulering"
+
+INNKREVINGSGRUNNLAG:
+  intern: "Innkrevingsgrunnlag"
+
+BIDRAG_JUSTERT_NED_TIL_25_PROSENT_AV_INNTEKT:
+  intern: "Bidrag redusert til 25 prosent av inntekt"
+BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BP:
+  intern: "Bidrag satt til barnetillegg fra BP"
+BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM:
+  intern: "Bidrag satt til underholdskostnad minus barnetillegg BM"
+BIDRAG_JUSTERT_TIL_FORSKUDDSSATS:
+  intern: "Bidrag justert til forskuddssats"
+BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS:
+  intern: "Bidrag justert manuelt til forskuddssats"
+BIDRAG_JUSTERT_FOR_DELT_BOSTED:
+  intern: "Bidrag justert for delt bosted"

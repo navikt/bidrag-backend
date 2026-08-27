@@ -183,7 +183,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.github.oshai</groupId>
@@ -202,7 +202,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-commons-test-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
@@ -214,7 +214,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-transport-felles</artifactId>
-      <version>${bidrag-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>io.swagger.core.v3</groupId>
@@ -505,5 +505,38 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Kjør tester i flere JVM-forker parallelt for å utnytte flere CPU-kjerner på CI-runneren -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <forkCount>1C</forkCount>
+          <reuseForks>true</reuseForks>
+        </configuration>
+      </plugin>
+      <!-- kapt kjører her uten at noen annotation processor faktisk er konfigurert
+           (ingen <annotationProcessorPaths>), og produserer 0 genererte filer
+           (bekreftet i target/generated-sources/kapt*). Det eneste den gjør er å
+           auto-oppdage prosessorer på compile-classpath (deprecated oppførsel) og
+           deretter varsle at de mangler i kapt-classpath. Deaktiverer de to
+           arvede kapt-kjøringene for denne modulen for å spare kjøretid. -->
+      <plugin>
+        <groupId>org.jetbrains.kotlin</groupId>
+        <artifactId>kotlin-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-kapt</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>default-test-kapt</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>
