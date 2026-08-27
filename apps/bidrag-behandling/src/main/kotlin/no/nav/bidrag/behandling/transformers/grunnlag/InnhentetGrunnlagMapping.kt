@@ -138,8 +138,9 @@ fun List<Grunnlag>.tilInnhentetAndreBarnTilBidragsmottaker(personobjekter: Set<G
 fun List<Grunnlag>.tilInnhentetHusstandsmedlemmer(
     personobjekter: Set<GrunnlagDto>,
     behandling: Behandling,
-    byggForSøknadsbarn: List<Rolle> = behandling.søknadsbarn,
 ): Set<GrunnlagDto> {
+    val personobjekterAlleBarn = (behandling.søknadsbarn.map { it.tilGrunnlagPerson() } + personobjekter).toSet()
+    val byggForSøknadsbarn = behandling.søknadsbarn
     val personobjekterInnhentetHusstandsmedlem = mutableSetOf<GrunnlagDto>()
 
     fun RelatertPersonGrunnlagDto.opprettPersonGrunnlag(): GrunnlagDto {
@@ -155,12 +156,12 @@ fun List<Grunnlag>.tilInnhentetHusstandsmedlemmer(
         val grunnlag = grunnlagListe.first()
         val husstandsmedlemList =
             grunnlag.konvertereData<List<RelatertPersonGrunnlagDto>>() ?: emptyList()
-        val gjelder = personobjekter.hentPersonNyesteIdent(partPersonId)!!
+        val gjelder = personobjekterAlleBarn.hentPersonNyesteIdent(partPersonId)!!
         return husstandsmedlemList
             .groupBy { it.gjelderPersonId }
             .flatMap { (relatertPersonPersonId, relatertPersonListe) ->
                 val relatertPersonObjekter =
-                    (personobjekter + personobjekterInnhentetHusstandsmedlem)
+                    (personobjekterAlleBarn + personobjekterInnhentetHusstandsmedlem)
                         .hentPersonerNyesteIdent(
                             relatertPersonPersonId,
                         ).ifEmpty {
@@ -197,7 +198,7 @@ fun List<Grunnlag>.tilInnhentetHusstandsmedlemmer(
                 val andreVoksneIHusstandenListe =
                     grunnlag.konvertereData<List<RelatertPersonGrunnlagDto>>()?.filter { it.relasjon != Familierelasjon.BARN }
                         ?: emptyList()
-                val gjelder = personobjekter.hentPersonNyesteIdent(grunnlag.rolle.ident)!!
+                val gjelder = personobjekterAlleBarn.hentPersonNyesteIdent(grunnlag.rolle.ident)!!
                 GrunnlagDto(
                     referanse =
                     opprettInnhentetHusstandsmedlemGrunnlagsreferanse(
@@ -225,7 +226,7 @@ fun List<Grunnlag>.tilInnhentetHusstandsmedlemmer(
             innhentetHusstandsmedlemBMGrunnlagListe
 
     return innhentetGrunnlagsliste +
-        behandling.opprettInnhentetHusstandsmedlemGrunnlagHvisMangler(innhentetGrunnlagsliste, personobjekter, byggForSøknadsbarn)
+        behandling.opprettInnhentetHusstandsmedlemGrunnlagHvisMangler(innhentetGrunnlagsliste, personobjekterAlleBarn, byggForSøknadsbarn)
 }
 
 fun Behandling.opprettInnhentetHusstandsmedlemGrunnlagHvisMangler(

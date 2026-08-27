@@ -432,7 +432,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
         }
     }
 
-    if (!UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER.isEnabled) {
+    if (!UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_SAKER.isEnabled) {
         val sakerBp =
             hentAlleSaker(bidragspliktig!!.ident).filter {
                 it.saksnummer.verdi != saksnummer &&
@@ -446,7 +446,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
                 .distinct()
 
         if (sakerBp.isNotEmpty() && barnIAndreSaker.isNotEmpty()) {
-            return "Kan ikke fatte vedtak når BP har flere saker"
+            return "Kan ikke behandle eller fatte vedtak når BP har flere saker"
         }
         val harPrivatAvtaleAndreBarnAndreSaker =
             sakerBp.filter { it.saksnummer.verdi != saksnummer }.any {

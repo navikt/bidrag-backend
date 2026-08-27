@@ -252,7 +252,7 @@ class ForholdsmessigFordelingSøknadService(
             if (rolle.id != null) {
                 virkningstidspunktService.oppdaterVirkningstidspunkt(
                     rolle.id,
-                    søktFomDato.withDayOfMonth(1),
+                    rolle.virkningstidspunkt ?: søktFomDato.withDayOfMonth(1),
                     behandling,
                     true,
                     rekalkulerOpplysningerVedEndring = false,

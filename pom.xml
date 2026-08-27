@@ -60,7 +60,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Nav moduler -->
-        <bidrag-beregn-felles.version>2026.08.21.075458</bidrag-beregn-felles.version>
+        <bidrag-beregn-felles.version>2026.08.27.110246</bidrag-beregn-felles.version>
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>
 
