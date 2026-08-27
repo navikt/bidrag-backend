@@ -1,6 +1,5 @@
 package no.nav.bidrag.statistikk.service
 
-import com.github.tomakehurst.wiremock.WireMockServer
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
@@ -24,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.wiremock.spring.ConfigureWireMock
 import org.wiremock.spring.EnableWireMock
-import org.wiremock.spring.InjectWireMock
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -35,8 +33,6 @@ import java.time.LocalDateTime
 @EnableMockOAuth2Server
 @EnableWireMock(ConfigureWireMock(name = "my-service", port = 0))
 class HendelserServiceTest {
-    @InjectWireMock("my-service")
-    var wireMock: WireMockServer? = null
 
     @Autowired
     private lateinit var hendelserService: HendelserService
@@ -65,8 +61,14 @@ class HendelserServiceTest {
                         barnetsAldersgruppe = "0-6",
                         antallBarnIEgenHusstand = 1.0,
                         sivilstand = "ENKE",
-                        barnBorMedBM = true,
-                        inntektListe = listOf(
+                        barnBorMedMottaker = true,
+                        mottakerInntektListe = listOf(
+                            Inntekt(
+                                beløp = BigDecimal.valueOf(10000),
+                                type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
+                            ),
+                        ),
+                        kravhaverInntektListe = listOf(
                             Inntekt(
                                 beløp = BigDecimal.valueOf(10000),
                                 type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
@@ -104,21 +106,27 @@ class HendelserServiceTest {
                         resultat = Beslutningstype.ENDRING.name,
                         bidragsevne = BigDecimal(1000),
                         underholdskostnad = BigDecimal(1000),
-                        bPsAndelUnderholdskostnad = BigDecimal(1000),
+                        skyldnersAndelUnderholdskostnad = BigDecimal(1000),
                         nettoTilsynsutgift = BigDecimal(1000),
                         faktiskUtgift = BigDecimal(1000),
                         samværsfradrag = BigDecimal(1000),
-                        nettoBarnetilleggBP = BigDecimal(1000),
-                        nettoBarnetilleggBM = BigDecimal(1000),
-                        bPBorMedAndreVoksne = true,
+                        nettoBarnetilleggSkyldner = BigDecimal(1000),
+                        nettoBarnetilleggMottaker = BigDecimal(1000),
+                        skyldnerBorMedAndreVoksne = true,
                         samværsklasse = Samværsklasse.DELT_BOSTED,
-                        bPInntektListe = listOf(
+                        skyldnerInntektListe = listOf(
                             Inntekt(
                                 beløp = BigDecimal.valueOf(10000),
                                 type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
                             ),
                         ),
-                        bMInntektListe = listOf(
+                        mottakerInntektListe = listOf(
+                            Inntekt(
+                                beløp = BigDecimal.valueOf(10000),
+                                type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
+                            ),
+                        ),
+                        kravhaverInntektListe = listOf(
                             Inntekt(
                                 beløp = BigDecimal.valueOf(10000),
                                 type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,

@@ -240,32 +240,32 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(100))
         assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(3500))
         assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(500))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(400))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(400))
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.valueOf(150))
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBP).isEqualTo(BigDecimal.valueOf(500))
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPBorMedAndreVoksne).isTrue
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggSkyldner).isEqualTo(BigDecimal.valueOf(500))
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerBorMedAndreVoksne).isTrue
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.DELT_BOSTED)
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(1000))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPInntektListe?.size == 1)
-        assertThat(hendelser[0].bidragPeriodeListe[0].bMInntektListe?.size == 1)
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(1000))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.size == 1)
+        assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.size == 1)
 
         assertThat(hendelser[0].bidragPeriodeListe[1].periodeFra).isEqualTo(LocalDate.of(2025, 3, 1))
         assertThat(hendelser[0].bidragPeriodeListe[1].periodeTil).isNull()
         assertThat(hendelser[0].bidragPeriodeListe[1].beløp).isEqualTo(BigDecimal.valueOf(200))
         assertThat(hendelser[0].bidragPeriodeListe[1].bidragsevne).isEqualTo(BigDecimal.valueOf(3500))
         assertThat(hendelser[0].bidragPeriodeListe[1].underholdskostnad).isEqualTo(BigDecimal.valueOf(500))
-        assertThat(hendelser[0].bidragPeriodeListe[1].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(200))
+        assertThat(hendelser[0].bidragPeriodeListe[1].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(200))
         assertThat(hendelser[0].bidragPeriodeListe[1].samværsfradrag).isEqualTo(BigDecimal.valueOf(150))
-        assertThat(hendelser[0].bidragPeriodeListe[1].nettoBarnetilleggBP).isEqualTo(BigDecimal.valueOf(1200))
-        assertThat(hendelser[0].bidragPeriodeListe[1].nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe[1].bPBorMedAndreVoksne).isTrue
+        assertThat(hendelser[0].bidragPeriodeListe[1].nettoBarnetilleggSkyldner).isEqualTo(BigDecimal.valueOf(1200))
+        assertThat(hendelser[0].bidragPeriodeListe[1].nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe[1].skyldnerBorMedAndreVoksne).isTrue
         assertThat(hendelser[0].bidragPeriodeListe[1].samværsklasse).isEqualTo(Samværsklasse.DELT_BOSTED)
 
-        assertThat(hendelser[0].bidragPeriodeListe[1].bPInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(1700))
-        assertThat(hendelser[0].bidragPeriodeListe[1].bMInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(2500))
-        assertThat(hendelser[0].bidragPeriodeListe[1].bPInntektListe?.size == 1)
-        assertThat(hendelser[0].bidragPeriodeListe[1].bMInntektListe?.size == 1)
+        assertThat(hendelser[0].bidragPeriodeListe[1].skyldnerInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(1700))
+        assertThat(hendelser[0].bidragPeriodeListe[1].mottakerInntektListe?.first()?.beløp).isEqualTo(BigDecimal.valueOf(2500))
+        assertThat(hendelser[0].bidragPeriodeListe[1].skyldnerInntektListe?.size == 1)
+        assertThat(hendelser[0].bidragPeriodeListe[1].mottakerInntektListe?.size == 1)
     }
 
     @Test
@@ -303,7 +303,6 @@ class VedtakHendelseListenerTest {
             """.trimIndent(),
         )
         verify(statistikkKafkaEventProducerMock, times(1)).publishBidrag(captor.capture())
-        val hendelser = captor.allValues
     }
 
     @Test
@@ -353,11 +352,11 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].historiskVedtak).isFalse
         assertThat(hendelser[0].bidragPeriodeListe.first().bidragsevne).isNull()
         assertThat(hendelser[0].bidragPeriodeListe.first().underholdskostnad).isEqualTo(BigDecimal.valueOf(500))
-        assertThat(hendelser[0].bidragPeriodeListe.first().bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3))
+        assertThat(hendelser[0].bidragPeriodeListe.first().skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3))
         assertThat(hendelser[0].bidragPeriodeListe.first().samværsfradrag).isEqualTo(BigDecimal.valueOf(150))
-        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggBP).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().bPBorMedAndreVoksne).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggSkyldner).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().skyldnerBorMedAndreVoksne).isNull()
         assertThat(hendelser[0].bidragPeriodeListe.first().samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
     }
 
@@ -408,11 +407,11 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].historiskVedtak).isTrue
         assertThat(hendelser[0].bidragPeriodeListe.first().bidragsevne).isNull()
         assertThat(hendelser[0].bidragPeriodeListe.first().underholdskostnad).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().bPsAndelUnderholdskostnad).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().skyldnersAndelUnderholdskostnad).isNull()
         assertThat(hendelser[0].bidragPeriodeListe.first().samværsfradrag).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggBP).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe.first().bPBorMedAndreVoksne).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggSkyldner).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe.first().skyldnerBorMedAndreVoksne).isNull()
         assertThat(hendelser[0].bidragPeriodeListe.first().samværsklasse).isNull()
     }
 
@@ -468,14 +467,14 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(2170))
         assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(7798.48))
         assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(7925.31))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3266.75))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3266.75))
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.valueOf(1099))
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBP).isEqualTo(BigDecimal.valueOf(613.58))
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPBorMedAndreVoksne).isFalse
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggSkyldner).isEqualTo(BigDecimal.valueOf(613.58))
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerBorMedAndreVoksne).isFalse
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
+        assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))
     }
 
     @Disabled
@@ -514,31 +513,6 @@ class VedtakHendelseListenerTest {
             """.trimIndent(),
         )
         verify(statistikkKafkaEventProducerMock, times(2)).publishBidrag(captor.capture())
-
-        val hendelser = captor.allValues
-        /*        assertThat(hendelser[0].vedtaksid).isEqualTo(4796607)
-                assertThat(hendelser[0].vedtakstidspunkt).isEqualTo("2025-08-27T11:00:00.000001")
-                assertThat(hendelser[0].type).isEqualTo("ENDRING")
-                assertThat(hendelser[0].saksnr).isEqualTo("1210712")
-                assertThat(hendelser[0].skyldner).isEqualTo("12345678901")
-                assertThat(hendelser[0].kravhaver).isEqualTo("23456789012")
-                assertThat(hendelser[0].mottaker).isEqualTo("34567890123")
-                assertThat(hendelser[0].historiskVedtak).isFalse
-                assertThat(hendelser[0].bidragPeriodeListe.size == 1)
-
-                assertThat(hendelser[0].bidragPeriodeListe[0].periodeFra).isEqualTo(LocalDate.of(2025, 7, 1))
-                assertThat(hendelser[0].bidragPeriodeListe[0].periodeTil).isNull()
-                assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(2170))
-                assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(7798.48))
-                assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(7925.31))
-                assertThat(hendelser[0].bidragPeriodeListe[0].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3266.75))
-                assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.valueOf(1099))
-                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBP).isEqualTo(BigDecimal.valueOf(613.58))
-                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBM).isNull()
-                assertThat(hendelser[0].bidragPeriodeListe[0].bPBorMedAndreVoksne).isFalse
-                assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
-                assertThat(hendelser[0].bidragPeriodeListe[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
-                assertThat(hendelser[0].bidragPeriodeListe[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))*/
     }
 
     @Test
@@ -862,32 +836,32 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(5750))
         assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(28078.33))
         assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(8778.69))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(7116.91))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(7116.91))
         assertThat(hendelser[0].bidragPeriodeListe[0].nettoTilsynsutgift).isEqualTo(BigDecimal.valueOf(555.69))
         assertThat(hendelser[0].bidragPeriodeListe[0].faktiskUtgift).isEqualTo(BigDecimal.valueOf(1375))
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.ZERO)
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBP).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPBorMedAndreVoksne).isFalse
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggSkyldner).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerBorMedAndreVoksne).isFalse
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
-        assertThat(hendelser[0].bidragPeriodeListe[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(913213))
-        assertThat(hendelser[0].bidragPeriodeListe[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(213233))
+        assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(913213))
+        assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(213233))
 
         assertThat(hendelser[2].bidragPeriodeListe[6].periodeFra).isEqualTo(LocalDate.of(2025, 12, 1))
         assertThat(hendelser[2].bidragPeriodeListe[6].periodeTil).isNull()
         assertThat(hendelser[2].bidragPeriodeListe[6].beløp).isEqualTo(BigDecimal.valueOf(7960))
         assertThat(hendelser[2].bidragPeriodeListe[6].bidragsevne).isEqualTo(BigDecimal.valueOf(24740.25))
         assertThat(hendelser[2].bidragPeriodeListe[6].underholdskostnad).isEqualTo(BigDecimal.valueOf(11084))
-        assertThat(hendelser[2].bidragPeriodeListe[6].bPsAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(8985.83))
+        assertThat(hendelser[2].bidragPeriodeListe[6].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(8985.83))
         assertThat(hendelser[2].bidragPeriodeListe[6].nettoTilsynsutgift).isNull()
         assertThat(hendelser[2].bidragPeriodeListe[6].faktiskUtgift).isNull()
         assertThat(hendelser[2].bidragPeriodeListe[6].samværsfradrag).isEqualTo(BigDecimal.ZERO)
-        assertThat(hendelser[2].bidragPeriodeListe[6].nettoBarnetilleggBP).isNull()
-        assertThat(hendelser[2].bidragPeriodeListe[6].nettoBarnetilleggBM).isNull()
-        assertThat(hendelser[2].bidragPeriodeListe[6].bPBorMedAndreVoksne).isFalse
+        assertThat(hendelser[2].bidragPeriodeListe[6].nettoBarnetilleggSkyldner).isNull()
+        assertThat(hendelser[2].bidragPeriodeListe[6].nettoBarnetilleggMottaker).isNull()
+        assertThat(hendelser[2].bidragPeriodeListe[6].skyldnerBorMedAndreVoksne).isFalse
         assertThat(hendelser[2].bidragPeriodeListe[6].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_0)
-        assertThat(hendelser[2].bidragPeriodeListe[6].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(913213))
-        assertThat(hendelser[2].bidragPeriodeListe[6].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(213233))
+        assertThat(hendelser[2].bidragPeriodeListe[6].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(913213))
+        assertThat(hendelser[2].bidragPeriodeListe[6].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(213233))
     }
 
     @Test
@@ -969,8 +943,8 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].godkjentBeløp).isEqualTo(BigDecimal.valueOf(14000))
         assertThat(hendelser[0].betaltBeløp).isEqualTo(BigDecimal.valueOf(9700))
         assertThat(hendelser[0].historiskVedtak).isFalse
-        assertThat(hendelser[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(400000))
-        assertThat(hendelser[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(320000))
+        assertThat(hendelser[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(400000))
+        assertThat(hendelser[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(320000))
     }
 
     @Test
@@ -1052,8 +1026,8 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].godkjentBeløp).isNull()
         assertThat(hendelser[0].betaltBeløp).isEqualTo(BigDecimal.valueOf(9700))
         assertThat(hendelser[0].historiskVedtak).isTrue
-        assertThat(hendelser[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.ZERO)
-        assertThat(hendelser[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.ZERO)
+        assertThat(hendelser[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.ZERO)
+        assertThat(hendelser[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.ZERO)
     }
 
     @Test
@@ -1118,8 +1092,8 @@ class VedtakHendelseListenerTest {
 
         val hendelser = captor.allValues
 
-        val barnetilleggBPInntektListe = hendelser[0].bPInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
-        val barnetilleggBMInntektListe = hendelser[0].bMInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+        val barnetilleggBPInntektListe = hendelser[0].skyldnerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+        val barnetilleggBMInntektListe = hendelser[0].mottakerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
 
         assertThat(hendelser[0].vedtaksid).isEqualTo(1411)
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
@@ -1138,8 +1112,8 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].godkjentBeløp).isEqualTo(BigDecimal.valueOf(19000))
         assertThat(hendelser[0].betaltBeløp).isEqualTo(BigDecimal.valueOf(0))
         assertThat(hendelser[0].historiskVedtak).isFalse
-        assertThat(hendelser[0].bPInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(320400))
-        assertThat(hendelser[0].bMInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(236000))
+        assertThat(hendelser[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(320400))
+        assertThat(hendelser[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(236000))
 
         assertThat(barnetilleggBPInntektListe?.size).isEqualTo(2)
         assertThat(barnetilleggBMInntektListe?.size).isEqualTo(2)
