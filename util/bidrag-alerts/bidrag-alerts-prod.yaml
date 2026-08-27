@@ -132,7 +132,7 @@ spec:
         - apiURL:
             key: apiUrl
             name: slack-webhook
-          channel: 'team-bidrag-monitorering'
+          channel: '#team-bidrag-monitorering'
           iconEmoji: ':alert:'
           username: 'Varsel prod-fss'
           sendResolved: true

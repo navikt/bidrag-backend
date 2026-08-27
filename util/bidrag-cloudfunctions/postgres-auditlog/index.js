@@ -44,10 +44,10 @@ functions.http('gcpAuditToSlack', async (req, res) => {
   } = labelsFromSummary;
 
 
-  console.debug("DEBUG:", JSON.stringify(labelsFromSummary), JSON.stringify(payload))
+  console.debug('Received auditlog incident', { insertId: labelsFromSummary.insertId });
   // ── 3. Resolve Slack mention
   let mention = '';
-  const slackId = USERNAME_TO_SLACK_ID[username.toLocaleLowerCase()];
+  const slackId = USERNAME_TO_SLACK_ID[username.toLowerCase()];
   if (username && slackId) {
     mention = `<@${slackId}>`;
   } else if (username) {

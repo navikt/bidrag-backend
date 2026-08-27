@@ -2,7 +2,7 @@
 
 Varslinger for team-bidrag apper i bidrag namespace
 
-For mer informasjon om hvordan alarmene fungere se:
+For mer informasjon om hvordan alarmene fungerer, se:
 [https://github.com/nais/doc/tree/master/docs/observability/alerts](https://github.com/nais/doc/tree/master/docs/observability/alerts)
 
 ## Utvikling:
@@ -11,7 +11,7 @@ Du kan bruke `https://prometheus.nais.preprod.local/graph` som hjelp til å test
 ## Varsler slack
 Varsler fra apper i prod vil vises på slack kanalen #team-bidrag-varsel (varselkanal angitt i [bidrag-naiskonsoll](https://teams.nav.cloud.nais.io/teams/bidrag))
 
-Varsler fra apper i dev vil vises på slack kanalen #team-bidrag-varsel-dev (denne er lagt inn via egen alertmanagerkonfig i bidrdag-alerts-dev.yaml). 
+Varsler fra apper i dev vil vises på slack kanalen #team-bidrag-varsel-dev (denne er lagt inn via egen alertmanagerkonfig i bidrag-alerts-dev.yaml).
 
 ## Statusplattform - status.nav.no
 Varsler fra bidragsapper vises i Statusplattformen:
@@ -27,4 +27,4 @@ Innslag i Statusplattform kan administreres her:
 Deployes automatisk til prod og dev via github actions
 
 ### For NAV ansatte
-Vi er tilgjenngelig på slack kanalen #team-bidrag
+Vi er tilgjengelig på slack kanalen #team-bidrag

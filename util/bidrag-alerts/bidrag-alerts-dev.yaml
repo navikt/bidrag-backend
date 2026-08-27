@@ -10,11 +10,11 @@ spec:
     - name: Applikasjoner er nede
       rules:
         - alert: Applikasjon nede
-          expr: kube_deployment_status_replicas_available{deployment=~".+bidrag.+|bidrag.+|.+bidrag", deployment!~"bidrag-aktoerregister|bidrag-bidragskalkulator-.*"} == 0
+          expr: kube_deployment_status_replicas_available{namespace="bidrag",deployment=~".+bidrag.+|bidrag.+|.+bidrag", deployment!~"bidrag-aktoerregister|bidrag-bidragskalkulator-.*"} == 0
           for: 10m
           annotations:
-            description: "App {{ $labels.app }} er nede i namespace {{ $labels.kubernetes_namespace }}"
-            consequence: Application is unavailable
+            description: "Deployment {{ $labels.deployment }} er nede i namespace {{ $labels.namespace }}"
+            consequence: Applikasjon er utilgjengelig
             action: "`Kjør kubectl get pod -n {{ $labels.namespace }}  | grep {{ $labels.deployment }}` for å se podder som er nede"
             summary: |-
               App {{ $labels.deployment }} er nede i dev
