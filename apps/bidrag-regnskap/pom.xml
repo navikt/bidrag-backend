@@ -65,12 +65,12 @@
         <!-- Nav -->
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-commons-felles</artifactId>
+            <artifactId>bidrag-backend-commons</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-transport-felles</artifactId>
+            <artifactId>bidrag-backend-transport</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -201,7 +201,7 @@
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-commons-test-felles</artifactId>
+            <artifactId>bidrag-backend-commons-test</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

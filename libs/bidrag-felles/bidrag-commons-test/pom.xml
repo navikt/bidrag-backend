@@ -8,7 +8,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>bidrag-commons-test-felles</artifactId>
+  <artifactId>bidrag-backend-commons-test</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <name>bidrag-commons-test</name>
   <packaging>jar</packaging>
@@ -33,7 +33,7 @@
   <dependencies>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-commons-felles</artifactId>
+      <artifactId>bidrag-backend-commons</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>

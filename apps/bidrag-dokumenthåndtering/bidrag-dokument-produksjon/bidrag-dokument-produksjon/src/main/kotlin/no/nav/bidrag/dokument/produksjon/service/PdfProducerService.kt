@@ -185,9 +185,9 @@ fun hotTemplateData(
     template: String,
 ): String {
     val safeNamePattern = Regex("^[\\w\\-]+$")
-    if (!safeNamePattern.matches(foldername)) throw IllegalArgumentException("Invalid foldername: $foldername")
-    if (!safeNamePattern.matches(template)) throw IllegalArgumentException("Invalid template: $template")
-    val dataFile = getPath("$foldername/$template.json")
+    val safeFoldername = safeNamePattern.matchEntire(foldername)?.value ?: throw IllegalArgumentException("Invalid foldername: $foldername")
+    val safeTemplate = safeNamePattern.matchEntire(template)?.value ?: throw IllegalArgumentException("Invalid template: $template")
+    val dataFile = getPath("$safeFoldername/$safeTemplate.json")
     val data =
         commonObjectmapper.readValue(
             if (Files.exists(dataFile)) {

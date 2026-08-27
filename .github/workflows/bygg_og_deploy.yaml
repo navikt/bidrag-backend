@@ -190,11 +190,11 @@ jobs:
         with:
           path: |
             ~/.m2/repository/no/nav/bidrag/bidrag-backend
-            ~/.m2/repository/no/nav/bidrag/bidrag-domene-felles
-            ~/.m2/repository/no/nav/bidrag/bidrag-transport-felles
-            ~/.m2/repository/no/nav/bidrag/bidrag-commons-felles
-            ~/.m2/repository/no/nav/bidrag/bidrag-commons-test-felles
-            ~/.m2/repository/no/nav/bidrag/bidrag-generer-testdata-felles
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-domene
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-transport
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons-test
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-generer-testdata
           key: felles-m2-${{ hashFiles('libs/bidrag-felles/**') }}
       # Bygger, installerer og tester bidrag-felles-modulene i det lokale Maven-repoet
       # ved cache-miss Merk: siden alle app-workflows som avhenger av
