@@ -38,7 +38,6 @@ import no.nav.bidrag.beregn.vedtak.Vedtaksfiltrering
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.web.mock.hentFil
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
-import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.commons.web.mock.stubSjablonService
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -52,6 +51,7 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnSluttberegningBarnebidragGrunnlagIReferanser
 import no.nav.bidrag.transport.behandling.vedtak.response.HentVedtakForStønadResponse

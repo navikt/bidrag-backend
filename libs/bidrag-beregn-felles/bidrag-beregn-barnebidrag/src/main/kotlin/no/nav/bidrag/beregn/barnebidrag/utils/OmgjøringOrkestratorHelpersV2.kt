@@ -56,15 +56,14 @@ class OmgjøringOrkestratorHelpersV2(private val vedtakService: VedtakService, p
         }
     }
 
-    fun utførDelberegningPrivatAvtalePeriode(omgjøringsberegningGrunnlag: BeregnGrunnlag): List<GrunnlagDto> =
-        if (omgjøringsberegningGrunnlag.grunnlagListe
-                .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
-                .none { it.gjelderBarnReferanse == omgjøringsberegningGrunnlag.søknadsbarnReferanse }
-        ) {
-            emptyList()
-        } else {
-            delberegningIndeksreguleringPrivatAvtaleV2(omgjøringsberegningGrunnlag, omgjøringsberegningGrunnlag.periode)
-        }
+    fun utførDelberegningPrivatAvtalePeriode(omgjøringsberegningGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = if (omgjøringsberegningGrunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
+            .none { it.gjelderBarnReferanse == omgjøringsberegningGrunnlag.søknadsbarnReferanse }
+    ) {
+        emptyList()
+    } else {
+        delberegningIndeksreguleringPrivatAvtaleV2(omgjøringsberegningGrunnlag, omgjøringsberegningGrunnlag.periode)
+    }
 
     fun finnBeløpshistorikkFørOmgjøringsVedtak(
         vedtak: VedtakDto,

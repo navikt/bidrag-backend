@@ -1,11 +1,11 @@
 package no.nav.bidrag.beregn.sivilstand.service
 
-import no.nav.bidrag.domene.enums.person.Sivilstandskode
-import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandBo
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandV1
 import no.nav.bidrag.beregn.sivilstand.response.Status
+import no.nav.bidrag.domene.enums.person.Sivilstandskode
+import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -222,8 +222,7 @@ internal class SivilstandServiceV1 {
 
     private fun hentSisteDagIMåneden(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month, dato.month.length(dato.isLeapYear))
 
-    private fun hentSisteDagIForrigeMåned(dato: LocalDate): LocalDate =
-        LocalDate.of(dato.year, dato.month, dato.month.length(dato.isLeapYear)).minusMonths(1)
+    private fun hentSisteDagIForrigeMåned(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month, dato.month.length(dato.isLeapYear)).minusMonths(1)
 
     private fun hentFørsteDagINesteMåned(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month, 1).plusMonths(1)
 }

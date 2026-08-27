@@ -67,11 +67,9 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
         )
     }
 
-    private fun finnFødselsdatoBarn(beregnGrunnlag: List<GrunnlagDto>, referanse: String): LocalDate =
-        finnPersonFraReferanse(beregnGrunnlag, referanse).fødselsdato
+    private fun finnFødselsdatoBarn(beregnGrunnlag: List<GrunnlagDto>, referanse: String): LocalDate = finnPersonFraReferanse(beregnGrunnlag, referanse).fødselsdato
 
-    private fun finnPersonidentBarn(beregnGrunnlag: List<GrunnlagDto>, referanse: String): Personident =
-        finnPersonFraReferanse(beregnGrunnlag, referanse).ident!!
+    private fun finnPersonidentBarn(beregnGrunnlag: List<GrunnlagDto>, referanse: String): Personident = finnPersonFraReferanse(beregnGrunnlag, referanse).ident!!
 
     private fun mapSjablonPeriodeListe(sjablonPeriodeListeCore: List<SjablonPeriodeCore>): List<SjablonPeriode> {
         val sjablonPeriodeListe = mutableListOf<SjablonPeriode>()

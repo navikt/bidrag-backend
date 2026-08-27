@@ -7,9 +7,9 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import de.focus_shift.jollyday.core.HolidayCalendar
 import de.focus_shift.jollyday.core.HolidayManager
 import de.focus_shift.jollyday.core.ManagerParameters
-import no.nav.bidrag.domene.enums.diverse.PlussMinus
 import no.nav.bidrag.beregn.inntekt.service.Beskrivelser
 import no.nav.bidrag.beregn.inntekt.service.YtelserService
+import no.nav.bidrag.domene.enums.diverse.PlussMinus
 import no.nav.bidrag.transport.behandling.inntekt.request.Ainntektspost
 import java.math.BigDecimal
 import java.time.LocalDate

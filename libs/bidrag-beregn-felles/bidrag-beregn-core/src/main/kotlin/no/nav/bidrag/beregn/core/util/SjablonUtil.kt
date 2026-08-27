@@ -198,11 +198,10 @@ object SjablonUtil {
     // Filtrerer sortertSjablonSingelNøkkelListe på nøkkel-verdi >= sjablonNøkkel og returnerer en liste av typen SjablonInnholdNy (tom liste hvis det
     // mot formodning ikke finnes noen forekomster).
     // Brukes av sjabloner som har flere innholdobjekter og som henter verdi(er) basert på intervall (Samværsfradrag).
-    private fun finnSjablonInnholdVerdiListeIntervall(sortertSjablonSingelNøkkelListe: List<SjablonSingelNøkkel>, sjablonNøkkelVerdi: Int) =
-        sortertSjablonSingelNøkkelListe
-            .filter { it.verdi.toInt() >= sjablonNøkkelVerdi }
-            .map { it.innholdListe }
-            .firstOrNull() ?: emptyList()
+    private fun finnSjablonInnholdVerdiListeIntervall(sortertSjablonSingelNøkkelListe: List<SjablonSingelNøkkel>, sjablonNøkkelVerdi: Int) = sortertSjablonSingelNøkkelListe
+        .filter { it.verdi.toInt() >= sjablonNøkkelVerdi }
+        .map { it.innholdListe }
+        .firstOrNull() ?: emptyList()
 
     // Filtrerer sjablonInnholdListe på sjablonInnholdNavn og returnerer en liste over alle matchende verdier.
     // Brukes av sjabloner som skal returnere en liste med innholdverdier (TrinnvisSkattesats).
@@ -211,9 +210,7 @@ object SjablonUtil {
         .map { it.verdi }
         .toList()
 
-    fun justerSjablonTomDato(datoTom: LocalDate?): LocalDate? =
-        if (datoTom == LocalDate.parse("9999-12-31") || datoTom == null) null else datoTom.plusMonths(1)
+    fun justerSjablonTomDato(datoTom: LocalDate?): LocalDate? = if (datoTom == LocalDate.parse("9999-12-31") || datoTom == null) null else datoTom.plusMonths(1)
 
-    fun lagSjablonReferanse(sjablonNavn: String, fomDato: LocalDate, postfix: String = ""): String =
-        "sjablon_${sjablonNavn}_${fomDato.format(DateTimeFormatter.ofPattern("yyyyMM"))}$postfix"
+    fun lagSjablonReferanse(sjablonNavn: String, fomDato: LocalDate, postfix: String = ""): String = "sjablon_${sjablonNavn}_${fomDato.format(DateTimeFormatter.ofPattern("yyyyMM"))}$postfix"
 }

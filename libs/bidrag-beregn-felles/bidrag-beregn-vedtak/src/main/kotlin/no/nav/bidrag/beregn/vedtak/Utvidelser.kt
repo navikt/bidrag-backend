@@ -25,11 +25,9 @@ fun VedtakForStønad.erIkkeRelevant() = !stønadsendring.erEndring() || harIngen
 
 fun VedtakForStønad.harIngenPerioder() = this.stønadsendring.periodeListe.isEmpty()
 
-fun VedtakForStønad.erResultatIngenEndringUnderGrense() =
-    this.stønadsendring.periodeListe.any { Resultatkode.fraKode(it.resultatkode) == Resultatkode.INGEN_ENDRING_UNDER_GRENSE }
+fun VedtakForStønad.erResultatIngenEndringUnderGrense() = this.stønadsendring.periodeListe.any { Resultatkode.fraKode(it.resultatkode) == Resultatkode.INGEN_ENDRING_UNDER_GRENSE }
 
-fun VedtakForStønad.erResultatFraAnnetVedtak() =
-    this.stønadsendring.periodeListe.maxBy { it.periode.fom }.takeIf { Beslutningsårsak.RESULTAT_FRA_ANNET_VEDTAK.kode == it.resultatkode } != null
+fun VedtakForStønad.erResultatFraAnnetVedtak() = this.stønadsendring.periodeListe.maxBy { it.periode.fom }.takeIf { Beslutningsårsak.RESULTAT_FRA_ANNET_VEDTAK.kode == it.resultatkode } != null
 
 fun VedtakForStønad.erKlage() = Vedtakstype.KLAGE == type || søknadKlageRefId != null
 

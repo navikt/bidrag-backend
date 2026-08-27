@@ -74,14 +74,14 @@ import no.nav.bidrag.beregn.boforhold.dto.BoforholdBarnRequestV3
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
 import no.nav.bidrag.beregn.boforhold.dto.EndreBostatus
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
+import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.diverse.TypeEndring
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.beregn.sivilstand.SivilstandApi
-import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import no.nav.bidrag.transport.felles.commonObjectmapper

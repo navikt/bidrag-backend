@@ -54,6 +54,7 @@ import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.utgift.tilSærbidragKategoriDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.transformers.årsinntekterSortert
+import no.nav.bidrag.beregn.inntekt.util.InntektUtil
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.finnVisningsnavn
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
@@ -71,7 +72,6 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.DatoperiodeDto
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.domene.util.visningsnavn
-import no.nav.bidrag.beregn.inntekt.util.InntektUtil
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.grunnlag.response.ArbeidsforholdGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto

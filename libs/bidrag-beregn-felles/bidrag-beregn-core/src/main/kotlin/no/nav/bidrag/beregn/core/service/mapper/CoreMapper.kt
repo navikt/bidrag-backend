@@ -57,8 +57,7 @@ abstract class CoreMapper {
 
     // Henter sjablonverdi for innslag kapitalinntekt
     // NB! Pt ligger det bare en gyldig sjablonverdi (uforandret siden 2003). Logikken her må utvides hvis det legges inn nye sjablonverdier.
-    fun finnInnslagKapitalinntektFraSjablontallListe(sjablontallListe: List<Sjablontall>): Sjablontall? =
-        sjablontallListe.firstOrNull { it.typeSjablon == SjablonTallNavn.INNSLAG_KAPITALINNTEKT_BELØP.id }
+    fun finnInnslagKapitalinntektFraSjablontallListe(sjablontallListe: List<Sjablontall>): Sjablontall? = sjablontallListe.firstOrNull { it.typeSjablon == SjablonTallNavn.INNSLAG_KAPITALINNTEKT_BELØP.id }
 
     // Henter sjablonverdi for kapitalinntekt og returnerer Sjablontall-objekt
     // NB! Pt ligger det bare en gyldig sjablonverdi (uforandret siden 2003). Logikken her må utvides hvis det legges inn nye sjablonverdier.
@@ -586,12 +585,11 @@ abstract class CoreMapper {
     }
 
     // Setter til-dato for grunnlaget til null hvis det er lik eller etter beregnDatoTil
-    fun mapDatoTil(grunnlagPeriode: ÅrMånedsperiode, beregnPeriodeTil: YearMonth?): LocalDate? =
-        if (grunnlagPeriode.til == null || (beregnPeriodeTil != null && (!grunnlagPeriode.til!!.isBefore(beregnPeriodeTil)))) {
-            null
-        } else {
-            grunnlagPeriode.toDatoperiode().til
-        }
+    fun mapDatoTil(grunnlagPeriode: ÅrMånedsperiode, beregnPeriodeTil: YearMonth?): LocalDate? = if (grunnlagPeriode.til == null || (beregnPeriodeTil != null && (!grunnlagPeriode.til!!.isBefore(beregnPeriodeTil)))) {
+        null
+    } else {
+        grunnlagPeriode.toDatoperiode().til
+    }
 
     // Sjekker om søknadsbarnet fyller 18 år i beregningsperioden. Justerer i så fall til-periode. Hvis stønadstype er BIDRAG18AAR skal det ikke
     // sjekkes om barnet blir 18 år i perioden. Hvis barnet fyller 18 år før beregningsperioden starter, settes til-periode lik fom-periode for å

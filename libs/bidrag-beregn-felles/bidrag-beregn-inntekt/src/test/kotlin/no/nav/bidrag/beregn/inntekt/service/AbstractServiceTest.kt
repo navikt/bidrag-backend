@@ -1,9 +1,9 @@
 package no.nav.bidrag.beregn.inntekt.service
 
-import no.nav.bidrag.commons.service.KodeverkProvider
 import no.nav.bidrag.beregn.inntekt.testdata.StubUtils
 import no.nav.bidrag.beregn.inntekt.testdata.StubUtils.Companion.kodeverkUrl
 import no.nav.bidrag.beregn.inntekt.testdata.StubUtils.Companion.wireMockServer
+import no.nav.bidrag.commons.service.KodeverkProvider
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 

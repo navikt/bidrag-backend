@@ -202,16 +202,15 @@ internal object EndeligBidragMapper : CoreMapper() {
         }
     }
 
-    private fun mapBeløpshistorikk(beregnGrunnlag: BeregnGrunnlag, grunnlagstype: Grunnlagstype): BeløpshistorikkPeriodeGrunnlag? =
-        beregnGrunnlag.grunnlagListe
-            .filtrerOgKonverterBasertPåEgenReferanse<BeløpshistorikkGrunnlag>(grunnlagType = grunnlagstype)
-            .map {
-                BeløpshistorikkPeriodeGrunnlag(
-                    referanse = it.referanse,
-                    beløpshistorikkPeriode = it.innhold,
-                )
-            }
-            .firstOrNull()
+    private fun mapBeløpshistorikk(beregnGrunnlag: BeregnGrunnlag, grunnlagstype: Grunnlagstype): BeløpshistorikkPeriodeGrunnlag? = beregnGrunnlag.grunnlagListe
+        .filtrerOgKonverterBasertPåEgenReferanse<BeløpshistorikkGrunnlag>(grunnlagType = grunnlagstype)
+        .map {
+            BeløpshistorikkPeriodeGrunnlag(
+                referanse = it.referanse,
+                beløpshistorikkPeriode = it.innhold,
+            )
+        }
+        .firstOrNull()
 
     private fun mapSøknadGrunnlag(beregnGrunnlag: BeregnGrunnlag): BegrensetRevurderingPeriodeGrunnlag? = beregnGrunnlag.grunnlagListe
         .filtrerOgKonverterBasertPåEgenReferanse<SøknadGrunnlag>(Grunnlagstype.SØKNAD)

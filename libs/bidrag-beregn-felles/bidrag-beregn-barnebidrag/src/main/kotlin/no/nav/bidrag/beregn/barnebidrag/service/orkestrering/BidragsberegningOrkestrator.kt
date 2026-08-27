@@ -83,168 +83,167 @@ class BidragsberegningOrkestrator(
     private val sakConsumer: BeregningSakConsumer,
 ) {
 
-    fun utførBidragsberegningV3(request: BidragsberegningOrkestratorRequestV2): BidragsberegningOrkestratorResponseV2 =
-        when (request.beregningstype) {
-            Beregningstype.BIDRAG -> {
-                secureLogger.debug { "Utfører bidragsberegning for request: ${commonObjectmapper.writeValueAsString(request)}" }
+    fun utførBidragsberegningV3(request: BidragsberegningOrkestratorRequestV2): BidragsberegningOrkestratorResponseV2 = when (request.beregningstype) {
+        Beregningstype.BIDRAG -> {
+            secureLogger.debug { "Utfører bidragsberegning for request: ${commonObjectmapper.writeValueAsString(request)}" }
 
-                // Sjekk om det skal gis direkte avslag for alle barn
-                if (request.erDirekteAvslag) {
-                    // Kaller beregning for ett og ett søknadsbarn
-                    val respons = utforBeregningDirekteAvslag(request)
-                    secureLogger.debug { "Direkte avslag, respons fra beregning: $${commonObjectmapper.writeValueAsString(respons)}" }
+            // Sjekk om det skal gis direkte avslag for alle barn
+            if (request.erDirekteAvslag) {
+                // Kaller beregning for ett og ett søknadsbarn
+                val respons = utforBeregningDirekteAvslag(request)
+                secureLogger.debug { "Direkte avslag, respons fra beregning: $${commonObjectmapper.writeValueAsString(respons)}" }
 
-                    BidragsberegningOrkestratorResponseV2(
-                        grunnlagListe = respons.flatMap { it.second }.distinct(),
-                        resultat = respons.map { it.first },
-                    )
-                } else {
-                    val resultat = orkestrerBeregning(request)
-                    BidragsberegningOrkestratorResponseV2(
-                        grunnlagListe = resultat.grunnlagsliste,
-                        resultat =
-                        resultat.resultatListe.map { bergningResultat ->
-                            BidragsberegningResultatBarnV2(
-                                søknadsbarnreferanse = bergningResultat.søknadsbarnreferanse,
-                                fatteVedtakAnbefalt = bergningResultat.fatteVedtakAnbefalt,
-                                avvistRevurderingsbarn = bergningResultat.avvistRevurderingsbarn,
-                                beregningsfeil = bergningResultat.beregningsfeil,
-                                resultatVedtakListe = bergningResultat.beregnetBarnebidragResultat?.let {
-                                    listOf(
-                                        ResultatVedtakV2(
-                                            periodeListe = it.beregnetBarnebidragPeriodeListe,
-                                            vedtakstype = Vedtakstype.ENDRING,
-                                        ),
-                                    )
-                                } ?: listOf(
-                                    ResultatVedtakV2(
-                                        periodeListe = emptyList(),
-                                        vedtakstype = Vedtakstype.ENDRING,
-                                    ),
-                                ),
-
-                            )
-                        },
-                    )
-                }
-            }
-
-            Beregningstype.OMGJØRING -> {
-                secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
-                val respons = orkestrerBeregning(request, true)
                 BidragsberegningOrkestratorResponseV2(
-
-                    grunnlagListe = respons.grunnlagsliste,
-                    resultat = respons.resultatListe.map {
+                    grunnlagListe = respons.flatMap { it.second }.distinct(),
+                    resultat = respons.map { it.first },
+                )
+            } else {
+                val resultat = orkestrerBeregning(request)
+                BidragsberegningOrkestratorResponseV2(
+                    grunnlagListe = resultat.grunnlagsliste,
+                    resultat =
+                    resultat.resultatListe.map { bergningResultat ->
                         BidragsberegningResultatBarnV2(
-                            søknadsbarnreferanse = it.søknadsbarnreferanse,
-                            beregningsfeil = it.beregningsfeil,
-                            avvistRevurderingsbarn = it.avvistRevurderingsbarn,
-                            fatteVedtakAnbefalt = it.fatteVedtakAnbefalt,
-                            resultatVedtakListe = if (it.beregnetBarnebidragResultat == null) {
-                                emptyList()
-                            } else {
+                            søknadsbarnreferanse = bergningResultat.søknadsbarnreferanse,
+                            fatteVedtakAnbefalt = bergningResultat.fatteVedtakAnbefalt,
+                            avvistRevurderingsbarn = bergningResultat.avvistRevurderingsbarn,
+                            beregningsfeil = bergningResultat.beregningsfeil,
+                            resultatVedtakListe = bergningResultat.beregnetBarnebidragResultat?.let {
                                 listOf(
                                     ResultatVedtakV2(
-                                        periodeListe = it.beregnetBarnebidragResultat.beregnetBarnebidragPeriodeListe,
-                                        delvedtak = false,
-                                        omgjøringsvedtak = true,
-                                        vedtakstype = Vedtakstype.KLAGE,
+                                        periodeListe = it.beregnetBarnebidragPeriodeListe,
+                                        vedtakstype = Vedtakstype.ENDRING,
                                     ),
                                 )
-                            },
+                            } ?: listOf(
+                                ResultatVedtakV2(
+                                    periodeListe = emptyList(),
+                                    vedtakstype = Vedtakstype.ENDRING,
+                                ),
+                            ),
+
                         )
                     },
                 )
             }
-
-            Beregningstype.OMGJØRING_ENDELIG -> {
-                secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
-                val klageberegningResultat = orkestrerBeregning(request, true)
-                val respons = klageberegningResultat.resultatListe.parallelStream().map { resultat ->
-                    if (resultat.beregningsfeil != null) {
-                        BidragsberegningResultatBarnV2(
-                            søknadsbarnreferanse = resultat.søknadsbarnreferanse,
-                            resultatVedtakListe = emptyList(),
-                            beregningsfeil = resultat.beregningsfeil,
-                        ) to request.grunnlagsliste
-                    } else {
-                        val barnRequest = request.beregningBarn.find {
-                            it.søknadsbarnreferanse == resultat.søknadsbarnreferanse
-                        }!!
-                        val erRevurderingsbarn = klageberegningResultat.grunnlagsliste.hentPersonMedReferanse(
-                            barnRequest.søknadsbarnreferanse,
-                        )!!.erRevurderingsbarn
-                        val skalFatteVedtak = if (erRevurderingsbarn) {
-                            val overstyrtFatteVedtak = barnRequest.omgjøringOrkestratorGrunnlag?.skalFatteVedtakForRevurderingsbarn != null
-                            if (resultat.avvistRevurderingsbarn) {
-                                false
-                            } else if (overstyrtFatteVedtak) {
-                                barnRequest.omgjøringOrkestratorGrunnlag?.skalFatteVedtakForRevurderingsbarn == true
-                            } else {
-                                resultat.fatteVedtakAnbefalt
-                            }
-                        } else {
-                            true
-                        }
-                        val requestBarn = request.beregningBarn.find { bb -> bb.søknadsbarnreferanse == resultat.søknadsbarnreferanse }
-                        val endeligKlageberegningResultat = omgjøringOrkestratorV2.utførOmgjøringEndelig(
-                            omgjøringResultat = resultat.beregnetBarnebidragResultat!!,
-                            omgjøringGrunnlagInput = requestBarn!!.tilBeregnGrunnlagV1Klage(request.grunnlagsliste),
-                            omgjøringOrkestratorGrunnlag =
-                            requestBarn.omgjøringOrkestratorGrunnlag ?: throw IllegalArgumentException("klageOrkestratorGrunnlag må være angitt"),
-                            skalFatteVedtak = skalFatteVedtak,
-                        )
-                        BidragsberegningResultatBarnV2(
-                            resultat.søknadsbarnreferanse,
-                            avvistRevurderingsbarn = resultat.avvistRevurderingsbarn,
-                            fatteVedtakAnbefalt = resultat.fatteVedtakAnbefalt,
-                            resultatVedtakListe = endeligKlageberegningResultat.map {
-                                ResultatVedtakV2(
-                                    periodeListe = it.resultat.beregnetBarnebidragPeriodeListe,
-                                    delvedtak = it.delvedtak,
-                                    grunnlagslisteDelvedtak = if (it.delvedtak) it.resultat.grunnlagListe else emptyList(),
-                                    omgjøringsvedtak = it.omgjøringsvedtak,
-                                    beregnet = it.beregnet,
-                                    vedtakstype = it.vedtakstype,
-                                )
-                            },
-                        ) to run {
-                            val grunnlagslisteOmgjøring = endeligKlageberegningResultat.flatMap {
-                                if (!it.delvedtak && !it.omgjøringsvedtak) {
-                                    it.resultat.grunnlagListe
-                                } else {
-                                    emptyList()
-                                }
-                            }
-                            // Legg til grunnlag fra beregningen som kan inneholde vurdering av FF
-                            val grunnlagslisteAlle =
-                                grunnlagslisteOmgjøring + resultat.beregnetBarnebidragResultat.grunnlagListe
-                            grunnlagslisteAlle.distinctBy { it.referanse }
-                        }
-                    }
-                }.toList()
-                secureLogger.debug { "Resultat av bidragsberegning: $respons" }
-
-                val resultatGrunnlagsliste = respons.flatMap { it.second }
-                val grunnlagslisteFraRunde2A = klageberegningResultat.grunnlagsliste.filter {
-                    it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
-                }
-                val grunnlagslisteJustert =
-                    leggTilDelberegningReferansePåSluttberegninger(
-                        grunnlagListe = resultatGrunnlagsliste,
-                        delberegningGrunnlagFraRunde2A = grunnlagslisteFraRunde2A,
-                    )
-                val referertGrunnlagslisteFraRunde2A = klageberegningResultat.grunnlagsliste.filter { grunnlag ->
-                    !resultatGrunnlagsliste.map { it.referanse }.contains(grunnlag.referanse)
-                }
-
-                BidragsberegningOrkestratorResponseV2(
-                    grunnlagListe = (grunnlagslisteJustert + grunnlagslisteFraRunde2A + referertGrunnlagslisteFraRunde2A).distinctBy { it.referanse },
-                    resultat = respons.map { it.first },
-                )
-            }
         }
+
+        Beregningstype.OMGJØRING -> {
+            secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
+            val respons = orkestrerBeregning(request, true)
+            BidragsberegningOrkestratorResponseV2(
+
+                grunnlagListe = respons.grunnlagsliste,
+                resultat = respons.resultatListe.map {
+                    BidragsberegningResultatBarnV2(
+                        søknadsbarnreferanse = it.søknadsbarnreferanse,
+                        beregningsfeil = it.beregningsfeil,
+                        avvistRevurderingsbarn = it.avvistRevurderingsbarn,
+                        fatteVedtakAnbefalt = it.fatteVedtakAnbefalt,
+                        resultatVedtakListe = if (it.beregnetBarnebidragResultat == null) {
+                            emptyList()
+                        } else {
+                            listOf(
+                                ResultatVedtakV2(
+                                    periodeListe = it.beregnetBarnebidragResultat.beregnetBarnebidragPeriodeListe,
+                                    delvedtak = false,
+                                    omgjøringsvedtak = true,
+                                    vedtakstype = Vedtakstype.KLAGE,
+                                ),
+                            )
+                        },
+                    )
+                },
+            )
+        }
+
+        Beregningstype.OMGJØRING_ENDELIG -> {
+            secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
+            val klageberegningResultat = orkestrerBeregning(request, true)
+            val respons = klageberegningResultat.resultatListe.parallelStream().map { resultat ->
+                if (resultat.beregningsfeil != null) {
+                    BidragsberegningResultatBarnV2(
+                        søknadsbarnreferanse = resultat.søknadsbarnreferanse,
+                        resultatVedtakListe = emptyList(),
+                        beregningsfeil = resultat.beregningsfeil,
+                    ) to request.grunnlagsliste
+                } else {
+                    val barnRequest = request.beregningBarn.find {
+                        it.søknadsbarnreferanse == resultat.søknadsbarnreferanse
+                    }!!
+                    val erRevurderingsbarn = klageberegningResultat.grunnlagsliste.hentPersonMedReferanse(
+                        barnRequest.søknadsbarnreferanse,
+                    )!!.erRevurderingsbarn
+                    val skalFatteVedtak = if (erRevurderingsbarn) {
+                        val overstyrtFatteVedtak = barnRequest.omgjøringOrkestratorGrunnlag?.skalFatteVedtakForRevurderingsbarn != null
+                        if (resultat.avvistRevurderingsbarn) {
+                            false
+                        } else if (overstyrtFatteVedtak) {
+                            barnRequest.omgjøringOrkestratorGrunnlag?.skalFatteVedtakForRevurderingsbarn == true
+                        } else {
+                            resultat.fatteVedtakAnbefalt
+                        }
+                    } else {
+                        true
+                    }
+                    val requestBarn = request.beregningBarn.find { bb -> bb.søknadsbarnreferanse == resultat.søknadsbarnreferanse }
+                    val endeligKlageberegningResultat = omgjøringOrkestratorV2.utførOmgjøringEndelig(
+                        omgjøringResultat = resultat.beregnetBarnebidragResultat!!,
+                        omgjøringGrunnlagInput = requestBarn!!.tilBeregnGrunnlagV1Klage(request.grunnlagsliste),
+                        omgjøringOrkestratorGrunnlag =
+                        requestBarn.omgjøringOrkestratorGrunnlag ?: throw IllegalArgumentException("klageOrkestratorGrunnlag må være angitt"),
+                        skalFatteVedtak = skalFatteVedtak,
+                    )
+                    BidragsberegningResultatBarnV2(
+                        resultat.søknadsbarnreferanse,
+                        avvistRevurderingsbarn = resultat.avvistRevurderingsbarn,
+                        fatteVedtakAnbefalt = resultat.fatteVedtakAnbefalt,
+                        resultatVedtakListe = endeligKlageberegningResultat.map {
+                            ResultatVedtakV2(
+                                periodeListe = it.resultat.beregnetBarnebidragPeriodeListe,
+                                delvedtak = it.delvedtak,
+                                grunnlagslisteDelvedtak = if (it.delvedtak) it.resultat.grunnlagListe else emptyList(),
+                                omgjøringsvedtak = it.omgjøringsvedtak,
+                                beregnet = it.beregnet,
+                                vedtakstype = it.vedtakstype,
+                            )
+                        },
+                    ) to run {
+                        val grunnlagslisteOmgjøring = endeligKlageberegningResultat.flatMap {
+                            if (!it.delvedtak && !it.omgjøringsvedtak) {
+                                it.resultat.grunnlagListe
+                            } else {
+                                emptyList()
+                            }
+                        }
+                        // Legg til grunnlag fra beregningen som kan inneholde vurdering av FF
+                        val grunnlagslisteAlle =
+                            grunnlagslisteOmgjøring + resultat.beregnetBarnebidragResultat.grunnlagListe
+                        grunnlagslisteAlle.distinctBy { it.referanse }
+                    }
+                }
+            }.toList()
+            secureLogger.debug { "Resultat av bidragsberegning: $respons" }
+
+            val resultatGrunnlagsliste = respons.flatMap { it.second }
+            val grunnlagslisteFraRunde2A = klageberegningResultat.grunnlagsliste.filter {
+                it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
+            }
+            val grunnlagslisteJustert =
+                leggTilDelberegningReferansePåSluttberegninger(
+                    grunnlagListe = resultatGrunnlagsliste,
+                    delberegningGrunnlagFraRunde2A = grunnlagslisteFraRunde2A,
+                )
+            val referertGrunnlagslisteFraRunde2A = klageberegningResultat.grunnlagsliste.filter { grunnlag ->
+                !resultatGrunnlagsliste.map { it.referanse }.contains(grunnlag.referanse)
+            }
+
+            BidragsberegningOrkestratorResponseV2(
+                grunnlagListe = (grunnlagslisteJustert + grunnlagslisteFraRunde2A + referertGrunnlagslisteFraRunde2A).distinctBy { it.referanse },
+                resultat = respons.map { it.first },
+            )
+        }
+    }
 
     // Orkestrering av beregningen
     //
@@ -804,16 +803,15 @@ class BidragsberegningOrkestrator(
     }
 
     // Henter alle søknadsbarn og deres referanser og personidenter fra grunnlagslista
-    private fun hentAlleSøknadsbarn(beregningBarnListe: List<BeregningGrunnlagV2>, grunnlagsliste: List<GrunnlagDto>): List<PersonStønad> =
-        beregningBarnListe.mapNotNull { beregningsbarn ->
-            val barnGrunnlag =
-                grunnlagsliste.filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
-                    .firstOrNull { it.referanse == beregningsbarn.søknadsbarnreferanse }
-                    ?: throw IllegalArgumentException(
-                        "Fant ikke PERSON_SØKNADSBARN-grunnlag for barn med referanse ${beregningsbarn.søknadsbarnreferanse}",
-                    )
-            barnGrunnlag.innhold.ident?.let { PersonStønad(ident = it.verdi, stønadstype = beregningsbarn.stønadstype) }
-        }
+    private fun hentAlleSøknadsbarn(beregningBarnListe: List<BeregningGrunnlagV2>, grunnlagsliste: List<GrunnlagDto>): List<PersonStønad> = beregningBarnListe.mapNotNull { beregningsbarn ->
+        val barnGrunnlag =
+            grunnlagsliste.filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+                .firstOrNull { it.referanse == beregningsbarn.søknadsbarnreferanse }
+                ?: throw IllegalArgumentException(
+                    "Fant ikke PERSON_SØKNADSBARN-grunnlag for barn med referanse ${beregningsbarn.søknadsbarnreferanse}",
+                )
+        barnGrunnlag.innhold.ident?.let { PersonStønad(ident = it.verdi, stønadstype = beregningsbarn.stønadstype) }
+    }
 
     private fun BidragsberegningOrkestratorRequestV2.finnBidragsmottakerForBarn(søknadsbarnreferanse: String): String = grunnlagsliste
         .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)

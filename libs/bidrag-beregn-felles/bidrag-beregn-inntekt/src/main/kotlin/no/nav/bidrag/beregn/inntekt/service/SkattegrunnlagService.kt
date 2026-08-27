@@ -1,10 +1,10 @@
 package no.nav.bidrag.beregn.inntekt.service
 
+import no.nav.bidrag.beregn.inntekt.util.hentMappingerKapitalinntekt
+import no.nav.bidrag.beregn.inntekt.util.hentMappingerLigs
 import no.nav.bidrag.domene.enums.diverse.PlussMinus
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.beregn.inntekt.util.hentMappingerKapitalinntekt
-import no.nav.bidrag.beregn.inntekt.util.hentMappingerLigs
 import no.nav.bidrag.transport.behandling.inntekt.request.SkattegrunnlagForLigningsår
 import no.nav.bidrag.transport.behandling.inntekt.response.InntektPost
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt

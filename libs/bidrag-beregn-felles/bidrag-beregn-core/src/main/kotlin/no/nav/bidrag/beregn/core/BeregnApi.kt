@@ -34,12 +34,9 @@ class BeregnApi {
     private val inntektService = BeregnInntektService()
     private val boforholdService = BeregnBoforholdService()
 
-    fun beregnInntekt(beregnForskuddGrunnlag: BeregnValgteInntekterGrunnlag): BeregnValgteInntekterResultat =
-        inntektService.beregn(beregnForskuddGrunnlag)
+    fun beregnInntekt(beregnForskuddGrunnlag: BeregnValgteInntekterGrunnlag): BeregnValgteInntekterResultat = inntektService.beregn(beregnForskuddGrunnlag)
 
-    fun beregnBoforholdCore(grunnlag: BeregnGrunnlag, gjelderReferanse: Grunnlagsreferanse? = null): BeregnBoforholdPeriodeCoreRespons =
-        boforholdService.beregnBoforholdPeriodeCore(grunnlag, gjelderReferanse)
+    fun beregnBoforholdCore(grunnlag: BeregnGrunnlag, gjelderReferanse: Grunnlagsreferanse? = null): BeregnBoforholdPeriodeCoreRespons = boforholdService.beregnBoforholdPeriodeCore(grunnlag, gjelderReferanse)
 
-    fun beregnBoforhold(grunnlag: BeregnGrunnlag, gjelderReferanse: Grunnlagsreferanse? = null): List<DelberegningBoforhold> =
-        boforholdService.beregnDelberegningBoforholdListe(grunnlag, gjelderReferanse)
+    fun beregnBoforhold(grunnlag: BeregnGrunnlag, gjelderReferanse: Grunnlagsreferanse? = null): List<DelberegningBoforhold> = boforholdService.beregnDelberegningBoforholdListe(grunnlag, gjelderReferanse)
 }

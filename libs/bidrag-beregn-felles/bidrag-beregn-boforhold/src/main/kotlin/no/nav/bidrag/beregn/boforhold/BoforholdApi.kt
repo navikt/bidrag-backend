@@ -22,12 +22,10 @@ import java.time.LocalDate
 class BoforholdApi {
     companion object {
         private val boforholdServiceV1 = BoforholdServiceV1()
-        fun beregnV1(virkningstidspunkt: LocalDate, boforholdGrunnlagDtoListe: List<RelatertPerson>): List<BoforholdBeregnet> =
-            boforholdServiceV1.beregnEgneBarn(virkningstidspunkt, boforholdGrunnlagDtoListe)
+        fun beregnV1(virkningstidspunkt: LocalDate, boforholdGrunnlagDtoListe: List<RelatertPerson>): List<BoforholdBeregnet> = boforholdServiceV1.beregnEgneBarn(virkningstidspunkt, boforholdGrunnlagDtoListe)
 
         private val boforholdBarnServiceV2 = BoforholdBarnServiceV2()
-        fun beregnBoforholdBarnV2(virkningstidspunkt: LocalDate, boforholdBarnRequestListe: List<BoforholdBarnRequest>): List<BoforholdResponse> =
-            boforholdBarnServiceV2.beregnBoforholdBarn(virkningstidspunkt, boforholdBarnRequestListe)
+        fun beregnBoforholdBarnV2(virkningstidspunkt: LocalDate, boforholdBarnRequestListe: List<BoforholdBarnRequest>): List<BoforholdResponse> = boforholdBarnServiceV2.beregnBoforholdBarn(virkningstidspunkt, boforholdBarnRequestListe)
 
         private val boforholdBarnServiceV3 = BoforholdBarnServiceV3()
         fun beregnBoforholdBarnV3(
@@ -51,7 +49,6 @@ class BoforholdApi {
             boforholdVoksneRequest: BoforholdVoksneRequest,
             opphørsdato: LocalDate? = null,
             beregnTilDato: LocalDate? = null,
-        ): List<Bostatus> =
-            boforholdAndreVoksneService.beregnBoforholdAndreVoksne(virkningstidspunkt, boforholdVoksneRequest, opphørsdato, beregnTilDato)
+        ): List<Bostatus> = boforholdAndreVoksneService.beregnBoforholdAndreVoksne(virkningstidspunkt, boforholdVoksneRequest, opphørsdato, beregnTilDato)
     }
 }

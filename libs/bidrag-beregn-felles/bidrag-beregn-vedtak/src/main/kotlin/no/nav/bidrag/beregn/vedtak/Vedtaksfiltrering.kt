@@ -20,8 +20,7 @@ class Vedtaksfiltrering {
      * @param personidentSøknadsbarn personidenSøknadsbarn typisk fødselsnummer til søknadsbarnet stønaden og vedtakene gjelder for
      * @return vedtak for evnevurdering for stønaden
      */
-    fun finneVedtakForEvnevurderingNy(vedtak: Collection<VedtakForStønad>, personidentSøknadsbarn: Personident): VedtakForStønad? =
-        finneSisteManuelleVedtak(vedtak)
+    fun finneVedtakForEvnevurderingNy(vedtak: Collection<VedtakForStønad>, personidentSøknadsbarn: Personident): VedtakForStønad? = finneSisteManuelleVedtak(vedtak)
 
     /**
      * Finner vedtak siste manuelle vedtak for stønadstype
@@ -98,8 +97,7 @@ class Vedtaksfiltrering {
         return vedtaksdetaljerListe
     }
 
-    private fun VedtakForStønad.erOpprettetAvBatchEllerAldersjusteringIndeksregulering(): Boolean =
-        kilde == Vedtakskilde.AUTOMATISK || type == Vedtakstype.INDEKSREGULERING || type == Vedtakstype.ALDERSJUSTERING
+    private fun VedtakForStønad.erOpprettetAvBatchEllerAldersjusteringIndeksregulering(): Boolean = kilde == Vedtakskilde.AUTOMATISK || type == Vedtakstype.INDEKSREGULERING || type == Vedtakstype.ALDERSJUSTERING
 
     private fun VedtakForStønad.filtrereBortIrrelevanteVedtak(): Boolean = erInnkreving() && !erIkkeRelevant()
 }

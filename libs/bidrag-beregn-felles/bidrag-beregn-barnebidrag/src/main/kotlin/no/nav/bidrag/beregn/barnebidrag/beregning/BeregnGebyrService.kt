@@ -116,20 +116,16 @@ class BeregnGebyrService(private val sjablonService: SjablonService) {
     }
 }
 
-private fun List<GrunnlagDto>.finnMaksBarnetilleggSistePeriode(referanseTilRolle: Grunnlagsreferanse) =
-    finnDelberegningSumInntektSistePeriode(referanseTilRolle).maxByOrNull { it.innhold.barnetillegg ?: BigDecimal.ZERO }
+private fun List<GrunnlagDto>.finnMaksBarnetilleggSistePeriode(referanseTilRolle: Grunnlagsreferanse) = finnDelberegningSumInntektSistePeriode(referanseTilRolle).maxByOrNull { it.innhold.barnetillegg ?: BigDecimal.ZERO }
 
-private fun List<GrunnlagDto>.finnÅrsinntektSistePeriode(referanseTilRolle: Grunnlagsreferanse) =
-    finnDelberegningSumInntektSistePeriode(referanseTilRolle).maxByOrNull { it.innhold.skattepliktigInntekt ?: BigDecimal.ZERO }
+private fun List<GrunnlagDto>.finnÅrsinntektSistePeriode(referanseTilRolle: Grunnlagsreferanse) = finnDelberegningSumInntektSistePeriode(referanseTilRolle).maxByOrNull { it.innhold.skattepliktigInntekt ?: BigDecimal.ZERO }
 
-private fun List<GrunnlagDto>.finnDelberegningSumInntektSistePeriode(referanseTilRolle: Grunnlagsreferanse) =
-    filtrerOgKonverterBasertPåFremmedReferanse<DelberegningSumInntekt>(
-        grunnlagType = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-        referanse = referanseTilRolle,
-    ).groupBy { it.gjelderBarnReferanse }.map { (_, inntekt) -> inntekt.maxBy { it.innhold.periode.fom } }
+private fun List<GrunnlagDto>.finnDelberegningSumInntektSistePeriode(referanseTilRolle: Grunnlagsreferanse) = filtrerOgKonverterBasertPåFremmedReferanse<DelberegningSumInntekt>(
+    grunnlagType = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+    referanse = referanseTilRolle,
+).groupBy { it.gjelderBarnReferanse }.map { (_, inntekt) -> inntekt.maxBy { it.innhold.periode.fom } }
 
-private fun List<GrunnlagDto>.finnManueltOverstyrtGebyr(referanseTilRolle: Grunnlagsreferanse) =
-    find { it.type == Grunnlagstype.MANUELT_OVERSTYRT_GEBYR && it.gjelderReferanse == referanseTilRolle }
+private fun List<GrunnlagDto>.finnManueltOverstyrtGebyr(referanseTilRolle: Grunnlagsreferanse) = find { it.type == Grunnlagstype.MANUELT_OVERSTYRT_GEBYR && it.gjelderReferanse == referanseTilRolle }
 private fun List<Sjablontall>.finnSjablonFastsettelsegebyr() = filter { it.typeSjablon == SjablonTallNavn.FASTSETTELSESGEBYR_BELØP.id }
     .maxBy { it.datoFom!! }
 private fun List<Sjablontall>.finnSjablonNedreInntektsgrense() = filter { it.typeSjablon == SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP.id }

@@ -12,6 +12,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.AldersjusteringOrchestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.utils.OmgjøringOrkestratorHelpers
+import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -21,7 +22,6 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.OmgjøringOrkestratorGrunnlag

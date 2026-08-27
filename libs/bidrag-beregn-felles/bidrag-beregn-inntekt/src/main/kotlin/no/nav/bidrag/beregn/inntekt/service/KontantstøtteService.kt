@@ -28,31 +28,30 @@ class KontantstøtteService {
     }
 
     // Summerer kontantstøtte for angitt barn
-    fun beregnKontantstøttePerBarn(kontantstøtteListePerBarn: List<Kontantstøtte>): List<SummertÅrsinntekt> =
-        if (kontantstøtteListePerBarn.isNotEmpty()) {
-            val kontantstøtteListeUt = mutableListOf<SummertÅrsinntekt>()
-            val barnPersonId = kontantstøtteListePerBarn.first().barnPersonId
+    fun beregnKontantstøttePerBarn(kontantstøtteListePerBarn: List<Kontantstøtte>): List<SummertÅrsinntekt> = if (kontantstøtteListePerBarn.isNotEmpty()) {
+        val kontantstøtteListeUt = mutableListOf<SummertÅrsinntekt>()
+        val barnPersonId = kontantstøtteListePerBarn.first().barnPersonId
 
-            kontantstøtteListePerBarn.forEach {
-                kontantstøtteListeUt.add(
-                    SummertÅrsinntekt(
-                        inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
-                        sumInntekt = it.beløp.times(BigDecimal.valueOf(12)).setScale(0, RoundingMode.HALF_UP),
-                        periode =
-                        ÅrMånedsperiode(
-                            fom = YearMonth.of(it.periodeFra.year, it.periodeFra.month),
-                            til = finnPeriodeTil(it.periodeTil),
-                        ),
-                        gjelderBarnPersonId = barnPersonId,
-                        inntektPostListe = emptyList(),
-                        grunnlagsreferanseListe = listOf(it.referanse),
+        kontantstøtteListePerBarn.forEach {
+            kontantstøtteListeUt.add(
+                SummertÅrsinntekt(
+                    inntektRapportering = Inntektsrapportering.KONTANTSTØTTE,
+                    sumInntekt = it.beløp.times(BigDecimal.valueOf(12)).setScale(0, RoundingMode.HALF_UP),
+                    periode =
+                    ÅrMånedsperiode(
+                        fom = YearMonth.of(it.periodeFra.year, it.periodeFra.month),
+                        til = finnPeriodeTil(it.periodeTil),
                     ),
-                )
-            }
-            kontantstøtteListeUt.sortedWith(compareBy({ it.inntektRapportering.toString() }, { it.periode.fom }))
-        } else {
-            emptyList()
+                    gjelderBarnPersonId = barnPersonId,
+                    inntektPostListe = emptyList(),
+                    grunnlagsreferanseListe = listOf(it.referanse),
+                ),
+            )
         }
+        kontantstøtteListeUt.sortedWith(compareBy({ it.inntektRapportering.toString() }, { it.periode.fom }))
+    } else {
+        emptyList()
+    }
 
     private fun finnPeriodeTil(periodeTil: LocalDate?): YearMonth? = periodeTil?.minusMonths(1)?.let {
         YearMonth.of(it.year, it.month)

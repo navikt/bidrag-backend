@@ -516,12 +516,11 @@ internal class BoforholdAndreVoksneService {
         return justertSekundærPeriodeListe.sortedBy { it.periodeFom }
     }
 
-    private fun beregnetPeriodeErInnenforOffentligPeriodeMedLikBostatuskode(beregnetPeriode: Bostatus, offentligePerioder: List<Bostatus>): Boolean =
-        offentligePerioder.any { offentligPeriode ->
-            beregnetPeriode.bostatus == offentligPeriode.bostatus &&
-                beregnetPeriode.periodeFom!!.isAfter(offentligPeriode.periodeFom!!.minusDays(1)) &&
-                (offentligPeriode.periodeTom == null || beregnetPeriode.periodeTom?.isBefore(offentligPeriode.periodeTom.plusDays(1)) == true)
-        }
+    private fun beregnetPeriodeErInnenforOffentligPeriodeMedLikBostatuskode(beregnetPeriode: Bostatus, offentligePerioder: List<Bostatus>): Boolean = offentligePerioder.any { offentligPeriode ->
+        beregnetPeriode.bostatus == offentligPeriode.bostatus &&
+            beregnetPeriode.periodeFom!!.isAfter(offentligPeriode.periodeFom!!.minusDays(1)) &&
+            (offentligPeriode.periodeTom == null || beregnetPeriode.periodeTom?.isBefore(offentligPeriode.periodeTom.plusDays(1)) == true)
+    }
 
     private fun behandleEndringer(
         virkningstidspunkt: LocalDate,

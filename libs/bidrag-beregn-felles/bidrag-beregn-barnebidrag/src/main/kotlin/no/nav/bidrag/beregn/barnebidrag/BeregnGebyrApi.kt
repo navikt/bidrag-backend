@@ -11,6 +11,5 @@ class BeregnGebyrApi(sjablonService: SjablonService) {
 
     private val service = BeregnGebyrService(sjablonService)
 
-    fun beregnGebyr(grunnlagsliste: List<GrunnlagDto>, referanseTilRolle: Grunnlagsreferanse, referansePostfix: String? = null) =
-        service.beregnGebyr(grunnlagsliste, referanseTilRolle, referansePostfix)
+    fun beregnGebyr(grunnlagsliste: List<GrunnlagDto>, referanseTilRolle: Grunnlagsreferanse, referansePostfix: String? = null) = service.beregnGebyr(grunnlagsliste, referanseTilRolle, referansePostfix)
 }

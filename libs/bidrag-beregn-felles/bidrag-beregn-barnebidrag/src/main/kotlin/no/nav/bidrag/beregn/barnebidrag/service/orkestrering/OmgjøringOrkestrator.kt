@@ -20,6 +20,8 @@ import no.nav.bidrag.beregn.barnebidrag.utils.vedtaksidAutomatiskJobb
 import no.nav.bidrag.beregn.barnebidrag.utils.vedtaksidBeregnetBeløpshistorikk
 import no.nav.bidrag.beregn.barnebidrag.utils.vedtaksidPrivatavtale
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtak
+import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
+import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
@@ -33,8 +35,6 @@ import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
-import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.OmgjøringOrkestratorGrunnlag
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning
@@ -205,30 +205,29 @@ class OmgjøringOrkestrator(
         }
     }
 
-    private fun List<ResultatVedtak>.gjørOmTilÅpenPeriodeHvisEnesteVedtak(bidragOpphøres: Boolean): List<ResultatVedtak> =
-        if (omgjøringsvedtaksErEnesteVedtak) {
-            map {
-                if (!bidragOpphøres && (it.omgjøringsvedtak || it.endeligVedtak)) {
-                    it.copy(
-                        resultat = it.resultat.copy(
-                            beregnetBarnebidragPeriodeListe = it.resultat.beregnetBarnebidragPeriodeListe.mapIndexed { i, resultatPeriode ->
-                                if (i == it.resultat.beregnetBarnebidragPeriodeListe.size - 1) {
-                                    resultatPeriode.copy(
-                                        periode = resultatPeriode.periode.copy(til = null),
-                                    )
-                                } else {
-                                    resultatPeriode
-                                }
-                            },
-                        ),
-                    )
-                } else {
-                    it
-                }
+    private fun List<ResultatVedtak>.gjørOmTilÅpenPeriodeHvisEnesteVedtak(bidragOpphøres: Boolean): List<ResultatVedtak> = if (omgjøringsvedtaksErEnesteVedtak) {
+        map {
+            if (!bidragOpphøres && (it.omgjøringsvedtak || it.endeligVedtak)) {
+                it.copy(
+                    resultat = it.resultat.copy(
+                        beregnetBarnebidragPeriodeListe = it.resultat.beregnetBarnebidragPeriodeListe.mapIndexed { i, resultatPeriode ->
+                            if (i == it.resultat.beregnetBarnebidragPeriodeListe.size - 1) {
+                                resultatPeriode.copy(
+                                    periode = resultatPeriode.periode.copy(til = null),
+                                )
+                            } else {
+                                resultatPeriode
+                            }
+                        },
+                    ),
+                )
+            } else {
+                it
             }
-        } else {
-            this
         }
+    } else {
+        this
+    }
 
     private fun validerEtterfølgendeVedtakIkkeOverlapper(stønad: Stønadsid, omgjørVedtak: VedtakDto, omgjøringsperiode: ÅrMånedsperiode) {
         val omgjørVedtakVirkningstidspunkt = omgjørVedtak.virkningstidspunkt?.toYearMonth()

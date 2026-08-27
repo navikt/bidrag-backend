@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import no.nav.bidrag.domene.enums.diverse.PlussMinus
 import no.nav.bidrag.beregn.inntekt.service.MappingPoster
 import no.nav.bidrag.beregn.inntekt.service.Post
 import no.nav.bidrag.beregn.inntekt.service.PostKonfig
+import no.nav.bidrag.domene.enums.diverse.PlussMinus
 import org.springframework.core.io.ClassPathResource
 import java.io.IOException
 import java.time.Year

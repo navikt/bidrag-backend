@@ -151,17 +151,16 @@ internal class BeregnInntektService {
         // Returnerer en gruppert og summert liste over inntekter pr bruddperiode
         return akkumulerOgPeriodiserInntekter(filteredGrunnlagListe, periodeListe)
     }
-    fun justerPerioderForOpphørsdato(grunnlagsliste: List<InntektsgrunnlagPeriode>, opphørsdato: YearMonth?): List<InntektsgrunnlagPeriode> =
-        grunnlagsliste.filter {
-            it.periode.fom.isBefore(opphørsdato)
-        }
-            .map { grunnlag ->
-                if (grunnlag.periode.til == null || grunnlag.periode.til!! >= opphørsdato) {
-                    grunnlag.copy(periode = grunnlag.periode.copy(til = justerPeriodeTilOpphørsdato(opphørsdato)))
-                } else {
-                    grunnlag
-                }
+    fun justerPerioderForOpphørsdato(grunnlagsliste: List<InntektsgrunnlagPeriode>, opphørsdato: YearMonth?): List<InntektsgrunnlagPeriode> = grunnlagsliste.filter {
+        it.periode.fom.isBefore(opphørsdato)
+    }
+        .map { grunnlag ->
+            if (grunnlag.periode.til == null || grunnlag.periode.til!! >= opphørsdato) {
+                grunnlag.copy(periode = grunnlag.periode.copy(til = justerPeriodeTilOpphørsdato(opphørsdato)))
+            } else {
+                grunnlag
             }
+        }
 
     // Grupperer og summerer inntekter pr bruddperiode
     private fun akkumulerOgPeriodiserInntekter(
@@ -204,9 +203,8 @@ internal class BeregnInntektService {
         }
 
     // Filtrerer ut grunnlag som tilhører en gitt periode
-    private fun filtrerGrunnlagsliste(grunnlagsliste: List<InntektsgrunnlagPeriode>, periode: Periode): List<InntektsgrunnlagPeriode> =
-        grunnlagsliste.filter { grunnlag ->
-            (grunnlag.periode.til == null || periode.datoFom.isBefore(grunnlag.periode.til!!.atDay(1))) &&
-                (periode.datoTil == null || periode.datoTil.isAfter(grunnlag.periode.fom.atDay(1)))
-        }
+    private fun filtrerGrunnlagsliste(grunnlagsliste: List<InntektsgrunnlagPeriode>, periode: Periode): List<InntektsgrunnlagPeriode> = grunnlagsliste.filter { grunnlag ->
+        (grunnlag.periode.til == null || periode.datoFom.isBefore(grunnlag.periode.til!!.atDay(1))) &&
+            (periode.datoTil == null || periode.datoTil.isAfter(grunnlag.periode.fom.atDay(1)))
+    }
 }

@@ -53,8 +53,7 @@ internal data class DelberegningSamværsklasseIntern(
 @Service
 class BeregnSamværsklasseApi(private val sjablonService: SjablonService) {
     companion object {
-        fun beregnSumGjennomsnittligSamværPerMåned(detaljer: SamværskalkulatorDetaljer): BigDecimal =
-            detaljer.gjennomsnittligMånedligSamvær().avrundetMedToDesimaler
+        fun beregnSumGjennomsnittligSamværPerMåned(detaljer: SamværskalkulatorDetaljer): BigDecimal = detaljer.gjennomsnittligMånedligSamvær().avrundetMedToDesimaler
     }
 
     fun beregnSamværsklasse(
@@ -202,10 +201,8 @@ private fun SamværskalkulatorDetaljer.totalGjennomsnittligSamvær() = regelmess
 
 private fun SamværskalkulatorDetaljer.gjennomsnittligMånedligSamvær() = totalSamvær().gjennomsnittOverToÅrOffentligSamværskalkulator
 
-private fun SamværskalkulatorDetaljer.totalSamvær() =
-    ferier.bpTotalNetter().tilpassetOffentligSamværskalkulator + totalGjennomsnittligSamvær().tilpassetOffentligSamværskalkulator
+private fun SamværskalkulatorDetaljer.totalSamvær() = ferier.bpTotalNetter().tilpassetOffentligSamværskalkulator + totalGjennomsnittligSamvær().tilpassetOffentligSamværskalkulator
 
-private fun SamværskalkulatorDetaljer.samværOverFjortendagersDagersperiode() =
-    regelmessigSamværHosBm().gjennomsnittOverToUkerOffentligSamværskalkulator.tilpassetOffentligSamværskalkulator
+private fun SamværskalkulatorDetaljer.samværOverFjortendagersDagersperiode() = regelmessigSamværHosBm().gjennomsnittOverToUkerOffentligSamværskalkulator.tilpassetOffentligSamværskalkulator
 
 private fun SamværskalkulatorDetaljer.regelmessigSamværHosBm(): BigDecimal = totalNetterOverToÅr - ferier.bpTotalNetter() - ferier.bmTotalNetter()

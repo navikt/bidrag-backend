@@ -4,13 +4,13 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import no.nav.bidrag.domene.enums.diverse.Kilde
-import no.nav.bidrag.domene.enums.person.Sivilstandskode
-import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandV1
 import no.nav.bidrag.beregn.sivilstand.response.Status
+import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.person.Sivilstandskode
+import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import org.junit.jupiter.api.Test
 import java.time.LocalDate

@@ -1,10 +1,10 @@
 package no.nav.bidrag.beregn.indeksregulering.api
 
+import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
+import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
-import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering

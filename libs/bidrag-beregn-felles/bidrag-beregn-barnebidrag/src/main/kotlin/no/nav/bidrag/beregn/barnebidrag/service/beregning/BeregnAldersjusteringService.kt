@@ -207,11 +207,10 @@ class BeregnAldersjusteringService : BeregnService() {
     }
 
     // Lager grunnlagsobjekter for sjabloner (ett objekt pr sjablonverdi som er innenfor perioden)
-    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode, delberegning: (SjablonTallNavn) -> Boolean): List<GrunnlagDto> =
-        mapSjablonSjablontallGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablontall(), delberegning = delberegning) +
-            mapSjablonBarnetilsynGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonBarnetilsyn()) +
-            mapSjablonForbruksutgifterGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonForbruksutgifter()) +
-            mapSjablonSamværsfradragGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonSamværsfradrag())
+    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode, delberegning: (SjablonTallNavn) -> Boolean): List<GrunnlagDto> = mapSjablonSjablontallGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablontall(), delberegning = delberegning) +
+        mapSjablonBarnetilsynGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonBarnetilsyn()) +
+        mapSjablonForbruksutgifterGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonForbruksutgifter()) +
+        mapSjablonSamværsfradragGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonSamværsfradrag())
 
     // Henter vedtak for et søknadsbarn fra grunnlag. Hvis det ikke finnes noe vedtak eller det er mer enn ett vedtak kastes exception.
     private fun hentVedtakFraGrunnlag(mottattGrunnlag: BeregnGrunnlagAldersjustering, søknadsbarnReferanse: String): BeregnGrunnlagVedtak {
@@ -651,20 +650,19 @@ class BeregnAldersjusteringService : BeregnService() {
     }
 
     // Standardlogikk for å lage resultatperioder
-    private fun lagResultatPerioder(delberegningEndeligBidragResultat: List<GrunnlagDto>, beløpshistorikkReferanse: String?): List<ResultatPeriode> =
-        delberegningEndeligBidragResultat
-            .filtrerOgKonverterBasertPåEgenReferanse<SluttberegningBarnebidragAldersjustering>(
-                Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+    private fun lagResultatPerioder(delberegningEndeligBidragResultat: List<GrunnlagDto>, beløpshistorikkReferanse: String?): List<ResultatPeriode> = delberegningEndeligBidragResultat
+        .filtrerOgKonverterBasertPåEgenReferanse<SluttberegningBarnebidragAldersjustering>(
+            Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING,
+        )
+        .map {
+            ResultatPeriode(
+                periode = it.innhold.periode,
+                resultat = ResultatBeregning(
+                    beløp = it.innhold.resultatBeløp,
+                ),
+                grunnlagsreferanseListe = listOfNotNull(it.referanse, beløpshistorikkReferanse),
             )
-            .map {
-                ResultatPeriode(
-                    periode = it.innhold.periode,
-                    resultat = ResultatBeregning(
-                        beløp = it.innhold.resultatBeløp,
-                    ),
-                    grunnlagsreferanseListe = listOfNotNull(it.referanse, beløpshistorikkReferanse),
-                )
-            }
+        }
 
     // Sjekker om aldersjustert beløp er lavere enn løpende beløp fra beløpshistorikken
     private fun erAldersjustertBeløpLavereEnnEllerLikLøpendeBeløp(

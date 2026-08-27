@@ -2,8 +2,8 @@ package no.nav.bidrag.beregn.inntekt.service
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.beregn.inntekt.TestUtil
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue

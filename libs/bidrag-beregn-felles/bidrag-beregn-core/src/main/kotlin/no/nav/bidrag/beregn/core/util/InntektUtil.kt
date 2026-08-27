@@ -342,11 +342,10 @@ object InntektUtil {
     }
 
     // Summerer inntektene i en gitt periode (eksklusiv inntekttype utvidet barnetrygd)
-    private fun summerInntektPeriode(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) =
-        justertInntektPeriodeGrunnlagListe
-            .filter { it.getPeriode().overlapperMed(periode) && it.type != Inntektstype.UTVIDET_BARNETRYGD.name }
-            .map(InntektPeriodeGrunnlagUtenInntektType::belop)
-            .fold(BigDecimal.ZERO) { acc, beløp -> acc + beløp }
+    private fun summerInntektPeriode(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) = justertInntektPeriodeGrunnlagListe
+        .filter { it.getPeriode().overlapperMed(periode) && it.type != Inntektstype.UTVIDET_BARNETRYGD.name }
+        .map(InntektPeriodeGrunnlagUtenInntektType::belop)
+        .fold(BigDecimal.ZERO) { acc, beløp -> acc + beløp }
 
     // Finner verdien til en gitt sjablon i en gitt periode
     private fun finnSjablonverdi(periode: Periode, justertsjablonListe: List<SjablonPeriode>, sjablonTallNavn: SjablonTallNavn) = justertsjablonListe
@@ -355,16 +354,14 @@ object InntektUtil {
         .firstOrNull() ?: BigDecimal.ZERO
 
     // Finner verdien til flagget 'Delt fordel' i en gitt periode
-    private fun finnDeltFordel(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) =
-        justertInntektPeriodeGrunnlagListe.firstOrNull {
-            it.getPeriode().overlapperMed(periode) && it.type == Inntektstype.UTVIDET_BARNETRYGD.name
-        }?.deltFordel ?: false
+    private fun finnDeltFordel(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) = justertInntektPeriodeGrunnlagListe.firstOrNull {
+        it.getPeriode().overlapperMed(periode) && it.type == Inntektstype.UTVIDET_BARNETRYGD.name
+    }?.deltFordel ?: false
 
     // Finner verdien til flagget 'Skatteklasse 2' i en gitt periode
-    private fun finnSkatteklasse2(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) =
-        justertInntektPeriodeGrunnlagListe.firstOrNull {
-            it.getPeriode().overlapperMed(periode) && it.type == Inntektstype.UTVIDET_BARNETRYGD.name
-        }?.skatteklasse2 ?: false
+    private fun finnSkatteklasse2(periode: Periode, justertInntektPeriodeGrunnlagListe: List<InntektPeriodeGrunnlagUtenInntektType>) = justertInntektPeriodeGrunnlagListe.firstOrNull {
+        it.getPeriode().overlapperMed(periode) && it.type == Inntektstype.UTVIDET_BARNETRYGD.name
+    }?.skatteklasse2 ?: false
 
     // Beregner fordel særfradrag
     private fun beregnFordelSærfradrag(periodisertInntekt: PeriodisertInntekt): BigDecimal {
@@ -467,8 +464,7 @@ object InntektUtil {
         return inntektListeSærfradragEnsligForsørger
     }
 
-    private fun lagReferanse(inntektType: Inntektstype, datoFom: LocalDate) =
-        "Beregnet_Inntekt_" + inntektType.name + "_" + datoFom.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+    private fun lagReferanse(inntektType: Inntektstype, datoFom: LocalDate) = "Beregnet_Inntekt_" + inntektType.name + "_" + datoFom.format(DateTimeFormatter.ofPattern("yyyyMMdd"))
 
     // Verdi fra sjablon 0006 skal trekkes fra kapitalinntekt. Hvis nettobeløpet blir mindre enn 0, settes det til 0
     fun justerKapitalinntekt(beløp: BigDecimal, innslagKapitalinntektSjablonverdi: BigDecimal): BigDecimal {
@@ -485,13 +481,11 @@ object InntektUtil {
             )
 
     // Sjekker om inntekten er kapitalinntekt
-    fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) =
-        inntektsrapportering in listOf(Inntektsrapportering.KAPITALINNTEKT, Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER)
+    fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) = inntektsrapportering in listOf(Inntektsrapportering.KAPITALINNTEKT, Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER)
 
     // Sjekker om inntekten inneholder barnetillegg tiltakspenger
-    fun inneholderBarnetilleggTiltakspenger(inntektsrapporteringPeriode: InntektsrapporteringPeriode) =
-        (inntektsrapporteringPeriode.inntektsrapportering == Inntektsrapportering.BARNETILLEGG) &&
-            (inntektsrapporteringPeriode.inntektspostListe.any { it.inntektstype == Inntektstype.BARNETILLEGG_TILTAKSPENGER })
+    fun inneholderBarnetilleggTiltakspenger(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = (inntektsrapporteringPeriode.inntektsrapportering == Inntektsrapportering.BARNETILLEGG) &&
+        (inntektsrapporteringPeriode.inntektspostListe.any { it.inntektstype == Inntektstype.BARNETILLEGG_TILTAKSPENGER })
 
     fun BigDecimal.beløpTilÅrsbeløp(beløpstype: InntektBeløpstype? = null): BigDecimal = when (beløpstype) {
         InntektBeløpstype.MÅNEDSBELØP -> {

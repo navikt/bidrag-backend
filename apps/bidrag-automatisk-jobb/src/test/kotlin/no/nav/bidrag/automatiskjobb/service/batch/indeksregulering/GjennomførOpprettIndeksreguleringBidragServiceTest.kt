@@ -22,6 +22,7 @@ import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Behandlingstype
 import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Status
 import no.nav.bidrag.automatiskjobb.persistence.repository.IndeksreguleringRepository
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
+import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.domene.beløp.Beløp
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
@@ -33,7 +34,6 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto

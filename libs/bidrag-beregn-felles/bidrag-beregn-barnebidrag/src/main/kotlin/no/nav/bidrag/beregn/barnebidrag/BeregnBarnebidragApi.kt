@@ -39,11 +39,9 @@ class BeregnBarnebidragApi {
     private val service = BeregnBarnebidragService()
     private val aldersjusteringService = BeregnAldersjusteringService()
 
-    fun beregnMånedsbeløpFaktiskeUtgifter(faktiskUtgift: BigDecimal, kostpenger: BigDecimal): BigDecimal? =
-        service.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger)
+    fun beregnMånedsbeløpFaktiskeUtgifter(faktiskUtgift: BigDecimal, kostpenger: BigDecimal): BigDecimal? = service.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger)
 
-    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal =
-        service.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype)
+    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal = service.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype)
 
     fun beregn(beregnGrunnlag: BeregnGrunnlag): BeregnetBarnebidragResultat = service.beregnBarnebidrag(beregnGrunnlag)
 
@@ -63,8 +61,7 @@ class BeregnBarnebidragApi {
         grunnlagOpprinneligBeregningListe = grunnlagOpprinneligBeregningListe,
     )
 
-    fun beregnAlleSøknadsbarn(beregnGrunnlagListe: List<BeregnGrunnlag>): List<Pair<BidragsberegningResultatBarnV2, List<GrunnlagDto>>> =
-        service.beregnBarnebidragAlleSøknadsbarn(beregnGrunnlagListe)
+    fun beregnAlleSøknadsbarn(beregnGrunnlagListe: List<BeregnGrunnlag>): List<Pair<BidragsberegningResultatBarnV2, List<GrunnlagDto>>> = service.beregnBarnebidragAlleSøknadsbarn(beregnGrunnlagListe)
 
     fun opprettAvslag(beregnGrunnlag: BeregnGrunnlag): BeregnetBarnebidragResultat = service.opprettAvslagResultat(beregnGrunnlag)
 
@@ -74,13 +71,11 @@ class BeregnBarnebidragApi {
 
     fun beregnUnderholdskostnad(beregnGrunnlag: BeregnGrunnlag) = service.beregnUnderholdskostnad(beregnGrunnlag)
 
-    fun beregnNettoTilsynsutgiftOgUnderholdskostnad(beregnGrunnlag: BeregnGrunnlag) =
-        service.beregnNettoTilsynsutgiftOgUnderholdskostnad(beregnGrunnlag)
+    fun beregnNettoTilsynsutgiftOgUnderholdskostnad(beregnGrunnlag: BeregnGrunnlag) = service.beregnNettoTilsynsutgiftOgUnderholdskostnad(beregnGrunnlag)
 
     fun beregnBpAndelUnderholdskostnad(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = service.beregnBpAndelUnderholdskostnad(beregnGrunnlag)
 
-    fun beregnNettoBarnetillegg(beregnGrunnlag: BeregnGrunnlag, rolle: Grunnlagstype): List<GrunnlagDto> =
-        service.beregnNettoBarnetillegg(beregnGrunnlag, rolle)
+    fun beregnNettoBarnetillegg(beregnGrunnlag: BeregnGrunnlag, rolle: Grunnlagstype): List<GrunnlagDto> = service.beregnNettoBarnetillegg(beregnGrunnlag, rolle)
 
     fun beregnSamværsfradrag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = service.beregnSamværsfradrag(beregnGrunnlag)
 
@@ -90,6 +85,5 @@ class BeregnBarnebidragApi {
 
     fun beregnEndringSjekkGrense(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = service.beregnEndringSjekkGrense(beregnGrunnlag)
 
-    fun beregnAldersjustering(beregnGrunnlag: BeregnGrunnlagAldersjustering): BeregnetBarnebidragResultat =
-        aldersjusteringService.beregnAldersjusteringBarnebidrag(beregnGrunnlag)
+    fun beregnAldersjustering(beregnGrunnlag: BeregnGrunnlagAldersjustering): BeregnetBarnebidragResultat = aldersjusteringService.beregnAldersjusteringBarnebidrag(beregnGrunnlag)
 }

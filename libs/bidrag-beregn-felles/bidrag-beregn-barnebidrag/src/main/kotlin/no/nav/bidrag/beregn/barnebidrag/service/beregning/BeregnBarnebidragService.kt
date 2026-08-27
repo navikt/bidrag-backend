@@ -1007,17 +1007,16 @@ class BeregnBarnebidragService : BeregnService() {
     // Gjør ikke 12%-sjekk hvis det finnes perioder hvor det ikke er full evne og ufullstendige grunnlag.
     private fun BeregnGrunnlagJustert.minimumsgrenseForEndring(
         ikkeFullBidragsevneOgUfullstendigeGrunnlag: Boolean,
-    ): SjekkMotMinimumsgrenseForEndringResultat =
-        if (beregnGrunnlag.skalSjekkeMotMinimumsgrenseForEndring() && !ikkeFullBidragsevneOgUfullstendigeGrunnlag) {
-            sjekkMotMinimumsgrenseForEndringV2()
-        } else {
-            SjekkMotMinimumsgrenseForEndringResultat(
-                resultatPeriodeListe = lagResultatPerioderV2(beregnGrunnlag.grunnlagListe),
-                delberegningEndringSjekkGrensePeriodeResultat = emptyList(),
-                delberegningEndringSjekkGrenseResultat = emptyList(),
-                delberegningIndeksreguleringPrivatAvtaleResultat = emptyList(),
-            )
-        }
+    ): SjekkMotMinimumsgrenseForEndringResultat = if (beregnGrunnlag.skalSjekkeMotMinimumsgrenseForEndring() && !ikkeFullBidragsevneOgUfullstendigeGrunnlag) {
+        sjekkMotMinimumsgrenseForEndringV2()
+    } else {
+        SjekkMotMinimumsgrenseForEndringResultat(
+            resultatPeriodeListe = lagResultatPerioderV2(beregnGrunnlag.grunnlagListe),
+            delberegningEndringSjekkGrensePeriodeResultat = emptyList(),
+            delberegningEndringSjekkGrenseResultat = emptyList(),
+            delberegningIndeksreguleringPrivatAvtaleResultat = emptyList(),
+        )
+    }
 
     private fun BeregnGrunnlag.filtrerBeløpshistorikkGrunnlag(er18ÅrsBidrag: Boolean): List<GrunnlagDto> {
         val grunnlagstype = if (er18ÅrsBidrag) Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR else Grunnlagstype.BELØPSHISTORIKK_BIDRAG
@@ -1030,24 +1029,21 @@ class BeregnBarnebidragService : BeregnService() {
                 it.gjelderBarnReferanse == søknadsbarnReferanse
         }
 
-    private fun filtrerBeløpshistorikkGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> =
-        beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG }
+    private fun filtrerBeløpshistorikkGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG }
 
-    private fun filtrerBeløpshistorikk18ÅrGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> =
-        beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR }
+    private fun filtrerBeløpshistorikk18ÅrGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR }
 
-    private fun utførDelberegningPrivatAvtalePeriode(beregnGrunnlag: BeregnGrunnlag, beregningsperiode: ÅrMånedsperiode): List<GrunnlagDto> =
-        if (beregnGrunnlag.grunnlagListe
-                .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
-                .none { it.gjelderBarnReferanse == beregnGrunnlag.søknadsbarnReferanse }
-        ) {
-            emptyList()
-        } else {
-            BeregnIndeksreguleringPrivatAvtaleService.delberegningIndeksreguleringPrivatAvtale(
-                grunnlag = beregnGrunnlag,
-                beregningsperiode = beregningsperiode,
-            )
-        }
+    private fun utførDelberegningPrivatAvtalePeriode(beregnGrunnlag: BeregnGrunnlag, beregningsperiode: ÅrMånedsperiode): List<GrunnlagDto> = if (beregnGrunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
+            .none { it.gjelderBarnReferanse == beregnGrunnlag.søknadsbarnReferanse }
+    ) {
+        emptyList()
+    } else {
+        BeregnIndeksreguleringPrivatAvtaleService.delberegningIndeksreguleringPrivatAvtale(
+            grunnlag = beregnGrunnlag,
+            beregningsperiode = beregningsperiode,
+        )
+    }
 
     // Standardlogikk for å lage resultatperioder
     private fun lagResultatPerioder(delberegningEndeligBidragResultat: List<GrunnlagDto>): List<ResultatPeriode> = delberegningEndeligBidragResultat
@@ -1238,11 +1234,9 @@ class BeregnBarnebidragService : BeregnService() {
         )
     }
 
-    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgift: BigDecimal, kostpenger: BigDecimal = BigDecimal.ZERO): BigDecimal =
-        NettoTilsynsutgiftMapper.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger).avrundetMedToDesimaler
+    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgift: BigDecimal, kostpenger: BigDecimal = BigDecimal.ZERO): BigDecimal = NettoTilsynsutgiftMapper.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger).avrundetMedToDesimaler
 
-    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal =
-        NettoTilsynsutgiftMapper.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype).avrundetMedToDesimaler
+    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal = NettoTilsynsutgiftMapper.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype).avrundetMedToDesimaler
 
     // Sjekker om søknadsbarnet er del av opprinnelig behandling eller om det er del av en revurderingssøknad som er utløst pga. FF og innhenting
     // av nye grunnlag for løpende bidrag.

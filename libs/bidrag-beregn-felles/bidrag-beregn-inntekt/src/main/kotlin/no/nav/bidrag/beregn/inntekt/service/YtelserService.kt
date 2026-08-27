@@ -1,10 +1,10 @@
 package no.nav.bidrag.beregn.inntekt.service
 
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.filtrerInntekterPåYtelse
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.finnSisteAarSomSkalRapporteres
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.hentMappingYtelser
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.inntekt.request.Ainntektspost
 import no.nav.bidrag.transport.behandling.inntekt.response.InntektPost
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt

@@ -75,7 +75,7 @@ internal object AldersjusteringMapper : CoreMapper() {
             .maxByOrNull { it.innhold.periode.fom }
             ?: throw UgyldigInputException(
                 "Aldersjustering: Delberegning underholdskostnad ikke funnet for søknadsbarn med referanse ${søknadsbarn.referanse} " +
-                        "og vedtak med id ${vedtak.vedtakId}",
+                    "og vedtak med id ${vedtak.vedtakId}",
             )
 
         val nettoTilsynsutgift = underholdskostnadSistePeriode.innhold.nettoTilsynsutgift
@@ -83,26 +83,26 @@ internal object AldersjusteringMapper : CoreMapper() {
         val barnetilsynMedStønad = underholdskostnadSistePeriode.innhold.barnetilsynMedStønad
 
         val bpAndelFaktor = (
-                grunnlagListeSluttberegningSistePeriode
-                    .filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragspliktigesAndel>(Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL)
-                    .filter { it.gjelderBarnReferanse == søknadsbarn.referanse }
-                    .maxByOrNull { it.innhold.periode.fom }
-                    ?: throw UgyldigInputException(
-                        "Aldersjustering: Delberegning bidragspliktiges andel ikke funnet for søknadsbarn med referanse ${søknadsbarn.referanse} " +
-                                "og vedtak med id ${vedtak.vedtakId}",
-                    )
-                ).innhold.endeligAndelFaktor
+            grunnlagListeSluttberegningSistePeriode
+                .filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragspliktigesAndel>(Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL)
+                .filter { it.gjelderBarnReferanse == søknadsbarn.referanse }
+                .maxByOrNull { it.innhold.periode.fom }
+                ?: throw UgyldigInputException(
+                    "Aldersjustering: Delberegning bidragspliktiges andel ikke funnet for søknadsbarn med referanse ${søknadsbarn.referanse} " +
+                        "og vedtak med id ${vedtak.vedtakId}",
+                )
+            ).innhold.endeligAndelFaktor
 
         val samværsklasse = (
-                grunnlagListeSluttberegningSistePeriode
-                    .filtrerOgKonverterBasertPåEgenReferanse<SamværsperiodeGrunnlag>(Grunnlagstype.SAMVÆRSPERIODE)
-                    .filter { it.gjelderBarnReferanse == søknadsbarn.referanse }
-                    .maxByOrNull { it.innhold.periode.fom }
-                    ?: throw UgyldigInputException(
-                        "Aldersjustering: Samværsperiode ikke funnet for søknadsbarn med referanse ${søknadsbarn.referanse} " +
-                                "og vedtak med id ${vedtak.vedtakId}",
-                    )
-                ).innhold.samværsklasse
+            grunnlagListeSluttberegningSistePeriode
+                .filtrerOgKonverterBasertPåEgenReferanse<SamværsperiodeGrunnlag>(Grunnlagstype.SAMVÆRSPERIODE)
+                .filter { it.gjelderBarnReferanse == søknadsbarn.referanse }
+                .maxByOrNull { it.innhold.periode.fom }
+                ?: throw UgyldigInputException(
+                    "Aldersjustering: Samværsperiode ikke funnet for søknadsbarn med referanse ${søknadsbarn.referanse} " +
+                        "og vedtak med id ${vedtak.vedtakId}",
+                )
+            ).innhold.samværsklasse
 
         val søknadsbarnAlder = Period.between(
             søknadsbarn.fødselsdato.withMonth(7).withDayOfMonth(1),
@@ -184,7 +184,7 @@ internal object AldersjusteringMapper : CoreMapper() {
         if (periodeListe.isEmpty()) {
             throw UgyldigInputException(
                 "Aldersjustering: Stønadsendring av type BIDRAG inneholder ingen perioder som inneholder grunnlagsperiode for " +
-                        "vedtak med id $vedtakId",
+                    "vedtak med id $vedtakId",
             )
         } else {
             return periodeListe

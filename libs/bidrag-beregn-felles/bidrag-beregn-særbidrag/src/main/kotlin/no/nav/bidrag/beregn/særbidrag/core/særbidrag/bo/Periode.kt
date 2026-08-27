@@ -19,8 +19,7 @@ data class BidragsevnePeriode(
     override fun getPeriode(): Periode = periode
 }
 
-data class BPsBeregnedeTotalbidragPeriode(val referanse: String, private val periode: Periode, val bPsBeregnedeTotalbidrag: BigDecimal) :
-    PeriodisertGrunnlag {
+data class BPsBeregnedeTotalbidragPeriode(val referanse: String, private val periode: Periode, val bPsBeregnedeTotalbidrag: BigDecimal) : PeriodisertGrunnlag {
     override fun getPeriode(): Periode = periode
 }
 

@@ -9,8 +9,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEndringSje
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 
 internal object EndringSjekkGrenseMapper : CoreMapper() {
-    fun mapEndringSjekkGrenseGrunnlag(mottattGrunnlag: BeregnGrunnlag) =
-        EndringSjekkGrensePeriodeGrunnlag(mapEndringSjekkGrensePeriode(mottattGrunnlag))
+    fun mapEndringSjekkGrenseGrunnlag(mottattGrunnlag: BeregnGrunnlag) = EndringSjekkGrensePeriodeGrunnlag(mapEndringSjekkGrensePeriode(mottattGrunnlag))
 
     private fun mapEndringSjekkGrensePeriode(beregnGrunnlag: BeregnGrunnlag): List<EndringSjekkGrensePeriodeDelberegningPeriodeGrunnlag> {
         try {

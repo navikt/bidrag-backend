@@ -89,18 +89,15 @@ class SkalIkkeAldersjusteresException(
     val begrunnelser: List<SkalIkkeAldersjusteresBegrunnelse> = begrunnelse.toList()
 }
 
-class AldersjusteresManueltException(begrunnelse: SkalAldersjusteresManueltBegrunnelse, val resultat: String? = null, val vedtaksid: Int? = null) :
-    RuntimeException("Skal aldersjusteres manuelt med begrunnelse $begrunnelse") {
+class AldersjusteresManueltException(begrunnelse: SkalAldersjusteresManueltBegrunnelse, val resultat: String? = null, val vedtaksid: Int? = null) : RuntimeException("Skal aldersjusteres manuelt med begrunnelse $begrunnelse") {
     val begrunnelse: SkalAldersjusteresManueltBegrunnelse = begrunnelse
 }
 
 fun aldersjusteringFeilet(begrunnelse: String): Nothing = throw RuntimeException(begrunnelse)
 
-fun aldersjusteresManuelt(begrunnelse: SkalAldersjusteresManueltBegrunnelse, resultat: String? = null, vedtaksid: Int? = null): Nothing =
-    throw AldersjusteresManueltException(begrunnelse, resultat = resultat, vedtaksid = vedtaksid)
+fun aldersjusteresManuelt(begrunnelse: SkalAldersjusteresManueltBegrunnelse, resultat: String? = null, vedtaksid: Int? = null): Nothing = throw AldersjusteresManueltException(begrunnelse, resultat = resultat, vedtaksid = vedtaksid)
 
-fun skalIkkeAldersjusteres(vararg begrunnelse: SkalIkkeAldersjusteresBegrunnelse, resultat: String? = null, vedtaksid: Int? = null): Nothing =
-    throw SkalIkkeAldersjusteresException(*begrunnelse, resultat = resultat, vedtaksid = vedtaksid)
+fun skalIkkeAldersjusteres(vararg begrunnelse: SkalIkkeAldersjusteresBegrunnelse, resultat: String? = null, vedtaksid: Int? = null): Nothing = throw SkalIkkeAldersjusteresException(*begrunnelse, resultat = resultat, vedtaksid = vedtaksid)
 
 data class BeregnBasertPåVedtak(val vedtaksid: Int? = null, val vedtakDto: VedtakDto? = null)
 
@@ -266,19 +263,18 @@ class AldersjusteringOrchestrator(
         )
     }
 
-    internal fun opprettVirkningstidspunktGrunnlag(referanseBarn: String, virkningstidspunkt: LocalDate, opphørsdato: YearMonth?): GrunnlagDto =
-        GrunnlagDto(
-            referanse = "virkningstidspunkt_$referanseBarn",
-            type = Grunnlagstype.VIRKNINGSTIDSPUNKT,
-            gjelderBarnReferanse = referanseBarn,
-            innhold = POJONode(
-                VirkningstidspunktGrunnlag(
-                    virkningstidspunkt = virkningstidspunkt,
-                    opphørsdato = opphørsdato?.atDay(1),
-                    årsak = VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING,
-                ),
+    internal fun opprettVirkningstidspunktGrunnlag(referanseBarn: String, virkningstidspunkt: LocalDate, opphørsdato: YearMonth?): GrunnlagDto = GrunnlagDto(
+        referanse = "virkningstidspunkt_$referanseBarn",
+        type = Grunnlagstype.VIRKNINGSTIDSPUNKT,
+        gjelderBarnReferanse = referanseBarn,
+        innhold = POJONode(
+            VirkningstidspunktGrunnlag(
+                virkningstidspunkt = virkningstidspunkt,
+                opphørsdato = opphørsdato?.atDay(1),
+                årsak = VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING,
             ),
-        )
+        ),
+    )
 
     private fun Exception.loggOgKastFeil(stønad: Stønadsid, aldersjusteresForÅr: Int): Nothing {
         when (this) {

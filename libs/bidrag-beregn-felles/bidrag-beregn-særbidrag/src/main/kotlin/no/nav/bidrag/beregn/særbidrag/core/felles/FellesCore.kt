@@ -14,8 +14,7 @@ import no.nav.bidrag.beregn.core.dto.SjablonResultatGrunnlagCore
 import java.time.format.DateTimeFormatter
 
 open class FellesCore {
-    protected fun lagSjablonReferanse(sjablon: SjablonPeriodeNavnVerdi): String =
-        "Sjablon_${sjablon.navn}_${sjablon.periode.datoFom.format(DateTimeFormatter.ofPattern("yyyyMMdd"))}"
+    protected fun lagSjablonReferanse(sjablon: SjablonPeriodeNavnVerdi): String = "Sjablon_${sjablon.navn}_${sjablon.periode.datoFom.format(DateTimeFormatter.ofPattern("yyyyMMdd"))}"
 
     protected fun mapSjablonListe(sjablonListe: List<SjablonPeriodeNavnVerdi>): List<SjablonResultatGrunnlagCore> = sjablonListe
         .map {

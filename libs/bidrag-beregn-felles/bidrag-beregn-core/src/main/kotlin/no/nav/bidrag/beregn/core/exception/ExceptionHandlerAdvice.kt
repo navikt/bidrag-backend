@@ -63,6 +63,5 @@ class ExceptionHandlerAdvice {
             ),
         )
 
-    private fun errorMsg(runtimeException: RuntimeException): String =
-        String.format("%s: %s", runtimeException.javaClass.getSimpleName(), runtimeException.message)
+    private fun errorMsg(runtimeException: RuntimeException): String = String.format("%s: %s", runtimeException.javaClass.getSimpleName(), runtimeException.message)
 }

@@ -17,16 +17,15 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 
 internal object UnderholdskostnadMapper : CoreMapper() {
-    fun mapUnderholdskostnadGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>): UnderholdskostnadPeriodeGrunnlag =
-        UnderholdskostnadPeriodeGrunnlag(
-            beregningsperiode = mottattGrunnlag.periode,
-            søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
-            barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),
-            nettoTilsynsutgiftPeriodeGrunnlagListe = mapNettoTilsynsutgift(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
-            sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
-            sjablonBarnetilsynPeriodeGrunnlagListe = mapSjablonBarnetilsyn(sjablonGrunnlag),
-            sjablonForbruksutgifterPeriodeGrunnlagListe = mapSjablonForbruksutgifter(sjablonGrunnlag),
-        )
+    fun mapUnderholdskostnadGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>): UnderholdskostnadPeriodeGrunnlag = UnderholdskostnadPeriodeGrunnlag(
+        beregningsperiode = mottattGrunnlag.periode,
+        søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
+        barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),
+        nettoTilsynsutgiftPeriodeGrunnlagListe = mapNettoTilsynsutgift(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
+        sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
+        sjablonBarnetilsynPeriodeGrunnlagListe = mapSjablonBarnetilsyn(sjablonGrunnlag),
+        sjablonForbruksutgifterPeriodeGrunnlagListe = mapSjablonForbruksutgifter(sjablonGrunnlag),
+    )
 
     private fun mapSøknadsbarn(beregnGrunnlag: BeregnGrunnlag): SøknadsbarnPeriodeGrunnlag {
         try {

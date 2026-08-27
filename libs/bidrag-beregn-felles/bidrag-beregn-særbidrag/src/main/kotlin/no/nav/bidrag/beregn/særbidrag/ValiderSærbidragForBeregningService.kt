@@ -13,8 +13,7 @@ import org.springframework.stereotype.Service
 class ValiderSærbidragForBeregningService {
     private val service = BeregnSærbidragService()
 
-    fun validerForBeregning(vedtakstype: Vedtakstype, delberegningUtgift: DelberegningUtgift): Resultatkode? =
-        service.validerForBeregning(vedtakstype, delberegningUtgift)
+    fun validerForBeregning(vedtakstype: Vedtakstype, delberegningUtgift: DelberegningUtgift): Resultatkode? = service.validerForBeregning(vedtakstype, delberegningUtgift)
 
     // Service for å sjekke at alle løpende bidrag har gyldig valutakode for beregning. Kun "NOK" er gyldig i starten.
     fun validerGyldigValuta(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = service.validerValutakode(løpendeBidragGrunnlag)

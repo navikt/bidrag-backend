@@ -249,8 +249,7 @@ class VedtakService(
     )
 
     // TODO Kode kopiert fra bidrag-behandling
-    fun hentSisteLøpendeStønader(bpIdent: Personident): List<LøpendeBidragssak> =
-        stønadConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent)).bidragssakerListe
+    fun hentSisteLøpendeStønader(bpIdent: Personident): List<LøpendeBidragssak> = stønadConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent)).bidragssakerListe
 
     fun finnAlleManuelleVedtakForEvnevurdering(stønadsid: Stønadsid): List<VedtakForStønad> {
         val vedtakISak =
@@ -301,6 +300,5 @@ class VedtakService(
         ),
     )
 
-    fun hentAlleStønaderForBidragspliktig(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse =
-        stønadConsumer.hentAlleLøpendeStønaderIPeriode(request)
+    fun hentAlleStønaderForBidragspliktig(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse = stønadConsumer.hentAlleLøpendeStønaderIPeriode(request)
 }

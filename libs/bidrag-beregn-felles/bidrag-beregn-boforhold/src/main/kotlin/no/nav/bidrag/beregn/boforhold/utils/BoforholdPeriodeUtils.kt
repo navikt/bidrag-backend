@@ -1,8 +1,8 @@
 package no.nav.bidrag.beregn.boforhold.utils
 
-import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
+import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import java.time.LocalDate
 
 fun List<BoforholdResponseV2>.justerBoforholdPerioderForOpphørsdatoOgBeregnTilDato(

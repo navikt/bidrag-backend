@@ -290,8 +290,7 @@ internal class BoforholdServiceV1 {
         return listeJustertMotAttenårsdag
     }
 
-    private fun personenHarFylt18År(fødselsdato: LocalDate, dato: LocalDate): Boolean =
-        ChronoUnit.YEARS.between(fødselsdato.plusMonths(1).withDayOfMonth(1), dato) >= 18
+    private fun personenHarFylt18År(fødselsdato: LocalDate, dato: LocalDate): Boolean = ChronoUnit.YEARS.between(fødselsdato.plusMonths(1).withDayOfMonth(1), dato) >= 18
 
     private fun beregnetAttenÅrFraDato(fødselsdato: LocalDate): LocalDate = fødselsdato.plusYears(18).plusMonths(1).withDayOfMonth(1)
 }

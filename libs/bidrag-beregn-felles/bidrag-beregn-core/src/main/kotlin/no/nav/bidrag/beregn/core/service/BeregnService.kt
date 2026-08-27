@@ -406,18 +406,16 @@ abstract class BeregnService {
     }
 
     // Lager liste over gyldige alderTom-verdier for sjablon forbruksutgifter
-    protected fun hentAlderTomListeForbruksutgifter(sjablonForbruksutgifterPerioder: List<SjablonForbruksutgifterPeriodeGrunnlag>): List<Int> =
-        sjablonForbruksutgifterPerioder
-            .map { it.sjablonForbruksutgifterPeriode.alderTom }
-            .distinct()
-            .sorted()
+    protected fun hentAlderTomListeForbruksutgifter(sjablonForbruksutgifterPerioder: List<SjablonForbruksutgifterPeriodeGrunnlag>): List<Int> = sjablonForbruksutgifterPerioder
+        .map { it.sjablonForbruksutgifterPeriode.alderTom }
+        .distinct()
+        .sorted()
 
     // Lager liste over gyldige alderTom-verdier for sjablon samværsfradrag
-    protected fun hentAlderTomListeSamværsfradrag(sjablonSamværsfradragPerioder: List<SjablonSamværsfradragPeriodeGrunnlag>): List<Int> =
-        sjablonSamværsfradragPerioder
-            .map { it.sjablonSamværsfradragPeriode.alderTom }
-            .distinct()
-            .sorted()
+    protected fun hentAlderTomListeSamværsfradrag(sjablonSamværsfradragPerioder: List<SjablonSamværsfradragPeriodeGrunnlag>): List<Int> = sjablonSamværsfradragPerioder
+        .map { it.sjablonSamværsfradragPeriode.alderTom }
+        .distinct()
+        .sorted()
 
     // Henter ut verdi fra delberegning for endring sjekk av grense (her skal det være kun en forekomst)
     fun erOverMinimumsgrenseForEndring(endringSjekkGrenseGrunnlagliste: List<GrunnlagDto>): Boolean = endringSjekkGrenseGrunnlagliste
@@ -425,8 +423,7 @@ abstract class BeregnService {
         .map { it.innhold.endringErOverGrense }
         .firstOrNull() ?: true
 
-    protected fun BeregnGrunnlagJustert.utvidMedNyeGrunnlag(nyeGrunnlag: List<GrunnlagDto>) =
-        copy(beregnGrunnlag = beregnGrunnlag.copy(grunnlagListe = (beregnGrunnlag.grunnlagListe + nyeGrunnlag).distinctBy { it.referanse }))
+    protected fun BeregnGrunnlagJustert.utvidMedNyeGrunnlag(nyeGrunnlag: List<GrunnlagDto>) = copy(beregnGrunnlag = beregnGrunnlag.copy(grunnlagListe = (beregnGrunnlag.grunnlagListe + nyeGrunnlag).distinctBy { it.referanse }))
 
     data class BeregnGrunnlagJustert(
         val beregnGrunnlag: BeregnGrunnlag,

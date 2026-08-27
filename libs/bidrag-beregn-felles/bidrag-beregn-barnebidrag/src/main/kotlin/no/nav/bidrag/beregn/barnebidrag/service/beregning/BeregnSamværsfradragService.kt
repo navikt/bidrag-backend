@@ -132,8 +132,7 @@ internal object BeregnSamværsfradragService : BeregnService() {
     }
 
     // Lager grunnlagsobjekter for sjabloner (ett objekt pr sjablonverdi som er innenfor perioden)
-    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode): List<GrunnlagDto> =
-        mapSjablonSamværsfradragGrunnlag(periode, SjablonProvider.hentSjablonSamværsfradrag())
+    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode): List<GrunnlagDto> = mapSjablonSamværsfradragGrunnlag(periode, SjablonProvider.hentSjablonSamværsfradrag())
 
     // Lager en liste over alle bruddperioder basert på grunnlag som skal brukes i beregningen
     private fun lagBruddPeriodeListeSamværsfradrag(

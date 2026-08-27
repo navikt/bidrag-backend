@@ -57,6 +57,8 @@ import no.nav.bidrag.behandling.utils.testdata.tilTransformerInntekterRequest
 import no.nav.bidrag.behandling.utils.testdata.voksenPersonIBpsHusstand
 import no.nav.bidrag.beregn.boforhold.BoforholdApi
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.inntekt.InntektApi
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -75,8 +77,6 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.beregn.inntekt.InntektApi
-import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektspostDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.ArbeidsforholdGrunnlagDto

@@ -3,8 +3,8 @@ package no.nav.bidrag.beregn.inntekt.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.beregn.inntekt.TestUtil
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

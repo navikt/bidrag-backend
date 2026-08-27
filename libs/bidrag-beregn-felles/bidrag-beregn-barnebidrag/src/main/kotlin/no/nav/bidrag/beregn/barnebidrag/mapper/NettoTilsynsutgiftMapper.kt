@@ -185,9 +185,8 @@ internal object NettoTilsynsutgiftMapper : CoreMapper() {
         }
     }
 
-    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgiftBeløp: BigDecimal, kostpengerBeløp: BigDecimal?): BigDecimal =
-        faktiskUtgiftBeløp.minus(kostpengerBeløp ?: BigDecimal.ZERO).multiply(BigDecimal.valueOf(11))
-            .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP).coerceAtLeast(BigDecimal.ZERO)
+    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgiftBeløp: BigDecimal, kostpengerBeløp: BigDecimal?): BigDecimal = faktiskUtgiftBeløp.minus(kostpengerBeløp ?: BigDecimal.ZERO).multiply(BigDecimal.valueOf(11))
+        .divide(BigDecimal.valueOf(12), 10, RoundingMode.HALF_UP).coerceAtLeast(BigDecimal.ZERO)
 
     fun beregnMånedsbeløpTilleggsstønad(beløp: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal = when (beløpstype) {
         InntektBeløpstype.DAGSATS ->

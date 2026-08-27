@@ -110,6 +110,9 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.boforhold.BoforholdApi
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
+import no.nav.bidrag.beregn.inntekt.InntektApi
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.RequestContextAsyncContext
 import no.nav.bidrag.commons.util.SecurityCoroutineContext
@@ -134,9 +137,6 @@ import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.util.visningsnavn
-import no.nav.bidrag.beregn.inntekt.InntektApi
-import no.nav.bidrag.beregn.sivilstand.SivilstandApi
-import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag

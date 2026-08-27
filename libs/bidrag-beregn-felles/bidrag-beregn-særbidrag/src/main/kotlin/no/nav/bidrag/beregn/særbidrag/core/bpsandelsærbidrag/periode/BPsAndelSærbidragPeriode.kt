@@ -15,8 +15,7 @@ import no.nav.bidrag.beregn.særbidrag.core.bpsandelsærbidrag.bo.Utgift
 import no.nav.bidrag.beregn.særbidrag.core.felles.FellesPeriode
 import java.time.LocalDate
 
-class BPsAndelSærbidragPeriode(private val bPsAndelSærbidragBeregning: BPsAndelSærbidragBeregning = BPsAndelSærbidragBeregning()) :
-    FellesPeriode() {
+class BPsAndelSærbidragPeriode(private val bPsAndelSærbidragBeregning: BPsAndelSærbidragBeregning = BPsAndelSærbidragBeregning()) : FellesPeriode() {
 
     fun beregnPerioder(grunnlag: BeregnBPsAndelSærbidragGrunnlag): BeregnBPsAndelSærbidragResultat {
         val grunnlagTilBeregning = BeregnBPsAndelSærbidragListeGrunnlag()

@@ -256,8 +256,7 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService) {
         return bidragBeregningListe
     }
 
-    private fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> =
-        // Fjerner perioder som ikke overlapper med beregningsperioden
+    private fun LøpendeBidragPeriodeResponse.filtrerForPeriode(beregningsperiode: ÅrMånedsperiode): List<LøpendeBidrag> = // Fjerner perioder som ikke overlapper med beregningsperioden
         bidragListe.mapNotNull { bidrag ->
             val beregningsperiodeTil = beregningsperiode.til
             val periodeListe = bidrag.periodeListe.filter {

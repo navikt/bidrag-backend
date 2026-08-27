@@ -1,11 +1,11 @@
 package no.nav.bidrag.beregn.inntekt.service
 
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.BRUDD_MÅNED_OVERGANSSTØNAD
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.filtrerInntekterPåYtelse
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.finnCutOffDag
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.hentMappingYtelser
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.inntekt.request.Ainntektspost
 import no.nav.bidrag.transport.behandling.inntekt.response.InntektPost
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
@@ -168,15 +168,14 @@ class YtelserServiceOvergangsstønad {
         return summertInntektPostListeTilÅrsinntekt
     }
 
-    private fun beregnInntektOmgjortTilÅrsbeløp(beløp: BigDecimal, antallMånederMedDataIPerioden: Int): BigDecimal =
-        if (antallMånederMedDataIPerioden == 0) {
-            BigDecimal.ZERO
-        } else {
-            val skalertBeløp = beløp.setScale(10, RoundingMode.HALF_UP) // Øker scale for bedre presisjon
-            val månedligInntekt = skalertBeløp.divide(BigDecimal.valueOf(antallMånederMedDataIPerioden.toLong()), 10, RoundingMode.HALF_UP)
-            val årligInntekt = månedligInntekt.multiply(BigDecimal.valueOf(12))
-            årligInntekt
-        }
+    private fun beregnInntektOmgjortTilÅrsbeløp(beløp: BigDecimal, antallMånederMedDataIPerioden: Int): BigDecimal = if (antallMånederMedDataIPerioden == 0) {
+        BigDecimal.ZERO
+    } else {
+        val skalertBeløp = beløp.setScale(10, RoundingMode.HALF_UP) // Øker scale for bedre presisjon
+        val månedligInntekt = skalertBeløp.divide(BigDecimal.valueOf(antallMånederMedDataIPerioden.toLong()), 10, RoundingMode.HALF_UP)
+        val årligInntekt = månedligInntekt.multiply(BigDecimal.valueOf(12))
+        årligInntekt
+    }
 
     // Summerer og grupperer ainntekter pr år
     private fun summerAarsinntekter(

@@ -1,8 +1,8 @@
 package no.nav.bidrag.beregn.inntekt
 
 import jakarta.annotation.PostConstruct
-import no.nav.bidrag.commons.service.KodeverkProvider
 import no.nav.bidrag.beregn.inntekt.service.InntektService
+import no.nav.bidrag.commons.service.KodeverkProvider
 import no.nav.bidrag.transport.behandling.inntekt.request.TransformerInntekterRequest
 import no.nav.bidrag.transport.behandling.inntekt.response.TransformerInntekterResponse
 import org.springframework.beans.factory.annotation.Value

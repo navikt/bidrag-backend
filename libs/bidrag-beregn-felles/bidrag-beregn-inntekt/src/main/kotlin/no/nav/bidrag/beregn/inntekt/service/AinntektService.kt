@@ -1,7 +1,5 @@
 package no.nav.bidrag.beregn.inntekt.service
 
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.KEY_12MND
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.KEY_12MND_OV
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.KEY_3MND
@@ -11,6 +9,8 @@ import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.PERIODE_ÅR
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.finnCutOffDag
 import no.nav.bidrag.beregn.inntekt.util.InntektUtil.Companion.finnSisteAarSomSkalRapporteres
 import no.nav.bidrag.beregn.inntekt.util.isNumeric
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.inntekt.request.Ainntektspost
 import no.nav.bidrag.transport.behandling.inntekt.response.InntektPost
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertMånedsinntekt

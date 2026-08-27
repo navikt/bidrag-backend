@@ -6,11 +6,11 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.beregn.inntekt.InntektApi
 import no.nav.bidrag.beregn.inntekt.TestUtil
 import no.nav.bidrag.beregn.inntekt.testdata.StubUtils.Companion.kodeverkUrl
 import no.nav.bidrag.beregn.inntekt.util.VersionProvider.Companion.APP_VERSJON
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

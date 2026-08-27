@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.beregn.core.bo.SjablonSjablontallBeregningGrunnlag
 import no.nav.bidrag.beregn.core.bo.SjablonSjablontallPeriodeGrunnlag
 import no.nav.bidrag.beregn.core.service.BeregnService
+import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
+import no.nav.bidrag.beregn.indeksregulering.bo.IndeksregulerPeriodeGrunnlag
 import no.nav.bidrag.commons.service.sjablon.SjablonProvider
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.beløp.Beløp
@@ -12,8 +14,6 @@ import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.domene.util.avrundetTilNærmesteTier
-import no.nav.bidrag.beregn.indeksregulering.bo.BeregnIndeksreguleringGrunnlag
-import no.nav.bidrag.beregn.indeksregulering.bo.IndeksregulerPeriodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BeløpshistorikkGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BeløpshistorikkPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto

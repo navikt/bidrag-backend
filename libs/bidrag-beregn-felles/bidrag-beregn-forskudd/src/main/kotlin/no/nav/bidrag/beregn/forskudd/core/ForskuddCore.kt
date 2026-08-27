@@ -66,8 +66,7 @@ internal class ForskuddCore(private val forskuddPeriode: ForskuddPeriode = Forsk
         avvikListe = mapAvvik(avvikListe),
     )
 
-    private fun mapSøknadsbarn(søknadsbarnCore: SøknadsbarnCore) =
-        Søknadsbarn(referanse = søknadsbarnCore.referanse, fødselsdato = søknadsbarnCore.fødselsdato)
+    private fun mapSøknadsbarn(søknadsbarnCore: SøknadsbarnCore) = Søknadsbarn(referanse = søknadsbarnCore.referanse, fødselsdato = søknadsbarnCore.fødselsdato)
 
     private fun mapBostatusPeriodeListe(bostatusPeriodeListeCore: List<BostatusPeriodeCore>): List<BostatusPeriode> {
         val bostatusPeriodeListe = mutableListOf<BostatusPeriode>()

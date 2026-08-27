@@ -79,18 +79,17 @@ internal class SærbidragCore(private val særbidragPeriode: SærbidragPeriode =
     )
 }
 
-private fun mapBPsAndelSærbidragPeriodeListe(bPsAndelSærbidragPeriodeListeCore: List<BPsAndelSærbidragPeriodeCore>) =
-    bPsAndelSærbidragPeriodeListeCore.map {
-        BPsAndelSærbidragPeriode(
-            referanse = it.referanse,
-            periode = Periode(datoFom = it.periode.datoFom, datoTil = it.periode.datoTil),
-            endeligAndelFaktor = it.endeligAndelFaktor,
-            andelBeløp = it.andelBeløp,
-            beregnetAndelFaktor = it.beregnetAndelFaktor,
-            barnEndeligInntekt = it.barnEndeligInntekt,
-            barnetErSelvforsørget = it.barnetErSelvforsørget,
-        )
-    }
+private fun mapBPsAndelSærbidragPeriodeListe(bPsAndelSærbidragPeriodeListeCore: List<BPsAndelSærbidragPeriodeCore>) = bPsAndelSærbidragPeriodeListeCore.map {
+    BPsAndelSærbidragPeriode(
+        referanse = it.referanse,
+        periode = Periode(datoFom = it.periode.datoFom, datoTil = it.periode.datoTil),
+        endeligAndelFaktor = it.endeligAndelFaktor,
+        andelBeløp = it.andelBeløp,
+        beregnetAndelFaktor = it.beregnetAndelFaktor,
+        barnEndeligInntekt = it.barnEndeligInntekt,
+        barnetErSelvforsørget = it.barnetErSelvforsørget,
+    )
+}
 
 private fun mapResultatPeriode(resultatPeriodeListe: List<ResultatPeriode>) = resultatPeriodeListe.map {
     ResultatPeriodeCore(

@@ -20,23 +20,21 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBase
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
 
 internal object EndringSjekkGrensePeriodeMapper : CoreMapper() {
-    fun mapEndringSjekkGrensePeriodeGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) =
-        EndringSjekkGrensePeriodePeriodeGrunnlag(
-            beregningsperiode = mottattGrunnlag.periode,
-            sluttberegningPeriodeGrunnlagListe = mapSluttberegning(mottattGrunnlag),
-            beløpshistorikkBidragPeriodeGrunnlag = mapBeløpshistorikk(mottattGrunnlag, grunnlagstype),
-            privatAvtaleIndeksregulertPeriodeGrunnlagListe = mapPrivatAvtale(mottattGrunnlag),
-            sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
-        )
+    fun mapEndringSjekkGrensePeriodeGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) = EndringSjekkGrensePeriodePeriodeGrunnlag(
+        beregningsperiode = mottattGrunnlag.periode,
+        sluttberegningPeriodeGrunnlagListe = mapSluttberegning(mottattGrunnlag),
+        beløpshistorikkBidragPeriodeGrunnlag = mapBeløpshistorikk(mottattGrunnlag, grunnlagstype),
+        privatAvtaleIndeksregulertPeriodeGrunnlagListe = mapPrivatAvtale(mottattGrunnlag),
+        sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
+    )
 
-    fun mapEndringSjekkGrensePeriodeGrunnlagV2(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) =
-        EndringSjekkGrensePeriodePeriodeGrunnlagV2(
-            beregningsperiode = mottattGrunnlag.periode,
-            sluttberegningPeriodeGrunnlagListe = mapSluttberegningV2(mottattGrunnlag),
-            beløpshistorikkBidragPeriodeGrunnlag = mapBeløpshistorikk(mottattGrunnlag, grunnlagstype),
-            privatAvtaleIndeksregulertPeriodeGrunnlagListe = mapPrivatAvtaleV2(mottattGrunnlag),
-            sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
-        )
+    fun mapEndringSjekkGrensePeriodeGrunnlagV2(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>, grunnlagstype: Grunnlagstype) = EndringSjekkGrensePeriodePeriodeGrunnlagV2(
+        beregningsperiode = mottattGrunnlag.periode,
+        sluttberegningPeriodeGrunnlagListe = mapSluttberegningV2(mottattGrunnlag),
+        beløpshistorikkBidragPeriodeGrunnlag = mapBeløpshistorikk(mottattGrunnlag, grunnlagstype),
+        privatAvtaleIndeksregulertPeriodeGrunnlagListe = mapPrivatAvtaleV2(mottattGrunnlag),
+        sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
+    )
 
     private fun mapSluttberegning(beregnGrunnlag: BeregnGrunnlag): List<SluttberegningPeriodeGrunnlag> {
         try {
@@ -72,16 +70,15 @@ internal object EndringSjekkGrensePeriodeMapper : CoreMapper() {
         }
     }
 
-    private fun mapBeløpshistorikk(beregnGrunnlag: BeregnGrunnlag, grunnlagstype: Grunnlagstype): BeløpshistorikkPeriodeGrunnlag? =
-        beregnGrunnlag.grunnlagListe
-            .filtrerOgKonverterBasertPåEgenReferanse<BeløpshistorikkGrunnlag>(grunnlagType = grunnlagstype)
-            .map {
-                BeløpshistorikkPeriodeGrunnlag(
-                    referanse = it.referanse,
-                    beløpshistorikkPeriode = it.innhold,
-                )
-            }
-            .firstOrNull()
+    private fun mapBeløpshistorikk(beregnGrunnlag: BeregnGrunnlag, grunnlagstype: Grunnlagstype): BeløpshistorikkPeriodeGrunnlag? = beregnGrunnlag.grunnlagListe
+        .filtrerOgKonverterBasertPåEgenReferanse<BeløpshistorikkGrunnlag>(grunnlagType = grunnlagstype)
+        .map {
+            BeløpshistorikkPeriodeGrunnlag(
+                referanse = it.referanse,
+                beløpshistorikkPeriode = it.innhold,
+            )
+        }
+        .firstOrNull()
 
     private fun mapPrivatAvtale(beregnGrunnlag: BeregnGrunnlag): List<PrivatAvtaleIndeksregulertPeriodeGrunnlag> = beregnGrunnlag.grunnlagListe
         .filtrerOgKonverterBasertPåFremmedReferanse<DelberegningPrivatAvtale>(

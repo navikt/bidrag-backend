@@ -12,11 +12,10 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
 
 internal object NettoBarnetilleggMapper : CoreMapper() {
-    fun mapNettoBarnetilleggGrunnlag(mottattGrunnlag: BeregnGrunnlag, referanseTilRolle: String): NettoBarnetilleggPeriodeGrunnlag =
-        NettoBarnetilleggPeriodeGrunnlag(
-            beregningsperiode = mottattGrunnlag.periode,
-            barnetilleggPeriodeGrunnlagListe = mapBarnetillegg(beregnGrunnlag = mottattGrunnlag, referanseTilRolle),
-        )
+    fun mapNettoBarnetilleggGrunnlag(mottattGrunnlag: BeregnGrunnlag, referanseTilRolle: String): NettoBarnetilleggPeriodeGrunnlag = NettoBarnetilleggPeriodeGrunnlag(
+        beregningsperiode = mottattGrunnlag.periode,
+        barnetilleggPeriodeGrunnlagListe = mapBarnetillegg(beregnGrunnlag = mottattGrunnlag, referanseTilRolle),
+    )
 
     private fun mapBarnetillegg(beregnGrunnlag: BeregnGrunnlag, referanseTilRolle: String): List<BarnetilleggPeriodeGrunnlag> {
         try {

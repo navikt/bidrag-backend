@@ -30,11 +30,11 @@ import no.nav.bidrag.behandling.transformers.underhold.tilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.underhold.tilStønadTilBarnetilsynDtos
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.transport.behandling.grunnlag.response.ArbeidsforholdGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto

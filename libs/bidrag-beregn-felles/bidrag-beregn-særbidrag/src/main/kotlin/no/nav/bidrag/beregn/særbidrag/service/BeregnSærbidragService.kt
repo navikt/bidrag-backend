@@ -108,8 +108,7 @@ internal class BeregnSærbidragService(
         null
     }
 
-    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean =
-        løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == "NOK" }
+    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == "NOK" }
 
     // ==================================================================================================================================================
     // Bygger grunnlag til core og kaller delberegninger

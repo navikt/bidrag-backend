@@ -29,6 +29,5 @@ import org.springframework.stereotype.Service
 class BeregnSærbidragApi {
     private val service = BeregnSærbidragService()
 
-    fun beregn(beregnSærbidragGrunnlag: BeregnGrunnlag, vedtakstype: Vedtakstype): BeregnetSærbidragResultat =
-        service.beregn(beregnSærbidragGrunnlag, vedtakstype)
+    fun beregn(beregnSærbidragGrunnlag: BeregnGrunnlag, vedtakstype: Vedtakstype): BeregnetSærbidragResultat = service.beregn(beregnSærbidragGrunnlag, vedtakstype)
 }

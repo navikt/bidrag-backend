@@ -55,6 +55,9 @@ import no.nav.bidrag.behandling.transformers.vedtak.personIdentNav
 import no.nav.bidrag.beregn.barnebidrag.BeregnSamværsklasseApi
 import no.nav.bidrag.beregn.boforhold.BoforholdApi
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.inntekt.InntektApi
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
+import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.commons.web.mock.stubSjablonService
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
@@ -91,9 +94,6 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.beregn.inntekt.InntektApi
-import no.nav.bidrag.beregn.sivilstand.SivilstandApi
-import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssak
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto

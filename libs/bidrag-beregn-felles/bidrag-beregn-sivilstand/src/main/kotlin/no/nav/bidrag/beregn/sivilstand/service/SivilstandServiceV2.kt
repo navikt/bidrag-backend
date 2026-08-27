@@ -1,14 +1,14 @@
 package no.nav.bidrag.beregn.sivilstand.service
 
+import no.nav.bidrag.beregn.sivilstand.bo.SivilstandPDLBo
+import no.nav.bidrag.beregn.sivilstand.dto.EndreSivilstand
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
+import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.diverse.TypeEndring
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
-import no.nav.bidrag.beregn.sivilstand.bo.SivilstandPDLBo
-import no.nav.bidrag.beregn.sivilstand.dto.EndreSivilstand
-import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
-import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -912,8 +912,7 @@ internal class SivilstandServiceV2 {
 
     private fun hentSisteDagIMåneden(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month, dato.month.length(dato.isLeapYear))
 
-    private fun hentSisteDagIForrigeMåned(dato: LocalDate): LocalDate =
-        LocalDate.of(dato.year, dato.month.minus(1), dato.month.minus(1).length(dato.isLeapYear))
+    private fun hentSisteDagIForrigeMåned(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month.minus(1), dato.month.minus(1).length(dato.isLeapYear))
 
     private fun hentFørsteDagINesteMåned(dato: LocalDate): LocalDate = LocalDate.of(dato.year, dato.month, 1).plusMonths(1)
 

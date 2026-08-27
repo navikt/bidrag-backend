@@ -6,8 +6,7 @@ import java.time.temporal.TemporalAdjusters
 data class Periode(var datoFom: LocalDate, val datoTil: LocalDate?) : PeriodisertGrunnlag {
     companion object {
         // Juster dato til den første i neste måned (hvis ikke dato er den første i inneværende måned)
-        internal fun justerDato(dato: LocalDate?): LocalDate? =
-            if (dato == null || dato.dayOfMonth == 1) dato else dato.with(TemporalAdjusters.firstDayOfNextMonth())
+        internal fun justerDato(dato: LocalDate?): LocalDate? = if (dato == null || dato.dayOfMonth == 1) dato else dato.with(TemporalAdjusters.firstDayOfNextMonth())
     }
 
     constructor(periode: Periode) : this(justerDato(periode.datoFom) ?: periode.datoFom, justerDato(periode.datoTil))

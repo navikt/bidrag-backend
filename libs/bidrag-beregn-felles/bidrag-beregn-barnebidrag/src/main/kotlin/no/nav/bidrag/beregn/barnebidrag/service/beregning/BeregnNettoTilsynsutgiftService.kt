@@ -148,10 +148,9 @@ internal object BeregnNettoTilsynsutgiftService : BeregnService() {
         return forrigeGrunnlag.copy(innhold = POJONode(utvidetInnhold))
     }
 
-    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode, delberegning: (SjablonTallNavn) -> Boolean): List<GrunnlagDto> =
-        mapSjablonSjablontallGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablontall(), delberegning = delberegning) +
-            mapSjablonMaksTilsynsbeløpGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonMaksTilsyn()) +
-            mapSjablonMaksFradragGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonMaksFradrag())
+    private fun lagSjablonGrunnlagsobjekter(periode: ÅrMånedsperiode, delberegning: (SjablonTallNavn) -> Boolean): List<GrunnlagDto> = mapSjablonSjablontallGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablontall(), delberegning = delberegning) +
+        mapSjablonMaksTilsynsbeløpGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonMaksTilsyn()) +
+        mapSjablonMaksFradragGrunnlag(periode = periode, sjablonListe = SjablonProvider.hentSjablonMaksFradrag())
 
     // Lager en liste over alle bruddperioder basert på grunnlag som skal brukes i beregningen
     private fun lagBruddPeriodeListeNettoTilsynsutgift(
@@ -356,42 +355,40 @@ internal object BeregnNettoTilsynsutgiftService : BeregnService() {
     }
 
     // Mapper ut DelberegningFaktiskUtgift
-    private fun mapDelberegningFaktiskTilsynsutgift(faktiskUtgiftPeriodeCoreListe: List<FaktiskUtgiftPeriodeCore>, bidragsmottakerReferanse: String) =
-        faktiskUtgiftPeriodeCoreListe
-            .map {
-                GrunnlagDto(
-                    referanse = it.referanse,
-                    type = Grunnlagstype.DELBEREGNING_FAKTISK_UTGIFT,
-                    innhold = POJONode(
-                        DelberegningFaktiskTilsynsutgift(
-                            periode = ÅrMånedsperiode(fom = it.periode.datoFom, til = it.periode.datoTil),
-                            beregnetBeløp = it.beregnetBeløp,
-                        ),
+    private fun mapDelberegningFaktiskTilsynsutgift(faktiskUtgiftPeriodeCoreListe: List<FaktiskUtgiftPeriodeCore>, bidragsmottakerReferanse: String) = faktiskUtgiftPeriodeCoreListe
+        .map {
+            GrunnlagDto(
+                referanse = it.referanse,
+                type = Grunnlagstype.DELBEREGNING_FAKTISK_UTGIFT,
+                innhold = POJONode(
+                    DelberegningFaktiskTilsynsutgift(
+                        periode = ÅrMånedsperiode(fom = it.periode.datoFom, til = it.periode.datoTil),
+                        beregnetBeløp = it.beregnetBeløp,
                     ),
-                    grunnlagsreferanseListe = it.grunnlagsreferanseListe.sorted(),
-                    gjelderReferanse = bidragsmottakerReferanse,
-                    gjelderBarnReferanse = it.gjelderBarn,
-                )
-            }
+                ),
+                grunnlagsreferanseListe = it.grunnlagsreferanseListe.sorted(),
+                gjelderReferanse = bidragsmottakerReferanse,
+                gjelderBarnReferanse = it.gjelderBarn,
+            )
+        }
 
     // Mapper ut DelberegningTilleggsstønad
-    private fun mapDelberegningTilleggsstønad(tilleggsstønadPeriodeCoreListe: List<TilleggsstønadPeriodeCore>, bidragsmottakerReferanse: String) =
-        tilleggsstønadPeriodeCoreListe
-            .map {
-                GrunnlagDto(
-                    referanse = it.referanse,
-                    type = Grunnlagstype.DELBEREGNING_TILLEGGSSTØNAD,
-                    innhold = POJONode(
-                        DelberegningTilleggsstønad(
-                            periode = ÅrMånedsperiode(fom = it.periode.datoFom, til = it.periode.datoTil),
-                            beregnetBeløp = it.beregnetBeløp,
-                        ),
+    private fun mapDelberegningTilleggsstønad(tilleggsstønadPeriodeCoreListe: List<TilleggsstønadPeriodeCore>, bidragsmottakerReferanse: String) = tilleggsstønadPeriodeCoreListe
+        .map {
+            GrunnlagDto(
+                referanse = it.referanse,
+                type = Grunnlagstype.DELBEREGNING_TILLEGGSSTØNAD,
+                innhold = POJONode(
+                    DelberegningTilleggsstønad(
+                        periode = ÅrMånedsperiode(fom = it.periode.datoFom, til = it.periode.datoTil),
+                        beregnetBeløp = it.beregnetBeløp,
                     ),
-                    grunnlagsreferanseListe = it.grunnlagsreferanseListe.sorted(),
-                    gjelderReferanse = bidragsmottakerReferanse,
-                    gjelderBarnReferanse = it.gjelderBarn,
-                )
-            }
+                ),
+                grunnlagsreferanseListe = it.grunnlagsreferanseListe.sorted(),
+                gjelderReferanse = bidragsmottakerReferanse,
+                gjelderBarnReferanse = it.gjelderBarn,
+            )
+        }
 
     private fun barnUnderTolvÅr(barnBMListe: List<BarnBM>, fom: YearMonth): List<BarnBM> = barnBMListe
         // Filtrer først bort barn som er født etter periodens start

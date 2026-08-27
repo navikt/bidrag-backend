@@ -2,9 +2,9 @@ package no.nav.bidrag.beregn.sivilstand.service
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
-import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.beregn.sivilstand.TestUtil
 import no.nav.bidrag.beregn.sivilstand.response.Status
+import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.LocalDate

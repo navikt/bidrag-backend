@@ -86,19 +86,18 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
         bostatusPeriodeGrunnlagListe = mapBostatus(mottattGrunnlag, søknadsbarnReferanse = mottattGrunnlag.søknadsbarnReferanse),
     )
 
-    fun mapSumBidragTilFordelingGrunnlag(beregningsperiode: ÅrMånedsperiode, mottattGrunnlagListe: List<BeregnGrunnlag>) =
-        SumBidragTilFordelingPeriodeGrunnlag(
-            beregningsperiode = beregningsperiode,
-            bidragTilFordelingDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingFraBeregnGrunnlagListe(mottattGrunnlagListe),
-            bidragTilFordelingLøpendeBidragDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingLøpendeBidrag(
-                mottattGrunnlagListe.flatMap
-                    { it.grunnlagListe },
-            ),
-            bidragTilFordelingPrivatAvtaleDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingPrivatAvtale(
-                mottattGrunnlagListe.flatMap
-                    { it.grunnlagListe },
-            ),
-        )
+    fun mapSumBidragTilFordelingGrunnlag(beregningsperiode: ÅrMånedsperiode, mottattGrunnlagListe: List<BeregnGrunnlag>) = SumBidragTilFordelingPeriodeGrunnlag(
+        beregningsperiode = beregningsperiode,
+        bidragTilFordelingDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingFraBeregnGrunnlagListe(mottattGrunnlagListe),
+        bidragTilFordelingLøpendeBidragDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingLøpendeBidrag(
+            mottattGrunnlagListe.flatMap
+                { it.grunnlagListe },
+        ),
+        bidragTilFordelingPrivatAvtaleDelberegningPeriodeGrunnlagListe = mapBidragTilFordelingPrivatAvtale(
+            mottattGrunnlagListe.flatMap
+                { it.grunnlagListe },
+        ),
+    )
 
     fun mapEvne25ProsentAvInntektGrunnlag(mottattGrunnlag: BeregnGrunnlag) = Evne25ProsentAvInntektPeriodeGrunnlag(
         beregningsperiode = mottattGrunnlag.periode,
@@ -115,28 +114,26 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
         ),
     )
 
-    fun mapBidragTilFordelingLøpendeBidragGrunnlag(mottattGrunnlag: BeregnGrunnlag, valutakursGrunnlag: GrunnlagDto?) =
-        BidragTilFordelingLøpendeBidragPeriodeGrunnlag(
-            beregningsperiode = mottattGrunnlag.periode,
-            løpendeBidragPeriodeGrunnlagListe = mapLøpendeBidrag(mottattGrunnlag),
-            samværsfradragDelberegningPeriodeGrunnlagListe = mapSamværsfradrag(
-                beregnGrunnlag = mottattGrunnlag.grunnlagListe,
-                gjelderBarnReferanse = mottattGrunnlag.søknadsbarnReferanse,
-            ),
-            valutakursGrunnlag = mapValutakurs(valutakursGrunnlag),
-        )
+    fun mapBidragTilFordelingLøpendeBidragGrunnlag(mottattGrunnlag: BeregnGrunnlag, valutakursGrunnlag: GrunnlagDto?) = BidragTilFordelingLøpendeBidragPeriodeGrunnlag(
+        beregningsperiode = mottattGrunnlag.periode,
+        løpendeBidragPeriodeGrunnlagListe = mapLøpendeBidrag(mottattGrunnlag),
+        samværsfradragDelberegningPeriodeGrunnlagListe = mapSamværsfradrag(
+            beregnGrunnlag = mottattGrunnlag.grunnlagListe,
+            gjelderBarnReferanse = mottattGrunnlag.søknadsbarnReferanse,
+        ),
+        valutakursGrunnlag = mapValutakurs(valutakursGrunnlag),
+    )
 
-    fun mapBidragTilFordelingPrivatAvtaleGrunnlag(mottattGrunnlag: BeregnGrunnlag, valutakursGrunnlag: GrunnlagDto?) =
-        BidragTilFordelingPrivatAvtalePeriodeGrunnlag(
-            beregningsperiode = mottattGrunnlag.periode,
-            privatAvtaleGrunnlag = mapPrivatAvtaleGrunnlag(mottattGrunnlag),
-            indeksreguleringPrivatAvtalePeriodeGrunnlagListe = mapIndeksreguleringPrivatAvtale(mottattGrunnlag),
-            samværsfradragDelberegningPeriodeGrunnlagListe = mapSamværsfradrag(
-                beregnGrunnlag = mottattGrunnlag.grunnlagListe,
-                gjelderBarnReferanse = mottattGrunnlag.søknadsbarnReferanse,
-            ),
-            valutakursGrunnlag = mapValutakurs(valutakursGrunnlag),
-        )
+    fun mapBidragTilFordelingPrivatAvtaleGrunnlag(mottattGrunnlag: BeregnGrunnlag, valutakursGrunnlag: GrunnlagDto?) = BidragTilFordelingPrivatAvtalePeriodeGrunnlag(
+        beregningsperiode = mottattGrunnlag.periode,
+        privatAvtaleGrunnlag = mapPrivatAvtaleGrunnlag(mottattGrunnlag),
+        indeksreguleringPrivatAvtalePeriodeGrunnlagListe = mapIndeksreguleringPrivatAvtale(mottattGrunnlag),
+        samværsfradragDelberegningPeriodeGrunnlagListe = mapSamværsfradrag(
+            beregnGrunnlag = mottattGrunnlag.grunnlagListe,
+            gjelderBarnReferanse = mottattGrunnlag.søknadsbarnReferanse,
+        ),
+        valutakursGrunnlag = mapValutakurs(valutakursGrunnlag),
+    )
 
     fun mapBidragJustertForBPBarnetilleggGrunnlag(mottattGrunnlag: BeregnGrunnlag) = BidragJustertForBPBarnetilleggPeriodeGrunnlag(
         beregningsperiode = mottattGrunnlag.periode,

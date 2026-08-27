@@ -1,8 +1,8 @@
 package no.nav.bidrag.beregn.inntekt.service
 
+import no.nav.bidrag.beregn.inntekt.util.VersionProvider.Companion.APP_VERSJON
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.beregn.inntekt.util.VersionProvider.Companion.APP_VERSJON
 import no.nav.bidrag.transport.behandling.inntekt.request.TransformerInntekterRequest
 import no.nav.bidrag.transport.behandling.inntekt.response.InntektPost
 import no.nav.bidrag.transport.behandling.inntekt.response.TransformerInntekterResponse

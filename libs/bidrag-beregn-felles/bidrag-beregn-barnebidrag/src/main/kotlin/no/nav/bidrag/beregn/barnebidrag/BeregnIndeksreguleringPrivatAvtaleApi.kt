@@ -11,9 +11,7 @@ class BeregnIndeksreguleringPrivatAvtaleApi {
 
     private val service = BeregnIndeksreguleringPrivatAvtaleService
 
-    fun beregnIndeksreguleringPrivatAvtale(beregnGrunnlag: BeregnGrunnlag) =
-        service.delberegningIndeksreguleringPrivatAvtale(grunnlag = beregnGrunnlag, beregningsperiode = beregnGrunnlag.periode)
+    fun beregnIndeksreguleringPrivatAvtale(beregnGrunnlag: BeregnGrunnlag) = service.delberegningIndeksreguleringPrivatAvtale(grunnlag = beregnGrunnlag, beregningsperiode = beregnGrunnlag.periode)
 
-    fun beregnIndeksreguleringPrivatAvtaleV2(beregnGrunnlag: BeregnGrunnlag) =
-        service.delberegningIndeksreguleringPrivatAvtaleV2(grunnlag = beregnGrunnlag)
+    fun beregnIndeksreguleringPrivatAvtaleV2(beregnGrunnlag: BeregnGrunnlag) = service.delberegningIndeksreguleringPrivatAvtaleV2(grunnlag = beregnGrunnlag)
 }

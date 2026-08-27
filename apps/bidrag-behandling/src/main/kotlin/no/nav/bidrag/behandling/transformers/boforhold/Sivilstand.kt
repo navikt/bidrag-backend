@@ -8,12 +8,12 @@ import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.boforhold.Sivilstandsperiode
 import no.nav.bidrag.behandling.oppdateringAvBoforholdFeilet
+import no.nav.bidrag.beregn.sivilstand.dto.EndreSivilstand
+import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.diverse.TypeEndring
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
-import no.nav.bidrag.beregn.sivilstand.dto.EndreSivilstand
-import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import java.time.LocalDate
 import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand as SivilstandBeregnV2Dto

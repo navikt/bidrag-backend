@@ -25,6 +25,7 @@ import no.nav.bidrag.beregn.barnebidrag.testdata.opprettVedtakForStønadBidragsb
 import no.nav.bidrag.beregn.barnebidrag.utils.OmgjøringOrkestratorHelpers
 import no.nav.bidrag.beregn.barnebidrag.utils.OmgjøringOrkestratorHelpersV2
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -34,7 +35,6 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.LøpendeBidragPeriodeRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.BidragPeriode
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidrag
