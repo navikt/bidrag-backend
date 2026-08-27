@@ -1,5 +1,3 @@
-[![Build status](https://github.com/navikt/bidrag-alerts/workflows/Deploy%20alerts%20to%20dev%20and%20prod/badge.svg)](https://github.com/navikt/bidrag-alerts/workflows/Deploy%20alerts%20to%20dev%20and%20prod/badge.svg)
-
 # bidrag-alerts
 
 Varslinger for team-bidrag apper i bidrag namespace
