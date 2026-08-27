@@ -3,6 +3,8 @@ package no.nav.bidrag.oppgave.consumer.oppgaveapi.model
 data class FinnOppgaverParams(
     /** Statuskategori er en kategorisering av statuser internt i oppgave, dvs at det kan søkes på enten AAPEN eller AVSLUTTET og de relevante oppgave vil returneres uten at konsument trenger å spesifisere alle statuser som representerer åpne oppgaver eller motsatt (avsluttede oppgaver) */
     val statuskategori: String? = null,
+    /** Konkrete statuser det søkes på (query-param `status`). Flere kan angis i samme søk. */
+    val statuser: List<OppgaveDto.Status>? = null,
     /** Filtrering på aktuelle tema (iht felles kodeverk) */
     val tema: List<FellesKodeverkTema>? = null,
     /** Filtrering på aktuelle oppgavetyper (iht felles kodeverk) */
