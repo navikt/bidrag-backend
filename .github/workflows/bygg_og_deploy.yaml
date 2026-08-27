@@ -53,6 +53,15 @@ on:
         type: boolean
         default: false
         description: Om denne kjøringen skal deploye til prod (etter en vellykket bygg+test), samt tagge en utgivelse.
+      skip_tester:
+        required: false
+        type: boolean
+        default: false
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy,
+          f.eks. for å teste en ellers rød branch i q1/q2. Kun tillatt sammen
+          med deploy_q1/deploy_q2 - jobben feiler eksplisitt hvis dette
+          kombineres med deploy_prod.
       maven_options:
         required: false
         type: string
@@ -126,6 +135,18 @@ jobs:
       contents: "read"
       id-token: "write"
     steps:
+      # skip_tester lar en dispatch-kjøring tvinge gjennom en deploy uten at
+      # tester/ktlint kjører. Kun ment for q1/q2. Stopper derfor jobben eksplisitt hvis
+      # den noen gang kombineres med deploy_prod, og varsler tydelig ellers slik at
+      # det er sporbart hvem som brukte den og når.
+      - name: Sperre skip_tester mot prod
+        if: inputs.skip_tester && inputs.deploy_prod
+        run: |
+          echo "::error::skip_tester kan ikke kombineres med deploy_prod - dette er kun for q1/q2."
+          exit 1
+      - name: Varsle at tester/ktlint hoppes over
+        if: inputs.skip_tester
+        run: echo "::warning::Deploy tvinges gjennom av ${{ github.actor }} med tester og ktlint hoppet over (skip_tester=true)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
@@ -181,16 +202,18 @@ jobs:
       # app-pushene vil deretter treffe den nå varme cachen.
       - name: Installer bidrag-felles i lokalt repo (kun ved cache-miss)
         if: steps.felles_cache.outputs.cache-hit != 'true'
-        run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am install
+        run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
       # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
       # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
       # feiler for moduler med interne avhengigheter
       - name: Cache ktlint CLI
+        if: '!inputs.skip_tester'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.local/bin/ktlint
           key: ktlint-cli-${{ inputs.ktlint_version }}
       - name: Verifiser formatering med ktlint
+        if: '!inputs.skip_tester'
         run: |
           if [ ! -x ~/.local/bin/ktlint ]; then
             mkdir -p ~/.local/bin
@@ -202,7 +225,9 @@ jobs:
         # -Dmaven.antrun.skip=true: hopper over ktlint-antrun-executionen som er bundet til
         # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og
         # maven-antrun-plugin brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
-        run: mvn -T 1C ${{ inputs.maven_options }} clean verify -Dmaven.antrun.skip=true
+        # -DskipTests (kun når skip_tester=true): hopper i tillegg over selve testkjøringen,
+        # slik at `package`/`verify` fullfører og Docker-imaget likevel kan bygges.
+        run: mvn -T 1C ${{ inputs.maven_options }} ${{ inputs.skip_tester && '-DskipTests' || '' }} clean verify -Dmaven.antrun.skip=true
       - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
         if: github.actor != 'dependabot[bot]'
         id: docker-push

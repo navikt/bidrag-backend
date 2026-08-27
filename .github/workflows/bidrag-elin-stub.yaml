@@ -8,6 +8,13 @@ on:
         type: choice
         options:
           - q2
+      hopp_over_tester:
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy.
+          Fungerer kun for q1/q2 - ignoreres for prod.
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - '**'
@@ -46,6 +53,7 @@ jobs:
       nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
       nais_variabler_filnavn_q2: bidrag-elin-stub/main.yaml
       deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
+      skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
       maven_options: -B -fae -pl apps/bidrag-elin-stub
       maven_cache_paths: |
         pom.xml

@@ -10,6 +10,13 @@ on:
           - prod
           - q1
           - q2
+      hopp_over_tester:
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy.
+          Fungerer kun for q1/q2 - ignoreres for prod.
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - '**'
@@ -52,6 +59,7 @@ jobs:
       deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
       nais_variabler_filnavn_prod: bidrag-automatisk-jobb/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+      skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
       maven_options: -B -fae -pl apps/bidrag-automatisk-jobb
       maven_cache_paths: |
         pom.xml
