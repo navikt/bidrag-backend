@@ -1,6 +1,7 @@
 package no.nav.bidrag.oppgave.service
 
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
@@ -13,7 +14,13 @@ class OppgaveService(
 ) {
 
     fun hentOppgaverForSak(saksnummer: String): List<OppgaveDto> = oppgaveClient
-        .finnOppgaver(FinnOppgaverParams(saksreferanse = listOf(saksnummer), statuser = statuserViSokerEtter))
+        .finnOppgaver(
+            FinnOppgaverParams(
+                saksreferanse = listOf(saksnummer),
+                tema = listOf(FellesKodeverkTema.BID),
+                statuser = statuserViSokerEtter,
+            ),
+        )
         .oppgaver
         .orEmpty()
         .map { it.tilBidragOppgave() }

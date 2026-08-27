@@ -56,6 +56,7 @@ class OppgaveServiceTest {
         mockServer.expect(requestTo(startsWith("/api/v1/oppgaver?")))
             .andExpect(method(HttpMethod.GET))
             .andExpect(queryParam("saksreferanse", "SAK-123"))
+            .andExpect(queryParam("tema", "BID"))
             .andExpect(queryParam("status", "OPPRETTET", "AAPNET", "UNDER_BEHANDLING", "FERDIGSTILT", "FEILREGISTRERT"))
             .andRespond(
                 withStatus(HttpStatus.OK)
