@@ -513,6 +513,31 @@ class VedtakHendelseListenerTest {
             """.trimIndent(),
         )
         verify(statistikkKafkaEventProducerMock, times(2)).publishBidrag(captor.capture())
+
+        val hendelser = captor.allValues
+        /*        assertThat(hendelser[0].vedtaksid).isEqualTo(4796607)
+                assertThat(hendelser[0].vedtakstidspunkt).isEqualTo("2025-08-27T11:00:00.000001")
+                assertThat(hendelser[0].type).isEqualTo("ENDRING")
+                assertThat(hendelser[0].saksnr).isEqualTo("1210712")
+                assertThat(hendelser[0].skyldner).isEqualTo("12345678901")
+                assertThat(hendelser[0].kravhaver).isEqualTo("23456789012")
+                assertThat(hendelser[0].mottaker).isEqualTo("34567890123")
+                assertThat(hendelser[0].historiskVedtak).isFalse
+                assertThat(hendelser[0].bidragPeriodeListe.size == 1)
+
+                assertThat(hendelser[0].bidragPeriodeListe[0].periodeFra).isEqualTo(LocalDate.of(2025, 7, 1))
+                assertThat(hendelser[0].bidragPeriodeListe[0].periodeTil).isNull()
+                assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(2170))
+                assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(7798.48))
+                assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(7925.31))
+                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3266.75))
+                assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.valueOf(1099))
+                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggSkyldner).isEqualTo(BigDecimal.valueOf(613.58))
+                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggMottaker).isNull()
+                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerBorMedAndreVoksne).isFalse
+                assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
+                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
+                assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))*/
     }
 
     @Test
@@ -1092,8 +1117,8 @@ class VedtakHendelseListenerTest {
 
         val hendelser = captor.allValues
 
-        val barnetilleggBPInntektListe = hendelser[0].skyldnerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
-        val barnetilleggBMInntektListe = hendelser[0].mottakerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+        val barnetilleggskyldnerInntektListe = hendelser[0].skyldnerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+        val barnetilleggmottakerInntektListe = hendelser[0].mottakerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
 
         assertThat(hendelser[0].vedtaksid).isEqualTo(1411)
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
@@ -1115,22 +1140,236 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(320400))
         assertThat(hendelser[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(236000))
 
-        assertThat(barnetilleggBPInntektListe?.size).isEqualTo(2)
-        assertThat(barnetilleggBMInntektListe?.size).isEqualTo(2)
+        assertThat(barnetilleggskyldnerInntektListe?.size).isEqualTo(2)
+        assertThat(barnetilleggmottakerInntektListe?.size).isEqualTo(2)
 
         assertThat(
-            barnetilleggBPInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+            barnetilleggskyldnerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
                 ?.all { it.gjelderKravhaver == "02422177550" },
         ).isTrue
         assertThat(
-            barnetilleggBMInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
+            barnetilleggmottakerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
                 ?.all { it.gjelderKravhaver == "02422177550" },
         ).isTrue
 
-        assertThat(barnetilleggBPInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(14400) }?.inntektstype == Inntektstype.BARNETILLEGG_AAP.name)
-        assertThat(barnetilleggBPInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(600) }?.inntektstype == Inntektstype.BARNETILLEGG_DAGPENGER.name)
+        assertThat(barnetilleggskyldnerInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(14400) }?.inntektstype == Inntektstype.BARNETILLEGG_AAP.name)
+        assertThat(barnetilleggskyldnerInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(600) }?.inntektstype == Inntektstype.BARNETILLEGG_DAGPENGER.name)
 
-        assertThat(barnetilleggBMInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(12000) }?.inntektstype == Inntektstype.BARNETILLEGG_DAGPENGER.name)
-        assertThat(barnetilleggBMInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(24000) }?.inntektstype == Inntektstype.BARNETILLEGG_STOREBRAND.name)
+        assertThat(barnetilleggmottakerInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(12000) }?.inntektstype == Inntektstype.BARNETILLEGG_DAGPENGER.name)
+        assertThat(barnetilleggmottakerInntektListe?.firstOrNull { it.beløp == BigDecimal.valueOf(24000) }?.inntektstype == Inntektstype.BARNETILLEGG_STOREBRAND.name)
+    }
+
+    @Test
+    fun `skal lese vedtakshendelse uten grunnlagsobjekt for BM`() {
+        val captor = argumentCaptor<SærbidragHendelse>()
+        stubHenteVedtak(lesVedtakDtoFraFil("src/test/resources/fil/vedtakUtenGrunnlagsobjektBM.json"))
+        vedtakHendelseListener.lesHendelse(
+            """
+    {
+	"kilde": "MANUELT",
+	"type": "FASTSETTELSE",
+	"id": 1,
+	"opprettetAv": "Z990313",
+	"opprettetAvNavn": "F_Z990313 E_Z990313",
+	"kildeapplikasjon": "bidrag-behandling-q2",
+	"vedtakstidspunkt": "2026-04-30T08:33:02.88514208",
+	"enhetsnummer": "4806",
+	"innkrevingUtsattTilDato": null,
+	"fastsattILand": null,
+	"opprettetTidspunkt": "2026-04-30T08:33:04.68655846",
+	"stønadsendringListe": [],
+	"engangsbeløpListe": [
+		{
+			"type": "SÆRBIDRAG",
+			"sak": "2500050",
+			"skyldner": "1",
+			"kravhaver": "3",
+			"mottaker": "2",
+			"beløp": 7887,
+			"valutakode": "NOK",
+			"resultatkode": "SÆRBIDRAG_INNVILGET",
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"referanse": "behandling_1130_20260430082804_SÆRBIDRAG",
+			"delytelseId": null,
+			"eksternReferanse": null,
+			"betaltBeløp": 9700
+		}
+	],
+	"behandlingsreferanseListe": [
+		{
+			"kilde": "BEHANDLING_ID",
+			"referanse": "1130"
+		},
+		{
+			"kilde": "BISYS_SØKNAD",
+			"referanse": "50010555"
+		}
+	],
+	"sporingsdata": {
+		"correlationId": "690012ce05e24b3f87f55819f11ea5d2-bidrag-behandling-q2",
+		"brukerident": null,
+		"opprettet": "2026-04-30T08:33:05.273650684",
+		"opprettetAv": null
+	}
+}
+            """.trimIndent(),
+        )
+
+        verify(statistikkKafkaEventProducerMock, times(1)).publishSærbidrag((captor.capture()))
+
+        val hendelser = captor.allValues
+
+        assertThat(hendelser[0].vedtaksid).isEqualTo(1)
+        assertThat(hendelser[0].vedtakstidspunkt.truncatedTo(ChronoUnit.MICROS)).isEqualTo("2026-04-30T08:33:02.885142")
+        assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
+        assertThat(hendelser[0].kategori).isEqualTo(Særbidragskategori.OPTIKK)
+        assertThat(hendelser[0].saksnr).isEqualTo("2500050")
+        assertThat(hendelser[0].skyldner).isEqualTo("1")
+        assertThat(hendelser[0].kravhaver).isEqualTo("3")
+        assertThat(hendelser[0].mottaker).isEqualTo("2")
+        assertThat(hendelser[0].beløp).isEqualTo(BigDecimal.valueOf(7887))
+        assertThat(hendelser[0].valutakode).isEqualTo("NOK")
+        assertThat(hendelser[0].resultat).isEqualTo("SÆRBIDRAG_INNVILGET")
+        assertThat(hendelser[0].innkreving).isTrue
+        assertThat(hendelser[0].omgjørVedtakId).isNull()
+        assertThat(hendelser[0].kravbeløp).isEqualTo(BigDecimal.valueOf(18000))
+        assertThat(hendelser[0].godkjentBeløp).isEqualTo(BigDecimal.valueOf(14000))
+        assertThat(hendelser[0].betaltBeløp).isEqualTo(BigDecimal.valueOf(9700))
+        assertThat(hendelser[0].historiskVedtak).isFalse
+        assertThat(hendelser[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(400000))
+        assertThat(hendelser[0].mottakerInntektListe.isNullOrEmpty())
+        assertThat(hendelser[0].kravhaverInntektListe.isNullOrEmpty())
+    }
+
+    @Test
+    fun `skal lese vedtakshendelse med inntekt for flere søknadsbarn`() {
+        val captor = argumentCaptor<BidragHendelse>()
+        stubHenteVedtak(lesVedtakDtoFraFil("src/test/resources/fil/vedtakMedInntektFlereSøknadsbarn.json"))
+        vedtakHendelseListener.lesHendelse(
+            """
+{
+	"kilde": "MANUELT",
+	"type": "ENDRING",
+	"id": 1447,
+	"opprettetAv": "Z990313",
+	"opprettetAvNavn": "F_Z990313 E_Z990313",
+	"kildeapplikasjon": "bidrag-behandling-q2",
+	"vedtakstidspunkt": "2026-08-25T14:25:37.945130823",
+	"enhetsnummer": "4806",
+	"innkrevingUtsattTilDato": "2026-08-28",
+	"fastsattILand": null,
+	"opprettetTidspunkt": "2026-08-25T14:25:38.189819882",
+	"stønadsendringListe": [
+		{
+			"type": "BIDRAG",
+			"sak": "2600125",
+			"skyldner": "1",
+			"kravhaver": "4",
+			"mottaker": "2",
+			"førsteIndeksreguleringsår": 2027,
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"eksternReferanse": null,
+			"periodeListe": [
+				{
+					"periode": {
+						"fom": "2026-08",
+						"til": null
+					},
+					"beløp": 1350,
+					"valutakode": "NOK",
+					"resultatkode": "BEREGNET_BIDRAG",
+					"delytelseId": null
+				}
+			]
+		},
+		{
+			"type": "BIDRAG",
+			"sak": "2600125",
+			"skyldner": "1",
+			"kravhaver": "3",
+			"mottaker": "2",
+			"førsteIndeksreguleringsår": 2027,
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"eksternReferanse": null,
+			"periodeListe": [
+				{
+					"periode": {
+						"fom": "2026-08",
+						"til": null
+					},
+					"beløp": 1350,
+					"valutakode": "NOK",
+					"resultatkode": "BEREGNET_BIDRAG",
+					"delytelseId": null
+				}
+			]
+		}
+	],
+	"engangsbeløpListe": [
+		{
+			"type": "GEBYR_SKYLDNER",
+			"sak": "2600125",
+			"skyldner": "1",
+			"kravhaver": "NAV",
+			"mottaker": "NAV",
+			"beløp": null,
+			"valutakode": null,
+			"resultatkode": "GEBYR_FRITATT",
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"referanse": "Bisys_gebyr_BP_c6559d27-9123-40e9-b56a-3e6d82769cea",
+			"delytelseId": null,
+			"eksternReferanse": null,
+			"betaltBeløp": null
+		},
+		{
+			"type": "GEBYR_MOTTAKER",
+			"sak": "2600125",
+			"skyldner": "2",
+			"kravhaver": "NAV",
+			"mottaker": "NAV",
+			"beløp": null,
+			"valutakode": null,
+			"resultatkode": "GEBYR_FRITATT",
+			"innkreving": "MED_INNKREVING",
+			"beslutning": "ENDRING",
+			"omgjørVedtakId": null,
+			"referanse": "Bisys_gebyr_BM_c294b22a-7177-4c21-98f2-e7b826c5f3ee",
+			"delytelseId": null,
+			"eksternReferanse": null,
+			"betaltBeløp": null
+		}
+	],
+	"behandlingsreferanseListe": [
+		{
+			"kilde": "BEHANDLING_ID",
+			"referanse": "1971"
+		},
+		{
+			"kilde": "BISYS_SØKNAD",
+			"referanse": "50014413"
+		}
+	],
+	"sporingsdata": {
+		"correlationId": "c134742e089e40439227674666aed644-bidrag-behandling-q2",
+		"brukerident": null,
+		"opprettet": "2026-08-25T14:25:38.794429033",
+		"opprettetAv": null
+	}
+}
+            """.trimIndent(),
+        )
+
+        verify(statistikkKafkaEventProducerMock, times(2)).publishBidrag(captor.capture())
+        val hendelser = captor.allValues
+        assertThat(hendelser[0].bidragPeriodeListe[0].kravhaverInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(60000))
+        assertThat(hendelser[1].bidragPeriodeListe[0].kravhaverInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(50000))
     }
 }

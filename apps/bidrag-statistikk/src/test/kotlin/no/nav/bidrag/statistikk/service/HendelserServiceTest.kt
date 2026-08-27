@@ -68,12 +68,7 @@ class HendelserServiceTest {
                                 type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
                             ),
                         ),
-                        kravhaverInntektListe = listOf(
-                            Inntekt(
-                                beløp = BigDecimal.valueOf(10000),
-                                type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
-                            ),
-                        ),
+                        kravhaverInntektListe = emptyList(),
                     ),
                 ),
             ),
@@ -126,12 +121,7 @@ class HendelserServiceTest {
                                 type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
                             ),
                         ),
-                        kravhaverInntektListe = listOf(
-                            Inntekt(
-                                beløp = BigDecimal.valueOf(10000),
-                                type = Inntektsrapportering.AINNTEKT_BEREGNET_12MND.name,
-                            ),
-                        ),
+                        kravhaverInntektListe = emptyList(),
                     ),
                 ),
             ),
