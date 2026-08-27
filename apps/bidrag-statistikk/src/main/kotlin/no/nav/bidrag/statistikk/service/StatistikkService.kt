@@ -90,13 +90,11 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
         if (forskuddsvedtak && vedtakHendelse.id <= 5367078) {
             LOGGER.info("Forskuddsvedtak med vedtaksid ${vedtakHendelse.id} lavere eller lik enn 5367078 er allerede behandlet")
-            SECURE_LOGGER.debug("Forskuddsvedtak med vedtaksid ${vedtakHendelse.id} lavere enn 5150003 er allerede behandlet")
             return
         }
 
         if (bidragsvedtak && vedtakHendelse.id <= 5367078) {
             LOGGER.info("Bidragsvedtak med vedtaksid ${vedtakHendelse.id} lavere eller lik enn 5367078 er allerede behandlet")
-            SECURE_LOGGER.debug("Bidragsvedtak med vedtaksid ${vedtakHendelse.id} lavere enn 5150003 er allerede behandlet")
             return
         }
 
