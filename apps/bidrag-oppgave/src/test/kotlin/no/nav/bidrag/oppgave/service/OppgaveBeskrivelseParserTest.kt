@@ -14,9 +14,9 @@ class OppgaveBeskrivelseParserTest {
         Linje 2 av kommentaren
         · Frist endret fra 01.01.2017 til 01.05.2017
 
-        --- 31.12.2016 23:59 Saksbehandler, Per (S161234, 4802) ---
+        --- 31.12.2016 23:59 Saksbehandler, Per (Z987654, 4802) ---
         · Frist endret fra 01.05.2017 til 01.05.2019
-        --- 02.01.2016 15:00 Saksbehandler, Per (S161234, 4802) ---
+        --- 02.01.2016 15:00 Saksbehandler, Per (Z987654, 4802) ---
         Hurra! Ferdig!
         """.trimIndent()
 
@@ -36,7 +36,7 @@ class OppgaveBeskrivelseParserTest {
         val saksbehandler = innslag[1]
         assertThat(saksbehandler.tidspunkt).isEqualTo(LocalDateTime.of(2016, 12, 31, 23, 59))
         assertThat(saksbehandler.saksbehandlerNavn).isEqualTo("Saksbehandler, Per")
-        assertThat(saksbehandler.saksbehandlerId).isEqualTo("S161234")
+        assertThat(saksbehandler.saksbehandlerId).isEqualTo("Z987654")
         assertThat(saksbehandler.enhetsnr).isEqualTo("4802")
         assertThat(saksbehandler.kommentar).isNull()
         assertThat(saksbehandler.endringer).containsExactly("Frist endret fra 01.05.2017 til 01.05.2019")
@@ -58,11 +58,11 @@ class OppgaveBeskrivelseParserTest {
     @Test
     fun `header med enhetsnavn i tillegg til enhetsnr gir kun enhetsnr`() {
         val innslag = OppgaveBeskrivelseParser.parse(
-            "--- 31.12.2016 23:59 Gjøresak, Iver (G161234, 4802 NAV Familie og pensjonsytelser) ---",
+            "--- 31.12.2016 23:59 Gjøresak, Iver (Z987654, 4802 NAV Familie og pensjonsytelser) ---",
         )!!
 
         assertThat(innslag.single().enhetsnr).isEqualTo("4802")
-        assertThat(innslag.single().saksbehandlerId).isEqualTo("G161234")
+        assertThat(innslag.single().saksbehandlerId).isEqualTo("Z987654")
     }
 
     @Test

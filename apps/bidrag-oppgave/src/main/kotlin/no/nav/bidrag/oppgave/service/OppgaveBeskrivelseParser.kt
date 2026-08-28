@@ -15,9 +15,10 @@ import java.time.format.ResolverStyle
  * (`OppgaveBeskrivelseFormatterImpl` i bidrag-bisys):
  *
  * ```
- * --- 31.12.2016 23:59 Gjøresak, Iver (G161234, 4802) ---
+ * --- 31.12.2016 23:59 Saksbehandler, Sarah (Z012345, 4802) ---
  * En kommentar som kan gå over flere linjer
  * · Frist endret fra 14.01.2017 til 31.12.2016
+ *
  * --- 28.12.2016 20:17 Automatisk jobb ---
  * Mottatt melding om utflytting for BM i sak.
  * ```
