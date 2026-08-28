@@ -15,6 +15,21 @@
     <artifactId>bidrag-regnskap</artifactId>
     <name>bidrag-regnskap</name>
 
+    <properties>
+        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
+        <slack-api.version>1.49.0</slack-api.version>
+        <shedlock.version>7.7.0</shedlock.version>
+        <jsch.version>2.28.6</jsch.version>
+        <google-cloud-storage.version>2.71.0</google-cloud-storage.version>
+        <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
+        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <logback-encoder.version>9.0</logback-encoder.version>
+        <okhttp.version>5.4.0</okhttp.version>
+        <mockk.version>1.14.11</mockk.version>
+        <kotest.version>6.2.3</kotest.version>
+    </properties>
+
     <dependencies>
 
         <!-- Spring -->

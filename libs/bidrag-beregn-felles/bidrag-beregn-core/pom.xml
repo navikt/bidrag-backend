@@ -30,6 +30,11 @@
     </developer>
   </developers>
 
+  <properties>
+    <mockk.version>1.14.11</mockk.version>
+    <kotest.version>6.2.3</kotest.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
@@ -75,6 +80,7 @@
     <dependency>
       <groupId>io.mockk</groupId>
       <artifactId>mockk-jvm</artifactId>
+      <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

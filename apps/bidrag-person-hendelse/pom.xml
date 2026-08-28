@@ -15,6 +15,18 @@
     <name>bidrag-person-hendelse</name>
     <description>Mottaksapplikasjon for personhendelser. Lytter på hendelser fra PDL og distribuerer disse videre til Bisys via MQ.</description>
 
+    <properties>
+        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <shedlock.version>7.7.0</shedlock.version>
+        <logback-encoder.version>9.0</logback-encoder.version>
+        <unleash-client-java.version>12.2.2</unleash-client-java.version>
+        <ibm-mq-jakarta-client.version>9.4.5.1</ibm-mq-jakarta-client.version>
+        <apache-avro.version>1.12.1</apache-avro.version>
+        <confluent.version>8.0.0</confluent.version>
+        <mockk.version>1.14.11</mockk.version>
+        <kotest.version>6.2.3</kotest.version>
+    </properties>
+
     <dependencies>
         <!-- Spring Boot -->
         <dependency>

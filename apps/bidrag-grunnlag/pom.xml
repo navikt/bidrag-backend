@@ -15,6 +15,20 @@
   <name>bidrag-grunnlag</name>
   <description>Behandling av grunnlag i Bidrag</description>
 
+  <properties>
+    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>
+    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <okhttp.version>5.4.0</okhttp.version>
+    <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
+    <circuitbreaker.version>5.0.2</circuitbreaker.version>
+    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <mockk.version>1.14.11</mockk.version>
+    <mockito-kotlin.version>6.3.0</mockito-kotlin.version>
+    <kotest.version>6.2.3</kotest.version>
+    <swagger-annotations.version>2.2.51</swagger-annotations.version>
+  </properties>
+
   <dependencies>
     <!-- spring -->
     <dependency>

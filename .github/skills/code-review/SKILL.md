@@ -46,37 +46,43 @@ det er lett å innføre unødvendig duplisering i et Maven-monorepo med mange mo
 
 ### Hovedregel
 
-**Versjoner skal arves fra root-`pom.xml`.** Ikke legg til en `<properties>`-oppføring
-eller en versjon på en `<dependency>` i en app-pom hvis versjonen allerede finnes i
-root-pom sin `<properties>` eller `<dependencyManagement>`.
+**Versjoner skal eies av den enkelte app-/lib-pom, ikke av root-`pom.xml`.** Root-pomen
+skal kun beholde de få property-ene den trenger for sin egen build (`java.version`,
+`kotlin.version`, `ktlint.version`, `versions-maven-plugin.version`). All annen
+avhengighetsversjonering (Nav-moduler, tredjeparts-biblioteker, test-rammeverk osv.)
+skal defineres direkte i hver app-/lib-pom som faktisk bruker avhengigheten – selv om
+flere apper bruker samme versjon (dupliser da property-en i hver av dem).
 
-Sjekk alltid root `pom.xml` sine kommenterte grupper (`<!-- Nav moduler -->`,
-`<!-- Andre avhengigheter -->` osv.) før du legger til en ny versjon lokalt – den
-finnes ofte der allerede under et annet property-navn enn du forventer (se eksempel
-under).
+Dette er en bevisst reversering av den tidligere «arv fra root»-regelen. Bakgrunnen er
+at root-`pom.xml` er en aggregator med `<modules>` for samtlige ~43 undermoduler: en
+versjonsendring i en property i root sin `<properties>`-seksjon trigget tidligere
+rebuild av *alle* apper i CI, selv om kanskje bare halvparten faktisk brukte den
+endrede avhengigheten. Ved å flytte versjonene ut til hver enkelt app-/lib-pom påvirker
+en versjonsendring kun de appene som faktisk endres (og som CI sin `detect_changes`
+dermed korrekt oppdager som endret).
 
-### Når egne properties/versjoner er greit
-
-En app-pom (eller en mellomliggende pom, som `bidrag-dokumenthåndtering/pom.xml` for
-dokument-appene) kan ha egne `<properties>` **kun** for avhengigheter som faktisk ikke
-finnes i root-pom, f.eks. et bibliotek som bare én app bruker
-(`graphq-dgs-client.version`, `joark-hendelse.version` i `bidrag-dokument-arkiv`).
-
-Når dette gjøres:
-
-- Alle egne versjonerte properties skal ligge samlet **øverst** i `<properties>`-blokken
-  i pom.xml-en, ikke spredt utover fila – dette gjør det raskt å se i en review nøyaktig
-  hvilke versjoner appen selv eier ansvaret for.
-- Hver egen property bør faktisk brukes et sted (sjekk med `grep` i `src/` og pom.xml
-  selv). Fjern properties som ikke lenger refereres til noe sted.
+- Ikke legg til en ny avhengighetsversjon i root-pom sin `<properties>` – den hører
+  hjemme i app-/lib-pomen som bruker den.
+- Alle versjonerte properties i en app-/lib-pom skal ligge samlet **øverst** i
+  `<properties>`-blokken, ikke spredt utover fila – dette gjør det raskt å se i en
+  review nøyaktig hvilke versjoner appen selv eier ansvaret for.
+- Hvis flere apper trenger samme versjon av en avhengighet, dupliser property-en i hver
+  av dem med samme verdi – ikke løft den opp i en delt/mellomliggende pom for å "spare"
+  linjer. Unntaket er properties/plugins root-pomen selv trenger for sin egen build.
+- Hver property bør faktisk brukes et sted (sjekk med `grep` i `src/` og pom.xml selv).
+  Fjern properties som ikke lenger refereres til noe sted (både i root og i app-/
+  lib-pomer).
 
 ### Unntak: overstyring av transitive avhengigheter
 
 Noen ganger er det nødvendig å tvinge en spesifikk versjon av en **transitiv**
 avhengighet via `<dependencyManagement>` – typisk for å lukke et sikkerhetshull i en
 avhengighet du ikke kontrollerer direkte, eller for å unngå en kjent
-inkompatibilitet mellom to biblioteker. Dette er et dokumentert, akseptert unntaksmønster
-– se Nav sin egen veiledning på
+inkompatibilitet mellom to biblioteker (f.eks. at et testbibliotek som `springmockk`
+transitivt drar inn en eldre versjon av `mockk-dsl-jvm` enn den appen ellers bruker
+direkte – se `mockk.version`-overstyringen i f.eks. `bidrag-behandling/pom.xml` og
+`bidrag-aktoerregister/pom.xml` for et konkret eksempel). Dette er et dokumentert,
+akseptert unntaksmønster – se Nav sin egen veiledning på
 [sikkerhet.nav.no/docs/sikker-utvikling/tredjepartskode](https://sikkerhet.nav.no/docs/sikker-utvikling/tredjepartskode),
 som viser nøyaktig dette mønsteret for Maven:
 
@@ -92,6 +98,12 @@ som viser nøyaktig dette mønsteret for Maven:
 </dependencyManagement>
 ```
 
+Siden versjonering nå eies av den enkelte app-/lib-pom (se hovedregelen over), skal en
+slik `<dependencyManagement>`-overstyring **også** ligge i app-/lib-pomen som faktisk
+trenger den – ikke løftes til root – selv om det betyr at flere apper ender opp med en
+identisk overstyringsblokk. Legg den rett under `<properties>` og bruk appens egen
+lokale versjons-property i `${...}`-referansen.
+
 Krav når dette unntaket brukes:
 
 - **Begrunn overstyringen med en kommentar** i pom.xml (CVE-nummer, kompatibilitetsgrunn,
@@ -99,7 +111,12 @@ Krav når dette unntaket brukes:
 - **Verifiser at overstyringen faktisk gjør noe.** Kjør
   `mvn dependency:tree -Dincludes=<groupId>:<artifactId>` og bekreft at versjonen som
   faktisk brukes endres av overstyringen din. En overstyring som ikke endrer noe reelt
-  (fordi transitivt treff allerede gir samme versjon) er bare støy og skal fjernes.
+  (fordi transitivt treff allerede gir samme versjon) er bare støy og skal fjernes. Merk
+  at dette må sjekkes **per app** – samme avhengighet kan trenge overstyring i én app
+  (fordi den mangler en konkurrerende direkte avhengighet på samme artefakt) og være
+  unødvendig i en annen (fordi appen allerede har en direkte avhengighet som vinner via
+  Mavens nearest-wins-mediering). Ikke kopier en overstyring blindt til alle apper som
+  bruker den samme avhengigheten – test og legg den kun til der den faktisk endrer noe.
 - **Kjør alltid full test-suite (`mvn clean test`, gjerne `mvn verify`) etter enhver
   avhengighetsendring** – både etter at en overstyring legges til, og etter at en fjernes.
   `dependency:tree`-analyse alene er **ikke tilstrekkelig**: en importert BOM (f.eks.
@@ -115,10 +132,13 @@ Krav når dette unntaket brukes:
 
 ### Sjekkliste for pom.xml i review
 
-- [ ] Ingen versjon som allerede finnes i root-pom er duplisert lokalt.
-- [ ] Alle egne versjonerte properties ligger samlet øverst i `<properties>`.
-- [ ] Alle egne properties er faktisk i bruk (ingen død kode/versjon).
-- [ ] Eventuelle `dependencyManagement`-overstyringer har en forklarende kommentar.
+- [ ] Ingen ny avhengighetsversjon er lagt til i root-pom sin `<properties>` – den skal
+      ligge i app-/lib-pomen som bruker den, selv om flere apper trenger samme verdi.
+- [ ] Alle versjonerte properties i app-/lib-pomen ligger samlet øverst i `<properties>`.
+- [ ] Alle properties er faktisk i bruk (ingen død kode/versjon), både lokalt og i root.
+- [ ] Eventuelle `dependencyManagement`-overstyringer ligger i app-/lib-pomen som trenger
+      dem (ikke i root), har en forklarende kommentar, og er verifisert med
+      `dependency:tree` for **den spesifikke appen** – ikke antatt nødvendig andre steder.
 - [ ] `mvn clean test` (eller `verify`) er kjørt og er grønn etter endringen – ikke bare
       `dependency:tree`.
 
@@ -249,8 +269,8 @@ Sikkerhetskrav til selve workflow-filene (jf.
 ## 6. Sjekkliste – kort oppsummering
 
 - [ ] Kodestack er Kotlin/Spring Boot/PostgreSQL, eller avvik er eksplisitt begrunnet.
-- [ ] Ingen dupliserte versjoner i pom.xml – arves fra root der det er mulig.
-- [ ] Egne versjonerte properties ligger samlet øverst og er alle i faktisk bruk.
+- [ ] Ingen ny avhengighetsversjon lagt til i root-pom – hører hjemme i app-/lib-pomen.
+- [ ] Versjonerte properties i app-/lib-pomen ligger samlet øverst og er alle i faktisk bruk.
 - [ ] Overstyringer av transitive avhengigheter har forklarende kommentar og er
       verifisert med `dependency:tree` **og** full testkjøring.
 - [ ] Ingen hemmeligheter i kode/config.
