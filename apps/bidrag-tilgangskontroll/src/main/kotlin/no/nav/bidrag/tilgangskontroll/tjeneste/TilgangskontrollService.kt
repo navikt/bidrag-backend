@@ -13,7 +13,6 @@ import no.nav.bidrag.tilgangskontroll.konsumer.TilgangsmaskinConsumer
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Søknadsgruppe
 import no.nav.bidrag.tilgangskontroll.model.kodeverk.Informasjonstilgang
-import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinBulkResponse
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.tilgang.Brukertilganger
 import no.nav.bidrag.transport.tilgang.OpprinnelseTilgangsbeslutning
@@ -243,40 +242,37 @@ class TilgangskontrollService(
         }
 
         val tilgangsmaskinResponse = tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(filtrerteRoller)
-        tilgangsmaskinResponse.resultater.forEach { resultat ->
+        val avslag = mutableListOf<String>()
+        val begrunnelser = mutableListOf<String>()
 
-            if (resultat.status == 403) {
-                secureLogger.info {
-                    "${resultat.detaljer?.navIdent} har ikke tilgang. Begrunnelse: ${resultat.detaljer?.begrunnelse}"
+        tilgangsmaskinResponse.resultater.forEach { resultat ->
+            when (resultat.status) {
+                403 -> {
+                    val begrunnelse = resultat.detaljer?.begrunnelse ?: "Du har ikke tilgang til bruker.."
+                    secureLogger.info {
+                        "${resultat.detaljer?.navIdent} har ikke tilgang. Begrunnelse: $begrunnelse"
+                    }
+                    avslag += "${resultat.detaljer?.navIdent ?: resultat.brukerId ?: "ukjent bruker"}: $begrunnelse"
                 }
-                return TilgangskontrollResponseDetaljer(
-                    false,
-                    resultat.detaljer?.begrunnelse ?: "Du har ikke tilgang til bruker..",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-                )
-            }
-            if (resultat.status == 404) {
-                secureLogger.info { "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen, tilgang antas som å være gyldig" }
-                return TilgangskontrollResponseDetaljer(
-                    true,
-                    "Person ikke funnet i tilgangsmaskinen.",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-                )
-            } else {
-                secureLogger.debug {
-                    "Tilgangsmaskin har svar med status: ${resultat.status} for navident: ${resultat.detaljer?.navIdent}. Begrunnelse: ${resultat.detaljer?.begrunnelse}"
+                404 -> {
+                    secureLogger.info { "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen, tilgang antas som å være gyldig" }
+                    begrunnelser += "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen."
                 }
-                return TilgangskontrollResponseDetaljer(
-                    true,
-                    resultat.detaljer?.begrunnelse
-                        ?: "Mangler begrunnelse fra tilgangsmaskin. Status: ${resultat.status}",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-                )
             }
         }
+
+        if (avslag.isNotEmpty()) {
+            return TilgangskontrollResponseDetaljer(
+                harTilgang = false,
+                begrunnelse = avslag.joinToString(separator = " | "),
+                opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+            )
+        }
+
         return TilgangskontrollResponseDetaljer(
             harTilgang = true,
-            begrunnelse = "Bruker har tilgang til etterspurte roller.",
+            begrunnelse = begrunnelser.takeIf { it.isNotEmpty() }?.joinToString(separator = " | ")
+                ?: "Bruker har tilgang til etterspurte roller.",
             opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
         )
     }
@@ -431,9 +427,5 @@ class TilgangskontrollService(
                 ?.map { it.navn!! }
                 ?: emptyList()
         return brukerAdgrupper
-    }
-
-    fun evaluerKomplettRegelsettForFlereBrukere(identer: List<String>): TilgangsmaskinBulkResponse {
-        return tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(identer)
     }
 }

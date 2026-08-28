@@ -1,6 +1,7 @@
 package no.nav.bidrag.tilgangskontroll.tjeneste
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -25,6 +26,7 @@ import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinBulkRes
 import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinResultat
 import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinResultatDetaljer
 import no.nav.bidrag.transport.sak.BidragssakPipDto
+import no.nav.bidrag.transport.tilgang.OpprinnelseTilgangsbeslutning
 import org.junit.experimental.runners.Enclosed
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -244,6 +246,98 @@ class TilgangskontrollServiceTest {
             val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1"))
 
             resultat.harTilgang shouldBe false
+        }
+
+        private fun mockResultat(
+            status: Int,
+            navIdent: String? = null,
+            begrunnelse: String? = null,
+        ): TilgangsmaskinResultat {
+            val tmDetaljer = mockk<TilgangsmaskinResultatDetaljer>()
+            every { tmDetaljer.begrunnelse } returns begrunnelse
+            every { tmDetaljer.navIdent } returns navIdent
+            val tmResultat = mockk<TilgangsmaskinResultat>()
+            every { tmResultat.status } returns status
+            every { tmResultat.detaljer } returns tmDetaljer
+            every { tmResultat.brukerId } returns navIdent
+            return tmResultat
+        }
+
+        @Test
+        fun `skal nekte tilgang når en av flere personer får 403 selv om første person har tilgang`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val harTilgangResultat = mockResultat(status = 200, navIdent = "Z111111", begrunnelse = "Har tilgang")
+            val ikkeTilgangResultat = mockResultat(status = 403, navIdent = "Z222222", begrunnelse = "Avslag")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(harTilgangResultat, ikkeTilgangResultat)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe false
+        }
+
+        @Test
+        fun `skal nekte tilgang når en av flere personer får 403 selv om første person ikke ble funnet`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val ikkeFunnetResultat = mockResultat(status = 404, navIdent = "Z111111")
+            val ikkeTilgangResultat = mockResultat(status = 403, navIdent = "Z222222", begrunnelse = "Avslag")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(ikkeFunnetResultat, ikkeTilgangResultat)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe false
+        }
+
+        @Test
+        fun `skal aggregere begrunnelse fra alle avslag når flere personer mangler tilgang`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val avslag1 = mockResultat(status = 403, navIdent = "Z111111", begrunnelse = "Avslag person 1")
+            val avslag2 = mockResultat(status = 403, navIdent = "Z222222", begrunnelse = "Avslag person 2")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(avslag1, avslag2)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe false
+            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
+            begrunnelse shouldContain "Z111111"
+            begrunnelse shouldContain "Avslag person 1"
+            begrunnelse shouldContain "Z222222"
+            begrunnelse shouldContain "Avslag person 2"
+        }
+
+        @Test
+        fun `skal gi tilgang når alle personer i listen har tilgang`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val ok1 = mockResultat(status = 200, navIdent = "Z111111", begrunnelse = "Har tilgang")
+            val ikkeFunnet = mockResultat(status = 404, navIdent = "Z222222")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(ok1, ikkeFunnet)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe true
         }
     }
 
