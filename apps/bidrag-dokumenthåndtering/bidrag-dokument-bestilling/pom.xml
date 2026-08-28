@@ -21,6 +21,7 @@
     <google-cloud-libraries-bom.version>26.72.0</google-cloud-libraries-bom.version>
     <artemis.version>2.53.0</artemis.version>
     <mq-jms-spring-boot-starter.version>3.5.7</mq-jms-spring-boot-starter.version>
+    <bouncycastle.version>1.85</bouncycastle.version>
   </properties>
 
   <dependencyManagement>
@@ -31,6 +32,23 @@
         <version>${google-cloud-libraries-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <!-- Overstyrer transitiv versjon fra com.ibm.mq.jakarta.client for å fikse CVE-2025-14813
+           (GOST CTR keystream-gjenbruk i bcprov-jdk18on < 1.84) -->
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk18on</artifactId>
+        <version>${bouncycastle.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk18on</artifactId>
+        <version>${bouncycastle.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcutil-jdk18on</artifactId>
+        <version>${bouncycastle.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
