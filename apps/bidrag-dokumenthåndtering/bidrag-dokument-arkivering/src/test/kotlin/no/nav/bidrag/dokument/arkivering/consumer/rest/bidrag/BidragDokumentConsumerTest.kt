@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.function.Executable
 import org.mockito.Mock
@@ -71,5 +72,17 @@ class BidragDokumentConsumerTest {
                 )
             },
         )
+    }
+
+    @Test
+    @DisplayName("Skal kaste feil ved ugyldig journalpostid ved henting av dokument")
+    fun skalKasteFeilVedUgyldigJournalpostidVedHentingAvDokument() {
+        val invalidJournalpostId = "http://evil.test"
+
+        assertThrows<IllegalArgumentException> {
+            bidragDokumentConsumer!!.hentDokument(invalidJournalpostId)
+        }
+
+        Mockito.verifyNoInteractions(restTemplateMock)
     }
 }
