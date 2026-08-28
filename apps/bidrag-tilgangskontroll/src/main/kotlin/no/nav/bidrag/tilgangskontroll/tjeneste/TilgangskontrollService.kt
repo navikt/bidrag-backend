@@ -242,8 +242,9 @@ class TilgangskontrollService(
         }
 
         val tilgangsmaskinResponse = tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(filtrerteRoller)
-        val avslag = mutableListOf<String>()
-        val begrunnelser = mutableListOf<String>()
+        // LinkedHashSet bevarer rekkefølgen samtidig som identiske avviksmeldinger slås sammen til én
+        val avslag = linkedSetOf<String>()
+        val begrunnelser = linkedSetOf<String>()
 
         tilgangsmaskinResponse.resultater.forEach { resultat ->
             when (resultat.status) {

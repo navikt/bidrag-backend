@@ -1,5 +1,6 @@
 package no.nav.bidrag.tilgangskontroll.tjeneste
 
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.clearAllMocks
@@ -336,6 +337,46 @@ class TilgangskontrollServiceTest {
             val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
 
             resultat.harTilgang shouldBe true
+        }
+
+        @Test
+        fun `skal ikke duplisere identisk avslagsbegrunnelse fra flere personer`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val avslag1 = mockResultat(status = 403, navIdent = "Z111111", begrunnelse = "Mangler rolle")
+            val avslag2 = mockResultat(status = 403, navIdent = "Z222222", begrunnelse = "Mangler rolle")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(avslag1, avslag2)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe false
+            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
+            begrunnelse.split(" | ").filter { it == "Mangler rolle" } shouldHaveSize 1
+        }
+
+        @Test
+        fun `skal ikke duplisere identisk melding når flere personer ikke finnes i tilgangsmaskinen`() {
+            every { TokenUtils.erApplikasjonsbruker() } returns false
+            every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
+
+            val ikkeFunnet1 = mockResultat(status = 404, navIdent = "SAMME_ID")
+            val ikkeFunnet2 = mockResultat(status = 404, navIdent = "SAMME_ID")
+
+            val tmResponse = mockk<TilgangsmaskinBulkResponse>()
+            every { tmResponse.resultater } returns listOf(ikkeFunnet1, ikkeFunnet2)
+
+            every { tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(listOf("rolle1", "rolle2")) } returns tmResponse
+
+            val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
+
+            resultat.harTilgang shouldBe true
+            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
+            begrunnelse.split(" | ") shouldHaveSize 1
         }
     }
 
