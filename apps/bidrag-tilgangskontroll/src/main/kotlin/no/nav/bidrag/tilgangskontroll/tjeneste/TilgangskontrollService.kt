@@ -13,6 +13,7 @@ import no.nav.bidrag.tilgangskontroll.konsumer.TilgangsmaskinConsumer
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Søknadsgruppe
 import no.nav.bidrag.tilgangskontroll.model.kodeverk.Informasjonstilgang
+import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinBulkResponse
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.tilgang.Brukertilganger
 import no.nav.bidrag.transport.tilgang.OpprinnelseTilgangsbeslutning
@@ -430,5 +431,9 @@ class TilgangskontrollService(
                 ?.map { it.navn!! }
                 ?: emptyList()
         return brukerAdgrupper
+    }
+
+    fun evaluerKomplettRegelsettForFlereBrukere(identer: List<String>): TilgangsmaskinBulkResponse {
+        return tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(identer)
     }
 }

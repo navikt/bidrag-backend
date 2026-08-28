@@ -15,6 +15,7 @@ import no.nav.bidrag.tilgangskontroll.model.graph.BrukerEnheterRespons
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerinformasjonResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Søknadsgruppe
+import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinBulkResponse
 import no.nav.bidrag.tilgangskontroll.tjeneste.CacheService
 import no.nav.bidrag.tilgangskontroll.tjeneste.TilgangskontrollService
 import no.nav.bidrag.transport.tilgang.Brukertilganger
@@ -318,4 +319,9 @@ class TilgangControllerV2(
         ],
     )
     fun hentBrukertilganger(): Brukertilganger = tilgangskontrollService.hentBrukertilganger()
+
+    @PostMapping("/tilgangsmaskin/komplett/bulk")
+    fun sjekkTilgangsmaskinresultat(identer: List<String>): TilgangsmaskinBulkResponse {
+        return tilgangskontrollService.evaluerKomplettRegelsettForFlereBrukere(identer)
+    }
 }
