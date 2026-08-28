@@ -12,7 +12,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - '.nais/bidrag-kafka-manager/**.yaml'
       - 'apps/bidrag-kafka-manager/**'
