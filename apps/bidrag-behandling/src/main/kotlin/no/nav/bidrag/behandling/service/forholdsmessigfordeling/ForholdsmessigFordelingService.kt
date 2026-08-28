@@ -441,12 +441,15 @@ class ForholdsmessigFordelingService(
     ) {
         val alleSaker = alleSøknaderRelevantForBehandling.map { it.saksnummer }.distinct()
         val alleSakerDetaljer = mutableListOf<BidragssakDto>()
+        var sakerDetaljerHentet = false
         behandling.roller.filter { it.forholdsmessigFordeling == null }.forEach { rolle ->
-            if (alleSakerDetaljer.isEmpty()) {
+            val ident = rolle.ident ?: return@forEach
+            if (!sakerDetaljerHentet) {
                 // Ikke hent sak hvis ikke nødvendig for å unngå unødvendig nettverkskall
+                sakerDetaljerHentet = true
                 alleSakerDetaljer.addAll(alleSaker.mapNotNull { hentSak(it) })
             }
-            val sakRolle = alleSakerDetaljer.find { it.roller.any { it.fødselsnummer?.verdi == rolle.ident } } ?: return@forEach
+            val sakRolle = alleSakerDetaljer.find { sak -> sak.roller.any { it.fødselsnummer?.verdi == ident } } ?: return@forEach
             val sakBm = sakRolle.roller.find { it.type == Rolletype.BIDRAGSMOTTAKER }
             rolle.forholdsmessigFordeling = ForholdsmessigFordelingRolle(
                 delAvOpprinneligBehandling = true,
