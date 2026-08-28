@@ -316,9 +316,7 @@ class TilgangskontrollServiceTest {
 
             resultat.harTilgang shouldBe false
             val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
-            begrunnelse shouldContain "Z111111"
             begrunnelse shouldContain "Avslag person 1"
-            begrunnelse shouldContain "Z222222"
             begrunnelse shouldContain "Avslag person 2"
         }
 

@@ -252,7 +252,7 @@ class TilgangskontrollService(
                     secureLogger.info {
                         "${resultat.detaljer?.navIdent} har ikke tilgang. Begrunnelse: $begrunnelse"
                     }
-                    avslag += "${resultat.detaljer?.navIdent ?: resultat.brukerId ?: "ukjent bruker"}: $begrunnelse"
+                    avslag += begrunnelse
                 }
 
                 404 -> {
