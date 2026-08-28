@@ -1,0 +1,130 @@
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+
+logging.level.secureLogger: DEBUG
+logging.level.no.nav.bidrag: DEBUG
+bidrag:
+  rest:
+    connect:
+      timeout:
+        seconds: 30
+springdoc:
+  openapi:
+    kotlin:
+      enabled: false
+  packages-to-scan: no.nav.bidrag.beregn.debug.app.api
+  paths-to-match: "/**"
+  swagger-ui:
+    path: /
+    showCommonExtensions: true
+
+spring.main.banner-mode: off
+
+management.metrics.distribution.percentiles-histogram.http.server.requests: true
+management.metrics.distribution.percentiles-histogram.http.client.requests: true
+no.nav.security.jwt:
+  client:
+    registration:
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-organisasjon:
+        resource-url: ${BIDRAG_ORGANISASJON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_ORGANISASJON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-vedtak:
+        resource-url: ${BIDRAG_VEDTAK_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_VEDTAK_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-sak:
+        resource-url: ${BIDRAG_SAK_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_SAK_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-belopshistorikk:
+        resource-url: ${BIDRAG_BELOPSHISTORIKK_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_BELOPSHISTORIKK_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-bbm:
+        resource-url: ${BIDRAG_BBM_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_BBM_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
+
+
+server.port: 9898
+NAIS_APP_NAME: bidrag-behandling
+BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q1
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+
+KODEVERK_URL: https://kodeverk-api.nav.no
+
+---
+spring:
+  config:
+    activate:
+      on-profile: q2
+BIDRAG_BELOPSHISTORIKK_URL: https://bidrag-belopshistorikk-q2.intern.dev.nav.no
+BIDRAG_BELOPSHISTORIKK_SCOPE: dev-gcp.bidrag.bidrag-belopshistorikk-q2
+BIDRAG_BBM_URL: https://bidrag-bbm.dev-fss-pub.nais.io
+BIDRAG_BBM_SCOPE: dev-fss.bidrag.bidrag-bbm
+BIDRAG_SAK_URL: https://bidrag-sak.dev.intern.nav.no/bidrag-sak
+
+BIDRAG_VEDTAK_URL: https://bidrag-vedtak-q2.intern.dev.nav.no
+BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q2
+BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak
+KODEVERK_URL: https://bidrag-kodeverk.intern.dev.nav.no
+---
+spring:
+  config:
+    activate:
+      on-profile: q1
+BIDRAG_BELOPSHISTORIKK_URL: https://bidrag-belopshistorikk-q1.intern.dev.nav.no
+BIDRAG_BELOPSHISTORIKK_SCOPE: dev-gcp.bidrag.bidrag-belopshistorikk-q1
+BIDRAG_BBM_URL: https://bidrag-bbm-feature.dev-fss-pub.nais.io
+BIDRAG_BBM_SCOPE: dev-fss.bidrag.bidrag-bbm-feature
+BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q1
+BIDRAG_VEDTAK_URL: https://bidrag-vedtak-q1.intern.dev.nav.no
+BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q1
+BIDRAG_DOKUMENT_URL: https://bidrag-dokument-feature.dev-fss-pub.nais.io/bidrag-dokument
+KODEVERK_URL: https://bidrag-kodeverk.intern.dev.nav.no

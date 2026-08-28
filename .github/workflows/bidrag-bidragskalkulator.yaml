@@ -23,6 +23,7 @@ on:
     paths:
       - 'pom.xml'
       - 'libs/bidrag-felles/**'
+      - 'libs/bidrag-beregn-felles/**'
       - '.nais/bidrag-bidragskalkulator/**.yaml'
       - 'apps/bidrag-bidragskalkulator/**'
 
@@ -57,11 +58,11 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-bidragskalkulator/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-bidragskalkulator
+      maven_options: -B -fae -pl apps/bidrag-bidragskalkulator -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-bidragskalkulator/pom.xml
-      ktlint_paths: apps/bidrag-bidragskalkulator/src/**/*.kt
+      ktlint_paths: apps/bidrag-bidragskalkulator/src/**/*.kt libs/bidrag-beregn-felles/**/src/**/*.kt
       docker_context: ./apps/bidrag-bidragskalkulator
       image_suffix: bidrag-bidragskalkulator
       tag: bidrag-bidragskalkulator

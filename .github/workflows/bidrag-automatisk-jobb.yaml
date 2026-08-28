@@ -24,6 +24,7 @@ on:
     paths:
       - 'pom.xml'
       - 'libs/bidrag-felles/**'
+      - 'libs/bidrag-beregn-felles/**'
       - '.nais/bidrag-automatisk-jobb/**.yaml'
       - 'apps/bidrag-automatisk-jobb/**'
 
@@ -60,11 +61,11 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-automatisk-jobb/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-automatisk-jobb
+      maven_options: -B -fae -pl apps/bidrag-automatisk-jobb -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-automatisk-jobb/pom.xml
-      ktlint_paths: apps/bidrag-automatisk-jobb/src/**/*.kt
+      ktlint_paths: apps/bidrag-automatisk-jobb/src/**/*.kt libs/bidrag-beregn-felles/**/src/**/*.kt
       docker_context: ./apps/bidrag-automatisk-jobb
       image_suffix: bidrag-automatisk-jobb
       tag: bidrag-automatisk-jobb

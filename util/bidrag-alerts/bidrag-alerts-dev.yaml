@@ -1,0 +1,191 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    team: bidrag
+  name: bidrag-alerts
+  namespace: bidrag
+spec:
+  groups:
+    - name: Applikasjoner er nede
+      rules:
+        - alert: Applikasjon nede
+          expr: kube_deployment_status_replicas_available{namespace="bidrag",deployment=~".+bidrag.+|bidrag.+|.+bidrag", deployment!~"bidrag-aktoerregister|bidrag-bidragskalkulator-.*"} == 0
+          for: 10m
+          annotations:
+            description: "Deployment {{ $labels.deployment }} er nede i namespace {{ $labels.namespace }}"
+            consequence: Applikasjon er utilgjengelig
+            action: "`Kjør kubectl get pod -n {{ $labels.namespace }}  | grep {{ $labels.deployment }}` for å se podder som er nede"
+            summary: |-
+              App {{ $labels.deployment }} er nede i dev
+          labels:
+            namespace: bidrag
+            severity: critical
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
+            sp_alert: sp-alert-bidrag # Statusplattform
+            alert_type: custom # Statusplattform
+            nav_service_id: ccd76526-c3dd-4bec-8dff-670ce38cdd4d #Statusplattform - Service id for bidrag fra statusplattformen (se https://status.intern.dev.nav.no/sp/Admin?tab=Tjenester)
+            nav_status: issue #Statusplattform - Feilstatus down|issue
+
+    - name: Høy feilrate
+      rules:
+        - alert: Høy feilrate i logger
+          expr: (100 * sum by (app, namespace) (rate(log_messages_errors{namespace="bidrag",level=~"Error",app!~"linkerd-proxy"}[3m]))/sum by (app, namespace) (rate(log_messages_total{namespace="bidrag",app!~"linkerd-proxy"}[3m]))) > 10
+          for: 2m
+          annotations:
+            consequence: "App {{ $labels.app }} har høy feilrate i logger"
+            action: "`kubectl logs -l app={{ $labels.app }} -n {{ $labels.namespace }} -c {{ $labels.app }} --tail=100`"
+            logs: "<https://logs.adeo.no/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-24h,to:now))&_a=(columns:!(message,envclass,level,application,host),filters:!(),hideChart:!f,index:'96e648c0-980a-11e9-830a-e17bbd64b4db',interval:auto,query:(language:kuery,query:'application:%22{{$labels.app}}%22%20and%20level:(Error)%20and%20envclass:%20%22q%22'),sort:!(!('@timestamp',desc)))|Link til logger>"
+            summary: |-
+              App `{{ $labels.app }}` har logget en del feil siste minuttene. Sjekk loggene for å se hvorfor det er så mye feil.
+          labels:
+            namespace: bidrag
+            severity: critical
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
+            sp_alert: sp-alert-bidrag # Statusplattform
+            alert_type: custom # Statusplattform
+            nav_service_id: ccd76526-c3dd-4bec-8dff-670ce38cdd4d #Statusplattform - Service id fra statusplattformen (se https://status.intern.dev.nav.no/sp/Admin?tab=Tjenester)
+            nav_status: issue #Statusplattform - Feilstatus down|issue
+
+        - alert: Høy andel HTTP serverfeil (5xx responser)
+          expr:  (100 * (sum by (service, namespace, host) (rate(nginx_ingress_controller_requests{namespace="bidrag",status=~"^5\\d\\d",service!~"linkerd-proxy"}[3m]))/sum by (service, namespace, host) (rate(nginx_ingress_controller_requests{namespace="bidrag",service!~"linkerd-proxy"}[3m])))) > 20
+          for: 4m
+          annotations:
+            consequence: "App {{ $labels.service }} har høy andel HTTP serverfeil (5xx responser)"
+            action: "`kubectl logs -l app={{ $labels.service }} -n {{ $labels.namespace }} -c {{ $labels.service }} --tail=100`"
+            logs: "<https://logs.adeo.no/app/discover#/?_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-24h,to:now))&_a=(columns:!(message,envclass,level,application,host),filters:!(),hideChart:!f,index:'96e648c0-980a-11e9-830a-e17bbd64b4db',interval:auto,query:(language:kuery,query:'application:%20%22controller%22%20and%20response_code%20%3E%3D%20500%20and%20x_ingress_namespace:%20%22bidrag%22%20and%20not%20%22actuator%22%20and%20envclass:%20%22q%22%20and%20x_host:%20%22{{$labels.host}}%22'),sort:!(!('@timestamp',desc)))|Link til logger>"
+            summary: |-
+                Sjekk loggene for å se hvorfor `{{ $labels.service }}` returnerer HTTP (5xx responser) feilresponser
+          labels:
+            namespace: bidrag
+            severity: critical
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
+            sp_alert: sp-alert-bidrag # Statusplattform
+            alert_type: custom # Statusplattform
+            nav_service_id: ccd76526-c3dd-4bec-8dff-670ce38cdd4d #Statusplattform - Service id fra statusplattformen (se https://status.intern.dev.nav.no/sp/Admin?tab=Tjenester)
+            nav_status: issue #Statusplattform - Feilstatus down|issue
+---
+# Webhookkonfig for tilpasset Slack-kanal dev-fss
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: bidrag-template-slack-fss
+  namespace: bidrag
+  labels:
+    alertmanagerConfig: bidrag-template-slack-fss
+spec:
+  receivers:
+    - name: bidrag-template-receiver
+      slackConfigs:
+        - apiURL:
+            key: apiUrl
+            name: slack-webhook
+          channel: '#team-bidrag-varsel-dev'
+          iconEmoji: ':alert:'
+          username: 'Varsel dev-fss'
+          sendResolved: true
+          httpConfig:
+            proxyURL: http://webproxy.nais:8088
+          title: |-
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+          text: >-
+            {{ range .Alerts }}
+            {{ if or .Annotations.summary .Annotations.message }}
+            {{ or .Annotations.summary .Annotations.message }}
+            {{ println " " }}
+            {{- end }}
+            {{- if .Annotations.action }}
+            • *action*: {{ .Annotations.action }} {{ println " " }}
+            {{- end }}
+            {{- if .Annotations.logs }}
+            • {{ .Annotations.logs }}{{ println " " }}
+            {{- end }}
+            {{ end }}
+  route:
+    groupBy:
+      - alertname
+    matchers:
+      - name: "bidrag_template_type_fss"
+        matchType: "="
+        value: "bidrag-template-fss"
+    groupInterval: 5m
+    groupWait: 1m
+    receiver: bidrag-template-receiver
+    repeatInterval: 1h
+
+---
+# Webhookkonfig for tilpasset Slack-kanal dev-gcp
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: bidrag-template-slack
+  namespace: bidrag
+  labels:
+    alertmanagerConfig: bidrag-template-slack
+spec:
+  receivers:
+    - name: bidrag-template-receiver
+      slackConfigs:
+        - apiURL:
+            key: apiUrl
+            name: slack-webhook
+          channel: '#team-bidrag-varsel-dev'
+          iconEmoji: ':alert:'
+          username: 'Varsel dev-gcp'
+          sendResolved: true
+          title: |-
+            [{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}
+          text: >-
+            {{ range .Alerts }}
+            {{ if or .Annotations.summary .Annotations.message }}
+            {{ or .Annotations.summary .Annotations.message }}
+            {{ println " " }}
+            {{- end }}
+            {{- if .Annotations.action }}
+            • *action*: {{ .Annotations.action }} {{ println " " }}
+            {{- end }}
+            {{- if .Annotations.logs }}
+            • {{ .Annotations.logs }}{{ println " " }}
+            {{- end }}
+            {{ end }}
+  route:
+    groupBy:
+      - alertname
+    matchers:
+      - name: "bidrag_template_type"
+        matchType: "="
+        value: "bidrag-template"
+    groupInterval: 5m
+    groupWait: 1m
+    receiver: bidrag-template-receiver
+    repeatInterval: 1h
+
+---
+# Webhookkonfig for Statusplattform
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: bidrag
+  namespace: bidrag
+  labels:
+    alertmanagerConfig: bidrag-testing-status-webhook
+    team: bidrag
+spec:
+  receivers:
+    - name: status_proxy
+      webhookConfigs:
+        - url: 'https://promstatusproxy.intern.dev.nav.no/alert' #For test
+  route:
+    groupBy:
+      - alertname
+    matchers:
+      - name: "sp_alert"
+        matchType: "="
+        value: "sp-alert-bidrag"
+    groupInterval: 5m
+    groupWait: 1m
+    receiver: status_proxy
+    repeatInterval: 1h

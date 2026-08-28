@@ -5,7 +5,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import org.junit.jupiter.api.Test
 import java.time.LocalDate

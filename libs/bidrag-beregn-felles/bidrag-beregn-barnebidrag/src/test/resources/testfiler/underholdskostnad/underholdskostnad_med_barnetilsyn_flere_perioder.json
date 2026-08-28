@@ -1,0 +1,60 @@
+{
+  "periode": {
+    "fom": "2024-01",
+    "til": "2024-09"
+  },
+  "søknadsbarnReferanse": "Person_Søknadsbarn",
+  "grunnlagListe": [
+    {
+      "referanse": "Person_Søknadsbarn",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "{FNR_SB1}",
+        "navn": "Trengende Søknadsbarn",
+        "fødselsdato": "2017-09-13",
+        "bidragsmottaker": "Person_Bidragsmottaker"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragsmottaker",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "ident": "{FNR_BM1}",
+        "navn": "Søkende Bidragsmottaker",
+        "fødselsdato": "1982-05-05"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragspliktig",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "ident": "{FNR_BP1}",
+        "navn": "Motvillig Bidragspliktig",
+        "fødselsdato": "1981-07-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Mottatt_Barnetilsyn_202402_Person_Søknadsbarn",
+      "type": "BARNETILSYN_MED_STØNAD_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-02",
+          "til": "2024-08"
+        },
+        "gjelderBarn": "Person_Søknadsbarn",
+        "tilsynstype": "HELTID",
+        "skolealder": "UNDER",
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    }
+  ]
+}

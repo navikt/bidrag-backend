@@ -227,13 +227,6 @@
             <type>pom</type>
         </dependency>
 
-        <!-- runtime scope -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- Sikkerhet -->
         <dependency>
             <groupId>no.nav.security</groupId>

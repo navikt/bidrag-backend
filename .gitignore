@@ -12,7 +12,7 @@ target/
 # OS
 .DS_Store
 
-# Node (util/bidrag-cli)
+# Node (util/bidrag-cli, util/bidrag-cloudfunctions)
 node_modules/
 dist/
 

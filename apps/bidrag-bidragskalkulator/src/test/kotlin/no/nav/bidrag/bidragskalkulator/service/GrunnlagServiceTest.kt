@@ -5,13 +5,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import no.nav.bidrag.beregn.inntekt.InntektApi
 import no.nav.bidrag.bidragskalkulator.consumer.BidragGrunnlagConsumer
 import no.nav.bidrag.bidragskalkulator.exception.GrunnlagNotFoundException
 import no.nav.bidrag.bidragskalkulator.exception.InntektTransformException
 import no.nav.bidrag.bidragskalkulator.utils.JsonUtils.lesJsonFil
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.inntekt.InntektApi
 import no.nav.bidrag.transport.behandling.grunnlag.response.HentGrunnlagDto
 import no.nav.bidrag.transport.behandling.inntekt.request.TransformerInntekterRequest
 import no.nav.bidrag.transport.behandling.inntekt.response.TransformerInntekterResponse

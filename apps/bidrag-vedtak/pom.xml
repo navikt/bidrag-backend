@@ -116,13 +116,6 @@
       <artifactId>swagger-annotations</artifactId>
       <version>${swagger-annotations.version}</version>
     </dependency>
-    <!-- Avhengigheter for lokal kjøring -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
 
     <!-- test -->
     <dependency>

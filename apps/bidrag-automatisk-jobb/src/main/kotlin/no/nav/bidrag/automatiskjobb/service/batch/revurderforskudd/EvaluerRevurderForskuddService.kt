@@ -18,6 +18,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.SisteManuelleVedtak
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.core.exception.UgyldigInputException
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
+import no.nav.bidrag.beregn.inntekt.InntektApi
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -36,7 +37,6 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.inntekt.InntektApi
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag

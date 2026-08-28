@@ -124,6 +124,10 @@ env:
   # libs/bidrag-felles/**, og bygges kun på nytt når det innholdet faktisk endres.
   FELLES_MODULER: >-
     libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
+  # De 9 bidrag-beregn-felles-modulene caches på samme måte som FELLES_MODULER over,
+  # nøkkelet på innholdet i libs/bidrag-beregn-felles/**.
+  BEREGN_FELLES_MODULER: >-
+    libs/bidrag-beregn-felles/bidrag-beregn-core,libs/bidrag-beregn-felles/bidrag-beregn-forskudd,libs/bidrag-beregn-felles/bidrag-beregn-boforhold,libs/bidrag-beregn-felles/bidrag-beregn-inntekt,libs/bidrag-beregn-felles/bidrag-beregn-sivilstand,libs/bidrag-beregn-felles/bidrag-beregn-særbidrag,libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering,libs/bidrag-beregn-felles/bidrag-beregn-vedtak,libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag
 
 jobs:
   # Bygger, kjører tester og lager Docker-image. Kjører uansett om det skal deploye eller ikke, slik at
@@ -148,7 +152,7 @@ jobs:
         if: inputs.skip_tester
         run: echo "::warning::Deploy tvinges gjennom av ${{ github.actor }} med tester og ktlint hoppet over (skip_tester=true)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           java-version: ${{ inputs.java-version }}
           distribution: 'temurin'
@@ -204,6 +208,29 @@ jobs:
       - name: Installer bidrag-felles i lokalt repo (kun ved cache-miss)
         if: steps.felles_cache.outputs.cache-hit != 'true'
         run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+      # Delt cache for de ferdig installerte bidrag-beregn-felles-artefaktene.
+      - name: Gjenopprett cache for bidrag-beregn-felles-artefakter
+        id: beregn_felles_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-core
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-forskudd
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-boforhold
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-inntekt
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-sivilstand
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-saerbidrag
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-indeksregulering
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-vedtak
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-barnebidrag
+          key: beregn-felles-m2-${{ hashFiles('libs/bidrag-beregn-felles/**') }}
+      # Bygger, installerer og tester bidrag-beregn-felles-modulene ved cache-miss.
+      # Kjøres etter bidrag-felles-installasjonen over, siden beregn-felles-modulene
+      # avhenger av bidrag-felles (bidrag-domene/bidrag-commons m.fl.) og derfor må
+      # finne dem i det lokale Maven-repoet.
+      - name: Installer bidrag-beregn-felles i lokalt repo (kun ved cache-miss)
+        if: steps.beregn_felles_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -T 1C -pl ${{ env.BEREGN_FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
       # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
       # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
       # feiler for moduler med interne avhengigheter

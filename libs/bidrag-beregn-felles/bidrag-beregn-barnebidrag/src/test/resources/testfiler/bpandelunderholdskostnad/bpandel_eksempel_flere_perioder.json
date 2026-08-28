@@ -1,0 +1,226 @@
+{
+  "periode": {
+    "fom": "2023-09",
+    "til": "2024-10"
+  },
+  "søknadsbarnReferanse": "Person_Søknadsbarn",
+  "grunnlagListe": [
+    {
+      "referanse": "Person_Søknadsbarn",
+      "type": "PERSON_SØKNADSBARN",
+      "innhold": {
+        "ident": "{FNR_SB1}",
+        "navn": "Trengende Søknadsbarn",
+        "fødselsdato": "2012-09-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragsmottaker",
+      "type": "PERSON_BIDRAGSMOTTAKER",
+      "innhold": {
+        "ident": "{FNR_BM1}",
+        "navn": "Søkende Bidragsmottaker",
+        "fødselsdato": "1982-05-05"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Person_Bidragspliktig",
+      "type": "PERSON_BIDRAGSPLIKTIG",
+      "innhold": {
+        "ident": "{FNR_BP1}",
+        "navn": "Motvillig Bidragspliktig",
+        "fødselsdato": "1981-07-13"
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderReferanse": null
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Bidragspliktig_202309",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-09",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 1000000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Bidragspliktig"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Bidragspliktig_202401",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-01",
+          "til": "2024-09"
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 500000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Bidragspliktig"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Bidragspliktig_202409",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-09",
+          "til": null
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 200000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Bidragspliktig"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Bidragsmottaker_202309",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-09",
+          "til": "2023-11"
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 500000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Bidragsmottaker_202311",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-11",
+          "til": null
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 100000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Søknadsbarn_202309",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-09",
+          "til": "2023-11"
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 200000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Søknadsbarn"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Søknadsbarn_202311",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2023-11",
+          "til": "2024-01"
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 100000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Søknadsbarn"
+    },
+    {
+      "referanse": "Mottatt_InntektRapportering_Ainntekt_Søknadsbarn_202409",
+      "type": "INNTEKT_RAPPORTERING_PERIODE",
+      "innhold": {
+        "periode": {
+          "fom": "2024-09",
+          "til": null
+        },
+        "inntektsrapportering": "AINNTEKT",
+        "gjelderBarn": null,
+        "beløp": 100000,
+        "manueltRegistrert": false,
+        "valgt": true
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": null,
+      "gjelderReferanse": "Person_Søknadsbarn"
+    },
+    {
+      "referanse": "Delberegning_Underholdskostnad_202309",
+      "type": "DELBEREGNING_UNDERHOLDSKOSTNAD",
+      "innhold": {
+        "periode": {
+          "fom": "2023-09",
+          "til": "2024-05"
+        },
+        "forbruksutgift": 2000,
+        "boutgift": 2000,
+        "barnetilsynMedStønad": 2000,
+        "nettoTilsynsutgift": 2000,
+        "barnetrygd": 2000,
+        "underholdskostnad": 9000,
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    },
+    {
+      "referanse": "Delberegning_Underholdskostnad_202405",
+      "type": "DELBEREGNING_UNDERHOLDSKOSTNAD",
+      "innhold": {
+        "periode": {
+          "fom": "2024-05",
+          "til": null
+        },
+        "forbruksutgift": 2000,
+        "boutgift": 2000,
+        "barnetilsynMedStønad": 2000,
+        "nettoTilsynsutgift": 2000,
+        "barnetrygd": 2000,
+        "underholdskostnad": 8000,
+        "manueltRegistrert": false
+      },
+      "grunnlagsreferanseListe": [],
+      "gjelderBarnReferanse": "Person_Søknadsbarn",
+      "gjelderReferanse": "Person_Bidragsmottaker"
+    }
+  ]
+}

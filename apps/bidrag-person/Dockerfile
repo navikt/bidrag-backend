@@ -1,4 +1,4 @@
-FROM busybox:1.37.0-uclibc as busybox
+FROM busybox:1.38.0-uclibc as busybox
 
 FROM gcr.io/distroless/java21-debian12:nonroot
 LABEL maintainer="Team Bidrag" \

@@ -24,9 +24,9 @@ import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
 import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.erBidrag
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.sivilstand.dto.Sivilstand
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
