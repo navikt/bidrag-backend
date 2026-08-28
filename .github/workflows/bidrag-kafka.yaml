@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - '.nais/bidrag-kafka/**.yaml'
       - 'apps/bidrag-kafka/**'
