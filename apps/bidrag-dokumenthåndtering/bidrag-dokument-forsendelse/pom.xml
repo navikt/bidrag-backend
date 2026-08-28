@@ -18,6 +18,20 @@
   <packaging>jar</packaging>
 
   <properties>
+    <mockk.version>1.14.11</mockk.version>
+    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
+    <shedlock.version>7.7.0</shedlock.version>
+    <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
+    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <logback-encoder.version>9.0</logback-encoder.version>
+    <okhttp.version>5.4.0</okhttp.version>
+    <unleash-client-java.version>12.2.2</unleash-client-java.version>
+    <hypersistence-utils-hibernate.version>3.15.2</hypersistence-utils-hibernate.version>
+    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <springmockk.version>5.0.1</springmockk.version>
+    <kotest.version>6.2.3</kotest.version>
+    <swagger-annotations.version>2.2.51</swagger-annotations.version>
     <google-cloud-libraries-bom.version>26.72.0</google-cloud-libraries-bom.version>
     <google-tink-gcpkms.version>1.10.0</google-tink-gcpkms.version>
     <google-tink.version>1.19.0</google-tink.version>
@@ -25,8 +39,42 @@
     <verapdf.version>1.30.2</verapdf.version>
   </properties>
 
+  <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
+       mockk.version. Uten dette trekker springmockk inn en eldre
+       mockk-dsl-jvm enn bidrag-backend-commons-test sin Stubs.kt er kompilert
+       mot, noe som gir NoClassDefFoundError for klasser lagt til i nyere
+       mockk-versjoner (f.eks. AnyTypedMatcher, introdusert i 1.14.9).
+       Denne appen bruker springmockk uten en konkurrerende direkte
+       avhengighet til mockk-jvm, så uten denne overstyringen vinner
+       springmockk sin transitive (eldre) versjon. Verifisert med
+       mvn dependency:tree -Dincludes=io.mockk. -->
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-dsl-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-agent-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-agent-api-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.mockk</groupId>
+        <artifactId>mockk-core-jvm</artifactId>
+        <version>${mockk.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.google.cloud</groupId>
         <artifactId>libraries-bom</artifactId>
@@ -34,7 +82,6 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- unleash-client-java sin okhttp 4.x kolliderer med okhttp-jvm 5.x fra mock-oauth2-server -->
       <dependency>
         <groupId>com.squareup.okhttp3</groupId>
         <artifactId>okhttp</artifactId>
