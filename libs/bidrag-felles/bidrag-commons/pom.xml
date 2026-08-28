@@ -47,7 +47,7 @@
     <javax-activation.version>1.1.1</javax-activation.version>
     <httpclient5.version>5.5.1</httpclient5.version>
     <aspectj.version>1.9.24</aspectj.version>
-    <micrometer-registry.version>1.15.2</micrometer-registry.version>
+    <micrometer-registry.version>1.17.1</micrometer-registry.version>
   </properties>
 
   <dependencies>
