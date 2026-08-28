@@ -12,7 +12,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - '.nais/bidrag-dokumentmal/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal/**'
