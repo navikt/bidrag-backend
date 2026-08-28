@@ -2,7 +2,11 @@ name: Bidrag-dokumentasjon
 on:
   push:
     branches:
-      - '**'
+      - 'main'
+    paths:
+      - '.github/workflows/bidrag-dokumentasjon.yaml'
+      - 'apps/bidrag-dokumentasjon/**'
+  pull_request:
     paths:
       - '.github/workflows/bidrag-dokumentasjon.yaml'
       - 'apps/bidrag-dokumentasjon/**'
