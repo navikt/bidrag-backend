@@ -254,6 +254,7 @@ class TilgangskontrollService(
                     }
                     avslag += "${resultat.detaljer?.navIdent ?: resultat.brukerId ?: "ukjent bruker"}: $begrunnelse"
                 }
+
                 404 -> {
                     secureLogger.info { "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen, tilgang antas som å være gyldig" }
                     begrunnelser += "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen."
