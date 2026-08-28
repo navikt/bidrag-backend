@@ -19,7 +19,7 @@
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <shedlock.version>7.7.0</shedlock.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <unleash-client-java.version>12.2.2</unleash-client-java.version>
+        <unleash-client-java.version>12.2.3</unleash-client-java.version>
         <ibm-mq-jakarta-client.version>9.4.5.1</ibm-mq-jakarta-client.version>
         <apache-avro.version>1.12.1</apache-avro.version>
         <confluent.version>8.0.0</confluent.version>
