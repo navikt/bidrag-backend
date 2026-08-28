@@ -164,7 +164,7 @@ select * from inntekt inner join public.behandling b on b.id = inntekt.behandlin
 select *
 from behandling
 where vedtaksid is not null
-  and vedtak_fattet_av != 'J141208'
+  and vedtak_fattet_av != '<ekskludert_ident>'
 order by vedtakstidspunkt desc;
 
 WITH behandlinger_med_saksbehandler_beregnet AS (
