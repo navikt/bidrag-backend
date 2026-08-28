@@ -37,7 +37,6 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directories:
-      - "/"
       - "/apps/*"
       - "/libs/*"
       - "/libs/bidrag-felles/*"
