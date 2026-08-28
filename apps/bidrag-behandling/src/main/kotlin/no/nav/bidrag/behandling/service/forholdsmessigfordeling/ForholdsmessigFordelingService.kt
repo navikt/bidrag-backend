@@ -7,7 +7,6 @@ import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
-import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
@@ -20,7 +19,6 @@ import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessi
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
-import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SøknadRevurdering
@@ -45,7 +43,6 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregn
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
-import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
@@ -66,7 +63,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.behandling.vedtak.Periode
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.toYearMonth
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Value
@@ -434,8 +430,10 @@ class ForholdsmessigFordelingService(
         return LocalDateTime.now().minusMinutes(antallMinutter) > ffSistSynkronisert
     }
 
-    /** Synkroniserer søknadsbarn, revurderingsbarn og søknadsstatus mot BBM for en FF-behandling */
-    private fun opprettForholdsmessigFordelingForRollerUtenFF(
+    /** Opprett forholdsmessig fordeling objekt for rolle hvis det mangler
+     *  Dette er en feilhåndtering hvis det av en eller annen grunn har feilet i opprettelse av FF og det ikke har blitt håndtert riktig
+     * */
+    private fun opprettForholdsmessigFordelingForRollerSomDetManglerFor(
         behandling: Behandling,
         alleSøknaderRelevantForBehandling: List<HentSøknad>,
     ) {
@@ -483,7 +481,7 @@ class ForholdsmessigFordelingService(
                 behandling.omgjøringsdetaljer,
             )
 
-        opprettForholdsmessigFordelingForRollerUtenFF(behandling, alleSøknaderRelevantForBehandling)
+        opprettForholdsmessigFordelingForRollerSomDetManglerFor(behandling, alleSøknaderRelevantForBehandling)
 
         // Feilhåndtering hvis opprettelse av FF feilet
         if (behandling.metadata?.getOpprettelseEllerOppdateringAvFFFeilet() == true) {
