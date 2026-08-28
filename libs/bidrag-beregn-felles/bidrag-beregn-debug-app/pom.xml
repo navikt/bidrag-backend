@@ -17,7 +17,7 @@
   <properties>
     <jackson.version>2.22.0</jackson.version>
     <token-support.version>6.0.10</token-support.version>
-    <springdoc.version>3.0.3</springdoc.version>
+    <springdoc.version>3.1.0</springdoc.version>
     <caffeine.version>3.2.4</caffeine.version>
     <unleash-client.version>12.2.2</unleash-client.version>
     <swagger-annotations.version>2.2.50</swagger-annotations.version>
