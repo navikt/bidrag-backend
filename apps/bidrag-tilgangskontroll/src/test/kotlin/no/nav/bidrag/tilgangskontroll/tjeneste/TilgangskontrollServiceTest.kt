@@ -1,8 +1,8 @@
 package no.nav.bidrag.tilgangskontroll.tjeneste
 
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -301,7 +301,7 @@ class TilgangskontrollServiceTest {
         }
 
         @Test
-        fun `skal aggregere begrunnelse fra alle avslag når flere personer mangler tilgang`() {
+        fun `skal opprette en egen detalj per unikt avslag når flere personer mangler tilgang`() {
             every { TokenUtils.erApplikasjonsbruker() } returns false
             every { TokenUtils.hentSaksbehandlerIdent() } returns "Z999999"
 
@@ -316,9 +316,10 @@ class TilgangskontrollServiceTest {
             val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
 
             resultat.harTilgang shouldBe false
-            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
-            begrunnelse shouldContain "Avslag person 1"
-            begrunnelse shouldContain "Avslag person 2"
+            val tilgangsmaskinDetaljer = resultat.detaljer.filter { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }
+            tilgangsmaskinDetaljer shouldHaveSize 2
+            tilgangsmaskinDetaljer.map { it.begrunnelse } shouldContainExactlyInAnyOrder listOf("Avslag person 1", "Avslag person 2")
+            tilgangsmaskinDetaljer.forEach { it.harTilgang shouldBe false }
         }
 
         @Test
@@ -355,8 +356,9 @@ class TilgangskontrollServiceTest {
             val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
 
             resultat.harTilgang shouldBe false
-            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
-            begrunnelse.split(" | ").filter { it == "Mangler rolle" } shouldHaveSize 1
+            val tilgangsmaskinDetaljer = resultat.detaljer.filter { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }
+            tilgangsmaskinDetaljer shouldHaveSize 1
+            tilgangsmaskinDetaljer.first().begrunnelse shouldBe "Mangler rolle"
         }
 
         @Test
@@ -375,8 +377,8 @@ class TilgangskontrollServiceTest {
             val resultat = tilgangskontrollService.sjekkTilgangAlleRollerV2(listOf("rolle1", "rolle2"))
 
             resultat.harTilgang shouldBe true
-            val begrunnelse = resultat.detaljer.first { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }.begrunnelse
-            begrunnelse.split(" | ") shouldHaveSize 1
+            val tilgangsmaskinDetaljer = resultat.detaljer.filter { it.opprinnelseTilgangsbeslutning == OpprinnelseTilgangsbeslutning.TILGANGSMASKIN }
+            tilgangsmaskinDetaljer shouldHaveSize 1
         }
     }
 

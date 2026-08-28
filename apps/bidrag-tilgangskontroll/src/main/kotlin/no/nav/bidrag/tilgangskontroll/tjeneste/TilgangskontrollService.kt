@@ -133,8 +133,8 @@ class TilgangskontrollService(
         val tematilgang = sjekkTematilgangV2(tema, saksbehandlerNavIdent)
 
         return TilgangskontrollResponse(
-            harTilgang = tilgangsmaskin.harTilgang && tematilgang.harTilgang,
-            detaljer = listOf(tilgangsmaskin, tematilgang),
+            harTilgang = tilgangsmaskin.all { it.harTilgang } && tematilgang.harTilgang,
+            detaljer = tilgangsmaskin + tematilgang,
         )
     }
 
@@ -231,18 +231,20 @@ class TilgangskontrollService(
         )
     }
 
-    private fun sjekkTilgangTilgangsmaskinV2(roller: List<String>): TilgangskontrollResponseDetaljer {
+    private fun sjekkTilgangTilgangsmaskinV2(roller: List<String>): List<TilgangskontrollResponseDetaljer> {
         val filtrerteRoller = roller.filter { it.isNotBlank() }.map { it.trim() }
         if (filtrerteRoller.isEmpty()) {
-            return TilgangskontrollResponseDetaljer(
-                harTilgang = true,
-                begrunnelse = "Ingen roller angitt, tilgang antas å være gyldig",
-                opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+            return listOf(
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = true,
+                    begrunnelse = "Ingen roller angitt, tilgang antas å være gyldig",
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                ),
             )
         }
 
         val tilgangsmaskinResponse = tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(filtrerteRoller)
-        // LinkedHashSet bevarer rekkefølgen samtidig som identiske avviksmeldinger slås sammen til én
+        // LinkedHashSet bevarer rekkefølgen samtidig som identiske avviksmeldinger/vurderinger slås sammen til én
         val avslag = linkedSetOf<String>()
         val begrunnelser = linkedSetOf<String>()
 
@@ -264,19 +266,31 @@ class TilgangskontrollService(
         }
 
         if (avslag.isNotEmpty()) {
-            return TilgangskontrollResponseDetaljer(
-                harTilgang = false,
-                begrunnelse = avslag.joinToString(separator = " | "),
-                opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-            )
+            return avslag.map {
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = false,
+                    begrunnelse = it,
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                )
+            }
         }
 
-        return TilgangskontrollResponseDetaljer(
-            harTilgang = true,
-            begrunnelse = begrunnelser.takeIf { it.isNotEmpty() }?.joinToString(separator = " | ")
-                ?: "Bruker har tilgang til etterspurte roller.",
-            opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-        )
+        return begrunnelser
+            .map {
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = true,
+                    begrunnelse = it,
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                )
+            }.ifEmpty {
+                listOf(
+                    TilgangskontrollResponseDetaljer(
+                        harTilgang = true,
+                        begrunnelse = "Bruker har tilgang til etterspurte roller.",
+                        opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                    ),
+                )
+            }
     }
 
     fun hentBrukertilganger(): Brukertilganger {
