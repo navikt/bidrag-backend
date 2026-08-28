@@ -78,6 +78,7 @@ class BidragDokumentConsumerTest {
     @DisplayName("Skal kaste feil ved ugyldig journalpostid ved henting av dokument")
     fun skalKasteFeilVedUgyldigJournalpostidVedHentingAvDokument() {
         val invalidJournalpostId = "http://evil.test"
+        Mockito.reset(restTemplateMock)
 
         assertThrows<IllegalArgumentException> {
             bidragDokumentConsumer!!.hentDokument(invalidJournalpostId)

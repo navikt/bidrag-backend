@@ -175,7 +175,7 @@ class BidragDokumentConsumer(
 
         const val HENTE_JOURNALPOST_PATH = "/journal/%s"
         const val HENTE_DOKUMENT_PATH = "/dokument/%s?resizeToA4=false&optimizeForPrint=false"
-        val JOURNALPOST_ID_PATTERN = Regex("\\d+")
+        val JOURNALPOST_ID_PATTERN = Regex("(BID-)?\\d+")
 
         const val KAN_DISTRIBUERE_JOURNALPOST_PATH = "/journal/distribuer/%s/enabled"
 
