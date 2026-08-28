@@ -14,6 +14,7 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/util/bidrag-cli"
+      - "/util/bidrag-cloudfunctions/postgres-auditlog"
       - "/apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon"
     registries:
       - "npm-github"
@@ -64,6 +65,7 @@ updates:
     directories:
       - "/"
       - "/apps/*"
+      - "/util/bidrag-cloudfunctions/postgres-auditlog"
     cooldown:
       default-days: 7
     schedule:
