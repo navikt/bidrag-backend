@@ -69,19 +69,19 @@ import no.nav.bidrag.behandling.transformers.validerBoforhold
 import no.nav.bidrag.behandling.transformers.validere
 import no.nav.bidrag.behandling.transformers.validereSivilstand
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
-import no.nav.bidrag.boforhold.BoforholdApi
-import no.nav.bidrag.boforhold.dto.BoforholdBarnRequestV3
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
-import no.nav.bidrag.boforhold.dto.Bostatus
-import no.nav.bidrag.boforhold.dto.EndreBostatus
+import no.nav.bidrag.beregn.boforhold.BoforholdApi
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdBarnRequestV3
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.boforhold.dto.Bostatus
+import no.nav.bidrag.beregn.boforhold.dto.EndreBostatus
+import no.nav.bidrag.beregn.sivilstand.SivilstandApi
+import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.diverse.TypeEndring
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.sivilstand.SivilstandApi
-import no.nav.bidrag.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -93,7 +93,7 @@ import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.collections.toList
-import no.nav.bidrag.sivilstand.dto.Sivilstand as SivilstandBeregnV2Dto
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand as SivilstandBeregnV2Dto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
 
 private val log = KotlinLogging.logger {}

@@ -27,7 +27,7 @@ enum class UnleashFeatures(
     // Forhodlsmessig fordeling
     BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG("behandling.behandle_bidrag_flere_barn_lopende_bidrag", false),
     FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG("behandling.fattevedtak_flere_barn_lopende_bidrag", false),
-    FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER("behandling.behandle_bidrag_bp_har_flere_saker", false),
+    BEHANDLE_BARNEBIDRAG_FLERE_SAKER("behandling.behandle_bidrag_bp_har_flere_saker", false),
     FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA("behandling.fattevedtak_barnebidrag_utenlandskvaluta", false),
     FATTE_VEDTAK_BARNEBIDRAG_OPPFOSTRINGSBIDRAG("behandling.fattevedtak_barnebidrag_oppfostringsbidrag", false),
     ;

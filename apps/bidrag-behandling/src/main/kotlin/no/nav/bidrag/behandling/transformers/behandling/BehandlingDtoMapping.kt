@@ -85,10 +85,12 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregn
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTil
 import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.behandling.transformers.årsinntekterSortert
+import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.core.BeregnApi
 import no.nav.bidrag.beregn.core.util.avrundetTilToDesimaler
 import no.nav.bidrag.beregn.core.util.sluttenAvForrigeMåned
-import no.nav.bidrag.boforhold.dto.BoforholdResponseV2
+import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
+import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.commons.service.forsendelse.bidragspliktig
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -107,8 +109,6 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.util.visningsnavn
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
-import no.nav.bidrag.sivilstand.dto.Sivilstand
-import no.nav.bidrag.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilsynGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDto
@@ -432,7 +432,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
         }
     }
 
-    if (!UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_SAKER.isEnabled) {
+    if (!UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_SAKER.isEnabled) {
         val sakerBp =
             hentAlleSaker(bidragspliktig!!.ident).filter {
                 it.saksnummer.verdi != saksnummer &&
@@ -446,7 +446,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
                 .distinct()
 
         if (sakerBp.isNotEmpty() && barnIAndreSaker.isNotEmpty()) {
-            return "Kan ikke fatte vedtak når BP har flere saker"
+            return "Kan ikke behandle eller fatte vedtak når BP har flere saker"
         }
         val harPrivatAvtaleAndreBarnAndreSaker =
             sakerBp.filter { it.saksnummer.verdi != saksnummer }.any {

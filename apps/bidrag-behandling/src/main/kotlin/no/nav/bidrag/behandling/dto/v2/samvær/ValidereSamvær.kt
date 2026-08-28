@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
+import no.nav.bidrag.behandling.dto.v1.behandling.RolleDto
 import no.nav.bidrag.behandling.dto.v2.felles.OverlappendePeriode
+import no.nav.bidrag.behandling.transformers.behandling.tilDto
 import no.nav.bidrag.behandling.transformers.finnHullIPerioder
 import no.nav.bidrag.behandling.transformers.finnOverlappendePerioder
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
@@ -24,8 +26,7 @@ import java.time.LocalDate
 
 data class SamværValideringsfeilDto(
     val samværId: Long,
-    @JsonIgnore
-    val gjelderRolle: Rolle,
+    val gjelderRolle: RolleDto,
     val manglerBegrunnelse: Boolean = false,
     val ingenLøpendeSamvær: Boolean = false,
     val manglerSamvær: Boolean = false,
@@ -57,11 +58,11 @@ fun Samvær.mapValideringsfeil(): SamværValideringsfeilDto {
     val perioder = perioder
     val opphørsdato = rolle.opphørsdato
     if (rolle.avslag != null) {
-        return SamværValideringsfeilDto(id!!, rolle)
+        return SamværValideringsfeilDto(id!!, rolle.tilDto())
     }
     return SamværValideringsfeilDto(
         samværId = id!!,
-        gjelderRolle = rolle,
+        gjelderRolle = rolle.tilDto(),
         manglerBegrunnelse = if (behandling.erKlageEllerOmgjøring) false else notatSæmvær?.innhold.isNullOrBlank(),
         ingenLøpendeSamvær =
         (opphørsdato == null || opphørsdato.opphørSisteTilDato().isAfter(LocalDate.now().sluttenAvForrigeMåned)) &&

@@ -1,0 +1,63 @@
+[
+  {
+    "referanse": "innhentet_valutakurs_grunnlag",
+    "type": "VALUTAKURS_GRUNNLAG",
+    "innhold": {
+      "valutakursListe": [
+        {
+          "valutakode1": "NOK",
+          "valutakode2": "SEK",
+          "valutakurs": 0.92
+        },
+        {
+          "valutakode1": "SEK",
+          "valutakode2": "NOK",
+          "valutakurs": 1.09
+        },
+        {
+          "valutakode1": "NOK",
+          "valutakode2": "DKK",
+          "valutakurs": 0.65
+        },
+        {
+          "valutakode1": "DKK",
+          "valutakode2": "NOK",
+          "valutakurs": 1.53
+        },
+        {
+          "valutakode1": "NOK",
+          "valutakode2": "EUR",
+          "valutakurs": 0.087
+        },
+        {
+          "valutakode1": "EUR",
+          "valutakode2": "NOK",
+          "valutakurs": 11.45
+        },
+        {
+          "valutakode1": "NOK",
+          "valutakode2": "GBP",
+          "valutakurs": 0.076
+        },
+        {
+          "valutakode1": "GBP",
+          "valutakode2": "NOK",
+          "valutakurs": 13.21
+        },
+        {
+          "valutakode1": "NOK",
+          "valutakode2": "USD",
+          "valutakurs": 0.1
+        },
+        {
+          "valutakode1": "USD",
+          "valutakode2": "NOK",
+          "valutakurs": 9.6
+        }
+      ]
+    },
+    "grunnlagsreferanseListe": [],
+    "gjelderReferanse": null,
+    "gjelderBarnReferanse": null
+  }
+]

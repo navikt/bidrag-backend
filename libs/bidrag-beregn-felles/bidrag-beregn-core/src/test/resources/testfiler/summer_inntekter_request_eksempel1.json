@@ -1,0 +1,123 @@
+{
+  "periode": {
+    "fom": "2023-01",
+    "til": "2023-07"
+  },
+  "barnListe": [
+    {
+      "ident": "{FNR_BARN1}"
+    },
+    {
+      "ident": "{FNR_BARN2}"
+    }
+  ],
+  "gjelderIdent": "99999999999",
+  "grunnlagListe": [
+    {
+      "periode": {
+        "fom": "2023-01",
+        "til": "2023-07"
+      },
+      "inntektsrapportering": "AINNTEKT",
+      "inntektGjelderBarnIdent": null,
+      "beløp": 160000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-01",
+        "til": "2023-04"
+      },
+      "inntektsrapportering": "PENSJON",
+      "inntektGjelderBarnIdent": null,
+      "beløp": 100000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-02",
+        "til": "2023-05"
+      },
+      "inntektsrapportering": "KAPITALINNTEKT",
+      "inntektGjelderBarnIdent": null,
+      "beløp": -15000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-05",
+        "til": "2023-07"
+      },
+      "inntektsrapportering": "KAPITALINNTEKT_EGNE_OPPLYSNINGER",
+      "inntektGjelderBarnIdent": null,
+      "beløp": 80000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-01",
+        "til": "2023-03"
+      },
+      "inntektsrapportering": "KONTANTSTØTTE",
+      "inntektGjelderBarn":   {
+        "ident": "{FNR_BARN1}"
+      },
+      "beløp": 10000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-02",
+        "til": "2023-06"
+      },
+      "inntektsrapportering": "BARNETILLEGG",
+      "inntektGjelderBarn":   {
+        "ident": "{FNR_BARN2}"
+      },
+      "beløp": 6000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-03",
+        "til": "2023-04"
+      },
+      "inntektsrapportering": "BARNETILLEGG",
+      "inntektGjelderBarn":   {
+        "ident": "{FNR_BARN1}"
+      },
+      "beløp": 9000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-01",
+        "til": "2023-07"
+      },
+      "inntektsrapportering": "UTVIDET_BARNETRYGD",
+      "inntektGjelderBarn": null,
+      "beløp": 15000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-06",
+        "til": "2023-07"
+      },
+      "inntektsrapportering": "SMÅBARNSTILLEGG",
+      "inntektGjelderBarn": null,
+      "beløp": 20000,
+      "inntektEiesAvIdent": "99999999999"
+    },
+    {
+      "periode": {
+        "fom": "2023-02",
+        "til": "2023-05"
+      },
+      "inntektsrapportering": "YTELSE_FRA_OFFENTLIG_MANUELT_BEREGNET",
+      "inntektGjelderBarn": null,
+      "beløp": 70000,
+      "inntektEiesAvIdent": "99999999999"
+    }
+  ]
+}

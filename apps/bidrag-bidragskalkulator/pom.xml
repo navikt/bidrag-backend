@@ -61,7 +61,7 @@
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-beregn-barnebidrag</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>
@@ -75,8 +75,8 @@
     </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
-      <artifactId>bidrag-inntekt</artifactId>
-      <version>${bidrag-beregn-felles.version}</version>
+      <artifactId>bidrag-beregn-inntekt</artifactId>
+      <version>${project.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.google.errorprone</groupId>

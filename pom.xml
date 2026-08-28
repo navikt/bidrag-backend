@@ -27,6 +27,16 @@
         <module>libs/bidrag-felles/bidrag-commons</module>
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-core</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-forskudd</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-boforhold</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-inntekt</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-sivilstand</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-særbidrag</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-vedtak</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag</module>
+        <module>libs/bidrag-beregn-felles/bidrag-beregn-debug-app</module>
         <module>apps/bidrag-regnskap</module>
         <module>apps/bidrag-aktoerregister</module>
         <module>apps/bidrag-arbeidsflyt</module>
@@ -60,7 +70,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Nav moduler -->
-        <bidrag-beregn-felles.version>2026.08.21.075458</bidrag-beregn-felles.version>
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>
 
@@ -97,6 +106,7 @@
         <!-- Test-versjoner -->
         <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
         <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
+        <wiremock-jre8.version>3.0.1</wiremock-jre8.version>
         <springmockk.version>5.0.1</springmockk.version>
         <mockk.version>1.14.11</mockk.version>
         <mockito-kotlin.version>6.3.0</mockito-kotlin.version>
@@ -163,12 +173,12 @@
 
     <repositories>
         <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/navikt/bidrag-felles</url>
-        </repository>
-        <repository>
             <id>confluent</id>
             <url>https://packages.confluent.io/maven/</url>
+        </repository>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/navikt/token-support</url>
         </repository>
     </repositories>
 
@@ -200,12 +210,6 @@
                     <value>true</value>
                 </property>
             </activation>
-            <repositories>
-                <repository>
-                    <id>github</id>
-                    <url>https://maven.pkg.github.com/navikt/bidrag-felles</url>
-                </repository>
-            </repositories>
         </profile>
     </profiles>
 
