@@ -26,7 +26,7 @@ public class BidragPersonConsumer {
   @Cacheable(PERSON_CACHE)
   public Optional<PersonDto> hentPerson(String id) {
     var personResponse =
-        restTemplate.exchange(String.format(BidragPerson.HENT_PERSON_INFO_URL, id),
+        restTemplate.exchange(BidragPerson.HENT_PERSON_INFO_URL,
         HttpMethod.POST,
         new HttpEntity<>(new PersonRequest(new Personident(id))),
         PersonDto.class);

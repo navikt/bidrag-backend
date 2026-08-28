@@ -48,9 +48,8 @@ class EnhetsregisterConsumer(
     }
 
     private fun byggEregUrl(request: HentEnhetsregisterRequest): String {
-        // Valideres og saneres for å hindre SSRF via ugyldige verdier i URL-en.
-        val organisasjonsnummer = request.organisasjonsnummer
-        require(organisasjonsnummer.matches(Regex("\\d+"))) { "Ugyldig organisasjonsnummer: $organisasjonsnummer" }
+        val organisasjonsnummer = Regex("\\d+").matchEntire(request.organisasjonsnummer)?.value
+            ?: throw IllegalArgumentException("Ugyldig organisasjonsnummer: ${request.organisasjonsnummer}")
         val url = "v2/organisasjon/$organisasjonsnummer/noekkelinfo"
 
         val gyldigDato = request.gyldigDato
