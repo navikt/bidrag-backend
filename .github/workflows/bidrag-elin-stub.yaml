@@ -18,7 +18,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - 'pom.xml'
       - 'libs/bidrag-felles/**'

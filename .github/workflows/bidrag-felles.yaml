@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - 'libs/bidrag-felles/**'
   workflow_dispatch:
