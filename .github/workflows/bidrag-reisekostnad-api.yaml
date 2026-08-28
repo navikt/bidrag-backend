@@ -18,8 +18,13 @@ on:
         default: false
   push:
     branches:
-      - '**'
-      - '!dependabot/**'
+      - 'main'
+    paths:
+      - 'pom.xml'
+      - 'libs/bidrag-felles/**'
+      - '.nais/bidrag-reisekostnad-api/**.yaml'
+      - 'apps/bidrag-reisekostnad-api/**'
+  pull_request:
     paths:
       - 'pom.xml'
       - 'libs/bidrag-felles/**'
@@ -44,7 +49,7 @@ jobs:
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
     needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
+    if: needs.detect_changes.outputs.changed == 'true'
     permissions:
       contents: "write"
       id-token: "write"
