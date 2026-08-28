@@ -4,8 +4,9 @@ steps:
     args:
       - 'build'
       - '-t'
-      - '-f', 'util/postgres-auditlog/Dockerfile',
       - '${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/bidrag-cloudfunctions/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '-f'
+      - 'util/postgres-auditlog/Dockerfile'
       - '.'
     id: Build image
 
