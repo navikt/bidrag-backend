@@ -61,7 +61,7 @@ class DokumentController(private val dokumentService: DokumentService) {
 
     @RequestMapping(
         value = ["/dokument/{journalpostId}/{dokumentreferanse}", "/dokument/{journalpostId}", "/dokumentreferanse/{dokumentreferanse}"],
-        method = [RequestMethod.OPTIONS],
+        method = [RequestMethod.OPTIONS, RequestMethod.GET],
     )
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],

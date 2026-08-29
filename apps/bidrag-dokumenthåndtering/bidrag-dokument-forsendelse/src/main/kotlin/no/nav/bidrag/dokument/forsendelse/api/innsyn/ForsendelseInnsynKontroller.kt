@@ -62,11 +62,11 @@ class ForsendelseInnsynKontroller(
         @PathVariable saksnummer: String,
     ): List<ForsendelseResponsTo> = forsendelseInnsynService.hentForsendelseForSak(saksnummer)
 
-    @RequestMapping("/dokumentmaler", method = [RequestMethod.OPTIONS])
+    @RequestMapping("/dokumentmaler", method = [RequestMethod.OPTIONS, RequestMethod.GET])
     @Operation(description = "Henter dokumentmaler som er støttet av applikasjonen")
     fun støttedeDokumentmaler(): List<String> = bidragDokumentBestillingConsumer.støttedeDokumentmaler()
 
-    @RequestMapping("/dokumentmaler/detaljer", method = [RequestMethod.OPTIONS])
+    @RequestMapping("/dokumentmaler/detaljer", method = [RequestMethod.OPTIONS, RequestMethod.GET])
     @Operation(description = "Henter dokumentmaler som er støttet av applikasjonen")
     fun støttedeDokumentmalDetaljer(): Map<String, DokumentMalDetaljer> = bidragDokumentBestillingConsumer.dokumentmalDetaljer()
 
