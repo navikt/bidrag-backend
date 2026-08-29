@@ -37,6 +37,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto.UnderholdskostnadPeriodeBeregningsdetaljer
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.erForholdsmessigFordeling
+import no.nav.bidrag.behandling.service.harTilgangSak
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
@@ -506,7 +507,6 @@ private fun ResultatBidragsberegningBarn.byggPerioderForBarn(
     )
 } else {
     resultat.beregnetBarnebidragPeriodeListe
-        .parallelStream()
         .map {
             val periodeAvslagskode = if (it.resultat.beløp == null) avslagskode else null
             grunnlagsListe
@@ -2114,7 +2114,9 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
 
 fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
     bidragTilFordeling: List<InnholdMedReferanse<DelberegningBidragTilFordelingLøpendeBidrag>>,
+    harTilgangSak: (String) -> Boolean = ::harTilgangSak,
 ): List<ForholdsmessigFordelingBidragTilFordelingBarn> {
+    val tilgangPerSak = mutableMapOf<String, Boolean>()
     return bidragTilFordeling.mapNotNull {
         val barn = hentPersonMedReferanse(it.gjelderBarnReferanse!!)!!.personObjekt
         val grunnlagSamværsfradrag =
@@ -2143,6 +2145,8 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
                 ?.valutakursListe
                 ?.find { vl -> vl.valutakode1 == it.innhold.valutakode && vl.valutakode2 == Valutakode.NOK }
                 ?.valutakurs ?: BigDecimal.ONE
+        val saksnummer = løpendeBidrag.saksnummer
+        val harTilgangTilSak = tilgangPerSak.getOrPut(saksnummer.verdi) { harTilgangSak(saksnummer.verdi) }
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = !it.innhold.erNorskBidrag,
             oppfostringsbidrag = it.innhold.erOppfostringsbidrag,
@@ -2150,23 +2154,26 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
             erSøknadsbarn = false,
             stønadstype = løpendeBidrag.stønadstype,
             bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
-            barn =
-            PersoninfoDto(
-                ident = barn.ident,
-                fødselsdato = barn.fødselsdato,
-                navn = barn.navn,
-                erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
-            ),
+            barn = if (harTilgangTilSak) {
+                PersoninfoDto(
+                    ident = barn.ident,
+                    fødselsdato = barn.fødselsdato,
+                    navn = barn.navn,
+                    erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                )
+            } else {
+                PersoninfoDto(ident = null, fødselsdato = null, navn = "Ingen tilgang", erRevurderingsbarn = false)
+            },
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
-                saksnummer = løpendeBidrag.saksnummer,
+                saksnummer = if (harTilgangTilSak) saksnummer else Saksnummer(""),
                 samværsklasse = løpendeBidrag.samværsklasse ?: Samværsklasse.SAMVÆRSKLASSE_0,
                 løpendeBeløp = løpendeBidrag.løpendeBeløp,
                 faktiskBeløp = løpendeBidrag.faktiskBeløp,
                 stønadstype = løpendeBidrag.stønadstype,
                 beregnetBidrag = it.innhold.bidragTilFordelingNOK,
-                vedtaksid = løpendeBidrag.vedtaksid,
+                vedtaksid = if (harTilgangTilSak) løpendeBidrag.vedtaksid else null,
                 bidragJustertForNettoBarnetilleggBP = løpendeBidrag.bidragJustertForNettoBarnetilleggBP,
                 bruttoBidragEtterBarnetilleggBM = løpendeBidrag.bruttoBidragEtterBarnetilleggBM,
                 bruttoBidragEtterBarnetilleggBP = løpendeBidrag.bruttoBidragEtterBarnetilleggBP,

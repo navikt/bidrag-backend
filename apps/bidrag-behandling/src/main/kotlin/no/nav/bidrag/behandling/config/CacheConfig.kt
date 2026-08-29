@@ -35,7 +35,8 @@ class CacheConfig {
         const val SAK_CACHE = "SAK_CACHE"
         const val SAK_PERSON_CACHE = "SAK_PERSON_CACHE"
         const val TILGANG_TEMA_CACHE = "TILGANG_TEMA_CACHE"
-        const val TILGANG_PERSON_I_SAK_CACHE = "TILGANG_SAK_CACHE"
+        const val TILGANG_SAK_CACHE = "TILGANG_SAK_CACHE"
+        const val TILGANG_PERSON_I_SAK_CACHE = "TILGANG_PERSON_I_SAK_CACHE"
         const val PERSON_HAR_BESKYTTELSE = "PERSON_HAR_BESKYTTELSE"
     }
 
@@ -66,6 +67,7 @@ class CacheConfig {
             STØNAD_HISTORIKK_CACHE_2,
             Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.SECONDS).build(),
         )
+        caffeineCacheManager.registerCustomCache(TILGANG_SAK_CACHE, Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build())
         caffeineCacheManager.registerCustomCache(TILGANG_TEMA_CACHE, Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build())
         caffeineCacheManager.registerCustomCache(BBM_BEREGNING_CACHE, Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build())
         caffeineCacheManager.registerCustomCache(
