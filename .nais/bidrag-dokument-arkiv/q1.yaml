@@ -11,6 +11,12 @@ azure:
       - application: bidrag-ui-feature
         namespace: bidrag
         cluster: dev-fss
+      - application: bidrag-frontend-q1
+        namespace: bidrag
+        cluster: dev-gcp
+      - application: bidrag-localauth
+        namespace: bidrag
+        cluster: dev-gcp
 ingresses:
   - https://bidrag-dokument-arkiv-feature.intern.dev.nav.no
 kafka:
