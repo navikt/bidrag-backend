@@ -60,14 +60,14 @@ class DokumentController(private val dokumentService: DokumentService) {
     }
 
     @RequestMapping(
-        value = ["/dokument/{journalpostId}/{dokumentreferanse}", "/dokument/{journalpostId}", "/dokumentreferanse/{dokumentreferanse}"],
-        method = [RequestMethod.OPTIONS],
+        value = ["/dokument/metadata/{journalpostId}/{dokumentreferanse}", "/dokument/metadata/{journalpostId}", "/dokumentreferanse/metadata/{dokumentreferanse}"],
+        method = [RequestMethod.GET],
     )
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Henter dokument for journalpostid og dokumentreferanse. ",
     )
-    fun hentDokumentMetadata(
+    fun hentDokumentMetadataV2(
         @PathVariable(required = false) journalpostId: String?,
         @PathVariable(required = false) dokumentreferanse: String?,
     ): ResponseEntity<List<DokumentMetadata>> {
@@ -99,4 +99,18 @@ class DokumentController(private val dokumentService: DokumentService) {
             )
         }
     }
+
+    @RequestMapping(
+        value = ["/dokument/{journalpostId}/{dokumentreferanse}", "/dokument/{journalpostId}", "/dokumentreferanse/{dokumentreferanse}"],
+        method = [RequestMethod.OPTIONS],
+    )
+    @Operation(
+        security = [SecurityRequirement(name = "bearer-key")],
+        summary = "Henter dokument for journalpostid og dokumentreferanse. ",
+        deprecated = true,
+    )
+    fun hentDokumentMetadata(
+        @PathVariable(required = false) journalpostId: String?,
+        @PathVariable(required = false) dokumentreferanse: String?,
+    ): ResponseEntity<List<DokumentMetadata>> = hentDokumentMetadataV2(journalpostId, dokumentreferanse)
 }
