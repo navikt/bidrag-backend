@@ -158,7 +158,7 @@ class ForholdsmessigFordelingService(
             }
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
-            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling).løpendeBidragBarn
+            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
             if (behandling.erKlageEllerOmgjøring) {
                 klageService.opprettSøknaderForKlageEllerOmgjøring(
                     behandling,
@@ -486,7 +486,7 @@ class ForholdsmessigFordelingService(
         // Feilhåndtering hvis opprettelse av FF feilet
         if (behandling.metadata?.getOpprettelseEllerOppdateringAvFFFeilet() == true) {
             oppdaterFFDetaljerPåSøknadsbarn(behandling, emptySet(), emptyList(), null)
-            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling).løpendeBidragBarn
+            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
             val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling)
             overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
             syncGebyrSøknadReferanse(behandling)
@@ -919,7 +919,7 @@ class ForholdsmessigFordelingService(
                         lb.løperBidragEtterDato(alleRelevanteKravhavere.finnSøktFomRevurderingSøknad(behandling).toYearMonth()),
                     )
                 }
-        val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling)
+        val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = true)
         return SjekkForholdmessigFordelingResponse(
             søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
             skalBehandlesAvEnhet = behandlesAvEnhet,
@@ -957,7 +957,7 @@ class ForholdsmessigFordelingService(
         return harLøpendeBidragForBarnIkkeIBehandling(behandling)
     }
 
-    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling): FFBeregningResultat = try {
+    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling, maskerSensitivInfo: Boolean = false): FFBeregningResultat = try {
         val resultat =
             try {
                 beregningService.beregneBidrag(behandling, true, simulerBeregning = true)
@@ -988,7 +988,7 @@ class ForholdsmessigFordelingService(
         val lagretLøpendeBidragBarnIdenter = lagretLøpendeBidrag.map { it.gjelderBarnIdent to it.gjelderStønadstype }
         val løpendeBidragBarn =
             grunnlagsliste
-                .mapTilBeregnetBidragDto(løpendeBidrag)
+                .mapTilBeregnetBidragDto(løpendeBidrag, maskerSensitivInfo)
                 .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident?.verdi to it.stønadstype) }
                 .groupBy { it.barn.ident?.verdi to it.stønadstype }
                 .map { (identStønad, løpendeBidrag) ->

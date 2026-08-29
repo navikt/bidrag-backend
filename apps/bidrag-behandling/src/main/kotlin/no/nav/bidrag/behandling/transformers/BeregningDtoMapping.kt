@@ -2114,6 +2114,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
 
 fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
     bidragTilFordeling: List<InnholdMedReferanse<DelberegningBidragTilFordelingLøpendeBidrag>>,
+    maskerSensitivInfo: Boolean = true,
     harTilgangSak: (String) -> Boolean = ::harTilgangSak,
 ): List<ForholdsmessigFordelingBidragTilFordelingBarn> {
     val tilgangPerSak = mutableMapOf<String, Boolean>()
@@ -2146,7 +2147,8 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
                 ?.find { vl -> vl.valutakode1 == it.innhold.valutakode && vl.valutakode2 == Valutakode.NOK }
                 ?.valutakurs ?: BigDecimal.ONE
         val saksnummer = løpendeBidrag.saksnummer
-        val harTilgangTilSak = tilgangPerSak.getOrPut(saksnummer.verdi) { harTilgangSak(saksnummer.verdi) }
+        // Når FF opprettes så skal ikke sensitiv info maskeres. Det er bare når det returneres i respons til frontend det må maskeres
+        val harTilgangTilSak = !maskerSensitivInfo || tilgangPerSak.getOrPut(saksnummer.verdi) { harTilgangSak(saksnummer.verdi) }
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = !it.innhold.erNorskBidrag,
             oppfostringsbidrag = it.innhold.erOppfostringsbidrag,
