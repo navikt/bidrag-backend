@@ -989,11 +989,11 @@ class ForholdsmessigFordelingService(
         val løpendeBidragBarn =
             grunnlagsliste
                 .mapTilBeregnetBidragDto(løpendeBidrag)
-                .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident!!.verdi to it.stønadstype) }
-                .groupBy { it.barn.ident!!.verdi to it.stønadstype }
+                .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident?.verdi to it.stønadstype) }
+                .groupBy { it.barn.ident?.verdi to it.stønadstype }
                 .map { (identStønad, løpendeBidrag) ->
                     LøpendeBidragGrunnlagForholdsmessigFordeling(
-                        identStønad.first,
+                        identStønad.first ?: "",
                         identStønad.second,
                         løpendeBidrag.mapNotNull { it.beregnetBidrag },
                     )
