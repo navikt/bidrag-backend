@@ -46,7 +46,16 @@ class ForholdsmessigFordelingOverføringService(
     ) {
         if (behandlerEnhet == behandling.behandlerEnhet) return
         behandling.behandlerEnhet = behandlerEnhet
-        oppdaterSakOgSøknadBehandlerEnhet(behandling.saksnummer, behandling.soknadsid!!, behandlerEnhet)
+        behandling.forholdsmessigFordeling?.overførtTilEnhet = behandlerEnhet
+        behandling.søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
+            .groupBy { it.saksnummer }
+            .filterNot { it.value.isEmpty() }
+            .forEach { (saksnummer, søknader) ->
+                sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(saksnummer!!, behandlerEnhet))
+                søknader.forEach {
+                    bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(it.søknadsid!!, behandlerEnhet))
+                }
+            }
     }
 
     /**

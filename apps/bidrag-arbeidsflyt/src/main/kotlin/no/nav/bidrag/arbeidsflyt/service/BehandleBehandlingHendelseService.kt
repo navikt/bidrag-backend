@@ -132,23 +132,44 @@ class BehandleBehandlingHendelseService(
             if (erBehandlingAvsluttet(hendelse)) return
             val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) } ?: return
             if (behandlingDetaljer.forholdsmessigFordeling != null && behandling.oppgaverOverførtEtterFFOpprettet == null) {
-                val ff = behandlingDetaljer.forholdsmessigFordeling
-                val søknader =
-                    hendelse.barn
-                        .filter { it.søknadsid != null }
-                        .filter { !erAvsluttet(it.søknadsid) }
-                søknader.forEach { søknad ->
-                    val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
-                    secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
-                    oppgave.dataForHendelse
-                        .filter { !it.erStatusKategoriAvsluttet }
-                        .filter { it.tilordnetRessurs != ff.opprettetAvSaksbehandler }
-                        .forEach {
-                            secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler ${ff.opprettetAvSaksbehandler} etter FF ble opprettet." }
-                            oppgaveService
-                                .overforOppgave(it, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet)
-                        }
+                if (behandlingDetaljer.forholdsmessigFordeling.overførtTilEnhet != null) {
+                    val ff = behandlingDetaljer.forholdsmessigFordeling
+                    val søknader =
+                        hendelse.barn
+                            .filter { it.søknadsid != null }
+                            .filter { !erAvsluttet(it.søknadsid) }
+                    søknader.forEach { søknad ->
+                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
+                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
+                        oppgave.dataForHendelse
+                            .filter { !it.erStatusKategoriAvsluttet }
+                            .filter { it.tildeltEnhetsnr != ff.overførtTilEnhet }
+                            .forEach {
+                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til enhet ${ff.overførtTilEnhet} etter FF ble opprettet." }
+                                oppgaveService
+                                    .overforOppgave(it, null, ff.overførtTilEnhet)
+                            }
+                    }
+                } else {
+                    val ff = behandlingDetaljer.forholdsmessigFordeling
+                    val søknader =
+                        hendelse.barn
+                            .filter { it.søknadsid != null }
+                            .filter { !erAvsluttet(it.søknadsid) }
+                    søknader.forEach { søknad ->
+                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
+                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
+                        oppgave.dataForHendelse
+                            .filter { !it.erStatusKategoriAvsluttet }
+                            .filter { it.tilordnetRessurs != ff.opprettetAvSaksbehandler }
+                            .forEach {
+                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler ${ff.opprettetAvSaksbehandler} etter FF ble opprettet." }
+                                oppgaveService
+                                    .overforOppgave(it, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet)
+                            }
+                    }
                 }
+
                 // Forsikre at oppgaver ikke overføres flere ganger hvis feks SB manuelt overfører til en annen
                 behandling.oppgaverOverførtEtterFFOpprettet = LocalDateTime.now()
             }
