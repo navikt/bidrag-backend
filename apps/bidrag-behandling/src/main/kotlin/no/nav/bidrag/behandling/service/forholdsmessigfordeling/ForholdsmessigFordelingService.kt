@@ -41,6 +41,7 @@ import no.nav.bidrag.behandling.transformers.mapTilBeregnetBidragDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
 import no.nav.bidrag.behandling.ugyldigForespørsel
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
 import no.nav.bidrag.commons.util.secureLogger
@@ -411,15 +412,17 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {
-        kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
-        grunnlagService.oppdatereGrunnlagForBehandling(behandling)
-        oppdaterBehandlingEtterOppdatertRoller(
-            behandling,
-            underholdService,
-            virkningstidspunktService,
-            behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
-            emptyList(),
-        )
+        SikkerhetsKontekst.medApplikasjonKontekst {
+            kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
+            grunnlagService.oppdatereGrunnlagForBehandling(behandling)
+            oppdaterBehandlingEtterOppdatertRoller(
+                behandling,
+                underholdService,
+                virkningstidspunktService,
+                behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
+                emptyList(),
+            )
+        }
     }
 
     private fun foretaNySynkroniseringAvFF(
