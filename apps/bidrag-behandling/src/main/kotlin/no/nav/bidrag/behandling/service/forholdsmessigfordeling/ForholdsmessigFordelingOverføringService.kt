@@ -46,7 +46,9 @@ class ForholdsmessigFordelingOverføringService(
     ) {
         if (behandlerEnhet == behandling.behandlerEnhet) return
         behandling.behandlerEnhet = behandlerEnhet
-        behandling.forholdsmessigFordeling?.overførtTilEnhet = behandlerEnhet
+        behandling.forholdsmessigFordeling = behandling.forholdsmessigFordeling!!.copy(
+            overførtTilEnhet = behandlerEnhet,
+        )
         behandling.søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
             .groupBy { it.saksnummer }
             .filterNot { it.value.isEmpty() }
