@@ -93,6 +93,8 @@ class BehandleBehandlingHendelseService(
         if (!UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE.isEnabled) {
             secureLogger.info { "Behandling av hendelse er skrudd av. Lagrer behandling uten å opprette eller slette oppgaver" }
         }
+        val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
+        val overførtTilEnhet = behandlingDetaljer?.forholdsmessigFordeling?.overførtTilEnhet
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
             val saksnummer = saksnummerSøknadPair.first
@@ -111,9 +113,9 @@ class BehandleBehandlingHendelseService(
                     ).dataForHendelse
             secureLogger.info { "Fant ${åpneOppgaver.size} åpne søknadsoppgaver for sak $saksnummer og søknadsid $søknadsid og behandlingsid = ${hendelse.behandlingsid}" }
             oppdaterNormDatoOgMottattdato(hendelse, behandling, førsteBarn)
-            if (kreverOppgave && åpneOppgaver.isEmpty() && UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE.isEnabled && !sjekkOglukkÅpneOppgaver) {
-                opprettOppgave(behandling, førsteBarn, hendelse)
-            } else if (!kreverOppgave && UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE.isEnabled) {
+            if (kreverOppgave && åpneOppgaver.isEmpty() && !sjekkOglukkÅpneOppgaver) {
+                opprettOppgave(behandling, førsteBarn, hendelse, overførtTilEnhet)
+            } else if (!kreverOppgave) {
                 ferdigstillOppgaver(åpneOppgaver, hendelse)
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
@@ -234,6 +236,7 @@ class BehandleBehandlingHendelseService(
         behandling: Behandling,
         barn: BehandlingHendelseBarn,
         hendelse: BehandlingHendelse,
+        overførtTilEnhet: String?,
     ): OppgaveData {
         val oppgave =
             oppgaveService.opprettOppgave(
@@ -242,12 +245,13 @@ class BehandleBehandlingHendelseService(
                     saksreferanse = barn.saksnummer,
                     innhold = opprettOppgaveBeskrivelse(barn),
                     frist = finnFristForSøknadsgruppe(behandling, barn),
-                    tildeltEnhetsnr = hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
+                    tildeltEnhetsnr = overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
                     tema = finnFagområdeForSøknad(barn.stønadstype),
                     oppgavetype = finnOppgavetypeForStønadstype(barn.behandlingstema),
                     søknadsid = barn.søknadsid,
                     behandlingsid = hendelse.behandlingsid,
                     sporingsdata = hendelse.sporingsdata,
+                    overførtTilEnhet = overførtTilEnhet,
                 ),
             )
         val oppgaveDetaljer = behandling.oppgave ?: BehandlingOppgave(oppgaver = setOf())

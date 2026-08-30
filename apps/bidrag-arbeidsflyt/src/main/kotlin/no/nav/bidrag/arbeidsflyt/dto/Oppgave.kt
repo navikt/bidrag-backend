@@ -333,6 +333,7 @@ class OpprettSøknadsoppgaveRequest(
     søknadsid: Long?,
     behandlingsid: Long?,
     innhold: String,
+    overførtTilEnhet: String?,
     frist: LocalDate,
     sporingsdata: Sporingsdata,
     override var saksreferanse: String,
@@ -358,7 +359,7 @@ class OpprettSøknadsoppgaveRequest(
         opprettetAvEnhetsnr = sporingsdata.enhetsnummer ?: "9999"
         fristFerdigstillelse = formatterDatoForOppgave(frist)
         tilordnetRessurs =
-            if (sporingsdataAdjusted.brukerident != "bisys" && (sporingsdataAdjusted.enhetsnummer == null || tildeltEnhetsnr == sporingsdataAdjusted.enhetsnummer)) {
+            if (overførtTilEnhet == null && sporingsdataAdjusted.brukerident != "bisys" && (sporingsdataAdjusted.enhetsnummer == null || tildeltEnhetsnr == sporingsdataAdjusted.enhetsnummer)) {
                 sporingsdataAdjusted.brukerident
             } else {
                 null
