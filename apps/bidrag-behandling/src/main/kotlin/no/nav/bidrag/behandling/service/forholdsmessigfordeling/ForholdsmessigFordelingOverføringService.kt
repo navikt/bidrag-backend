@@ -49,14 +49,15 @@ class ForholdsmessigFordelingOverføringService(
         behandling.forholdsmessigFordeling = behandling.forholdsmessigFordeling!!.copy(
             overførtTilEnhet = behandlerEnhet,
         )
+
+        behandling.søknadsbarn.mapNotNull { it.forholdsmessigFordeling?.tilhørerSak }.distinct()
+            .forEach {
+                sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(it, behandlerEnhet))
+            }
+
         behandling.søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
-            .groupBy { it.saksnummer }
-            .filterNot { it.value.isEmpty() }
-            .forEach { (saksnummer, søknader) ->
-                sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(saksnummer!!, behandlerEnhet))
-                søknader.forEach {
-                    bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(it.søknadsid!!, behandlerEnhet))
-                }
+            .forEach { søknad ->
+                bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknad.søknadsid!!, behandlerEnhet))
             }
     }
 
