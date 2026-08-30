@@ -134,6 +134,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonMaksTilsynPerio
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
 import no.nav.bidrag.transport.behandling.felles.grunnlag.TilleggsstønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.TilsynsutgiftBarn
@@ -1738,6 +1739,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
 ): ForholdsmessigFordelingBeregningsdetaljer? {
     val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
+    val sluttberegningPeriode = sluttberegning.innholdTilObjekt<SluttberegningBarnebidragV2>().periode
     val sumBidragTilFordelingGrunnlagsliste =
         finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<DelberegningSumBidragTilFordeling>(
             Grunnlagstype.DELBEREGNING_SUM_BIDRAG_TIL_FORDELING,
@@ -1747,7 +1749,18 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
         sumBidragTilFordelingGrunnlagsliste
             .filter {
                 it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
-            }.maxByOrNull { it.innhold.periode.fom }
+            }.maxByOrNull { it.innhold.periode.fom } ?: run {
+            // TODO: Dette er en fallback som egentlig ikke bør skje. Er det en feil i beregningen?
+            val sumBidragTilFordelingGrunnlagsliste =
+                filtrerOgKonverterBasertPåEgenReferanse<DelberegningSumBidragTilFordeling>(
+                    Grunnlagstype.DELBEREGNING_SUM_BIDRAG_TIL_FORDELING,
+                ).filter {
+                    it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
+                }
+            sumBidragTilFordelingGrunnlagsliste.find {
+                it.innhold.periode.inneholder(sluttberegningPeriode)
+            }
+        }
 
     val sumBidragTilBeregning =
         // Hvis lista er lengre enn 1 så betyr det at det er opprettet FF og at det finnes en bidrag til fordeling for sjekk mot beløpshistorikk og en annen del for endelig beregning av R-barn og søknadsbarn
