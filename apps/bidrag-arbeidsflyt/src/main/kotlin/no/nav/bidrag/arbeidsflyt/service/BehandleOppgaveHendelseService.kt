@@ -70,10 +70,8 @@ class BehandleOppgaveHendelseService(
                 .utfor()
             opprettNyJournalforingOppgaveHvisNodvendig(oppgave)
         } else {
-            if (UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE.isEnabled) {
-                overførSøknadsoppgaverTilSammeEnhet(oppgave)
-                opprettSøknadsoppgaveHvisBehandlingIkkeAvsluttet(oppgave)
-            }
+            overførSøknadsoppgaverTilSammeEnhet(oppgave)
+            opprettSøknadsoppgaveHvisBehandlingIkkeAvsluttet(oppgave)
 
             behandlingService.oppdaterStatusPåOppgaverBehandlingTilFerdigstilt(oppgave)
         }
