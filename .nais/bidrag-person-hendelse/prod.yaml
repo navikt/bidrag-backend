@@ -20,6 +20,8 @@ env:
   BIDRAG_PERSON_HOST: bidrag-person.prod-fss-pub.nais.io
   MQ_HOST: mpls04.adeo.no
   MQ_PORT: 1414
+  # TODO: Avro 1.12-whitelist for spesifikke lesere. Bør strammes inn fra "*" til faktiske pakker.
+  AVRO_SERIALIZABLE_PACKAGES: "*"
 database:
   tier: db-custom-1-3840
   navn: person-hendelse-prod

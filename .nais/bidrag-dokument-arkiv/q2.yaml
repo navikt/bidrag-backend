@@ -54,4 +54,6 @@ env:
   DOKDISTKANAL_SCOPE: dev-fss.teamdokumenthandtering.dokdistkanal
   INNSENDING_API_URL: https://innsending-api-gcp.intern.dev.nav.no
   INNSENDING_API_SCOPE: dev-gcp.team-soknad.innsending-api
+  # TODO: Avro 1.12-whitelist for spesifikke lesere. Bør strammes inn fra "*" til faktiske pakker.
+  AVRO_SERIALIZABLE_PACKAGES: "*"
   JAVA_OPTS: -Xmx2500m -Xms2500m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005

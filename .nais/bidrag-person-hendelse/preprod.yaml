@@ -21,6 +21,8 @@ env:
   BIDRAG_PERSON_HOST: bidrag-person-q2.dev-fss-pub.nais.io
   MQ_HOST: b27apvl222.preprod.local
   MQ_PORT: 1413
+  # TODO: Avro 1.12-whitelist for spesifikke lesere. Bør strammes inn fra "*" til faktiske pakker.
+  AVRO_SERIALIZABLE_PACKAGES: "*"
 database:
   tier: db-custom-1-3840
   navn: person-hendelse-preprod
