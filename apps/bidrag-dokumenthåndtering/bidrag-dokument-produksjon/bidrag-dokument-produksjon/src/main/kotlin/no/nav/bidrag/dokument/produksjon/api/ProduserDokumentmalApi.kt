@@ -29,13 +29,6 @@ private val log = KotlinLogging.logger {}
 class ProduserDokumentmalApi(
     val pdfProducerService: PdfProducerService,
 ) {
-    @Bean
-    fun forsideOrkestreringExampleV1(): Example {
-        val example = Example()
-        example.value = Paths.get("data/vedtak/klage_orkestrering.json").readText()
-        example.description = "Vedtak bidrag"
-        return example
-    }
 
     @PostMapping("/pdf/{dokumentmal}")
     @RequestBody(
