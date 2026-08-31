@@ -2,10 +2,12 @@ package no.nav.bidrag.sak.integration
 
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
+import no.nav.bidrag.sak.config.CACHE_SAMMENKNYTNINGER_HOVEDSØKNAD
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component
@@ -31,6 +33,7 @@ class BidragBBMConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
+    @Cacheable(CACHE_SAMMENKNYTNINGER_HOVEDSØKNAD)
     fun finnSammenknytningerHovedsøknad(
         søknadsid: Long,
     ) = postForNonNullEntity<FinnSammenknytningerHovedsøknadResponse>(

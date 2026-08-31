@@ -25,6 +25,7 @@ import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
+import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
@@ -56,7 +57,6 @@ import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
-import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -435,16 +435,9 @@ class BidragSakService(
                     }
 
                 val søknadsid = hendelse.søknad?.id?.toLong()
-                val knytninger = søknadsid?.let {
-                    try {
-                        bbmConsumer.finnSammenknytningerHovedsøknad(it)
-                    } catch (e: Exception) {
-                        secureLogger.error(e) { "Feil ved henting av sammenknytninger for hovedsøknad $it" }
-                        return@let null
-                    }
-                }
+                val knytninger = søknadsid?.let(::hentSammenknytninger)
 
-                val erHovedsøknad = (søknadsid != null && knytninger?.hovedsøknadsid == søknadsid) || knytninger == null
+                val erHovedsøknad = knytninger == null || knytninger.hovedsøknadsid == søknadsid
                 val erDelAvFF = knytninger?.søknader?.isNotEmpty() == true
                 SakshendelseDto(
                     hendelseId = hendelse.hendelseId?.toString(),
@@ -499,4 +492,11 @@ class BidragSakService(
     }
 
     private fun hentFødselsdatoer(opprettSakRequest: OpprettSakRequest): Map<Personident, LocalDate?> = rolleService.validerRollerOgHentFødselsdatoer(opprettSakRequest.roller)
+
+    private fun hentSammenknytninger(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
+        bbmConsumer.finnSammenknytningerHovedsøknad(søknadsid)
+    } catch (e: Exception) {
+        secureLogger.error(e) { "Feil ved henting av sammenknytninger for hovedsøknad $søknadsid" }
+        null
+    }
 }
