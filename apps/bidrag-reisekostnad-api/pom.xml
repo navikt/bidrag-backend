@@ -15,6 +15,15 @@
   <description>Backend for å fordele reisekostnader ved samvær med barn</description>
 
   <properties>
+    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
+    <shedlock.version>7.7.0</shedlock.version>
+    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
+    <mockk.version>1.14.11</mockk.version>
+    <kotest.version>6.2.3</kotest.version>
+    <swagger-annotations.version>2.2.51</swagger-annotations.version>
     <!-- PDF-generering -->
     <apache-pdfbox.version>2.0.35</apache-pdfbox.version>
     <openhtml.version>1.0.10</openhtml.version>

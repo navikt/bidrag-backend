@@ -14,6 +14,12 @@
   <name>bidrag-maskinporten-client</name>
   <description>Utsteder Maskinporten-tokens for test av endepunkter i Team Bidrag</description>
 
+  <properties>
+    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>

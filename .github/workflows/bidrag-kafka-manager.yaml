@@ -11,8 +11,11 @@ on:
           - prod
   push:
     branches:
-      - '**'
-      - '!dependabot/**'
+      - 'main'
+    paths:
+      - '.nais/bidrag-kafka-manager/**.yaml'
+      - 'apps/bidrag-kafka-manager/**'
+  pull_request:
     paths:
       - '.nais/bidrag-kafka-manager/**.yaml'
       - 'apps/bidrag-kafka-manager/**'
@@ -37,7 +40,7 @@ jobs:
   # og deployes den direkte her istedenfor via de gjenbrukbare bygg_og_deploy(-_prod)-workflowene.
   deploy_dev:
     needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true' && ((github.event_name == 'push' && github.ref != 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
+    if: needs.detect_changes.outputs.changed == 'true' && (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev'))
     name: "Build and deploy to dev"
     concurrency:
       group: deploy-kafka-manager-dev-${{ github.ref }}
@@ -58,7 +61,12 @@ jobs:
           docker_context: ./apps/bidrag-kafka-manager
           image_suffix: bidrag-kafka-manager
           tag: bidrag-kafka-manager
+      # Docker-imaget bygges (og pushes til artifact-registryet) uansett, slik at
+      # dependabot-PR-er som bumper base-image i Dockerfilen faktisk får bygge-feedback.
+      # Selve deploy til dev skjer derimot ikke for dependabot, siden det er en reell
+      # endring i et kjørende dev-miljø fra en ennå ikke reviewet PR.
       - name: Deploy to dev-gcp
+        if: github.actor != 'dependabot[bot]'
         uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
         env:
           CLUSTER: dev-gcp

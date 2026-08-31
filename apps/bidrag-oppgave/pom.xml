@@ -15,6 +15,11 @@
     <name>bidrag-oppgave</name>
     <description>Oppgave-tjeneste for team Bidrag</description>
 
+    <properties>
+        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <mock-oauth2-server.version>2.1.10</mock-oauth2-server.version>
+    </properties>
+
     <dependencies>
         <!-- Intern DTO-modul -->
         <dependency>
