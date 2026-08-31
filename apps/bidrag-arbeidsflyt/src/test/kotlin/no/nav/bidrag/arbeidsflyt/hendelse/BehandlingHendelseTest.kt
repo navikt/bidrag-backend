@@ -50,38 +50,6 @@ internal class BehandlingHendelseTest : AbstractBehandleHendelseTest() {
     @Autowired
     lateinit var behandlingRepository: BehandlingRepository
 
-    @BeforeEach
-    fun initUnleash() {
-        enableUnleashFeature(UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE)
-    }
-
-    @Test
-    fun `skal ikke opprette oppgave for behandlinghendelse hvis feature toggle er av`() {
-        val behandlingsid = 123123L
-        disableUnleashFeature(UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE)
-
-        val hendelse = opprettHendelse(behandlingsid)
-        val barnHendelse = hendelse.barn.first()
-        stubHentOppgaveSok(emptyList())
-        stubHentSak(
-            opprettSakForBehandling(barnHendelse),
-        )
-        behandleHendelseService.behandleHendelse(hendelse)
-        val behandling = behandlingRepository.finnForBehandlingId(behandlingsid)
-        behandling.shouldNotBeNull()
-        assertSoftly(behandling) {
-            this.behandlingsid shouldBe behandlingsid
-            søknadsid shouldBe 123
-            status shouldBe BehandlingStatusType.UNDER_BEHANDLING
-            mottattDato shouldBe LocalDate.parse("2020-06-01")
-            enhet shouldBe "4806"
-            barn.shouldNotBeNull()
-            barn!!.barn shouldHaveSize 1
-        }
-        val oppgaveRequest = getOppgaveOpprettRequest()
-        oppgaveRequest.shouldBeNull()
-    }
-
     @Test
     fun `skal opprette oppgave for behandlinghendelse`() {
         val behandlingsid = 123123L

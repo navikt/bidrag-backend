@@ -441,6 +441,8 @@ fun List<Grunnlag>.hentEndringerInntekter(
                             rolle.ident!!,
                             GrunnlagInntektEndringstype.NY,
                             innhentetTidspunkt,
+                            null,
+                            rolle.saksnummer,
                         )
                 val erBeløpEndret =
                     eksisterendeInntekt.belop.nærmesteHeltall != grunnlag.sumInntekt.nærmesteHeltall
@@ -460,6 +462,7 @@ fun List<Grunnlag>.hentEndringerInntekter(
                         GrunnlagInntektEndringstype.ENDRING,
                         innhentetTidspunkt,
                         eksisterendeInntekt,
+                        rolle.saksnummer,
                     )
                 } else {
                     grunnlag.tilIkkeAktivInntektDto(
@@ -467,6 +470,7 @@ fun List<Grunnlag>.hentEndringerInntekter(
                         GrunnlagInntektEndringstype.INGEN_ENDRING,
                         innhentetTidspunkt,
                         eksisterendeInntekt,
+                        rolle.saksnummer,
                     )
                 }
             }?.toSet() ?: emptySet()

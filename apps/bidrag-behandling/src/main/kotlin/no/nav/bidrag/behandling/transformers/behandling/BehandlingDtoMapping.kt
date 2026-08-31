@@ -1779,6 +1779,7 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
             barn = barnDto,
             opprettetAvSaksbehandler = forholdsmessigFordeling?.opprettetAvSaksbehandler,
             opprettetAvEnhet = forholdsmessigFordeling?.oppprettetAvEnhet,
+            overførtTilEnhet = forholdsmessigFordeling?.overførtTilEnhet,
         )
     } else {
         null
