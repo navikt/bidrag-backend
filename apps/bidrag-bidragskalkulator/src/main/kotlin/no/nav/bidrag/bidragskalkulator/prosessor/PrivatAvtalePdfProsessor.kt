@@ -5,6 +5,7 @@ import no.nav.bidrag.bidragskalkulator.utils.PdfUtils
 import no.nav.bidrag.bidragskalkulator.utils.PdfUtils.Companion.convertAllPagesToA4
 import no.nav.bidrag.bidragskalkulator.utils.skalerTilA4
 import no.nav.bidrag.commons.util.secureLogger
+import org.apache.pdfbox.Loader
 import org.apache.pdfbox.io.MemoryUsageSetting
 import org.apache.pdfbox.multipdf.PDFMergerUtility
 import org.apache.pdfbox.pdmodel.PDDocument
@@ -39,7 +40,7 @@ class PrivatAvtalePdfProsessor : PdfProsessor {
         try {
             for (dokument in dokumentBytes) {
                 val tempFile = File.createTempFile("/tmp/${UUID.randomUUID()}", null)
-                PDDocument.load(dokument).use { pdd ->
+                Loader.loadPDF(dokument).use { pdd ->
                     pdd.skalerTilA4()
                     pdd.save(tempFile)
                     tempFiles.add(tempFile)
@@ -48,7 +49,7 @@ class PrivatAvtalePdfProsessor : PdfProsessor {
             }
 
             // TODO: temp file only på sikt. Mulig in memory fører til OOM feil
-            pdfMerger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly())
+            pdfMerger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly().streamCache)
         } catch (e: Exception) {
             logger.error { "Feil ved sammenslåing av PDF-filer: ${e.message}" }
             secureLogger.error(e) { "Feil ved sammenslåing av PDF-filer ${e.message}" }
