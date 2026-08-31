@@ -241,6 +241,6 @@ class BidragBBMConsumer(
         status: SøknadsknytningStatus = SøknadsknytningStatus.Aktiv,
     ) = postForNonNullEntity<FinnSammenknytningerHovedsøknadResponse>(
         bidragBBMUri.pathSegment("finnsammenknytningerhovedsoknad").build().toUri(),
-        FinnSammenknytningerHovedsøknadRequest(søknadsid, status = status),
+        FinnSammenknytningerHovedsøknadRequest(søknadsid, statuser = listOf(status)),
     )
 }

@@ -76,7 +76,7 @@ class TestdataManager(
     @Transactional
     fun hentSøknadsknytningerHovedsøknad(hovedsøknadsid: Long): List<Søknadsknytning> = søknadsknytningRepository.finnSøknadsknytningerHovedsøknad(
         hovedsøknadsid = hovedsøknadsid,
-        status = SøknadsknytningStatus.Aktiv.name,
+        statuser = listOf(SøknadsknytningStatus.Aktiv.name),
     )
 
     @Transactional
@@ -85,7 +85,7 @@ class TestdataManager(
         status: String? = null,
     ): List<Søknadsknytning> = søknadsknytningRepository.finnSøknadsknytningReferertSøknad(
         referertSøknadsid = referertSøknadsid,
-        status = status ?: SøknadsknytningStatus.Aktiv.name,
+        statuser = listOf(status ?: SøknadsknytningStatus.Aktiv.name),
     )
 
     fun rydd() {

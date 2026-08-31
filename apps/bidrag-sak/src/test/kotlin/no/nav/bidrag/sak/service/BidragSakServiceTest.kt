@@ -30,6 +30,7 @@ import no.nav.bidrag.sak.domain.Søknad
 import no.nav.bidrag.sak.domain.Søknadslinje
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.dto.NySakCommandDto
+import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
@@ -63,6 +64,7 @@ internal class BidragSakServiceTest {
     private val cachedKodeverkService: CachedKodeverkService = mockk()
 
     private val rolleService: RolleService = mockk(relaxed = true)
+    private val bbmConsumerMock: BidragBBMConsumer = mockk(relaxed = true)
 
     private val rollehistorikkService: RollehistorikkService = mockk(relaxed = true)
 
@@ -97,6 +99,7 @@ internal class BidragSakServiceTest {
                 hendelseService = hendelseService,
                 identConsumer = identConsumer,
                 opprettSakValidator = opprettSakValidator,
+                bbmConsumer = bbmConsumerMock,
             )
     }
 
