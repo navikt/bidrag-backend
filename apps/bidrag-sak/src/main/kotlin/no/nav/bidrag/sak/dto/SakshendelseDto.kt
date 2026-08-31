@@ -37,7 +37,7 @@ data class SakshendelseDto(
 ) {
     @Suppress("unused")
     val søknadsgruppeBeskrivelse: String?
-        get() = if (erDelAvFF) {
+        get() = if (erDelAvFF && søknadsgruppe?.beskrivelse != null) {
             val postfiks = if (erHovedsøknad) {
                 " (HFF)"
             } else if (type !in listOf(HendelseType.FORHOLDSMESSIG_FORDELING, HendelseType.FORHOLDSMESSIG_FORDELING_KLAGE)) {
@@ -45,7 +45,7 @@ data class SakshendelseDto(
             } else {
                 ""
             }
-            "${søknadsgruppe?.beskrivelse}$postfiks"
+            "${søknadsgruppe.beskrivelse}$postfiks"
         } else {
             søknadsgruppe?.beskrivelse
         }
