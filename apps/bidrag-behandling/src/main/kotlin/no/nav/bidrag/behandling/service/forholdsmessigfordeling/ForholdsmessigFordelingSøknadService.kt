@@ -396,6 +396,7 @@ class ForholdsmessigFordelingSøknadService(
                 søktAvType = SøktAvType.NAV_BIDRAG,
                 behandlingstype = behandling.behandlingstypeForFF,
                 behandlingstema = Behandlingstema.BIDRAG,
+                saksnummer = saksnummer,
             )
         } else {
             val behandlingstema =
@@ -428,6 +429,7 @@ class ForholdsmessigFordelingSøknadService(
                 søknadFomDato = søktFomDato,
                 søknadsid = søknad.søknadsid,
                 enhet = behandling.behandlerEnhet,
+                saksnummer = saksnummer,
             )
         }
     }

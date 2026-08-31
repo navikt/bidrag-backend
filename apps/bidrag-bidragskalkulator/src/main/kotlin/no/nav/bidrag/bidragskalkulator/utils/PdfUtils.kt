@@ -1,5 +1,6 @@
 package no.nav.bidrag.bidragskalkulator.utils
 
+import org.apache.pdfbox.Loader
 import org.apache.pdfbox.pdmodel.PDDocument
 import org.apache.pdfbox.pdmodel.PDPageContentStream
 import org.apache.pdfbox.pdmodel.common.PDRectangle
@@ -20,7 +21,7 @@ class PdfUtils {
         }
 
         fun convertAllPagesToA4(file: File) {
-            PDDocument.load(file).use { pdd ->
+            Loader.loadPDF(file).use { pdd ->
                 pdd.pages.forEach { page -> page.mediaBox = PDRectangle.A4 }
                 pdd.save(file)
             }

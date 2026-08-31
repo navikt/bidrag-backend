@@ -61,11 +61,6 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         private const val ANNEN_ENHET = "4806"
     }
 
-    @BeforeEach
-    fun initUnleash() {
-        enableUnleashFeature(UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE)
-    }
-
     private fun stubHentBehandlingDetaljer(
         behandlingsid: Long,
         forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? =

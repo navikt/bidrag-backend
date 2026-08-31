@@ -1,13 +1,13 @@
 # ────────────────────────────────
 # Dockerfile – optimized for Cloud Run
 # ────────────────────────────────
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-FROM node:25-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 

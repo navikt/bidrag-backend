@@ -37,6 +37,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto.UnderholdskostnadPeriodeBeregningsdetaljer
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.erForholdsmessigFordeling
+import no.nav.bidrag.behandling.service.harTilgangSak
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
@@ -133,6 +134,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonMaksTilsynPerio
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
 import no.nav.bidrag.transport.behandling.felles.grunnlag.TilleggsstønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.TilsynsutgiftBarn
@@ -506,7 +508,6 @@ private fun ResultatBidragsberegningBarn.byggPerioderForBarn(
     )
 } else {
     resultat.beregnetBarnebidragPeriodeListe
-        .parallelStream()
         .map {
             val periodeAvslagskode = if (it.resultat.beløp == null) avslagskode else null
             grunnlagsListe
@@ -1738,6 +1739,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
 ): ForholdsmessigFordelingBeregningsdetaljer? {
     val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
+    val sluttberegningPeriode = sluttberegning.innholdTilObjekt<SluttberegningBarnebidragV2>().periode
     val sumBidragTilFordelingGrunnlagsliste =
         finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<DelberegningSumBidragTilFordeling>(
             Grunnlagstype.DELBEREGNING_SUM_BIDRAG_TIL_FORDELING,
@@ -1747,7 +1749,18 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
         sumBidragTilFordelingGrunnlagsliste
             .filter {
                 it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
-            }.maxByOrNull { it.innhold.periode.fom }
+            }.maxByOrNull { it.innhold.periode.fom } ?: run {
+            // TODO: Dette er en fallback som egentlig ikke bør skje. Er det en feil i beregningen?
+            val sumBidragTilFordelingGrunnlagsliste =
+                filtrerOgKonverterBasertPåEgenReferanse<DelberegningSumBidragTilFordeling>(
+                    Grunnlagstype.DELBEREGNING_SUM_BIDRAG_TIL_FORDELING,
+                ).filter {
+                    it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
+                }
+            sumBidragTilFordelingGrunnlagsliste.find {
+                it.innhold.periode.inneholder(sluttberegningPeriode)
+            }
+        }
 
     val sumBidragTilBeregning =
         // Hvis lista er lengre enn 1 så betyr det at det er opprettet FF og at det finnes en bidrag til fordeling for sjekk mot beløpshistorikk og en annen del for endelig beregning av R-barn og søknadsbarn
@@ -2114,7 +2127,10 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
 
 fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
     bidragTilFordeling: List<InnholdMedReferanse<DelberegningBidragTilFordelingLøpendeBidrag>>,
+    maskerSensitivInfo: Boolean = true,
+    harTilgangSak: (String) -> Boolean = ::harTilgangSak,
 ): List<ForholdsmessigFordelingBidragTilFordelingBarn> {
+    val tilgangPerSak = mutableMapOf<String, Boolean>()
     return bidragTilFordeling.mapNotNull {
         val barn = hentPersonMedReferanse(it.gjelderBarnReferanse!!)!!.personObjekt
         val grunnlagSamværsfradrag =
@@ -2143,6 +2159,9 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
                 ?.valutakursListe
                 ?.find { vl -> vl.valutakode1 == it.innhold.valutakode && vl.valutakode2 == Valutakode.NOK }
                 ?.valutakurs ?: BigDecimal.ONE
+        val saksnummer = løpendeBidrag.saksnummer
+        // Når FF opprettes så skal ikke sensitiv info maskeres. Det er bare når det returneres i respons til frontend det må maskeres
+        val harTilgangTilSak = !maskerSensitivInfo || tilgangPerSak.getOrPut(saksnummer.verdi) { harTilgangSak(saksnummer.verdi) }
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = !it.innhold.erNorskBidrag,
             oppfostringsbidrag = it.innhold.erOppfostringsbidrag,
@@ -2150,23 +2169,26 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
             erSøknadsbarn = false,
             stønadstype = løpendeBidrag.stønadstype,
             bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
-            barn =
-            PersoninfoDto(
-                ident = barn.ident,
-                fødselsdato = barn.fødselsdato,
-                navn = barn.navn,
-                erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
-            ),
+            barn = if (harTilgangTilSak) {
+                PersoninfoDto(
+                    ident = barn.ident,
+                    fødselsdato = barn.fødselsdato,
+                    navn = barn.navn,
+                    erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                )
+            } else {
+                PersoninfoDto(ident = null, fødselsdato = null, navn = "Ingen tilgang", erRevurderingsbarn = false)
+            },
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
-                saksnummer = løpendeBidrag.saksnummer,
+                saksnummer = if (harTilgangTilSak) saksnummer else Saksnummer(""),
                 samværsklasse = løpendeBidrag.samværsklasse ?: Samværsklasse.SAMVÆRSKLASSE_0,
                 løpendeBeløp = løpendeBidrag.løpendeBeløp,
                 faktiskBeløp = løpendeBidrag.faktiskBeløp,
                 stønadstype = løpendeBidrag.stønadstype,
                 beregnetBidrag = it.innhold.bidragTilFordelingNOK,
-                vedtaksid = løpendeBidrag.vedtaksid,
+                vedtaksid = if (harTilgangTilSak) løpendeBidrag.vedtaksid else null,
                 bidragJustertForNettoBarnetilleggBP = løpendeBidrag.bidragJustertForNettoBarnetilleggBP,
                 bruttoBidragEtterBarnetilleggBM = løpendeBidrag.bruttoBidragEtterBarnetilleggBM,
                 bruttoBidragEtterBarnetilleggBP = løpendeBidrag.bruttoBidragEtterBarnetilleggBP,

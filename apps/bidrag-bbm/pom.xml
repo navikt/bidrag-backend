@@ -19,9 +19,9 @@
 		<kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
 		<springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
 		<logback-encoder.version>9.0</logback-encoder.version>
-		<okhttp.version>5.4.0</okhttp.version>
+		<okhttp.version>5.5.0</okhttp.version>
 		<db2.db2jcc4.version>10.5fp6</db2.db2jcc4.version>
-		<kotest.version>6.2.3</kotest.version>
+		<kotest.version>6.2.4</kotest.version>
 		<!-- Testcontainers pinnet til 1.x: testkoden (Db2Container) er ikke migrert til Spring Boot 4.1.0 sin BOM-styrte 2.x-versjon -->
 		<testcontainers.version>1.21.4</testcontainers.version>
 	</properties>

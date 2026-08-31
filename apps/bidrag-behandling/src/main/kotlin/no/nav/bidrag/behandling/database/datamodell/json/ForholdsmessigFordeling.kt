@@ -20,6 +20,7 @@ data class ForholdsmessigFordeling(
     var erHovedbehandling: Boolean = false,
     var opprettetAvSaksbehandler: String? = null,
     var oppprettetAvEnhet: String? = null,
+    var overførtTilEnhet: String? = null,
     var opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
 )
 

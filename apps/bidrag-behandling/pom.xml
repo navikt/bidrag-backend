@@ -16,20 +16,20 @@
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.7.0</shedlock.version>
+    <shedlock.version>7.9.0</shedlock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <unleash-client-java.version>12.2.2</unleash-client-java.version>
-    <hypersistence-utils-hibernate.version>3.15.2</hypersistence-utils-hibernate.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <hypersistence-utils-hibernate.version>3.15.3</hypersistence-utils-hibernate.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <springmockk.version>5.0.1</springmockk.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.3</kotest.version>
-    <swagger-annotations.version>2.2.51</swagger-annotations.version>
-    <jetbrains.annotations.version>26.0.2</jetbrains.annotations.version>
+    <kotest.version>6.2.4</kotest.version>
+    <swagger-annotations.version>2.2.54</swagger-annotations.version>
+    <jetbrains.annotations.version>26.1.0</jetbrains.annotations.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-    <okhttp.version>5.2.1</okhttp.version>
+    <okhttp.version>5.5.0</okhttp.version>
   </properties>
 
   <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med

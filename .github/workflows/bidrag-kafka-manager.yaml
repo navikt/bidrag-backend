@@ -67,7 +67,7 @@ jobs:
       # endring i et kjørende dev-miljø fra en ennå ikke reviewet PR.
       - name: Deploy to dev-gcp
         if: github.actor != 'dependabot[bot]'
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/bidrag-kafka-manager/dev.yaml
@@ -97,7 +97,7 @@ jobs:
           image_suffix: bidrag-kafka-manager
           tag: bidrag-kafka-manager
       - name: Deploy to prod-gcp
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/bidrag-kafka-manager/prod.yaml

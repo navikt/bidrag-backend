@@ -20,10 +20,10 @@
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
         <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.3</kotest.version>
-        <swagger-annotations.version>2.2.51</swagger-annotations.version>
+        <kotest.version>6.2.4</kotest.version>
+        <swagger-annotations.version>2.2.54</swagger-annotations.version>
     </properties>
 
     <dependencies>
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.netflix.graphql.dgs</groupId>
             <artifactId>graphql-dgs-client</artifactId>
-            <version>12.0.0</version>
+            <version>12.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>

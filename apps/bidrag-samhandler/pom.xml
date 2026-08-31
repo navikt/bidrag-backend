@@ -19,12 +19,12 @@
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
-    <jaxws.version>4.0.3</jaxws.version>
-    <hypersistence-utils-hibernate.version>3.15.2</hypersistence-utils-hibernate.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
+    <jaxws.version>4.0.5</jaxws.version>
+    <hypersistence-utils-hibernate.version>3.15.5</hypersistence-utils-hibernate.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.3</kotest.version>
+    <kotest.version>6.2.4</kotest.version>
   </properties>
 
   <dependencies>

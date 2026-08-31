@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.consumer
 
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.PERSON_HAR_BESKYTTELSE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.TILGANG_PERSON_I_SAK_CACHE
+import no.nav.bidrag.behandling.config.CacheConfig.Companion.TILGANG_SAK_CACHE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.TILGANG_TEMA_CACHE
 import no.nav.bidrag.behandling.fantIkkeSak
 import no.nav.bidrag.commons.cache.BrukerCacheable
@@ -9,6 +10,7 @@ import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.transport.tilgang.TilgangTilPersonRequest
+import no.nav.bidrag.transport.tilgang.TilgangTilSakRequest
 import no.nav.bidrag.transport.tilgang.TilgangTilTemaRequest
 import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
 import org.springframework.beans.factory.annotation.Qualifier
@@ -58,6 +60,21 @@ class BidragTilgangskontrollConsumer(
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.FORBIDDEN) return false
             if (e.statusCode == HttpStatus.NOT_FOUND) fantIkkeSak(saksnummer.verdi)
+            throw e
+        }
+    }
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    @BrukerCacheable(TILGANG_SAK_CACHE)
+    fun sjekkTilgangSak(saksnummer: String): Boolean {
+        return try {
+            postForNonNullEntity<TilgangskontrollResponse>(createUri("/v2/api/tilgang/sak"), TilgangTilSakRequest(Saksnummer(saksnummer))).harTilgang
+        } catch (e: HttpStatusCodeException) {
+            if (e.statusCode == HttpStatus.FORBIDDEN) return false
             throw e
         }
     }
