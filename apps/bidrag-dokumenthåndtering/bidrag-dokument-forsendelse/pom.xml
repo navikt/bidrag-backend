@@ -21,21 +21,21 @@
     <mockk.version>1.14.11</mockk.version>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.7.0</shedlock.version>
+    <shedlock.version>7.9.0</shedlock.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <okhttp.version>5.4.0</okhttp.version>
-    <unleash-client-java.version>12.2.2</unleash-client-java.version>
-    <hypersistence-utils-hibernate.version>3.15.2</hypersistence-utils-hibernate.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <okhttp.version>5.5.0</okhttp.version>
+    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <hypersistence-utils-hibernate.version>3.15.5</hypersistence-utils-hibernate.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
-    <kotest.version>6.2.3</kotest.version>
-    <swagger-annotations.version>2.2.51</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.72.0</google-cloud-libraries-bom.version>
-    <google-tink-gcpkms.version>1.10.0</google-tink-gcpkms.version>
-    <google-tink.version>1.19.0</google-tink.version>
-    <pdfbox.version>3.0.5</pdfbox.version>
+    <kotest.version>6.2.4</kotest.version>
+    <swagger-annotations.version>2.2.54</swagger-annotations.version>
+    <google-cloud-libraries-bom.version>26.86.0</google-cloud-libraries-bom.version>
+    <google-tink-gcpkms.version>1.12.0</google-tink-gcpkms.version>
+    <google-tink.version>1.23.0</google-tink.version>
+    <pdfbox.version>3.0.8</pdfbox.version>
     <verapdf.version>1.30.2</verapdf.version>
   </properties>
 
@@ -99,7 +99,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>4.33.6</version>
+      <version>4.36.0</version>
     </dependency>
     <!--  PDF  -->
     <dependency>
@@ -331,7 +331,7 @@
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-serialization-json</artifactId>
-      <version>1.7.1</version>
+      <version>1.11.0</version>
     </dependency>
     <dependency>
       <groupId>io.getunleash</groupId>

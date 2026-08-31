@@ -18,9 +18,9 @@
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <mockito-kotlin.version>6.3.0</mockito-kotlin.version>
-    <swagger-annotations.version>2.2.51</swagger-annotations.version>
+    <swagger-annotations.version>2.2.54</swagger-annotations.version>
   </properties>
 
   <dependencies>

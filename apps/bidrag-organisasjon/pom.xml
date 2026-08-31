@@ -18,14 +18,14 @@
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-    <okhttp.version>5.4.0</okhttp.version>
-    <google-guava.version>33.0.0-jre</google-guava.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <okhttp.version>5.5.0</okhttp.version>
+    <google-guava.version>33.7.1-jre</google-guava.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <springmockk.version>5.0.1</springmockk.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.3</kotest.version>
-    <swagger-annotations.version>2.2.51</swagger-annotations.version>
+    <kotest.version>6.2.4</kotest.version>
+    <swagger-annotations.version>2.2.54</swagger-annotations.version>
   </properties>
 
   <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med

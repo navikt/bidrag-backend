@@ -17,20 +17,20 @@
   <properties>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.7.0</shedlock.version>
+    <shedlock.version>7.9.0</shedlock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.3</kotest.version>
-    <swagger-annotations.version>2.2.51</swagger-annotations.version>
+    <kotest.version>6.2.4</kotest.version>
+    <swagger-annotations.version>2.2.54</swagger-annotations.version>
     <!-- PDF-generering -->
     <apache-pdfbox.version>2.0.35</apache-pdfbox.version>
     <openhtml.version>1.0.10</openhtml.version>
     <jsoup.version>1.23.1</jsoup.version>
 
     <!-- Brukernotifikasjoner -->
-    <tms-varsel.version>2.1.1</tms-varsel.version>
+    <tms-varsel.version>2.2.0</tms-varsel.version>
 
     <!-- Diverse -->
     <commons-compress.version>1.28.0</commons-compress.version>
