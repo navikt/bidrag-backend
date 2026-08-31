@@ -27,9 +27,7 @@ private val LOGGER = KotlinLogging.logger {}
 class OppgaveSlettingService(
     private val oppgaveRepository: OppgaveRepository,
 ) {
-    // Egen bean/transaksjonsgrense (REQUIRES_NEW) slik at hver sletting committes for seg.
-    // Feiler denne (f.eks. raden allerede slettet av annen prosess), ruller kun denne
-    // transaksjonen tilbake - resten av batchen i KafkaDLQRetryScheduler upåvirket.
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun slettOppgave(oppgaveId: Long) {
         oppgaveRepository.deleteByOppgaveId(oppgaveId)
@@ -72,8 +70,6 @@ class KafkaDLQRetryScheduler(
                 val oppgave = oppgaveService.hentOppgave(it.oppgaveId)
                 if (oppgave.erStatusKategoriAvsluttet) {
                     LOGGER.info { "Sletter oppgave med id ${it.oppgaveId} som ikke lenger er åpen" }
-                    // Kjøres i egen transaksjon slik at en feil (f.eks. raden allerede slettet av
-                    // annen prosess) kun feiler denne ene oppgaven og ikke ruller tilbake resten av batchen.
                     oppgaveSlettingService.slettOppgave(it.oppgaveId)
                 }
             } catch (e: Exception) {
