@@ -28,6 +28,7 @@ data class BehandlingDetaljerDtoV2(
 data class ForholdmessigFordelingDetaljerDto(
     val opprettetAvSaksbehandler: String? = null,
     val opprettetAvEnhet: String? = null,
+    val overførtTilEnhet: String? = null,
 )
 
 @Service

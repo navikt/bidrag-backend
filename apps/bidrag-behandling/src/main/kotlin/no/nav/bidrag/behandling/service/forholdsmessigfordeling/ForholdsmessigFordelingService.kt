@@ -7,7 +7,6 @@ import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
-import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
@@ -20,7 +19,6 @@ import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessi
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
-import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SøknadRevurdering
@@ -31,6 +29,7 @@ import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
+import no.nav.bidrag.behandling.service.hentSak
 import no.nav.bidrag.behandling.transformers.behandling.erSamme
 import no.nav.bidrag.behandling.transformers.behandling.oppdaterBehandlingEtterOppdatertRoller
 import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
@@ -42,9 +41,9 @@ import no.nav.bidrag.behandling.transformers.mapTilBeregnetBidragDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
 import no.nav.bidrag.behandling.ugyldigForespørsel
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
-import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
@@ -65,8 +64,8 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.behandling.vedtak.Periode
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.toYearMonth
+import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -160,7 +159,7 @@ class ForholdsmessigFordelingService(
             }
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
-            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling).løpendeBidragBarn
+            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
             if (behandling.erKlageEllerOmgjøring) {
                 klageService.opprettSøknaderForKlageEllerOmgjøring(
                     behandling,
@@ -413,15 +412,17 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {
-        kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
-        grunnlagService.oppdatereGrunnlagForBehandling(behandling)
-        oppdaterBehandlingEtterOppdatertRoller(
-            behandling,
-            underholdService,
-            virkningstidspunktService,
-            behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
-            emptyList(),
-        )
+        SikkerhetsKontekst.medApplikasjonKontekst {
+            kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
+            grunnlagService.oppdatereGrunnlagForBehandling(behandling)
+            oppdaterBehandlingEtterOppdatertRoller(
+                behandling,
+                underholdService,
+                virkningstidspunktService,
+                behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
+                emptyList(),
+            )
+        }
     }
 
     private fun foretaNySynkroniseringAvFF(
@@ -432,8 +433,37 @@ class ForholdsmessigFordelingService(
         return LocalDateTime.now().minusMinutes(antallMinutter) > ffSistSynkronisert
     }
 
-    /** Synkroniserer søknadsbarn, revurderingsbarn og søknadsstatus mot BBM for en FF-behandling */
-    @Transactional
+    /** Opprett forholdsmessig fordeling objekt for rolle hvis det mangler
+     *  Dette er en feilhåndtering hvis det av en eller annen grunn har feilet i opprettelse av FF og det ikke har blitt håndtert riktig
+     * */
+    private fun opprettForholdsmessigFordelingForRollerSomDetManglerFor(
+        behandling: Behandling,
+        alleSøknaderRelevantForBehandling: List<HentSøknad>,
+    ) {
+        val alleSaker = alleSøknaderRelevantForBehandling.map { it.saksnummer }.distinct()
+        val alleSakerDetaljer = mutableListOf<BidragssakDto>()
+        var sakerDetaljerHentet = false
+        behandling.roller.filter { it.forholdsmessigFordeling == null }.forEach { rolle ->
+            val ident = rolle.ident ?: return@forEach
+            if (!sakerDetaljerHentet) {
+                // Ikke hent sak hvis ikke nødvendig for å unngå unødvendig nettverkskall
+                sakerDetaljerHentet = true
+                alleSakerDetaljer.addAll(alleSaker.mapNotNull { hentSak(it) })
+            }
+            val sakRolle = alleSakerDetaljer.find { sak -> sak.roller.any { it.fødselsnummer?.verdi == ident } } ?: return@forEach
+            val sakBm = sakRolle.roller.find { it.type == Rolletype.BIDRAGSMOTTAKER }
+            rolle.forholdsmessigFordeling = ForholdsmessigFordelingRolle(
+                delAvOpprinneligBehandling = true,
+                tilhørerSak = sakRolle.saksnummer.verdi,
+                behandlingsid = behandling.id,
+                behandlerenhet = sakRolle.eierfogd.verdi,
+                bidragsmottaker = sakBm?.fødselsnummer?.verdi,
+                erRevurdering = false,
+                søknader = mutableSetOf(),
+            )
+        }
+    }
+
     fun synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(
         behandling: Behandling,
         ignorerSynkTimer: Boolean = false,
@@ -454,10 +484,12 @@ class ForholdsmessigFordelingService(
                 behandling.omgjøringsdetaljer,
             )
 
+        opprettForholdsmessigFordelingForRollerSomDetManglerFor(behandling, alleSøknaderRelevantForBehandling)
+
         // Feilhåndtering hvis opprettelse av FF feilet
         if (behandling.metadata?.getOpprettelseEllerOppdateringAvFFFeilet() == true) {
             oppdaterFFDetaljerPåSøknadsbarn(behandling, emptySet(), emptyList(), null)
-            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling).løpendeBidragBarn
+            val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
             val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling)
             overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
             syncGebyrSøknadReferanse(behandling)
@@ -890,7 +922,7 @@ class ForholdsmessigFordelingService(
                         lb.løperBidragEtterDato(alleRelevanteKravhavere.finnSøktFomRevurderingSøknad(behandling).toYearMonth()),
                     )
                 }
-        val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling)
+        val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = true)
         return SjekkForholdmessigFordelingResponse(
             søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
             skalBehandlesAvEnhet = behandlesAvEnhet,
@@ -928,7 +960,7 @@ class ForholdsmessigFordelingService(
         return harLøpendeBidragForBarnIkkeIBehandling(behandling)
     }
 
-    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling): FFBeregningResultat = try {
+    private fun sjekkBeregningKreverForholdsmessigFordeling(behandling: Behandling, maskerSensitivInfo: Boolean = false): FFBeregningResultat = try {
         val resultat =
             try {
                 beregningService.beregneBidrag(behandling, true, simulerBeregning = true)
@@ -959,12 +991,12 @@ class ForholdsmessigFordelingService(
         val lagretLøpendeBidragBarnIdenter = lagretLøpendeBidrag.map { it.gjelderBarnIdent to it.gjelderStønadstype }
         val løpendeBidragBarn =
             grunnlagsliste
-                .mapTilBeregnetBidragDto(løpendeBidrag)
-                .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident!!.verdi to it.stønadstype) }
-                .groupBy { it.barn.ident!!.verdi to it.stønadstype }
+                .mapTilBeregnetBidragDto(løpendeBidrag, maskerSensitivInfo)
+                .filter { !lagretLøpendeBidragBarnIdenter.contains(it.barn.ident?.verdi to it.stønadstype) }
+                .groupBy { it.barn.ident?.verdi to it.stønadstype }
                 .map { (identStønad, løpendeBidrag) ->
                     LøpendeBidragGrunnlagForholdsmessigFordeling(
-                        identStønad.first,
+                        identStønad.first ?: "",
                         identStønad.second,
                         løpendeBidrag.mapNotNull { it.beregnetBidrag },
                     )
