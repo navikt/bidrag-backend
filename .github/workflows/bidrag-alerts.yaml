@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - '**'
-      - '!dependabot/**'
     paths:
       - 'util/bidrag-alerts/**'
 
@@ -33,12 +32,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy til dev-fss
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: dev-fss
           RESOURCE: util/bidrag-alerts/bidrag-alerts-dev.yaml
       - name: Deploy til dev-gcp
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: util/bidrag-alerts/bidrag-alerts-dev.yaml
@@ -54,12 +53,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy til prod-fss
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: prod-fss
           RESOURCE: util/bidrag-alerts/bidrag-alerts-prod.yaml
       - name: Deploy til prod-gcp
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: util/bidrag-alerts/bidrag-alerts-prod.yaml

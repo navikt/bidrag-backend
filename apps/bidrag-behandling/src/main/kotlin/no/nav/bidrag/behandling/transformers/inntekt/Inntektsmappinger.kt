@@ -220,6 +220,7 @@ fun Inntekt.tilIkkeAktivInntektDto(
     endringstype = endringstype,
     innhentetTidspunkt = innhentetTidspunkt,
     originalId = id,
+    saksnummer = gjelderBarnRolle?.saksnummer ?: gjelderRolle?.saksnummer,
     inntektsposter =
     inntektsposter
         .map {
@@ -239,6 +240,7 @@ fun SummertÅrsinntekt.tilIkkeAktivInntektDto(
     endringstype: GrunnlagInntektEndringstype,
     innhentetTidspunkt: LocalDateTime,
     eksisterendeInntekt: Inntekt? = null,
+    saksnummer: String? = null,
 ) = IkkeAktivInntektDto(
     rapporteringstype = this.inntektRapportering,
     // Kapitalinntekt kan ha negativ verdi. Dette skal ikke vises i frontend
@@ -249,6 +251,7 @@ fun SummertÅrsinntekt.tilIkkeAktivInntektDto(
     endringstype = endringstype,
     innhentetTidspunkt = innhentetTidspunkt,
     originalId = eksisterendeInntekt?.id,
+    saksnummer = saksnummer,
     inntektsposter =
     inntektPostListe.map { it.toInntektpost() }.toSet(),
     inntektsposterSomErEndret =

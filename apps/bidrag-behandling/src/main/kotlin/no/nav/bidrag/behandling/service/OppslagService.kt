@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.service
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
+import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.consumer.dto.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
@@ -58,7 +59,12 @@ fun hentVedtak(vedtaksid: Int?): VedtakDto? = try {
     }
     null
 }
-
+fun sjekkTilgangSak(saksnummer: String): Boolean = try {
+    AppContext.getBean(BidragTilgangskontrollConsumer::class.java).sjekkTilgangSak(saksnummer)
+} catch (e: Exception) {
+    secureLogger.debug(e) { "Feil ved henting av person for ident $saksnummer" }
+    false
+}
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
@@ -68,6 +74,7 @@ fun hentPerson(ident: String?): PersonDto? = try {
     null
 }
 
+fun harTilgangSak(saksnummer: String) = sjekkTilgangSak(saksnummer)
 fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn

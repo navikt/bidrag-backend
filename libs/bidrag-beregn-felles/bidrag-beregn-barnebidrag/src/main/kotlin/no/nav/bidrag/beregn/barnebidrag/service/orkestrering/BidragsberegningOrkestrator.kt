@@ -9,6 +9,7 @@ import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidr
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidragException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Beregningstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -50,7 +51,10 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.personObjekt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.person.PersonStønad
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.client.RestClientResponseException
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -1043,8 +1047,17 @@ class BidragsberegningOrkestrator(
                 ) in søknadsbarnListe
             }
             .forEach { løpendeBidrag ->
-                val fødselsdato = personConsumer.hentFødselsdatoForPerson(løpendeBidrag.kravhaver)
-                løpendeBarnFødselsdatoMap[løpendeBidrag.kravhaver] = fødselsdato
+                try {
+                    val fødselsdato = personConsumer.hentFødselsdatoForPerson(løpendeBidrag.kravhaver)
+                    løpendeBarnFødselsdatoMap[løpendeBidrag.kravhaver] = fødselsdato
+                } catch (e: RestClientResponseException) {
+                    if (e.statusCode == HttpStatus.FORBIDDEN) {
+                        // Hvis SB ikke har tilgang til person så bør ikke det feile i løpende bidrag sjekken.
+                        // Fødselsdato er ikke viktig å lagre for barn som ikke er del av beregningen så ignorerer
+                        return@forEach
+                    }
+                    throw e
+                }
             }
 
         // Sjekker om sak for innhentede løpende bidrag er utlandssaker og lager en liste med disse
