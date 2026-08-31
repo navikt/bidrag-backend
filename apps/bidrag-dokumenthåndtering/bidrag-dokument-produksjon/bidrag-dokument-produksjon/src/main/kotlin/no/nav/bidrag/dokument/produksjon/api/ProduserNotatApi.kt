@@ -24,13 +24,6 @@ private val log = KotlinLogging.logger {}
 class ProduserNotatApi(
     val pdfProducerService: PdfProducerService,
 ) {
-    @Bean
-    fun notatForskuddExampleV2(): Example {
-        val example = Example()
-        example.value = fyllInnGenererteIdenter(Paths.get("data/notat/forskudd.json").readText())
-        example.description = "Forskudd notat"
-        return example
-    }
 
     // Fyller inn genererte identer i eksempelfilen.
     private fun fyllInnGenererteIdenter(json: String): String = Regex("PERSONIDENT_\\d+")
