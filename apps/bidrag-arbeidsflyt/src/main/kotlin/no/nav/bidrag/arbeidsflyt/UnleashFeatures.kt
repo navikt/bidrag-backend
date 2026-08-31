@@ -8,10 +8,6 @@ enum class UnleashFeatures(
     defaultValue: Boolean,
 ) {
     DEBUG_LOGGING("debug_logging", false),
-
-    // I Q1 ved opprettelse av klage så blir alle inntekter fjernet fordi de ikke finnes i testmiljøene.
-    // Dette er for å unngå de slettes ved grunnlagsinnhenting
-    BEHANDLE_BEHANDLING_HENDELSE("bisys.behandle_behandling_hendelse", false),
     ;
 
     private var defaultValue = false

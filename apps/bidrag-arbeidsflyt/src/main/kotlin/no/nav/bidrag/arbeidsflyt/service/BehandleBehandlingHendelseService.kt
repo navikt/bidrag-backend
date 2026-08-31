@@ -1,7 +1,7 @@
 package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.arbeidsflyt.UnleashFeatures
+import no.nav.bidrag.arbeidsflyt.consumer.BehandlingDetaljerDtoV2
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragSakConsumer
@@ -90,9 +90,7 @@ class BehandleBehandlingHendelseService(
             secureLogger.info { "Søknad ${behandling.søknadsid} inneholder flere søknader Ignorer hendelse da den ikke inneholder informasjon om behandlingsid" }
             return
         }
-        if (!UnleashFeatures.BEHANDLE_BEHANDLING_HENDELSE.isEnabled) {
-            secureLogger.info { "Behandling av hendelse er skrudd av. Lagrer behandling uten å opprette eller slette oppgaver" }
-        }
+
         val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
         val overførtTilEnhet = behandlingDetaljer?.forholdsmessigFordeling?.overførtTilEnhet
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
@@ -121,7 +119,7 @@ class BehandleBehandlingHendelseService(
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
         }
-        overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling)
+        overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
@@ -129,10 +127,11 @@ class BehandleBehandlingHendelseService(
     private fun overføreOppgaverTilSaksbehandlerSomOpprettetFF(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
+        behandlingDetaljer: BehandlingDetaljerDtoV2?,
     ) {
         try {
             if (erBehandlingAvsluttet(hendelse)) return
-            val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) } ?: return
+            if (behandlingDetaljer == null) return
             if (behandlingDetaljer.forholdsmessigFordeling != null && behandling.oppgaverOverførtEtterFFOpprettet == null) {
                 if (behandlingDetaljer.forholdsmessigFordeling.overførtTilEnhet != null) {
                     val ff = behandlingDetaljer.forholdsmessigFordeling
