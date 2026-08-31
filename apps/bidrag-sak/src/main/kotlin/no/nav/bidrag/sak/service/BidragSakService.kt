@@ -434,7 +434,14 @@ class BidragSakService(
                     }
 
                 val søknadsid = hendelse.søknad?.id?.toLong()
-                val knytninger = søknadsid?.let { bbmConsumer.finnSammenknytningerHovedsøknad(it) }
+                val knytninger = søknadsid?.let {
+                    try {
+                        bbmConsumer.finnSammenknytningerHovedsøknad(it)
+                    } catch (e: Exception) {
+                        secureLogger.error(e) { "Feil ved henting av sammenknytninger for hovedsøknad $it" }
+                        return@let null
+                    }
+                }
 
                 val erHovedsøknad = (søknadsid != null && knytninger?.hovedsøknadsid == søknadsid) || knytninger == null
                 val erDelAvFF = knytninger?.søknader?.isNotEmpty() == true
