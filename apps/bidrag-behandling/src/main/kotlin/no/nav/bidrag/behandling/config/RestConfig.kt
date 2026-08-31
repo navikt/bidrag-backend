@@ -100,5 +100,5 @@ class RestConfig(
     @Primary
     fun restTemplateBuilder(restTemplate: RestTemplateBuilder): RestTemplateBuilder = restTemplate
         .connectTimeout(Duration.of(30, ChronoUnit.SECONDS))
-        .readTimeout(Duration.of(30, ChronoUnit.SECONDS))
+        .readTimeout(Duration.of(120, ChronoUnit.SECONDS))
 }
