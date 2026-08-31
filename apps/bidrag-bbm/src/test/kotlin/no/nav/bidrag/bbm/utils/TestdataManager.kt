@@ -3,7 +3,6 @@ package no.nav.bidrag.bbm.utils
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import jakarta.transaction.Transactional
-import no.nav.bidrag.bbm.bo.SøknadsknytningStatus
 import no.nav.bidrag.bbm.persistence.bbm.entity.PeriodeBidrag
 import no.nav.bidrag.bbm.persistence.bbm.entity.Samvær
 import no.nav.bidrag.bbm.persistence.bbm.repository.PeriodeBidragRepository
@@ -22,6 +21,7 @@ import no.nav.bidrag.bbm.persistence.bisys.repository.RolleRepository
 import no.nav.bidrag.bbm.persistence.bisys.repository.SøknadRepository
 import no.nav.bidrag.bbm.persistence.bisys.repository.SøknadsknytningRepository
 import no.nav.bidrag.bbm.persistence.bisys.repository.SøknadslinjeRepository
+import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import org.springframework.stereotype.Component
 
 @Component
@@ -76,7 +76,7 @@ class TestdataManager(
     @Transactional
     fun hentSøknadsknytningerHovedsøknad(hovedsøknadsid: Long): List<Søknadsknytning> = søknadsknytningRepository.finnSøknadsknytningerHovedsøknad(
         hovedsøknadsid = hovedsøknadsid,
-        status = SøknadsknytningStatus.Aktiv.name,
+        statuser = listOf(SøknadsknytningStatus.Aktiv.name),
     )
 
     @Transactional
@@ -85,7 +85,7 @@ class TestdataManager(
         status: String? = null,
     ): List<Søknadsknytning> = søknadsknytningRepository.finnSøknadsknytningReferertSøknad(
         referertSøknadsid = referertSøknadsid,
-        status = status ?: SøknadsknytningStatus.Aktiv.name,
+        statuser = listOf(status ?: SøknadsknytningStatus.Aktiv.name),
     )
 
     fun rydd() {

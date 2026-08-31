@@ -1584,6 +1584,7 @@ private fun GrunnlagDto.tilRolle(
                             behandlingstype = søknadGrunnlag.behandlingstype,
                             behandlingstema = stønadsendring?.type?.tilBehandlingstema() ?: søknadGrunnlag.behandlingstema,
                             enhet = søknadGrunnlag.behandlerenhet ?: behandling.behandlerEnhet,
+                            saksnummer = søknadGrunnlag.saksnummer,
                         )
                     }.toMutableSet(),
             )

@@ -1,15 +1,11 @@
 package no.nav.bidrag.bbm.service
 
-import no.nav.bidrag.bbm.bo.FinnSammenknytningerHovedsøknadRequest
-import no.nav.bidrag.bbm.bo.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.bbm.bo.Gebyrsøknad
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
-import no.nav.bidrag.bbm.bo.SøknadsknytningStatus
 import no.nav.bidrag.bbm.exception.mismatchEksisterendeBehandlingsid
 import no.nav.bidrag.bbm.exception.søknadFinnesIkke
-import no.nav.bidrag.bbm.model.erForholdsmessigFordeling
 import no.nav.bidrag.bbm.persistence.bisys.entity.Blankett
 import no.nav.bidrag.bbm.persistence.bisys.entity.Hendelse
 import no.nav.bidrag.bbm.persistence.bisys.entity.Søknad
@@ -28,6 +24,7 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
+import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
@@ -43,6 +40,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -298,7 +297,7 @@ class BisysService(
             val søknadsknytningHovedsøknad =
                 søknadsknytningRepository.finnSøknadsknytningReferertSøknad(
                     referertSøknadsid = request.hovedsøknadsid!!,
-                    status = SøknadsknytningStatus.Aktiv.name,
+                    statuser = listOf(SøknadsknytningStatus.Aktiv.name),
                 )
 
             if (søknadsknytningHovedsøknad.isEmpty()) {
@@ -1100,7 +1099,7 @@ class BisysService(
     fun slettSammenknytningReferertSøknad(request: SlettSammenknytningForSøknadRequest) {
         val søknadsknytninger =
             søknadsknytningRepository
-                .finnSøknadsknytningReferertSøknad(referertSøknadsid = request.søknadsid, status = SøknadsknytningStatus.Aktiv.name)
+                .finnSøknadsknytningReferertSøknad(referertSøknadsid = request.søknadsid, statuser = listOf(SøknadsknytningStatus.Aktiv.name))
 
         søknadsknytninger
             .forEach {
@@ -1121,7 +1120,7 @@ class BisysService(
             søknadsknytningRepository
                 .finnSøknadsknytningReferertSøknad(
                     referertSøknadsid = request.referertSøknadsid,
-                    status = SøknadsknytningStatus.Aktiv.name,
+                    statuser = listOf(SøknadsknytningStatus.Aktiv.name),
                 )
 
         if (eksisterendeSammenknytninger.isEmpty()) {
@@ -1163,10 +1162,10 @@ class BisysService(
             søknadsknytningRepository
                 .finnSøknadsknytningerHovedsøknad(
                     hovedsøknadsid = request.eksisterendeHovedsøknadsid,
-                    status = SøknadsknytningStatus.Aktiv.name,
+                    statuser = listOf(SøknadsknytningStatus.Aktiv.name),
                 ).ifEmpty {
                     finnSammenknytningHovedsøknadForReferertSøknad(
-                        FinnSammenknytningerHovedsøknadRequest(request.eksisterendeHovedsøknadsid, status = SøknadsknytningStatus.Aktiv),
+                        FinnSammenknytningerHovedsøknadRequest(request.eksisterendeHovedsøknadsid, statuser = listOf(SøknadsknytningStatus.Aktiv)),
                     )
                 }
 
@@ -1206,9 +1205,10 @@ class BisysService(
 
     fun finnSammenknytningerHovedsøknad(request: FinnSammenknytningerHovedsøknadRequest): FinnSammenknytningerHovedsøknadResponse {
         // Finn eksisterende sammenknytninger for angitt hovedsøknad
+        val statuser = if (request.statuser.isEmpty()) listOfNotNull(request.status.name) else request.statuser.map { it.name }
         val sammenknytninger =
             søknadsknytningRepository
-                .finnSøknadsknytningerHovedsøknad(hovedsøknadsid = request.søknadsid, status = request.status.name)
+                .finnSøknadsknytningerHovedsøknad(hovedsøknadsid = request.søknadsid, statuser = statuser)
                 .ifEmpty {
                     finnSammenknytningHovedsøknadForReferertSøknad(request)
                 }
@@ -1229,16 +1229,17 @@ class BisysService(
     }
 
     private fun finnSammenknytningHovedsøknadForReferertSøknad(request: FinnSammenknytningerHovedsøknadRequest): List<Søknadsknytning> {
+        val statuser = if (request.statuser.isEmpty()) listOfNotNull(request.status.name) else request.statuser.map { it.name }
         val sammenknytning =
             søknadsknytningRepository
                 .finnSøknadsknytningReferertSøknad(
                     referertSøknadsid = request.søknadsid,
-                    status = request.status.name,
+                    statuser = statuser,
                 ).firstOrNull() ?: return emptyList()
 
         val hovedsøknadsid = sammenknytning.hovedsøknadsid ?: return emptyList()
 
         return søknadsknytningRepository
-            .finnSøknadsknytningerHovedsøknad(hovedsøknadsid = hovedsøknadsid, status = request.status.name)
+            .finnSøknadsknytningerHovedsøknad(hovedsøknadsid = hovedsøknadsid, statuser = statuser)
     }
 }

@@ -349,6 +349,7 @@ class BehandlingService(
                         behandlingstema = opprettBehandling.behandlingstema,
                         behandlingstype = opprettBehandling.behandlingstype,
                         enhet = opprettBehandling.behandlerenhet,
+                        saksnummer = opprettBehandling.saksnummer,
                     )
                 try {
                     forholdsmessigFordelingService!!.leggTilEllerSlettBarnFraBehandlingSomErIFF(

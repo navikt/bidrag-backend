@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 
+const val CACHE_SAMMENKNYTNINGER_HOVEDSØKNAD = "sammenknytninger_hovedsoknad"
+
 @Configuration
 @EnableCaching
 @EnableUserCache
@@ -23,8 +25,13 @@ class CacheConfig {
             val concurrentMap =
                 Caffeine
                     .newBuilder()
-                    .expireAfter(InvaliderCacheFørStartenAvArbeidsdag())
-                    .recordStats()
+                    .apply {
+                        if (name == CACHE_SAMMENKNYTNINGER_HOVEDSØKNAD) {
+                            expireAfterWrite(10, TimeUnit.MINUTES)
+                        } else {
+                            expireAfter(InvaliderCacheFørStartenAvArbeidsdag())
+                        }
+                    }.recordStats()
                     .build<Any, Any>()
                     .asMap()
             return ConcurrentMapCache(name, concurrentMap, true)

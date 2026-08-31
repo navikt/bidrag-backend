@@ -71,6 +71,6 @@ data class ForholdsmessigFordelingSøknadBarn(
     var innkreving: Boolean = true,
     val enhet: String = "9999",
     // TODO: Er dette nødvendig? Kan BM/Barn være i flere saker?
-    val saksnummer: String? = null,
+    val saksnummer: String?,
     var status: Behandlingstatus? = null,
 )

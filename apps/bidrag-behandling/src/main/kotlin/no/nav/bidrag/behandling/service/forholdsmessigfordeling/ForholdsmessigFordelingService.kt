@@ -175,7 +175,7 @@ class ForholdsmessigFordelingService(
             behandling.alleBidragsmottakere.filter { it.forholdsmessigFordeling == null }.forEach {
                 it.forholdsmessigFordeling = behandling.tilFFDetaljerBM()
             }
-            val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling)
+            val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, request?.opprettetAvEnhet)
             val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
             val eksisterendeSøknadsbarn = finnEksisterendeSøknadsbarn(behandling, reevaluerSøkndasbarn)
 
@@ -886,7 +886,7 @@ class ForholdsmessigFordelingService(
     ) = barnService.avsluttForholdsmessigFordeling(behandling, slettBarn)
 
     @Transactional
-    fun sjekkSkalOppretteForholdsmessigFordeling(behandlingId: Long): SjekkForholdmessigFordelingResponse {
+    fun sjekkSkalOppretteForholdsmessigFordeling(behandlingId: Long, opprettetAvEnhet: String?): SjekkForholdmessigFordelingResponse {
         val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
         if (behandling.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
             return SjekkForholdmessigFordelingResponse(
@@ -902,7 +902,7 @@ class ForholdsmessigFordelingService(
                     periodeLøperBidrag != null && periodeLøperBidrag.fom < it.virkningstidspunktRolle.toYearMonth() &&
                         periodeLøperBidrag.overlapper(periodeBeregning)
                 }
-        val behandlesAvEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling)
+        val behandlesAvEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, opprettetAvEnhet)
 
         val eksisterendeSøknadsbarn = behandling.søknadsbarn.map { it.identStønadstypeNøkkel }
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling)

@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
-import no.nav.bidrag.bbm.bo.FinnSammenknytningerHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
@@ -22,6 +21,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhe
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import no.nav.security.token.support.core.api.Protected
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

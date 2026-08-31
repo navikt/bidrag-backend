@@ -35,6 +35,10 @@ env:
     value: bidrag.sak
   - name: KODEVERK_URL
     value: https://bidrag-kodeverk.intern.nav.no
+  - name: BIDRAG_BBM_URL
+    value: https://bidrag-bbm.intern.nav.no
+  - name: BIDRAG_BBM_SCOPE
+    value: prod-fss.bidrag.bidrag-bbm
 kafka:
   pool: nav-prod
 azure_access_inbound:

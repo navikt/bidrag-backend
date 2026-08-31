@@ -375,6 +375,7 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
                         søktAvType = SøktAvType.BIDRAGSMOTTAKER,
                         behandlingstype = Behandlingstype.ENDRING,
                         behandlingstema = Behandlingstema.BIDRAG,
+                        saksnummer = null,
                     ),
                 ),
             )
@@ -394,6 +395,8 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
                             søktAvType = SøktAvType.BIDRAGSMOTTAKER,
                             behandlingstype = Behandlingstype.ENDRING,
                             behandlingstema = Behandlingstema.BIDRAG,
+                            saksnummer = null,
+
                         ),
                     ),
                 )

@@ -16,13 +16,3 @@ data class SlettHovedsøknadRequest(
     val nyHovedsøknadsid: Long? = null,
     val feilregistrerFFSøknader: Boolean = false,
 )
-
-data class FinnSammenknytningerHovedsøknadResponse(
-    val hovedsøknadsid: Long? = null,
-    val søknader: List<HentSøknad>,
-)
-
-data class FinnSammenknytningerHovedsøknadRequest(
-    val søknadsid: Long,
-    val status: SøknadsknytningStatus = SøknadsknytningStatus.Aktiv,
-)

@@ -20,5 +20,8 @@ azure_access_inbound:
   - application: bidrag-dokument-forsendelse
     namespace: bidrag
     cluster: dev-gcp
+  - application: bidrag-sak-q2
+    namespace: bidrag
+    cluster: dev-fss
 database:
   secret_name: bidrag-bbm-db

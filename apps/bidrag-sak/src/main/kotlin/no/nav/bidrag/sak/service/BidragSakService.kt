@@ -6,6 +6,7 @@ import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
+import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
@@ -16,12 +17,15 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.Søknadsknytning
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.dto.FogdhistorikkDto
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
+import no.nav.bidrag.sak.integration.BidragBBMConsumer
+import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
@@ -29,6 +33,7 @@ import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
+import no.nav.bidrag.sak.repository.SøknadsknytningRepository
 import no.nav.bidrag.sak.repository.VedtakOverføringRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.VEDTAK_LINK
@@ -39,6 +44,7 @@ import no.nav.bidrag.sak.util.tilEngangsbeløptype
 import no.nav.bidrag.sak.util.tilStønadstype
 import no.nav.bidrag.sak.util.tilVedtakstype
 import no.nav.bidrag.sak.validering.OpprettSakValidator
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
@@ -50,10 +56,14 @@ import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
+import kotlin.collections.firstOrNull
+import kotlin.collections.ifEmpty
+import kotlin.collections.map
 
 fun Set<Tilgang>.finnMidlertidligTilgang(
     enhet: String,
@@ -76,6 +86,7 @@ class BidragSakService(
     private val opprettSakValidator: OpprettSakValidator,
     private val hendelseRepository: HendelseRepository,
     private val vedtakOverføringRepository: VedtakOverføringRepository,
+    private val bbmConsumer: BidragBBMConsumer,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -394,6 +405,7 @@ class BidragSakService(
 
         return hendelseRepository
             .findBySaksnummer(saksnummer.verdi)
+            .sortedByDescending { it.systemOpprettetTidspunkt }
             .mapNotNull { hendelse ->
                 val hendelseType =
                     hendelse.type ?: run {
@@ -422,6 +434,11 @@ class BidragSakService(
                         vedtakOverføringRepository.finnVedtakIdBidragVedtakForSak(saksnummer, it).firstOrNull()?.toString()
                     }
 
+                val søknadsid = hendelse.søknad?.id?.toLong()
+                val knytninger = søknadsid?.let(::hentSammenknytninger)
+
+                val erHovedsøknad = knytninger == null || knytninger.hovedsøknadsid == søknadsid
+                val erDelAvFF = knytninger?.søknader?.isNotEmpty() == true
                 SakshendelseDto(
                     hendelseId = hendelse.hendelseId?.toString(),
                     opprettetTidspunkt = hendelse.opprettetTidspunkt,
@@ -459,6 +476,8 @@ class BidragSakService(
                         ?.soknType
                         ?.tilVedtakstype(),
                     barnObjektNumre = barnObjektNumre,
+                    erHovedsøknad = erHovedsøknad,
+                    erDelAvFF = erDelAvFF,
                 )
             }
     }
@@ -473,4 +492,11 @@ class BidragSakService(
     }
 
     private fun hentFødselsdatoer(opprettSakRequest: OpprettSakRequest): Map<Personident, LocalDate?> = rolleService.validerRollerOgHentFødselsdatoer(opprettSakRequest.roller)
+
+    private fun hentSammenknytninger(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
+        bbmConsumer.finnSammenknytningerHovedsøknad(søknadsid)
+    } catch (e: Exception) {
+        secureLogger.error(e) { "Feil ved henting av sammenknytninger for hovedsøknad $søknadsid" }
+        null
+    }
 }

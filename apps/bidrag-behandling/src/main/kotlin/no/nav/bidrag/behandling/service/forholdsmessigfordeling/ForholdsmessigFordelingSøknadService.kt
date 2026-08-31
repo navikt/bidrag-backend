@@ -82,6 +82,7 @@ class ForholdsmessigFordelingSøknadService(
                 behandlingstype = behandling.behandlingstypeForFF,
                 enhet = behandlerEnhet,
                 status = Behandlingstatus.UNDER_BEHANDLING,
+                saksnummer = saksnummer,
             )
         val søknadsidUtenInnkreving =
             opprettEllerOppdaterRevurderingssøknadForBarn(
