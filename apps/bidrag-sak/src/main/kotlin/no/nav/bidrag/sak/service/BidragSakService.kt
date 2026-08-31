@@ -405,6 +405,7 @@ class BidragSakService(
 
         return hendelseRepository
             .findBySaksnummer(saksnummer.verdi)
+            .sortedByDescending { it.systemOpprettetTidspunkt }
             .mapNotNull { hendelse ->
                 val hendelseType =
                     hendelse.type ?: run {

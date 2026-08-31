@@ -27,6 +27,8 @@ open class Hendelse(
     open var type: HendelseType?,
     @Column(name = "OPPRETTET_DATO")
     open var opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "sys_oppr_dato")
+    open var systemOpprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
     @Column(name = "ENHET", columnDefinition = "CHAR(4)")
     open var enhet: String,
     @Column(name = "RESULTAT")
