@@ -32,10 +32,23 @@ data class SakshendelseDto(
     val søktAv: SøktAvType? = null,
     val vedtakType: Vedtakstype? = null,
     val barnObjektNumre: List<String> = emptyList(),
+    val erHovedsøknad: Boolean,
+    val erDelAvFF: Boolean,
 ) {
     @Suppress("unused")
     val søknadsgruppeBeskrivelse: String?
-        get() = søknadsgruppe?.beskrivelse
+        get() = if (erDelAvFF) {
+            val postfiks = if (erHovedsøknad) {
+                " (HFF)"
+            } else if (type !in listOf(HendelseType.FORHOLDSMESSIG_FORDELING, HendelseType.FORHOLDSMESSIG_FORDELING_KLAGE)) {
+                " (FF)"
+            } else {
+                ""
+            }
+            "${søknadsgruppe?.beskrivelse}$postfiks"
+        } else {
+            søknadsgruppe?.beskrivelse
+        }
 
     @Suppress("unused")
     val typeBeskrivelse: String

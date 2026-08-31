@@ -1,6 +1,6 @@
-package no.nav.bidrag.bbm.persistence.bisys.repository
+package no.nav.bidrag.sak.repository
 
-import no.nav.bidrag.bbm.persistence.bisys.entity.Søknadsknytning
+import no.nav.bidrag.sak.domain.Søknadsknytning
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 
@@ -20,13 +20,4 @@ interface SøknadsknytningRepository : CrudRepository<Søknadsknytning, String> 
         referertSøknadsid: Long,
         statuser: List<String>,
     ): List<Søknadsknytning>
-
-    @Query(
-        "select s from Søknadsknytning s where s.hovedsøknadsid = :hovedsøknadsid and s.referertSøknadsid = :referertSøknadsid  and s.status = :status",
-    )
-    fun finnSøknadsknytning(
-        hovedsøknadsid: Long,
-        referertSøknadsid: Long,
-        status: String,
-    ): Søknadsknytning?
 }
