@@ -17,14 +17,14 @@
 
     <properties>
         <nav-token-support.version>6.0.12</nav-token-support.version>
-        <shedlock.version>7.7.0</shedlock.version>
+        <shedlock.version>7.9.0</shedlock.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <unleash-client-java.version>12.2.2</unleash-client-java.version>
-        <ibm-mq-jakarta-client.version>9.4.5.1</ibm-mq-jakarta-client.version>
-        <apache-avro.version>1.12.1</apache-avro.version>
-        <confluent.version>8.0.0</confluent.version>
+        <unleash-client-java.version>12.2.3</unleash-client-java.version>
+        <ibm-mq-jakarta-client.version>10.0.0.0</ibm-mq-jakarta-client.version>
+        <apache-avro.version>1.12.2</apache-avro.version>
+        <confluent.version>8.3.1</confluent.version>
         <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.3</kotest.version>
+        <kotest.version>6.2.4</kotest.version>
     </properties>
 
     <dependencies>

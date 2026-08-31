@@ -18,13 +18,13 @@
   <properties>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.7.0</shedlock.version>
+    <shedlock.version>7.9.0</shedlock.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <unleash-client-java.version>12.2.2</unleash-client-java.version>
+    <unleash-client-java.version>12.2.3</unleash-client-java.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.3</kotest.version>
+    <kotest.version>6.2.4</kotest.version>
   </properties>
 
   <dependencies>

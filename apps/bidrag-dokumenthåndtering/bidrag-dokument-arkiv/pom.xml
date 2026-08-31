@@ -25,15 +25,15 @@
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <okhttp.version>5.4.0</okhttp.version>
-        <apache-avro.version>1.12.1</apache-avro.version>
-        <confluent.version>8.0.0</confluent.version>
-        <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+        <okhttp.version>5.5.0</okhttp.version>
+        <apache-avro.version>1.12.2</apache-avro.version>
+        <confluent.version>8.3.1</confluent.version>
+        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
         <springmockk.version>5.0.1</springmockk.version>
-        <kotest.version>6.2.3</kotest.version>
-        <swagger-annotations.version>2.2.51</swagger-annotations.version>
+        <kotest.version>6.2.4</kotest.version>
+        <swagger-annotations.version>2.2.54</swagger-annotations.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <graphq-dgs-client.version>12.0.0</graphq-dgs-client.version>
+        <graphq-dgs-client.version>12.0.1</graphq-dgs-client.version>
         <joark-hendelse.version>67a9be4476b63b7247cfacfaf821ab656bd2a952</joark-hendelse.version>
         <json-path.version>3.0.0</json-path.version>
     </properties>

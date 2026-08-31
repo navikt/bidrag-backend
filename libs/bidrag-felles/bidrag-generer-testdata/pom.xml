@@ -31,7 +31,7 @@
 
     <properties>
         <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.3</kotest.version>
+        <kotest.version>6.2.4</kotest.version>
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>

@@ -18,8 +18,8 @@
         <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
         <wiremock-jre8.version>3.0.1</wiremock-jre8.version>
         <mockito-kotlin.version>6.3.0</mockito-kotlin.version>
-        <kotest.version>6.2.3</kotest.version>
-        <guava.version>33.6.0-jre</guava.version>
+        <kotest.version>6.2.4</kotest.version>
+        <guava.version>33.7.1-jre</guava.version>
     </properties>
 
     <dependencies>
