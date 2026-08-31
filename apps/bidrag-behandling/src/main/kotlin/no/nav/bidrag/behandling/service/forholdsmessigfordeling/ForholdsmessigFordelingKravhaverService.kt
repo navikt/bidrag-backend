@@ -43,7 +43,7 @@ class ForholdsmessigFordelingKravhaverService(
     private val beløpshistorikkConsumer: BidragBeløpshistorikkConsumer,
     private val bbmConsumer: BidragBBMConsumer,
 ) {
-    fun finnEnhetForBarnIBehandling(behandling: Behandling): String {
+    fun finnEnhetForBarnIBehandling(behandling: Behandling, utløsendeEnhet: String? = behandling.behandlerEnhet): String {
         val sakerBp = hentSakerBp(behandling.bidragspliktig!!.ident!!)
         return when {
             sakerBp.any { it.eierfogd.verdi == ENHET_VIKAFOSSEN } -> ENHET_VIKAFOSSEN
@@ -53,7 +53,7 @@ class ForholdsmessigFordelingKravhaverService(
             sakerBp.any { it.eierfogd.verdi == ENHET_UTLAND || it.kategori == Sakskategori.UTLAND } -> ENHET_UTLAND
 
             else ->
-                sakerBp.minByOrNull { it.opprettetDato }?.eierfogd?.verdi
+                utløsendeEnhet ?: sakerBp.minByOrNull { it.opprettetDato }?.eierfogd?.verdi
                     ?: behandling.behandlerEnhet
         }
     }

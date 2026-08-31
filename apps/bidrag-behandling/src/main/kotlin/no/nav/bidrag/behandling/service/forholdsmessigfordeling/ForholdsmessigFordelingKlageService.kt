@@ -117,7 +117,7 @@ class ForholdsmessigFordelingKlageService(
 
         var hovedsøknadsid = behandling.soknadsid!!
 
-        val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling)
+        val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, request?.opprettetAvEnhet)
         val åpneSøknaderForVedtaksid = hentÅpneSøknaderForVedtak(behandling)
 
         sammeknyttSøknadHvisNødvendig(hovedsøknadsid, opprettetEllerOppdaterSøknadsid)

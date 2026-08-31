@@ -35,5 +35,6 @@ class ForholdsmessigFordelingController(
     @PostMapping("/sjekk/{behandlingsid}")
     fun kanOppretteForholdsmessigFordeling(
         @PathVariable behandlingsid: Long,
-    ): SjekkForholdmessigFordelingResponse = forholdsmessigFordelingService.sjekkSkalOppretteForholdsmessigFordeling(behandlingsid)
+        @RequestBody(required = false) request: OpprettFFRequest?,
+    ): SjekkForholdmessigFordelingResponse = forholdsmessigFordelingService.sjekkSkalOppretteForholdsmessigFordeling(behandlingsid, request?.opprettetAvEnhet)
 }
