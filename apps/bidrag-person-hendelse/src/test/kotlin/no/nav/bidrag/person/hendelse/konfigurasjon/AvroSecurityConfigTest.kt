@@ -6,13 +6,13 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.person.pdl.leesah.Endringstype
 import no.nav.person.pdl.leesah.Personhendelse
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.util.UUID
-import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 
 /**
  * Verifiserer at Kafka faktisk klarer å deserialisere en spesifikk Avro-record

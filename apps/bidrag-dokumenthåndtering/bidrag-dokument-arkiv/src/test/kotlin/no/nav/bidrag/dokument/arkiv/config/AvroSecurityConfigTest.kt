@@ -14,8 +14,8 @@ import java.util.UUID
 
 /**
  * Verifiserer at Kafka faktisk klarer å deserialisere en spesifikk Avro-record
-    * når pakken er tillatt av AvroSecurityConfig.
-    */
+ * når pakken er tillatt av AvroSecurityConfig.
+*/
 @DisplayName("Kafka Avro-deserialisering av JournalfoeringHendelseRecord")
 internal class AvroSecurityConfigTest {
 
