@@ -16,7 +16,7 @@
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.7.0</shedlock.version>
+    <shedlock.version>7.9.0</shedlock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <unleash-client-java.version>12.2.2</unleash-client-java.version>
