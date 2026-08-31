@@ -305,5 +305,6 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         behandlingstema = Behandlingstema.BIDRAG,
         innkreving = true,
         status = status,
+        saksnummer = "",
     )
 }

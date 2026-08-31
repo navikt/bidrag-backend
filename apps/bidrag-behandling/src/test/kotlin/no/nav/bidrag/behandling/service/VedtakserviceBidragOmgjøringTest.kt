@@ -246,6 +246,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                             søktAvType = SøktAvType.BIDRAGSMOTTAKER,
                             behandlingstype = Behandlingstype.ENDRING,
                             behandlingstema = Behandlingstema.BIDRAG,
+                            saksnummer = "",
                         ),
                     ),
                 )
@@ -561,6 +562,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                 status = null,
                 behandlingstype = null,
                 behandlingstema = null,
+                saksnummer = "",
             ),
         ),
     )
