@@ -434,6 +434,7 @@ data class IkkeAktivInntektDto(
     @get:Schema(required = true)
     val inntektsposter: Set<InntektspostDtoV2>,
     val inntektsposterSomErEndret: Set<InntektspostEndringDto> = emptySet(),
+    val saksnummer: String? = null,
 )
 
 data class InntektspostEndringDto(

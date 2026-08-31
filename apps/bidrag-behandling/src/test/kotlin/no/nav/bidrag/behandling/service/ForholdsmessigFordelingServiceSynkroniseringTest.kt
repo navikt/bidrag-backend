@@ -9,6 +9,7 @@ import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.consumer.dto.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
@@ -60,6 +61,9 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
 
     @MockK
     lateinit var underholdService: UnderholdService
+
+    @MockK
+    lateinit var tilgangskontrollConsumer: BidragTilgangskontrollConsumer
 
     private lateinit var service: ForholdsmessigFordelingService
 

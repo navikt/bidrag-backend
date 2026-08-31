@@ -22,6 +22,7 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
@@ -32,8 +33,9 @@ import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.toYearMonth
 import java.time.LocalDateTime
 
-private const val FORETRUKKET_BEHANDLERENHET = "2103"
-private val STØTTEDE_BEHANDLERENHETER_FOR_FF = setOf("4883", FORETRUKKET_BEHANDLERENHET)
+private const val ENHET_VIKAFOSSEN = "2103"
+private const val ENHET_EGENANSATT = "4883"
+private const val ENHET_UTLAND = "4865"
 
 class ForholdsmessigFordelingKravhaverService(
     private val sakConsumer: BidragSakConsumer,
@@ -43,10 +45,17 @@ class ForholdsmessigFordelingKravhaverService(
 ) {
     fun finnEnhetForBarnIBehandling(behandling: Behandling): String {
         val sakerBp = hentSakerBp(behandling.bidragspliktig!!.ident!!)
-        val relevanteSaker = sakerBp.filter { it.eierfogd.verdi in STØTTEDE_BEHANDLERENHETER_FOR_FF }
-        return relevanteSaker.find { it.eierfogd.verdi == FORETRUKKET_BEHANDLERENHET }?.eierfogd?.verdi
-            ?: relevanteSaker.firstOrNull()?.eierfogd?.verdi
-            ?: behandling.behandlerEnhet
+        return when {
+            sakerBp.any { it.eierfogd.verdi == ENHET_VIKAFOSSEN } -> ENHET_VIKAFOSSEN
+
+            sakerBp.any { it.eierfogd.verdi == ENHET_EGENANSATT } -> ENHET_EGENANSATT
+
+            sakerBp.any { it.eierfogd.verdi == ENHET_UTLAND || it.kategori == Sakskategori.UTLAND } -> ENHET_UTLAND
+
+            else ->
+                sakerBp.minByOrNull { it.opprettetDato }?.eierfogd?.verdi
+                    ?: behandling.behandlerEnhet
+        }
     }
 
     fun hentSisteLøpendeStønader(

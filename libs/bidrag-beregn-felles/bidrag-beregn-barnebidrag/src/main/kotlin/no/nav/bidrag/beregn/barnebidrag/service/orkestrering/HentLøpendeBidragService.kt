@@ -6,6 +6,7 @@ import io.micrometer.core.annotation.Timed
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.vedtak.Vedtaksfiltrering
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.sak.Sakskategori
@@ -39,10 +40,14 @@ import no.nav.bidrag.transport.behandling.vedtak.response.VedtakForStønad
 import no.nav.bidrag.transport.felles.toCompactString
 import no.nav.bidrag.transport.person.PersonStønad
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.client.RestClientResponseException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.collections.set
 
 private val log = KotlinLogging.logger {}
 
@@ -164,6 +169,7 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService) {
             secureLogger.info { "Følgende beregninger skal hentes fra BBM: ${hentBeregningFraBBMListe.joinToString { it.toString() }}" }
             bidragBeregningResponsDtoFraBBM =
                 vedtakService.hentAlleBeregningerFraBBM(hentBeregningFraBBMListe)
+
             secureLogger.info { "Respons fra BBM: $bidragBeregningResponsDtoFraBBM" }
         }
 
@@ -344,7 +350,18 @@ fun LøpendeBidragOgBeregninger.tilBeregnGrunnlag(
         } else {
             // For utlandssaker og oppfostringsbidrag skal det ikke hentes inn løpende bidrag, da disse ikke skal påvirke beregningen.
             // Det opprettes likevel et grunnlagsobjekt for å unngå feil i beregningen
-            val bMFødselsdato = løpendeBidrag.mottaker?.let { personConsumer.hentFødselsdatoForPerson(løpendeBidrag.mottaker!!) } ?: return@forEach
+            val bMFødselsdato = løpendeBidrag.mottaker?.let {
+                try {
+                    personConsumer.hentFødselsdatoForPerson(løpendeBidrag.mottaker!!)
+                } catch (e: RestClientResponseException) {
+                    if (e.statusCode == HttpStatus.FORBIDDEN) {
+                        // Hvis SB ikke har tilgang til person så bør ikke det feile i løpende bidrag sjekken.
+                        // Fødselsdato er ikke viktig å lagre for BM så ignorerer
+                        return@let null
+                    }
+                    throw e
+                }
+            } ?: LocalDate.MAX
 
             // Sjekker om referanse for BM ligger i grunnlaget, ellers oppretter vi en ny referanse
             bMReferanse = request.grunnlagsliste.find {

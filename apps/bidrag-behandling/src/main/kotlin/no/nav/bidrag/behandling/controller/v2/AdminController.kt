@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.persistence.EntityNotFoundException
 import no.nav.bidrag.behandling.behandlingNotFoundException
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettBehandlingRequest
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettBehandlingResponse
@@ -365,6 +366,7 @@ class AdminController(
         val behandling = behandlingRepository.findBehandlingById(behandlingId).getOrNull() ?: behandlingNotFoundException(behandlingId)
         val rolle = behandling.roller.find { it.ident == barnIdent }
         behandlingService.slettRolleFraBehandling(behandling, rolle!!)
+        behandling.roller.remove(rolle)
     }
 
     @PostMapping("/admin/slettetbarn/feilfiks/{behandlingId}")
@@ -383,6 +385,108 @@ class AdminController(
                 grunnlag.gjelderBarnRolle?.toString()
             } catch (e: EntityNotFoundException) {
                 grunnlag.gjelderBarnRolle = null
+            }
+        }
+    }
+
+    /**
+     * En rolle kan i sjeldne tilfeller ha blitt hardslettet fra databasen uten at alle referanser til den
+     * ble ryddet opp (se f.eks bug fikset i BehandlingService.slettRolleFraBehandling). Da sitter det igjen
+     * rader i andre tabeller med en rolle_id/gjelder_barn_rolle_id som peker på en rolle som ikke lenger
+     * finnes. Dette gir EntityNotFoundException ved lasting av behandlingen. Dette endepunktet rydder opp
+     * i alle slike gjenværende referanser for en gitt behandling.
+     */
+    @PostMapping("/admin/feilfiks/orfanertrolle/{behandlingId}")
+    @Operation(
+        description =
+        "Fjerner referanser i behandlingen som peker på en rolle som ikke lenger finnes i databasen " +
+            "(f.eks etter at en rolle har blitt slettet uten at alle referanser ble ryddet opp)",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @Transactional
+    fun fiksOrfanerteRolleReferanser(
+        @PathVariable behandlingId: Long,
+    ) {
+        val behandling = behandlingRepository.findBehandlingById(behandlingId).getOrNull() ?: behandlingNotFoundException(behandlingId)
+
+        fun Rolle?.erSlettetFraDatabasen(): Boolean {
+            if (this == null) return false
+            return try {
+                // Trigger initialisering av proxyen. Kaster EntityNotFoundException hvis raden ikke finnes.
+                toString()
+                false
+            } catch (e: EntityNotFoundException) {
+                true
+            }
+        }
+
+        val slettedeGrunnlag =
+            behandling.grunnlag.filter { grunnlag ->
+                val eiendeRolleSlettet = grunnlag.rolle.erSlettetFraDatabasen()
+                if (!eiendeRolleSlettet && grunnlag.gjelderBarnRolle.erSlettetFraDatabasen()) {
+                    grunnlag.gjelderBarnRolle = null
+                }
+                eiendeRolleSlettet
+            }
+        if (slettedeGrunnlag.isNotEmpty()) {
+            log.warn {
+                "Fjerner ${slettedeGrunnlag.size} grunnlag i behandling $behandlingId som eies av en slettet rolle"
+            }
+            // NB: it.rolle er selve den slettede rollen her, så vi kan ikke lese/oppdatere it.rolle.grunnlag
+            // (proxyen kaster EntityNotFoundException). Det holder å fjerne fra behandling.grunnlag,
+            // som har orphanRemoval = true og dermed sletter raden ved flush.
+            behandling.grunnlag.removeAll(slettedeGrunnlag.toSet())
+        }
+
+        val slettedeNotater = behandling.notater.filter { it.rolle.erSlettetFraDatabasen() }
+        if (slettedeNotater.isNotEmpty()) {
+            log.warn {
+                "Fjerner ${slettedeNotater.size} notater i behandling $behandlingId som eies av en slettet rolle"
+            }
+            behandling.notater.removeAll(slettedeNotater.toSet())
+        }
+
+        val slettedeInntekter =
+            behandling.inntekter.filter { inntekt ->
+                val eiendeRolleSlettet = inntekt.rolle.erSlettetFraDatabasen()
+                if (!eiendeRolleSlettet && inntekt.gjelderBarnRolle.erSlettetFraDatabasen()) {
+                    inntekt.gjelderBarnRolle = null
+                }
+                eiendeRolleSlettet
+            }
+        if (slettedeInntekter.isNotEmpty()) {
+            log.warn {
+                "Fjerner ${slettedeInntekter.size} inntekter i behandling $behandlingId som eies av en slettet rolle"
+            }
+            behandling.inntekter.removeAll(slettedeInntekter.toSet())
+        }
+
+        val slettedeSamvær = behandling.samvær.filter { it.rolle.erSlettetFraDatabasen() }
+        if (slettedeSamvær.isNotEmpty()) {
+            log.warn {
+                "Fjerner ${slettedeSamvær.size} samvær i behandling $behandlingId som eies av en slettet rolle"
+            }
+            behandling.samvær.removeAll(slettedeSamvær.toSet())
+        }
+
+        behandling.underholdskostnader.forEach {
+            if (it.rolle.erSlettetFraDatabasen()) {
+                log.warn { "Nullstiller referanse til slettet rolle for underholdskostnad ${it.id} i behandling $behandlingId" }
+                it.rolle = null
+            }
+        }
+
+        behandling.privatAvtale.forEach {
+            if (it.rolle.erSlettetFraDatabasen()) {
+                log.warn { "Nullstiller referanse til slettet rolle for privat avtale ${it.id} i behandling $behandlingId" }
+                it.rolle = null
+            }
+        }
+
+        behandling.husstandsmedlem.forEach {
+            if (it.rolle.erSlettetFraDatabasen()) {
+                log.warn { "Nullstiller referanse til slettet rolle for husstandsmedlem ${it.id} i behandling $behandlingId" }
+                it.rolle = null
             }
         }
     }
