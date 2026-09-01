@@ -218,7 +218,7 @@ class VedtakService(
                     "søktFomDato ${request.søktFomDato}, mottatDato ${request.mottattdato}, søknadId ${request.søknadsid}: $request"
             }
 
-            behandlingService.hentEksisteredenBehandling(request.søknadsid)?.let {
+            behandlingService.hentEksisterendeBehandling(request.søknadsid)?.let {
                 secureLogger.warn {
                     "Fant eksisterende behandling ${it.id} for søknadsId ${request.søknadsid}. Oppretter ikke ny behandling"
                 }
