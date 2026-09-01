@@ -1,5 +1,6 @@
 package no.nav.bidrag.automatiskjobb.kafka
 
+import no.nav.bidrag.automatiskjobb.service.SakService
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.sak.SakHendelse
@@ -9,7 +10,9 @@ import org.springframework.messaging.handler.annotation.Header
 import org.springframework.stereotype.Component
 
 @Component
-class SakHendelseListener {
+class SakHendelseListener(
+    private val sakService: SakService,
+) {
     @KafkaListener(
         topics = ["\${KAFKA_SAK_HENDELSE_TOPIC}"],
         groupId = "\${SAK_HENDELSE_KAFKA_GROUP_ID:bidrag-automatisk-jobb-sak}",
@@ -26,7 +29,7 @@ class SakHendelseListener {
         try {
             val sakHendelse = commonObjectmapper.readValue(hendelse, SakHendelse::class.java)
             secureLogger.info { "Behandler sakhendelse $sakHendelse" }
-            // todo
+            sakService.behandleSakHendelse(sakHendelse)
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved behandling av sakhendelse" }
         }
