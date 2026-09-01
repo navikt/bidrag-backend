@@ -151,6 +151,7 @@ class ForholdsmessigFordelingService(
         behandlingId: Long,
         reevaluerSøkndasbarn: Pair<String, Stønadstype?>? = null,
         request: OpprettFFRequest? = null,
+        opprettetAvSaksbehandler: String? = null,
     ) {
         try {
             if (TokenUtils.hentBruker() != null && !UnleashFeatures.TILGANG_OPPRETTE_FF.isEnabled) {
@@ -197,12 +198,14 @@ class ForholdsmessigFordelingService(
                 erOppdateringAvBehandlingSomErIFF,
             )
 
-            behandling.forholdsmessigFordeling =
-                ForholdsmessigFordeling(
-                    erHovedbehandling = true,
-                    opprettetAvSaksbehandler = TokenUtils.hentSaksbehandlerIdent(),
-                    oppprettetAvEnhet = request?.opprettetAvEnhet,
-                )
+            if (behandling.forholdsmessigFordeling == null) {
+                behandling.forholdsmessigFordeling =
+                    ForholdsmessigFordeling(
+                        erHovedbehandling = true,
+                        opprettetAvSaksbehandler = opprettetAvSaksbehandler,
+                        oppprettetAvEnhet = request?.opprettetAvEnhet,
+                    )
+            }
 
             oppdaterGebyrDetaljerRollerIBehandling(behandling, relevanteKravhavere)
             oppdaterFFDetaljerPåSøknadsbarn(behandling, relevanteKravhavere, eksisterendeSøknadsbarn, originalBM)
