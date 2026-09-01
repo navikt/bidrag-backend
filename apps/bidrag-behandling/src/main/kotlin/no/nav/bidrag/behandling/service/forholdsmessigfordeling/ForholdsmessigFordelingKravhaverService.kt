@@ -44,6 +44,7 @@ class ForholdsmessigFordelingKravhaverService(
     private val bbmConsumer: BidragBBMConsumer,
 ) {
     fun finnEnhetForBarnIBehandling(behandling: Behandling, utløsendeEnhet: String? = behandling.behandlerEnhet): String {
+        if (behandling.erIForholdsmessigFordeling) return behandling.behandlerEnhet
         val sakerBp = hentSakerBp(behandling.bidragspliktig!!.ident!!)
         return when {
             sakerBp.any { it.eierfogd.verdi == ENHET_VIKAFOSSEN } -> ENHET_VIKAFOSSEN

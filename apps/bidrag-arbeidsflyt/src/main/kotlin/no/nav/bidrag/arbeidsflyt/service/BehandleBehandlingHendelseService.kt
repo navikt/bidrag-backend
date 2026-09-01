@@ -153,6 +153,10 @@ class BehandleBehandlingHendelseService(
                     }
                 } else {
                     val ff = behandlingDetaljer.forholdsmessigFordeling
+                    if (ff.opprettetAvSaksbehandler == null) {
+                        secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
+                        return
+                    }
                     val søknader =
                         hendelse.barn
                             .filter { it.søknadsid != null }

@@ -164,7 +164,7 @@ class BidragsberegningOrkestrator(
         Beregningstype.OMGJØRING_ENDELIG -> {
             secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
             val klageberegningResultat = orkestrerBeregning(request, true)
-            val respons = klageberegningResultat.resultatListe.parallelStream().map { resultat ->
+            val respons = klageberegningResultat.resultatListe.map { resultat ->
                 if (resultat.beregningsfeil != null) {
                     BidragsberegningResultatBarnV2(
                         søknadsbarnreferanse = resultat.søknadsbarnreferanse,
