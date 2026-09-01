@@ -1223,12 +1223,12 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             ).takeIf { it.isNotEmpty() }
     },
 )
-
 fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekterV2(
-    virkningstidspunkt: LocalDate,
+    virkningstidspunktInput: LocalDate,
     rolle: Rolle,
     behandlingType: TypeBehandling = TypeBehandling.FORSKUDD,
 ): InntektValideringsfeil? {
+    val virkningstidspunkt = if (rolle?.rolletype == Rolletype.BIDRAGSMOTTAKER) rolle.virkningstidspunktRolle else virkningstidspunktInput
     val inntekterSomSkalSjekkes = filter { !eksplisitteYtelser.contains(it.type) }.filter { it.taMed }
     val rollerSomKreverMinstEnInntekt = bestemRollerSomMåHaMinstEnInntekt(behandlingType)
     val opphørsdato = rolle.behandling.globalOpphørsdato
@@ -1273,7 +1273,7 @@ fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekterV2(
 }
 
 fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekter(
-    virkningstidspunkt: LocalDate,
+    virkningstidspunktInput: LocalDate,
     roller: Set<Rolle>,
     behandlingType: TypeBehandling = TypeBehandling.FORSKUDD,
 ): Set<InntektValideringsfeil> {
@@ -1282,6 +1282,7 @@ fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekter(
     return roller
         .filter { bestemRollerSomKanHaInntekter(behandlingType).contains(it.rolletype) }
         .map { rolle ->
+            val virkingstidspunkt = if (rolle.rolletype == Rolletype.BIDRAGSMOTTAKER) rolle.virkningstidspunktRolle else virkningstidspunktInput
             val opphørsdato = rolle.behandling.globalOpphørsdato
             val inntekterTaMed = inntekterSomSkalSjekkes.filter { it.erSammeRolle(rolle) }
 
@@ -1300,12 +1301,12 @@ fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekter(
                         // Feks at barnet bare har inntekt fra sommerjobb
                         emptyList()
                     } else {
-                        inntekterTaMed.finnHullIPerioder(virkningstidspunkt, opphørsdato)
+                        inntekterTaMed.finnHullIPerioder(virkingstidspunkt, opphørsdato)
                     }
                 InntektValideringsfeil(
                     hullIPerioder = hullIPerioder,
                     overlappendePerioder = inntekterTaMed.finnOverlappendePerioderInntekt(),
-                    fremtidigPeriode = inntekterTaMed.inneholderFremtidigPeriode(virkningstidspunkt),
+                    fremtidigPeriode = inntekterTaMed.inneholderFremtidigPeriode(virkingstidspunkt),
                     ugyldigSluttPeriode = inntekterTaMed.harUgyldigSluttperiode(opphørsdato),
                     manglerPerioder =
                     (rolle.rolletype != Rolletype.BARN)

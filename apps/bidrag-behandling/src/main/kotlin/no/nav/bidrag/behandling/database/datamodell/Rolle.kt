@@ -173,7 +173,13 @@ open class Rolle(
                 (rolletype == Rolletype.BIDRAGSMOTTAKER && it.bidragsmottaker?.ident == this.ident)
         }
     val stønadstypeBarnEllerBehandling get() = stønadstype ?: behandling.stonadstype
-    val virkningstidspunktRolle get() = virkningstidspunkt ?: behandling.virkningstidspunktEllerSøktFomDato
+    val virkningstidspunktRolle get() = if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
+        behandling.søknadsbarn.filter { it.saksnummer == saksnummer }
+            .minOfOrNull { it.virkningstidspunkt ?: behandling.virkningstidspunktEllerSøktFomDato }
+            ?: virkningstidspunkt ?: behandling.virkningstidspunktEllerSøktFomDato
+    } else {
+        virkningstidspunkt ?: behandling.virkningstidspunktEllerSøktFomDato
+    }
 
     val søknader get() = forholdsmessigFordeling?.søknaderUnderBehandling ?: listOf(behandling.tilFFBarnDetaljer())
 
