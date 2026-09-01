@@ -202,7 +202,7 @@ class ForholdsmessigFordelingService(
                 behandling.forholdsmessigFordeling =
                     ForholdsmessigFordeling(
                         erHovedbehandling = true,
-                        opprettetAvSaksbehandler = opprettetAvSaksbehandler,
+                        opprettetAvSaksbehandler = opprettetAvSaksbehandler ?: TokenUtils.hentSaksbehandlerIdent(),
                         oppprettetAvEnhet = request?.opprettetAvEnhet,
                     )
             }
