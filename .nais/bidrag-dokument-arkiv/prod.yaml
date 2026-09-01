@@ -14,6 +14,7 @@ azure:
 ingresses:
   - https://bidrag-dokument-arkiv.nais.adeo.no/
   - https://bidrag-dokument-arkiv.intern.nav.no/
+  - https://bidrag-dokument-arkiv.prod-fss-pub.nais.io
 kafka:
   pool: nav-prod
 cpu:
