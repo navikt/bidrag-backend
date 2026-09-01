@@ -1228,7 +1228,7 @@ fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekterV2(
     rolle: Rolle,
     behandlingType: TypeBehandling = TypeBehandling.FORSKUDD,
 ): InntektValideringsfeil? {
-    val virkningstidspunkt = if (rolle?.rolletype == Rolletype.BIDRAGSMOTTAKER) rolle.virkningstidspunktRolle else virkningstidspunktInput
+    val virkningstidspunkt = if (rolle.rolletype == Rolletype.BIDRAGSMOTTAKER && rolle.behandling.erIForholdsmessigFordeling) rolle.virkningstidspunktRolle else virkningstidspunktInput
     val inntekterSomSkalSjekkes = filter { !eksplisitteYtelser.contains(it.type) }.filter { it.taMed }
     val rollerSomKreverMinstEnInntekt = bestemRollerSomMåHaMinstEnInntekt(behandlingType)
     val opphørsdato = rolle.behandling.globalOpphørsdato
@@ -1282,7 +1282,7 @@ fun Collection<Inntekt>.mapValideringsfeilForÅrsinntekter(
     return roller
         .filter { bestemRollerSomKanHaInntekter(behandlingType).contains(it.rolletype) }
         .map { rolle ->
-            val virkingstidspunkt = if (rolle.rolletype == Rolletype.BIDRAGSMOTTAKER) rolle.virkningstidspunktRolle else virkningstidspunktInput
+            val virkingstidspunkt = if (rolle.rolletype == Rolletype.BIDRAGSMOTTAKER && rolle.behandling.erIForholdsmessigFordeling) rolle.virkningstidspunktRolle else virkningstidspunktInput
             val opphørsdato = rolle.behandling.globalOpphørsdato
             val inntekterTaMed = inntekterSomSkalSjekkes.filter { it.erSammeRolle(rolle) }
 
