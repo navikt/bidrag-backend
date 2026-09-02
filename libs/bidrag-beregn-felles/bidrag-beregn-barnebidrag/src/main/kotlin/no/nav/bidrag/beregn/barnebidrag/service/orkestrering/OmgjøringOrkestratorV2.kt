@@ -637,7 +637,7 @@ class OmgjøringOrkestratorV2(
                     vedtakTilResultatPeriode(komplettVedtak, it)
                 }
 
-                !context.skalFatteVedtak -> {
+                !context.skalFatteVedtak && !context.omgjøringOrkestratorGrunnlag.skalInnkreves -> {
                     val delberegningIndeksreguleringPrivatAvtalePeriodeResultat = omgjøringOrkestratorHelpers.utførDelberegningPrivatAvtalePeriode(context.omgjøringGrunnlag)
                     val søknadsbarn = delberegningIndeksreguleringPrivatAvtalePeriodeResultat.hentPersonMedIdent(stønad.kravhaver.verdi)!!
                     val privatavtalePerioder = delberegningIndeksreguleringPrivatAvtalePeriodeResultat
