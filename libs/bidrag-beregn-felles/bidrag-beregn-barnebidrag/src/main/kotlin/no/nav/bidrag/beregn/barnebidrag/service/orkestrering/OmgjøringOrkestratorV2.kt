@@ -41,6 +41,7 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatVedtak
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.AldersjusteringDetaljerGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BeløpshistorikkGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningIndeksreguleringPrivatAvtale
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ResultatFraVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
@@ -49,6 +50,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erResultatEndringUnderGrense
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanser
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
@@ -89,6 +91,7 @@ internal data class OmgjøringeOrkestratorContext(
     val nyVirkningErEtterOpprinneligVirkning: Boolean,
     val erResultatUtenPerioder: Boolean,
     val skalFatteVedtak: Boolean,
+    val omgjøringGrunnlag: BeregnGrunnlag,
     val vedtakslisteRelatertTilOmgjortVedtak: Set<Int>,
     val omgjørVedtak: VedtakDto,
 ) {
@@ -240,6 +243,7 @@ class OmgjøringOrkestratorV2(
                 omgjøringGrunnlag,
                 omgjørVedtakVirkningstidspunkt,
                 omgjøringOrkestratorGrunnlag.gjelderParagraf35c,
+                omgjøringOrkestratorGrunnlag.skalInnkreves,
 
             )
 
@@ -250,6 +254,7 @@ class OmgjøringOrkestratorV2(
             val context = OmgjøringeOrkestratorContext(
                 nyVirkningErEtterOpprinneligVirkning = nyVirkningErEtterOpprinneligVirkning,
                 erResultatUtenPerioder = erResultatUtenPerioder,
+                omgjøringGrunnlag = omgjøringGrunnlag,
                 skalFatteVedtak = skalFatteVedtak,
                 omgjøringsresultat = omgjøringResultat,
                 omgjøringsperiode = omgjøringperiode,
@@ -632,6 +637,9 @@ class OmgjøringOrkestratorV2(
                     vedtakTilResultatPeriode(komplettVedtak, it)
                 }
 
+                !context.skalFatteVedtak && !context.omgjøringOrkestratorGrunnlag.skalInnkreves ->
+                    opprettDelvedtakFraPrivatAvtaleHvisHeleHistorikkenErPrivatAvtale(context, beløpshistorikk)
+
                 else -> null
             }
             resultat?.let {
@@ -640,6 +648,40 @@ class OmgjøringOrkestratorV2(
             }
         }
         return beregnetBarnebidragResultatListe
+    }
+
+    // Sjekker om alle periodene i historikken er privat avtale og lager en beregningsperiode basert på det ved tilbakestilling for R-barn
+    private fun opprettDelvedtakFraPrivatAvtaleHvisHeleHistorikkenErPrivatAvtale(
+        context: OmgjøringeOrkestratorContext,
+        beløpshistorikk: List<BeløpshistorikkPeriodeInternal>,
+    ): BeregnetBarnebidragResultatInternal? {
+        val delberegningIndeksreguleringPrivatAvtalePeriodeResultat =
+            omgjøringOrkestratorHelpers.utførDelberegningPrivatAvtalePeriode(context.omgjøringGrunnlag)
+        val søknadsbarn = delberegningIndeksreguleringPrivatAvtalePeriodeResultat.hentPersonMedIdent(context.stønad.kravhaver.verdi)!!
+        val privatavtalePerioder = delberegningIndeksreguleringPrivatAvtalePeriodeResultat
+            .filtrerOgKonverterBasertPåFremmedReferanse<DelberegningIndeksreguleringPrivatAvtale>(
+                Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE,
+                gjelderBarnReferanse = søknadsbarn.referanse,
+            )
+
+        val privatavtaleÅrmåndesperioder = privatavtalePerioder.map { it.innhold.periode }
+        if (!beløpshistorikk.all { privatavtaleÅrmåndesperioder.contains(it.periode) }) return null
+
+        return BeregnetBarnebidragResultatInternal(
+            resultat = BeregnetBarnebidragResultat(
+                beregnetBarnebidragPeriodeListe = privatavtalePerioder.map {
+                    ResultatPeriode(
+                        it.innhold.periode,
+                        ResultatBeregning(it.innhold.indeksregulertBeløp),
+                        it.grunnlag.grunnlagsreferanseListe,
+                    )
+                },
+                grunnlagListe = delberegningIndeksreguleringPrivatAvtalePeriodeResultat,
+            ),
+            vedtakstype = Vedtakstype.FASTSETTELSE,
+            beregnet = false,
+            beregnetFraDato = privatavtalePerioder.map { it.innhold }.minOf { it.periode.fom }.atDay(1),
+        )
     }
 
     private fun vedtakTilResultatPeriode(komplettVedtak: VedtakDto, it: List<BeløpshistorikkPeriodeInternal>): BeregnetBarnebidragResultatInternal {
@@ -734,7 +776,9 @@ class OmgjøringOrkestratorV2(
         opphørsdato: YearMonth?,
         omgjørVedtakVedtakstidspunkt: LocalDateTime,
         skalInnkreves: Boolean,
+        skalFatteVedtak: Boolean,
     ): List<BeløpshistorikkPeriodeInternal> {
+        if (!skalFatteVedtak && !skalInnkreves) return this
         if (this.isEmpty() || (!beregnForPerioderEtterKlage && (!skalInnkreves)) || !skalInnkreves) return emptyList()
 
         val beløshistorikkKlage = if (beregnForPerioderEtterKlage) {
@@ -842,17 +886,16 @@ class OmgjøringOrkestratorV2(
             emptyList()
         } else {
             val periodeListe = beløpshistorikkFørOmgjortVedtak.beløpshistorikk.filter { it.vedtaksid != context.omgjørVedtakId }
-            val perioderFiltrertForBeregningsperioder = periodeListe.filter {
-                it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!
-            }
+
             val perioderFiltrert = if (context.erResultatUtenPerioder || !context.skalFatteVedtak) {
                 // Betyr at revurderingsbarn i klage har gått fra å bli revurdert til å ikke trenger å bli revurdert lenger
                 // Gjenopprett forrige beløpshistorikk
                 val periodelisteFørOmgjortVedtak = beløpshistorikkFørOmgjortVedtak.beløpshistorikk.filter { it.vedtaksid != context.omgjørVedtakId }
-                val perioderFiltrert = periodelisteFørOmgjortVedtak.filter {
-                    it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!
+                val perioderFiltrertForBeregningsperioder = periodelisteFørOmgjortVedtak.filter {
+                    it.periode.til == null ||
+                        (it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!)
                 }
-                if (perioderFiltrert.isEmpty()) {
+                if (perioderFiltrertForBeregningsperioder.isEmpty()) {
                     // Legg til siste periode slik at tilbakestillingen av beløpshistorikk ikke opphører bidraget til R-barnet
                     val sistePeriodeFiltrert = periodelisteFørOmgjortVedtak.maxByOrNull { it.periode.fom }
                     if (sistePeriodeFiltrert == null) {
@@ -873,7 +916,9 @@ class OmgjøringOrkestratorV2(
                     perioderFiltrertForBeregningsperioder
                 }
             } else {
-                perioderFiltrertForBeregningsperioder
+                periodeListe.filter {
+                    it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!
+                }
             }
 
             perioderFiltrert.map {
@@ -908,6 +953,7 @@ class OmgjøringOrkestratorV2(
             opphørsdato = context.opphørsdato,
             omgjørVedtakVedtakstidspunkt = context.omgjørVedtak.vedtakstidspunkt!!,
             skalInnkreves = context.omgjøringOrkestratorGrunnlag.skalInnkreves,
+            skalFatteVedtak = context.skalFatteVedtak,
         )
     }
 
@@ -1103,13 +1149,13 @@ class OmgjøringOrkestratorV2(
         vedtakListe: List<ResultatVedtak>,
         opphørsdato: YearMonth?,
         erBeregningsperiodeLøpende: Boolean,
-        skalFatteVedtak: Boolean,
+        inkluderBeregnet: Boolean,
     ): BeregnetBarnebidragResultat {
         val resultatPeriodeListe = mutableListOf<ResultatPeriode>()
         val grunnlagListe = mutableListOf<GrunnlagDto>()
         // Hvis det ikke skal fattes vedtak så skal ikke beregnet bidraget tas med i endelig vedtaket
         // Ønsker enten å tilbakestille eller opphøre bidraget pga at det tilbakestilles (tilfeller hvor det velges å ikke fatte vedtak for R-barn når det originalet ble fattet vedtak)
-        vedtakListe.filter { skalFatteVedtak || !it.beregnet }.forEach {
+        vedtakListe.filter { inkluderBeregnet || !it.beregnet }.forEach {
             resultatPeriodeListe.addAll(it.resultat.beregnetBarnebidragPeriodeListe)
         }
 
@@ -1321,6 +1367,8 @@ class OmgjøringOrkestratorV2(
             opphørsdato = opphørsdato,
             omgjørVedtakVedtakstidspunkt = context.omgjørVedtak.vedtakstidspunkt!!,
             skalInnkreves = context.omgjøringOrkestratorGrunnlag.skalInnkreves,
+            skalFatteVedtak = context.skalFatteVedtak,
+
         )
         return vedtakEtterOmgjøringsVedtak
     }

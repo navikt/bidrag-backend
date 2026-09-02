@@ -159,6 +159,7 @@ class OmgjøringOrkestrator(
                 vedtakslisteRelatertTilOmgjortVedtak = vedtakslisteRelatertTilOmgjortVedtak,
                 omgjørVedtak = omgjørVedtak,
                 skalFatteVedtak = true,
+                omgjøringGrunnlag = omgjøringGrunnlag,
             )
             val åpenSluttperiode = omgjøringGrunnlagJustert.åpenSluttperiode && context.opphørsdato == null
 

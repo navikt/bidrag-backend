@@ -1745,7 +1745,7 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
                     navn = barn.navn ?: "",
                     fødselsdato = barn.fødselsdato,
                     saksnr = barn.forholdsmessigFordeling?.tilhørerSak ?: "",
-                    bidragsmottaker = bm!!.tilDto(),
+                    bidragsmottaker = bm?.tilDto(),
                     sammeSakSomBehandling = barn.forholdsmessigFordeling?.tilhørerSak == saksnummer,
                     erRevurdering = barn.forholdsmessigFordeling?.erRevurdering == true,
                     harLøpendeBidrag = barn.forholdsmessigFordeling?.harLøpendeBidrag == true,
