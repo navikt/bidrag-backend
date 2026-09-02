@@ -31,10 +31,6 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as Beregn
 
 private val LOGGER = KotlinLogging.logger { }
 
-/**
- * SakHendelse inneholder ingen informasjon om hvilke felt som er endret. Denne tjenesten holder derfor
- * et snapshot av partene i saken, og utleder endringer ved å sammenligne mot forrige observerte tilstand.
- */
 @Service
 class SakService(
     private val sakRepository: SakRepository,
@@ -64,12 +60,12 @@ class SakService(
     ): List<Mottakerendring> {
         val mottakerendringer = mutableListOf<Mottakerendring>()
 
-        lagretSak.bidragspliktig = hendelse.bidragspliktig?.normalisert()
-        lagretSak.bidragsmottaker = hendelse.bidragsmottaker?.normalisert()
+        lagretSak.bidragspliktig = hendelse.bidragspliktig?.nyesteIdent()
+        lagretSak.bidragsmottaker = hendelse.bidragsmottaker?.nyesteIdent()
 
         hendelse.barn.forEach { barnISak ->
-            val kravhaver = barnISak.ident?.normalisert() ?: return@forEach
-            val nyReellMottaker = barnISak.reellMottaker?.normalisert()
+            val kravhaver = barnISak.ident?.nyesteIdent() ?: return@forEach
+            val nyReellMottaker = barnISak.reellMottaker?.nyesteIdent()
             val lagretBarn = lagretSak.finnBarn(kravhaver)
 
             if (lagretBarn == null) {
@@ -173,37 +169,27 @@ class SakService(
         val sak =
             Sak(
                 saksnummer = saksnummer.verdi,
-                bidragspliktig = bidragspliktig?.normalisert(),
-                bidragsmottaker = bidragsmottaker?.normalisert(),
+                bidragspliktig = bidragspliktig?.nyesteIdent(),
+                bidragsmottaker = bidragsmottaker?.nyesteIdent(),
             )
         sak.barn.addAll(
             barn.mapNotNull { barnISak ->
-                val kravhaver = barnISak.ident?.normalisert() ?: return@mapNotNull null
+                val kravhaver = barnISak.ident?.nyesteIdent() ?: return@mapNotNull null
                 SakBarn(
                     sak = sak,
                     kravhaver = kravhaver,
-                    reellMottaker = barnISak.reellMottaker?.normalisert(),
+                    reellMottaker = barnISak.reellMottaker?.nyesteIdent(),
                 )
             },
         )
         return sak
     }
 
-    /**
-     * Normaliserer identen mot PDL slik at en ren fødselsnummerendring ikke tolkes som en endring av part.
-     */
-    private fun Personident.normalisert(): String = identUtils.hentNyesteIdent(this).verdi
+    private fun Personident.nyesteIdent(): String = identUtils.hentNyesteIdent(this).verdi
 
-    /**
-     * Reell mottaker kan også være en samhandler-id. Den finnes ikke i PDL og skal derfor ikke normaliseres.
-     */
-    private fun ReellMottaker.normalisert(): String = personIdent()?.let { identUtils.hentNyesteIdent(it).verdi } ?: verdi
+    private fun ReellMottaker.nyesteIdent(): String = personIdent()?.let { identUtils.hentNyesteIdent(it).verdi } ?: verdi
 
-    /**
-     * Snapshotet kan inneholde et fødselsnummer som senere er erstattet i PDL. Begge sider av
-     * sammenligningen må derfor normaliseres, ellers tolkes en ren identendring som bytte av mottaker.
-     */
-    private fun String?.normalisertReellMottaker(): String? = this?.let { ReellMottaker(it).normalisert() }
+    private fun String?.normalisertReellMottaker(): String? = this?.let { ReellMottaker(it).nyesteIdent() }
 
     private data class Mottakerendring(
         val kravhaver: String,

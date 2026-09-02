@@ -12,10 +12,6 @@ import jakarta.persistence.OneToMany
 import org.hibernate.proxy.HibernateProxy
 import java.time.LocalDateTime
 
-/**
- * Speiler partene i en sak slik de sist ble observert i en SakHendelse.
- * Brukes til å utlede hva som faktisk har endret seg, siden SakHendelse ikke inneholder feltdiff.
- */
 @Entity(name = "sak")
 data class Sak(
     @Id
