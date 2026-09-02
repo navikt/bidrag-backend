@@ -274,6 +274,7 @@ fun BeregnetBarnebidragResultat.byggStønadsendringerForEndeligVedtak(
                 resultatPeriode.grunnlagsreferanseListe.all { gr ->
                     grunnlaglisterResultat.find { it.referanse == gr }?.type == Grunnlagstype.RESULTAT_FRA_VEDTAK
                 }
+
         val vedtak =
             resultatDelvedtak.find { rv ->
                 val tilhørerBarn =
@@ -317,13 +318,22 @@ fun BeregnetBarnebidragResultat.byggStønadsendringerForEndeligVedtak(
                     }!!
                 if (periode.resultat.beløp == null) Resultatkode.OPPHØR.name else Resultatkode.BEREGNET_BIDRAG.name
             }
-
+        val periodeErPrivatAvtale =
+            resultatPeriode.grunnlagsreferanseListe.isNotEmpty() &&
+                resultatPeriode.grunnlagsreferanseListe.any { gr ->
+                    grunnlaglisterResultat.find { it.referanse == gr }?.type == Grunnlagstype.PRIVAT_AVTALE_PERIODE_GRUNNLAG
+                }
         val resultatFraGrunnlag =
-            if (periodeErResultatFraVedtak) {
+            // Privat avtale periode kan skje hvis det er klage vedtak av FF og beregningen tilbakestiller til privat avtale hvis SB velger å ikke fatte vedtak for R-barn likevel
+            if (periodeErPrivatAvtale) {
+                grunnlagListe.addAll(grunnlaglisterResultat.filter { resultatPeriode.grunnlagsreferanseListe.contains(it.referanse) })
+
+                resultatPeriode.grunnlagsreferanseListe
+            } else if (periodeErResultatFraVedtak) {
                 val referanse = resultatPeriode.grunnlagsreferanseListe.first()
                 val resultatFraGrunnlag = grunnlaglisterResultat.find { it.referanse == referanse }!!
                 grunnlagListe.add(resultatFraGrunnlag)
-                resultatFraGrunnlag
+                listOf(resultatFraGrunnlag.referanse)
             } else {
                 val referanse = "resultatFraVedtak_${vedtak!!.vedtaksid ?: resultatPeriode.periode.fom.toCompactString()}"
                 val resultatFraGrunnlag =
@@ -347,7 +357,7 @@ fun BeregnetBarnebidragResultat.byggStønadsendringerForEndeligVedtak(
                         ),
                     )
                 grunnlagListe.add(resultatFraGrunnlag)
-                resultatFraGrunnlag
+                listOf(resultatFraGrunnlag.referanse)
             }
         val klagevedtak =
             resultatDelvedtak
@@ -374,7 +384,7 @@ fun BeregnetBarnebidragResultat.byggStønadsendringerForEndeligVedtak(
             beløp = resultatPeriode.resultat.beløp,
             valutakode = if (resultatPeriode.resultat.beløp == null) null else "NOK",
             resultatkode = resultatkode,
-            grunnlagReferanseListe = listOf(resultatFraGrunnlag.referanse),
+            grunnlagReferanseListe = resultatFraGrunnlag,
         )
     }
     val periodeliste =
