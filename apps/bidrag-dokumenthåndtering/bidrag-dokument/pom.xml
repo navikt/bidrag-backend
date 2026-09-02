@@ -19,16 +19,16 @@
   <properties>
     <mockk.version>1.14.11</mockk.version>
     <nav-token-support.version>6.0.12</nav-token-support.version>
-    <jackson.version>2.21.2</jackson.version>
+    <jackson.version>2.22.2</jackson.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <okhttp.version>5.4.0</okhttp.version>
-    <google-guava.version>33.0.0-jre</google-guava.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <okhttp.version>5.5.0</okhttp.version>
+    <google-guava.version>33.7.1-jre</google-guava.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
-    <kotest.version>6.2.3</kotest.version>
+    <kotest.version>6.2.4</kotest.version>
   </properties>
 
   <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
@@ -169,7 +169,7 @@
     <dependency>
       <groupId>io.opentelemetry.instrumentation</groupId>
       <artifactId>opentelemetry-instrumentation-annotations</artifactId>
-      <version>2.28.1</version>
+      <version>2.31.0</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
@@ -191,12 +191,12 @@
     <dependency>
       <groupId>org.apache.pdfbox</groupId>
       <artifactId>pdfbox</artifactId>
-      <version>3.0.7</version>
+      <version>3.0.8</version>
     </dependency>
     <dependency>
       <groupId>org.apache.pdfbox</groupId>
       <artifactId>pdfbox-io</artifactId>
-      <version>3.0.7</version>
+      <version>3.0.8</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

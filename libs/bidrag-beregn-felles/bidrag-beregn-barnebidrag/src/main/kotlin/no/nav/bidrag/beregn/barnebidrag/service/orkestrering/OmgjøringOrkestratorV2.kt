@@ -440,7 +440,7 @@ class OmgjøringOrkestratorV2(
             )
         }
 
-        val resultatSlåttSammen = slåSammenVedtak(delvedtakListe, context.opphørsdato, context.erBeregningsperiodeLøpende)
+        val resultatSlåttSammen = slåSammenVedtak(delvedtakListe, context.opphørsdato, context.erBeregningsperiodeLøpende, context.skalFatteVedtak)
         val sammenslåttVedtak =
             ResultatVedtak(
                 resultat = resultatSlåttSammen,
@@ -464,7 +464,7 @@ class OmgjøringOrkestratorV2(
     private fun omgjøringScenarioVirkningEtterOpprinneligVirkning(context: OmgjøringeOrkestratorContext): List<ResultatVedtak> {
         val vedtakIderMellomOmgjortVirkningOgNyVirkning =
             finnVedtakIderMellomOmgjortVirkningOgNyVirkning(context)
-        val periodeSomSkalOpphøres = if (!context.erResultatUtenPerioder && context.skalFatteVedtak) {
+        val periodeSomSkalOpphøres = if ((!context.erResultatUtenPerioder && context.skalFatteVedtak)) {
             finnPeriodeSomSkalOpphøres(
                 context.omgjøringsperiode,
                 context.omgjørVedtakVirkningstidspunkt,
@@ -543,7 +543,7 @@ class OmgjøringOrkestratorV2(
                     },
             )
         }
-        val resultatSlåttSammen = slåSammenVedtak(delvedtakListe, context.opphørsdato, context.erBeregningsperiodeLøpende)
+        val resultatSlåttSammen = slåSammenVedtak(delvedtakListe, context.opphørsdato, context.erBeregningsperiodeLøpende, context.skalFatteVedtak)
 
         val sammenslåttVedtak =
             ResultatVedtak(
@@ -754,9 +754,7 @@ class OmgjøringOrkestratorV2(
         } else {
             listOf(
                 BeløpshistorikkPeriodeInternal(
-                    omgjørVedtakVirkningstidspunkt?.takeIf {
-                        omgjøringsperiode.fom > omgjørVedtakVirkningstidspunkt
-                    }?.let { ÅrMånedsperiode(it, omgjøringsperiode.fom) }
+                    omgjørVedtakVirkningstidspunkt?.let { ÅrMånedsperiode(omgjørVedtakVirkningstidspunkt, omgjøringsperiode.fom) }
                         ?: omgjøringsperiode,
                     BigDecimal.ZERO,
                     omgjøringsvedtak = true,
@@ -844,29 +842,38 @@ class OmgjøringOrkestratorV2(
             emptyList()
         } else {
             val periodeListe = beløpshistorikkFørOmgjortVedtak.beløpshistorikk.filter { it.vedtaksid != context.omgjørVedtakId }
+            val perioderFiltrertForBeregningsperioder = periodeListe.filter {
+                it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!
+            }
             val perioderFiltrert = if (context.erResultatUtenPerioder || !context.skalFatteVedtak) {
                 // Betyr at revurderingsbarn i klage har gått fra å bli revurdert til å ikke trenger å bli revurdert lenger
                 // Gjenopprett forrige beløpshistorikk
                 val periodelisteFørOmgjortVedtak = beløpshistorikkFørOmgjortVedtak.beløpshistorikk.filter { it.vedtaksid != context.omgjørVedtakId }
-                val sistePeriodeFiltrert = periodelisteFørOmgjortVedtak.maxByOrNull { it.periode.fom }
-                if (sistePeriodeFiltrert == null) {
-                    emptyList()
-                } else {
-                    listOfNotNull(
-                        sistePeriodeFiltrert.copy(
-                            periode = ÅrMånedsperiode(
-                                // Kan hende virkning er etter sistePeriode hvis det feks er revurderingsbarn
-                                // Unngå å ha en periode hvor fom > til
-                                minOfNullable(omgjørVedtakVirkningstidspunkt, sistePeriodeFiltrert.periode.til)!!,
-                                sistePeriodeFiltrert.periode.til,
+                val perioderFiltrert = periodelisteFørOmgjortVedtak.filter {
+                    it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!! <= omgjøringsperiode.til!!
+                }
+                if (perioderFiltrert.isEmpty()) {
+                    // Legg til siste periode slik at tilbakestillingen av beløpshistorikk ikke opphører bidraget til R-barnet
+                    val sistePeriodeFiltrert = periodelisteFørOmgjortVedtak.maxByOrNull { it.periode.fom }
+                    if (sistePeriodeFiltrert == null) {
+                        emptyList()
+                    } else {
+                        listOfNotNull(
+                            sistePeriodeFiltrert.copy(
+                                periode = ÅrMånedsperiode(
+                                    // Kan hende virkning er etter sistePeriode hvis det feks er revurderingsbarn
+                                    // Unngå å ha en periode hvor fom > til
+                                    minOfNullable(omgjørVedtakVirkningstidspunkt, sistePeriodeFiltrert.periode.til)!!,
+                                    sistePeriodeFiltrert.periode.til,
+                                ),
                             ),
-                        ),
-                    )
+                        )
+                    }
+                } else {
+                    perioderFiltrertForBeregningsperioder
                 }
             } else {
-                periodeListe.filter {
-                    it.periode.fom >= omgjørVedtakVirkningstidspunkt && it.periode.til != null && it.periode.til!!.isBefore(omgjøringsperiode.til!!)
-                }
+                perioderFiltrertForBeregningsperioder
             }
 
             perioderFiltrert.map {
@@ -1096,11 +1103,17 @@ class OmgjøringOrkestratorV2(
         vedtakListe: List<ResultatVedtak>,
         opphørsdato: YearMonth?,
         erBeregningsperiodeLøpende: Boolean,
+        skalFatteVedtak: Boolean,
     ): BeregnetBarnebidragResultat {
         val resultatPeriodeListe = mutableListOf<ResultatPeriode>()
         val grunnlagListe = mutableListOf<GrunnlagDto>()
-        vedtakListe.forEach {
+        // Hvis det ikke skal fattes vedtak så skal ikke beregnet bidraget tas med i endelig vedtaket
+        // Ønsker enten å tilbakestille eller opphøre bidraget pga at det tilbakestilles (tilfeller hvor det velges å ikke fatte vedtak for R-barn når det originalet ble fattet vedtak)
+        vedtakListe.filter { skalFatteVedtak || !it.beregnet }.forEach {
             resultatPeriodeListe.addAll(it.resultat.beregnetBarnebidragPeriodeListe)
+        }
+
+        vedtakListe.forEach {
             grunnlagListe.addAll(it.resultat.grunnlagListe)
         }
         // Fjern perioder fra indeksregulering og aldersjustering som overlapper med klagevedtaket.

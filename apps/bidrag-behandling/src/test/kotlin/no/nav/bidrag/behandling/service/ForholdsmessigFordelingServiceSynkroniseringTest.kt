@@ -9,7 +9,7 @@ import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
-import no.nav.bidrag.behandling.consumer.dto.FinnSammenknytningerHovedsøknadResponse
+import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
@@ -26,6 +26,7 @@ import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
@@ -60,6 +61,9 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
 
     @MockK
     lateinit var underholdService: UnderholdService
+
+    @MockK
+    lateinit var tilgangskontrollConsumer: BidragTilgangskontrollConsumer
 
     private lateinit var service: ForholdsmessigFordelingService
 
@@ -301,5 +305,6 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         behandlingstema = Behandlingstema.BIDRAG,
         innkreving = true,
         status = status,
+        saksnummer = "",
     )
 }

@@ -133,8 +133,8 @@ class TilgangskontrollService(
         val tematilgang = sjekkTematilgangV2(tema, saksbehandlerNavIdent)
 
         return TilgangskontrollResponse(
-            harTilgang = tilgangsmaskin.harTilgang && tematilgang.harTilgang,
-            detaljer = listOf(tilgangsmaskin, tematilgang),
+            harTilgang = tilgangsmaskin.all { it.harTilgang } && tematilgang.harTilgang,
+            detaljer = tilgangsmaskin + tematilgang,
         )
     }
 
@@ -231,53 +231,66 @@ class TilgangskontrollService(
         )
     }
 
-    private fun sjekkTilgangTilgangsmaskinV2(roller: List<String>): TilgangskontrollResponseDetaljer {
+    private fun sjekkTilgangTilgangsmaskinV2(roller: List<String>): List<TilgangskontrollResponseDetaljer> {
         val filtrerteRoller = roller.filter { it.isNotBlank() }.map { it.trim() }
         if (filtrerteRoller.isEmpty()) {
-            return TilgangskontrollResponseDetaljer(
-                harTilgang = true,
-                begrunnelse = "Ingen roller angitt, tilgang antas å være gyldig",
-                opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+            return listOf(
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = true,
+                    begrunnelse = "Ingen roller angitt, tilgang antas å være gyldig",
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                ),
             )
         }
 
         val tilgangsmaskinResponse = tilgangsmaskinConsumer.evaluerKomplettRegelsettForFlereBrukere(filtrerteRoller)
-        tilgangsmaskinResponse.resultater.forEach { resultat ->
+        // LinkedHashSet bevarer rekkefølgen samtidig som identiske avviksmeldinger/vurderinger slås sammen til én
+        val avslag = linkedSetOf<String>()
+        val begrunnelser = linkedSetOf<String>()
 
-            if (resultat.status == 403) {
-                secureLogger.info {
-                    "${resultat.detaljer?.navIdent} har ikke tilgang. Begrunnelse: ${resultat.detaljer?.begrunnelse}"
+        tilgangsmaskinResponse.resultater.forEach { resultat ->
+            when (resultat.status) {
+                403 -> {
+                    val begrunnelse = resultat.detaljer?.begrunnelse ?: "Du har ikke tilgang til bruker.."
+                    secureLogger.info {
+                        "${resultat.detaljer?.navIdent} har ikke tilgang. Begrunnelse: $begrunnelse"
+                    }
+                    avslag += begrunnelse
                 }
-                return TilgangskontrollResponseDetaljer(
-                    false,
-                    resultat.detaljer?.begrunnelse ?: "Du har ikke tilgang til bruker..",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-                )
+
+                404 -> {
+                    secureLogger.info { "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen, tilgang antas som å være gyldig" }
+                    begrunnelser += "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen."
+                }
             }
-            if (resultat.status == 404) {
-                secureLogger.info { "Person ${resultat.brukerId} ikke funnet i tilgangsmaskinen, tilgang antas som å være gyldig" }
-                return TilgangskontrollResponseDetaljer(
-                    true,
-                    "Person ikke funnet i tilgangsmaskinen.",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-                )
-            } else {
-                secureLogger.debug {
-                    "Tilgangsmaskin har svar med status: ${resultat.status} for navident: ${resultat.detaljer?.navIdent}. Begrunnelse: ${resultat.detaljer?.begrunnelse}"
-                }
-                return TilgangskontrollResponseDetaljer(
-                    true,
-                    resultat.detaljer?.begrunnelse
-                        ?: "Mangler begrunnelse fra tilgangsmaskin. Status: ${resultat.status}",
-                    OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+        }
+
+        if (avslag.isNotEmpty()) {
+            return avslag.map {
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = false,
+                    begrunnelse = it,
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
                 )
             }
         }
-        return TilgangskontrollResponseDetaljer(
-            harTilgang = true,
-            begrunnelse = "Bruker har tilgang til etterspurte roller.",
-            opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
-        )
+
+        return begrunnelser
+            .map {
+                TilgangskontrollResponseDetaljer(
+                    harTilgang = true,
+                    begrunnelse = it,
+                    opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                )
+            }.ifEmpty {
+                listOf(
+                    TilgangskontrollResponseDetaljer(
+                        harTilgang = true,
+                        begrunnelse = "Bruker har tilgang til etterspurte roller.",
+                        opprinnelseTilgangsbeslutning = OpprinnelseTilgangsbeslutning.TILGANGSMASKIN,
+                    ),
+                )
+            }
     }
 
     fun hentBrukertilganger(): Brukertilganger {

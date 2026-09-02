@@ -22,11 +22,11 @@
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-    <okhttp.version>5.4.0</okhttp.version>
-    <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+    <okhttp.version>5.5.0</okhttp.version>
+    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <!-- Egne versjoner for avhengigheter som ikke finnes i root-pom -->
-    <commons-io.version>2.18.0</commons-io.version>
+    <commons-io.version>2.22.0</commons-io.version>
   </properties>
 
   <dependencies>

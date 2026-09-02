@@ -16,11 +16,23 @@ import no.nav.bidrag.arbeidsflyt.service.OppgaveService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 private val LOGGER = KotlinLogging.logger {}
+
+@Component
+class OppgaveSlettingService(
+    private val oppgaveRepository: OppgaveRepository,
+) {
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun slettOppgave(oppgaveId: Long) {
+        oppgaveRepository.deleteByOppgaveId(oppgaveId)
+    }
+}
 
 @Component
 class KafkaDLQRetryScheduler(
@@ -33,6 +45,7 @@ class KafkaDLQRetryScheduler(
     private val behandleBehandlingHendelseService: BehandleBehandlingHendelseService,
     private val behandlingSchedulerService: BehandlingSchedulerService,
     private val oppgaveService: OppgaveService,
+    private val oppgaveSlettingService: OppgaveSlettingService,
 ) {
     @Value($$"${SCHEDULER_MAX_RETRY:10}")
     lateinit var maxRetry: Number
@@ -48,7 +61,6 @@ class KafkaDLQRetryScheduler(
 
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES, initialDelay = 10)
     @SchedulerLock(name = "slettOppgaverSomIkkeLengerErÅpen", lockAtLeastFor = "10m")
-    @Transactional
     fun slettOppgaverSomIkkeLengerErÅpen() {
         val oppgaver = oppgaveRepository.finnOppgaverEldreEnnDato(LocalDateTime.now().minusWeeks(1))
         LOGGER.info { "Fant ${oppgaver.size} oppgaver som fortsatt er åpen. Sjekker og oppdaterer status" }
@@ -58,7 +70,7 @@ class KafkaDLQRetryScheduler(
                 val oppgave = oppgaveService.hentOppgave(it.oppgaveId)
                 if (oppgave.erStatusKategoriAvsluttet) {
                     LOGGER.info { "Sletter oppgave med id ${it.oppgaveId} som ikke lenger er åpen" }
-                    oppgaveRepository.delete(it)
+                    oppgaveSlettingService.slettOppgave(it.oppgaveId)
                 }
             } catch (e: Exception) {
                 LOGGER.error(e) { "Det skjedde feil ved prosessering av oppgave med id=${it.oppgaveId}" }

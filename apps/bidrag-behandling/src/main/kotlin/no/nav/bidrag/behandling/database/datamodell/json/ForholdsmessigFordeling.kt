@@ -20,6 +20,7 @@ data class ForholdsmessigFordeling(
     var erHovedbehandling: Boolean = false,
     var opprettetAvSaksbehandler: String? = null,
     var oppprettetAvEnhet: String? = null,
+    var overførtTilEnhet: String? = null,
     var opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
 )
 
@@ -70,6 +71,6 @@ data class ForholdsmessigFordelingSøknadBarn(
     var innkreving: Boolean = true,
     val enhet: String = "9999",
     // TODO: Er dette nødvendig? Kan BM/Barn være i flere saker?
-    val saksnummer: String? = null,
+    val saksnummer: String?,
     var status: Behandlingstatus? = null,
 )

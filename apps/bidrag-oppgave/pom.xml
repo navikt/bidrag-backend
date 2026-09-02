@@ -17,7 +17,7 @@
 
     <properties>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-        <mock-oauth2-server.version>2.1.10</mock-oauth2-server.version>
+        <mock-oauth2-server.version>6.0.2</mock-oauth2-server.version>
     </properties>
 
     <dependencies>

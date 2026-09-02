@@ -28,6 +28,7 @@ import no.nav.bidrag.sak.domain.BidragssakTest.Companion.createBidragssak
 import no.nav.bidrag.sak.domain.BidragssakTest.Companion.createRolle
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
+import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
@@ -77,6 +78,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
     @Autowired
     private lateinit var bidragssakService: BidragSakService
     private val opprettSakValidator: OpprettSakValidator = mockk()
+    private val bbmConsumerMock: BidragBBMConsumer = mockk()
 
     private fun makeFullContextPath(): String = "http://localhost:$port"
 
@@ -654,6 +656,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     hendelseService = hendelseService,
                     identConsumer = identConsumer,
                     opprettSakValidator = opprettSakValidator,
+                    bbmConsumer = bbmConsumerMock,
                 ),
             )
 

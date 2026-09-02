@@ -2,8 +2,6 @@ package no.nav.bidrag.behandling.consumer
 
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_ALLE_BEREGNINGER_CACHE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_BEREGNING_CACHE
-import no.nav.bidrag.behandling.consumer.dto.FinnSammenknytningerHovedsøknadRequest
-import no.nav.bidrag.behandling.consumer.dto.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.behandling.consumer.dto.SammenknyttSøknaderRequest
 import no.nav.bidrag.behandling.consumer.dto.SlettHovedsøknadRequest
 import no.nav.bidrag.behandling.consumer.dto.SlettSammenknytningForSøknadRequest
@@ -30,6 +28,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsid
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.retry.annotation.Backoff
@@ -241,6 +241,6 @@ class BidragBBMConsumer(
         status: SøknadsknytningStatus = SøknadsknytningStatus.Aktiv,
     ) = postForNonNullEntity<FinnSammenknytningerHovedsøknadResponse>(
         bidragBBMUri.pathSegment("finnsammenknytningerhovedsoknad").build().toUri(),
-        FinnSammenknytningerHovedsøknadRequest(søknadsid, status),
+        FinnSammenknytningerHovedsøknadRequest(søknadsid, status = status, statuser = listOf(status)),
     )
 }

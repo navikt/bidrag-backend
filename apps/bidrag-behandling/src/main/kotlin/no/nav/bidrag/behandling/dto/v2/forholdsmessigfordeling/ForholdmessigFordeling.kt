@@ -19,6 +19,7 @@ data class ForholdmessigFordelingDetaljerDto(
     val barn: List<ForholdsmessigFordelingBarnDto>,
     val opprettetAvSaksbehandler: String? = null,
     val opprettetAvEnhet: String? = null,
+    val overførtTilEnhet: String? = null,
 )
 
 data class OpprettFFRequest(

@@ -21,19 +21,19 @@
     <properties>
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-        <okhttp.version>5.4.0</okhttp.version>
-        <jakarta.xml.ws-api.version>4.0.1</jakarta.xml.ws-api.version>
-        <jaxws.version>4.0.3</jaxws.version>
+        <okhttp.version>5.5.0</okhttp.version>
+        <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
+        <jaxws.version>4.0.5</jaxws.version>
         <db2.db2jcc4.version>10.5fp6</db2.db2jcc4.version>
-        <ibm-mq-jakarta-client.version>9.4.5.1</ibm-mq-jakarta-client.version>
-        <wiremock-spring-boot.version>4.2.1</wiremock-spring-boot.version>
+        <ibm-mq-jakarta-client.version>10.0.0.0</ibm-mq-jakarta-client.version>
+        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
         <springmockk.version>5.0.1</springmockk.version>
         <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.3</kotest.version>
-        <swagger-annotations.version>2.2.51</swagger-annotations.version>
+        <kotest.version>6.2.4</kotest.version>
+        <swagger-annotations.version>2.2.54</swagger-annotations.version>
         <!-- Egne versjoner for avhengigheter som ikke finnes i root-pom -->
-        <artemis.version>2.53.0</artemis.version>
-        <commons-io.version>2.20.0</commons-io.version>
+        <artemis.version>2.56.0</artemis.version>
+        <commons-io.version>2.22.0</commons-io.version>
         <cxf-spring-boot-starter-jaxws.version>4.2.3</cxf-spring-boot-starter-jaxws.version>
     </properties>
 

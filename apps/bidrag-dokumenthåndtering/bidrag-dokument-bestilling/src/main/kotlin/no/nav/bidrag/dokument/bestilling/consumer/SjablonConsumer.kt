@@ -12,7 +12,6 @@ import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.DefaultUriBuilderFactory
-import javax.annotation.PostConstruct
 
 private val log = KotlinLogging.logger {}
 

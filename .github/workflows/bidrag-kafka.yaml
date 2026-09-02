@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up kafka topics i dev-gcp
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/bidrag-kafka/topics/journalpost.yaml,.nais/bidrag-kafka/topics/journalpost-feature.yaml,.nais/bidrag-kafka/topics/dokument-dev.yaml,.nais/bidrag-kafka/topics/dokument-feature.yaml,.nais/bidrag-kafka/topics/sak-q1.yaml,.nais/bidrag-kafka/topics/sak-q2.yaml,.nais/bidrag-kafka/topics/vedtak-q1.yaml,.nais/bidrag-kafka/topics/vedtak-q2.yaml,.nais/bidrag-kafka/topics/vedtak-q4.yaml,.nais/bidrag-kafka/topics/samhandler-q1.yaml,.nais/bidrag-kafka/topics/samhandler-q2.yaml,.nais/bidrag-kafka/topics/samhandler-q4.yaml,.nais/bidrag-kafka/topics/statistikk-q2.yaml,.nais/bidrag-kafka/topics/vedtaksforslag-q1.yaml,.nais/bidrag-kafka/topics/vedtaksforslag-q2.yaml,.nais/bidrag-kafka/topics/vedtaksforslag-q4.yaml,.nais/bidrag-kafka/topics/statistikk-bidrag-q2.yaml,.nais/bidrag-kafka/topics/behandling-q2.yaml,.nais/bidrag-kafka/topics/behandling-q1.yaml,.nais/bidrag-kafka/topics/statistikk-saerbidrag-q2.yaml,.nais/bidrag-kafka/topics/personhendelse-preprod.yaml
@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Set up kafka topics i prod-gcp
-        uses: nais/deploy/actions/deploy@849e900e3cfa7faf7ad1532bb3a3e6499c932199 # v2
+        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/bidrag-kafka/topics/journalpost-prod.yaml,.nais/bidrag-kafka/topics/vedtak-prod.yaml,.nais/bidrag-kafka/topics/dokument-prod.yaml,.nais/bidrag-kafka/topics/sak-prod.yaml,.nais/bidrag-kafka/topics/samhandler-prod.yaml,.nais/bidrag-kafka/topics/statistikk-prod.yaml,.nais/bidrag-kafka/topics/vedtaksforslag-prod.yaml,.nais/bidrag-kafka/topics/statistikk-bidrag-prod.yaml,.nais/bidrag-kafka/topics/behandling-prod.yaml,.nais/bidrag-kafka/topics/statistikk-saerbidrag-prod.yaml,.nais/bidrag-kafka/topics/personhendelse-prod.yaml

@@ -4,6 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
+import no.nav.bidrag.commons.security.utils.TokenUtils
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -21,7 +23,10 @@ class ForholdsmessigFordelingController(
         @PathVariable behandlingsid: Long,
         @RequestBody(required = false) request: OpprettFFRequest?,
     ) {
-        forholdsmessigFordelingService.opprettEllerOppdaterForholdsmessigFordeling(behandlingsid, request = request)
+        val saksbehandlerIdent = TokenUtils.hentSaksbehandlerIdent()
+        SikkerhetsKontekst.medApplikasjonKontekst {
+            forholdsmessigFordelingService.opprettEllerOppdaterForholdsmessigFordeling(behandlingsid, request = request, opprettetAvSaksbehandler = saksbehandlerIdent)
+        }
     }
 
     @PostMapping("/nyeopplysninger/{behandlingsid}")
@@ -32,5 +37,6 @@ class ForholdsmessigFordelingController(
     @PostMapping("/sjekk/{behandlingsid}")
     fun kanOppretteForholdsmessigFordeling(
         @PathVariable behandlingsid: Long,
-    ): SjekkForholdmessigFordelingResponse = forholdsmessigFordelingService.sjekkSkalOppretteForholdsmessigFordeling(behandlingsid)
+        @RequestBody(required = false) request: OpprettFFRequest?,
+    ): SjekkForholdmessigFordelingResponse = forholdsmessigFordelingService.sjekkSkalOppretteForholdsmessigFordeling(behandlingsid, request?.opprettetAvEnhet)
 }

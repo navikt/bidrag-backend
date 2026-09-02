@@ -79,7 +79,10 @@ class BidragDokumentConsumer(
 
     @Retryable(backoff = Backoff(delay = 500, maxDelay = 1500))
     open fun hentDokument(journalpostId: String): ByteArray {
-        val path = String.format(HENTE_DOKUMENT_PATH, journalpostId)
+        val safeJournalpostId =
+            JOURNALPOST_ID_PATTERN.matchEntire(journalpostId)?.value
+                ?: throw IllegalArgumentException("Ugyldig journalpostId: $journalpostId")
+        val path = String.format(HENTE_DOKUMENT_PATH, safeJournalpostId)
         log.info { "Henter dokument fra bidrag-dokument$path" }
         return try {
             restTemplate.exchange(path, HttpMethod.GET, null, ByteArray::class.java).body!!
@@ -172,6 +175,7 @@ class BidragDokumentConsumer(
 
         const val HENTE_JOURNALPOST_PATH = "/journal/%s"
         const val HENTE_DOKUMENT_PATH = "/dokument/%s?resizeToA4=false&optimizeForPrint=false"
+        val JOURNALPOST_ID_PATTERN = Regex("(BID-)?\\d+")
 
         const val KAN_DISTRIBUERE_JOURNALPOST_PATH = "/journal/distribuer/%s/enabled"
 

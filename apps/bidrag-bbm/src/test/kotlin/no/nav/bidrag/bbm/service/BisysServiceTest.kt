@@ -6,11 +6,9 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.bidrag.bbm.CommonTestRunner
-import no.nav.bidrag.bbm.bo.FinnSammenknytningerHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
-import no.nav.bidrag.bbm.bo.SøknadsknytningStatus
 import no.nav.bidrag.bbm.utils.PERSONIDENT_BARN_1
 import no.nav.bidrag.bbm.utils.PERSONIDENT_BARN_2
 import no.nav.bidrag.bbm.utils.PERSONIDENT_BARN_3
@@ -31,6 +29,7 @@ import no.nav.bidrag.bbm.utils.opprettSøknadslinje
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.beregning.felles.Barn
@@ -45,6 +44,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGeby
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -52,7 +52,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
-import kotlin.toString
 
 class BisysServiceTest(
     @param:Autowired override var testdataManager: TestdataManager,

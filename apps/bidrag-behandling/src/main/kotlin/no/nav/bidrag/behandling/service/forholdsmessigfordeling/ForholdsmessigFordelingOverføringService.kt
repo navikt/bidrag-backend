@@ -12,6 +12,7 @@ import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.transformers.behandling.erSammePerson
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
+import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
@@ -45,7 +46,19 @@ class ForholdsmessigFordelingOverføringService(
     ) {
         if (behandlerEnhet == behandling.behandlerEnhet) return
         behandling.behandlerEnhet = behandlerEnhet
-        oppdaterSakOgSøknadBehandlerEnhet(behandling.saksnummer, behandling.soknadsid!!, behandlerEnhet)
+        behandling.forholdsmessigFordeling = behandling.forholdsmessigFordeling!!.copy(
+            overførtTilEnhet = behandlerEnhet,
+        )
+
+        behandling.søknadsbarn.mapNotNull { it.forholdsmessigFordeling?.tilhørerSak }.distinct()
+            .forEach {
+                sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(it, behandlerEnhet))
+            }
+
+        behandling.søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
+            .forEach { søknad ->
+                bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknad.søknadsid!!, behandlerEnhet))
+            }
     }
 
     /**
@@ -56,8 +69,10 @@ class ForholdsmessigFordelingOverføringService(
         søknadsid: Long,
         tilgangTilEnhet: String,
     ) {
-        sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(saksnummer, tilgangTilEnhet))
-        bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknadsid, tilgangTilEnhet))
+        SikkerhetsKontekst.medApplikasjonKontekst {
+            sakConsumer.opprettMidlertidligTilgang(OpprettMidlertidligTilgangRequest(saksnummer, tilgangTilEnhet))
+            bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknadsid, tilgangTilEnhet))
+        }
     }
 
     /**
