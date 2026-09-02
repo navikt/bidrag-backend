@@ -13,6 +13,7 @@ import io.mockk.slot
 import io.mockk.verify
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.behandling.TestContainerRunner
+import no.nav.bidrag.behandling.async.BestillAsyncJobService
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
@@ -104,6 +105,9 @@ class VedtakserviceTest : TestContainerRunner() {
 
     @MockkBean
     lateinit var notatOpplysningerService: NotatOpplysningerService
+
+    @MockkBean(relaxed = true)
+    lateinit var bestillAsyncJobService: BestillAsyncJobService
 
     @MockkBean
     lateinit var tilgangskontrollService: TilgangskontrollService
@@ -268,7 +272,6 @@ class VedtakserviceTest : TestContainerRunner() {
             VedtakService(
                 behandlingService,
                 grunnlagService,
-                notatOpplysningerService,
                 tilgangskontrollService,
                 vedtakConsumer,
                 validerBeregning,
@@ -277,6 +280,7 @@ class VedtakserviceTest : TestContainerRunner() {
                 validerBehandlingService,
                 forsendelseService,
                 virkningstidspunktService,
+                bestillAsyncJobService = bestillAsyncJobService,
             )
         every { notatOpplysningerService.opprettNotat(any()) } returns testNotatJournalpostId
         every { tilgangskontrollService.sjekkTilgangPersonISak(any(), any()) } returns Unit
@@ -482,6 +486,6 @@ class VedtakserviceTest : TestContainerRunner() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 }
