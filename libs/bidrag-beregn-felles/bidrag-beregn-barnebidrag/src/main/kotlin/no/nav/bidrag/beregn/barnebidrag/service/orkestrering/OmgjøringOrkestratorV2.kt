@@ -637,37 +637,8 @@ class OmgjøringOrkestratorV2(
                     vedtakTilResultatPeriode(komplettVedtak, it)
                 }
 
-                !context.skalFatteVedtak && !context.omgjøringOrkestratorGrunnlag.skalInnkreves -> {
-                    val delberegningIndeksreguleringPrivatAvtalePeriodeResultat = omgjøringOrkestratorHelpers.utførDelberegningPrivatAvtalePeriode(context.omgjøringGrunnlag)
-                    val søknadsbarn = delberegningIndeksreguleringPrivatAvtalePeriodeResultat.hentPersonMedIdent(stønad.kravhaver.verdi)!!
-                    val privatavtalePerioder = delberegningIndeksreguleringPrivatAvtalePeriodeResultat
-                        .filtrerOgKonverterBasertPåFremmedReferanse<DelberegningIndeksreguleringPrivatAvtale>(
-                            Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE,
-                            gjelderBarnReferanse = søknadsbarn.referanse,
-                        )
-
-                    val privatavtaleÅrmåndesperioder = privatavtalePerioder.map { it.innhold.periode }
-                    // Sjekker om alle periodene i historikken er privat avtale og lager en beregningsperiode basert på det ved tilbakestilling for R-barn
-                    if (beløpshistorikk.all { privatavtaleÅrmåndesperioder.contains(it.periode) }) {
-                        BeregnetBarnebidragResultatInternal(
-                            resultat = BeregnetBarnebidragResultat(
-                                beregnetBarnebidragPeriodeListe = privatavtalePerioder.map {
-                                    ResultatPeriode(
-                                        it.innhold.periode,
-                                        ResultatBeregning(it.innhold.indeksregulertBeløp),
-                                        it.grunnlag.grunnlagsreferanseListe,
-                                    )
-                                },
-                                grunnlagListe = delberegningIndeksreguleringPrivatAvtalePeriodeResultat,
-                            ),
-                            vedtakstype = Vedtakstype.FASTSETTELSE,
-                            beregnet = false,
-                            beregnetFraDato = privatavtalePerioder.map { it.innhold }.minOf { it.periode.fom }.atDay(1),
-                        )
-                    } else {
-                        null
-                    }
-                }
+                !context.skalFatteVedtak && !context.omgjøringOrkestratorGrunnlag.skalInnkreves ->
+                    opprettDelvedtakFraPrivatAvtaleHvisHeleHistorikkenErPrivatAvtale(context, beløpshistorikk)
 
                 else -> null
             }
@@ -677,6 +648,40 @@ class OmgjøringOrkestratorV2(
             }
         }
         return beregnetBarnebidragResultatListe
+    }
+
+    // Sjekker om alle periodene i historikken er privat avtale og lager en beregningsperiode basert på det ved tilbakestilling for R-barn
+    private fun opprettDelvedtakFraPrivatAvtaleHvisHeleHistorikkenErPrivatAvtale(
+        context: OmgjøringeOrkestratorContext,
+        beløpshistorikk: List<BeløpshistorikkPeriodeInternal>,
+    ): BeregnetBarnebidragResultatInternal? {
+        val delberegningIndeksreguleringPrivatAvtalePeriodeResultat =
+            omgjøringOrkestratorHelpers.utførDelberegningPrivatAvtalePeriode(context.omgjøringGrunnlag)
+        val søknadsbarn = delberegningIndeksreguleringPrivatAvtalePeriodeResultat.hentPersonMedIdent(context.stønad.kravhaver.verdi)!!
+        val privatavtalePerioder = delberegningIndeksreguleringPrivatAvtalePeriodeResultat
+            .filtrerOgKonverterBasertPåFremmedReferanse<DelberegningIndeksreguleringPrivatAvtale>(
+                Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE,
+                gjelderBarnReferanse = søknadsbarn.referanse,
+            )
+
+        val privatavtaleÅrmåndesperioder = privatavtalePerioder.map { it.innhold.periode }
+        if (!beløpshistorikk.all { privatavtaleÅrmåndesperioder.contains(it.periode) }) return null
+
+        return BeregnetBarnebidragResultatInternal(
+            resultat = BeregnetBarnebidragResultat(
+                beregnetBarnebidragPeriodeListe = privatavtalePerioder.map {
+                    ResultatPeriode(
+                        it.innhold.periode,
+                        ResultatBeregning(it.innhold.indeksregulertBeløp),
+                        it.grunnlag.grunnlagsreferanseListe,
+                    )
+                },
+                grunnlagListe = delberegningIndeksreguleringPrivatAvtalePeriodeResultat,
+            ),
+            vedtakstype = Vedtakstype.FASTSETTELSE,
+            beregnet = false,
+            beregnetFraDato = privatavtalePerioder.map { it.innhold }.minOf { it.periode.fom }.atDay(1),
+        )
     }
 
     private fun vedtakTilResultatPeriode(komplettVedtak: VedtakDto, it: List<BeløpshistorikkPeriodeInternal>): BeregnetBarnebidragResultatInternal {
