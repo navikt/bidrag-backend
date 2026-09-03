@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 
 private val log = KotlinLogging.logger {}
 
@@ -70,10 +71,11 @@ class VirkningstidspunktController(
     )
     fun brukSammeVirkningstidspunktForAlleBarna(
         @PathVariable behandlingsid: Long,
+        @RequestParam(required = false) saksnummer: String?,
     ): BehandlingDtoV2 {
         secureLogger.info { "Sett sammen virkningstidspunkt for alle barne for behandling $behandlingsid" }
 
-        virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandlingsid)
+        virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandlingsid, saksnummer)
 
         val behandling = behandlingService.hentBehandlingById(behandlingsid)
         return dtomapper.tilDto(behandling)

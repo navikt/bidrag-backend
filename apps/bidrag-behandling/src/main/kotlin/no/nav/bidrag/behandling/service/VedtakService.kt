@@ -3,12 +3,10 @@
 package no.nav.bidrag.behandling.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.behandling.config.UnleashFeatures
+import no.nav.bidrag.behandling.async.BestillAsyncJobService
+import no.nav.bidrag.behandling.async.dto.OpprettNotatBestilling
+import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.json.FattetVedtak
@@ -51,9 +49,8 @@ import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.behandling.transformers.vedtak.validerGrunnlagsreferanser
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtak
-import no.nav.bidrag.commons.util.RequestContextAsyncContext
-import no.nav.bidrag.commons.util.SecurityCoroutineContext
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
@@ -78,15 +75,20 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.HttpClientErrorException
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 
 private val LOGGER = KotlinLogging.logger {}
+
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT = Duration.ofSeconds(10)
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START = Duration.ofMillis(250)
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS = Duration.ofSeconds(2)
 
 @Service
 class VedtakService(
     private val behandlingService: BehandlingService,
     private val grunnlagService: GrunnlagService,
-    private val notatOpplysningerService: NotatOpplysningerService,
     private val tilgangskontrollService: TilgangskontrollService,
     private val vedtakConsumer: BidragVedtakConsumer,
     private val validering: ValiderBeregning,
@@ -97,6 +99,8 @@ class VedtakService(
     private val virkningstidspunktService: VirkningstidspunktService,
     private val forholdsmessigFordelingService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
+    private val bidragBBMConsumer: BidragBBMConsumer? = null,
+    private val bestillAsyncJobService: BestillAsyncJobService? = null,
 //    private val vedtakLocalConsumer: BidragVedtakConsumerLocal? = null,
 ) {
     fun konverterVedtakTilBehandlingForLesemodus(vedtakId: Int): Behandling? {
@@ -436,7 +440,9 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
-            opprettNotat(behandling)
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
+
+            bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for særbidrag behandling $behandlingId med vedtaksid ${response.vedtaksid}"
             }
@@ -470,7 +476,8 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
-            opprettNotat(behandling)
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
+            bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -628,10 +635,10 @@ class VedtakService(
 
             if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
                 behandling.saker.forEach {
-                    opprettNotat(behandling, it)
+                    bestillOpprettelseAvNotat(behandling, it)
                 }
             } else {
-                opprettNotat(behandling)
+                bestillOpprettelseAvNotat(behandling)
             }
 
             LOGGER.info {
@@ -678,7 +685,8 @@ class VedtakService(
                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                 unikreferanse = innkrevingRequest.unikReferanse,
             )
-            opprettNotat(behandling)
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
+            bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -828,20 +836,10 @@ class VedtakService(
                         forsendelseService.opprettForsendelseForAldersjustering(behandling)
                     } else if (vedtakRequest.type != Vedtakstype.ALDERSJUSTERING) {
                         if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                            opprettNotatForAlleSakerParallelt(behandling)
+                            behandling.saker.forEach { bestillOpprettelseAvNotat(behandling, it) }
                         } else {
-                            opprettNotat(behandling)
+                            bestillOpprettelseAvNotat(behandling)
                         }
-                    }
-                }
-
-                if (vedtakRequest.type == Vedtakstype.ALDERSJUSTERING && !simuler) {
-                    try {
-                        // Venter i 2 sekunder for å sikre at vedtaksbro har lest inn vedtaket og har oppdatert saksloggen
-                        Thread.sleep(2000)
-                    } catch (ie: InterruptedException) {
-                        Thread.currentThread().interrupt()
-                        LOGGER.warn(ie) { "Tråd avbrutt under venting" }
                     }
                 }
 
@@ -862,6 +860,13 @@ class VedtakService(
                 )
                 søknadsider to response.vedtaksid
             }
+
+        if (!simuler) {
+            val søknadsider = vedtakResponser.flatMap { it.key }
+            // Venter til vedtaksbro har lest inn vedtaket og lukket søknadslinjene i saksloggen,
+            // slik at neste iterasjon i loopen ser oppdatert sakslogg
+            ventPåFerdigstiltSøknad(søknadsider)
+        }
 
         val vedtaksid =
             vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.firstOrNull() ?: vedtakResponser.values.first()
@@ -941,33 +946,53 @@ class VedtakService(
         }
     }
 
-    // Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor parallelt per sak
-    private fun opprettNotatForAlleSakerParallelt(behandling: Behandling) {
-        val saker = behandling.saker.toList()
-        if (saker.size <= 1) {
-            saker.forEach { opprettNotat(behandling, it) }
-            return
-        }
-        val scope = CoroutineScope(Dispatchers.IO + SecurityCoroutineContext() + RequestContextAsyncContext())
-        runBlocking {
-            saker
-                .map { saksnummer ->
-                    scope.async { opprettNotat(behandling, saksnummer) }
-                }.awaitAll()
-        }
-    }
-
-    private fun opprettNotat(
+    /**
+     * Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor i bakgrunnen slik at
+     * saksbehandler får svar med én gang. Jobben håndteres av
+     * [no.nav.bidrag.behandling.async.BestillAsyncJobListener.behandleBestillingAvNotat].
+     */
+    private fun bestillOpprettelseAvNotat(
         behandling: Behandling,
         saksnummer: String? = null,
     ) {
-        try {
-            notatOpplysningerService.opprettNotat(behandling.id!!, saksnummer = saksnummer)
-        } catch (e: Exception) {
-            LOGGER.error(
-                e,
-            ) { "Det skjedde en feil ved opprettelse av notat for behandling ${behandling.id} og vedtaksid ${behandling.vedtaksid}" }
+        bestillAsyncJobService!!.bestillOpprettelseAvNotat(
+            OpprettNotatBestilling(behandlingId = behandling.id!!, saksnummer = saksnummer),
+        )
+    }
+
+    /**
+     * Poller BBM til søknadene er ferdigstilt av vedtaksbroen (søknadslinjene lukket med status VF).
+     * Timeout er ikke en feil: vedtaket er allerede fattet, så vi logger og går videre.
+     */
+    private fun ventPåFerdigstiltSøknad(søknadsider: List<Long>) {
+        if (søknadsider.isEmpty() || bidragBBMConsumer == null) return
+        val frist = Instant.now().plus(VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT)
+        val gjenstående = søknadsider.toMutableSet()
+        var ventetid = VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START
+        while (gjenstående.isNotEmpty() && Instant.now().isBefore(frist)) {
+            try {
+                Thread.sleep(ventetid.toMillis())
+            } catch (ie: InterruptedException) {
+                Thread.currentThread().interrupt()
+                LOGGER.warn(ie) { "Tråd avbrutt under venting på ferdigstilte søknader $gjenstående" }
+                return
+            }
+            gjenstående.removeAll { erSøknadFerdigstilt(it) }
+            ventetid = minOf(ventetid.multipliedBy(2), VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS)
         }
+        if (gjenstående.isNotEmpty()) {
+            LOGGER.warn {
+                "Søknadene $gjenstående var ikke ferdigstilt i BBM innen " +
+                    "${VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT.toSeconds()} sekunder. Fortsetter uten å vente."
+            }
+        }
+    }
+
+    private fun erSøknadFerdigstilt(søknadsid: Long): Boolean = try {
+        bidragBBMConsumer!!.hentSøknad(søknadsid)?.søknad?.behandlingStatusType == BehandlingStatusType.VEDTAK_FATTET
+    } catch (e: Exception) {
+        LOGGER.warn(e) { "Kunne ikke hente status for søknad $søknadsid fra BBM" }
+        false
     }
 
     private fun Behandling.vedtakAlleredeFattet(): Nothing = throw HttpClientErrorException(

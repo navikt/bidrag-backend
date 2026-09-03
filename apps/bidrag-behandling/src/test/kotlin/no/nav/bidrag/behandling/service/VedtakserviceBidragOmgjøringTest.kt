@@ -100,7 +100,6 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
             VedtakService(
                 behandlingService,
                 grunnlagService,
-                notatOpplysningerService,
                 tilgangskontrollService,
                 vedtakConsumer,
                 validerBeregning,
@@ -111,6 +110,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                 virkningstidspunktService,
                 behandlingRepository = behandlingRepository,
                 forholdsmessigFordelingService = forholdsmessigFordelingService,
+                bestillAsyncJobService = bestillAsyncJobService,
             )
     }
 
