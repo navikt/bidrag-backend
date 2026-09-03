@@ -75,13 +75,17 @@ class SamværService(
     }
 
     @Transactional
-    fun brukSammeSamværForAlleBarn(behandlingId: Long) {
+    @JvmOverloads
+    fun brukSammeSamværForAlleBarn(behandlingId: Long, saksnummer: String? = null) {
         val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
-        val yngsteBarn = behandling.søknadsbarn.minBy { it.fødselsdato }
+        val søknadsbarn =
+            saksnummer?.let { sak -> behandling.søknadsbarn.filter { it.saksnummer == sak } }
+                ?: behandling.søknadsbarn
+        val yngsteBarn = søknadsbarn.minBy { it.fødselsdato }
 
         val samværYngsteBarn = behandling.samvær.finnSamværForBarn(yngsteBarn.id, yngsteBarn.ident!!)
         var nyNotat = yngsteBarn.notat.find { it.type == NotatGrunnlag.NotatType.SAMVÆR }?.innhold ?: ""
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             if (it.id != yngsteBarn.id) {
                 val begrunnelse = it.notat.find { it.type == NotatGrunnlag.NotatType.SAMVÆR }?.innhold ?: ""
                 nyNotat +=
@@ -94,7 +98,7 @@ class SamværService(
                     }
             }
         }
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             val samværBarn = behandling.samvær.finnSamværForBarn(it.id, it.ident!!)
             val perioderKopiert =
                 samværYngsteBarn.perioder.map {
@@ -103,7 +107,7 @@ class SamværService(
             samværBarn.perioder.clear()
             samværBarn.perioder.addAll(perioderKopiert.toMutableSet())
         }
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             notatService.oppdatereNotat(behandling, NotatGrunnlag.NotatType.SAMVÆR, nyNotat, it)
         }
     }

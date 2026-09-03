@@ -440,6 +440,8 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
+
             bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for særbidrag behandling $behandlingId med vedtaksid ${response.vedtaksid}"
@@ -474,6 +476,7 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
             bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
@@ -682,6 +685,7 @@ class VedtakService(
                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                 unikreferanse = innkrevingRequest.unikReferanse,
             )
+            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
             bestillOpprettelseAvNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${

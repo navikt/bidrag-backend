@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.dto.v2.samvær
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import no.nav.bidrag.behandling.dto.v1.behandling.BegrunnelseDto
+import no.nav.bidrag.behandling.dto.v1.behandling.ErSamværVirkningLikForAlleForSak
 import no.nav.bidrag.behandling.dto.v1.behandling.RolleDto
 import no.nav.bidrag.behandling.dto.v2.behandling.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
@@ -24,6 +25,7 @@ data class OppdaterSamværResponsDto(
     @get:Schema(description = "Samvær som ble oppdatert", deprecated = true)
     val oppdatertSamvær: SamværBarnDto? = null,
     val erSammeForAlle: Boolean = true,
+    val erSammeForAlleSaker: List<ErSamværVirkningLikForAlleForSak> = emptyList(),
     val samværBarn: List<SamværBarnDto> = emptyList(),
 )
 
@@ -51,6 +53,7 @@ data class SletteSamværsperiodeElementDto(
 
 data class SamværDtoV2(
     val erSammeForAlle: Boolean,
+    val erSammeForAlleSaker: List<ErSamværVirkningLikForAlleForSak> = emptyList(),
     val barn: List<SamværBarnDto>,
 )
 

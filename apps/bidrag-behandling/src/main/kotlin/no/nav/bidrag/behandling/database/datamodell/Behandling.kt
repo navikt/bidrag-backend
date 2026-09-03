@@ -25,6 +25,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.KlageDetaljerConverter
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljerConverter
+import no.nav.bidrag.behandling.dto.v1.behandling.ErSamværVirkningLikForAlleForSak
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.LesemodusVedtak
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
@@ -371,6 +372,9 @@ open class Behandling(
         if (erBidrag()) søknadsbarn.all { it.avslag != null } else avslag != null
 
     val erVirkningstidspunktLiktForAlle get() = søknadsbarn.mapNotNull { it.virkningstidspunkt }.toSet().size == 1
+    val erVirkningstidspunktLiktForAlleSaker get() = søknadsbarn.groupBy { it.saksnummer }
+        .mapNotNull { it.key to (it.value.mapNotNull { sb -> sb.virkningstidspunkt }.toSet().size == 1) }
+        .map { ErSamværVirkningLikForAlleForSak(it.first, it.second) }
     val globalOpphørsdato get() =
         if (søknadsbarn.any { it.opphørsdato == null }) {
             null
@@ -384,34 +388,45 @@ open class Behandling(
     val sammeVirkningstidspunktForAlle get() =
         forholdsmessigFordeling == null &&
             søknadsbarn.all { sb1 ->
-                søknadsbarn.all {
-                    sb1.virkningstidspunkt == it.virkningstidspunkt &&
-                        sb1.opphørsdato == it.opphørsdato &&
-                        sb1.beregnTil == it.beregnTil &&
-                        sb1.avslag == it.avslag &&
-                        sb1.årsak == it.årsak &&
-                        sb1.notat
-                            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-                            ?.innhold
-                            ?.normalizeForComparison()
-                            ?.takeIf { it.isNotEmpty() } ==
-                        it.notat
-                            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-                            ?.innhold
-                            ?.normalizeForComparison()
-                            ?.takeIf { it.isNotEmpty() } &&
-                        sb1.notat
-                            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
-                            ?.innhold
-                            ?.normalizeForComparison()
-                            ?.takeIf { it.isNotEmpty() } ==
-                        it.notat
-                            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
-                            ?.innhold
-                            ?.normalizeForComparison()
-                            ?.takeIf { it.isNotEmpty() }
-                }
+                søknadsbarn.all { erVirkningstidspunktLikt(sb1, it) }
             }
+
+    val sammeVirkningstidspunktForAlleSaker get() = søknadsbarn
+        .groupBy { it.saksnummer }
+        .map { (saksnummer, søknadsbarnForSak) ->
+            ErSamværVirkningLikForAlleForSak(
+                saksnummer,
+                søknadsbarnForSak.all { sb1 ->
+                    søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
+                },
+            )
+        }
+
+    private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle) = sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
+        sb1.opphørsdato == sb2.opphørsdato &&
+        sb1.beregnTil == sb2.beregnTil &&
+        sb1.avslag == sb2.avslag &&
+        sb1.årsak == sb2.årsak &&
+        sb1.notat
+            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
+            ?.innhold
+            ?.normalizeForComparison()
+            ?.takeIf { it.isNotEmpty() } ==
+        sb2.notat
+            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
+            ?.innhold
+            ?.normalizeForComparison()
+            ?.takeIf { it.isNotEmpty() } &&
+        sb1.notat
+            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
+            ?.innhold
+            ?.normalizeForComparison()
+            ?.takeIf { it.isNotEmpty() } ==
+        sb2.notat
+            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
+            ?.innhold
+            ?.normalizeForComparison()
+            ?.takeIf { it.isNotEmpty() }
 
     val sammeSamværForAlle get() =
         forholdsmessigFordeling == null &&
@@ -420,6 +435,19 @@ open class Behandling(
                     sb1.erLik(it)
                 }
             }
+    val sammeSamværForAlleSaker get() = samvær
+        .filter { it.rolle.kreverGrunnlagForBeregning }
+        .groupBy { it.rolle.saksnummer }
+        .map { (saksnummer, samværForSak) ->
+            ErSamværVirkningLikForAlleForSak(
+                saksnummer,
+                samværForSak.all { sb1 ->
+                    samværForSak.filter { it.id != sb1.id }.all {
+                        sb1.erLik(it)
+                    }
+                },
+            )
+        }
 
     fun tilStønadsid(person: Person) = Stønadsid(
         stonadstype!!,
