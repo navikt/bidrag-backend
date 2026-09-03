@@ -50,25 +50,35 @@ class SamværService(
     ): Samvær {
         val behandling = behandlingRepository.findBehandlingById(behandlingsid).get()
         secureLogger.debug { "Oppdaterer samvær for behandling $behandlingsid, forespørsel=$request" }
-        if (request.sammeForAlle && !behandling.sammeSamværForAlle) {
+        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
+        val saksnummer = samværBarn.rolle.saksnummer
+        val flereSaker = behandling.samvær.map { it.rolle.saksnummer }.distinct().size > 1
+        val erSammeForAlle =
+            if (flereSaker) {
+                behandling.sammeSamværForAlleSaker.find { it.saksnummer == saksnummer }?.erLikForAlle ?: true
+            } else {
+                behandling.sammeSamværForAlle
+            }
+        if (request.sammeForAlle && !erSammeForAlle) {
             throw HttpClientErrorException(
                 HttpStatus.BAD_REQUEST,
                 "Ugyldig data ved oppdatering av samvær: Kan ikke oppdatere til samme for alle når det ikke valgt til å være samme",
             )
         }
-        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
         oppdaterSamvær(request, samværBarn)
 
         if (request.sammeForAlle) {
-            behandling.samvær.filter { it.id != samværBarn.id }.forEach { oppdaterSamvær ->
-                kopierSamværPerioderOgBegrunnelse(
-                    samværBarn,
-                    oppdaterSamvær,
-                    erPerioderOppdatert = request.periode != null,
-                    erBegrunnelseOppdatert =
-                    request.oppdatereBegrunnelse != null,
-                )
-            }
+            behandling.samvær
+                .filter { it.id != samværBarn.id && (!flereSaker || it.rolle.saksnummer == saksnummer) }
+                .forEach { oppdaterSamvær ->
+                    kopierSamværPerioderOgBegrunnelse(
+                        samværBarn,
+                        oppdaterSamvær,
+                        erPerioderOppdatert = request.periode != null,
+                        erBegrunnelseOppdatert =
+                        request.oppdatereBegrunnelse != null,
+                    )
+                }
         }
 
         return samværBarn

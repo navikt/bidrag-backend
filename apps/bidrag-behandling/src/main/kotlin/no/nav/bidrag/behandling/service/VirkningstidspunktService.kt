@@ -236,7 +236,12 @@ class VirkningstidspunktService(
                         it.bidragsmottaker!!,
                     )
                 } else {
-                    it.søknadsbarn.forEach { barn ->
+                    // Når saksnummer er angitt oppdateres begrunnelsen kun for barn i den aktuelle saken,
+                    // ellers for alle barn.
+                    val søknadsbarn =
+                        request.saksnummer?.let { sak -> it.søknadsbarn.filter { barn -> barn.saksnummer == sak } }
+                            ?: it.søknadsbarn
+                    søknadsbarn.forEach { barn ->
                         notatService.oppdatereNotat(
                             it,
                             NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
