@@ -1758,7 +1758,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
                     it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
                 }
             sumBidragTilFordelingGrunnlagsliste.find {
-                it.innhold.periode.inneholder(sluttberegningPeriode)
+                it.innhold.periode.omsluttesAv(sluttberegningPeriode)
             }
         }
 

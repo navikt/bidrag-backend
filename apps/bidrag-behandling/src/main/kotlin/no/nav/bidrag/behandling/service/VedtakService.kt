@@ -3,6 +3,11 @@
 package no.nav.bidrag.behandling.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
@@ -46,6 +51,8 @@ import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.behandling.transformers.vedtak.validerGrunnlagsreferanser
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtak
+import no.nav.bidrag.commons.util.RequestContextAsyncContext
+import no.nav.bidrag.commons.util.SecurityCoroutineContext
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -218,7 +225,7 @@ class VedtakService(
                     "søktFomDato ${request.søktFomDato}, mottatDato ${request.mottattdato}, søknadId ${request.søknadsid}: $request"
             }
 
-            behandlingService.hentEksisteredenBehandling(request.søknadsid)?.let {
+            behandlingService.hentEksisterendeBehandling(request.søknadsid)?.let {
                 secureLogger.warn {
                     "Fant eksisterende behandling ${it.id} for søknadsId ${request.søknadsid}. Oppretter ikke ny behandling"
                 }
@@ -821,9 +828,7 @@ class VedtakService(
                         forsendelseService.opprettForsendelseForAldersjustering(behandling)
                     } else if (vedtakRequest.type != Vedtakstype.ALDERSJUSTERING) {
                         if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                            behandling.saker.forEach {
-                                opprettNotat(behandling, it)
-                            }
+                            opprettNotatForAlleSakerParallelt(behandling)
                         } else {
                             opprettNotat(behandling)
                         }
@@ -933,6 +938,22 @@ class VedtakService(
 
         if (saksnummer.isEmpty()) {
             throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Saksnummer mangler")
+        }
+    }
+
+    // Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor parallelt per sak
+    private fun opprettNotatForAlleSakerParallelt(behandling: Behandling) {
+        val saker = behandling.saker.toList()
+        if (saker.size <= 1) {
+            saker.forEach { opprettNotat(behandling, it) }
+            return
+        }
+        val scope = CoroutineScope(Dispatchers.IO + SecurityCoroutineContext() + RequestContextAsyncContext())
+        runBlocking {
+            saker
+                .map { saksnummer ->
+                    scope.async { opprettNotat(behandling, saksnummer) }
+                }.awaitAll()
         }
     }
 

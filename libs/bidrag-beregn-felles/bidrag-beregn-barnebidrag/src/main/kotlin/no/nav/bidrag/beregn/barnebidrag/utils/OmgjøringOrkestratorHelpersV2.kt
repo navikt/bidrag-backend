@@ -72,6 +72,7 @@ class OmgjøringOrkestratorHelpersV2(private val vedtakService: VedtakService, p
         omgjøringsberegningGrunnlag: BeregnGrunnlag,
         omgjortVedtakVirkningstidspunkt: YearMonth,
         gjelderParagraf35c: Boolean,
+        skalInnkreves: Boolean,
     ): BeløpshistorikkGrunnlag {
         val delberegningIndeksreguleringPrivatAvtalePeriodeResultat = utførDelberegningPrivatAvtalePeriode(omgjøringsberegningGrunnlag)
         val beløpshistorikk = if (gjelderParagraf35c) {
@@ -122,12 +123,15 @@ class OmgjøringOrkestratorHelpersV2(private val vedtakService: VedtakService, p
             val førstePeriodeFraBeløpshistorikk =
                 beløpshistorikk.beløpshistorikk.minByOrNull { it.periode.fom }?.periode
 
-            val periodeStartInnkreving =
+            val periodeStartInnkreving = if (skalInnkreves) {
                 førstePeriodeFraBeløpshistorikk?.fom?.let { minOf(it, omgjortVedtakVirkningstidspunkt) } ?: omgjortVedtakVirkningstidspunkt
+            } else {
+                null
+            }
 
             // Bare ta med privat avtale perioder til første periode i historikken
             val privatAvtalePerioderFiltrert = privatavtalePerioder
-                .filter { it.innhold.periode.fom.isBefore(periodeStartInnkreving) }
+                .filter { periodeStartInnkreving == null || it.innhold.periode.fom.isBefore(periodeStartInnkreving) }
                 .map {
                     DelberegningIndeksreguleringPrivatAvtale(
                         periode = it.innhold.periode,

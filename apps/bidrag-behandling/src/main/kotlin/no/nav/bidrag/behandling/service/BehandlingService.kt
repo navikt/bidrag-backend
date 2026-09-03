@@ -39,7 +39,6 @@ import no.nav.bidrag.behandling.dto.v2.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.OppdaterBarnFraFFRequest
-import no.nav.bidrag.behandling.service.forholdsmessigfordeling.barn
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.barnAlle
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.behandlingstyperSomIkkeSkalInkluderesIFF
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.bidragsmottaker
@@ -283,7 +282,7 @@ class BehandlingService(
         sendOppdatertHendelse(behandling.id!!, true)
     }
 
-    fun hentEksisteredenBehandling(søknadsid: Long): Behandling? = behandlingRepository.findFirstBySoknadsid(søknadsid)
+    fun hentEksisterendeBehandling(søknadsid: Long): Behandling? = behandlingRepository.findFirstBySoknadsid(søknadsid)
 
     fun lagreBehandling(
         behandling: Behandling,
@@ -313,7 +312,7 @@ class BehandlingService(
         return lagretBehandling
     }
 
-    fun opprettBehandlingHvisIkkeEksisterer(behandling: Behandling) = hentEksisteredenBehandling(behandling.soknadsid!!)?.let {
+    fun opprettBehandlingHvisIkkeEksisterer(behandling: Behandling) = hentEksisterendeBehandling(behandling.soknadsid!!)?.let {
         log.debug { "Fant eksisterende behandling ${it.id} for søknadsId ${behandling.soknadsid}. Oppretter ikke ny behandling" }
         return it
     } ?: run {
@@ -820,16 +819,21 @@ class BehandlingService(
                         rolle != null && rolle.erRevurderingsbarn
                     }
             try {
-                forholdsmessigFordelingService!!.leggTilEllerSlettBarnFraBehandlingSomErIFF(
-                    OppdaterBarnFraFFRequest(
-                        rollerSomSkalLeggesTilDto = (rollerSomLeggesTil + revurderingsbarnSomLeggesTil).distinct(),
-                        rollerSomSkalSlettes = rollerSomSkalSlettes,
-                        behandling = behandling,
-                        søknadsid = request.søknadsid ?: behandling.soknadsid!!,
-                        saksnummer = request.saksnummer ?: behandling.saksnummer,
-                    ),
-                )
-                forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling)
+                // I klage eller omgjøring skal det ikke kunne legges til barn til behandling
+                // Klage behandler samme søknadsbarn som i opprinnelig vedtak
+                // Revurderingsbarn legges til via opprett/oppdater FF metoden
+                if (!behandling.erKlageEllerOmgjøring) {
+                    forholdsmessigFordelingService!!.leggTilEllerSlettBarnFraBehandlingSomErIFF(
+                        OppdaterBarnFraFFRequest(
+                            rollerSomSkalLeggesTilDto = (rollerSomLeggesTil + revurderingsbarnSomLeggesTil).distinct(),
+                            rollerSomSkalSlettes = rollerSomSkalSlettes,
+                            behandling = behandling,
+                            søknadsid = request.søknadsid ?: behandling.soknadsid!!,
+                            saksnummer = request.saksnummer ?: behandling.saksnummer,
+                        ),
+                    )
+                }
+                forholdsmessigFordelingService!!.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling)
             } catch (e: Exception) {
                 log.error(e) { "Feil ved oppdatering av roller i behandling $behandlingId. Ruller tilbake til tidligere roller" }
                 // Fail fast so the transaction rolls back instead of flushing a broken persistence context.
