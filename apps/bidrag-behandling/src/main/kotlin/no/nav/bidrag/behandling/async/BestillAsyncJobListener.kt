@@ -15,6 +15,8 @@ import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 
 private val log = KotlinLogging.logger {}
 
@@ -58,11 +60,15 @@ class BestillAsyncJobListener(
     /**
      * Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor i bakgrunnen etter at
      * vedtaket er fattet. Kjøres i applikasjonskontekst fordi saksbehandlerens token ikke propageres til
-     * async-tråder (se [no.nav.bidrag.behandling.config.AsyncConfig.ThreadLocalTaskDecorator]).
+     * async-tråder.
      * Feiler jobben, plukkes behandlingen opp igjen av [no.nav.bidrag.behandling.scheduling.NotatFeilhåndteringScheduler].
      */
     @EventListener
     @Async
+    @TransactionalEventListener(
+        phase = TransactionPhase.AFTER_COMMIT,
+        fallbackExecution = true,
+    )
     fun behandleBestillingAvNotat(bestilling: OpprettNotatBestilling) {
         log.info {
             "Async: Oppretter notat for behandling ${bestilling.behandlingId}" +

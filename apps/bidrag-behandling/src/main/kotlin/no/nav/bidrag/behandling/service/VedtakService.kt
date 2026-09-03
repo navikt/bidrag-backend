@@ -839,12 +839,6 @@ class VedtakService(
                     }
                 }
 
-                if (!simuler) {
-                    // Venter til vedtaksbro har lest inn vedtaket og lukket søknadslinjene i saksloggen,
-                    // slik at neste iterasjon i loopen ser oppdatert sakslogg
-                    ventPåFerdigstiltSøknad(søknadsider)
-                }
-
                 LOGGER.info {
                     "Fattet vedtak for behandling ${behandling.id} med ${
                         behandling.årsak?.let { "årsakstype $it" }
@@ -862,6 +856,13 @@ class VedtakService(
                 )
                 søknadsider to response.vedtaksid
             }
+
+        if (!simuler) {
+            val søknadsider = vedtakResponser.flatMap { it.key }
+            // Venter til vedtaksbro har lest inn vedtaket og lukket søknadslinjene i saksloggen,
+            // slik at neste iterasjon i loopen ser oppdatert sakslogg
+            ventPåFerdigstiltSøknad(søknadsider)
+        }
 
         val vedtaksid =
             vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.firstOrNull() ?: vedtakResponser.values.first()
