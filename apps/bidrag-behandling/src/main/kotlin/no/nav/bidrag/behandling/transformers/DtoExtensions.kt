@@ -31,7 +31,7 @@ fun Behandling.tilForsendelseRolleDto(
 ) = roller
     .filter { r -> !(r.rolletype == Rolletype.BARN && r.ident == null) }
     .filter { r -> r.rolletype != Rolletype.BARN || opprettForSøknad?.søknadsid == null || r.harSøknad(opprettForSøknad.søknadsid!!) }
-    .filter { it.saksnummer == saksnummer }
+    .filter { it.saksnummer == saksnummer || it.rolletype == Rolletype.BIDRAGSPLIKTIG }
     .map {
         no.nav.bidrag.behandling.dto.v1.forsendelse.ForsendelseRolleDto(
             fødselsnummer = Personident(it.ident!!),
