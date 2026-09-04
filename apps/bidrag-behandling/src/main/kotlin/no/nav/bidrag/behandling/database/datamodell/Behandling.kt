@@ -402,31 +402,24 @@ open class Behandling(
             )
         }
 
-    private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle) = sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
-        sb1.opphørsdato == sb2.opphørsdato &&
-        sb1.beregnTil == sb2.beregnTil &&
-        sb1.avslag == sb2.avslag &&
-        sb1.årsak == sb2.årsak &&
-        sb1.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } ==
-        sb2.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } &&
-        sb1.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } ==
-        sb2.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() }
+    private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle): Boolean {
+        fun Rolle.normalisertNotat(type: NotatGrunnlag.NotatType) =
+            notat
+                .find { it.type == type && it.erDelAvBehandlingen }
+                ?.innhold
+                ?.normalizeForComparison()
+                ?.takeIf { it.isNotEmpty() }
+
+        return sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
+            sb1.opphørsdato == sb2.opphørsdato &&
+            sb1.beregnTil == sb2.beregnTil &&
+            sb1.avslag == sb2.avslag &&
+            sb1.årsak == sb2.årsak &&
+            sb1.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT) ==
+            sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT) &&
+            sb1.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG) ==
+            sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+    }
 
     val sammeSamværForAlle get() =
         forholdsmessigFordeling == null &&

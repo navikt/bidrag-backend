@@ -130,6 +130,7 @@ import no.nav.bidrag.transport.sak.BidragssakDto
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import kotlin.collections.component1
 import kotlin.collections.sortedBy
 
@@ -274,6 +275,7 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
         }
 
     val delvedtak = if (erPrivatAvtale) {
+        val sistePeriode = stønadsendring.periodeListe.maxByOrNull { it.periode.fom }?.periode?.fom ?: YearMonth.now()
         listOf(
             DelvedtakDto(
                 type = Vedtakstype.ENDRING,
@@ -282,7 +284,7 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
                 delvedtak = true,
                 beregnet = false,
                 resultatFraVedtakVedtakstidspunkt = null,
-                indeksår = 2027,
+                indeksår = sistePeriode.plusYears(1).year,
                 perioder = stønadsendring.periodeListe.map {
                     ResultatBarnebidragsberegningPeriodeDto(
                         periode = it.periode,
