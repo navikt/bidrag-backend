@@ -460,7 +460,7 @@ class ForholdsmessigFordelingBarnService(
                 feilregistrerBarnFraFFSøknad(rolle)
                 relevanteKravhavere.groupBy {
                     it.saksnummer
-                }.forEach { (saksnummer, kravhavere) ->
+                }.filter { (saksnummer) -> saksnummer != null }.forEach { (saksnummer, kravhavere) ->
                     søknadService.opprettRollerOgRevurderingssøknadForSak(
                         behandling,
                         saksnummer!!,
