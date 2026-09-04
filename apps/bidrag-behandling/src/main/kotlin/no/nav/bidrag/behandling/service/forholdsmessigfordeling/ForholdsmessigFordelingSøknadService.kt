@@ -70,8 +70,9 @@ class ForholdsmessigFordelingSøknadService(
         val sak = sakConsumer.hentSak(saksnummer)
         val bmFødselsnummer = hentNyesteIdent(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
 
-        val barnUtenInnkreving = løpendeBidragssak.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
-        val barnMedInnkreving = løpendeBidragssak.filter { it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
+        val løpendeBidragssakForSaksnummer = løpendeBidragssak.filter { it.saksnummer == saksnummer }
+        val barnUtenInnkreving = løpendeBidragssakForSaksnummer.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
+        val barnMedInnkreving = løpendeBidragssakForSaksnummer.filter { it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
         val ffDetaljerBarn =
             ForholdsmessigFordelingSøknadBarn(
                 søknadsid = 0, // Settes senere når søknad opprettes
