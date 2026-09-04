@@ -1,0 +1,137 @@
+# Denne workflowen trigger deploy til q1/q2 for alle app-workflows i repoet.
+# Brukes f.eks. etter en versjonsbump i rot-pom.xml (tomcat, spring boot o.l.) for å fjerne et
+# sikkerhetshull i alle q-miljøer, uavhengig av om den enkelte appens egne paths er endret siden
+# forrige deploy (og dermed ikke ville blitt trigget av vanlig push/detect_changes-logikk).
+#
+# Hvilke apper som støtter q1/q2 leses dynamisk fra hver enkelt apps egen workflow_dispatch.miljo
+# options, slik at listen ikke må vedlikeholdes manuelt her når apper legges til/fjernes eller får
+# nye miljøer.
+name: Deploy alle apper til q1/q2
+
+on:
+  workflow_dispatch:
+    inputs:
+      miljo:
+        description: "Hvilke(t) miljø som skal deployes"
+        required: true
+        type: choice
+        options:
+          - q1_og_q2
+          - q1
+          - q2
+        default: q1_og_q2
+      ref:
+        description: "Branch/tag/SHA som skal deployes til q-miljøene"
+        required: false
+        type: string
+        default: main
+      hopp_over_tester:
+        description: "Hopp over tester/ktlint i alle apper for å få gjennom deploy raskere"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  finn_apper:
+    name: Finn apper som støtter q1/q2
+    runs-on: ubuntu-latest
+    outputs:
+      q1_apper: ${{ steps.finn.outputs.q1_apper }}
+      q2_apper: ${{ steps.finn.outputs.q2_apper }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Installer pyyaml
+        run: pip install --quiet pyyaml
+      - name: Finn apper med q1/q2-støtte
+        id: finn
+        run: |
+          python3 <<'EOF'
+          import glob
+          import json
+          import os
+
+          import yaml
+
+          ORCHESTRATOR = "deploy-alle-q-miljoer.yaml"
+          q1_apper, q2_apper = [], []
+
+          for path in sorted(glob.glob(".github/workflows/*.yaml")):
+              navn = os.path.basename(path)
+              if navn == ORCHESTRATOR:
+                  continue
+              with open(path) as f:
+                  innhold = yaml.safe_load(f)
+              # YAML 1.1 tolker en uquotet "on:"-nøkkel som boolean True
+              on = innhold.get(True, innhold.get("on", {}))
+              if not isinstance(on, dict):
+                  continue
+              wd = on.get("workflow_dispatch")
+              if not isinstance(wd, dict):
+                  continue
+              miljo = wd.get("inputs", {}).get("miljo")
+              if not isinstance(miljo, dict):
+                  continue
+              options = miljo.get("options") or []
+              if "q1" in options:
+                  q1_apper.append(navn)
+              if "q2" in options:
+                  q2_apper.append(navn)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"q1_apper={json.dumps(q1_apper)}\n")
+              f.write(f"q2_apper={json.dumps(q2_apper)}\n")
+
+          print("q1:", q1_apper)
+          print("q2:", q2_apper)
+          EOF
+
+  deploy_q1:
+    name: "q1: ${{ matrix.workflow }}"
+    needs: finn_apper
+    if: |
+      (inputs.miljo == 'q1' || inputs.miljo == 'q1_og_q2') &&
+      needs.finn_apper.outputs.q1_apper != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        workflow: ${{ fromJSON(needs.finn_apper.outputs.q1_apper) }}
+    steps:
+      - name: Trigger ${{ matrix.workflow }} mot q1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run "${{ matrix.workflow }}" \
+            --repo "${{ github.repository }}" \
+            --ref "${{ inputs.ref }}" \
+            -f miljo=q1 \
+            -f hopp_over_tester=${{ inputs.hopp_over_tester }}
+
+  deploy_q2:
+    name: "q2: ${{ matrix.workflow }}"
+    needs: finn_apper
+    if: |
+      (inputs.miljo == 'q2' || inputs.miljo == 'q1_og_q2') &&
+      needs.finn_apper.outputs.q2_apper != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        workflow: ${{ fromJSON(needs.finn_apper.outputs.q2_apper) }}
+    steps:
+      - name: Trigger ${{ matrix.workflow }} mot q2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run "${{ matrix.workflow }}" \
+            --repo "${{ github.repository }}" \
+            --ref "${{ inputs.ref }}" \
+            -f miljo=q2 \
+            -f hopp_over_tester=${{ inputs.hopp_over_tester }}
