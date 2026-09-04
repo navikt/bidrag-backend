@@ -424,19 +424,24 @@ class ForholdsmessigFordelingBarnService(
             val søknad = rolle.forholdsmessigFordeling!!.eldsteSøknad
             if (søknad == null || !søknad.innkreving) {
                 feilregistrerBarnFraFFSøknad(rolle)
-                søknadService.opprettRollerOgRevurderingssøknadForSak(
-                    behandling,
-                    behandling.saksnummer,
-                    løpendeBidragssaker,
-                    behandling.behandlerEnhet,
-                    rolle.stønadstype,
-                    søknad?.søknadFomDato ?: rolle.forholdsmessigFordeling?.sisteOpprettetSøknad?.søknadFomDato
-                        ?: relevanteKravhavere
-                            .filter {
-                                rollerRevurderingsbarn.contains(PersonStønad(Personident(it.kravhaver), it.stønadstype))
-                            }.finnSøktFomRevurderingSøknad(behandling),
-                    true,
-                )
+                løpendeBidragssaker.groupBy {
+                    it.saksnummer
+                }.filter { (saksnummer) -> saksnummer != null }
+                    .forEach { (saksnummer, kravhavere) ->
+                        søknadService.opprettRollerOgRevurderingssøknadForSak(
+                            behandling,
+                            saksnummer!!,
+                            kravhavere,
+                            behandling.behandlerEnhet,
+                            rolle.stønadstype,
+                            søknad?.søknadFomDato ?: rolle.forholdsmessigFordeling?.sisteOpprettetSøknad?.søknadFomDato
+                                ?: relevanteKravhavere
+                                    .filter {
+                                        rollerRevurderingsbarn.contains(PersonStønad(Personident(it.kravhaver), it.stønadstype))
+                                    }.finnSøktFomRevurderingSøknad(behandling),
+                            true,
+                        )
+                    }
             }
         }
     }
@@ -453,17 +458,21 @@ class ForholdsmessigFordelingBarnService(
             val søknad = rolle.forholdsmessigFordeling!!.eldsteSøknad
             if (søknad == null || søknad.innkreving) {
                 feilregistrerBarnFraFFSøknad(rolle)
-                søknadService.opprettRollerOgRevurderingssøknadForSak(
-                    behandling,
-                    behandling.saksnummer,
-                    relevanteKravhavere.filter { it.erLik(rolle.ident!!, rolle.stønadstype) },
-                    behandling.behandlerEnhet,
-                    rolle.stønadstype,
-                    søknad?.søknadFomDato
-                        ?: rolle.forholdsmessigFordeling?.revurderingsdatoVedOpprettelseAvFF
-                        ?: rolle.forholdsmessigFordeling?.sisteOpprettetSøknad?.søknadFomDato!!,
-                    true,
-                )
+                relevanteKravhavere.groupBy {
+                    it.saksnummer
+                }.forEach { (saksnummer, kravhavere) ->
+                    søknadService.opprettRollerOgRevurderingssøknadForSak(
+                        behandling,
+                        saksnummer!!,
+                        kravhavere.filter { it.erLik(rolle.ident!!, rolle.stønadstype) },
+                        behandling.behandlerEnhet,
+                        rolle.stønadstype,
+                        søknad?.søknadFomDato
+                            ?: rolle.forholdsmessigFordeling?.revurderingsdatoVedOpprettelseAvFF
+                            ?: rolle.forholdsmessigFordeling?.sisteOpprettetSøknad?.søknadFomDato!!,
+                        true,
+                    )
+                }
             }
         }
     }
