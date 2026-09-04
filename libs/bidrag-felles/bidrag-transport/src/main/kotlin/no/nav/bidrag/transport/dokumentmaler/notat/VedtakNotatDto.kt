@@ -248,6 +248,7 @@ data class NotatUnderholdBarnDto(
 
 data class NotatSamværDto(
     val erSammeForAlle: Boolean,
+    val sammeSamværForAlleSaker: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
     val barn: List<NotatSamværBarnDto>,
 )
 
@@ -345,11 +346,16 @@ data class NotatSærbidragKategoriDto(
     val kategori: Særbidragskategori,
     val beskrivelse: String? = null,
 )
-
+data class NotatErSamværVirkningLikForAlleForSak(
+    val saksnummer: String,
+    val erLikForAlle: Boolean,
+)
 data class NotatVirkningstidspunktDto(
     @Schema(description = "Hvis det er likt for alle bruk avslag/årsak fra ett av barna")
     val erLikForAlle: Boolean,
+    val erLikForAlleBasertPåSak: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
     val erVirkningstidspunktLikForAlle: Boolean,
+    val erVirkningstidspunktLiktForAlleSaker: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
     val erAvslagForAlle: Boolean = false,
     val eldsteVirkningstidspunkt: YearMonth,
     val barn: List<NotatVirkningstidspunktBarnDto>,
