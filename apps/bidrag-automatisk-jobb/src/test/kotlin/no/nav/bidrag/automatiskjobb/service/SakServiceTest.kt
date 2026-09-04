@@ -9,9 +9,6 @@ import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
-import no.nav.bidrag.automatiskjobb.persistence.entity.Sak
-import no.nav.bidrag.automatiskjobb.persistence.entity.SakBarn
-import no.nav.bidrag.automatiskjobb.persistence.repository.SakRepository
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -23,6 +20,7 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
+import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
@@ -39,9 +37,6 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as Beregn
 
 @ExtendWith(MockKExtension::class)
 class SakServiceTest {
-    @RelaxedMockK
-    private lateinit var sakRepository: SakRepository
-
     @RelaxedMockK
     private lateinit var bidragVedtakConsumer: BidragVedtakConsumer
 
@@ -67,27 +62,16 @@ class SakServiceTest {
     @BeforeEach
     fun setup() {
         every { identUtils.hentNyesteIdent(any()) } returnsArgument 0
-        every { sakRepository.save(any()) } returnsArgument 0
     }
 
     @Test
-    fun `skal ikke opprette vedtaksforslag ved første hendelse for ukjent sak`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns null
-
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = reellMottaker))
-
-        verify(exactly = 0) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(any()) }
-    }
-
-    @Test
-    fun `skal opprette vedtaksforslag for endring av mottaker når reell mottaker er endret`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
-        every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns løpendeForskudd()
+    fun `skal fatte vedtak for endring av mottaker når reell mottaker avviker fra beløpshistorikken`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
 
         val request = slot<OpprettVedtakRequestDto>()
-        verify(exactly = 1) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(capture(request)) }
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
 
         request.captured.type shouldBe Vedtakstype.ENDRING_MOTTAKER
         val stønadsendring = request.captured.stønadsendringListe.single()
@@ -99,89 +83,104 @@ class SakServiceTest {
     }
 
     @Test
+    fun `skal fatte vedtak for alle tre stønadstyper når disse løper`() {
+        stubLøpendeStønad(Stønadstype.BIDRAG, mottaker = reellMottaker)
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        stubLøpendeStønad(Stønadstype.BIDRAG18AAR, mottaker = reellMottaker)
+
+        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+
+        val requests = mutableListOf<OpprettVedtakRequestDto>()
+        verify(exactly = 3) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
+        requests
+            .map { it.stønadsendringListe.single().type }
+            .toSet() shouldBe setOf(Stønadstype.BIDRAG, Stønadstype.FORSKUDD, Stønadstype.BIDRAG18AAR)
+    }
+
+    @Test
     fun `skal sette siste vedtaksid på stønadsendringen`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
-        every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns løpendeForskudd()
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         every { beregnVedtakService.finnSisteVedtaksid(any()) } returns 4242
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
 
         val request = slot<OpprettVedtakRequestDto>()
-        verify(exactly = 1) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(capture(request)) }
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
         request.captured.stønadsendringListe
             .single()
             .sisteVedtaksid shouldBe 4242
     }
 
     @Test
-    fun `skal ikke opprette vedtaksforslag når reell mottaker er uendret`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
+    fun `skal ikke fatte vedtak når mottaker er uendret`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = reellMottaker))
 
-        verify(exactly = 0) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(any()) }
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     @Test
-    fun `skal ikke opprette vedtaksforslag når reell mottaker kun har fått nytt fødselsnummer`() {
+    fun `skal ikke fatte vedtak når reell mottaker kun har fått nytt fødselsnummer`() {
         val nyttFødselsnummerSammePerson = genererFødselsnummer()
         every { identUtils.hentNyesteIdent(Personident(reellMottaker)) } returns Personident(nyttFødselsnummerSammePerson)
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
-        every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns løpendeForskudd()
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyttFødselsnummerSammePerson))
 
-        verify(exactly = 0) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(any()) }
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     @Test
-    fun `skal ikke opprette vedtaksforslag når det ikke finnes løpende forskudd`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
+    fun `skal ikke fatte vedtak når det ikke finnes løpende stønad`() {
         every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns null
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
 
-        verify(exactly = 0) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(any()) }
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     @Test
     fun `skal sette bidragsmottaker som mottaker når reell mottaker er fjernet`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
-        every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns løpendeForskudd()
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = null))
 
         val request = slot<OpprettVedtakRequestDto>()
-        verify(exactly = 1) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(capture(request)) }
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
         request.captured.stønadsendringListe
             .single()
             .mottaker shouldBe Personident(bidragsmottaker)
     }
 
     @Test
-    fun `skal ikke opprette vedtaksforslag når ny reell mottaker er en samhandler`() {
-        every { sakRepository.findBySaksnummer(saksnummer) } returns lagretSak(reellMottaker)
-        every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns løpendeForskudd()
+    fun `skal ikke fatte vedtak når ny reell mottaker er en samhandler`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = SAMHANDLER_ID))
 
-        verify(exactly = 0) { bidragVedtakConsumer.opprettEllerOppdaterVedtaksforslag(any()) }
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
-    private fun lagretSak(reellMottaker: String?) = Sak(
-        id = 1,
-        saksnummer = saksnummer,
-        bidragspliktig = bidragspliktig,
-        barn = mutableListOf(SakBarn(id = 1, kravhaver = kravhaver, reellMottaker = reellMottaker)),
-    )
+    private fun stubLøpendeStønad(
+        type: Stønadstype,
+        mottaker: String,
+    ) {
+        every {
+            bidragBeløpshistorikkConsumer.hentLøpendeStønad(match<HentStønadRequest> { it.type == type })
+        } returns løpendeStønad(type, mottaker)
+    }
 
-    private fun løpendeForskudd() = StønadDto(
+    private fun løpendeStønad(
+        type: Stønadstype,
+        mottaker: String,
+    ) = StønadDto(
         stønadsid = 1,
-        type = Stønadstype.FORSKUDD,
+        type = type,
         sak = Saksnummer(saksnummer),
-        skyldner = personidentNav,
+        skyldner = if (type == Stønadstype.FORSKUDD) personidentNav else Personident(bidragspliktig),
         kravhaver = Personident(kravhaver),
-        mottaker = Personident(reellMottaker),
+        mottaker = Personident(mottaker),
         førsteIndeksreguleringsår = 2025,
         nesteIndeksreguleringsår = 2026,
         innkreving = Innkrevingstype.MED_INNKREVING,
