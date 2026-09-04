@@ -27,7 +27,6 @@ import no.nav.bidrag.domene.enums.samværskalkulator.SamværskalkulatorNetterFre
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
-import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
@@ -248,7 +247,7 @@ data class NotatUnderholdBarnDto(
 
 data class NotatSamværDto(
     val erSammeForAlle: Boolean,
-    val sammeSamværForAlleSaker: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
+    val sammeSamværForAlleSaker: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val barn: List<NotatSamværBarnDto>,
 )
 
@@ -346,16 +345,16 @@ data class NotatSærbidragKategoriDto(
     val kategori: Særbidragskategori,
     val beskrivelse: String? = null,
 )
-data class NotatErSamværVirkningLikForAlleForSak(
+data class NotatErLikForAlleBasertPåSak(
     val saksnummer: String,
     val erLikForAlle: Boolean,
 )
 data class NotatVirkningstidspunktDto(
     @Schema(description = "Hvis det er likt for alle bruk avslag/årsak fra ett av barna")
     val erLikForAlle: Boolean,
-    val erLikForAlleBasertPåSak: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
+    val erLikForAlleBasertPåSak: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val erVirkningstidspunktLikForAlle: Boolean,
-    val erVirkningstidspunktLiktForAlleSaker: List<NotatErSamværVirkningLikForAlleForSak> = emptyList(),
+    val erVirkningstidspunktLiktForAlleSaker: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val erAvslagForAlle: Boolean = false,
     val eldsteVirkningstidspunkt: YearMonth,
     val barn: List<NotatVirkningstidspunktBarnDto>,

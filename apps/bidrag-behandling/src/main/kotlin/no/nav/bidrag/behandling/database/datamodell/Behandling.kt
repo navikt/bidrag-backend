@@ -25,7 +25,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.KlageDetaljerConverter
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljerConverter
-import no.nav.bidrag.behandling.dto.v1.behandling.ErSamværVirkningLikForAlleForSak
+import no.nav.bidrag.behandling.dto.v1.behandling.ErLikForAlleBasertPåSak
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.LesemodusVedtak
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
@@ -374,7 +374,7 @@ open class Behandling(
     val erVirkningstidspunktLiktForAlle get() = søknadsbarn.mapNotNull { it.virkningstidspunkt }.toSet().size == 1
     val erVirkningstidspunktLiktForAlleSaker get() = søknadsbarn.groupBy { it.saksnummer }
         .mapNotNull { it.key to (it.value.mapNotNull { sb -> sb.virkningstidspunkt }.toSet().size == 1) }
-        .map { ErSamværVirkningLikForAlleForSak(it.first, it.second) }
+        .map { ErLikForAlleBasertPåSak(it.first, it.second) }
     val globalOpphørsdato get() =
         if (søknadsbarn.any { it.opphørsdato == null }) {
             null
@@ -394,7 +394,7 @@ open class Behandling(
     val sammeVirkningstidspunktForAlleSaker get() = søknadsbarn
         .groupBy { it.saksnummer }
         .map { (saksnummer, søknadsbarnForSak) ->
-            ErSamværVirkningLikForAlleForSak(
+            ErLikForAlleBasertPåSak(
                 saksnummer,
                 søknadsbarnForSak.all { sb1 ->
                     søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
@@ -403,12 +403,11 @@ open class Behandling(
         }
 
     private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle): Boolean {
-        fun Rolle.normalisertNotat(type: NotatGrunnlag.NotatType) =
-            notat
-                .find { it.type == type && it.erDelAvBehandlingen }
-                ?.innhold
-                ?.normalizeForComparison()
-                ?.takeIf { it.isNotEmpty() }
+        fun Rolle.normalisertNotat(type: NotatGrunnlag.NotatType) = notat
+            .find { it.type == type && it.erDelAvBehandlingen }
+            ?.innhold
+            ?.normalizeForComparison()
+            ?.takeIf { it.isNotEmpty() }
 
         return sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
             sb1.opphørsdato == sb2.opphørsdato &&
@@ -432,7 +431,7 @@ open class Behandling(
         .filter { it.rolle.kreverGrunnlagForBeregning }
         .groupBy { it.rolle.saksnummer }
         .map { (saksnummer, samværForSak) ->
-            ErSamværVirkningLikForAlleForSak(
+            ErLikForAlleBasertPåSak(
                 saksnummer,
                 samværForSak.all { sb1 ->
                     samværForSak.filter { it.id != sb1.id }.all {

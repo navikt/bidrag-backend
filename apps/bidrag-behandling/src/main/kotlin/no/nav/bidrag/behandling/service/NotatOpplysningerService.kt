@@ -105,7 +105,7 @@ import no.nav.bidrag.transport.dokumentmaler.notat.NotatBeregnetInntektDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBeregnetPrivatAvtalePeriodeDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBoforholdDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBoforholdTilBMMedSøknadsbarn
-import no.nav.bidrag.transport.dokumentmaler.notat.NotatErSamværVirkningLikForAlleForSak
+import no.nav.bidrag.transport.dokumentmaler.notat.NotatErLikForAlleBasertPåSak
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto.NotatGebyrInntektDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrRolleV2Dto
@@ -310,9 +310,9 @@ class NotatOpplysningerService(
             virkningstidspunkt =
             NotatVirkningstidspunktDto(
                 erLikForAlle = behandling.sammeVirkningstidspunktForAlle,
-                erLikForAlleBasertPåSak = behandling.sammeVirkningstidspunktForAlleSaker.map { NotatErSamværVirkningLikForAlleForSak(it.saksnummer, it.erLikForAlle) },
+                erLikForAlleBasertPåSak = behandling.sammeVirkningstidspunktForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 erVirkningstidspunktLikForAlle = behandling.erVirkningstidspunktLiktForAlle,
-                erVirkningstidspunktLiktForAlleSaker = behandling.erVirkningstidspunktLiktForAlleSaker.map { NotatErSamværVirkningLikForAlleForSak(it.saksnummer, it.erLikForAlle) },
+                erVirkningstidspunktLiktForAlleSaker = behandling.erVirkningstidspunktLiktForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 erAvslagForAlle = behandling.erAvslagForAlle,
                 eldsteVirkningstidspunkt = behandling.eldsteVirkningstidspunkt.toYearMonth(),
                 barn = behandling.tilVirkningstidspunktBarn(søknadsbarnForNotat),
@@ -326,7 +326,7 @@ class NotatOpplysningerService(
             samværV2 =
             NotatSamværDto(
                 erSammeForAlle = behandling.sammeSamværForAlle,
-                sammeSamværForAlleSaker = behandling.sammeSamværForAlleSaker.map { NotatErSamværVirkningLikForAlleForSak(it.saksnummer, it.erLikForAlle) },
+                sammeSamværForAlleSaker = behandling.sammeSamværForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 barn =
                 mapper
                     .run { behandling.tilSamværDto() }
