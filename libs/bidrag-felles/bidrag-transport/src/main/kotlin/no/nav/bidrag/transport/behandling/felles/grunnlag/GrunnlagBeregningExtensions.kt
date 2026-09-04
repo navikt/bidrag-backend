@@ -93,10 +93,10 @@ fun GrunnlagDto.erSluttberegningGammelStruktur(): Boolean = type == Grunnlagstyp
             )
     }
 
-fun List<GrunnlagDto>.finnSamværsklasse(sluttberegningGrunnlag: GrunnlagDto): Samværsklasse = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SamværsperiodeGrunnlag>(
+fun List<GrunnlagDto>.finnSamværsklasse(sluttberegningGrunnlag: GrunnlagDto): Samværsklasse? = finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SamværsperiodeGrunnlag>(
     Grunnlagstype.SAMVÆRSPERIODE,
     sluttberegningGrunnlag.grunnlagsreferanseListe,
-).first().innhold.samværsklasse
+).firstOrNull()?.innhold?.samværsklasse
 
 fun List<GrunnlagDto>.finnBidragTilFordeling(sluttberegningGrunnlag: GrunnlagDto): BigDecimal {
     if (sluttberegningGrunnlag.erSluttberegningGammelStruktur()) {

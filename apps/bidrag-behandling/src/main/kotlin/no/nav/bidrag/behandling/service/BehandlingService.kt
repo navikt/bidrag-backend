@@ -874,10 +874,12 @@ class BehandlingService(
         behandling: Behandling,
         rolle: Rolle,
     ) {
+        // Sjekk for alle identer
+        val rolleIdenter = setOfNotNull(rolle.ident, rolle.personident?.verdi, hentNyesteIdent(rolle.ident)?.verdi)
         val grunnlagSomSkalSlettes =
             behandling.grunnlag
                 .filter {
-                    it.gjelderBarnRolle?.id == rolle.id || it.gjelder == rolle.ident ||
+                    it.gjelderBarnRolle?.id == rolle.id || it.gjelder in rolleIdenter ||
                         it.rolle.id == rolle.id
                 }.toSet()
 
