@@ -879,7 +879,7 @@ class BehandlingService(
         val grunnlagSomSkalSlettes =
             behandling.grunnlag
                 .filter {
-                    it.gjelderBarnRolle?.id == rolle.id || it.gjelder in rolleIdenter ||
+                    it.gjelderBarnRolle?.id == rolle.id || (it.gjelder != null && it.gjelder in rolleIdenter) ||
                         it.rolle.id == rolle.id
                 }.toSet()
 
