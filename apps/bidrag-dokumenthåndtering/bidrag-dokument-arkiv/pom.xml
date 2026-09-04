@@ -81,6 +81,16 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -341,10 +351,15 @@
             <artifactId>spring-boot-resttestclient</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Kun brukt i src/test (se Stubs.kt/AbstractControllerTest.kt). Manglet scope=test,
+             som gjorde at wiremock (og dens handlebars-avhengighet, sårbar for
+             CVE-2026-55760 - path traversal via FileTemplateLoader) havnet i produksjons-jaren.
+             Alle andre moduler som bruker wiremock-spring-boot har scope=test. -->
         <dependency>
             <groupId>org.wiremock.integrations</groupId>
             <artifactId>wiremock-spring-boot</artifactId>
             <version>${wiremock-spring-boot.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
