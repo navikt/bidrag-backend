@@ -47,11 +47,15 @@ class VedtakHendelseListener(
     val behandlingRepository: BehandlingRepository,
     val forholdsmessigFordelingService: ForholdsmessigFordelingService,
 ) {
-    @KafkaListener(groupId = "bidrag-behandling", topics = [$$"${TOPIC_VEDTAK}"])
+    @KafkaListener(groupId = "bidrag-behandling2", topics = [$$"${TOPIC_VEDTAK}"])
     @Transactional
     fun prossesserVedtakHendelse(melding: ConsumerRecord<String, String>) {
         val vedtak = parseVedtakHendelse(melding)
-        vedtak.oppdaterÅpenFFBehandlingHvisOpphørEllerInnkreving()
+        try {
+            vedtak.oppdaterÅpenFFBehandlingHvisOpphørEllerInnkreving()
+        } catch (e: Exception) {
+            secureLogger.error(e) { "Det skjedde en feil ved behandling ${vedtak.behandlingId} for vedtaksid ${vedtak.id}" }
+        }
 
         if (!vedtak.erFattetGjennomBidragBehandling()) {
             log.info {
@@ -137,8 +141,8 @@ class VedtakHendelseListener(
                 stønadsendring.periodeListe
                     .filter {
                         it.periode.fom.isBefore(behandling.finnBeregnTilDato().toYearMonth())
-                    }.maxBy { it.periode.fom }
-                    .beløp !=
+                    }.maxByOrNull { it.periode.fom }
+                    ?.beløp !=
                 null
         if (opphørsperiode != null) {
             forholdsmessigFordelingService

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 
 @BehandlingRestControllerV2
 class SamværController(
@@ -46,6 +47,7 @@ class SamværController(
         return OppdaterSamværResponsDto(
             oppdatertSamvær = respons.tilDto(),
             erSammeForAlle = behandling.sammeSamværForAlle,
+            erSammeForAlleSaker = behandling.sammeSamværForAlleSaker,
             samværBarn = dtomapper.run { behandling.tilSamværDto() ?: emptyList() },
         )
     }
@@ -57,10 +59,11 @@ class SamværController(
     )
     fun brukSammeSamværForAlleBarna(
         @PathVariable behandlingsid: Long,
+        @RequestParam(required = false) saksnummer: String?,
     ): BehandlingDtoV2 {
         secureLogger.info { "Sett sammen virkningstidspunkt for alle barne for behandling $behandlingsid" }
 
-        samværService.brukSammeSamværForAlleBarn(behandlingsid)
+        samværService.brukSammeSamværForAlleBarn(behandlingsid, saksnummer)
         val behandling = behandlingService.hentBehandlingById(behandlingsid)
         return dtomapper.tilDto(behandling)
     }
@@ -83,6 +86,7 @@ class SamværController(
         return OppdaterSamværResponsDto(
             oppdatertSamvær = respons.oppdatertSamvær,
             erSammeForAlle = behandling.sammeSamværForAlle,
+            erSammeForAlleSaker = behandling.sammeSamværForAlleSaker,
             samværBarn = dtomapper.run { behandling.tilSamværDto() ?: emptyList() },
         )
     }

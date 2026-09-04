@@ -889,7 +889,9 @@ class Dtomapper(
                 virkningstidspunktV3 =
                 VirkningstidspunktDtoV3(
                     false,
+                    erLikForAlleBasertPåSak = emptyList(),
                     erVirkningstidspunktLiktForAlle,
+                    erVirkningstidspunktLiktForAlleSaker = erVirkningstidspunktLiktForAlleSaker,
                     erAvslagForAlle,
                     BeregnTil.INNEVÆRENDE_MÅNED,
                     beregnTilDato,
@@ -919,7 +921,9 @@ class Dtomapper(
         val virkningstidspunktV3 =
             VirkningstidspunktDtoV3(
                 erLikForAlle = this.sammeVirkningstidspunktForAlle,
+                erLikForAlleBasertPåSak = this.sammeVirkningstidspunktForAlleSaker,
                 erVirkningstidspunktLiktForAlle = erVirkningstidspunktLiktForAlle,
+                erVirkningstidspunktLiktForAlleSaker = erVirkningstidspunktLiktForAlleSaker,
                 erAvslagForAlle = erAvslagForAlle,
                 eldsteVirkningstidspunkt = eldsteVirkningstidspunkt.toYearMonth(),
                 beregnTil = søknadsbarn.first().beregnTil,
@@ -935,6 +939,7 @@ class Dtomapper(
         val samværV2 =
             SamværDtoV2(
                 this.sammeSamværForAlle,
+                this.sammeSamværForAlleSaker,
                 samværDto ?: emptyList(),
             )
         val ikkeAktiverteEndringer =
