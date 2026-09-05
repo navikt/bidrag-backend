@@ -298,7 +298,7 @@ fun List<GrunnlagDto>.finnSøknadGrunnlagForBarn(søknadsbarnreferanse: String):
     Grunnlagstype.SØKNAD,
     gjelderBarnReferanse = søknadsbarnreferanse,
 ).firstOrNull()
-    ?.innhold ?: finnSøknadGrunnlag()
+    ?.innhold
 
 fun VedtakDto.erInnkrevingsgrunnlag(): Boolean {
     val søknad = this.grunnlagListe.finnSøknadGrunnlag()
