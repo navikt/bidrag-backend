@@ -196,6 +196,8 @@ class VedtakTilBehandlingMapping(
             )
 
         val sak = hentSak(behandling.saksnummer)
+        val vedtakSomDetOpprettesKlageFor = påklagetVedtak ?: this
+        val sakerIVedtak = vedtakSomDetOpprettesKlageFor.stønadsendringListe.map { it.sak.verdi }.distinct()
         behandling.roller =
             grunnlagListe.mapRoller(
                 påklagetVedtak ?: this,
@@ -205,6 +207,7 @@ class VedtakTilBehandlingMapping(
                 sak,
                 inneholderBareRevurderingsbarn,
                 inneholderBareRevurderingsbarn || forholdsmessigFordeling != null,
+                sakerIVedtak,
             )
 
         val skalLagreOmgjøringsdetaljer = !lesemodus || inkluderKlagedetaljer
