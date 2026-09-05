@@ -415,19 +415,18 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {
-        SikkerhetsKontekst.medApplikasjonKontekst {
-            kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
-            // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
-            behandling.grunnlagSistInnhentet = null
-            grunnlagService.oppdatereGrunnlagForBehandling(behandling)
-            oppdaterBehandlingEtterOppdatertRoller(
-                behandling,
-                underholdService,
-                virkningstidspunktService,
-                behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
-                emptyList(),
-            )
-        }
+        behandlingService.lagreBehandling(behandling, opprettForsendelse = false, forceSave = true)
+        kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
+        // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
+        behandling.grunnlagSistInnhentet = null
+        grunnlagService.oppdatereGrunnlagForBehandling(behandling)
+        oppdaterBehandlingEtterOppdatertRoller(
+            behandling,
+            underholdService,
+            virkningstidspunktService,
+            behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
+            emptyList(),
+        )
     }
 
     private fun foretaNySynkroniseringAvFF(
