@@ -188,7 +188,9 @@ class ForholdsmessigFordelingService(
                     .toSet()
 
             overføringService.overførÅpneBehandlingTilHovedbehandling(behandling, relevanteKravhavereIkkeSøknadsbarn)
+            LOGGER.debug { "Overførte åpne behandlinger til hovedbehandling for behandlingId=$behandlingId" }
             overføringService.overførÅpneBisysSøknaderTilBehandling(behandling, relevanteKravhavereIkkeSøknadsbarn)
+            LOGGER.debug { "Overførte åpne Bisys-søknader til behandlingId=$behandlingId" }
 
             opprettRevurderingsbarnOgSøknaderForNyeKravhavere(
                 behandling,
@@ -215,6 +217,10 @@ class ForholdsmessigFordelingService(
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
             behandlingService.sendOppdatertHendelse(behandling.id!!, false)
         } catch (e: Exception) {
+            LOGGER.error(e) {
+                "Feil ved opprettelse/oppdatering av FF for behandlingId=$behandlingId. " +
+                    "Transaksjonen rulles tilbake. Se secureLogger for detaljer."
+            }
             secureLogger.error(e) { "Det skjedde en feil ved opprettelse eller oppdatering av FF for behandling $behandlingId" }
             behandlingRepository.markerOpprettelseAvFFFeilet(behandlingId)
         }
@@ -415,7 +421,6 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {
-        behandlingService.lagreBehandling(behandling, opprettForsendelse = false, forceSave = true)
         kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
         // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
         behandling.grunnlagSistInnhentet = null
