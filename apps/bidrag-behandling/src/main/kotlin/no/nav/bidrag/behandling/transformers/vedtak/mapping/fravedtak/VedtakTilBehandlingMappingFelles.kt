@@ -562,8 +562,13 @@ internal fun List<GrunnlagDto>.mapRoller(
                 return@filter true
             }
         }
-        // Fallback for andre vedtak hvor saksnummer ikke er lagret. Er relevant bare for FF vedtak som inneholder flere saker
-        søknad?.saksnummer == null || sakerIVedtak.contains(søknad.saksnummer)
+        val saksnummer = søknad?.saksnummer
+        val rolleTilhørerSaksnummerIVedtak = saksnummer != null && sakerIVedtak.contains(saksnummer)
+
+        // Hvis det ikke bare gjelder R-barn så godtas også at saksnumme er null. Saksnummer ble ikke lagret for eldre vedtak.
+        // Dette er relevant bare for FF flere saker hvor vedtak ble splittet pga BP hadde full evne i alle perioder.
+        // Ellers har det ikke noe å si mtp at vedtaket inneholder alle partene i "alle" saker (FF i flere saker eller vanlig vedtak)
+        rolleTilhørerSaksnummerIVedtak || (!inneholderBareRevurderingsbarn && saksnummer == null)
     }
     .filter { personGrunnlag ->
         if (personGrunnlag.type == Grunnlagstype.PERSON_SØKNADSBARN && !lesemodus) {

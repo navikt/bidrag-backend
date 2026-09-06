@@ -292,7 +292,7 @@ fun List<GrunnlagDto>.finnSøknadGrunnlagSomGjelder(gjelder: String): SøknadGru
     Grunnlagstype.SØKNAD,
     referanse = gjelder,
 ).firstOrNull()
-    ?.innhold ?: finnSøknadGrunnlag()
+    ?.innhold
 
 fun List<GrunnlagDto>.finnSøknadGrunnlagForBarn(søknadsbarnreferanse: String): SøknadGrunnlag? = filtrerOgKonverterBasertPåFremmedReferanse<SøknadGrunnlag>(
     Grunnlagstype.SØKNAD,

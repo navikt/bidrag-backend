@@ -252,9 +252,11 @@ class VedtakTilBehandlingMapping(
         }
 
         if (lesemodus) {
+            val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
             behandling.lesemodusVedtak =
                 LesemodusVedtak(
-                    erAvvist = stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST },
+                    erAvvist = stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST } ||
+                        (inneholderBareRevurderingsbarn && behandlingDetaljer?.fatteVedtakRevurderingsbarn?.bleFFTrukket == true),
                     opprettetAvBatch = kilde == Vedtakskilde.AUTOMATISK,
                     erOrkestrertVedtak = erOrkestrertVedtak,
                     inneholderBareRevurderingsbarn = inneholderBareRevurderingsbarn,
