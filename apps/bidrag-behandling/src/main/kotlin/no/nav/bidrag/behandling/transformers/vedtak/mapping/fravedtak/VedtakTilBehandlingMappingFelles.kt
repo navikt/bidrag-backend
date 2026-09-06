@@ -24,7 +24,6 @@ import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragberegningDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegningBarnDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
-import no.nav.bidrag.behandling.service.forholdsmessigfordeling.erForholdsmessigFordeling
 import no.nav.bidrag.behandling.service.hentNyesteIdent
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
@@ -55,7 +54,6 @@ import no.nav.bidrag.behandling.transformers.tilGrunnlagstypeBeløpshistorikk
 import no.nav.bidrag.behandling.transformers.tilStønadsid
 import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.tilTypeBoforhold
-import no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak.filterBarnIBehandling
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.vedtakmappingFeilet
 import no.nav.bidrag.beregn.boforhold.BoforholdApi
@@ -121,6 +119,8 @@ import no.nav.bidrag.transport.behandling.vedtak.response.finnOrkestreringDetalj
 import no.nav.bidrag.transport.behandling.vedtak.response.finnResultatFraAnnenVedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.finnSistePeriode
 import no.nav.bidrag.transport.behandling.vedtak.response.finnStønadsendring
+import no.nav.bidrag.transport.behandling.vedtak.response.finnSøknadGrunnlagForBarn
+import no.nav.bidrag.transport.behandling.vedtak.response.finnSøknadGrunnlagSomGjelder
 import no.nav.bidrag.transport.behandling.vedtak.response.gjelderRevurderingsbarn
 import no.nav.bidrag.transport.behandling.vedtak.response.løpteBidragEllerForskuddFraVirkningstidspunkt
 import no.nav.bidrag.transport.behandling.vedtak.response.søknadId
@@ -540,9 +540,36 @@ internal fun List<GrunnlagDto>.mapRoller(
     sak: BidragssakDto? = null,
     inneholderBareRevurderingsbarn: Boolean = true,
     inkluderRevurderingsbarn: Boolean = true,
+    sakerIVedtak: List<String> = emptyList(),
 ): MutableSet<Rolle> = asSequence()
     .filter { grunnlagstyperRolle.contains(it.type) }
     .filter { inkluderRevurderingsbarn || !it.erRevurderingsbarn }
+    .filter {
+        if (sakerIVedtak.isEmpty()) return@filter true
+        // Hent bare rolle for sakene det er opprettet klage for.
+        // Dette er relevant i tilfelle en FF vedtak ble splittet men inneholder persongrunnlag for andre parter i saken pga beregningen
+        // Da må ikke de andre rollene i de andre sakene bli med i vedtaket
+        val søknad = when (it.type) {
+            Grunnlagstype.PERSON_SØKNADSBARN -> {
+                finnSøknadGrunnlagForBarn(it.referanse)
+            }
+
+            Grunnlagstype.PERSON_BIDRAGSMOTTAKER -> {
+                finnSøknadGrunnlagSomGjelder(it.referanse)
+            }
+
+            else -> {
+                return@filter true
+            }
+        }
+        val saksnummer = søknad?.saksnummer
+        val rolleTilhørerSaksnummerIVedtak = saksnummer != null && sakerIVedtak.contains(saksnummer)
+
+        // Hvis det ikke bare gjelder R-barn så godtas også at saksnumme er null. Saksnummer ble ikke lagret for eldre vedtak.
+        // Dette er relevant bare for FF flere saker hvor vedtak ble splittet pga BP hadde full evne i alle perioder.
+        // Ellers har det ikke noe å si mtp at vedtaket inneholder alle partene i "alle" saker (FF i flere saker eller vanlig vedtak)
+        rolleTilhørerSaksnummerIVedtak || (!inneholderBareRevurderingsbarn && saksnummer == null)
+    }
     .filter { personGrunnlag ->
         if (personGrunnlag.type == Grunnlagstype.PERSON_SØKNADSBARN && !lesemodus) {
             if (vedtak.stønadsendringListe.isNotEmpty()) {
