@@ -145,10 +145,6 @@ class SakService(
         secureLogger.info { "Endring av mottaker for ${stønadsid.toReferanse()}, ny mottaker $nyMottaker." }
     }
 
-    /**
-     * Ny mottaker utledes fra hendelsen: reell mottaker hvis satt, ellers bidragsmottaker.
-     * En samhandler-id kan ikke brukes som mottaker på en stønadsendring, og gir derfor ingen ident.
-     */
     private fun BarnISak.nyMottaker(hendelse: SakHendelse): Personident? = if (reellMottaker != null) {
         reellMottaker!!.personIdent()?.let { Personident(it.nyesteIdent()) }
     } else {
