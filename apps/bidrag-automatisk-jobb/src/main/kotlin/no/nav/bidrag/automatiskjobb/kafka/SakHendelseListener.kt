@@ -32,6 +32,7 @@ class SakHendelseListener(
             sakService.behandleSakHendelse(sakHendelse)
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved behandling av sakhendelse" }
+            throw e
         }
     }
 }
