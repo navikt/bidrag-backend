@@ -1,10 +1,10 @@
 # Chainguard/Wolfi-basert dev-image: kilde for nb-locale (apk) og busybox (sh/printenv),
 # siden minimal-varianten av jre-imaget verken har pakkehåndtering eller shell.
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21-dev AS tools
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-26-dev AS tools
 USER root
 RUN apk add --no-cache glibc-locale-nb
 
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-26
 LABEL maintainer="Team Bidrag" \
       email="bidrag@nav.no"
 
