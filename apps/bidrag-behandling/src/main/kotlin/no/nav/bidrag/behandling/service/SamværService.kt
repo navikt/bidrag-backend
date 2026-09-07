@@ -50,38 +50,52 @@ class SamværService(
     ): Samvær {
         val behandling = behandlingRepository.findBehandlingById(behandlingsid).get()
         secureLogger.debug { "Oppdaterer samvær for behandling $behandlingsid, forespørsel=$request" }
-        if (request.sammeForAlle && !behandling.sammeSamværForAlle) {
+        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
+        val saksnummer = samværBarn.rolle.saksnummer
+        val flereSaker = behandling.samvær.map { it.rolle.saksnummer }.distinct().size > 1
+        val erSammeForAlle =
+            if (flereSaker) {
+                behandling.sammeSamværForAlleSaker.find { it.saksnummer == saksnummer }?.erLikForAlle ?: true
+            } else {
+                behandling.sammeSamværForAlle
+            }
+        if (request.sammeForAlle && !erSammeForAlle) {
             throw HttpClientErrorException(
                 HttpStatus.BAD_REQUEST,
                 "Ugyldig data ved oppdatering av samvær: Kan ikke oppdatere til samme for alle når det ikke valgt til å være samme",
             )
         }
-        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
         oppdaterSamvær(request, samværBarn)
 
         if (request.sammeForAlle) {
-            behandling.samvær.filter { it.id != samværBarn.id }.forEach { oppdaterSamvær ->
-                kopierSamværPerioderOgBegrunnelse(
-                    samværBarn,
-                    oppdaterSamvær,
-                    erPerioderOppdatert = request.periode != null,
-                    erBegrunnelseOppdatert =
-                    request.oppdatereBegrunnelse != null,
-                )
-            }
+            behandling.samvær
+                .filter { it.id != samværBarn.id && (!flereSaker || it.rolle.saksnummer == saksnummer) }
+                .forEach { oppdaterSamvær ->
+                    kopierSamværPerioderOgBegrunnelse(
+                        samværBarn,
+                        oppdaterSamvær,
+                        erPerioderOppdatert = request.periode != null,
+                        erBegrunnelseOppdatert =
+                        request.oppdatereBegrunnelse != null,
+                    )
+                }
         }
 
         return samværBarn
     }
 
     @Transactional
-    fun brukSammeSamværForAlleBarn(behandlingId: Long) {
+    @JvmOverloads
+    fun brukSammeSamværForAlleBarn(behandlingId: Long, saksnummer: String? = null) {
         val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
-        val yngsteBarn = behandling.søknadsbarn.minBy { it.fødselsdato }
+        val søknadsbarn =
+            saksnummer?.let { sak -> behandling.søknadsbarn.filter { it.saksnummer == sak } }
+                ?: behandling.søknadsbarn
+        val yngsteBarn = søknadsbarn.minBy { it.fødselsdato }
 
         val samværYngsteBarn = behandling.samvær.finnSamværForBarn(yngsteBarn.id, yngsteBarn.ident!!)
         var nyNotat = yngsteBarn.notat.find { it.type == NotatGrunnlag.NotatType.SAMVÆR }?.innhold ?: ""
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             if (it.id != yngsteBarn.id) {
                 val begrunnelse = it.notat.find { it.type == NotatGrunnlag.NotatType.SAMVÆR }?.innhold ?: ""
                 nyNotat +=
@@ -94,7 +108,7 @@ class SamværService(
                     }
             }
         }
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             val samværBarn = behandling.samvær.finnSamværForBarn(it.id, it.ident!!)
             val perioderKopiert =
                 samværYngsteBarn.perioder.map {
@@ -103,7 +117,7 @@ class SamværService(
             samværBarn.perioder.clear()
             samværBarn.perioder.addAll(perioderKopiert.toMutableSet())
         }
-        behandling.søknadsbarn.forEach {
+        søknadsbarn.forEach {
             notatService.oppdatereNotat(behandling, NotatGrunnlag.NotatType.SAMVÆR, nyNotat, it)
         }
     }

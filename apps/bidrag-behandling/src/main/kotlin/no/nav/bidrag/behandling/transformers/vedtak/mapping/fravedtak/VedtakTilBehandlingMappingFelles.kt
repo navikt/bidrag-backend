@@ -130,6 +130,7 @@ import no.nav.bidrag.transport.sak.BidragssakDto
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import kotlin.collections.component1
 import kotlin.collections.sortedBy
 
@@ -266,9 +267,39 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
     val søknadsbarnGrunnlag = grunnlagListe.hentPerson(stønadsendring.kravhaver.verdi)
     val virkningstidspunkt = søknadsbarnGrunnlag?.let { grunnlagListe.hentVirkningstidspunkt(it.referanse) }
     val orkestreringDetaljer = grunnlagListe.finnOrkestreringDetaljer(stønadsendring.grunnlagReferanseListe)
-    val delvedtak =
+    val erPrivatAvtale = stønadsendring.periodeListe.isNotEmpty() &&
+        stønadsendring.periodeListe.all { p ->
+            p.grunnlagReferanseListe.any { gr ->
+                grunnlagListe.find { it.referanse == gr }?.type == Grunnlagstype.PRIVAT_AVTALE_PERIODE_GRUNNLAG
+            }
+        }
+
+    val delvedtak = if (erPrivatAvtale) {
+        val sistePeriode = stønadsendring.periodeListe.maxByOrNull { it.periode.fom }?.periode?.fom ?: YearMonth.now()
+        listOf(
+            DelvedtakDto(
+                type = Vedtakstype.ENDRING,
+                omgjøringsvedtak = false,
+                vedtaksid = null,
+                delvedtak = true,
+                beregnet = false,
+                resultatFraVedtakVedtakstidspunkt = null,
+                indeksår = sistePeriode.plusYears(1).year,
+                perioder = stønadsendring.periodeListe.map {
+                    ResultatBarnebidragsberegningPeriodeDto(
+                        periode = it.periode,
+                        faktiskBidrag = it.beløp ?: BigDecimal(0),
+                        beregnetBidrag = it.beløp ?: BigDecimal(0),
+                        resultatKode = Resultatkode.PRIVAT_AVTALE,
+                        vedtakstype = Vedtakstype.ENDRING,
+                    )
+                },
+            ),
+        )
+    } else {
         stønadsendring.periodeListe
             .mapNotNull { periode ->
+
                 val resultatFraAnnenVedtak =
                     grunnlagListe
                         .finnResultatFraAnnenVedtak(
@@ -392,6 +423,7 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
                         },
                 )
             }
+    }
 
     val endeligVedtak =
         DelvedtakDto(
@@ -1554,7 +1586,7 @@ private fun GrunnlagDto.tilRolle(
                     grunnlagsliste.hentSøknader(referanse)
                 }
             val personGrunnlag = grunnlagsliste.hentPerson(personIdent)?.personObjekt!!
-            val erRevurdering = søknader.all { it.behandlingstype?.erForholdsmessigFordeling == true }
+            val erRevurdering = !personGrunnlag.delAvOpprinneligBehandling // søknader.all { it.behandlingstype?.erForholdsmessigFordeling == true }
             val førsteSøknad = søknader.firstOrNull()
             val bidragsmottakerIdent =
                 if (rolletype == Rolletype.BARN) {

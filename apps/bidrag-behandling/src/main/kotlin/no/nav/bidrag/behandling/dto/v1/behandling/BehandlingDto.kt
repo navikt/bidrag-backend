@@ -78,9 +78,15 @@ data class ManuellVedtakDto(
         }
 }
 
+data class ErLikForAlleBasertPåSak(
+    val saksnummer: String,
+    val erLikForAlle: Boolean,
+)
 data class VirkningstidspunktDtoV3(
     val erLikForAlle: Boolean,
+    val erLikForAlleBasertPåSak: List<ErLikForAlleBasertPåSak>,
     val erVirkningstidspunktLiktForAlle: Boolean,
+    val erVirkningstidspunktLiktForAlleSaker: List<ErLikForAlleBasertPåSak>,
     val erAvslagForAlle: Boolean = false,
     val beregnTil: BeregnTil?,
     val beregnTilDato: YearMonth?,

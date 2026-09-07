@@ -41,6 +41,8 @@ data class OppdaterVirkningstidspunktBegrunnelseBarnResponse(
 
 data class OppdatereVirkningstidspunktBegrunnelseDto(
     val rolleId: Long? = null,
+    @get:Schema(description = "Saksnummer begrunnelsen gjelder for. Hvis satt oppdateres kun barn i den aktuelle saken")
+    val saksnummer: String? = null,
     @get:Schema(description = "Oppdatere saksbehandlers begrunnelse")
     var oppdatereBegrunnelse: OppdatereBegrunnelse? = null,
     @get:Schema(

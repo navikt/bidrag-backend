@@ -2097,6 +2097,9 @@ class GrunnlagService(
         val rolleInhentetFor = Grunnlagsdatatype.BOFORHOLD.innhentesForRolle(behandling)!!
         val ikkeAktiveGrunnlag = behandling.grunnlag.hentAlleIkkeAktiv()
         val aktiveGrunnlag = behandling.grunnlag.hentSisteAktiv()
+
+        endreHusstandsmedlemTilOffentligHvisDetLiggerIGrunnlaget(behandling)
+
         if (ikkeAktiveGrunnlag.isEmpty()) return
         val endringerSomMåBekreftes = ikkeAktiveGrunnlag.henteEndringerIBoforhold(aktiveGrunnlag, behandling)
 
@@ -2118,6 +2121,21 @@ class GrunnlagService(
             }
 
         aktivereInnhentetBoforholdsgrunnlagHvisBearbeidetGrunnlagErAktivertForAlleHusstandsmedlemmene(behandling)
+    }
+
+    // Feilfiks i tilfellet husstandsmedlem har feil kilde men det ligger i grunnlaget
+    private fun endreHusstandsmedlemTilOffentligHvisDetLiggerIGrunnlaget(behandling: Behandling) {
+        val offentligeBarn = behandling
+            .henteNyesteAktiveGrunnlag(
+                Grunnlagstype(Grunnlagsdatatype.BOFORHOLD, false),
+                Grunnlagsdatatype.BOFORHOLD.innhentesForRolle(behandling)!!,
+            ).konvertereData<List<RelatertPersonGrunnlagDto>>() ?: emptyList()
+
+        behandling.husstandsmedlem.filter { it.kilde == Kilde.MANUELL }.forEach { hm ->
+            if (offentligeBarn.any { it.gjelderPersonId == hm.ident }) {
+                hm.kilde = Kilde.OFFENTLIG
+            }
+        }
     }
 
     fun aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling: Behandling) {

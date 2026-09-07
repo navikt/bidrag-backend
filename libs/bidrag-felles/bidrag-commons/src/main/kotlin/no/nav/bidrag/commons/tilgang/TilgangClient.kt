@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Import
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
@@ -24,7 +22,7 @@ import java.net.URI
 @Component
 @Import(RestOperationsAzure::class)
 class TilgangClient(
-    @param:Value("\${BIDRAG_TILGANG_URL}") private val tilgangURI: URI,
+    @param:Value($$"${BIDRAG_TILGANG_URL}") private val tilgangURI: URI,
     @param:Qualifier("azure") private val restTemplate: RestTemplate,
 ) : AbstractRestClient(restTemplate, "tilgang") {
     private val logger = LoggerFactory.getLogger(this::class.java)
@@ -60,7 +58,7 @@ class TilgangClient(
             return response.harTilgang
         } catch (e: Exception) {
             logger.error("Feil ved sjekk på tilgang til saksnummer $saksnummer ", e)
-            return false
+            throw e
         }
     }
 
@@ -70,7 +68,7 @@ class TilgangClient(
             return response.harTilgang
         } catch (e: Exception) {
             logger.error("Feil ved sjekk på tilgang til person ", e)
-            return false
+            throw e
         }
     }
 

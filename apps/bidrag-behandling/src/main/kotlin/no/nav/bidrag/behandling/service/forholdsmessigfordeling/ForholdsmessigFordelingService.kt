@@ -417,6 +417,8 @@ class ForholdsmessigFordelingService(
     ) {
         SikkerhetsKontekst.medApplikasjonKontekst {
             kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
+            // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
+            behandling.grunnlagSistInnhentet = null
             grunnlagService.oppdatereGrunnlagForBehandling(behandling)
             oppdaterBehandlingEtterOppdatertRoller(
                 behandling,
