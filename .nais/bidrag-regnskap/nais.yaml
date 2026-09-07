@@ -80,6 +80,8 @@ spec:
             value: "write,role,ddl"
           - name: "pgaudit.log_parameter"
             value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"
     buckets:
       - name: {{ bucket.navn }}
   accessPolicy:
