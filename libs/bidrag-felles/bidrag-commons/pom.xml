@@ -40,7 +40,7 @@
     <slack-api.version>1.50.0</slack-api.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <mockk.version>1.14.11</mockk.version>
     <kotest.version>6.2.4</kotest.version>
     <!-- dependencies -->
