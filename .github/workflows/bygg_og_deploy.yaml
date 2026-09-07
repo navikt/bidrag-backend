@@ -116,15 +116,7 @@ on:
         value: ${{ jobs.bygg_test_og_image.outputs.digest }}
 
 env:
-  # De 5 bidrag-felles-modulene som (nesten) alle app-moduler avhenger av med
-  # ${project.version} (SNAPSHOT, aldri reelt publisert). Uten dette måtte hver av de
-  # 32 app-pipelinene kompilert (og delvis testet) disse fra kildekode på nytt via
-  # `-pl app -am`, uansett om bidrag-felles faktisk var endret. Nå caches ferdig
-  # installerte jar-er på tvers av alle app-workflows, nøkkelet på innholdet i
-  # libs/bidrag-felles/**, og bygges kun på nytt når det innholdet faktisk endres.
-  FELLES_MODULER: >-
-    libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
-  # De 9 bidrag-beregn-felles-modulene caches på samme måte som FELLES_MODULER over,
+  # De 9 bidrag-beregn-felles-modulene caches på samme måte som bidrag-felles-modulene under,
   # nøkkelet på innholdet i libs/bidrag-beregn-felles/**.
   BEREGN_FELLES_MODULER: >-
     libs/bidrag-beregn-felles/bidrag-beregn-core,libs/bidrag-beregn-felles/bidrag-beregn-forskudd,libs/bidrag-beregn-felles/bidrag-beregn-boforhold,libs/bidrag-beregn-felles/bidrag-beregn-inntekt,libs/bidrag-beregn-felles/bidrag-beregn-sivilstand,libs/bidrag-beregn-felles/bidrag-beregn-særbidrag,libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering,libs/bidrag-beregn-felles/bidrag-beregn-vedtak,libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag
@@ -184,30 +176,57 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
-      # Delt cache for de ferdig installerte bidrag-felles-artefaktene, nøkkelet på
-      # innholdet i libs/bidrag-felles/** uavhengig av hvilken app som bygges. Denne
-      # cachen gjenbrukes på tvers av alle workflows, slik at bidrag-felles kun
-      # bygges fra kildekode når den faktisk endres.
-      - name: Gjenopprett cache for bidrag-felles-artefakter
-        id: felles_cache
+      # Delt cache for de ferdig installerte bidrag-felles-artefaktene, én per modul.
+      # Nøkkelen for hver modul hasher kun sin egen kildekode pluss modulene den faktisk avhenger av.
+      - name: Gjenopprett cache for bidrag-domene
+        id: felles_domene_cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-domene
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-transport
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons-test
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-generer-testdata
-          key: felles-m2-${{ hashFiles('libs/bidrag-felles/**') }}
-      # Bygger, installerer og tester bidrag-felles-modulene i det lokale Maven-repoet
-      # ved cache-miss Merk: siden alle app-workflows som avhenger av
-      # bidrag-felles trigges av samme push når libs/bidrag-felles/** endres, vil flere
-      # av dem kunne cache-misse og bygge+teste felles samtidig. De neste urelaterte
-      # app-pushene vil deretter treffe den nå varme cachen.
-      - name: Installer bidrag-felles i lokalt repo (kun ved cache-miss)
-        if: steps.felles_cache.outputs.cache-hit != 'true'
-        run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+          path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-domene
+          key: felles-domene-m2-${{ hashFiles('libs/bidrag-felles/bidrag-domene/**') }}
+      - name: Installer bidrag-domene i lokalt repo (kun ved cache-miss)
+        if: steps.felles_domene_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -pl libs/bidrag-felles/bidrag-domene ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+
+      - name: Gjenopprett cache for bidrag-transport
+        id: felles_transport_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-transport
+          key: felles-transport-m2-${{ hashFiles('libs/bidrag-felles/bidrag-domene/**', 'libs/bidrag-felles/bidrag-transport/**') }}
+      - name: Installer bidrag-transport i lokalt repo (kun ved cache-miss)
+        if: steps.felles_transport_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -pl libs/bidrag-felles/bidrag-transport ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+
+      - name: Gjenopprett cache for bidrag-generer-testdata
+        id: felles_generer_testdata_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-generer-testdata
+          key: felles-generer-testdata-m2-${{ hashFiles('libs/bidrag-felles/bidrag-domene/**', 'libs/bidrag-felles/bidrag-generer-testdata/**') }}
+      - name: Installer bidrag-generer-testdata i lokalt repo (kun ved cache-miss)
+        if: steps.felles_generer_testdata_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -pl libs/bidrag-felles/bidrag-generer-testdata ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+
+      - name: Gjenopprett cache for bidrag-commons
+        id: felles_commons_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons
+          key: felles-commons-m2-${{ hashFiles('libs/bidrag-felles/bidrag-domene/**', 'libs/bidrag-felles/bidrag-transport/**', 'libs/bidrag-felles/bidrag-generer-testdata/**', 'libs/bidrag-felles/bidrag-commons/**') }}
+      - name: Installer bidrag-commons i lokalt repo (kun ved cache-miss)
+        if: steps.felles_commons_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -pl libs/bidrag-felles/bidrag-commons ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+
+      - name: Gjenopprett cache for bidrag-commons-test
+        id: felles_commons_test_cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons-test
+          key: felles-commons-test-m2-${{ hashFiles('libs/bidrag-felles/bidrag-domene/**', 'libs/bidrag-felles/bidrag-transport/**', 'libs/bidrag-felles/bidrag-generer-testdata/**', 'libs/bidrag-felles/bidrag-commons/**', 'libs/bidrag-felles/bidrag-commons-test/**') }}
+      - name: Installer bidrag-commons-test i lokalt repo (kun ved cache-miss)
+        if: steps.felles_commons_test_cache.outputs.cache-hit != 'true'
+        run: mvn -B -q -pl libs/bidrag-felles/bidrag-commons-test ${{ inputs.skip_tester && '-DskipTests' || '' }} install
       # Delt cache for de ferdig installerte bidrag-beregn-felles-artefaktene.
       - name: Gjenopprett cache for bidrag-beregn-felles-artefakter
         id: beregn_felles_cache
