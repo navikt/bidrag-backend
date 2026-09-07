@@ -42,7 +42,7 @@ jobs:
       q1_apper: ${{ steps.finn.outputs.q1_apper }}
       q2_apper: ${{ steps.finn.outputs.q2_apper }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Installer pyyaml
         run: pip install --quiet pyyaml
       - name: Finn apper med q1/q2-støtte
