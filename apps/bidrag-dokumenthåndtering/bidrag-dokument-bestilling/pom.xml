@@ -29,7 +29,7 @@
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.4</kotest.version>
     <swagger-annotations.version>2.2.54</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.86.0</google-cloud-libraries-bom.version>
+    <google-cloud-libraries-bom.version>26.87.0</google-cloud-libraries-bom.version>
     <artemis.version>2.56.0</artemis.version>
     <mq-jms-spring-boot-starter.version>4.1.0</mq-jms-spring-boot-starter.version>
     <bouncycastle.version>1.85</bouncycastle.version>

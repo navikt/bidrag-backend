@@ -16,14 +16,14 @@
 
     <properties>
         <nav-token-support.version>6.0.12</nav-token-support.version>
-        <slack-api.version>1.50.0</slack-api.version>
+        <slack-api.version>1.51.0</slack-api.version>
         <shedlock.version>7.9.0</shedlock.version>
         <jsch.version>2.28.7</jsch.version>
-        <google-cloud-storage.version>2.71.0</google-cloud-storage.version>
+        <google-cloud-storage.version>2.72.0</google-cloud-storage.version>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
         <okhttp.version>5.5.0</okhttp.version>
-        <unleash-client-java.version>12.2.3</unleash-client-java.version>
+        <unleash-client-java.version>12.3.0</unleash-client-java.version>
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.4</kotest.version>
     </properties>
