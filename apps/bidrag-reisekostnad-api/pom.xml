@@ -25,9 +25,9 @@
     <kotest.version>6.2.4</kotest.version>
     <swagger-annotations.version>2.2.54</swagger-annotations.version>
     <!-- PDF-generering -->
-    <apache-pdfbox.version>2.0.35</apache-pdfbox.version>
+    <apache-pdfbox.version>3.0.8</apache-pdfbox.version>
     <openhtml.version>1.0.10</openhtml.version>
-    <jsoup.version>1.23.1</jsoup.version>
+    <jsoup.version>1.23.2</jsoup.version>
 
     <!-- Brukernotifikasjoner -->
     <tms-varsel.version>2.2.0</tms-varsel.version>
