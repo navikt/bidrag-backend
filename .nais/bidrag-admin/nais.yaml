@@ -91,6 +91,8 @@ spec:
             value: "write"
           - name: "pgaudit.log_parameter"
             value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"
   ingresses:
   {{#each ingresses as |url|}}
     - {{url}}
