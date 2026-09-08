@@ -275,7 +275,7 @@ jobs:
         # -DskipTests (kun når skip_tester=true): hopper i tillegg over selve testkjøringen,
         # slik at `package`/`verify` fullfører og Docker-imaget likevel kan bygges.
         run: mvn -T 1C ${{ inputs.maven_options }} ${{ inputs.skip_tester && '-DskipTests' || '' }} clean verify -Dmaven.antrun.skip=true
-      - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
+      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
         if: github.actor != 'dependabot[bot]'
         id: docker-push
         env:
