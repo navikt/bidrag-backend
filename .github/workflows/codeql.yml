@@ -68,6 +68,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
+        queries: security-and-quality
 
     - name: Run manual build steps
       # Bygger hele Maven-reactoren (alle moduler) fremfor kun én app, siden CodeQL
