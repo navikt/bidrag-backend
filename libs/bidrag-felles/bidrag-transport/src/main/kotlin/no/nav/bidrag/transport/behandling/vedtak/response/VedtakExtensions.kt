@@ -288,11 +288,17 @@ fun List<GrunnlagDto>.finnSøknadGrunnlag(): SøknadGrunnlag? = filtrerOgKonvert
     Grunnlagstype.SØKNAD,
 ).firstOrNull()?.innhold
 
+fun List<GrunnlagDto>.finnSøknadGrunnlagSomGjelder(gjelder: String): SøknadGrunnlag? = filtrerOgKonverterBasertPåFremmedReferanse<SøknadGrunnlag>(
+    Grunnlagstype.SØKNAD,
+    referanse = gjelder,
+).firstOrNull()
+    ?.innhold
+
 fun List<GrunnlagDto>.finnSøknadGrunnlagForBarn(søknadsbarnreferanse: String): SøknadGrunnlag? = filtrerOgKonverterBasertPåFremmedReferanse<SøknadGrunnlag>(
     Grunnlagstype.SØKNAD,
     gjelderBarnReferanse = søknadsbarnreferanse,
 ).firstOrNull()
-    ?.innhold ?: finnSøknadGrunnlag()
+    ?.innhold
 
 fun VedtakDto.erInnkrevingsgrunnlag(): Boolean {
     val søknad = this.grunnlagListe.finnSøknadGrunnlag()
