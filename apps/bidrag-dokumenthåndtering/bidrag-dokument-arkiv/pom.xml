@@ -31,7 +31,7 @@
         <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
         <springmockk.version>5.0.1</springmockk.version>
         <kotest.version>6.2.4</kotest.version>
-        <swagger-annotations.version>2.2.54</swagger-annotations.version>
+        <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <commons-compress.version>1.28.0</commons-compress.version>
         <graphq-dgs-client.version>12.0.1</graphq-dgs-client.version>
         <joark-hendelse.version>67a9be4476b63b7247cfacfaf821ab656bd2a952</joark-hendelse.version>
