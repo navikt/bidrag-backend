@@ -51,7 +51,8 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
      */
     @ExceptionHandler(RestClientResponseException::class)
     fun handleRestClientResponseException(exception: RestClientResponseException): ProblemDetail {
-        log.warn(exception) { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}" }
+        // AbstractRestClient har allerede logget stacktracen, så den gjentas ikke her.
+        log.warn { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}" }
         return problemDetail(
             status = HttpStatus.BAD_GATEWAY,
             tittel = "Feil ved kall mot tjeneste",
@@ -62,7 +63,10 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
     /** Timeout, brutt forbindelse, DNS-feil. */
     @ExceptionHandler(ResourceAccessException::class)
     fun handleResourceAccessException(exception: ResourceAccessException): ProblemDetail {
-        log.warn(exception) { "Fikk ikke kontakt med ekstern tjeneste" }
+        // Årsaksklassen framfor meldingen: den skiller timeout fra brutt forbindelse fra DNS-feil,
+        // mens meldingen fra RestTemplate er "I/O error on GET request for "<url>": ..." og altså
+        // inneholder aktøriden.
+        log.warn { "Fikk ikke kontakt med ekstern tjeneste: ${(exception.cause ?: exception).javaClass.simpleName}" }
         return problemDetail(
             status = HttpStatus.BAD_GATEWAY,
             tittel = "Tjenesten svarte ikke",
@@ -120,7 +124,7 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
         statusCode: HttpStatusCode,
         request: WebRequest,
     ): ResponseEntity<Any>? {
-        log.warn(ex) { "Avviste forespørsel med status $statusCode" }
+        log.warn { "Avviste forespørsel med status $statusCode: ${ex.javaClass.simpleName}" }
         val problem = problemDetail(
             status = statusCode,
             tittel = "Forespørselen kunne ikke behandles",
