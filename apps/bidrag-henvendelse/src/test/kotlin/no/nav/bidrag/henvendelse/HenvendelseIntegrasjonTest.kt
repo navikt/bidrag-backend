@@ -1,5 +1,10 @@
 package no.nav.bidrag.henvendelse
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.classic.spi.LoggingEvent
+import ch.qos.logback.core.ConsoleAppender
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -15,6 +20,7 @@ import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -239,6 +245,25 @@ class HenvendelseIntegrasjonTest {
         respons.statusCode shouldBe HttpStatus.UNAUTHORIZED
     }
 
+    /**
+     * Maskeringen i logback-spring.xml er det eneste som står mellom en aktørid og loggen: hver
+     * URL appen kaller har `?aktorid=...`, og AbstractRestClient logger URL-en når kallet feiler.
+     *
+     * Testen sender loggposten gjennom den faktiske encoderen framfor å se på XML-en, fordi feilen
+     * den skal fange er en tagg logback ikke kjenner - `<jsonGeneratorDecorator>` framfor
+     * `<decorator>` - og ukjente tagger overses i stillhet. Oppsettet så riktig ut og
+     * maskerte ingenting.
+     */
+    @Test
+    fun `skal maskere aktørid i loggen`() {
+        val appender = rotloggeren.getAppender("stdout_json") as ConsoleAppender<ILoggingEvent>
+
+        val linje = String(appender.encoder.encode(loggpost("Kall mot /henvendelseliste?aktorid=$AKTØRID feilet")))
+
+        linje shouldNotContain AKTØRID
+        linje shouldContain "*".repeat(AKTØRID.length)
+    }
+
     private fun stubHenvendelser(respons: String) {
         wireMockServer.stubFor(
             get(urlPathEqualTo(HENVENDELSESTI)).willReturn(
@@ -263,6 +288,17 @@ class HenvendelseIntegrasjonTest {
             },
         ),
         String::class.java,
+    )
+
+    private val rotloggeren get() = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
+
+    private fun loggpost(melding: String) = LoggingEvent(
+        HenvendelseIntegrasjonTest::class.java.name,
+        rotloggeren,
+        Level.WARN,
+        melding,
+        null,
+        null,
     )
 
     private fun token() = mockOAuth2Server
