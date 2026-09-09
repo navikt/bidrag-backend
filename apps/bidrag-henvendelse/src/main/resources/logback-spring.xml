@@ -13,9 +13,9 @@
         <arguments/>
         <stackTrace/>
       </providers>
-      <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+      <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
         <valueMasker class="no.nav.bidrag.commons.logging.SensitiveLogMasker"/>
-      </jsonGeneratorDecorator>
+      </decorator>
     </encoder>
   </appender>
 
@@ -27,9 +27,9 @@
         <includeContext>false</includeContext>
         <!-- Samme maskering som på stdout. Hver URL i denne appen har ?aktorid=..., og
              exception-meldinger fra AbstractRestClient inneholder URL-en. -->
-        <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+        <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
           <valueMasker class="no.nav.bidrag.commons.logging.SensitiveLogMasker"/>
-        </jsonGeneratorDecorator>
+        </decorator>
       </encoder>
     </appender>
   </springProfile>
