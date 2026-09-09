@@ -84,8 +84,9 @@ private fun HenvendelseConsumerOutput.tilHenvendelseDto(): HenvendelseDto? = kje
  *
  * Repoet håndterer ellers ukjente enum-verdier stille, via `@JsonEnumDefaultValue` og
  * `READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE` (se `Grunnlagstype` i bidrag-domene). Her
- * avvikes det bevisst, fordi `henvendelseType` er fritekst i kilden og en ny type er noe
- * brukeroversikten bør vise fram framfor å skjule.
+ * avvikes det bevisst: swaggeren lister `henvendelseType` som en lukket enum med tre verdier,
+ * men en fjerde vil komme før eller senere, og da skal brukeroversikten vise den fram
+ * framfor å skjule den.
  */
 private fun String?.tilHenvendelsestype(): Henvendelsestype = when (this) {
     "CHAT" -> Henvendelsestype.CHAT

@@ -15,7 +15,7 @@ import java.util.UUID
  * propagerer callId-en under alle navnene NAV bruker, inkludert `X-Correlation-Id` - men den
  * verdien er på formatet `<32 hex>-<appnavn>` og altså ikke en UUID. Siden `HttpHeaders` er
  * case-insensitiv og commons bruker `add`, ville en header satt på selve forespørselen gitt
- * *to* verdier på tråden.
+ * *to* verdier i headeren.
  *
  * Denne interceptoren registreres derfor sist, og bruker `set` framfor `add`, slik at det går
  * ut nøyaktig én verdi.

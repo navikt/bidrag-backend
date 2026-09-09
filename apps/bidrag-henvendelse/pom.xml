@@ -47,8 +47,7 @@
         </dependency>
         <!--
           Aspectj kreves av @EnableAspectJAutoProxy i DefaultConfiguration. Appen har ingen
-          egne aspekter i dag; annotasjonen står igjen fordi bidrag-commons sine aspekter
-          (AuditAdvice) skal tas i bruk når auditloggingen kommer - se README.
+          egne aspekter i dag, men aspektene i bidrag-commons trenger det.
         -->
         <dependency>
             <groupId>org.aspectj</groupId>
