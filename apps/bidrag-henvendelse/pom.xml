@@ -22,6 +22,8 @@
         <logback-encoder.version>9.0</logback-encoder.version>
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.4</kotest.version>
+        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+        <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     </properties>
 
     <dependencies>
@@ -155,6 +157,20 @@
             <version>${nav-token-support.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Mock-server for sf-henvendelse-api-proxy og bidrag-person i integrasjonstesten -->
+        <dependency>
+            <groupId>org.wiremock.integrations</groupId>
+            <artifactId>wiremock-spring-boot</artifactId>
+            <version>${wiremock-spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
+            <version>${wiremock-standalone.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

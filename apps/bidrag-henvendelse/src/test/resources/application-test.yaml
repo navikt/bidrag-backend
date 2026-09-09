@@ -1,0 +1,41 @@
+# Konfigurasjon for integrasjonstesten. Wiremock står for sf-henvendelse-api-proxy og
+# bidrag-person, mock-oauth2-server for Azure. Portene fylles inn av @EnableWireMock og
+# @EnableMockOAuth2Server.
+HENVENDELSE_URL: http://localhost:${wiremock.server.port}/henvendelse
+HENVENDELSE_SCOPE: test.teamnks.sf-henvendelse-api-proxy
+BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/person
+BIDRAG_PERSON_SCOPE: test.bidrag.bidrag-person
+
+AZURE_OPENID_CONFIG_ISSUER: http://localhost:${mock-oauth2-server.port}/aad
+AZURE_APP_TENANT_ID: test-tenant
+AZURE_APP_CLIENT_ID: test-client-id
+AZURE_APP_CLIENT_SECRET: test-client-secret
+
+# IdUtils i bidrag-commons krever denne, uten default. MdcFilter og
+# MdcValuesPropagatingClientInterceptor bruker IdUtils, så konteksten starter ikke uten.
+NAIS_APP_NAME: bidrag-henvendelse
+
+no.nav.security.jwt:
+  client:
+    registration:
+      sf-henvendelse-api:
+        resource-url: ${HENVENDELSE_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${HENVENDELSE_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: http://localhost:${mock-oauth2-server.port}/aad/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
