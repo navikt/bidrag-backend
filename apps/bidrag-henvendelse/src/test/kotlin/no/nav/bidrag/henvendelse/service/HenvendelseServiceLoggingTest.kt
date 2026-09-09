@@ -106,6 +106,48 @@ class HenvendelseServiceLoggingTest {
         linjer.single() shouldContain "Hoppet over 2 av 3"
     }
 
+    /**
+     * Vi ber om pageSize=100 og henter bare første side. Advarselen er det eneste signalet vi får
+     * om at 100 ikke holder for en person, og dermed grunnlaget for å ta stilling til paginering.
+     */
+    @Test
+    fun `skal varsle når kilden har flere sider enn den vi henter`() {
+        stub(
+            """
+            {
+              "data": [ { "henvendelseType": "CHAT", "kjedeId": "kjede-1", "meldinger": [] } ],
+              "currentPage": 1,
+              "pageSize": 100,
+              "totalPages": 3,
+              "hasNextPage": true
+            }
+            """.trimIndent(),
+        )
+
+        service.hentHenvendelser(personident).henvendelser shouldHaveSize 1
+
+        linjerSom { it.contains("flere sider") }.single() shouldContain "currentPage=1"
+    }
+
+    @Test
+    fun `skal ikke varsle om sider når konvolutten sier at det ikke er flere`() {
+        stub(
+            """
+            {
+              "data": [ { "henvendelseType": "CHAT", "kjedeId": "kjede-1", "meldinger": [] } ],
+              "currentPage": 1,
+              "pageSize": 100,
+              "totalPages": 1,
+              "hasNextPage": false
+            }
+            """.trimIndent(),
+        )
+
+        service.hentHenvendelser(personident).henvendelser shouldHaveSize 1
+
+        linjerFraTjenesten().shouldBeEmpty()
+    }
+
     @Test
     fun `skal ikke logge noe når responsen er som forventet`() {
         stub("""[ { "henvendelseType": "CHAT", "kjedeId": "kjede-1", "meldinger": [] } ]""")
