@@ -39,8 +39,22 @@ class PersistenceService(
     }
 
     @Timed
-    fun oppdaterStønad(stønadsid: Int, opprettetAv: String, nesteIndeksreguleringsår: Int?) {
-        stønadRepository.oppdaterStønad(stønadsid = stønadsid, opprettetAv = opprettetAv, nesteIndeksreguleringsår = nesteIndeksreguleringsår)
+    fun oppdaterStønad(
+        stønadsid: Int,
+        skyldner: String,
+        kravhaver: String,
+        mottaker: String,
+        opprettetAv: String,
+        nesteIndeksreguleringsår: Int?,
+    ) {
+        stønadRepository.oppdaterStønad(
+            stønadsid = stønadsid,
+            skyldner = skyldner,
+            kravhaver = kravhaver,
+            mottaker = mottaker,
+            opprettetAv = opprettetAv,
+            nesteIndeksreguleringsår = nesteIndeksreguleringsår,
+        )
     }
 
     fun opprettPeriode(periodeBo: PeriodeBo, stønadsid: Int) {

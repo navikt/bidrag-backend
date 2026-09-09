@@ -48,8 +48,8 @@ private val LOGGER = KotlinLogging.logger {}
 class BeløpshistorikkService(val persistenceService: PersistenceService, private val identUtils: IdentUtils) {
 
     // Opprett komplett stønad (alle tabeller)
+    // Det forutsettes at identene som sendes inn ved opprettelse er de nyeste identene.
     fun opprettStønad(stønadRequest: OpprettStønadRequestDto): Int {
-        // TODO Sjekke skyldner/kravhaver/mottaker for nyeste ident?
         LOGGER.info { "Oppretter ny stønad for sak ${stønadRequest.sak} og type ${stønadRequest.type}" }
         secureLogger.debug { "Oppretter ny stønad: ${tilJsonString(stønadRequest)}" }
         val opprettetStønadId = persistenceService.opprettStønad(stønadRequest)
@@ -71,7 +71,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             periodeListe.forEach { periode ->
                 stønadPeriodeDtoListe.add(periode.toStønadPeriodeDto())
             }
-            return stønad.toStønadDto(stønadPeriodeDtoListe)
+            return stønad.toStønadDto(stønadPeriodeDtoListe).medNyesteIdenter()
         } else {
             return null
         }
@@ -87,8 +87,6 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             kravhaverIdentListe = kravhaverIdentListe,
             sak = request.sak.toString(),
         )
-        // TODO Bør skyldner/kravhaver/mottaker oppdateres med identUtils.hentNyesteIdent hvis det er flere identer og det ikke er den nyeste som er
-        //  lagret?
         if (stønadListe.isNotEmpty()) {
             // TODO Sjekk hvordan dette bør håndteres. Lage varsel i varselkanalen?
             if (stønadListe.size > 1) {
@@ -107,7 +105,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             periodeListe.forEach { periode ->
                 stønadPeriodeDtoListe.add(periode.toStønadPeriodeDto())
             }
-            return stønad.toStønadDto(stønadPeriodeDtoListe)
+            return stønad.toStønadDto(stønadPeriodeDtoListe).medNyesteIdenter()
         } else {
             return null
         }
@@ -143,8 +141,6 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             kravhaverIdentListe = kravhaverIdentListe,
             sak = request.sak.toString(),
         )
-        // TODO Bør skyldner/kravhaver/mottaker oppdateres med identUtils.hentNyesteIdent hvis det er flere identer og det ikke er den nyeste som er
-        //  lagret?
         if (stønadListe.isNotEmpty()) {
             // TODO Sjekk hvordan dette bør håndteres. Lage varsel i varselkanalen?
             if (stønadListe.size > 1) {
@@ -164,7 +160,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             periodeListe.forEach { periode ->
                 stønadPeriodeDtoListe.add(periode.toStønadPeriodeDto())
             }
-            return stønad.toStønadDto(stønadPeriodeDtoListe)
+            return stønad.toStønadDto(stønadPeriodeDtoListe).medNyesteIdenter()
         } else {
             return null
         }
@@ -181,7 +177,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                 periodeListe.forEach { periode ->
                     stønadPeriodeDtoListe.add(periode.toStønadPeriodeDto())
                 }
-                stønadsendringDtoListe.add(stønad.toStønadDto(stønadPeriodeDtoListe))
+                stønadsendringDtoListe.add(stønad.toStønadDto(stønadPeriodeDtoListe).medNyesteIdenter())
             }
             return stønadsendringDtoListe
         } else {
@@ -194,9 +190,14 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
         val endretAvSaksbehandlerId = oppdatertStønad.opprettetAv
         val nesteIndeksreguleringsår = oppdatertStønad.nesteIndeksreguleringsår
 
-        // TODO Bør samtidig oppdatere skyldner/kravhaver/mottaker med nyeste ident?
+        loggEndredeIdenter(eksisterendeStønad = eksisterendeStønad, oppdatertStønad = oppdatertStønad)
+
+        // Identene i oppdateringen er de gjeldende og skal erstatte identene som er lagret på stønaden.
         persistenceService.oppdaterStønad(
             stønadsid = stønadsid,
+            skyldner = oppdatertStønad.skyldner.verdi,
+            kravhaver = oppdatertStønad.kravhaver.verdi,
+            mottaker = oppdatertStønad.mottaker.verdi,
             opprettetAv = endretAvSaksbehandlerId,
             nesteIndeksreguleringsår = nesteIndeksreguleringsår,
         )
@@ -245,7 +246,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                     LøpendeBidragssak(
                         sak = Saksnummer(stønad.sak),
                         type = Stønadstype.valueOf(stønad.type),
-                        kravhaver = Personident(stønad.kravhaver),
+                        kravhaver = nyesteIdent(stønad.kravhaver),
                         løpendeBeløp = periode.beløp ?: BigDecimal.ZERO,
                         valutakode = periode.valutakode ?: "NOK",
                     ),
@@ -263,7 +264,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             SkyldnerStønad(
                 sak = Saksnummer(stønad.sak),
                 type = Stønadstype.valueOf(stønad.type),
-                kravhaver = Personident(stønad.kravhaver),
+                kravhaver = nyesteIdent(stønad.kravhaver),
             )
         }
         return SkyldnerStønaderResponse(skyldnerStønadListe)
@@ -332,8 +333,8 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                     LøpendeBidrag(
                         sak = Saksnummer(stønad.sak),
                         type = Stønadstype.valueOf(stønad.type),
-                        kravhaver = Personident(stønad.kravhaver),
-                        mottaker = Personident(stønad.mottaker),
+                        kravhaver = nyesteIdent(stønad.kravhaver),
+                        mottaker = nyesteIdent(stønad.mottaker),
                         periodeListe = bidragPeriodeListe,
                     ),
                 )
@@ -399,8 +400,8 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
     )
 
     // Oppretter engangsbeløp
+    // Det forutsettes at identene som sendes inn ved opprettelse er de nyeste identene.
     fun opprettEngangsbeløp(engangsbeløpRequest: OpprettEngangsbeløpRequestDto): Int {
-        // TODO Sjekke skyldner/kravhaver/mottaker for nyeste ident?
         LOGGER.info { "Oppretter nytt engangsbeløp for vedtak med id ${engangsbeløpRequest.vedtaksid}" }
         secureLogger.debug { "Oppretter nytt engangsbeløp: ${tilJsonString(engangsbeløpRequest)}" }
         return persistenceService.opprettEngangsbeløp(engangsbeløpRequest)
@@ -417,7 +418,6 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             sak = request.sak.toString(),
             referanse = request.referanse,
         )
-        // TODO Bør skyldner/kravhaver oppdateres med identUtils.hentNyesteIdent hvis det er flere identer og det ikke er den nyeste som er lagret?
         if (engangsbeløpListe.isNotEmpty()) {
             // TODO Sjekk hvordan dette bør håndteres. Lage varsel i varselkanalen?
             if (engangsbeløpListe.size > 1) {
@@ -431,13 +431,13 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                         "referanse = ${request.referanse}. Behandling fortsetter med det første engangsbeløpet i lista. Sjekk om dette bør patches."
                 }
             }
-            return engangsbeløpListe.first().toEngangsbeløpDto()
+            return engangsbeløpListe.first().toEngangsbeløpDto().medNyesteIdenter()
         } else {
             return null
         }
     }
 
-    fun finnEngangsbeløpforSak(sak: Saksnummer): List<EngangsbeløpDto> = persistenceService.finnEngangsbeløpForSak(sak)
+    fun finnEngangsbeløpforSak(sak: Saksnummer): List<EngangsbeløpDto> = persistenceService.finnEngangsbeløpForSak(sak).map { it.medNyesteIdenter() }
 
     // Henter historiske engangsbeløp. Brukes bare i test. Har derfor ikke implementert logikk for å sjekke mot historiske identer.
     fun hentHistoriskeEngangsbeløp(request: HentEngangsbeløpRequest): List<EngangsbeløpDto> {
@@ -475,7 +475,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             endretAv = oppdatertEngangsbeløp.opprettetAv,
         )
 
-        // TODO Bør samtidig oppdatere skyldner/kravhaver/mottaker med nyeste ident?
+        // Det nye engangsbeløpet opprettes med identene fra oppdateringen. Disse regnes som de gjeldende identene.
         if (oppdatertEngangsbeløp.beløp != null) {
             LOGGER.info { "Oppretter nytt engangsbeløp" }
             secureLogger.debug { "Oppretter nytt engangsbeløp: ${tilJsonString(oppdatertEngangsbeløp)}" }
@@ -494,5 +494,34 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
             secureLogger.warn { "Flere historiske identer funnet for personident ${personident.verdi}: $identListe" }
         }
         return identListe
+    }
+
+    // Identer som er lagret på en stønad kan være utdaterte. Ved utlevering skal alltid den nyeste identen returneres.
+    private fun nyesteIdent(ident: String): Personident = identUtils.hentNyesteIdent(Personident(ident))
+
+    private fun StønadDto.medNyesteIdenter() = copy(
+        skyldner = nyesteIdent(skyldner.verdi),
+        kravhaver = nyesteIdent(kravhaver.verdi),
+        mottaker = nyesteIdent(mottaker.verdi),
+    )
+
+    private fun EngangsbeløpDto.medNyesteIdenter() = copy(
+        skyldner = nyesteIdent(skyldner.verdi),
+        kravhaver = nyesteIdent(kravhaver.verdi),
+        mottaker = nyesteIdent(mottaker.verdi),
+    )
+
+    private fun loggEndredeIdenter(eksisterendeStønad: StønadDto, oppdatertStønad: OpprettStønadRequestDto) {
+        val endredeIdenter = buildList {
+            if (eksisterendeStønad.skyldner != oppdatertStønad.skyldner) add("skyldner")
+            if (eksisterendeStønad.kravhaver != oppdatertStønad.kravhaver) add("kravhaver")
+            if (eksisterendeStønad.mottaker != oppdatertStønad.mottaker) add("mottaker")
+        }
+        if (endredeIdenter.isNotEmpty()) {
+            secureLogger.info {
+                "Lagret ident ${endredeIdenter.joinToString()} på stønadsid ${eksisterendeStønad.stønadsid} avviker fra identen i oppdateringen. " +
+                    "Stønaden oppdateres med identene fra oppdateringen."
+            }
+        }
     }
 }
