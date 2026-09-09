@@ -38,30 +38,26 @@ JWT-tokenet kan hentes ut manuelt eller ved hjelp at skriptet her: [hentJwtToken
 
 For å utstede et slikt token trenger man miljøvariablene `AZURE_APP_CLIENT_ID` og `AZURE_APP_CLIENT_SECRET`. Disse ligger tilgjengelig i de kjørende pod'ene til applikasjonen.
 
-Koble seg til en kjørende pod (feature-branch):
-```
-kubectl -n bidrag exec -i -t bidrag-grunnlag-feature-<sha> -c bidrag-grunnlag-feature -- /bin/bash
-```
-
-Koble seg til en kjørende pod (main-branch):
-```
-kubectl -n bidrag exec -i -t bidrag-grunnlag-<sha> -c bidrag-grunnlag -- /bin/bash
+Miljøvariabler kan hentes ut fra en kjørende pod slik:
+```bash
+# Feature-branch:
+export $(kubectl --namespace bidrag --cluster dev-gcp exec --tty deployment/bidrag-grunnlag-feature -- printenv | grep -e AZURE_APP_CLIENT_ID -e AZURE_APP_CLIENT_SECRET | xargs -L 1)
 ```
 
-Når man er inne i pod'en kan man hente ut miljøvariablene på følgende måte:
-```
-echo "$( cat /var/run/secrets/nais.io/azure/AZURE_APP_CLIENT_ID )"
-echo "$( cat /var/run/secrets/nais.io/azure/AZURE_APP_CLIENT_SECRET )"
-```
-
-Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall (feature-branch): 
-```
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id=<AZURE_APP_CLIENT_ID>&scope=api://dev-gcp.bidrag.bidrag-grunnlag-feature/.default&client_secret=<AZURE_APP_CLIENT_SECRET>&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
+```bash
+# Main-branch:
+export $(kubectl --namespace bidrag --cluster dev-gcp exec --tty deployment/bidrag-grunnlag -- printenv | grep -e AZURE_APP_CLIENT_ID -e AZURE_APP_CLIENT_SECRET | xargs -L 1)
 ```
 
-Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall (main-branch):
+Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall:
+```bash
+# Feature-branch:
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id='"$AZURE_APP_CLIENT_ID"'&scope=api://dev-gcp.bidrag.bidrag-grunnlag-feature/.default&client_secret='"$AZURE_APP_CLIENT_SECRET"'&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
 ```
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id=<AZURE_APP_CLIENT_ID>&scope=api://dev-gcp.bidrag.bidrag-grunnlag/.default&client_secret=<AZURE_APP_CLIENT_SECRET>&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
+
+```bash
+# Main-branch:
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id='"$AZURE_APP_CLIENT_ID"'&scope=api://dev-gcp.bidrag.bidrag-grunnlag/.default&client_secret='"$AZURE_APP_CLIENT_SECRET"'&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
 ```
 
 ## Kjøre applikasjon lokalt
@@ -82,7 +78,7 @@ https://bidrag-grunnlag.intern.dev.nav.no/swagger-ui/index.html
 ### Kjøre lokalt mot nais med lokal database
 ##### Start opp database
 Start opp lokal postgres database med følgende kommando på rotmappen. 
-```
+```bash
 docker-compose up -d
 ```
 Dette vil starte en tom postgres database. 
@@ -95,6 +91,11 @@ Kjør ```initEnv.sh``` skriptet for å sette opp miljøvariabler for lokal kjør
 <br/>
 Dette vil hente Azure hemmeligheter og diverse miljøvariabler fra POD kjørende i dev
 
+Man må først være logget inn i nais. Logg inn med
+```bash
+nais auth login
+```
+
 Hvis du ikke får `permission denied` når du prøver å kjøre skriptet så må du gi deg selv tilgang til å kjøre shell skript med følgende kommand:
 ```bash
 Kjør chmod +x ./initEnv.sh
@@ -102,4 +103,4 @@ Kjør chmod +x ./initEnv.sh
 
 Du kan da starte opp applikasjonen ved å kjøre [BidragGrunnlagLokalNais.kt](src/test/kotlin/no/nav/bidrag/grunnlag/BidragGrunnlagLokalNais.kt)
 
-Gå til http://localhost:8086 for å åpne swagger-ui
+Gå til [http://localhost:8086/swagger-ui/index.html](http://localhost:8086/swagger-ui/index.html) for å åpne swagger-ui
