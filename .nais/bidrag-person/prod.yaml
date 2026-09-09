@@ -1,6 +1,5 @@
 name: bidrag-person
 ingresses:
-  - https://bidrag-person.nais.adeo.no/
   - https://bidrag-person.intern.nav.no/
   - https://bidrag-person.prod-fss-pub.nais.io
 env:

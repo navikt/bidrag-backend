@@ -33,7 +33,6 @@ azure:
         namespace: bidrag
         cluster: prod-gcp
 ingresses:
-  - https://bidrag-dokument.nais.adeo.no/
   - https://bidrag-dokument.intern.nav.no/
   - https://bidrag-dokument.prod-fss-pub.nais.io
 env:

@@ -76,7 +76,6 @@ updates:
       timezone: "Europe/Oslo"
     groups:
       maven-dependencies:
-        group-by: "dependency-name"
         patterns:
           - "*"
     open-pull-requests-limit: 20
