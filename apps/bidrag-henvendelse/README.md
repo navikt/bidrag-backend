@@ -93,3 +93,52 @@ Tom liste er `{ "henvendelser": [] }`, aldri `null`.
 
 Detaljene står i loggen: feilmeldingene inneholder URL-er med aktørid og verdier fra
 request-body.
+
+## Bygge
+
+```bash
+mvn -pl apps/bidrag-henvendelse -am clean verify        # bygg + tester + ktlint
+mvn -pl apps/bidrag-henvendelse test                    # bare tester
+mvn antrun:run@ktlint-format -pl apps/bidrag-henvendelse # formater
+```
+
+`~/.m2/settings.xml` må ha en `github`-server med et personal access token med
+`read:packages`; `token-support` hentes fra GitHub Packages.
+
+## Teste
+
+### Mot mock
+
+`HenvendelseIntegrasjonTest` starter appen med Wiremocked sf-henvendelse-api-proxy og
+bidrag-person, og mock-oauth2-server som Azure. Raskeste vei til å se APIet svare:
+
+```bash
+mvn -pl apps/bidrag-henvendelse test -Dtest=HenvendelseIntegrasjonTest
+```
+
+Andre svar fra kilden legges til som stub i `stubHenvendelser` og `stubPerson`.
+
+### Mot dev
+
+Krever JDK 21 og naisdevice (tjenestene ligger på `*.intern.dev.nav.no`).
+
+Start `BidragHenvendelseLocal` i `src/test/kotlin`; main-metoden setter profilene `local`,
+`lokal-nais`, `nais` og `lokal-nais-secrets`. Appen svarer på `http://localhost:8080`.
+
+URL-er og scopes for dev ligger i `src/test/resources/application-local.yaml`.
+Azure-credentials settes som miljøvariabler:
+
+```
+AZURE_APP_TENANT_ID
+AZURE_APP_CLIENT_ID
+AZURE_APP_CLIENT_SECRET
+```
+
+Hentes fra kjørende pod i dev:
+
+```bash
+kubectl -n bidrag exec -it deploy/bidrag-henvendelse -- printenv \
+  AZURE_APP_TENANT_ID AZURE_APP_CLIENT_ID AZURE_APP_CLIENT_SECRET
+```
+
+Sett dem i run-konfigurasjonen i IntelliJ (Edit Configurations → Environment variables).
