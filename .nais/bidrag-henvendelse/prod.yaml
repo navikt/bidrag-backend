@@ -1,0 +1,16 @@
+name: bidrag-henvendelse
+ingresses:
+  - https://bidrag-henvendelse.intern.nav.no
+env:
+  HENVENDELSE_URL: https://sf-henvendelse.intern.nav.no
+  HENVENDELSE_SCOPE: prod-gcp.teamnks.sf-henvendelse-api-proxy
+  BIDRAG_PERSON_URL: https://bidrag-person.intern.nav.no
+  BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure_access_inbound:
+  - application: bidrag-frontend
+    namespace: bidrag
+    cluster: prod-gcp
+outbound-access-hosts:
+  - sf-henvendelse.intern.nav.no
+  - bidrag-person.intern.nav.no
