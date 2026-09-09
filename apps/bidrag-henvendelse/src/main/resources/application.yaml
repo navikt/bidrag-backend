@@ -1,0 +1,58 @@
+springdoc:
+  packages-to-scan: no.nav.bidrag.henvendelse.controller
+  swagger-ui:
+    path: /
+    display-request-duration: true
+    try-it-out-enabled: true
+
+spring:
+  main:
+    banner-mode: off
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,health"
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
+
+bidrag.rest.read.timeout.seconds: 30
+bidrag.rest.connect.timeout.seconds: 30
+---
+spring.config.activate.on-profile: nais,lokal-nais
+
+# resource-url må være satt: BearerTokenClientInterceptor i bidrag-commons finner riktig
+# registrering ved å matche utgående URI mot den (startsWith).
+#
+# Merk at grant-type-verdien under ikke er det som avgjør vekslingen: interceptoren overstyrer
+# den ut fra det innkommende tokenet - jwt-bearer (on-behalf-of) når kallet har en innlogget
+# bruker, client_credentials når det har opphav i applikasjonen selv. Det er avgjørende her,
+# siden sf-henvendelse-api-proxy avviser maskintoken med 403 utenfor /kodeverk/.
+no.nav.security.jwt:
+  client:
+    registration:
+      sf-henvendelse-api:
+        resource-url: ${HENVENDELSE_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${HENVENDELSE_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+      bidrag-person:
+        resource-url: ${BIDRAG_PERSON_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_PERSON_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
+  issuer.aad:
+    discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
+    accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}

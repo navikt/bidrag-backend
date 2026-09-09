@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        <mdc/>
+        <timestamp/>
+        <message/>
+        <loggerName/>
+        <threadName/>
+        <logLevel/>
+        <callerData/>
+        <arguments/>
+        <stackTrace/>
+      </providers>
+      <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+        <valueMasker class="no.nav.bidrag.commons.logging.SensitiveLogMasker"/>
+      </jsonGeneratorDecorator>
+    </encoder>
+  </appender>
+
+  <springProfile name="nais">
+    <appender name="team-logs" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <destination>team-logs.nais-system:5170</destination>
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>{"google_cloud_project":"${GOOGLE_CLOUD_PROJECT}","nais_namespace_name":"${NAIS_NAMESPACE}","nais_pod_name":"${HOSTNAME}","nais_container_name":"${NAIS_APP_NAME}"}</customFields>
+        <includeContext>false</includeContext>
+        <!-- Samme maskering som på stdout. Hver URL i denne appen har ?aktorid=..., og
+             exception-meldinger fra AbstractRestClient inneholder URL-en. -->
+        <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+          <valueMasker class="no.nav.bidrag.commons.logging.SensitiveLogMasker"/>
+        </jsonGeneratorDecorator>
+      </encoder>
+    </appender>
+  </springProfile>
+
+  <!-- team-logs finnes bare i nais-profilen, så appender-ref-ene må stå her. Ellers gir
+       logback en statusfeil om ukjent appender ved hver oppstart utenfor nais, testene
+       inkludert. -->
+  <springProfile name="nais">
+    <root level="info">
+      <appender-ref ref="stdout_json"/>
+      <appender-ref ref="team-logs"/>
+    </root>
+
+    <logger name="secureLogger" level="INFO" additivity="false">
+      <appender-ref ref="team-logs"/>
+    </logger>
+  </springProfile>
+
+  <springProfile name="!nais">
+    <root level="info">
+      <appender-ref ref="stdout_json"/>
+    </root>
+  </springProfile>
+</configuration>
