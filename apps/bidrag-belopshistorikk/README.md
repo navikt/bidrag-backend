@@ -5,6 +5,19 @@ Ved nye vedtak for en stønad vil alltid periodene i det nye vedtaket erstatte e
 Ved overlapp vil eksisterende perioder merkes som ugyldiggjorte og nye perioder med identiske verdier opprettes
 for periodene som eventuelt ikke dekkes av det nye vedtaket. Tilsvarende gjelder for engangsbeløp.
 
+## Håndtering av identer
+
+Identer som er lagret på en stønad eller et engangsbeløp kan bli utdaterte, for eksempel når en person får nytt
+fødselsnummer. Tjenesten håndterer dette slik:
+
+- **Utlevering:** Skyldner, kravhaver og mottaker slås opp mot bidrag-person ved henting, og det er alltid den nyeste
+  identen som returneres — uavhengig av hvilken ident som er lagret i databasen.
+- **Oppslag:** Ved søk etter stønad eller engangsbeløp brukes alle historiske identer, slik at treff også gis på
+  utdaterte identer.
+- **Opprettelse:** Det forutsettes at identene i innkommende vedtak er de nyeste. De lagres uendret.
+- **Oppdatering:** Identene i vedtaket som oppdaterer stønaden regnes som de gjeldende, og erstatter identene som er
+  lagret på stønaden. Nye engangsbeløp opprettes tilsvarende med identene fra oppdateringen.
+
 #### Kjøre lokalt mot Nais postgres database
 For å kunne kjøre lokalt mot sky må du gjøre følgende
 
