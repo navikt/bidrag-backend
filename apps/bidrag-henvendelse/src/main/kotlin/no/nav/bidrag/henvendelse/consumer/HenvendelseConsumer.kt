@@ -18,8 +18,11 @@ import java.net.URI
  * Kaller sf-henvendelse-api-proxy (namespace `teamnks`), som proxyer videre til
  * henvendelsesløsningen i Salesforce.
  *
- * Kontrakten er dokumentert i tjenestens egen swagger, `src/main/resources/static/swagger.json`
- * i [navikt/sf-henvendelse-api-proxy](https://github.com/navikt/sf-henvendelse-api-proxy).
+ * Proxyens swagger (`src/main/resources/static/swagger.json` i
+ * [navikt/sf-henvendelse-api-proxy](https://github.com/navikt/sf-henvendelse-api-proxy))
+ * beskriver endepunktet, men er utdatert på svarformen: den dokumenterer en ren liste, mens
+ * kilden svarer med konvolutt. Det som faktisk skjer står i
+ * `CRM_HenvendelseInfoListRestService` i navikt/crm-henvendelse.
  *
  * Proxyen krever on-behalf-of-token: maskintoken gir 403 "Machine token authorization not
  * sufficient" utenfor `/kodeverk/`. Proxyen henter selv saksbehandlerens NAVident ut av tokenet
@@ -29,29 +32,35 @@ import java.net.URI
  *
  * ### Forespørsel
  * ```
- * GET /henvendelseinfo/henvendelseliste?aktorid=2000012345678
+ * GET /henvendelseinfo/henvendelseliste?aktorid=2000012345678&pageSize=100
  * Authorization: Bearer <on-behalf-of-token>
  * X-Correlation-ID: 4f8b1c2e-1f7a-4a3e-9c1b-8d2f6a5b0c31
  * ```
  *
  * ### Svar (200) - forkortet
  * ```json
- * [
- *   {
- *     "henvendelseType": "SAMTALEREFERAT",
- *     "fnr": "17490123474",
- *     "aktorId": "2000012345678",
- *     "kjedeId": "a0J3N000004dUBJUA2",
- *     "gjeldendeTemagruppe": "FMLI",
- *     "gjeldendeTema": "BID",
- *     "opprettetDato": "2026-06-27T12:00:00.000Z",
- *     "meldinger": [
- *       { "sendtDato": "2026-06-27T12:00:00.000Z", "kanal": "DIGITAL", "fritekst": "..." }
- *     ],
- *     "journalposter": [],
- *     "markeringer": []
- *   }
- * ]
+ * {
+ *   "data": [
+ *     {
+ *       "henvendelseType": "SAMTALEREFERAT",
+ *       "fnr": "17490123474",
+ *       "aktorId": "2000012345678",
+ *       "kjedeId": "a0J3N000004dUBJUA2",
+ *       "gjeldendeTemagruppe": "FMLI",
+ *       "gjeldendeTema": "BID",
+ *       "opprettetDato": "2026-06-27T12:00:00.000Z",
+ *       "meldinger": [
+ *         { "sendtDato": "2026-06-27T12:00:00.000Z", "kanal": "DIGITAL", "fritekst": "..." }
+ *       ],
+ *       "journalposter": [],
+ *       "markeringer": []
+ *     }
+ *   ],
+ *   "currentPage": 1,
+ *   "pageSize": 100,
+ *   "totalPages": 1,
+ *   "hasNextPage": false
+ * }
  * ```
  * Vi leser bare feltene i [HenvendelseConsumerOutput]; resten ignoreres.
  */

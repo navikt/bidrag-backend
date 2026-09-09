@@ -88,8 +88,9 @@ class HenvendelseController(
         @RequestBody request: PersonRequest,
     ): HenvendelserDto {
         // Sifferkravet må stå først: Personident.gyldig() gjør substring(0, 1).toInt() etter et
-        // toLongOrNull()-sjekk som godtar fortegn, og kaster derfor på "+1749011234".
-        if (!request.ident.verdi.all(Char::isDigit) || !request.ident.gyldig()) throw UgyldigIdentException()
+        // toLongOrNull()-sjekk som godtar fortegn, og kaster derfor på "+1749011234". Vi sjekker
+        // mot ASCII-sifre og ikke Char.isDigit(), som også godtar arabisk-indiske sifre.
+        if (!request.ident.verdi.all { it in '0'..'9' } || !request.ident.gyldig()) throw UgyldigIdentException()
         return henvendelseService.hentHenvendelser(request.ident)
     }
 }
