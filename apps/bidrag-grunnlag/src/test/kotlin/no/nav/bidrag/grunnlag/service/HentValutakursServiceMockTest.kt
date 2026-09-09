@@ -54,6 +54,7 @@ class HentValutakursServiceMockTest {
                     dimensions = SdmxDimensions(
                         series = listOf(
                             SdmxDimension("BASE_CUR", listOf(SdmxValue("ISK"))),
+                            SdmxDimension("UNIT_MULT", listOf(SdmxValue("2"))),
                         ),
                     ),
                 ),

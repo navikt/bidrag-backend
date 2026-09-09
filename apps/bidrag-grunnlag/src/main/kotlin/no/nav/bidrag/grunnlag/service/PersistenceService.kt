@@ -4,6 +4,7 @@ import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.AinntektBo
 import no.nav.bidrag.grunnlag.bo.AinntektspostBo
@@ -15,6 +16,7 @@ import no.nav.bidrag.grunnlag.bo.SivilstandBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagspostBo
 import no.nav.bidrag.grunnlag.bo.UtvidetBarnetrygdOgSmaabarnstilleggBo
+import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.bo.toAinntektEntity
 import no.nav.bidrag.grunnlag.bo.toAinntektspostEntity
 import no.nav.bidrag.grunnlag.bo.toBarnetilleggEntity
@@ -25,6 +27,7 @@ import no.nav.bidrag.grunnlag.bo.toSivilstandEntity
 import no.nav.bidrag.grunnlag.bo.toSkattegrunnlagEntity
 import no.nav.bidrag.grunnlag.bo.toSkattegrunnlagspostEntity
 import no.nav.bidrag.grunnlag.bo.toUtvidetBarnetrygdOgSmaabarnstilleggEntity
+import no.nav.bidrag.grunnlag.bo.toValutakursgrunnlagEntity
 import no.nav.bidrag.grunnlag.comparator.AinntektPeriodComparator
 import no.nav.bidrag.grunnlag.comparator.Period
 import no.nav.bidrag.grunnlag.comparator.PeriodComparable
@@ -41,6 +44,7 @@ import no.nav.bidrag.grunnlag.persistence.entity.Sivilstand
 import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlagspost
 import no.nav.bidrag.grunnlag.persistence.entity.UtvidetBarnetrygdOgSmaabarnstillegg
+import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektBo
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektspostBo
 import no.nav.bidrag.grunnlag.persistence.entity.toGrunnlagspakkeEntity
@@ -57,6 +61,7 @@ import no.nav.bidrag.grunnlag.persistence.repository.SivilstandRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagspostRepository
 import no.nav.bidrag.grunnlag.persistence.repository.UtvidetBarnetrygdOgSmaabarnstilleggRepository
+import no.nav.bidrag.grunnlag.persistence.repository.ValutakursgrunnlagRepository
 import no.nav.bidrag.transport.behandling.grunnlag.request.OpprettGrunnlagspakkeRequestDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektspostDto
@@ -86,6 +91,7 @@ class PersistenceService(
     val sivilstandRepository: SivilstandRepository,
     val kontantstotteRepository: KontantstotteRepository,
     val barnetilsynRepository: BarnetilsynRepository,
+    val valutakursgrunnlagRepository: ValutakursgrunnlagRepository,
 ) {
 
     fun opprettNyGrunnlagspakke(opprettGrunnlagspakkeRequestDto: OpprettGrunnlagspakkeRequestDto): Grunnlagspakke {
@@ -143,6 +149,11 @@ class PersistenceService(
     fun opprettBarnetilsyn(barnetilsynBo: BarnetilsynBo): Barnetilsyn {
         val nyBarnetilsyn = barnetilsynBo.toBarnetilsynEntity()
         return barnetilsynRepository.save(nyBarnetilsyn)
+    }
+
+    fun opprettValutakursgrunnlag(valutakursgrunnlagBo: ValutakursgrunnlagBo): Valutakursgrunnlag {
+        val nyValutakurs = valutakursgrunnlagBo.toValutakursgrunnlagEntity()
+        return valutakursgrunnlagRepository.save(nyValutakurs)
     }
 
     fun oppdaterEksisterendeBarnetilleggPensjonTilInaktiv(grunnlagspakkeId: Int, personIdListe: List<String>, timestampOppdatering: LocalDateTime) {
@@ -593,5 +604,9 @@ class PersistenceService(
                 )
             }
         return barnetilsynDtoListe
+    }
+
+    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag {
+        return valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato)
     }
 }
