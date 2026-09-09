@@ -92,6 +92,10 @@ class HenvendelseConsumer(
             // gir ikke 404 - Apex-koden svarer 200 med tom data-liste - så 404 betyr en aktørid
             // Salesforce ikke kjenner i det hele tatt. Vi viser tom liste framfor 502: det er
             // ikke saksbehandleren som har gjort noe feil, og det finnes ingenting å vise.
+            //
+            // AbstractRestClient har allerede logget en WARN med hele URL-en og stacktracen før
+            // vi kommer hit, så dette normaltilfellet ser ut som en feil i loggen. URL-en er også
+            // grunnen til at maskeringen i logback-spring.xml må virke - den inneholder aktøriden.
             log.info("Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste.")
             return emptyList()
         }

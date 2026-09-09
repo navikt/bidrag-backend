@@ -102,7 +102,7 @@ class DefaultRestControllerAdviceTest {
     }
 
     @Test
-    fun `skal gi 400 ved ugyldig ident, uten å gjenta identen`() {
+    fun `skal gi 400 ved ugyldig ident`() {
         val problem = advice.handleUgyldigIdent(UgyldigIdentException())
 
         problem.status shouldBe HttpStatus.BAD_REQUEST.value()

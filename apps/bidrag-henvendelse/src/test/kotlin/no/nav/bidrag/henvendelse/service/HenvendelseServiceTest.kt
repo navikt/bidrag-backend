@@ -112,7 +112,7 @@ class HenvendelseServiceTest {
     }
 
     @Test
-    fun `skal takle at svaret er pakket i en data-konvolutt, og varsle om flere sider`() {
+    fun `skal takle at svaret er pakket i en data-konvolutt`() {
         every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
         stubHenvendelseliste(
             """
