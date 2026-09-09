@@ -11,6 +11,7 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.felles.personidentNav
+import no.nav.bidrag.domene.ident.Ident
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Stønadsid
@@ -53,7 +54,7 @@ class SakService(
         val stønadsid =
             Stønadsid(
                 type = stønadstype,
-                kravhaver = Personident(kravhaver),
+                kravhaver = kravhaver,
                 skyldner = skyldner,
                 sak = hendelse.saksnummer,
             )
@@ -76,16 +77,27 @@ class SakService(
             return
         }
 
-        val nyMottaker = barnISak.nyMottaker(hendelse)
-        if (nyMottaker == null) {
+        val utledetMottaker = barnISak.utledMottaker(hendelse)
+        if (utledetMottaker == null) {
             LOGGER.warn {
-                "Kan ikke utlede ny mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi} " +
-                    "(reell mottaker er trolig en samhandler). Fatter ikke vedtak."
+                "Kan ikke utlede mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi}. Fatter ikke vedtak."
+            }
+            return
+        }
+        if (utledetMottaker.erSamhandlerId()) {
+            return
+        }
+        if (!utledetMottaker.erPersonIdent()) {
+            LOGGER.warn {
+                "Utledet mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi} er ikke en gyldig personident. " +
+                    "Fatter ikke vedtak."
             }
             return
         }
 
-        if (løpendeStønad.mottaker.normalisertIdent() == nyMottaker.normalisertIdent()) {
+        val nyMottaker = Personident(utledetMottaker.verdi).nyesteIdent()
+
+        if (løpendeStønad.mottaker.nyesteIdent().verdi == nyMottaker.verdi) {
             LOGGER.info {
                 "Mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi} er uendret. Fatter ikke vedtak."
             }
@@ -145,15 +157,15 @@ class SakService(
         secureLogger.info { "Endring av mottaker for ${stønadsid.toReferanse()}, ny mottaker $nyMottaker." }
     }
 
-    private fun BarnISak.nyMottaker(hendelse: SakHendelse): Personident? = if (reellMottaker != null) {
-        reellMottaker!!.personIdent()?.let { Personident(it.nyesteIdent()) }
+    private fun BarnISak.utledMottaker(hendelse: SakHendelse): Ident? = if (reellMottaker != null) {
+        Ident(reellMottaker!!.verdi)
     } else {
-        hendelse.bidragsmottaker?.let { Personident(it.nyesteIdent()) }
+        hendelse.bidragsmottaker?.let { Ident(it.verdi) }
     }
 
     private fun Stønadstype.skyldner(hendelse: SakHendelse): Personident? = when (this) {
         Stønadstype.FORSKUDD -> personidentNav
-        else -> hendelse.bidragspliktig?.let { Personident(it.nyesteIdent()) }
+        else -> hendelse.bidragspliktig?.nyesteIdent()
     }
 
     private fun unikReferanse(
@@ -161,9 +173,7 @@ class SakService(
         nyMottaker: Personident,
     ) = "endring_mottaker_${stønadsid.toReferanse()}_${nyMottaker.verdi}"
 
-    private fun Personident.nyesteIdent(): String = identUtils.hentNyesteIdent(this).verdi
-
-    private fun Personident.normalisertIdent(): String = identUtils.hentNyesteIdent(this).verdi
+    private fun Personident.nyesteIdent(): Personident = identUtils.hentNyesteIdent(this)
 
     companion object {
         private const val ENHET_AUTOMATISK = "9999"
