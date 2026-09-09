@@ -142,3 +142,20 @@ kubectl -n bidrag exec -it deploy/bidrag-henvendelse -- printenv \
 ```
 
 Sett dem i run-konfigurasjonen i IntelliJ (Edit Configurations → Environment variables).
+
+### Swagger
+
+Swagger-UI ligger på root path, OpenAPI-spesifikasjonen på `/v3/api-docs`:
+
+| Miljø | Swagger-UI | OpenAPI |
+|-------|------------|---------|
+| dev   | https://bidrag-henvendelse.intern.dev.nav.no/ | https://bidrag-henvendelse.intern.dev.nav.no/v3/api-docs |
+| prod  | https://bidrag-henvendelse.intern.nav.no/     | https://bidrag-henvendelse.intern.nav.no/v3/api-docs |
+| lokalt| http://localhost:8080/ | http://localhost:8080/v3/api-docs |
+
+Trykk **Authorize** og lim inn et token for en fiktiv saksbehandler fra Ida. I dev får du et
+fra `azure-token-generator`.
+
+## Ikke implementert: auditlogging og tilgangskontroll
+
+Oppslag auditlogges ikke, og ingen ledd i kjeden sjekker tilgang til personen.
