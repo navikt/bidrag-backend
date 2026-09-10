@@ -134,7 +134,7 @@ class SakService(
                             innkreving = løpendeStønad.innkreving,
                             sisteVedtaksid = beregnVedtakService.finnSisteVedtaksid(stønadsid),
                             grunnlagReferanseListe = emptyList(),
-                            periodeListe = emptyList()
+                            periodeListe = emptyList(),
                         ),
                     ),
                 ),
