@@ -28,7 +28,9 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.KopiSamværsperiodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SivilstandPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.Sluttberegning
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningForskudd
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnOgKonverterGrunnlagSomErReferertAv
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnSluttberegningIReferanser
@@ -620,11 +622,14 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
 
         val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
+        val periode = sluttberegning.innholdTilObjekt<SluttberegningBarnebidragV2>().periode
         val inntekter = finnOgKonverterGrunnlagSomErReferertAv<InntektsrapporteringPeriode>(
             Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
             sluttberegning,
         ).filter { it.innhold.valgt }
             .filter { it.gjelderReferanse == referanseTilRolle && (it.innhold.gjelderBarn == null || it.innhold.gjelderBarn == søknadsbarnReferanse) }
+            // Filtrer vekk inntekter som er referert, men som er utenfor sluttberegningens periode. Skjer ved beregning av skatt på barnetillegg.
+            .filter { it.innhold.periode.overlapper(periode) }
         return inntekter.map { inntekt ->
             Inntekt(
                 type = inntekt.innhold.inntektsrapportering.name,
