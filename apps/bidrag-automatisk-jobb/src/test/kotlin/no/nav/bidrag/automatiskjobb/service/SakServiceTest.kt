@@ -2,7 +2,9 @@ package no.nav.bidrag.automatiskjobb.service
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldMatch
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.RelaxedMockK
@@ -209,7 +211,7 @@ class SakServiceTest {
     }
 
     @Test
-    fun `skal sette unik referanse basert på saksnummer, hendelsetidspunkt og hendelsestype`() {
+    fun `skal sette unik referanse med saksnummer, tidspunkt, hendelsestype, stønadstype og datahash`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         val tidspunkt = Instant.parse("2026-09-10T08:30:15.123Z")
 
@@ -217,7 +219,8 @@ class SakServiceTest {
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
-        request.captured.unikReferanse shouldBe "endring_mottaker_${saksnummer}_20260910083015123_ENDRING"
+        request.captured.unikReferanse shouldMatch
+            Regex("endring_mottaker_${saksnummer}_20260910083015123_ENDRING_FORSKUDD_[0-9a-f]{16}")
     }
 
     @Test
@@ -228,7 +231,36 @@ class SakServiceTest {
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
-        request.captured.unikReferanse shouldBe "endring_mottaker_${saksnummer}_null_ENDRING"
+        request.captured.unikReferanse shouldMatch
+            Regex("endring_mottaker_${saksnummer}_null_ENDRING_FORSKUDD_[0-9a-f]{16}")
+    }
+
+    @Test
+    fun `unik referanse skal være deterministisk for samme hendelse`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        val hendelse = sakHendelse(
+            reellMottaker = nyReellMottaker,
+            hendelseTidspunkt = Instant.parse("2026-09-10T08:30:15.123Z"),
+        )
+
+        sakService.behandleSakHendelse(hendelse)
+        sakService.behandleSakHendelse(hendelse)
+
+        val requests = mutableListOf<OpprettVedtakRequestDto>()
+        verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
+        requests[0].unikReferanse shouldBe requests[1].unikReferanse
+    }
+
+    @Test
+    fun `unik referanse skal skille ulike stønadstyper for samme hendelse`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        stubLøpendeStønad(Stønadstype.BIDRAG, mottaker = reellMottaker)
+
+        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+
+        val requests = mutableListOf<OpprettVedtakRequestDto>()
+        verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
+        requests.map { it.unikReferanse }.toSet() shouldHaveSize 2
     }
 
     private fun stubLøpendeStønad(

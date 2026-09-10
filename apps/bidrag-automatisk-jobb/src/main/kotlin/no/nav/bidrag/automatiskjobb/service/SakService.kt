@@ -25,6 +25,7 @@ import no.nav.bidrag.transport.sak.SakHendelse
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
+import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -123,7 +124,7 @@ class SakService(
                 kilde = Vedtakskilde.AUTOMATISK,
                 vedtakstidspunkt = LocalDateTime.now(),
                 enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
-                unikReferanse = unikReferanse(hendelse),
+                unikReferanse = unikReferanse(hendelse, stønadsid, nyMottaker),
                 grunnlagListe = emptyList(),
                 engangsbeløpListe = emptyList(),
                 behandlingsreferanseListe = emptyList(),
@@ -178,11 +179,23 @@ class SakService(
         else -> hendelse.bidragspliktig?.nyesteIdent()
     }
 
-    private fun unikReferanse(hendelse: SakHendelse): String {
+    private fun unikReferanse(
+        hendelse: SakHendelse,
+        stønadsid: Stønadsid,
+        nyMottaker: Personident,
+    ): String {
         // hendelseTidspunkt er midlertidig nullable; serialiseres til "null" til Kafka-køen er drenert.
         val hendelseTidspunkt = hendelse.hendelseTidspunkt?.let { KOMPAKT_HENDELSE_TIDSPUNKT.format(it) } ?: "null"
-        return "endring_mottaker_${hendelse.saksnummer.verdi}_${hendelseTidspunkt}_${hendelse.hendelsestype.name}"
+        val datahash = hashAv(stønadsid.kravhaver.verdi, stønadsid.skyldner.verdi, nyMottaker.verdi)
+        return "endring_mottaker_${hendelse.saksnummer.verdi}_${hendelseTidspunkt}_" +
+            "${hendelse.hendelsestype.name}_${stønadsid.type.name}_$datahash"
     }
+
+    private fun hashAv(vararg felter: String): String = MessageDigest
+        .getInstance("SHA-256")
+        .digest(felter.joinToString("_").toByteArray())
+        .joinToString("") { "%02x".format(it) }
+        .take(16)
 
     private fun Personident.nyesteIdent(): Personident = identUtils.hentNyesteIdent(this)
 
