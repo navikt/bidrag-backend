@@ -26,6 +26,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as BeregnVedtakService
 
 private val LOGGER = KotlinLogging.logger { }
@@ -106,10 +108,11 @@ class SakService(
             return
         }
 
-        fattEndreMottakerVedtak(stønadsid, løpendeStønad, nyMottaker)
+        fattEndreMottakerVedtak(hendelse, stønadsid, løpendeStønad, nyMottaker)
     }
 
     private fun fattEndreMottakerVedtak(
+        hendelse: SakHendelse,
         stønadsid: Stønadsid,
         løpendeStønad: StønadDto,
         nyMottaker: Personident,
@@ -120,7 +123,7 @@ class SakService(
                 kilde = Vedtakskilde.AUTOMATISK,
                 vedtakstidspunkt = LocalDateTime.now(),
                 enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
-                unikReferanse = unikReferanse(stønadsid, nyMottaker),
+                unikReferanse = unikReferanse(hendelse),
                 grunnlagListe = emptyList(),
                 engangsbeløpListe = emptyList(),
                 behandlingsreferanseListe = emptyList(),
@@ -145,7 +148,6 @@ class SakService(
             try {
                 bidragVedtakConsumer.opprettVedtak(request).vedtaksid
             } catch (e: HttpStatusCodeException) {
-                // Et vedtak med samme unike referanse finnes allerede – behandle som allerede utført (idempotent).
                 if (e.statusCode == HttpStatus.CONFLICT) {
                     val eksisterende = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
                     LOGGER.info {
@@ -176,15 +178,18 @@ class SakService(
         else -> hendelse.bidragspliktig?.nyesteIdent()
     }
 
-    private fun unikReferanse(
-        stønadsid: Stønadsid,
-        nyMottaker: Personident,
-    ) = "endring_mottaker_${stønadsid.toReferanse()}_${nyMottaker.verdi}"
+    private fun unikReferanse(hendelse: SakHendelse): String {
+        // hendelseTidspunkt er midlertidig nullable; serialiseres til "null" til Kafka-køen er drenert.
+        val hendelseTidspunkt = hendelse.hendelseTidspunkt?.let { KOMPAKT_HENDELSE_TIDSPUNKT.format(it) } ?: "null"
+        return "endring_mottaker_${hendelse.saksnummer.verdi}_${hendelseTidspunkt}_${hendelse.hendelsestype.name}"
+    }
 
     private fun Personident.nyesteIdent(): Personident = identUtils.hentNyesteIdent(this)
 
     companion object {
         private const val ENHET_AUTOMATISK = "9999"
         private val STØNADSTYPER = listOf(Stønadstype.BIDRAG, Stønadstype.FORSKUDD, Stønadstype.BIDRAG18AAR)
+        private val KOMPAKT_HENDELSE_TIDSPUNKT: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS").withZone(ZoneOffset.UTC)
     }
 }

@@ -16,6 +16,7 @@ import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.Instant
 
 @Service
 class HendelseService(
@@ -52,8 +53,11 @@ class HendelseService(
         sak: Bidragssak?,
         oppdatertSak: Bidragssak,
     ) {
+        val hendelseTidspunkt = Instant.now()
+
         val sakshendelse =
             SakHendelse(
+                hendelseTidspunkt = hendelseTidspunkt,
                 saksnummer = Saksnummer(oppdatertSak.saksnummer),
                 hendelsestype = if (sak == null) SakKafkaHendelsestype.OPPRETTELSE else SakKafkaHendelsestype.ENDRING,
                 bidragspliktig = oppdatertSak.roller.personidentBidragspliktig(),

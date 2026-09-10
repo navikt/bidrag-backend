@@ -39,6 +39,7 @@ import org.springframework.http.MediaType
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as BeregnVedtakService
@@ -207,6 +208,29 @@ class SakServiceTest {
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
+    @Test
+    fun `skal sette unik referanse basert på saksnummer, hendelsetidspunkt og hendelsestype`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        val tidspunkt = Instant.parse("2026-09-10T08:30:15.123Z")
+
+        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker, hendelseTidspunkt = tidspunkt))
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.unikReferanse shouldBe "endring_mottaker_${saksnummer}_20260910083015123_ENDRING"
+    }
+
+    @Test
+    fun `skal serialisere hendelsetidspunkt til null i unik referanse når det mangler`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+
+        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker, hendelseTidspunkt = null))
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.unikReferanse shouldBe "endring_mottaker_${saksnummer}_null_ENDRING"
+    }
+
     private fun stubLøpendeStønad(
         type: Stønadstype,
         mottaker: String,
@@ -250,7 +274,11 @@ class SakServiceTest {
         ),
     )
 
-    private fun sakHendelse(reellMottaker: String?) = SakHendelse(
+    private fun sakHendelse(
+        reellMottaker: String?,
+        hendelseTidspunkt: Instant? = Instant.now(),
+    ) = SakHendelse(
+        hendelseTidspunkt = hendelseTidspunkt,
         saksnummer = Saksnummer(saksnummer),
         hendelsestype = SakKafkaHendelsestype.ENDRING,
         bidragspliktig = Personident(bidragspliktig),
