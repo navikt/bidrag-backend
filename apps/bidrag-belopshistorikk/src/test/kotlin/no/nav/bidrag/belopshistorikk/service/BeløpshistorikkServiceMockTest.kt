@@ -8,6 +8,7 @@ import no.nav.bidrag.belopshistorikk.TestUtil.Companion.byggEngangsbeløpRespons
 import no.nav.bidrag.belopshistorikk.TestUtil.Companion.byggStønadRequest
 import no.nav.bidrag.belopshistorikk.TestUtil.Companion.byggStønadResponseFlereStønader
 import no.nav.bidrag.belopshistorikk.bo.PeriodeBo
+import no.nav.bidrag.belopshistorikk.persistence.entity.toStønadDto
 import no.nav.bidrag.belopshistorikk.service.BeløpshistorikkServiceMockTest.MockitoHelper.any
 import no.nav.bidrag.belopshistorikk.service.BeløpshistorikkServiceMockTest.MockitoHelper.capture
 import no.nav.bidrag.commons.util.IdentUtils
@@ -35,6 +36,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 
 @ExtendWith(MockitoExtension::class)
@@ -106,6 +108,7 @@ class BeløpshistorikkServiceMockTest {
     fun `skal hente stønad og perioder der det hentes to stønader fra ulike identer`() {
         `when`(identUtilsMock.hentAlleIdenter(Personident("Skyldner123"))).thenReturn(listOf("Skyldner123", "Skyldner456"))
         `when`(identUtilsMock.hentAlleIdenter(Personident("Kravhaver123"))).thenReturn(listOf("Kravhaver123"))
+        `when`(identUtilsMock.hentNyesteIdent(any(Personident::class.java))).thenAnswer { it.getArgument(0) }
         `when`(
             persistenceServiceMock.hentStønad(
                 stønadType = Stønadstype.BIDRAG.toString(),
@@ -173,6 +176,7 @@ class BeløpshistorikkServiceMockTest {
     fun `skal hente engangsbeløp der det hentes to engangsbeløp fra ulike identer`() {
         `when`(identUtilsMock.hentAlleIdenter(Personident("Skyldner123"))).thenReturn(listOf("Skyldner123", "Skyldner456"))
         `when`(identUtilsMock.hentAlleIdenter(Personident("Kravhaver123"))).thenReturn(listOf("Kravhaver123"))
+        `when`(identUtilsMock.hentNyesteIdent(any(Personident::class.java))).thenAnswer { it.getArgument(0) }
         `when`(
             persistenceServiceMock.hentEngangsbeløp(
                 engangsbeløpType = Engangsbeløptype.SÆRBIDRAG.toString(),
@@ -196,6 +200,94 @@ class BeløpshistorikkServiceMockTest {
             { assertThat(returnertEngangsbeløp).isNotNull() },
             { assertThat(returnertEngangsbeløp?.engangsbeløpsid).isEqualTo(1) },
             { assertThat(returnertEngangsbeløp?.skyldner).isEqualTo(Personident("Skyldner123")) },
+        )
+    }
+
+    @Test
+    fun `skal returnere nyeste ident ved henting av stønad`() {
+        `when`(identUtilsMock.hentAlleIdenter(Personident("Skyldner123"))).thenReturn(listOf("Skyldner123", "Skyldner456"))
+        `when`(identUtilsMock.hentAlleIdenter(Personident("Kravhaver123"))).thenReturn(listOf("Kravhaver123"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Skyldner123"))).thenReturn(Personident("SkyldnerNy"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Kravhaver123"))).thenReturn(Personident("KravhaverNy"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Mottaker123"))).thenReturn(Personident("MottakerNy"))
+        `when`(
+            persistenceServiceMock.hentStønad(
+                stønadType = Stønadstype.BIDRAG.toString(),
+                skyldnerIdentListe = listOf("Skyldner123", "Skyldner456"),
+                kravhaverIdentListe = listOf("Kravhaver123"),
+                sak = "SAK-001",
+            ),
+        ).thenReturn(byggStønadResponseFlereStønader())
+        `when`(persistenceServiceMock.hentPerioderForStønad(1)).thenReturn(emptyList())
+
+        val returnertStønad = beløpshistorikkService.hentStønad(
+            HentStønadRequest(
+                type = Stønadstype.BIDRAG,
+                sak = Saksnummer("SAK-001"),
+                skyldner = Personident("Skyldner123"),
+                kravhaver = Personident("Kravhaver123"),
+            ),
+        )
+
+        assertAll(
+            { assertThat(returnertStønad?.skyldner).isEqualTo(Personident("SkyldnerNy")) },
+            { assertThat(returnertStønad?.kravhaver).isEqualTo(Personident("KravhaverNy")) },
+            { assertThat(returnertStønad?.mottaker).isEqualTo(Personident("MottakerNy")) },
+        )
+    }
+
+    @Test
+    fun `skal returnere nyeste ident ved henting av engangsbeløp`() {
+        `when`(identUtilsMock.hentAlleIdenter(Personident("Skyldner123"))).thenReturn(listOf("Skyldner123", "Skyldner456"))
+        `when`(identUtilsMock.hentAlleIdenter(Personident("Kravhaver123"))).thenReturn(listOf("Kravhaver123"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Skyldner123"))).thenReturn(Personident("SkyldnerNy"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Kravhaver123"))).thenReturn(Personident("KravhaverNy"))
+        `when`(identUtilsMock.hentNyesteIdent(Personident("Mottaker123"))).thenReturn(Personident("MottakerNy"))
+        `when`(
+            persistenceServiceMock.hentEngangsbeløp(
+                engangsbeløpType = Engangsbeløptype.SÆRBIDRAG.toString(),
+                skyldnerIdentListe = listOf("Skyldner123", "Skyldner456"),
+                kravhaverIdentListe = listOf("Kravhaver123"),
+                sak = "SAK-001",
+                referanse = "Referanse-001",
+            ),
+        ).thenReturn(byggEngangsbeløpResponseFlereEngangsbeløp())
+
+        val returnertEngangsbeløp = beløpshistorikkService.hentEngangsbeløp(
+            HentEngangsbeløpRequest(
+                type = Engangsbeløptype.SÆRBIDRAG,
+                sak = Saksnummer("SAK-001"),
+                skyldner = Personident("Skyldner123"),
+                kravhaver = Personident("Kravhaver123"),
+                referanse = "Referanse-001",
+            ),
+        )
+
+        assertAll(
+            { assertThat(returnertEngangsbeløp?.skyldner).isEqualTo(Personident("SkyldnerNy")) },
+            { assertThat(returnertEngangsbeløp?.kravhaver).isEqualTo(Personident("KravhaverNy")) },
+            { assertThat(returnertEngangsbeløp?.mottaker).isEqualTo(Personident("MottakerNy")) },
+        )
+    }
+
+    @Test
+    fun `skal oppdatere identer på stønad med identene som er sendt inn i oppdateringen`() {
+        val eksisterendeStønad = byggStønadResponseFlereStønader().first().toStønadDto(emptyList())
+        val oppdatertStønad = byggStønadRequest()
+
+        beløpshistorikkService.endreStønad(
+            eksisterendeStønad = eksisterendeStønad,
+            oppdatertStønad = oppdatertStønad,
+            vedtakstidspunkt = LocalDateTime.now(),
+        )
+
+        Mockito.verify(persistenceServiceMock).oppdaterStønad(
+            stønadsid = 1,
+            skyldner = SKYLDNER_IDENT,
+            kravhaver = KRAVHAVER_IDENT,
+            mottaker = MOTTAKER_IDENT,
+            opprettetAv = "X123456",
+            nesteIndeksreguleringsår = 2024,
         )
     }
 
