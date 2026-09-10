@@ -34,6 +34,26 @@
     </appender>
   </springProfile>
 
+  <springProfile name="nais">
+    <!-- Samme sink som team-logs, men uten maskering. `secureLogger` er stedet en ident har
+         lov til å havne, og AuditLogger i bidrag-commons skriver auditlinjene sine dit: de er
+         CEF med `duid=<fødselsnummer>`, og det er nettopp identen sporet skal dokumentere.
+         Maskeres den, er linja verdiløs.
+
+         Maskeringen ligger på appenderen, ikke loggeren, så en umaskert logger krever en egen
+         appender. Den kan ikke droppes fra team-logs: dit går også rotloggeren, og hver URL i
+         denne appen har ?aktorid=.
+
+         Skal auditsporet siden andre steder, er det destinasjonen her som byttes. -->
+    <appender name="team-logs-secure" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <destination>team-logs.nais-system:5170</destination>
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <customFields>{"google_cloud_project":"${GOOGLE_CLOUD_PROJECT}","nais_namespace_name":"${NAIS_NAMESPACE}","nais_pod_name":"${HOSTNAME}","nais_container_name":"${NAIS_APP_NAME}"}</customFields>
+        <includeContext>false</includeContext>
+      </encoder>
+    </appender>
+  </springProfile>
+
   <!-- team-logs finnes bare i nais-profilen, så appender-ref-ene må stå her. Ellers gir
        logback en statusfeil om ukjent appender ved hver oppstart utenfor nais, testene
        inkludert. -->
@@ -44,7 +64,7 @@
     </root>
 
     <logger name="secureLogger" level="INFO" additivity="false">
-      <appender-ref ref="team-logs"/>
+      <appender-ref ref="team-logs-secure"/>
     </logger>
   </springProfile>
 
