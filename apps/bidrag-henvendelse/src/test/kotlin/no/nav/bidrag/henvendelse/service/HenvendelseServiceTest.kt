@@ -13,6 +13,7 @@ import no.nav.bidrag.henvendelse.aop.IngenTilgangException
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
 import no.nav.bidrag.henvendelse.dto.Henvendelsestype
+import no.nav.bidrag.transport.tilgang.Sporingsdata
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -42,12 +43,12 @@ class HenvendelseServiceTest {
     private val service = HenvendelseService(
         bidragPersonConsumer,
         HenvendelseConsumer(URI.create(BASE_URL), restTemplate),
-        Tilgangskontroll(tilgangClient),
+        Tilgangskontroll(tilgangClient, mockk(relaxed = true)),
     )
 
     @BeforeEach
     fun girTilgang() {
-        every { tilgangClient.harTilgangPerson(personident) } returns true
+        every { tilgangClient.hentSporingsdataPerson(personident) } returns Sporingsdata(personident.verdi, tilgang = true)
     }
 
     @Test
@@ -177,7 +178,7 @@ class HenvendelseServiceTest {
      */
     @Test
     fun `skal kaste IngenTilgangException uten å slå opp personen når saksbehandleren mangler tilgang`() {
-        every { tilgangClient.harTilgangPerson(personident) } returns false
+        every { tilgangClient.hentSporingsdataPerson(personident) } returns Sporingsdata(personident.verdi, tilgang = false)
 
         shouldThrow<IngenTilgangException> { service.hentHenvendelser(personident) }
 

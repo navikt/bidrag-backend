@@ -167,7 +167,25 @@ på om saksbehandleren har tilgang til personen.
 Kallet går på tjenestenavnet i clusteret (`http://bidrag-tilgangskontroll`), ikke ingressen,
 og krever at appen står i `azure_access_inbound` hos bidrag-tilgangskontroll.
 
-## Ikke implementert: auditlogging
+## Auditlogging
 
-Oppslag auditlogges ikke. Ingen app i dette repoet gjør det i dag - `AuditLogger` i
-bidrag-commons kalles bare fra `AuditAdvice`, og ingen annoterer med `@AuditLog`.
+Hvert oppslag skrives til auditsporet: hvem hentet ut opplysninger om hvem, når, og med
+hvilket utfall. Formatet er CEF, samme felter som `AuditLogger` i bidrag-commons bruker.
+Både innvilget og avslått oppslag logges, og `flexString1` skiller dem.
+
+Linja skrives av `AuditLogger` i bidrag-commons, som logger til `secureLogger`. Den
+loggeren er her rutet til appenderen `team-logs-secure` - samme destinasjon som `team-logs`,
+men uten `SensitiveLogMasker`. Uten det ville fødselsnummeret i `duid` blitt maskert, altså
+nettopp identen sporet finnes for. Maskeringen ligger på appenderen og ikke på loggeren, så
+en umaskert logger krever en egen appender; den kan ikke droppes fra `team-logs`, som også
+tar imot rotloggeren. Skal auditsporet siden et annet sted, er det destinasjonen i
+`logback-spring.xml` som byttes.
+
+`AuditLogger` kaster selv 403 ved avslag, som en `HttpClientErrorException`.
+`DefaultRestControllerAdvice` oversetter den slags til 502 ("tjenesten vi kaller feilet"), så
+`Tilgangskontroll` bytter den til `IngenTilgangException`. Avgjørelsen håndheves i tillegg
+eksplisitt, siden `AuditLogger` hopper over både logging og avslag for maskintoken.
+
+Merk at ingen annen app i repoet auditlogger i dag: `AuditLogger` kalles bare fra
+`AuditAdvice`, og ingen annoterer med `@AuditLog`. Oppsettet her er dermed ikke en etablert
+konvensjon - ta det opp med en teknisk leder før det kopieres.

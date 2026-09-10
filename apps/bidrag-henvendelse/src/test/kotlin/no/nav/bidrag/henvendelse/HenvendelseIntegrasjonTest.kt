@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.spi.LoggingEvent
 import ch.qos.logback.core.ConsoleAppender
+import ch.qos.logback.core.read.ListAppender
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -18,6 +19,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import no.nav.security.mock.oauth2.MockOAuth2Server
+import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -279,12 +281,47 @@ class HenvendelseIntegrasjonTest {
         linje shouldContain "*".repeat(AKTØRID.length)
     }
 
+    /**
+     * Auditsporet er hele poenget med `duid`, så det skal *ikke* maskeres. Derfor går det til
+     * loggeren `secureLogger` og en umaskert appender - se logback-spring.xml.
+     */
+    @Test
+    fun `skal auditlogge oppslaget med saksbehandler, person og utfall`() {
+        stubHenvendelser("""{ "data": [], "currentPage": 1, "pageSize": 100, "totalPages": 0, "hasNextPage": false }""")
+        val auditlinjer = lyttPåAuditloggen()
+
+        hentHenvendelser(FNR).statusCode shouldBe HttpStatus.OK
+
+        val linje = auditlinjer.list.single().formattedMessage
+        linje shouldContain "suid=$NAVIDENT"
+        linje shouldContain "duid=$FNR"
+        linje shouldContain "flexString1=permit"
+        linje shouldContain "request=/henvendelser"
+    }
+
+    @Test
+    fun `skal auditlogge avslag som deny`() {
+        stubTilgang(harTilgang = false)
+        val auditlinjer = lyttPåAuditloggen()
+
+        hentHenvendelser(FNR).statusCode shouldBe HttpStatus.FORBIDDEN
+
+        auditlinjer.list.single().formattedMessage shouldContain "flexString1=deny"
+    }
+
+    private fun lyttPåAuditloggen(): ListAppender<ILoggingEvent> {
+        val appender = ListAppender<ILoggingEvent>()
+        appender.start()
+        (LoggerFactory.getLogger("secureLogger") as Logger).addAppender(appender)
+        return appender
+    }
+
     private fun stubTilgang(harTilgang: Boolean) {
         wireMockServer.stubFor(
-            post(urlPathEqualTo("/tilgang/v2/api/tilgang/person")).willReturn(
+            post(urlPathEqualTo("/tilgang/v2/api/sporingsdata/person")).willReturn(
                 aResponse()
                     .withHeader("Content-Type", "application/json")
-                    .withBody("""{ "harTilgang": $harTilgang }"""),
+                    .withBody("""{ "personIdent": "$FNR", "tilgang": $harTilgang, "ekstrafelter": [] }"""),
             ),
         )
     }
@@ -326,9 +363,22 @@ class HenvendelseIntegrasjonTest {
         null,
     )
 
+    /**
+     * `NAVident` er claimet auditsporet identifiserer saksbehandleren med, og
+     * `ContextService.hentPåloggetSaksbehandler()` feiler uten det. Nais-templaten ber Azure
+     * om claimet, så et token uten det finnes ikke i praksis.
+     */
     private fun token() = mockOAuth2Server
-        .issueToken("aad", "Z999999", "test-client-id")
-        .serialize()
+        .issueToken(
+            "aad",
+            NAVIDENT,
+            DefaultOAuth2TokenCallback(
+                issuerId = "aad",
+                subject = NAVIDENT,
+                audience = listOf("test-client-id"),
+                claims = mapOf("NAVident" to NAVIDENT),
+            ),
+        ).serialize()
 
     /** Sammenligner uten mellomrom, slik at testen ikke avhenger av formateringen av JSON-en. */
     private infix fun String.shouldContainJson(forventet: String) {
@@ -344,6 +394,7 @@ class HenvendelseIntegrasjonTest {
     companion object {
         private const val FNR = "17490123474"
         private const val AKTØRID = "2000012345678"
+        private const val NAVIDENT = "Z999999"
         private const val HENVENDELSESTI = "/henvendelse/henvendelseinfo/henvendelseliste"
     }
 }

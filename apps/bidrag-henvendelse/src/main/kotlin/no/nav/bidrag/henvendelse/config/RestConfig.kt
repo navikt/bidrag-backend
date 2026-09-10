@@ -1,5 +1,6 @@
 package no.nav.bidrag.henvendelse.config
 
+import no.nav.bidrag.commons.logging.audit.AuditLogger
 import no.nav.bidrag.commons.security.api.EnableSecurityConfiguration
 import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.commons.web.config.RestOperationsAzure
@@ -19,7 +20,7 @@ import org.springframework.web.client.RestTemplate
  */
 @Configuration
 @EnableSecurityConfiguration
-@Import(RestOperationsAzure::class, TilgangClient::class)
+@Import(RestOperationsAzure::class, TilgangClient::class, AuditLogger::class)
 class RestConfig {
     @Bean
     fun clientRequestObservationConvention(): ClientRequestObservationConvention = DefaultClientRequestObservationConvention()
