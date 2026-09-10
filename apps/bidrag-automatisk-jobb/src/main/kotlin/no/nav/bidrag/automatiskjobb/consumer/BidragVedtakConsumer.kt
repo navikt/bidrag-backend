@@ -5,7 +5,6 @@ import no.nav.bidrag.automatiskjobb.configuration.CacheConfiguration.Companion.V
 import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
 import no.nav.bidrag.automatiskjobb.utils.JsonUtil.Companion.tilJson
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningVedtakConsumer
-import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.behandling.vedtak.request.HentManuelleVedtakRequest
 import no.nav.bidrag.transport.behandling.vedtak.request.HentVedtakForStønadRequest
@@ -36,23 +35,10 @@ class BidragVedtakConsumer(
     private val bidragVedtakUri
         get() = UriComponentsBuilder.fromUri(bidragVedtakUrl)
 
-    fun opprettVedtak(request: OpprettVedtakRequestDto): OpprettVedtakResponseDto = try {
-        postForNonNullEntity(
-            bidragVedtakUri.pathSegment("vedtak").build().toUri(),
-            request,
-        )
-    } catch (e: HttpStatusCodeException) {
-        if (e.statusCode == HttpStatus.CONFLICT) {
-            val resultat = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
-            secureLogger.info {
-                "Vedtak med referanse ${request.unikReferanse} finnes allerede med vedtaksid ${resultat.vedtaksid}."
-            }
-            OpprettVedtakResponseDto(resultat.vedtaksid, emptyList())
-        } else {
-            secureLogger.error(e) { "Feil ved oppretting av vedtak med referanse ${request.unikReferanse}" }
-            throw e
-        }
-    }
+    fun opprettVedtak(request: OpprettVedtakRequestDto): OpprettVedtakResponseDto = postForNonNullEntity(
+        bidragVedtakUri.pathSegment("vedtak").build().toUri(),
+        request,
+    )
 
     fun hentVedtaksforslagBasertPåReferanase(referanse: String): VedtakDto? = postForEntity(
         bidragVedtakUri

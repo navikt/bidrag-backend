@@ -33,34 +33,6 @@ class BidragVedtakConsumerTest {
     )
 
     @Test
-    fun `skal returnere eksisterende vedtaksid ved 409 Conflict`() {
-        mockServer.expect(requestTo("http://bidrag-vedtak/vedtak"))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(
-                withStatus(HttpStatus.CONFLICT)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body("""{"vedtaksid": 555}"""),
-            )
-
-        val respons = consumer.opprettVedtak(request)
-
-        respons.vedtaksid shouldBe 555
-        mockServer.verify()
-    }
-
-    @Test
-    fun `skal kaste videre ved andre feil enn 409`() {
-        mockServer.expect(requestTo("http://bidrag-vedtak/vedtak"))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR))
-
-        shouldThrow<HttpStatusCodeException> {
-            consumer.opprettVedtak(request)
-        }
-        mockServer.verify()
-    }
-
-    @Test
     fun `skal returnere respons ved suksess`() {
         mockServer.expect(requestTo("http://bidrag-vedtak/vedtak"))
             .andExpect(method(HttpMethod.POST))
@@ -74,6 +46,22 @@ class BidragVedtakConsumerTest {
         val respons = consumer.opprettVedtak(request)
 
         respons.vedtaksid shouldBe 42
+        mockServer.verify()
+    }
+
+    @Test
+    fun `skal la feil propagere - 409-håndtering ligger i service-laget`() {
+        mockServer.expect(requestTo("http://bidrag-vedtak/vedtak"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(
+                withStatus(HttpStatus.CONFLICT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body("""{"vedtaksid": 555}"""),
+            )
+
+        shouldThrow<HttpStatusCodeException> {
+            consumer.opprettVedtak(request)
+        }
         mockServer.verify()
     }
 }

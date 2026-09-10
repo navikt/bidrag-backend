@@ -1,5 +1,6 @@
 package no.nav.bidrag.automatiskjobb.service
 
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -10,6 +11,7 @@ import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
+import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -31,7 +33,12 @@ import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
+import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.LocalDateTime
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as BeregnVedtakService
@@ -176,6 +183,28 @@ class SakServiceTest {
         sakService.behandleSakHendelse(sakHendelse(reellMottaker = SAMHANDLER_ID))
 
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
+    }
+
+    @Test
+    fun `skal ikke feile når vedtaket allerede finnes (409 Conflict)`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        val konflikt = HttpClientErrorException.create(
+            HttpStatus.CONFLICT,
+            "Conflict",
+            HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON },
+            """{"vedtaksid": 999}""".toByteArray(StandardCharsets.UTF_8),
+            StandardCharsets.UTF_8,
+        ).apply {
+            // RestTemplate setter normalt denne; her setter vi den manuelt så getResponseBodyAs virker.
+            setBodyConvertFunction { OpprettVedtakConflictResponse(999) }
+        }
+        every { bidragVedtakConsumer.opprettVedtak(any()) } throws konflikt
+
+        shouldNotThrowAny {
+            sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        }
+
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     private fun stubLøpendeStønad(

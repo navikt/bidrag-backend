@@ -3,6 +3,7 @@ package no.nav.bidrag.automatiskjobb.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
+import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
 import no.nav.bidrag.automatiskjobb.utils.hentSisteLøpendePeriode
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
@@ -21,7 +22,9 @@ import no.nav.bidrag.transport.behandling.vedtak.request.OpprettStønadsendringR
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.sak.BarnISak
 import no.nav.bidrag.transport.sak.SakHendelse
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDateTime
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as BeregnVedtakService
 
@@ -111,36 +114,52 @@ class SakService(
         løpendeStønad: StønadDto,
         nyMottaker: Personident,
     ) {
-        val respons =
-            bidragVedtakConsumer.opprettVedtak(
-                OpprettVedtakRequestDto(
-                    type = Vedtakstype.ENDRING_MOTTAKER,
-                    kilde = Vedtakskilde.AUTOMATISK,
-                    vedtakstidspunkt = LocalDateTime.now(),
-                    enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
-                    unikReferanse = unikReferanse(stønadsid, nyMottaker),
-                    grunnlagListe = emptyList(),
-                    engangsbeløpListe = emptyList(),
-                    behandlingsreferanseListe = emptyList(),
-                    stønadsendringListe =
-                    listOf(
-                        OpprettStønadsendringRequestDto(
-                            type = stønadsid.type,
-                            sak = stønadsid.sak,
-                            kravhaver = stønadsid.kravhaver,
-                            skyldner = stønadsid.skyldner,
-                            mottaker = nyMottaker,
-                            beslutning = Beslutningstype.ENDRING,
-                            innkreving = løpendeStønad.innkreving,
-                            sisteVedtaksid = beregnVedtakService.finnSisteVedtaksid(stønadsid),
-                            grunnlagReferanseListe = emptyList(),
-                            periodeListe = emptyList(),
-                        ),
+        val request =
+            OpprettVedtakRequestDto(
+                type = Vedtakstype.ENDRING_MOTTAKER,
+                kilde = Vedtakskilde.AUTOMATISK,
+                vedtakstidspunkt = LocalDateTime.now(),
+                enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
+                unikReferanse = unikReferanse(stønadsid, nyMottaker),
+                grunnlagListe = emptyList(),
+                engangsbeløpListe = emptyList(),
+                behandlingsreferanseListe = emptyList(),
+                stønadsendringListe =
+                listOf(
+                    OpprettStønadsendringRequestDto(
+                        type = stønadsid.type,
+                        sak = stønadsid.sak,
+                        kravhaver = stønadsid.kravhaver,
+                        skyldner = stønadsid.skyldner,
+                        mottaker = nyMottaker,
+                        beslutning = Beslutningstype.ENDRING,
+                        innkreving = løpendeStønad.innkreving,
+                        sisteVedtaksid = beregnVedtakService.finnSisteVedtaksid(stønadsid),
+                        grunnlagReferanseListe = emptyList(),
+                        periodeListe = emptyList(),
                     ),
                 ),
             )
+
+        val vedtaksid =
+            try {
+                bidragVedtakConsumer.opprettVedtak(request).vedtaksid
+            } catch (e: HttpStatusCodeException) {
+                // Et vedtak med samme unike referanse finnes allerede – behandle som allerede utført (idempotent).
+                if (e.statusCode == HttpStatus.CONFLICT) {
+                    val eksisterende = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
+                    LOGGER.info {
+                        "Vedtak for endring av mottaker for ${stønadsid.type.name.lowercase()} i sak ${stønadsid.sak.verdi} " +
+                            "finnes allerede med vedtaksid ${eksisterende.vedtaksid}. Fatter ikke nytt vedtak."
+                    }
+                    eksisterende.vedtaksid
+                } else {
+                    throw e
+                }
+            }
+
         LOGGER.info {
-            "Fattet vedtak ${respons.vedtaksid} for endring av mottaker for ${stønadsid.type.name.lowercase()} " +
+            "Fattet vedtak $vedtaksid for endring av mottaker for ${stønadsid.type.name.lowercase()} " +
                 "i sak ${stønadsid.sak.verdi}."
         }
         secureLogger.info { "Endring av mottaker for ${stønadsid.toReferanse()}, ny mottaker $nyMottaker." }
