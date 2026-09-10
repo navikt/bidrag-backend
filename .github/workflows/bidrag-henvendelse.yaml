@@ -7,9 +7,9 @@ on:
         required: true
         type: choice
         options:
-          - prod
-          - q1
           - q2
+          - q1
+          - prod
       hopp_over_tester:
         description: >-
           Hopp over tester og ktlint for å tvinge gjennom en deploy.
