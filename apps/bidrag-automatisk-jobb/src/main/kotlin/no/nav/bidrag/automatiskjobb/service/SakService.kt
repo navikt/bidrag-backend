@@ -17,7 +17,6 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Stønadsid
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
-import no.nav.bidrag.transport.behandling.vedtak.request.OpprettPeriodeRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettStønadsendringRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.sak.BarnISak
@@ -112,7 +111,6 @@ class SakService(
         løpendeStønad: StønadDto,
         nyMottaker: Personident,
     ) {
-        val løpendePeriode = løpendeStønad.periodeListe.hentSisteLøpendePeriode()!!
         val respons =
             bidragVedtakConsumer.opprettVedtak(
                 OpprettVedtakRequestDto(
@@ -136,16 +134,7 @@ class SakService(
                             innkreving = løpendeStønad.innkreving,
                             sisteVedtaksid = beregnVedtakService.finnSisteVedtaksid(stønadsid),
                             grunnlagReferanseListe = emptyList(),
-                            periodeListe =
-                            listOf(
-                                OpprettPeriodeRequestDto(
-                                    periode = løpendePeriode.periode,
-                                    beløp = løpendePeriode.beløp,
-                                    valutakode = løpendePeriode.valutakode,
-                                    resultatkode = løpendePeriode.resultatkode,
-                                    grunnlagReferanseListe = emptyList(),
-                                ),
-                            ),
+                            periodeListe = emptyList()
                         ),
                     ),
                 ),

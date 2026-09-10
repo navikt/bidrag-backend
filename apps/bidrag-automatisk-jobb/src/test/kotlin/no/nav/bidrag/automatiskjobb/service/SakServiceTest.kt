@@ -1,5 +1,6 @@
 package no.nav.bidrag.automatiskjobb.service
 
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
@@ -80,6 +81,21 @@ class SakServiceTest {
         stønadsendring.kravhaver shouldBe Personident(kravhaver)
         stønadsendring.skyldner shouldBe personidentNav
         stønadsendring.mottaker shouldBe Personident(nyReellMottaker)
+        stønadsendring.periodeListe.shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal ikke sette perioder på vedtaket`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+
+        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.stønadsendringListe
+            .single()
+            .periodeListe
+            .shouldBeEmpty()
     }
 
     @Test
