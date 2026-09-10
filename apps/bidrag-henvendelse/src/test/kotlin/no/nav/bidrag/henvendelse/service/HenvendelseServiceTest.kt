@@ -1,16 +1,20 @@
 package no.nav.bidrag.henvendelse.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.henvendelse.aop.IngenTilgangException
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
 import no.nav.bidrag.henvendelse.dto.Henvendelsestype
 import org.hamcrest.CoreMatchers.startsWith
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
@@ -32,12 +36,19 @@ class HenvendelseServiceTest {
     private val personident = Personident(SYNTETISK_FNR)
 
     private val bidragPersonConsumer = mockk<BidragPersonConsumer>()
+    private val tilgangClient = mockk<TilgangClient>()
     private val restTemplate = RestTemplate()
     private val mockServer = MockRestServiceServer.bindTo(restTemplate).build()
     private val service = HenvendelseService(
         bidragPersonConsumer,
         HenvendelseConsumer(URI.create(BASE_URL), restTemplate),
+        Tilgangskontroll(tilgangClient),
     )
+
+    @BeforeEach
+    fun girTilgang() {
+        every { tilgangClient.harTilgangPerson(personident) } returns true
+    }
 
     @Test
     fun `skal hente henvendelser og mappe til bidrag-dto`() {
@@ -158,6 +169,20 @@ class HenvendelseServiceTest {
 
         henvendelser shouldHaveSize 1
         henvendelser.single().henvendelsestype shouldBe Henvendelsestype.UKJENT
+    }
+
+    /**
+     * Sjekken skal skje før identvekslingen, ellers avslører responstiden - og et eventuelt
+     * avvik i loggen - om personen finnes i bidrag-person.
+     */
+    @Test
+    fun `skal kaste IngenTilgangException uten å slå opp personen når saksbehandleren mangler tilgang`() {
+        every { tilgangClient.harTilgangPerson(personident) } returns false
+
+        shouldThrow<IngenTilgangException> { service.hentHenvendelser(personident) }
+
+        verify(exactly = 0) { bidragPersonConsumer.hentAktørid(any()) }
+        mockServer.verify()
     }
 
     @Test

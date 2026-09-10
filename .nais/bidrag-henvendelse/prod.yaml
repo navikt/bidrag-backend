@@ -6,6 +6,11 @@ env:
   HENVENDELSE_SCOPE: prod-gcp.teamnks.sf-henvendelse-api-proxy
   BIDRAG_PERSON_URL: https://bidrag-person.intern.nav.no
   BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
+  # bidrag-tilgangskontroll kjører i samme cluster, så kallet går på tjenestenavnet framfor
+  # ingressen - samme oppsett som bidrag-behandling. Navnet BIDRAG_TILGANG_URL kreves av
+  # TilgangClient i bidrag-commons.
+  BIDRAG_TILGANG_URL: http://bidrag-tilgangskontroll
+  BIDRAG_TILGANG_SCOPE: prod-gcp.bidrag.bidrag-tilgangskontroll
   JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
   - application: bidrag-frontend
@@ -14,3 +19,5 @@ azure_access_inbound:
 outbound-access-hosts:
   - sf-henvendelse.intern.nav.no
   - bidrag-person.intern.nav.no
+outbound-access-apps:
+  - bidrag-tilgangskontroll

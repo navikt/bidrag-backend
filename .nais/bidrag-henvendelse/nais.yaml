@@ -33,6 +33,9 @@ spec:
           - host: {{this}}
       {{/each}}
       rules:
+      {{#each outbound-access-apps}}
+          - application: {{this}}
+      {{/each}}
           - application: logging
             namespace: nais-system
   liveness:

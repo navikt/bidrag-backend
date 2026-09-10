@@ -10,6 +10,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.post
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.http.Fault
 import io.kotest.matchers.collections.shouldHaveSize
@@ -72,8 +73,9 @@ class HenvendelseIntegrasjonTest {
     }
 
     @BeforeEach
-    fun stubPerson() {
+    fun stubTilgangOgPerson() {
         wireMockServer.resetAll()
+        stubTilgang(harTilgang = true)
         wireMockServer.stubFor(
             post(urlPathEqualTo("/person/personidenter")).willReturn(
                 aResponse()
@@ -81,6 +83,19 @@ class HenvendelseIntegrasjonTest {
                     .withBody("""[ { "ident": "$AKTØRID", "historisk": false, "gruppe": "AKTORID" } ]"""),
             ),
         )
+    }
+
+    @Test
+    fun `skal svare 403 ProblemDetail når saksbehandleren ikke har tilgang til personen`() {
+        stubTilgang(harTilgang = false)
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.FORBIDDEN
+        respons.body!! shouldContain "Ingen tilgang"
+        // Uten tilgang skal vi verken ha vekslet ident eller spurt kilden.
+        wireMockServer.findAll(getRequestedFor(urlPathEqualTo(HENVENDELSESTI))) shouldHaveSize 0
+        wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/person/personidenter"))) shouldHaveSize 0
     }
 
     /**
@@ -262,6 +277,16 @@ class HenvendelseIntegrasjonTest {
 
         linje shouldNotContain AKTØRID
         linje shouldContain "*".repeat(AKTØRID.length)
+    }
+
+    private fun stubTilgang(harTilgang: Boolean) {
+        wireMockServer.stubFor(
+            post(urlPathEqualTo("/tilgang/v2/api/tilgang/person")).willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("""{ "harTilgang": $harTilgang }"""),
+            ),
+        )
     }
 
     private fun stubHenvendelser(respons: String) {

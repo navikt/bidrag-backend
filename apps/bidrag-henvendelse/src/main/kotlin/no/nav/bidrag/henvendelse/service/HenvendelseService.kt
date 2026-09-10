@@ -17,12 +17,18 @@ private val log = KotlinLogging.logger {}
 class HenvendelseService(
     private val bidragPersonConsumer: BidragPersonConsumer,
     private val henvendelseConsumer: HenvendelseConsumer,
+    private val tilgangskontroll: Tilgangskontroll,
 ) {
     /**
      * Henter henvendelsene for en person. Personer uten aktørid får tom liste uten at det
      * gjøres kall mot henvendelsesløsningen - samme oppførsel som BiSys.
+     *
+     * Tilgangen sjekkes før identvekslingen, slik at et oppslag saksbehandleren ikke har lov
+     * til å gjøre heller ikke avslører om personen finnes i bidrag-person.
      */
     fun hentHenvendelser(personident: Personident): HenvendelserDto {
+        tilgangskontroll.sjekkTilgangTilPerson(personident)
+
         val aktørid = bidragPersonConsumer.hentAktørid(personident)
         if (aktørid == null) {
             log.info { "Fant ingen aktørid for personen. Returnerer tom henvendelsesliste." }
