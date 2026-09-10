@@ -68,7 +68,6 @@ class VedtakHendelseListenerTest {
         every { kafkaTemplate.afterSingletonsInstantiated() } returns Unit
     }
 
-    @Disabled
     @Test
     fun `skal lese vedtakshendelse Forskudd uten feil`() {
         stubHenteVedtak(byggVedtakDtoForskudd())
@@ -115,7 +114,6 @@ class VedtakHendelseListenerTest {
         verify(statistikkKafkaEventProducerMock, times(2)).publishForskudd(anyOrNull())
     }
 
-    @Disabled
     @Test
     fun `skal lese vedtakshendelse Forskudd uten grunnlag og sjekke at det fortsatt produseres hendelse`() {
         stubHenteVedtak(byggVedtakDtoUtenGrunnlag())
@@ -162,7 +160,6 @@ class VedtakHendelseListenerTest {
         verify(statistikkKafkaEventProducerMock, times(1)).publishForskudd(anyOrNull())
     }
 
-    @Disabled
     @Test
     fun `skal ikke behandle hendelse Forskudd hvis vedtak ikke inneholder forskudd eller bidrag`() {
         stubHenteVedtak(byggVedtakDtoUtenForskuddOgBidrag())
@@ -475,69 +472,6 @@ class VedtakHendelseListenerTest {
         assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
         assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
         assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))
-    }
-
-    @Disabled
-    @Test
-    fun `skal lese vedtakshendelse Bidrag med netto tilsynsutgift og faktisk utgift uten feil2`() {
-        val captor = argumentCaptor<BidragHendelse>()
-        stubHenteVedtak(lesVedtakDtoFraFil("src/test/resources/fil/test.json"))
-        vedtakHendelseListener.lesHendelse(
-            """
-            {
-              "kilde":"MANUELT",
-              "type":"INNKREVING",
-              "id":"999999999",
-              "opprettetAv":"ABCDEFG",
-              "kildeapplikasjon":"bisys",              
-              "vedtakstidspunkt":"2012-10-03T09:44:33.000619",              
-              "enhetsnummer":"ABCD",
-              "opprettetTidspunkt":"2012-10-03T09:44:33.000619",    
-              "stønadsendringListe": [
-                {
-                 "type": "OPPFOSTRINGSBIDRAG",
-                 "sak": "1210712",
-                 "skyldner": "12345678901",
-                 "kravhaver": "23456789012",
-                 "mottaker": "34567890123",
-                 "innkreving": "MED_INNKREVING",
-                 "beslutning": "ENDRING",
-                 "periodeListe": []             
-                }
-              ],
-              "sporingsdata":
-                {
-                "correlationId":""            
-                }
-            }
-            """.trimIndent(),
-        )
-        verify(statistikkKafkaEventProducerMock, times(2)).publishBidrag(captor.capture())
-
-        val hendelser = captor.allValues
-        /*        assertThat(hendelser[0].vedtaksid).isEqualTo(4796607)
-                assertThat(hendelser[0].vedtakstidspunkt).isEqualTo("2025-08-27T11:00:00.000001")
-                assertThat(hendelser[0].type).isEqualTo("ENDRING")
-                assertThat(hendelser[0].saksnr).isEqualTo("1210712")
-                assertThat(hendelser[0].skyldner).isEqualTo("12345678901")
-                assertThat(hendelser[0].kravhaver).isEqualTo("23456789012")
-                assertThat(hendelser[0].mottaker).isEqualTo("34567890123")
-                assertThat(hendelser[0].historiskVedtak).isFalse
-                assertThat(hendelser[0].bidragPeriodeListe.size == 1)
-
-                assertThat(hendelser[0].bidragPeriodeListe[0].periodeFra).isEqualTo(LocalDate.of(2025, 7, 1))
-                assertThat(hendelser[0].bidragPeriodeListe[0].periodeTil).isNull()
-                assertThat(hendelser[0].bidragPeriodeListe[0].beløp).isEqualTo(BigDecimal.valueOf(2170))
-                assertThat(hendelser[0].bidragPeriodeListe[0].bidragsevne).isEqualTo(BigDecimal.valueOf(7798.48))
-                assertThat(hendelser[0].bidragPeriodeListe[0].underholdskostnad).isEqualTo(BigDecimal.valueOf(7925.31))
-                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnersAndelUnderholdskostnad).isEqualTo(BigDecimal.valueOf(3266.75))
-                assertThat(hendelser[0].bidragPeriodeListe[0].samværsfradrag).isEqualTo(BigDecimal.valueOf(1099))
-                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggSkyldner).isEqualTo(BigDecimal.valueOf(613.58))
-                assertThat(hendelser[0].bidragPeriodeListe[0].nettoBarnetilleggMottaker).isNull()
-                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerBorMedAndreVoksne).isFalse
-                assertThat(hendelser[0].bidragPeriodeListe[0].samværsklasse).isEqualTo(Samværsklasse.SAMVÆRSKLASSE_2)
-                assertThat(hendelser[0].bidragPeriodeListe[0].skyldnerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(496864))
-                assertThat(hendelser[0].bidragPeriodeListe[0].mottakerInntektListe?.sumOf { it.beløp }).isEqualTo(BigDecimal.valueOf(708553))*/
     }
 
     @Test
