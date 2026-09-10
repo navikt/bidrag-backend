@@ -7,15 +7,12 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.henvendelse.aop.IngenTilgangException
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
 import no.nav.bidrag.henvendelse.dto.Henvendelsestype
-import no.nav.bidrag.transport.tilgang.Sporingsdata
 import org.hamcrest.CoreMatchers.startsWith
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
@@ -37,19 +34,14 @@ class HenvendelseServiceTest {
     private val personident = Personident(SYNTETISK_FNR)
 
     private val bidragPersonConsumer = mockk<BidragPersonConsumer>()
-    private val tilgangClient = mockk<TilgangClient>()
+    private val tilgangskontroll = mockk<Tilgangskontroll>(relaxed = true)
     private val restTemplate = RestTemplate()
     private val mockServer = MockRestServiceServer.bindTo(restTemplate).build()
     private val service = HenvendelseService(
         bidragPersonConsumer,
         HenvendelseConsumer(URI.create(BASE_URL), restTemplate),
-        Tilgangskontroll(tilgangClient, mockk(relaxed = true)),
+        tilgangskontroll,
     )
-
-    @BeforeEach
-    fun girTilgang() {
-        every { tilgangClient.hentSporingsdataPerson(personident) } returns Sporingsdata(personident.verdi, tilgang = true)
-    }
 
     @Test
     fun `skal hente henvendelser og mappe til bidrag-dto`() {
@@ -178,7 +170,7 @@ class HenvendelseServiceTest {
      */
     @Test
     fun `skal kaste IngenTilgangException uten å slå opp personen når saksbehandleren mangler tilgang`() {
-        every { tilgangClient.hentSporingsdataPerson(personident) } returns Sporingsdata(personident.verdi, tilgang = false)
+        every { tilgangskontroll.sjekkTilgangTilPerson(personident) } throws IngenTilgangException()
 
         shouldThrow<IngenTilgangException> { service.hentHenvendelser(personident) }
 

@@ -2,6 +2,7 @@ package no.nav.bidrag.henvendelse.service
 
 import no.nav.bidrag.commons.logging.audit.AuditLogger
 import no.nav.bidrag.commons.logging.audit.AuditLoggerEvent
+import no.nav.bidrag.commons.security.ContextService
 import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.henvendelse.aop.IngenTilgangException
@@ -27,6 +28,14 @@ class Tilgangskontroll(
     private val auditLogger: AuditLogger,
 ) {
     fun sjekkTilgangTilPerson(personident: Personident) {
+        // Maskintoken avvises framfor å vurderes: for et client_credentials-token svarer
+        // bidrag-tilgangskontroll harTilgang=true uten å spørre tilgangsmaskinen i det hele
+        // tatt (se TilgangskontrollService.erApplikasjonsbruker), og AuditLogger hopper over
+        // både linja og avslaget. Vi ville altså stått uten både vurdering og spor. Appen har
+        // ingen maskin-til-maskin-konsument - sf-henvendelse-api-proxy avviser dem uansett
+        // utenfor /kodeverk/ - så det riktige er å stoppe kallet her.
+        if (ContextService.erMaskinTilMaskinToken()) throw IngenTilgangException()
+
         val sporingsdata = tilgangClient.hentSporingsdataPerson(personident)
 
         // AuditLogger skriver linja og kaster selv 403 ved avslag. Den kommer som en
@@ -38,8 +47,8 @@ class Tilgangskontroll(
             throw IngenTilgangException()
         }
 
-        // AuditLogger hopper over både logging og avslag for maskintoken. Kravet gjelder
-        // uansett hvem som kaller, så avgjørelsen håndheves her i tillegg.
+        // AuditLogger kaster selv ved avslag, men bare for brukertoken. Avgjørelsen håndheves
+        // derfor også her, slik at den ikke hviler på oppførselen til loggeren.
         if (!sporingsdata.tilgang) throw IngenTilgangException()
     }
 }
