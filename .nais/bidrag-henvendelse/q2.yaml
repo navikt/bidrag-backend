@@ -1,0 +1,30 @@
+name: bidrag-henvendelse-q2
+ingresses:
+  - https://bidrag-henvendelse-q2.intern.dev.nav.no
+env:
+  # sf-henvendelse-api-proxy ligger i namespace teamnks og finnes bare i én dev-instans,
+  # så q1 og q2 deler den. Se .nais/dev-gcp.yaml i navikt/sf-henvendelse-api-proxy - begge
+  # appnavnene våre må inn i deres accessPolicy.inbound før kallene går gjennom.
+  HENVENDELSE_URL: https://sf-henvendelse.intern.dev.nav.no
+  HENVENDELSE_SCOPE: dev-gcp.teamnks.sf-henvendelse-api-proxy
+  # bidrag-person kjører i FSS og er delt i q1/q2. q2 er miljøet BiSys-testdataene og
+  # Dolly-personene ligger i, så manuell testing skjer her.
+  BIDRAG_PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no
+  BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+azure_access_inbound:
+  - application: bidrag-frontend-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+  # azure-token-generator gir et OBO-token som innlogget testsaksbehandler, slik at
+  # endepunktene kan kalles fra Swagger uten frontend. Maskintoken duger ikke:
+  # sf-henvendelse-api-proxy avviser client_credentials med 403 utenfor /kodeverk/.
+  - application: azure-token-generator
+    namespace: nais
+    cluster: dev-gcp
+outbound-access-hosts:
+  - sf-henvendelse.intern.dev.nav.no
+  - bidrag-person-q2.intern.dev.nav.no
