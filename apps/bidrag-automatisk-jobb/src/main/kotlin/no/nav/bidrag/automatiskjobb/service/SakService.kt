@@ -150,7 +150,7 @@ class SakService(
             } catch (e: HttpStatusCodeException) {
                 if (e.statusCode == HttpStatus.CONFLICT) {
                     val eksisterende = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
-                    LOGGER.info {
+                    LOGGER.error {
                         "Vedtak for endring av mottaker for ${stønadsid.type.name.lowercase()} i sak ${stønadsid.sak.verdi} " +
                             "finnes allerede med vedtaksid ${eksisterende.vedtaksid}. Fatter ikke nytt vedtak."
                     }
