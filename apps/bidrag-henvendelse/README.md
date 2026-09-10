@@ -156,6 +156,18 @@ Swagger-UI ligger på root path, OpenAPI-spesifikasjonen på `/v3/api-docs`:
 Trykk **Authorize** og lim inn et token for en fiktiv saksbehandler fra Ida. I dev får du et
 fra `azure-token-generator`.
 
-## Ikke implementert: auditlogging og tilgangskontroll
+## Tilgangskontroll
 
-Oppslag auditlogges ikke, og ingen ledd i kjeden sjekker tilgang til personen.
+Hvert oppslag sjekkes mot bidrag-tilgangskontroll (`TilgangClient` i bidrag-commons) før
+identvekslingen, og saksbehandlere uten tilgang får 403. Sjekken må ligge her: endepunktet
+`/henvendelseinfo/henvendelseliste` i navikt/crm-henvendelse er deklarert `without sharing`,
+og sf-henvendelse-api-proxy kontrollerer bare at tokenet er gyldig. Ingen ledd etter oss ser
+på om saksbehandleren har tilgang til personen.
+
+Kallet går på tjenestenavnet i clusteret (`http://bidrag-tilgangskontroll`), ikke ingressen,
+og krever at appen står i `azure_access_inbound` hos bidrag-tilgangskontroll.
+
+## Ikke implementert: auditlogging
+
+Oppslag auditlogges ikke. Ingen app i dette repoet gjør det i dag - `AuditLogger` i
+bidrag-commons kalles bare fra `AuditAdvice`, og ingen annoterer med `@AuditLog`.

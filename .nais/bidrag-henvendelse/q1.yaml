@@ -11,6 +11,11 @@ env:
   # fra pdl-api-q1. En person som bare finnes i q2 gir tom liste, ikke feil.
   BIDRAG_PERSON_URL: https://bidrag-person-q1.intern.dev.nav.no
   BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q1
+  # bidrag-tilgangskontroll kjører i samme cluster, så kallet går på tjenestenavnet framfor
+  # ingressen - samme oppsett som bidrag-behandling. Navnet BIDRAG_TILGANG_URL kreves av
+  # TilgangClient i bidrag-commons. q1-instansen deres heter -feature, ikke -q1.
+  BIDRAG_TILGANG_URL: http://bidrag-tilgangskontroll-feature
+  BIDRAG_TILGANG_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll-feature
   JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
   - application: bidrag-frontend-q1
@@ -28,3 +33,5 @@ azure_access_inbound:
 outbound-access-hosts:
   - sf-henvendelse.intern.dev.nav.no
   - bidrag-person-q1.intern.dev.nav.no
+outbound-access-apps:
+  - bidrag-tilgangskontroll-feature

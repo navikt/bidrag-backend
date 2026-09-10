@@ -84,6 +84,20 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
         )
     }
 
+    /**
+     * Detaljteksten sier ikke om personen finnes. Frontend har egen håndtering av 403, se
+     * `packages/api/src/TilgangsFeilError.ts` i bidrag-frontend.
+     */
+    @ExceptionHandler(IngenTilgangException::class)
+    fun handleIngenTilgang(exception: IngenTilgangException): ProblemDetail {
+        log.warn { "Saksbehandleren mangler tilgang til personen i forespørselen" }
+        return problemDetail(
+            status = HttpStatus.FORBIDDEN,
+            tittel = "Ingen tilgang",
+            detalj = "Du har ikke tilgang til å se henvendelser for denne personen.",
+        )
+    }
+
     @ExceptionHandler(UgyldigIdentException::class)
     fun handleUgyldigIdent(exception: UgyldigIdentException): ProblemDetail {
         log.warn { "Fikk forespørsel med ugyldig ident" }
@@ -145,3 +159,6 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
 
 /** Kastes når identen i forespørselen ikke er en gyldig personident. */
 class UgyldigIdentException : RuntimeException("Ugyldig personident")
+
+/** Kastes når bidrag-tilgangskontroll svarer at saksbehandleren ikke har tilgang til personen. */
+class IngenTilgangException : RuntimeException("Ingen tilgang til personen")

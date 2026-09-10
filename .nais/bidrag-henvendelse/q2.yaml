@@ -11,6 +11,11 @@ env:
   # Dolly-personene ligger i, så manuell testing skjer her.
   BIDRAG_PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no
   BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
+  # bidrag-tilgangskontroll kjører i samme cluster, så kallet går på tjenestenavnet framfor
+  # ingressen - samme oppsett som bidrag-behandling. Navnet BIDRAG_TILGANG_URL kreves av
+  # TilgangClient i bidrag-commons.
+  BIDRAG_TILGANG_URL: http://bidrag-tilgangskontroll
+  BIDRAG_TILGANG_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll
   JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
   - application: bidrag-frontend-q2
@@ -28,3 +33,5 @@ azure_access_inbound:
 outbound-access-hosts:
   - sf-henvendelse.intern.dev.nav.no
   - bidrag-person-q2.intern.dev.nav.no
+outbound-access-apps:
+  - bidrag-tilgangskontroll
