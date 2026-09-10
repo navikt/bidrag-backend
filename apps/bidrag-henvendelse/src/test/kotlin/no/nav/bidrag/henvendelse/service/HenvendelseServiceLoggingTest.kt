@@ -9,11 +9,9 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
-import no.nav.bidrag.transport.tilgang.Sporingsdata
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -35,13 +33,12 @@ class HenvendelseServiceLoggingTest {
     private val aktørid = "2000012345678"
 
     private val bidragPersonConsumer = mockk<BidragPersonConsumer>()
-    private val tilgangClient = mockk<TilgangClient>()
     private val restTemplate = RestTemplate()
     private val mockServer = MockRestServiceServer.bindTo(restTemplate).build()
     private val service = HenvendelseService(
         bidragPersonConsumer,
         HenvendelseConsumer(URI.create("http://sf-henvendelse"), restTemplate),
-        Tilgangskontroll(tilgangClient, mockk(relaxed = true)),
+        mockk(relaxed = true),
     )
 
     private val logg = ListAppender<ILoggingEvent>()
@@ -49,7 +46,6 @@ class HenvendelseServiceLoggingTest {
 
     @BeforeEach
     fun start() {
-        every { tilgangClient.hentSporingsdataPerson(personident) } returns Sporingsdata(personident.verdi, tilgang = true)
         every { bidragPersonConsumer.hentAktørid(personident) } returns aktørid
         logg.start()
         rotlogger.addAppender(logg)

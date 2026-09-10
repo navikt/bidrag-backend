@@ -101,6 +101,25 @@ class HenvendelseIntegrasjonTest {
     }
 
     /**
+     * Maskintoken må avvises, ikke vurderes: bidrag-tilgangskontroll svarer harTilgang=true
+     * uten å spørre tilgangsmaskinen for client_credentials, og AuditLogger hopper over både
+     * linja og avslaget. Uten denne sperren kunne en app i accessPolicy.inbound hentet
+     * henvendelser om hvem som helst, usporet.
+     */
+    @Test
+    fun `skal svare 403 og ikke slå opp noe for maskintoken`() {
+        val auditlinjer = lyttPåAuditloggen()
+
+        val respons = kall("""{ "ident": "$FNR" }""", maskintoken())
+
+        respons.statusCode shouldBe HttpStatus.FORBIDDEN
+        wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/tilgang/v2/api/sporingsdata/person"))) shouldHaveSize 0
+        wireMockServer.findAll(postRequestedFor(urlPathEqualTo("/person/personidenter"))) shouldHaveSize 0
+        wireMockServer.findAll(getRequestedFor(urlPathEqualTo(HENVENDELSESTI))) shouldHaveSize 0
+        auditlinjer.list shouldHaveSize 0
+    }
+
+    /**
      * Formen her er den kilden faktisk svarer med, slik `CRM_HenvendelseInfoListRestService` i
      * navikt/crm-henvendelse serialiserer den - konvolutt med alle fem feltene, og henvendelser
      * med feltene vi ikke leser.
@@ -339,6 +358,11 @@ class HenvendelseIntegrasjonTest {
     private fun kall(
         body: String,
         medToken: Boolean,
+    ) = kall(body, if (medToken) token() else null)
+
+    private fun kall(
+        body: String,
+        token: String?,
     ) = klient.exchange(
         "http://localhost:$port/henvendelser",
         HttpMethod.POST,
@@ -346,7 +370,7 @@ class HenvendelseIntegrasjonTest {
             body,
             HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_JSON
-                if (medToken) setBearerAuth(token())
+                if (token != null) setBearerAuth(token)
             },
         ),
         String::class.java,
@@ -380,6 +404,22 @@ class HenvendelseIntegrasjonTest {
             ),
         ).serialize()
 
+    /**
+     * Formen ContextService.erMaskinTilMaskinToken() kjenner igjen: `oid` lik `sub`, rollen
+     * `access_as_application`, og ingen NAVident.
+     */
+    private fun maskintoken() = mockOAuth2Server
+        .issueToken(
+            "aad",
+            MASKINOID,
+            DefaultOAuth2TokenCallback(
+                issuerId = "aad",
+                subject = MASKINOID,
+                audience = listOf("test-client-id"),
+                claims = mapOf("oid" to MASKINOID, "roles" to listOf("access_as_application")),
+            ),
+        ).serialize()
+
     /** Sammenligner uten mellomrom, slik at testen ikke avhenger av formateringen av JSON-en. */
     private infix fun String.shouldContainJson(forventet: String) {
         this.replace(" ", "") shouldContain forventet
@@ -395,6 +435,7 @@ class HenvendelseIntegrasjonTest {
         private const val FNR = "17490123474"
         private const val AKTØRID = "2000012345678"
         private const val NAVIDENT = "Z999999"
+        private const val MASKINOID = "11111111-2222-3333-4444-555555555555"
         private const val HENVENDELSESTI = "/henvendelse/henvendelseinfo/henvendelseliste"
     }
 }

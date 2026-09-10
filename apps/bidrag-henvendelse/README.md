@@ -167,6 +167,11 @@ på om saksbehandleren har tilgang til personen.
 Kallet går på tjenestenavnet i clusteret (`http://bidrag-tilgangskontroll`), ikke ingressen,
 og krever at appen står i `azure_access_inbound` hos bidrag-tilgangskontroll.
 
+Maskintoken avvises framfor å vurderes. For et client_credentials-token svarer
+bidrag-tilgangskontroll `harTilgang=true` uten å spørre tilgangsmaskinen, og `AuditLogger`
+hopper over både auditlinja og avslaget - vi ville altså stått uten både vurdering og spor.
+Appen har ingen maskin-til-maskin-konsument, så slike kall får 403.
+
 ## Auditlogging
 
 Hvert oppslag skrives til auditsporet: hvem hentet ut opplysninger om hvem, når, og med
