@@ -27,8 +27,10 @@ azure:
   aareg_cluster: dev-fss
   bidrag_organisasjon_url: bidrag-organisasjon-feature.dev-fss-pub.nais.io
   bidrag_organisasjon_scope: dev-fss.bidrag.bidrag-organisasjon-feature
-  tilleggsstonadersak_url: tilleggsstonader-sak.intern.dev.nav.no
-  tilleggsstonadersak_scope: dev-gcp.tilleggsstonader.tilleggsstonader-sak
+  tilleggsstonadersak_url: aap-api.intern.dev.nav.no
+  tilleggsstonadersak_scope: dev-gcp.aap-api.tilleggsstonader-sak
+  aap_url: aap-api.intern.dev.nav.no
+  aap_scope: dev-gcp.aap.api-intern
   unsecure:
     ereg_url: ereg-services.dev-fss-pub.nais.io
     norgesbank_url: data.norges-bank.no

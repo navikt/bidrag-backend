@@ -85,7 +85,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     }
 
     private fun behandleVedtakHendelseForskudd(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
-        if (vedtakHendelse.id > 5371729) {
+        if (vedtakHendelse.id > 5371749) {
             vedtakDto.stønadsendringListe.filter { it.type == Stønadstype.FORSKUDD && it.beslutning == Beslutningstype.ENDRING }
                 .forEach { stønadsendring ->
                     val forskuddHendelse = ForskuddHendelse(
@@ -242,7 +242,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
     private fun behandleVedtakHendelseSærbidrag(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
         val vedtakFraBisys = vedtakHendelse.kildeapplikasjon.contains(bisys)
-        if (vedtakHendelse.id > 5371729) {
+        if (vedtakHendelse.id > 5371749) {
             vedtakDto.engangsbeløpListe.filter {
                 (it.type == Engangsbeløptype.SÆRBIDRAG || it.type == Engangsbeløptype.SAERTILSKUDD) && it.beslutning == Beslutningstype.ENDRING
             }
