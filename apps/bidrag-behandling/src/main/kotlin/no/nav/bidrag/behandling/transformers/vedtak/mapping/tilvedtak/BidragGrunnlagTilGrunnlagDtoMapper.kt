@@ -1,7 +1,6 @@
 package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import com.fasterxml.jackson.databind.node.POJONode
-import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilSøknadsbarn
 import no.nav.bidrag.behandling.service.hentNyesteIdent
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.grunnlag.finnFødselsdato

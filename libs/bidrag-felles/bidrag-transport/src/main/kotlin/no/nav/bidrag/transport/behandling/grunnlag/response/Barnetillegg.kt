@@ -44,5 +44,5 @@ data class BarnetilleggGrunnlagDto(
     @Schema(description = "Bruttobeløp")
     val beløpBrutto: BigDecimal,
     @Schema(description = "Angir om barnet er felles- eller særkullsbarn")
-    val barnType: String,
+    val barnType: String?,
 )

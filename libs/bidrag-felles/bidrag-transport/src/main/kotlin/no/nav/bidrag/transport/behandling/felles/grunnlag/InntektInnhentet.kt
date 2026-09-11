@@ -104,7 +104,7 @@ data class InnhentetBarnetillegg(
         val barnetilleggType: String,
         val beløpBrutto: BigDecimal,
         @Schema(description = "Angir om barnet er felles- eller særkullsbarn")
-        val barnType: String,
+        val barnType: String?,
     )
 
     fun hentBarnetilleggForBarn(barnReferanse: Grunnlagsreferanse) = grunnlag.filter { it.gjelderBarn == barnReferanse }

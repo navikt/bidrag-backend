@@ -87,7 +87,7 @@ fun opprettGrunnlagFraFil(
 
         // Inntekter er en subset av grunnlag så lagrer bare alt
         Grunnlagsdatatype.BARNETILLEGG -> {
-            grunnlag.barnetilleggListe.tilGrunnlagEntity(behandling)
+            grunnlag.barnetilleggPensjonListe.tilGrunnlagEntity(behandling)
         }
 
         Grunnlagsdatatype.BARNETILSYN -> {
@@ -294,7 +294,7 @@ fun HentGrunnlagDto.tilTransformerInntekterRequest(
         )
     },
     barnetilleggsliste =
-    this.barnetilleggListe.filter { it.partPersonId == rolle.ident }.map {
+    this.barnetilleggPensjonListe.filter { it.partPersonId == rolle.ident }.map {
         Barnetillegg(
             periodeFra = it.periodeFra,
             periodeTil = it.periodeTil,

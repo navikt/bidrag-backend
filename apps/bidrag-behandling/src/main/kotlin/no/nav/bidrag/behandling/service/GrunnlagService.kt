@@ -72,7 +72,6 @@ import no.nav.bidrag.behandling.transformers.behandling.hentEndringerInntekter
 import no.nav.bidrag.behandling.transformers.behandling.hentEndringerSivilstand
 import no.nav.bidrag.behandling.transformers.behandling.henteAktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforhold
-import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarn
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarnV2
 import no.nav.bidrag.behandling.transformers.behandling.henteUaktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
@@ -1157,11 +1156,11 @@ class GrunnlagService(
                         } else {
                             request.skattegrunnlagListe
                         },
-                        barnetilleggListe =
+                        barnetilleggPensjonListe =
                         if (grunnlagsdatatype == Grunnlagsdatatype.BARNETILLEGG) {
                             sisteGrunnlag.konvertereData<List<BarnetilleggGrunnlagDto>>()!!
                         } else {
-                            request.barnetilleggListe
+                            request.barnetilleggPensjonListe
                         },
                         utvidetBarnetrygdListe =
                         if (grunnlagsdatatype == Grunnlagsdatatype.UTVIDET_BARNETRYGD) {
@@ -2172,7 +2171,7 @@ class GrunnlagService(
 
     private fun innhentetGrunnlagInneholderInntekterEllerYtelser(innhentetGrunnlag: HentGrunnlagDto): Boolean = innhentetGrunnlag.ainntektListe.size > 0 ||
         innhentetGrunnlag.skattegrunnlagListe.size > 0 ||
-        innhentetGrunnlag.barnetilleggListe.size > 0 ||
+        innhentetGrunnlag.barnetilleggPensjonListe.size > 0 ||
         innhentetGrunnlag.kontantstøtteListe.size > 0 ||
         innhentetGrunnlag.småbarnstilleggListe.size > 0 ||
         innhentetGrunnlag.utvidetBarnetrygdListe.size > 0
@@ -2932,7 +2931,7 @@ class GrunnlagService(
                     behandling,
                     rolleInhentetFor,
                     Grunnlagstype(grunnlagsdatatype, false),
-                    innhentetGrunnlag.barnetilleggListe
+                    innhentetGrunnlag.barnetilleggPensjonListe
                         .filter {
                             harBarnRolleIBehandling(it.barnPersonId, behandling)
                         }.toSet(),

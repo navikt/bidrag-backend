@@ -19,10 +19,10 @@ import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 
 @ExtendWith(MockitoExtension::class)
-class HentBarnetilleggServiceMockTest {
+class HentBarnetilleggPensjonServiceMockTest {
 
     @InjectMocks
-    private lateinit var hentBarnetilleggService: HentBarnetilleggService
+    private lateinit var hentBarnetilleggPensjonService: HentBarnetilleggPensjonService
 
     @Mock
     private lateinit var pensjonConsumerMock: PensjonConsumer
@@ -34,7 +34,7 @@ class HentBarnetilleggServiceMockTest {
 
         val barnetilleggPensjonRequestListe = listOf(TestUtil.byggPersonIdOgPeriodeRequest())
 
-        val barnetilleggPensjonListe = hentBarnetilleggService.hentBarnetilleggPensjon(
+        val barnetilleggPensjonListe = hentBarnetilleggPensjonService.hentBarnetillegg(
             barnetilleggPensjonRequestListe = barnetilleggPensjonRequestListe,
         )
 
@@ -62,7 +62,7 @@ class HentBarnetilleggServiceMockTest {
 
         val barnetilleggPensjonRequestListe = listOf(TestUtil.byggPersonIdOgPeriodeRequest())
 
-        val barnetilleggPensjonListe = hentBarnetilleggService.hentBarnetilleggPensjon(
+        val barnetilleggPensjonListe = hentBarnetilleggPensjonService.hentBarnetillegg(
             barnetilleggPensjonRequestListe = barnetilleggPensjonRequestListe,
         )
 
