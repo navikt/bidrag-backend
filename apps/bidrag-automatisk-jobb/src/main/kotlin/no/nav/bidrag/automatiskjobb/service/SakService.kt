@@ -25,7 +25,7 @@ import no.nav.bidrag.transport.sak.SakHendelse
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
-import java.security.MessageDigest
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -40,16 +40,20 @@ class SakService(
     private val identUtils: IdentUtils,
     private val beregnVedtakService: BeregnVedtakService,
 ) {
-    fun behandleSakHendelse(hendelse: SakHendelse) {
+    fun behandleSakHendelse(
+        hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
+    ) {
         hendelse.barn.forEach { barnISak ->
             STØNADSTYPER.forEach { stønadstype ->
-                behandleMottakerForStønad(hendelse, barnISak, stønadstype)
+                behandleMottakerForStønad(hendelse, hendelseTidspunkt, barnISak, stønadstype)
             }
         }
     }
 
     private fun behandleMottakerForStønad(
         hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
         barnISak: BarnISak,
         stønadstype: Stønadstype,
     ) {
@@ -109,11 +113,12 @@ class SakService(
             return
         }
 
-        fattEndreMottakerVedtak(hendelse, stønadsid, løpendeStønad, nyMottaker)
+        fattEndreMottakerVedtak(hendelse, hendelseTidspunkt, stønadsid, løpendeStønad, nyMottaker)
     }
 
     private fun fattEndreMottakerVedtak(
         hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
         stønadsid: Stønadsid,
         løpendeStønad: StønadDto,
         nyMottaker: Personident,
@@ -124,7 +129,7 @@ class SakService(
                 kilde = Vedtakskilde.AUTOMATISK,
                 vedtakstidspunkt = LocalDateTime.now(),
                 enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
-                unikReferanse = unikReferanse(hendelse, stønadsid, nyMottaker),
+                unikReferanse = unikReferanse(hendelse, hendelseTidspunkt, stønadsid, nyMottaker),
                 grunnlagListe = emptyList(),
                 engangsbeløpListe = emptyList(),
                 behandlingsreferanseListe = emptyList(),
@@ -181,21 +186,14 @@ class SakService(
 
     private fun unikReferanse(
         hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
         stønadsid: Stønadsid,
         nyMottaker: Personident,
     ): String {
-        // hendelseTidspunkt er midlertidig nullable; serialiseres til "null" til Kafka-køen er drenert.
-        val hendelseTidspunkt = hendelse.hendelseTidspunkt?.let { KOMPAKT_HENDELSE_TIDSPUNKT.format(it) } ?: "null"
-        val datahash = hashAv(stønadsid.kravhaver.verdi, stønadsid.skyldner.verdi, nyMottaker.verdi)
-        return "endring_mottaker_${hendelse.saksnummer.verdi}_${hendelseTidspunkt}_" +
-            "${hendelse.hendelsestype.name}_${stønadsid.type.name}_$datahash"
+        val tidspunkt = KOMPAKT_HENDELSE_TIDSPUNKT.format(hendelseTidspunkt)
+        return "endring_mottaker_${hendelse.saksnummer.verdi}_${tidspunkt}_${hendelse.hendelsestype.name}_" +
+            "${stønadsid.type.name}_${stønadsid.kravhaver.verdi}_${stønadsid.skyldner.verdi}_${nyMottaker.verdi}"
     }
-
-    private fun hashAv(vararg felter: String): String = MessageDigest
-        .getInstance("SHA-256")
-        .digest(felter.joinToString("_").toByteArray())
-        .joinToString("") { "%02x".format(it) }
-        .take(16)
 
     private fun Personident.nyesteIdent(): Personident = identUtils.hentNyesteIdent(this)
 

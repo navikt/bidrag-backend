@@ -8,6 +8,7 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.stereotype.Component
+import java.time.Instant
 
 @Component
 class SakHendelseListener(
@@ -24,12 +25,13 @@ class SakHendelseListener(
         @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
         @Header(KafkaHeaders.RECEIVED_PARTITION) partition: Int,
         @Header(KafkaHeaders.GROUP_ID) groupId: String,
+        @Header(KafkaHeaders.RECEIVED_TIMESTAMP) timestamp: Long,
     ) {
         secureLogger.info { "Leser hendelse fra topic: $topic, offset: $offset, partition: $partition, groupId: $groupId" }
         try {
             val sakHendelse = commonObjectmapper.readValue(hendelse, SakHendelse::class.java)
             secureLogger.info { "Behandler sakhendelse $sakHendelse" }
-            sakService.behandleSakHendelse(sakHendelse)
+            sakService.behandleSakHendelse(sakHendelse, Instant.ofEpochMilli(timestamp))
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved behandling av sakhendelse" }
             throw e

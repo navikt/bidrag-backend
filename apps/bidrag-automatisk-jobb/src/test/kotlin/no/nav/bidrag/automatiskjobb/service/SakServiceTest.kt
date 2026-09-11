@@ -4,7 +4,6 @@ import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldMatch
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.RelaxedMockK
@@ -79,7 +78,7 @@ class SakServiceTest {
     fun `skal fatte vedtak for endring av mottaker når reell mottaker avviker fra beløpshistorikken`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
@@ -98,7 +97,7 @@ class SakServiceTest {
     fun `skal ikke sette perioder på vedtaket`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
@@ -114,7 +113,7 @@ class SakServiceTest {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         stubLøpendeStønad(Stønadstype.BIDRAG18AAR, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         val requests = mutableListOf<OpprettVedtakRequestDto>()
         verify(exactly = 3) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
@@ -128,7 +127,7 @@ class SakServiceTest {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         every { beregnVedtakService.finnSisteVedtaksid(any()) } returns 4242
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
@@ -141,7 +140,7 @@ class SakServiceTest {
     fun `skal ikke fatte vedtak når mottaker er uendret`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = reellMottaker))
+        behandle(reellMottaker = reellMottaker)
 
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
@@ -152,7 +151,7 @@ class SakServiceTest {
         every { identUtils.hentNyesteIdent(Personident(reellMottaker)) } returns Personident(nyttFødselsnummerSammePerson)
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyttFødselsnummerSammePerson))
+        behandle(reellMottaker = nyttFødselsnummerSammePerson)
 
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
@@ -161,7 +160,7 @@ class SakServiceTest {
     fun `skal ikke fatte vedtak når det ikke finnes løpende stønad`() {
         every { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) } returns null
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
@@ -170,7 +169,7 @@ class SakServiceTest {
     fun `skal sette bidragsmottaker som mottaker når reell mottaker er fjernet`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = null))
+        behandle(reellMottaker = null)
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
@@ -183,7 +182,7 @@ class SakServiceTest {
     fun `skal ikke fatte vedtak når ny reell mottaker er en samhandler`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = SAMHANDLER_ID))
+        behandle(reellMottaker = SAMHANDLER_ID)
 
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
@@ -204,47 +203,31 @@ class SakServiceTest {
         every { bidragVedtakConsumer.opprettVedtak(any()) } throws konflikt
 
         shouldNotThrowAny {
-            sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+            behandle(reellMottaker = nyReellMottaker)
         }
 
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     @Test
-    fun `skal sette unik referanse med saksnummer, tidspunkt, hendelsestype, stønadstype og datahash`() {
+    fun `skal sette lesbar unik referanse av saksnummer, tidspunkt, hendelsestype, stønadstype og identer`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
-        val tidspunkt = Instant.parse("2026-09-10T08:30:15.123Z")
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker, hendelseTidspunkt = tidspunkt))
+        behandle(reellMottaker = nyReellMottaker, hendelseTidspunkt = HENDELSE_TIDSPUNKT)
 
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
-        request.captured.unikReferanse shouldMatch
-            Regex("endring_mottaker_${saksnummer}_20260910083015123_ENDRING_FORSKUDD_[0-9a-f]{16}")
-    }
-
-    @Test
-    fun `skal serialisere hendelsetidspunkt til null i unik referanse når det mangler`() {
-        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
-
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker, hendelseTidspunkt = null))
-
-        val request = slot<OpprettVedtakRequestDto>()
-        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
-        request.captured.unikReferanse shouldMatch
-            Regex("endring_mottaker_${saksnummer}_null_ENDRING_FORSKUDD_[0-9a-f]{16}")
+        request.captured.unikReferanse shouldBe
+            "endring_mottaker_${saksnummer}_20260910083015123_ENDRING_FORSKUDD_" +
+            "${kravhaver}_${personidentNav.verdi}_$nyReellMottaker"
     }
 
     @Test
     fun `unik referanse skal være deterministisk for samme hendelse`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
-        val hendelse = sakHendelse(
-            reellMottaker = nyReellMottaker,
-            hendelseTidspunkt = Instant.parse("2026-09-10T08:30:15.123Z"),
-        )
 
-        sakService.behandleSakHendelse(hendelse)
-        sakService.behandleSakHendelse(hendelse)
+        behandle(reellMottaker = nyReellMottaker, hendelseTidspunkt = HENDELSE_TIDSPUNKT)
+        behandle(reellMottaker = nyReellMottaker, hendelseTidspunkt = HENDELSE_TIDSPUNKT)
 
         val requests = mutableListOf<OpprettVedtakRequestDto>()
         verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
@@ -256,12 +239,17 @@ class SakServiceTest {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         stubLøpendeStønad(Stønadstype.BIDRAG, mottaker = reellMottaker)
 
-        sakService.behandleSakHendelse(sakHendelse(reellMottaker = nyReellMottaker))
+        behandle(reellMottaker = nyReellMottaker)
 
         val requests = mutableListOf<OpprettVedtakRequestDto>()
         verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
         requests.map { it.unikReferanse }.toSet() shouldHaveSize 2
     }
+
+    private fun behandle(
+        reellMottaker: String?,
+        hendelseTidspunkt: Instant = HENDELSE_TIDSPUNKT,
+    ) = sakService.behandleSakHendelse(sakHendelse(reellMottaker = reellMottaker), hendelseTidspunkt)
 
     private fun stubLøpendeStønad(
         type: Stønadstype,
@@ -306,11 +294,7 @@ class SakServiceTest {
         ),
     )
 
-    private fun sakHendelse(
-        reellMottaker: String?,
-        hendelseTidspunkt: Instant? = Instant.now(),
-    ) = SakHendelse(
-        hendelseTidspunkt = hendelseTidspunkt,
+    private fun sakHendelse(reellMottaker: String?) = SakHendelse(
         saksnummer = Saksnummer(saksnummer),
         hendelsestype = SakKafkaHendelsestype.ENDRING,
         bidragspliktig = Personident(bidragspliktig),
@@ -326,5 +310,6 @@ class SakServiceTest {
 
     companion object {
         private const val SAMHANDLER_ID = "80000000001"
+        private val HENDELSE_TIDSPUNKT: Instant = Instant.parse("2026-09-10T08:30:15.123Z")
     }
 }
