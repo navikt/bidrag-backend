@@ -19,9 +19,7 @@ class DokumentService(
     private val safConsumer: SafConsumer = safConsumers.get(Discriminator.REGULAR_USER)
     private val journalpostService: JournalpostService = journalpostServices.get(Discriminator.REGULAR_USER)
 
-    fun hentDokument(journalpostId: Long, dokumentReferanse: String?): ResponseEntity<ByteArray> {
-        return safConsumer.hentDokument(journalpostId, java.lang.Long.valueOf(dokumentReferanse))
-    }
+    fun hentDokument(journalpostId: Long, dokumentReferanse: String?): ResponseEntity<ByteArray> = safConsumer.hentDokument(journalpostId, java.lang.Long.valueOf(dokumentReferanse))
 
     fun tilDokumentMetadata(journalStatus: JournalStatus?, dokumentReferanse: String?, journalpostId: Long?, tittel: String?) = DokumentMetadata(
         arkivsystem = DokumentArkivSystemDto.JOARK,

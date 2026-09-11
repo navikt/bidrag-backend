@@ -49,7 +49,7 @@ class HendelseListener(
             LOGGER.debug("Journalpost er opprettet av NKS. Stopper videre behandling")
             return
         }
-        secureLogger.info {"Mottok journalføringshendelse $journalfoeringHendelseRecord" }
+        secureLogger.info { "Mottok journalføringshendelse $journalfoeringHendelseRecord" }
         behandleJournalforingHendelseService.behandleJournalforingHendelse(
             journalfoeringHendelseRecord,
         )

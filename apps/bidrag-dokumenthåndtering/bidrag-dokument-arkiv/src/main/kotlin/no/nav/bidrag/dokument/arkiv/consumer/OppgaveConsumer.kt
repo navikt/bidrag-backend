@@ -30,12 +30,10 @@ class OppgaveConsumer(restTemplate: RestTemplate?) : AbstractConsumer(restTempla
         return oppgaveResponse.body?.id
     }
 
-    fun patchOppgave(oppgavePatch: OppgaveRequest): OppgaveData? {
-        return restTemplate.patchForObject<OppgaveData>(
-            "/${oppgavePatch.id}",
-            oppgavePatch,
-        )
-    }
+    fun patchOppgave(oppgavePatch: OppgaveRequest): OppgaveData? = restTemplate.patchForObject<OppgaveData>(
+        "/${oppgavePatch.id}",
+        oppgavePatch,
+    )
 
     fun patchOppgaveWithVersionRetry(oppgavePatch: OppgaveRequest): OppgaveData? {
         try {
@@ -50,11 +48,9 @@ class OppgaveConsumer(restTemplate: RestTemplate?) : AbstractConsumer(restTempla
         }
     }
 
-    fun hentOppgave(oppgaveId: Long): OppgaveData? {
-        return restTemplate.exchange<OppgaveData>(
-            "/$oppgaveId",
-            HttpMethod.GET,
-            null,
-        ).body
-    }
+    fun hentOppgave(oppgaveId: Long): OppgaveData? = restTemplate.exchange<OppgaveData>(
+        "/$oppgaveId",
+        HttpMethod.GET,
+        null,
+    ).body
 }

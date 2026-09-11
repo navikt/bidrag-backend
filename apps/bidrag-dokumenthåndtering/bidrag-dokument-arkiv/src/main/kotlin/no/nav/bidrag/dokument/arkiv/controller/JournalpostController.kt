@@ -118,9 +118,7 @@ class JournalpostController(
             ),
         ],
     )
-    fun hentJournal(@PathVariable saksnummer: String, @RequestParam fagomrade: List<String> = emptyList()): ResponseEntity<List<JournalpostDto>> {
-        return ResponseEntity.ok(journalpostService.finnJournalposter(saksnummer, fagomrade))
-    }
+    fun hentJournal(@PathVariable saksnummer: String, @RequestParam fagomrade: List<String> = emptyList()): ResponseEntity<List<JournalpostDto>> = ResponseEntity.ok(journalpostService.finnJournalposter(saksnummer, fagomrade))
 
     @PatchMapping("$ROOT_JOURNAL/{joarkJournalpostId}")
     @Operation(
@@ -152,7 +150,7 @@ class JournalpostController(
                 joarkJournalpostId,
                 endreJournalpostCommand,
             )
-            LOGGER.warn{ msgBadRequest }
+            LOGGER.warn { msgBadRequest }
             return ResponseEntity
                 .badRequest()
                 .header(HttpHeaders.WARNING, msgBadRequest)

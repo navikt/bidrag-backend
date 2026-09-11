@@ -21,10 +21,8 @@ class BidragDokumentConsumer(
             UriComponentsBuilder.fromUri(url)
 
     @Retryable(backoff = Backoff(delay = 500, maxDelay = 2000, multiplier = 2.0))
-    fun hentDokument(dokumentId: String): ByteArray {
-        return getForNonNullEntity(
-            dokumentUrl.pathSegment("dokumentreferanse").pathSegment(dokumentId)
-                .build().toUri(),
-        )
-    }
+    fun hentDokument(dokumentId: String): ByteArray = getForNonNullEntity(
+        dokumentUrl.pathSegment("dokumentreferanse").pathSegment(dokumentId)
+            .build().toUri(),
+    )
 }

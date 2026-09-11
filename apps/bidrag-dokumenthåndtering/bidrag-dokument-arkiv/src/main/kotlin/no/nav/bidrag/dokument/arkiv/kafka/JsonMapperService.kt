@@ -11,6 +11,6 @@ class JsonMapperService(private val objectMapper: JsonMapper) {
     fun mapOppgaveHendelse(hendelse: String): OppgaveKafkaHendelse = try {
         objectMapper.readValue(hendelse, OppgaveKafkaHendelse::class.java)
     } finally {
-        secureLogger.debug {"Leser hendelse: $hendelse" }
+        secureLogger.debug { "Leser hendelse: $hendelse" }
     }
 }

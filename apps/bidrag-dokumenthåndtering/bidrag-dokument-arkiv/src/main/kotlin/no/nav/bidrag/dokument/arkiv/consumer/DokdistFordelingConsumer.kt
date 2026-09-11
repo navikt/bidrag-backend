@@ -50,9 +50,9 @@ class DokdistFordelingConsumer(
             )
         LOGGER.debug {
             "Bestiller distribusjon for journalpost ${request.journalpostId} " +
-                    "med distribusjonstype ${request.distribusjonstype} " +
-                    "og distribusjonstidspunkt ${request.distribusjonstidspunkt}" +
-                    if (Strings.isNotEmpty(batchId)) String.format(" og batchId %s", batchId) else ""
+                "med distribusjonstype ${request.distribusjonstype} " +
+                "og distribusjonstidspunkt ${request.distribusjonstidspunkt}" +
+                if (Strings.isNotEmpty(batchId)) String.format(" og batchId %s", batchId) else ""
         }
 
         try {
@@ -63,7 +63,7 @@ class DokdistFordelingConsumer(
             val errorMessage = parseErrorMessage(e)
             if (HttpStatus.CONFLICT == status) {
                 LOGGER.warn {
-                    "Distribusjon er allerede bestillt for journalpost ${journalpostId}. Fortsetter behandling."
+                    "Distribusjon er allerede bestillt for journalpost $journalpostId. Fortsetter behandling."
                 }
                 return conflictExceptionToResponse(journalpostId, e)
             }
@@ -120,6 +120,6 @@ class DokdistFordelingConsumer(
     }
 
     companion object {
-        private val LOGGER = KotlinLogging.logger {  }
+        private val LOGGER = KotlinLogging.logger { }
     }
 }

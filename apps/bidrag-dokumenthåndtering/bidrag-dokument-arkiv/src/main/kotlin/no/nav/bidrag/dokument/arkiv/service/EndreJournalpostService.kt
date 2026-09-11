@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.service
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivConsumer
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivKnyttTilSakConsumer
 import no.nav.bidrag.dokument.arkiv.dto.EndreJournalpostCommandIntern
@@ -24,7 +25,6 @@ import org.slf4j.LoggerFactory
 import java.util.Objects
 import java.util.function.Consumer
 import java.util.stream.Collectors
-import no.nav.bidrag.commons.util.secureLogger
 
 class EndreJournalpostService(
     private val journalpostService: JournalpostService,
