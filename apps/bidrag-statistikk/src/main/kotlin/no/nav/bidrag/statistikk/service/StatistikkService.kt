@@ -85,67 +85,69 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     }
 
     private fun behandleVedtakHendelseForskudd(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
-        vedtakDto.stønadsendringListe.filter { it.type == Stønadstype.FORSKUDD && it.beslutning == Beslutningstype.ENDRING }
-            .forEach { stønadsendring ->
-                val forskuddHendelse = ForskuddHendelse(
-                    vedtaksid = vedtakHendelse.id,
-                    vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
-                    type = vedtakHendelse.type.name,
-                    saksnr = stønadsendring.sak.verdi,
-                    kravhaver = stønadsendring.kravhaver.verdi,
-                    mottaker = stønadsendring.mottaker.verdi,
-                    historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
-                    forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
-                        val grunnlagsdata =
-                            finnGrunnlagsdataForskudd(
-                                vedtakDto.grunnlagListe,
-                                periode.grunnlagReferanseListe,
-                                stønadsendring.kravhaver.verdi,
-                                periode.periode,
-                            )
-
-                        if ((
-                                grunnlagsdata?.barnetsAldersgruppe == null ||
-                                    grunnlagsdata.antallBarnIEgenHusstand == null ||
-                                    grunnlagsdata.sivilstand == null ||
-                                    grunnlagsdata.barnBorMedMottaker == null ||
-                                    grunnlagsdata.mottakerInntektListe?.isEmpty() == true
-                                ) &&
-                            !vedtakDto.kildeapplikasjon.contains(bisys)
-                        ) {
-                            SECURE_LOGGER.info(
-                                "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: {}, vedtakstype: {}, " +
-                                    "resultatkode: {}, beløp: {}",
-                                vedtakHendelse.id,
-                                vedtakDto.type,
-                                periode.resultatkode,
-                                periode.beløp,
-                            )
-                        }
-                        ForskuddPeriode(
-                            periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
-                            periodeTil = if (periode.periode.til == null) {
-                                null
-                            } else {
-                                LocalDate.of(
-                                    periode.periode.til!!.year,
-                                    periode.periode.til!!.month,
-                                    1,
+        if (vedtakHendelse.id > 5371729) {
+            vedtakDto.stønadsendringListe.filter { it.type == Stønadstype.FORSKUDD && it.beslutning == Beslutningstype.ENDRING }
+                .forEach { stønadsendring ->
+                    val forskuddHendelse = ForskuddHendelse(
+                        vedtaksid = vedtakHendelse.id,
+                        vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
+                        type = vedtakHendelse.type.name,
+                        saksnr = stønadsendring.sak.verdi,
+                        kravhaver = stønadsendring.kravhaver.verdi,
+                        mottaker = stønadsendring.mottaker.verdi,
+                        historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
+                        forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
+                            val grunnlagsdata =
+                                finnGrunnlagsdataForskudd(
+                                    vedtakDto.grunnlagListe,
+                                    periode.grunnlagReferanseListe,
+                                    stønadsendring.kravhaver.verdi,
+                                    periode.periode,
                                 )
-                            },
-                            beløp = periode.beløp,
-                            resultat = periode.resultatkode,
-                            barnetsAldersgruppe = grunnlagsdata?.barnetsAldersgruppe,
-                            antallBarnIEgenHusstand = grunnlagsdata?.antallBarnIEgenHusstand,
-                            sivilstand = grunnlagsdata?.sivilstand,
-                            barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
-                            mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                            kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
-                        )
-                    },
-                )
-                hendelserService.opprettForskuddshendelse(forskuddHendelse)
-            }
+
+                            if ((
+                                    grunnlagsdata?.barnetsAldersgruppe == null ||
+                                        grunnlagsdata.antallBarnIEgenHusstand == null ||
+                                        grunnlagsdata.sivilstand == null ||
+                                        grunnlagsdata.barnBorMedMottaker == null ||
+                                        grunnlagsdata.mottakerInntektListe?.isEmpty() == true
+                                    ) &&
+                                !vedtakDto.kildeapplikasjon.contains(bisys)
+                            ) {
+                                SECURE_LOGGER.info(
+                                    "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: {}, vedtakstype: {}, " +
+                                        "resultatkode: {}, beløp: {}",
+                                    vedtakHendelse.id,
+                                    vedtakDto.type,
+                                    periode.resultatkode,
+                                    periode.beløp,
+                                )
+                            }
+                            ForskuddPeriode(
+                                periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
+                                periodeTil = if (periode.periode.til == null) {
+                                    null
+                                } else {
+                                    LocalDate.of(
+                                        periode.periode.til!!.year,
+                                        periode.periode.til!!.month,
+                                        1,
+                                    )
+                                },
+                                beløp = periode.beløp,
+                                resultat = periode.resultatkode,
+                                barnetsAldersgruppe = grunnlagsdata?.barnetsAldersgruppe,
+                                antallBarnIEgenHusstand = grunnlagsdata?.antallBarnIEgenHusstand,
+                                sivilstand = grunnlagsdata?.sivilstand,
+                                barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
+                                mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                                kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
+                            )
+                        },
+                    )
+                    hendelserService.opprettForskuddshendelse(forskuddHendelse)
+                }
+        }
     }
 
     private fun behandleVedtakHendelseBidrag(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
@@ -240,42 +242,44 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
     private fun behandleVedtakHendelseSærbidrag(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
         val vedtakFraBisys = vedtakHendelse.kildeapplikasjon.contains(bisys)
-        vedtakDto.engangsbeløpListe.filter {
-            (it.type == Engangsbeløptype.SÆRBIDRAG || it.type == Engangsbeløptype.SAERTILSKUDD) && it.beslutning == Beslutningstype.ENDRING
-        }
-            .forEach { særbidrag ->
-                val grunnlagsdata =
-                    finnGrunnlagsdataSærbidrag(
-                        vedtakFraBisys = vedtakFraBisys,
-                        vedtakDto.grunnlagListe,
-                        særbidrag.grunnlagReferanseListe,
-                        særbidrag.kravhaver.verdi,
-                    )
-                val særbidragshendelse = SærbidragHendelse(
-                    vedtaksid = vedtakHendelse.id,
-                    vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
-                    type = vedtakHendelse.type.name,
-                    kategori = grunnlagsdata?.kategori,
-                    saksnr = særbidrag.sak.verdi,
-                    skyldner = særbidrag.skyldner.verdi,
-                    kravhaver = særbidrag.kravhaver.verdi,
-                    mottaker = særbidrag.mottaker.verdi,
-                    referanse = særbidrag.referanse,
-                    beløp = særbidrag.beløp,
-                    valutakode = særbidrag.valutakode,
-                    resultat = særbidrag.resultatkode,
-                    innkreving = særbidrag.innkreving == Innkrevingstype.MED_INNKREVING,
-                    omgjørVedtakId = særbidrag.omgjørVedtakId,
-                    historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
-                    kravbeløp = grunnlagsdata?.kravbeløp,
-                    godkjentBeløp = grunnlagsdata?.godkjentBeløp,
-                    betaltBeløp = særbidrag.betaltBeløp,
-                    skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
-                    mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                    kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
-                )
-                hendelserService.opprettSærbidragshendelse(særbidragshendelse)
+        if (vedtakHendelse.id > 5371729) {
+            vedtakDto.engangsbeløpListe.filter {
+                (it.type == Engangsbeløptype.SÆRBIDRAG || it.type == Engangsbeløptype.SAERTILSKUDD) && it.beslutning == Beslutningstype.ENDRING
             }
+                .forEach { særbidrag ->
+                    val grunnlagsdata =
+                        finnGrunnlagsdataSærbidrag(
+                            vedtakFraBisys = vedtakFraBisys,
+                            vedtakDto.grunnlagListe,
+                            særbidrag.grunnlagReferanseListe,
+                            særbidrag.kravhaver.verdi,
+                        )
+                    val særbidragshendelse = SærbidragHendelse(
+                        vedtaksid = vedtakHendelse.id,
+                        vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
+                        type = vedtakHendelse.type.name,
+                        kategori = grunnlagsdata?.kategori,
+                        saksnr = særbidrag.sak.verdi,
+                        skyldner = særbidrag.skyldner.verdi,
+                        kravhaver = særbidrag.kravhaver.verdi,
+                        mottaker = særbidrag.mottaker.verdi,
+                        referanse = særbidrag.referanse,
+                        beløp = særbidrag.beløp,
+                        valutakode = særbidrag.valutakode,
+                        resultat = særbidrag.resultatkode,
+                        innkreving = særbidrag.innkreving == Innkrevingstype.MED_INNKREVING,
+                        omgjørVedtakId = særbidrag.omgjørVedtakId,
+                        historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
+                        kravbeløp = grunnlagsdata?.kravbeløp,
+                        godkjentBeløp = grunnlagsdata?.godkjentBeløp,
+                        betaltBeløp = særbidrag.betaltBeløp,
+                        skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
+                        mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                        kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
+                    )
+                    hendelserService.opprettSærbidragshendelse(særbidragshendelse)
+                }
+        }
     }
 
     fun hentVedtak(vedtaksid: Int): VedtakDto? {
