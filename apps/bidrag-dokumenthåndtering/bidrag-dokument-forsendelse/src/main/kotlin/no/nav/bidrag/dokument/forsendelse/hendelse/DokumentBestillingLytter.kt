@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import jakarta.transaction.Transactional
 import no.nav.bidrag.commons.CorrelationId
 import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.dokument.forsendelse.config.UnleashFeatures
 import no.nav.bidrag.dokument.forsendelse.consumer.BidragDokumentBestillingConsumer
 import no.nav.bidrag.dokument.forsendelse.consumer.BidragVedtakConsumer
 import no.nav.bidrag.dokument.forsendelse.consumer.dto.DokumentBestillingForespørsel
@@ -256,8 +257,18 @@ class DokumentBestillingLytter(
         val erAldersjusteringFattetGjennomNyLøsning = behandlingInfo.erAldersjusteringFattetGjennomNyLøsning()
         return dokumentDetaljer.kanBestilles ||
             erFattetGjennomNyLøsning ||
+            vedtakFattetIBBMHarNokGrunnlag() ||
             erOpprettetGjennomNyLøsning ||
             erAldersjusteringFattetGjennomNyLøsning
+    }
+
+    private fun Forsendelse.vedtakFattetIBBMHarNokGrunnlag(): Boolean {
+        if (behandlingInfo == null || !UnleashFeatures.BESTILL_VEDTAK_MED_OVERFØRT_GRUNNLAG_GJENNOM_NY_LØSNING.isEnabled) return false
+        val erFattetGjennomNyLøsning =
+            behandlingInfo?.behandlingId != null && behandlingInfo?.vedtakId != null
+        if (erFattetGjennomNyLøsning) return true
+        val vedtak = vedtakConsumer.hentVedtak(behandlingInfo!!.vedtakId!!) ?: return false
+        return vedtak.grunnlagListe.isNotEmpty()
     }
 
     private fun BehandlingInfo?.erAldersjusteringFattetGjennomNyLøsning(): Boolean = this?.let {

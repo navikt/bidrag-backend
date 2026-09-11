@@ -10,6 +10,7 @@ enum class UnleashFeatures(
     DOKUMENTVALG_FRA_VEDTAK_BEHANDLING("forsendelse.dokumentvalg_vedtak_behandling", false),
     OPPRETT_BATCHBREV("forsendelse.opprett_batchbrev", false),
     VIS_BATCHBREV_NYERE_ENN_3_DAGER("forsendelse.batchbrev_nyere_enn_3_dager", false),
+    BESTILL_VEDTAK_MED_OVERFØRT_GRUNNLAG_GJENNOM_NY_LØSNING("forsendelse.bestill_vedtak_overfort_grunnlag", false),
     ;
 
     private var defaultValue = false

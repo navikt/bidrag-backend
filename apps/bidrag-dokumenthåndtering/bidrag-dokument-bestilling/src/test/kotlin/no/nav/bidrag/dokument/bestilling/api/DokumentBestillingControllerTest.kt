@@ -128,7 +128,7 @@ class DokumentBestillingControllerTest : AbstractControllerTest() {
         responseDokumentMalerBucket["FARSKAP_PROVETAKING_FARSKAP"]!!.innholdType shouldBe DokumentMalType.SKJEMA
 
         responseDokumentMalerBrevserver.filter { it.value.kreverBehandling } shouldHaveSize 4
-        responseDokumentMalerBrevserver.filter { it.value.kreverVedtak } shouldHaveSize 31
+        responseDokumentMalerBrevserver.filter { it.value.kreverVedtak } shouldHaveSize 30
     }
 
     @Test
