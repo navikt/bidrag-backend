@@ -12,6 +12,8 @@ const USERNAME_TO_SLACK_ID = {
   "morten.hermansen": "UAQQKJL9L",
   "magnus.rinnan": "UC8R961EW",
   "tatjana.andersen": "UA4DANW3H",
+  "cristiano.sadun": "U0BT124NGCU",
+  "sigbjorn.myhre":"UBB6YAXJB"
 };
 
 functions.http('gcpAuditToSlack', async (req, res) => {
