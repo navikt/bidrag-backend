@@ -1,0 +1,75 @@
+name: Bidrag-henvendelse
+on:
+  workflow_dispatch:
+    inputs:
+      miljo:
+        description: "Miljø som skal deployes til"
+        required: true
+        type: choice
+        options:
+          - q2
+          - q1
+          - prod
+      hopp_over_tester:
+        description: >-
+          Hopp over tester og ktlint for å tvinge gjennom en deploy.
+          Fungerer kun for q1/q2 - ignoreres for prod.
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'pom.xml'
+      - 'libs/bidrag-felles/**'
+      - '.nais/bidrag-henvendelse/**.yaml'
+      - 'apps/bidrag-henvendelse/**'
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'libs/bidrag-felles/**'
+      - '.nais/bidrag-henvendelse/**.yaml'
+      - 'apps/bidrag-henvendelse/**'
+
+jobs:
+  detect_changes:
+    name: "Sjekk om appen faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
+  bygg_test_og_deploy:
+    name: "Bygg, test og deploy"
+    needs: detect_changes
+    if: needs.detect_changes.outputs.changed == 'true'
+    permissions:
+      contents: "write"
+      id-token: "write"
+    uses: ./.github/workflows/bygg_og_deploy.yaml
+    secrets: inherit
+    with:
+      nais_hovedfil_navn: bidrag-henvendelse/nais.yaml
+      nais_variabler_filnavn_q1: bidrag-henvendelse/q1.yaml
+      deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
+      nais_variabler_filnavn_q2: bidrag-henvendelse/q2.yaml
+      deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
+      nais_variabler_filnavn_prod: bidrag-henvendelse/prod.yaml
+      deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+      skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
+      maven_options: -B -fae -pl apps/bidrag-henvendelse
+      maven_cache_paths: |
+        pom.xml
+        apps/bidrag-henvendelse/pom.xml
+      ktlint_paths: apps/bidrag-henvendelse/src/**/*.kt
+      docker_context: ./apps/bidrag-henvendelse
+      image_suffix: bidrag-henvendelse
+      tag: bidrag-henvendelse
