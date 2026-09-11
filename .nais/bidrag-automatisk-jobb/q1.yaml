@@ -50,6 +50,8 @@ env:
   PERSON_HENDELSE_KAFKA_GROUP_ID: bidrag-automatisk-jobb-q1
   KAFKA_BAKS_OPPHOER_BARNETRYGD_TOPIC: teamfamilie.aapen-familie-ba-sak-opphoer-barnetrygd
   BAKS_OPPHOER_BARNETRYGD_KAFKA_GROUP_ID: bidrag-automatisk-jobb-q1
+  KAFKA_SAK_HENDELSE_TOPIC: bidrag.sak-q1
+  SAK_HENDELSE_KAFKA_GROUP_ID: bidrag-automatisk-jobb-q1-sak
   KAFKA_MAX_RETRY: 3
   SLACK_CHANNEL_ID: C0AT3SG8MTN
   SLACK_BATCH_KJOREPLAN_VARSLING_CRON: "0 0 12 1 * *" # Hver måned den 1. kl 12:00

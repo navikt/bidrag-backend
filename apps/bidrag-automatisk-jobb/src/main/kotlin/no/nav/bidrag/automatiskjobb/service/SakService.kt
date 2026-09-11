@@ -1,0 +1,206 @@
+package no.nav.bidrag.automatiskjobb.service
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
+import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
+import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
+import no.nav.bidrag.automatiskjobb.utils.hentSisteLøpendePeriode
+import no.nav.bidrag.commons.util.IdentUtils
+import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.felles.personidentNav
+import no.nav.bidrag.domene.ident.Ident
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.domene.sak.Stønadsid
+import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
+import no.nav.bidrag.transport.behandling.vedtak.request.OpprettStønadsendringRequestDto
+import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
+import no.nav.bidrag.transport.sak.BarnISak
+import no.nav.bidrag.transport.sak.SakHendelse
+import org.springframework.http.HttpStatus
+import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpStatusCodeException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService as BeregnVedtakService
+
+private val LOGGER = KotlinLogging.logger { }
+
+@Service
+class SakService(
+    private val bidragVedtakConsumer: BidragVedtakConsumer,
+    private val bidragBeløpshistorikkConsumer: BidragBeløpshistorikkConsumer,
+    private val identUtils: IdentUtils,
+    private val beregnVedtakService: BeregnVedtakService,
+) {
+    fun behandleSakHendelse(
+        hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
+    ) {
+        hendelse.barn.forEach { barnISak ->
+            STØNADSTYPER.forEach { stønadstype ->
+                behandleMottakerForStønad(hendelse, hendelseTidspunkt, barnISak, stønadstype)
+            }
+        }
+    }
+
+    private fun behandleMottakerForStønad(
+        hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
+        barnISak: BarnISak,
+        stønadstype: Stønadstype,
+    ) {
+        val kravhaver = barnISak.ident?.nyesteIdent() ?: return
+        val skyldner = stønadstype.skyldner(hendelse) ?: return
+
+        val stønadsid =
+            Stønadsid(
+                type = stønadstype,
+                kravhaver = kravhaver,
+                skyldner = skyldner,
+                sak = hendelse.saksnummer,
+            )
+
+        val løpendeStønad =
+            bidragBeløpshistorikkConsumer.hentLøpendeStønad(
+                HentStønadRequest(
+                    type = stønadsid.type,
+                    sak = stønadsid.sak,
+                    skyldner = stønadsid.skyldner,
+                    kravhaver = stønadsid.kravhaver,
+                ),
+            )
+
+        val løpendePeriode = løpendeStønad?.periodeListe?.hentSisteLøpendePeriode()
+        if (løpendeStønad == null || løpendePeriode == null) {
+            LOGGER.info {
+                "Ingen løpende ${stønadstype.name.lowercase()} for sak ${stønadsid.sak.verdi}. Ingen mottakerendring å utlede."
+            }
+            return
+        }
+
+        val utledetMottaker = barnISak.utledMottaker(hendelse)
+        if (utledetMottaker == null) {
+            LOGGER.warn {
+                "Kan ikke utlede mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi}. Fatter ikke vedtak."
+            }
+            return
+        }
+        if (utledetMottaker.erSamhandlerId()) {
+            return
+        }
+        if (!utledetMottaker.erPersonIdent()) {
+            LOGGER.warn {
+                "Utledet mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi} er ikke en gyldig personident. " +
+                    "Fatter ikke vedtak."
+            }
+            return
+        }
+
+        val nyMottaker = Personident(utledetMottaker.verdi).nyesteIdent()
+
+        if (løpendeStønad.mottaker.nyesteIdent().verdi == nyMottaker.verdi) {
+            LOGGER.info {
+                "Mottaker for ${stønadstype.name.lowercase()} i sak ${stønadsid.sak.verdi} er uendret. Fatter ikke vedtak."
+            }
+            return
+        }
+
+        fattEndreMottakerVedtak(hendelse, hendelseTidspunkt, stønadsid, løpendeStønad, nyMottaker)
+    }
+
+    private fun fattEndreMottakerVedtak(
+        hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
+        stønadsid: Stønadsid,
+        løpendeStønad: StønadDto,
+        nyMottaker: Personident,
+    ) {
+        val request =
+            OpprettVedtakRequestDto(
+                type = Vedtakstype.ENDRING_MOTTAKER,
+                kilde = Vedtakskilde.AUTOMATISK,
+                vedtakstidspunkt = LocalDateTime.now(),
+                enhetsnummer = Enhetsnummer(ENHET_AUTOMATISK),
+                unikReferanse = unikReferanse(hendelse, hendelseTidspunkt, stønadsid, nyMottaker),
+                grunnlagListe = emptyList(),
+                engangsbeløpListe = emptyList(),
+                behandlingsreferanseListe = emptyList(),
+                stønadsendringListe =
+                listOf(
+                    OpprettStønadsendringRequestDto(
+                        type = stønadsid.type,
+                        sak = stønadsid.sak,
+                        kravhaver = stønadsid.kravhaver,
+                        skyldner = stønadsid.skyldner,
+                        mottaker = nyMottaker,
+                        beslutning = Beslutningstype.ENDRING,
+                        innkreving = løpendeStønad.innkreving,
+                        sisteVedtaksid = beregnVedtakService.finnSisteVedtaksid(stønadsid),
+                        grunnlagReferanseListe = emptyList(),
+                        periodeListe = emptyList(),
+                    ),
+                ),
+            )
+
+        val vedtaksid =
+            try {
+                bidragVedtakConsumer.opprettVedtak(request).vedtaksid
+            } catch (e: HttpStatusCodeException) {
+                if (e.statusCode == HttpStatus.CONFLICT) {
+                    val eksisterende = e.getResponseBodyAs(OpprettVedtakConflictResponse::class.java)!!
+                    LOGGER.error {
+                        "Vedtak for endring av mottaker for ${stønadsid.type.name.lowercase()} i sak ${stønadsid.sak.verdi} " +
+                            "finnes allerede med vedtaksid ${eksisterende.vedtaksid}. Fatter ikke nytt vedtak."
+                    }
+                    eksisterende.vedtaksid
+                } else {
+                    throw e
+                }
+            }
+
+        LOGGER.info {
+            "Opprettet eller gjenbrukte vedtak $vedtaksid for endring av mottaker for ${stønadsid.type.name.lowercase()} " +
+                "i sak ${stønadsid.sak.verdi}."
+        }
+        secureLogger.info { "Endring av mottaker for ${stønadsid.toReferanse()}, ny mottaker $nyMottaker." }
+    }
+
+    private fun BarnISak.utledMottaker(hendelse: SakHendelse): Ident? = if (reellMottaker != null) {
+        Ident(reellMottaker!!.verdi)
+    } else {
+        hendelse.bidragsmottaker?.let { Ident(it.verdi) }
+    }
+
+    private fun Stønadstype.skyldner(hendelse: SakHendelse): Personident? = when (this) {
+        Stønadstype.FORSKUDD -> personidentNav
+        else -> hendelse.bidragspliktig?.nyesteIdent()
+    }
+
+    private fun unikReferanse(
+        hendelse: SakHendelse,
+        hendelseTidspunkt: Instant,
+        stønadsid: Stønadsid,
+        nyMottaker: Personident,
+    ): String {
+        val tidspunkt = KOMPAKT_HENDELSE_TIDSPUNKT.format(hendelseTidspunkt)
+        return "endring_mottaker_${hendelse.saksnummer.verdi}_${tidspunkt}_${hendelse.hendelsestype.name}_" +
+            "${stønadsid.type.name}_${stønadsid.kravhaver.verdi}_${stønadsid.skyldner.verdi}_${nyMottaker.verdi}"
+    }
+
+    private fun Personident.nyesteIdent(): Personident = identUtils.hentNyesteIdent(this)
+
+    companion object {
+        private const val ENHET_AUTOMATISK = "9999"
+        private val STØNADSTYPER = listOf(Stønadstype.BIDRAG, Stønadstype.FORSKUDD, Stønadstype.BIDRAG18AAR)
+        private val KOMPAKT_HENDELSE_TIDSPUNKT: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS").withZone(ZoneOffset.UTC)
+    }
+}
