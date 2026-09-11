@@ -6,39 +6,34 @@ import no.nav.bidrag.dokument.arkiv.dto.OppgaveResponse
 import no.nav.bidrag.dokument.arkiv.dto.OppgaveSokResponse
 import no.nav.bidrag.dokument.arkiv.dto.OpprettOppgaveRequest
 import no.nav.bidrag.dokument.arkiv.model.OppgaveSokParametre
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.exchange
+import org.springframework.web.client.patchForObject
+import org.springframework.web.client.postForEntity
 
 class OppgaveConsumer(restTemplate: RestTemplate?) : AbstractConsumer(restTemplate) {
     fun finnOppgaver(parametre: OppgaveSokParametre): OppgaveSokResponse? {
         val pathMedParametre = parametre.hentParametreForApneOppgaverSortertSynkendeEtterFrist()
-        LOGGER.info("søk opp åpne oppgaver med {}", pathMedParametre)
-        return restTemplate.exchange(
+        return restTemplate.exchange<OppgaveSokResponse>(
             pathMedParametre,
             HttpMethod.GET,
             null,
-            OppgaveSokResponse::class.java,
         ).body
     }
 
     fun opprett(opprettOppgaveRequest: OpprettOppgaveRequest): Long? {
         val oppgaveResponse =
-            restTemplate.postForEntity("/", opprettOppgaveRequest, OppgaveResponse::class.java)
-        LOGGER.info(
-            "Opprettet oppgave ${opprettOppgaveRequest.javaClass.simpleName} med id=${oppgaveResponse.body?.id} med type ${opprettOppgaveRequest.oppgavetype} og journalpostid ${opprettOppgaveRequest.journalpostId}",
-        )
+            restTemplate.postForEntity<OppgaveResponse>("/", opprettOppgaveRequest)
         return oppgaveResponse.body?.id
     }
 
     fun patchOppgave(oppgavePatch: OppgaveRequest): OppgaveData? {
-        LOGGER.info("${oppgavePatch.javaClass.simpleName} for oppgave med id: ${oppgavePatch.id}")
-        return restTemplate.patchForObject(
+        return restTemplate.patchForObject<OppgaveData>(
             "/${oppgavePatch.id}",
             oppgavePatch,
-            OppgaveData::class.java,
         )
     }
 
@@ -56,16 +51,10 @@ class OppgaveConsumer(restTemplate: RestTemplate?) : AbstractConsumer(restTempla
     }
 
     fun hentOppgave(oppgaveId: Long): OppgaveData? {
-        LOGGER.info("Henter oppgave $oppgaveId")
-        return restTemplate.exchange(
+        return restTemplate.exchange<OppgaveData>(
             "/$oppgaveId",
             HttpMethod.GET,
             null,
-            OppgaveData::class.java,
         ).body
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(OppgaveConsumer::class.java)
     }
 }

@@ -62,15 +62,9 @@ class AvvikService(
     personConsumers: ResourceByDiscriminator<PersonConsumer?>,
     journalpostService: ResourceByDiscriminator<JournalpostService?>,
 ) {
-    private final val journalpostService: JournalpostService
-    private final val dokarkivConsumer: DokarkivConsumer
-    private final val personConsumer: PersonConsumer
-
-    init {
-        this.journalpostService = journalpostService.get(Discriminator.REGULAR_USER)
-        this.personConsumer = personConsumers.get(Discriminator.REGULAR_USER)
-        this.dokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
-    }
+    private final val journalpostService: JournalpostService = journalpostService.get(Discriminator.REGULAR_USER)
+    private final val dokarkivConsumer: DokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
+    private final val personConsumer: PersonConsumer = personConsumers.get(Discriminator.REGULAR_USER)
 
     fun hentAvvik(jpid: Long): List<AvvikType> = journalpostService.hentJournalpost(jpid)?.tilAvvik() ?: emptyList()
 

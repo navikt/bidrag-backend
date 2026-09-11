@@ -1,6 +1,7 @@
 package no.nav.bidrag.dokument.arkiv.consumer
 
 import com.fasterxml.jackson.databind.JsonNode
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.dokument.arkiv.dto.DokDistDistribuerJournalpostRequest
 import no.nav.bidrag.dokument.arkiv.dto.DokDistDistribuerJournalpostResponse
@@ -11,8 +12,6 @@ import no.nav.bidrag.transport.dokument.DistribuerJournalpostResponse
 import no.nav.bidrag.transport.dokument.DistribuerTilAdresse
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -25,7 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 @Service
 class DokdistFordelingConsumer(
-    @Value("\${DOKDISTFORDELING_URL}") val url: URI,
+    @Value($$"${DOKDISTFORDELING_URL}") val url: URI,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "dokdistfordenling") {
     private fun createUri() = UriComponentsBuilder
@@ -49,13 +48,12 @@ class DokdistFordelingConsumer(
                 adresse,
                 batchId,
             )
-        LOGGER.info(
-            "Bestiller distribusjon for journalpost {} med distribusjonstype {} og distribusjonstidspunkt {}{}",
-            request.journalpostId,
-            request.distribusjonstype,
-            request.distribusjonstidspunkt,
-            if (Strings.isNotEmpty(batchId)) String.format(" og batchId %s", batchId) else "",
-        )
+        LOGGER.debug {
+            "Bestiller distribusjon for journalpost ${request.journalpostId} " +
+                    "med distribusjonstype ${request.distribusjonstype} " +
+                    "og distribusjonstidspunkt ${request.distribusjonstidspunkt}" +
+                    if (Strings.isNotEmpty(batchId)) String.format(" og batchId %s", batchId) else ""
+        }
 
         try {
             return postForNonNullEntity<DokDistDistribuerJournalpostResponse>(createUri(), request)
@@ -64,10 +62,9 @@ class DokdistFordelingConsumer(
             val status = e.statusCode
             val errorMessage = parseErrorMessage(e)
             if (HttpStatus.CONFLICT == status) {
-                LOGGER.warn(
-                    "Distribusjon er allerede bestillt for journalpost {}. Fortsetter behandling.",
-                    journalpostId,
-                )
+                LOGGER.warn {
+                    "Distribusjon er allerede bestillt for journalpost ${journalpostId}. Fortsetter behandling."
+                }
                 return conflictExceptionToResponse(journalpostId, e)
             }
 
@@ -112,7 +109,7 @@ class DokdistFordelingConsumer(
 
     private fun parseErrorMessage(e: HttpStatusCodeException): String? {
         try {
-            val jsonNode = commonObjectmapper.readValue<JsonNode>(e.responseBodyAsString, JsonNode::class.java)
+            val jsonNode = commonObjectmapper.readValue(e.responseBodyAsString, JsonNode::class.java)
             if (jsonNode.has("message")) {
                 return jsonNode.get("message").asText()
             }
@@ -123,6 +120,6 @@ class DokdistFordelingConsumer(
     }
 
     companion object {
-        private val LOGGER: Logger = LoggerFactory.getLogger(DokarkivConsumer::class.java)
+        private val LOGGER = KotlinLogging.logger {  }
     }
 }

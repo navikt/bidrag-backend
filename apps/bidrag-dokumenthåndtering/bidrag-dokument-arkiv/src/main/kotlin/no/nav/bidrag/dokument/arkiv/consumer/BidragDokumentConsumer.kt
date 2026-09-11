@@ -1,6 +1,5 @@
 package no.nav.bidrag.dokument.arkiv.consumer
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -10,8 +9,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
-
-private val LOGGER = KotlinLogging.logger {}
 
 @Service
 class BidragDokumentConsumer(
@@ -25,7 +22,6 @@ class BidragDokumentConsumer(
 
     @Retryable(backoff = Backoff(delay = 500, maxDelay = 2000, multiplier = 2.0))
     fun hentDokument(dokumentId: String): ByteArray {
-        LOGGER.info { "Henter dokument bytedata for dokumentreferanse $dokumentId" }
         return getForNonNullEntity(
             dokumentUrl.pathSegment("dokumentreferanse").pathSegment(dokumentId)
                 .build().toUri(),

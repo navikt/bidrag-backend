@@ -12,7 +12,6 @@ import no.nav.bidrag.dokument.arkiv.dto.KnyttTilSakRequest
 import no.nav.bidrag.dokument.arkiv.dto.LagreJournalfortAvIdentRequest
 import no.nav.bidrag.dokument.arkiv.dto.LagreJournalpostRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterDokumentdatoTilIdag
-import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostDistribusjonsInfoRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostResponse
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostTilleggsopplysninger
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory
 import java.util.Objects
 import java.util.function.Consumer
 import java.util.stream.Collectors
+import no.nav.bidrag.commons.util.secureLogger
 
 class EndreJournalpostService(
     private val journalpostService: JournalpostService,
@@ -127,25 +127,16 @@ class EndreJournalpostService(
             journalpost.hentJournalpostIdLong(),
             knyttTilAnnenSakRequest,
         )
-        LOGGER.info(
-            "Tilknyttet journalpost {} til sak {} med ny journalpostId {} og tema {}",
-            journalpost.journalpostId,
-            saksnummer,
-            nyJournalpostId,
-            tema,
-        )
+        secureLogger.debug {
+            "Tilknyttet journalpost ${journalpost.journalpostId} til sak $saksnummer med ny journalpostId $nyJournalpostId og tema $tema"
+        }
         journalpost.leggTilTilknyttetSak(saksnummer)
     }
 
     private fun journalfoerJournalpost(journalpostId: Long?, enhet: String?, journalpost: Journalpost) {
         val journalforRequest = FerdigstillJournalpostRequest(journalpostId!!, enhet!!)
         dokarkivConsumer.ferdigstill(journalforRequest)
-        LOGGER.info("Journalpost med id $journalpostId er journalført")
         lagreSaksbehandlerIdentForJournalfortJournalpost(journalpost, null)
-    }
-
-    fun oppdaterJournalpostDistribusjonBestiltStatus(journalpostId: Long, journalpost: Journalpost) {
-        lagreJournalpost(OppdaterJournalpostDistribusjonsInfoRequest(journalpostId, journalpost))
     }
 
     fun oppdaterDokumentdatoTilIdag(journalpostId: Long, journalpost: Journalpost) {
