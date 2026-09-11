@@ -59,8 +59,8 @@ class DistribuerJournalpostService(
     val innsendingService: InnsendingService,
     final val meterRegistry: MeterRegistry,
 ) {
-    private final val journalpostService: JournalpostService
-    private final val personConsumer: PersonConsumer
+    private final val journalpostService: JournalpostService = journalpostServices.get(Discriminator.REGULAR_USER)
+    private final val personConsumer: PersonConsumer = personConsumers.get(Discriminator.REGULAR_USER)
     private final val distributionAntallDokumenter =
         DistributionSummary.builder(DISTRIBUSJON_DOKUMENTER_GAUGE_NAME)
             .publishPercentileHistogram()
@@ -72,11 +72,6 @@ class DistribuerJournalpostService(
         private const val DISTRIBUSJON_COUNTER_NAME = "distribuer_journalpost"
         private const val DISTRIBUSJON_DOKUMENTER_GAUGE_NAME =
             "distribuer_journalpost_antall_dokumenter"
-    }
-
-    init {
-        journalpostService = journalpostServices.get(Discriminator.REGULAR_USER)
-        personConsumer = personConsumers.get(Discriminator.REGULAR_USER)
     }
 
     fun hentDistribusjonKanal(request: BestemDistribusjonKanalRequest): BestemKanalResponse {
@@ -101,7 +96,6 @@ class DistribuerJournalpostService(
     fun hentDistribusjonsInfo(journalpostId: Long): DistribusjonInfoDto? = journalpostService.hentDistribusjonsInfo(journalpostId)
         .takeIf { it.isUtgaaendeDokument() }
         ?.let {
-            SECURE_LOGGER.info { "Hentet utsendinginfo $it for journalpost $journalpostId" }
             val utsendingsinfo = it.utsendingsinfo
             DistribusjonInfoDto(
                 journalstatus = it.hentJournalStatus(),
@@ -205,7 +199,6 @@ class DistribuerJournalpostService(
             validerKanDistribueres(journalpost)
 
             if (distribuerJournalpostRequest.erLokalUtskrift()) {
-                LOGGER.info { "Journalpost $journalpostId er distribuert via lokal utskrift. Oppdaterer journalpost status" }
                 oppdaterDistribusjonsInfoLokalUtskrift(journalpostId)
                 oppdaterTilleggsopplysninger(journalpostId, journalpost, erLokalUtskrift = true)
                 oppdaterDokumentdatoTilIdag(journalpostId, journalpost)
@@ -229,7 +222,7 @@ class DistribuerJournalpostService(
             // TODO: Lagre bestillingsid når bd-arkiv er koblet mot database
             val distribuerResponse =
                 dokdistFordelingConsumer.distribuerJournalpost(journalpost, batchId, adresse)
-            LOGGER.info {
+            LOGGER.debug {
                 "Bestillte distribusjon av journalpost $journalpostId med bestillingsId ${distribuerResponse.bestillingsId}, " +
                     "antall dokumenter ${journalpost.dokumenter.size} og kanal ${distribusjonKanal.distribusjonskanal}(${distribusjonKanal.regel}-${distribusjonKanal.regelBegrunnelse})."
             }
@@ -288,7 +281,6 @@ class DistribuerJournalpostService(
     private fun lagreEttersendingsoppgave(journalpostId: Long, ettersendingsoppgave: OpprettEttersendingsppgaveDto) {
         val journalpostEtter = hentJournalpost(journalpostId)
 
-        LOGGER.info { "Lagrer ettersendingsoppgave som tilleggsopplysning på journalpost $journalpostId" }
         journalpostEtter.tilleggsopplysninger.addInnsendingsOppgave(ettersendingsoppgave.toTilleggsopplysning())
         endreJournalpostService.oppdaterJournalpostTilleggsopplysninger(
             journalpostId,
@@ -420,7 +412,6 @@ class DistribuerJournalpostService(
     }
 
     fun kanDistribuereJournalpost(journalpostId: Long) {
-        LOGGER.info { "Sjekker om distribuere journalpost $journalpostId kan distribueres" }
         val journalpost = journalpostService.hentJournalpost(journalpostId)
             ?: throw JournalpostIkkeFunnetException(
                 String.format(

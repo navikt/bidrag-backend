@@ -48,16 +48,11 @@ class OpprettJournalpostService(
     private val endreJournalpostService: EndreJournalpostService,
     private val bidragDokumentConsumer: BidragDokumentConsumer,
 ) {
-    private val dokarkivConsumer: DokarkivConsumer
-    private val safConsumer: SafConsumer
+    private val dokarkivConsumer: DokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
+    private val safConsumer: SafConsumer = safConsumers.get(Discriminator.REGULAR_USER)
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(OpprettJournalpostService::class.java)
-    }
-
-    init {
-        dokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
-        safConsumer = safConsumers.get(Discriminator.REGULAR_USER)
     }
 
     fun opprettJournalpost(request: OpprettJournalpostRequest): OpprettJournalpostResponse {
@@ -132,10 +127,7 @@ class OpprettJournalpostService(
         validerKanOppretteJournalpost(request, skalFerdigstilles)
 
         val response = dokarkivConsumer.opprett(request, skalFerdigstilles)
-        LOGGER.info(
-            "Opprettet ny journalpost ${response.journalpostId} med type=${request.journalpostType} kanal=${request.kanal}, tema=${request.tema}, referanseId=${request.eksternReferanseId} og enhet=${request.journalfoerendeEnhet}",
-        )
-        SECURE_LOGGER.info { "Opprettet ny journalpost $response" }
+        SECURE_LOGGER.debug { "Opprettet ny journalpost $response" }
 
         validerOpprettJournalpostResponse(skalFerdigstilles, response)
 
@@ -315,9 +307,6 @@ class OpprettJournalpostService(
     private fun hentDokument(dokumentDto: OpprettDokumentDto): ByteArray = dokumentDto.fysiskDokument ?: dokumentDto.dokument?.let {
         Base64.getDecoder().decode(it)
     } ?: dokumentDto.dokumentreferanse?.let {
-        LOGGER.info(
-            "Henter dokument bytedata for dokument med tittel ${dokumentDto.tittel} og dokumentreferanse ${dokumentDto.dokumentreferanse}",
-        )
         bidragDokumentConsumer.hentDokument(
             it,
         )

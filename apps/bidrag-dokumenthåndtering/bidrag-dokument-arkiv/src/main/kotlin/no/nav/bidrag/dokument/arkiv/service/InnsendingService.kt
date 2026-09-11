@@ -1,7 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.InnsendingConsumer
 import no.nav.bidrag.dokument.arkiv.consumer.dto.DokumentSoknadDto
 import no.nav.bidrag.dokument.arkiv.consumer.dto.HentEtterseningsoppgaveRequest
@@ -15,17 +14,6 @@ private val LOGGER = KotlinLogging.logger {}
 
 @Service
 class InnsendingService(private val innsendingConsumer: InnsendingConsumer) {
-
-    fun hentEttersending(journalpost: Journalpost): DokumentSoknadDto? {
-        val gjelder = journalpost.hentGjelderId()
-
-        val ettersendingsoppgave = journalpost.ettersendingsoppgave() ?: return null
-        val ettersendingsoppgaver = hentEttersendingsoppgaver(
-            gjelder!!,
-            ettersendingsoppgave.skjemaId,
-        )
-        return ettersendingsoppgaver.find { it.innsendingsId == ettersendingsoppgave.innsendingsId }
-    }
 
     fun hentEttersendingsoppgaver(gjelderId: String, skjemaId: String): List<DokumentSoknadDto> {
         try {
@@ -87,18 +75,9 @@ class InnsendingService(private val innsendingConsumer: InnsendingConsumer) {
             }
 //            return eksisterendeOppgaver.maxBy { it.opprettetDato }
         }
-
-        LOGGER.info { "Oppretter og lagrer ettersendingsoppgave for journalpost ${journalpost.journalpostId}" }
-        SECURE_LOGGER.info { "Oppretter og lagrer ettersendingsoppgave $ettersending for journalpost ${journalpost.journalpostId}" }
-
         val oppgave = innsendingConsumer.opprettEttersendingsoppgave(
             ettersending.tilRequest(journalpost),
         )
-
-        LOGGER.info { "Ettersendingsoppgave opprettet med innsendingsId=${oppgave.innsendingsId} for journalpost ${journalpost.journalpostId}" }
-        SECURE_LOGGER.info {
-            "Ettersendingsoppgave opprettet med innsendingsId=${oppgave.innsendingsId} for journalpost ${journalpost.journalpostId}: $oppgave"
-        }
         return oppgave
     }
 }

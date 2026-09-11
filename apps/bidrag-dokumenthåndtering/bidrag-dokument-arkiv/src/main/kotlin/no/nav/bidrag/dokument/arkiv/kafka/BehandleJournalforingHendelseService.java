@@ -52,7 +52,7 @@ public class BehandleJournalforingHendelseService {
     Long journalpostId = record.getJournalpostId();
     var journalpost =
         hentJournalpostMedSaksbehandlerIdent(journalpostId, record.getJournalpostStatus());
-    SECURE_LOGGER.info(
+    SECURE_LOGGER.debug(
         () -> "Mottok journalføringshendelse med id " + record + " og journalpost " + journalpost);
     if (erOpprettetAvNKS(journalpost)) {
       String brevKoder =
