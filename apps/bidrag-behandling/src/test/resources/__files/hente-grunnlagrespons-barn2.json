@@ -100,7 +100,8 @@
       "hentetTidspunkt": "2024-01-08T13:39:06.151722999"
     }
   ],
-  "barnetilleggListe": [],
+  "barnetilleggPensjonListe": [],
+  "barnetilleggAapListe": [],
   "barnetilsynListe": [],
   "hentetTidspunkt": "2024-01-16T15:10:44.003848261",
   "husstandsmedlemmerOgEgneBarnListe": [],

@@ -3166,7 +3166,7 @@
       "beløp": 1000.0
     }
   ],
-  "barnetilleggListe": [
+  "barnetilleggPensjonListe": [
     {
       "partPersonId": "{bpIdent}",
       "barnPersonId": "{barn1Ident}",
@@ -3177,6 +3177,7 @@
       "beløpBrutto": 1000.0
     }
   ],
+  "barnetilleggAapListe": [],
   "kontantstøtteListe": [
     {
       "partPersonId": "{bpIdent}",

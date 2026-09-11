@@ -326,7 +326,7 @@
       "beløp": 1000.0
     }
   ],
-  "barnetilleggListe": [
+  "barnetilleggPensjonListe": [
     {
       "partPersonId": "{personId}",
       "barnPersonId": "{barn1Ident}",

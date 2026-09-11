@@ -1,7 +1,7 @@
 {
   "ainntektListe": [],
   "arbeidsforholdListe": [],
-  "barnetilleggListe": [],
+  "barnetilleggPensjonListe": [],
   "barnetilsynListe": [
     {
       "barnPersonId": "1344124",
@@ -36,5 +36,6 @@
   "skattegrunnlagListe": [],
   "småbarnstilleggListe": [],
   "utvidetBarnetrygdListe": [],
+  "barnetilleggAapListe": [],
   "feilrapporteringListe": []
 }

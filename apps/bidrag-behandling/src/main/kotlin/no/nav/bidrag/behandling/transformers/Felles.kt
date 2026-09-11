@@ -503,6 +503,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     feilrapporteringListe = emptyList(),
     hentetTidspunkt = LocalDateTime.now(),
     tilleggsstønadBarnetilsynListe = emptyList(),
+    barnetilleggAapListe = emptyList(),
 )
 
 fun Set<PrivatAvtale>.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode(

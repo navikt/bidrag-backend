@@ -1,7 +1,7 @@
 {
   "ainntektListe": [],
   "arbeidsforholdListe": [],
-  "barnetilleggListe": [],
+  "barnetilleggPensjonListe": [],
   "barnetilsynListe": [],
   "hentetTidspunkt": "2024-01-16T15:10:44.003848261",
   "husstandsmedlemmerOgEgneBarnListe": [],
@@ -16,5 +16,6 @@
     }
   ],
   "utvidetBarnetrygdListe": [],
+  "barnetilleggAapListe": [],
   "feilrapporteringListe": []
 }

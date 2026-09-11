@@ -158,13 +158,14 @@
   "skattegrunnlagListe": [],
   "utvidetBarnetrygdListe": [],
   "småbarnstilleggListe": [],
-  "barnetilleggListe": [],
+  "barnetilleggPensjonListe": [],
   "kontantstøtteListe": [],
   "husstandsmedlemmerOgEgneBarnListe": [],
   "sivilstandListe": [],
   "barnetilsynListe": [],
   "arbeidsforholdListe": [],
   "tilleggsstønadBarnetilsynListe": [],
+  "barnetilleggAapListe": [],
   "feilrapporteringListe": [],
   "hentetTidspunkt": "2025-04-15T12:31:24.37937621"
 }

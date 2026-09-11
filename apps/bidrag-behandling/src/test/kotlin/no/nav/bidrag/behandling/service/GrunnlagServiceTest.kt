@@ -5043,6 +5043,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
             småbarnstilleggListe = småbarnstillegg,
             utvidetBarnetrygdListe = utvidetBarnetrygd,
             tilleggsstønadBarnetilsynListe = emptyList(),
+            barnetilleggAapListe = emptyList(),
         )
 
         fun tilAinntektspostDto(
@@ -5155,6 +5156,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     feilrapporteringListe = emptyList(),
     hentetTidspunkt = LocalDateTime.now(),
     tilleggsstønadBarnetilsynListe = emptyList(),
+    barnetilleggAapListe = emptyList(),
 )
 
 fun oppretteFeilrapporteringerForPerson(
