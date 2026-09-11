@@ -137,9 +137,13 @@ AZURE_APP_CLIENT_SECRET
 Hentes fra kjørende pod i dev:
 
 ```bash
-kubectl -n bidrag exec -it deploy/bidrag-henvendelse -- printenv \
+kubectl -n bidrag exec -it deploy/bidrag-henvendelse-q2 -- printenv \
   AZURE_APP_TENANT_ID AZURE_APP_CLIENT_ID AZURE_APP_CLIENT_SECRET
 ```
+
+Merk at appen må være deployet til q2 først: det er Nais som oppretter Azure-registreringen
+og secreten, og det er `bidrag-henvendelse-q2` de andre tjenestene har åpnet for. Kallene
+lokalt går på ingressene, ikke tjenestenavnene i clusteret, så naisdevice må være på.
 
 Sett dem i run-konfigurasjonen i IntelliJ (Edit Configurations → Environment variables).
 

@@ -6,6 +6,11 @@ HENVENDELSE_SCOPE: dev-gcp.teamnks.sf-henvendelse-api-proxy
 BIDRAG_PERSON_URL: https://bidrag-person-q2.intern.dev.nav.no
 BIDRAG_PERSON_SCOPE: dev-fss.bidrag.bidrag-person-q2
 
+# I miljøene går dette kallet på tjenestenavnet i clusteret. Lokalt må det gå via ingressen,
+# og da kreves naisdevice.
+BIDRAG_TILGANG_URL: https://bidrag-tilgangskontroll.intern.dev.nav.no
+BIDRAG_TILGANG_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll
+
 # IdUtils i bidrag-commons krever denne, uten default. Settes av Nais i miljøene, men må
 # stå her for at appen skal starte lokalt.
 NAIS_APP_NAME: bidrag-henvendelse-lokal
