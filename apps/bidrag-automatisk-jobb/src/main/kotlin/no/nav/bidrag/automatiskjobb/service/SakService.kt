@@ -167,7 +167,7 @@ class SakService(
             }
 
         LOGGER.info {
-            "Fattet vedtak $vedtaksid for endring av mottaker for ${stønadsid.type.name.lowercase()} " +
+            "Opprettet eller gjenbrukte vedtak $vedtaksid for endring av mottaker for ${stønadsid.type.name.lowercase()} " +
                 "i sak ${stønadsid.sak.verdi}."
         }
         secureLogger.info { "Endring av mottaker for ${stønadsid.toReferanse()}, ny mottaker $nyMottaker." }
