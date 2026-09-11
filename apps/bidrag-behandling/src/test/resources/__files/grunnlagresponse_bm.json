@@ -35,6 +35,7 @@
     }
   ],
   "utvidetBarnetrygdListe": [],
+  "barnetilleggAapListe": [],
   "tilleggsstønadBarnetilsynListe": [
     {
       "partPersonId": "{bmIdent}",
@@ -42,7 +43,7 @@
     }
   ],
   "småbarnstilleggListe": [],
-  "barnetilleggListe": [],
+  "barnetilleggPensjonListe": [],
   "kontantstøtteListe": [],
   "husstandsmedlemmerOgEgneBarnListe": [
     {

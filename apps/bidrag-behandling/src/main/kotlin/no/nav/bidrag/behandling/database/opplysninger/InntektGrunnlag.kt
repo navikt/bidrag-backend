@@ -13,7 +13,7 @@ data class InntektGrunnlag(
     val skattegrunnlagListe: List<SkattegrunnlagGrunnlagDto> = emptyList(),
     val utvidetBarnetrygdListe: List<UtvidetBarnetrygdGrunnlagDto> = emptyList(),
     val småbarnstilleggListe: List<SmåbarnstilleggGrunnlagDto> = emptyList(),
-    val barnetilleggListe: List<BarnetilleggGrunnlagDto> = emptyList(),
+    val barnetilleggPensjonListe: List<BarnetilleggGrunnlagDto> = emptyList(),
     val kontantstøtteListe: List<KontantstøtteGrunnlagDto> = emptyList(),
     val barnetilsynListe: List<BarnetilsynGrunnlagDto> = emptyList(),
 )

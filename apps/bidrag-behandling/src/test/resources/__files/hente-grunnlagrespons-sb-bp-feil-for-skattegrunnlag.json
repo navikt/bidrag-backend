@@ -100,7 +100,7 @@
       "hentetTidspunkt": "2024-01-08T13:39:06.151722999"
     }
   ],
-  "barnetilleggListe": [
+  "barnetilleggPensjonListe": [
     {
       "barnPersonId": "{barnIGrunnlagsrespons}",
       "partPersonId": "213244124",
@@ -182,6 +182,7 @@
   ],
   "småbarnstilleggListe": [],
   "utvidetBarnetrygdListe": [],
+  "barnetilleggAapListe": [],
   "feilrapporteringListe": [
     {
       "feiltype": "TEKNISK_FEIL",

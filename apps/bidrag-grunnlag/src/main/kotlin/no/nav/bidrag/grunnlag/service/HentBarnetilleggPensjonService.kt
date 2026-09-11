@@ -12,9 +12,9 @@ import no.nav.bidrag.grunnlag.util.GrunnlagUtil.Companion.evaluerFeiltype
 import no.nav.bidrag.transport.behandling.grunnlag.response.BarnetilleggGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.FeilrapporteringDto
 
-class HentBarnetilleggService(private val pensjonConsumer: PensjonConsumer) {
+class HentBarnetilleggPensjonService(private val pensjonConsumer: PensjonConsumer) {
 
-    fun hentBarnetilleggPensjon(barnetilleggPensjonRequestListe: List<PersonIdOgPeriodeRequest>): HentGrunnlagGenericDto<BarnetilleggGrunnlagDto> {
+    fun hentBarnetillegg(barnetilleggPensjonRequestListe: List<PersonIdOgPeriodeRequest>): HentGrunnlagGenericDto<BarnetilleggGrunnlagDto> {
         val barnetilleggPensjonListe = mutableListOf<BarnetilleggGrunnlagDto>()
         val feilrapporteringListe = mutableListOf<FeilrapporteringDto>()
 

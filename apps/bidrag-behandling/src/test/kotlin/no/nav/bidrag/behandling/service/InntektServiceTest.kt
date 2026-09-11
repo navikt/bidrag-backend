@@ -3,7 +3,6 @@ package no.nav.bidrag.behandling.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import jakarta.persistence.EntityManager

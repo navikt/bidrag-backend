@@ -37,7 +37,6 @@ import no.nav.bidrag.transport.behandling.inntekt.response.SummertMånedsinntekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import no.nav.bidrag.transport.felles.ifTrue
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -352,7 +351,7 @@ fun opprettTransformerInntekterRequest(
         )
     },
     barnetilleggsliste =
-    innhentetGrunnlag.barnetilleggListe
+    innhentetGrunnlag.barnetilleggPensjonListe
         .filter {
             harBarnRolleIBehandling(
                 it.barnPersonId,

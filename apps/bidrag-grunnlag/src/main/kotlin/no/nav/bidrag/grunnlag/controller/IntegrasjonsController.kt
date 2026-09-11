@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.grunnlag.ISSUER
+import no.nav.bidrag.grunnlag.consumer.aap.AapConsumer
+import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPRequest
+import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.ArbeidsforholdConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.EnhetsregisterConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.api.Arbeidsforhold
@@ -59,6 +62,7 @@ class IntegrasjonsController(
     private val arbeidsforholdConsumer: ArbeidsforholdConsumer,
     private val enhetsregisterConsumer: EnhetsregisterConsumer,
     private val tilleggsstønadConsumer: TilleggsstønadConsumer,
+    private val aapConsumer: AapConsumer,
 ) {
 
     @PostMapping(HENT_AINNTEKT)
@@ -142,6 +146,12 @@ class IntegrasjonsController(
         tilleggsstønadConsumer.hentTilleggsstønad((request)),
     )
 
+    @PostMapping(HENT_BARNETILLEGG_AAP)
+    @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Henter barnetillegg fra AAp")
+    fun hentBarnetilleggAap(
+        @RequestBody request: HentBarnetilleggAAPRequest,
+    ): ResponseEntity<HentBarnetilleggAAPResponse> = handleRestResponse(aapConsumer.hentBarnetillegg(request))
+
     private fun <T : Any> handleRestResponse(restResponse: RestResponse<T>): ResponseEntity<T> = when (restResponse) {
         is RestResponse.Success -> ResponseEntity(restResponse.body, HttpStatus.OK)
         is RestResponse.Failure -> throw ResponseStatusException(restResponse.statusCode, restResponse.message)
@@ -151,7 +161,7 @@ class IntegrasjonsController(
         const val HENT_AINNTEKT = "/integrasjoner/ainntekt"
         const val HENT_AINNTEKT_ABONNEMENT = "/integrasjoner/ainntekt/abonnement"
         const val HENT_SKATTEGRUNNLAG = "/integrasjoner/skattegrunnlag"
-        const val HENT_BARNETILLEGG_PENSJON = "/integrasjoner/barnetillegg"
+        const val HENT_BARNETILLEGG_PENSJON = "/integrasjoner/barnetillegg/pensjon"
         const val HENT_FAMILIEBASAK = "/integrasjoner/familiebasak"
         const val HENT_FORELDER_BARN_RELASJON = "/integrasjoner/forelderbarnrelasjon"
         const val HENT_FOEDSEL_DOED = "/integrasjoner/navnfoedseldoed"
@@ -162,5 +172,6 @@ class IntegrasjonsController(
         const val HENT_ARBEIDSFORHOLD = "/integrasjoner/arbeidsforhold"
         const val HENT_ENHETSINFO = "/integrasjoner/enhetsinfo"
         const val HENT_TILLEGGSTØNAD = "/integrasjoner/tilleggsstonad"
+        const val HENT_BARNETILLEGG_AAP = "/integrasjoner/barnetillegg/aap"
     }
 }

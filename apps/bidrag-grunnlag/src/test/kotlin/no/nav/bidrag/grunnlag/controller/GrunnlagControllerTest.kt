@@ -2,7 +2,6 @@ package no.nav.bidrag.grunnlag.controller
 
 import io.kotest.matchers.nulls.shouldNotBeNull
 import kotlinx.coroutines.runBlocking
-import no.nav.bidrag.commons.web.test.HttpHeaderTestRestTemplate
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.vedtak.Formål
 import no.nav.bidrag.grunnlag.BidragGrunnlagTest
@@ -216,13 +215,14 @@ class GrunnlagControllerTest {
                 skattegrunnlagListe = emptyList(),
                 utvidetBarnetrygdListe = emptyList(),
                 småbarnstilleggListe = emptyList(),
-                barnetilleggListe = emptyList(),
+                barnetilleggPensjonListe = emptyList(),
                 kontantstøtteListe = emptyList(),
                 husstandsmedlemmerOgEgneBarnListe = emptyList(),
                 sivilstandListe = emptyList(),
                 barnetilsynListe = emptyList(),
                 arbeidsforholdListe = emptyList(),
                 tilleggsstønadBarnetilsynListe = emptyList(),
+                barnetilleggAapListe = emptyList(),
                 feilrapporteringListe = emptyList(),
                 hentetTidspunkt = LocalDateTime.now(),
             ),

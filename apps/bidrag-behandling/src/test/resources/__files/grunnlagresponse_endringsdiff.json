@@ -3119,6 +3119,7 @@
       "beløp": 1000.0
     }
   ],
+  "barnetilleggAapListe": [],
   "småbarnstilleggListe": [
     {
       "personId": "313213213",
@@ -3128,7 +3129,7 @@
       "beløp": 1000.0
     }
   ],
-  "barnetilleggListe": [
+  "barnetilleggPensjonListe": [
     {
       "partPersonId": "313213213",
       "barnPersonId": "1344124",

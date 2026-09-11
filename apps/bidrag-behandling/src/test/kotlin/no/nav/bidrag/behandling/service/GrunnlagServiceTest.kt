@@ -2708,7 +2708,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     grunnlagsdata =
                     opprettHentGrunnlagDto()
                         .copy(
-                            barnetilleggListe = barnetilleggGrunnlag.toList(),
+                            barnetilleggPensjonListe = barnetilleggGrunnlag.toList(),
                         ).tilSummerteInntekter(behandling.bidragspliktig!!),
                 )
 
@@ -3690,7 +3690,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     grunnlagsdata =
                     opprettHentGrunnlagDto()
                         .copy(
-                            barnetilleggListe = barnetilleggGrunnlag.toList(),
+                            barnetilleggPensjonListe = barnetilleggGrunnlag.toList(),
                         ).tilSummerteInntekter(behandling.bidragsmottaker!!),
                 )
 
@@ -5032,7 +5032,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
         ) = HentGrunnlagDto(
             ainntektListe = ainntekter,
             arbeidsforholdListe = arbeidsforhold,
-            barnetilleggListe = barnetillegg,
+            barnetilleggPensjonListe = barnetillegg,
             barnetilsynListe = barnetilsyn,
             feilrapporteringListe = feilrapportering,
             hentetTidspunkt = hentet,
@@ -5043,6 +5043,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
             småbarnstilleggListe = småbarnstillegg,
             utvidetBarnetrygdListe = utvidetBarnetrygd,
             tilleggsstønadBarnetilsynListe = emptyList(),
+            barnetilleggAapListe = emptyList(),
         )
 
         fun tilAinntektspostDto(
@@ -5146,7 +5147,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     skattegrunnlagListe = emptyList(),
     arbeidsforholdListe = emptyList(),
     barnetilsynListe = emptyList(),
-    barnetilleggListe = emptyList(),
+    barnetilleggPensjonListe = emptyList(),
     kontantstøtteListe = emptyList(),
     utvidetBarnetrygdListe = emptyList(),
     småbarnstilleggListe = emptyList(),
@@ -5155,6 +5156,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     feilrapporteringListe = emptyList(),
     hentetTidspunkt = LocalDateTime.now(),
     tilleggsstønadBarnetilsynListe = emptyList(),
+    barnetilleggAapListe = emptyList(),
 )
 
 fun oppretteFeilrapporteringerForPerson(

@@ -494,7 +494,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     skattegrunnlagListe = emptyList(),
     arbeidsforholdListe = emptyList(),
     barnetilsynListe = emptyList(),
-    barnetilleggListe = emptyList(),
+    barnetilleggPensjonListe = emptyList(),
     kontantstøtteListe = emptyList(),
     utvidetBarnetrygdListe = emptyList(),
     småbarnstilleggListe = emptyList(),
@@ -503,6 +503,7 @@ fun opprettHentGrunnlagDto() = HentGrunnlagDto(
     feilrapporteringListe = emptyList(),
     hentetTidspunkt = LocalDateTime.now(),
     tilleggsstønadBarnetilsynListe = emptyList(),
+    barnetilleggAapListe = emptyList(),
 )
 
 fun Set<PrivatAvtale>.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode(

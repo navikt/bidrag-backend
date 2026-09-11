@@ -12,8 +12,8 @@ data class HentGrunnlagDto(
     val utvidetBarnetrygdListe: List<UtvidetBarnetrygdGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet småbarnstillegg")
     val småbarnstilleggListe: List<SmåbarnstilleggGrunnlagDto>,
-    @Schema(description = "Periodisert liste over innhentet barnetillegg")
-    val barnetilleggListe: List<BarnetilleggGrunnlagDto>,
+    @Schema(description = "Periodisert liste over innhentet barnetillegg fra Pensjon")
+    val barnetilleggPensjonListe: List<BarnetilleggGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet kontantstøtte")
     val kontantstøtteListe: List<KontantstøtteGrunnlagDto>,
     @Schema(
@@ -35,6 +35,8 @@ data class HentGrunnlagDto(
             "enten Arena eller tilleggsstonader-sak. Responsen skal utvides med periode og beløp senere",
     )
     val tilleggsstønadBarnetilsynListe: List<TilleggsstønadGrunnlagDto> = emptyList(),
+    @Schema(description = "Periodisert liste over innhentet barnetillegg fra AAP")
+    val barnetilleggAapListe: List<BarnetilleggGrunnlagDto>,
     @Schema(description = "Liste over evt. feil rapportert under henting av grunnlag")
     val feilrapporteringListe: List<FeilrapporteringDto>,
     val hentetTidspunkt: LocalDateTime,

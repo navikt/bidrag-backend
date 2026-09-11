@@ -3128,7 +3128,7 @@
       "beløp": 1000.0
     }
   ],
-  "barnetilleggListe": [
+  "barnetilleggPensjonListe": [
     {
       "partPersonId": "313213213",
       "barnPersonId": "1344124",
@@ -3265,6 +3265,7 @@
     }
   ],
   "barnetilsynListe": [],
+  "barnetilleggAapListe": [],
   "arbeidsforholdListe": [
     {
       "partPersonId": "313213213",
