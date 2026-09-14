@@ -48,6 +48,18 @@ cachen, og sørger for riktig byggerekkefølge. Hvis alle gruppene finnes der,
 installeres bare parent-POM-ene. En endring i ett bibliotek kan dermed føre
 til at hele gruppen bygges på nytt, men bare én gang per workflow-kjøring.
 
+Ved cache-miss bygges uendret `felles` uten å kompilere eller kjøre tester.
+Testene kjøres bare når diffen inneholder endringer under `libs/bidrag-felles/`.
+For PR-er brukes diffen fra merge-base, og ved push til `main` brukes filene
+som ble endret i pushen. Manuelle kjøringer sammenligner branchen med main;
+på main brukes siste commit. Appens egne tester og testene i `beregn` og
+`oppgave` påvirkes ikke.
+
+En cache med testede fellesbiblioteker brukes hvis den finnes. Ellers kan
+uendret felles bruke en egen cache fra bygg uten tester. Denne cachen brukes
+aldri i stedet for å teste en faktisk felles-endring. Treffer kjøringen en
+cache med allerede testet innhold, kjøres ikke de samme testene på nytt.
+
 Cachen fornyes når kildekode, ressurser, POM-filer, Maven-/Java-versjon eller
 byggoppsett endres. Beregningsbibliotekene bygges også på nytt når
 fellesbibliotekene endres. Bygg med og uten tester har separate cacher.
