@@ -11,7 +11,7 @@ EREG_URL: http://localhost:${wiremock.server.port}/ereg
 NORGESBANK_URL: http://localhost:${wiremock.server.port}/norgesbank
 BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
 TILLEGGSSTONADERSAK_URL: http://localhost:${wiremock.server.port}/tilleggsstonadersak
-AAP_URL: http://localhost:${wiremock.server.port}/aap
+AAP_URL: http://localhost:${wiremock.server.port}/aap-api
 NAIS_APP_NAME: bidrag-grunnlag
 spring:
   config.activate.on-profile: local

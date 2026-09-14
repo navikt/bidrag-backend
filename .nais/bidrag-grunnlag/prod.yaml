@@ -31,7 +31,7 @@ azure:
   tilleggsstonadersak_url: tilleggsstonader-sak.intern.nav.no
   tilleggsstonadersak_scope: prod-gcp.tilleggsstonader.tilleggsstonader-sak
   aap_url: aap-api.intern.nav.no
-  aap_scope: prod-gcp.aap.api-intern
+  aap_scope: prod-gcp.aap-api-intern
   unsecure:
     ereg_url: ereg-services.prod-fss-pub.nais.io
     norgesbank_url: data.norges-bank.no
