@@ -21,7 +21,6 @@ import no.nav.bidrag.dokument.arkiv.kafka.HendelserProducer
 import no.nav.bidrag.dokument.arkiv.model.JournalpostIkkeFunnetException
 import no.nav.bidrag.dokument.arkiv.model.LagreSaksbehandlerIdentForJournalfortJournalpostFeilet
 import no.nav.bidrag.dokument.arkiv.security.SaksbehandlerInfoManager
-import org.slf4j.LoggerFactory
 import java.util.Objects
 import java.util.function.Consumer
 import java.util.stream.Collectors
@@ -147,11 +146,8 @@ class EndreJournalpostService(
         lagreJournalpost(OppdaterJournalpostTilleggsopplysninger(journalpostId, journalpost))
     }
 
-    private fun hentJournalpost(journalpostId: Long): Journalpost {
-        LOGGER.info("Henter jouranlpost $journalpostId")
-        return journalpostService.hentJournalpost(journalpostId)
-            ?: throw JournalpostIkkeFunnetException("Kunne ikke finne journalpost med id: $journalpostId")
-    }
+    private fun hentJournalpost(journalpostId: Long): Journalpost = journalpostService.hentJournalpost(journalpostId)
+        ?: throw JournalpostIkkeFunnetException("Kunne ikke finne journalpost med id: $journalpostId")
 
     fun oppdaterDistribusjonsInfo(journalpostId: Long?, settStatusEkspedert: Boolean, utsendingsKanal: JournalpostUtsendingKanal?) {
         dokarkivConsumer.oppdaterDistribusjonsInfo(
@@ -159,9 +155,5 @@ class EndreJournalpostService(
             settStatusEkspedert,
             utsendingsKanal,
         )
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(EndreJournalpostService::class.java)
     }
 }

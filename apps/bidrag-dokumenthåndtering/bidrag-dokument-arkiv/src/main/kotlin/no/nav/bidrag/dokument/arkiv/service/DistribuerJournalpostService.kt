@@ -81,7 +81,7 @@ class DistribuerJournalpostService(
             request.tema,
             request.forsendelseStoerrelse,
         )
-        SECURE_LOGGER.info { "Hentet kanal ${kanal.distribusjonskanal} for forespørsel $request" }
+        SECURE_LOGGER.debug { "Hentet kanal ${kanal.distribusjonskanal} for forespørsel $request" }
         return kanal
     }
 
