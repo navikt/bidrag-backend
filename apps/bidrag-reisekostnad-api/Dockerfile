@@ -1,9 +1,9 @@
 # Må ha egen versjon av dockerfile som er på java 21 siden ModelMapper generer proxyklasser for mapping som ikke fungerer i java26
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21-dev AS tools
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-26-dev AS tools
 USER root
 RUN apk add --no-cache glibc-locale-nb
 
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-26
 LABEL maintainer="Team Bidrag" \
       email="bidrag@nav.no"
 
