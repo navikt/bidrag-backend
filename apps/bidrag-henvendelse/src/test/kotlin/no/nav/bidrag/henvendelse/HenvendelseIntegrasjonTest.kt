@@ -436,6 +436,6 @@ class HenvendelseIntegrasjonTest {
         private const val AKTØRID = "2000012345678"
         private const val NAVIDENT = "Z999999"
         private const val MASKINOID = "11111111-2222-3333-4444-555555555555"
-        private const val HENVENDELSESTI = "/henvendelse/henvendelseinfo/henvendelseliste"
+        private const val HENVENDELSESTI = "/henvendelse/api/henvendelseinfo/henvendelseliste"
     }
 }
