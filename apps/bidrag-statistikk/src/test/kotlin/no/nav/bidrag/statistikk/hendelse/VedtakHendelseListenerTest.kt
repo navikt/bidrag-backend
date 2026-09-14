@@ -832,7 +832,7 @@ class VedtakHendelseListenerTest {
     {
 	"kilde": "MANUELT",
 	"type": "FASTSETTELSE",
-	"id": 1,
+	"id": 999999999,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bidrag-behandling-q2",
@@ -885,7 +885,7 @@ class VedtakHendelseListenerTest {
 
         val hendelser = captor.allValues
 
-        assertThat(hendelser[0].vedtaksid).isEqualTo(1)
+        assertThat(hendelser[0].vedtaksid).isEqualTo(999999999)
         assertThat(hendelser[0].vedtakstidspunkt.truncatedTo(ChronoUnit.MICROS)).isEqualTo("2026-04-30T08:33:02.885142")
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
         assertThat(hendelser[0].kategori).isEqualTo(Særbidragskategori.OPTIKK)
@@ -915,7 +915,7 @@ class VedtakHendelseListenerTest {
     {
 	"kilde": "MANUELT",
 	"type": "FASTSETTELSE",
-	"id": 1,
+	"id": 999999999,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bisys",
@@ -968,7 +968,7 @@ class VedtakHendelseListenerTest {
 
         val hendelser = captor.allValues
 
-        assertThat(hendelser[0].vedtaksid).isEqualTo(1)
+        assertThat(hendelser[0].vedtaksid).isEqualTo(999999999)
         assertThat(hendelser[0].vedtakstidspunkt.truncatedTo(ChronoUnit.MICROS)).isEqualTo("2026-04-30T10:33:02.885142")
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
         assertThat(hendelser[0].kategori).isNull()
@@ -998,7 +998,7 @@ class VedtakHendelseListenerTest {
 {
 	"kilde": "MANUELT",
 	"type": "FASTSETTELSE",
-	"id": 1411,
+	"id": 999999999,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bidrag-behandling-q2",
@@ -1054,7 +1054,7 @@ class VedtakHendelseListenerTest {
         val barnetilleggskyldnerInntektListe = hendelser[0].skyldnerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
         val barnetilleggmottakerInntektListe = hendelser[0].mottakerInntektListe?.filter { it.type == Inntektsrapportering.BARNETILLEGG.name }
 
-        assertThat(hendelser[0].vedtaksid).isEqualTo(1411)
+        assertThat(hendelser[0].vedtaksid).isEqualTo(999999999)
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
         assertThat(hendelser[0].kategori).isEqualTo(Særbidragskategori.TANNREGULERING)
         assertThat(hendelser[0].saksnr).isEqualTo("2400150")
@@ -1102,7 +1102,7 @@ class VedtakHendelseListenerTest {
     {
 	"kilde": "MANUELT",
 	"type": "FASTSETTELSE",
-	"id": 1,
+	"id": 999999999,
 	"opprettetAv": "Z990313",
 	"opprettetAvNavn": "F_Z990313 E_Z990313",
 	"kildeapplikasjon": "bidrag-behandling-q2",
@@ -1155,7 +1155,7 @@ class VedtakHendelseListenerTest {
 
         val hendelser = captor.allValues
 
-        assertThat(hendelser[0].vedtaksid).isEqualTo(1)
+        assertThat(hendelser[0].vedtaksid).isEqualTo(999999999)
         assertThat(hendelser[0].vedtakstidspunkt.truncatedTo(ChronoUnit.MICROS)).isEqualTo("2026-04-30T08:33:02.885142")
         assertThat(hendelser[0].type).isEqualTo("FASTSETTELSE")
         assertThat(hendelser[0].kategori).isEqualTo(Særbidragskategori.OPTIKK)
