@@ -1,0 +1,506 @@
+name: Bygg og deploy apper
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pom.xml'
+      - 'apps/**'
+      - 'libs/**'
+      - '.nais/**'
+      - '.github/**'
+      - '.editorconfig'
+  pull_request:
+    paths:
+      - 'pom.xml'
+      - 'apps/**'
+      - 'libs/**'
+      - '.nais/**'
+      - '.github/**'
+      - '.editorconfig'
+
+permissions:
+  contents: read
+
+jobs:
+  detect_changes:
+    name: Finn berørte apper
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.appvalg.outputs.apps }}
+      bibliotekgrupper: ${{ steps.appvalg.outputs.bibliotekgrupper }}
+      felles_endret: ${{ steps.appvalg.outputs.felles_endret }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Installer YAML-parser
+        run: python3 -m pip install --quiet --disable-pip-version-check PyYAML==6.0.3
+      - name: Kjør tester for CI-skriptene
+        run: |
+          python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+          bash .github/scripts/test-pr-endringsoversikt.sh
+      - name: Finn apper som må bygges
+        id: appvalg
+        run: python3 .github/scripts/finn_berorte_apper.py
+
+  biblioteker:
+    name: Klargjør biblioteker
+    needs: detect_changes
+    if: needs.detect_changes.outputs.apps != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      artefaktnavn: ${{ steps.artefakt.outputs.navn }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bibliotek-avhengigheter-${{ hashFiles('pom.xml', 'libs/**/pom.xml') }}
+          restore-keys: |
+            maven-bibliotek-avhengigheter-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          githubServer: false
+          servers: |
+            [
+              {"id": "github", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"},
+              {"id": "github2", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"}
+            ]
+      - uses: ./.github/actions/klargjor-biblioteker
+        with:
+          grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
+          felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
+      - name: Sett artefaktnavn for denne kjøringen
+        id: artefakt
+        run: echo "navn=biblioteker-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+      - name: Del ferdige biblioteker med appjobbene
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.artefakt.outputs.navn }}
+          path: |
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend
+            ~/.m2/repository/no/nav/bidrag/bidrag-backend-*
+            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-*
+            ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-client
+            ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-dto
+            ~/.m2/repository/no/nav/bidrag/bidrag-admin
+            ~/.m2/repository/no/nav/bidrag/bidrag-dokumenthandtering
+          if-no-files-found: error
+          retention-days: 14
+
+  bidrag-admin-fss:
+    name: Bidrag-admin-fss
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-admin-fss')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-admin-fss.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-admin:
+    name: Bidrag-admin
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-admin')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-admin.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-aktoerregister:
+    name: Bidrag-aktørregister
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-aktoerregister')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-aktoerregister.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-arbeidsflyt:
+    name: Bidrag-arbeidsflyt
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-arbeidsflyt')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-arbeidsflyt.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-automatisk-jobb:
+    name: Bidrag-automatisk-jobb
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-automatisk-jobb')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-automatisk-jobb.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-bbm:
+    name: Bidrag-bbm
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-bbm')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-bbm.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-behandling:
+    name: Bidrag-behandling
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-behandling')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-behandling.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-belopshistorikk:
+    name: Bidrag-belopshistorikk
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-belopshistorikk')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-belopshistorikk.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-bidragskalkulator:
+    name: Bidrag-bidragskalkulator
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-bidragskalkulator')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-bidragskalkulator.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-arkiv:
+    name: Bidrag-dokument-arkiv
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-arkiv')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-arkiv.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-arkivering:
+    name: Bidrag-dokument-arkivering
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-arkivering')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-arkivering.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-bestilling:
+    name: Bidrag-dokument-bestilling
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-bestilling')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-bestilling.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-forsendelse:
+    name: Bidrag-dokument-forsendelse
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-forsendelse')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-forsendelse.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-journalpost:
+    name: Bidrag-dokument-journalpost
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-journalpost')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-journalpost.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument-produksjon:
+    name: Bidrag-dokument-produksjon
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument-produksjon')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument-produksjon.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-dokument:
+    name: Bidrag-dokument
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-dokument')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-dokument.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-elin-stub:
+    name: Bidrag-elin-stub
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-elin-stub')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-elin-stub.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-grunnlag:
+    name: Bidrag-grunnlag
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-grunnlag')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-grunnlag.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-henvendelse:
+    name: Bidrag-henvendelse
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-henvendelse')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-henvendelse.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-kodeverk:
+    name: Bidrag-kodeverk
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-kodeverk')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-kodeverk.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-maskinporten-client:
+    name: Bidrag-maskinporten-client
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-maskinporten-client')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-maskinporten-client.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-oppgave:
+    name: Bidrag-oppgave
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-oppgave')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-oppgave.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-organisasjon:
+    name: Bidrag-organisasjon
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-organisasjon')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-organisasjon.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-person-hendelse:
+    name: Bidrag-person-hendelse
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-person-hendelse')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-person-hendelse.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-person:
+    name: Bidrag-person
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-person')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-person.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-regnskap:
+    name: Bidrag-regnskap
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-regnskap')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-regnskap.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-reisekostnad-api:
+    name: Bidrag-reisekostnad-api
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-reisekostnad-api')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-reisekostnad-api.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-reskontro:
+    name: Bidrag-reskontro
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-reskontro')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-reskontro.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-sak:
+    name: Bidrag-sak
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-sak')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-sak.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-samhandler:
+    name: Bidrag-samhandler
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-samhandler')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-samhandler.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-sjablon:
+    name: Bidrag-sjablon
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-sjablon')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-sjablon.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-statistikk:
+    name: Bidrag-statistikk
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-statistikk')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-statistikk.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-tilgangskontroll:
+    name: Bidrag-tilgangskontroll
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-tilgangskontroll')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-tilgangskontroll.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  bidrag-vedtak:
+    name: Bidrag-vedtak
+    needs: [detect_changes, biblioteker]
+    if: contains(fromJSON(needs.detect_changes.outputs.apps), 'bidrag-vedtak')
+    permissions:
+      contents: write
+      id-token: write
+    uses: ./.github/workflows/bidrag-vedtak.yaml
+    secrets: inherit
+    with:
+      bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
