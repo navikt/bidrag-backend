@@ -161,7 +161,7 @@ class IntegrasjonsController(
         const val HENT_AINNTEKT = "/integrasjoner/ainntekt"
         const val HENT_AINNTEKT_ABONNEMENT = "/integrasjoner/ainntekt/abonnement"
         const val HENT_SKATTEGRUNNLAG = "/integrasjoner/skattegrunnlag"
-        const val HENT_BARNETILLEGG_PENSJON = "/integrasjoner/barnetillegg/pensjon"
+        const val HENT_BARNETILLEGG_PENSJON = "/integrasjoner/barnetillegg"
         const val HENT_FAMILIEBASAK = "/integrasjoner/familiebasak"
         const val HENT_FORELDER_BARN_RELASJON = "/integrasjoner/forelderbarnrelasjon"
         const val HENT_FOEDSEL_DOED = "/integrasjoner/navnfoedseldoed"
