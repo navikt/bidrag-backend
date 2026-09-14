@@ -73,7 +73,7 @@ class HentBarnetilleggAAPService(private val aapConsumer: AapConsumer) {
                     periodeTil = barn.perioderMedBarnetillegg.first().til,
                     beløpBrutto = barn.perioderMedBarnetillegg.first().beløp,
                     // TODO feltet barntype har ingen verdi fra AAP og må gjøres nullable
-                    barnType = BarnType.FELLES.toString(),
+                    barnType = BarnType.UKJENT.toString(),
                 ),
             )
         }
