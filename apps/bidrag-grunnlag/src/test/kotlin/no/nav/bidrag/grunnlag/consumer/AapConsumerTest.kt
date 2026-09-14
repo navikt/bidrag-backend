@@ -9,8 +9,6 @@ import io.mockk.runs
 import no.nav.bidrag.grunnlag.TestUtil
 import no.nav.bidrag.grunnlag.consumer.aap.AapConsumer
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
-import no.nav.bidrag.grunnlag.consumer.familiebasak.api.TilleggsstønadResponse
-import no.nav.bidrag.grunnlag.consumer.tilleggsstønad.TilleggsstønadConsumer
 import no.nav.bidrag.grunnlag.exception.RestResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -25,7 +23,7 @@ import org.springframework.web.client.RestTemplate
 import java.net.URI
 
 @ExtendWith(MockKExtension::class)
-@DisplayName("TilleggsstønadConsumerTest")
+@DisplayName("AapConsumerTest")
 internal class AapConsumerTest {
     @MockK
     private lateinit var restTemplateMock: RestTemplate

@@ -606,6 +606,8 @@
       "permitteringListe": []
     }
   ],
+  ,
+  "barnetilleggAapListe": [],
   "feilrapporteringListe": [],
   "hentetTidspunkt": "{dagens_dato}"
 }

@@ -2,7 +2,6 @@ package no.nav.bidrag.grunnlag.service
 
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
-import no.nav.bidrag.domene.enums.person.BarnType
 import no.nav.bidrag.grunnlag.consumer.aap.AapConsumer
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPRequest
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
@@ -37,7 +36,7 @@ class HentBarnetilleggAAPService(private val aapConsumer: AapConsumer) {
                 is RestResponse.Failure -> {
                     feilrapporteringListe.add(
                         FeilrapporteringDto(
-                            grunnlagstype = GrunnlagRequestType.BARNETILLEGG,
+                            grunnlagstype = GrunnlagRequestType.BARNETILLEGG_AAP,
                             personId = hentBarnetilleggRequest.personidentifikator,
                             periodeFra = null,
                             periodeTil = null,

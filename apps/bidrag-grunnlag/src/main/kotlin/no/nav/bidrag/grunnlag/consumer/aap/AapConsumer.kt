@@ -4,8 +4,6 @@ import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPRequest
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
-import no.nav.bidrag.grunnlag.consumer.familiekssak.api.BisysDto
-import no.nav.bidrag.grunnlag.consumer.familiekssak.api.BisysResponsDto
 import no.nav.bidrag.grunnlag.exception.RestResponse
 import no.nav.bidrag.grunnlag.exception.tryExchange
 import org.springframework.beans.factory.annotation.Qualifier

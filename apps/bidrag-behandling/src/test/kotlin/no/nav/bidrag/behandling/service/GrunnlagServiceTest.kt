@@ -4790,7 +4790,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     ),
                 )
 
-            innhentingMedFeil.feilrapporteringListe shouldHaveSize 30
+            innhentingMedFeil.feilrapporteringListe shouldHaveSize 33
             every {
                 runBlocking {
                     bidragGrunnlagConsumerMock.henteGrunnlag(
@@ -4963,7 +4963,7 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     ),
                 )
 
-            innhentingMedFeil.feilrapporteringListe shouldHaveSize 30
+            innhentingMedFeil.feilrapporteringListe shouldHaveSize 33
             every {
                 runBlocking {
                     bidragGrunnlagConsumerMock.henteGrunnlag(

@@ -45,7 +45,7 @@ spec:
         - host: {{ azure.tilleggsstonadersak_url }}
         - host: {{ azure.unsecure.ereg_url }}
         - host: {{ azure.unsecure.norgesbank_url }}
-        - host: {{ azure.aap-api_url }}
+        - host: {{ azure.aap_url }}
       rules:
         - application: familie-ba-sak
           namespace: teamfamilie
@@ -134,6 +134,8 @@ spec:
       value: https://{{ azure.unsecure.norgesbank_url }}
     - name: AAP_URL
       value: https://{{ azure.aap_url }}
+    - name: AAP_SCOPE
+      value: {{ azure.aap_scope }}
   gcp:
     sqlInstances:
       - name: {{ dbinstancename }}
