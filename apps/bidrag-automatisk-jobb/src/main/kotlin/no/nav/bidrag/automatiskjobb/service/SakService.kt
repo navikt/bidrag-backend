@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
 import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
+import no.nav.bidrag.automatiskjobb.utils.UnleashFeatures
 import no.nav.bidrag.automatiskjobb.utils.hentSisteLøpendePeriode
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
@@ -44,6 +45,13 @@ class SakService(
         hendelse: SakHendelse,
         hendelseTidspunkt: Instant,
     ) {
+        if (!UnleashFeatures.FATTE_ENDRING_MOTTAKER_VEDTAK.isEnabled) {
+            LOGGER.info {
+                "Feature toggle ${UnleashFeatures.FATTE_ENDRING_MOTTAKER_VEDTAK.featureName} er avskrudd. " +
+                    "Behandler ikke sakhendelse for endring av mottaker."
+            }
+            return
+        }
         hendelse.barn.forEach { barnISak ->
             STØNADSTYPER.forEach { stønadstype ->
                 behandleMottakerForStønad(hendelse, hendelseTidspunkt, barnISak, stønadstype)

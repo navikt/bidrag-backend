@@ -8,11 +8,14 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragVedtakConsumer
 import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
+import no.nav.bidrag.automatiskjobb.utils.UnleashFeatures
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -71,6 +74,10 @@ class SakServiceTest {
 
     @BeforeEach
     fun setup() {
+        mockkObject(UnleashFeaturesProvider)
+        every {
+            UnleashFeaturesProvider.isEnabled(eq(UnleashFeatures.FATTE_ENDRING_MOTTAKER_VEDTAK.featureName), any())
+        } returns true
         every { identUtils.hentNyesteIdent(any()) } returnsArgument 0
     }
 
@@ -244,6 +251,19 @@ class SakServiceTest {
         val requests = mutableListOf<OpprettVedtakRequestDto>()
         verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
         requests.map { it.unikReferanse }.toSet() shouldHaveSize 2
+    }
+
+    @Test
+    fun `skal ikke behandle sakhendelse eller fatte vedtak når feature toggle er avskrudd`() {
+        every {
+            UnleashFeaturesProvider.isEnabled(eq(UnleashFeatures.FATTE_ENDRING_MOTTAKER_VEDTAK.featureName), any())
+        } returns false
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+
+        behandle(reellMottaker = nyReellMottaker)
+
+        verify(exactly = 0) { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) }
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     private fun behandle(
