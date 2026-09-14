@@ -1,5 +1,7 @@
 package no.nav.bidrag.transport.behandling.grunnlag.response
 
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
@@ -13,6 +15,7 @@ data class HentGrunnlagDto(
     @Schema(description = "Periodisert liste over innhentet småbarnstillegg")
     val småbarnstilleggListe: List<SmåbarnstilleggGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet barnetillegg fra Pensjon")
+    @JsonAlias("barnetilleggListe")
     val barnetilleggPensjonListe: List<BarnetilleggGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet kontantstøtte")
     val kontantstøtteListe: List<KontantstøtteGrunnlagDto>,
@@ -40,4 +43,9 @@ data class HentGrunnlagDto(
     @Schema(description = "Liste over evt. feil rapportert under henting av grunnlag")
     val feilrapporteringListe: List<FeilrapporteringDto>,
     val hentetTidspunkt: LocalDateTime,
-)
+) {
+    @get:JsonProperty("barnetilleggListe")
+    @get:Schema(description = "Periodisert liste over innhentet barnetillegg", deprecated = true)
+    @Deprecated("Bruk barnetilleggPensjonListe", ReplaceWith("barnetilleggPensjonListe"))
+    val barnetilleggListe: List<BarnetilleggGrunnlagDto> get() = barnetilleggPensjonListe
+}
