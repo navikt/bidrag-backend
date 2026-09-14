@@ -186,7 +186,7 @@ class HentGrunnlagService(
                     aapConsumer = aapConsumer,
                 ).hentBarnetillegg(
                     request = hentRequestListeFor(
-                        type = GrunnlagRequestType.BARNETILLEGG,
+                        type = GrunnlagRequestType.BARNETILLEGG_AAP,
                         hentGrunnlagRequestDto = requestMedNyesteIdenter,
                     ),
                 )

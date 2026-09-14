@@ -147,7 +147,7 @@ class IntegrasjonsController(
     )
 
     @PostMapping(HENT_BARNETILLEGG_AAP)
-    @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Henter barnetillegg fra AAp")
+    @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Henter barnetillegg fra Aap")
     fun hentBarnetilleggAap(
         @RequestBody request: HentBarnetilleggAAPRequest,
     ): ResponseEntity<HentBarnetilleggAAPResponse> = handleRestResponse(aapConsumer.hentBarnetillegg(request))
