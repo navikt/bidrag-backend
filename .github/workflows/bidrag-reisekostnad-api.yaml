@@ -49,6 +49,7 @@ jobs:
     secrets: inherit
     with:
       bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
+      java-version: '26'
       runner: ubuntu-latest-4-cores
       nais_hovedfil_navn: bidrag-reisekostnad-api/nais.yaml
       nais_variabler_filnavn_q1: bidrag-reisekostnad-api/preprod.yaml
@@ -62,6 +63,5 @@ jobs:
         apps/bidrag-reisekostnad-api/pom.xml
       ktlint_paths: apps/bidrag-reisekostnad-api/src/**/*.kt
       docker_context: ./apps/bidrag-reisekostnad-api
-      dockerfile_with_path: ./apps/bidrag-reisekostnad-api/Dockerfile
       image_suffix: bidrag-reisekostnad-api
       tag: bidrag-reisekostnad-api
