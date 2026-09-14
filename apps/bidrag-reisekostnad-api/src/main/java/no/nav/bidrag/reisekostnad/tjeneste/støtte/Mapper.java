@@ -10,7 +10,6 @@ import no.nav.bidrag.reisekostnad.database.dao.ForespørselDao;
 import no.nav.bidrag.reisekostnad.database.datamodell.Barn;
 import no.nav.bidrag.reisekostnad.database.datamodell.Forelder;
 import no.nav.bidrag.reisekostnad.database.datamodell.Forespørsel;
-import no.nav.bidrag.reisekostnad.database.datamodell.Person;
 import no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.BidragPersonkonsument;
 import no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.api.Diskresjonskode;
 import no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.api.Familiemedlem;
@@ -18,28 +17,21 @@ import no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.api.HentFamilieRespo
 import no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.api.MotpartBarnRelasjon;
 import no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig;
 import org.apache.commons.lang3.StringUtils;
-import org.modelmapper.Converter;
-import org.modelmapper.ModelMapper;
-import org.modelmapper.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static no.nav.bidrag.reisekostnad.integrasjon.bidrag.person.BidragPersonkonsument.FORMAT_FØDSELSDATO;
-
 @Slf4j
 @Component
 public class Mapper {
 
-    private ModelMapper modelMapper = new ModelMapper();
     private ForespørselDao forespørselDao;
     private BidragPersonkonsument bidragPersonkonsument;
 
@@ -47,17 +39,6 @@ public class Mapper {
     public Mapper(BidragPersonkonsument bidragPersonkonsument, ForespørselDao forespørselDao) {
         this.bidragPersonkonsument = bidragPersonkonsument;
         this.forespørselDao = forespørselDao;
-        this.modelMapper.getConfiguration().setFieldMatchingEnabled(true).setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
-        oppretteTypeMaps();
-    }
-
-    private void oppretteTypeMaps() {
-        this.modelMapper.createTypeMap(Familiemedlem.class, PersonDto.class);
-        this.modelMapper.createTypeMap(Forespørsel.class, ForespørselDto.class);
-        this.modelMapper.createTypeMap(ForespørselDto.class, Forespørsel.class);
-        this.modelMapper.createTypeMap(Person.class, PersonDto.class);
-        this.modelMapper.createTypeMap(Forelder.class, PersonDto.class)
-            .setConverter(ctx -> tilPersonDto(ctx.getSource().getPersonident()));
     }
 
     public BrukerinformasjonDto tilDto(HentFamilieRespons familieRespons) {
@@ -91,15 +72,8 @@ public class Mapper {
     }
 
     private PersonDto tilDto(Familiemedlem familiemedlem) {
-
-        var egenskapmapper = modelMapper.getTypeMap(Familiemedlem.class, PersonDto.class);
-
-        Converter<String, String> konverterePersonident = ident -> ident.getSource() == null ? null : kryptere(ident.getSource());
-
-        egenskapmapper.addMappings(mapper -> mapper.using(konverterePersonident).map(Familiemedlem::getIdent, PersonDto::setIdent));
-        egenskapmapper.addMappings(mapper -> mapper.map(Familiemedlem::getFoedselsdato, PersonDto::setFødselsdato));
-
-        return modelMapper.map(familiemedlem, PersonDto.class);
+        var ident = familiemedlem.getIdent() == null ? null : kryptere(familiemedlem.getIdent());
+        return new PersonDto(ident, familiemedlem.getFornavn(), null, familiemedlem.getFoedselsdato());
     }
 
     /**
@@ -193,23 +167,27 @@ public class Mapper {
     }
 
     private ForespørselDto tilForespørselDto(Forespørsel forespørsel) {
-        var forespørselmapper = modelMapper.getTypeMap(Forespørsel.class, ForespørselDto.class);
+        return ForespørselDto.builder()
+                .id(forespørsel.getId())
+                .kreverSamtykke(forespørsel.isKreverSamtykke())
+                .barn(tilPersonDtoSetFraBarn(forespørsel.getBarn()))
+                .hovedpart(tilPersonDto(forespørsel.getHovedpart()))
+                .motpart(tilPersonDto(forespørsel.getMotpart()))
+                .opprettet(forespørsel.getOpprettet())
+                .samtykket(forespørsel.getSamtykket())
+                .samtykkefrist(forespørsel.getSamtykkefrist())
+                .journalført(forespørsel.getJournalført())
+                .deaktivert(forespørsel.getDeaktivert())
+                .deaktivertAv(forespørsel.getDeaktivertAv())
+                .build();
+    }
 
-        Converter<String, LocalDate> konvertereDatostreng = d -> d.getSource() == null ? null
-                : LocalDate.parse(d.getSource(), DateTimeFormatter.ofPattern(FORMAT_FØDSELSDATO));
+    private PersonDto tilPersonDto(Forelder forelder) {
+        return forelder == null ? null : tilPersonDto(forelder.getPersonident());
+    }
 
-        Converter<Person, PersonDto> tilPersonDto = context -> tilPersonDto(context.getSource().getPersonident());
-        Converter<Set<Person>, Set<PersonDto>> tilPersonDtoSet = context -> context.getSource().stream()
-                .map(element -> tilPersonDto(element.getPersonident())).collect(Collectors.toSet());
-
-        forespørselmapper.addMappings(mapper -> mapper.using(konvertereDatostreng).map(Forespørsel::getHovedpart, ForespørselDto::setHovedpart));
-        forespørselmapper.addMappings(mapper -> mapper.using(konvertereDatostreng).map(Forespørsel::getMotpart, ForespørselDto::setMotpart));
-
-        forespørselmapper.addMappings(mapper -> mapper.using(tilPersonDto).map(Forespørsel::getHovedpart, ForespørselDto::setHovedpart));
-        forespørselmapper.addMappings(mapper -> mapper.using(tilPersonDto).map(Forespørsel::getMotpart, ForespørselDto::setMotpart));
-        forespørselmapper.addMappings(mapper -> mapper.using(tilPersonDtoSet).map(Forespørsel::getBarn, ForespørselDto::setBarn));
-
-        return modelMapper.map(forespørsel, ForespørselDto.class);
+    private Set<PersonDto> tilPersonDtoSetFraBarn(Set<Barn> barn) {
+        return barn.stream().filter(Objects::nonNull).map(b -> tilPersonDto(b.getPersonident())).collect(Collectors.toSet());
     }
 
     public Set<Barn> tilEntitet(Set<String> personidenterBarn) {
