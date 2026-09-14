@@ -20,7 +20,7 @@
 
     <properties>
         <nav-token-support.version>6.0.12</nav-token-support.version>
-        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
         <okhttp.version>5.5.0</okhttp.version>
         <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
         <jaxws.version>4.0.5</jaxws.version>

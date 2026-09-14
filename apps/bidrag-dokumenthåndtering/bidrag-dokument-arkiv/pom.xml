@@ -23,7 +23,7 @@
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
         <okhttp.version>5.5.0</okhttp.version>
         <apache-avro.version>1.12.2</apache-avro.version>

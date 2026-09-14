@@ -21,9 +21,9 @@
     <mockk.version>1.14.11</mockk.version>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.9.0</shedlock.version>
+    <shedlock.version>7.10.0</shedlock.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <okhttp.version>5.5.0</okhttp.version>
     <unleash-client-java.version>12.3.0</unleash-client-java.version>
@@ -32,7 +32,7 @@
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.4</kotest.version>
     <swagger-annotations.version>2.2.55</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.87.0</google-cloud-libraries-bom.version>
+    <google-cloud-libraries-bom.version>26.88.0</google-cloud-libraries-bom.version>
     <google-tink-gcpkms.version>1.12.0</google-tink-gcpkms.version>
     <google-tink.version>1.23.0</google-tink.version>
     <pdfbox.version>3.0.8</pdfbox.version>
@@ -99,7 +99,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>4.36.0</version>
+      <version>4.36.1</version>
     </dependency>
     <!--  PDF  -->
     <dependency>

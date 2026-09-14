@@ -18,7 +18,7 @@
   <properties>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <aordningen-inntektsinformasjon-v1.version>1.7</aordningen-inntektsinformasjon-v1.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <okhttp.version>5.5.0</okhttp.version>
     <nimbus-jose-jwt.version>10.9.1</nimbus-jose-jwt.version>
     <circuitbreaker.version>5.0.3</circuitbreaker.version>

@@ -17,7 +17,7 @@
   <properties>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <okhttp.version>5.5.0</okhttp.version>
     <google-guava.version>33.7.1-jre</google-guava.version>
     <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
