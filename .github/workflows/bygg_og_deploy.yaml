@@ -148,6 +148,25 @@ jobs:
         if: inputs.skip_tester
         run: echo "::warning::Deploy tvinges gjennom av ${{ github.actor }} med tester og ktlint hoppet over (skip_tester=true)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: ${{ inputs.bibliotekartefakt == '' && '0' || '1' }}
+      - name: Sjekk om felles er endret
+        if: inputs.bibliotekartefakt == ''
+        id: felles_endringer
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" = refs/heads/main ]; then
+            filer="$(git diff-tree --root --no-commit-id --name-only --no-renames -r --diff-merges=first-parent HEAD -- libs/bidrag-felles/)"
+          else
+            base="$(git merge-base HEAD refs/remotes/origin/main)"
+            filer="$(git diff --name-only --no-renames "$base" HEAD -- libs/bidrag-felles/)"
+          fi
+          if [ -n "$filer" ]; then
+            echo "endret=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "endret=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           java-version: ${{ inputs.java-version }}
@@ -186,6 +205,7 @@ jobs:
           grupper: ${{ inputs.bibliotekgrupper }}
           artefaktnavn: ${{ inputs.bibliotekartefakt }}
           skip_tester: ${{ inputs.skip_tester }}
+          felles_endret: ${{ steps.felles_endringer.outputs.endret == 'true' }}
       # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
       # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
       # feiler for moduler med interne avhengigheter

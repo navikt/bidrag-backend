@@ -192,11 +192,17 @@ class AppFiltersTest(unittest.TestCase):
             self.load({"other.yaml": {"env": {"APP_PATHS": "apps/a/**"}}})
 
     def test_script_outputs_affected_apps_and_required_library_groups(self):
+        app_names = list(load_app_filters(ROOT))
+        felles_apps = [app for app in app_names if app not in {"bidrag-oppgave", "bidrag-sjablon"}]
         scenarios = (
-            (["apps/bidrag-behandling/src/main/kotlin/App.kt"], ["bidrag-behandling"], "felles,beregn"),
-            (["apps/bidrag-henvendelse/pom.xml"], ["bidrag-henvendelse"], "felles"),
-            (["apps/bidrag-sjablon/pom.xml"], ["bidrag-sjablon"], ""),
-            (["README.md"], [], ""),
+            (["apps/bidrag-behandling/src/main/kotlin/App.kt"], ["bidrag-behandling"], "felles,beregn", "false"),
+            (["apps/bidrag-henvendelse/pom.xml"], ["bidrag-henvendelse"], "felles", "false"),
+            (["apps/bidrag-sjablon/pom.xml"], ["bidrag-sjablon"], "", "false"),
+            (["README.md"], [], "", "false"),
+            (["pom.xml"], app_names, "felles,beregn,oppgave", "false"),
+            (["libs/bidrag-felles/bidrag-domene/pom.xml"], felles_apps, "felles,beregn", "true"),
+            (["libs/bidrag-felles/bidrag-commons/src/test/kotlin/Test.kt"], felles_apps, "felles,beregn", "true"),
+            (["libs/bidrag-felles-extra/pom.xml"], [], "", "false"),
         )
         with tempfile.TemporaryDirectory() as directory:
             event = Path(directory) / "event.json"
@@ -204,7 +210,7 @@ class AppFiltersTest(unittest.TestCase):
             event.write_text(json.dumps({"pull_request": {"base": {"ref": "main"}}}))
             env = {"GITHUB_EVENT_NAME": "pull_request", "GITHUB_EVENT_PATH": str(event),
                    "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
-            for changed, apps, groups in scenarios:
+            for changed, apps, groups, felles_changed in scenarios:
                 output.write_text("")
                 with self.subTest(changed=changed), patch.dict(os.environ, env), \
                         patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
@@ -213,6 +219,7 @@ class AppFiltersTest(unittest.TestCase):
                 values = dict(line.split("=", 1) for line in output.read_text().splitlines())
                 self.assertEqual(json.loads(values["apps"]), apps)
                 self.assertEqual(values["bibliotekgrupper"], groups)
+                self.assertEqual(values["felles_endret"], felles_changed)
 
 
 class WorkflowIntegrationTest(unittest.TestCase):
@@ -235,7 +242,11 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(library_job["outputs"]["artefaktnavn"], "${{ steps.artefakt.outputs.navn }}")
         prepare = next(step for step in library_job["steps"]
                        if step.get("uses") == "./.github/actions/klargjor-biblioteker")
-        self.assertEqual(prepare["with"], {"grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}"})
+        self.assertEqual(prepare["with"], {
+            "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
+            "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+        })
+        self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
         self.assertEqual(set(jobs) - {"detect_changes", "biblioteker"}, set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
@@ -317,6 +328,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(len(prepare), 1)
         self.assertEqual(len(download), 1)
         self.assertEqual(prepare[0]["with"]["artefaktnavn"], "${{ inputs.bibliotekartefakt }}")
+        self.assertEqual(prepare[0]["with"]["felles_endret"], "${{ steps.felles_endringer.outputs.endret == 'true' }}")
         self.assertEqual(download[0]["if"], "inputs.artefaktnavn != ''")
         self.assertNotIn("run-id", download[0]["with"])
         self.assertNotIn("github-token", download[0]["with"])
@@ -353,25 +365,32 @@ class LibraryBuildTest(unittest.TestCase):
         cls.steps = cls.action["runs"]["steps"]
         cls.build = next(step for step in cls.steps if "FELLES_MODULER" in step.get("env", {}))
 
-    def run_build(self, **state):
+    def run_build_calls(self, **state):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)
             fake_maven = path / "mvn"
-            fake_maven.write_text('#!/bin/sh\nprintf "%s\\n" "$@" > "$MAVEN_ARGS_OUTPUT"\n')
+            fake_maven.write_text('#!/bin/sh\nprintf "%s\\n" "--maven-call--" "$@" >> "$MAVEN_ARGS_OUTPUT"\n')
             fake_maven.chmod(0o755)
             env = {**os.environ, **self.build["env"],
                    "FELLES": "false", "BEREGN": "false", "OPPGAVE": "false",
                    "FELLES_CACHE": "", "BEREGN_CACHE": "", "OPPGAVE_CACHE": "",
-                   "SKIP_TESTS": "false", **state,
+                   "SKIP_TESTS": "false", "TEST_FELLES": "true", **state,
                    "PATH": f"{path}:{os.environ['PATH']}",
                    "MAVEN_ARGS_OUTPUT": str(path / "args"), "GITHUB_STEP_SUMMARY": str(path / "summary")}
             subprocess.run(["bash", "-euo", "pipefail", "-c", self.build["run"]], env=env, check=True)
-            return (path / "args").read_text().splitlines()
+            return [call.splitlines() for call in (path / "args").read_text().split("--maven-call--\n")[1:]]
+
+    def run_build(self, **state):
+        calls = self.run_build_calls(**state)
+        self.assertEqual(len(calls), 1)
+        return calls[0]
 
     def test_cold_cache_selects_groups_once_and_lets_maven_order_them(self):
         args = self.run_build(FELLES="true", BEREGN="true")
         projects = args[args.index("-pl") + 1].split(",")
         self.assertNotIn("-am", args)
+        self.assertNotIn("-Dmaven.test.skip=true", args)
+        self.assertNotIn("-DskipTests", args)
         self.assertEqual(args[args.index("-T") + 1], "1C")
         self.assertEqual(len(projects), len(set(projects)))
         self.assertEqual(len(projects), 3 + 5 + 9)
@@ -391,6 +410,39 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertNotIn("libs/bidrag-felles/", selected)
         self.assertIn("libs/bidrag-beregn-felles/", selected)
 
+    def test_unchanged_felles_cache_miss_skips_test_compilation_and_execution(self):
+        args = self.run_build(FELLES="true", TEST_FELLES="false")
+        self.assertIn("-Dmaven.test.skip=true", args)
+        projects = args[args.index("-pl") + 1].split(",")
+        self.assertEqual(len(projects), 3 + 5)
+        self.assertIn("libs/bidrag-felles/bidrag-commons-test", projects)
+        self.assertNotIn("-am", args)
+        self.assertNotIn("-Dmaven.antrun.skip=true", args)
+
+    def test_unchanged_felles_is_built_first_without_skipping_other_library_tests(self):
+        calls = self.run_build_calls(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="false")
+        self.assertEqual(len(calls), 2)
+        felles, other = calls
+        self.assertIn("-Dmaven.test.skip=true", felles)
+        self.assertNotIn("libs/bidrag-beregn-felles/", felles[felles.index("-pl") + 1])
+        self.assertNotIn("-Dmaven.test.skip=true", other)
+        self.assertNotIn("-DskipTests", other)
+        projects = other[other.index("-pl") + 1].split(",")
+        self.assertEqual(len(projects), 9 + 2)
+        self.assertFalse(any(project.startswith("libs/bidrag-felles/") for project in projects))
+        self.assertNotIn("-am", other)
+
+    def test_manual_test_skip_also_skips_compilation_for_felles(self):
+        calls = self.run_build_calls(FELLES="true", BEREGN="true", TEST_FELLES="false", SKIP_TESTS="true")
+        self.assertEqual(len(calls), 2)
+        self.assertIn("-Dmaven.test.skip=true", calls[0])
+        self.assertIn("-DskipTests", calls[1])
+
+    def test_cached_unchanged_felles_is_not_rebuilt(self):
+        args = self.run_build(FELLES="true", FELLES_CACHE="true", TEST_FELLES="false", BEREGN="true")
+        self.assertNotIn("libs/bidrag-felles/", args[args.index("-pl") + 1])
+        self.assertNotIn("-Dmaven.test.skip=true", args)
+
     def test_oppgave_does_not_build_felles(self):
         args = self.run_build(OPPGAVE="true", SKIP_TESTS="true")
         self.assertIn("-DskipTests", args)
@@ -401,10 +453,11 @@ class LibraryBuildTest(unittest.TestCase):
     def test_caches_are_exact_and_beregn_includes_its_felles_inputs(self):
         restores = {step["id"]: step for step in self.steps
                     if step.get("uses", "").startswith("actions/cache/restore@")}
-        self.assertEqual(set(restores), {"felles", "beregn", "oppgave"})
+        self.assertEqual(set(restores), {"felles", "felles_uten_tester", "beregn", "oppgave"})
         for step in restores.values():
             key = step["with"]["key"]
-            self.assertIn("inputs.skip_tester", key)
+            if step["id"] in ("beregn", "oppgave"):
+                self.assertIn("inputs.skip_tester", key)
             self.assertIn("outputs.toolchain", key)
             self.assertIn("'pom.xml'", key)
             self.assertNotIn("restore-keys", step["with"])
@@ -412,9 +465,27 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertIn("libs/bidrag-felles/*/src/**", restores["beregn"]["with"]["key"])
         self.assertNotIn("bidrag-felles", restores["oppgave"]["with"]["key"])
         saves = [step for step in self.steps if step.get("uses", "").startswith("actions/cache/save@")]
-        self.assertEqual(len(saves), 3)
+        self.assertEqual(len(saves), 4)
         for step in saves:
             self.assertIn("cache-primary-key", step["with"]["key"])
+
+    def test_untested_cache_cannot_satisfy_a_build_that_requires_felles_tests(self):
+        restores = {step["id"]: step for step in self.steps
+                    if step.get("uses", "").startswith("actions/cache/restore@")}
+        tested, untested = restores["felles"], restores["felles_uten_tester"]
+        self.assertNotIn("test_felles", tested["if"])
+        self.assertIn("steps.grupper.outputs.test_felles == 'false'", untested["if"])
+        self.assertIn("steps.felles.outputs.cache-hit != 'true'", untested["if"])
+        self.assertEqual(tested["with"]["key"].replace("-testet-", "-uten-tester-"), untested["with"]["key"])
+        self.assertLess(self.steps.index(tested), self.steps.index(untested))
+        self.assertEqual(self.build["env"]["FELLES_CACHE"],
+                         "${{ steps.felles.outputs.cache-hit == 'true' || steps.felles_uten_tester.outputs.cache-hit == 'true' }}")
+        saves = {step["with"]["key"]: step for step in self.steps
+                 if step.get("uses", "").startswith("actions/cache/save@")}
+        self.assertIn("steps.grupper.outputs.test_felles == 'true'",
+                      saves["${{ steps.felles.outputs.cache-primary-key }}"]["if"])
+        self.assertIn("steps.grupper.outputs.test_felles == 'false'",
+                      saves["${{ steps.felles_uten_tester.outputs.cache-primary-key }}"]["if"])
 
     def test_stale_internal_artifacts_are_removed_but_settings_are_untouched(self):
         clean = next(step for step in self.steps if "rm -rf" in step.get("run", ""))

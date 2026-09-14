@@ -129,10 +129,12 @@ def main():
         raise ValueError(f"Appvalg støtter bare push og pull_request, ikke {event_name}")
     branch = (event["pull_request"]["base"]["ref"] if event_name == "pull_request"
               else event["ref"].removeprefix("refs/heads/"))
-    apps = select_affected_apps(app_filters, event_name, branch, find_changed_files(root, event_name, event))
+    changed_paths = find_changed_files(root, event_name, event)
+    apps = select_affected_apps(app_filters, event_name, branch, changed_paths)
     groups = required_library_groups(root, apps)
+    felles_changed = any(path.startswith("libs/bidrag-felles/") for path in changed_paths)
     with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
-        stream.write(f"apps={json.dumps(apps)}\nbibliotekgrupper={groups}\n")
+        stream.write(f"apps={json.dumps(apps)}\nbibliotekgrupper={groups}\nfelles_endret={str(felles_changed).lower()}\n")
     message = f"Apper som skal bygges: {', '.join(apps) or 'ingen'}. Bibliotekgrupper: {groups or 'ingen'}."
     print(message)
     with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as stream:

@@ -28,6 +28,7 @@ jobs:
     outputs:
       apps: ${{ steps.appvalg.outputs.apps }}
       bibliotekgrupper: ${{ steps.appvalg.outputs.bibliotekgrupper }}
+      felles_endret: ${{ steps.appvalg.outputs.felles_endret }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -77,6 +78,7 @@ jobs:
       - uses: ./.github/actions/klargjor-biblioteker
         with:
           grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
+          felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
       - name: Sett artefaktnavn for denne kjøringen
         id: artefakt
         run: echo "navn=biblioteker-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
