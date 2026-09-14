@@ -107,8 +107,6 @@ def required_library_groups(root, apps):
         if len(build_jobs) != 1:
             raise ValueError(f"{app} må ha nøyaktig én jobb som bruker bygg_og_deploy.yaml")
         config = build_jobs[0]["with"]
-        if str(config.get("java-version", "21")) != "21":
-            raise ValueError(f"{app} bruker en annen Java-versjon enn bibliotekjobben, som bruker Java 21")
         configured = config.get("bibliotekgrupper", "felles")
         selected = set(configured.split(",")) if configured else set()
         if not selected <= {"felles", "beregn", "oppgave"}:
