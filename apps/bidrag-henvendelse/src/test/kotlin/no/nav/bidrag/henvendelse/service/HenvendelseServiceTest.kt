@@ -191,7 +191,7 @@ class HenvendelseServiceTest {
 
     private fun stubHenvendelseliste(respons: String) {
         mockServer
-            .expect(requestTo(startsWith("$BASE_URL/henvendelseinfo/henvendelseliste?")))
+            .expect(requestTo(startsWith("$BASE_URL/api/henvendelseinfo/henvendelseliste?")))
             .andExpect(method(HttpMethod.GET))
             .andExpect(queryParam("aktorid", SYNTETISK_AKTØRID))
             // Kilden har default pageSize 50; vi setter den selv.

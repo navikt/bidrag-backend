@@ -127,6 +127,6 @@ class DefaultRestControllerAdviceTest {
     companion object {
         private const val AKTØRID = "2000012345678"
         private const val URL_MED_AKTØRID =
-            "https://sf-henvendelse.intern.dev.nav.no/henvendelseinfo/henvendelseliste?aktorid=$AKTØRID"
+            "https://sf-henvendelse.intern.dev.nav.no/api/henvendelseinfo/henvendelseliste?aktorid=$AKTØRID"
     }
 }

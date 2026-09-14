@@ -32,7 +32,7 @@ import java.net.URI
  *
  * ### Forespørsel
  * ```
- * GET /henvendelseinfo/henvendelseliste?aktorid=2000012345678&pageSize=100
+ * GET /api/henvendelseinfo/henvendelseliste?aktorid=2000012345678&pageSize=100
  * Authorization: Bearer <on-behalf-of-token>
  * X-Correlation-ID: 4f8b1c2e-1f7a-4a3e-9c1b-8d2f6a5b0c31
  * ```
@@ -72,7 +72,10 @@ class HenvendelseConsumer(
     fun hentHenvendelser(aktørid: String): List<HenvendelseConsumerOutput> {
         val uri = UriComponentsBuilder
             .fromUri(henvendelseUrl)
-            .pathSegment("henvendelseinfo", "henvendelseliste")
+            // `api` er proxyens basesti: `Application.kt` i navikt/sf-henvendelse-api-proxy binder
+            // `"$API_BASE_PATH/{rest:.*}"` med `API_BASE_PATH = "/api"`, og ruter bare `/internal`
+            // og `/static` utenom. Uten prefikset svarer den 404 med tom kropp, ikke 401 eller 403.
+            .pathSegment("api", "henvendelseinfo", "henvendelseliste")
             .queryParam("aktorid", aktørid)
             // Kilden paginerer med default pageSize 50 (se CRM_HenvendelseInfoListRestService i
             // navikt/crm-henvendelse). Vi setter den eksplisitt framfor å arve en default vi ikke
