@@ -124,6 +124,11 @@ Den første filen, avstdet_D inneholder alle oversendte konteringer for gjeldend
 Den andre filen, avstsum er en summering over hvor mange av hver transaksjonskode som ble oversendt, samt totale beløpet alle de var på.
 Se [AvstemmingsfilerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendelse/schedule/avstemning/AvstemmingsfilerScheduler.kt).
 
+### Endring av mottaker
+Ved vedtak av type `ENDRING_MOTTAKER` oppdaterer bidrag-regnskap regnskapsmottaker (RM) i ELIN via bidrag-reskontro sitt `/endreRmForSak`-endepunkt (saksnummer, barn og ny mottaker – ingen perioder, kun gjeldende mottaker settes).
+Hvert vedtak lagres som en egen historikkrad i `endre_mottaker`-tabellen og forsøkes overført umiddelbart. Fordi ELIN er ustabilt, resendes ikke-godkjente endringer også skedulert. Siden ELIN kun lagrer gjeldende mottaker, resendes kun den nyeste ikke-godkjente raden per (sak, barn), slik at eldre, overkjørte endringer ikke tilbakestiller RM (håndterer f.eks. A→B→A). En gang per dag varsles det i Slack dersom det finnes endringer som fremdeles ikke er godkjent av skatt.
+Se [EndreMottakerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendelse/schedule/krav/EndreMottakerScheduler.kt).
+
 ### Vedlikeholdsmodus
 Vedlikeholdsmodus er en funksjon som sørger for at KravAPIet blir stengt for videre oversending av konteringer. Denne kan slå av og på ved å kalle et endepunkt i ELIN. 
 Vedlikeholdsmodus blir automatisk påslått ved opprettelse av påløpsfil. Den blir derimot ikke automatisk slått av. 

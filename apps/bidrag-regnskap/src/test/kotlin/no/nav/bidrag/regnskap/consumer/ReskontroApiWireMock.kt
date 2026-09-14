@@ -16,6 +16,10 @@ class ReskontroApiWireMock {
         mock.start()
     }
 
+    internal fun stop() {
+        mock.stop()
+    }
+
     internal fun reskontroIngenResponse() {
         mock.stubFor(
             WireMock.post(WireMock.anyUrl()).willReturn(

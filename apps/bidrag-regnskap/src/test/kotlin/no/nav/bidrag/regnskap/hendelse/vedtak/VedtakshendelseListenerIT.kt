@@ -161,6 +161,11 @@ internal class VedtakshendelseListenerIT {
     @AfterAll
     internal fun teardown() {
         file.close()
+        kravApiWireMock.stop()
+        sakApiWireMock.stop()
+        maskinportenWireMock.stop()
+        personApiWireMock.stop()
+        reskontroApiWireMock.stop()
     }
 
     @Test

@@ -6,11 +6,13 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.regnskap.persistence.entity.Driftsavvik
+import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import no.nav.bidrag.regnskap.persistence.entity.Kontering
 import no.nav.bidrag.regnskap.persistence.entity.Oppdrag
 import no.nav.bidrag.regnskap.persistence.entity.Oppdragsperiode
 import no.nav.bidrag.regnskap.persistence.entity.Påløp
 import no.nav.bidrag.regnskap.persistence.repository.DriftsavvikRepository
+import no.nav.bidrag.regnskap.persistence.repository.EndreMottakerRepository
 import no.nav.bidrag.regnskap.persistence.repository.KonteringRepository
 import no.nav.bidrag.regnskap.persistence.repository.OppdragRepository
 import no.nav.bidrag.regnskap.persistence.repository.OppdragsperiodeRepository
@@ -37,6 +39,7 @@ class PersistenceService(
     val påløpRepository: PåløpRepository,
     val oppdragsperiodeRepository: OppdragsperiodeRepository,
     val driftsavvikRepository: DriftsavvikRepository,
+    val endreMottakerRepository: EndreMottakerRepository,
 ) {
 
     fun hentOppdrag(oppdragId: Int): Oppdrag? {
@@ -186,4 +189,7 @@ class PersistenceService(
         stønadstype.name,
         LocalDate.of(periode.year, periode.month, 1),
     )
+
+    fun lagreEndreMottaker(endreMottaker: EndreMottaker): EndreMottaker = endreMottakerRepository.save(endreMottaker)
+    fun hentNyesteIkkeGodkjenteEndreMottakerPerSakOgBarn(): List<EndreMottaker> = endreMottakerRepository.hentNyesteIkkeGodkjentePerSakOgBarn()
 }

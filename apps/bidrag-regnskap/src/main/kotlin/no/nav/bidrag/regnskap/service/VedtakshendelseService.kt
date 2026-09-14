@@ -9,6 +9,7 @@ import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.regnskap.dto.vedtak.Hendelse
 import no.nav.bidrag.regnskap.dto.vedtak.Periode
 import no.nav.bidrag.regnskap.util.PåløpException
@@ -32,6 +33,7 @@ class VedtakshendelseService(
     private val persistenceService: PersistenceService,
     private val identUtils: IdentUtils,
     private val driftsavvikService: DriftsavvikService,
+    private val endreMottakerService: EndreMottakerService,
 ) {
 
     @Transactional
@@ -61,6 +63,10 @@ class VedtakshendelseService(
             opprettOppdragForEngangsbeløp(vedtakHendelse, engangsbelop)?.let {
                 opprettedeOppdrag.add(it)
             }
+        }
+
+        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
+            behandleEndringAvMottaker(vedtakHendelse)
         }
 
         return opprettedeOppdrag
@@ -175,4 +181,26 @@ class VedtakshendelseService(
     private fun erVedlikeholdsmodusPåslått(): Boolean = kravService.erVedlikeholdsmodusPåslått()
 
     private fun harAktiveDriftAvvik(erInnlesning: Boolean = false): Boolean = persistenceService.harAktivtDriftsavvik(erInnlesning)
+
+    private fun behandleEndringAvMottaker(vedtakHendelse: VedtakHendelse) {
+        val endringer = vedtakHendelse.stønadsendringListe
+            ?.map { stønadsendring ->
+                Triple(
+                    stønadsendring.sak.verdi,
+                    identUtils.hentNyesteIdent(stønadsendring.kravhaver).verdi,
+                    identUtils.hentNyesteIdent(stønadsendring.mottaker).verdi,
+                )
+            }
+            ?.distinct()
+            ?: emptyList()
+        endringer.forEach { (sakId, barnIdent, nyMottakerIdent) ->
+            LOGGER.info { "Behandler endring av mottaker for vedtak: ${vedtakHendelse.id}, sak: $sakId." }
+            endreMottakerService.opprettOgOverførEndreMottaker(
+                vedtakId = vedtakHendelse.id,
+                sakId = sakId,
+                barnIdent = barnIdent,
+                nyMottakerIdent = nyMottakerIdent,
+            )
+        }
+    }
 }
