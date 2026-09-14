@@ -148,7 +148,6 @@ class EndreJournalpostService(
     }
 
     private fun hentJournalpost(journalpostId: Long): Journalpost {
-        LOGGER.info("Henter jouranlpost $journalpostId")
         return journalpostService.hentJournalpost(journalpostId)
             ?: throw JournalpostIkkeFunnetException("Kunne ikke finne journalpost med id: $journalpostId")
     }
