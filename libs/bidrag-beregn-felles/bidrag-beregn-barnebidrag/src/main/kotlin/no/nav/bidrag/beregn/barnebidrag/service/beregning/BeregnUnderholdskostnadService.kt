@@ -156,6 +156,7 @@ internal object BeregnUnderholdskostnadService : BeregnService() {
         datoInnføringUtvidetBarnetrygd: YearMonth,
         virkningFraPeriode: YearMonth? = null,
     ): List<ÅrMånedsperiode> {
+        //TODO Legge til forpleining
         val periodeListe = sequenceOf(grunnlagListe.beregningsperiode)
             .plus(grunnlagListe.barnetilsynMedStønadPeriodeGrunnlagListe.asSequence().map { it.barnetilsynMedStønadPeriode.periode })
             .plus(grunnlagListe.nettoTilsynsutgiftPeriodeGrunnlagListe.asSequence().map { it.nettoTilsynsutgiftPeriodeGrunnlag.periode })
@@ -304,6 +305,7 @@ internal object BeregnUnderholdskostnadService : BeregnService() {
                 ),
                 type = Grunnlagstype.DELBEREGNING_UNDERHOLDSKOSTNAD,
                 innhold = POJONode(
+                        //TODO Legge til verdi for forpleining
                     DelberegningUnderholdskostnad(
                         periode = it.periode,
                         forbruksutgift = it.resultat.forbruksutgift,

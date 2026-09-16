@@ -18,6 +18,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBase
 
 internal object UnderholdskostnadMapper : CoreMapper() {
     fun mapUnderholdskostnadGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>): UnderholdskostnadPeriodeGrunnlag = UnderholdskostnadPeriodeGrunnlag(
+        //TODO Legge til grunnlag for forpleining
         beregningsperiode = mottattGrunnlag.periode,
         søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
         barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),

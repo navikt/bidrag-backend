@@ -34,6 +34,7 @@ internal object UnderholdskostnadBeregning {
             }
         }
 
+        //TODO Trekke fra forpleining
         val beregnetUnderholdskostnad = (
             sjablonverdier.forbruksutgifterBeløp.add(sjablonverdier.boutgifterBidragsbarn).add(sjablonverdier.barnetilsynBeløp ?: BigDecimal.ZERO)
                 .add(
