@@ -74,10 +74,6 @@ updates:
       day: "monday"
       time: "04:00"
       timezone: "Europe/Oslo"
-    groups:
-      maven-dependencies:
-        patterns:
-          - "*"
     open-pull-requests-limit: 20
     labels:
       - "dependencies"
