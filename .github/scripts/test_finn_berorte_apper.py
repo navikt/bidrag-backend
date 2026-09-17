@@ -274,24 +274,10 @@ class WorkflowIntegrationTest(unittest.TestCase):
         visit("bygg-apper.yaml", [])
         self.assertLessEqual(len(called), 50)
 
-    def test_build_workflow_filters_unrelated_files_but_covers_all_app_paths(self):
+    def test_build_workflow_has_no_path_filter_on_either_trigger(self):
         on = triggers(self.build_workflow)
-        self.assertEqual(on["push"]["branches"], ["main"])
-        patterns = on["push"]["paths"]
-        self.assertFalse(path_matches_filters("README.md", patterns))
-        self.assertFalse(path_matches_filters("util/cloudfunction/index.js", patterns))
-        self.assertTrue(path_matches_filters(".github/actions/klargjor-biblioteker/action.yaml", patterns))
-        for app_patterns in self.app_filters.values():
-            for pattern in app_patterns:
-                sample = pattern.replace("**", "nested/File").replace("*", "File")
-                self.assertTrue(path_matches_filters(sample, patterns), pattern)
-
-    def test_pull_request_trigger_has_no_path_filter(self):
-        # pull_request skal trigges uansett hvilke filer som er endret, uten branches/paths-filter,
-        # slik at "Alle bygg fullført" alltid postes som required status check - ellers blir PR-er
-        # som kun endrer f.eks. README stående som "Pending" og blokkerer merge for alltid.
-        # detect_changes/finn_berorte_apper.py gjør den presise vurderingen av berørte apper i stedet.
-        self.assertEqual(triggers(self.build_workflow)["pull_request"], {})
+        self.assertEqual(on["push"], {"branches": ["main"]})
+        self.assertEqual(on["pull_request"], {})
 
     def test_app_workflows_have_no_duplicate_automatic_triggers(self):
         for app in self.app_filters:

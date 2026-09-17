@@ -2,19 +2,6 @@ name: Bygg og deploy apper
 on:
   push:
     branches: [main]
-    paths:
-      - 'pom.xml'
-      - 'apps/**'
-      - 'libs/**'
-      - '.nais/**'
-      - '.github/**'
-      - '.editorconfig'
-  # Ingen paths-filter her: required status check "Alle bygg fullført" må trigges
-  # for *alle* PR-er, ellers blir den stående som "Pending" for PR-er som kun
-  # endrer f.eks. README eller util-skript utenfor filtrene, og blokkerer merge.
-  # detect_changes/finn_berorte_apper.py gjør den presise, git-diff-baserte
-  # vurderingen av hvilke apper som faktisk er berørt - biblioteker- og app-jobbene
-  # hopper allerede over seg selv når ingen apper er berørt.
   pull_request: {}
 
 permissions:
