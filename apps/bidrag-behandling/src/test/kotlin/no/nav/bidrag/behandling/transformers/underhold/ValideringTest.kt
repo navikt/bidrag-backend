@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.transformers.underhold
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -11,6 +12,8 @@ import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -18,6 +21,8 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -728,6 +733,96 @@ class ValideringTest {
                     it.periode shouldBe DatoperiodeDto(fom, tom)
                 }
             }
+        }
+    }
+
+    @Nested
+    open inner class ForpleiningMotUnderholdskostnad {
+        private fun underholdskostnad(
+            fom: LocalDate,
+            tom: LocalDate?,
+            total: Int,
+            forpleining: Int? = null,
+        ) = UnderholdskostnadDto(
+            periode = DatoperiodeDto(fom, tom),
+            total = BigDecimal.valueOf(total.toLong()),
+            forpleining = forpleining?.let { BigDecimal.valueOf(it.toLong()) },
+        )
+
+        private fun request(
+            fom: LocalDate,
+            tom: LocalDate?,
+            beløp: Int,
+        ) = OppdatereForpleiningRequest(
+            periode = DatoperiodeDto(fom, tom),
+            beløp = BigDecimal.valueOf(beløp.toLong()),
+        )
+
+        @Test
+        fun `skal godta beløp som er lavere enn underholdskostnaden`() {
+            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, total = 8000))
+
+            request(LocalDate.of(2024, 3, 1), null, beløp = 5000)
+                .validereMotUnderholdskostnad(perioder)
+        }
+
+        @Test
+        fun `skal godta beløp som er likt underholdskostnaden`() {
+            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, total = 8000))
+
+            request(LocalDate.of(2024, 3, 1), null, beløp = 8000)
+                .validereMotUnderholdskostnad(perioder)
+        }
+
+        @Test
+        fun `skal avvise beløp som overstiger underholdskostnaden`() {
+            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, total = 8000))
+
+            val feil =
+                shouldThrow<HttpClientErrorException> {
+                    request(LocalDate.of(2024, 3, 1), null, beløp = 8001)
+                        .validereMotUnderholdskostnad(perioder)
+                }
+
+            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `skal kontrollere mot den laveste underholdskostnaden i perioden`() {
+            val perioder =
+                setOf(
+                    underholdskostnad(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), total = 8000),
+                    underholdskostnad(LocalDate.of(2024, 7, 1), null, total = 6000),
+                )
+
+            shouldThrow<HttpClientErrorException> {
+                request(LocalDate.of(2024, 1, 1), null, beløp = 7000)
+                    .validereMotUnderholdskostnad(perioder)
+            }
+
+            request(LocalDate.of(2024, 1, 1), null, beløp = 6000)
+                .validereMotUnderholdskostnad(perioder)
+        }
+
+        @Test
+        fun `skal legge tilbake forpleining som allerede er lagret`() {
+            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, total = 2000, forpleining = 6000))
+
+            request(LocalDate.of(2024, 1, 1), null, beløp = 8000)
+                .validereMotUnderholdskostnad(perioder)
+
+            shouldThrow<HttpClientErrorException> {
+                request(LocalDate.of(2024, 1, 1), null, beløp = 8001)
+                    .validereMotUnderholdskostnad(perioder)
+            }
+        }
+
+        @Test
+        fun `skal ikke kontrollere når ingen underholdskostnadsperioder overlapper`() {
+            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), total = 8000))
+
+            request(LocalDate.of(2025, 1, 1), null, beløp = 99999)
+                .validereMotUnderholdskostnad(perioder)
         }
     }
 }
