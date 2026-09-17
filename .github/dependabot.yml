@@ -36,31 +36,8 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
-    # Rot-pom.xml i egen update-blokk, isolert fra apps/libs
     directories:
       - "/"
-    cooldown:
-      default-days: 7
-    registries:
-      - "maven-github"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "04:00"
-      timezone: "Europe/Oslo"
-    groups:
-      maven-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "maven"
-    commit-message:
-      prefix: "[dependency] "
-  - package-ecosystem: "maven"
-    # Alle app- og libs-modulene.
-    directories:
       - "/apps/*"
       - "/libs/*"
       - "/libs/bidrag-felles/*"
@@ -74,6 +51,9 @@ updates:
       day: "monday"
       time: "04:00"
       timezone: "Europe/Oslo"
+    groups:
+      maven-dependencies:
+        group-by: dependency-name
     open-pull-requests-limit: 20
     labels:
       - "dependencies"
