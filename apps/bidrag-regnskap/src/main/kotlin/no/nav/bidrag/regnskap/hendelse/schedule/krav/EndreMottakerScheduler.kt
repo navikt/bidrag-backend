@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.transaction.annotation.Transactional
 
 private val LOGGER = KotlinLogging.logger { }
 
@@ -25,11 +24,16 @@ class EndreMottakerScheduler(
 
     @Scheduled(cron = $$"${scheduler.endremottaker.cron}")
     @SchedulerLock(name = "skedulertResendingAvEndringAvMottaker")
-    @Transactional
     fun skedulertResendingAvEndringAvMottaker() {
         LockAssert.assertLocked()
-        LOGGER.info { "Starter skedulert resending av endringer av mottaker som ikke er godkjent av skatt." }
-        endreMottakerService.resendIkkeGodkjenteEndringer()
+        val ikkeGodkjente = endreMottakerService.hentIkkeGodkjenteEndringer()
+        if (ikkeGodkjente.isEmpty()) {
+            LOGGER.info { "Det finnes ingen endringer av mottaker som ikke er godkjent av skatt." }
+            return
+        }
+
+        LOGGER.info { "Starter skedulert resending av ${ikkeGodkjente.size} endringer av mottaker som ikke er godkjent av skatt." }
+        ikkeGodkjente.forEach { endreMottakerService.overførEndreMottaker(it.id!!) }
     }
 
     @Scheduled(cron = $$"${scheduler.endremottakervarsling.cron}")

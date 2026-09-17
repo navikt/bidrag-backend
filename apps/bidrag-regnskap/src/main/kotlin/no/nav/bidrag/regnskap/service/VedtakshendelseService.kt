@@ -195,7 +195,7 @@ class VedtakshendelseService(
             ?: emptyList()
         endringer.forEach { (sakId, barnIdent, nyMottakerIdent) ->
             LOGGER.info { "Behandler endring av mottaker for vedtak: ${vedtakHendelse.id}, sak: $sakId." }
-            endreMottakerService.opprettOgOverførEndreMottaker(
+            endreMottakerService.opprettEndreMottaker(
                 vedtakId = vedtakHendelse.id,
                 sakId = sakId,
                 barnIdent = barnIdent,
