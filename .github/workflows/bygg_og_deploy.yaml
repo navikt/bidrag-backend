@@ -297,12 +297,16 @@ jobs:
           echo "REPO_NAME=$repo_name" >> $GITHUB_OUTPUT
       - name: Generate SBOM, attest and sign image
         id: attest-sign
-        uses: nais/attest-sign@c778867caf15ed06f2893afd5723898560b2dcc9 # v2.0.18
+        uses: Wandalen/wretry.action@07a795412544df22ca71450b64edd16974f542d6 # v3.8.0_js_action
         with:
-          image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
+          action: nais/attest-sign@c778867caf15ed06f2893afd5723898560b2dcc9 # v2.0.18
+          attempt_limit: 3
+          attempt_delay: 15000
+          with: |
+            image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
     outputs:
         description: "SBOM.json in cyclonedx format"
-        value: ${{ steps.attest-sign.outputs.sbom }}
+        value: ${{ fromJSON(steps.attest-sign.outputs.outputs).sbom }}
 
   # De tre deploy-jobbene under trenger alle et vellykket bygg,
   # og kjører kun når kalleren faktisk ber om det aktuelle miljøet (deploy_q1/q2/prod-input).
