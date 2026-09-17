@@ -5,12 +5,14 @@ import no.nav.bidrag.behandling.bådeDagsatsOgMånedsbeløpAngittException
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteBearbeidetBarnetilsyn
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereUnderholdRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OverlappendePeriode
@@ -30,6 +32,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
+import java.math.BigDecimal
 import java.time.LocalDate
 
 fun OppdatereUnderholdRequest.validere() {
@@ -149,6 +152,12 @@ fun SletteUnderholdselement.validere(behandling: Behandling) {
                 ressursIkkeFunnetException("Fant ikke tilleggsstønad med id ${this.idElement} i behandling ${behandling.id}")
             }
         }
+
+        Underholdselement.FORPLEINING -> {
+            if (underhold.forpleining.find { this.idElement == it.id } == null) {
+                ressursIkkeFunnetException("Fant ikke forpleining med id ${this.idElement} i behandling ${behandling.id}")
+            }
+        }
     }
 }
 
@@ -228,6 +237,7 @@ fun Underholdskostnad.valider(): UnderholdskostnadValideringsfeil = Underholdsko
     stønadTilBarnetilsyn = barnetilsyn.validerePerioderBarnetilsyn().takeIf { it.harFeil },
     tilleggsstønad = tilleggsstønad.validerePerioderTilleggsstønad().takeIf { it.harFeil },
     faktiskTilsynsutgift = faktiskeTilsynsutgifter.validerePerioderFaktiskTilsynsutgift().takeIf { it.harFeil },
+    forpleining = forpleining.validerePerioderForpleining().takeIf { it.harFeil },
     tilleggsstønadsperioderUtenFaktiskTilsynsutgift = finnTilleggsstønadsperioderSomIkkeOverlapperMedFaktiskTilsynsutgiftsperioder(),
     manglerPerioderForTilsynsordning = manglerPerioderForTilsynsordning(),
     manglerBegrunnelse = manglerBegrunnelse(),
@@ -256,7 +266,8 @@ fun Underholdskostnad.manglerPerioderForTilsynsordning(): Boolean {
     return this.harTilsynsordning == true &&
         this.barnetilsyn.isEmpty() &&
         this.faktiskeTilsynsutgifter.isEmpty() &&
-        this.tilleggsstønad.isEmpty()
+        this.tilleggsstønad.isEmpty() &&
+        this.forpleining.isEmpty()
 }
 
 fun Set<Tilleggsstønad>.validerePerioderTilleggsstønad() = UnderholdskostnadValideringsfeilTabell(
@@ -265,6 +276,14 @@ fun Set<Tilleggsstønad>.validerePerioderTilleggsstønad() = UnderholdskostnadVa
         firstOrNull()?.underholdskostnad?.beregnFraDato,
     ),
     overlappendePerioder = tilleggsstønadTilUnderholdsperioder().finneOverlappendePerioder(),
+)
+
+fun Set<Forpleining>.validerePerioderForpleining() = UnderholdskostnadValideringsfeilTabell(
+    fremtidigePerioder =
+    forpleiningTilDatoperioder().finneFremtidigePerioder(
+        firstOrNull()?.underholdskostnad?.beregnFraDato,
+    ),
+    overlappendePerioder = forpleiningTilDatoperioder().finneOverlappendePerioder(),
 )
 
 fun StønadTilBarnetilsynDto.validerePerioderStønadTilBarnetilsyn(underholdskostnad: Underholdskostnad) {
@@ -303,6 +322,20 @@ fun OppdatereTilleggsstønadRequest.validere(underholdskostnad: Underholdskostna
         if (this.beløp == null && this.dagsats == null) {
             tilleggstønadBeløpIkkeAngittException(this.id, Ressurstype.TILLEGGSSTØNAD)
         }
+    }
+}
+
+fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
+    this.id?.let { id ->
+        if (id > 0 && underholdskostnad.forpleining.find { id == it.id } == null) {
+            ressursIkkeFunnetException("Fant ikke forpleining med id $id i behandling ${underholdskostnad.behandling.id}")
+        }
+    }
+    if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
+        ugyldigForespørsel("Kan ikke legge til periode før barnets fødselsdato")
+    }
+    if (this.beløp <= BigDecimal.ZERO) {
+        ugyldigForespørsel("Beløp for forpleining må være større enn null")
     }
 }
 

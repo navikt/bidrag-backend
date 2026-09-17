@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
@@ -23,6 +24,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
@@ -445,6 +447,32 @@ class UnderholdService(
     }
 
     @Transactional
+    fun oppdatereForpleining(
+        underholdskostnad: Underholdskostnad,
+        request: OppdatereForpleiningRequest,
+    ) {
+        request.validere(underholdskostnad)
+
+        request.id?.let { id ->
+            val forpleining = underholdskostnad.forpleining.find { id == it.id }!!
+            forpleining.fom = request.periode.fom
+            forpleining.tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato)
+            forpleining.beløp = request.beløp
+            forpleining.underholdskostnad = underholdskostnad
+        } ?: run {
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    fom = request.periode.fom,
+                    tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato),
+                    beløp = request.beløp,
+                    underholdskostnad = underholdskostnad,
+                ),
+            )
+            underholdskostnad.harTilsynsordning = true
+        }
+    }
+
+    @Transactional
     fun oppdatereTilleggsstønad(
         underholdskostnad: Underholdskostnad,
         request: OppdatereTilleggsstønadRequest,
@@ -524,6 +552,10 @@ class UnderholdService(
                     request.idElement,
                 )
             }
+
+            Underholdselement.FORPLEINING -> {
+                sletteForpleining(underholdskostnad, request.idElement)
+            }
         }
     }
 
@@ -558,6 +590,14 @@ class UnderholdService(
     ) {
         val tilleggsstønad = underholdskostnad.tilleggsstønad.find { idElement == it.id }
         underholdskostnad.tilleggsstønad.remove(tilleggsstønad)
+    }
+
+    private fun sletteForpleining(
+        underholdskostnad: Underholdskostnad,
+        idElement: Long,
+    ) {
+        val forpleining = underholdskostnad.forpleining.find { idElement == it.id }
+        underholdskostnad.forpleining.remove(forpleining)
     }
 
     private fun sletteUnderholdskostnad(
