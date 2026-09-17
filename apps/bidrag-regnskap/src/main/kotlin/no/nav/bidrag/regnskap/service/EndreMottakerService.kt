@@ -70,31 +70,27 @@ class EndreMottakerService(
         }
 
         val nå = LocalDateTime.now()
-        val oppdatert = runCatching {
+        val oppdatert = try {
             bidragReskontroConsumer.endreRmForSak(
                 saksnummer = Saksnummer(endreMottaker.saksnummer),
                 barn = Personident(endreMottaker.barnIdent),
                 nyMottaker = Personident(endreMottaker.nyMottakerIdent),
             )
-        }.fold(
-            onSuccess = {
-                LOGGER.info { "Endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} ble godkjent av skatt." }
-                endreMottaker.copy(
-                    overførtTilSkattTidspunkt = nå,
-                    godkjentAvSkattTidspunkt = nå,
-                    feilmeldingFraSkatt = null,
-                )
-            },
-            onFailure = { e ->
-                LOGGER.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} til skatt." }
-                secureLogger.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer}, barn ${endreMottaker.barnIdent}, ny mottaker ${endreMottaker.nyMottakerIdent} til skatt." }
-                endreMottaker.copy(
-                    overførtTilSkattTidspunkt = nå,
-                    godkjentAvSkattTidspunkt = null,
-                    feilmeldingFraSkatt = e.message?.take(MAKS_LENGDE_FEILMELDING),
-                )
-            },
-        )
+            LOGGER.info { "Endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} ble godkjent av skatt." }
+            endreMottaker.copy(
+                overførtTilSkattTidspunkt = nå,
+                godkjentAvSkattTidspunkt = nå,
+                feilmeldingFraSkatt = null,
+            )
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} til skatt." }
+            secureLogger.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer}, barn ${endreMottaker.barnIdent}, ny mottaker ${endreMottaker.nyMottakerIdent} til skatt." }
+            endreMottaker.copy(
+                overførtTilSkattTidspunkt = nå,
+                godkjentAvSkattTidspunkt = null,
+                feilmeldingFraSkatt = e.message?.take(MAKS_LENGDE_FEILMELDING),
+            )
+        }
         persistenceService.lagreEndreMottaker(oppdatert)
     }
 
