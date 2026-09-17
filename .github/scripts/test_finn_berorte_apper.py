@@ -247,7 +247,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
         })
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
-        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker"}, set(self.app_filters))
+        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker", "alle_bygg_fullfort"}, set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
                 self.assertEqual(set(jobs[app]["needs"]), {"detect_changes", "biblioteker"})
