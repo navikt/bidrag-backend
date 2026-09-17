@@ -256,6 +256,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
                 self.assertEqual(jobs[app]["with"]["bibliotekartefakt"],
                                  "${{ needs.biblioteker.outputs.artefaktnavn }}")
 
+    def test_alle_bygg_fullfort_needs_every_other_job(self):
+        # alle_bygg_fullfort er required status check. Den håndskrevne needs-listen må
+        # dekke alle andre jobber i workflowen, ellers kan samlejobben bli
+        # grønn uten at en nylig lagt til jobb (f.eks. en ny app) faktisk har kjørt/blitt
+        # kontrollert. Denne testen sammenligner needs mot selve jobb-settet i workflowen
+        # slik at den også fanger opp fremtidige infrastruktur-jobber, ikke bare nye apper.
+        jobs = self.build_workflow["jobs"]
+        gate = jobs["alle_bygg_fullfort"]
+        self.assertEqual(set(gate["needs"]), set(jobs) - {"alle_bygg_fullfort"})
+        self.assertEqual(gate["if"], "always()")
+
     def test_reusable_workflow_tree_stays_within_github_limits(self):
         called, documents = set(), {}
 
