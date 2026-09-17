@@ -13,6 +13,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereUnderholdRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OverlappendePeriode
@@ -336,6 +337,23 @@ fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
     }
     if (this.beløp <= BigDecimal.ZERO) {
         ugyldigForespørsel("Beløp for forpleining må være større enn null")
+    }
+}
+
+/**
+ * Forpleiningen kan ikke overstige underholdskostnaden før forpleining er trukket fra.
+ * Frontend gjør samme kontroll, men endepunktet kan kalles direkte.
+ *
+ * Underholdskostnaden splittes i flere perioder enn forpleiningen, så beløpet kontrolleres
+ * mot den laveste i perioden. `total` er netto, derfor legges forpleiningen tilbake.
+ */
+fun OppdatereForpleiningRequest.validereMotUnderholdskostnad(beregnetPerioder: Set<UnderholdskostnadDto>) {
+    val overlappende = beregnetPerioder.filter { it.periode.tilDatoperiode().overlapper(periode.tilDatoperiode()) }
+    if (overlappende.isEmpty()) return
+
+    val laveste = overlappende.minOf { it.total + (it.forpleining ?: BigDecimal.ZERO) }
+    if (beløp > laveste) {
+        ugyldigForespørsel("Forpleining på $beløp overstiger underholdskostnaden på $laveste i perioden $periode")
     }
 }
 
