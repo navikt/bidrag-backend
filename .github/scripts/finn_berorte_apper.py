@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 
 import yaml
@@ -97,16 +98,39 @@ def load_app_filters(root):
     return app_filters
 
 
+def build_config(root, app):
+    """Verdiene appen sender videre til bygg_og_deploy.yaml."""
+    with open(root / f".github/workflows/{app}.yaml") as stream:
+        workflow = yaml.safe_load(stream)
+    build_jobs = [job for job in workflow["jobs"].values()
+                  if job.get("uses") == "./.github/workflows/bygg_og_deploy.yaml"]
+    if len(build_jobs) != 1:
+        raise ValueError(f"{app} må ha nøyaktig én jobb som bruker bygg_og_deploy.yaml")
+    return build_jobs[0]["with"]
+
+
+def split_on_merged_module(root, apps):
+    """Del appene i dem som har en modul i treet, og dem som ennå ikke har det.
+
+    En ny app får workflowen sin merget før selve appmodulen, slik at resten av CI-oppsettet
+    er på plass når modulen kommer. Uten modulen har appjobben ingenting å bygge, og
+    `mvn -pl` feiler. Den feilen felte samlejobben og dermed bygget for alle de andre appene.
+    Vi hopper heller over appen til modulen er merget.
+    """
+    merged, unmerged = [], []
+    for app in apps:
+        options = shlex.split(build_config(root, app)["maven_options"])
+        if "-pl" not in options:
+            raise ValueError(f"{app} mangler -pl i maven_options og kan ikke knyttes til en modul")
+        module = options[options.index("-pl") + 1]
+        (merged if (root / module / "pom.xml").is_file() else unmerged).append(app)
+    return merged, unmerged
+
+
 def required_library_groups(root, apps):
     groups = set()
     for app in apps:
-        with open(root / f".github/workflows/{app}.yaml") as stream:
-            workflow = yaml.safe_load(stream)
-        build_jobs = [job for job in workflow["jobs"].values()
-                      if job.get("uses") == "./.github/workflows/bygg_og_deploy.yaml"]
-        if len(build_jobs) != 1:
-            raise ValueError(f"{app} må ha nøyaktig én jobb som bruker bygg_og_deploy.yaml")
-        config = build_jobs[0]["with"]
+        config = build_config(root, app)
         if str(config.get("java-version", "21")) != "21":
             raise ValueError(f"{app} bruker en annen Java-versjon enn bibliotekjobben, som bruker Java 21")
         configured = config.get("bibliotekgrupper", "felles")
@@ -130,12 +154,15 @@ def main():
     branch = (event["pull_request"]["base"]["ref"] if event_name == "pull_request"
               else event["ref"].removeprefix("refs/heads/"))
     changed_paths = find_changed_files(root, event_name, event)
-    apps = select_affected_apps(app_filters, event_name, branch, changed_paths)
+    apps, unmerged_apps = split_on_merged_module(
+        root, select_affected_apps(app_filters, event_name, branch, changed_paths))
     groups = required_library_groups(root, apps)
     felles_changed = any(path.startswith("libs/bidrag-felles/") for path in changed_paths)
     with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
         stream.write(f"apps={json.dumps(apps)}\nbibliotekgrupper={groups}\nfelles_endret={str(felles_changed).lower()}\n")
     message = f"Apper som skal bygges: {', '.join(apps) or 'ingen'}. Bibliotekgrupper: {groups or 'ingen'}."
+    if unmerged_apps:
+        message += f" Hoppet over fordi appmodulen ikke er merget: {', '.join(unmerged_apps)}."
     print(message)
     with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as stream:
         stream.write(message + "\n")
