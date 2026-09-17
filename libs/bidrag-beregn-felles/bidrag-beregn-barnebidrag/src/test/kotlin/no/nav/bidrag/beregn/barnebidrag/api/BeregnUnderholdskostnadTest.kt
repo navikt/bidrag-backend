@@ -235,6 +235,57 @@ internal class BeregnUnderholdskostnadTest : FellesTest() {
         )
     }
 
+    @Test
+    @DisplayName("Underholdskostnad - med forpleining i deler av perioden")
+    fun test_underholdskostnad_med_forpleining() {
+        filnavn = "src/test/resources/testfiler/underholdskostnad/underholdskostnad_med_forpleining.json"
+        val resultat = utførBeregningerOgEvaluerResultatUnderholdskostnad()
+
+        // Underholdskostnad uten forpleining 01.24 -> 07.24: 8223
+        // Underholdskostnad uten forpleining 07.24 ->      : 8471
+        // Forpleining 03.24 -> 05.24: 2000
+
+        assertAll(
+            // Forpleiningsperioden splitter underholdskostnadsperiodene
+            { assertThat(resultat).hasSize(4) },
+            { assertThat(resultat[0].periode).isEqualTo(ÅrMånedsperiode("2024-01", "2024-03")) },
+            { assertThat(resultat[1].periode).isEqualTo(ÅrMånedsperiode("2024-03", "2024-05")) },
+            { assertThat(resultat[2].periode).isEqualTo(ÅrMånedsperiode("2024-05", "2024-07")) },
+            { assertThat(resultat[3].periode).isEqualTo(ÅrMånedsperiode(YearMonth.parse("2024-07"), null)) },
+
+            { assertThat(resultat[0].forpleining).isNull() },
+            { assertEquals(0, resultat[0].underholdskostnad.compareTo(BigDecimal.valueOf(8223))) },
+
+            { assertEquals(0, resultat[1].forpleining!!.compareTo(BigDecimal.valueOf(2000))) },
+            { assertEquals(0, resultat[1].underholdskostnad.compareTo(BigDecimal.valueOf(6223))) },
+
+            { assertThat(resultat[2].forpleining).isNull() },
+            { assertEquals(0, resultat[2].underholdskostnad.compareTo(BigDecimal.valueOf(8223))) },
+
+            { assertThat(resultat[3].forpleining).isNull() },
+            { assertEquals(0, resultat[3].underholdskostnad.compareTo(BigDecimal.valueOf(8471))) },
+        )
+    }
+
+    @Test
+    @DisplayName("Underholdskostnad - forpleining som overstiger underholdskostnaden gir null")
+    fun test_underholdskostnad_med_forpleining_over_underholdskostnad() {
+        filnavn = "src/test/resources/testfiler/underholdskostnad/underholdskostnad_med_forpleining_over_underholdskostnad.json"
+        val resultat = utførBeregningerOgEvaluerResultatUnderholdskostnad()
+
+        // Underholdskostnad uten forpleining 01.24 -> 07.24: 8223
+        // Underholdskostnad uten forpleining 07.24 ->      : 8471
+        // Forpleining 01.24 ->: 20000
+
+        assertAll(
+            { assertThat(resultat).hasSize(2) },
+            { assertEquals(0, resultat[0].forpleining!!.compareTo(BigDecimal.valueOf(20000))) },
+            { assertEquals(0, resultat[0].underholdskostnad.compareTo(BigDecimal.ZERO)) },
+            { assertEquals(0, resultat[1].forpleining!!.compareTo(BigDecimal.valueOf(20000))) },
+            { assertEquals(0, resultat[1].underholdskostnad.compareTo(BigDecimal.ZERO)) },
+        )
+    }
+
     private fun utførBeregningerOgEvaluerResultatUnderholdskostnad(): List<DelberegningUnderholdskostnad> {
         val request = lesFilOgByggRequest(filnavn)
         val underholdskostnadResultat = api.beregnUnderholdskostnad(request)
@@ -254,6 +305,7 @@ internal class BeregnUnderholdskostnadTest : FellesTest() {
                     nettoTilsynsutgift = it.innhold.nettoTilsynsutgift,
                     barnetrygd = it.innhold.barnetrygd,
                     underholdskostnad = it.innhold.underholdskostnad,
+                    forpleining = it.innhold.forpleining,
                 )
             }
 
