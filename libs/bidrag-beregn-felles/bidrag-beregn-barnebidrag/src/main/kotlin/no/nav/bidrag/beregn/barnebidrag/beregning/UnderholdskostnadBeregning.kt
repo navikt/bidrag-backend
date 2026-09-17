@@ -34,12 +34,12 @@ internal object UnderholdskostnadBeregning {
             }
         }
 
-        //TODO Trekke fra forpleining
         val beregnetUnderholdskostnad = (
             sjablonverdier.forbruksutgifterBeløp.add(sjablonverdier.boutgifterBidragsbarn).add(sjablonverdier.barnetilsynBeløp ?: BigDecimal.ZERO)
                 .add(
                     grunnlag.nettoTilsynsutgiftBeregningGrunnlag?.nettoTilsynsutgift ?: BigDecimal.ZERO,
                 ).subtract(barnetrygdBeløp)
+                .subtract(grunnlag.forpleining?.beløp ?: BigDecimal.ZERO)
             ).coerceAtLeast(BigDecimal.ZERO)
 
         val underholdskostnadBeregningResultat = UnderholdskostnadBeregningResultat(
@@ -48,10 +48,12 @@ internal object UnderholdskostnadBeregning {
             barnetilsynMedStønad = sjablonverdier.barnetilsynBeløp?.avrundetMedToDesimaler,
             nettoTilsynsutgift = grunnlag.nettoTilsynsutgiftBeregningGrunnlag?.nettoTilsynsutgift?.avrundetMedToDesimaler,
             barnetrygd = barnetrygdBeløp.avrundetMedToDesimaler,
+            forpleining = grunnlag.forpleining?.beløp?.avrundetMedToDesimaler,
             underholdskostnad = beregnetUnderholdskostnad.avrundetMedToDesimaler,
             grunnlagsreferanseListe = listOfNotNull(
                 grunnlag.barnetilsynMedStønad?.referanse,
                 grunnlag.nettoTilsynsutgiftBeregningGrunnlag?.referanse,
+                grunnlag.forpleining?.referanse,
                 grunnlag.sjablonBarnetilsynBeregningGrunnlag?.referanse,
                 grunnlag.sjablonForbruksutgifterBeregningGrunnlag.referanse,
             ).plus(
