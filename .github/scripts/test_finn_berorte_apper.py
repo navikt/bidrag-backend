@@ -247,7 +247,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
         })
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
-        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker"}, set(self.app_filters))
+        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker", "alle_bygg_fullfort"}, set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
                 self.assertEqual(set(jobs[app]["needs"]), {"detect_changes", "biblioteker"})
@@ -255,6 +255,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
                 self.assertIn(f"'{app}'", jobs[app]["if"])
                 self.assertEqual(jobs[app]["with"]["bibliotekartefakt"],
                                  "${{ needs.biblioteker.outputs.artefaktnavn }}")
+
+    def test_alle_bygg_fullfort_needs_every_other_job(self):
+        # alle_bygg_fullfort er required status check. Den håndskrevne needs-listen må
+        # dekke alle andre jobber i workflowen, ellers kan samlejobben bli
+        # grønn uten at en nylig lagt til jobb (f.eks. en ny app) faktisk har kjørt/blitt
+        # kontrollert. Denne testen sammenligner needs mot selve jobb-settet i workflowen
+        # slik at den også fanger opp fremtidige infrastruktur-jobber, ikke bare nye apper.
+        jobs = self.build_workflow["jobs"]
+        gate = jobs["alle_bygg_fullfort"]
+        self.assertEqual(set(gate["needs"]), set(jobs) - {"alle_bygg_fullfort"})
+        self.assertEqual(gate["if"], "always()")
 
     def test_reusable_workflow_tree_stays_within_github_limits(self):
         called, documents = set(), {}
@@ -274,19 +285,10 @@ class WorkflowIntegrationTest(unittest.TestCase):
         visit("bygg-apper.yaml", [])
         self.assertLessEqual(len(called), 50)
 
-    def test_build_workflow_filters_unrelated_files_but_covers_all_app_paths(self):
+    def test_build_workflow_has_no_path_filter_on_either_trigger(self):
         on = triggers(self.build_workflow)
-        self.assertEqual(on["push"]["branches"], ["main"])
-        self.assertNotIn("branches", on["pull_request"])
-        for event in ("push", "pull_request"):
-            patterns = on[event]["paths"]
-            self.assertFalse(path_matches_filters("README.md", patterns))
-            self.assertFalse(path_matches_filters("util/cloudfunction/index.js", patterns))
-            self.assertTrue(path_matches_filters(".github/actions/klargjor-biblioteker/action.yaml", patterns))
-            for app_patterns in self.app_filters.values():
-                for pattern in app_patterns:
-                    sample = pattern.replace("**", "nested/File").replace("*", "File")
-                    self.assertTrue(path_matches_filters(sample, patterns), pattern)
+        self.assertEqual(on["push"], {"branches": ["main"]})
+        self.assertEqual(on["pull_request"], {})
 
     def test_app_workflows_have_no_duplicate_automatic_triggers(self):
         for app in self.app_filters:
