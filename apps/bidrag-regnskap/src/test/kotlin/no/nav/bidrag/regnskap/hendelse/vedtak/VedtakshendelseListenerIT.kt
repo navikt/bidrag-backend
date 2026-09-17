@@ -53,8 +53,6 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
-import java.io.File
-import java.io.FileOutputStream
 import java.math.BigDecimal
 import java.time.Duration
 import java.time.LocalDate
@@ -80,7 +78,6 @@ internal class VedtakshendelseListenerIT {
 
     companion object {
         private const val HENDELSE_FILMAPPE = "testfiler/hendelse/"
-        private const val TESTDATA_OUTPUT_NAVN = "target/kravTestData.json"
         private val PÅLØPSDATO = LocalDate.of(2022, 6, 1)
 
         private var kravApiWireMock: KravApiWireMock = KravApiWireMock()
@@ -130,8 +127,6 @@ internal class VedtakshendelseListenerIT {
     @Value("\${TOPIC_VEDTAK}")
     private lateinit var topic: String
 
-    private lateinit var file: FileOutputStream
-
     private val påløp =
         TestData.opprettPåløp(
             forPeriode = YearMonth.from(PÅLØPSDATO).toString(),
@@ -144,7 +139,6 @@ internal class VedtakshendelseListenerIT {
 
     @BeforeAll
     fun beforeAll() {
-        file = FileOutputStream(File(TESTDATA_OUTPUT_NAVN).apply { parentFile?.mkdirs() })
         persistenceService.lagrePåløp(påløp)
     }
 
@@ -161,7 +155,6 @@ internal class VedtakshendelseListenerIT {
 
     @AfterAll
     internal fun teardown() {
-        file.close()
         kravApiWireMock.stop()
         sakApiWireMock.stop()
         maskinportenWireMock.stop()
@@ -174,7 +167,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette gybyr for skyldner`() {
         val vedtakHendelse = hentFilOgSendPåKafka("gebyrSkyldner.json", 1)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000001,
             vedtakHendelse,
             Engangsbeløptype.GEBYR_SKYLDNER,
@@ -182,8 +175,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.FABP,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Gebyr for skyldner")
     }
 
     @Test
@@ -191,14 +182,12 @@ internal class VedtakshendelseListenerIT {
     fun `skal oppdatere gebyr for skyldner`() {
         hentFilOgSendPåKafka("gebyrSkyldnerOppdatering.json", 3)
 
-        val konteringer = assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
+        assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
             100000001,
             Transaksjonskode.G1,
             Transaksjonskode.G3,
             100000000,
         )
-
-        skrivTilTestdatafil(konteringer.subList(1, 3), "Oppdatering på gebyr for skyldner")
     }
 
     @Test
@@ -206,7 +195,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette gebyr for mottaker`() {
         val vedtakHendelse = hentFilOgSendPåKafka("gebyrMottaker.json", 4)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000002,
             vedtakHendelse,
             Engangsbeløptype.GEBYR_MOTTAKER,
@@ -214,8 +203,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.FABM,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Gebyr for mottaker")
     }
 
     @Test
@@ -227,14 +214,12 @@ internal class VedtakshendelseListenerIT {
 
         hentFilOgSendPåKafka("gebyrMottakerOppdatering.json", 6)
 
-        val konteringer = assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
+        assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
             100000002,
             Transaksjonskode.G1,
             Transaksjonskode.G3,
             100000001,
         )
-
-        skrivTilTestdatafil(konteringer.subList(1, 3), "Oppdatering på gebyr for skyldner")
     }
 
     @Test
@@ -242,7 +227,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette særtilskudd`() {
         val vedtakHendelse = hentFilOgSendPåKafka("særtilskudd.json", 7)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000003,
             vedtakHendelse,
             Engangsbeløptype.SÆRBIDRAG,
@@ -250,8 +235,6 @@ internal class VedtakshendelseListenerIT {
             100000002,
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Særtilskudd")
     }
 
     @Test
@@ -263,14 +246,12 @@ internal class VedtakshendelseListenerIT {
 
         hentFilOgSendPåKafka("særtilskuddOppdatering.json", 9)
 
-        val konteringer = assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
+        assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
             100000003,
             Transaksjonskode.E1,
             Transaksjonskode.E3,
             100000003,
         )
-
-        skrivTilTestdatafil(konteringer.subList(1, 3), "Oppdatering på særtilskudd")
     }
 
     @Test
@@ -278,7 +259,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette tilbakekreving`() {
         val vedtakHendelse = hentFilOgSendPåKafka("tilbakekreving.json", 10)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000004,
             vedtakHendelse,
             Engangsbeløptype.TILBAKEKREVING,
@@ -286,8 +267,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Tilbakekreving")
     }
 
     @Test
@@ -299,14 +278,12 @@ internal class VedtakshendelseListenerIT {
 
         hentFilOgSendPåKafka("tilbakekrevingOppdatering.json", 12)
 
-        val konteringer = assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
+        assertVedOppdateringAvEngangsbeløpOgReturnerKonteringer(
             100000004,
             Transaksjonskode.H1,
             Transaksjonskode.H3,
             100000004,
         )
-
-        skrivTilTestdatafil(konteringer.subList(1, 3), "Oppdatering på tilbakekreving")
     }
 
     @Test
@@ -314,7 +291,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette ettergivelse`() {
         val vedtakHendelse = hentFilOgSendPåKafka("ettergivelse.json", 14)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000005,
             vedtakHendelse,
             Engangsbeløptype.ETTERGIVELSE,
@@ -322,8 +299,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Ettergivelse")
     }
 
     @Test
@@ -331,7 +306,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette direkte oppgjør`() {
         val vedtakHendelse = hentFilOgSendPåKafka("direkteOppgjor.json", 15)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000007,
             vedtakHendelse,
             Engangsbeløptype.DIREKTE_OPPGJØR,
@@ -339,8 +314,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Direkte oppgjør")
     }
 
     @Test
@@ -348,7 +321,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette ettergivelse tilbakekreving`() {
         val vedtakHendelse = hentFilOgSendPåKafka("ettergivelseTilbakekreving.json", 16)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000008,
             vedtakHendelse,
             Engangsbeløptype.ETTERGIVELSE_TILBAKEKREVING,
@@ -356,8 +329,6 @@ internal class VedtakshendelseListenerIT {
             Integer.valueOf(vedtakHendelse.engangsbeløpListe!![0].delytelseId),
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Ettergivelse tilbakekreving")
     }
 
     val skyldnerIdent = genererFødselsnummer()
@@ -368,7 +339,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette bidragsforskudd`() {
         val vedtakHendelse = hentFilOgSendPåKafka("bidragsforskudd.json", 31, skyldnerIdent, kravhaverIdent)
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000009,
             vedtakHendelse,
             Stønadstype.FORSKUDD,
@@ -377,9 +348,6 @@ internal class VedtakshendelseListenerIT {
             Transaksjonskode.A1,
             Søknadstype.EN,
         )
-
-        val konteringer = hentAlleKonteringerForOppdrag(oppdrag)
-        skrivTilTestdatafil(konteringer, "Bidragsforskudd")
     }
 
     @Test
@@ -396,7 +364,7 @@ internal class VedtakshendelseListenerIT {
             kravhaverIdent,
         )
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000009,
             vedtakHendelse,
             Stønadstype.FORSKUDD,
@@ -405,12 +373,6 @@ internal class VedtakshendelseListenerIT {
             Transaksjonskode.A1,
             Søknadstype.EN,
             Transaksjonskode.A3,
-        )
-
-        val konteringer = hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag)
-        skrivTilTestdatafil(
-            konteringer,
-            "Oppdaterer bidragsforskudds med 50 øre og endrer til å slutte 2 mnd tidligere.",
         )
     }
 
@@ -431,7 +393,7 @@ internal class VedtakshendelseListenerIT {
             barn2 = barn2Bidrag,
         )
 
-        val oppdrag1 = assertStønader(
+        assertStønader(
             100000010,
             vedtakHendelse,
             Stønadstype.BIDRAG,
@@ -441,7 +403,7 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
         )
 
-        val oppdrag2 = assertStønader(
+        assertStønader(
             100000011,
             vedtakHendelse,
             Stønadstype.BIDRAG,
@@ -452,7 +414,7 @@ internal class VedtakshendelseListenerIT {
             stonadsendringIndex = 1,
         )
 
-        val gebyrBp = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000012,
             vedtakHendelse,
             Engangsbeløptype.GEBYR_SKYLDNER,
@@ -461,7 +423,7 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.FABP,
         )
 
-        val gebyrBm = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000013,
             vedtakHendelse,
             Engangsbeløptype.GEBYR_MOTTAKER,
@@ -470,11 +432,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.FABM,
             engangsbeløpIndex = 1,
         )
-
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag1), "Barnebidrag for barn 1")
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag2), "Barnebidrag for barn 2")
-        skrivTilTestdatafil(listOf(gebyrBp), "Gebyr til BP for barnebidrag")
-        skrivTilTestdatafil(listOf(gebyrBm), "Gebyr til BM for barnebidrag")
     }
 
     @Test
@@ -489,7 +446,7 @@ internal class VedtakshendelseListenerIT {
             barn2 = barn2Bidrag,
         )
 
-        val oppdrag1 = assertStønader(
+        assertStønader(
             100000010,
             vedtakHendelse,
             Stønadstype.BIDRAG,
@@ -500,12 +457,7 @@ internal class VedtakshendelseListenerIT {
             Transaksjonskode.B3, 0,
         )
 
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag1),
-            "Oppdaterer barnebidrag for barn 1 med 10kr.",
-        )
-
-        val oppdrag2 = assertStønader(
+        assertStønader(
             100000011,
             vedtakHendelse,
             Stønadstype.BIDRAG,
@@ -515,11 +467,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             Transaksjonskode.B3,
             1,
-        )
-
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag2),
-            "Oppdaterer barnebidrag for barn 2 med 10kr.",
         )
     }
 
@@ -542,7 +489,7 @@ internal class VedtakshendelseListenerIT {
             return@until persistenceService.hentOppdrag(100000014) != null
         }
 
-        val oppdrag1 = assertStønader(
+        assertStønader(
             100000014,
             vedtakHendelse,
             Stønadstype.OPPFOSTRINGSBIDRAG,
@@ -556,7 +503,7 @@ internal class VedtakshendelseListenerIT {
             return@until persistenceService.hentOppdrag(100000015) != null
         }
 
-        val oppdrag2 = assertStønader(
+        assertStønader(
             100000015,
             vedtakHendelse,
             Stønadstype.OPPFOSTRINGSBIDRAG,
@@ -565,9 +512,6 @@ internal class VedtakshendelseListenerIT {
             Transaksjonskode.B1,
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag1), "Oppfostringsbidrag for barn 1")
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag2), "Oppfostringsbidrag for barn 2")
     }
 
     @Test
@@ -581,7 +525,7 @@ internal class VedtakshendelseListenerIT {
             barn2 = barn2Oppfostring,
         )
 
-        val oppdrag1 = assertStønader(
+        assertStønader(
             100000014,
             vedtakHendelse,
             Stønadstype.OPPFOSTRINGSBIDRAG,
@@ -593,12 +537,7 @@ internal class VedtakshendelseListenerIT {
             0,
         )
 
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag1),
-            "Oppdaterer oppfostringsbidrag for barn 1 med 100kr.",
-        )
-
-        val oppdrag2 = assertStønader(
+        assertStønader(
             100000015,
             vedtakHendelse,
             Stønadstype.OPPFOSTRINGSBIDRAG,
@@ -608,11 +547,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             Transaksjonskode.B3,
             1,
-        )
-
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag2),
-            "Oppdaterer oppfostringsbidrag for barn 2 med 100kr.",
         )
     }
 
@@ -634,7 +568,7 @@ internal class VedtakshendelseListenerIT {
             return@until persistenceService.hentOppdrag(100000016) != null
         }
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000016,
             vedtakHendelse,
             Stønadstype.BIDRAG18AAR,
@@ -644,8 +578,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             forventetMottaker = bidrag18årsMottaker,
         )
-
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag), "18 års bidrag")
     }
 
     @Test
@@ -659,7 +591,7 @@ internal class VedtakshendelseListenerIT {
             mottaker = bidrag18årsMottakerNy,
         )
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000016,
             vedtakHendelse,
             Stønadstype.BIDRAG18AAR,
@@ -669,11 +601,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             Transaksjonskode.D3,
             forventetMottaker = bidrag18årsMottakerNy,
-        )
-
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag),
-            "Oppdaterer 18 års bidrag med 1 mnd lenger varighet, til å starte 1 mnd før og +100kr.",
         )
     }
 
@@ -696,7 +623,7 @@ internal class VedtakshendelseListenerIT {
             return@until persistenceService.hentOppdrag(100000017) != null
         }
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000017,
             vedtakHendelse,
             Stønadstype.EKTEFELLEBIDRAG,
@@ -706,8 +633,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             forventetMottaker = mottakerEktefellebidrag,
         )
-
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag), "Ektefellebidrag")
     }
 
     @Test
@@ -720,7 +645,7 @@ internal class VedtakshendelseListenerIT {
             kravhaverIdent = kravhaverIdEktefellebidrag,
         )
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000017,
             vedtakHendelse,
             Stønadstype.EKTEFELLEBIDRAG,
@@ -730,11 +655,6 @@ internal class VedtakshendelseListenerIT {
             Søknadstype.EN,
             Transaksjonskode.F3,
             forventetMottaker = mottakerEktefellebidragNy,
-        )
-
-        skrivTilTestdatafil(
-            hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag),
-            "Oppdaterer ektefellebidrag med 1000kr fra 2022-02-01.",
         )
     }
 
@@ -750,7 +670,7 @@ internal class VedtakshendelseListenerIT {
             return@until persistenceService.hentOppdrag(100000018) != null
         }
 
-        val oppdrag = assertStønader(
+        assertStønader(
             100000018,
             vedtakHendelse,
             Stønadstype.MOTREGNING,
@@ -759,8 +679,6 @@ internal class VedtakshendelseListenerIT {
             Transaksjonskode.I1,
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(hentAlleKonteringerForOppdrag(oppdrag), "Motregning")
     }
 
     val endreRmBmBidrag = genererFødselsnummer()
@@ -819,7 +737,7 @@ internal class VedtakshendelseListenerIT {
     fun `skal opprette særbidrag med betalt beløp`() {
         val vedtakHendelse = hentFilOgSendPåKafka("særbidrag_betaltbeløp.json", 179)
 
-        val kontering = assertVedOpprettelseAvEngangsbeløp(
+        assertVedOpprettelseAvEngangsbeløp(
             100000020,
             vedtakHendelse,
             Engangsbeløptype.SÆRBIDRAG,
@@ -827,8 +745,6 @@ internal class VedtakshendelseListenerIT {
             100000014,
             Søknadstype.EN,
         )
-
-        skrivTilTestdatafil(listOf(kontering), "Særbidrag")
     }
 
     @Test
@@ -1000,12 +916,6 @@ internal class VedtakshendelseListenerIT {
         return kontering
     }
 
-    private fun skrivTilTestdatafil(konteringer: List<Kontering>, kommentar: String) {
-        val skattKravRequest = kravService.opprettKravKonteringListe(konteringer)
-        file.write("\n// $kommentar\n".toByteArray())
-        file.write(objectmapper.writerWithDefaultPrettyPrinter().writeValueAsString(skattKravRequest).toByteArray())
-    }
-
     private fun leggInnGenererteIdenter(
         vedtakFil: String,
         kravhaverIdent: String,
@@ -1032,20 +942,6 @@ internal class VedtakshendelseListenerIT {
             oppdragsperiode.konteringer.forEach { kontering ->
                 konteringer.add(kontering)
             }
-        }
-        return konteringer
-    }
-
-    private fun hentAlleOppdaterteOgNyeKonteringerForOppdragVedOppdatering(oppdrag: Oppdrag): List<Kontering> {
-        val konteringer = mutableListOf<Kontering>()
-
-        oppdrag.oppdragsperioder[oppdrag.oppdragsperioder.size - 2].konteringer.forEach { kontering ->
-            if (Transaksjonskode.valueOf(kontering.transaksjonskode).korreksjonskode == null) {
-                konteringer.add(kontering)
-            }
-        }
-        oppdrag.oppdragsperioder.last().konteringer.forEach { kontering ->
-            konteringer.add(kontering)
         }
         return konteringer
     }
