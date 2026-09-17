@@ -504,3 +504,52 @@ jobs:
     secrets: inherit
     with:
       bibliotekartefakt: ${{ needs.biblioteker.outputs.artefaktnavn }}
+
+  # Samlejobb for branch protection/ruleset
+  alle_bygg_fullfort:
+    name: Alle bygg fullført
+    needs:
+      - detect_changes
+      - biblioteker
+      - bidrag-admin-fss
+      - bidrag-admin
+      - bidrag-aktoerregister
+      - bidrag-arbeidsflyt
+      - bidrag-automatisk-jobb
+      - bidrag-bbm
+      - bidrag-behandling
+      - bidrag-belopshistorikk
+      - bidrag-bidragskalkulator
+      - bidrag-dokument-arkiv
+      - bidrag-dokument-arkivering
+      - bidrag-dokument-bestilling
+      - bidrag-dokument-forsendelse
+      - bidrag-dokument-journalpost
+      - bidrag-dokument-produksjon
+      - bidrag-dokument
+      - bidrag-elin-stub
+      - bidrag-grunnlag
+      - bidrag-henvendelse
+      - bidrag-kodeverk
+      - bidrag-maskinporten-client
+      - bidrag-oppgave
+      - bidrag-organisasjon
+      - bidrag-person-hendelse
+      - bidrag-person
+      - bidrag-regnskap
+      - bidrag-reisekostnad-api
+      - bidrag-reskontro
+      - bidrag-sak
+      - bidrag-samhandler
+      - bidrag-sjablon
+      - bidrag-statistikk
+      - bidrag-tilgangskontroll
+      - bidrag-vedtak
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Feil hvis noen jobber feilet eller ble avbrutt
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: |
+          echo "::error::En eller flere bygg-/deploy-jobber feilet eller ble avbrutt - se jobbene over for detaljer."
+          exit 1
