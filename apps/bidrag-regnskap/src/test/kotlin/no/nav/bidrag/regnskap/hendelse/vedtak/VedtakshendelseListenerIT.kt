@@ -53,6 +53,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.transaction.annotation.Transactional
 import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import java.io.File
 import java.io.FileOutputStream
 import java.math.BigDecimal
 import java.time.Duration
@@ -79,7 +80,7 @@ internal class VedtakshendelseListenerIT {
 
     companion object {
         private const val HENDELSE_FILMAPPE = "testfiler/hendelse/"
-        private const val TESTDATA_OUTPUT_NAVN = "kravTestData.json"
+        private const val TESTDATA_OUTPUT_NAVN = "target/kravTestData.json"
         private val PÅLØPSDATO = LocalDate.of(2022, 6, 1)
 
         private var kravApiWireMock: KravApiWireMock = KravApiWireMock()
@@ -143,7 +144,7 @@ internal class VedtakshendelseListenerIT {
 
     @BeforeAll
     fun beforeAll() {
-        file = FileOutputStream(TESTDATA_OUTPUT_NAVN)
+        file = FileOutputStream(File(TESTDATA_OUTPUT_NAVN).apply { parentFile?.mkdirs() })
         persistenceService.lagrePåløp(påløp)
     }
 
