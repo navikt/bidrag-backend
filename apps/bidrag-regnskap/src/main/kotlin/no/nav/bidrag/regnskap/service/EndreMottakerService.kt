@@ -77,19 +77,19 @@ class EndreMottakerService(
                 nyMottaker = Personident(endreMottaker.nyMottakerIdent),
             )
             LOGGER.info { "Endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} ble godkjent av skatt." }
-            endreMottaker.copy(
-                overførtTilSkattTidspunkt = nå,
-                godkjentAvSkattTidspunkt = nå,
-                feilmeldingFraSkatt = null,
-            )
+
+            endreMottaker.overførtTilSkattTidspunkt = nå
+            endreMottaker.godkjentAvSkattTidspunkt = nå
+            endreMottaker.feilmeldingFraSkatt = null
+            endreMottaker
         } catch (e: Exception) {
             LOGGER.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} til skatt." }
             secureLogger.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer}, barn ${endreMottaker.barnIdent}, ny mottaker ${endreMottaker.nyMottakerIdent} til skatt." }
-            endreMottaker.copy(
-                overførtTilSkattTidspunkt = nå,
-                godkjentAvSkattTidspunkt = null,
-                feilmeldingFraSkatt = e.message?.take(MAKS_LENGDE_FEILMELDING),
-            )
+            val feilmeldingFraSkatt = e.message?.take(MAKS_LENGDE_FEILMELDING)
+            endreMottaker.overførtTilSkattTidspunkt = nå
+            endreMottaker.godkjentAvSkattTidspunkt = null
+            endreMottaker.feilmeldingFraSkatt = feilmeldingFraSkatt
+            endreMottaker
         }
         persistenceService.lagreEndreMottaker(oppdatert)
     }
