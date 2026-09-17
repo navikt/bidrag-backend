@@ -142,5 +142,3 @@ private class DummyClassForAnnotasjon {
     @SjekkForNyIdent("ident1")
     fun skalTesteFeilInput(ident1: Long, ident2: String): List<String> = listOf(ident1.toString(), ident2)
 }
-
-
