@@ -29,6 +29,7 @@ import no.nav.bidrag.behandling.database.datamodell.henteNyesteIkkeAktiveGrunnla
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.repository.PersonRepository
 import no.nav.bidrag.behandling.database.repository.UnderholdskostnadRepository
+import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
@@ -63,6 +64,7 @@ import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
@@ -335,6 +337,46 @@ class UnderholdServiceTest {
             assertFailsWith<HttpClientErrorException> {
                 underholdService.oppdatereTilsynsordning(underholdskostnad, false)
             }
+        }
+
+        @Test
+        open fun `skal fjerne forpleining når barnet endres til andre barn`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first { !it.gjelderAndreBarn }
+            val rolleBarn = underholdskostnad.rolle!!
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().minusMonths(4).withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            every { personRepository.findFirstByIdent(any()) } returns
+                Person(
+                    ident = rolleBarn.ident,
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            val request =
+                OpprettRolleDto(
+                    rolletype = Rolletype.BARN,
+                    ident = Personident(rolleBarn.ident!!),
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            // hvis
+            underholdService.endreUnderholdskostnadTilAndreBarn(behandling, request)
+
+            // så
+            underholdskostnad.forpleining.shouldBeEmpty()
         }
 
         @Test
