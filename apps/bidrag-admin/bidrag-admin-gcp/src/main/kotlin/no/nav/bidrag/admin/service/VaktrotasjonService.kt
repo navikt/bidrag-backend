@@ -1,4 +1,4 @@
-package no.nav.bidrag.admin.vaktrotasjon
+package no.nav.bidrag.admin.service
 
 import com.slack.api.methods.request.slack_lists.SlackListsItemsListRequest
 import com.slack.api.methods.request.slack_lists.SlackListsItemsUpdateRequest

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.LocalDate
+import no.nav.bidrag.admin.service.VaktrotasjonService
 
 @ExtendWith(MockKExtension::class)
 class VaktrotasjonServiceTest {
