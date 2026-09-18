@@ -24,7 +24,7 @@ class HentValutaScheduler(
 //            @Scheduled
     fun hentValutakurs() {
         LOGGER.info { "Henter valutakurs" }
-        val valutakoder = Valutakode.entries.toTypedArray()
+        val valutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
         val hentValutakursRequest = HentValutakursRequest(
             hentValutakursListe = valutakoder.map { valutakode ->
                 HentValutakurs(

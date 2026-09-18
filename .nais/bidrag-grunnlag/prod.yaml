@@ -33,6 +33,7 @@ azure:
   unsecure:
     ereg_url: ereg-services.prod-fss-pub.nais.io
     norgesbank_url: data.norges-bank.no
+    ecb_url: data-api.ecb.europa.eu
 dbname: bidrag-grunnlag-prod-4
 dbinstancename: bidrag-grunnlag-prod-4
 azureAccessInbound:

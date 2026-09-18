@@ -606,7 +606,7 @@ class PersistenceService(
         return barnetilsynDtoListe
     }
 
-    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag {
-        return valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato)
+    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag? {
+        return valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato.atStartOfDay())
     }
 }

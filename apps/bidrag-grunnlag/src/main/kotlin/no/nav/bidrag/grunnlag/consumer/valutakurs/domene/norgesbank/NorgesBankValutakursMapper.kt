@@ -1,0 +1,115 @@
+package no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank
+
+import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
+import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.NorgesBankValutakursMappingException
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
+import kotlin.math.pow
+
+object NorgesBankValutakursMapper {
+    @Throws(NorgesBankValutakursMappingException::class)
+    fun NorgesBankValutakursData.tilValutakurs(
+        valuta: String,
+        frekvens: Frekvens,
+        kursDato: LocalDate,
+    ): Valutakurs {
+        this.valider(valuta, frekvens, kursDato)
+        return Valutakurs(valuta = valuta, kurs = this.tilKalkulertKurs(), kursDato = kursDato)
+    }
+
+    private fun NorgesBankValutakursData.valider(
+        forventetValuta: String,
+        forventetFrekvens: Frekvens,
+        forventetKursDato: LocalDate,
+    ) {
+        val valutaData = this.dataSet.series
+        valutaData.validerValuta(forventetValuta)
+        valutaData.validerFrekvens(forventetFrekvens)
+        valutaData.validerKursDato(forventetKursDato)
+        valutaData.validerErKalkulertValutakurs()
+        valutaData.validerInnsamlingstidspunkt()
+    }
+
+    fun NorgesBankValutakursSeries.hentSeriesKey(id: String): String =
+        this.seriesKeys.singleOrNull { it.id == id }?.value
+            ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
+
+    fun NorgesBankValutakursSeries.hentAttribute(id: String): String =
+        this.attributes.singleOrNull { it.id == id }?.value
+            ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
+
+    fun NorgesBankValutakursSeries.hentKurs(): BigDecimal = observations.sdmxExchangeRateValue.value
+
+    fun NorgesBankValutakursSeries.hentKursDato(): LocalDate =
+        try {
+            LocalDate.parse(observations.date.value)
+        } catch (e: DateTimeParseException) {
+            throw NorgesBankValutakursMappingException.UgyldigData("Respons inneholder ugyldig datoformat.", e)
+        }
+
+    private fun NorgesBankValutakursSeries.validerValuta(forventetValuta: String) {
+        val valuta = hentSeriesKey("BASE_CUR")
+
+        if (forventetValuta != valuta) {
+            throw NorgesBankValutakursMappingException.UgyldigData("Forventet valuta $forventetValuta men fikk $valuta.")
+        }
+    }
+
+    private fun NorgesBankValutakursSeries.validerFrekvens(forventetFrekvens: Frekvens) {
+        val frekvens: Frekvens = Frekvens.fraVerdi(hentSeriesKey("FREQ"))
+
+        if (forventetFrekvens != frekvens) {
+            throw NorgesBankValutakursMappingException.UgyldigData("Forventet frekvens $forventetFrekvens men fikk $frekvens.")
+        }
+    }
+
+    private fun NorgesBankValutakursSeries.validerErKalkulertValutakurs() {
+        val kalkulertVerdi: Boolean = hentAttribute("CALCULATED").toBoolean()
+
+        if (kalkulertVerdi) {
+            throw NorgesBankValutakursMappingException.UgyldigData(
+                "Valutakurs er kalkulert og vi forventer observert verdi.",
+            )
+        }
+    }
+
+    private fun NorgesBankValutakursSeries.validerInnsamlingstidspunkt() {
+        val innsamlingstidspunkt = hentAttribute("COLLECTION")
+        if (innsamlingstidspunkt != "C") {
+            throw NorgesBankValutakursMappingException.UgyldigData(
+                "Forventer at innsamlingstidspunkt er 'C' men fikk '$innsamlingstidspunkt'.",
+            )
+        }
+    }
+
+    private fun NorgesBankValutakursSeries.validerKursDato(forventetDato: LocalDate) {
+        val kursDato: LocalDate = hentKursDato()
+        if (!forventetDato.isEqual(kursDato)) {
+            throw NorgesBankValutakursMappingException.UgyldigData("Forventet kursdato $forventetDato men fikk $kursDato.")
+        }
+    }
+
+/**
+     * Norges Bank leverer ikke alltid valutakurs på lik enhet, men leverer i noen tilfeller enhetsverdi multiplisert med 10, 100 eller 1000.
+     * Vi må derfor hente ut enhets-multiplikatoren med id *UNIT_MULT* og bruke denne for å kalkulere enhetsverdien.
+     * Kursen kalkuleres ved (kurs / 10^UNIT_MULT). Altså vil det bli henholdsvis kurs/1, kurs/10, kurs/100 osv basert på verdien til *UNIT_MULT*.
+     * Eksempelvis leveres kursen for DKK som verdien av 100 DKK og ikke 1 DKK. I dette tilfellet er *UNIT_MULT* satt til 2, og vi finner enhetsverdien ved ta kurs/100.
+     * Siden vi alltid deler på en potens av 10, er delingen alltid eksakt (terminerende desimaltall), og vi mister derfor aldri presisjon selv uten å oppgi eksplisitt skala eller avrundingsmodus.
+     * Resultatet får derimot ikke nødvendigvis en kompakt skala (f.eks. kan 10.0000/1 bli "10.000" i stedet for "10"), så vi bruker stripTrailingZeros() for å normalisere til et minimalt antall desimaler.
+     */
+    private fun NorgesBankValutakursData.tilKalkulertKurs(): BigDecimal {
+        val enhetMultiplikator: Double =
+            this.dataSet.series
+                .hentAttribute("UNIT_MULT")
+                .toDouble()
+
+        val kurs: BigDecimal = this.dataSet.series.hentKurs()
+
+        return kurs
+            .divide(BigDecimal.valueOf(10.0.pow(enhetMultiplikator)))
+            .stripTrailingZeros()
+            // Passer på at scale ikke blir negativ, da dette kan føre til at 100.00 blir til 1E+2, som ikke er ønskelig.
+            .let { if (it.scale() < 0) it.setScale(0) else it }
+    }
+}
