@@ -125,11 +125,12 @@ class UnderholdService(
             (
                 underholdskostnad.barnetilsyn.isNotEmpty() ||
                     underholdskostnad.tilleggsstønad.isNotEmpty() ||
-                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
+                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
+                    underholdskostnad.forpleining.isNotEmpty()
                 )
         ) {
             ugyldigForespørsel(
-                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, eller faktiske tilsynsutgift",
+                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, faktiske tilsynsutgift, eller forpleining",
             )
         }
 
@@ -163,6 +164,7 @@ class UnderholdService(
             eksisterendeUnderholdskostnad.person = person
             eksisterendeUnderholdskostnad.barnetilsyn.clear()
             eksisterendeUnderholdskostnad.tilleggsstønad.clear()
+            eksisterendeUnderholdskostnad.forpleining.clear()
             eksisterendeUnderholdskostnad.harTilsynsordning = eksisterendeUnderholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
         }
     }

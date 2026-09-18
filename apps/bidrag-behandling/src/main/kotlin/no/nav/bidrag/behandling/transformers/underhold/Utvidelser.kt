@@ -207,6 +207,16 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
     tilleggsstønad.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
         periode.fom = virkningsdato
     }
+    forpleining.filter { it.fom < virkningsdato }.forEach { periode ->
+        if (periode.tom != null && virkningsdato >= periode.tom) {
+            forpleining.remove(periode)
+        } else {
+            periode.fom = virkningsdato
+        }
+    }
+    forpleining.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+        periode.fom = virkningsdato
+    }
 }
 
 fun Underholdskostnad.justerPerioderForOpphørsdato(
@@ -249,6 +259,19 @@ fun Underholdskostnad.justerPerioderForOpphørsdato(
                 tilleggsstønad.remove(periode)
             }
         tilleggsstønad
+            .filter { periode ->
+                periode.tom == null || periode.tom!!.isAfter(beregnTilDato) || periode.tom == forrigeOpphørsdato.sluttenAvForrigeMåned
+            }.maxByOrNull { it.fom }
+            ?.let {
+                it.tom = justerPeriodeTomOpphørsdato(opphørsdato)
+            }
+
+        forpleining
+            .filter { opphørsdato == null || it.fom > beregnTilDato }
+            .forEach { periode ->
+                forpleining.remove(periode)
+            }
+        forpleining
             .filter { periode ->
                 periode.tom == null || periode.tom!!.isAfter(beregnTilDato) || periode.tom == forrigeOpphørsdato.sluttenAvForrigeMåned
             }.maxByOrNull { it.fom }
