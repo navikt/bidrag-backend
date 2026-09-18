@@ -11,10 +11,8 @@ CREATE TABLE IF NOT EXISTS endre_mottaker
     opprettet_tidspunkt           timestamp NOT NULL DEFAULT current_timestamp
 );
 
--- Brukes for å finne nyeste rad per (saksnummer, barn_ident) ved resending og varsling.
-CREATE INDEX endre_mottaker_sak_barn_opprettet_index ON endre_mottaker (saksnummer, barn_ident, opprettet_tidspunkt DESC);
-
--- Delindeks for raskt oppslag av rader som ikke er godkjent av skatt enda.
-CREATE INDEX endre_mottaker_ikke_godkjent_index ON endre_mottaker (saksnummer, barn_ident)
-    WHERE godkjent_av_skatt_tidspunkt IS NULL;
-
+-- Dekker DISTINCT ON (saksnummer, barn_ident) med ORDER BY saksnummer, barn_ident,
+-- opprettet_tidspunkt DESC, id DESC i hentNyesteIkkeGodkjentePerSakOgBarn, slik at nyeste rad
+-- per (sak, barn) kan hentes uten et eget sorteringssteg. id DESC er tiebreak ved likt tidsstempel.
+CREATE INDEX endre_mottaker_sak_barn_opprettet_index
+    ON endre_mottaker (saksnummer, barn_ident, opprettet_tidspunkt DESC, id DESC);
