@@ -17,6 +17,7 @@ import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
@@ -305,6 +306,66 @@ class UnderholdServiceTest {
                 innhold shouldBe "Begrunnelse for andre barn"
                 type shouldBe NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("Tester forpleining")
+    open inner class ForpleiningTest {
+        @Test
+        open fun `skal ikke kunne slå av tilsynsordning når barnet har forpleining`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            // hvis, så
+            assertFailsWith<HttpClientErrorException> {
+                underholdService.oppdatereTilsynsordning(underholdskostnad, false)
+            }
+        }
+
+        @Test
+        open fun `skal slette forpleining fra underholdskostnad`() {
+            // gitt
+            val universalid = 1L
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = universalid,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+            val request = SletteUnderholdselement(idUnderhold = 1, idElement = 1, Underholdselement.FORPLEINING)
+
+            // hvis
+            underholdService.sletteFraUnderhold(behandling, request)
+
+            // så
+            behandling.underholdskostnader
+                .find { it.id == universalid }
+                ?.forpleining
+                .shouldBeEmpty()
         }
     }
 

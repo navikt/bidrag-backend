@@ -1,9 +1,12 @@
 package no.nav.bidrag.behandling.transformers.underhold
 
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldNotBeGreaterThan
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.shouldBe
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
@@ -11,8 +14,9 @@ import no.nav.bidrag.behandling.utils.testdata.oppretteBarnetilsynGrunnlagDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
-import kotlin.test.Test
 
 class UtvidelserTest {
     @Test
@@ -190,5 +194,62 @@ class UtvidelserTest {
                 .minusMonths(4)
                 .plusMonths(1)
                 .minusDays(1)
+    }
+
+    @Test
+    fun `forpleiningsperiode som starter før virkningstidspunktet skal flyttes fram`() {
+        // gitt
+        val b =
+            oppretteTestbehandling(
+                setteDatabaseider = true,
+                inkludereBp = true,
+                behandlingstype = TypeBehandling.BIDRAG,
+            )
+        val virkningsdato = b.eldsteVirkningstidspunkt.withDayOfMonth(1)
+        val u = b.underholdskostnader.first()
+
+        u.forpleining.add(
+            Forpleining(
+                underholdskostnad = u,
+                fom = virkningsdato.minusMonths(2),
+                tom = virkningsdato.plusMonths(2),
+                beløp = BigDecimal(2000),
+            ),
+        )
+
+        // hvis
+        u.justerePerioder()
+
+        // så
+        u.forpleining shouldHaveSize 1
+        u.forpleining.first().fom shouldBe virkningsdato
+    }
+
+    @Test
+    fun `forpleiningsperiode som slutter før virkningstidspunktet skal fjernes`() {
+        // gitt
+        val b =
+            oppretteTestbehandling(
+                setteDatabaseider = true,
+                inkludereBp = true,
+                behandlingstype = TypeBehandling.BIDRAG,
+            )
+        val virkningsdato = b.eldsteVirkningstidspunkt.withDayOfMonth(1)
+        val u = b.underholdskostnader.first()
+
+        u.forpleining.add(
+            Forpleining(
+                underholdskostnad = u,
+                fom = virkningsdato.minusMonths(5),
+                tom = virkningsdato.minusMonths(1),
+                beløp = BigDecimal(2000),
+            ),
+        )
+
+        // hvis
+        u.justerePerioder()
+
+        // så
+        u.forpleining.shouldBeEmpty()
     }
 }
