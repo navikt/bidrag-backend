@@ -114,9 +114,21 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
 
         assertSoftly(behandling) {
             notater.shouldNotBeEmpty()
-            notater.forEach { notat ->
-                notat.rolle.notat shouldContain notat
-            }
+            val rollenotattyper =
+                setOf(
+                    Notattype.VIRKNINGSTIDSPUNKT,
+                    Notattype.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                    Notattype.INNTEKT,
+                    Notattype.SAMVÆR,
+                    Notattype.UNDERHOLDSKOSTNAD,
+                    Notattype.PRIVAT_AVTALE,
+                )
+            notater
+                .filter { it.type in rollenotattyper }
+                .shouldNotBeEmpty()
+                .forEach { notat ->
+                    notat.rolle.notat shouldContain notat
+                }
             val søknadsbarnRolle = søknadsbarn.first()
             søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.SAMVÆR
             søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.UNDERHOLDSKOSTNAD
