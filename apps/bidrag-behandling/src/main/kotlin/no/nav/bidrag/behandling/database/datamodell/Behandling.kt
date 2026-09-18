@@ -423,8 +423,9 @@ open class Behandling(
     val sammeSamværForAlle get() =
         forholdsmessigFordeling == null &&
             samvær.filter { it.rolle.kreverGrunnlagForBeregning }.all { sb1 ->
-                samvær.filter { it.rolle.kreverGrunnlagForBeregning }.filter { it.id != sb1.id }.all {
-                    sb1.erLik(it)
+                samvær.filter { it.rolle.kreverGrunnlagForBeregning }.filter { it.id != sb1.id }.all { sb2 ->
+                    sb1.erLik(sb2) && sb1.rolle.virkningstidspunkt == sb2.rolle.virkningstidspunkt &&
+                        sb1.rolle.opphørsdato == sb2.rolle.opphørsdato
                 }
             }
     val sammeSamværForAlleSaker get() = samvær
