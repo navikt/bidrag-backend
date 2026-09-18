@@ -23,7 +23,7 @@ class SlackService(
     @param:Value($$"${BIDRAG_BOT_SLACK_OAUTH_TOKEN}") private val oauthToken: String,
     @param:Value($$"${SLACK_CHANNEL_ID}") private val channel: String,
 ) {
-    internal val client: MethodsClient by lazy { Slack.getInstance().methods(oauthToken) }
+    val client: MethodsClient by lazy { Slack.getInstance().methods(oauthToken) }
 
     companion object {
         internal val LOGGER = KotlinLogging.logger { }
