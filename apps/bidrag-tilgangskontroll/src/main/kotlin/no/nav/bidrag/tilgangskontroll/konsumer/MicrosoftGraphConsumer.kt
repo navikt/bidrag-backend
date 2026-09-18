@@ -9,6 +9,7 @@ import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerinformasjonResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.CheckMemberGroupsResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.EnhetResponse
+import no.nav.bidrag.tilgangskontroll.model.graph.Gruppe
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
@@ -53,7 +54,7 @@ class MicrosoftGraphConsumer(
                     .pathSegment("users/$id/transitiveMemberOf")
                     .build()
                     .toUri()
-            val response = getForEntity<BrukerGrupperResponse>(uri)
+            val response = hentAlleGrupper(uri)
             return response
         } else {
             val uri =
@@ -62,7 +63,7 @@ class MicrosoftGraphConsumer(
                     .pathSegment("me/transitiveMemberOf")
                     .build()
                     .toUri()
-            return getForEntity<BrukerGrupperResponse>(uri)
+            return hentAlleGrupper(uri)
         }
     }
 
@@ -80,7 +81,7 @@ class MicrosoftGraphConsumer(
                     .pathSegment("users/$id/transitiveMemberOf")
                     .build()
                     .toUri()
-            val response = getForEntity<BrukerGrupperResponse>(uri)
+            val response = hentAlleGrupper(uri)
             return response
         } else {
             val uri =
@@ -89,8 +90,19 @@ class MicrosoftGraphConsumer(
                     .pathSegment("me/transitiveMemberOf")
                     .build()
                     .toUri()
-            return getForEntity<BrukerGrupperResponse>(uri)
+            return hentAlleGrupper(uri)
         }
+    }
+
+    private fun hentAlleGrupper(uri: URI): BrukerGrupperResponse {
+        val grupper = mutableListOf<Gruppe>()
+        var nesteSide: URI? = uri
+        while (nesteSide != null) {
+            val response = getForEntity<BrukerGrupperResponse>(nesteSide)
+            response?.value?.let { grupper.addAll(it) }
+            nesteSide = response?.nextLink?.takeIf { it.isNotBlank() }?.let(URI::create)
+        }
+        return BrukerGrupperResponse(value = grupper)
     }
 
     @BrukerCacheable(Cache.BRUKERE_FOR_ENHET)
