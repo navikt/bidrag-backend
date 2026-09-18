@@ -1,18 +1,20 @@
 package no.nav.bidrag.domene.enums.samhandler
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDate
 
 @Schema(enumAsRef = true, name = "Valutakode")
 enum class Valutakode(
     val visningsnavn: String,
+    val utgåttDato: LocalDate? = null,
 ) {
     ALL("Albanske lek"),
-    ANG("NL Antillene Gylden"),
+    ANG("NL Antillene Gylden", LocalDate.of(2025, 4, 1)),
     ARS("Argentinsk peso"),
     AUD("Australske dollar"),
     BAM("Bosniske Mark"),
     BDT("Bangladeshi taka"),
-    BGN("Bulgarsk lev"),
+    BGN("Bulgarsk lev", LocalDate.of(2026, 1, 1)),
     BRL("Brasilske reais"),
     BYN("Belarusiske nye rubler"),
     CAD("Canadiske dollar"),
@@ -22,11 +24,11 @@ enum class Valutakode(
     CZK("Tsjekkiske koruna"),
     DKK("Danske kroner"),
     DZD("Algerisk dinar"),
-    EEK("Estiske kroon"),
+    EEK("Estiske kroon", LocalDate.of(2011, 1, 1)),
     EUR("Euro"),
     GBP("Britiske Pund"),
     HKD("Hong Kong dollar"),
-    HRK("Kroatiske kuna"),
+    HRK("Kroatiske kuna", LocalDate.of(2023, 1, 1)),
     HUF("Ungarske forint"),
     IDR("Indonesiske rupiah"),
     ILS("Ny israelsk shekel"),
@@ -34,8 +36,8 @@ enum class Valutakode(
     ISK("Islandske kroner"),
     JPY("Japanske Yen"),
     KRW("Sørkoreanske won"),
-    LTL("Litauiske litas"),
-    LVL("Latviske lat"),
+    LTL("Litauiske litas", LocalDate.of(2015, 1, 1)),
+    LVL("Latviske lat", LocalDate.of(2014, 1, 1)),
     MAD("Marokkansk dirham"),
     MMK("Myanmar kyat"),
     MXN("Myanmar kyat"),
@@ -59,6 +61,8 @@ enum class Valutakode(
     VND("Vietnamesisk dong "),
     ZAR("Sør-Afrika Rep. rand"),
     ;
+
+    fun aktiv(dato: LocalDate = LocalDate.now()) = utgåttDato == null || (dato.isAfter(LocalDate.now()))
 
     companion object {
         fun fraVisningsnavn(visningsnavn: String): Valutakode? = entries.firstOrNull { it.visningsnavn == visningsnavn }

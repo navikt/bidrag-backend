@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.persistence.entity
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -18,7 +19,7 @@ import kotlin.reflect.full.memberProperties
 data class Valutakursgrunnlag(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "valutagrunnlag_id")
+    @Column(name = "valutakursgrunnlag_id")
     val valutakursgrunnlagId: Int = 0,
 
     @Column(nullable = false, name = "aktiv")
@@ -33,11 +34,11 @@ data class Valutakursgrunnlag(
     @Column(nullable = false, name = "hentet_tidspunkt")
     val hentetTidspunkt: LocalDateTime = LocalDateTime.now(),
 
-    @Column(nullable = false, name = "kurs")
-    val kurs: BigDecimal = BigDecimal.ONE,
+    @Column(nullable = true, name = "kurs")
+    val kurs: BigDecimal? = null,
 
-    @Column(nullable = false, name = "multiplikator")
-    val multiplikator: Int = 0,
+    @Column(nullable = true, name = "multiplikator")
+    val multiplikator: Int? = null,
 
     @Column(nullable = false, name = "basisvaluta")
     @Enumerated(value = EnumType.STRING)
@@ -46,6 +47,9 @@ data class Valutakursgrunnlag(
     @Column(nullable = false, name = "kvoteringsvaluta")
     @Enumerated(value = EnumType.STRING)
     val kvoteringsvaluta: Valutakode = Valutakode.NOK,
+
+    @Column(nullable = false, name = "feilet_henting")
+    val feiletHenting: Boolean = false,
 )
 
 fun Valutakursgrunnlag.toValutakursgrunnlagBo() = with(::ValutakursgrunnlagBo) {

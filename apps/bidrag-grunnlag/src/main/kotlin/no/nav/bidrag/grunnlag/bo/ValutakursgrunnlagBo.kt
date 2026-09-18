@@ -23,29 +23,20 @@ data class ValutakursgrunnlagBo(
     @Schema(description = "Hentet tidspunkt")
     val hentetTidspunkt: LocalDateTime = LocalDateTime.now(),
 
-    @Schema(description = "Observert kurs")
-    val kurs: BigDecimal = BigDecimal.ONE,
+    @Schema(description = "Observert kurs. Null dersom henting av valuta feilets")
+    val kurs: BigDecimal?,
 
-    @Schema(description = """
-Eksponent i tiende potens slik at en multiplikasjon av observasjonsverdien med 10^multiplikator gir verdien av en enhet.
-
-For eksempel:
-basisvaluta = SEK
-kvoteringsvaluta = NOK
-multiplikator = 2
-kurs = 100,8
-
-=> 1 SEK * 10^2 = 100,80 NOK
-=> 38 NOK = (38 NOK / 100,80) * 100^2 = 37,70 SEK
-"""
-    )
-    val multiplikator: Int = 0,
+    @Schema(description = "Eksponent i tiende potens slik at en multiplikasjon av observasjonsverdien med 10^multiplikator gir verdien av en enhet. Null dersom henting av valuta feilet")
+    val multiplikator: Int?,
 
     @Schema(description = "Første valuta i et valutakvoteringspar. Også kalt transaksjonsvaluta")
     val basisvaluta: Valutakode,
 
     @Schema(description = "Andre valuta i et valutakvoteringspar. Også kalt motvaluta")
     val kvoteringsvaluta: Valutakode = Valutakode.NOK,
+
+    @Schema(description = "Dersom true har henting av valutakurs feilet. Det kan være på grunn av at valutakurs ikke er støttet eller en annen teknisk feil")
+    val feiletHenting: Boolean = false,
 )
 
 fun ValutakursgrunnlagBo.toValutakursgrunnlagEntity() = with(::Valutakursgrunnlag) {
