@@ -57,6 +57,7 @@ export default {
         stønadTilBarnetilsyn: "Stønad til barnetilsyn",
         beregnetTilsyn: "Beregnet tilsynsutgift",
         barnetrygd: "Barnetrygd",
+        forpleining: "Forpleining",
         underholdskostnad: "Underholdskostnad",
       },
       stønadTilBarnetilsyn: {
@@ -75,6 +76,9 @@ export default {
         beløp: "Beløp",
         beløpstype: "Beløpstype",
         totalt: "Totalt (12 mnd)",
+      },
+      forpleining: {
+        beløp: "Beløp",
       },
     },
     utgifter: {
