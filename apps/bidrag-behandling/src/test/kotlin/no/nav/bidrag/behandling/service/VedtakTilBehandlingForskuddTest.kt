@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.service
 
+import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -47,7 +48,6 @@ import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
-import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
 
 class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
