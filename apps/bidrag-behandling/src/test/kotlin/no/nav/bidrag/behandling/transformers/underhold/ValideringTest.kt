@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.transformers.underhold
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -10,14 +11,18 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
+import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
+import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -869,6 +874,46 @@ class ValideringTest {
 
             request(LocalDate.of(2025, 1, 1), null, beløp = 99999)
                 .validereMotUnderholdskostnad(perioder)
+        }
+    }
+
+    @Nested
+    open inner class BegrunnelseForForpleining {
+        private fun behandlingMedForpleining(): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.harTilsynsordning = true
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.of(2024, 1, 1),
+                    tom = null,
+                    beløp = BigDecimal(2000),
+                ),
+            )
+            return underholdskostnad
+        }
+
+        @Test
+        fun `skal kreve begrunnelse når kun forpleining er registrert`() {
+            behandlingMedForpleining().manglerBegrunnelse().shouldBeTrue()
+        }
+
+        @Test
+        fun `skal ikke kreve begrunnelse når begrunnelsen er skrevet`() {
+            val underholdskostnad = behandlingMedForpleining()
+            underholdskostnad.behandling.leggTilNotat(
+                "Barnet bor på institusjon",
+                NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD,
+                underholdskostnad.rolle,
+            )
+
+            underholdskostnad.manglerBegrunnelse().shouldBeFalse()
         }
     }
 }

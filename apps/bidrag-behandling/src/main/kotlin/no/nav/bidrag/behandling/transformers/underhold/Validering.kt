@@ -257,7 +257,8 @@ fun Underholdskostnad.manglerBegrunnelse(): Boolean {
         (
             this.barnetilsyn.any { it.kilde == Kilde.MANUELL } ||
                 this.faktiskeTilsynsutgifter.isNotEmpty() ||
-                this.tilleggsstønad.isNotEmpty()
+                this.tilleggsstønad.isNotEmpty() ||
+                this.forpleining.isNotEmpty()
             )
 }
 
