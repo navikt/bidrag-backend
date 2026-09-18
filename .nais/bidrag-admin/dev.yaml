@@ -20,7 +20,7 @@ env:
   BIDRAG_ORGANISASJON_SCOPE: dev-fss.bidrag.bidrag-organisasjon
   BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.dev-fss-pub.nais.io/bidrag-organisasjon
   JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
-  SLACK_CHANNEL_ID: C0C3NGVFDB2
+  SLACK_CHANNEL_ID: CGS0FTBDE
   SLACK_VAKTLISTE_ID: F0C1R4W86QK
   VAKTHAVENDE_ROTASJON_CRON: "-"
 outbound-access-apps:

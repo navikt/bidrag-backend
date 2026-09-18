@@ -30,21 +30,20 @@ class VaktrotasjonService(
     fun kjørRotasjon() {
         val rader = hentVaktrader()
         if (rader.isEmpty()) {
-            LOGGER.warn { "Fant ingen rader i vaktlisten $listeId. Avbryter rotasjon." }
-            return
+            throw VaktrotasjonException("Fant ingen rader i vaktlisten $listeId. Avbryter rotasjon.")
         }
 
-        val nesteVakthavende = rader.minByOrNull { it.sistVaktdato ?: LocalDate.MIN } ?: return
-        val slackUserId = nesteVakthavende.slackUserId
-        if (slackUserId == null) {
-            LOGGER.error {
-                "Fant rad ${nesteVakthavende.radId} uten gyldig verdi i kolonnen \"$KOLONNE_VAKTHAVENDE\". " +
-                    "Tilgjengelige feltnøkler på raden: ${nesteVakthavende.tilgjengeligeFeltnøkler}"
-            }
-            return
-        }
+        val nesteVakthavende = rader.minByOrNull { it.sistVaktdato ?: LocalDate.MIN }
+            ?: throw VaktrotasjonException("Fant ingen rad å velge vakthavende fra i vaktlisten $listeId.")
+        val slackUserId = nesteVakthavende.slackUserId ?: throw VaktrotasjonException(
+            "Fant rad ${nesteVakthavende.radId} uten gyldig verdi i kolonnen \"$KOLONNE_VAKTHAVENDE\". " +
+                "Tilgjengelige feltnøkler på raden: ${nesteVakthavende.tilgjengeligeFeltnøkler}",
+        )
 
-        slackService.sendMelding(byggVaktmelding(slackUserId))
+        val melding = slackService.sendMelding(byggVaktmelding(slackUserId))
+        if (!melding.vellykket) {
+            throw VaktrotasjonException("Feil ved sending av vaktmelding til Slack: ${melding.feil}")
+        }
         oppdaterSistVaktdato(nesteVakthavende)
         LOGGER.info { "Vakt rotert til <@$slackUserId> (rad ${nesteVakthavende.radId})." }
     }
@@ -59,8 +58,7 @@ class VaktrotasjonService(
             )
 
         if (!respons.isOk) {
-            LOGGER.error { "Feil ved henting av vaktlisten $listeId: ${respons.error}" }
-            return emptyList()
+            throw VaktrotasjonException("Feil ved henting av vaktlisten $listeId: ${respons.error}")
         }
 
         return respons.items.map { it.tilVaktRad() }
@@ -68,10 +66,9 @@ class VaktrotasjonService(
 
     private fun oppdaterSistVaktdato(rad: VaktRad) {
         val columnId = rad.sistVaktdatoColumnId
-        if (columnId == null) {
-            LOGGER.error { "Fant ikke kolonne-id for \"$KOLONNE_SIST_VAKTDATO\" på rad ${rad.radId}. Klarte ikke å oppdatere dato." }
-            return
-        }
+            ?: throw VaktrotasjonException(
+                "Fant ikke kolonne-id for \"$KOLONNE_SIST_VAKTDATO\" på rad ${rad.radId}. Klarte ikke å oppdatere dato.",
+            )
 
         val cellOppdatering =
             ListRecord.CellUpdate
@@ -91,7 +88,7 @@ class VaktrotasjonService(
             )
 
         if (!respons.isOk) {
-            LOGGER.error { "Feil ved oppdatering av \"$KOLONNE_SIST_VAKTDATO\" på rad ${rad.radId}: ${respons.error}" }
+            throw VaktrotasjonException("Feil ved oppdatering av \"$KOLONNE_SIST_VAKTDATO\" på rad ${rad.radId}: ${respons.error}")
         }
     }
 
@@ -143,3 +140,5 @@ internal data class VaktRad(
     val sistVaktdatoColumnId: String?,
     val tilgjengeligeFeltnøkler: List<String>,
 )
+
+class VaktrotasjonException(message: String) : RuntimeException(message)

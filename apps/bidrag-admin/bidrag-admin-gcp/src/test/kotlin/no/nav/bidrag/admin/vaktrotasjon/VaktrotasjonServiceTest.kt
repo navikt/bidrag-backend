@@ -13,12 +13,13 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import no.nav.bidrag.admin.service.VaktrotasjonService
+import no.nav.bidrag.commons.service.slack.SlackMelding
 import no.nav.bidrag.commons.service.slack.SlackService
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.LocalDate
-import no.nav.bidrag.admin.service.VaktrotasjonService
 
 @ExtendWith(MockKExtension::class)
 class VaktrotasjonServiceTest {
@@ -34,6 +35,8 @@ class VaktrotasjonServiceTest {
     fun setup() {
         vaktrotasjonService = VaktrotasjonService(slackService, "F0C1R4W86QK")
         every { slackService.client } returns methodsClient
+        every { slackService.sendMelding(any()) } returns
+            SlackMelding(slackService = slackService, ts = "1234.5678", threadTs = null, channel = "C123")
         every { methodsClient.slackListsItemsUpdate(any<SlackListsItemsUpdateRequest>()) } returns
             SlackListsItemsUpdateResponse().apply { isOk = true }
     }

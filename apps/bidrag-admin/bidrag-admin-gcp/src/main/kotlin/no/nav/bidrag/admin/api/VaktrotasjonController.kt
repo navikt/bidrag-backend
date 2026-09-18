@@ -6,9 +6,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nav.bidrag.admin.service.VaktrotasjonException
 import no.nav.bidrag.admin.service.VaktrotasjonService
 import no.nav.bidrag.commons.service.slack.SlackService
 import no.nav.security.token.support.core.api.Protected
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -35,8 +38,11 @@ class VaktrotasjonController(
             ApiResponse(responseCode = "500", description = "Intern serverfeil."),
         ],
     )
-    fun triggVaktrotasjon() {
+    fun triggVaktrotasjon(): ResponseEntity<String> = try {
         vaktrotasjonService.kjørRotasjon()
+        ResponseEntity.ok("Vaktrotasjon kjørt.")
+    } catch (e: VaktrotasjonException) {
+        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.message)
     }
 
     @PostMapping("/vakt/test-melding")
@@ -51,7 +57,7 @@ class VaktrotasjonController(
             ApiResponse(responseCode = "200", description = "Testmelding sendt."),
             ApiResponse(responseCode = "401", description = "Ikke autentisert."),
             ApiResponse(responseCode = "403", description = "Ikke autorisert."),
-            ApiResponse(responseCode = "500", description = "Intern serverfeil."),
+            ApiResponse(responseCode = "500", description = "Feil ved sending av testmelding til Slack."),
         ],
     )
     fun sendTestmelding(
@@ -61,7 +67,12 @@ class VaktrotasjonController(
             defaultValue = "Dette er en testmelding fra bidrag-admin for å verifisere vaktrotasjon-integrasjonen mot Slack.",
         )
         melding: String,
-    ) {
-        slackService.sendMelding(melding)
+    ): ResponseEntity<String> {
+        val slackMelding = slackService.sendMelding(melding)
+        return if (slackMelding.vellykket) {
+            ResponseEntity.ok("Testmelding sendt.")
+        } else {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Feil ved sending av testmelding: ${slackMelding.feil}")
+        }
     }
 }
