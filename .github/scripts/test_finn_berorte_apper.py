@@ -19,6 +19,7 @@ from finn_berorte_apper import (
     path_matches_filters,
     required_library_groups,
     select_affected_apps,
+    split_on_merged_module,
 )
 
 
@@ -192,11 +193,12 @@ class AppFiltersTest(unittest.TestCase):
             self.load({"other.yaml": {"env": {"APP_PATHS": "apps/a/**"}}})
 
     def test_script_outputs_affected_apps_and_required_library_groups(self):
-        app_names = list(load_app_filters(ROOT))
+        # Apper uten en merget modul faller ut av appvalget, se split_on_merged_module.
+        app_names, unmerged = split_on_merged_module(ROOT, list(load_app_filters(ROOT)))
         felles_apps = [app for app in app_names if app not in {"bidrag-oppgave", "bidrag-sjablon"}]
         scenarios = (
             (["apps/bidrag-behandling/src/main/kotlin/App.kt"], ["bidrag-behandling"], "felles,beregn", "false"),
-            (["apps/bidrag-henvendelse/pom.xml"], ["bidrag-henvendelse"], "felles", "false"),
+            ([f"apps/{app}/pom.xml" for app in unmerged], [], "", "false"),
             (["apps/bidrag-sjablon/pom.xml"], ["bidrag-sjablon"], "", "false"),
             (["README.md"], [], "", "false"),
             (["pom.xml"], app_names, "felles,beregn,oppgave", "false"),
@@ -220,6 +222,37 @@ class AppFiltersTest(unittest.TestCase):
                 self.assertEqual(json.loads(values["apps"]), apps)
                 self.assertEqual(values["bibliotekgrupper"], groups)
                 self.assertEqual(values["felles_endret"], felles_changed)
+
+
+class MergedModuleTest(unittest.TestCase):
+    def app_root(self, directory, maven_options="-B -fae -pl apps/bidrag-ny"):
+        root = Path(directory)
+        workflows = root / ".github/workflows"
+        workflows.mkdir(parents=True)
+        (workflows / "bidrag-ny.yaml").write_text(yaml.safe_dump({
+            "env": {"APP_PATHS": "apps/bidrag-ny/**"},
+            "jobs": {"bygg_test_og_deploy": {"uses": "./.github/workflows/bygg_og_deploy.yaml",
+                                             "with": {"maven_options": maven_options}}},
+        }))
+        return root
+
+    def test_app_whose_module_is_not_merged_yet_is_held_back(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.app_root(directory)
+            self.assertEqual(split_on_merged_module(root, ["bidrag-ny"]), ([], ["bidrag-ny"]))
+
+    def test_app_is_built_as_soon_as_the_module_lands(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.app_root(directory)
+            (root / "apps/bidrag-ny").mkdir(parents=True)
+            (root / "apps/bidrag-ny/pom.xml").write_text("<project/>")
+            self.assertEqual(split_on_merged_module(root, ["bidrag-ny"]), (["bidrag-ny"], []))
+
+    def test_maven_options_without_a_module_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.app_root(directory, maven_options="-B -fae")
+            with self.assertRaisesRegex(ValueError, "-pl"):
+                split_on_merged_module(root, ["bidrag-ny"])
 
 
 class WorkflowIntegrationTest(unittest.TestCase):
@@ -247,7 +280,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
         })
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
-        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker"}, set(self.app_filters))
+        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker", "alle_bygg_fullfort"}, set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
                 self.assertEqual(set(jobs[app]["needs"]), {"detect_changes", "biblioteker"})
@@ -255,6 +288,17 @@ class WorkflowIntegrationTest(unittest.TestCase):
                 self.assertIn(f"'{app}'", jobs[app]["if"])
                 self.assertEqual(jobs[app]["with"]["bibliotekartefakt"],
                                  "${{ needs.biblioteker.outputs.artefaktnavn }}")
+
+    def test_alle_bygg_fullfort_needs_every_other_job(self):
+        # alle_bygg_fullfort er required status check. Den håndskrevne needs-listen må
+        # dekke alle andre jobber i workflowen, ellers kan samlejobben bli
+        # grønn uten at en nylig lagt til jobb (f.eks. en ny app) faktisk har kjørt/blitt
+        # kontrollert. Denne testen sammenligner needs mot selve jobb-settet i workflowen
+        # slik at den også fanger opp fremtidige infrastruktur-jobber, ikke bare nye apper.
+        jobs = self.build_workflow["jobs"]
+        gate = jobs["alle_bygg_fullfort"]
+        self.assertEqual(set(gate["needs"]), set(jobs) - {"alle_bygg_fullfort"})
+        self.assertEqual(gate["if"], "always()")
 
     def test_reusable_workflow_tree_stays_within_github_limits(self):
         called, documents = set(), {}
@@ -274,19 +318,10 @@ class WorkflowIntegrationTest(unittest.TestCase):
         visit("bygg-apper.yaml", [])
         self.assertLessEqual(len(called), 50)
 
-    def test_build_workflow_filters_unrelated_files_but_covers_all_app_paths(self):
+    def test_build_workflow_has_no_path_filter_on_either_trigger(self):
         on = triggers(self.build_workflow)
-        self.assertEqual(on["push"]["branches"], ["main"])
-        self.assertNotIn("branches", on["pull_request"])
-        for event in ("push", "pull_request"):
-            patterns = on[event]["paths"]
-            self.assertFalse(path_matches_filters("README.md", patterns))
-            self.assertFalse(path_matches_filters("util/cloudfunction/index.js", patterns))
-            self.assertTrue(path_matches_filters(".github/actions/klargjor-biblioteker/action.yaml", patterns))
-            for app_patterns in self.app_filters.values():
-                for pattern in app_patterns:
-                    sample = pattern.replace("**", "nested/File").replace("*", "File")
-                    self.assertTrue(path_matches_filters(sample, patterns), pattern)
+        self.assertEqual(on["push"], {"branches": ["main"]})
+        self.assertEqual(on["pull_request"], {})
 
     def test_app_workflows_have_no_duplicate_automatic_triggers(self):
         for app in self.app_filters:
@@ -344,16 +379,19 @@ class WorkflowIntegrationTest(unittest.TestCase):
             self.assertIn("inputs.image_suffix", group)
             self.assertTrue(group.endswith(f"-{environment}"))
 
-    def test_maven_modules_exist_except_henvendelse_pending_merge(self):
+    def test_apps_without_a_merged_module_are_skipped_and_not_built(self):
         missing_modules = set()
         for app in self.app_filters:
             config = workflow(f"{app}.yaml")["jobs"]["bygg_test_og_deploy"]["with"]
             args = shlex.split(config["maven_options"])
             module = args[args.index("-pl") + 1]
             if not (ROOT / module / "pom.xml").is_file():
-                missing_modules.add((app, module))
-        # Henvendelse kobles inn før appmodulen merges. Manglende modul skal feile i appjobben.
-        self.assertLessEqual(missing_modules, {("bidrag-henvendelse", "apps/bidrag-henvendelse")})
+                missing_modules.add(app)
+        # En ny app kobles inn i CI før appmodulen merges. Appvalget skal hoppe over den,
+        # ikke felle bygget for alle de andre appene.
+        merged, unmerged = split_on_merged_module(ROOT, list(self.app_filters))
+        self.assertEqual(set(unmerged), missing_modules)
+        self.assertEqual(set(merged), set(self.app_filters) - missing_modules)
         default = triggers(workflow("bygg_og_deploy.yaml"))["workflow_call"]["inputs"]["bibliotekgrupper"]["default"]
         self.assertEqual(default, "felles")
 
