@@ -41,6 +41,9 @@ class VedtakshendelseServiceTest {
     @MockK(relaxed = true)
     private lateinit var driftsavvikService: DriftsavvikService
 
+    @MockK(relaxed = true)
+    private lateinit var endreMottakerService: EndreMottakerService
+
     @InjectMockKs
     private lateinit var vedtakshendelseService: VedtakshendelseService
 
