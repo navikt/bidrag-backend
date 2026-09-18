@@ -1239,6 +1239,7 @@ export interface NotatUnderholdBarnDto {
   stønadTilBarnetilsyn: NotatStonadTilBarnetilsynDto[];
   faktiskTilsynsutgift: NotatFaktiskTilsynsutgiftDto[];
   tilleggsstønad: NotatTilleggsstonadDto[];
+  forpleining: NotatForpleiningDto[];
   underholdskostnad: NotatUnderholdskostnadBeregningDto[];
   begrunnelse?: NotatBegrunnelseDto | null;
 }
@@ -1249,6 +1250,11 @@ export interface NotatUnderholdDto {
   offentligeOpplysningerV2: NotatOffentligeOpplysningerUnderhold;
 }
 
+export interface NotatForpleiningDto {
+  periode: DatoperiodeDto;
+  beløp: number;
+}
+
 export interface NotatUnderholdskostnadBeregningDto {
   periode: DatoperiodeDto;
   forbruk: number;
@@ -1256,6 +1262,7 @@ export interface NotatUnderholdskostnadBeregningDto {
   stønadTilBarnetilsyn: number;
   tilsynsutgifter: number;
   barnetrygd: number;
+  forpleining?: number | null;
   total: number;
   beregningsdetaljer?: NotatUnderholdskostnadPeriodeBeregningsdetaljer | null;
 }

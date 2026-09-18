@@ -12,6 +12,7 @@ import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereUnderholdResponse
 import no.nav.bidrag.behandling.dto.v2.underhold.OpprettUnderholdskostnadBarnResponse
@@ -188,6 +189,39 @@ class UnderholdController(
         return underholdskostnad.tilRespons()
     }
 
+    @PutMapping("/behandling/{behandlingsid}/underhold/{underholdsid}/forpleining")
+    @Operation(
+        description =
+        "Oppdatere forpleining for underholdskostnad i behandling. Returnerer oppdatert element.",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Forespørsel oppdatert uten feil",
+            ),
+        ],
+    )
+    fun oppdatereForpleining(
+        @PathVariable behandlingsid: Long,
+        @PathVariable underholdsid: Long,
+        @Valid @RequestBody(required = true) request: OppdatereForpleiningRequest,
+    ): OppdatereUnderholdResponse {
+        log.info { "Oppdaterer forpleining for behandling $behandlingsid" }
+        secureLogger.info { "Oppdaterer forpleining for behandling $behandlingsid med forespørsel $request" }
+
+        val behandling =
+            behandlingRepository
+                .findBehandlingById(behandlingsid)
+                .orElseThrow { behandlingNotFoundException(behandlingsid) }
+
+        val underholdskostnad = henteOgValidereUnderholdskostnad(behandling, underholdsid)
+
+        underholdService.oppdatereForpleining(underholdskostnad, request)
+        return underholdskostnad.tilRespons()
+    }
+
     @PutMapping("/behandling/{behandlingsid}/underhold/begrunnelse")
     @Operation(
         description = "Oppdatere begrunnelse for underhold relatert til søknadsbarn eller andre barn.",
@@ -278,6 +312,7 @@ class UnderholdController(
             faktiskTilsynsutgift = faktiskeTilsynsutgifter.tilFaktiskeTilsynsutgiftDtos(),
             stønadTilBarnetilsyn = barnetilsyn.tilStønadTilBarnetilsynDtos(),
             tilleggsstønad = tilleggsstønad.tilTilleggsstønadDtos(),
+            forpleining = forpleining.tilForpleiningDtos(),
             beregnetUnderholdskostnader = dtomapper.run { behandling.tilBeregnetUnderholdskostnad() },
             valideringsfeil = behandling.underholdskostnader.valider(),
             underholdId = id!!,

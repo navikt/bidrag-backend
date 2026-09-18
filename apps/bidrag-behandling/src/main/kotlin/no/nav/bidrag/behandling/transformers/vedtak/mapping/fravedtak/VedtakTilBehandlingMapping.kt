@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
@@ -63,6 +64,7 @@ import no.nav.bidrag.transport.behandling.beregning.samvær.SamværskalkulatorDe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InnhentetAndreBarnTilBidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
@@ -837,10 +839,21 @@ class VedtakTilBehandlingMapping(
                 .mapBarnetilsyn(underholdskostnad, lesemodus)
                 .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
         )
+        underholdskostnad.forpleining.addAll(
+            filtrerBasertPåEgenReferanse(Grunnlagstype.FORPLEINING_PERIODE)
+                .filter {
+                    val personGrunnlag = hentPersonMedReferanse(it.gjelderBarnReferanse)!!
+                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                }.map { it.innholdTilObjekt<ForpleiningPeriode>() }
+                .mapForpleining(underholdskostnad, lesemodus)
+                .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
+        )
+
         underholdskostnad.harTilsynsordning =
             underholdskostnad.barnetilsyn.isNotEmpty() ||
             underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
-            underholdskostnad.tilleggsstønad.isNotEmpty()
+            underholdskostnad.tilleggsstønad.isNotEmpty() ||
+            underholdskostnad.forpleining.isNotEmpty()
     }
 
     private fun List<GrunnlagDto>.hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt: LocalDate) = filtrerBasertPåEgenReferanse(
@@ -865,6 +878,22 @@ class VedtakTilBehandlingMapping(
                 ?.atEndOfMonth(),
             beløp = it.beløp,
             beløpstype = it.beløpstype,
+        )
+    }
+
+    private fun List<ForpleiningPeriode>.mapForpleining(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+    ): List<Forpleining> = mapIndexed { index, it ->
+        Forpleining(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            beløp = it.beløp,
         )
     }
 

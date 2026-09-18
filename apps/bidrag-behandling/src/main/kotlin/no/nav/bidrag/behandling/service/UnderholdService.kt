@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
@@ -23,12 +24,17 @@ import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
+import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilPerson
 import no.nav.bidrag.behandling.transformers.behandling.hentAlleBearbeidaBarnetilsyn
+import no.nav.bidrag.behandling.transformers.finnAlleDelberegningUnderholdskostnad
+import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
+import no.nav.bidrag.behandling.transformers.tilUnderholdskostnadDto
 import no.nav.bidrag.behandling.transformers.underhold.aktivereBarnetilsynHvisIngenEndringerMåAksepteres
 import no.nav.bidrag.behandling.transformers.underhold.erstatteOffentligePerioderIBarnetilsynstabellMedOppdatertGrunnlag
 import no.nav.bidrag.behandling.transformers.underhold.harAndreBarnIUnderhold
@@ -39,8 +45,12 @@ import no.nav.bidrag.behandling.transformers.underhold.justerePerioderForBearbei
 import no.nav.bidrag.behandling.transformers.underhold.tilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.underhold.validerBarn
 import no.nav.bidrag.behandling.transformers.underhold.validere
+import no.nav.bidrag.behandling.transformers.underhold.validereMotUnderholdskostnad
 import no.nav.bidrag.behandling.transformers.underhold.validerePerioderStønadTilBarnetilsyn
+import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrunnlagMapper
 import no.nav.bidrag.behandling.ugyldigForespørsel
+import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
@@ -48,6 +58,8 @@ import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -68,6 +80,8 @@ class UnderholdService(
     private val personRepository: PersonRepository,
     private val notatService: NotatService,
     private val personService: PersonService,
+    private val vedtakGrunnlagMapper: VedtakGrunnlagMapper,
+    private val beregnBarnebidragApi: BeregnBarnebidragApi,
 ) {
     @Transactional
     fun oppdatereBegrunnelse(
@@ -123,11 +137,12 @@ class UnderholdService(
             (
                 underholdskostnad.barnetilsyn.isNotEmpty() ||
                     underholdskostnad.tilleggsstønad.isNotEmpty() ||
-                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
+                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
+                    underholdskostnad.forpleining.isNotEmpty()
                 )
         ) {
             ugyldigForespørsel(
-                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, eller faktiske tilsynsutgift",
+                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, faktiske tilsynsutgift, eller forpleining",
             )
         }
 
@@ -161,6 +176,7 @@ class UnderholdService(
             eksisterendeUnderholdskostnad.person = person
             eksisterendeUnderholdskostnad.barnetilsyn.clear()
             eksisterendeUnderholdskostnad.tilleggsstønad.clear()
+            eksisterendeUnderholdskostnad.forpleining.clear()
             eksisterendeUnderholdskostnad.harTilsynsordning = eksisterendeUnderholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
         }
     }
@@ -445,6 +461,55 @@ class UnderholdService(
     }
 
     @Transactional
+    fun oppdatereForpleining(
+        underholdskostnad: Underholdskostnad,
+        request: OppdatereForpleiningRequest,
+    ) {
+        request.validere(underholdskostnad)
+        request.validereMotUnderholdskostnad(underholdskostnad.beregneUnderholdskostnad())
+
+        request.id?.let { id ->
+            val forpleining = underholdskostnad.forpleining.find { id == it.id }!!
+            forpleining.fom = request.periode.fom
+            forpleining.tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato)
+            forpleining.beløp = request.beløp
+            forpleining.underholdskostnad = underholdskostnad
+        } ?: run {
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    fom = request.periode.fom,
+                    tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato),
+                    beløp = request.beløp,
+                    underholdskostnad = underholdskostnad,
+                ),
+            )
+            underholdskostnad.harTilsynsordning = true
+        }
+    }
+
+    private fun Underholdskostnad.beregneUnderholdskostnad(): Set<UnderholdskostnadDto> {
+        val søknadsbarn = rolle ?: return emptySet()
+        val beregning =
+            if (behandling.grunnlagslisteFraVedtak.isNullOrEmpty()) {
+                val grunnlag =
+                    vedtakGrunnlagMapper
+                        .byggGrunnlagForBeregning(behandling, søknadsbarn)
+                        .beregnGrunnlag
+                        .copy(opphørsdato = søknadsbarn.opphørsdatoYearMonth)
+                beregnBarnebidragApi.beregnNettoTilsynsutgiftOgUnderholdskostnad(grunnlag) +
+                    grunnlag.grunnlagListe.hentAllePersoner()
+            } else {
+                behandling.grunnlagslisteFraVedtak!!
+            } as List<GrunnlagDto>
+
+        val personobjekt =
+            beregning.hentPersonNyesteIdent(søknadsbarn.ident, søknadsbarn.stønadstype) ?: søknadsbarn.tilGrunnlagPerson()
+        return beregning
+            .finnAlleDelberegningUnderholdskostnad(personobjekt)
+            .tilUnderholdskostnadDto(beregning, behandling.erBisysVedtak)
+    }
+
+    @Transactional
     fun oppdatereTilleggsstønad(
         underholdskostnad: Underholdskostnad,
         request: OppdatereTilleggsstønadRequest,
@@ -524,6 +589,10 @@ class UnderholdService(
                     request.idElement,
                 )
             }
+
+            Underholdselement.FORPLEINING -> {
+                sletteForpleining(underholdskostnad, request.idElement)
+            }
         }
     }
 
@@ -558,6 +627,14 @@ class UnderholdService(
     ) {
         val tilleggsstønad = underholdskostnad.tilleggsstønad.find { idElement == it.id }
         underholdskostnad.tilleggsstønad.remove(tilleggsstønad)
+    }
+
+    private fun sletteForpleining(
+        underholdskostnad: Underholdskostnad,
+        idElement: Long,
+    ) {
+        val forpleining = underholdskostnad.forpleining.find { idElement == it.id }
+        underholdskostnad.forpleining.remove(forpleining)
     }
 
     private fun sletteUnderholdskostnad(

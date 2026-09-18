@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.beregn.barnebidrag.beregning.UnderholdskostnadBeregning
 import no.nav.bidrag.beregn.barnebidrag.bo.BarnetilsynMedStønad
 import no.nav.bidrag.beregn.barnebidrag.bo.BarnetrygdType
+import no.nav.bidrag.beregn.barnebidrag.bo.Forpleining
 import no.nav.bidrag.beregn.barnebidrag.bo.NettoTilsynsutgift
 import no.nav.bidrag.beregn.barnebidrag.bo.SjablonBarnetilsynBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SjablonForbruksutgifterBeregningGrunnlag
@@ -159,6 +160,8 @@ internal object BeregnUnderholdskostnadService : BeregnService() {
         val periodeListe = sequenceOf(grunnlagListe.beregningsperiode)
             .plus(grunnlagListe.barnetilsynMedStønadPeriodeGrunnlagListe.asSequence().map { it.barnetilsynMedStønadPeriode.periode })
             .plus(grunnlagListe.nettoTilsynsutgiftPeriodeGrunnlagListe.asSequence().map { it.nettoTilsynsutgiftPeriodeGrunnlag.periode })
+            // Uten denne splittes ikke underholdskostnadsperiodene der forpleiningen endrer seg
+            .plus(grunnlagListe.forpleiningPeriodeGrunnlagListe.asSequence().map { it.forpleiningPeriode.periode })
             .plus(grunnlagListe.sjablonSjablontallPeriodeGrunnlagListe.asSequence().map { it.sjablonSjablontallPeriode.periode })
             .plus(grunnlagListe.sjablonBarnetilsynPeriodeGrunnlagListe.asSequence().map { it.sjablonBarnetilsynPeriode.periode })
             .plus(grunnlagListe.sjablonForbruksutgifterPeriodeGrunnlagListe.asSequence().map { it.sjablonForbruksutgifterPeriode.periode })
@@ -246,6 +249,20 @@ internal object BeregnUnderholdskostnadService : BeregnService() {
                         )
                     },
 
+                forpleining = underholdskostnadPeriodeGrunnlag.forpleiningPeriodeGrunnlagListe
+                    .firstOrNull {
+                        ÅrMånedsperiode(
+                            fom = it.forpleiningPeriode.periode.fom,
+                            til = it.forpleiningPeriode.periode.til,
+                        ).inneholder(bruddPeriode)
+                    }
+                    ?.let {
+                        Forpleining(
+                            referanse = it.referanse,
+                            beløp = it.forpleiningPeriode.beløp,
+                        )
+                    },
+
                 sjablonSjablontallBeregningGrunnlagListe = underholdskostnadPeriodeGrunnlag.sjablonSjablontallPeriodeGrunnlagListe
                     .filter { it.sjablonSjablontallPeriode.periode.inneholder(bruddPeriode) }
                     .map {
@@ -312,6 +329,7 @@ internal object BeregnUnderholdskostnadService : BeregnService() {
                         nettoTilsynsutgift = it.resultat.nettoTilsynsutgift,
                         barnetrygd = it.resultat.barnetrygd,
                         underholdskostnad = it.resultat.underholdskostnad,
+                        forpleining = it.resultat.forpleining,
                     ),
                 ),
                 grunnlagsreferanseListe = it.resultat.grunnlagsreferanseListe.distinct().sorted(),

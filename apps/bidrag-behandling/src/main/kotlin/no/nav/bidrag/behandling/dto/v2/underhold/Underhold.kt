@@ -25,6 +25,7 @@ data class OppdatereUnderholdResponse(
     val stønadTilBarnetilsyn: Set<StønadTilBarnetilsynDto> = emptySet(),
     val faktiskTilsynsutgift: Set<FaktiskTilsynsutgiftDto> = emptySet(),
     val tilleggsstønad: Set<TilleggsstønadDto> = emptySet(),
+    val forpleining: Set<ForpleiningDto> = emptySet(),
     val valideringsfeil: Set<UnderholdskostnadValideringsfeil>? = null,
     val beregnetUnderholdskostnader: Set<BeregnetUnderholdskostnad>,
     val underholdId: Long,
@@ -36,7 +37,7 @@ data class SletteUnderholdselement(
     val type: Underholdselement,
 )
 
-enum class Underholdselement { BARN, FAKTISK_TILSYNSUTGIFT, STØNAD_TIL_BARNETILSYN, TILLEGGSSTØNAD }
+enum class Underholdselement { BARN, FAKTISK_TILSYNSUTGIFT, STØNAD_TIL_BARNETILSYN, TILLEGGSSTØNAD, FORPLEINING }
 
 data class BarnDto(
     @Parameter(description = "Unik databaseid for person. Skal være null ved opprettelse av underholdskostand for nytt barn")
@@ -58,6 +59,7 @@ data class UnderholdDto(
     val stønadTilBarnetilsyn: Set<StønadTilBarnetilsynDto> = emptySet(),
     val faktiskTilsynsutgift: Set<FaktiskTilsynsutgiftDto>,
     val tilleggsstønad: Set<TilleggsstønadDto> = emptySet(),
+    val forpleining: Set<ForpleiningDto> = emptySet(),
     val underholdskostnad: Set<UnderholdskostnadDto>,
     val begrunnelse: String? = null,
     val begrunnelseFraOpprinneligVedtak: String? = null,
@@ -87,6 +89,7 @@ data class UnderholdskostnadValideringsfeil(
     val tilleggsstønad: UnderholdskostnadValideringsfeilTabell? = null,
     val faktiskTilsynsutgift: UnderholdskostnadValideringsfeilTabell? = null,
     val stønadTilBarnetilsyn: UnderholdskostnadValideringsfeilTabell? = null,
+    val forpleining: UnderholdskostnadValideringsfeilTabell? = null,
     @get:Schema(description = "Tilleggsstønadsperioder som ikke overlapper fullstendig med faktiske tilsynsutgifter.")
     val tilleggsstønadsperioderUtenFaktiskTilsynsutgift: Set<DatoperiodeDto> = emptySet(),
     @get:Schema(description = "Minst en periode må legges til hvis det ikke finnes noen offentlige opplysninger for stønad til barnetilsyn")
@@ -100,6 +103,7 @@ data class UnderholdskostnadValideringsfeil(
             tilleggsstønad?.harFeil == true ||
                 faktiskTilsynsutgift?.harFeil == true ||
                 stønadTilBarnetilsyn?.harFeil == true ||
+                forpleining?.harFeil == true ||
                 tilleggsstønadsperioderUtenFaktiskTilsynsutgift.isNotEmpty() ||
                 manglerBegrunnelse ||
                 manglerPerioderForTilsynsordning
@@ -222,6 +226,18 @@ data class TilleggsstønadDto(
     val beløp: BigDecimal?,
     val beløpstype: InntektBeløpstype = InntektBeløpstype.DAGSATS,
     val total: BigDecimal,
+)
+
+data class OppdatereForpleiningRequest(
+    val id: Long? = null,
+    val periode: DatoperiodeDto,
+    val beløp: BigDecimal,
+)
+
+data class ForpleiningDto(
+    val id: Long? = null,
+    val periode: DatoperiodeDto,
+    val beløp: BigDecimal,
 )
 
 data class OppdatereFaktiskTilsynsutgiftRequest(
