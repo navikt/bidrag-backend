@@ -434,8 +434,9 @@ open class Behandling(
             ErLikForAlleBasertPåSak(
                 saksnummer,
                 samværForSak.all { sb1 ->
-                    samværForSak.filter { it.id != sb1.id }.all {
-                        sb1.erLik(it)
+                    samværForSak.filter { it.id != sb1.id }.all { sb2 ->
+                        sb1.erLik(sb2) && sb1.rolle.virkningstidspunkt == sb2.rolle.virkningstidspunkt &&
+                            sb1.rolle.opphørsdato == sb2.rolle.opphørsdato
                     }
                 },
             )
