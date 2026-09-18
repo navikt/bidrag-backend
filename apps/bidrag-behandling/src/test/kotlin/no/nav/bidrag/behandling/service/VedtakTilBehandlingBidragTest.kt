@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -92,6 +93,33 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
             validerGrunnlag()
             validerUnderhold()
             validerSamvær()
+        }
+    }
+
+    @Test
+    fun `Skal knytte notater til rolle-entitet i lesemodus for BIDRAG`() {
+        val vedtakDto = lagVedtaksdata("fattetvedtak/bidrag-innvilget")
+        every { vedtakConsumer.hentVedtak(eq(1)) } returns
+            vedtakDto.copy(
+                vedtaksid = 1,
+                stønadsendringListe = vedtakDto.stønadsendringListe.map { it.copy(omgjørVedtakId = 2) },
+            )
+        every { vedtakConsumer.hentVedtak(eq(2)) } returns
+            vedtakDto.copy(
+                vedtaksid = 2,
+                stønadsendringListe = vedtakDto.stønadsendringListe.map { it.copy(omgjørVedtakId = null) },
+            )
+        every { behandlingService.hentBehandlingById(1) } returns (oppretteBehandling())
+        val behandling = vedtakService.konverterVedtakTilBehandlingForLesemodus(1)!!
+
+        assertSoftly(behandling) {
+            notater.shouldNotBeEmpty()
+            notater.forEach { notat ->
+                notat.rolle.notat shouldContain notat
+            }
+            val søknadsbarnRolle = søknadsbarn.first()
+            søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.SAMVÆR
+            søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.UNDERHOLDSKOSTNAD
         }
     }
 
