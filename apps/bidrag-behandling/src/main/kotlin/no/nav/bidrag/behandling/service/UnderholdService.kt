@@ -29,8 +29,12 @@ import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
+import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilPerson
 import no.nav.bidrag.behandling.transformers.behandling.hentAlleBearbeidaBarnetilsyn
+import no.nav.bidrag.behandling.transformers.finnAlleDelberegningUnderholdskostnad
+import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
+import no.nav.bidrag.behandling.transformers.tilUnderholdskostnadDto
 import no.nav.bidrag.behandling.transformers.underhold.aktivereBarnetilsynHvisIngenEndringerMåAksepteres
 import no.nav.bidrag.behandling.transformers.underhold.erstatteOffentligePerioderIBarnetilsynstabellMedOppdatertGrunnlag
 import no.nav.bidrag.behandling.transformers.underhold.harAndreBarnIUnderhold
@@ -41,8 +45,12 @@ import no.nav.bidrag.behandling.transformers.underhold.justerePerioderForBearbei
 import no.nav.bidrag.behandling.transformers.underhold.tilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.underhold.validerBarn
 import no.nav.bidrag.behandling.transformers.underhold.validere
+import no.nav.bidrag.behandling.transformers.underhold.validereMotUnderholdskostnad
 import no.nav.bidrag.behandling.transformers.underhold.validerePerioderStønadTilBarnetilsyn
+import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrunnlagMapper
 import no.nav.bidrag.behandling.ugyldigForespørsel
+import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
@@ -50,6 +58,8 @@ import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -70,6 +80,8 @@ class UnderholdService(
     private val personRepository: PersonRepository,
     private val notatService: NotatService,
     private val personService: PersonService,
+    private val vedtakGrunnlagMapper: VedtakGrunnlagMapper,
+    private val beregnBarnebidragApi: BeregnBarnebidragApi,
 ) {
     @Transactional
     fun oppdatereBegrunnelse(
@@ -454,6 +466,7 @@ class UnderholdService(
         request: OppdatereForpleiningRequest,
     ) {
         request.validere(underholdskostnad)
+        request.validereMotUnderholdskostnad(underholdskostnad.beregneUnderholdskostnad())
 
         request.id?.let { id ->
             val forpleining = underholdskostnad.forpleining.find { id == it.id }!!
@@ -472,6 +485,28 @@ class UnderholdService(
             )
             underholdskostnad.harTilsynsordning = true
         }
+    }
+
+    private fun Underholdskostnad.beregneUnderholdskostnad(): Set<UnderholdskostnadDto> {
+        val søknadsbarn = rolle ?: return emptySet()
+        val beregning =
+            if (behandling.grunnlagslisteFraVedtak.isNullOrEmpty()) {
+                val grunnlag =
+                    vedtakGrunnlagMapper
+                        .byggGrunnlagForBeregning(behandling, søknadsbarn)
+                        .beregnGrunnlag
+                        .copy(opphørsdato = søknadsbarn.opphørsdatoYearMonth)
+                beregnBarnebidragApi.beregnNettoTilsynsutgiftOgUnderholdskostnad(grunnlag) +
+                    grunnlag.grunnlagListe.hentAllePersoner()
+            } else {
+                behandling.grunnlagslisteFraVedtak!!
+            } as List<GrunnlagDto>
+
+        val personobjekt =
+            beregning.hentPersonNyesteIdent(søknadsbarn.ident, søknadsbarn.stønadstype) ?: søknadsbarn.tilGrunnlagPerson()
+        return beregning
+            .finnAlleDelberegningUnderholdskostnad(personobjekt)
+            .tilUnderholdskostnadDto(beregning, behandling.erBisysVedtak)
     }
 
     @Transactional

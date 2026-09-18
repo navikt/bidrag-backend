@@ -26,7 +26,6 @@ import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.underhold.henteOgValidereUnderholdskostnad
 import no.nav.bidrag.behandling.transformers.underhold.tilStønadTilBarnetilsynDtos
 import no.nav.bidrag.behandling.transformers.underhold.valider
-import no.nav.bidrag.behandling.transformers.underhold.validereMotUnderholdskostnad
 import no.nav.bidrag.commons.util.secureLogger
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -218,13 +217,6 @@ class UnderholdController(
                 .orElseThrow { behandlingNotFoundException(behandlingsid) }
 
         val underholdskostnad = henteOgValidereUnderholdskostnad(behandling, underholdsid)
-
-        val beregnetFørEndring = dtomapper
-            .run { behandling.tilBeregnetUnderholdskostnad() }
-            .find { it.gjelderBarn.ident?.verdi == underholdskostnad.personIdent }
-            ?.perioder
-            .orEmpty()
-        request.validereMotUnderholdskostnad(beregnetFørEndring)
 
         underholdService.oppdatereForpleining(underholdskostnad, request)
         return underholdskostnad.tilRespons()

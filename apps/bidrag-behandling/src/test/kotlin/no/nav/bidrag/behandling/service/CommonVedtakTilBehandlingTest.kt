@@ -127,6 +127,8 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
                 personRepository,
                 notatService,
                 personService,
+                vedtakGrunnlagMapper,
+                BeregnBarnebidragApi(),
             )
         vedtakTilBehandlingMapping = VedtakTilBehandlingMapping(validerBeregning, underholdService = underholdService, behandlingRepository)
         val identConsumer = stubIdentConsumer()
