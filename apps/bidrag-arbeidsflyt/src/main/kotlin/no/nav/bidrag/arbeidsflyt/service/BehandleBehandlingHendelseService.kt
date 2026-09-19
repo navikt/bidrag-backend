@@ -136,7 +136,7 @@ class BehandleBehandlingHendelseService(
 
             if (behandling.oppgaverOverførtEtterFFOpprettet == null) {
                 if (ff.overførtTilEnhet != null) {
-                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = null, tilEnhet = ff.overførtTilEnhet) {
+                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = ff.opprettetAvSaksbehandler, tilEnhet = ff.overførtTilEnhet) {
                         it.tildeltEnhetsnr != ff.overførtTilEnhet
                     }
                 } else {
