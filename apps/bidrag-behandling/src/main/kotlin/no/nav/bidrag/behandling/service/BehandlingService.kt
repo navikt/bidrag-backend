@@ -233,10 +233,7 @@ class BehandlingService(
                     søknadBleSlettet = true,
                 )
                 behandling.bidragspliktig?.fjernGebyr(søknadsid)
-                if (behandling.erIForholdsmessigFordeling && behandling.forholdsmessigFordeling!!.erHovedbehandling == false) {
-                    val hovedbehandling = behandlingRepository.finnHovedbehandlingForBpVedFF(behandling.bidragspliktig!!.ident!!) ?: return
-                    sendOppdatertHendelse(hovedbehandling.id!!, false)
-                }
+                sendOppdatertHendelse(behandling.id!!, false)
             }
         } else {
             logiskSlettBehandling(behandling)

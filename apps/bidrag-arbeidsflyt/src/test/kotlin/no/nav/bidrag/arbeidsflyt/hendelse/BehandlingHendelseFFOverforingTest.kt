@@ -237,4 +237,40 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
 
         hentBehandling(behandlingsid).oppgaverOverførtEtterFFOpprettet shouldBe overførtTidspunktEtterFørsteKall
     }
+
+    @Test
+    fun `skal overføre oppgave til enhet når FF er overført til enhet`() {
+        val behandlingsid = 555560L
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubOppgaveForSaken(tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET)
+        stubHentBehandlingDetaljer(
+            behandlingsid,
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+        )
+
+        behandleHendelseService.behandleHendelse(hendelse)
+
+        val overførtRequest = getOppgaveEndretRequest(oppgaveId = OPPGAVE_ID)
+        overførtRequest.shouldNotBeNull()
+        overførtRequest.tildeltEnhetsnr shouldBe ENHET_SOM_OPPRETTET_FF
+        hentBehandling(behandlingsid).oppgaverOverførtEtterFFOpprettet.shouldNotBeNull()
+    }
+
+    @Test
+    fun `skal ikke overføre oppgave når den allerede er på enheten FF ble overført til`() {
+        val behandlingsid = 555561L
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubOppgaveForSaken(tilordnetRessurs = null, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
+        stubHentBehandlingDetaljer(
+            behandlingsid,
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+        )
+
+        behandleHendelseService.behandleHendelse(hendelse)
+
+        verifyOppgaveNotEndret()
+        hentBehandling(behandlingsid).oppgaverOverførtEtterFFOpprettet.shouldNotBeNull()
+    }
 }
