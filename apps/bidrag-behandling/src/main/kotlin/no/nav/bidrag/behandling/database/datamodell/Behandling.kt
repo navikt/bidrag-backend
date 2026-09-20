@@ -33,6 +33,7 @@ import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.transformers.erBidrag
 import no.nav.bidrag.behandling.transformers.normalizeForComparison
 import no.nav.bidrag.behandling.transformers.vedtak.ifFalse
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
@@ -426,10 +427,10 @@ open class Behandling(
         .groupBy { it.rolle.saksnummer }
         .map { (saksnummer, samværForSak) ->
             ErLikForAlleBasertPåSak(
-                saksnummer,
-                samværForSak.all { sb1 ->
+                saksnummer = saksnummer,
+                erLikForAlle = samværForSak.all { sb1 ->
                     samværForSak.filter { it.id != sb1.id }.all { sb2 ->
-                        sb1.erLik(sb2) && sb1.rolle.virkningstidspunkt == sb2.rolle.virkningstidspunkt &&
+                        sb1.erLik(sb2) && sb1.rolle.finnBeregnFra() == sb2.rolle.finnBeregnFra() &&
                             sb1.rolle.opphørsdato == sb2.rolle.opphørsdato
                     }
                 },
