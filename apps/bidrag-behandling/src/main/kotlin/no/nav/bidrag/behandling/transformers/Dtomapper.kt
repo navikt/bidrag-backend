@@ -339,7 +339,7 @@ class Dtomapper(
             } else {
                 null
             },
-            valideringsfeil = this.valider().takeIf { it.harFeil },
+            valideringsfeil = this.valider(beregnetUnderholdskostnad).takeIf { it.harFeil },
         )
     }
 

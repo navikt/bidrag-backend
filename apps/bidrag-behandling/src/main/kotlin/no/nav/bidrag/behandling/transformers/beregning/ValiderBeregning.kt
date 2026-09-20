@@ -57,12 +57,14 @@ class ValiderBeregning(
 ) {
     /**
      * Forpleiningen kan ha vært gyldig da den ble registrert, men underholdskostnaden kan ha gått ned siden.
-     * Beregningen kjøres derfor på nytt her, og hvert barn kontrolleres mot sine egne perioder.
+     * Beregningen kjøres derfor på nytt her, og hvert barn kontrolleres mot sine egne perioder. Beregningen
+     * koster en full runde per søknadsbarn, så den hoppes over når ingen har forpleining.
      */
     private fun Behandling.beregnetUnderholdskostnadPerBarn(): (Underholdskostnad) -> Set<UnderholdskostnadDto> {
+        if (underholdskostnader.none { it.forpleining.isNotEmpty() }) return { emptySet() }
         val beregnet = dtomapper?.run { tilBeregnetUnderholdskostnad() } ?: return { emptySet() }
         return { underholdskostnad ->
-            beregnet.find { it.gjelderBarn.ident?.verdi == underholdskostnad.personIdent }?.perioder.orEmpty()
+            dtomapper.run { beregnet.perioderForBarn(underholdskostnad.personIdent, underholdskostnad.rolle?.stønadstype) }
         }
     }
 
