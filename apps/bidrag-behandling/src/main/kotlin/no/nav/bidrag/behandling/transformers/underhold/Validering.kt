@@ -231,9 +231,13 @@ fun Set<FaktiskTilsynsutgift>.validerePerioderFaktiskTilsynsutgift(): Underholds
     ),
 )
 
-fun Set<Underholdskostnad>.valider() = this.map { it.valider() }.filter { it.harFeil }.toSet()
+fun Set<Underholdskostnad>.valider(
+    beregnetUnderholdskostnad: (Underholdskostnad) -> Set<UnderholdskostnadDto> = { emptySet() },
+) = this.map { it.valider(beregnetUnderholdskostnad(it)) }.filter { it.harFeil }.toSet()
 
-fun Underholdskostnad.valider(): UnderholdskostnadValideringsfeil = UnderholdskostnadValideringsfeil(
+fun Underholdskostnad.valider(
+    beregnetPerioder: Set<UnderholdskostnadDto> = emptySet(),
+): UnderholdskostnadValideringsfeil = UnderholdskostnadValideringsfeil(
     gjelderUnderholdskostnad = this,
     stønadTilBarnetilsyn = barnetilsyn.validerePerioderBarnetilsyn().takeIf { it.harFeil },
     tilleggsstønad = tilleggsstønad.validerePerioderTilleggsstønad().takeIf { it.harFeil },
@@ -242,7 +246,27 @@ fun Underholdskostnad.valider(): UnderholdskostnadValideringsfeil = Underholdsko
     tilleggsstønadsperioderUtenFaktiskTilsynsutgift = finnTilleggsstønadsperioderSomIkkeOverlapperMedFaktiskTilsynsutgiftsperioder(),
     manglerPerioderForTilsynsordning = manglerPerioderForTilsynsordning(),
     manglerBegrunnelse = manglerBegrunnelse(),
+    forpleiningOverstigerUnderholdskostnad = finnForpleiningSomOverstigerUnderholdskostnad(beregnetPerioder),
 )
+
+/**
+ * Kontrollen i endepunktet fanger bare opp beløpet når forpleiningen registreres. Underholdskostnaden
+ * kan senere gå ned, for eksempel når en faktisk tilsynsutgift slettes, og da må feilen fortsatt vises.
+ */
+fun Underholdskostnad.finnForpleiningSomOverstigerUnderholdskostnad(
+    beregnetPerioder: Set<UnderholdskostnadDto>,
+): Set<DatoperiodeDto> {
+    if (forpleining.isEmpty() || beregnetPerioder.isEmpty()) return emptySet()
+    return forpleining
+        .filter { registrert ->
+            beregnetPerioder.any {
+                it.periode.fom <= (registrert.tom ?: LocalDate.MAX) &&
+                    registrert.fom <= (it.periode.tom ?: LocalDate.MAX) &&
+                    registrert.beløp > it.forbruk + it.boutgifter + it.stønadTilBarnetilsyn + it.tilsynsutgifter - it.barnetrygd
+            }
+        }.map { DatoperiodeDto(it.fom, it.tom) }
+        .toSet()
+}
 
 fun Underholdskostnad.manglerBegrunnelse(): Boolean {
     // Bisys vedtak har ingen begrunnelse. Er ikke påkrevd for å unngå at saksbehandler må skrive inn begrunnelse der det ikke er behov

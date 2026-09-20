@@ -4,6 +4,7 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -914,6 +915,61 @@ class ValideringTest {
             )
 
             underholdskostnad.manglerBegrunnelse().shouldBeFalse()
+        }
+    }
+
+    @Nested
+    open inner class ForpleiningEtterAtUnderholdskostnadenHarGattNed {
+        private fun underholdskostnadMedForpleining(beløp: Int): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.of(2024, 1, 1),
+                    tom = null,
+                    beløp = BigDecimal(beløp),
+                ),
+            )
+            return underholdskostnad
+        }
+
+        private fun beregnet(forbruk: Int) =
+            setOf(
+                UnderholdskostnadDto(
+                    periode = DatoperiodeDto(LocalDate.of(2024, 1, 1), null),
+                    forbruk = BigDecimal(forbruk),
+                    total = BigDecimal.ZERO,
+                ),
+            )
+
+        @Test
+        fun `skal gi valideringsfeil når underholdskostnaden har gått ned under forpleiningen`() {
+            val underholdskostnad = underholdskostnadMedForpleining(beløp = 10000)
+
+            val feil = underholdskostnad.valider(beregnet(forbruk = 8000))
+
+            feil.forpleiningOverstigerUnderholdskostnad shouldHaveSize 1
+            feil.harFeil shouldBe true
+        }
+
+        @Test
+        fun `skal ikke gi valideringsfeil når forpleiningen fortsatt er innenfor`() {
+            val underholdskostnad = underholdskostnadMedForpleining(beløp = 5000)
+
+            underholdskostnad.valider(beregnet(forbruk = 8000)).forpleiningOverstigerUnderholdskostnad.shouldBeEmpty()
+        }
+
+        @Test
+        fun `skal ikke kontrollere uten beregnede perioder`() {
+            val underholdskostnad = underholdskostnadMedForpleining(beløp = 10000)
+
+            underholdskostnad.valider().forpleiningOverstigerUnderholdskostnad.shouldBeEmpty()
         }
     }
 }
