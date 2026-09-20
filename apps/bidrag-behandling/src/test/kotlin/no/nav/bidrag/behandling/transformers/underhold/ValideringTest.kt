@@ -939,14 +939,13 @@ class ValideringTest {
             return underholdskostnad
         }
 
-        private fun beregnet(forbruk: Int) =
-            setOf(
-                UnderholdskostnadDto(
-                    periode = DatoperiodeDto(LocalDate.of(2024, 1, 1), null),
-                    forbruk = BigDecimal(forbruk),
-                    total = BigDecimal.ZERO,
-                ),
-            )
+        private fun beregnet(forbruk: Int) = setOf(
+            UnderholdskostnadDto(
+                periode = DatoperiodeDto(LocalDate.of(2024, 1, 1), null),
+                forbruk = BigDecimal(forbruk),
+                total = BigDecimal.ZERO,
+            ),
+        )
 
         @Test
         fun `skal gi valideringsfeil når underholdskostnaden har gått ned under forpleiningen`() {
