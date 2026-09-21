@@ -375,7 +375,7 @@ open class Behandling(
     val erVirkningstidspunktLiktForAlle get() = søknadsbarn.mapNotNull { it.virkningstidspunkt }.toSet().size == 1
     val erVirkningstidspunktLiktForAlleSaker get() = søknadsbarn.groupBy { it.saksnummer }
         .mapNotNull { it.key to (it.value.mapNotNull { sb -> sb.virkningstidspunkt }.toSet().size == 1) }
-        .map { ErLikForAlleBasertPåSak(it.first, it.second) }
+        .map { ErLikForAlleBasertPåSak(saksnummer = it.first, erLikForAlle = it.second, kanVurdereSamlet = it.second) }
     val globalOpphørsdato get() =
         if (søknadsbarn.any { it.opphørsdato == null }) {
             null
@@ -396,8 +396,11 @@ open class Behandling(
         .groupBy { it.saksnummer }
         .map { (saksnummer, søknadsbarnForSak) ->
             ErLikForAlleBasertPåSak(
-                saksnummer,
-                søknadsbarnForSak.all { sb1 ->
+                saksnummer = saksnummer,
+                erLikForAlle = søknadsbarnForSak.all { sb1 ->
+                    søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
+                },
+                kanVurdereSamlet = søknadsbarnForSak.all { sb1 ->
                     søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
                 },
             )
@@ -428,6 +431,7 @@ open class Behandling(
         .map { (saksnummer, samværForSak) ->
             ErLikForAlleBasertPåSak(
                 saksnummer = saksnummer,
+                kanVurdereSamlet = søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }.distinctBy { it.søknadsid }.size <= 1,
                 erLikForAlle = samværForSak.all { sb1 ->
                     samværForSak.filter { it.id != sb1.id }.all { sb2 ->
                         sb1.erLik(sb2) && sb1.rolle.finnBeregnFra() == sb2.rolle.finnBeregnFra() &&
