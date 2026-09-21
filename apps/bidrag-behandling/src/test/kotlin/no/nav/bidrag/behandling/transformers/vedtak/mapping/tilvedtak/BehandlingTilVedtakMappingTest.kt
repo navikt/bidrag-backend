@@ -39,32 +39,31 @@ class BehandlingTilVedtakMappingTest {
         behandling: Behandling,
         ident: String,
         søknadsid: Long,
-    ): Rolle =
-        Rolle(
-            ident = ident,
-            rolletype = Rolletype.BARN,
-            behandling = behandling,
-            fødselsdato = LocalDate.of(2010, 3, 20),
-            forholdsmessigFordeling =
-                ForholdsmessigFordelingRolle(
-                    tilhørerSak = "123",
-                    behandlerenhet = "13",
-                    delAvOpprinneligBehandling = true,
-                    erRevurdering = false,
-                    bidragsmottaker = "22222222222",
-                    søknader =
-                        mutableSetOf(
-                            ForholdsmessigFordelingSøknadBarn(
-                                mottattDato = LocalDate.of(2023, 3, 15),
-                                søktAvType = SøktAvType.BIDRAGSMOTTAKER,
-                                søknadsid = søknadsid,
-                                behandlingstype = null,
-                                behandlingstema = null,
-                                saksnummer = "123",
-                            ),
-                        ),
+    ): Rolle = Rolle(
+        ident = ident,
+        rolletype = Rolletype.BARN,
+        behandling = behandling,
+        fødselsdato = LocalDate.of(2010, 3, 20),
+        forholdsmessigFordeling =
+        ForholdsmessigFordelingRolle(
+            tilhørerSak = "123",
+            behandlerenhet = "13",
+            delAvOpprinneligBehandling = true,
+            erRevurdering = false,
+            bidragsmottaker = "22222222222",
+            søknader =
+            mutableSetOf(
+                ForholdsmessigFordelingSøknadBarn(
+                    mottattDato = LocalDate.of(2023, 3, 15),
+                    søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+                    søknadsid = søknadsid,
+                    behandlingstype = null,
+                    behandlingstema = null,
+                    saksnummer = "123",
                 ),
-        )
+            ),
+        ),
+    )
 
     @Test
     fun `skal legge til opphørsperiode når siste periode har sluttdato`() {
