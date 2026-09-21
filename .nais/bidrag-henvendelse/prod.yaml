@@ -4,7 +4,10 @@ ingresses:
 env:
   HENVENDELSE_URL: https://sf-henvendelse.intern.nav.no
   HENVENDELSE_SCOPE: prod-gcp.teamnks.sf-henvendelse-api-proxy
-  BIDRAG_PERSON_URL: https://bidrag-person.intern.nav.no
+  # Fra GCP må kallet gå på fss-pub-ingressen; intern.nav.no-navnet til en FSS-app er ikke
+  # nåbart herfra. Kontekststien /bidrag-person må med, fordi BidragPersonConsumer legger
+  # «personidenter» på basestien.
+  BIDRAG_PERSON_URL: https://bidrag-person.prod-fss-pub.nais.io/bidrag-person
   BIDRAG_PERSON_SCOPE: prod-fss.bidrag.bidrag-person
   # bidrag-tilgangskontroll kjører i samme cluster, så kallet går på tjenestenavnet framfor
   # ingressen - samme oppsett som bidrag-behandling. Navnet BIDRAG_TILGANG_URL kreves av
@@ -18,6 +21,6 @@ azure_access_inbound:
     cluster: prod-gcp
 outbound-access-hosts:
   - sf-henvendelse.intern.nav.no
-  - bidrag-person.intern.nav.no
+  - bidrag-person.prod-fss-pub.nais.io
 outbound-access-apps:
   - bidrag-tilgangskontroll
