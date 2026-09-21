@@ -156,7 +156,7 @@ function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
 }
 
 function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
-  if (data.forpleining.length == 0) return null;
+  if (!data.forpleining?.length) return null;
 
   return (
     <div className={"mb-4 mt-4"}>
