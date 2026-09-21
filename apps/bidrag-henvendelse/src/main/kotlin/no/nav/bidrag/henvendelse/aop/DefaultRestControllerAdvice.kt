@@ -52,7 +52,9 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
     @ExceptionHandler(RestClientResponseException::class)
     fun handleRestClientResponseException(exception: RestClientResponseException): ProblemDetail {
         // AbstractRestClient har allerede logget stacktracen, så den gjentas ikke her.
-        log.warn { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}" }
+        // Klassenavnet er med fordi statusen alene ikke sier hvilket ledd som feilet, og
+        // meldingen ikke kan logges: den inneholder URL-en, som hos oss har ?aktorid=.
+        log.warn { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}, type ${exception.javaClass.simpleName}" }
         return problemDetail(
             status = HttpStatus.BAD_GATEWAY,
             tittel = "Feil ved kall mot tjeneste",

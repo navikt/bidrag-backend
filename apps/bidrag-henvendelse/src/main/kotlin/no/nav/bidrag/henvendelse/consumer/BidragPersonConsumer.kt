@@ -8,8 +8,9 @@ import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonidentDto
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -55,6 +56,11 @@ class BidragPersonConsumer(
         // i tjenesten, så den oversettes her framfor å ende som 502 "Feil ved kall mot tjeneste".
         // Bare denne konsumenten gjør det: en 404 fra sf-henvendelse-api-proxy betyr at basestien
         // vår er feil, og skal fortsatt bli 502.
+        //
+        // Fanges på statuskode og ikke på HttpClientErrorException.NotFound: AbstractRestClient
+        // kaster ikke nødvendigvis den underklassen. Får den en ikke-2xx respons uten at
+        // RestTemplate selv har kastet, lager validerOgPakkUt en HttpServerErrorException - med
+        // 404 i statusfeltet. Begge er RestClientResponseException.
         val identer: List<PersonidentDto> = try {
             postForNonNullEntity(
                 uri,
@@ -64,8 +70,9 @@ class BidragPersonConsumer(
                     inkludereHistoriske = false,
                 ),
             )
-        } catch (_: HttpClientErrorException.NotFound) {
-            throw PersonIkkeFunnetException()
+        } catch (exception: RestClientResponseException) {
+            if (exception.statusCode == HttpStatus.NOT_FOUND) throw PersonIkkeFunnetException()
+            throw exception
         }
         return identer.firstOrNull { it.gruppe == Identgruppe.AKTORID && !it.historisk }?.ident
     }
