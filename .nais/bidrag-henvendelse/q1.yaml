@@ -19,7 +19,7 @@ env:
   # TilgangClient i bidrag-commons. q1-instansen deres heter -feature, ikke -q1.
   BIDRAG_TILGANG_URL: http://bidrag-tilgangskontroll-feature
   BIDRAG_TILGANG_SCOPE: dev-gcp.bidrag.bidrag-tilgangskontroll-feature
-  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
   - application: bidrag-frontend-q1
     namespace: bidrag
