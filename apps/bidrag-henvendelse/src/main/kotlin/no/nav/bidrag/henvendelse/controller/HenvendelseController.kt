@@ -82,6 +82,7 @@ class HenvendelseController(
             ApiResponse(responseCode = "400", description = "Identen er ikke et gyldig fødselsnummer eller d-nummer"),
             ApiResponse(responseCode = "401", description = "Ugyldig eller manglende sikkerhetstoken"),
             ApiResponse(responseCode = "403", description = "Saksbehandleren har ikke tilgang til personen"),
+            ApiResponse(responseCode = "404", description = "Identen tilhører ingen person i folkeregisteret"),
             ApiResponse(responseCode = "502", description = "En tjeneste vi er avhengig av feilet eller svarte ikke"),
         ],
     )

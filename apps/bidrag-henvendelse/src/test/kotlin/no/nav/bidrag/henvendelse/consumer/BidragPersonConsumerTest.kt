@@ -1,11 +1,15 @@
 package no.nav.bidrag.henvendelse.consumer
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.henvendelse.aop.PersonIkkeFunnetException
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestTemplate
 import java.net.URI
@@ -47,6 +51,16 @@ class BidragPersonConsumerTest {
         stub("[]")
 
         consumer.hentAktørid(Personident(FNR)) shouldBe null
+    }
+
+    @Test
+    fun `skal kaste PersonIkkeFunnetException når bidrag-person svarer 404`() {
+        // Uten oversettelsen her ville en ukjent ident blitt 502 "Feil ved kall mot tjeneste".
+        mockServer
+            .expect(requestTo("http://bidrag-person/personidenter"))
+            .andRespond(withStatus(HttpStatus.NOT_FOUND))
+
+        shouldThrow<PersonIkkeFunnetException> { consumer.hentAktørid(Personident(FNR)) }
     }
 
     private fun stub(respons: String) {

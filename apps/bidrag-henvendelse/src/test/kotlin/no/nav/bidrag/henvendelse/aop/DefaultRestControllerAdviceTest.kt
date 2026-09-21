@@ -111,6 +111,15 @@ class DefaultRestControllerAdviceTest {
     }
 
     @Test
+    fun `skal gi 404 når personen ikke finnes`() {
+        val problem = advice.handlePersonIkkeFunnet(PersonIkkeFunnetException())
+
+        problem.status shouldBe HttpStatus.NOT_FOUND.value()
+        problem.title shouldBe "Fant ikke personen"
+        problem.detail!!.utenLekkasje()
+    }
+
+    @Test
     fun `skal gi 401 ved manglende token`() {
         val problem = advice.handleUnauthorizedException(JwtTokenUnauthorizedException("Token expired"))
 

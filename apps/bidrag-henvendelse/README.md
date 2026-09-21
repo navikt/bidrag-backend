@@ -88,6 +88,8 @@ Tom liste er `{ "henvendelser": [] }`, aldri `null`.
 |--------|-----|
 | 400 | identen er ikke et gyldig fødselsnummer eller d-nummer |
 | 401 | manglende eller ugyldig token |
+| 403 | saksbehandleren har ikke tilgang til personen |
+| 404 | identen tilhører ingen person i folkeregisteret |
 | 502 | en tjeneste vi er avhengig av feilet eller svarte ikke |
 | 500 | uventet feil hos oss |
 

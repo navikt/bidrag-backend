@@ -108,6 +108,22 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
         )
     }
 
+    /**
+     * 404 fra bidrag-person betyr at identen ikke finnes i folkeregisteret. Det er et svar om
+     * forespørselen, ikke en feil i tjenesten, så den skal ikke bli 502. Statusen er 404 og ikke
+     * 400: identen er velformet - den har bestått kontrollsifferet i controlleren - og det er
+     * personen som ikke finnes.
+     */
+    @ExceptionHandler(PersonIkkeFunnetException::class)
+    fun handlePersonIkkeFunnet(exception: PersonIkkeFunnetException): ProblemDetail {
+        log.warn { "Fikk forespørsel om en person som ikke finnes" }
+        return problemDetail(
+            status = HttpStatus.NOT_FOUND,
+            tittel = "Fant ikke personen",
+            detalj = "Identen i forespørselen tilhører ingen person i folkeregisteret.",
+        )
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleUkjentFeil(exception: Exception): ProblemDetail {
         årsakskjede(exception).forEach { årsak ->
@@ -162,3 +178,6 @@ class UgyldigIdentException : RuntimeException("Ugyldig personident")
 
 /** Kastes når bidrag-tilgangskontroll svarer at saksbehandleren ikke har tilgang til personen. */
 class IngenTilgangException : RuntimeException("Ingen tilgang til personen")
+
+/** Kastes når bidrag-person ikke kjenner identen i forespørselen. */
+class PersonIkkeFunnetException : RuntimeException("Fant ikke personen")
