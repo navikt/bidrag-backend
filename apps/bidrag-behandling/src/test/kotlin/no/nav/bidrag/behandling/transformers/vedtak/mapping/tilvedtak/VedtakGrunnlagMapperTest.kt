@@ -8,6 +8,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
 import no.nav.bidrag.behandling.service.PersonService
@@ -27,11 +28,14 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.YearMonth
 
 @ExtendWith(MockKExtension::class)
@@ -321,5 +325,27 @@ class VedtakGrunnlagMapperTest {
         val resultat = perioder.filtrerOgJusterFraVirkningstidspunkt(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
 
         resultat shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
+    }
+
+    @Test
+    fun `finnBeregnFra skal ikke starte før barnets fødsel ved forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.stønadstype = Stønadstype.BIDRAG
+        søknadsbarn.fødselsdato = LocalDate.of(2023, 6, 15)
+
+        søknadsbarn.finnBeregnFra() shouldBe YearMonth.of(2023, 6)
+    }
+
+    @Test
+    fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.stønadstype = Stønadstype.BIDRAG
+        søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
+
+        søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
     }
 }
