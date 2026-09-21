@@ -126,6 +126,38 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
         )
     }
 
+    /**
+     * Konsumentene pakker feil fra tjenesten de kaller i denne, slik at svaret kan navngi hvem
+     * som feilet. Tjenestenavnet er ikke en personopplysning, og saksbehandleren - eller den som
+     * leser en feilmelding i frontend - trenger å vite om det er bidrag-person eller
+     * henvendelsesløsningen som er nede.
+     *
+     * Skillet mellom "svarte ikke" og "svarte med feil" leses av årsaken: en ResourceAccessException
+     * er timeout, brutt forbindelse eller DNS-feil, alt annet er en respons vi ikke likte.
+     */
+    @ExceptionHandler(TjenesteFeilException::class)
+    fun handleTjenesteFeil(exception: TjenesteFeilException): ProblemDetail {
+        val årsak = exception.cause
+        val svarteIkke = årsakskjede(exception).any { it is ResourceAccessException }
+        val status = (årsak as? RestClientResponseException)?.statusCode
+
+        // Meldingen logges ikke: den inneholder URL-en, og hos oss har hver URL ?aktorid=.
+        log.warn {
+            "Feil fra ${exception.tjeneste}" +
+                (status?.let { ", status $it" } ?: "") +
+                ", type ${(årsak ?: exception).javaClass.simpleName}"
+        }
+        return problemDetail(
+            status = HttpStatus.BAD_GATEWAY,
+            tittel = if (svarteIkke) "Tjenesten svarte ikke" else "Feil ved kall mot tjeneste",
+            detalj = if (svarteIkke) {
+                "Kunne ikke hente henvendelser fordi ${exception.tjeneste} ikke svarte."
+            } else {
+                "Kunne ikke hente henvendelser fordi ${exception.tjeneste} svarte med feil."
+            },
+        )
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleUkjentFeil(exception: Exception): ProblemDetail {
         årsakskjede(exception).forEach { årsak ->
@@ -183,3 +215,12 @@ class IngenTilgangException : RuntimeException("Ingen tilgang til personen")
 
 /** Kastes når bidrag-person ikke kjenner identen i forespørselen. */
 class PersonIkkeFunnetException : RuntimeException("Fant ikke personen")
+
+/**
+ * Kastes av konsumentene når tjenesten de kaller feiler. [tjeneste] er navnet som havner i
+ * svaret, så det skal være navnet teamet bruker om tjenesten - ikke en URL.
+ */
+class TjenesteFeilException(
+    val tjeneste: String,
+    cause: Throwable,
+) : RuntimeException("Feil fra $tjeneste", cause)

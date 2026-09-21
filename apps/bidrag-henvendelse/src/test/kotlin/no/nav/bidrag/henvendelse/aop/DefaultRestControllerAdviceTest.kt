@@ -1,6 +1,7 @@
 package no.nav.bidrag.henvendelse.aop
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.junit.jupiter.api.Test
@@ -107,6 +108,36 @@ class DefaultRestControllerAdviceTest {
 
         problem.status shouldBe HttpStatus.BAD_REQUEST.value()
         problem.title shouldBe "Ugyldig ident"
+        problem.detail!!.utenLekkasje()
+    }
+
+    @Test
+    fun `skal navngi tjenesten som svarte med feil`() {
+        val exception = TjenesteFeilException(
+            "bidrag-person",
+            HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "500 på \"$URL_MED_AKTØRID\""),
+        )
+
+        val problem = advice.handleTjenesteFeil(exception)
+
+        problem.status shouldBe HttpStatus.BAD_GATEWAY.value()
+        problem.title shouldBe "Feil ved kall mot tjeneste"
+        problem.detail!! shouldContain "bidrag-person"
+        problem.detail!!.utenLekkasje()
+    }
+
+    @Test
+    fun `skal navngi tjenesten som ikke svarte`() {
+        val exception = TjenesteFeilException(
+            "sf-henvendelse-api-proxy",
+            RuntimeException("Feil ved kall mot uri=$URL_MED_AKTØRID", ResourceAccessException("timeout")),
+        )
+
+        val problem = advice.handleTjenesteFeil(exception)
+
+        problem.status shouldBe HttpStatus.BAD_GATEWAY.value()
+        problem.title shouldBe "Tjenesten svarte ikke"
+        problem.detail!! shouldContain "sf-henvendelse-api-proxy"
         problem.detail!!.utenLekkasje()
     }
 

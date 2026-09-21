@@ -3,6 +3,7 @@ package no.nav.bidrag.henvendelse.consumer
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.henvendelse.aop.PersonIkkeFunnetException
+import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
 import no.nav.bidrag.transport.person.HentePersonidenterRequest
 import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonidentDto
@@ -70,10 +71,14 @@ class BidragPersonConsumer(
                     inkludereHistoriske = false,
                 ),
             )
-        } catch (exception: RestClientResponseException) {
-            if (exception.statusCode == HttpStatus.NOT_FOUND) throw PersonIkkeFunnetException()
-            throw exception
+        } catch (exception: Exception) {
+            if (exception is RestClientResponseException && exception.statusCode == HttpStatus.NOT_FOUND) {
+                throw PersonIkkeFunnetException()
+            }
+            throw TjenesteFeilException(TJENESTE, exception)
         }
         return identer.firstOrNull { it.gruppe == Identgruppe.AKTORID && !it.historisk }?.ident
     }
 }
+
+private const val TJENESTE = "bidrag-person"

@@ -2,14 +2,16 @@ package no.nav.bidrag.henvendelse.consumer
 
 import com.fasterxml.jackson.core.type.TypeReference
 import no.nav.bidrag.commons.web.client.AbstractRestClient
+import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
 import no.nav.bidrag.henvendelse.config.RestConfig
 import no.nav.bidrag.henvendelse.dto.consumer.HenvendelseConsumerOutput
 import no.nav.bidrag.henvendelse.dto.consumer.HenvendelseslisteKonvolutt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -90,7 +92,13 @@ class HenvendelseConsumer(
         // den samme uansett - og vi kan velge form ut fra hva vi faktisk fikk.
         val respons = try {
             getForEntity<String>(uri)
-        } catch (_: HttpClientErrorException.NotFound) {
+        } catch (exception: Exception) {
+            // Fanges på statuskode og ikke på HttpClientErrorException.NotFound: AbstractRestClient
+            // lager en HttpServerErrorException - med 404 i statusfeltet - av en ikke-2xx respons
+            // RestTemplate ikke selv har kastet på.
+            if (exception !is RestClientResponseException || exception.statusCode != HttpStatus.NOT_FOUND) {
+                throw TjenesteFeilException(TJENESTE, exception)
+            }
             // Swaggeren dokumenterer 404 som "Could not find actor". Personer uten henvendelser
             // gir ikke 404 - Apex-koden svarer 200 med tom data-liste - så 404 betyr en aktørid
             // Salesforce ikke kjenner i det hele tatt. Vi viser tom liste framfor 502: det er
@@ -139,3 +147,5 @@ class HenvendelseConsumer(
         private val henvendelseListeType = object : TypeReference<List<HenvendelseConsumerOutput>>() {}
     }
 }
+
+private const val TJENESTE = "sf-henvendelse-api-proxy"

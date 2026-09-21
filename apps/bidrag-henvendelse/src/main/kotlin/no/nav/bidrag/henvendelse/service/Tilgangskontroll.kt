@@ -6,6 +6,7 @@ import no.nav.bidrag.commons.security.ContextService
 import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.henvendelse.aop.IngenTilgangException
+import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
 
@@ -36,7 +37,11 @@ class Tilgangskontroll(
         // utenfor /kodeverk/ - så det riktige er å stoppe kallet her.
         if (ContextService.erMaskinTilMaskinToken()) throw IngenTilgangException()
 
-        val sporingsdata = tilgangClient.hentSporingsdataPerson(personident)
+        val sporingsdata = try {
+            tilgangClient.hentSporingsdataPerson(personident)
+        } catch (exception: Exception) {
+            throw TjenesteFeilException("bidrag-tilgangskontroll", exception)
+        }
 
         // AuditLogger skriver linja og kaster selv 403 ved avslag. Den kommer som en
         // HttpClientErrorException, som DefaultRestControllerAdvice ellers oversetter til 502
