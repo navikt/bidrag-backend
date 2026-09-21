@@ -4,7 +4,7 @@ ingresses:
 env:
   KODEVERK_URL: https://kodeverk-api.nav.no
   KODEVERK_SCOPE: prod-gcp.team-rocket.kodeverk-api
-  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
   - application: bidrag-ui
     namespace: bidrag
