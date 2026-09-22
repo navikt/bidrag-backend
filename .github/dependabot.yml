@@ -77,7 +77,7 @@ updates:
         patterns:
           - "*"
     ignore:
-      - dependency-name: "europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre"
+      - dependency-name: "cgr-nav/pull-through/nav.no/jre"
         update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
