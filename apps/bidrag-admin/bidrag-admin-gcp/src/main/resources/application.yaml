@@ -30,8 +30,6 @@ no.nav.security.jwt:
     discovery_url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/v2.0/.well-known/openid-configuration
     accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
 
-BIDRAG_BOT_SLACK_OAUTH_TOKEN: ${MR_B_SLACK_OAUTH_TOKEN}
-
 spring:
   datasource:
     url: ${DB_JDBC_URL}
