@@ -213,6 +213,23 @@ class HenvendelseIntegrasjonTest {
     }
 
     @Test
+    fun `skal gi 502 når henvendelsestjenesten svarer med noe vi ikke kan tolke`() {
+        // Uten oversettelsen i konsumenten havner Jackson-feilen i catch-allen og blir 500
+        // "Ukjent feil" - altså vår feil - selv om det er kilden som svarer med søppel.
+        wireMockServer.stubFor(
+            get(urlPathEqualTo(HENVENDELSESTI)).willReturn(
+                aResponse().withStatus(200).withHeader("Content-Type", "application/json").withBody("{ikke gyldig json"),
+            ),
+        )
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.BAD_GATEWAY
+        respons.body!! shouldContainJson "\"status\":502"
+        respons.body!! shouldContain "sf-henvendelse-api-proxy"
+    }
+
+    @Test
     fun `skal gi 502 når henvendelsestjenesten bryter forbindelsen`() {
         wireMockServer.stubFor(
             get(urlPathEqualTo(HENVENDELSESTI)).willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)),

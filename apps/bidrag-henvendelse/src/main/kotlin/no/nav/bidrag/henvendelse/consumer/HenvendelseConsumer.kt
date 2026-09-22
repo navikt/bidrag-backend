@@ -1,5 +1,6 @@
 package no.nav.bidrag.henvendelse.consumer
 
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.core.type.TypeReference
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
@@ -111,7 +112,14 @@ class HenvendelseConsumer(
             return emptyList()
         }
         if (respons.isNullOrBlank()) return emptyList()
-        return tolkRespons(respons)
+        // En respons vi ikke klarer å tolke er en feil hos tjenesten vi kaller, ikke hos oss.
+        // Uten denne ville Jackson-feilen gått til catch-allen i DefaultRestControllerAdvice og
+        // blitt 500 "Ukjent feil", som sender saksbehandleren til feil sted med spørsmålet.
+        return try {
+            tolkRespons(respons)
+        } catch (exception: JacksonException) {
+            throw TjenesteFeilException(TJENESTE, exception)
+        }
     }
 
     /**
