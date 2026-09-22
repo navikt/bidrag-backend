@@ -14,9 +14,12 @@ kubectl edit deployment/bidrag-regnskap-feature
 ```  
 Det vil da åpne seg en .yaml fil i din favoritt tekst-editor. Under spec.template.spec.containers - env legg inn følgende:
 ```  
-        - name: JAVA_OPTS
+        - name: JAVA_TOOL_OPTIONS
           value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
 ``` 
+<span style="color: red">NB: Bruk `JAVA_TOOL_OPTIONS`, ikke `JAVA_OPTS`. Containeren starter med `ENTRYPOINT ["java", "-jar"]`
+(exec-form, ingen shell), så `JAVA_OPTS` blir aldri lest av JVM-en og debug-agenten starter ikke.
+`JAVA_TOOL_OPTIONS` blir derimot alltid lest automatisk av `java`-launcheren, uavhengig av oppstartsform.</span>
 <span style="color: red">NB: Spacingen er viktig at blir riktig. Om denne er feil vil filen åpnes på nytt etter du har lagret og lukket den.
 Feilmeldingen står på toppen av filen.
 
