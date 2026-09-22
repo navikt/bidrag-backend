@@ -64,7 +64,7 @@ private fun loggAvvikIResponsen(
 
     val ukjenteTyper = fraKilden
         .filter { it.henvendelseType.tilHenvendelsestype() == Henvendelsestype.UKJENT }
-        .map { it.henvendelseType ?: "<mangler>" }
+        .map { it.henvendelseType?.tilLoggbarVerdi() ?: "<mangler>" }
         .distinct()
     if (ukjenteTyper.isNotEmpty()) {
         log.warn { "Ukjente henvendelsestyper i responsen fra sf-henvendelse-api: $ukjenteTyper. Mappet til UKJENT." }
@@ -102,3 +102,12 @@ private fun String?.tilHenvendelsestype(): Henvendelsestype = when (this) {
 }
 
 private fun List<MeldingConsumerOutput>.sisteSendtDato() = mapNotNull { it.sendtDato }.maxOrNull()
+
+/**
+ * Verdien kommer som fritekst fra kilden, og den logges for at en ny henvendelsestype skal bli
+ * oppdaget. Da må den ikke kunne ta med seg noe annet inn i loggen: linjeskift ville laget en
+ * falsk logglinje, og et fritekstfelt kan i prinsippet inneholde et navn eller en ident.
+ * `SensitiveLogMasker` fanger bare kjente tallmønstre, så verdien begrenses her til tegnene en
+ * enum-verdi faktisk består av, og til en lengde som ikke kan fylle loggen.
+ */
+private fun String.tilLoggbarVerdi(): String = filter { it.isLetterOrDigit() || it == '_' }.take(40)

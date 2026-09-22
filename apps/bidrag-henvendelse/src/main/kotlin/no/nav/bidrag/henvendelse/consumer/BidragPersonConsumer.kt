@@ -82,9 +82,10 @@ class BidragPersonConsumer(
             }
             throw TjenesteFeilException(TJENESTE, exception)
         }
-        if (identer == null) {
-            throw TjenesteFeilException(TJENESTE, IllegalStateException("Tom kropp fra /personidenter"))
-        }
+        // Tom kropp er bidrag-person sin måte å si "fant ikke personen": `PersonIkkeFunnetException`
+        // der er mappet til 204 No Content, ikke 404 (se model/Exceptions.kt i bidrag-person).
+        // Derfor er dette et normalt utfall og ikke en tjenestefeil.
+        if (identer == null) throw PersonIkkeFunnetException()
         return identer.firstOrNull { it.gruppe == Identgruppe.AKTORID && !it.historisk }?.ident
     }
 }

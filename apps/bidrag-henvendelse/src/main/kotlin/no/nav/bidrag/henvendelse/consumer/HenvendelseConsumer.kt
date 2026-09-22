@@ -113,7 +113,7 @@ class HenvendelseConsumer(
             // AbstractRestClient har allerede logget en WARN med hele URL-en og stacktracen før
             // vi kommer hit, så dette normaltilfellet ser ut som en feil i loggen. URL-en er også
             // grunnen til at maskeringen i logback-spring.xml må virke - den inneholder aktøriden.
-            if (!exception.responseBodyAsString.contains("actor", ignoreCase = true)) {
+            if (!exception.responseBodyAsString.contains(UKJENT_AKTØR, ignoreCase = true)) {
                 throw TjenesteFeilException(TJENESTE, exception)
             }
             log.info("Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste.")
@@ -161,6 +161,13 @@ class HenvendelseConsumer(
     }
 
     companion object {
+        /**
+         * Den dokumenterte 404-meldinga fra kilden. Hele setningen matches, ikke bare ordet
+         * "actor": en rutingfeil eller en annen tjeneste i kjeden kan nevne det samme ordet, og da
+         * skal svaret bli 502 framfor en tom liste som skjuler feilen.
+         */
+        private const val UKJENT_AKTØR = "Could not find actor"
+
         /**
          * Kildens default er 50. Brukeroversikten viser en håndfull rader, så 100 holder med god
          * margin - og sier kilden at det finnes flere sider, logges det.

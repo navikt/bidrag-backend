@@ -201,6 +201,34 @@ class HenvendelseIntegrasjonTest {
     }
 
     @Test
+    fun `skal gi 404 når bidrag-person svarer 204 for ukjent person`() {
+        // bidrag-person mapper PersonIkkeFunnetException til 204 No Content, ikke 404 - se
+        // model/Exceptions.kt der. Tom kropp er altså det normale svaret for en ukjent ident.
+        wireMockServer.stubFor(
+            post(urlPathEqualTo("/person/personidenter")).willReturn(aResponse().withStatus(204)),
+        )
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.NOT_FOUND
+        respons.body!! shouldContainJson "\"status\":404"
+    }
+
+    @Test
+    fun `skal gi 502 når 404-kroppen nevner actor uten å være den dokumenterte feilen`() {
+        // En rutingfeil et annet sted i kjeden kan godt nevne ordet, men skal ikke bli tom liste.
+        wireMockServer.stubFor(
+            get(urlPathEqualTo(HENVENDELSESTI)).willReturn(
+                aResponse().withStatus(404).withBody("""{ "message": "No route for actor service" }"""),
+            ),
+        )
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.BAD_GATEWAY
+    }
+
+    @Test
     fun `skal gi 502 når 404 kommer uten den dokumenterte kroppen`() {
         // Proxyen svarer også 404, med tom kropp, på en rute den ikke kjenner - det skjedde da
         // `/api` manglet i basestien. Den feilen skal ikke se ut som en person uten henvendelser.

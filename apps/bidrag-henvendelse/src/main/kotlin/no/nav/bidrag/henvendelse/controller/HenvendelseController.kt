@@ -35,10 +35,12 @@ import org.springframework.web.bind.annotation.RestController
  *       "temagruppe": "FMLI",
  *       "sisteMeldingSendt": "2026-06-28T09:30:00Z"
  *     }
- *   ]
+ *   ],
+ *   "avkortet": false
  * }
  * ```
- * Tom liste er `{ "henvendelser": [] }`, aldri `null`.
+ * Tom liste er `{ "henvendelser": [], "avkortet": false }`, aldri `null`. `avkortet` er sant bare
+ * når kilden har flere sider enn vi henter.
  *
  * Svar når en tjeneste vi er avhengig av feiler (ProblemDetail, RFC 7807):
  * ```json
