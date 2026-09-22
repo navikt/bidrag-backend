@@ -345,6 +345,34 @@ class HenvendelseIntegrasjonTest {
         linje shouldContain "*".repeat(AKTØRID.length)
     }
 
+    @Test
+    fun `skal maskere fødselsnummer i loggen, også inne i en stacktrace`() {
+        // Identen kommer ikke bare fra meldingsteksten: AbstractRestClient logger exception-en, og
+        // et fødselsnummer kan ligge i en URL eller en feilmelding derfra. Encoderen skriver
+        // stacktracen som eget felt, så den må maskeres like godt som selve meldinga.
+        val appender = rotloggeren.getAppender("stdout_json") as ConsoleAppender<ILoggingEvent>
+        val post = loggpost("Oppslag feilet", IllegalStateException("Fant ikke person $FNR"))
+
+        val linje = String(appender.encoder.encode(post))
+
+        linje shouldNotContain FNR
+        linje shouldContain "*".repeat(FNR.length)
+    }
+
+    /**
+     * At auditlinja ikke havner i den vanlige loggen kan ikke observeres her: `additivity="false"`
+     * settes bare i `nais`-profilen, og integrasjonstesten kjører med profilen `test`. Derfor
+     * sjekkes konfigurasjonen i stedet. Det fanger den realistiske feilen - at noen fjerner
+     * attributtet eller flytter loggeren ut av profilen - uten å late som om vi måler oppførsel.
+     */
+    @Test
+    fun `secureLogger skal ikke arve rotloggerens appendere i nais`() {
+        val config = javaClass.getResource("/logback-spring.xml")!!.readText()
+
+        config shouldContain """<logger name="secureLogger" level="INFO" additivity="false">"""
+        config shouldContain """<appender-ref ref="team-logs-secure"/>"""
+    }
+
     /**
      * Auditsporet er hele poenget med `duid`, så det skal *ikke* maskeres. Derfor går det til
      * loggeren `secureLogger` og en umaskert appender - se logback-spring.xml.
@@ -423,12 +451,15 @@ class HenvendelseIntegrasjonTest {
 
     private val rotloggeren get() = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
 
-    private fun loggpost(melding: String) = LoggingEvent(
+    private fun loggpost(
+        melding: String,
+        feil: Throwable? = null,
+    ) = LoggingEvent(
         HenvendelseIntegrasjonTest::class.java.name,
         rotloggeren,
         Level.WARN,
         melding,
-        null,
+        feil,
         null,
     )
 

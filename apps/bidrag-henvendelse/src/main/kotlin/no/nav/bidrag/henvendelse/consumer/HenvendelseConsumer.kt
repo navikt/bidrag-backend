@@ -119,7 +119,10 @@ class HenvendelseConsumer(
             log.info("Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste.")
             return Henvendelsesliste(emptyList(), avkortet = false)
         }
-        if (respons.isNullOrBlank()) return Henvendelsesliste(emptyList(), avkortet = false)
+        // Tom kropp med 200 er ikke et gyldig svar fra kilden - den svarer alltid med konvolutten.
+        if (respons.isNullOrBlank()) {
+            throw TjenesteFeilException(TJENESTE, IllegalStateException("Tom kropp fra henvendelseslista"))
+        }
         // En respons vi ikke klarer å tolke er en feil hos tjenesten vi kaller, ikke hos oss.
         // Uten denne ville Jackson-feilen gått til catch-allen i DefaultRestControllerAdvice og
         // blitt 500 "Ukjent feil", som sender saksbehandleren til feil sted med spørsmålet.
@@ -149,7 +152,12 @@ class HenvendelseConsumer(
                 "Henvendelseslista har flere sider (currentPage=${konvolutt.currentPage}), men vi henter bare den første.",
             )
         }
-        Henvendelsesliste(konvolutt.data, avkortet = konvolutt.hasNextPage == true)
+        // `data` mangler helt: da er det ikke konvolutten vi fikk, uansett hvor gyldig JSON-en er.
+        val data = konvolutt.data ?: throw TjenesteFeilException(
+            TJENESTE,
+            IllegalStateException("Responsen mangler feltet data"),
+        )
+        Henvendelsesliste(data, avkortet = konvolutt.hasNextPage == true)
     }
 
     companion object {

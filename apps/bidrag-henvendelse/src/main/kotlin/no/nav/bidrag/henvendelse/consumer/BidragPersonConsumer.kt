@@ -62,8 +62,13 @@ class BidragPersonConsumer(
         // kaster ikke nødvendigvis den underklassen. Får den en ikke-2xx respons uten at
         // RestTemplate selv har kastet, lager validerOgPakkUt en HttpServerErrorException - med
         // 404 i statusfeltet. Begge er RestClientResponseException.
-        val identer: List<PersonidentDto> = try {
-            postForNonNullEntity(
+        //
+        // `postForEntity` og ikke `postForNonNullEntity`: sistnevnte lager en syntetisk
+        // HttpServerErrorException med status 404 når kroppen er tom, og den ville ikke vært til å
+        // skille fra en ekte 404 her. Et tomt svar er en feil hos tjenesten, ikke en beskjed om at
+        // personen ikke finnes, og saksbehandleren skal ikke få vite det motsatte.
+        val identer: List<PersonidentDto>? = try {
+            postForEntity(
                 uri,
                 HentePersonidenterRequest(
                     ident = personident.verdi,
@@ -76,6 +81,9 @@ class BidragPersonConsumer(
                 throw PersonIkkeFunnetException()
             }
             throw TjenesteFeilException(TJENESTE, exception)
+        }
+        if (identer == null) {
+            throw TjenesteFeilException(TJENESTE, IllegalStateException("Tom kropp fra /personidenter"))
         }
         return identer.firstOrNull { it.gruppe == Identgruppe.AKTORID && !it.historisk }?.ident
     }

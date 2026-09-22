@@ -73,7 +73,13 @@ data class MeldingConsumerOutput(
  * ```
  */
 data class HenvendelseslisteKonvolutt(
-    val data: List<HenvendelseConsumerOutput> = emptyList(),
+    /**
+     * Nullbar med vilje. `"data": []` er et gyldig svar for en person uten henvendelser, mens et
+     * objekt uten `data` i det hele tatt er en respons vi ikke kjenner igjen - og de to skal ikke
+     * se like ut. Uten dette ville en vilkårlig JSON-struktur blitt til en tom liste og sett ut
+     * som et vellykket oppslag.
+     */
+    val data: List<HenvendelseConsumerOutput>? = null,
     val currentPage: Int? = null,
     val pageSize: Int? = null,
     val totalPages: Int? = null,
