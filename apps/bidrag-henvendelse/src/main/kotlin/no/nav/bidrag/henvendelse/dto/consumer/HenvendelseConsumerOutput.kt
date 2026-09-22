@@ -55,8 +55,9 @@ data class MeldingConsumerOutput(
 
 /**
  * Den paginerte konvolutten kilden svarer med, slik `CRM_HenvendelseInfoListRestService` i
- * navikt/crm-henvendelse serialiserer den. Proxyens swagger dokumenterer en ren liste og er
- * utdatert på dette punktet; consumeren tåler begge former.
+ * navikt/crm-henvendelse serialiserer den. Proxyens spesifikasjon dokumenterer den samme
+ * konvolutten som `PaginertHenvendelseListe` (sjekket mot `Api/henvendelse_api.json` 2026-09-22).
+ * Consumeren tåler også en ren liste, slik eldre utgaver av spesifikasjonen beskrev.
  *
  * Personer uten henvendelser gir 200 med tom `data` og `totalPages: 0`, ikke 404.
  *
