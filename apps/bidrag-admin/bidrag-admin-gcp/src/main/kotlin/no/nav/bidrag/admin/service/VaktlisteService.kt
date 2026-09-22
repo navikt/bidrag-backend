@@ -213,7 +213,6 @@ class VaktlisteService(
         LOGGER.warn(e) { "Klarte ikke å tolke dato \"$verdi\" i kolonnen \"$KOLONNE_SIST_VAKTDATO\"." }
         null
     }
-
 }
 
 internal data class VaktlisteRad(
