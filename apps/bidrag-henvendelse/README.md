@@ -67,11 +67,16 @@ Content-Type: application/json
       "temagruppe": "FMLI",
       "sisteMeldingSendt": null
     }
-  ]
+  ],
+  "avkortet": false
 }
 ```
 
-Tom liste er `{ "henvendelser": [] }`, aldri `null`.
+Tom liste er `{ "henvendelser": [], "avkortet": false }`, aldri `null`.
+
+`avkortet` er sant når kilden har flere sider enn vi henter. Vi ber om 100 per side og henter
+bare den første; en person har sjelden i nærheten av så mange henvendelser, men skjer det, skal
+brukeroversikten kunne si fra om at den viser et utvalg.
 
 **Svar ved feil**, som `ProblemDetail` - frontend har typen i `packages/api/src/ProblemDetail.ts`:
 

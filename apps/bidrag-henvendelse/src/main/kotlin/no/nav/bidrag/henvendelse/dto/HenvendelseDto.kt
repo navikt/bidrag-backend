@@ -30,15 +30,21 @@ import java.time.OffsetDateTime
  *       "temagruppe": "FMLI",
  *       "sisteMeldingSendt": null
  *     }
- *   ]
+ *   ],
+ *   "avkortet": false
  * }
  * ```
- * Tom liste er `{ "henvendelser": [] }`, aldri `null`.
+ * Tom liste er `{ "henvendelser": [], "avkortet": false }`, aldri `null`.
  */
 @Schema(name = "Henvendelser")
 data class HenvendelserDto(
     @field:Schema(description = "Henvendelsene til personen, nyeste rekkefølge som fra kilden")
     val henvendelser: List<HenvendelseDto>,
+    @field:Schema(
+        description = "Sant når kilden har flere henvendelser enn vi henter. Brukeroversikten bør da si fra om at " +
+            "den viser et utvalg. Normalt usant - vi henter 100, og en person har sjelden i nærheten av så mange.",
+    )
+    val avkortet: Boolean = false,
 )
 
 /**

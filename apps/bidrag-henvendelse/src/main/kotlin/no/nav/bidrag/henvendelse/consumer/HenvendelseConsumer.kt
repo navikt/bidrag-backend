@@ -72,7 +72,7 @@ class HenvendelseConsumer(
     @param:Value($$"${HENVENDELSE_URL}") private val henvendelseUrl: URI,
     @param:Qualifier(RestConfig.BEAN_HENVENDELSE_REST_TEMPLATE) restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "sf-henvendelse-api") {
-    fun hentHenvendelser(aktørid: String): List<HenvendelseConsumerOutput> {
+    fun hentHenvendelser(aktørid: String): Henvendelsesliste {
         val uri = UriComponentsBuilder
             .fromUri(henvendelseUrl)
             // `api` er proxyens basesti: `Application.kt` i navikt/sf-henvendelse-api-proxy binder
@@ -101,17 +101,25 @@ class HenvendelseConsumer(
                 throw TjenesteFeilException(TJENESTE, exception)
             }
             // Swaggeren dokumenterer 404 som "Could not find actor". Personer uten henvendelser
-            // gir ikke 404 - Apex-koden svarer 200 med tom data-liste - så 404 betyr en aktørid
-            // Salesforce ikke kjenner i det hele tatt. Vi viser tom liste framfor 502: det er
-            // ikke saksbehandleren som har gjort noe feil, og det finnes ingenting å vise.
+            // gir ikke 404 - Apex-koden svarer 200 med tom data-liste - så den responsen betyr en
+            // aktørid Salesforce ikke kjenner i det hele tatt. Vi viser tom liste framfor 502: det
+            // er ikke saksbehandleren som har gjort noe feil, og det finnes ingenting å vise.
+            //
+            // Kroppen må sjekkes, ikke bare statuskoden: proxyen svarer også 404, med tom kropp, på
+            // en rute den ikke kjenner. Det skjedde da `/api` manglet i basestien. Uten denne
+            // sjekken ville en feil HENVENDELSE_URL sett ut som en person uten henvendelser, og
+            // feilen ville blitt stående usett.
             //
             // AbstractRestClient har allerede logget en WARN med hele URL-en og stacktracen før
             // vi kommer hit, så dette normaltilfellet ser ut som en feil i loggen. URL-en er også
             // grunnen til at maskeringen i logback-spring.xml må virke - den inneholder aktøriden.
+            if (!exception.responseBodyAsString.contains("actor", ignoreCase = true)) {
+                throw TjenesteFeilException(TJENESTE, exception)
+            }
             log.info("Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste.")
-            return emptyList()
+            return Henvendelsesliste(emptyList(), avkortet = false)
         }
-        if (respons.isNullOrBlank()) return emptyList()
+        if (respons.isNullOrBlank()) return Henvendelsesliste(emptyList(), avkortet = false)
         // En respons vi ikke klarer å tolke er en feil hos tjenesten vi kaller, ikke hos oss.
         // Uten denne ville Jackson-feilen gått til catch-allen i DefaultRestControllerAdvice og
         // blitt 500 "Ukjent feil", som sender saksbehandleren til feil sted med spørsmålet.
@@ -130,8 +138,8 @@ class HenvendelseConsumer(
      * Swaggeren til proxyen dokumenterer en ren liste. Den er altså utdatert, men vi tåler
      * begge former - det koster to linjer, og BiSys pakker ut `data` på samme vis.
      */
-    private fun tolkRespons(respons: String): List<HenvendelseConsumerOutput> = if (respons.trimStart().startsWith("[")) {
-        commonObjectmapper.readValue(respons, henvendelseListeType)
+    private fun tolkRespons(respons: String): Henvendelsesliste = if (respons.trimStart().startsWith("[")) {
+        Henvendelsesliste(commonObjectmapper.readValue(respons, henvendelseListeType), avkortet = false)
     } else {
         val konvolutt = commonObjectmapper.readValue(respons, HenvendelseslisteKonvolutt::class.java)
         if (konvolutt.hasNextPage == true) {
@@ -141,7 +149,7 @@ class HenvendelseConsumer(
                 "Henvendelseslista har flere sider (currentPage=${konvolutt.currentPage}), men vi henter bare den første.",
             )
         }
-        konvolutt.data
+        Henvendelsesliste(konvolutt.data, avkortet = konvolutt.hasNextPage == true)
     }
 
     companion object {
@@ -157,3 +165,15 @@ class HenvendelseConsumer(
 }
 
 private const val TJENESTE = "sf-henvendelse-api-proxy"
+
+/**
+ * Henvendelsene fra kilden, og om lista er avkortet.
+ *
+ * [avkortet] er sant når kilden sier at det finnes flere sider enn den vi henter. Da må
+ * brukeroversikten kunne si fra om at den viser et utvalg - en stille avkorting er ikke til å
+ * skille fra en person som faktisk har få henvendelser.
+ */
+data class Henvendelsesliste(
+    val henvendelser: List<HenvendelseConsumerOutput>,
+    val avkortet: Boolean,
+)

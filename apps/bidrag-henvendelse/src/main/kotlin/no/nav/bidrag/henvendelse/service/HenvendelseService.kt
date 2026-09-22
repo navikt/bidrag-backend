@@ -36,9 +36,9 @@ class HenvendelseService(
         }
 
         val fraKilden = henvendelseConsumer.hentHenvendelser(aktørid)
-        val henvendelser = fraKilden.mapNotNull { it.tilHenvendelseDto() }
-        loggAvvikIResponsen(fraKilden, antallMappet = henvendelser.size)
-        return HenvendelserDto(henvendelser)
+        val henvendelser = fraKilden.henvendelser.mapNotNull { it.tilHenvendelseDto() }
+        loggAvvikIResponsen(fraKilden.henvendelser, antallMappet = henvendelser.size)
+        return HenvendelserDto(henvendelser, avkortet = fraKilden.avkortet)
     }
 }
 

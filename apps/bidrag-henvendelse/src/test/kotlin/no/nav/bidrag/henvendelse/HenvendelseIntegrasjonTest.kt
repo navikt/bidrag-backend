@@ -197,6 +197,34 @@ class HenvendelseIntegrasjonTest {
 
         respons.statusCode shouldBe HttpStatus.OK
         respons.body!! shouldContainJson "\"henvendelser\":[]"
+        respons.body!! shouldContainJson "\"avkortet\":false"
+    }
+
+    @Test
+    fun `skal gi 502 når 404 kommer uten den dokumenterte kroppen`() {
+        // Proxyen svarer også 404, med tom kropp, på en rute den ikke kjenner - det skjedde da
+        // `/api` manglet i basestien. Den feilen skal ikke se ut som en person uten henvendelser.
+        wireMockServer.stubFor(
+            get(urlPathEqualTo(HENVENDELSESTI)).willReturn(aResponse().withStatus(404)),
+        )
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.BAD_GATEWAY
+        respons.body!! shouldContain "sf-henvendelse-api-proxy"
+    }
+
+    @Test
+    fun `skal melde fra når kilden har flere sider enn vi henter`() {
+        stubHenvendelser(
+            """{ "data": [ { "kjedeId": "a1", "henvendelseType": "CHAT" } ], "currentPage": 1,
+                 "pageSize": 100, "totalPages": 3, "hasNextPage": true }""",
+        )
+
+        val respons = hentHenvendelser(FNR)
+
+        respons.statusCode shouldBe HttpStatus.OK
+        respons.body!! shouldContainJson "\"avkortet\":true"
     }
 
     @Test
