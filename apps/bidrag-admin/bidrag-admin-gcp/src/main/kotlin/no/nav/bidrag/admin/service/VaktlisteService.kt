@@ -1,5 +1,6 @@
 package no.nav.bidrag.admin.service
 
+import com.slack.api.methods.SlackApiTextResponse
 import com.slack.api.methods.request.files.FilesInfoRequest
 import com.slack.api.methods.request.slack_lists.SlackListsItemsListRequest
 import com.slack.api.methods.request.slack_lists.SlackListsItemsUpdateRequest
@@ -84,7 +85,7 @@ class VaktlisteService(
             )
 
         if (!respons.isOk) {
-            throw VaktlisteException("Feil ved henting av vaktlisten $vaktlisteId: ${respons.error}")
+            throw VaktlisteException("Feil ved henting av vaktlisten $vaktlisteId: ${respons.feilmelding()}")
         }
 
         return respons.items.map { it.tilVaktRad(kolonnenøkler) } to kolonnenøkler
@@ -106,7 +107,7 @@ class VaktlisteService(
             )
 
         if (!respons.isOk) {
-            throw VaktlisteException("Feil ved henting av skjema for vaktlisten $vaktlisteId: ${respons.error}")
+            throw VaktlisteException("Feil ved henting av skjema for vaktlisten $vaktlisteId: ${respons.feilmelding()}")
         }
 
         val skjema = respons.file?.listMetadata?.schema
@@ -178,7 +179,7 @@ class VaktlisteService(
             )
 
         if (!respons.isOk) {
-            throw VaktlisteException("Feil ved oppdatering av vaktstatus i vaktlisten $vaktlisteId: ${respons.error}")
+            throw VaktlisteException("Feil ved oppdatering av vaktstatus i vaktlisten $vaktlisteId: ${respons.feilmelding()}")
         }
     }
 
@@ -212,6 +213,11 @@ class VaktlisteService(
     } catch (e: Exception) {
         LOGGER.warn(e) { "Klarte ikke å tolke dato \"$verdi\" i kolonnen \"$KOLONNE_SIST_VAKTDATO\"." }
         null
+    }
+
+    private fun SlackApiTextResponse.feilmelding(): String {
+        val scopeDetaljer = needed?.let { " (mangler scope: \"$it\", token har: \"${provided ?: "ukjent"}\")" } ?: ""
+        return "$error$scopeDetaljer"
     }
 }
 
