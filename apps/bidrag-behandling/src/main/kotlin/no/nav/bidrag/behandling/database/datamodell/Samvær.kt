@@ -39,7 +39,7 @@ open class Samvær(
 ) {
     fun erLik(other: Samvær): Boolean {
         if (rolle.finnBeregnFra() != other.rolle.finnBeregnFra()) return false
-        if (rolle.finnBeregnTil() != other.rolle.finnBeregnTil()) return false
+        if (rolle.opphørsdato != other.rolle.opphørsdato) return false
         if (perioder.size != other.perioder.size) return false
         if (!perioder.all { periode -> other.perioder.any { otherPeriode -> periode.erLik(otherPeriode) } }) return false
         if (rolle.notat
