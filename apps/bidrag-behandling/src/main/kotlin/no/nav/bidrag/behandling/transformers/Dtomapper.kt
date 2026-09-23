@@ -997,10 +997,14 @@ class Dtomapper(
                     rolle.id!! to this.hentBeregnetInntekterForRolle(rolle)
                 }.toList()
                 .associate { it.first to it.second }
-        val valideringsfeilForRolle =
+        val valideringsfeilForRolle = if (!erAvslagForAlle) {
             rollerForInntektsbilde.associate { rolle ->
                 rolle.id!! to this.hentInntekterValideringsfeilV2(rolle)
             }
+        } else {
+            emptyMap()
+        }
+
         val inntektsnotatForRolle =
             rollerForInntektsbilde.associate { rolle ->
                 rolle.id!! to NotatService.henteInntektsnotat(this, rolle.id!!)

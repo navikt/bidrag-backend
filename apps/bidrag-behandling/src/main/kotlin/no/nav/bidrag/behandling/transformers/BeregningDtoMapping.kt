@@ -64,6 +64,7 @@ import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
@@ -174,6 +175,7 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
+import kotlin.compareTo
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
@@ -304,27 +306,36 @@ fun BeregnGebyrResultat.tilDto(
     )
 }
 
-fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnlag = BeregnValgteInntekterGrunnlag(
-    periode =
-    ÅrMånedsperiode(
-        virkningstidspunktEllerSøktFomDato,
-        finnBeregnTilDatoBehandling(),
-    ),
-    opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
-    barnListe =
-    søknadsbarn
-        .filter { it.avslag == null }
-        .filter {
-            rolle.rolletype != Rolletype.BIDRAGSMOTTAKER || it.bidragsmottaker?.ident == null ||
-                it.bidragsmottaker?.ident == rolle.ident
-        }.map { PersonStønad(it.ident!!, it.stønadstype) },
-    gjelderIdent = Personident(rolle.ident!!),
-    grunnlagListe =
-    inntekter
-        .filter { it.erSammeRolle(rolle) }
+fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngen: Boolean = false): BeregnValgteInntekterGrunnlag {
+    val inntekterRolle = inntekter.filter { it.erSammeRolle(rolle) }
+    val inntekter = inntekterRolle
         .filter { it.taMed }
         .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
-        .map {
+        .ifEmpty {
+            if (taMed12MndInntektHvisIngen) {
+                inntekterRolle
+                    .filter { it.type == Inntektsrapportering.AINNTEKT_BEREGNET_12MND }
+                    .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
+            } else {
+                emptyList()
+            }
+        }
+    return BeregnValgteInntekterGrunnlag(
+        periode =
+        ÅrMånedsperiode(
+            virkningstidspunktEllerSøktFomDato,
+            finnBeregnTilDatoBehandling(),
+        ),
+        opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
+        barnListe =
+        søknadsbarn
+            .filter { it.avslag == null }
+            .filter {
+                rolle.rolletype != Rolletype.BIDRAGSMOTTAKER || it.bidragsmottaker?.ident == null ||
+                    it.bidragsmottaker?.ident == rolle.ident
+            }.map { PersonStønad(it.ident!!, it.stønadstype) },
+        gjelderIdent = Personident(rolle.ident!!),
+        grunnlagListe = inntekter.map {
             InntektsgrunnlagPeriode(
                 periode =
                 if (it.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(it.type)) {
@@ -335,7 +346,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnl
                         datoTil,
                     )
                 } else {
-                    ÅrMånedsperiode(it.datoFom!!, it.datoTom?.plusDays(1))
+                    ÅrMånedsperiode(if (taMed12MndInntektHvisIngen) eldsteVirkningstidspunkt else it.datoFom!!, it.datoTom?.plusDays(1))
                 },
                 beløp = it.belop,
                 inntektsrapportering = it.type,
@@ -345,7 +356,8 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnl
                 inntektEiesAvIdent = Personident(it.gjelderIdent!!),
             )
         },
-)
+    )
+}
 
 fun opprettIndeksreguleringsperioder(
     resultat: ResultatBidragsberegningBarn,
