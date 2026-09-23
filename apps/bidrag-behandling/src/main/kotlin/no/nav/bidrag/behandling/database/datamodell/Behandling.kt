@@ -430,9 +430,10 @@ open class Behandling(
         .filter { it.rolle.kreverGrunnlagForBeregning }
         .groupBy { it.rolle.saksnummer }
         .map { (saksnummer, samværForSak) ->
+            val erVirkningLik = erVirkningstidspunktLiktForAlleSaker.find { it.saksnummer == saksnummer } ?: erVirkningstidspunktLiktForAlleSaker.firstOrNull()
             ErLikForAlleBasertPåSak(
                 saksnummer = saksnummer,
-                kanVurdereSamlet = søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }.distinctBy { it.søknadsid }.size <= 1,
+                kanVurdereSamlet = (erVirkningLik == null || erVirkningLik.erLikForAlle) && søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }.distinctBy { it.søknadsid }.size <= 1,
                 erLikForAlle = samværForSak.all { sb1 ->
                     samværForSak.filter { it.id != sb1.id }.all { sb2 -> sb1.erLik(sb2) }
                 },
