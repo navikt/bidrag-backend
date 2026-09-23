@@ -245,19 +245,19 @@ open class Rolle(
         }
         // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
         // Fjern derfor vurdering av gebyr for andre søknader tilhørende samme sak
-        val søknadsiderSomBleOppdatert = gebyrSøknaderForSak.map { it.søknadsid }
-        gebyr
-            .finnAlleGebyrForSak(saksnummer)
-            .filter { !søknadsiderSomBleOppdatert.contains(it.søknadsid) && !it.gjelder18ÅrSøknad }
-            .forEach {
-                it.manueltOverstyrtGebyr =
-                    RolleManueltOverstyrtGebyr(
-                        ilagtGebyr = false,
-                        overstyrGebyr = true,
-                        begrunnelse = "Gebyr ilegges bare en gang per sak",
-                        beregnetIlagtGebyr = false,
-                    )
-            }
+//        val søknadsiderSomBleOppdatert = gebyrSøknaderForSak.map { it.søknadsid }
+//        gebyr
+//            .finnAlleGebyrForSak(saksnummer)
+//            .filter { !søknadsiderSomBleOppdatert.contains(it.søknadsid) && !it.gjelder18ÅrSøknad }
+//            .forEach {
+//                it.manueltOverstyrtGebyr =
+//                    RolleManueltOverstyrtGebyr(
+//                        ilagtGebyr = false,
+//                        overstyrGebyr = true,
+//                        begrunnelse = "Gebyr ilegges bare en gang per sak",
+//                        beregnetIlagtGebyr = false,
+//                    )
+//            }
     }
 
     fun oppdaterGebyr(
@@ -420,10 +420,10 @@ data class GebyrRolle(
             alleGebyrSøknader
                 .filter { søknadsid == null || it.søknadsid == søknadsid }
                 .filter { !it.gjelder18ÅrSøknad }
-                .minByOrNull { it.søknadsid }
+//                .minByOrNull { it.søknadsid }.let { listOfNotNull(it) }
         val gebyr18År = alleGebyrSøknader.filter { søknadsid == null || it.søknadsid == søknadsid }.filter { it.gjelder18ÅrSøknad }
         // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
-        return listOfNotNull(gebyrIkke18År) + gebyr18År
+        return gebyrIkke18År + gebyr18År
     }
 
     fun finnGebyrForSøknad(søknadsid: Long): GebyrRolleSøknad? = gebyrSøknader.find { it.søknadsid == søknadsid }
