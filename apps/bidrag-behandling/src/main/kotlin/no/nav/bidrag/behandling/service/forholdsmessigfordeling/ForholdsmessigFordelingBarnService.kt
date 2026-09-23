@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
@@ -242,46 +243,55 @@ class ForholdsmessigFordelingBarnService(
             }
             return
         }
-        BARN_LOGGER.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingsøknad" }
         barn.forholdsmessigFordeling!!.erRevurdering = true
-        feilregistrerBarnFraFFSøknad(barn)
-        behandlingService.slettRolleFraBehandling(behandling, barn)
-        behandling.roller.remove(barn)
-        secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
-//        if (!barn.harLøpendeBidragFørOpphørEllerLøpende()) {
-//            feilregistrerBarnFraFFSøknad(barn)
-//            behandlingService.slettRolleFraBehandling(behandling, barn)
-//            behandling.roller.remove(barn)
-//            secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
-//        } else {
-//            val løpendeBidrag = behandling.finnSistePeriodeLøpendePeriodeInnenforSøktFomDato(barn)
-//            val skalOppretteFFSøknadMedInnkreving =
-//                løpendeBidrag?.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) == true
-//
-//            val søktFomDato = LocalDate.now().plusMonths(1).withDayOfMonth(1)
-//
-//            val søknad =
-//                søknadService.leggTilEllerOpprettSøknadForRevurderingsbarn(
-//                    behandling,
-//                    barn.ident!!,
-//                    barn.stønadstype,
-//                    barn.forholdsmessigFordeling!!.tilhørerSak,
-//                    søktFomDato,
-//                    skalOppretteFFSøknadMedInnkreving,
-//                )
-//            barn.forholdsmessigFordeling!!.søknader.add(søknad)
-//            barn.årsak = VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
-//            barn.innkrevingstype =
-//                if (skalOppretteFFSøknadMedInnkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING
-//            virkningstidspunktService.oppdaterVirkningstidspunkt(
-//                barn.id,
-//                søktFomDato.withDayOfMonth(1),
-//                behandling,
-//                forrigeVirkningstidspunkt = behandling.eldsteVirkningstidspunkt,
-//            )
-//        }
+        if (UnleashFeatures.GJENOPPRETT_FF_SØKNAD.isEnabled) {
+            slettBarnEllerGjenopprettFFSøknad(barn, behandling)
+        } else {
+            feilregistrerBarnFraFFSøknad(barn)
+            behandlingService.slettRolleFraBehandling(behandling, barn)
+            behandling.roller.remove(barn)
+            secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
+        }
     }
 
+    fun slettBarnEllerGjenopprettFFSøknad(
+        barn: Rolle,
+        behandling: Behandling,
+    ) {
+        BARN_LOGGER.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingsøknad" }
+        if (!barn.harLøpendeBidragFørOpphørEllerLøpende()) {
+            feilregistrerBarnFraFFSøknad(barn)
+            behandlingService.slettRolleFraBehandling(behandling, barn)
+            behandling.roller.remove(barn)
+            secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
+        } else {
+            val løpendeBidrag = behandling.finnSistePeriodeLøpendePeriodeInnenforSøktFomDato(barn)
+            val skalOppretteFFSøknadMedInnkreving =
+                løpendeBidrag?.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) == true
+
+            val søktFomDato = LocalDate.now().plusMonths(1).withDayOfMonth(1)
+
+            val søknad =
+                søknadService.leggTilEllerOpprettSøknadForRevurderingsbarn(
+                    behandling,
+                    barn.ident!!,
+                    barn.stønadstype,
+                    barn.forholdsmessigFordeling!!.tilhørerSak,
+                    søktFomDato,
+                    skalOppretteFFSøknadMedInnkreving,
+                )
+            barn.forholdsmessigFordeling!!.søknader.add(søknad)
+            barn.årsak = VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
+            barn.innkrevingstype =
+                if (skalOppretteFFSøknadMedInnkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING
+            virkningstidspunktService.oppdaterVirkningstidspunkt(
+                barn.id,
+                søktFomDato.withDayOfMonth(1),
+                behandling,
+                forrigeVirkningstidspunkt = behandling.eldsteVirkningstidspunkt,
+            )
+        }
+    }
     private fun opprettNyRolleForBarn(
         nyRolle: OpprettRolleDto,
         request: OppdaterBarnFraFFRequest,
