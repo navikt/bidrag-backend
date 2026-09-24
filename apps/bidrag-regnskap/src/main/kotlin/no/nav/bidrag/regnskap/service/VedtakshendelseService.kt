@@ -185,6 +185,13 @@ class VedtakshendelseService(
 
     private fun behandleEndringAvMottaker(vedtakHendelse: VedtakHendelse) {
         val endringer = vedtakHendelse.stønadsendringListe
+            ?.filter { stønadsendring ->
+                erInnkrevingOgEndring(
+                    "Endring av mottaker (vedtakId: ${vedtakHendelse.id}, sak: ${stønadsendring.sak.verdi}",
+                    stønadsendring.innkreving,
+                    stønadsendring.beslutning,
+                )
+            }
             ?.map { stønadsendring ->
                 Triple(
                     stønadsendring.sak.verdi,
