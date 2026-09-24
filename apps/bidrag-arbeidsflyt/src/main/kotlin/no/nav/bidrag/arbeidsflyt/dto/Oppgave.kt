@@ -6,6 +6,7 @@ import no.nav.bidrag.arbeidsflyt.model.ENHET_FAGPOST
 import no.nav.bidrag.arbeidsflyt.model.isBidJournalpostId
 import no.nav.bidrag.arbeidsflyt.model.journalpostMedBareBIDPrefix
 import no.nav.bidrag.arbeidsflyt.model.tilFagområdeBeskrivelse
+import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfo
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.commons.util.VirkedagerProvider
@@ -506,8 +507,9 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         return this
     }
 
-    fun overforTilSaksbehandler(nyTilordnetRessurs: String): OppdaterOppgave {
+    fun overforTilSaksbehandler(nyTilordnetRessurs: String, nyTildeltEnhetsnr: String): OppdaterOppgave {
         tilordnetRessurs = nyTilordnetRessurs
+        tildeltEnhetsnr = nyTildeltEnhetsnr
         _hasChanged = true
         return this
     }
@@ -536,14 +538,14 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         }
 
         if (erTilordnetRessursEndret) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra $eksisterendeTilordnetRessurs til $tilordnetRessurs\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs, tildeltEnhetsnr)} til ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr)}\r\n"
         }
         if (erTilordnetRessursEndretFraIkkeValgtTilValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til $tilordnetRessurs\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr)}\r\n"
         }
 
         if (erTilordnetRessursEndretFraValgtTilIkkeValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra $eksisterendeTilordnetRessurs til ikke valgt\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr!!)} til ikke valgt\r\n"
         }
 
         if (nyBeskrivelse.isNotEmpty()) {
@@ -562,7 +564,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = eksisterendeTilordnetRessurs?.isNotEmpty() == true && tilordnetRessurs?.isEmpty() == true
     private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = eksisterendeTilordnetRessurs?.isEmpty() == true && tilordnetRessurs?.isNotEmpty() == true
     private val erTilordnetRessursEndret get() = !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
-        !erTilordnetRessursEndretFraIkkeValgtTilValgt &&
+        !erTilordnetRessursEndretFraIkkeValgtTilValgt && (!tilordnetRessurs.isNullOrEmpty() && !eksisterendeTilordnetRessurs.isNullOrEmpty()) &&
         eksisterendeTilordnetRessurs != tilordnetRessurs
     private val erEnhetEndret get() = tildeltEnhetsnr != null && (eksisterendeTildeltEnhet) != tildeltEnhetsnr
 }

@@ -43,7 +43,7 @@ class OppgaveService(
             .filter { it.tilordnetRessurs != oppgave.tilordnetRessurs }.forEach {
                 oppdaterOppgave(
                     OppdaterOppgave(it)
-                        .overforTilSaksbehandler(oppgave.tilordnetRessurs!!),
+                        .overforTilSaksbehandler(oppgave.tilordnetRessurs!!, oppgave.tildeltEnhetsnr!!),
                 )
             }
     }
