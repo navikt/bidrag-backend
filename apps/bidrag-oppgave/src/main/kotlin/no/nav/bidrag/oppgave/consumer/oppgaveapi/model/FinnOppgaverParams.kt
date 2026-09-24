@@ -30,7 +30,7 @@ data class FinnOppgaverParams(
     /** Orgnr til organisasjonen oppgavene er opprettet for */
     val orgnr: List<String>? = null,
     /** Begrensning i antall returnerte oppgaver */
-    val limit: Long? = 10,
+    val limit: Int? = null,
     /** Offset for paginering i søk */
-    val offset: Long? = null,
+    val offset: Int? = null,
 )

@@ -3,17 +3,9 @@ package no.nav.bidrag.oppgave
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.core.env.MapPropertySource
-import org.springframework.test.context.ContextConfiguration
-
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(initializers = [MockOidcServerInitializer::class])
-annotation class IntegrationTest
 
 object MockOidcServer {
     const val AZURE_APP_CLIENT_ID = "bidrag-oppgave"
