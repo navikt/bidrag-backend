@@ -320,7 +320,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -341,7 +341,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -362,7 +362,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: prod-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}

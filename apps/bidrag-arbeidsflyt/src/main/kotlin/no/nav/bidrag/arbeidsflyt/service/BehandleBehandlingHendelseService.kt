@@ -132,55 +132,61 @@ class BehandleBehandlingHendelseService(
         try {
             if (erBehandlingAvsluttet(hendelse)) return
             if (behandlingDetaljer == null) return
-            if (behandlingDetaljer.forholdsmessigFordeling != null && behandling.oppgaverOverførtEtterFFOpprettet == null) {
-                if (behandlingDetaljer.forholdsmessigFordeling.overførtTilEnhet != null) {
-                    val ff = behandlingDetaljer.forholdsmessigFordeling
-                    val søknader =
-                        hendelse.barn
-                            .filter { it.søknadsid != null }
-                            .filter { !erAvsluttet(it.søknadsid) }
-                    søknader.forEach { søknad ->
-                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
-                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
-                        oppgave.dataForHendelse
-                            .filter { !it.erStatusKategoriAvsluttet }
-                            .filter { it.tildeltEnhetsnr != ff.overførtTilEnhet }
-                            .forEach {
-                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til enhet ${ff.overførtTilEnhet} etter FF ble opprettet." }
-                                oppgaveService
-                                    .overforOppgave(it, null, ff.overførtTilEnhet)
-                            }
+            val ff = behandlingDetaljer.forholdsmessigFordeling ?: return
+
+            if (behandling.oppgaverOverførtEtterFFOpprettet == null) {
+                if (ff.overførtTilEnhet != null) {
+                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = ff.opprettetAvSaksbehandler, tilEnhet = ff.overførtTilEnhet) {
+                        it.tildeltEnhetsnr != ff.overførtTilEnhet
                     }
                 } else {
-                    val ff = behandlingDetaljer.forholdsmessigFordeling
                     if (ff.opprettetAvSaksbehandler == null) {
                         secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
                         return
                     }
-                    val søknader =
-                        hendelse.barn
-                            .filter { it.søknadsid != null }
-                            .filter { !erAvsluttet(it.søknadsid) }
-                    søknader.forEach { søknad ->
-                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
-                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
-                        oppgave.dataForHendelse
-                            .filter { !it.erStatusKategoriAvsluttet }
-                            .filter { it.tilordnetRessurs != ff.opprettetAvSaksbehandler }
-                            .forEach {
-                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler ${ff.opprettetAvSaksbehandler} etter FF ble opprettet." }
-                                oppgaveService
-                                    .overforOppgave(it, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet)
-                            }
+                    overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
+                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler
                     }
                 }
 
                 // Forsikre at oppgaver ikke overføres flere ganger hvis feks SB manuelt overfører til en annen
                 behandling.oppgaverOverførtEtterFFOpprettet = LocalDateTime.now()
+            } else {
+                if (ff.opprettetAvSaksbehandler == null) {
+                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
+                    return
+                }
+                overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
+                    // Overfør nye oppgaver til saksbehandler
+                    it.tilordnetRessurs == null
+                }
             }
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved overføring av oppgaver etter FF er opprettet for behandling ${behandling.behandlingsid} og hendelse $hendelse" }
         }
+    }
+
+    private fun overførOppgaverEtterFF(
+        hendelse: BehandlingHendelse,
+        behandling: Behandling,
+        tilSaksbehandler: String?,
+        tilEnhet: String?,
+        skalOverføres: (OppgaveData) -> Boolean,
+    ) {
+        hendelse.barn
+            .filter { it.søknadsid != null }
+            .filter { !erAvsluttet(it.søknadsid) }
+            .forEach { søknad ->
+                val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
+                secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
+                oppgave.dataForHendelse
+                    .filter { !it.erStatusKategoriAvsluttet }
+                    .filter(skalOverføres)
+                    .forEach {
+                        secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler $tilSaksbehandler / enhet $tilEnhet etter FF ble opprettet." }
+                        oppgaveService.overforOppgave(it, tilSaksbehandler, tilEnhet)
+                    }
+            }
     }
 
     private fun erBehandlingAvsluttet(hendelse: BehandlingHendelse): Boolean {
