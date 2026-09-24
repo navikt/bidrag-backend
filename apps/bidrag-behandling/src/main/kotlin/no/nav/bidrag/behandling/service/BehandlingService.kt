@@ -233,6 +233,7 @@ class BehandlingService(
                     søknadBleSlettet = true,
                 )
                 behandling.bidragspliktig?.fjernGebyr(søknadsid)
+                sendOppdatertHendelse(behandling.id!!, false)
             }
         } else {
             logiskSlettBehandling(behandling)
@@ -659,7 +660,8 @@ class BehandlingService(
         ikkeHentGrunnlag: Boolean = false,
     ): Behandling {
         val behandling = hentBehandlingById(behandlingsid)
-        if (!ikkeHentGrunnlag) {
+        val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
+        if (!ikkeHentGrunnlag && !erVedtakFattet) {
             if (behandling.erIForholdsmessigFordeling) {
                 forholdsmessigFordelingService?.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling).ifTrue {
                     behandlingRepository.save(behandling)
