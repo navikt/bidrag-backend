@@ -3,6 +3,7 @@ package no.nav.bidrag.oppgave.service
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.controller.FinnOppgaverRequest
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
 import org.springframework.stereotype.Service
@@ -13,26 +14,23 @@ class OppgaveService(
     private val oppgaveClient: OppgaveClient,
 ) {
 
-    fun hentOppgaverForSak(saksnummer: String): List<OppgaveDto> = oppgaveClient
+    fun finnOppgaver(query: FinnOppgaverRequest): List<OppgaveDto> = oppgaveClient
         .finnOppgaver(
-            FinnOppgaverParams(
-                saksreferanse = listOf(saksnummer),
-                tema = listOf(FellesKodeverkTema.BID),
-                statuser = statuserViSokerEtter,
-            ),
+            query.toOppgaveParams(),
         )
         .oppgaver
         .orEmpty()
         .map { it.tilBidragOppgave() }
-}
 
-private val statuserViSokerEtter = listOf(
-    OppgaveApiDto.Status.OPPRETTET,
-    OppgaveApiDto.Status.AAPNET,
-    OppgaveApiDto.Status.UNDER_BEHANDLING,
-    OppgaveApiDto.Status.FERDIGSTILT,
-    OppgaveApiDto.Status.FEILREGISTRERT,
-)
+    private fun FinnOppgaverRequest.toOppgaveParams(): FinnOppgaverParams = FinnOppgaverParams(
+        saksreferanse = saksnummer?.let { listOf(it) },
+        aktoerId = aktoerId?.let { listOf(it) },
+        tildeltEnhetsnr = enhetsnummer,
+        tilordnetRessurs = saksbehandler,
+        tema = listOf(FellesKodeverkTema.BID),
+        statuskategori = "AAPEN",
+    )
+}
 
 private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     id = id.verdi,
