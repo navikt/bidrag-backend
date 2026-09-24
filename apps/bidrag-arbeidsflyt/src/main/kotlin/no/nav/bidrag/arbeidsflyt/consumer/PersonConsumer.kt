@@ -47,9 +47,9 @@ class PersonConsumer(
 
         return try {
             postForEntity<PersonDto>(
-                    hentPersonUri,
-                    PersonRequest(Personident(ident)),
-                )
+                hentPersonUri,
+                PersonRequest(Personident(ident)),
+            )
         } catch (statusException: HttpStatusCodeException) {
             if (statusException.statusCode.is4xxClientError) {
                 throw HentPersonFeiletFunksjoneltException("Det skjedde en feil ved henting av person $ident", statusException)

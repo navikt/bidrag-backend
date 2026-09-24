@@ -1,9 +1,9 @@
 package no.nav.bidrag.arbeidsflyt.consumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.net.URI
 import no.nav.bidrag.arbeidsflyt.model.HentJournalpostFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.HentJournalpostFeiletTekniskException
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.dokument.JournalpostResponse
 import org.springframework.beans.factory.annotation.Qualifier
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
+import java.net.URI
 
 @Service
 class BidragDokumentConsumer(
@@ -51,13 +52,13 @@ class BidragDokumentConsumer(
         } catch (e: HttpStatusCodeException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
                 // Should not happen in production. Logging error to be notified
-                LOGGER.error(e) { "Fant ikke journalpost $journalpostId" }
+                LOGGER.error(e) { "Fant ikke journalpost ${journalpostId.sanitizeForLog()}" }
                 return null
             }
 
             val errorMessage = "Det skjedde en feil ved henting av journalpost $journalpostId"
             if (e.statusCode.is4xxClientError) {
-                LOGGER.error(e) { errorMessage }
+                LOGGER.error(e) { errorMessage.sanitizeForLog() }
                 throw HentJournalpostFeiletFunksjoneltException(errorMessage, e)
             }
             throw HentJournalpostFeiletTekniskException(errorMessage, e)

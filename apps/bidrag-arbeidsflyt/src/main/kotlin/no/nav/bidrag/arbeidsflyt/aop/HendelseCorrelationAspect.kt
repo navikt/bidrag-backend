@@ -1,14 +1,16 @@
 package no.nav.bidrag.arbeidsflyt.aop
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.model.CORRELATION_ID
 import no.nav.bidrag.commons.CorrelationId
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.After
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
-import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.stereotype.Component
 
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Component
 class HendelseCorrelationAspect {
     companion object {
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(HendelseCorrelationAspect::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @Before(value = "execution(* no.nav.bidrag.arbeidsflyt.hendelse.KafkaDLQRetryScheduler.processMessages(..))")
@@ -37,14 +39,14 @@ class HendelseCorrelationAspect {
 
             if (correlationIdJsonNode == null) {
                 val correlationId = CorrelationId.generateTimestamped("unknown").get()
-                LOGGER.warn("Unable to find correlation Id in '${hendelse.trim(' ')}', using '$correlationId'")
+                secureLogger.warn { "Unable to find correlation Id in '${hendelse.trim(' ').sanitizeForLog()}', using '$correlationId'" }
                 MDC.put(CORRELATION_ID, correlationId)
             } else {
                 val correlationId = CorrelationId.existing(correlationIdJsonNode.asText())
                 MDC.put(CORRELATION_ID, correlationId.get())
             }
         } catch (e: Exception) {
-            LOGGER.error("Unable to parse '$hendelse': ${e.javaClass.simpleName}: ${e.message}")
+            secureLogger.error(e) { "Unable to parse hendelse '${hendelse.sanitizeForLog()}'" }
         }
     }
 

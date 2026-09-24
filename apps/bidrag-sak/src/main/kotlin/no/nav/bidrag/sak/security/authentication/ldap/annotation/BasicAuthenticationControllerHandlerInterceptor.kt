@@ -1,12 +1,12 @@
 package no.nav.bidrag.sak.security.authentication.ldap.annotation
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.sak.security.SecurityUtils
 import no.nav.bidrag.sak.security.authentication.ldap.LdapUserService
 import no.nav.bidrag.sak.security.exception.BasicNotAuthenticatedException
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -14,7 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 class BasicAuthenticationControllerHandlerInterceptor(
     private val ldapUserService: LdapUserService,
 ) : HandlerInterceptor {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = KotlinLogging.logger {}
 
     private enum class AuthenticationMethod {
         Basic,
@@ -34,7 +34,7 @@ class BasicAuthenticationControllerHandlerInterceptor(
                     authHeader.contains(AuthenticationMethod.Basic.toString()) &&
                     handleProtectedWithBasicAnnotation(authHeader, protectedWithBasic.groups)
                 ) {
-                    logger.debug("Basic authentication succeeded!")
+                    logger.debug { "Basic authentication succeeded!" }
                     true
                 } else {
                     throw BasicNotAuthenticatedException(
@@ -54,14 +54,14 @@ class BasicAuthenticationControllerHandlerInterceptor(
     private fun getProtectedWithBasicAnnotation(handlerMethod: HandlerMethod): ProtectedWithBasic? {
         val methodBasicAnnotation = handlerMethod.getMethodAnnotation(ProtectedWithBasic::class.java)
         return if (methodBasicAnnotation != null) {
-            logger.debug("method $handlerMethod marked @ProtectedWithBasic")
+            logger.debug { "method $handlerMethod marked @ProtectedWithBasic" }
             methodBasicAnnotation
         } else {
             val method = handlerMethod.method
             val declaringClass = method.declaringClass
             val classBasicAnnotation = declaringClass.getAnnotation(ProtectedWithBasic::class.java)
             if (classBasicAnnotation != null) {
-                logger.debug("Class $declaringClass marked @ProtectedWithBasic")
+                logger.debug { "Class $declaringClass marked @ProtectedWithBasic" }
             }
             classBasicAnnotation
         }
@@ -77,14 +77,10 @@ class BasicAuthenticationControllerHandlerInterceptor(
         return try {
             userIsAuthenticated =
                 ldapUserService.authenticate(loginCredentials[0], loginCredentials[1], listOf(*groups))
-            logger.debug(
-                "User {} was successfully authenticated: {}",
-                loginCredentials[0],
-                userIsAuthenticated,
-            )
+            logger.debug { "User ${loginCredentials[0].sanitizeForLog()} was successfully authenticated: $userIsAuthenticated" }
             userIsAuthenticated
         } catch (e: Exception) {
-            logger.warn("An error occurred when looking up user {} in AD", loginCredentials[0], e)
+            logger.warn(e) { "An error occurred when looking up user ${loginCredentials[0].sanitizeForLog()} in AD" }
             throw BasicNotAuthenticatedException("Basic user authentication failed")
         }
     }

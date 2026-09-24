@@ -9,8 +9,6 @@ import no.nav.bidrag.arbeidsflyt.service.OppgaveService
 import no.nav.bidrag.arbeidsflyt.service.OrganisasjonService
 import no.nav.bidrag.arbeidsflyt.service.erFarskap
 import no.nav.bidrag.transport.dokument.BidragEnhet
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.config.BeanDefinition.SCOPE_PROTOTYPE
 import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
@@ -74,7 +72,7 @@ class OppdaterOppgaveFraHendelse(
         val erVurderDokumentOppgaveUtenJournalpost =
             oppgave.erAapenVurderDokumentOppgave() && !oppgave.hasJournalpostId
         if (erVurderDokumentOppgaveUtenJournalpost) {
-            LOGGER.info{ "Oppgave ${oppgave.id} har oppgavetype=${oppgave.oppgavetype} med tema BID men har ingen tilknyttet journalpost. Endrer oppgavetype til ${OppgaveType.VURD_HENV}" }
+            LOGGER.info { "Oppgave ${oppgave.id} har oppgavetype=${oppgave.oppgavetype} med tema BID men har ingen tilknyttet journalpost. Endrer oppgavetype til ${OppgaveType.VURD_HENV}" }
             oppdaterOppgave.endreOppgavetype(OppgaveType.VURD_HENV)
         }
         return this
@@ -88,22 +86,26 @@ class OppdaterOppgaveFraHendelse(
 
     private fun overforOppgaveTilFarskapEnhet() {
         val tildeltEnhetsnr = BidragEnhet.ENHET_FARSKAP
-        LOGGER.info {"Oppgave ${oppgave.id} er returoppgave som har journalpost tema FAR. Oppgaven er tildelt ${oppgave.tildeltEnhetsnr} som ikke er farskapenhet. Overfører til ${BidragEnhet.ENHET_FARSKAP}" }
+        LOGGER.info { "Oppgave ${oppgave.id} er returoppgave som har journalpost tema FAR. Oppgaven er tildelt ${oppgave.tildeltEnhetsnr} som ikke er farskapenhet. Overfører til ${BidragEnhet.ENHET_FARSKAP}" }
         oppdaterOppgave.overforTilEnhet(tildeltEnhetsnr)
     }
 
     private fun overforOppgaveTilJournalforendeEnhet(oppgaveHendelse: OppgaveData) {
         val tildeltEnhetsnr = arbeidsfordelingService.hentArbeidsfordeling(oppgaveHendelse.aktoerId)
-        LOGGER.info {"Oppgave ${oppgaveHendelse.id} har oppgavetype=${oppgaveHendelse.oppgavetype} med tema BID men ligger på en ikke journalførende " +
-                "enhet ${oppgaveHendelse.tildeltEnhetsnr}. Overfører oppgave fra ${oppgaveHendelse.tildeltEnhetsnr} til $tildeltEnhetsnr."}
+        LOGGER.info {
+            "Oppgave ${oppgaveHendelse.id} har oppgavetype=${oppgaveHendelse.oppgavetype} med tema BID men ligger på en ikke journalførende " +
+                "enhet ${oppgaveHendelse.tildeltEnhetsnr}. Overfører oppgave fra ${oppgaveHendelse.tildeltEnhetsnr} til $tildeltEnhetsnr."
+        }
         oppdaterOppgave.overforTilEnhet(tildeltEnhetsnr.verdi)
     }
 
     private fun endreOppgaveTypeTilJournalforingEllerFerdigstill(oppgaveHendelse: OppgaveData) {
         val oppgaver = oppgaveService.finnAapneJournalforingOppgaverForJournalpost(oppgaveHendelse.journalpostId!!)
         if (oppgaver.harJournalforingsoppgaver()) {
-            LOGGER.info {"Oppgave ${oppgaveHendelse.id} har oppgavetype=${oppgaveHendelse.oppgavetype} med tema BID men tilhørende journalpost har status MOTTATT. " +
-                        "Journalposten har allerede en journalføringsoppgave med tema BID. Ferdigstiller oppgave." }
+            LOGGER.info {
+                "Oppgave ${oppgaveHendelse.id} har oppgavetype=${oppgaveHendelse.oppgavetype} med tema BID men tilhørende journalpost har status MOTTATT. " +
+                    "Journalposten har allerede en journalføringsoppgave med tema BID. Ferdigstiller oppgave."
+            }
             oppdaterOppgave.ferdigstill()
         } else {
             LOGGER.info { "Oppgave ${oppgaveHendelse.id} har oppgavetype=${oppgaveHendelse.oppgavetype} med tema BID men tilhørende journalpost har status MOTTATT. Endrer oppgave til journalføringsoppgave" }

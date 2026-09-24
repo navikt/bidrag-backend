@@ -228,19 +228,19 @@ class BehandleOppgaveHendelseService(
         oppgave: OppgaveData,
     ) {
         try {
-            secureLogger.info{
-                    "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med " +
-                            buildList {
-                                add("oppgaveId ${oppgaveHendelse.oppgave.oppgaveId}")
-                                add("versjon ${oppgaveHendelse.oppgave.versjon}")
-                                add("opgpavetype ${oppgaveHendelse.oppgave.kategorisering?.oppgavetype}")
-                                add("tema ${oppgaveHendelse.oppgave.kategorisering?.tema}")
-                                add("journalpostId ${oppgave.journalpostId}")
-                                add("tildelt ${oppgaveHendelse.oppgave.tilordning?.navIdent} (enhet ${oppgaveHendelse.oppgave.tilordning?.enhetsnr})")
-                                add("utførtAv ${oppgaveHendelse.utfortAv?.navIdent} (enhet ${oppgaveHendelse.utfortAv?.enhetsnr})")
-                                add("hendelse $oppgaveHendelse")
-                            }.joinToString(", ")
-                }
+            secureLogger.info {
+                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med " +
+                    buildList {
+                        add("oppgaveId ${oppgaveHendelse.oppgave.oppgaveId}")
+                        add("versjon ${oppgaveHendelse.oppgave.versjon}")
+                        add("opgpavetype ${oppgaveHendelse.oppgave.kategorisering?.oppgavetype}")
+                        add("tema ${oppgaveHendelse.oppgave.kategorisering?.tema}")
+                        add("journalpostId ${oppgave.journalpostId}")
+                        add("tildelt ${oppgaveHendelse.oppgave.tilordning?.navIdent} (enhet ${oppgaveHendelse.oppgave.tilordning?.enhetsnr})")
+                        add("utførtAv ${oppgaveHendelse.utfortAv?.navIdent} (enhet ${oppgaveHendelse.utfortAv?.enhetsnr})")
+                        add("hendelse $oppgaveHendelse")
+                    }.joinToString(", ")
+            }
         } catch (e: Exception) {
             LOGGER.error(e) { "Det skjedde en feil ved logging av hendelse" }
         }

@@ -1,10 +1,10 @@
 package no.nav.bidrag.person.hendelse.integrasjon.kontoregister
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.prosess.Kontoendringsbehandler
 import no.nav.person.endringsmelding.v1.Endringsmelding
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.messaging.handler.annotation.Payload
@@ -29,29 +29,26 @@ class Kontoendringsmottak(
         @Payload(required = false) endringsmelding: Endringsmelding?,
         cr: ConsumerRecord<String, Endringsmelding?>,
     ) {
-        slog.info(
-            "Kontoregisterendringsmelding mottatt: Record key={}, value={}, value={}",
-            cr.key(),
-            cr.value(),
-            cr.offset(),
-        )
+        secureLogger.info {
+            "Kontoregisterendringsmelding mottatt: Record key=${cr.key()}, value=${cr.value()}, value=${cr.offset()}"
+        }
 
         if (harGyldigFormat(endringsmelding)) {
             kontoendringsbehandler.publisere(endringsmelding?.kontohaver.toString())
-            slog.info("Kontoendring publisert for kontoeier {}", endringsmelding?.kontohaver)
+            secureLogger.info { "Kontoendring publisert for kontoeier ${endringsmelding?.kontohaver}" }
         }
     }
 
     fun harGyldigFormat(endringsmelding: Endringsmelding?): Boolean {
         if (endringsmelding == null) {
-            log.warn("Innhold mangler i mottatt endringsmelding.")
+            log.warn { "Innhold mangler i mottatt endringsmelding." }
             return false
         } else if (endringsmelding.kontohaver.isNullOrEmpty()) {
-            log.warn("Kontohaver mangler i mottatt endringsmelding.")
+            log.warn { "Kontohaver mangler i mottatt endringsmelding." }
             return false
         } else if (!harGylidgFormat(endringsmelding.kontohaver.toString())) {
-            log.warn("Kontohavers personident har ikke gyldig format.")
-            slog.warn("Kontohavers personident (${endringsmelding.kontohaver}) har ikke gyldig format.")
+            log.warn { "Kontohavers personident har ikke gyldig format." }
+            secureLogger.warn { "Kontohavers personident (${endringsmelding.kontohaver}) har ikke gyldig format." }
             return false
         }
 
@@ -61,7 +58,6 @@ class Kontoendringsmottak(
     fun harGylidgFormat(personident: String): Boolean = personident.isNotEmpty() && (personident.length == 11 || personident.length == 13)
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
-        val slog: Logger = LoggerFactory.getLogger("secureLogger")
+        val log = KotlinLogging.logger {}
     }
 }

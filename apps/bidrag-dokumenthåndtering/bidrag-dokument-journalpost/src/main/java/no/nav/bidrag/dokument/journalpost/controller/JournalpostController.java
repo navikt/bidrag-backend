@@ -2,6 +2,7 @@ package no.nav.bidrag.dokument.journalpost.controller;
 
 import static java.util.stream.Collectors.toList;
 import static no.nav.bidrag.commons.util.KildesystemIdenfikator.PREFIX_BIDRAG_COMPLETE;
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.dokument.journalpost.BidragDokumentJournalpost.SECURE_LOGGER;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,7 +92,7 @@ public class JournalpostController {
       @ApiResponse(responseCode = "400", description = "Opprett journalpost kalt med ugyldig data"),
   })
   public ResponseEntity<OpprettJournalpostResponse> opprettJournalpost(@RequestBody OpprettJournalpostRequest opprettJournalpostRequest) {
-    SECURE_LOGGER.info("Oppretter journalpost {}", opprettJournalpostRequest);
+    SECURE_LOGGER.info("Oppretter journalpost {}", sanitizeForLog(opprettJournalpostRequest));
 
     return ResponseEntity.ok(opprettJournalpostService.opprettJournalpost(opprettJournalpostRequest));
   }
@@ -110,7 +111,7 @@ public class JournalpostController {
   public ResponseEntity<List<JournalpostDto>> hentJournal(
       @PathVariable String saksnummer, @RequestParam List<String> fagomrade, @RequestParam(required = false) Boolean medFeilforte
   ) {
-    LOGGER.info("Henter journal for sak {} med fagområder {} og medFeilforte {}", saksnummer, fagomrade, medFeilforte);
+    LOGGER.info("Henter journal for sak {} med fagområder {} og medFeilforte {}", sanitizeForLog(saksnummer), sanitizeForLog(fagomrade), medFeilforte);
 
     // Kaster exception med HttpStatus.FORBIDDEN (403) hvis tilgangskontroll feiler. 204 hvis sak mangler
     tilgangskontrollService.sjekkTilgangSak(saksnummer);
@@ -156,13 +157,10 @@ public class JournalpostController {
     JournalpostResponseIntern journalpostResponseIntern;
 
     if (muligSaksnummer.isPresent()) {
-      LOGGER.info("Henter journalpost {} med saksnummer {}", bidJournalpostId, saksnummer);
-
       // Kaster exception med HttpStatus.FORBIDDEN (403) hvis tilgangskontroll feiler. 204 hvis sak mangler
       tilgangskontrollService.sjekkTilgangSak(saksnummer);
       journalpostResponseIntern = journalpostService.hentJournalpost(saksnummer, kildesystemIdenfikator.hentJournalpostId());
     } else {
-      LOGGER.info("Henter journalpost {}", bidJournalpostId);
       journalpostResponseIntern = journalpostService.hentJournalpost(kildesystemIdenfikator.hentJournalpostId());
 
       // Kaster exception med HttpStatus.FORBIDDEN (403) hvis tilgangskontroll feiler. 204 hvis sak mangler
@@ -177,7 +175,7 @@ public class JournalpostController {
       throw new JournalpostIkkeFunnetException("Fant ikke journalpost med id: " + kildesystemIdenfikator.getPrefiksetJournalpostId());
     }
 
-    SECURE_LOGGER.info("Hentet journalpost med innhold: {}", journalpostResponseIntern.getJournalpost());
+    SECURE_LOGGER.info("Hentet journalpost med innhold: {}", sanitizeForLog(journalpostResponseIntern.getJournalpost()));
 
     return new ResponseEntity<>(journalpostResponseIntern.tilJournalpostResponse(), HttpStatus.OK);
   }
@@ -197,14 +195,6 @@ public class JournalpostController {
       @PathVariable String bidJournalpostId,
       @Parameter(name = "saksnummer", description = "journalposten tilhører sak") @RequestParam(required = false) String saksnummer
   ) {
-    var muligSak = Optional.ofNullable(saksnummer);
-
-    if (muligSak.isPresent()) {
-      LOGGER.info("Henter avvik for journalpost {} og saksnummer {}", bidJournalpostId, saksnummer);
-    } else {
-      LOGGER.info("Henter avvik for journalpost {}", bidJournalpostId);
-    }
-
     var kildesystemIdenfikator = new KildesystemIdenfikator(bidJournalpostId);
 
     if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
@@ -227,7 +217,7 @@ public class JournalpostController {
 
     var listeMedAvvikForJournalpost = finnAvvik.hentListeMedAvvik();
 
-    LOGGER.info("Hentet avvik {} for journalpost {}", listeMedAvvikForJournalpost, bidJournalpostId);
+    LOGGER.info("Hentet avvik {} for journalpost {}", sanitizeForLog(listeMedAvvikForJournalpost), sanitizeForLog(bidJournalpostId));
 
     return new ResponseEntity<>(listeMedAvvikForJournalpost, HttpStatus.OK);
   }
@@ -260,8 +250,7 @@ public class JournalpostController {
       @RequestHeader(EnhetFilter.X_ENHET_HEADER) List<String> enheter
   ) {
     String enhet = !enheter.isEmpty() ? enheter.get(0) : null;
-    LOGGER.info("Behandler avvik for journalpost {} med avvikType {}", bidJournalpostId, avvikshendelse.getAvvikType());
-    SECURE_LOGGER.info("Behandler avvik for journalpost {} med avvikHendelse {}", bidJournalpostId, avvikshendelse);
+    SECURE_LOGGER.info("Behandler avvik for journalpost {} med avvikHendelse {}", sanitizeForLog(bidJournalpostId), sanitizeForLog(avvikshendelse));
 
     var kildesystemIdenfikator = new KildesystemIdenfikator(bidJournalpostId);
 
@@ -283,7 +272,7 @@ public class JournalpostController {
           "Ugyldig avvik: avvikshendelse: %s, mulig avvik: %s, enhet: %s", avvikshendelse, muligAvvikstype, enhet
       );
 
-      LOGGER.warn(message);
+      LOGGER.warn(sanitizeForLog(message));
 
       return new ResponseEntity<>(WebUtil.INSTANCE.initHttpHeadersWith(HttpHeaders.WARNING, message), HttpStatus.BAD_REQUEST);
     }
@@ -303,7 +292,7 @@ public class JournalpostController {
 
   private ResponseEntity<BehandleAvvikshendelseResponse> behandletUgyldigAvvik(BehandleAvvikResponse behandleAvvikResponse) {
     var message = "Kunne ikke opprette avvik: " + behandleAvvikResponse;
-    LOGGER.warn(message);
+    LOGGER.warn(sanitizeForLog(message));
 
     if (behandleAvvikResponse.erStatus(StatusAvviksbehandling.UGYLDIG)) {
       return new ResponseEntity<>(WebUtil.INSTANCE.initHttpHeadersWith(HttpHeaders.WARNING, message), HttpStatus.BAD_REQUEST);
@@ -354,7 +343,7 @@ public class JournalpostController {
 
     if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
       var message = String.format("Id har ikke riktig prefix: %s", bidJournalpostId);
-      LOGGER.warn(message);
+      LOGGER.warn(sanitizeForLog(message));
 
       return new ResponseEntity<>(WebUtil.INSTANCE.initHttpHeadersWith(HttpHeaders.WARNING, message), HttpStatus.BAD_REQUEST);
     }
@@ -368,7 +357,7 @@ public class JournalpostController {
     var journalpostId = kildesystemIdenfikator.hentJournalpostId(); // bruker id i fra path...
     var muligEndretJournalpost = journalpostService.endre(new EndreJournalpostCommandIntern(journalpostId, enhet, endreJournalpostCommand));
 
-    muligEndretJournalpost.ifPresent(jp -> SECURE_LOGGER.info("Endret journalpost: {}", jp));
+    muligEndretJournalpost.ifPresent(jp -> SECURE_LOGGER.info("Endret journalpost: {}", sanitizeForLog(jp)));
 
     return new ResponseEntity<>(muligEndretJournalpost.isPresent() ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
   }
@@ -384,13 +373,13 @@ public class JournalpostController {
   })
   @ResponseBody
   public ResponseEntity<DistribuerJournalpostResponse> distribuerJournalpost(@PathVariable String bidJournalpostId) {
-    LOGGER.info("Marker journalpost {} sendt med lokal utksrift til mottaker", bidJournalpostId);
+    LOGGER.debug("Marker journalpost {} sendt med lokal utksrift til mottaker", sanitizeForLog(bidJournalpostId));
     KildesystemIdenfikator kildesystemIdenfikator = new KildesystemIdenfikator(bidJournalpostId);
 
     if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
       var msgBadRequest = String.format("Id har ikke riktig prefix: %s", bidJournalpostId);
 
-      LOGGER.warn(msgBadRequest);
+      LOGGER.warn(sanitizeForLog(msgBadRequest));
 
       return ResponseEntity
           .badRequest()
@@ -416,14 +405,14 @@ public class JournalpostController {
       @PathVariable String journalpostId,
       @RequestHeader(EnhetFilter.X_ENHET_HEADER) List<String> enheter
   ) {
-    String enhet = !enheter.isEmpty() ? enheter.get(0) : null;
-    LOGGER.info("Sjekker om journalpost {} for enhet {} kan distribueres", journalpostId, enhet);
+    String enhet = !enheter.isEmpty() ? enheter.getFirst() : null;
+    LOGGER.debug("Sjekker om journalpost {} for enhet {} kan distribueres", sanitizeForLog(journalpostId), sanitizeForLog(enhet));
     KildesystemIdenfikator kildesystemIdenfikator = new KildesystemIdenfikator(journalpostId);
 
     if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
       var msgBadRequest = String.format("Id har ikke riktig prefix: %s", journalpostId);
 
-      LOGGER.warn(msgBadRequest);
+      LOGGER.warn(sanitizeForLog(msgBadRequest));
 
       return ResponseEntity
           .badRequest()
@@ -435,7 +424,7 @@ public class JournalpostController {
       distribuerService.kanDistribuereJournalpost(kildesystemIdenfikator.hentJournalpostId(), enhet);
       return ResponseEntity.ok().build();
     } catch (IllegalArgumentException e){
-      LOGGER.warn("Ikke gyldig journalpost for distribusjon, begrunnelse {}", e.getMessage());
+      LOGGER.warn("Ikke gyldig journalpost for distribusjon, begrunnelse {}", sanitizeForLog(e.getMessage()));
       return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
           .header(HttpHeaders.WARNING, e.getMessage())
           .build();

@@ -15,6 +15,7 @@ import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Forsendelsestype
 import no.nav.bidrag.automatiskjobb.persistence.repository.ForsendelseBestillingRepository
 import no.nav.bidrag.automatiskjobb.utils.bidragsmottaker
 import no.nav.bidrag.automatiskjobb.utils.bidragspliktig
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.samhandler.Områdekode
@@ -26,7 +27,6 @@ import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
 import java.time.LocalDate
-import no.nav.bidrag.commons.util.secureLogger
 
 private val LOGGER = KotlinLogging.logger {}
 

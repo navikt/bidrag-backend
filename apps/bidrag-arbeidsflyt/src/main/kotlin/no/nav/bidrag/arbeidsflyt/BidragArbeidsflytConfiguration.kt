@@ -1,5 +1,6 @@
 package no.nav.bidrag.arbeidsflyt
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import net.javacrumbs.shedlock.core.LockProvider
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock
@@ -12,9 +13,9 @@ import no.nav.bidrag.commons.security.api.EnableSecurityConfiguration
 import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvider
 import no.nav.bidrag.commons.unleash.EnableUnleashFeatures
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.config.RestOperationsAzure
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,7 +32,6 @@ import org.springframework.retry.annotation.EnableRetry
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.util.backoff.FixedBackOff
 import java.time.Duration
-import no.nav.bidrag.commons.util.secureLogger
 import javax.sql.DataSource
 
 @Configuration
@@ -43,7 +43,7 @@ import javax.sql.DataSource
 class HendelseConfiguration {
     companion object {
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(HendelseConfiguration::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @Bean
@@ -60,7 +60,7 @@ class HendelseConfiguration {
         @Value($$"${KAFKA_MAX_RETRY:10}") maxRetries: Int,
         persistenceService: PersistenceService,
     ): DefaultErrorHandler? {
-        LOGGER.info("Init kafka errorhandler with exponential backoff and maxRetries=$maxRetries")
+        LOGGER.info { "Init kafka errorhandler with exponential backoff and maxRetries=$maxRetries" }
         val backoffStrategy =
             if (maxRetries == 0) {
                 FixedBackOff(0, 0)
@@ -81,7 +81,7 @@ class HendelseConfiguration {
                 val topic = rec.topic()
                 val partition = rec.partition()
                 val errorMessage = "Håndtering av Kafka melding feilet. Nøkkel $key, partition $partition, topic $topic og offset $offset. Melding som feilet: $value"
-                secureLogger.error(e) {errorMessage}
+                secureLogger.error(e) { errorMessage }
                 val retryableException = !(e?.cause is OpprettOppgaveFeiletFunksjoneltException || e?.cause is EndreOppgaveFeiletFunksjoneltException)
                 persistenceService.lagreDLQKafka(topic, key?.toString()?.replace("\u0000", ""), value?.toString() ?: "{}", retryableException)
             }, backoffStrategy)

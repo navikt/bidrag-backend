@@ -1,9 +1,9 @@
 package no.nav.bidrag.commons.web.client
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Metrics
 import io.micrometer.core.instrument.Timer
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -29,8 +29,6 @@ abstract class AbstractRestClient(
         Metrics.counter("$metricsPrefix.response", "status", "success")
     protected val responsFailure: Counter =
         Metrics.counter("$metricsPrefix.response", "status", "failure")
-
-    internal val LOGGER = KotlinLogging.logger { }
 
     protected inline fun <reified T : Any> getForEntity(uri: URI): T? = getForEntity(uri, null)
 
@@ -144,7 +142,7 @@ abstract class AbstractRestClient(
         uri: URI,
     ): T? {
         if (!respons.statusCode.is2xxSuccessful) {
-            secureLogger.debug { "Kall mot $uri feilet:  ${respons.body}" }
+            secureLogger.debug { "Kall mot ${uri.sanitizeForLog()} feilet:  ${respons.body.sanitizeForLog()}" }
             throw HttpServerErrorException(
                 respons.statusCode,
                 "",

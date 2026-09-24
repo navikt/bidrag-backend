@@ -2,9 +2,9 @@ package no.nav.bidrag.commons.security.utils
 
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.security.service.OidcTokenManager
-import org.slf4j.LoggerFactory
 import java.text.ParseException
 
 enum class TokenUtsteder {
@@ -15,7 +15,7 @@ enum class TokenUtsteder {
 }
 
 object TokenUtils {
-    private val LOGGER = LoggerFactory.getLogger(TokenUtils::class.java)
+    private val LOGGER = KotlinLogging.logger {}
     private const val ISSUER_AZURE_AD_IDENTIFIER = "login.microsoftonline.com"
     private const val ISSUER_TOKENX_IDENTIFIER = "tokenx"
     private const val ISSUER_IDPORTEN_IDENTIFIER = "idporten"
@@ -41,8 +41,8 @@ object TokenUtils {
         val token = hentToken()
         return try {
             konverterTokenTilJwt(token)?.jwtClaimsSet?.getStringClaim("tid")
-        } catch (var2: Exception) {
-            LOGGER.error("Klarte ikke parse ${token?.substring(0, token.length.coerceAtMost(10))}...", var2)
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke parse token" }
             return null
         }
     }
@@ -61,7 +61,7 @@ object TokenUtils {
         return try {
             konverterTokenTilJwt(token)?.let { hentApplikasjonNavnFraToken(it) }
         } catch (var2: Exception) {
-            LOGGER.error("Klarte ikke parse ${token.substring(0, token.length.coerceAtMost(10))}...", var2)
+            LOGGER.error(var2) { "Klarte ikke parse token" }
             return null
         }
     }
@@ -79,7 +79,7 @@ object TokenUtils {
                 TokenUtsteder.UKJENT
             }
         } catch (var5: ParseException) {
-            LOGGER.error("Kunne ikke hente informasjon om tokenets issuer", var5)
+            LOGGER.error(var5) { "Kunne ikke hente informasjon om tokenets issuer" }
             TokenUtsteder.UKJENT
         }
     }
@@ -102,7 +102,7 @@ object TokenUtils {
         return try {
             konverterTokenTilJwt(token)?.let { hentBruker(it) }
         } catch (var2: Exception) {
-            LOGGER.error("Klarte ikke parse ${token?.substring(0, token.length.coerceAtMost(10))}...", var2)
+            LOGGER.error(var2) { "Klarte ikke parse token" }
             return null
         }
     }

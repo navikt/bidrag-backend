@@ -8,6 +8,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokResponse
 import no.nav.bidrag.arbeidsflyt.dto.PatchOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.model.EndreOppgaveFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.OpprettOppgaveFeiletFunksjoneltException
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -17,7 +18,6 @@ import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
-import no.nav.bidrag.commons.util.secureLogger
 
 private const val OPPGAVE_CONTEXT = "/api/v1/oppgaver/"
 private val LOGGER = KotlinLogging.logger { }
@@ -72,7 +72,7 @@ class OppgaveConsumer(
                     baseUri.pathSegment(patchOppgaveRequest.id.toString()).build().toUri(),
                     patchOppgaveRequest,
                 )
-            secureLogger.info{ "Endret oppgave ${patchOppgaveRequest.id}, fikk respons $responseEntity" }
+            secureLogger.info { "Endret oppgave ${patchOppgaveRequest.id}, fikk respons $responseEntity" }
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.BAD_REQUEST) {
                 throw EndreOppgaveFeiletFunksjoneltException(

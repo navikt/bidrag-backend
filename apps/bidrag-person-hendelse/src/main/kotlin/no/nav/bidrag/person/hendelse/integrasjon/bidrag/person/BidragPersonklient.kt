@@ -1,10 +1,9 @@
 package no.nav.bidrag.person.hendelse.integrasjon.bidrag.person
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.person.HentePersonidenterRequest
 import no.nav.bidrag.transport.person.PersonidentDto
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.retry.annotation.Backoff
@@ -24,10 +23,10 @@ class BidragPersonklient(
     fun henteAlleIdenterForPerson(personIdent: String): List<PersonidentDto>? = try {
         postForEntity(createUri(), HentePersonidenterRequest(personIdent))
     } catch (e: HttpStatusCodeException) {
-        slog.warn(
+        secureLogger.warn {
             "Kall mot bidrag-person for å hente alle registrerte personidenter " +
-                "for personident $personIdent feilet med statuskode ${e.statusCode} og melding ${e.message}",
-        )
+                "for personident $personIdent feilet med statuskode ${e.statusCode} og melding ${e.message}"
+        }
         throw e
     }
 
@@ -39,6 +38,5 @@ class BidragPersonklient(
 
     companion object {
         const val ENDEPUNKT_PERSONIDENTER = "/personidenter"
-        val slog: Logger = LoggerFactory.getLogger("secureLogger")
     }
 }

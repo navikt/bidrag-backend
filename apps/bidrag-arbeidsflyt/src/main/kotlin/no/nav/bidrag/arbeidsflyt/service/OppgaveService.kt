@@ -236,7 +236,7 @@ class OppgaveService(
         oppgaverForHendelse: OppgaverForHendelse,
     ) {
         oppgaverForHendelse.hentJournalforingsOppgaver().forEach {
-            LOGGER.info{ "Ferdigstiller oppgave med type ${it.oppgavetype} og journalpostId ${it.journalpostId}" }
+            LOGGER.info { "Ferdigstiller oppgave med type ${it.oppgavetype} og journalpostId ${it.journalpostId}" }
             oppgaveConsumer.endreOppgave(
                 endretAvEnhetsnummer = endretAvEnhetsnummer,
                 patchOppgaveRequest = FerdigstillOppgaveRequest(it),
@@ -266,8 +266,10 @@ class OppgaveService(
         if (!oppgave.erStatusKategoriAvsluttet) return oppgaveId
 
         val nyOppgaveId = opprettOppgave(oppgave.mapTilOpprettOppgaveDetaljert()).id
-        secureLogger.info{ "Gjennopprettet oppgave $oppgaveId med ny oppgaveId $nyOppgaveId for sak ${oppgave.saksreferanse} " +
-                "og søknadsid ${oppgave.søknadsid} og behandlingsid ${oppgave.behandlingsid} med type ${oppgave.oppgavetype}" }
+        secureLogger.info {
+            "Gjennopprettet oppgave $oppgaveId med ny oppgaveId $nyOppgaveId for sak ${oppgave.saksreferanse} " +
+                "og søknadsid ${oppgave.søknadsid} og behandlingsid ${oppgave.behandlingsid} med type ${oppgave.oppgavetype}"
+        }
         return nyOppgaveId
     }
 
@@ -278,7 +280,7 @@ class OppgaveService(
         saker: List<String>,
     ) {
         saker.forEach {
-            LOGGER.info{ "Oppretter behandle dokument oppgave for sak $it og journalpostId ${journalpostHendelse.journalpostId}" }
+            LOGGER.info { "Oppretter behandle dokument oppgave for sak $it og journalpostId ${journalpostHendelse.journalpostId}" }
             opprettOppgave(
                 OpprettBehandleDokumentOppgaveRequest(
                     saksreferanse = it,
@@ -297,7 +299,6 @@ class OppgaveService(
         journalpostHendelse: JournalpostHendelse,
         oppgaver: List<OppgaveData>,
     ) {
-
         for (oppgaveData in oppgaver) {
             val request = EndreForNyttDokumentRequest(oppgaveData, journalpostHendelse)
             oppgaveConsumer.endreOppgave(request)

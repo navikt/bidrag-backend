@@ -1,8 +1,8 @@
 package no.nav.bidrag.organisasjon.consumer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.organisasjon.consumer.dto.SkjermingRequest
 import no.nav.bidrag.organisasjon.exception.SkjermingConsumerException
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -15,13 +15,12 @@ import org.springframework.web.util.UriComponentsBuilder
 class SkjermingConsumer(private val restTemplate: RestTemplate) {
     fun erPersonSkjermet(skjermingRequest: SkjermingRequest): Boolean {
         val uri = UriComponentsBuilder.fromPath(PATH_SKJERMING).toUriString()
-        LOGGER.info("Skjerming uri: $uri")
         return try {
             val response = restTemplate.exchange<Boolean>(uri, HttpMethod.POST, createRequestEntity(skjermingRequest))
             response.body ?: false
         } catch (e: HttpClientErrorException) {
             val melding = "Feil ved kall til Skjerming API: " + e.message + ". Response body: " + e.responseBodyAsString
-            LOGGER.error(melding)
+            LOGGER.error { melding }
             throw SkjermingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }
@@ -33,7 +32,7 @@ class SkjermingConsumer(private val restTemplate: RestTemplate) {
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(SkjermingConsumer::class.java)
+        private val LOGGER = KotlinLogging.logger {}
         private const val PATH_SKJERMING = "/skjermet"
     }
 }

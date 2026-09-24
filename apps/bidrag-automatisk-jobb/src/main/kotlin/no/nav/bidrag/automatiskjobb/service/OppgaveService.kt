@@ -32,8 +32,6 @@ import java.time.format.DateTimeFormatter
 
 private val LOGGER = KotlinLogging.logger {}
 
-const val opprettRevurderForskuddOppgaveToggleName = "automatiskjobb.opprett-revurder-forskudd-oppgave"
-
 @Service
 class OppgaveService(
     private val oppgaveConsumer: OppgaveConsumer,
@@ -51,7 +49,7 @@ class OppgaveService(
                         it.opprettRevurderForskuddOppgaveEtterAdresseEndring()
                     } else {
                         LOGGER.info {
-                            "Feature toggle $opprettRevurderForskuddOppgaveToggleName er skrudd av. Oppretter ikke oppgave for $it"
+                            "Feature toggle ${UnleashFeatures.OPPRETT_REVURDER_FORSKUDD_OPPGAVE.name} er skrudd av. Oppretter ikke oppgave for $it"
                         }
                     }
                 }
