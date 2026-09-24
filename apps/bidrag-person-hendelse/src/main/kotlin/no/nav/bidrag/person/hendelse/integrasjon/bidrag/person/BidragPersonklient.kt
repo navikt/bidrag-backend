@@ -1,5 +1,6 @@
 package no.nav.bidrag.person.hendelse.integrasjon.bidrag.person
 
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.person.HentePersonidenterRequest
@@ -25,7 +26,7 @@ class BidragPersonklient(
     } catch (e: HttpStatusCodeException) {
         secureLogger.warn {
             "Kall mot bidrag-person for å hente alle registrerte personidenter " +
-                "for personident $personIdent feilet med statuskode ${e.statusCode} og melding ${e.message}"
+                "for personident $personIdent feilet med statuskode ${e.statusCode} og melding ${e.message}".sanitizeForLog()
         }
         throw e
     }

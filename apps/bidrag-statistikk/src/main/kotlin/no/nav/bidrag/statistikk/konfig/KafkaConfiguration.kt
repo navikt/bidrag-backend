@@ -1,5 +1,6 @@
 package no.nav.bidrag.statistikk.konfig
 
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.statistikk.LOGGER
 import no.nav.bidrag.statistikk.konfig.KafkaRetryListener
@@ -28,7 +29,7 @@ class KafkaConfiguration {
                 val partition = rec.partition()
                 secureLogger.error(e) {
                     "Kafkamelding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value"
-                }
+                }.sanitizeForLog()
             }, backoffPolicy)
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler

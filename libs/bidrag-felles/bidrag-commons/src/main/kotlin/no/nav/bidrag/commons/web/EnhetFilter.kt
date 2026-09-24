@@ -8,6 +8,7 @@ import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import org.slf4j.MDC
 
 private val LOGGER = KotlinLogging.logger {}
@@ -27,10 +28,10 @@ class EnhetFilter : Filter {
                     ENHETSNUMMER_VALUE.set(enhetsnummer)
                     MDC.put(ENHET_MDC, enhetsnummer)
                     (servletResponse as HttpServletResponse).addHeader(X_ENHET_HEADER, enhetsnummer)
-                    LOGGER.debug { "Behandler request '${requestURI.sanitizeForLog()}' for enhet med enhetsnummer ${enhetsnummer.sanitizeForLog()}" }
+                    secureLogger.debug { "Behandler request '${requestURI.sanitizeForLog()}' for enhet med enhetsnummer ${enhetsnummer.sanitizeForLog()}" }
                 } else {
                     ENHETSNUMMER_VALUE.set(null)
-                    LOGGER.debug { "Behandler request '${requestURI.sanitizeForLog()}' uten informasjon om enhetsnummer." }
+                    secureLogger.debug { "Behandler request '${requestURI.sanitizeForLog()}' uten informasjon om enhetsnummer." }
                 }
             }
         } else {

@@ -1,6 +1,7 @@
 package no.nav.bidrag.person.hendelse.integrasjon.kontoregister
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.prosess.Kontoendringsbehandler
 import no.nav.person.endringsmelding.v1.Endringsmelding
@@ -35,7 +36,7 @@ class Kontoendringsmottak(
 
         if (harGyldigFormat(endringsmelding)) {
             kontoendringsbehandler.publisere(endringsmelding?.kontohaver.toString())
-            secureLogger.info { "Kontoendring publisert for kontoeier ${endringsmelding?.kontohaver}" }
+            secureLogger.info { "Kontoendring publisert for kontoeier ${endringsmelding?.kontohaver}" }.sanitizeForLog()
         }
     }
 
