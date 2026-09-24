@@ -2,18 +2,24 @@ name: bidrag-oppgave
 ingresses:
   - https://bidrag-oppgave.intern.nav.no
 limits:
-  memory: 512Mi
+  memory: 1Gi
 requests:
-  cpu: 50m
   memory: 256Mi
 replicas:
-  max: 4
+  max: 2
   min: 2
 env:
-  OPPGAVE_API_URL: https://oppgave.prod-fss-pub.nais.io
-  OPPGAVE_API_SCOPE: api://prod-fss.oppgavehandtering.oppgave/.default
-  OPPGAVE_API_HOST: oppgave.prod-fss-pub.nais.io
-accessPolicyInbound:
-  - application: bidrag-frontend
-    namespace: bidrag
-    cluster: prod-gcp
+  APP_OPPGAVE_URL: https://oppgave.prod-fss-pub.nais.io
+  APP_OPPGAVE_AUDIENCE: api://prod-fss.oppgavehandtering.oppgave/.default
+
+inbound:
+  rules:
+    - application: bidrag-frontend
+      namespace: bidrag
+      cluster: prod-gcp
+
+outbound:
+  rules:
+#    - application: bidrag-admin
+  external:
+    - oppgave.prod-fss-pub.nais.io

@@ -34,10 +34,9 @@ spec:
     min: {{ replicas.min }}
   resources:
     limits:
-      memory: {{ limits.memory }}
+      memory: 1Gi
     requests:
-      cpu: {{ requests.cpu }}
-      memory: {{ requests.memory }}
+      memory: 512Mi
   ingresses:
   {{#each ingresses as |url|}}
     - {{url}}
@@ -50,14 +49,20 @@ spec:
   accessPolicy:
     inbound:
       rules:
-      {{#each accessPolicyInbound as |rule|}}
-        - application: {{rule.application}}
-          namespace: {{rule.namespace}}
-          cluster: {{rule.cluster}}
+      {{#each inbound.rules as |rule|}}
+      - application: {{rule.application}}
+        namespace: {{rule.namespace}}
+        cluster: {{rule.cluster}}
       {{/each}}
     outbound:
-      external:
-        - host: {{ env.OPPGAVE_API_HOST }}
       rules:
         - application: logging
           namespace: nais-system
+      {{#each outbound.rules as |rule|}}
+        - application: {{rule.application }}
+      {{/each}}
+      external:
+        - host: {{unleash.host}}
+      {{#each outbound.external as |host|}}
+        - host: {{host}}
+      {{/each}}

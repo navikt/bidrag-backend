@@ -1,22 +1,27 @@
-name: bidrag-oppgave
+name: bidrag-oppgave-q2
 ingresses:
-  - https://bidrag-oppgave.intern.dev.nav.no
-limits:
-  memory: 512Mi
-requests:
-  cpu: 50m
-  memory: 256Mi
+  - https://bidrag-oppgave-q2.intern.dev.nav.no
 replicas:
-  max: 4
-  min: 2
+  max: 1
+  min: 1
 env:
-  OPPGAVE_API_URL: https://oppgave.dev-fss-pub.nais.io
-  OPPGAVE_API_SCOPE: api://dev-fss.oppgavehandtering.oppgave/.default
-  OPPGAVE_API_HOST: oppgave.dev-fss-pub.nais.io
-accessPolicyInbound:
-  - application: bidrag-frontend
-    namespace: bidrag
-    cluster: dev-gcp
-  - application: azure-token-generator
-    namespace: nais
-    cluster: dev-gcp
+  APP_OPPGAVE_URL: https://oppgave.dev-fss-pub.nais.io
+  APP_OPPGAVE_AUDIENCE: api://dev-fss.oppgavehandtering.oppgave/.default
+
+inbound:
+  rules:
+    - application: bidrag-frontend-q2
+      namespace: bidrag
+      cluster: dev-gcp
+    - application: azure-token-generator
+      namespace: nais
+      cluster: dev-gcp
+    - application: bidrag-localauth
+      namespace: bidrag
+      cluster: dev-gcp
+
+outbound:
+  rules:
+
+  external:
+    - oppgave.dev-fss-pub.nais.io

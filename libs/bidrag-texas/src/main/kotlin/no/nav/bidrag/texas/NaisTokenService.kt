@@ -5,11 +5,19 @@ import org.springframework.core.env.Environment
 import org.springframework.web.client.RestClient.builder
 
 class NaisTokenService(
-    environment: Environment,
+    private val oboEndpoint: String,
+    private val m2mEndpoint: String,
     val tokenSupplier: () -> String,
 ) {
-    private val oboEndpoint = environment.getRequiredProperty("nais.token.exchange.endpoint")
-    private val m2mEndpoint = environment.getRequiredProperty("nais.token.endpoint")
+
+    constructor(
+        naisTokenProperties: NaisTokenProperties,
+        tokenSupplier: () -> String,
+    ) : this(
+        oboEndpoint = naisTokenProperties.exchange.endpoint,
+        m2mEndpoint = naisTokenProperties.endpoint,
+        tokenSupplier = tokenSupplier,
+    )
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val texas = NaisTokenClient(
