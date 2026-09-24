@@ -404,11 +404,7 @@ class VedtakGrunnlagMapper(
         )
     }
 
-    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) = if (avslag != null) {
-        beregnetInntekterGrunnlagForRolle(rolle, true)
-    } else {
-        beregnetInntekterGrunnlagForRolle(rolle, false)
-    }
+    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) = beregnetInntekterGrunnlagForRolle(rolle, avslag != null || erAvslagForAlle)
 
     fun beregnGebyr(
         behandling: Behandling,
@@ -416,7 +412,7 @@ class VedtakGrunnlagMapper(
         grunnlagsliste: List<GrunnlagDto> = behandling.gebyrGrunnlagslisteDefaultVerdi(rolle),
         referanse: String? = null,
     ): BeregnGebyrResultat {
-        val grunnlagGebyr = if (behandling.avslag != null) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste).distinct() else grunnlagsliste
+        val grunnlagGebyr = if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste).distinct() else grunnlagsliste
         val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
         val inntektSiste12Mnd = gebyrBeregning.finnInntektSiste12Mnd(rolle)
@@ -436,8 +432,8 @@ class VedtakGrunnlagMapper(
         )
     }
 
-    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle, taMed12MndInntektHvisIngen: Boolean) = BeregnApi()
-        .beregnInntekt(tilInntektberegningDto(rolle, taMed12MndInntektHvisIngen))
+    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle, taMed12MndInntektHvisIngenValgt: Boolean) = BeregnApi()
+        .beregnInntekt(tilInntektberegningDto(rolle, taMed12MndInntektHvisIngenValgt))
         .inntektPerBarnListe
         .flatMap { beregningBarn ->
             beregningBarn.summertInntektListe.map {

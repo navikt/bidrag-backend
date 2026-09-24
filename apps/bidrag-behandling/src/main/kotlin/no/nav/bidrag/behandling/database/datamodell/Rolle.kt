@@ -243,21 +243,6 @@ open class Rolle(
         gebyrSøknaderForSak.forEach {
             it.manueltOverstyrtGebyr = manueltOverstyrtGebyr
         }
-        // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
-        // Fjern derfor vurdering av gebyr for andre søknader tilhørende samme sak
-//        val søknadsiderSomBleOppdatert = gebyrSøknaderForSak.map { it.søknadsid }
-//        gebyr
-//            .finnAlleGebyrForSak(saksnummer)
-//            .filter { !søknadsiderSomBleOppdatert.contains(it.søknadsid) && !it.gjelder18ÅrSøknad }
-//            .forEach {
-//                it.manueltOverstyrtGebyr =
-//                    RolleManueltOverstyrtGebyr(
-//                        ilagtGebyr = false,
-//                        overstyrGebyr = true,
-//                        begrunnelse = "Gebyr ilegges bare en gang per sak",
-//                        beregnetIlagtGebyr = false,
-//                    )
-//            }
     }
 
     fun oppdaterGebyr(

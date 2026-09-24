@@ -175,7 +175,6 @@ import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
-import kotlin.compareTo
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
@@ -306,13 +305,13 @@ fun BeregnGebyrResultat.tilDto(
     )
 }
 
-fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngen: Boolean = false): BeregnValgteInntekterGrunnlag {
+fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenValgt: Boolean = false): BeregnValgteInntekterGrunnlag {
     val inntekterRolle = inntekter.filter { it.erSammeRolle(rolle) }
     val inntekter = inntekterRolle
         .filter { it.taMed }
         .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
         .ifEmpty {
-            if (taMed12MndInntektHvisIngen) {
+            if (taMed12MndInntektHvisIngenValgt) {
                 inntekterRolle
                     .filter { it.type == Inntektsrapportering.AINNTEKT_BEREGNET_12MND }
                     .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
@@ -346,7 +345,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngen: 
                         datoTil,
                     )
                 } else {
-                    ÅrMånedsperiode(if (taMed12MndInntektHvisIngen) eldsteVirkningstidspunkt else it.datoFom!!, it.datoTom?.plusDays(1))
+                    ÅrMånedsperiode(if (taMed12MndInntektHvisIngenValgt) eldsteVirkningstidspunkt else it.datoFom!!, it.datoTom?.plusDays(1))
                 },
                 beløp = it.belop,
                 inntektsrapportering = it.type,
