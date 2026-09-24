@@ -23,7 +23,7 @@ class SlackService(
     @param:Value($$"${BIDRAG_BOT_SLACK_OAUTH_TOKEN}") private val oauthToken: String,
     @param:Value($$"${SLACK_CHANNEL_ID}") private val channel: String,
 ) {
-    internal val client: MethodsClient by lazy { Slack.getInstance().methods(oauthToken) }
+    val client: MethodsClient by lazy { Slack.getInstance().methods(oauthToken) }
 
     companion object {
         internal val LOGGER = KotlinLogging.logger { }
@@ -50,13 +50,15 @@ class SlackService(
 
         if (response.isOk) {
             LOGGER.debug { "Slack melding sendt: $melding" }
+            SlackMelding(slackService = this, ts = response.ts, threadTs = threadTs ?: response.ts, channel = response.channel ?: channel)
         } else {
-            LOGGER.error { "Feil ved sending av slackmelding: ${response.error}" }
+            val feilmelding = response.error ?: "ukjent feil"
+            LOGGER.error { "Feil ved sending av slackmelding: $feilmelding" }
+            SlackMelding(slackService = this, ts = null, threadTs = threadTs, channel = channel, feil = feilmelding)
         }
-        SlackMelding(slackService = this, ts = response.ts, threadTs = threadTs ?: response.ts, channel = response.channel ?: channel)
     } catch (e: Exception) {
         LOGGER.error(e) { "Uventet feil ved sending av slackmelding" }
-        SlackMelding(slackService = this, ts = null, threadTs = threadTs, channel = channel)
+        SlackMelding(slackService = this, ts = null, threadTs = threadTs, channel = channel, feil = e.message ?: "uventet feil")
     }
 }
 
@@ -65,7 +67,10 @@ class SlackMelding(
     private val ts: String?,
     private val threadTs: String? = ts,
     private val channel: String?,
+    val feil: String? = null,
 ) {
+    val vellykket: Boolean get() = feil == null && ts != null
+
     fun oppdaterMelding(melding: String) {
         if (ts == null) {
             SlackService.LOGGER.warn { "Ingen melding å oppdatere..." }

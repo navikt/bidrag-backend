@@ -92,7 +92,7 @@ class EndringsloggService(
         endringer.forEach {
             oppdaterLestAvEndringslogg(it)
         }
-        secureLogger.info { "Hentet endringslogg for type $type: $endringer" }
+        secureLogger.debug { "Hentet endringslogg for type $type: $endringer" }
         return endringer
     }
 
