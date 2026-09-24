@@ -60,8 +60,8 @@ object TokenUtils {
     private fun hentApplikasjonsnavn(token: String): String? {
         return try {
             konverterTokenTilJwt(token)?.let { hentApplikasjonNavnFraToken(it) }
-        } catch (var2: Exception) {
-            LOGGER.error(var2) { "Klarte ikke parse token" }
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke parse token" }
             return null
         }
     }
@@ -78,8 +78,8 @@ object TokenUtils {
             } else {
                 TokenUtsteder.UKJENT
             }
-        } catch (var5: ParseException) {
-            LOGGER.error(var5) { "Kunne ikke hente informasjon om tokenets issuer" }
+        } catch (e: ParseException) {
+            LOGGER.error(e) { "Kunne ikke hente informasjon om tokenets issuer" }
             TokenUtsteder.UKJENT
         }
     }
@@ -93,16 +93,16 @@ object TokenUtils {
             val azureApp = roles != null && roles.contains("access_as_application")
             systemRessurs || azureApp
         } ?: false
-    } catch (var5: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", var5)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", e)
     }
 
     @JvmStatic
     private fun hentBruker(token: String?): String? {
         return try {
             konverterTokenTilJwt(token)?.let { hentBruker(it) }
-        } catch (var2: Exception) {
-            LOGGER.error(var2) { "Klarte ikke parse token" }
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke parse token" }
             return null
         }
     }
@@ -110,29 +110,29 @@ object TokenUtils {
     private fun erTokenUtstedtAvSTS(signedJWT: SignedJWT): Boolean = try {
         val issuer = signedJWT.jwtClaimsSet.issuer
         erTokenUtstedtAvSTS(issuer)
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun erTokenUtstedtAvAzure(signedJWT: SignedJWT): Boolean = try {
         val issuer = signedJWT.jwtClaimsSet.issuer
         erTokenUtstedtAvAzure(issuer)
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun erTokenUtstedtAvIdPorten(signedJWT: SignedJWT): Boolean = try {
         val idp = signedJWT.jwtClaimsSet.getStringClaim("idp")
         erIdPorten(idp)
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun erTokenUtstedtAvTokenX(signedJWT: SignedJWT): Boolean = try {
         val issuer = signedJWT.jwtClaimsSet.issuer
         erTokenUtstedtAvTokenX(issuer)
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun erTokenUtstedtAvAzure(issuer: String?): Boolean = issuer != null && issuer.contains(ISSUER_AZURE_AD_IDENTIFIER)
@@ -146,8 +146,8 @@ object TokenUtils {
     private fun erTokenUtstedtAvMaskinporten(signedJWT: SignedJWT): Boolean = try {
         val issuer = signedJWT.jwtClaimsSet.issuer
         erTokenUtstedtAvMaskinporten(issuer)
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun erTokenUtstedtAvMaskinporten(issuer: String?): Boolean = !issuer.isNullOrEmpty() && issuer.contains(ISSUER_MASKINPORTEN_IDENTIFIER)
@@ -164,16 +164,16 @@ object TokenUtils {
             } else {
                 claims.audience[0]
             }
-        } catch (var4: ParseException) {
-            throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", var4)
+        } catch (e: ParseException) {
+            throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", e)
         }
     }
 
     private fun hentBrukerIdFraIdportenToken(signedJWT: SignedJWT): String? = try {
         val claims = signedJWT.jwtClaimsSet
         claims.getStringClaim("pid")
-    } catch (var4: ParseException) {
-        throw IllegalStateException("Kunne ikke hente personid fra idporten tokenr", var4)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente personid fra idporten tokenr", e)
     }
 
     private fun hentBrukerIdFraAzureToken(signedJWT: SignedJWT): String? = try {
@@ -181,8 +181,8 @@ object TokenUtils {
         val navIdent = claims.getStringClaim("NAVident")
         val application = claims.getStringClaim("azp_name")
         navIdent ?: hentApplikasjonNavnFraAzp(application)
-    } catch (var4: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", var4)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets issuer", e)
     }
 
     private fun hentBruker(signedJWT: SignedJWT): String? = try {
@@ -193,8 +193,8 @@ object TokenUtils {
         } else {
             signedJWT.jwtClaimsSet.subject
         }
-    } catch (var2: ParseException) {
-        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", var2)
+    } catch (e: ParseException) {
+        throw IllegalStateException("Kunne ikke hente informasjon om tokenets subject", e)
     }
 
     private fun hentApplikasjonNavnFraAzp(azpName: String?): String? = if (azpName == null) {

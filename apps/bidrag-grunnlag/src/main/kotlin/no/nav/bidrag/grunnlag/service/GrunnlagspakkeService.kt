@@ -88,7 +88,7 @@ class GrunnlagspakkeService(
                     secureLogger.warn {
                         "Hentet historiske identer for personId: ${grunnlagDto.personId} og fikk tilbake: ${
                             tilJson(
-                                historiskeIdenterListe
+                                historiskeIdenterListe,
                             )
                         }"
                     }
@@ -105,29 +105,28 @@ class GrunnlagspakkeService(
     }
 
     // Henter historiske identer for personen. Returnerer en liste med historiske identer (inklusiv den aktive identen)
-    private fun hentIdenterFraConsumer(personId: String): List<HistoriskIdent> =
-        when (val response = bidragPersonConsumer.hentPersonidenter(personident = Personident(personId), inkludereHistoriske = true)) {
-            is RestResponse.Success -> {
-                val personidenterResponse = response.body
-                secureLogger.info {
-                    "Kall til bidrag-person for å hente historiske identer for ident $personId ga følgende respons: ${
-                        tilJson(
-                            personidenterResponse,
-                        )
-                    }"
-                }
-                if (personidenterResponse.isEmpty()) {
-                    listOf(HistoriskIdent(personId, false))
-                } else {
-                    personidenterResponse.map { HistoriskIdent(it.ident, it.historisk) }
-                }
+    private fun hentIdenterFraConsumer(personId: String): List<HistoriskIdent> = when (val response = bidragPersonConsumer.hentPersonidenter(personident = Personident(personId), inkludereHistoriske = true)) {
+        is RestResponse.Success -> {
+            val personidenterResponse = response.body
+            secureLogger.info {
+                "Kall til bidrag-person for å hente historiske identer for ident $personId ga følgende respons: ${
+                    tilJson(
+                        personidenterResponse,
+                    )
+                }"
             }
-
-            is RestResponse.Failure -> {
-                secureLogger.warn { "Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response" }
+            if (personidenterResponse.isEmpty()) {
                 listOf(HistoriskIdent(personId, false))
+            } else {
+                personidenterResponse.map { HistoriskIdent(it.ident, it.historisk) }
             }
         }
+
+        is RestResponse.Failure -> {
+            secureLogger.warn { "Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response" }
+            listOf(HistoriskIdent(personId, false))
+        }
+    }
 
     // Bytter ut identer i grunnlagspakke-requesten med aktiv ident for personen
     private fun byttUtIdentMedAktivIdent(

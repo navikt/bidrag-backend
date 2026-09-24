@@ -64,8 +64,10 @@ class DokumentConsumer(
     )
     @Timed("hentDokument")
     fun henteDokument(dokumentbestilling: Dokumentbestilling): Optional<ByteArray> {
-        LOGGER.debug { "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
-                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}" }
+        LOGGER.debug {
+            "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
+                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}"
+        }
 
         val hentDokumentRequest = HentDokumentRequest()
         hentDokumentRequest.brevreferanse = dokumentbestilling.brevreferanse
@@ -98,8 +100,10 @@ class DokumentConsumer(
     )
     @Timed("erFerdigstilt")
     fun erFerdigstilt(dokumentbestilling: Dokumentbestilling): Boolean {
-        LOGGER.debug { "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
-                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}" }
+        LOGGER.debug {
+            "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
+                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}"
+        }
 
         val hentDokumentRequest = HentDokumentRequest()
         hentDokumentRequest.brevreferanse = dokumentbestilling.brevreferanse
