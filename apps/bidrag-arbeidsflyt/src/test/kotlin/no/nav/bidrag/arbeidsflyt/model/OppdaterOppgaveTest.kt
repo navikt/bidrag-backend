@@ -101,6 +101,37 @@ internal class OppdaterOppgaveTest {
     }
 
     @Test
+    fun `skal overføre til saksbehandler og legge til beskrivelse når saksbehandler ikke var valgt`() {
+        val existingBeskrivelse = "En beskrivelse fra før"
+        val hendelse = createOppgaveData(id = 1, beskrivelse = existingBeskrivelse, tilordnetRessurs = "")
+        val oppdaterOppgave =
+            OppdaterOppgave(hendelse)
+                .overforTilSaksbehandler("Z12345")
+                .oppdaterOppgaveBeskrivelse()
+
+        assertThat(oppdaterOppgave.tilordnetRessurs).isEqualTo("Z12345")
+        assertThat(oppdaterOppgave.hasChanged()).isTrue
+        assertThat(oppdaterOppgave.beskrivelse).isEqualTo(
+            "--- 10.09.2022 01:00 Automatisk jobb ---\r\n" +
+                "· Saksbehandler endret fra ikke valgt til Z12345\r\n" +
+                "\r\n\r\n$existingBeskrivelse",
+        )
+    }
+
+    @Test
+    fun `skal overføre til saksbehandler uten beskrivelse når saksbehandler endres fra en til en annen`() {
+        val hendelse = createOppgaveData(id = 1, beskrivelse = "Beskrivelse", tilordnetRessurs = "Z99999")
+        val oppdaterOppgave =
+            OppdaterOppgave(hendelse)
+                .overforTilSaksbehandler("Z12345")
+                .oppdaterOppgaveBeskrivelse()
+
+        assertThat(oppdaterOppgave.tilordnetRessurs).isEqualTo("Z12345")
+        assertThat(oppdaterOppgave.hasChanged()).isTrue
+        assertThat(oppdaterOppgave.beskrivelse).isNull()
+    }
+
+    @Test
     fun `skal ikke legge til beskrivelse hvis ikke endret`() {
         val existingBeskrivelse = "En beskrivelse fra før"
         val tilordnetRessurs = "Z99999"

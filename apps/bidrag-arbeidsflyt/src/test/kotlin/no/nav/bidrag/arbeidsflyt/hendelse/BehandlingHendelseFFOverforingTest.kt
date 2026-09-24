@@ -1,5 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.hendelse
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
@@ -236,6 +237,86 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/$OPPGAVE_ID")))
 
         hentBehandling(behandlingsid).oppgaverOverførtEtterFFOpprettet shouldBe overførtTidspunktEtterFørsteKall
+    }
+
+    private fun søknadsoppgave(
+        id: Long,
+        tilordnetRessurs: String?,
+        tildeltEnhetsnr: String?,
+    ) = OppgaveData(
+        id = id,
+        versjon = 1,
+        saksreferanse = SAKSNUMMER,
+        tema = "BID",
+        tildeltEnhetsnr = tildeltEnhetsnr,
+        tilordnetRessurs = tilordnetRessurs,
+        status = OppgaveStatus.OPPRETTET,
+        metadata = mapOf(METADATA_NØKKEL_SØKNAD_ID to "123"),
+    )
+
+    private fun førsteFFOverføring(behandlingsid: Long): BehandlingHendelse {
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubOppgaveForSaken(tilordnetRessurs = ANNEN_SAKSBEHANDLER, tildeltEnhetsnr = ANNEN_ENHET)
+        stubHentBehandlingDetaljer(behandlingsid)
+        behandleHendelseService.behandleHendelse(hendelse)
+        hentBehandling(behandlingsid).oppgaverOverførtEtterFFOpprettet.shouldNotBeNull()
+        WireMock.resetAllRequests()
+        return hendelse.copy(endretTidspunkt = LocalDateTime.now().plusMinutes(1))
+    }
+
+    @Test
+    fun `skal overføre nye oppgaver til saksbehandler som har eksisterende oppgave etter FF allerede er overført`() {
+        val behandlingsid = 555562L
+        val nyOppgaveId = 556L
+        val andreHendelse = førsteFFOverføring(behandlingsid)
+        stubHentOppgaveContaining(
+            listOf(
+                søknadsoppgave(OPPGAVE_ID, tilordnetRessurs = ANNEN_SAKSBEHANDLER, tildeltEnhetsnr = ANNEN_ENHET),
+                søknadsoppgave(nyOppgaveId, tilordnetRessurs = null, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF),
+            ),
+        )
+
+        behandleHendelseService.behandleHendelse(andreHendelse)
+
+        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/$OPPGAVE_ID")))
+        val overførtRequest = getOppgaveEndretRequest(oppgaveId = nyOppgaveId)
+        overførtRequest.shouldNotBeNull()
+        overførtRequest.tilordnetRessurs shouldBe ANNEN_SAKSBEHANDLER
+        overførtRequest.tildeltEnhetsnr shouldBe ANNEN_ENHET
+    }
+
+    @Test
+    fun `skal ikke overføre nye oppgaver etter FF allerede er overført hvis ingen oppgaver er tilordnet saksbehandler`() {
+        val behandlingsid = 555563L
+        val andreHendelse = førsteFFOverføring(behandlingsid)
+        stubHentOppgaveContaining(
+            listOf(søknadsoppgave(OPPGAVE_ID, tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET)),
+        )
+
+        behandleHendelseService.behandleHendelse(andreHendelse)
+
+        verifyOppgaveNotEndret()
+    }
+
+    @Test
+    fun `skal ikke overføre nye oppgaver etter FF allerede er overført hvis FF mangler saksbehandler`() {
+        val behandlingsid = 555564L
+        val andreHendelse = førsteFFOverføring(behandlingsid)
+        stubHentBehandlingDetaljer(
+            behandlingsid,
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
+        )
+        stubHentOppgaveContaining(
+            listOf(
+                søknadsoppgave(OPPGAVE_ID, tilordnetRessurs = ANNEN_SAKSBEHANDLER, tildeltEnhetsnr = ANNEN_ENHET),
+                søknadsoppgave(556L, tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET),
+            ),
+        )
+
+        behandleHendelseService.behandleHendelse(andreHendelse)
+
+        verifyOppgaveNotEndret()
     }
 
     @Test

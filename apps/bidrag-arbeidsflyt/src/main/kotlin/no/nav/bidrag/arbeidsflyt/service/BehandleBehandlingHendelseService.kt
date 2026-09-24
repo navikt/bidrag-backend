@@ -156,10 +156,10 @@ class BehandleBehandlingHendelseService(
                     secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
                     return
                 }
-                val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandling.id)
+                val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandling.behandlingsid ?: hendelse.behandlingsid ?: return)
                 val oppgaveTilordnet = oppgaverBehandling.find { !it.tilordnetRessurs.isNullOrEmpty() } ?: return
                 val tilordnetEnhet = oppgaveTilordnet.tildeltEnhetsnr
-                val tilordnetRessurs = oppgaveTilordnet.tildeltEnhetsnr
+                val tilordnetRessurs = oppgaveTilordnet.tilordnetRessurs
                 overførOppgaverEtterFF(hendelse, behandling, tilordnetRessurs, tilordnetEnhet) {
                     // Overfør nye oppgaver til saksbehandler
                     it.tilordnetRessurs == null
