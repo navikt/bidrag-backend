@@ -151,17 +151,6 @@ class VedtakshendelseServiceTest {
     }
 
     @Test
-    fun `Skal ikke opprette oppdrag for endring av mottaker`() {
-        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
-
-        vedtakshendelseService.behandleHendelse(hendelse)
-
-        verify(exactly = 0) { oppdragService.lagreHendelse(any()) }
-        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
-        verify(exactly = 1) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
-    }
-
-    @Test
     fun `Skal ikke behandle endring av mottaker uten innkreving`() {
         val hendelse = opprettVedtakshendelse(
             vedtakstype = "ENDRING_MOTTAKER",

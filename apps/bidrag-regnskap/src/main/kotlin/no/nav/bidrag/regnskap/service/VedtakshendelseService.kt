@@ -44,11 +44,6 @@ class VedtakshendelseService(
 
         val vedtakHendelse = mapVedtakHendelse(hendelse)
 
-        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
-            behandleEndringAvMottaker(vedtakHendelse)
-            return emptyList()
-        }
-
         if (oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(vedtakHendelse.id).isNotEmpty()) {
             LOGGER.warn { "VedtakHendelse med vedtakid: ${vedtakHendelse.id} er allerede behandlet. Ignorerer hendelse." }
             return emptyList()
@@ -68,6 +63,10 @@ class VedtakshendelseService(
             opprettOppdragForEngangsbeløp(vedtakHendelse, engangsbelop)?.let {
                 opprettedeOppdrag.add(it)
             }
+        }
+
+        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
+            behandleEndringAvMottaker(vedtakHendelse)
         }
 
         return opprettedeOppdrag
