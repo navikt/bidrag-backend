@@ -28,8 +28,8 @@ class KafkaConfiguration {
                 val topic = rec.topic()
                 val partition = rec.partition()
                 secureLogger.error(e) {
-                    "Kafkamelding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value"
-                }.sanitizeForLog()
+                    "Kafkamelding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value".sanitizeForLog()
+                }
             }, backoffPolicy)
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler

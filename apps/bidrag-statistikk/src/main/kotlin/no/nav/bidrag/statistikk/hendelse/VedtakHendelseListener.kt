@@ -22,7 +22,7 @@ open class PojoVedtakHendelseListener(
             val vedtakHendelse = jsonMapperService.mapHendelse(hendelse)
             behandeHendelseService.behandleHendelse(vedtakHendelse)
         } catch (e: Exception) {
-            secureLogger.error(e) { "Behandling av vedtakshendelse feilet for: $hendelse" }.sanitizeForLog()
+            secureLogger.error(e) { "Behandling av vedtakshendelse feilet for: $hendelse".sanitizeForLog() }
             throw e
         }
     }

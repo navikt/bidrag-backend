@@ -11,7 +11,7 @@ class JsonMapperService {
     fun mapHendelse(hendelse: String): VedtakHendelse = try {
         commonObjectmapper.readValue(hendelse, VedtakHendelse::class.java)
     } finally {
-        secureLogger.debug { "Leser hendelse: $hendelse" }.sanitizeForLog()
+        secureLogger.debug { "Leser hendelse: $hendelse".sanitizeForLog() }
     }
 
     fun readTree(hendelse: String) = commonObjectmapper.readTree(hendelse)

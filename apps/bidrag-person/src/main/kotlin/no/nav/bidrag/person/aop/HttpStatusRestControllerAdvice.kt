@@ -13,14 +13,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.HttpStatusCodeException
-import kotlin.collections.firstOrNull
 
 @RestControllerAdvice
 class HttpStatusRestControllerAdvice {
 
     companion object {
-        private const val EXTERNAL_SERVICE_ERROR_PREFIX = "Det skjedde en feil ved kall mot ekstern tjeneste: "
         private val logger = KotlinLogging.logger {}
     }
 
@@ -64,10 +61,20 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler
     fun handleMissingKotlinParameterException(exception: JsonMappingException): ResponseEntity<*> {
-        logger.warn(exception) { "Noe gikk galt i jsonMapping." }
+        logger.warn(exception) { "Noe gikk galt i jsonMapping" }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .header(HttpHeaders.WARNING, exception.message ?: "Noe gikk galt i jsonMapping.")
+            .build<Any>()
+    }
+
+    @ResponseBody
+    @ExceptionHandler
+    fun handleHttpMessageNotReadableException(exception: HttpMessageNotReadableException): ResponseEntity<*> {
+        logger.warn(exception) { "Noe gikk kalt med http message" }
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .header(HttpHeaders.WARNING, exception.message ?: "Noe gikk kalt med http message")
             .build<Any>()
     }
 }

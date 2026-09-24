@@ -36,7 +36,7 @@ class Kontoendringsmottak(
 
         if (harGyldigFormat(endringsmelding)) {
             kontoendringsbehandler.publisere(endringsmelding?.kontohaver.toString())
-            secureLogger.info { "Kontoendring publisert for kontoeier ${endringsmelding?.kontohaver}" }.sanitizeForLog()
+            secureLogger.info { "Kontoendring publisert for kontoeier ${endringsmelding?.kontohaver}".sanitizeForLog() }
         }
     }
 

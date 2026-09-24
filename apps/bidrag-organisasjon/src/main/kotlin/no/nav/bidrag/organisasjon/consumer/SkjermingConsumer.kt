@@ -20,7 +20,7 @@ class SkjermingConsumer(private val restTemplate: RestTemplate) {
             response.body ?: false
         } catch (e: HttpClientErrorException) {
             val melding = "Feil ved kall til Skjerming API: " + e.message + ". Response body: " + e.responseBodyAsString
-            LOGGER.error { melding }
+            LOGGER.error(e) { "Feil ved kall til Skjerming API" }
             throw SkjermingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }

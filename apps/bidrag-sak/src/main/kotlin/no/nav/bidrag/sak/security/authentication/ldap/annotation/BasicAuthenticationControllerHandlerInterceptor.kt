@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.sak.security.SecurityUtils
 import no.nav.bidrag.sak.security.authentication.ldap.LdapUserService
 import no.nav.bidrag.sak.security.exception.BasicNotAuthenticatedException
@@ -77,7 +78,7 @@ class BasicAuthenticationControllerHandlerInterceptor(
         return try {
             userIsAuthenticated =
                 ldapUserService.authenticate(loginCredentials[0], loginCredentials[1], listOf(*groups))
-            logger.debug { "User ${loginCredentials[0].sanitizeForLog()} was successfully authenticated: $userIsAuthenticated" }
+            secureLogger.debug { "User ${loginCredentials[0].sanitizeForLog()} was successfully authenticated: $userIsAuthenticated" }
             userIsAuthenticated
         } catch (e: Exception) {
             logger.warn(e) { "An error occurred when looking up user ${loginCredentials[0].sanitizeForLog()} in AD" }

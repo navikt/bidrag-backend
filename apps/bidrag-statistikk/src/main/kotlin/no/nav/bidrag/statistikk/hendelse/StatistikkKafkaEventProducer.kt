@@ -38,7 +38,7 @@ class StatistikkKafkaEventProducer(
                 record,
             ).get().recordMetadata.offset()
         } catch (e: Exception) {
-            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med forskuddsvedtak, $record. Exception: $e" }.sanitizeForLog()
+            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med forskuddsvedtak, $record. Exception: $e".sanitizeForLog() }
             throw IllegalStateException(e.message, e)
         }
     }
@@ -58,7 +58,7 @@ class StatistikkKafkaEventProducer(
                 record,
             ).get().recordMetadata.offset()
         } catch (e: Exception) {
-            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med bidragsvedtak, $record. Exception: $e" }
+            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med bidragsvedtak, $record. Exception: $e".sanitizeForLog() }
             throw IllegalStateException(e.message, e)
         }
     }
