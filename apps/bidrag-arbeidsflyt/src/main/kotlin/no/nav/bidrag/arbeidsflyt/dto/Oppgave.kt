@@ -8,13 +8,9 @@ import no.nav.bidrag.arbeidsflyt.model.journalpostMedBareBIDPrefix
 import no.nav.bidrag.arbeidsflyt.model.tilFagområdeBeskrivelse
 import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfo
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
-import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.commons.util.VirkedagerProvider
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 import no.nav.bidrag.transport.dokument.Sporingsdata
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -507,9 +503,8 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         return this
     }
 
-    fun overforTilSaksbehandler(nyTilordnetRessurs: String, nyTildeltEnhetsnr: String): OppdaterOppgave {
+    fun overforTilSaksbehandler(nyTilordnetRessurs: String): OppdaterOppgave {
         tilordnetRessurs = nyTilordnetRessurs
-        tildeltEnhetsnr = nyTildeltEnhetsnr
         _hasChanged = true
         return this
     }
@@ -538,14 +533,14 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         }
 
         if (erTilordnetRessursEndret) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs, tildeltEnhetsnr)} til ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr)}\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs)} til ${lagSaksbehandlerInfo(tilordnetRessurs)}\r\n"
         }
         if (erTilordnetRessursEndretFraIkkeValgtTilValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr)}\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til ${lagSaksbehandlerInfo(tilordnetRessurs)}\r\n"
         }
 
         if (erTilordnetRessursEndretFraValgtTilIkkeValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(tilordnetRessurs, tildeltEnhetsnr!!)} til ikke valgt\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(tilordnetRessurs)} til ikke valgt\r\n"
         }
 
         if (nyBeskrivelse.isNotEmpty()) {
