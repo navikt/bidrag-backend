@@ -25,6 +25,7 @@ data class Oppgave(
     val frist: LocalDate?,
     var søknadsoppgave: Boolean = false,
     var tildeltEnhetsnr: String? = null,
+    var tilordnetRessurs: String? = null,
 ) {
     fun erJournalforingOppgave(): Boolean = oppgavetype == "JFR"
 
@@ -36,5 +37,6 @@ data class Oppgave(
         oppgavetype = oppgaveHendelse.oppgavetype!!
         tildeltEnhetsnr = oppgaveHendelse.tildeltEnhetsnr
         søknadsoppgave = oppgaveHendelse.erSøknadsoppgave
+        tilordnetRessurs = oppgaveHendelse.tilordnetRessurs
     }
 }

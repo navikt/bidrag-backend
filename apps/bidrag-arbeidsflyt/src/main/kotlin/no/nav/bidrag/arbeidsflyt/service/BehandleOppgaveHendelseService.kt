@@ -71,6 +71,7 @@ class BehandleOppgaveHendelseService(
             opprettNyJournalforingOppgaveHvisNodvendig(oppgave)
         } else {
             overførSøknadsoppgaverTilSammeEnhet(oppgave)
+            overførSøknadsoppgaverTilSammeSaksbehandler(oppgave)
             opprettSøknadsoppgaveHvisBehandlingIkkeAvsluttet(oppgave)
 
             behandlingService.oppdaterStatusPåOppgaverBehandlingTilFerdigstilt(oppgave)
@@ -173,7 +174,13 @@ class BehandleOppgaveHendelseService(
             behandlingHendelseService.behandleHendelse(behandling.hendelse!!)
         }
     }
+    fun overførSøknadsoppgaverTilSammeSaksbehandler(oppgave: OppgaveData) {
+        if (oppgave.endretAvArbeidsflyt()) return
+        if (!erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave)) return
 
+        oppgaveService.oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave)
+        behandlingService.oppdaterBehandlingEnhet(oppgave)
+    }
     fun overførSøknadsoppgaverTilSammeEnhet(oppgave: OppgaveData) {
         if (oppgave.endretAvArbeidsflyt()) return
         if (!erSøknadsoppgaveEnhetEndretTilNoeAnnet(oppgave)) return
@@ -181,7 +188,16 @@ class BehandleOppgaveHendelseService(
         oppgaveService.oppdaterAlleOppgaverSomTilhørerSammeBehandling(oppgave)
         behandlingService.oppdaterBehandlingEnhet(oppgave)
     }
+    fun erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave: OppgaveData): Boolean {
+        if (!oppgave.erSøknadsoppgave) {
+            return false
+        }
 
+        val prevOppgaveState = persistenceService.hentOppgave(oppgave.id) ?: return false
+
+        // Ikke gjør noe hvis forrige status var null, det skal enten settes av systemet eller av SB. Hvis den settes til null senere å er det noe som er gjort manuelt
+        return prevOppgaveState.tilordnetRessurs != null && (prevOppgaveState.tilordnetRessurs != oppgave.tilordnetRessurs)
+    }
     fun erSøknadsoppgaveEnhetEndretTilNoeAnnet(oppgave: OppgaveData): Boolean {
         if (!oppgave.erSøknadsoppgave) {
             return false
