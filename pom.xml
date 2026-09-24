@@ -62,6 +62,7 @@
         <module>apps/bidrag-tilgangskontroll</module>
         <module>apps/bidrag-reisekostnad-api</module>
         <module>apps/bidrag-vedtak</module>
+        <module>libs/bidrag-texas</module>
     </modules>
 
     <!-- Versjonsegenskaper her er kun de som root-pom-en selv trenger for sin

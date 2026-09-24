@@ -27,6 +27,11 @@
             <artifactId>bidrag-oppgave-dto</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>no.nav.bidrag</groupId>
+            <artifactId>bidrag-texas</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
         <!-- Spring Boot -->
