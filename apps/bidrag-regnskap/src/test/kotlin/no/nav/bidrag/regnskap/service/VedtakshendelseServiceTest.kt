@@ -150,10 +150,21 @@ class VedtakshendelseServiceTest {
         verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
-    private fun opprettVedtakshendelse(): String = """
+    @Test
+    fun `Skal ikke opprette oppdrag for endring av mottaker`() {
+        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 0) { oppdragService.lagreHendelse(any()) }
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
+        verify(exactly = 1) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+    }
+
+    private fun opprettVedtakshendelse(vedtakstype: String = "INNKREVING"): String = """
       {
         "kilde":"MANUELT",
-        "type":"INNKREVING",
+        "type":"$vedtakstype",
         "id":"123",
         "vedtakstidspunkt":"2022-06-01T00:00:00.000000000",
         "enhetsnummer":"4812",
