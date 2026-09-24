@@ -535,6 +535,9 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
             nyBeskrivelse += "\u00B7 Oppgave overført fra enhet $eksisterendeTildeltEnhet til $tildeltEnhetsnr\r\n"
         }
 
+        if (erTilordnetRessursEndret) {
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra $eksisterendeTilordnetRessurs til $tilordnetRessurs\r\n"
+        }
         if (erTilordnetRessursEndretFraIkkeValgtTilValgt) {
             nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til $tilordnetRessurs\r\n"
         }
@@ -558,6 +561,9 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
     private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = eksisterendeTilordnetRessurs?.isNotEmpty() == true && tilordnetRessurs?.isEmpty() == true
     private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = eksisterendeTilordnetRessurs?.isEmpty() == true && tilordnetRessurs?.isNotEmpty() == true
+    private val erTilordnetRessursEndret get() = !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
+        !erTilordnetRessursEndretFraIkkeValgtTilValgt &&
+        eksisterendeTilordnetRessurs != tilordnetRessurs
     private val erEnhetEndret get() = tildeltEnhetsnr != null && (eksisterendeTildeltEnhet) != tildeltEnhetsnr
 }
 
