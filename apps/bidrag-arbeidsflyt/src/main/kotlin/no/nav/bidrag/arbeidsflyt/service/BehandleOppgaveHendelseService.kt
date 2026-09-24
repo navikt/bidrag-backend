@@ -12,6 +12,7 @@ import no.nav.bidrag.arbeidsflyt.model.OppdaterOppgaveFraHendelse
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -196,7 +197,7 @@ class BehandleOppgaveHendelseService(
         val prevOppgaveState = persistenceService.hentOppgave(oppgave.id) ?: return false
 
         // Ikke gjør noe hvis forrige status var null, det skal enten settes av systemet eller av SB. Hvis den settes til null senere å er det noe som er gjort manuelt
-        return prevOppgaveState.tilordnetRessurs != null && (prevOppgaveState.tilordnetRessurs != oppgave.tilordnetRessurs)
+        return (prevOppgaveState.tilordnetRessurs != null || oppgave.tilordnetRessurs != null) && (prevOppgaveState.tilordnetRessurs != oppgave.tilordnetRessurs)
     }
     fun erSøknadsoppgaveEnhetEndretTilNoeAnnet(oppgave: OppgaveData): Boolean {
         if (!oppgave.erSøknadsoppgave) {
@@ -247,17 +248,7 @@ class BehandleOppgaveHendelseService(
     ) {
         try {
             SECURE_LOGGER.info(
-                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med " +
-                    buildList {
-                        add("oppgaveId ${oppgaveHendelse.oppgave.oppgaveId}")
-                        add("versjon ${oppgaveHendelse.oppgave.versjon}")
-                        add("opgpavetype ${oppgaveHendelse.oppgave.kategorisering?.oppgavetype}")
-                        add("tema ${oppgaveHendelse.oppgave.kategorisering?.tema}")
-                        add("journalpostId ${oppgave.journalpostId}")
-                        add("tildelt ${oppgaveHendelse.oppgave.tilordning?.navIdent} (enhet ${oppgaveHendelse.oppgave.tilordning?.enhetsnr})")
-                        add("utførtAv ${oppgaveHendelse.utfortAv?.navIdent} (enhet ${oppgaveHendelse.utfortAv?.enhetsnr})")
-                        add("hendelse $oppgaveHendelse")
-                    }.joinToString(", "),
+                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med ${commonObjectmapper.writeValueAsString(oppgaveHendelse)} ",
             )
         } catch (e: Exception) {
             LOGGER.error(e) { "Det skjedde en feil ved logging av hendelse" }

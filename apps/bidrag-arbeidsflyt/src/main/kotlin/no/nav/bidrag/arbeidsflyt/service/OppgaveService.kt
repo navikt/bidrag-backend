@@ -38,13 +38,14 @@ class OppgaveService(
     fun oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave: OppgaveData) {
         if (oppgave.behandlingsid == null) return
         val oppgaver = finnOppgaverForBehandling(oppgave.behandlingsid!!.toLong())
-        oppgaver.forEach {
-            if (it.id == oppgave.id) return@forEach
-            oppdaterOppgave(
-                OppdaterOppgave(it)
-                    .overforTilSaksbehandler(oppgave.tilordnetRessurs!!),
-            )
-        }
+        oppgaver
+            .filter { it.id != oppgave.id }
+            .filter { it.tilordnetRessurs != oppgave.tilordnetRessurs }.forEach {
+                oppdaterOppgave(
+                    OppdaterOppgave(it)
+                        .overforTilSaksbehandler(oppgave.tilordnetRessurs!!),
+                )
+            }
     }
 
     fun oppdaterAlleOppgaverSomTilhørerSammeBehandling(oppgave: OppgaveData) {
