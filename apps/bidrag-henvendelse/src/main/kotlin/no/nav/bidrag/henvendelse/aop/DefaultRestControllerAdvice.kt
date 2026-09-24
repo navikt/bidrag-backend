@@ -1,0 +1,226 @@
+package no.nav.bidrag.henvendelse.aop
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
+import org.springframework.http.ProblemDetail
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.context.request.WebRequest
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
+
+private val log = KotlinLogging.logger {}
+
+/**
+ * Feil svares ut som ProblemDetail (RFC 7807). Frontend har egen håndtering av formatet, se
+ * `packages/api/src/ProblemDetail.ts` i bidrag-frontend.
+ *
+ * Tre ting er verdt å merke seg:
+ *
+ * Klassen arver [ResponseEntityExceptionHandler] framfor å ta `@ExceptionHandler(Exception::class)`
+ * alene. Et rent catch-all her registreres før Spring Boots egen `ProblemDetailsExceptionHandler`
+ * og overskygger den, slik at ugyldig request-body, feil HTTP-metode og ukjent path alle ble 500
+ * istedenfor 400/405/404.
+ *
+ * Ingen tekst fra exceptions legges i `detail`. Meldingene fra AbstractRestClient og Spring
+ * inneholder den kallede URL-en - som hos oss har `?aktorid=...` - og noen av Spring sine egne
+ * meldinger siterer verdier fra forespørselen. Derfor overstyres også [handleExceptionInternal],
+ * slik at *alle* de arvede handlerne får en fast detaljtekst. Detaljene hører i loggen.
+ *
+ * Catch-allen ser på årsakskjeden. AbstractRestClient pakker alt som ikke er en
+ * `RestClientResponseException` i en `RuntimeException`, og Spring finner handler ut fra
+ * exception-klassen som faktisk kastes - ikke årsaken. Uten utpakkingen ble timeout og feilet
+ * token-veksling 500 "Ukjent feil" istedenfor 502, og [handleResourceAccessException] var
+ * død kode.
+ */
+@RestControllerAdvice
+class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
+    /**
+     * Feil fra tjenestene vi kaller skal ikke lekke ut som vår egen status. En 403 fra
+     * sf-henvendelse-api-proxy betyr at *appen* mangler tilgang, og ville ellers fått frontend
+     * til å fortelle saksbehandleren at hun ikke har tilgang til personen.
+     *
+     * Tar `RestClientResponseException` og ikke `HttpStatusCodeException`, siden det er den
+     * førstnevnte AbstractRestClient kaster videre - `UnknownHttpStatusCodeException` (ikke-
+     * standard statuskode) er også en av dem.
+     */
+    @ExceptionHandler(RestClientResponseException::class)
+    fun handleRestClientResponseException(exception: RestClientResponseException): ProblemDetail {
+        // AbstractRestClient har allerede logget stacktracen, så den gjentas ikke her.
+        // Klassenavnet er med fordi statusen alene ikke sier hvilket ledd som feilet, og
+        // meldingen ikke kan logges: den inneholder URL-en, som hos oss har ?aktorid=.
+        log.warn { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}, type ${exception.javaClass.simpleName}" }
+        return problemDetail(
+            status = HttpStatus.BAD_GATEWAY,
+            tittel = "Feil ved kall mot tjeneste",
+            detalj = "Kunne ikke hente henvendelser fordi en tjeneste vi er avhengig av svarte med feil.",
+        )
+    }
+
+    /** Timeout, brutt forbindelse, DNS-feil. */
+    @ExceptionHandler(ResourceAccessException::class)
+    fun handleResourceAccessException(exception: ResourceAccessException): ProblemDetail {
+        // Årsaksklassen framfor meldingen: den skiller timeout fra brutt forbindelse fra DNS-feil,
+        // mens meldingen fra RestTemplate er "I/O error on GET request for "<url>": ..." og altså
+        // inneholder aktøriden.
+        log.warn { "Fikk ikke kontakt med ekstern tjeneste: ${(exception.cause ?: exception).javaClass.simpleName}" }
+        return problemDetail(
+            status = HttpStatus.BAD_GATEWAY,
+            tittel = "Tjenesten svarte ikke",
+            detalj = "Kunne ikke hente henvendelser fordi en tjeneste vi er avhengig av ikke svarte.",
+        )
+    }
+
+    @ExceptionHandler(JwtTokenUnauthorizedException::class)
+    fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException): ProblemDetail {
+        log.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
+        return problemDetail(
+            status = HttpStatus.UNAUTHORIZED,
+            tittel = "Autentiseringsfeil",
+            detalj = "Ugyldig eller manglende sikkerhetstoken.",
+        )
+    }
+
+    /**
+     * Detaljteksten sier ikke om personen finnes. Frontend har egen håndtering av 403, se
+     * `packages/api/src/TilgangsFeilError.ts` i bidrag-frontend.
+     */
+    @ExceptionHandler(IngenTilgangException::class)
+    fun handleIngenTilgang(exception: IngenTilgangException): ProblemDetail {
+        log.warn { "Saksbehandleren mangler tilgang til personen i forespørselen" }
+        return problemDetail(
+            status = HttpStatus.FORBIDDEN,
+            tittel = "Ingen tilgang",
+            detalj = "Du har ikke tilgang til å se henvendelser for denne personen.",
+        )
+    }
+
+    @ExceptionHandler(UgyldigIdentException::class)
+    fun handleUgyldigIdent(exception: UgyldigIdentException): ProblemDetail {
+        log.warn { "Fikk forespørsel med ugyldig ident" }
+        return problemDetail(
+            status = HttpStatus.BAD_REQUEST,
+            tittel = "Ugyldig ident",
+            detalj = "Identen i forespørselen er ikke et gyldig fødselsnummer eller d-nummer.",
+        )
+    }
+
+    /**
+     * 404 fra bidrag-person betyr at identen ikke finnes i folkeregisteret. Det er et svar om
+     * forespørselen, ikke en feil i tjenesten, så den skal ikke bli 502. Statusen er 404 og ikke
+     * 400: identen er velformet - den har bestått kontrollsifferet i controlleren - og det er
+     * personen som ikke finnes.
+     */
+    @ExceptionHandler(PersonIkkeFunnetException::class)
+    fun handlePersonIkkeFunnet(exception: PersonIkkeFunnetException): ProblemDetail {
+        log.warn { "Fikk forespørsel om en person som ikke finnes" }
+        return problemDetail(
+            status = HttpStatus.NOT_FOUND,
+            tittel = "Fant ikke personen",
+            detalj = "Identen i forespørselen tilhører ingen person i folkeregisteret.",
+        )
+    }
+
+    /**
+     * Konsumentene pakker feil fra tjenesten de kaller i denne, slik at svaret kan navngi hvem
+     * som feilet. Tjenestenavnet er ikke en personopplysning, og saksbehandleren - eller den som
+     * leser en feilmelding i frontend - trenger å vite om det er bidrag-person eller
+     * henvendelsesløsningen som er nede.
+     *
+     * Skillet mellom "svarte ikke" og "svarte med feil" leses av årsaken: en ResourceAccessException
+     * er timeout, brutt forbindelse eller DNS-feil, alt annet er en respons vi ikke likte.
+     */
+    @ExceptionHandler(TjenesteFeilException::class)
+    fun handleTjenesteFeil(exception: TjenesteFeilException): ProblemDetail {
+        val årsak = exception.cause
+        val svarteIkke = årsakskjede(exception).any { it is ResourceAccessException }
+        val status = (årsak as? RestClientResponseException)?.statusCode
+
+        // Meldingen logges ikke: den inneholder URL-en, og hos oss har hver URL ?aktorid=.
+        log.warn {
+            "Feil fra ${exception.tjeneste}" +
+                (status?.let { ", status $it" } ?: "") +
+                ", type ${(årsak ?: exception).javaClass.simpleName}"
+        }
+        return problemDetail(
+            status = HttpStatus.BAD_GATEWAY,
+            tittel = if (svarteIkke) "Tjenesten svarte ikke" else "Feil ved kall mot tjeneste",
+            detalj = if (svarteIkke) {
+                "Kunne ikke hente henvendelser fordi ${exception.tjeneste} ikke svarte."
+            } else {
+                "Kunne ikke hente henvendelser fordi ${exception.tjeneste} svarte med feil."
+            },
+        )
+    }
+
+    @ExceptionHandler(Exception::class)
+    fun handleUkjentFeil(exception: Exception): ProblemDetail {
+        årsakskjede(exception).forEach { årsak ->
+            when (årsak) {
+                is ResourceAccessException -> return handleResourceAccessException(årsak)
+                is RestClientResponseException -> return handleRestClientResponseException(årsak)
+                else -> Unit
+            }
+        }
+
+        log.error(exception) { "Det skjedde en ukjent feil" }
+        return problemDetail(
+            status = HttpStatus.INTERNAL_SERVER_ERROR,
+            tittel = "Ukjent feil",
+            detalj = "Det skjedde en uventet feil. Feilen er logget.",
+        )
+    }
+
+    /**
+     * Alle de arvede handlerne går gjennom her. Vi beholder statuskoden Spring har valgt, men
+     * bytter ut detaljteksten: flere av dem siterer forespørselen, for eksempel
+     * "Failed to convert 'x' with value: '...'", og da kan en ident havne i responsen.
+     */
+    override fun handleExceptionInternal(
+        ex: Exception,
+        body: Any?,
+        headers: HttpHeaders,
+        statusCode: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
+        log.warn { "Avviste forespørsel med status $statusCode: ${ex.javaClass.simpleName}" }
+        val problem = problemDetail(
+            status = statusCode,
+            tittel = "Forespørselen kunne ikke behandles",
+            detalj = "Forespørselen kunne ikke behandles. Se loggen for detaljer.",
+        )
+        return super.handleExceptionInternal(ex, problem, headers, statusCode, request)
+    }
+
+    private fun problemDetail(
+        status: HttpStatusCode,
+        tittel: String,
+        detalj: String,
+    ) = ProblemDetail.forStatusAndDetail(status, detalj).apply { title = tittel }
+
+    /** Exception-en selv og årsakene under, med tak for å tåle sykliske kjeder. */
+    private fun årsakskjede(exception: Throwable) = generateSequence(exception) { it.cause }.take(10)
+}
+
+/** Kastes når identen i forespørselen ikke er en gyldig personident. */
+class UgyldigIdentException : RuntimeException("Ugyldig personident")
+
+/** Kastes når bidrag-tilgangskontroll svarer at saksbehandleren ikke har tilgang til personen. */
+class IngenTilgangException : RuntimeException("Ingen tilgang til personen")
+
+/** Kastes når bidrag-person ikke kjenner identen i forespørselen. */
+class PersonIkkeFunnetException : RuntimeException("Fant ikke personen")
+
+/**
+ * Kastes av konsumentene når tjenesten de kaller feiler. [tjeneste] er navnet som havner i
+ * svaret, så det skal være navnet teamet bruker om tjenesten - ikke en URL.
+ */
+class TjenesteFeilException(
+    val tjeneste: String,
+    cause: Throwable,
+) : RuntimeException("Feil fra $tjeneste", cause)
