@@ -246,7 +246,7 @@ class ForholdsmessigFordelingKlageService(
      * Hvis den opprettede søknaden er avbrutt, opprett en ny klagesøknad.
      * Returnerer oppdatert hovedsøknadsid.
      */
-    private fun håndterSlettetHovedsøknad(
+    internal fun håndterSlettetHovedsøknad(
         opprettetSøknad: HentSøknad,
         behandling: Behandling,
         åpneSøknaderForVedtaksid: List<HentSøknad>,
@@ -255,8 +255,21 @@ class ForholdsmessigFordelingKlageService(
     ): Long {
         if (opprettetSøknad.behandlingStatusType != BehandlingStatusType.AVBRUTT) return gjeldeneHovedsøknadsid
 
-        val originalSøknad = bbmConsumer.hentSøknad(behandling.omgjøringsdetaljer!!.soknadRefId!!)!!.søknad
         val varHovedsøknad = opprettetEllerOppdaterSøknadsid == gjeldeneHovedsøknadsid
+        if (varHovedsøknad) {
+            val nyHovedsøknadsid = behandling.finnSøknadSomKanBliHovedsøknad(gjeldeneHovedsøknadsid)
+            if (nyHovedsøknadsid != null) {
+                KLAGE_LOGGER.info {
+                    "Hovedsøknad $gjeldeneHovedsøknadsid er avbrutt. Setter søknad $nyHovedsøknadsid som ble opprettet etter hovedsøknaden som ny hovedsøknad i behandling ${behandling.id}"
+                }
+                bbmConsumer.fjernSammeknytningHovedsøknad(gjeldeneHovedsøknadsid, nyHovedsøknadsid)
+                behandling.soknadsid = nyHovedsøknadsid
+                gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling, gjeldeneHovedsøknadsid)
+                return nyHovedsøknadsid
+            }
+        }
+
+        val originalSøknad = bbmConsumer.hentSøknad(behandling.omgjøringsdetaljer!!.soknadRefId!!)!!.søknad
         val nySøknadsid =
             opprettKlageSøknad(
                 originalSøknad,
@@ -371,7 +384,11 @@ class ForholdsmessigFordelingKlageService(
     ): Boolean {
         val barnMedErstattetFFKlagesøknad =
             behandling.søknadsbarn.mapNotNull { barn ->
-                barn.finnSøknad(søknadsidSomSlettes)?.erstatterFFKlagesøknadsid?.let { barn to it }
+                barn.forholdsmessigFordeling
+                    ?.søknader
+                    ?.find { it.søknadsid == søknadsidSomSlettes }
+                    ?.erstatterFFKlagesøknadsid
+                    ?.let { barn to it }
             }
         if (barnMedErstattetFFKlagesøknad.isEmpty()) return false
 
@@ -417,9 +434,56 @@ class ForholdsmessigFordelingKlageService(
                 roller
                     .filter { !it.harSøknad(nySøknadsid) }
                     .forEach { it.forholdsmessigFordeling?.søknader?.add(gjenopprettetSøknad.copy()) }
+                // Hindre at FF-klagesøknaden gjenopprettes flere ganger
+                barnListe.forEach { barn ->
+                    barn.forholdsmessigFordeling
+                        ?.søknader
+                        ?.filter { it.søknadsid == søknadsidSomSlettes }
+                        ?.forEach { it.erstatterFFKlagesøknadsid = null }
+                }
             }
         return true
     }
+
+    /**
+     * Korrigerer FF-klagesøknader ved synkronisering:
+     * - Gjenoppretter FF-klagesøknader hvis søknaden som erstattet dem er lukket (feks slettet uten at det ble fanget opp)
+     * - Feilregistrerer FF-klagesøknader for barn som har en åpen søknad opprettet etter hovedsøknaden
+     */
+    fun korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling: Behandling) {
+        val hovedsøknadsid = behandling.soknadsid ?: return
+        behandling.søknadsbarn
+            .flatMap { barn ->
+                barn.forholdsmessigFordeling?.søknader?.filter {
+                    it.erstatterFFKlagesøknadsid != null && it.status?.lukketStatus == true
+                } ?: emptyList()
+            }.mapNotNull { it.søknadsid }
+            .distinct()
+            .forEach { søknadsid ->
+                KLAGE_LOGGER.info { "Søknad $søknadsid som erstattet FF-klagesøknad er lukket. Gjenoppretter FF-klagesøknad i behandling ${behandling.id}" }
+                gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling, søknadsid)
+            }
+
+        behandling.søknadsbarn
+            .filter { barn -> barn.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.behandlingstype == Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE } == true }
+            .flatMap { barn ->
+                barn.forholdsmessigFordeling!!.søknaderUnderBehandling.filter {
+                    it.opprettetEtterHovedsøknad && it.søknadsid != hovedsøknadsid && it.behandlingstype?.erForholdsmessigFordeling != true
+                }
+            }.mapNotNull { it.søknadsid }
+            .distinct()
+            .forEach { søknadsid ->
+                val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
+                feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, søknad, hovedsøknadsid)
+            }
+    }
+
+    /** Finner eldste åpne søknad som er opprettet etter hovedsøknaden og som kan overta som hovedsøknad */
+    private fun Behandling.finnSøknadSomKanBliHovedsøknad(hovedsøknadsid: Long) = roller
+        .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
+        .filter { it.opprettetEtterHovedsøknad && it.søknadsid != null && it.søknadsid != hovedsøknadsid }
+        .mapNotNull { it.søknadsid }
+        .minOrNull()
 
     /**
      * Finner tilknyttede søknader fra påklaget vedtak og oppretter klagesøknader for dem.
