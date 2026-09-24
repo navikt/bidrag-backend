@@ -19,7 +19,7 @@ import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
-private val LOGGER = KotlinLogging.logger {}
+private val LOGGER = KotlinLogging.logger { }
 
 @Service
 class BidragSakConsumer(
@@ -51,7 +51,7 @@ class BidragSakConsumer(
             return postForNonNullEntity(createUri("/person/sak"), personIdent)
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.NOT_FOUND) {
-                LOGGER.warn(e) { "Fant ingen saker for ${personIdent.verdi}" }
+                LOGGER.info(e) { "Fant ingen saker for ${personIdent.verdi}" }
                 return emptyList()
             }
             LOGGER.warn(e) { "Det skjedde en feil ved henting av saker for $personIdent" }

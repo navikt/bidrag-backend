@@ -8,7 +8,6 @@ import no.nav.bidrag.arbeidsflyt.model.EndreOppgaveFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.HentPersonFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.OpprettOppgaveFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.service.PersistenceService
-import no.nav.bidrag.commons.ExceptionLogger
 import no.nav.bidrag.commons.security.api.EnableSecurityConfiguration
 import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvider
@@ -32,6 +31,7 @@ import org.springframework.retry.annotation.EnableRetry
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.util.backoff.FixedBackOff
 import java.time.Duration
+import no.nav.bidrag.commons.util.secureLogger
 import javax.sql.DataSource
 
 @Configuration
@@ -74,16 +74,15 @@ class HendelseConfiguration {
             }
 
         val errorHandler =
-            DefaultErrorHandler({ rec: ConsumerRecord<*, *>, ex: Exception? ->
+            DefaultErrorHandler({ rec: ConsumerRecord<*, *>, e: Exception? ->
                 val key = rec.key()
                 val value = rec.value()
                 val offset = rec.offset()
                 val topic = rec.topic()
                 val partition = rec.partition()
                 val errorMessage = "Håndtering av Kafka melding feilet. Nøkkel $key, partition $partition, topic $topic og offset $offset. Melding som feilet: $value"
-                LOGGER.error(errorMessage, ex)
-                SECURE_LOGGER.error(errorMessage, ex) // Log message without censoring sensitive data
-                val retryableException = !(ex?.cause is OpprettOppgaveFeiletFunksjoneltException || ex?.cause is EndreOppgaveFeiletFunksjoneltException)
+                secureLogger.error(e) {errorMessage}
+                val retryableException = !(e?.cause is OpprettOppgaveFeiletFunksjoneltException || e?.cause is EndreOppgaveFeiletFunksjoneltException)
                 persistenceService.lagreDLQKafka(topic, key?.toString()?.replace("\u0000", ""), value?.toString() ?: "{}", retryableException)
             }, backoffStrategy)
         errorHandler.setRetryListeners(KafkaRetryListener())

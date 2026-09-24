@@ -26,6 +26,7 @@ import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
 import java.time.LocalDate
+import no.nav.bidrag.commons.util.secureLogger
 
 private val LOGGER = KotlinLogging.logger {}
 
@@ -163,7 +164,7 @@ class ForsendelseBestillingService(
     }
 
     fun distribuerForsendelse(forsendelseBestilling: ForsendelseBestilling) {
-        LOGGER.info {
+        secureLogger.debug {
             "Bestiller distribusjon av forsendelse ${forsendelseBestilling.forsendelseId} " +
                 "til gjelder ${forsendelseBestilling.gjelder} " +
                 "og mottaker ${forsendelseBestilling.mottaker} med rolle ${forsendelseBestilling.rolletype} " +
@@ -174,7 +175,7 @@ class ForsendelseBestillingService(
                 forsendelseBestilling.batchId,
                 forsendelseBestilling.forsendelseId!!,
             )
-        LOGGER.info {
+        secureLogger.info {
             "Distribuerte forsendelse ${forsendelseBestilling.forsendelseId} " +
                 "med journalpostId ${distribuerJournalpostResponse.journalpostId.numeric} " +
                 "relatert til sak ${forsendelseBestilling.barn.saksnummer}"
@@ -327,7 +328,7 @@ class ForsendelseBestillingService(
         val rm = barn.reellMottaker ?: return null
         if (rm.ident.verdi == barn.fødselsnummer!!.verdi) {
             return if (erOver18År(barn.fødselsnummer!!)) {
-                LOGGER.info {
+                secureLogger.info {
                     "Fødselsnummer til RM til barn er har samme fødselsnummer som barnet ${barn.fødselsnummer!!.verdi} og barnet er over 18 år. Setter mottaker av forsendelsen til barnet"
                 }
                 ForsendelseGjelderMottakerInfo(
@@ -336,7 +337,7 @@ class ForsendelseBestillingService(
                     Rolletype.BARN,
                 )
             } else {
-                LOGGER.info {
+                secureLogger.info {
                     "Fødselsnummer til RM til barn er har samme fødselsnummer som barnet ${barn.fødselsnummer!!.verdi} og men er under 18 år. Setter mottaker av forsendelsen til BM"
                 }
                 null
@@ -344,13 +345,13 @@ class ForsendelseBestillingService(
         }
         // sjekker om denne reelle mottaker er verge -> forsendelse skal til RM
         if (rm.verge) {
-            LOGGER.info { "RM ${rm.ident} til barn ${barn.fødselsnummer} er verge. Setter mottaker av forsendelsen til RM" }
+            secureLogger.info { "RM ${rm.ident} til barn ${barn.fødselsnummer} er verge. Setter mottaker av forsendelsen til RM" }
             // Hvis reell mottaker eksisterer og er verge, sendes forsendelsen til vergen
             return ForsendelseGjelderMottakerInfo(barn.fødselsnummer!!.verdi, rm.ident.verdi, Rolletype.REELMOTTAKER)
         }
 
         if (!SamhandlerId(rm.ident.verdi).gyldig()) {
-            LOGGER.warn {
+            secureLogger.warn {
                 "RM har ikke en gyldig samhandlerId ${rm.ident}. Går videre uten å sjekke om RM er Barnevernsinstitusjon"
             }
             return null
@@ -364,7 +365,7 @@ class ForsendelseBestillingService(
                 "Fant ikke samhandler med id ${rm.ident} i bidrag-samhandler",
             )
         if (samhandler.områdekode == Områdekode.BARNEVERNSINSTITUSJON) {
-            LOGGER.info {
+            secureLogger.info {
                 "RM ${rm.ident} til barnet ${barn.fødselsnummer} er barnevernsinstitusjon." +
                     " Setter mottaker av forsendelsen til RM"
             }
@@ -374,7 +375,7 @@ class ForsendelseBestillingService(
                 Rolletype.REELMOTTAKER,
             )
         }
-        LOGGER.info {
+        secureLogger.info {
             "RM ${rm.ident} til barnet ${barn.fødselsnummer} er ikke barnevernsinstitusjon eller verge." +
                 " Setter mottaker av forsendelsen til BM"
         }

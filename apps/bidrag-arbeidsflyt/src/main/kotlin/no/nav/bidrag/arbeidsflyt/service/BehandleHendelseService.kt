@@ -1,11 +1,11 @@
 package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
 import no.nav.bidrag.arbeidsflyt.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.PersonConsumer
 import no.nav.bidrag.arbeidsflyt.model.BehandleJournalpostHendelse
 import no.nav.bidrag.arbeidsflyt.utils.numericOnly
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 import org.springframework.stereotype.Service
 
@@ -20,8 +20,7 @@ class BehandleHendelseService(
     private val tIlgangskontrollConsumer: BidragTilgangskontrollConsumer,
 ) {
     fun behandleHendelse(journalpostHendelse: JournalpostHendelse) {
-        LOGGER.info { "Behandler journalpostHendelse: ${journalpostHendelse.printSummary()}" }
-        SECURE_LOGGER.info("Behandler journalpostHendelse: $journalpostHendelse")
+        secureLogger.debug { "Behandler journalpostHendelse: $journalpostHendelse" }
         if (journalpostHendelse.erForsendelse()) {
             LOGGER.info { "Ignorer journalpostHendelse med id ${journalpostHendelse.journalpostId}. Hendelsen gjelder forsendelse" }
             return
@@ -47,9 +46,8 @@ class BehandleHendelseService(
 
     fun populerMedAktoerIdHvisMangler(journalpostHendelse: JournalpostHendelse): JournalpostHendelse {
         if (journalpostHendelse.aktorId.isNullOrEmpty() && !journalpostHendelse.fnr.isNullOrEmpty()) {
-            LOGGER.info { "Hendelse mangler aktørid. Henter og oppdaterer hendelsedata med aktørid" }
             return personConsumer.hentPerson(journalpostHendelse.fnr?.numericOnly())?.let {
-                SECURE_LOGGER.info("Hendelse manglet aktørid. Hentet og oppdatert hendelsedata med aktørid ${it.aktørId} og fnr ${journalpostHendelse.fnr}")
+                secureLogger.info{ "Hendelse manglet aktørid. Hentet og oppdatert hendelsedata med aktørid ${it.aktørId} og fnr ${journalpostHendelse.fnr}" }
                 journalpostHendelse.copy(aktorId = it.aktørId)
             } ?: journalpostHendelse
         }

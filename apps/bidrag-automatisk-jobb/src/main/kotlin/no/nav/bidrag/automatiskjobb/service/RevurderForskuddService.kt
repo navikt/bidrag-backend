@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.YearMonth
+import no.nav.bidrag.commons.util.secureLogger
 
 private fun VedtakDto.erIndeksreguleringEllerAldersjustering() = listOf(Vedtakstype.ALDERSJUSTERING, Vedtakstype.INDEKSREGULERING).contains(type)
 
@@ -82,29 +83,29 @@ class RevurderForskuddService(
         val saker = bidragSakConsumer.hentSakerForPerson(barnIdent)
         return saker.mapNotNull { sak ->
             val personRolle = sak.roller.find { it.fødselsnummer == barnIdent } ?: return@mapNotNull null
-            LOGGER.info {
+            secureLogger.debug {
                 "Sjekker om person ${barnIdent.verdi} er barn i saken ${sak.saksnummer}, mottar forskudd og fortsatt bor hos BM etter adresseendring"
             }
             if (personRolle.type != Rolletype.BARN) {
-                LOGGER.info {
+                secureLogger.debug {
                     "Person ${barnIdent.verdi} har rolle ${personRolle.type} i sak ${sak.saksnummer}. Behandler bare når barnets adresse endres. Avslutter behandling"
                 }
                 return@mapNotNull null
             }
             val bidragsmottaker =
                 sak.roller.find { it.type == Rolletype.BIDRAGSMOTTAKER } ?: run {
-                    LOGGER.info {
+                    LOGGER.debug {
                         "Sak ${sak.saksnummer} har ingen bidragsmottaker. Avslutter behandling"
                     }
                     return@mapNotNull null
                 }
 
-            LOGGER.info {
+            secureLogger.debug {
                 "Sjekker om barnet ${barnIdent.verdi} i sak ${sak.saksnummer} mottar forskudd og fortsatt bor hos BM etter adresseendring"
             }
             val løpendeForskudd =
                 hentLøpendeForskudd(sak.saksnummer.verdi, barnIdent.verdi) ?: run {
-                    LOGGER.info {
+                    secureLogger.debug {
                         "Fant ingen løpende forskudd i sak ${sak.saksnummer} for barn ${barnIdent.verdi}. Avslutter behandling"
                     }
                     return@mapNotNull null
@@ -113,13 +114,13 @@ class RevurderForskuddService(
             val husstandsmedlemmerBM =
                 bidragPersonConsumer.hentPersonHusstandsmedlemmer(bidragsmottaker.fødselsnummer!!)
             if (husstandsmedlemmerBM.erHusstandsmedlem(barnIdent)) {
-                LOGGER.info {
+                secureLogger.debug {
                     "Barn ${barnIdent.verdi} er husstandsmedlem til bidragsmottaker ${bidragsmottaker.fødselsnummer!!.verdi}. Ingen endringer kreves."
                 }
                 return@mapNotNull null
             }
 
-            LOGGER.info {
+            secureLogger.info {
                 "Bidragsmottaker ${bidragsmottaker.fødselsnummer?.verdi} mottar forskudd for barn ${barnIdent.verdi} " +
                     "i sak ${sak.saksnummer} med beløp ${løpendeForskudd.beløp} ${løpendeForskudd.valutakode}. " +
                     "Barnet bor ikke lenger hos bidragsmottaker og skal derfor ikke motta forskudd lenger"
@@ -134,7 +135,7 @@ class RevurderForskuddService(
     }
 
     fun erForskuddRedusert(vedtakHendelse: VedtakHendelse): List<ForskuddRedusertResultat> {
-        LOGGER.info {
+        LOGGER.debug {
             "Sjekker om forskuddet er redusert etter fattet vedtak ${vedtakHendelse.id} i sak ${vedtakHendelse.saksnummer}"
         }
         val vedtak = hentVedtak(vedtakHendelse.id) ?: return listOf()
@@ -182,7 +183,7 @@ class RevurderForskuddService(
             .filter { it.type == Engangsbeløptype.SÆRBIDRAG }
             .filter {
                 if (it.resultatkode.tilResultatkode()?.erDirekteAvslag() == true) {
-                    LOGGER.info {
+                    LOGGER.debug {
                         "Særbidrag vedtaket $vedtaksid er direkte avslag med resultat ${it.resultatkode} og har derfor ingen inntekter."
                     }
                     false

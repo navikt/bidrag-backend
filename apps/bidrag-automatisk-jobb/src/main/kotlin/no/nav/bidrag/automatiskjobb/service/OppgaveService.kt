@@ -32,7 +32,7 @@ import java.time.format.DateTimeFormatter
 
 private val LOGGER = KotlinLogging.logger {}
 
-val opprettRevurderForskuddOppgaveToggleName = "automatiskjobb.opprett-revurder-forskudd-oppgave"
+const val opprettRevurderForskuddOppgaveToggleName = "automatiskjobb.opprett-revurder-forskudd-oppgave"
 
 @Service
 class OppgaveService(
@@ -43,7 +43,7 @@ class OppgaveService(
     fun sjekkOgOpprettRevurderForskuddOppgaveEtterBarnFlyttetFraBM(hendelse: Endringsmelding) {
         if (hendelse.erAdresseendring) {
             try {
-                LOGGER.info {
+                secureLogger.debug {
                     "Sjekker for person om barn mottar forskudd og fortsatt bor hos BM etter adresseendring i hendelse $hendelse"
                 }
                 revurderForskuddService.skalBMFortsattMottaForskuddForSøknadsbarnEtterAdresseendring(hendelse.aktørid).forEach {
@@ -66,11 +66,11 @@ class OppgaveService(
         try {
             if (vedtakHendelse.erForskudd()) return
             if (vedtakHendelse.kilde == Vedtakskilde.AUTOMATISK) return
-            LOGGER.info { "Sjekker om det skal opprettes revurder forskudd oppgave for hendelse $vedtakHendelse" }
+            secureLogger.debug { "Sjekker om det skal opprettes revurder forskudd oppgave for hendelse $vedtakHendelse" }
             revurderForskuddService
                 .erForskuddRedusert(vedtakHendelse)
                 .forEach { resultat ->
-                    LOGGER.info {
+                    secureLogger.debug {
                         "Forskuddet skal reduseres i sak ${resultat.saksnummer} for mottaker ${resultat.bidragsmottaker} og kravhaver ${resultat.gjelderBarn}. Opprett revurder forskudd oppgave"
                     }
                     vedtakHendelse.opprettRevurderForskuddOppgave(resultat)
@@ -96,7 +96,7 @@ class OppgaveService(
                 ),
             )
 
-        LOGGER.info {
+        secureLogger.info {
             "Opprettet revurder forskudd etter adresseendring oppgave $oppgaveResponse for sak $saksnummer, enhet $enhet og barn $gjelderBarn"
         }
     }
@@ -117,7 +117,7 @@ class OppgaveService(
     fun slettOppgave(oppgaveId: Int): Long {
         val oppgave = oppgaveConsumer.hentOppgaveForId(oppgaveId)
         if (oppgave.erLukket()) {
-            LOGGER.info { "Oppgave $oppgaveId er allerede lukket med status ${oppgave.status}. Gjør ingen endring" }
+            LOGGER.debug { "Oppgave $oppgaveId er allerede lukket med status ${oppgave.status}. Gjør ingen endring" }
             return oppgaveId.toLong()
         }
         val slettetOppgave = oppgaveConsumer.slettOppgave(oppgaveId, oppgave.versjon)
@@ -128,7 +128,7 @@ class OppgaveService(
     fun opprettOppgaveForManuellAldersjustering(aldersjustering: Aldersjustering): Int {
         val eksisterendeOppgave = finnEksisterendeOppgaveForManuellAldersjusteringISak(aldersjustering)
         if (eksisterendeOppgave != null) {
-            LOGGER.info {
+            secureLogger.debug {
                 "Fant eksisterende oppgave $eksisterendeOppgave for " +
                     "manuell aldersjustering ${aldersjustering.id} i sak ${aldersjustering.barn.saksnummer} " +
                     "og barn ${aldersjustering.barn.saksnummer}. " +
@@ -151,7 +151,7 @@ class OppgaveService(
                     personident = barn.kravhaver,
                 ),
             )
-        LOGGER.info { "Opprettet oppgave $oppgaveResponse for barn $barn, enhet $enhet." }
+        secureLogger.info { "Opprettet oppgave $oppgaveResponse for barn $barn, enhet $enhet." }
 
         return oppgaveResponse.id.toInt()
     }
@@ -172,7 +172,7 @@ class OppgaveService(
                 ),
             )
 
-        LOGGER.info {
+        secureLogger.info {
             "Opprettet revurder forskudd oppgave $oppgaveResponse for sak ${forskuddRedusertResultat.saksnummer}, enhet $enhet og bidragsmottaker ${forskuddRedusertResultat.bidragsmottaker}"
         }
     }
@@ -201,7 +201,7 @@ class OppgaveService(
             )
         val revurderForskuddOppgave = oppgaver.oppgaver.find { it.beskrivelse!!.contains(revurderForskuddBeskrivelseAdresseendring) }
         if (revurderForskuddOppgave != null) {
-            LOGGER.info {
+            secureLogger.debug {
                 "Fant revurder forskudd etter adresseendring oppgave $revurderForskuddOppgave for sak $saksnummer og barn $gjelderBarn. Oppretter ikke ny oppgave"
             }
             return true
@@ -218,7 +218,7 @@ class OppgaveService(
             )
         val revurderForskuddOppgave = oppgaver.oppgaver.find { it.beskrivelse!!.contains(forskuddRedusertResultat.tilOppgaveBeskrivelse()) }
         if (revurderForskuddOppgave != null) {
-            LOGGER.info {
+            secureLogger.debug {
                 "Fant revurder forskudd oppgave $revurderForskuddOppgave for sak ${forskuddRedusertResultat.saksnummer} og " +
                     "bidragsmottaker ${forskuddRedusertResultat.bidragsmottaker}. Oppretter ikke ny oppgave"
             }
@@ -283,7 +283,7 @@ class OppgaveService(
             )
         val revurderForskuddOppgave = oppgaver.oppgaver.find { it.beskrivelse!!.contains(beskrivelse) }
         if (revurderForskuddOppgave != null) {
-            secureLogger.info {
+            secureLogger.debug {
                 "Fant eksisterende oppgave for å revurdere forskudd og barnebidrag etter opphør av barnetrygd. " +
                     "Oppgave: $revurderForskuddOppgave, sak: $saksnummer. Oppretter ikke ny oppgave"
             }
