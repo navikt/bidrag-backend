@@ -405,7 +405,6 @@ data class GebyrRolle(
             alleGebyrSøknader
                 .filter { søknadsid == null || it.søknadsid == søknadsid }
                 .filter { !it.gjelder18ÅrSøknad }
-//                .minByOrNull { it.søknadsid }.let { listOfNotNull(it) }
         val gebyr18År = alleGebyrSøknader.filter { søknadsid == null || it.søknadsid == søknadsid }.filter { it.gjelder18ÅrSøknad }
         // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
         return gebyrIkke18År + gebyr18År
