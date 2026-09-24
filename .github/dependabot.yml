@@ -76,6 +76,9 @@ updates:
       docker-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "cgr-nav/pull-through/nav.no/jre"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
       - "dependencies"

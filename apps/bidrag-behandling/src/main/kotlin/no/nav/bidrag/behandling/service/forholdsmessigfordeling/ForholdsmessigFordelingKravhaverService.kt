@@ -197,8 +197,11 @@ class ForholdsmessigFordelingKravhaverService(
         val løpendeBidragsaker =
             løpendeBidraggsakerBP
                 .filter { lb -> !kravhaverFraÅpneSaker.finnes(lb.kravhaver.verdi, lb.type) }
-                .map {
+                .mapNotNull {
                     val sak = sakConsumer.hentSak(it.sak.verdi)
+                    val opphørsdato = behandling.finnOpphørsdato(it.type, it.kravhaver.verdi)
+                    // Ikke ta med de som opphører og starter samme tidspunkt
+                    if (it.periodeFra == opphørsdato) return@mapNotNull null
                     SakKravhaver(
                         saksnummer = it.sak.verdi,
                         kravhaver = it.kravhaver.verdi,
@@ -206,7 +209,7 @@ class ForholdsmessigFordelingKravhaverService(
                         bidragsmottaker = sak.bidragsmottaker?.fødselsnummer?.verdi,
                         løperBidragFra = it.periodeFra,
                         løperBidragTil = it.periodeTil,
-                        opphørsdato = behandling.finnOpphørsdato(it.type, it.kravhaver.verdi),
+                        opphørsdato = opphørsdato,
                         privatAvtale = behandling.privatAvtale.find { pa -> pa.gjelderPerson(it.kravhaver.verdi, it.type) },
                     )
                 }.distinctBy { it.distinctKey }

@@ -265,7 +265,7 @@ fun opprettEllerOppdaterRolle(
         if (it.forholdsmessigFordeling == null) {
             it.forholdsmessigFordeling = ffDetaljer
         } else {
-            if (it.forholdsmessigFordeling!!.søknader.isEmpty()) {
+            if (it.forholdsmessigFordeling!!.søknader.isEmpty() && ffDetaljer.søknader.isNotEmpty()) {
                 it.forholdsmessigFordeling!!.revurderingsdatoVedOpprettelseAvFF = ffDetaljer.søknader.minOf { it.søknadFomDato!! }
             }
             it.forholdsmessigFordeling!!.søknader.addAll(ffDetaljer.søknader)
