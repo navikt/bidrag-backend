@@ -1,6 +1,6 @@
 package no.nav.bidrag.organisasjon.consumer.ldap
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.Hashtable
 import javax.naming.NamingException
 import javax.naming.ldap.InitialLdapContext
@@ -10,11 +10,11 @@ class LdapInnlogging {
     fun lagLdapContext(environment: Map<String, Any?>): LdapContext? = try {
         InitialLdapContext(Hashtable(environment), null)
     } catch (e: NamingException) {
-        LOGGER.warn("Navn på saksbehandler ikke funnet (NamingException)")
+        LOGGER.warn(e) { "Navn på saksbehandler ikke funnet (NamingException)" }
         null
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(LdapInnlogging::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

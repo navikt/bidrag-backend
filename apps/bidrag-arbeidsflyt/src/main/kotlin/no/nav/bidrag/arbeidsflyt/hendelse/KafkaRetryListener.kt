@@ -1,14 +1,15 @@
 package no.nav.bidrag.arbeidsflyt.hendelse
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.listener.RetryListener
 import java.lang.Exception
 
 class KafkaRetryListener : RetryListener {
     companion object {
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(KafkaRetryListener::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     override fun failedDelivery(
@@ -16,14 +17,14 @@ class KafkaRetryListener : RetryListener {
         ex: Exception?,
         deliveryAttempt: Int,
     ) {
-        LOGGER.warn("Håndtering av kafka melding ${record.value()} feilet. Dette er $deliveryAttempt. forsøk", ex)
+        LOGGER.warn(ex) { "Håndtering av kafka melding ${record.value().sanitizeForLog()} feilet. Dette er $deliveryAttempt. forsøk" }
     }
 
     override fun recovered(
         record: ConsumerRecord<*, *>,
         ex: Exception?,
     ) {
-        LOGGER.warn("Håndtering av kafka melding ${record.value()} er enten suksess eller ignorert pågrunn av ugyldig data", ex)
+        LOGGER.warn(ex) { "Håndtering av kafka melding ${record.value().sanitizeForLog()} er enten suksess eller ignorert pågrunn av ugyldig data" }
     }
 
     override fun recoveryFailed(

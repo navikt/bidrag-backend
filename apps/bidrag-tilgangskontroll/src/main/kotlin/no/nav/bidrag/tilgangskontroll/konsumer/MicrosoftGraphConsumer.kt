@@ -1,5 +1,6 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.cache.BrukerCacheable
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.web.client.AbstractRestClient
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
+
+private val LOGGER = KotlinLogging.logger { }
 
 @Component
 class MicrosoftGraphConsumer(
@@ -41,37 +44,10 @@ class MicrosoftGraphConsumer(
     }
 
     @BrukerCacheable(Cache.BRUKERGRUPPER)
-    fun hentGrupperForBruker2(navident: String?): BrukerGrupperResponse? {
-        if (TokenUtils.erApplikasjonsbruker()) {
-            if (navident.isNullOrBlank()) {
-                log.warn("Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper.")
-                return null
-            }
-            val id = hentBrukerinformasjon(navident)?.value?.first()?.id ?: error("Fant ikke id for bruker med navident $navident")
-            val uri =
-                UriComponentsBuilder
-                    .fromUri(GRAPH_URL)
-                    .pathSegment("users/$id/transitiveMemberOf")
-                    .build()
-                    .toUri()
-            val response = hentAlleGrupper(uri)
-            return response
-        } else {
-            val uri =
-                UriComponentsBuilder
-                    .fromUri(GRAPH_URL)
-                    .pathSegment("me/transitiveMemberOf")
-                    .build()
-                    .toUri()
-            return hentAlleGrupper(uri)
-        }
-    }
-
-    @BrukerCacheable(Cache.BRUKERGRUPPER)
     fun hentGrupperForBruker(navident: String?): BrukerGrupperResponse? {
         if (TokenUtils.erApplikasjonsbruker()) {
             if (navident.isNullOrBlank()) {
-                log.warn("Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper.")
+                LOGGER.warn { "Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper." }
                 return null
             }
             val id = hentBrukerinformasjon(navident)?.value?.first()?.id ?: error("Fant ikke id for bruker med navident $navident")
@@ -116,7 +92,7 @@ class MicrosoftGraphConsumer(
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups", enhetId, "transitiveMembers", "microsoft.graph.user")
-                .queryParam("\$select", "id,displayName,givenName,surname,mail,officeLocation,jobTitle,onPremisesSamAccountName")
+                .queryParam($$"$select", "id,displayName,givenName,surname,mail,officeLocation,jobTitle,onPremisesSamAccountName")
                 .build()
                 .toUri()
 
@@ -124,7 +100,7 @@ class MicrosoftGraphConsumer(
         val allUsers = response?.value?.toMutableList() ?: mutableListOf()
 
         // Handle pagination
-        if (response != null && response.nextLink != null) {
+        if (response?.nextLink != null) {
             var nextLink = response.nextLink
             while (!nextLink.isNullOrBlank()) {
                 val nextResponse = getForEntity<BrukerinformasjonResponse>(URI.create(nextLink), httpHeaders)
@@ -158,7 +134,7 @@ class MicrosoftGraphConsumer(
         val response = postForEntity<CheckMemberGroupsResponse>(uri, requestBody, httpHeaders)
         response?.value?.contains(groupId) ?: false
     } catch (e: Exception) {
-        log.warn("Feil ved sjekk av medlemskap for bruker $userId i gruppe $groupId", e)
+        LOGGER.warn(e) { "Feil ved sjekk av medlemskap for bruker $userId i gruppe $groupId" }
         false
     }
 
@@ -169,9 +145,9 @@ class MicrosoftGraphConsumer(
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups")
-                .queryParam("\$select", "id,displayName")
-                .queryParam("\$orderby", "displayName")
-                .queryParam("\$search", "\"displayName:0000-GA-ENHET-$enhet\"")
+                .queryParam($$"$select", "id,displayName")
+                .queryParam($$"$orderby", "displayName")
+                .queryParam($$"$search", "\"displayName:0000-GA-ENHET-$enhet\"")
                 .build()
                 .toUri()
         val response = getForEntity<EnhetResponse>(uri, httpHeaders)
@@ -185,8 +161,8 @@ class MicrosoftGraphConsumer(
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups")
-                .queryParam("\$select", "id,displayName")
-                .queryParam("\$filter", "displayName eq '0000-GA-TEMA_BID'")
+                .queryParam($$"$select", "id,displayName")
+                .queryParam($$"$filter", "displayName eq '0000-GA-TEMA_BID'")
                 .build()
                 .toUri()
         val response = getForEntity<EnhetResponse>(uri, httpHeaders)

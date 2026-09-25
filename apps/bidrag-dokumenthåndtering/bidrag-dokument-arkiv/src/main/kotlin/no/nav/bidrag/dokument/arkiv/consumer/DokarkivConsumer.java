@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.arkiv.consumer;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
+
 import no.nav.bidrag.commons.web.HttpResponse;
 import no.nav.bidrag.dokument.arkiv.dto.FerdigstillJournalpostRequest;
 import no.nav.bidrag.dokument.arkiv.dto.JournalpostUtsendingKanal;
@@ -55,7 +57,7 @@ public class DokarkivConsumer extends AbstractConsumer {
       return response.getBody();
     } catch (HttpClientErrorException clientErrorException){
       if (clientErrorException.getStatusCode() == HttpStatus.CONFLICT){
-        LOGGER.info("Journalpost med eksternReferanseId {} er allerede arkivert i Joark", joarkOpprettJournalpostRequest.getEksternReferanseId());
+        LOGGER.info("Journalpost med eksternReferanseId {} er allerede arkivert i Joark", sanitizeForLog(joarkOpprettJournalpostRequest.getEksternReferanseId()));
         return handleConflictResponse(clientErrorException);
       }
       throw clientErrorException;

@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.journalpost.consumer;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.dokument.journalpost.BidragDokumentJournalpost.SECURE_LOGGER;
 import static no.nav.bidrag.dokument.journalpost.configuration.CacheConfig.SAKSBEHANDLER_CACHE;
 
@@ -25,18 +26,18 @@ public class SaksbehandlerConsumer {
   @Cacheable(SAKSBEHANDLER_CACHE)
   public Optional<Saksbehandler> hentSaksbehandler(String ident) {
     if (ident != null && ident.startsWith("srv")){
-      LOGGER.info("hentSaksbehandler: Bruker er systembruker ({})", ident);
+      LOGGER.debug("hentSaksbehandler: Bruker er systembruker ({})", sanitizeForLog(ident));
       return Optional.of(new Saksbehandler(ident, ident));
     }
 
     var saksbehandlerResponse = restTemplate.exchange("/saksbehandler/info/" + ident, HttpMethod.GET, null, Saksbehandler.class);
 
     if (saksbehandlerResponse == null || !saksbehandlerResponse.hasBody()){
-      LOGGER.warn("Fikk ingen saksbehandlerinformasjon for ident {}", ident);
+      LOGGER.warn("Fikk ingen saksbehandlerinformasjon for ident {}", sanitizeForLog(ident));
       return Optional.empty();
     }
 
-    SECURE_LOGGER.info("Hentet saksbehandlerinformasjon: {}", saksbehandlerResponse.getBody());
+    SECURE_LOGGER.debug("Hentet saksbehandlerinformasjon: {}", sanitizeForLog(saksbehandlerResponse.getBody()));
 
     return Optional.of(saksbehandlerResponse.getBody());
   }

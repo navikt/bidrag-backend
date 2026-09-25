@@ -1,8 +1,8 @@
 package no.nav.bidrag.grunnlag.service
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.inntekt.Skattegrunnlagstype
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.skattegrunnlag.SigrunConsumer
 import no.nav.bidrag.grunnlag.consumer.skattegrunnlag.api.HentSummertSkattegrunnlagRequest
 import no.nav.bidrag.grunnlag.consumer.skattegrunnlag.api.HentSummertSkattegrunnlagResponse
@@ -31,7 +31,7 @@ class HentSkattegrunnlagService(private val sigrunConsumer: SigrunConsumer) {
         skattegrunnlagRequestListe.forEach {
             // Hvis ident er BNR eller NPID finnes det ikke skattegrunnlag. Kaller derfor ikke Sigrun.
             if (erBnrEllerNpid(it.personId)) {
-                SECURE_LOGGER.warn("Ident er BNR eller NPID, ingen skattegrunnlag funnet for ${it.personId}")
+                secureLogger.warn { "Ident er BNR eller NPID, ingen skattegrunnlag funnet for ${it.personId}" }
                 return@forEach
             }
 
@@ -61,7 +61,7 @@ class HentSkattegrunnlagService(private val sigrunConsumer: SigrunConsumer) {
                         if ((restResponseSkattegrunnlag.statusCode == HttpStatus.NOT_FOUND) &&
                             (inntektsårIkkeStøttet(restResponseSkattegrunnlag.message))
                         ) {
-                            SECURE_LOGGER.warn("Skattegrunnlag er ikke tilgjengelig ennå for ${it.personId} og år $inntektÅr")
+                            secureLogger.warn { "Skattegrunnlag er ikke tilgjengelig ennå for ${it.personId} og år $inntektÅr" }
 
                             // Legger ut tom liste hvis det ikke finnes data
                         } else if ((
