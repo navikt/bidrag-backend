@@ -8,6 +8,7 @@ import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.regnskap.BidragRegnskapLocal
 import no.nav.bidrag.regnskap.consumer.PersonApiWireMock
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -35,6 +36,11 @@ class SjekkForNyIdentAspectTest {
     @BeforeAll
     fun setup() {
         personApiWireMock.personidentMedGyldigResponse()
+    }
+
+    @AfterAll
+    fun teardown() {
+        personApiWireMock.stop()
     }
 
     @Test
