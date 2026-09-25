@@ -24,7 +24,7 @@ internal object UnderholdskostnadMapper : CoreMapper() {
         søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
         barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),
         nettoTilsynsutgiftPeriodeGrunnlagListe = mapNettoTilsynsutgift(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
-        forpleiningPeriodeGrunnlagListe = mapForpleining(mottattGrunnlag),
+        forpleiningPeriodeGrunnlagListe = mapForpleining(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
         sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
         sjablonBarnetilsynPeriodeGrunnlagListe = mapSjablonBarnetilsyn(sjablonGrunnlag),
         sjablonForbruksutgifterPeriodeGrunnlagListe = mapSjablonForbruksutgifter(sjablonGrunnlag),
@@ -65,10 +65,11 @@ internal object UnderholdskostnadMapper : CoreMapper() {
         }
     }
 
-    private fun mapForpleining(beregnGrunnlag: BeregnGrunnlag): List<ForpleiningPeriodeGrunnlag> {
+    private fun mapForpleining(beregnGrunnlag: BeregnGrunnlag, gjelderBarn: Grunnlagsreferanse): List<ForpleiningPeriodeGrunnlag> {
         try {
             return beregnGrunnlag.grunnlagListe
                 .filtrerOgKonverterBasertPåEgenReferanse<ForpleiningPeriode>(Grunnlagstype.FORPLEINING_PERIODE)
+                .filter { it.gjelderBarnReferanse == gjelderBarn }
                 .map {
                     ForpleiningPeriodeGrunnlag(
                         referanse = it.referanse,

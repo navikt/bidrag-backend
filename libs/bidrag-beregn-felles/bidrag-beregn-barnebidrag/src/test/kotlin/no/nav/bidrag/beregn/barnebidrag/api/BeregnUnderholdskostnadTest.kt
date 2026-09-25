@@ -268,6 +268,36 @@ internal class BeregnUnderholdskostnadTest : FellesTest() {
     }
 
     @Test
+    @DisplayName("Underholdskostnad - forpleining for et annet søknadsbarn trekkes ikke fra")
+    fun test_underholdskostnad_med_forpleining_for_annet_barn() {
+        filnavn = "src/test/resources/testfiler/underholdskostnad/underholdskostnad_med_forpleining_for_annet_barn.json"
+        val resultat = utførBeregningerOgEvaluerResultatUnderholdskostnad()
+
+        // Som test_underholdskostnad_med_forpleining, men Person_Søknadsbarn2 har forpleining 5000 fra 01.24.
+        // Den skal verken splitte periodene eller trekkes fra underholdskostnaden til Person_Søknadsbarn.
+
+        assertAll(
+            { assertThat(resultat).hasSize(4) },
+            { assertThat(resultat[0].periode).isEqualTo(ÅrMånedsperiode("2024-01", "2024-03")) },
+            { assertThat(resultat[1].periode).isEqualTo(ÅrMånedsperiode("2024-03", "2024-05")) },
+            { assertThat(resultat[2].periode).isEqualTo(ÅrMånedsperiode("2024-05", "2024-07")) },
+            { assertThat(resultat[3].periode).isEqualTo(ÅrMånedsperiode(YearMonth.parse("2024-07"), null)) },
+
+            { assertThat(resultat[0].forpleining).isNull() },
+            { assertEquals(0, resultat[0].underholdskostnad.compareTo(BigDecimal.valueOf(8223))) },
+
+            { assertEquals(0, resultat[1].forpleining!!.compareTo(BigDecimal.valueOf(2000))) },
+            { assertEquals(0, resultat[1].underholdskostnad.compareTo(BigDecimal.valueOf(6223))) },
+
+            { assertThat(resultat[2].forpleining).isNull() },
+            { assertEquals(0, resultat[2].underholdskostnad.compareTo(BigDecimal.valueOf(8223))) },
+
+            { assertThat(resultat[3].forpleining).isNull() },
+            { assertEquals(0, resultat[3].underholdskostnad.compareTo(BigDecimal.valueOf(8471))) },
+        )
+    }
+
+    @Test
     @DisplayName("Underholdskostnad - forpleining som overstiger underholdskostnaden gir null")
     fun test_underholdskostnad_med_forpleining_over_underholdskostnad() {
         filnavn = "src/test/resources/testfiler/underholdskostnad/underholdskostnad_med_forpleining_over_underholdskostnad.json"
