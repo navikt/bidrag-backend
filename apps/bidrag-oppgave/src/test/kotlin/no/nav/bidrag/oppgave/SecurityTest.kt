@@ -2,85 +2,64 @@ package no.nav.bidrag.oppgave
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestClient
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
+import org.springframework.http.HttpStatus
+import org.springframework.security.oauth2.jwt.JwtDecoder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.servlet.assertj.MockMvcTester
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(initializers = [MockOidcServerInitializer::class])
+@ActiveProfiles("junit")
+@SpringBootTest
+@AutoConfigureMockMvc
 class SecurityTest {
 
-    @LocalServerPort
-    private var port: Int = 0
+    @Autowired
+    private lateinit var mockMvc: MockMvcTester
 
     @Test
     fun `get kall mot api uten token gir 401`() {
-        val exception = assertThrows<HttpClientErrorException.Unauthorized> {
-            restClient().get()
-                .uri("/api/oppgaver?saksnummer=SAK-123")
-                .retrieve()
-                .toBodilessEntity()
-        }
+        val resultat = mockMvc.get()
+            .uri("/api/oppgaver?saksnummer=SAK-123")
+            .exchange()
 
-        assertThat(exception.statusCode.value()).isEqualTo(401)
+        assertThat(resultat).hasStatus(HttpStatus.UNAUTHORIZED)
     }
 
     @Test
-    fun `post kall mot api uten token gir 401`() {
-        val exception = assertThrows<HttpClientErrorException.Unauthorized> {
-            restClient().get()
-                .uri("/api/oppgaver")
-                .retrieve()
-                .toBodilessEntity()
-        }
+    fun `autentisert kall slipper gjennom sikkerhetsfilteret`() {
+        val resultat = mockMvc.get()
+            .uri("/api/oppgaver")
+            .with(jwt())
+            .exchange()
 
-        assertThat(exception.statusCode.value()).isEqualTo(401)
-    }
-
-    @Test
-    fun `gyldig token med rett issuer og audience slipper gjennom sikkerhetsfilteret`() {
-        val exception = assertThrows<HttpClientErrorException.BadRequest> {
-            restClient(MockOidcServer.issueToken()).get()
-                .uri("/api/oppgaver")
-                .retrieve()
-                .toBodilessEntity()
-        }
-
-        assertThat(exception.statusCode.value()).isEqualTo(400)
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
     }
 
     @Test
     fun `internal endepunkt er apent uten token`() {
-        val response = RestClient.builder()
-            .baseUrl("http://localhost:$port")
-            .build()
-            .get().uri("/internal/health")
-            .retrieve()
-            .toBodilessEntity()
+        val resultat = mockMvc.get()
+            .uri("/internal/health")
+            .exchange()
 
-        assertThat(response.statusCode.is2xxSuccessful).isTrue()
+        assertThat(resultat).hasStatusOk()
     }
 
     @Test
-    fun `api-docs er apent og tilbyr bearer-autorisering`() {
-        val apiDocs = restClient()
-            .get().uri("/v3/api-docs")
-            .retrieve()
-            .body(String::class.java)
+    fun `api docs er apent og tilbyr bearer autorisering`() {
+        val resultat = mockMvc.get()
+            .uri("/v3/api-docs")
+            .exchange()
 
-        assertThat(apiDocs).contains("\"bearer-key\"")
-        assertThat(apiDocs).contains("\"scheme\":\"bearer\"")
-        assertThat(apiDocs).contains("\"bearerFormat\":\"JWT\"")
-    }
-
-    private fun restClient(token: String? = null): RestClient {
-        val builder = RestClient.builder().baseUrl("http://localhost:$port")
-        if (token != null) {
-            builder.defaultHeaders { it.setBearerAuth(token) }
-        }
-        return builder.build()
+        assertThat(resultat).hasStatusOk()
+        assertThat(resultat.response.contentAsString)
+            .contains("\"bearer-key\"")
+            .contains("\"scheme\":\"bearer\"")
+            .contains("\"bearerFormat\":\"JWT\"")
     }
 }

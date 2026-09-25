@@ -17,7 +17,6 @@
 
     <properties>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
-        <mock-oauth2-server.version>6.0.2</mock-oauth2-server.version>
     </properties>
 
     <dependencies>
@@ -91,12 +90,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>no.nav.security</groupId>
-            <artifactId>mock-oauth2-server</artifactId>
-            <version>${mock-oauth2-server.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
