@@ -29,7 +29,7 @@ class OppgaveService(
         tilordnetRessurs = saksbehandler,
         tema = listOf(FellesKodeverkTema.BID),
         statuskategori = "AAPEN",
-        limit = this.limit
+        limit = this.limit,
     )
 }
 
