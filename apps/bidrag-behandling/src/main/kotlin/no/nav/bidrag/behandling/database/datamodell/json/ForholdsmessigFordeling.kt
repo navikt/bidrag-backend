@@ -73,4 +73,8 @@ data class ForholdsmessigFordelingSøknadBarn(
     // TODO: Er dette nødvendig? Kan BM/Barn være i flere saker?
     val saksnummer: String?,
     var status: Behandlingstatus? = null,
+    // Søknaden ble opprettet samtidig med eller etter hovedsøknaden, og kan derfor bli hovedsøknad hvis hovedsøknaden slettes
+    var opprettetEtterHovedsøknad: Boolean = false,
+    // FF-klagesøknad som ble feilregistrert for barnet da denne søknaden ble opprettet. Gjenopprettes hvis denne søknaden slettes
+    var erstatterFFKlagesøknadsid: Long? = null,
 )

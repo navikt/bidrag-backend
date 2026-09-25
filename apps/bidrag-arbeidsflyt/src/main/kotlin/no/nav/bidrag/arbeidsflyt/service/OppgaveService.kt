@@ -35,6 +35,19 @@ class OppgaveService(
         private val LOGGER = LoggerFactory.getLogger(OppgaveService::class.java)
     }
 
+    fun oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave: OppgaveData) {
+        if (oppgave.behandlingsid == null) return
+        val oppgaver = finnOppgaverForBehandling(oppgave.behandlingsid!!.toLong())
+        oppgaver
+            .filter { it.id != oppgave.id }
+            .filter { it.tilordnetRessurs != oppgave.tilordnetRessurs }.forEach {
+                oppdaterOppgave(
+                    OppdaterOppgave(it)
+                        .overforTilSaksbehandler(oppgave.tilordnetRessurs!!),
+                )
+            }
+    }
+
     fun oppdaterAlleOppgaverSomTilhørerSammeBehandling(oppgave: OppgaveData) {
         if (oppgave.behandlingsid == null) return
         val oppgaver = finnOppgaverForBehandling(oppgave.behandlingsid!!.toLong())

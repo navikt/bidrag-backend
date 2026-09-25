@@ -522,6 +522,7 @@ class ForholdsmessigFordelingService(
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
+            klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
             behandling.oppdaterFFSistSynkronisert()
