@@ -235,6 +235,28 @@ internal class BeregnUnderholdskostnadTest : FellesTest() {
         )
     }
 
+    @Test
+    @DisplayName("Underholdskostnad - barnetilsyn for et annet søknadsbarn tas ikke med")
+    fun test_underholdskostnad_med_barnetilsyn_for_annet_barn() {
+        filnavn = "src/test/resources/testfiler/underholdskostnad/underholdskostnad_med_barnetilsyn_for_annet_barn.json"
+        val resultat = utførBeregningerOgEvaluerResultatUnderholdskostnad()
+
+        // Som underholdskostnad_med_barnetilsyn_flere_perioder, men barnetilsynet 02.24 -> 08.24 gjelder
+        // Person_Søknadsbarn2. Det skal verken splitte periodene eller legges til underholdskostnaden.
+
+        assertAll(
+            { assertThat(resultat).hasSize(2) },
+
+            { assertThat(resultat[0].periode).isEqualTo(ÅrMånedsperiode("2024-01", "2024-07")) },
+            { assertThat(resultat[0].barnetilsynMedStønad).isNull() },
+            { assertEquals(0, resultat[0].underholdskostnad.compareTo(BigDecimal.valueOf(8223))) },
+
+            { assertThat(resultat[1].periode).isEqualTo(ÅrMånedsperiode(YearMonth.parse("2024-07"), null)) },
+            { assertThat(resultat[1].barnetilsynMedStønad).isNull() },
+            { assertEquals(0, resultat[1].underholdskostnad.compareTo(BigDecimal.valueOf(8471))) },
+        )
+    }
+
     private fun utførBeregningerOgEvaluerResultatUnderholdskostnad(): List<DelberegningUnderholdskostnad> {
         val request = lesFilOgByggRequest(filnavn)
         val underholdskostnadResultat = api.beregnUnderholdskostnad(request)
