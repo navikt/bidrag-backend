@@ -28,6 +28,7 @@ import java.net.URI
 class BidragOrganisasjonConsumer(
     @Value($$"${BIDRAG_ORGANISASJON_URL}") val url: URI,
     @Qualifier("azure") restTemplate: RestTemplate,
+    @Value($$"${retry.enabled:true}") val shouldRetry: Boolean,
 ) : AbstractRestClient(restTemplate, "bidrag-organisasjon") {
     companion object {
         @JvmStatic
