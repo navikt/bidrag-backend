@@ -468,7 +468,7 @@ class ForholdsmessigFordelingKlageService(
             .filter { barn -> barn.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.behandlingstype == Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE } == true }
             .flatMap { barn ->
                 barn.forholdsmessigFordeling!!.søknaderUnderBehandling.filter {
-                    it.opprettetEtterHovedsøknad && it.søknadsid != hovedsøknadsid && it.behandlingstype?.erForholdsmessigFordeling != true
+                    it.søknadsid != hovedsøknadsid && it.behandlingstype?.erForholdsmessigFordeling != true
                 }
             }.mapNotNull { it.søknadsid }
             .distinct()
