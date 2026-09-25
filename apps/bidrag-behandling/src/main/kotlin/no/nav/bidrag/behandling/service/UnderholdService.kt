@@ -142,7 +142,7 @@ class UnderholdService(
                 )
         ) {
             ugyldigForespørsel(
-                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, faktiske tilsynsutgift, eller forpleining",
+                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilsyn, tilleggsstønad, faktiske tilsynsutgifter eller forpleining",
             )
         }
 
