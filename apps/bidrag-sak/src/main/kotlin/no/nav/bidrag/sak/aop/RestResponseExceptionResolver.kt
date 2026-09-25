@@ -9,10 +9,18 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class RestResponseExceptionResolver {
     private val logger = KotlinLogging.logger {}
+
+    @ResponseBody
+    @ExceptionHandler(NoResourceFoundException::class)
+    protected fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<*> {
+        logger.info { "Ukjent ressurs forespurt: ${e.resourcePath}" }
+        return ResponseEntity<Any>(HttpStatus.NOT_FOUND)
+    }
 
     @ResponseBody
     @ExceptionHandler(IllegalArgumentException::class)
