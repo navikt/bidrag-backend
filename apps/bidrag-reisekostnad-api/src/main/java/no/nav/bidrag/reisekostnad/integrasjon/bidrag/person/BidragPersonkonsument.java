@@ -2,6 +2,7 @@ package no.nav.bidrag.reisekostnad.integrasjon.bidrag.person;
 
 import static no.nav.bidrag.reisekostnad.feilhåndtering.Feilkode.PDL_FEIL;
 import static no.nav.bidrag.reisekostnad.feilhåndtering.Feilkode.PDL_PERSON_IKKE_FUNNET;
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig.SIKKER_LOGG;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Cachekonfig.CACHE_FAMILIE;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Cachekonfig.CACHE_PERSON;
@@ -55,11 +56,11 @@ public class BidragPersonkonsument {
     } catch (HttpStatusCodeException hsce) {
       if (HttpStatus.NOT_FOUND.equals(hsce.getStatusCode())) {
         SIKKER_LOGG.warn("Kall mot bidrag-person for henting av familierelasjoner returnerte httpstatus {} for personident {}",
-            hsce.getStatusCode(), personident);
+            hsce.getStatusCode(), sanitizeForLog(personident));
         throw new Persondatafeil(PDL_PERSON_IKKE_FUNNET, hsce.getStatusCode());
       } else {
         SIKKER_LOGG.warn("Kall mot bidrag-person for henting av familierelasjoner returnerte httpstatus {} for personident {}", hsce.getStatusCode(),
-            personident);
+            sanitizeForLog(personident));
         throw new Persondatafeil(PDL_FEIL, hsce.getStatusCode());
       }
     }
@@ -76,7 +77,7 @@ public class BidragPersonkonsument {
       return hentPersoninfo.getBody();
     } catch (HttpStatusCodeException hsce) {
       SIKKER_LOGG.warn("Kall mot bidrag-person for henting av personinfo returnerte httpstatus {} for personident {}", hsce.getStatusCode(),
-          personident, hsce);
+          sanitizeForLog(personident), hsce);
       var feilkode = HttpStatus.NOT_FOUND.equals(hsce.getStatusCode()) ? PDL_PERSON_IKKE_FUNNET : PDL_FEIL;
       throw new Persondatafeil(feilkode, hsce.getStatusCode());
     }

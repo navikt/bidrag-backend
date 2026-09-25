@@ -7,12 +7,13 @@ import com.netflix.graphql.dgs.client.DgsGraphQLResponse
 import com.netflix.graphql.dgs.client.GraphQLClient
 import com.netflix.graphql.dgs.client.GraphQLResponse
 import com.netflix.graphql.dgs.client.HttpResponse
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.cache.BrukerCacheable
 import no.nav.bidrag.commons.security.SikkerhetsKontekst.medApplikasjonKontekst
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.HttpHeaderRestTemplate
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.person.BidragPerson.Companion.SECURE_LOGGER
 import no.nav.bidrag.person.dto.ReasonToHttpStatus
 import no.nav.bidrag.person.model.PdlException
 import no.nav.bidrag.person.model.PersonIkkeFunnetException
@@ -51,7 +52,6 @@ import no.nav.bidrag.person.query.SivilstandResponse
 import no.nav.bidrag.transport.person.ForelderBarnRelasjon
 import no.nav.bidrag.transport.person.Husstandsmedlem
 import no.nav.bidrag.transport.person.Identgruppe
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpEntity
@@ -65,7 +65,7 @@ import org.springframework.web.client.exchange
 
 @Component
 class PDLConsumer(@param:Qualifier("pdl") restTemplate: HttpHeaderRestTemplate) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = KotlinLogging.logger {}
 
     private val graphQLClient: DgsGraphQLClient =
         DgsCustomGraphQLClient("") { _, _, body ->
@@ -149,7 +149,7 @@ class PDLConsumer(@param:Qualifier("pdl") restTemplate: HttpHeaderRestTemplate) 
             }
         }
 
-        SECURE_LOGGER.debug("Husstandsmedlem pageNumber: {} kriterier: {}", pageNumber, kriterier)
+        secureLogger.debug { "Husstandsmedlem pageNumber: $pageNumber kriterier: ${kriterier.toString().sanitizeForLog()}" }
 
         val response: HusstandsmedlemmerResponseData =
             consumeQuery(HusstandsmedlemmerQuery(paging, kriterier))
@@ -181,7 +181,7 @@ class PDLConsumer(@param:Qualifier("pdl") restTemplate: HttpHeaderRestTemplate) 
     private inline fun <reified T> feilsjekkOgLagMap(personBolkResponse: PersonBolkResponse<T>): Map<Personident, T> {
         val feil = personBolkResponse.personBolk.filter { it.code != "ok" }.associate { it.ident to it.code }
         if (feil.isNotEmpty()) {
-            SECURE_LOGGER.error("Feil ved henting av ${T::class} fra PDL: $feil")
+            secureLogger.error { "Feil ved henting av ${T::class} fra PDL: ${feil.toString().sanitizeForLog()}" }
             val reasonToHttpStatus = ReasonToHttpStatus(feil.values.first())
             throw PdlException(
                 "Feil ved henting av ${T::class} fra PDL: $feil. Se secure logg for detaljer.",
@@ -198,23 +198,23 @@ class PDLConsumer(@param:Qualifier("pdl") restTemplate: HttpHeaderRestTemplate) 
             val errorReason = response.parsed.read<Any>("errors[0].extensions.code")
             val reasonToHttpStatus = ReasonToHttpStatus(errorReason)
             if (reasonToHttpStatus.status == HttpStatus.NOT_FOUND) {
-                SECURE_LOGGER.debug("Fant ikke person med ident {} i PDL", query)
+                secureLogger.debug { "Fant ikke person med ident ${query.toString().sanitizeForLog()} i PDL" }
                 throw PersonIkkeFunnetException(message)
             }
-            SECURE_LOGGER.error("Feil ved henting av ${T::class} fra PDL: ${response.errors}. Query: $query")
+            secureLogger.error { "Feil ved henting av ${T::class} fra PDL: ${response.errors.toString().sanitizeForLog()}. Query: ${query.toString().sanitizeForLog()}" }
             throw PdlException(message, reasonToHttpStatus.status)
         }
-        SECURE_LOGGER.debug("Returnerer data for {}", T::class)
+        secureLogger.debug { "Returnerer data for ${T::class}" }
         return response.dataAsObject(T::class.java)
     }
 
     private fun executeQuery(query: GraphQuery): DgsGraphQLResponse = try {
         val queryString = query.getQuery()
-        logger.debug("queryString: $queryString")
+        logger.debug { "queryString: $queryString" }
         graphQLClient.executeQuery(queryString, query.getVariables())
     } catch (exception: Exception) {
         val melding = "Teknisk feil ved spørring på PDL"
-        logger.error(melding, exception)
+        logger.error(exception) { melding }
         throw PdlException(melding, HttpStatus.INTERNAL_SERVER_ERROR)
     }
 

@@ -7,7 +7,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.dokument.bestilling.SIKKER_LOGG
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.bestilling.bestilling.dto.hentDokumentMal
 import no.nav.bidrag.dokument.bestilling.model.dokumentMalEksistererIkke
 import no.nav.security.token.support.core.api.Protected
@@ -48,15 +49,14 @@ class AdminKontroller(
     ) {
         val dokumentMal =
             hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
-        LOGGER.info("Bestiller dokument for dokumentmal $dokumentMal med XML som input")
-        SIKKER_LOGG.info("Bestiller dokument for dokumentmal $dokumentMal med XML $xml")
+        secureLogger.info { "Bestiller dokument for dokumentmal ${dokumentMal.sanitizeForLog()} med XML ${xml.sanitizeForLog()}" }
         if (!isValidXml(xml)) throw IllegalArgumentException("Ugyldig XML")
         onlinebrevTemplate.send {
             val message = it.createTextMessage(xml)
             message.setIntProperty(JmsConstants.JMS_IBM_CHARACTER_SET, 277)
             message.setIntProperty(JmsConstants.JMS_IBM_MSGTYPE, CMQC.MQMT_DATAGRAM)
             message.setIntProperty(JmsConstants.JMS_IBM_PUTAPPLTYPE, CMQC.MQAT_CICS)
-            SIKKER_LOGG.info("Sending message \n\n$xml\n\n")
+            secureLogger.debug { "Sending message \n\n${xml.sanitizeForLog()}\n\n" }
             message
         }
     }

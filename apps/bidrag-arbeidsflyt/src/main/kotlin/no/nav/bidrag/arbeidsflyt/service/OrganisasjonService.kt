@@ -1,13 +1,13 @@
 package no.nav.bidrag.arbeidsflyt.service
 
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.consumer.BidragOrganisasjonConsumer
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
 import no.nav.bidrag.domene.felles.erNullEllerUgyldig
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.transport.organisasjon.EnhetDto
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -18,7 +18,7 @@ class OrganisasjonService(
         private val DEFAULT_ENHET = Enhetsnummer("4833")
 
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(OrganisasjonService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     fun hentArbeidsfordeling(
@@ -26,19 +26,16 @@ class OrganisasjonService(
         behandlingstema: String? = null,
     ): Enhetsnummer {
         if (personId.isNullOrEmpty()) {
-            LOGGER.warn("hentArbeidsfordeling: Personid mangler, bruker enhet $DEFAULT_ENHET")
+            LOGGER.info { "hentArbeidsfordeling: Personid mangler, bruker enhet $DEFAULT_ENHET" }
             return DEFAULT_ENHET
         }
 
         val geografiskEnhet = organisasjonConsumer.hentArbeidsfordeling(Personident(personId), behandlingstema)
         if (geografiskEnhet.erNullEllerUgyldig()) {
-            SECURE_LOGGER.warn(
-                "Fant ingen arbeidsfordeling for person $personId og behandlingstema=$behandlingstema, bruker enhet $DEFAULT_ENHET",
-            )
+            secureLogger.info { "Fant ingen arbeidsfordeling for person $personId og behandlingstema=$behandlingstema, bruker enhet $DEFAULT_ENHET" }
             return DEFAULT_ENHET
         }
 
-        SECURE_LOGGER.info("Hentet arbeidsfordeling $geografiskEnhet for person $personId og behandlingstema=$behandlingstema")
         return geografiskEnhet
     }
 
@@ -54,7 +51,7 @@ class OrganisasjonService(
             val response = organisasjonConsumer.hentEnhetInfo(Enhetsnummer(enhet))
             !(response == null || response.status == Enhetsstatus.NEDLAGT)
         } catch (e: Exception) {
-            LOGGER.warn("Hent enhetinfo feilet. Går videre med antagelse at enhet finnes og ikke er nedlagt.", e)
+            LOGGER.warn(e) { "Hent enhetinfo feilet. Går videre med antagelse at enhet finnes og ikke er nedlagt." }
             true
         }
     }

@@ -3,8 +3,6 @@ package no.nav.bidrag.arbeidsflyt.consumer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
-import no.nav.bidrag.transport.behandling.behandling.HentÅpneBehandlingerRequest
-import no.nav.bidrag.transport.behandling.behandling.HentÅpneBehandlingerRespons
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus

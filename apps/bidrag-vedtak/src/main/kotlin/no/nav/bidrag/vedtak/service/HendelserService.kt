@@ -1,6 +1,8 @@
 package no.nav.bidrag.vedtak.service
 
 import no.nav.bidrag.commons.CorrelationId
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.VedtaksforslagStatus
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.transport.behandling.vedtak.Behandlingsreferanse
@@ -12,7 +14,6 @@ import no.nav.bidrag.transport.behandling.vedtak.VedtakHendelse
 import no.nav.bidrag.transport.behandling.vedtak.VedtaksforslagHendelse
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
-import no.nav.bidrag.vedtak.SECURE_LOGGER
 import no.nav.bidrag.vedtak.hendelser.VedtakKafkaEventProducer
 import no.nav.bidrag.vedtak.util.VedtakUtil.Companion.tilJson
 import org.springframework.stereotype.Service
@@ -39,7 +40,7 @@ class HendelserService(private val vedtakKafkaEventProducer: VedtakKafkaEventPro
             sporingsdata = Sporingsdata(CorrelationId.fetchCorrelationIdForThread()),
         )
         vedtakKafkaEventProducer.publishVedtak(vedtakHendelse)
-        SECURE_LOGGER.info("Ny melding lagt på topic vedtak: ${tilJson(vedtakHendelse)}")
+        secureLogger.info { "Ny melding lagt på topic vedtak: ${tilJson(vedtakHendelse)}".sanitizeForLog() }
     }
 
     private fun mapStønadsendringer(vedtakDto: VedtakDto): List<Stønadsendring> {
@@ -129,6 +130,6 @@ class HendelserService(private val vedtakKafkaEventProducer: VedtakKafkaEventPro
             sporingsdata = Sporingsdata(CorrelationId.fetchCorrelationIdForThread()),
         )
         vedtakKafkaEventProducer.publishVedtaksforslag(vedtaksforslagHendelse)
-        SECURE_LOGGER.info("Ny melding lagt på topic vedtaksforslag: ${tilJson(vedtaksforslagHendelse)}")
+        secureLogger.info { "Ny melding lagt på topic vedtaksforslag: ${tilJson(vedtaksforslagHendelse)}".sanitizeForLog() }
     }
 }
