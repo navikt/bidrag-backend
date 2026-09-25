@@ -24,7 +24,13 @@ enum class Grunnlagstype {
     FAKTISK_UTGIFT_PERIODE,
     TILLEGGSSTØNAD_PERIODE,
     BARNETILSYN_MED_STØNAD_PERIODE,
+
+    @Deprecated(
+        "Bruk FORPLEINING_PERIODE i stedet",
+        replaceWith = ReplaceWith("FORPLEINING_PERIODE"),
+    )
     FORPLEINING_UTGIFT,
+    FORPLEINING_PERIODE,
 
     @Deprecated(
         "Bruk NETTO_TILSYNSUTGIFT i stedet",

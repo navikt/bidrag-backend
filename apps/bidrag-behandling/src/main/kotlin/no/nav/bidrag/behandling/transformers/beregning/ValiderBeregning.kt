@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.transformers.beregning
 
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
+import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.barn
 import no.nav.bidrag.behandling.database.datamodell.voksneIHusstanden
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -9,11 +10,13 @@ import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle2
 import no.nav.bidrag.behandling.dto.v2.gebyr.validerGebyr
 import no.nav.bidrag.behandling.dto.v2.samvær.mapValideringsfeil
+import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.validering.BeregningValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.BoforholdPeriodeseringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.MåBekrefteNyeOpplysninger
 import no.nav.bidrag.behandling.dto.v2.validering.VirkningstidspunktFeilV2Dto
 import no.nav.bidrag.behandling.dto.v2.vedtak.FatteVedtakRequestDto
+import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.behandling.hentInntekterValideringsfeil
 import no.nav.bidrag.behandling.transformers.behandling.hentVirkningstidspunktValideringsfeil
 import no.nav.bidrag.behandling.transformers.behandling.hentVirkningstidspunktValideringsfeilV2
@@ -39,6 +42,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.ifTrue
+import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
@@ -48,7 +52,22 @@ import java.time.LocalDate
 @Component
 class ValiderBeregning(
     val særbidragValidering: ValiderSærbidragForBeregningService = ValiderSærbidragForBeregningService(),
+    @Lazy
+    private val dtomapper: Dtomapper? = null,
 ) {
+    /**
+     * Forpleiningen kan ha vært gyldig da den ble registrert, men underholdskostnaden kan ha gått ned siden.
+     * Beregningen kjøres derfor på nytt her, og hvert barn kontrolleres mot sine egne perioder. Beregningen
+     * koster en full runde per søknadsbarn, så den hoppes over når ingen har forpleining.
+     */
+    private fun Behandling.beregnetUnderholdskostnadPerBarn(): (Underholdskostnad) -> Set<UnderholdskostnadDto> {
+        if (underholdskostnader.none { it.forpleining.isNotEmpty() }) return { emptySet() }
+        val beregnet = dtomapper?.run { tilBeregnetUnderholdskostnad() } ?: return { emptySet() }
+        return { underholdskostnad ->
+            dtomapper.run { beregnet.perioderForBarn(underholdskostnad.personIdent, underholdskostnad.rolle?.stønadstype) }
+        }
+    }
+
     fun Behandling.validerForBeregningForskudd() {
         val virkningstidspunktFeilV2 = hentVirkningstidspunktValideringsfeilV2()
 
@@ -267,7 +286,7 @@ class ValiderBeregning(
                     )
                 }.toSet()
         val samværValideringsfeil = samvær.mapValideringsfeil()
-        val underholdValideringsfeil = underholdskostnader.valider()
+        val underholdValideringsfeil = underholdskostnader.valider(beregnetUnderholdskostnadPerBarn())
         val harFeil =
             inntekterFeil != null ||
                 husstandsmedlemsfeil.isNotEmpty() ||

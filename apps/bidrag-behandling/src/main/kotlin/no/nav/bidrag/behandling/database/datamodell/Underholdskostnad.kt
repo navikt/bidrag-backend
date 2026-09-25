@@ -58,6 +58,13 @@ open class Underholdskostnad(
         orphanRemoval = true,
     )
     open var faktiskeTilsynsutgifter: MutableSet<FaktiskTilsynsutgift> = mutableSetOf(),
+    @OneToMany(
+        fetch = FetchType.EAGER,
+        mappedBy = "underholdskostnad",
+        cascade = [CascadeType.MERGE, CascadeType.PERSIST],
+        orphanRemoval = true,
+    )
+    open var forpleining: MutableSet<Forpleining> = mutableSetOf(),
     @Enumerated(EnumType.STRING)
     open var kilde: Kilde? = null,
 ) {
@@ -77,5 +84,5 @@ open class Underholdskostnad(
     val personFødselsdato: LocalDate get() = person?.fødselsdato ?: rolle?.fødselsdato!!
     val opphørsdato get() = rolle?.opphørsdato ?: behandling.globalOpphørsdato
 
-    override fun toString(): String = "Underholdskostnad(id=$id, behandling=${behandling.id}, person=${person?.id}, harTilsynsordning=$harTilsynsordning, faktiskeTilsynsutgifter=$faktiskeTilsynsutgifter, barnetilsyn=$barnetilsyn, tilleggsstønad=$tilleggsstønad)"
+    override fun toString(): String = "Underholdskostnad(id=$id, behandling=${behandling.id}, person=${person?.id}, harTilsynsordning=$harTilsynsordning, faktiskeTilsynsutgifter=$faktiskeTilsynsutgifter, barnetilsyn=$barnetilsyn, tilleggsstønad=$tilleggsstønad, forpleining=$forpleining)"
 }

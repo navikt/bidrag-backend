@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtalePeriode
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
@@ -20,6 +21,9 @@ fun Barnetilsyn.tilGrunnlagsreferanseBarnetilsyn(gjelderBarnReferanse: Grunnlags
 } ?: ""}"
 
 fun Tilleggsstønad.tilGrunnlagsreferanseTilleggsstønad(gjelderBarnReferanse: Grunnlagsreferanse) = "${Grunnlagstype.TILLEGGSSTØNAD_PERIODE}_${gjelderBarnReferanse}_" +
+    "_${fom.toCompactString()}${tom?.let { "_${it.toCompactString()}" } ?: ""}"
+
+fun Forpleining.tilGrunnlagsreferanseForpleining(gjelderBarnReferanse: Grunnlagsreferanse) = "${Grunnlagstype.FORPLEINING_PERIODE}_${gjelderBarnReferanse}_" +
     "_${fom.toCompactString()}${tom?.let { "_${it.toCompactString()}" } ?: ""}"
 
 fun FaktiskTilsynsutgift.tilGrunnlagsreferanseFaktiskTilsynsutgift(

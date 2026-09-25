@@ -6,6 +6,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Person
@@ -74,6 +75,7 @@ import no.nav.bidrag.behandling.dto.v2.samvær.SamværDtoV2
 import no.nav.bidrag.behandling.dto.v2.underhold.BeregnetUnderholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.FaktiskTilsynsutgiftDto
+import no.nav.bidrag.behandling.dto.v2.underhold.ForpleiningDto
 import no.nav.bidrag.behandling.dto.v2.underhold.TilleggsstønadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftResponse
@@ -318,6 +320,7 @@ class Dtomapper(
             faktiskTilsynsutgift = this.faktiskeTilsynsutgifter.tilFaktiskeTilsynsutgiftDtos(),
             stønadTilBarnetilsyn = this.barnetilsyn.tilStønadTilBarnetilsynDtos(),
             tilleggsstønad = this.tilleggsstønad.tilTilleggsstønadDtos(),
+            forpleining = this.forpleining.tilForpleiningDtos(),
             underholdskostnad = beregnetUnderholdskostnad,
             beregnetUnderholdskostnad = beregnetUnderholdskostnad,
             begrunnelse =
@@ -336,7 +339,7 @@ class Dtomapper(
             } else {
                 null
             },
-            valideringsfeil = this.valider().takeIf { it.harFeil },
+            valideringsfeil = this.valider(beregnetUnderholdskostnad).takeIf { it.harFeil },
         )
     }
 
@@ -556,6 +559,14 @@ class Dtomapper(
     )
 
     fun Set<Tilleggsstønad>.tilTilleggsstønadDtos() = this.sortedBy { it.fom }.map { it.tilDto() }.toSet()
+
+    fun Forpleining.tilDto() = ForpleiningDto(
+        id = this.id!!,
+        periode = DatoperiodeDto(this.fom, this.tom),
+        beløp = this.beløp,
+    )
+
+    fun Set<Forpleining>.tilForpleiningDtos() = this.sortedBy { it.fom }.map { it.tilDto() }.toSet()
 
     fun FaktiskTilsynsutgift.tilDto() = FaktiskTilsynsutgiftDto(
         id = this.id!!,
