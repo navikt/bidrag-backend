@@ -15,8 +15,8 @@ class SakHendelseListener(
     private val sakService: SakService,
 ) {
     @KafkaListener(
-        topics = ["\${KAFKA_SAK_HENDELSE_TOPIC}"],
-        groupId = "\${SAK_HENDELSE_KAFKA_GROUP_ID:bidrag-automatisk-jobb-sak}",
+        topics = [$$"${KAFKA_SAK_HENDELSE_TOPIC}"],
+        groupId = $$"${SAK_HENDELSE_KAFKA_GROUP_ID:bidrag-automatisk-jobb-sak}",
         properties = ["auto.offset.reset=latest"],
     )
     fun behandleSakHendelse(

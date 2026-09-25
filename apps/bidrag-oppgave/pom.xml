@@ -18,6 +18,7 @@
     <properties>
         <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
         <mock-oauth2-server.version>6.0.2</mock-oauth2-server.version>
+        <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     </properties>
 
     <dependencies>
@@ -70,6 +71,13 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>io.github.oshai</groupId>
+            <artifactId>kotlin-logging-jvm</artifactId>
+            <version>${kotlin-logging-jvm.version}</version>
         </dependency>
 
         <!-- Test -->

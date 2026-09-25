@@ -17,7 +17,7 @@ class DefaultRestControllerAdviceTest {
     fun `skal returnere ProblemDetail med riktig status ved HttpStatusCodeException`() {
         val exception = HttpServerErrorException(HttpStatus.BAD_GATEWAY, "Bad Gateway")
 
-        val result = advice.handleHttpClientErrorException(exception)
+        val result = advice.handleHttpStatusCodeException(exception)
 
         result.status shouldBe HttpStatus.BAD_GATEWAY.value()
         result.detail shouldContain "Bad Gateway"

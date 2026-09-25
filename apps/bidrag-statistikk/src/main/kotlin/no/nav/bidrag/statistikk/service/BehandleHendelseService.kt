@@ -1,15 +1,15 @@
 package no.nav.bidrag.statistikk.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
-import no.nav.bidrag.statistikk.SECURE_LOGGER
 import no.nav.bidrag.transport.behandling.vedtak.VedtakHendelse
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-private val LOGGER = LoggerFactory.getLogger(DefaultBehandleHendelseService::class.java)
+private val LOGGER = KotlinLogging.logger {}
 
 interface BehandleHendelseService {
     fun behandleHendelse(vedtakHendelse: VedtakHendelse)
@@ -20,8 +20,7 @@ interface BehandleHendelseService {
 class DefaultBehandleHendelseService(private val statistikkService: StatistikkService) : BehandleHendelseService {
     override fun behandleHendelse(vedtakHendelse: VedtakHendelse) {
         if (vedtakSkalBehandles(vedtakHendelse)) {
-            LOGGER.info("Behandler vedtakHendelse med vedtaksid: ${vedtakHendelse.id}")
-            SECURE_LOGGER.debug("Behandler vedtakHendelse: {}", vedtakHendelse)
+            secureLogger.debug { "Behandler vedtakHendelse: $vedtakHendelse" }
             statistikkService.behandleVedtakshendelse(vedtakHendelse)
         }
     }

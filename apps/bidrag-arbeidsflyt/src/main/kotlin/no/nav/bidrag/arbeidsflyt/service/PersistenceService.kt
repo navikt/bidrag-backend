@@ -1,22 +1,20 @@
 package no.nav.bidrag.arbeidsflyt.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.transaction.Transactional
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.model.erEksterntFagomrade
 import no.nav.bidrag.arbeidsflyt.model.erMottattStatus
 import no.nav.bidrag.arbeidsflyt.model.hentTema
-import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
 import no.nav.bidrag.arbeidsflyt.persistence.entity.DLQKafka
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Journalpost
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Oppgave
-import no.nav.bidrag.arbeidsflyt.persistence.repository.BehandlingRepository
 import no.nav.bidrag.arbeidsflyt.persistence.repository.DLQKafkaRepository
 import no.nav.bidrag.arbeidsflyt.persistence.repository.JournalpostRepository
 import no.nav.bidrag.arbeidsflyt.persistence.repository.OppgaveRepository
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
-import org.slf4j.LoggerFactory
-import org.springframework.dao.InvalidDataAccessApiUsageException
 import org.springframework.stereotype.Service
 
 @Service
@@ -27,7 +25,7 @@ class PersistenceService(
 ) {
     companion object {
         @JvmStatic
-        private val LOGGER = LoggerFactory.getLogger(PersistenceService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     fun hentJournalforingOppgave(oppgaveId: Long): Oppgave? = oppgaveRepository.findByOppgaveId(oppgaveId)?.takeIf { it.erJournalforingOppgave() }
@@ -41,12 +39,12 @@ class PersistenceService(
         val journalpostId = journalpostHendelse.journalpostId
         if (!journalpostHendelse.erMottattStatus || journalpostHendelse.erEksterntFagomrade) {
             deleteJournalpost(journalpostId)
-            LOGGER.info(
-                "Slettet journalpost $journalpostId fra hendelse fra databasen fordi status ikke lenger er MOTTATT eller er endret til ekstern fagområde (status=${journalpostHendelse.status}, fagomrade=${journalpostHendelse.hentTema()})",
-            )
+            LOGGER.info {
+                "Slettet journalpost ${journalpostId.sanitizeForLog()} fra hendelse fra databasen fordi status ikke lenger er MOTTATT eller er endret til ekstern fagområde (status=${journalpostHendelse.status}, fagomrade=${journalpostHendelse.hentTema()})"
+            }
         } else {
             saveOrUpdateMottattJournalpost(journalpostId, journalpostHendelse)
-            LOGGER.info("Lagret journalpost $journalpostId i databasen")
+            LOGGER.info { "Lagret journalpost ${journalpostId.sanitizeForLog()} i databasen" }
         }
     }
 
@@ -67,16 +65,16 @@ class PersistenceService(
                 ),
             )
         } catch (e: Exception) {
-            LOGGER.error("Det skjedde en feil ved lagring av feilet kafka melding", e)
+            LOGGER.error(e) { "Det skjedde en feil ved lagring av feilet kafka melding" }
         }
     }
 
     @Transactional
     fun lagreJournalforingsOppgaveFraHendelse(oppgaveHendelse: OppgaveData) {
         if (!oppgaveHendelse.erJournalforingOppgave && !oppgaveHendelse.erSøknadsoppgave) {
-            LOGGER.debug(
-                "Oppgave ${oppgaveHendelse.id} har oppgavetype ${oppgaveHendelse.oppgavetype}. Skal bare lagre oppgaver med type JFR. Lagrer ikke oppgave",
-            )
+            LOGGER.debug {
+                "Oppgave ${oppgaveHendelse.id} har oppgavetype ${oppgaveHendelse.oppgavetype}. Skal bare lagre oppgaver med type JFR. Lagrer ikke oppgave"
+            }
             return
         }
         val oppgave =
@@ -90,7 +88,7 @@ class PersistenceService(
                 tildeltEnhetsnr = oppgaveHendelse.tildeltEnhetsnr,
             )
         oppgaveRepository.save(oppgave)
-        LOGGER.info("Lagret oppgave med id ${oppgaveHendelse.id} i databasen.")
+        LOGGER.info { "Lagret oppgave med id ${oppgaveHendelse.id} i databasen." }
     }
 
     @Transactional
@@ -99,17 +97,17 @@ class PersistenceService(
             oppgaveRepository
                 .findByOppgaveId(oppgaveHendelse.id)
                 ?.apply {
-                    LOGGER.info("Oppdaterer oppgave ${oppgaveHendelse.id} i databasen")
+                    LOGGER.info { "Oppdaterer oppgave ${oppgaveHendelse.id} i databasen" }
                     oppdaterOppgaveFraHendelse(oppgaveHendelse)
                 } ?: run {
-                LOGGER.info("Fant ingen oppgave med id ${oppgaveHendelse.id} i databasen. Lagrer opppgave")
+                LOGGER.info { "Fant ingen oppgave med id ${oppgaveHendelse.id} i databasen. Lagrer opppgave" }
                 lagreJournalforingsOppgaveFraHendelse(oppgaveHendelse)
             }
         }
 
         if (oppgaveHendelse.erStatusKategoriAvsluttet) {
             oppgaveRepository.deleteByOppgaveId(oppgaveHendelse.id)
-            LOGGER.info("Slettet oppgave ${oppgaveHendelse.id} fra databasen fordi oppgave ikke lenger er åpen journalføringsoppgave")
+            LOGGER.info { "Slettet oppgave ${oppgaveHendelse.id} fra databasen fordi oppgave ikke lenger er åpen journalføringsoppgave" }
         }
     }
 
@@ -118,7 +116,7 @@ class PersistenceService(
         try {
             dlqKafkaRepository.deleteByMessageKey(oppgaveid.toString())
         } catch (e: Exception) {
-            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med oppgaveid $oppgaveid", e)
+            LOGGER.error(e) { "Det skjedde en feil ved sletting av feilede meldinger med oppgaveid $oppgaveid" }
         }
     }
 
@@ -127,7 +125,7 @@ class PersistenceService(
         try {
             dlqKafkaRepository.deleteByMessageKey(journalpostId)
         } catch (e: Exception) {
-            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med journalpostid $journalpostId", e)
+            LOGGER.error(e) { "Det skjedde en feil ved sletting av feilede meldinger med journalpostid ${journalpostId.sanitizeForLog()}" }
         }
     }
 
@@ -136,7 +134,7 @@ class PersistenceService(
         try {
             dlqKafkaRepository.deleteByMessageKey(søknadId.toString())
         } catch (e: Exception) {
-            LOGGER.error("Det skjedde en feil ved sletting av feilede meldinger med søknadId $søknadId", e)
+            LOGGER.error(e) { "Det skjedde en feil ved sletting av feilede meldinger med søknadId $søknadId" }
         }
     }
 
