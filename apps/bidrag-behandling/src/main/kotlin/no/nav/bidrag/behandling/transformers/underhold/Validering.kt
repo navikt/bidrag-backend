@@ -276,6 +276,9 @@ fun StønadTilBarnetilsynDto.validerePerioderStønadTilBarnetilsyn(underholdskos
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
         ugyldigForespørsel("Kan ikke legge til periode før barnets fødselsdato")
     }
+    if (periode.tom != null && periode.tom!! < periode.fom) {
+        ugyldigForespørsel("Til og med-dato kan ikke være før fra og med-dato")
+    }
 }
 
 fun OppdatereFaktiskTilsynsutgiftRequest.validere(underholdskostnad: Underholdskostnad) {
@@ -287,6 +290,9 @@ fun OppdatereFaktiskTilsynsutgiftRequest.validere(underholdskostnad: Underholdsk
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
         ugyldigForespørsel("Kan ikke legge til periode før barnets fødselsdato")
     }
+    if (periode.tom != null && periode.tom!! < periode.fom) {
+        ugyldigForespørsel("Til og med-dato kan ikke være før fra og med-dato")
+    }
 }
 
 fun OppdatereTilleggsstønadRequest.validere(underholdskostnad: Underholdskostnad) {
@@ -297,6 +303,9 @@ fun OppdatereTilleggsstønadRequest.validere(underholdskostnad: Underholdskostna
     }
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
         ugyldigForespørsel("Kan ikke legge til periode før barnets fødselsdato")
+    }
+    if (periode.tom != null && periode.tom!! < periode.fom) {
+        ugyldigForespørsel("Til og med-dato kan ikke være før fra og med-dato")
     }
 
     this.id?.let {

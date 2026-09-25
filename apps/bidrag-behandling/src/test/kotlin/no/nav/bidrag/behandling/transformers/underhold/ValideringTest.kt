@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.transformers.underhold
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -10,7 +11,11 @@ import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
+import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -18,6 +23,8 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -728,6 +735,58 @@ class ValideringTest {
                     it.periode shouldBe DatoperiodeDto(fom, tom)
                 }
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("Teste at til og med ikke kan være før fra og med")
+    open inner class PeriodeRekkefølgeTest {
+        private val fom = LocalDate.now().minusMonths(2).withDayOfMonth(1)
+        private val periodeMedTomFørFom = DatoperiodeDto(fom, fom.minusDays(1))
+
+        private fun underholdskostnadForSøknadsbarn(): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val barnIBehandling = behandling.søknadsbarn.first()
+            return behandling.underholdskostnader.find { barnIBehandling.personident!! == it.rolle?.personident }!!
+        }
+
+        @Test
+        open fun `skal avvise stønad til barnetilsyn der til og med er før fra og med`() {
+            val request = StønadTilBarnetilsynDto(periode = periodeMedTomFørFom, tilsynstype = Tilsynstype.HELTID)
+
+            val feil = shouldThrow<HttpClientErrorException> { request.validerePerioderStønadTilBarnetilsyn(underholdskostnadForSøknadsbarn()) }
+
+            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        open fun `skal avvise faktisk tilsynsutgift der til og med er før fra og med`() {
+            val request = OppdatereFaktiskTilsynsutgiftRequest(periode = periodeMedTomFørFom, utgift = BigDecimal(1000))
+
+            val feil = shouldThrow<HttpClientErrorException> { request.validere(underholdskostnadForSøknadsbarn()) }
+
+            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        open fun `skal avvise tilleggsstønad der til og med er før fra og med`() {
+            val request = OppdatereTilleggsstønadRequest(periode = periodeMedTomFørFom, dagsats = BigDecimal(100))
+
+            val feil = shouldThrow<HttpClientErrorException> { request.validere(underholdskostnadForSøknadsbarn()) }
+
+            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        open fun `skal godta periode som varer en måned`() {
+            val request = OppdatereTilleggsstønadRequest(periode = DatoperiodeDto(fom, fom.plusMonths(1).minusDays(1)), dagsats = BigDecimal(100))
+
+            request.validere(underholdskostnadForSøknadsbarn())
         }
     }
 }
