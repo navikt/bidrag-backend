@@ -60,7 +60,7 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-oppgave/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-oppgave
+      maven_options: -B -fae -pl apps/bidrag-oppgave -am
       maven_cache_paths: |
         pom.xml
         apps/bidrag-oppgave/pom.xml
