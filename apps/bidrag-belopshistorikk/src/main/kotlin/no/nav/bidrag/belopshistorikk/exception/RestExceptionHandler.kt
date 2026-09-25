@@ -1,7 +1,7 @@
 package no.nav.bidrag.belopshistorikk.exception
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.core.convert.ConversionFailedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -17,14 +17,14 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @Component
 class RestExceptionHandler {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(RestExceptionHandler::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ResponseBody
     @ExceptionHandler(Exception::class)
     protected fun handleOtherExceptions(e: Exception): ResponseEntity<*> {
         val feilmelding = "Det skjedde en feil: ${e.message}"
-        LOGGER.error(feilmelding, e)
+        LOGGER.error(e) { feilmelding }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, feilmelding)
@@ -41,7 +41,7 @@ class RestExceptionHandler {
     fun handleInvalidValueExceptions(exception: Exception): ResponseEntity<*> {
         val cause = exception.cause
         val valideringsFeil = if (cause is MismatchedInputException) createMissingKotlinParameterViolation(cause) else null
-        LOGGER.error("Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}", exception)
+        LOGGER.error(exception) { "Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}" }
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

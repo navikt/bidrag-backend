@@ -1,8 +1,9 @@
 package no.nav.bidrag.grunnlag.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.vedtak.Formål
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.inntektskomponenten.api.Aktoer
 import no.nav.bidrag.grunnlag.consumer.inntektskomponenten.api.ArbeidsInntektMaanedIntern
 import no.nav.bidrag.grunnlag.consumer.inntektskomponenten.api.HentInntektListeRequest
@@ -19,16 +20,13 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektspostDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.FeilrapporteringDto
 import no.nav.tjenester.aordningen.inntektsinformasjon.AktoerType
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.YearMonth
 
 class HentAinntektService(private val inntektskomponentenService: InntektskomponentenService) {
 
     companion object {
-        @JvmStatic
-        val LOGGER: Logger = LoggerFactory.getLogger(HentAinntektService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     fun hentAinntekt(ainntektRequestListe: List<PersonIdOgPeriodeRequest>, formål: Formål): HentGrunnlagGenericDto<AinntektGrunnlagDto> {
@@ -38,7 +36,7 @@ class HentAinntektService(private val inntektskomponentenService: Inntektskompon
         ainntektRequestListe.forEach {
             // Hvis ident er BNR eller NPID finnes det ikke inntekter i AINNTEKT. Kaller derfor ikke Inntektskomponenten.
             if (erBnrEllerNpid(it.personId)) {
-                SECURE_LOGGER.warn("Ident er BNR eller NPID, ingen inntekter funnet for ${it.personId}")
+                secureLogger.warn { "Ident er BNR eller NPID, ingen inntekter funnet for ${it.personId}" }
                 return@forEach
             }
 
@@ -62,7 +60,7 @@ class HentAinntektService(private val inntektskomponentenService: Inntektskompon
     }
 
     private fun kalkulerPeriodeFra(personIdOgPeriode: PersonIdOgPeriodeRequest): String = if (personIdOgPeriode.periodeFra.isBefore(LocalDate.parse("2015-01-01"))) {
-        LOGGER.warn("Ikke tillatt med periodeFra tidligere enn 2015 i request til Ainntekt, overstyres til januar 2015")
+        LOGGER.warn { "Ikke tillatt med periodeFra tidligere enn 2015 i request til Ainntekt, overstyres til januar 2015" }
         JANUAR2015
     } else {
         personIdOgPeriode.periodeFra.toString().substring(0, 7)
@@ -83,10 +81,10 @@ class HentAinntektService(private val inntektskomponentenService: Inntektskompon
                 }
             } else {
                 // Hvis responsen er tom og httpStatus er 2xx, så er det ikke funnet inntekter for perioden. Ingen inntekter legges til.
-                SECURE_LOGGER.warn(
+                secureLogger.warn {
                     "Ingen inntekter funnet for perioden ${hentInntektRequest.maanedFom} - ${hentInntektRequest.maanedTom} " +
-                        "for ${hentInntektRequest.ident.identifikator}",
-                )
+                        "for ${hentInntektRequest.ident.identifikator}"
+                }
             }
         } else {
             feilrapporteringListe.add(
@@ -112,11 +110,7 @@ class HentAinntektService(private val inntektskomponentenService: Inntektskompon
                 AinntektspostDto(
                     utbetalingsperiode = it.utbetaltIMaaned,
                     opptjeningsperiodeFra = it.opptjeningsperiodeFom,
-                    opptjeningsperiodeTil = if (it.opptjeningsperiodeTom != null) {
-                        it.opptjeningsperiodeTom.plusMonths(1).withDayOfMonth(1)
-                    } else {
-                        null
-                    },
+                    opptjeningsperiodeTil = it.opptjeningsperiodeTom?.plusMonths(1)?.withDayOfMonth(1),
                     opplysningspliktigId = it.opplysningspliktig?.identifikator,
                     virksomhetId = it.virksomhet?.identifikator,
                     inntektType = it.inntektType,

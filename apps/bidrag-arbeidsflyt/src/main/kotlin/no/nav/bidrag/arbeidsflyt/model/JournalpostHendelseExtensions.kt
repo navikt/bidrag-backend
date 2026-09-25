@@ -13,7 +13,7 @@ fun isBidJournalpostId(jpId: String) = (StringUtils.isNumeric(jpId) && BID_JP_RA
 
 fun JournalpostHendelse.erJournalstatusEndretTilIkkeMottatt() = status != null && !erMottattStatus
 
-val JournalpostHendelse.harSaker get() = sakstilknytninger?.isNotEmpty() == true
+val JournalpostHendelse.harSaker get() = sakstilknytninger.isNotEmpty()
 val JournalpostHendelse.erMottattStatus get() = status == JournalpostStatus.MOTTATT
 
 fun JournalpostHendelse.hentTema() = fagomrade ?: tema
@@ -22,7 +22,7 @@ val JournalpostHendelse.erEksterntFagomrade get() = hentTema() != null && (hentT
 val JournalpostHendelse.harSporingsdataEnhet get() = sporing?.enhetsnummer != null
 val JournalpostHendelse.harTittel get() = tittel != null
 val JournalpostHendelse.harDokumentDato get() = dokumentDato != null
-val JournalpostHendelse.saker get() = sakstilknytninger ?: emptyList()
+val JournalpostHendelse.saker get() = sakstilknytninger
 val JournalpostHendelse.erJournalfort get() = status == JournalpostStatus.JOURNALFØRT
 val JournalpostHendelse.journalpostIdUtenPrefix get() = if (harJournalpostIdPrefix()) journalpostId.split('-')[1] else journalpostId
 val JournalpostHendelse.journalpostMedBareBIDPrefix get() = if (erBidragJournalpost()) journalpostId else journalpostIdUtenPrefix

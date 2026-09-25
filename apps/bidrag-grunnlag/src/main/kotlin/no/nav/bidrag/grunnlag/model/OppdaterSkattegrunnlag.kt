@@ -1,9 +1,9 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.inntekt.Skattegrunnlagstype
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagspostBo
 import no.nav.bidrag.grunnlag.comparator.PeriodComparable
@@ -48,14 +48,14 @@ class OppdaterSkattegrunnlag(
                     personident = personIdOgPeriode.personId,
                 )
 
-                SECURE_LOGGER.info("Kaller Sigrun (skattegrunnlag) med request: ${tilJson(skattegrunnlagRequest)}")
+                secureLogger.debug { "Kaller Sigrun (skattegrunnlag) med request: ${tilJson(skattegrunnlagRequest)}" }
 
                 try {
                     when (val restResponseSkattegrunnlag = sigrunConsumer.hentSummertSkattegrunnlag(skattegrunnlagRequest)) {
                         is RestResponse.Success -> {
                             var antallSkattegrunnlagsposter = 0
                             val skattegrunnlagResponse = restResponseSkattegrunnlag.body
-                            SECURE_LOGGER.info("Sigrun (skattegrunnlag) ga følgende respons: ${tilJson(skattegrunnlagResponse)}")
+                            secureLogger.debug { "Sigrun (skattegrunnlag) ga følgende respons: ${tilJson(skattegrunnlagResponse)}" }
 
                             val skattegrunnlagsPosterOrdinaer = mutableListOf<Skattegrunnlag>()
                             val skattegrunnlagsPosterSvalbard = mutableListOf<Skattegrunnlag>()

@@ -174,7 +174,7 @@ class BatchInfoController(
 
         val gjennomsnittSekunder =
             jobRepository
-                .getJobInstances(jobNavn, 0, historikkAntall * 2)
+                .getJobInstances(jobNavn, 0, if (historikkAntall < Integer.MAX_VALUE / 2) historikkAntall * 2 else Integer.MAX_VALUE) // For å hindre overflow
                 .flatMap { jobRepository.getJobExecutions(it) }
                 .filter { it.status == BatchStatus.COMPLETED && it.startTime != null && it.endTime != null }
                 .take(historikkAntall)

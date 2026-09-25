@@ -1,11 +1,10 @@
 package no.nav.bidrag.person.hendelse.skedulering
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import no.nav.bidrag.person.hendelse.database.Databasetjeneste
 import no.nav.bidrag.person.hendelse.integrasjon.bidrag.topic.BidragKafkaMeldingsprodusent
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.Egenskaper
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -15,16 +14,16 @@ class PublisereEndringsmeldinger(
     val databasetjeneste: Databasetjeneste,
     val egenskaper: Egenskaper,
 ) {
-    @Scheduled(cron = "\${publisere_personhendelser.kjøreplan}")
+    @Scheduled(cron = $$"${publisere_personhendelser.kjøreplan}")
     @SchedulerLock(
         name = "publisere_personhendelser",
-        lockAtLeastFor = "\${publisere_personhendelser.lås.min}",
-        lockAtMostFor = "\${publisere_personhendelser.lås.max}",
+        lockAtLeastFor = $$"${publisere_personhendelser.lås.min}",
+        lockAtMostFor = $$"${publisere_personhendelser.lås.max}",
     )
     fun identifisereOgPublisere() {
         // Hente aktør med personidenter til til personer med nylige endringer i personopplysninger
         val aktørerPersonopplysninger = databasetjeneste.hentePubliseringsklareHendelser()
-        log.info("Fant ${aktørerPersonopplysninger.size} unike personer med nylige endringer i personopplysninger.")
+        log.info { "Fant ${aktørerPersonopplysninger.size} unike personer med nylige endringer i personopplysninger." }
 
         val subsetMedAktørider =
             aktørerPersonopplysninger.keys
@@ -33,9 +32,7 @@ class PublisereEndringsmeldinger(
                 ).toSet()
 
         if (subsetMedAktørider.size < aktørerPersonopplysninger.size) {
-            log.info(
-                "Begrenser antall meldinger som skal publiseres til ${subsetMedAktørider.size}",
-            )
+            log.info { "Begrenser antall meldinger som skal publiseres til ${subsetMedAktørider.size}" }
         }
 
         // Publisere melding til intern topic for samtlige personer med endringer
@@ -46,6 +43,6 @@ class PublisereEndringsmeldinger(
     }
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
+        val log = KotlinLogging.logger {}
     }
 }

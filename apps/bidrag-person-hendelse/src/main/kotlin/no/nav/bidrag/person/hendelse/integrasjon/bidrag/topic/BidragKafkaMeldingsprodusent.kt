@@ -2,6 +2,8 @@ package no.nav.bidrag.person.hendelse.integrasjon.bidrag.topic
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.database.Databasetjeneste
 import no.nav.bidrag.person.hendelse.database.HendelseMottakerForAktor
 import no.nav.bidrag.person.hendelse.database.Hendelsemottak
@@ -13,8 +15,6 @@ import no.nav.bidrag.person.hendelse.integrasjon.bidrag.topic.domene.tilHendelse
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.hendelseOjectmapper
 import no.nav.bidrag.transport.person.hendelse.Endringsmelding
 import org.apache.kafka.common.KafkaException
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -57,7 +57,7 @@ class BidragKafkaMeldingsprodusent(
                 }
             }
         } catch (e: Exception) {
-            log.warn("Feil ved henting av identendring fra hendelse ${this.hendelseid}: ${e.message}")
+            log.warn { "Feil ved henting av identendring fra hendelse ${this.hendelseid}: ${e.message}" }
         }
         return null
     }
@@ -75,7 +75,7 @@ class BidragKafkaMeldingsprodusent(
                 }
             }
         } catch (e: Exception) {
-            log.warn("Feil ved henting av sivilstandsendringer fra hendelse ${this.hendelseid}: ${e.message}")
+            log.warn { "Feil ved henting av sivilstandsendringer fra hendelse ${this.hendelseid}: ${e.message}" }
         }
         return null
     }
@@ -106,7 +106,7 @@ class BidragKafkaMeldingsprodusent(
                 )
             }
         } catch (e: Exception) {
-            log.warn("Feil ved henting av adresseendring fra hendelse ${this.hendelseid}: ${e.message}")
+            log.warn { "Feil ved henting av adresseendring fra hendelse ${this.hendelseid}: ${e.message}" }
         }
         return null
     }
@@ -145,16 +145,16 @@ class BidragKafkaMeldingsprodusent(
                     ),
                 ),
             )
-        slog.trace("Publiserer endringsmelding $melding for aktørid $aktørid")
+        secureLogger.trace { "Publiserer endringsmelding $melding for aktørid $aktørid" }
         try {
             val future = kafkaTemplate.send(BIDRAG_PERSONHENDELSE_TOPIC, aktørid, melding)
 
             future.whenComplete { result, ex ->
                 if (ex != null) {
-                    log.warn("Publisering av melding til topic $BIDRAG_PERSONHENDELSE_TOPIC feilet.")
-                    slog.warn(
-                        "Publisering av melding for aktørid ${result.producerRecord.key()} til topic $BIDRAG_PERSONHENDELSE_TOPIC feilet.",
-                    )
+                    log.warn { "Publisering av melding til topic $BIDRAG_PERSONHENDELSE_TOPIC feilet." }
+                    secureLogger.warn {
+                        "Publisering av melding for aktørid ${result.producerRecord.key()} til topic $BIDRAG_PERSONHENDELSE_TOPIC feilet."
+                    }
                     throw ex
                 }
             }
@@ -162,15 +162,14 @@ class BidragKafkaMeldingsprodusent(
             databasetjeneste.oppdaterePubliseringstidspunkt(aktørid)
         } catch (e: KafkaException) {
             // Fanger exception for å unngå at meldingsinnhold logges i åpen logg.
-            slog.error("Publisering av melding for aktørid $aktørid feilet med feilmelding: ${e.message}")
+            secureLogger.error { "Publisering av melding for aktørid $aktørid feilet med feilmelding: ${e.message}" }
             throw PubliseringFeiletException("Publisering av melding med nøkkel $aktørid til topic $BIDRAG_PERSONHENDELSE_TOPIC feilet.")
         }
     }
 
     companion object {
         val BIDRAG_PERSONHENDELSE_TOPIC = "bidrag.personhendelse.v1"
-        private val log = LoggerFactory.getLogger(this::class.java)
-        private val slog: Logger = LoggerFactory.getLogger("secureLogger")
+        private val log = KotlinLogging.logger {}
 
         fun tilJson(endringsmelding: Endringsmelding): String = hendelseOjectmapper.writeValueAsString(endringsmelding)
     }

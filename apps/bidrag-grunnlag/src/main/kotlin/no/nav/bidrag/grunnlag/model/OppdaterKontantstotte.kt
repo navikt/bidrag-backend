@@ -1,8 +1,8 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.KontantstotteBo
 import no.nav.bidrag.grunnlag.consumer.familiekssak.FamilieKsSakConsumer
 import no.nav.bidrag.grunnlag.consumer.familiekssak.api.BisysDto
@@ -38,7 +38,7 @@ class OppdaterKontantstotte(
                 identer = personIdListe,
             )
 
-            SECURE_LOGGER.info("Kaller kontantstøtte med request: ${tilJson(innsynRequest)}")
+            secureLogger.debug { "Kaller kontantstøtte med request: ${tilJson(innsynRequest)}" }
 
             try {
                 when (
@@ -47,7 +47,7 @@ class OppdaterKontantstotte(
                 ) {
                     is RestResponse.Success -> {
                         val kontantstotteResponse = restResponseKontantstotte.body
-                        SECURE_LOGGER.info("kontantstøtte ga følgende respons: ${tilJson(kontantstotteResponse)}")
+                        secureLogger.debug { "kontantstøtte ga følgende respons: ${tilJson(kontantstotteResponse)}" }
 
                         persistenceService.oppdaterEksisterendeKontantstotteTilInaktiv(
                             grunnlagspakkeId = grunnlagspakkeId,
@@ -127,7 +127,7 @@ class OppdaterKontantstotte(
                                     "${personIdOgPeriode.periodeTil}.",
                             ),
                         )
-                        SECURE_LOGGER.warn("kontantstøtte familie-ks-sak svarte med feil, respons: ${tilJson(restResponseKontantstotte)}")
+                        secureLogger.warn { "kontantstøtte familie-ks-sak svarte med feil, respons: ${tilJson(restResponseKontantstotte)}" }
                     }
                 }
             } catch (e: Exception) {

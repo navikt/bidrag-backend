@@ -1,7 +1,7 @@
 package no.nav.bidrag.kodeverk.aop
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,14 +13,14 @@ import org.springframework.web.client.HttpStatusCodeException
 @RestControllerAdvice
 class DefaultRestControllerAdvice {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DefaultRestControllerAdvice::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ResponseBody
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpClientErrorException(exception: HttpStatusCodeException): ResponseEntity<*> {
         val errorMessage = getErrorMessage(exception)
-        LOGGER.warn(errorMessage, exception)
+        LOGGER.warn(exception) { errorMessage }
         return ResponseEntity
             .status(exception.statusCode)
             .header(HttpHeaders.WARNING, errorMessage)
@@ -44,7 +44,7 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(Exception::class)
     fun handleOtherExceptions(exception: Exception): ResponseEntity<*> {
-        LOGGER.warn("Det skjedde en ukjent feil", exception)
+        LOGGER.warn(exception) { "Det skjedde en ukjent feil" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, "Det skjedde en ukjent feil: ${exception.message}")
@@ -54,7 +54,7 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException): ResponseEntity<*> {
-        LOGGER.warn("Ugyldig eller manglende sikkerhetstoken", exception)
+        LOGGER.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WARNING, "Ugyldig eller manglende sikkerhetstoken")
