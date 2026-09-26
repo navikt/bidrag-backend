@@ -247,7 +247,7 @@ class BehandleOppgaveHendelseService(
     ) {
         try {
             secureLogger.info {
-                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med ${commonObjectmapper.writeValueAsString(oppgaveHendelse)} ",
+                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med ${commonObjectmapper.writeValueAsString(oppgaveHendelse)} "
             }
         } catch (e: Exception) {
             LOGGER.error(e) { "Det skjedde en feil ved logging av hendelse" }

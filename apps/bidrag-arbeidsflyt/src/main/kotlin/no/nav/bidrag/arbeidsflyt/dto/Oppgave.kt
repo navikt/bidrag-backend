@@ -540,7 +540,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         }
 
         if (erTilordnetRessursEndretFraValgtTilIkkeValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(tilordnetRessurs)} til ikke valgt\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs)} til ikke valgt\r\n"
         }
 
         if (nyBeskrivelse.isNotEmpty()) {
@@ -556,8 +556,8 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val eksisterendeTildeltEnhet get() = oppgaveDataForHendelse?.tildeltEnhetsnr
     private val eksisterendeOppgavetype get() = oppgaveDataForHendelse?.oppgavetype
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
-    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = eksisterendeTilordnetRessurs?.isNotEmpty() == true && tilordnetRessurs?.isEmpty() == true
-    private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = eksisterendeTilordnetRessurs?.isEmpty() == true && tilordnetRessurs?.isNotEmpty() == true
+    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
+    private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
     private val erTilordnetRessursEndret get() = !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
         !erTilordnetRessursEndretFraIkkeValgtTilValgt && (!tilordnetRessurs.isNullOrEmpty() && !eksisterendeTilordnetRessurs.isNullOrEmpty()) &&
         eksisterendeTilordnetRessurs != tilordnetRessurs

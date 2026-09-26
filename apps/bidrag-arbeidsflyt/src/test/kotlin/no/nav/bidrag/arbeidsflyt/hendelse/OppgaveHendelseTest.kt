@@ -142,7 +142,7 @@ class OppgaveHendelseTest : AbstractBehandleHendelseTest() {
 
         behandleOppgaveHendelseService.behandleOppgaveHendelse(oppgaveData.toHendelse())
 
-        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/20004")))
+        verify(0, patchRequestedFor(urlEqualTo("oppgave/api/v1/oppgaver/20004")))
     }
 
     @Test
