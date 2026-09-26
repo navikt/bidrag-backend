@@ -23,12 +23,13 @@ data class Oppgave(
     val opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
     @Column(name = "frist")
     val frist: LocalDate?,
-    var søknadsoppgave: Boolean = false,
+    var søknadsoppgave: Boolean? = false,
     var tildeltEnhetsnr: String? = null,
+    var tilordnetRessurs: String? = null,
 ) {
     fun erJournalforingOppgave(): Boolean = oppgavetype == "JFR"
 
-    fun erSøknadsoppgave(): Boolean = søknadsoppgave
+    fun erSøknadsoppgave(): Boolean = søknadsoppgave == true
 
     fun oppdaterOppgaveFraHendelse(oppgaveHendelse: OppgaveData) {
         status = oppgaveHendelse.status?.name!!
@@ -36,5 +37,6 @@ data class Oppgave(
         oppgavetype = oppgaveHendelse.oppgavetype!!
         tildeltEnhetsnr = oppgaveHendelse.tildeltEnhetsnr
         søknadsoppgave = oppgaveHendelse.erSøknadsoppgave
+        tilordnetRessurs = oppgaveHendelse.tilordnetRessurs
     }
 }

@@ -149,17 +149,20 @@ class BehandleBehandlingHendelseService(
 
                 // Forsikre at oppgaver ikke overføres flere ganger hvis feks SB manuelt overfører til en annen
                 behandling.oppgaverOverførtEtterFFOpprettet = LocalDateTime.now()
+            } else {
+                if (ff.opprettetAvSaksbehandler == null) {
+                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
+                    return
+                }
+                val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandling.behandlingsid ?: hendelse.behandlingsid ?: return)
+                val oppgaveTilordnet = oppgaverBehandling.find { !it.tilordnetRessurs.isNullOrEmpty() } ?: return
+                val tilordnetEnhet = oppgaveTilordnet.tildeltEnhetsnr
+                val tilordnetRessurs = oppgaveTilordnet.tilordnetRessurs
+                overførOppgaverEtterFF(hendelse, behandling, tilordnetRessurs, tilordnetEnhet) {
+                    // Overfør nye oppgaver til saksbehandler
+                    it.tilordnetRessurs == null
+                }
             }
-//            else {
-//                if (ff.opprettetAvSaksbehandler == null) {
-//                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
-//                    return
-//                }
-//                overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
-//                    // Overfør nye oppgaver til saksbehandler
-//                    it.tilordnetRessurs == null
-//                }
-//            }
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved overføring av oppgaver etter FF er opprettet for behandling ${behandling.behandlingsid} og hendelse $hendelse" }
         }
