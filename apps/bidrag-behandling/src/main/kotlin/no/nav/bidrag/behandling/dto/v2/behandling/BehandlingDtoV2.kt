@@ -201,6 +201,7 @@ data class GebyrDto(
 data class SøknadDetaljerDto(
     val søknadsid: Long,
     val saksnummer: String,
+    val erHovedsøknad: Boolean,
     val barn: List<RolleDto>,
     val søktFomDato: LocalDate,
     val mottattDato: LocalDate,

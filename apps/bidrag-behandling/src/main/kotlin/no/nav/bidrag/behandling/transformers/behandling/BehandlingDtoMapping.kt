@@ -611,6 +611,7 @@ fun Rolle.tilSøknadsdetaljerDto(søknadsid: Long): SøknadDetaljerDto {
     val barn = behandling.søknadsbarnForSøknad(søknadsid)
     return SøknadDetaljerDto(
         søknadsid = søknadsid,
+        erHovedsøknad = behandling.soknadsid == søknadsdetaljer?.søknadsid,
         saksnummer = sakForSøknad(søknadsid),
         barn = if (rolletype != Rolletype.BARN) barn.map { it.tilDto() } else emptyList(),
         søktFomDato = søknadsdetaljer?.søknadFomDato ?: behandling.søktFomDato,
@@ -799,7 +800,7 @@ fun Behandling.tilInntektDtoV3(
                 gjelder = rolle.tilDto(),
             )
         },
-        valideringsfeil = valideringsfeilForRolle ?: hentInntekterValideringsfeilV2(rolle),
+        valideringsfeil = if (!erAvslagForAlle) valideringsfeilForRolle ?: hentInntekterValideringsfeilV2(rolle) else InntektValideringsfeilV2Dto(),
     )
 }
 
