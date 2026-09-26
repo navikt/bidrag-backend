@@ -503,7 +503,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         return this
     }
 
-    fun overforTilSaksbehandler(nyTilordnetRessurs: String): OppdaterOppgave {
+    fun overforTilSaksbehandler(nyTilordnetRessurs: String?): OppdaterOppgave {
         tilordnetRessurs = nyTilordnetRessurs
         _hasChanged = true
         return this
