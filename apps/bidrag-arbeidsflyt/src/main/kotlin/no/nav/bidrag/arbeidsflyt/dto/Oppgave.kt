@@ -504,7 +504,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     }
 
     fun overforTilSaksbehandler(nyTilordnetRessurs: String?): OppdaterOppgave {
-        tilordnetRessurs = nyTilordnetRessurs
+        tilordnetRessurs = nyTilordnetRessurs ?: ""
         _hasChanged = true
         return this
     }
