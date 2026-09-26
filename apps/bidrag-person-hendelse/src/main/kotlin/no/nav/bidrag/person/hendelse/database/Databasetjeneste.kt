@@ -1,12 +1,10 @@
 package no.nav.bidrag.person.hendelse.database
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.person.hendelse.domene.Endringstype
 import no.nav.bidrag.person.hendelse.domene.Livshendelse
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.Egenskaper
-import no.nav.bidrag.person.hendelse.prosess.Livshendelsebehandler
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -157,10 +155,10 @@ class Databasetjeneste(
             LocalDateTime.now()
 
         return if (Status.KANSELLERT == tidligereHendelseMedStatusMottatt?.status) {
-            log.info(
+            log.info {
                 "Livshendelse med hendelseid ${tidligereHendelseMedStatusMottatt.hendelseid} " +
-                    "ble erstattet av livshendelse med hendelseid ${livshendelse.hendelseid} og endringstype ${livshendelse.endringstype}.",
-            )
+                    "ble erstattet av livshendelse med hendelseid ${livshendelse.hendelseid} og endringstype ${livshendelse.endringstype}."
+            }
 
             if (Endringstype.KORRIGERT != livshendelse.endringstype) {
                 Status.KANSELLERT
@@ -173,10 +171,7 @@ class Databasetjeneste(
     }
 
     companion object {
-        val log: Logger =
-            LoggerFactory.getLogger(
-                Livshendelsebehandler::class.java,
-            )
+        val log = KotlinLogging.logger {}
     }
 }
 

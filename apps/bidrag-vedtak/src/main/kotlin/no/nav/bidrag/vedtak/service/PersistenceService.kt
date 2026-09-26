@@ -1,12 +1,13 @@
 package no.nav.bidrag.vedtak.service
 
 import io.micrometer.core.annotation.Timed
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.transport.behandling.vedtak.request.HentVedtakForStønadRequest
-import no.nav.bidrag.vedtak.SECURE_LOGGER
 import no.nav.bidrag.vedtak.bo.EngangsbeløpGrunnlagBo
 import no.nav.bidrag.vedtak.bo.PeriodeGrunnlagBo
 import no.nav.bidrag.vedtak.bo.StønadsendringGrunnlagBo
@@ -125,7 +126,7 @@ class PersistenceService(
         val eksisterendeGrunnlag = grunnlagRepository.findById(stønadsendringGrunnlagBo.grunnlagsid)
             .orElseThrow { IllegalArgumentException(String.format("Fant ikke grunnlag med id %d i databasen", stønadsendringGrunnlagBo.grunnlagsid)) }
         val nyStønadsendringGrunnlag = StønadsendringGrunnlag(eksisterendeStønadsendring, eksisterendeGrunnlag)
-        SECURE_LOGGER.debug("nyStønadsendringGrunnlag: ${tilJson(nyStønadsendringGrunnlag)}")
+        secureLogger.debug { "nyStønadsendringGrunnlag: ${tilJson(nyStønadsendringGrunnlag)}".sanitizeForLog() }
         return stønadsendringGrunnlagRepository.save(nyStønadsendringGrunnlag)
     }
 
@@ -135,7 +136,7 @@ class PersistenceService(
         val eksisterendeGrunnlag = grunnlagRepository.findById(periodeGrunnlagBo.grunnlagsid)
             .orElseThrow { IllegalArgumentException(String.format("Fant ikke grunnlag med id %d i databasen", periodeGrunnlagBo.grunnlagsid)) }
         val nyttPeriodeGrunnlag = PeriodeGrunnlag(eksisterendePeriode, eksisterendeGrunnlag)
-        SECURE_LOGGER.debug("nyttPeriodeGrunnlag: ${tilJson(nyttPeriodeGrunnlag)}")
+        secureLogger.debug { "nyttPeriodeGrunnlag: ${tilJson(nyttPeriodeGrunnlag)}".sanitizeForLog() }
         return periodeGrunnlagRepository.save(nyttPeriodeGrunnlag)
     }
 
@@ -159,7 +160,7 @@ class PersistenceService(
         val eksisterendeGrunnlag = grunnlagRepository.findById(engangsbeløpGrunnlagBo.grunnlagsid)
             .orElseThrow { IllegalArgumentException(String.format("Fant ikke grunnlag med id %d i databasen", engangsbeløpGrunnlagBo.grunnlagsid)) }
         val nyttEngangsbeløpGrunnlag = EngangsbeløpGrunnlag(eksisterendeEngangsbeløp, eksisterendeGrunnlag)
-        SECURE_LOGGER.debug("nyttEngangsbeløpGrunnlag: ${tilJson(nyttEngangsbeløpGrunnlag)}")
+        secureLogger.debug { "nyttEngangsbeløpGrunnlag: ${tilJson(nyttEngangsbeløpGrunnlag)}".sanitizeForLog() }
         return engangsbeløpGrunnlagRepository.save(nyttEngangsbeløpGrunnlag)
     }
 

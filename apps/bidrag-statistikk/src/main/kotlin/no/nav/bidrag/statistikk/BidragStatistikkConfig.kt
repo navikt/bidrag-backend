@@ -1,5 +1,6 @@
 package no.nav.bidrag.statistikk
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.info.Info
@@ -15,7 +16,6 @@ import no.nav.bidrag.statistikk.hendelse.KafkaVedtakHendelseListener
 import no.nav.bidrag.statistikk.service.BehandleHendelseService
 import no.nav.bidrag.statistikk.service.JsonMapperService
 import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.EnableAspectJAutoProxy
@@ -60,7 +60,7 @@ class BidragStatistikkConfig {
 @Import(RestOperationsAzure::class)
 class RestConfig
 
-val LOGGER = LoggerFactory.getLogger(KafkaConfig::class.java)
+val LOGGER = KotlinLogging.logger {}
 
 @Configuration
 @Profile(LIVE_PROFILE)

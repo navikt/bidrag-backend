@@ -6,7 +6,6 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OpprettOppgaveRequest
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
-import org.slf4j.LoggerFactory
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
@@ -19,8 +18,6 @@ import org.springframework.web.client.body
 class OppgaveClient(
     private val restClient: RestClient,
 ) {
-
-    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun opprettOppgave(request: OpprettOppgaveRequest): OppgaveDto = restClient.post()
         .uri("/api/v1/oppgaver")

@@ -1,6 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.service
 
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.consumer.OppgaveConsumer
 import no.nav.bidrag.arbeidsflyt.dto.DefaultOpprettOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.dto.EndreForNyttDokumentRequest
@@ -22,9 +22,9 @@ import no.nav.bidrag.arbeidsflyt.model.journalpostMedPrefix
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgaveDetaljert
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 import no.nav.bidrag.transport.dokument.Sporingsdata
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -32,7 +32,7 @@ class OppgaveService(
     private val oppgaveConsumer: OppgaveConsumer,
 ) {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(OppgaveService::class.java)
+        private val LOGGER = KotlinLogging.logger { }
     }
 
     fun oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave: OppgaveData) {
@@ -249,7 +249,7 @@ class OppgaveService(
         oppgaverForHendelse: OppgaverForHendelse,
     ) {
         oppgaverForHendelse.hentJournalforingsOppgaver().forEach {
-            LOGGER.info("Ferdigstiller oppgave med type ${it.oppgavetype} og journalpostId ${it.journalpostId}")
+            LOGGER.info { "Ferdigstiller oppgave med type ${it.oppgavetype} og journalpostId ${it.journalpostId}" }
             oppgaveConsumer.endreOppgave(
                 endretAvEnhetsnummer = endretAvEnhetsnummer,
                 patchOppgaveRequest = FerdigstillOppgaveRequest(it),
@@ -269,19 +269,20 @@ class OppgaveService(
 
         val sakerSomKreverNyBehandleDokumentOppgave =
             behandlingsOppgaver.hentSakerSomKreverNyBehandleDokumentOppgave(
-                journalpostHendelse.sakstilknytninger ?: emptyList(),
+                journalpostHendelse.sakstilknytninger,
             )
         opprettBehandleDokumentOppgaveForSaker(journalpostHendelse, sakerSomKreverNyBehandleDokumentOppgave)
     }
 
     fun gjenopprettOppgave(oppgaveId: Long): Long {
         val oppgave = hentOppgave(oppgaveId)
-
         if (!oppgave.erStatusKategoriAvsluttet) return oppgaveId
 
-        SECURE_LOGGER.info("Gjennoppretter oppgave for sak ${oppgave.saksreferanse} og søknadsid ${oppgave.søknadsid} og behandlingsid ${oppgave.behandlingsid} med type ${oppgave.oppgavetype}")
         val nyOppgaveId = opprettOppgave(oppgave.mapTilOpprettOppgaveDetaljert()).id
-        SECURE_LOGGER.info("Gjennopprettet oppgave $oppgaveId med ny oppgaveId $nyOppgaveId for sak ${oppgave.saksreferanse} og søknadsid ${oppgave.søknadsid} og behandlingsid ${oppgave.behandlingsid} med type ${oppgave.oppgavetype}")
+        secureLogger.info {
+            "Gjennopprettet oppgave $oppgaveId med ny oppgaveId $nyOppgaveId for sak ${oppgave.saksreferanse} " +
+                "og søknadsid ${oppgave.søknadsid} og behandlingsid ${oppgave.behandlingsid} med type ${oppgave.oppgavetype}"
+        }
         return nyOppgaveId
     }
 
@@ -291,9 +292,8 @@ class OppgaveService(
         journalpostHendelse: JournalpostHendelse,
         saker: List<String>,
     ) {
-        LOGGER.info("Antall behandle dokument oppgaver som skal opprettes: ${saker.size} for saker $saker")
         saker.forEach {
-            LOGGER.info("Oppretter behandle dokument oppgave for sak $it og journalpostId ${journalpostHendelse.journalpostId}")
+            LOGGER.info { "Oppretter behandle dokument oppgave for sak $it og journalpostId ${journalpostHendelse.journalpostId}" }
             opprettOppgave(
                 OpprettBehandleDokumentOppgaveRequest(
                     saksreferanse = it,
@@ -312,17 +312,10 @@ class OppgaveService(
         journalpostHendelse: JournalpostHendelse,
         oppgaver: List<OppgaveData>,
     ) {
-        LOGGER.info("Antall behandle dokument oppgaver som skal oppdateres: {}", oppgaver.size)
-
         for (oppgaveData in oppgaver) {
             val request = EndreForNyttDokumentRequest(oppgaveData, journalpostHendelse)
             oppgaveConsumer.endreOppgave(request)
-            LOGGER.info("Endret beskrivelse for oppgave {}", oppgaveData.id)
-            SECURE_LOGGER.info(
-                "Endret beskrivelse for oppgave {} med beskrivelse: {}",
-                oppgaveData.id,
-                request.beskrivelse,
-            )
+            secureLogger.info { "Endret beskrivelse for oppgave ${oppgaveData.id} med beskrivelse: ${request.beskrivelse}" }
         }
     }
 
