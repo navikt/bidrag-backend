@@ -10,10 +10,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.MockedStatic
 import org.mockito.Mockito
 import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.`when`
-import org.mockito.MockedStatic
 import java.time.LocalDateTime
 
 @DisplayName("OppdaterOppgaver")
