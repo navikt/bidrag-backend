@@ -124,7 +124,6 @@ class ForholdsmessigFordelingKlageService(
 
         val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, request?.opprettetAvEnhet)
         val åpneSøknaderForVedtaksid = hentÅpneSøknaderForVedtak(behandling)
-
         sammeknyttSøknadHvisNødvendig(hovedsøknadsid, opprettetEllerOppdaterSøknadsid)
 
         val opprettetSøknad = bbmConsumer.hentSøknad(opprettetEllerOppdaterSøknadsid)!!.søknad
@@ -150,10 +149,12 @@ class ForholdsmessigFordelingKlageService(
             )
 
         fjernSøknaderSomIkkeErDelAvKlagebehandlingen(behandling)
+        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
 
         val gjenværendeKravhavere =
             relevanteKravhavere
                 .filter { rk -> søknadsbarnOrdinæreSøknader.none { it.first == rk.kravhaver && it.second == rk.stønadstype } }
+                .filter { rk -> rollerITilknyttedeSøknader.none { it.first == rk.kravhaver && it.second == rk.stønadstype } }
                 .filter { rk -> !behandling.harSøknadSomErstatterFFKlagesøknad(rk.kravhaver, rk.stønadstype) }
                 .toSet()
         opprettRevurderingssøknaderForGjenværendeKravhavere(
@@ -228,6 +229,14 @@ class ForholdsmessigFordelingKlageService(
         .åpneSøknader
         .filter { it.refVedtaksid == behandling.omgjøringsdetaljer?.omgjørVedtakId }
 
+    private fun finnAlleBarnIOpprettetSøknader(hovedsøknadsid: Long): List<Pair<String?, Stønadstype?>> {
+        val tilknyttedeSøknaderBehandling =
+            bbmConsumer.finnSammenknytningerHovedsøknad(
+                hovedsøknadsid,
+                SøknadsknytningStatus.Aktiv,
+            )
+        return tilknyttedeSøknaderBehandling.søknader.flatMap { it.parterUnderBehandling.map { p -> p.personident to it.behandlingstema.tilStønadstype() } }.distinct()
+    }
     private fun sammeknyttSøknadHvisNødvendig(
         hovedsøknadsid: Long,
         opprettetEllerOppdaterSøknadsid: Long,
@@ -255,6 +264,8 @@ class ForholdsmessigFordelingKlageService(
     ): Long {
         if (opprettetSøknad.behandlingStatusType != BehandlingStatusType.AVBRUTT) return gjeldeneHovedsøknadsid
 
+        val hovedsøknad = bbmConsumer.hentSøknad(gjeldeneHovedsøknadsid)
+        if (hovedsøknad?.søknad?.behandlingStatusType?.erÅpenStatus == true) return gjeldeneHovedsøknadsid
         val varHovedsøknad = opprettetEllerOppdaterSøknadsid == gjeldeneHovedsøknadsid
         if (varHovedsøknad) {
             val nyHovedsøknadsid = behandling.finnSøknadSomKanBliHovedsøknad(gjeldeneHovedsøknadsid)
