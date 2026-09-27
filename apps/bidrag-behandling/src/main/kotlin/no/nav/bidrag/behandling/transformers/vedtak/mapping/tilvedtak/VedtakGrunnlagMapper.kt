@@ -57,17 +57,24 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.Bidragsberegning
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.OmgjøringOrkestratorGrunnlag
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.OmgjøringorkestratorManuellAldersjustering
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåFremmedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.finnGrunnlagSomErReferertAv
 import no.nav.bidrag.transport.behandling.felles.grunnlag.gebyrBeløp
 import no.nav.bidrag.transport.behandling.felles.grunnlag.gebyrDelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.sluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.tilPersonreferanse
 import no.nav.bidrag.transport.felles.toCompactString
@@ -413,6 +420,25 @@ class VedtakGrunnlagMapper(
         grunnlagsliste: List<GrunnlagDto> = behandling.gebyrGrunnlagslisteDefaultVerdi(rolle),
         referanse: String? = null,
     ): BeregnGebyrResultat {
+        if (behandling.lesemodusVedtak != null && behandling.grunnlagslisteFraVedtak != null) {
+            val grunnlagGebyr = behandling.grunnlagslisteFraVedtak!!
+                .filtrerOgKonverterBasertPåFremmedReferanse<SluttberegningGebyr>(Grunnlagstype.SLUTTBEREGNING_GEBYR, rolle.tilGrunnlagsreferanse()).firstOrNull()
+            val delberegningSumInntekt = grunnlagGebyr?.let {
+                behandling.grunnlagslisteFraVedtak!!.finnGrunnlagSomErReferertAv(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, grunnlagGebyr.grunnlag).toList()
+                    .innholdTilObjekt<DelberegningSumInntekt>()
+                    .maxByOrNull { it.barnetillegg ?: BigDecimal.ZERO }
+            }
+            return BeregnGebyrResultat(
+                skattepliktigInntekt =
+                delberegningSumInntekt?.skattepliktigInntekt ?: BigDecimal.ZERO,
+                maksBarnetillegg = delberegningSumInntekt?.barnetillegg,
+                resultatkode = grunnlagGebyr?.innhold?.tilResultatkode() ?: Resultatkode.GEBYR_FRITATT,
+                beløpGebyrsats = behandling.grunnlagslisteFraVedtak!!.gebyrBeløp!!,
+                grunnlagsreferanseListeEngangsbeløp = emptyList(),
+                ilagtGebyr = grunnlagGebyr?.innhold?.ilagtGebyr ?: false,
+                grunnlagsliste = emptyList(),
+            )
+        }
         val grunnlagGebyr = (if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste) else grunnlagsliste).toMutableList()
         grunnlagGebyr.addAll(
             behandling.grunnlag
@@ -445,7 +471,7 @@ class VedtakGrunnlagMapper(
             mapper.run {
                 tilGrunnlagInntekt(
                     personobjekter = tilPersonobjekter(),
-                    inkluderAlle = false,
+                    inkluderAlle = true,
                 )
             }.filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() }
 
