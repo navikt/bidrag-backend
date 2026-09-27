@@ -64,6 +64,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.gebyrBeløp
 import no.nav.bidrag.transport.behandling.felles.grunnlag.gebyrDelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
@@ -404,11 +405,7 @@ class VedtakGrunnlagMapper(
         )
     }
 
-    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) = if (avslag != null) {
-        emptyList()
-    } else {
-        beregnetInntekterGrunnlagForRolle(rolle)
-    }
+    private fun Behandling.gebyrGrunnlagslisteDefaultVerdi(rolle: Rolle) = beregnetInntekterGrunnlagForRolle(rolle, avslag != null || erAvslagForAlle)
 
     fun beregnGebyr(
         behandling: Behandling,
@@ -416,57 +413,59 @@ class VedtakGrunnlagMapper(
         grunnlagsliste: List<GrunnlagDto> = behandling.gebyrGrunnlagslisteDefaultVerdi(rolle),
         referanse: String? = null,
     ): BeregnGebyrResultat {
-        val gebyrBeregning =
-            if (behandling.avslag != null) {
-                beregnGebyrApi.beregnGebyr(grunnlagsliste, rolle.tilGrunnlagsreferanse(), referanse) +
-                    mapper.run {
-                        val grunnlagSkatteGrunnlag = behandling.tilGrunnlagInntektSiste12Mnd(rolle)
-                        if (grunnlagSkatteGrunnlag != null) {
-                            listOf(grunnlagSkatteGrunnlag) +
-                                behandling.grunnlag
-                                    .toList()
-                                    .mapAinntekt(behandling.tilPersonobjekter())
-                                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() }
-                        } else {
-                            emptyList()
-                        }
-                    }
-            } else {
-                beregnGebyrApi.beregnGebyr(grunnlagsliste, rolle.tilGrunnlagsreferanse(), referanse)
-            }
+        val grunnlagGebyr = (if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste) else grunnlagsliste).toMutableList()
+        grunnlagGebyr.addAll(
+            behandling.grunnlag
+                .toList()
+                .mapAinntekt(behandling.tilPersonobjekter())
+                .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+        )
+        val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
-        val inntektSiste12Mnd = gebyrBeregning.finnInntektSiste12Mnd(rolle)
+        val delberegningSummInntektGrunnlag = gebyrBeregning.filtrerBasertPåFremmedReferanse(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, rolle.tilGrunnlagsreferanse()).firstOrNull()
         return BeregnGebyrResultat(
             skattepliktigInntekt =
-            delberegningSumInntekt?.skattepliktigInntekt ?: inntektSiste12Mnd?.innhold?.beløp ?: BigDecimal.ZERO,
+            delberegningSumInntekt?.skattepliktigInntekt ?: BigDecimal.ZERO,
             maksBarnetillegg = delberegningSumInntekt?.barnetillegg,
             resultatkode = gebyrBeregning.sluttberegningGebyr!!.innhold.tilResultatkode(),
             beløpGebyrsats = gebyrBeregning.gebyrBeløp!!,
             grunnlagsreferanseListeEngangsbeløp =
             listOfNotNull(
                 gebyrBeregning.sluttberegningGebyr!!.referanse,
-                inntektSiste12Mnd?.referanse,
+                delberegningSummInntektGrunnlag?.referanse,
             ),
             ilagtGebyr = gebyrBeregning.sluttberegningGebyr!!.innhold.ilagtGebyr,
-            grunnlagsliste = gebyrBeregning,
+            grunnlagsliste = (gebyrBeregning + grunnlagGebyr).distinct(),
         )
     }
 
-    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle) = BeregnApi()
-        .beregnInntekt(tilInntektberegningDto(rolle))
-        .inntektPerBarnListe
-        .filter { it.inntektGjelderBarn?.ident != null }
-        .flatMap { beregningBarn ->
-            beregningBarn.summertInntektListe.map {
-                GrunnlagDto(
-                    referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
-                    type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                    innhold = POJONode(it),
-                    gjelderReferanse = rolle.tilGrunnlagsreferanse(),
-                    gjelderBarnReferanse = beregningBarn.inntektGjelderBarn!!.ident,
+    fun Behandling.beregnetInntekterGrunnlagForRolle(rolle: Rolle, taMed12MndInntektHvisIngenValgt: Boolean): List<GrunnlagDto> {
+        val inntektGrunnlag = tilInntektberegningDto(rolle, taMed12MndInntektHvisIngenValgt)
+        val inntektsperioder =
+            mapper.run {
+                tilGrunnlagInntekt(
+                    personobjekter = tilPersonobjekter(),
+                    inkluderAlle = false,
                 )
-            }
-        }
+            }.filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() }
+
+        return inntektsperioder +
+            BeregnApi()
+                .beregnInntekt(inntektGrunnlag)
+                .inntektPerBarnListe
+                .flatMap { beregningBarn ->
+                    beregningBarn.summertInntektListe.map {
+                        GrunnlagDto(
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                            type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+                            innhold = POJONode(it),
+                            gjelderReferanse = rolle.tilGrunnlagsreferanse(),
+                            gjelderBarnReferanse = beregningBarn.inntektGjelderBarn?.ident,
+                            grunnlagsreferanseListe = inntektsperioder.map { it.referanse }.distinct(),
+                        )
+                    }
+                }
+    }
 
     fun tilBeregnetPrivatAvtale(
         behandling: Behandling,
