@@ -13,21 +13,24 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.`when`
+import org.mockito.MockedStatic
 import java.time.LocalDateTime
 
 @DisplayName("OppdaterOppgaver")
 internal class OppdaterOppgaveTest {
-    val localDateTimeMock = mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS)
+    private var localDateTimeMock: MockedStatic<LocalDateTime>? = null
 
     @BeforeEach
     fun `mock time`() {
+        localDateTimeMock = mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS)
         val mockTime = LocalDateTime.parse("2022-09-10T01:00:00.00")
         `when`(LocalDateTime.now()).thenReturn(mockTime)
     }
 
     @AfterEach
     fun `remove time mock`() {
-        localDateTimeMock.close()
+        localDateTimeMock?.close()
+        localDateTimeMock = null
     }
 
     @Test
