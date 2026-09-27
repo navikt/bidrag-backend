@@ -556,9 +556,9 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val eksisterendeTildeltEnhet get() = oppgaveDataForHendelse?.tildeltEnhetsnr
     private val eksisterendeOppgavetype get() = oppgaveDataForHendelse?.oppgavetype
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
-    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
-    private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
-    private val erTilordnetRessursEndret get() = !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
+    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = tilordnetRessurs != null && !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
+    private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = tilordnetRessurs != null && eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
+    private val erTilordnetRessursEndret get() = tilordnetRessurs != null && !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
         !erTilordnetRessursEndretFraIkkeValgtTilValgt && (!tilordnetRessurs.isNullOrEmpty() && !eksisterendeTilordnetRessurs.isNullOrEmpty()) &&
         eksisterendeTilordnetRessurs != tilordnetRessurs
     private val erEnhetEndret get() = tildeltEnhetsnr != null && (eksisterendeTildeltEnhet) != tildeltEnhetsnr

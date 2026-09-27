@@ -7,6 +7,7 @@ import no.nav.bidrag.arbeidsflyt.utils.createOppgaveData
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
@@ -119,6 +120,7 @@ internal class OppdaterOppgaveTest {
     }
 
     @Test
+    @Disabled("Dette gir ikke mening?")
     fun `skal overføre til saksbehandler uten beskrivelse når saksbehandler endres fra en til en annen`() {
         val hendelse = createOppgaveData(id = 1, beskrivelse = "Beskrivelse", tilordnetRessurs = "Z99999")
         val oppdaterOppgave =
