@@ -2,6 +2,7 @@ package no.nav.bidrag.henvendelse.consumer
 
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.core.type.TypeReference
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
 import no.nav.bidrag.henvendelse.config.RestConfig
@@ -16,6 +17,8 @@ import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
+
+private val log = KotlinLogging.logger {}
 
 /**
  * Kaller sf-henvendelse-api-proxy (namespace `teamnks`), som proxyer videre til
@@ -110,13 +113,13 @@ class HenvendelseConsumer(
             // sjekken ville en feil HENVENDELSE_URL sett ut som en person uten henvendelser, og
             // feilen ville blitt stående usett.
             //
-            // AbstractRestClient har allerede logget en WARN med hele URL-en og stacktracen før
-            // vi kommer hit, så dette normaltilfellet ser ut som en feil i loggen. URL-en er også
-            // grunnen til at maskeringen i logback-spring.xml må virke - den inneholder aktøriden.
+            // URL-en inneholder aktøriden, og står i meldingen til exception-en. Derfor må
+            // maskeringen i logback-spring.xml virke, selv om AbstractRestClient ikke lenger logger
+            // URL-en selv.
             if (!exception.responseBodyAsString.contains(UKJENT_AKTØR, ignoreCase = true)) {
                 throw TjenesteFeilException(TJENESTE, exception)
             }
-            log.info("Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste.")
+            log.info { "Henvendelsesløsningen kjenner ikke aktøren. Returnerer tom liste." }
             return Henvendelsesliste(emptyList(), avkortet = false)
         }
         // Tom kropp med 200 er ikke et gyldig svar fra kilden - den svarer alltid med konvolutten.
@@ -147,10 +150,9 @@ class HenvendelseConsumer(
         val konvolutt = commonObjectmapper.readValue(respons, HenvendelseslisteKonvolutt::class.java)
         if (konvolutt.hasNextPage == true) {
             // Vi sender ikke page/pageSize, så flere sider betyr at lista er avkortet.
-            // log er den arvede SLF4J-loggeren fra AbstractRestClient, ikke kotlin-logging.
-            log.warn(
-                "Henvendelseslista har flere sider (currentPage=${konvolutt.currentPage}), men vi henter bare den første.",
-            )
+            log.warn {
+                "Henvendelseslista har flere sider (currentPage=${konvolutt.currentPage}), men vi henter bare den første."
+            }
         }
         // `data` mangler helt: da er det ikke konvolutten vi fikk, uansett hvor gyldig JSON-en er.
         val data = konvolutt.data ?: throw TjenesteFeilException(
