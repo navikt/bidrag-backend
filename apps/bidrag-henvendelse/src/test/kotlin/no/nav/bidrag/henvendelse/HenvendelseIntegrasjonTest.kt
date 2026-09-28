@@ -369,7 +369,8 @@ class HenvendelseIntegrasjonTest {
 
     /**
      * Maskeringen i logback-spring.xml er det eneste som står mellom en aktørid og loggen: hver
-     * URL appen kaller har `?aktorid=...`, og AbstractRestClient logger URL-en når kallet feiler.
+     * URL appen kaller har `?aktorid=...`, og URL-en står i meldingen til exceptions fra
+     * RestTemplate og AbstractRestClient.
      *
      * Testen sender loggposten gjennom den faktiske encoderen framfor å se på XML-en, fordi feilen
      * den skal fange er en tagg logback ikke kjenner - `<jsonGeneratorDecorator>` framfor
@@ -388,8 +389,8 @@ class HenvendelseIntegrasjonTest {
 
     @Test
     fun `skal maskere fødselsnummer i loggen, også inne i en stacktrace`() {
-        // Identen kommer ikke bare fra meldingsteksten: AbstractRestClient logger exception-en, og
-        // et fødselsnummer kan ligge i en URL eller en feilmelding derfra. Encoderen skriver
+        // Identen kommer ikke bare fra meldingsteksten: feilhåndteringen logger exceptions med
+        // stacktrace, og et fødselsnummer kan ligge i en URL eller en feilmelding der. Encoderen skriver
         // stacktracen som eget felt, så den må maskeres like godt som selve meldinga.
         val appender = rotloggeren.getAppender("stdout_json") as ConsoleAppender<ILoggingEvent>
         val post = loggpost("Oppslag feilet", IllegalStateException("Fant ikke person $FNR"))
