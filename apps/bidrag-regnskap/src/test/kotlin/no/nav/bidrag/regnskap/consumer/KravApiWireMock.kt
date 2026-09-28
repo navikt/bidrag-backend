@@ -15,6 +15,10 @@ class KravApiWireMock {
         mock.start()
     }
 
+    internal fun stop() {
+        mock.stop()
+    }
+
     internal fun kravMedGyldigResponse() {
         mock.stubFor(
             WireMock.post(WireMock.urlEqualTo(SkattConsumer.KRAV_PATH)).willReturn(

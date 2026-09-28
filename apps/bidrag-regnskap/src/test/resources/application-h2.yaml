@@ -15,6 +15,10 @@ scheduler:
     cron: "-" #Disabled
   påløpkjøring:
     cron: "-" #Disabled
+  endremottaker:
+    cron: "-" #Disabled
+  endremottakervarsling:
+    cron: "-" #Disabled
 
 spring:
   datasource:

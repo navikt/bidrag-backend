@@ -51,6 +51,8 @@ env:
   BEHANDLINGSSTATUS_CRON: "0 25 * * * *" #Hver time 25 minutter over hel
   AVSTEMNING_CRON: "0 15 0 * * *" #Hver dag kl 00:15
   PALOSKJORING_CRON: "0 5 * * * *" #Hver time 5 minutter over hel
+  ENDRE_MOTTAKER_CRON: "0 */15 * * * *" #Hvert 15. minutt – resender ikke-godkjente endringer av mottaker til ELIN
+  ENDRE_MOTTAKER_VARSLING_CRON: "0 0 9 * * *" #Hver dag kl 09:00 – Slack-varsel om feilede endringer av mottaker
   SLACK_CHANNEL_ID: C05HQPLTFAA
   KAFKA_AUTO_OFFSET_RESET: latest
 azure:

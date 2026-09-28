@@ -41,6 +41,9 @@ class VedtakshendelseServiceTest {
     @MockK(relaxed = true)
     private lateinit var driftsavvikService: DriftsavvikService
 
+    @MockK(relaxed = true)
+    private lateinit var endreMottakerService: EndreMottakerService
+
     @InjectMockKs
     private lateinit var vedtakshendelseService: VedtakshendelseService
 
@@ -147,10 +150,25 @@ class VedtakshendelseServiceTest {
         verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
-    private fun opprettVedtakshendelse(): String = """
+    @Test
+    fun `Skal ikke behandle endring av mottaker uten innkreving`() {
+        val hendelse = opprettVedtakshendelse(
+            vedtakstype = "ENDRING_MOTTAKER",
+            innkrevingstype = "UTEN_INNKREVING",
+        )
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+    }
+
+    private fun opprettVedtakshendelse(
+        vedtakstype: String = "INNKREVING",
+        innkrevingstype: String = "MED_INNKREVING",
+    ): String = """
       {
         "kilde":"MANUELT",
-        "type":"INNKREVING",
+        "type":"$vedtakstype",
         "id":"123",
         "vedtakstidspunkt":"2022-06-01T00:00:00.000000000",
         "enhetsnummer":"4812",
@@ -164,7 +182,7 @@ class VedtakshendelseServiceTest {
             "skyldner":"${genererFødselsnummer()}",
             "kravhaver":"${genererFødselsnummer()}",
             "mottaker":"${genererFødselsnummer()}",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "beslutning":"ENDRING",
             "periodeListe":[
               {
@@ -199,7 +217,7 @@ class VedtakshendelseServiceTest {
             "belop":"1790",
             "valutakode":"NOK",
             "resultatkode":"GIGI",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "referanse":"REFERANSE",
             "beslutning":"ENDRING"
           }
