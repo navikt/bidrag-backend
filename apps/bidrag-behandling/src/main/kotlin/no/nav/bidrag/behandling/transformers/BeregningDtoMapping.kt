@@ -292,7 +292,11 @@ fun BeregnGebyrResultat.tilDto(
             skattepliktigInntekt = skattepliktigInntekt,
             maksBarnetillegg = maksBarnetillegg,
         ),
-        beregnetIlagtGebyr = ilagtGebyr,
+        beregnetIlagtGebyr = if (erManueltOverstyrt) {
+            !(gebyr.manueltOverstyrtGebyr?.ilagtGebyr ?: (rolle.gebyr!!.ilagtGebyr == true))
+        } else {
+            ilagtGebyr
+        },
         begrunnelse = if (erManueltOverstyrt) gebyr.manueltOverstyrtGebyr?.begrunnelse ?: rolle.gebyr?.begrunnelse else null,
         endeligIlagtGebyr =
         if (erManueltOverstyrt) {

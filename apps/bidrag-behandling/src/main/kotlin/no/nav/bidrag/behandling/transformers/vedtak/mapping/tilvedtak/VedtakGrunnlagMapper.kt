@@ -420,9 +420,9 @@ class VedtakGrunnlagMapper(
         grunnlagsliste: List<GrunnlagDto> = behandling.gebyrGrunnlagslisteDefaultVerdi(rolle),
         referanse: String? = null,
     ): BeregnGebyrResultat {
-        if (behandling.lesemodusVedtak != null && behandling.grunnlagslisteFraVedtak != null) {
+        if (behandling.lesemodusVedtak != null && behandling.grunnlagslisteFraVedtak != null && referanse != null) {
             val grunnlagGebyr = behandling.grunnlagslisteFraVedtak!!
-                .filtrerOgKonverterBasertPåFremmedReferanse<SluttberegningGebyr>(Grunnlagstype.SLUTTBEREGNING_GEBYR, rolle.tilGrunnlagsreferanse()).firstOrNull()
+                .filtrerOgKonverterBasertPåFremmedReferanse<SluttberegningGebyr>(Grunnlagstype.SLUTTBEREGNING_GEBYR, rolle.tilGrunnlagsreferanse()).find { it.referanse.endsWith(referanse) }
             val delberegningSumInntekt = grunnlagGebyr?.let {
                 behandling.grunnlagslisteFraVedtak!!.finnGrunnlagSomErReferertAv(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, grunnlagGebyr.grunnlag).toList()
                     .innholdTilObjekt<DelberegningSumInntekt>()
@@ -433,10 +433,10 @@ class VedtakGrunnlagMapper(
                 delberegningSumInntekt?.skattepliktigInntekt ?: BigDecimal.ZERO,
                 maksBarnetillegg = delberegningSumInntekt?.barnetillegg,
                 resultatkode = grunnlagGebyr?.innhold?.tilResultatkode() ?: Resultatkode.GEBYR_FRITATT,
-                beløpGebyrsats = behandling.grunnlagslisteFraVedtak!!.gebyrBeløp!!,
+                beløpGebyrsats = if (grunnlagGebyr?.innhold?.ilagtGebyr == true) behandling.grunnlagslisteFraVedtak!!.gebyrBeløp!! else BigDecimal.ZERO,
                 grunnlagsreferanseListeEngangsbeløp = emptyList(),
                 ilagtGebyr = grunnlagGebyr?.innhold?.ilagtGebyr ?: false,
-                grunnlagsliste = emptyList(),
+                grunnlagsliste = behandling.grunnlagslisteFraVedtak ?: emptyList(),
             )
         }
         val grunnlagGebyr = (if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste) else grunnlagsliste).toMutableList()
