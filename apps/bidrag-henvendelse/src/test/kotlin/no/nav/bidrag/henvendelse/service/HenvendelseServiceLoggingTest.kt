@@ -9,9 +9,10 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
+import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -29,8 +30,8 @@ import java.net.URI
  * samlet én gang per kall, ikke én linje per henvendelse.
  */
 class HenvendelseServiceLoggingTest {
-    private val personident = Personident("17490123474")
-    private val aktørid = "2000012345678"
+    private val personident = genererPersonident()
+    private val aktørid = genererAktøridMed13Siffer()
 
     private val bidragPersonConsumer = mockk<BidragPersonConsumer>()
     private val restTemplate = RestTemplate()

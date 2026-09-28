@@ -3,7 +3,9 @@ package no.nav.bidrag.henvendelse.consumer
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.henvendelse.aop.PersonIkkeFunnetException
+import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -33,7 +35,7 @@ class BidragPersonConsumerTest {
             """
             [
               { "ident": "$FNR", "historisk": false, "gruppe": "FOLKEREGISTERIDENT" },
-              { "ident": "1000000000000", "historisk": true, "gruppe": "AKTORID" },
+              { "ident": "$HISTORISK_AKTØRID", "historisk": true, "gruppe": "AKTORID" },
               { "ident": "$AKTØRID", "historisk": false, "gruppe": "AKTORID" }
             ]
             """.trimIndent(),
@@ -44,7 +46,7 @@ class BidragPersonConsumerTest {
 
     @Test
     fun `skal gi null når personen bare har historiske aktørider`() {
-        stub("""[ { "ident": "1000000000000", "historisk": true, "gruppe": "AKTORID" } ]""")
+        stub("""[ { "ident": "$HISTORISK_AKTØRID", "historisk": true, "gruppe": "AKTORID" } ]""")
 
         consumer.hentAktørid(Personident(FNR)) shouldBe null
     }
@@ -88,8 +90,9 @@ class BidragPersonConsumerTest {
     }
 
     companion object {
-        private const val FNR = "17490123474"
-        private const val AKTØRID = "2000012345678"
+        private val FNR = genererFødselsnummer()
+        private val AKTØRID = genererAktøridMed13Siffer()
+        private val HISTORISK_AKTØRID = genererAktøridMed13Siffer()
     }
 }
 

@@ -8,10 +8,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.henvendelse.aop.IngenTilgangException
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
 import no.nav.bidrag.henvendelse.dto.Henvendelsestype
+import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
@@ -31,7 +33,7 @@ import java.time.OffsetDateTime
  * produksjonsoppsettet av RestTemplaten og Spring sin exception-resolver.
  */
 class HenvendelseServiceTest {
-    private val personident = Personident(SYNTETISK_FNR)
+    private val personident = Personident(FNR)
 
     private val bidragPersonConsumer = mockk<BidragPersonConsumer>()
     private val tilgangskontroll = mockk<Tilgangskontroll>(relaxed = true)
@@ -45,7 +47,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal hente henvendelser og mappe til bidrag-dto`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste(
             """
             [
@@ -78,7 +80,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal bruke seneste sendtDato uavhengig av rekkefølgen i meldingslista`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste(
             """
             [
@@ -102,7 +104,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal gi tom sisteMeldingSendt når kjeden ikke har meldinger`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste(
             """
             [ { "henvendelseType": "MELDINGSKJEDE", "kjedeId": "a0J3N000004dUBJUA2", "meldinger": [] } ]
@@ -117,7 +119,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal takle at svaret er pakket i en data-konvolutt`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste(
             """
             {
@@ -138,7 +140,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal returnere tom liste når personen ikke har henvendelser`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste("[]")
 
         service.hentHenvendelser(personident).henvendelser.shouldBeEmpty()
@@ -148,7 +150,7 @@ class HenvendelseServiceTest {
 
     @Test
     fun `skal mappe ukjent henvendelsestype til UKJENT og hoppe over henvendelser uten kjedeId`() {
-        every { bidragPersonConsumer.hentAktørid(personident) } returns SYNTETISK_AKTØRID
+        every { bidragPersonConsumer.hentAktørid(personident) } returns AKTØRID
         stubHenvendelseliste(
             """
             [
@@ -193,7 +195,7 @@ class HenvendelseServiceTest {
         mockServer
             .expect(requestTo(startsWith("$BASE_URL/api/henvendelseinfo/henvendelseliste?")))
             .andExpect(method(HttpMethod.GET))
-            .andExpect(queryParam("aktorid", SYNTETISK_AKTØRID))
+            .andExpect(queryParam("aktorid", AKTØRID))
             // Kilden har default pageSize 50; vi setter den selv.
             .andExpect(queryParam("pageSize", "100"))
             .andRespond(withSuccess(respons, MediaType.APPLICATION_JSON))
@@ -201,9 +203,7 @@ class HenvendelseServiceTest {
 
     companion object {
         private const val BASE_URL = "http://sf-henvendelse"
-
-        /** Syntetisk fødselsnummer - måned er lagt til 40, slik Dolly-identer er. */
-        private const val SYNTETISK_FNR = "17490123474"
-        private const val SYNTETISK_AKTØRID = "2000012345678"
+        private val FNR = genererFødselsnummer()
+        private val AKTØRID = genererAktøridMed13Siffer()
     }
 }

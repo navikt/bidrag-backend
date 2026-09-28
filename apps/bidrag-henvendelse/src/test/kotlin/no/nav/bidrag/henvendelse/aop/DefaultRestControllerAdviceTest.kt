@@ -3,6 +3,7 @@ package no.nav.bidrag.henvendelse.aop
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -165,8 +166,8 @@ class DefaultRestControllerAdviceTest {
     }
 
     companion object {
-        private const val AKTØRID = "2000012345678"
-        private const val URL_MED_AKTØRID =
+        private val AKTØRID = genererAktøridMed13Siffer()
+        private val URL_MED_AKTØRID =
             "https://sf-henvendelse.intern.dev.nav.no/api/henvendelseinfo/henvendelseliste?aktorid=$AKTØRID"
     }
 }

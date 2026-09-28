@@ -18,6 +18,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -333,18 +334,20 @@ class HenvendelseIntegrasjonTest {
 
     @Test
     fun `skal gi 400 for ugyldig ident, uten å gjenta identen`() {
-        val respons = hentHenvendelser("+1749011234")
+        val ugyldigIdent = "+" + FNR.drop(1)
+
+        val respons = hentHenvendelser(ugyldigIdent)
 
         respons.statusCode shouldBe HttpStatus.BAD_REQUEST
-        respons.body!! shouldNotContain "1749011234"
+        respons.body!! shouldNotContain FNR.drop(1)
     }
 
     @Test
     fun `skal gi 400 for ugyldig request-body, uten å gjenta innholdet`() {
-        val respons = kall("""{ "ident": 17490123474 }""", medToken = true)
+        val respons = kall("""{ "ident": $FNR }""", medToken = true)
 
         respons.statusCode shouldBe HttpStatus.BAD_REQUEST
-        respons.body!! shouldNotContain "17490123474"
+        respons.body!! shouldNotContain FNR
     }
 
     @Test
@@ -536,8 +539,8 @@ class HenvendelseIntegrasjonTest {
     }
 
     companion object {
-        private const val FNR = "17490123474"
-        private const val AKTØRID = "2000012345678"
+        private val FNR = genererFødselsnummer()
+        private val AKTØRID = genererAktøridMed13Siffer()
         private const val NAVIDENT = "Z999999"
         private const val MASKINOID = "11111111-2222-3333-4444-555555555555"
         private const val HENVENDELSESTI = "/henvendelse/api/henvendelseinfo/henvendelseliste"
