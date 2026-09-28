@@ -1,6 +1,6 @@
 package no.nav.bidrag.grunnlag.comparator
 
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.grunnlag.bo.AinntektBo
 import no.nav.bidrag.grunnlag.bo.AinntektspostBo
 import no.nav.bidrag.grunnlag.util.toJsonString
@@ -50,7 +50,7 @@ class AinntektPeriodComparator : AbstractPeriodComparator<PeriodComparable<Ainnt
             )
         }
         if (differences.isNotEmpty()) {
-            SECURE_LOGGER.debug(toJsonString(differences))
+            secureLogger.debug { toJsonString(differences) }
         }
         return differences.isEmpty()
     }

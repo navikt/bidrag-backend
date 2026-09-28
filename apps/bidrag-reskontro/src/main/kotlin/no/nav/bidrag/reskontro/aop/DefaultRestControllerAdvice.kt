@@ -1,11 +1,11 @@
 package no.nav.bidrag.reskontro.aop
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.security.maskinporten.MaskinportenClientException
 import no.nav.bidrag.reskontro.exceptions.FeilMotSkattException
 import no.nav.bidrag.reskontro.exceptions.IngenDataFraSkattException
 import no.nav.bidrag.reskontro.exceptions.TimeoutFraSkattException
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -15,12 +15,12 @@ import org.springframework.web.client.HttpStatusCodeException
 @RestControllerAdvice
 class DefaultRestControllerAdvice {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DefaultRestControllerAdvice::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpClientErrorException(exception: HttpStatusCodeException): ProblemDetail {
-        LOGGER.warn("Det skjedde en feil ved kall mot ekstern tjeneste: ${exception.statusText}", exception)
+        LOGGER.warn(exception) { "Det skjedde en feil ved kall mot ekstern tjeneste: ${exception.statusText}" }
         return ProblemDetail.forStatusAndDetail(
             exception.statusCode,
             "Feil ved kall mot tjeneste: ${exception.statusText}",
@@ -31,7 +31,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException): ProblemDetail {
-        LOGGER.warn("Ugyldig eller manglende sikkerhetstoken", exception)
+        LOGGER.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.UNAUTHORIZED,
             "Ugyldig eller manglende sikkerhetstoken",
@@ -50,7 +50,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(MaskinportenClientException::class)
     fun handleMaskinportenClientException(exception: MaskinportenClientException): ProblemDetail {
-        LOGGER.error("Feil i maskinportentoken benyttet mot skatt: ${exception.message}", exception)
+        LOGGER.error(exception) { "Feil i maskinportentoken benyttet mot skatt: ${exception.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.UNAUTHORIZED,
             "Feil i maskinportentoken benyttet mot skatt: ${exception.message}",
@@ -61,7 +61,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(TimeoutFraSkattException::class)
     fun handleTimeoutFraSkattException(exception: TimeoutFraSkattException): ProblemDetail {
-        LOGGER.warn("Timeout mot skatt: ${exception.message}", exception)
+        LOGGER.warn(exception) { "Timeout mot skatt: ${exception.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.BAD_GATEWAY,
             "${exception.message}",
@@ -72,7 +72,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(FeilMotSkattException::class)
     fun handleFeilMotSkattException(exception: FeilMotSkattException): ProblemDetail {
-        LOGGER.error("Feil ved kall mot skatt: ${exception.message}", exception)
+        LOGGER.error(exception) { "Feil ved kall mot skatt: ${exception.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "${exception.message}",
@@ -84,7 +84,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(Exception::class)
     fun handleOtherExceptions(exception: Exception): ProblemDetail {
-        LOGGER.warn("Det skjedde en ukjent feil: ${exception.message}", exception)
+        LOGGER.warn(exception) { "Det skjedde en ukjent feil: ${exception.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Det skjedde en ukjent feil: ${exception.message}",

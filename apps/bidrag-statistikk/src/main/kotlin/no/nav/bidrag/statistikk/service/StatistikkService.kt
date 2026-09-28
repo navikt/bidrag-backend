@@ -1,6 +1,8 @@
 package no.nav.bidrag.statistikk.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtakshendelse
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.Bostatuskode
@@ -11,7 +13,6 @@ import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.statistikk.SECURE_LOGGER
 import no.nav.bidrag.statistikk.consumer.BidragVedtakConsumer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BostatusPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBarnIHusstand
@@ -29,9 +30,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.KopiSamværsperiodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SivilstandPeriode
-import no.nav.bidrag.transport.behandling.felles.grunnlag.Sluttberegning
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
-import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningForskudd
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnOgKonverterGrunnlagSomErReferertAv
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnSluttberegningIReferanser
@@ -51,7 +50,6 @@ import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.behandling.vedtak.response.erDelvedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.erOrkestrertVedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.referertVedtaksid
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -67,15 +65,13 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     fun behandleVedtakshendelse(vedtakHendelse: VedtakHendelse) {
         val vedtakDto = hentVedtak(vedtakHendelse.id)
         if (vedtakDto == null) {
-            LOGGER.warn("Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse")
-            SECURE_LOGGER.warn(
-                "Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse",
-            )
+            secureLogger.warn {
+                "Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse"
+            }
             return
         }
 
-        LOGGER.info("Henter komplett vedtak for vedtaksid: ${vedtakHendelse.id}")
-        SECURE_LOGGER.debug("Henter komplett vedtak for vedtaksid: {} vedtak: {}", vedtakHendelse.id, vedtakDto)
+        secureLogger.debug { "Henter komplett vedtak for vedtaksid: ${vedtakHendelse.id} vedtak: $vedtakDto" }
 
         behandleVedtakHendelseForskudd(vedtakHendelse, vedtakDto)
 
@@ -114,14 +110,10 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                                     ) &&
                                 !vedtakDto.kildeapplikasjon.contains(bisys)
                             ) {
-                                SECURE_LOGGER.info(
-                                    "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: {}, vedtakstype: {}, " +
-                                        "resultatkode: {}, beløp: {}",
-                                    vedtakHendelse.id,
-                                    vedtakDto.type,
-                                    periode.resultatkode,
-                                    periode.beløp,
-                                )
+                                secureLogger.info {
+                                    "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: ${vedtakHendelse.id}, " +
+                                        "vedtakstype: ${vedtakDto.type}, resultatkode: ${periode.resultatkode}, beløp: ${periode.beløp}"
+                                }
                             }
                             ForskuddPeriode(
                                 periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
@@ -198,13 +190,10 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             !vedtakFraBisys &&
                             !vedtakErAldersjustering
                         ) {
-                            SECURE_LOGGER.info(
-                                "Fullstendig grunnlag ikke funnet for bidragsvedtak med vedtaksid: {}, vedtakstype: {}, resultatkode: {}, beløp: {}",
-                                vedtakHendelse.id,
-                                vedtakDto.type,
-                                periode.resultatkode,
-                                periode.beløp,
-                            )
+                            secureLogger.info {
+                                "Fullstendig grunnlag ikke funnet for bidragsvedtak med vedtaksid: ${vedtakHendelse.id}, " +
+                                    "vedtakstype: ${vedtakDto.type}, resultatkode: ${periode.resultatkode}, beløp: ${periode.beløp}"
+                            }
                         }
                         BidragPeriode(
                             periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
@@ -672,10 +661,6 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     fun finnIdentTilReferanse(grunnlagListe: List<GrunnlagDto>, referanse: String?) = grunnlagListe.hentPersonMedReferanseKonvertert(referanse)?.ident?.verdi
 
     fun finnReferanseTilIdent(grunnlagListe: List<GrunnlagDto>, ident: String) = grunnlagListe.hentPersonMedIdent(ident)?.referanse
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(StatistikkService::class.java)
-    }
 }
 
 data class GrunnlagsdataForskudd(

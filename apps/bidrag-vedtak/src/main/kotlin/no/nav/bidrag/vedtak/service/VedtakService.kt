@@ -1,10 +1,13 @@
 package no.nav.bidrag.vedtak.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.commons.util.IdentUtils
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
@@ -35,7 +38,6 @@ import no.nav.bidrag.transport.behandling.vedtak.response.StønadsendringDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakForStønad
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakPeriodeDto
-import no.nav.bidrag.vedtak.SECURE_LOGGER
 import no.nav.bidrag.vedtak.bo.EngangsbeløpGrunnlagBo
 import no.nav.bidrag.vedtak.bo.PeriodeGrunnlagBo
 import no.nav.bidrag.vedtak.bo.StønadsendringGrunnlagBo
@@ -61,7 +63,6 @@ import no.nav.bidrag.vedtak.persistence.entity.toVedtakEntity
 import no.nav.bidrag.vedtak.util.VedtakUtil.Companion.tilJson
 import no.nav.bidrag.vedtak.util.ignorerAutomatiskOpphørAvOppfostringsbidrag
 import org.hibernate.exception.ConstraintViolationException
-import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -134,15 +135,12 @@ class VedtakService(
             }
         }
 
-        // Opprett vedtak
         val opprettetVedtak = try {
             persistenceService.opprettVedtak(vedtakRequest.toVedtakEntity(opprettetAv, opprettetAvNavn, kildeapplikasjon, vedtakstidspunkt))
         } catch (e: DataIntegrityViolationException) {
             behandleDataIntegrityException(e, vedtakRequest)
         } catch (e: Exception) {
-            // Only handle other unexpected exceptions
-            LOGGER.error("Uventet feil ved lagring av vedtak")
-            SECURE_LOGGER.error("Uventet feil ved lagring av vedtak: ${e.message}", e)
+            secureLogger.error(e) { "Uventet feil ved lagring av vedtak" }
             throw e
         }
 
@@ -199,19 +197,15 @@ class VedtakService(
                 val vedtaksid = persistenceService.hentVedtakForUnikReferanseEgenTransaksjon(unikReferanse)?.id
 
                 if (vedtaksid != null) {
-                    LOGGER.error(
-                        "Feil ved lagring av vedtak. Det finnes allerede et vedtak unik referansen ${vedtakRequest.unikReferanse} med vedtaksid $vedtaksid",
-                    )
-                    SECURE_LOGGER.error(
-                        "Feil ved lagring av vedtak. Det finnes allerede et vedtak med unik referansen ${vedtakRequest.unikReferanse}. " +
-                            "Id: $vedtaksid. Request: $vedtakRequest",
-                    )
+                    secureLogger.error {
+                        "Feil ved lagring av vedtak. Det finnes allerede et vedtak med unik referansen ${vedtakRequest.unikReferanse.sanitizeForLog()}. " +
+                            "Id: $vedtaksid. Request: ${vedtakRequest.sanitizeForLog()}"
+                    }
                     throw ConflictException("Et vedtak med angitt unikReferanse finnes allerede", VedtakConflictResponse(vedtaksid))
                 }
             }
         }
-        LOGGER.error("Uventet feil ved lagring av vedtak")
-        SECURE_LOGGER.error("Uventet feil ved lagring av vedtak: ${e.message}", e)
+        secureLogger.error(e) { "Uventet feil ved lagring av vedtak" }
         throw e
     }
 
@@ -227,7 +221,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 persistenceService.opprettStønadsendringGrunnlag(StønadsendringGrunnlagBo(opprettetStønadsendring.id, grunnlagId))
@@ -253,7 +247,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 persistenceService.opprettEngangsbeløpGrunnlag(EngangsbeløpGrunnlagBo(opprettetEngangsbeløp.id, grunnlagId))
@@ -271,7 +265,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 val periodeGrunnlagBo = PeriodeGrunnlagBo(
@@ -430,8 +424,7 @@ class VedtakService(
     fun oppdaterVedtak(vedtaksid: Int, vedtakRequest: OpprettVedtakRequestDto, overstyrTest: Boolean? = false): Int {
         if (vedtakRequest.grunnlagListe.isEmpty()) {
             val feilmelding = "Grunnlagsdata mangler fra OppdaterVedtakRequest"
-            LOGGER.error(feilmelding)
-            SECURE_LOGGER.error("$feilmelding: ${tilJson(vedtakRequest)}")
+            secureLogger.error { "$feilmelding: ${tilJson(vedtakRequest).sanitizeForLog()}" }
             throw GrunnlagsdataManglerException(feilmelding)
         }
 
@@ -447,8 +440,9 @@ class VedtakService(
                 oppdaterGrunnlag(vedtaksid, vedtakRequest)
             } else {
                 val feilmelding = "Innsendte data for oppdatering av vedtak matcher ikke med eksisterende vedtaksdata"
-                LOGGER.error(feilmelding)
-                SECURE_LOGGER.error("$feilmelding: Request: $vedtakRequest \n\n Vedtak som oppdateres: ${hentVedtak(vedtaksid)} ")
+                secureLogger.error {
+                    "$feilmelding: Request: ${vedtakRequest.sanitizeForLog()} \n\n Vedtak som oppdateres: ${hentVedtak(vedtaksid).sanitizeForLog()} "
+                }
                 throw VedtaksdataMatcherIkkeException(feilmelding)
             }
         }
@@ -504,8 +498,7 @@ class VedtakService(
             persistenceService.hentVedtak(vedtaksid)
         } catch (e: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
-            LOGGER.error(feilmelding)
-            SECURE_LOGGER.error("$feilmelding: ${tilJson(vedtakRequest)}")
+            secureLogger.error { "$feilmelding: ${tilJson(vedtakRequest).sanitizeForLog()}" }
             throw IllegalArgumentException(feilmelding)
         }
 
@@ -576,8 +569,7 @@ class VedtakService(
             persistenceService.hentVedtak(vedtaksid)
         } catch (e: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
-            LOGGER.error(feilmelding)
-            SECURE_LOGGER.error(feilmelding)
+            secureLogger.error { feilmelding.sanitizeForLog() }
             throw IllegalArgumentException(feilmelding)
         }
 
@@ -585,8 +577,7 @@ class VedtakService(
         val vedtak = persistenceService.hentVedtak(vedtaksid)
         if (vedtak.vedtakstidspunkt != null) {
             val feilmelding = "Vedtak er ikke vedtaksforslag og kan derfor ikke slettes: $vedtaksid"
-            LOGGER.error(feilmelding)
-            SECURE_LOGGER.error(feilmelding)
+            secureLogger.error { feilmelding.sanitizeForLog() }
             throw IllegalArgumentException(feilmelding)
         }
 
@@ -612,8 +603,7 @@ class VedtakService(
             persistenceService.hentVedtak(vedtaksid)
         } catch (e: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
-            LOGGER.error(feilmelding)
-            SECURE_LOGGER.error(feilmelding)
+            secureLogger.error { feilmelding.sanitizeForLog() }
             throw IllegalArgumentException(feilmelding)
         }
 
@@ -621,14 +611,13 @@ class VedtakService(
         val vedtak = persistenceService.hentVedtak(vedtaksid)
         if (vedtak.vedtakstidspunkt != null) {
             val feilmelding = "Vedtak er allerede fattet. Ignorer forespørsel $vedtaksid"
-            LOGGER.warn(feilmelding)
-            SECURE_LOGGER.warn(feilmelding)
+            secureLogger.warn { feilmelding.sanitizeForLog() }
             return vedtaksid
         }
 
         val stønadsendringListe = persistenceService.hentAlleStønadsendringerForVedtak(vedtaksid)
 
-        SECURE_LOGGER.info(tilJson(stønadsendringListe))
+        secureLogger.info { tilJson(stønadsendringListe).sanitizeForLog() }
 
         stønadsendringListe.forEach { stønad ->
             if (!validerAtSisteVedtaksidErOk(
@@ -706,9 +695,9 @@ class VedtakService(
 
         // Sjekker om det er lagret like mange stønadsendringer som det ligger i oppdaterVedtak-requesten
         if (vedtakRequestStønadsendringListe.size != eksisterendeStønadsendringListe.size) {
-            SECURE_LOGGER.error(
-                "Det er ulikt antall stønadsendringer i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. VedtakId $vedtaksid",
-            )
+            secureLogger.error {
+                "Det er ulikt antall stønadsendringer i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. VedtakId $vedtaksid".sanitizeForLog()
+            }
             return false
         }
 
@@ -719,14 +708,16 @@ class VedtakService(
         // Hvis det er mismatch så gjøres det en innhenting av nyeste personident for partene i stønadsendringen og deretter gjøres
         // et nytt forsøk på å matche
         if (antallMatchendeElementer != eksisterendeStønadsendringListe.size) {
-            SECURE_LOGGER.warn(
-                "Det er mismatch på minst én stønadsendring ved forsøk på å oppdatere vedtak, forsøker på nytt med oppdaterte personidenter. " +
-                    "Vedtak: $vedtaksid: request: ${
-                        tilJson(
-                            vedtakRequest.stønadsendringListe,
-                        )
-                    } eksisterende: ${tilJson(eksisterendeStønadsendringListe)}",
-            )
+            secureLogger.warn {
+                (
+                    "Det er mismatch på minst én stønadsendring ved forsøk på å oppdatere vedtak, forsøker på nytt med oppdaterte personidenter. " +
+                        "Vedtak: $vedtaksid: request: ${
+                            tilJson(
+                                vedtakRequest.stønadsendringListe,
+                            )
+                        } eksisterende: ${tilJson(eksisterendeStønadsendringListe)}"
+                    ).sanitizeForLog()
+            }
 
             // Kopierer requesten med oppdaterte identer
             val requestMedOppdaterteIdenter = vedtakRequest.copy(
@@ -734,10 +725,12 @@ class VedtakService(
                     val nyesteSkyldner = identUtils.hentNyesteIdent(stønadsendring.skyldner)
                     val nyesteKravhaver = identUtils.hentNyesteIdent(stønadsendring.kravhaver)
 
-                    SECURE_LOGGER.info(
-                        "Stønadsendring. Mottatt skyldner: ${stønadsendring.skyldner.verdi} kravhaver: ${stønadsendring.kravhaver.verdi} " +
-                            "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}",
-                    )
+                    secureLogger.info {
+                        (
+                            "Stønadsendring. Mottatt skyldner: ${stønadsendring.skyldner.verdi} kravhaver: ${stønadsendring.kravhaver.verdi} " +
+                                "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}"
+                            ).sanitizeForLog()
+                    }
 
                     stønadsendring.copy(
                         skyldner = nyesteSkyldner,
@@ -751,10 +744,12 @@ class VedtakService(
                 val nyesteSkyldner = identUtils.hentNyesteIdent(Personident(stønadsendring.skyldner)).verdi
                 val nyesteKravhaver = identUtils.hentNyesteIdent(Personident(stønadsendring.kravhaver)).verdi
 
-                SECURE_LOGGER.info(
-                    "Stønadsendring. Eksisterende skyldner: ${stønadsendring.skyldner} kravhaver: ${stønadsendring.kravhaver} " +
-                        "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver",
-                )
+                secureLogger.info {
+                    (
+                        "Stønadsendring. Eksisterende skyldner: ${stønadsendring.skyldner} kravhaver: ${stønadsendring.kravhaver} " +
+                            "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver"
+                        ).sanitizeForLog()
+                }
                 stønadsendring.copy(
                     skyldner = nyesteSkyldner,
                     kravhaver = nyesteKravhaver,
@@ -769,14 +764,16 @@ class VedtakService(
 
             if (antallMatchendeElementerOppdaterteIdenter != eksisterendeStønadsendringListeMedOppdaterteIdenter.size) {
                 // Hvis det fortsatt er mismatch så kastes exception
-                SECURE_LOGGER.error(
-                    "Det er fortsatt mismatch etter å ha testet på nyeste personidenter på minst én stønadsendring ved forsøk på å oppdatere " +
-                        "vedtak $vedtaksid: request: ${
-                            tilJson(
-                                requestMedOppdaterteIdenter.stønadsendringListe,
-                            )
-                        } eksisterende: ${tilJson(eksisterendeStønadsendringListeMedOppdaterteIdenter)}",
-                )
+                secureLogger.error {
+                    (
+                        "Det er fortsatt mismatch etter å ha testet på nyeste personidenter på minst én stønadsendring ved forsøk på å oppdatere " +
+                            "vedtak $vedtaksid: request: ${
+                                tilJson(
+                                    requestMedOppdaterteIdenter.stønadsendringListe,
+                                )
+                            } eksisterende: ${tilJson(eksisterendeStønadsendringListeMedOppdaterteIdenter)}"
+                        ).sanitizeForLog()
+                }
                 return false
             }
         }
@@ -791,9 +788,9 @@ class VedtakService(
 
         for ((i, stønadsendring) in eksisterendeStønadsendringListe.withIndex()) {
             if (!perioderMatcher(stønadsendring.id, sortertStønadsendringRequestListe[i])) {
-                SECURE_LOGGER.error(
-                    "Det er mismatch på minst én periode ved forsøk på å oppdatere vedtak $vedtaksid, stønadsendring: ${stønadsendring.id}",
-                )
+                secureLogger.error {
+                    "Det er mismatch på minst én periode ved forsøk på å oppdatere vedtak $vedtaksid, stønadsendring: ${stønadsendring.id}".sanitizeForLog()
+                }
                 return false
             }
         }
@@ -835,9 +832,9 @@ class VedtakService(
 
         // Sjekker om det er lagret like mange engangsbeløp som det ligger i oppdaterVedtak-requesten
         if (vedtakRequest.engangsbeløpListe.size != eksisterendeEngangsbeløpListe.size) {
-            SECURE_LOGGER.error(
-                "Det er ulikt antall engangsbeløp i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. VedtakId $vedtaksid: request: ${vedtakRequest.engangsbeløpListe}, eksisterende: $eksisterendeEngangsbeløpListe",
-            )
+            secureLogger.error {
+                "Det er ulikt antall engangsbeløp i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. VedtakId $vedtaksid: request: ${vedtakRequest.engangsbeløpListe}, eksisterende: $eksisterendeEngangsbeløpListe".sanitizeForLog()
+            }
             return false
         }
 
@@ -853,14 +850,16 @@ class VedtakService(
             }
             return true
         } else {
-            SECURE_LOGGER.warn(
-                "Det er mismatch på minst ett engangsbeløp ved forsøk på å oppdatere vedtak, forsøker på nytt med oppdaterte personidenter. " +
-                    "Vedtak: $vedtaksid: request: ${
-                        tilJson(
-                            vedtakRequest.engangsbeløpListe,
-                        )
-                    } eksisterende: ${tilJson(eksisterendeEngangsbeløpListe)}",
-            )
+            secureLogger.warn {
+                (
+                    "Det er mismatch på minst ett engangsbeløp ved forsøk på å oppdatere vedtak, forsøker på nytt med oppdaterte personidenter. " +
+                        "Vedtak: $vedtaksid: request: ${
+                            tilJson(
+                                vedtakRequest.engangsbeløpListe,
+                            )
+                        } eksisterende: ${tilJson(eksisterendeEngangsbeløpListe)}"
+                    ).sanitizeForLog()
+            }
 
             // Kopierer requesten med oppdaterte identer
             val requestMedOppdaterteIdenter = vedtakRequest.copy(
@@ -868,10 +867,12 @@ class VedtakService(
                     val nyesteSkyldner = identUtils.hentNyesteIdent(engangsbeløp.skyldner)
                     val nyesteKravhaver = identUtils.hentNyesteIdent(engangsbeløp.kravhaver)
 
-                    SECURE_LOGGER.info(
-                        "Engangsbeløp. Mottatt skyldner: ${engangsbeløp.skyldner.verdi} kravhaver: ${engangsbeløp.kravhaver.verdi} " +
-                            "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}",
-                    )
+                    secureLogger.debug {
+                        (
+                            "Engangsbeløp. Mottatt skyldner: ${engangsbeløp.skyldner.verdi} kravhaver: ${engangsbeløp.kravhaver.verdi} " +
+                                "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}"
+                            ).sanitizeForLog()
+                    }
                     engangsbeløp.copy(
                         skyldner = nyesteSkyldner,
                         kravhaver = nyesteKravhaver,
@@ -884,10 +885,12 @@ class VedtakService(
                 val skyldner = identUtils.hentNyesteIdent(Personident(engangsbeløp.skyldner)).verdi
                 val kravhaver = identUtils.hentNyesteIdent(Personident(engangsbeløp.kravhaver)).verdi
 
-                SECURE_LOGGER.info(
-                    "Engangsbeløp. Eksisterende skyldner: ${engangsbeløp.skyldner} kravhaver: ${engangsbeløp.kravhaver} " +
-                        "etter oppdatering, skyldner: $skyldner kravhaver: $kravhaver",
-                )
+                secureLogger.debug {
+                    (
+                        "Engangsbeløp. Eksisterende skyldner: ${engangsbeløp.skyldner} kravhaver: ${engangsbeløp.kravhaver} " +
+                            "etter oppdatering, skyldner: $skyldner kravhaver: $kravhaver"
+                        ).sanitizeForLog()
+                }
                 engangsbeløp.copy(
                     skyldner = skyldner,
                     kravhaver = kravhaver,
@@ -906,14 +909,16 @@ class VedtakService(
                 }
                 return true
             } else {
-                SECURE_LOGGER.error(
-                    "Det er fortsatt mismatch på minst ett engangsbeløp med oppdaterte personidenter ved forsøk på å oppdatere vedtak . " +
-                        "Vedtak: $vedtaksid: request: ${
-                            tilJson(
-                                requestMedOppdaterteIdenter.engangsbeløpListe,
-                            )
-                        } eksisterende: ${tilJson(eksisterendeEngangsbeløpListeMedOppdaterteIdenter)}",
-                )
+                secureLogger.error {
+                    (
+                        "Det er fortsatt mismatch på minst ett engangsbeløp med oppdaterte personidenter ved forsøk på å oppdatere vedtak . " +
+                            "Vedtak: $vedtaksid: request: ${
+                                tilJson(
+                                    requestMedOppdaterteIdenter.engangsbeløpListe,
+                                )
+                            } eksisterende: ${tilJson(eksisterendeEngangsbeløpListeMedOppdaterteIdenter)}"
+                        ).sanitizeForLog()
+                }
             }
             return false
         }
@@ -930,10 +935,12 @@ class VedtakService(
 
         // Sjekker om det er lagret like mange behandlinmgsreferanser som det ligger i oppdaterVedtak-requesten
         if (vedtakRequest.behandlingsreferanseListe.size != eksisterendeBehandlingsreferanseListe.size) {
-            SECURE_LOGGER.error(
-                "Det er ulikt antall behandlingsreferanser i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. " +
-                    "VedtakId: $vedtaksid",
-            )
+            secureLogger.error {
+                (
+                    "Det er ulikt antall behandlingsreferanser i request for å oppdatere vedtak og det som er lagret på vedtaket fra før. " +
+                        "VedtakId: $vedtaksid"
+                    ).sanitizeForLog()
+            }
             return false
         }
 
@@ -1036,21 +1043,25 @@ class VedtakService(
         val matchendeEksisterendeStønadsendring = finnMatchendeStønadsendringer(eksisterendeStønadsendringListe, listOf(stønadsendringRequest))
 
         if (matchendeEksisterendeStønadsendring.size != 1) {
-            SECURE_LOGGER.warn(
-                "Feil ved forsøk på å hente stønadsendringsid under oppdatering av vedtak. Forsøker på nytt med oppdaterte personidenter: ${
-                    tilJson(
-                        stønadsendringRequest,
-                    )
-                }",
-            )
+            secureLogger.warn {
+                (
+                    "Feil ved forsøk på å hente stønadsendringsid under oppdatering av vedtak. Forsøker på nytt med oppdaterte personidenter: ${
+                        tilJson(
+                            stønadsendringRequest,
+                        )
+                    }"
+                    ).sanitizeForLog()
+            }
 
             val nyesteSkyldner = identUtils.hentNyesteIdent(stønadsendringRequest.skyldner)
             val nyesteKravhaver = identUtils.hentNyesteIdent(stønadsendringRequest.kravhaver)
 
-            SECURE_LOGGER.info(
-                "Stønadsendring. Mottatt skyldner: ${stønadsendringRequest.skyldner.verdi} kravhaver: ${stønadsendringRequest.kravhaver.verdi} " +
-                    "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}",
-            )
+            secureLogger.debug {
+                (
+                    "Stønadsendring. Mottatt skyldner: ${stønadsendringRequest.skyldner.verdi} kravhaver: ${stønadsendringRequest.kravhaver.verdi} " +
+                        "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}"
+                    ).sanitizeForLog()
+            }
 
             // Kopierer requesten med oppdaterte identer
             val requestMedOppdaterteIdenter = stønadsendringRequest.copy(
@@ -1064,10 +1075,12 @@ class VedtakService(
                 val nyesteSkyldner = identUtils.hentNyesteIdent(Personident(stønadsendring.skyldner)).verdi
                 val nyesteKravhaver = identUtils.hentNyesteIdent(Personident(stønadsendring.kravhaver)).verdi
 
-                SECURE_LOGGER.info(
-                    "Stønadsendring. Eksisterende skyldner: ${stønadsendring.skyldner} kravhaver: ${stønadsendring.kravhaver} " +
-                        "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver",
-                )
+                secureLogger.debug {
+                    (
+                        "Stønadsendring. Eksisterende skyldner: ${stønadsendring.skyldner} kravhaver: ${stønadsendring.kravhaver} " +
+                            "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver"
+                        ).sanitizeForLog()
+                }
                 Stønadsendring(
                     id = stønadsendring.id,
                     vedtak = stønadsendring.vedtak,
@@ -1096,18 +1109,20 @@ class VedtakService(
             }
 
             if (matchendeElementerOppdaterteIdenter.size != 1) {
-                SECURE_LOGGER.error(
-                    "Andre forsøk på å hente stønadsendringsid under oppdatering av vedtak feiler. " +
-                        "Eksisterende stønadsendringer: ${
-                            tilJson(
-                                eksisterendeStønadsendringListeMedOppdaterteIdenter,
-                            )
-                        } Request: ${
-                            tilJson(
-                                requestMedOppdaterteIdenter,
-                            )
-                        }",
-                )
+                secureLogger.error {
+                    (
+                        "Andre forsøk på å hente stønadsendringsid under oppdatering av vedtak feiler. " +
+                            "Eksisterende stønadsendringer: ${
+                                tilJson(
+                                    eksisterendeStønadsendringListeMedOppdaterteIdenter,
+                                )
+                            } Request: ${
+                                tilJson(
+                                    requestMedOppdaterteIdenter,
+                                )
+                            }"
+                        ).sanitizeForLog()
+                }
                 throw VedtaksdataMatcherIkkeException(
                     "Stønadsendringsid ikke funnet ved oppdatering av vedtak",
                 )
@@ -1127,7 +1142,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 val stønadsendringGrunnlagBo = StønadsendringGrunnlagBo(
@@ -1161,7 +1176,7 @@ class VedtakService(
         }
 
         if (matchendeEksisterendePeriode.size != 1) {
-            SECURE_LOGGER.error("Det er mismatch på antall matchende perioder for stønadsendring: ${tilJson(periodeRequest)}")
+            secureLogger.error { "Det er mismatch på antall matchende perioder for stønadsendring: ${tilJson(periodeRequest)}".sanitizeForLog() }
             throw VedtaksdataMatcherIkkeException("Det er mismatch på antall matchende perioder for stønadsendring")
         }
         return matchendeEksisterendePeriode.first().id
@@ -1174,7 +1189,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 val periodeGrunnlagBo = PeriodeGrunnlagBo(
@@ -1195,13 +1210,15 @@ class VedtakService(
         val matchendeEksisterendeEngangsbeløp = finnMatchendeEngangsbeløp(eksisterendeEngangsbeløpListe, listOf(engangsbeløpRequest))
 
         if (matchendeEksisterendeEngangsbeløp.isEmpty()) {
-            SECURE_LOGGER.warn(
-                "Feil ved forsøk på å hente engangsbeløpid under oppdatering av vedtak. Forsøker på nytt med oppdaterte personidenter: ${
-                    tilJson(
-                        engangsbeløpRequest,
-                    )
-                }",
-            )
+            secureLogger.warn {
+                (
+                    "Feil ved forsøk på å hente engangsbeløpid under oppdatering av vedtak. Forsøker på nytt med oppdaterte personidenter: ${
+                        tilJson(
+                            engangsbeløpRequest,
+                        )
+                    }"
+                    ).sanitizeForLog()
+            }
 
             val nyesteSkyldner = identUtils.hentNyesteIdent(engangsbeløpRequest.skyldner)
             val nyesteKravhaver = identUtils.hentNyesteIdent(engangsbeløpRequest.kravhaver)
@@ -1212,20 +1229,24 @@ class VedtakService(
                 kravhaver = nyesteKravhaver,
             )
 
-            SECURE_LOGGER.info(
-                "Engangsbeløp. Mottatt skyldner: ${engangsbeløpRequest.skyldner.verdi} kravhaver: ${engangsbeløpRequest.kravhaver.verdi} " +
-                    "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}",
-            )
+            secureLogger.debug {
+                (
+                    "Engangsbeløp. Mottatt skyldner: ${engangsbeløpRequest.skyldner.verdi} kravhaver: ${engangsbeløpRequest.kravhaver.verdi} " +
+                        "etter oppdatering, skyldner: ${nyesteSkyldner.verdi} kravhaver: ${nyesteKravhaver.verdi}"
+                    ).sanitizeForLog()
+            }
 
             // Kopierer eksisterende engangsbeløp med oppdaterte identer
             val eksisterendeEngangsbeløpListeMedOppdaterteIdenter = eksisterendeEngangsbeløpListe.map { engangsbeløp ->
                 val nyesteSkyldner = identUtils.hentNyesteIdent(Personident(engangsbeløp.skyldner)).verdi
                 val nyesteKravhaver = identUtils.hentNyesteIdent(Personident(engangsbeløp.kravhaver)).verdi
 
-                SECURE_LOGGER.info(
-                    "Engangsbeløp. Eksisterende skyldner: ${engangsbeløp.skyldner} kravhaver: ${engangsbeløp.kravhaver} " +
-                        "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver",
-                )
+                secureLogger.debug {
+                    (
+                        "Engangsbeløp. Eksisterende skyldner: ${engangsbeløp.skyldner} kravhaver: ${engangsbeløp.kravhaver} " +
+                            "etter oppdatering, skyldner: $nyesteSkyldner kravhaver: $nyesteKravhaver"
+                        ).sanitizeForLog()
+                }
                 engangsbeløp.copy(
                     skyldner = nyesteSkyldner,
                     kravhaver = nyesteKravhaver,
@@ -1240,13 +1261,15 @@ class VedtakService(
             }
 
             if (matchendeEksisterendeEngangsbeløpMedOppdatertIdent.size != 1) {
-                SECURE_LOGGER.error(
-                    "Det er fortsatt mismatch ved forsøk på å hente engangsbeløpsid. Eksisterende engangsbeløp: ${
-                        tilJson(
-                            eksisterendeEngangsbeløpListeMedOppdaterteIdenter,
-                        )
-                    } Request: ${tilJson(requestMedOppdaterteIdenter)}",
-                )
+                secureLogger.error {
+                    (
+                        "Det er fortsatt mismatch ved forsøk på å hente engangsbeløpsid. Eksisterende engangsbeløp: ${
+                            tilJson(
+                                eksisterendeEngangsbeløpListeMedOppdaterteIdenter,
+                            )
+                        } Request: ${tilJson(requestMedOppdaterteIdenter)}"
+                        ).sanitizeForLog()
+                }
                 throw VedtaksdataMatcherIkkeException(
                     "Finner ikke engangsbeløpsid ved match av engangsbeløp. ",
                 )
@@ -1267,7 +1290,7 @@ class VedtakService(
             val grunnlagId = grunnlagIdRefMap.getOrDefault(it, 0)
             if (grunnlagId == 0) {
                 val feilmelding = "grunnlagReferanse $it ikke funnet i intern mappingtabell"
-                LOGGER.error(feilmelding)
+                LOGGER.error { feilmelding.sanitizeForLog() }
                 throw IllegalArgumentException(feilmelding)
             } else {
                 val engangsbeløpGrunnlagBo = EngangsbeløpGrunnlagBo(
@@ -1391,7 +1414,7 @@ class VedtakService(
                 measureVedtak(navn, enhetsnummer, vedtakstype, null, it.type)
             }
         } catch (e: Exception) {
-            LOGGER.error("Det skjedde en feil ved telling av metrikker", e)
+            LOGGER.error(e) { "Det skjedde en feil ved telling av metrikker" }
         }
     }
 
@@ -1423,11 +1446,10 @@ class VedtakService(
             kravhaverAllePersonidenter,
         )
         if (sisteVedtaksid != sisteVedtaksidForStønad) {
-            LOGGER.error("Angitt sisteVedtaksid: $sisteVedtaksid for sak: $saksnummer er ikke lik lagret siste vedtaksid: $sisteVedtaksidForStønad")
             val feilmelding =
                 "Angitt sisteVedtaksid: $sisteVedtaksid for stønad $saksnummer $type $skyldner $kravhaver: " +
                     "er ikke lik lagret siste vedtaksid: $sisteVedtaksidForStønad"
-            SECURE_LOGGER.error(feilmelding)
+            secureLogger.error { feilmelding.sanitizeForLog() }
             return false
         }
 
@@ -1472,6 +1494,6 @@ class VedtakService(
         }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(VedtakService::class.java)
+        private val LOGGER = KotlinLogging.logger { }
     }
 }

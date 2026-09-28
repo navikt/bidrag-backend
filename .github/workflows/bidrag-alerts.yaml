@@ -5,6 +5,7 @@ on:
       - '**'
     paths:
       - 'util/bidrag-alerts/**'
+  workflow_dispatch:
 
 jobs:
   detect_changes:
