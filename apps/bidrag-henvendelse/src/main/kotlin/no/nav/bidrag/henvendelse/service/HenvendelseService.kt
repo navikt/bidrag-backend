@@ -107,7 +107,10 @@ private fun List<MeldingConsumerOutput>.sisteSendtDato() = mapNotNull { it.sendt
  * Verdien kommer som fritekst fra kilden, og den logges for at en ny henvendelsestype skal bli
  * oppdaget. Da må den ikke kunne ta med seg noe annet inn i loggen: linjeskift ville laget en
  * falsk logglinje, og et fritekstfelt kan i prinsippet inneholde et navn eller en ident.
- * `SensitiveLogMasker` fanger bare kjente tallmønstre, så verdien begrenses her til tegnene en
- * enum-verdi faktisk består av, og til en lengde som ikke kan fylle loggen.
+ * `SensitiveLogMasker` fanger bare kjente tallmønstre, så verdien logges bare når hele den har
+ * formen til en enum-verdi, og ellers som en fast markør. Å filtrere bort tegn er ikke nok:
+ * `OlaNordmann` består bare av bokstaver.
  */
-private fun String.tilLoggbarVerdi(): String = filter { it.isLetterOrDigit() || it == '_' }.take(40)
+private fun String.tilLoggbarVerdi(): String = if (matches(ENUMVERDI)) this else "<ugyldig>"
+
+private val ENUMVERDI = Regex("[A-Z0-9_]{1,40}")

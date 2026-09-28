@@ -90,6 +90,26 @@ class HenvendelseServiceLoggingTest {
     }
 
     @Test
+    fun `skal logge henvendelsestype som ikke har formen til en enum-verdi som ugyldig-markør`() {
+        stub(
+            """
+            [
+              { "henvendelseType": "OlaNordmann", "kjedeId": "kjede-1", "meldinger": [] },
+              { "henvendelseType": "NY\nFALSK LINJE", "kjedeId": "kjede-2", "meldinger": [] },
+              { "henvendelseType": "${"A".repeat(41)}", "kjedeId": "kjede-3", "meldinger": [] }
+            ]
+            """.trimIndent(),
+        )
+
+        service.hentHenvendelser(personident).henvendelser shouldHaveSize 3
+
+        val linje = linjerSom { it.contains("Ukjente henvendelsestyper") }.single()
+        linje shouldContain "[<ugyldig>]"
+        linje shouldNotContain "OlaNordmann"
+        linje shouldNotContain "\n"
+    }
+
+    @Test
     fun `skal logge forkastede henvendelser samlet per kall, med andel`() {
         stub(
             """
