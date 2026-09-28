@@ -22,12 +22,17 @@ env:
   BIDRAG_ORGANISASJON_SCOPE: prod-fss.bidrag.bidrag-organisasjon
   BIDRAG_ORGANISASJON_URL: https://bidrag-organisasjon.prod-fss-pub.nais.io/bidrag-organisasjon
   JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  SLACK_CHANNEL_ID: CAZ7A2074
+  SLACK_VAKTLISTE_ID: F0C1R4W86QK
+  VAKTHAVENDE_ROTASJON_CRON: "0 30 8 * * MON"
 outbound-access-apps:
   - bidrag-vedtak
   - bidrag-kodeverk
 outbound-access-hosts:
   - bidrag-organisasjon.prod-fss-pub.nais.io
   - bidrag-unleash-api.nav.cloud.nais.io
+  - slack.com
+  - api.slack.com
 unleash:
   env: production
   secret_name: bidrag-admin-unleash-api-token

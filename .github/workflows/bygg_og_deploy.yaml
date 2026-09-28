@@ -255,7 +255,7 @@ jobs:
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
           mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
       - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
-        if: github.actor != 'dependabot[bot]'
+        if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push
         env:
           TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
