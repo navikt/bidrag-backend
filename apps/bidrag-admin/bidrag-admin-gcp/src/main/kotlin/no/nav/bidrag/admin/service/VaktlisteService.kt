@@ -31,22 +31,16 @@ class VaktlisteService(
         internal const val KOLONNE_UKENS_VAKTHAVENDE = "Ukens"
         internal const val KOLONNE_NAVN = "name"
 
+        internal const val VAKT_CANVAS_LENKE = "https://nav-it.slack.com/docs/T5LNAMWNA/F0C4Z7R5933"
+        internal const val TRIGG_VAKT_ROTASJON_LENKE = "https://bidrag-admin.intern.nav.no/swagger-ui/index.html#/Vaktliste/triggVaktrotasjon"
+
         internal fun byggVaktmelding(slackUserId: String) = """
             Giv akt! Du har vakt, <@$slackUserId>!
-    
-            Dette innebærer at du skal gjøre følgende:
-    
-            - Følg med på om det er kritiske sårbarheter som må fikses. Alt som har over CVSS score på 9 har vi 24 timer på å fikse.
-                   - https://console.nav.cloud.nais.io/team/bidrag
-                   - https://console.nav.cloud.nais.io/team/farskapsportal
-            - En fin oversikt over hva som bør prioriteres finnes også her: https://tpt.ansatt.nav.no/nb/prioritization
-            - Se over dependabot pr'er.
-            - Se over codescanning i repoene om noe må fikses eller følges opp.
-            - Følg med i #team-bidrag-monitorering og #team-bidrag-varsel. Marker alle saker som du har sett på slik at vi vet de er fulgt opp.
-    
+            Følg rutine på vakt i canvas: $VAKT_CANVAS_LENKE
+
             Du skal ikke løse alt på egen hånd, fordel oppgaver til de aktuelle i teamet.
-    
-            Har du ikke mulighet denne uken? Ping i denne tråden og be noen ta over for deg!
+
+            Har du ikke mulighet? Ping i denne tråden og be noen ta over for deg! Eller trigg ny rotasjon av vakthavende her: $TRIGG_VAKT_ROTASJON_LENKE 
         """.trimIndent()
     }
 
