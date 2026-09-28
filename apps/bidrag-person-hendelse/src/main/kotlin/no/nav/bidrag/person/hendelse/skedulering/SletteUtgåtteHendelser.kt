@@ -73,8 +73,12 @@ class SletteUtgåtteHendelser(
         log.info {
             "Fant ${aktørerUtenReferanseTilHendelse.size} aktører uten referanse til hendelse og som ble sist publisert før $publisertFør."
         }
-        databasetjeneste.aktorDao.deleteAktorByIdIn(aktørerUtenReferanseTilHendelse)
-        if (aktørerUtenReferanseTilHendelse.isNotEmpty()) log.info { "Alle de referanseløse aktørene ble slettet fra databasen." }
+        if (aktørerUtenReferanseTilHendelse.isEmpty()) return
+
+        aktørerUtenReferanseTilHendelse.chunked(egenskaper.generelt.bolkstoerrelseVedSletting).forEach {
+            databasetjeneste.aktorDao.deleteAktorByIdIn(it.toSet())
+        }
+        log.info { "Alle de referanseløse aktørene ble slettet fra databasen." }
     }
 
     private fun sletteHendelser(
