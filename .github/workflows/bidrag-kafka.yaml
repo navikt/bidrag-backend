@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - '.nais/bidrag-kafka/**.yaml'
       - 'apps/bidrag-kafka/**'
