@@ -12,6 +12,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - '.nais/bidrag-pdfgen/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/**'
