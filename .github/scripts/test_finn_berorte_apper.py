@@ -447,6 +447,23 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(build["if"], "inputs.artefaktnavn == ''")
         self.assertTrue(any(s.get("if") == "inputs.skip_tester && inputs.deploy_prod" for s in steps))
 
+    def test_image_is_only_uploaded_when_the_run_actually_deploys(self):
+        # Et image per PR-push per app fylte registeret uten at noen brukte dem. Bygget
+        # beholdes, så en ødelagt Dockerfile fortsatt fanges i PR-en, men opplastingen,
+        # attesteringen og cache-eksporten skjer bare når kjøringen skal deploye.
+        document = workflow("bygg_og_deploy.yaml")
+        deploy_flags = [name for name in triggers(document)["workflow_call"]["inputs"]
+                        if name.startswith("deploy_")]
+        self.assertTrue(deploy_flags)
+        job = document["jobs"]["bygg_test_og_image"]
+        step = next(s for s in job["steps"] if s.get("uses", "").startswith("nais/docker-build-push@"))
+        for flag in deploy_flags:
+            with self.subTest(flag=flag):
+                # Alle miljøer som kan deploye, må også utløse opplasting og attestering.
+                self.assertIn(f"inputs.{flag}", step["with"]["push_image"])
+                self.assertIn(f"inputs.{flag}", step["with"]["cache_to"])
+                self.assertIn(f"inputs.{flag}", document["jobs"]["salsa"]["if"])
+
     def test_deploy_concurrency_uses_app_identity(self):
         jobs = workflow("bygg_og_deploy.yaml")["jobs"]
         for environment in ("q1", "q2", "prod"):

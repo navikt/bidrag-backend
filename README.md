@@ -52,6 +52,19 @@ Du kan hoppe over tester ved deploy til q1/q2, men ikke til prod.
 «Deploy alle til q1/q2» starter én manuell kjøring per app. Disse bruker
 bibliotekcachen, men har ikke en felles bibliotekjobb.
 
+### Docker-image
+
+Imaget lastes bare opp til registeret når kjøringen faktisk skal deploye,
+altså ved `workflow_dispatch` til q1, q2 eller prod, eller ved push til `main`.
+PR-kjøringer og merge-køen bygger imaget, men pusher det ikke. Dockerfilen og
+byggkonteksten blir altså fortsatt verifisert, uten at hver eneste PR-push
+legger igjen et image per app som ingen skal bruke.
+
+Attestering og signering (`salsa`-jobben) og eksport av Docker-lagcachen følger
+den samme regelen. Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`,
+må `push_image`, `cache_to` og `salsa`-jobben oppdateres med det nye flagget.
+En test i `test_finn_berorte_apper.py` feiler hvis du glemmer det.
+
 ### Slik deles bibliotekene
 
 [`klargjor-biblioteker`](.github/actions/klargjor-biblioteker/action.yaml)
