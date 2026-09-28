@@ -1,16 +1,19 @@
 package no.nav.bidrag.commons.web
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.Filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.slf4j.LoggerFactory
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import org.slf4j.MDC
 
+private val LOGGER = KotlinLogging.logger {}
+
 class EnhetFilter : Filter {
-    private val logger = LoggerFactory.getLogger(this::class.java)
 
     override fun doFilter(
         servletRequest: ServletRequest,
@@ -25,15 +28,15 @@ class EnhetFilter : Filter {
                     ENHETSNUMMER_VALUE.set(enhetsnummer)
                     MDC.put(ENHET_MDC, enhetsnummer)
                     (servletResponse as HttpServletResponse).addHeader(X_ENHET_HEADER, enhetsnummer)
-                    logger.debug("Behandler request '{}' for enhet med enhetsnummer {}", requestURI, enhetsnummer)
+                    secureLogger.debug { "Behandler request '${requestURI.sanitizeForLog()}' for enhet med enhetsnummer ${enhetsnummer.sanitizeForLog()}" }
                 } else {
                     ENHETSNUMMER_VALUE.set(null)
-                    logger.debug("Behandler request '{}' uten informasjon om enhetsnummer.", requestURI)
+                    secureLogger.debug { "Behandler request '${requestURI.sanitizeForLog()}' uten informasjon om enhetsnummer." }
                 }
             }
         } else {
             val filterRequest = servletRequest.javaClass.simpleName
-            logger.error("Filtrering gjøres ikke av en HttpServletRequest: $filterRequest")
+            LOGGER.error { "Filtrering gjøres ikke av en HttpServletRequest: ${filterRequest.sanitizeForLog()}" }
         }
         filterChain.doFilter(servletRequest, servletResponse)
         MDC.clear()

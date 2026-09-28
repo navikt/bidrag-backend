@@ -43,7 +43,7 @@ env:
   BIDRAG_RESKONTRO_URL: https://bidrag-reskontro-q2.intern.dev.nav.no
   BIDRAG_RESKONTRO_SCOPE: dev-gcp.bidrag.bidrag-reskontro-q2
   BIDRAG_RESKONTRO_HOST: bidrag-reskontro-q2.intern.dev.nav.no
-  JAVA_OPTS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
   MASKINPORTEN_SCOPES: "skatteetaten:barnebidragkrav"
   KONTERINGER_FORELDET_DATO: 2006-04
   SEND_KRAV_CRON: "0 */10 * * * *" #Hvert 10. minutt

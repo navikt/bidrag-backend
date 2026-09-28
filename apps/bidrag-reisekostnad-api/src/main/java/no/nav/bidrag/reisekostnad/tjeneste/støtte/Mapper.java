@@ -1,5 +1,6 @@
 package no.nav.bidrag.reisekostnad.tjeneste.støtte;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig.SIKKER_LOGG;
 import lombok.extern.slf4j.Slf4j;
 import no.nav.bidrag.reisekostnad.api.dto.ut.BrukerinformasjonDto;
@@ -131,8 +132,8 @@ public class Mapper {
         if (motpartHarPersonident) {
             return true;
         } else {
-            log.warn("Ukjent motpart med relasjon {} til felles barn", motpartBarnRelasjon.getRelasjonMotpart());
-            SIKKER_LOGG.warn("Ukjent motpart med relasjon {} til felles barn med identer: {}", motpartBarnRelasjon.getRelasjonMotpart(), motpartBarnRelasjon.getFellesBarn().stream().map(f-> f.getIdent()).collect(Collectors.toList()));
+            SIKKER_LOGG.warn("Ukjent motpart med relasjon {} til felles barn med identer: {}", motpartBarnRelasjon.getRelasjonMotpart(),
+                sanitizeForLog(motpartBarnRelasjon.getFellesBarn().stream().map(f-> f.getIdent()).collect(Collectors.toList())));
             return false;
         }
     }

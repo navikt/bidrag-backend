@@ -1,12 +1,12 @@
 package no.nav.bidrag.grunnlag.consumer.inntektskomponenten
 
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.inntektskomponenten.api.HentInntektListeRequest
 import no.nav.bidrag.grunnlag.exception.RestResponse
 import no.nav.bidrag.grunnlag.exception.tryExchange
-import no.nav.bidrag.grunnlag.service.InntektskomponentenService
 import no.nav.bidrag.grunnlag.util.GrunnlagUtil.Companion.tilJson
 import no.nav.tjenester.aordningen.inntektsinformasjon.Aktoer
 import no.nav.tjenester.aordningen.inntektsinformasjon.AktoerType
@@ -57,10 +57,10 @@ class InntektskomponentenConsumer(
             fallbackBody = HentInntektListeResponse(emptyList(), Aktoer(request.ident.identifikator, AktoerType.NATURLIG_IDENT)),
         )
         when (restResponse) {
-            is RestResponse.Success -> SECURE_LOGGER.info(
+            is RestResponse.Success -> secureLogger.debug {
                 "Henting av abonnerte ? $abonnerteInntekterRequest inntekter for perioden ${request.maanedFom} - ${request.maanedTom} " +
-                    "ga følgende respons for ${request.ident.identifikator}: ${tilJson(restResponse.body)}",
-            )
+                    "ga følgende respons for ${request.ident.identifikator.sanitizeForLog()}: ${tilJson(restResponse.body)}"
+            }
 
             is RestResponse.Failure -> {
                 if (abonnerteInntekterRequest) {
@@ -71,39 +71,30 @@ class InntektskomponentenConsumer(
                         restResponse.statusCode == HttpStatus.BAD_REQUEST ||
                         restResponse.statusCode == HttpStatus.LOCKED
                     ) {
-                        InntektskomponentenService.LOGGER.warn(
-                            "Mangler abonnement for henting av inntekter fra Inntektskomponenten. " +
-                                "Statuskode ${restResponse.statusCode.value()}/${restResponse.message}",
-                        )
-                        SECURE_LOGGER.warn(
-                            "Mangler abonnement for henting av inntekter fra Inntektskomponenten for ${request.ident.identifikator} for " +
+                        // Fjernet duplikat vanlig-logg (secureLogger beholdes som eneste loggkall her, jf. dobbeltlogging-opprydding)
+                        secureLogger.warn {
+                            "Mangler abonnement for henting av inntekter fra Inntektskomponenten for ${request.ident.identifikator.sanitizeForLog()} for " +
                                 "perioden ${request.maanedFom} - ${request.maanedTom}." +
-                                " Prøver å hente inntekter uten abonnement. ${restResponse.message}",
-                        )
+                                " Prøver å hente inntekter uten abonnement. ${restResponse.message}"
+                        }
                     } else {
-                        InntektskomponentenService.LOGGER.error(
-                            "Feil ved henting av inntekter med abonnement fra Inntektskomponenten. " +
-                                "Statuskode ${restResponse.statusCode.value()}/${restResponse.message}",
-                        )
-                        SECURE_LOGGER.error(
-                            "Feil ved henting av inntekter med abonnement for ${request.ident.identifikator} for perioden " +
-                                "${request.maanedFom} - ${request.maanedTom}. Prøver å hente inntekter uten abonnement. /${restResponse.message}",
-                        )
+                        // Fjernet duplikat vanlig-logg (secureLogger beholdes som eneste loggkall her, jf. dobbeltlogging-opprydding)
+                        secureLogger.error {
+                            "Feil ved henting av inntekter med abonnement for ${request.ident.identifikator.sanitizeForLog()} for perioden " +
+                                "${request.maanedFom} - ${request.maanedTom}. Prøver å hente inntekter uten abonnement. /${restResponse.message}"
+                        }
                     }
                 } else {
-                    InntektskomponentenService.LOGGER.error(
-                        "Feil ved henting av inntekter uten abonnement fra Inntektskomponenten. " +
-                            "Statuskode ${restResponse.statusCode.value()} /${restResponse.message}",
-                    )
-                    SECURE_LOGGER.error(
-                        "Feil ved henting av inntekter uten abonnement for ${request.ident.identifikator} for perioden " +
-                            "${request.maanedFom} - ${request.maanedTom}. Prøver å hente inntekter uten abonnement. /${restResponse.message}",
-                    )
+                    // Fjernet duplikat vanlig-logg (secureLogger beholdes som eneste loggkall her, jf. dobbeltlogging-opprydding)
+                    secureLogger.error {
+                        "Feil ved henting av inntekter uten abonnement for ${request.ident.identifikator.sanitizeForLog()} for perioden " +
+                            "${request.maanedFom} - ${request.maanedTom}. Prøver å hente inntekter uten abonnement. /${restResponse.message}"
+                    }
                 }
             }
         }
 
-        grunnlagConsumer.logResponse(logger = SECURE_LOGGER, restResponse = restResponse)
+        grunnlagConsumer.logResponse(logger = secureLogger, restResponse = restResponse)
 
         restResponse
     }, { throwable ->
@@ -111,7 +102,7 @@ class InntektskomponentenConsumer(
     })
 
     private fun håndtereFeil(throwable: Throwable?): RestResponse<HentInntektListeResponse> {
-        SECURE_LOGGER.warn("Circuit breaker-logikk iverksatt for inntektskomponenten: ${throwable?.message}")
+        secureLogger.warn { "Circuit breaker-logikk iverksatt for inntektskomponenten: ${throwable?.message}" }
         return RestResponse.Failure("Inntektskomponenten svarer ikke", HttpStatus.SERVICE_UNAVAILABLE, ServiceUnavailableException())
     }
 }

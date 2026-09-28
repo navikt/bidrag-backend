@@ -28,6 +28,9 @@ spec:
             cluster: {{this.cluster}}
       {{/each}}
     outbound:
+      rules:
+        - application: logging
+          namespace: nais-system
       external:
       {{#each outbound-access-hosts}}
           - host: {{this}}

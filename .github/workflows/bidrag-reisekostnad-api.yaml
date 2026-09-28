@@ -62,5 +62,6 @@ jobs:
         apps/bidrag-reisekostnad-api/pom.xml
       ktlint_paths: apps/bidrag-reisekostnad-api/src/**/*.kt
       docker_context: ./apps/bidrag-reisekostnad-api
+      dockerfile_with_path: ./apps/bidrag-reisekostnad-api/Dockerfile
       image_suffix: bidrag-reisekostnad-api
       tag: bidrag-reisekostnad-api

@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.arkiv.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.BidragDokumentConsumer
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivConsumer
@@ -32,7 +34,6 @@ import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
 import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -52,7 +53,7 @@ class OpprettJournalpostService(
     private val safConsumer: SafConsumer = safConsumers.get(Discriminator.REGULAR_USER)
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(OpprettJournalpostService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     fun opprettJournalpost(request: OpprettJournalpostRequest): OpprettJournalpostResponse {
@@ -159,10 +160,9 @@ class OpprettJournalpostService(
             )
             knyttSakerTilOpprettetJournalpost(opprettetJournalpost, knyttTilSaker)
         } catch (e: Exception) {
-            LOGGER.error(
-                "Etterbehandling av opprettet journalpost feilet (knytt til flere saker eller lagre saksbehandler ident). Fortsetter behandling da feilen må behandles manuelt.",
-                e,
-            )
+            LOGGER.error(e) {
+                "Etterbehandling av opprettet journalpost feilet (knytt til flere saker eller lagre saksbehandler ident). Fortsetter behandling da feilen må behandles manuelt."
+            }
         }
     }
 
@@ -173,7 +173,7 @@ class OpprettJournalpostService(
                 response.journalpostId,
                 response.melding,
             )
-            LOGGER.error(message)
+            LOGGER.error { message.sanitizeForLog() }
             throw KunneIkkeJournalforeOpprettetJournalpost(message)
         }
     }

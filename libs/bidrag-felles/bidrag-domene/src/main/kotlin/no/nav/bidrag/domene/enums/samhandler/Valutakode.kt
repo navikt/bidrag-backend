@@ -15,6 +15,7 @@ enum class Valutakode(
     CAD("Canadiske dollar"),
     CHF("Sveitsiske Franc"),
     CNY("Kinesiske Yen"),
+    COP("Colombianske peso"),
     CZK("Tsjekkiske koruna"),
     DKK("Danske kroner"),
     EEK("Estiske kroon"),
