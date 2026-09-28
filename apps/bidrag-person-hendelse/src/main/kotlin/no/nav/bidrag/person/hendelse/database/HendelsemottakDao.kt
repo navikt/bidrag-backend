@@ -55,7 +55,8 @@ interface HendelsemottakDao : JpaRepository<Hendelsemottak, Long> {
     ): List<Long>
 
     @Query(
-        "from Hendelsemottak hm " +
+        "select hm from Hendelsemottak hm " +
+            "join fetch hm.aktor " +
             "where hm.status = no.nav.bidrag.person.hendelse.database.Status.OVERFØRT " +
             "and hm.aktor.id in :aktørider",
     )
