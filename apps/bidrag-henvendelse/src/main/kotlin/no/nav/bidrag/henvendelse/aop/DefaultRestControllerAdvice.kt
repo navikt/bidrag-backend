@@ -51,10 +51,11 @@ class DefaultRestControllerAdvice : ResponseEntityExceptionHandler() {
      */
     @ExceptionHandler(RestClientResponseException::class)
     fun handleRestClientResponseException(exception: RestClientResponseException): ProblemDetail {
-        // AbstractRestClient har allerede logget stacktracen, så den gjentas ikke her.
-        // Klassenavnet er med fordi statusen alene ikke sier hvilket ledd som feilet, og
-        // meldingen ikke kan logges: den inneholder URL-en, som hos oss har ?aktorid=.
-        log.warn { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}, type ${exception.javaClass.simpleName}" }
+        // Exception-en logges med stacktrace, fordi ingen andre logger den: AbstractRestClient
+        // sluttet med det i #187. Meldingen inneholder URL-en med ?aktorid=, som maskeringen i
+        // logback-spring.xml fjerner. Klassenavnet er med fordi statusen alene ikke sier hvilket
+        // ledd som feilet.
+        log.warn(exception) { "Feil ved kall mot ekstern tjeneste, status ${exception.statusCode}, type ${exception.javaClass.simpleName}" }
         return problemDetail(
             status = HttpStatus.BAD_GATEWAY,
             tittel = "Feil ved kall mot tjeneste",
