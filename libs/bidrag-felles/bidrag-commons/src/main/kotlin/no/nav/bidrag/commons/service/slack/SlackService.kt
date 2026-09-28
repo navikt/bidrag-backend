@@ -8,6 +8,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
+private val LOGGER = KotlinLogging.logger { }
+
 /**
  * Tjeneste for sending, oppdatering og tråding av meldinger i Slack.
  *
@@ -24,10 +26,6 @@ class SlackService(
     @param:Value($$"${SLACK_CHANNEL_ID}") private val channel: String,
 ) {
     internal val client: MethodsClient by lazy { Slack.getInstance().methods(oauthToken) }
-
-    companion object {
-        internal val LOGGER = KotlinLogging.logger { }
-    }
 
     fun sendMelding(
         melding: String,
@@ -68,7 +66,7 @@ class SlackMelding(
 ) {
     fun oppdaterMelding(melding: String) {
         if (ts == null) {
-            SlackService.LOGGER.warn { "Ingen melding å oppdatere..." }
+            LOGGER.warn { "Ingen melding å oppdatere..." }
             return
         }
         try {
@@ -80,18 +78,18 @@ class SlackMelding(
                         .text(melding)
                 }
             if (response.isOk) {
-                SlackService.LOGGER.trace { "Slack melding oppdatert: $melding" }
+                LOGGER.trace { "Slack melding oppdatert: $melding" }
             } else {
-                SlackService.LOGGER.error { "Feil ved oppdatering av slackmelding: ${response.error}" }
+                LOGGER.error { "Feil ved oppdatering av slackmelding: ${response.error}" }
             }
         } catch (e: Exception) {
-            SlackService.LOGGER.error(e) { "Uventet feil ved oppdatering av slackmelding" }
+            LOGGER.error(e) { "Uventet feil ved oppdatering av slackmelding" }
         }
     }
 
     fun svarITråd(melding: String): SlackMelding {
         if (ts == null) {
-            SlackService.LOGGER.trace { "Ingen melding å svare på..." }
+            LOGGER.trace { "Ingen melding å svare på..." }
             return this
         }
         return slackService.sendMelding(melding = melding, threadTs = threadTs)

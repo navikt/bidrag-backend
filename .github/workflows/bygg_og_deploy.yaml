@@ -268,6 +268,8 @@ jobs:
           image_suffix: ${{ inputs.image_suffix }}
           tag: ${{ inputs.tag }}
           salsa: false
+          push_image: ${{ inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod }}
+          cache_to: ${{ (inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod) && 'type=gha,mode=max' || '' }}
     outputs:
       image: ${{ steps.docker-push.outputs.image }}
       tag: ${{ steps.docker-push.outputs.tag }}
@@ -276,6 +278,9 @@ jobs:
   salsa:
     name: Generate SBOM, attest and sign image
     needs: bygg_test_og_image
+    # Attestering signerer et image i registeret. Uten opplasting finnes det ikke noe
+    # image å signere, så jobben hører sammen med de samme miljøene som deployer.
+    if: inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod
     runs-on: ubuntu-latest
     permissions:
       id-token: "write"
@@ -358,7 +363,7 @@ jobs:
       id-token: "write"
     concurrency:
       group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-prod
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}

@@ -1,12 +1,14 @@
 package no.nav.bidrag.grunnlag.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursResponse
 import no.nav.bidrag.grunnlag.service.GrunnlagspakkeService
@@ -20,7 +22,6 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.HentGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.HentGrunnlagspakkeDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.OppdaterGrunnlagspakkeDto
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -51,7 +52,7 @@ class GrunnlagController(
         request: OpprettGrunnlagspakkeRequestDto,
     ): Int? {
         val grunnlagspakkeOpprettet = grunnlagspakkeService.opprettGrunnlagspakke(request)
-        LOGGER.info("Grunnlagspakke er opprettet med id: $grunnlagspakkeOpprettet")
+        LOGGER.info { "Grunnlagspakke er opprettet med id: $grunnlagspakkeOpprettet" }
         return grunnlagspakkeOpprettet
     }
 
@@ -73,9 +74,8 @@ class GrunnlagController(
         @Valid @RequestBody
         request: OppdaterGrunnlagspakkeRequestDto,
     ): OppdaterGrunnlagspakkeDto? {
-        SECURE_LOGGER.info("Oppdaterer grunnlagspakkeId: $grunnlagspakkeId med request: ${tilJson(request)}")
         val grunnlagspakkeOppdatert = grunnlagspakkeService.oppdaterGrunnlagspakke(grunnlagspakkeId, request)
-        LOGGER.info("Følgende grunnlagspakke ble oppdatert: $grunnlagspakkeId")
+        secureLogger.info { "Oppdateret grunnlagspakkeId: $grunnlagspakkeId med request: ${tilJson(request).sanitizeForLog()}" }
         return grunnlagspakkeOppdatert
     }
 
@@ -96,8 +96,7 @@ class GrunnlagController(
         grunnlagspakkeId: Int,
     ): HentGrunnlagspakkeDto? {
         val grunnlagspakkeFunnet = grunnlagspakkeService.hentGrunnlagspakke(grunnlagspakkeId)
-        LOGGER.info("Følgende grunnlagspakke ble hentet: ${grunnlagspakkeFunnet.grunnlagspakkeId}")
-        SECURE_LOGGER.info("Hent av grunnlagspakke med id: $grunnlagspakkeId ga følgende response: ${tilJson(grunnlagspakkeFunnet)}")
+        secureLogger.debug { "Hent av grunnlagspakke med id: $grunnlagspakkeId ga følgende response: ${tilJson(grunnlagspakkeFunnet).sanitizeForLog()}" }
 
         return grunnlagspakkeFunnet
     }
@@ -119,7 +118,7 @@ class GrunnlagController(
         grunnlagspakkeId: Int,
     ): Int? {
         val oppdatertgrunnlagspakke = grunnlagspakkeService.lukkGrunnlagspakke(grunnlagspakkeId)
-        LOGGER.info("Følgende grunnlagspakke ble oppdatert med gyldigTil-dato: $oppdatertgrunnlagspakke")
+        LOGGER.info { "Følgende grunnlagspakke ble oppdatert med gyldigTil-dato: $oppdatertgrunnlagspakke" }
         return grunnlagspakkeId
     }
 
@@ -142,9 +141,8 @@ class GrunnlagController(
         @Valid @RequestBody
         request: HentGrunnlagRequestDto,
     ): HentGrunnlagDto? {
-        SECURE_LOGGER.info("Henter grunnlag med request: ${tilJson(request)}")
         val hentGrunnlagDto = hentGrunnlagService.hentGrunnlag(request)
-        SECURE_LOGGER.info("Hent av grunnlag ga følgende respons: ${tilJson(hentGrunnlagDto)}")
+        secureLogger.debug { "Hent av grunnlag ga følgende respons: ${tilJson(hentGrunnlagDto).sanitizeForLog()}" }
         return hentGrunnlagDto
     }
 
@@ -167,9 +165,8 @@ class GrunnlagController(
         @Valid @RequestBody
         request: HentValutakursRequest,
     ): HentValutakursResponse? {
-        SECURE_LOGGER.info("Henter grunnlag med request: ${tilJson(request)}")
         val hentGrunnlagDto = hentValutakursService.hentValutakurs(request)
-        SECURE_LOGGER.info("Hent av grunnlag ga følgende respons: ${tilJson(hentGrunnlagDto)}")
+        secureLogger.debug { "Hent av grunnlag ga følgende respons: ${tilJson(hentGrunnlagDto).sanitizeForLog()}" }
         return hentGrunnlagDto
     }
 
@@ -181,6 +178,6 @@ class GrunnlagController(
         const val GRUNNLAGSPAKKE_LUKK = "/grunnlagspakke/{grunnlagspakkeId}/lukk"
         const val HENT_GRUNNLAG = "/hentgrunnlag"
         const val HENT_VALUTAKURS = "/hentvalutakurs"
-        private val LOGGER = LoggerFactory.getLogger(GrunnlagController::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.commons.util.CustomJacksonHttpMessageConverter
-import no.nav.bidrag.commons.web.test.HttpHeaderTestRestTemplate
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.vedtak.VedtakHendelse
 import no.nav.bidrag.transport.behandling.vedtak.VedtaksforslagHendelse
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.restclient.RestTemplateBuilder
 import org.springframework.boot.resttestclient.TestRestTemplate
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -72,9 +71,9 @@ class BidragVedtakTestConfig {
 
 class TestVedtakKafkaEventProducer : VedtakKafkaEventProducer {
     override fun publishVedtak(vedtakHendelse: VedtakHendelse) {
-        SECURE_LOGGER.info("Test Kafka vedtak: $vedtakHendelse")
+        secureLogger.info { "Test Kafka vedtak: $vedtakHendelse" }
     }
     override fun publishVedtaksforslag(vedtaksforslagHendelse: VedtaksforslagHendelse) {
-        SECURE_LOGGER.info("Test Kafka vedtaksforslag: $vedtaksforslagHendelse")
+        secureLogger.info { "Test Kafka vedtaksforslag: $vedtaksforslagHendelse" }
     }
 }

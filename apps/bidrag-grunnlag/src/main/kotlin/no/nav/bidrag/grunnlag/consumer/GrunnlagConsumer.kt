@@ -1,10 +1,9 @@
 package no.nav.bidrag.grunnlag.consumer
 
+import io.github.oshai.kotlinlogging.KLogger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.util.secureLogger
-import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
 import no.nav.bidrag.grunnlag.exception.RestResponse
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -16,18 +15,17 @@ import java.util.UUID
 @Component
 class GrunnlagConsumer {
 
-    fun <T> logResponse(logger: Logger, restResponse: RestResponse<T>) {
+    fun <T> logResponse(logger: KLogger, restResponse: RestResponse<T>) {
         when (restResponse) {
-            is RestResponse.Success -> logger.debug("Response: {}", HttpStatus.OK)
-            is RestResponse.Failure -> logger.warn("Response: ${restResponse.statusCode}/${restResponse.message}")
+            is RestResponse.Success -> logger.debug { "Response: ${HttpStatus.OK}" }
+            is RestResponse.Failure -> logger.warn { "Response: ${restResponse.statusCode}/${restResponse.message}" }
         }
     }
 
     fun <T> logResponse(type: String, ident: String, fom: LocalDate?, tom: LocalDate?, restResponse: RestResponse<T>) {
         when (restResponse) {
             is RestResponse.Success -> {
-                logger.info("Hent av grunnlag $type utført ok")
-                secureLogger.info { "Hent av grunnlag $type for $ident for perioden $fom - $tom ga følgende respons: ${restResponse.body}" }
+                secureLogger.debug { "Hent av grunnlag $type for $ident for perioden $fom - $tom ga følgende respons: ${restResponse.body}" }
             }
 
             is RestResponse.Failure -> {
@@ -36,7 +34,6 @@ class GrunnlagConsumer {
                     if (restResponse.statusCode == HttpStatus.NOT_FOUND &&
                         inntektsårIkkeStøttet(restResponse.message)
                     ) {
-                        logger.warn("Skattegrunnlag er ikke tilgjengelig ennå for personen")
                         secureLogger.warn { "Skattegrunnlag er ikke tilgjengelig ennå for $ident og perioden $fom - $tom" }
 
                         // Legger ut tom liste hvis det ikke finnes data
@@ -46,10 +43,9 @@ class GrunnlagConsumer {
                                 fantIkkeSkattegrunnlag(restResponse.message)
                             )
                     ) {
-                        logger.warn("Fant ikke skattegrunnlag for personen")
                         secureLogger.warn { "Fant ikke skattegrunnlag for $ident og perioden $fom - $tom" }
                     } else {
-                        secureLogger.warn {
+                        secureLogger.error {
                             "Feil ved hent av skattegrunnlag for $ident for perioden $fom - $tom. " +
                                 "${restResponse.statusCode}/${restResponse.message}"
                         }
@@ -57,17 +53,11 @@ class GrunnlagConsumer {
                 } else {
                     // Logger som warning i stedet for error hvis status er not found
                     if (restResponse.statusCode == HttpStatus.NOT_FOUND) {
-                        logger.warn(
-                            "Feil ved hent av grunnlag $type ${restResponse.statusCode}/${restResponse.message}",
-                        )
                         secureLogger.warn {
                             "Feil ved hent av grunnlag $type for $ident for perioden $fom - $tom. " +
                                 "${restResponse.statusCode}/${restResponse.message}"
                         }
                     } else {
-                        logger.error(
-                            "Feil ved hent av grunnlag $type ${restResponse.statusCode}/${restResponse.message}",
-                        )
                         secureLogger.error {
                             "Feil ved hent av grunnlag $type for $ident for perioden $fom - $tom. " +
                                 "${restResponse.statusCode}/${restResponse.message}"
@@ -135,7 +125,6 @@ class GrunnlagConsumer {
         const val FANT_IKKE_SKATTEGRUNNLAG_PROD = "Fant ikke summert skattegrunnlag"
         const val FANT_IKKE_SKATTEGRUNNLAG_TEST = "Det finnes ikke summertskattegrunnlag"
 
-        @JvmStatic
-        val logger: Logger = LoggerFactory.getLogger(BidragPersonConsumer::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

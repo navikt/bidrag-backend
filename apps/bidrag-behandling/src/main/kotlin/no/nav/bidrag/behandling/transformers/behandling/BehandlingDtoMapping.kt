@@ -340,7 +340,7 @@ fun oppdaterUnderholdskostnadForRoller(
     rollerSomLeggesTil: List<OpprettRolleDto>,
     rollerSomSkalSlettes: List<OpprettRolleDto>,
 ) {
-    if (behandling.tilType() == TypeBehandling.BIDRAG) {
+    if (behandling.erBidrag()) {
         rollerSomLeggesTil
             .filter { it.rolletype == Rolletype.BARN }
             .filter { rolle ->
@@ -365,7 +365,7 @@ fun oppdatereSamværForRoller(
     rollerSomLeggesTil: List<OpprettRolleDto>,
     rollerSomSlettes: List<OpprettRolleDto>,
 ) {
-    if (behandling.tilType() == TypeBehandling.BIDRAG) {
+    if (behandling.erBidrag()) {
         rollerSomLeggesTil
             .filter { it.rolletype == Rolletype.BARN }
             .filter { rolle ->
