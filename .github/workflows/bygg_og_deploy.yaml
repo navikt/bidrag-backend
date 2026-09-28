@@ -358,7 +358,7 @@ jobs:
       id-token: "write"
     concurrency:
       group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-prod
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}

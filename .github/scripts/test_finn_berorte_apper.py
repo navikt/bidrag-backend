@@ -20,6 +20,7 @@ from finn_berorte_apper import (
     required_library_groups,
     select_affected_apps,
     split_on_merged_module,
+    target_branch,
 )
 
 
@@ -89,6 +90,24 @@ class GitDiffTest(unittest.TestCase):
     def test_branch_deletion_does_not_build(self):
         self.assertEqual(find_changed_files(ROOT, "push", {"before": "b" * 40, "after": "0" * 40}), [])
 
+    def test_merge_group_diffs_the_queue_base_against_the_candidate(self):
+        # Køen har allerede merget kandidaten med main-tuppen (base_sha), så diffen
+        # mellom de to er nøyaktig det køen vil legge til i main. Ingen merge-base her.
+        event = {"merge_group": {"base_sha": "b" * 40, "head_sha": "a" * 40,
+                                 "base_ref": "refs/heads/main"}}
+        with patch("finn_berorte_apper.subprocess.check_output", return_value=b"apps/a/X.kt\0") as git:
+            self.assertEqual(find_changed_files(ROOT, "merge_group", event), ["apps/a/X.kt"])
+        self.assertEqual(git.call_count, 1)
+        self.assertNotIn("merge-base", git.call_args.args[0])
+        self.assertIn("b" * 40, git.call_args.args[0])
+        self.assertIn("a" * 40, git.call_args.args[0])
+
+    def test_merge_group_with_an_invalid_sha_is_not_used_as_a_git_argument(self):
+        with patch("finn_berorte_apper.subprocess.check_output") as git:
+            with self.assertRaises(ValueError):
+                find_changed_files(ROOT, "merge_group", {"merge_group": {"base_sha": "--all", "head_sha": "a" * 40}})
+            git.assert_not_called()
+
     def test_invalid_sha_is_not_used_as_a_git_argument(self):
         with patch("finn_berorte_apper.subprocess.check_output") as git:
             with self.assertRaises(ValueError):
@@ -139,6 +158,17 @@ class AppSelectionTest(unittest.TestCase):
     def test_non_main_push_does_not_select_apps(self):
         self.assertEqual(self.selected("pom.xml", event="push", branch="feature"), [])
         self.assertEqual(set(self.selected("pom.xml", branch="feature")), set(self.app_filters))
+
+    def test_merge_group_uses_the_same_filters_as_push_and_pr(self):
+        for patterns in self.app_filters.values():
+            for pattern in patterns:
+                sample = pattern.replace("**", "nested/File").replace("*", "File")
+                self.assertEqual(self.selected(sample, event="merge_group"), self.selected(sample))
+
+    def test_branch_is_read_from_the_right_place_per_event(self):
+        self.assertEqual(target_branch("push", {"ref": "refs/heads/main"}), "main")
+        self.assertEqual(target_branch("pull_request", {"pull_request": {"base": {"ref": "main"}}}), "main")
+        self.assertEqual(target_branch("merge_group", {"merge_group": {"base_ref": "refs/heads/main"}}), "main")
 
     def test_push_and_pr_use_the_same_app_paths(self):
         for patterns in self.app_filters.values():
@@ -222,6 +252,22 @@ class AppFiltersTest(unittest.TestCase):
                 self.assertEqual(json.loads(values["apps"]), apps)
                 self.assertEqual(values["bibliotekgrupper"], groups)
                 self.assertEqual(values["felles_endret"], felles_changed)
+
+    def test_merge_group_event_selects_apps_like_a_push_to_main(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / "event.json"
+            output = Path(directory) / "output"
+            event.write_text(json.dumps({"merge_group": {
+                "base_ref": "refs/heads/main", "base_sha": "b" * 40, "head_sha": "a" * 40}}))
+            env = {"GITHUB_EVENT_NAME": "merge_group", "GITHUB_EVENT_PATH": str(event),
+                   "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
+            with patch.dict(os.environ, env), patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
+                    patch("finn_berorte_apper.find_changed_files",
+                          return_value=["apps/bidrag-behandling/src/main/kotlin/App.kt"]), patch("builtins.print"):
+                main()
+            values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+            self.assertEqual(json.loads(values["apps"]), ["bidrag-behandling"])
+            self.assertEqual(values["bibliotekgrupper"], "felles,beregn")
 
 
 class MergedModuleTest(unittest.TestCase):
@@ -318,10 +364,39 @@ class WorkflowIntegrationTest(unittest.TestCase):
         visit("bygg-apper.yaml", [])
         self.assertLessEqual(len(called), 50)
 
-    def test_build_workflow_has_no_path_filter_on_either_trigger(self):
+    def test_build_workflow_runs_on_pr_merge_queue_and_main_without_path_filters(self):
         on = triggers(self.build_workflow)
         self.assertEqual(on["push"], {"branches": ["main"]})
         self.assertEqual(on["pull_request"], {})
+        self.assertEqual(on["merge_group"], {"types": ["checks_requested"]})
+        self.assertEqual(set(on), {"push", "pull_request", "merge_group"})
+
+    def test_no_wildcard_push_workflow_runs_on_merge_queue_branches(self):
+        # Merge-køen pusher til gh-readonly-queue/main/..., som treffer 'branches: **'.
+        # Workflowene som deployer til q1/dev fra en hvilken som helst branch, ville
+        # dermed deployet fra en midlertidig kø-branch som slettes rett etterpå.
+        for path in sorted((ROOT / ".github/workflows").glob("*.y*ml")):
+            on = triggers(workflow(path.name)) or {}
+            branches = (on.get("push") or {}).get("branches", []) if isinstance(on, dict) else []
+            if "**" in branches:
+                with self.subTest(workflow=path.name):
+                    self.assertIn("!gh-readonly-queue/**", branches)
+
+    def test_merge_queue_builds_but_never_deploys(self):
+        # Køen kjører før merge. Ingen app skal kunne deploye fra en merge_group-kjøring,
+        # derfor må alle deploy-flaggene kreve enten push til main eller workflow_dispatch.
+        for app in self.app_filters:
+            with self.subTest(app=app):
+                config = workflow(f"{app}.yaml")["jobs"]["bygg_test_og_deploy"]["with"]
+                for key, expression in config.items():
+                    if key.startswith("deploy_"):
+                        self.assertNotIn("merge_group", expression)
+                        for clause in expression.split("||"):
+                            self.assertTrue(
+                                "github.event_name == 'workflow_dispatch'" in clause
+                                or ("github.event_name == 'push'" in clause
+                                    and "refs/heads/main" in clause),
+                                f"{app}.{key} kan deploye fra en merge_group-kjøring: {clause}")
 
     def test_app_workflows_have_no_duplicate_automatic_triggers(self):
         for app in self.app_filters:
@@ -378,6 +453,15 @@ class WorkflowIntegrationTest(unittest.TestCase):
             group = jobs[f"deploy_{environment}"]["concurrency"]["group"]
             self.assertIn("inputs.image_suffix", group)
             self.assertTrue(group.endswith(f"-{environment}"))
+
+    def test_only_test_environments_may_cancel_a_running_deploy(self):
+        # En prod-deploy som avbrytes midt i nais-rolloutet, etterlater et applied
+        # manifest ingen har verifisert, og feller samlejobben med resultatet
+        # `cancelled`. q1/q2 startes manuelt, der er avbrytelse ønsket.
+        jobs = workflow("bygg_og_deploy.yaml")["jobs"]
+        self.assertIs(jobs["deploy_prod"]["concurrency"]["cancel-in-progress"], False)
+        for environment in ("q1", "q2"):
+            self.assertIs(jobs[f"deploy_{environment}"]["concurrency"]["cancel-in-progress"], True)
 
     def test_apps_without_a_merged_module_are_skipped_and_not_built(self):
         missing_modules = set()
