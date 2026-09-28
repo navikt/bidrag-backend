@@ -2,6 +2,7 @@ package no.nav.bidrag.vedtak.service
 
 import io.mockk.every
 import io.mockk.mockkObject
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
@@ -1001,6 +1002,33 @@ class VedtakServiceTest {
 
         assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
             vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak matcher historiske engangsbeløpstyper for særbidrag`() {
+        val vedtakRequest = byggVedtakRequest()
+        val vedtakId = vedtakService.opprettVedtak(vedtakRequest, false).vedtaksid
+
+        listOf(
+            Engangsbeløptype.SAERTILSKUDD,
+            Engangsbeløptype.SÆRTILSKUDD,
+            Engangsbeløptype.SÆRBIDRAG,
+        ).forEach { historiskType ->
+            val oppdateringRequest = vedtakRequest.copy(
+                engangsbeløpListe = vedtakRequest.engangsbeløpListe.map { it.copy(type = historiskType) },
+            )
+
+            vedtakService.oppdaterVedtak(vedtakId, oppdateringRequest)
+        }
+
+        val requestMedAnnenType = vedtakRequest.copy(
+            engangsbeløpListe = vedtakRequest.engangsbeløpListe.map { it.copy(type = Engangsbeløptype.GEBYR_SKYLDNER) },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, requestMedAnnenType)
         }
     }
 
