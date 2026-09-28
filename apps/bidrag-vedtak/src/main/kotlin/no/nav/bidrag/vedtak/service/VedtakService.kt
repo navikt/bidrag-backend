@@ -1366,27 +1366,27 @@ class VedtakService(
         )
     }
 
-/*    ).groupBy { it.vedtak }
+    /*    ).groupBy { it.vedtak }
 
-    val resultat = mutableListOf<VedtakForStønad>()
+        val resultat = mutableListOf<VedtakForStønad>()
 
-    vedtakOgStønadsendringerMap.forEach { vedtak, stønadsendring ->
-        resultat.add(
-            VedtakForStønad(
-                vedtaksid = vedtak.id,
-                vedtakstidspunkt = vedtak.vedtakstidspunkt!!,
-                type = Vedtakstype.valueOf(vedtak.type),
-                stønadsendring = stønadsendring.first().tilDto(),
-                behandlingsreferanser = persistenceService.hentAlleBehandlingsreferanserForVedtak(vedtak.id).map {
-                    BehandlingsreferanseDto(BehandlingsrefKilde.valueOf(it.kilde), it.referanse)
-                },
-                kilde = Vedtakskilde.valueOf(vedtak.kilde),
-                kildeapplikasjon = vedtak.kildeapplikasjon,
-            ),
-        )
+        vedtakOgStønadsendringerMap.forEach { vedtak, stønadsendring ->
+            resultat.add(
+                VedtakForStønad(
+                    vedtaksid = vedtak.id,
+                    vedtakstidspunkt = vedtak.vedtakstidspunkt!!,
+                    type = Vedtakstype.valueOf(vedtak.type),
+                    stønadsendring = stønadsendring.first().tilDto(),
+                    behandlingsreferanser = persistenceService.hentAlleBehandlingsreferanserForVedtak(vedtak.id).map {
+                        BehandlingsreferanseDto(BehandlingsrefKilde.valueOf(it.kilde), it.referanse)
+                    },
+                    kilde = Vedtakskilde.valueOf(vedtak.kilde),
+                    kildeapplikasjon = vedtak.kildeapplikasjon,
+                ),
+            )
 
 
-    }*/
+        }*/
 
     fun measureVedtak(
         metrikkNavn: String,
@@ -1481,7 +1481,13 @@ class VedtakService(
     ) = eksisterendeEngangsbeløpListe
         .filter { eksisterendeEngangsbeløp ->
             requestEngangsbeløpListe.any {
-                eksisterendeEngangsbeløp.type == it.type.name &&
+                (
+                    eksisterendeEngangsbeløp.type == it.type.name ||
+                        (
+                            eksisterendeEngangsbeløp.type in TYPE_SÆRBIDRAG &&
+                                it.type.name in TYPE_SÆRBIDRAG
+                            )
+                    ) &&
                     eksisterendeEngangsbeløp.sak == it.sak.verdi &&
                     eksisterendeEngangsbeløp.skyldner == it.skyldner.verdi &&
                     eksisterendeEngangsbeløp.kravhaver == it.kravhaver.verdi &&
@@ -1495,5 +1501,10 @@ class VedtakService(
 
     companion object {
         private val LOGGER = KotlinLogging.logger { }
+        private val TYPE_SÆRBIDRAG = setOf(
+            Engangsbeløptype.SAERTILSKUDD.name,
+            Engangsbeløptype.SÆRTILSKUDD.name,
+            Engangsbeløptype.SÆRBIDRAG.name,
+        )
     }
 }
