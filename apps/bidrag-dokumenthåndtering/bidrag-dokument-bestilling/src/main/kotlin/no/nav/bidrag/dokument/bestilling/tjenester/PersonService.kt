@@ -1,6 +1,7 @@
 package no.nav.bidrag.dokument.bestilling.tjenester
 
-import no.nav.bidrag.dokument.bestilling.SIKKER_LOGG
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.bestilling.consumer.BidragPersonConsumer
 import no.nav.bidrag.dokument.bestilling.model.FantIkkePersonException
 import no.nav.bidrag.transport.person.PersonAdresseDto
@@ -15,7 +16,7 @@ class PersonService(
         personId: String,
         rolle: String? = "UKJENT",
     ): PersonDto = bidragPersonConsumer.hentPerson(personId) ?: run {
-        SIKKER_LOGG.warn("Fant ikke person med fnr $personId og rolle $rolle")
+        secureLogger.warn { "Fant ikke person med fnr ${personId.sanitizeForLog()} og rolle ${rolle?.sanitizeForLog()}" }
         throw FantIkkePersonException("Fant ikke person med rolle $rolle")
     }
 
@@ -23,7 +24,7 @@ class PersonService(
         personId: String,
         rolle: String? = "UKJENT",
     ): PersonAdresseDto? = bidragPersonConsumer.hentAdresse(personId) ?: run {
-        SIKKER_LOGG.warn("Fant ikke adresse for person $personId med rolle $rolle")
+        secureLogger.warn { "Fant ikke adresse for person ${personId.sanitizeForLog()} med rolle ${rolle?.sanitizeForLog()}" }
         null
     }
 

@@ -3,8 +3,11 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - 'util/bidrag-alerts/**'
+  workflow_dispatch:
 
 jobs:
   detect_changes:

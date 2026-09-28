@@ -81,6 +81,7 @@ data class ManuellVedtakDto(
 data class ErLikForAlleBasertPåSak(
     val saksnummer: String,
     val erLikForAlle: Boolean,
+    val kanVurdereSamlet: Boolean,
 )
 data class VirkningstidspunktDtoV3(
     val erLikForAlle: Boolean,

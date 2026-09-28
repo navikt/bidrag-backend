@@ -1,10 +1,10 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.PersonBo
 import no.nav.bidrag.grunnlag.bo.RelatertPersonBo
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
@@ -123,7 +123,7 @@ class OppdaterRelatertePersoner(
     }
 
     private fun hentHusstandsmedlemmer(husstandsmedlemmerRequest: String, periodeFra: LocalDate?): List<PersonBo> {
-        SECURE_LOGGER.info("Kaller bidrag-person Husstandsmedlemmer med request: ${tilJson(husstandsmedlemmerRequest)}")
+        secureLogger.debug { "Kaller bidrag-person Husstandsmedlemmer med request: ${tilJson(husstandsmedlemmerRequest)}" }
 
         val husstandsmedlemListe = mutableListOf<PersonBo>()
 
@@ -139,13 +139,13 @@ class OppdaterRelatertePersoner(
             ) {
                 is RestResponse.Success -> {
                     val husstandsmedlemmerResponseDto = restResponseHusstandsmedlemmer.body
-                    SECURE_LOGGER.info(
+                    secureLogger.debug {
                         "Bidrag-person ga følgende respons på Husstandsmedlemmer for grunnlag EgneBarnIHusstanden: ${
                             tilJson(
                                 husstandsmedlemmerResponseDto,
                             )
-                        }",
-                    )
+                        }"
+                    }
 
                     if (husstandsmedlemmerResponseDto.husstandListe.isNotEmpty()) {
                         husstandsmedlemmerResponseDto.husstandListe.forEach { husstand ->
@@ -207,7 +207,7 @@ class OppdaterRelatertePersoner(
     }
 
     private fun hentBarn(forelderBarnRequest: Personident): List<PersonBo> {
-        SECURE_LOGGER.info("Kaller bidrag-person Forelder-barn-relasjon med request: ${tilJson(forelderBarnRequest)}")
+        secureLogger.debug { "Kaller bidrag-person Forelder-barn-relasjon med request: ${tilJson(forelderBarnRequest)}" }
 
         val barnListe = mutableListOf<PersonBo>()
 
@@ -221,7 +221,7 @@ class OppdaterRelatertePersoner(
                     val forelderBarnRelasjonResponse = restResponseForelderBarnRelasjon.body
 
                     if (forelderBarnRelasjonResponse.forelderBarnRelasjon.isNotEmpty()) {
-                        SECURE_LOGGER.info("Bidrag-person ga følgende respons på forelder-barn-relasjoner: ${tilJson(forelderBarnRelasjonResponse)}")
+                        secureLogger.debug { "Bidrag-person ga følgende respons på forelder-barn-relasjoner: ${tilJson(forelderBarnRelasjonResponse)}" }
 
                         forelderBarnRelasjonResponse.forelderBarnRelasjon.forEach { forelderBarnRelasjon ->
                             // Kaller bidrag-person for å hente info om fødselsdato og navn
@@ -273,7 +273,7 @@ class OppdaterRelatertePersoner(
 
     private fun hentNavnFoedselDoed(personident: Personident): NavnFødselDødDto? {
         // hent navn, fødselsdato og eventuell dødsdato for personer fra bidrag-person
-        SECURE_LOGGER.info("Kaller bidrag-person hent navn og fødselsdato for : $personident")
+        secureLogger.debug { "Kaller bidrag-person hent navn og fødselsdato for : $personident" }
         try {
             when (
                 val restResponseFoedselOgDoed =
@@ -281,7 +281,7 @@ class OppdaterRelatertePersoner(
             ) {
                 is RestResponse.Success -> {
                     val foedselOgDoedResponse = restResponseFoedselOgDoed.body
-                    SECURE_LOGGER.info("Bidrag-person ga følgende respons på hent navn og fødselsdato: ${tilJson(foedselOgDoedResponse)}")
+                    secureLogger.debug { "Bidrag-person ga følgende respons på hent navn og fødselsdato: ${tilJson(foedselOgDoedResponse)}" }
 
                     return NavnFødselDødDto(
                         foedselOgDoedResponse.navn,
