@@ -17,6 +17,7 @@ import com.github.tomakehurst.wiremock.http.Fault
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.string.shouldNotContain
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -40,17 +41,16 @@ import org.springframework.web.client.RestTemplate
 import org.wiremock.spring.ConfigureWireMock
 import org.wiremock.spring.EnableWireMock
 import org.wiremock.spring.InjectWireMock
-import java.util.UUID
 
 /**
  * Starter hele appen med wiremock i rollen som sf-henvendelse-api-proxy og bidrag-person, og
  * mock-oauth2-server i rollen som Azure.
  *
  * Grunnen til at denne finnes: de andre testene bygger objektene selv og går derfor rundt
- * produksjonsoppsettet. Det skjulte to feil - at feilhåndteringen ikke fant fram til
- * 502-handleren, og at `X-Correlation-ID` ble sendt med to verdier fordi
- * `MdcValuesPropagatingClientInterceptor` i bidrag-commons legger på sin egen. Begge kunne
- * bare avdekkes gjennom den faktiske RestTemplaten og Spring sin exception-resolver.
+ * produksjonsoppsettet. Det skjulte at feilhåndteringen ikke fant fram til 502-handleren, og
+ * det er bare gjennom den faktiske RestTemplaten at vi ser hvilken `X-Correlation-ID`
+ * interceptorene i bidrag-commons sender. Begge avhenger av RestTemplaten og Spring sin
+ * exception-resolver.
  *
  * Wiremock-oppsettet her er samtidig mock-serveren man kan kjøre appen mot lokalt.
  */
@@ -256,17 +256,27 @@ class HenvendelseIntegrasjonTest {
         respons.body!! shouldContainJson "\"avkortet\":true"
     }
 
+    /**
+     * Salesforce avviser kallet med 400 når `X-Correlation-ID` mangler eller er tom. Verdien er
+     * callId-en fra `MdcFilter`, så en `Nav-Call-Id` fra kalleren - BiSys sender et tall - skal gå
+     * uendret videre.
+     */
     @Test
-    fun `skal sende presis én X-Correlation-ID, og den skal være en UUID`() {
+    fun `skal videresende kallerens Nav-Call-Id som X-Correlation-ID`() {
+        stubHenvendelser("[]")
+
+        hentHenvendelser(FNR, callId = "8127364519").statusCode shouldBe HttpStatus.OK
+
+        korrelasjonsIderSendtTilHenvendelser() shouldBe listOf("8127364519")
+    }
+
+    @Test
+    fun `skal sende en X-Correlation-ID også når kalleren ikke sender callId`() {
         stubHenvendelser("[]")
 
         hentHenvendelser(FNR).statusCode shouldBe HttpStatus.OK
 
-        val forespørsler = wireMockServer.findAll(getRequestedFor(urlPathEqualTo(HENVENDELSESTI)))
-        forespørsler shouldHaveSize 1
-        val verdier = forespørsler.single().headers.getHeader("X-Correlation-ID").values()
-        verdier shouldHaveSize 1
-        UUID.fromString(verdier.single())
+        korrelasjonsIderSendtTilHenvendelser().single().shouldNotBeBlank()
     }
 
     @Test
@@ -457,7 +467,17 @@ class HenvendelseIntegrasjonTest {
         )
     }
 
-    private fun hentHenvendelser(ident: String) = kall("""{ "ident": "$ident" }""", medToken = true)
+    private fun korrelasjonsIderSendtTilHenvendelser() = wireMockServer
+        .findAll(getRequestedFor(urlPathEqualTo(HENVENDELSESTI)))
+        .single()
+        .headers
+        .getHeader("X-Correlation-ID")
+        .values()
+
+    private fun hentHenvendelser(
+        ident: String,
+        callId: String? = null,
+    ) = kall("""{ "ident": "$ident" }""", token(), callId)
 
     private fun kall(
         body: String,
@@ -467,6 +487,7 @@ class HenvendelseIntegrasjonTest {
     private fun kall(
         body: String,
         token: String?,
+        callId: String? = null,
     ) = klient.exchange(
         "http://localhost:$port/henvendelser",
         HttpMethod.POST,
@@ -475,6 +496,7 @@ class HenvendelseIntegrasjonTest {
             HttpHeaders().apply {
                 contentType = MediaType.APPLICATION_JSON
                 if (token != null) setBearerAuth(token)
+                if (callId != null) set("Nav-Call-Id", callId)
             },
         ),
         String::class.java,

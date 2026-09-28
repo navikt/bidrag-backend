@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.henvendelse.aop.TjenesteFeilException
-import no.nav.bidrag.henvendelse.config.RestConfig
 import no.nav.bidrag.henvendelse.dto.consumer.HenvendelseConsumerOutput
 import no.nav.bidrag.henvendelse.dto.consumer.HenvendelseslisteKonvolutt
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -34,13 +33,16 @@ private val log = KotlinLogging.logger {}
  * sufficient" utenfor `/kodeverk/`. Proxyen henter selv saksbehandlerens NAVident ut av tokenet
  * og videresender den til Salesforce i `X-ACTING-NAV-IDENT` - vi setter ingen slik header her.
  *
- * `X-Correlation-ID` er påkrevd, og settes av [KorrelasjonsIdInterceptor] på RestTemplaten.
+ * `X-Correlation-ID` er påkrevd. Swaggeren kaller den en UUID, men Salesforce sjekker bare at
+ * den ikke er tom (`ApexRestService.validate()` i navikt/crm-henvendelse), og proxyen sender
+ * den videre uendret. `MdcValuesPropagatingClientInterceptor` i bidrag-commons setter den til
+ * callId-en for forespørselen, altså den kallende appens `Nav-Call-Id` om den sendte en.
  *
  * ### Forespørsel
  * ```
  * GET /api/henvendelseinfo/henvendelseliste?aktorid=2000012345678&pageSize=100
  * Authorization: Bearer <on-behalf-of-token>
- * X-Correlation-ID: 4f8b1c2e-1f7a-4a3e-9c1b-8d2f6a5b0c31
+ * X-Correlation-ID: 26f640fdb6d64ec093ab46486b01421d-bidrag-henvendelse
  * ```
  *
  * ### Svar (200) - forkortet
@@ -73,7 +75,7 @@ private val log = KotlinLogging.logger {}
 @Service
 class HenvendelseConsumer(
     @param:Value($$"${HENVENDELSE_URL}") private val henvendelseUrl: URI,
-    @param:Qualifier(RestConfig.BEAN_HENVENDELSE_REST_TEMPLATE) restTemplate: RestOperations,
+    @param:Qualifier("azure") restTemplate: RestOperations,
 ) : AbstractRestClient(restTemplate, "sf-henvendelse-api") {
     fun hentHenvendelser(aktørid: String): Henvendelsesliste {
         val uri = UriComponentsBuilder
