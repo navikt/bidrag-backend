@@ -162,6 +162,22 @@ class VedtakshendelseServiceTest {
         verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
     }
 
+    @Test
+    fun `skal opprette endring av mottaker med vedtakets mottaker`() {
+        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 1) {
+            endreMottakerService.opprettEndreMottaker(
+                vedtakId = 123,
+                sakId = any(),
+                barnIdent = any(),
+                nyMottakerIdent = any(),
+            )
+        }
+    }
+
     private fun opprettVedtakshendelse(
         vedtakstype: String = "INNKREVING",
         innkrevingstype: String = "MED_INNKREVING",

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.HttpServerErrorException
 import java.time.LocalDateTime
 
@@ -64,6 +65,11 @@ class EndreMottakerService(
             return
         }
 
+        if (persistenceService.finnesEldreIkkeGodkjentEndreMottaker(endreMottaker)) {
+            LOGGER.info { "Endring av mottaker (id: $id) har eldre ikke-godkjente endringer på saken. Overfører ikke ennå." }
+            return
+        }
+
         if (overføringErBlokkert()) {
             LOGGER.info { "Overføring av endring av mottaker (id: $id) er blokkert av driftsavvik/vedlikeholdsmodus. Overføres ved neste skedulerte kjøring." }
             return
@@ -83,9 +89,13 @@ class EndreMottakerService(
             endreMottaker.feilmeldingFraSkatt = null
             endreMottaker
         } catch (e: Exception) {
-            LOGGER.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer} til skatt." }
             secureLogger.error(e) { "Klarte ikke å overføre endring av mottaker (id: $id) for sak ${endreMottaker.saksnummer}, barn ${endreMottaker.barnIdent}, ny mottaker ${endreMottaker.nyMottakerIdent} til skatt." }
-            val feilmeldingFraSkatt = e.message?.take(MAKS_LENGDE_FEILMELDING)
+            val feilmeldingFraSkatt = when (e) {
+                is HttpStatusCodeException ->
+                    "${e.statusCode.value()} ${e.statusText}".take(MAKS_LENGDE_FEILMELDING)
+                is JwtTokenUnauthorizedException -> "Uautorisert kall til skatt"
+                else -> "Uventet feil ved kall til skatt"
+            }
             endreMottaker.overførtTilSkattTidspunkt = nå
             endreMottaker.godkjentAvSkattTidspunkt = null
             endreMottaker.feilmeldingFraSkatt = feilmeldingFraSkatt
@@ -94,9 +104,9 @@ class EndreMottakerService(
         persistenceService.lagreEndreMottaker(oppdatert)
     }
 
-    fun hentIkkeGodkjenteEndringer(): List<EndreMottaker> = persistenceService.hentNyesteIkkeGodkjenteEndreMottakerPerSakOgBarn()
+    fun hentIkkeGodkjenteEndringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak()
 
-    fun hentFeiledeOverføringer(): List<EndreMottaker> = persistenceService.hentNyesteIkkeGodkjenteEndreMottakerPerSakOgBarn()
+    fun hentFeiledeOverføringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak()
         .filter { it.overførtTilSkattTidspunkt != null }
 
     private fun overføringErBlokkert(): Boolean = persistenceService.harAktivtDriftsavvik(erInnlesing = false) || kravService.erVedlikeholdsmodusPåslått()

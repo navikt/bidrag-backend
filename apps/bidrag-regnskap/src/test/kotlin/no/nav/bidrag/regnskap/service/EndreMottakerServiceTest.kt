@@ -14,6 +14,7 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.regnskap.consumer.BidragReskontroConsumer
 import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.context.ApplicationEventPublisher
@@ -43,6 +44,11 @@ class EndreMottakerServiceTest {
     private val sakId = "123456"
     private val barnIdent = "11111111111"
     private val nyMottakerIdent = "22222222222"
+
+    @BeforeEach
+    fun setup() {
+        every { persistenceService.finnesEldreIkkeGodkjentEndreMottaker(any()) } returns false
+    }
 
     private fun endreMottaker(godkjent: LocalDateTime? = null, overført: LocalDateTime? = null) = EndreMottaker(
         id = id,
@@ -120,6 +126,17 @@ class EndreMottakerServiceTest {
     @Test
     fun `skal ikke overfoere naar raden allerede er godkjent`() {
         every { persistenceService.hentEndreMottaker(id) } returns endreMottaker(godkjent = LocalDateTime.now())
+
+        endreMottakerService.overførEndreMottaker(id)
+
+        verify(exactly = 0) { bidragReskontroConsumer.endreRmForSak(any(), any(), any()) }
+        verify(exactly = 0) { persistenceService.lagreEndreMottaker(any()) }
+    }
+
+    @Test
+    fun `skal ikke overfoere naar en eldre endring paa saken ikke er godkjent`() {
+        every { persistenceService.hentEndreMottaker(id) } returns endreMottaker()
+        every { persistenceService.finnesEldreIkkeGodkjentEndreMottaker(any()) } returns true
 
         endreMottakerService.overførEndreMottaker(id)
 

@@ -126,7 +126,7 @@ Se [AvstemmingsfilerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendels
 
 ### Endring av mottaker
 Ved vedtak av type `ENDRING_MOTTAKER` oppdaterer bidrag-regnskap regnskapsmottaker (RM) i ELIN via bidrag-reskontro sitt `/endreRmForSak`-endepunkt (saksnummer, barn og ny mottaker – ingen perioder, kun gjeldende mottaker settes).
-Hvert vedtak lagres som en egen historikkrad i `endre_mottaker`-tabellen og forsøkes overført umiddelbart. Fordi ELIN er ustabilt, resendes ikke-godkjente endringer også skedulert. Siden ELIN kun lagrer gjeldende mottaker, resendes kun den nyeste ikke-godkjente raden per (sak, barn), slik at eldre, overkjørte endringer ikke tilbakestiller RM (håndterer f.eks. A→B→A). En gang per dag varsles det i Slack dersom det finnes endringer som fremdeles ikke er godkjent av skatt.
+Hvert vedtak lagres som en egen historikkrad i `endre_mottaker`-tabellen og forsøkes overført umiddelbart. Fordi ELIN er ustabilt, resendes ikke-godkjente endringer også skedulert. Endringer per sak sendes i samme rekkefølge som vedtakene ble mottatt, slik at en nyere endring ikke kan overskrive en eldre endring som fortsatt venter på behandling. En gang per dag varsles det i Slack dersom det finnes endringer som fremdeles ikke er godkjent av skatt.
 Se [EndreMottakerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendelse/schedule/krav/EndreMottakerScheduler.kt).
 
 ### Vedlikeholdsmodus
