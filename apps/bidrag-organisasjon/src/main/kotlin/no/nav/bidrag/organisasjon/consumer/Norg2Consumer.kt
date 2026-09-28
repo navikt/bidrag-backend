@@ -42,18 +42,19 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
 
     @Cacheable(ARBEIDSFORDELING_ENHET)
     fun hentArbeidsfordelingForEnhet(enhetsnummer: Enhetsnummer): List<EnhetArbeidsfordelingRespons>? {
-        LOGGER.info { "NORG2 hent enhetinfo for enhet ${enhetsnummer.toString().sanitizeForLog()}" }
+        val trygtEnhetsnummer = enhetsnummer.tilTrygtVerdi()
+        LOGGER.info { "NORG2 hent enhetinfo for enhet ${trygtEnhetsnummer.sanitizeForLog()}" }
         return try {
             val responseType = object : ParameterizedTypeReference<List<EnhetArbeidsfordelingRespons>>() {}
             restTemplate.exchange(
-                "/enhet/$enhetsnummer/arbeidsfordeling",
+                "/enhet/$trygtEnhetsnummer/arbeidsfordeling",
                 HttpMethod.GET,
                 createRequestEntity<Void>(),
                 responseType,
             ).body
         } catch (e: HttpClientErrorException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
-                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", enhetsnummer), e)
+                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", trygtEnhetsnummer), e)
             }
             val melding = "Feil ved kall til NORG2 Arbeidsfordeling API: " + e.message + ". Response body: " + e.responseBodyAsString
             // Logges ikke lokalt her - ArbeidsfordelingConsumerException fanges og logges av
@@ -63,13 +64,14 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
     }
 
     fun hentEnhetInfo(enhetsnummer: Enhetsnummer): EnhetInfoResponse {
-        LOGGER.info { "NORG2 hent enhetinfo for enhet ${enhetsnummer.toString().sanitizeForLog()}" }
+        val trygtEnhetsnummer = enhetsnummer.tilTrygtVerdi()
+        LOGGER.info { "NORG2 hent enhetinfo for enhet ${trygtEnhetsnummer.sanitizeForLog()}" }
         return try {
-            val response = restTemplate.exchange("/enhet/$enhetsnummer", HttpMethod.GET, createRequestEntity<Void>(), EnhetInfoResponse::class.java)
+            val response = restTemplate.exchange("/enhet/$trygtEnhetsnummer", HttpMethod.GET, createRequestEntity<Void>(), EnhetInfoResponse::class.java)
             response.body!!
         } catch (e: HttpClientErrorException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
-                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", enhetsnummer), e)
+                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", trygtEnhetsnummer), e)
             }
             val melding = "Feil ved kall til NORG2 Arbeidsfordeling API: " + e.message + ". Response body: " + e.responseBodyAsString
             // Logges ikke lokalt her - se kommentar i hentArbeidsfordelingForEnhet over.
@@ -132,6 +134,18 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
         ObjectMapper().findAndRegisterModules().readTree(e.responseBodyAsString)["message"].asText()
     } catch (_: Exception) {
         e.responseBodyAsString
+    }
+
+    /**
+     * Validerer enhetsnummeret og utleder en ny verdi via et heltall før det settes inn i URL-en mot NORG2.
+     *
+     * Valideringen alene er ikke nok: CodeQL (java/ssrf) sporer taint gjennom en boolsk sjekk som
+     * [Enhetsnummer.gyldig]. Omveien via [Int] gir en primitiv verdi, som CodeQL regner som en sanitizer,
+     * og "%04d" gir de samme fire sifrene tilbake, inkludert ledende nuller.
+     */
+    private fun Enhetsnummer.tilTrygtVerdi(): String {
+        require(gyldig()) { "Ugyldig enhetsnummer, må bestå av nøyaktig fire siffer" }
+        return "%04d".format(verdi.toInt())
     }
 
     companion object {
