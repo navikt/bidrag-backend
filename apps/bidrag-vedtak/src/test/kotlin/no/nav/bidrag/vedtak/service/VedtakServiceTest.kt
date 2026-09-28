@@ -2,8 +2,8 @@ package no.nav.bidrag.vedtak.service
 
 import io.mockk.every
 import io.mockk.mockkObject
-import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
