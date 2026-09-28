@@ -116,12 +116,24 @@ class BehandleBehandlingHendelseService(
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
+            oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
+    private fun oppdaterOppgaverMedBehandlingId(
+        åpneOppgaver: List<OppgaveData>,
+        hendelse: BehandlingHendelse,
+    ) {
+        if (hendelse.behandlingsid == null) return
+        åpneOppgaver.filter { it.behandlingsid == null || it.behandlingsid != hendelse.behandlingsid?.toString() }.forEach {
+            oppgaveService.oppdaterOppgave(
+                OppdaterOppgave(it).oppdaterBehandlingsid(hendelse.behandlingsid),
+            )
+        }
+    }
     private fun overføreOppgaverTilSaksbehandlerSomOpprettetFF(
         hendelse: BehandlingHendelse,
         behandling: Behandling,

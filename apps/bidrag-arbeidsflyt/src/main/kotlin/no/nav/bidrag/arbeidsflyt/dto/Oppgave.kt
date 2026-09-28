@@ -428,6 +428,7 @@ open class PatchOppgaveRequest(
     open var tildeltEnhetsnr: String? = null,
     open var tilordnetRessurs: String? = null,
     open var beskrivelse: String? = null,
+    open var metadata: Map<String, String>? = null,
 ) {
     fun leggOppgaveIdPa(contextUrl: String) = "$contextUrl/$id".replace("//", "/")
 
@@ -492,6 +493,15 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
 
     fun ferdigstill(): OppdaterOppgave {
         status = "FERDIGSTILT"
+        _hasChanged = true
+        return this
+    }
+
+    fun oppdaterBehandlingsid(behandlingsid: Long?): OppdaterOppgave {
+        if (behandlingsid == null) return this
+        metadata =
+            (oppgaveDataForHendelse?.metadata ?: emptyMap()) +
+            mapOf(METADATA_NØKKEL_BEHANDLING_ID to behandlingsid.toString())
         _hasChanged = true
         return this
     }
