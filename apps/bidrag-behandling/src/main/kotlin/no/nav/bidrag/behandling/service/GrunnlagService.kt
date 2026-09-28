@@ -2060,6 +2060,7 @@ class GrunnlagService(
 
         val bmUtenEndringer =
             behandling.alleBidragsmottakere
+                .filter { bm -> bm.id != null }
                 .filter { bm ->
                     endringerSomMåBekreftesBM.none { it.gjelderBM.id == bm.id }
                 }.map {

@@ -226,7 +226,8 @@ fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
         if (stønadstype == Stønadstype.BIDRAG18AAR) {
             maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
         } else {
-            behandling.eldsteVirkningstidspunkt.toYearMonth()
+            // Virkning kan ikke vær før barnet er født
+            maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
         }
     if (behandling.erIForholdsmessigFordeling) {
         if (rolletype == Rolletype.BIDRAGSMOTTAKER) {

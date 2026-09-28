@@ -3,9 +3,8 @@ package no.nav.bidrag.commons.web.client
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Metrics
 import io.micrometer.core.instrument.Timer
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -30,8 +29,6 @@ abstract class AbstractRestClient(
         Metrics.counter("$metricsPrefix.response", "status", "success")
     protected val responsFailure: Counter =
         Metrics.counter("$metricsPrefix.response", "status", "failure")
-
-    protected val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     protected inline fun <reified T : Any> getForEntity(uri: URI): T? = getForEntity(uri, null)
 
@@ -145,8 +142,7 @@ abstract class AbstractRestClient(
         uri: URI,
     ): T? {
         if (!respons.statusCode.is2xxSuccessful) {
-            secureLogger.debug { "Kall mot $uri feilet:  ${respons.body}" }
-            log.debug("Kall mot $uri feilet: ${respons.statusCode}")
+            secureLogger.debug { "Kall mot ${uri.sanitizeForLog()} feilet:  ${respons.body.sanitizeForLog()}" }
             throw HttpServerErrorException(
                 respons.statusCode,
                 "",
@@ -169,18 +165,12 @@ abstract class AbstractRestClient(
             return validerOgPakkUt(responseEntity, uri)
         } catch (e: RestClientResponseException) {
             responsFailure.increment()
-            log.warn("RestClientResponseException ved kall mot uri=$uri. ${hentFeilmeldingFraWarningHeader(e)}", e)
             throw e
         } catch (e: Exception) {
             responsFailure.increment()
-            log.warn("Feil ved kall mot uri=$uri", e)
             throw RuntimeException("Feil ved kall mot uri=$uri", e)
         }
     }
-
-    private fun hentFeilmeldingFraWarningHeader(exception: RestClientResponseException): String = exception.responseHeaders?.get("Warning")?.let {
-        "Detaljer: ${it.joinToString(", ")}"
-    } ?: ""
 
     override fun toString(): String = this::class.simpleName + " [operations=" + operations + "]"
 }

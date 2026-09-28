@@ -1,0 +1,170 @@
+name: Klargjør biblioteker
+description: Hent ferdigbygde biblioteker, eller bygg dem som mangler i cachen.
+inputs:
+  grupper:
+    description: Bibliotekgrupper, skilt med komma. Tom verdi installerer bare parent-POM-er.
+    required: true
+  artefaktnavn:
+    description: Navn på artefaktet med ferdige biblioteker fra denne kjøringen. Tom verdi bruker cache eller bygger ved behov.
+    default: ''
+  skip_tester:
+    description: Hopp over tester ved manuell deploy til q1/q2. Bruker en egen cache.
+    default: 'false'
+  felles_endret:
+    description: Om kjøringen har endringer under libs/bidrag-felles. Uendret felles bygges uten testkompilering og testkjøring.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Finn bibliotekgruppene som trengs
+      id: grupper
+      shell: bash
+      env:
+        LIBRARY_GROUPS: ${{ inputs.grupper }}
+        SKIP_TESTS: ${{ inputs.skip_tester }}
+        FELLES_ENDRET: ${{ inputs.felles_endret }}
+      run: |
+        felles=false
+        beregn=false
+        oppgave=false
+        IFS=, read -r -a grupper <<< "$LIBRARY_GROUPS"
+        for gruppe in "${grupper[@]}"; do
+          case "$gruppe" in
+            felles) felles=true ;;
+            beregn) felles=true; beregn=true ;;
+            oppgave) oppgave=true ;;
+            *) echo "::error::Ukjent bibliotekgruppe: $gruppe"; exit 1 ;;
+          esac
+        done
+        case "$SKIP_TESTS" in
+          true|false) ;;
+          *) echo "::error::skip_tester må være true eller false"; exit 1 ;;
+        esac
+        case "$FELLES_ENDRET" in
+          true|false) ;;
+          *) echo "::error::felles_endret må være true eller false"; exit 1 ;;
+        esac
+        test_felles=false
+        if [ "$FELLES_ENDRET" = true ] && [ "$SKIP_TESTS" = false ]; then
+          test_felles=true
+        fi
+        echo "felles=$felles" >> "$GITHUB_OUTPUT"
+        echo "beregn=$beregn" >> "$GITHUB_OUTPUT"
+        echo "oppgave=$oppgave" >> "$GITHUB_OUTPUT"
+        echo "test_felles=$test_felles" >> "$GITHUB_OUTPUT"
+        toolchain="$(mvn -Dstyle.color=never --version | sed -n '/Apache Maven /p; /Java version:/s/, runtime:.*//p' | sha256sum | cut -d' ' -f1)"
+        echo "toolchain=$toolchain" >> "$GITHUB_OUTPUT"
+    - name: Fjern gamle interne biblioteker fra Maven-cachen
+      shell: bash
+      run: |
+        repo="$HOME/.m2/repository/no/nav/bidrag"
+        rm -rf "$repo/bidrag-backend" "$repo"/bidrag-backend-* "$repo"/bidrag-beregn-* \
+          "$repo/bidrag-oppgave-client" "$repo/bidrag-oppgave-dto" \
+          "$repo/bidrag-admin" "$repo/bidrag-dokumenthandtering"
+    - name: Last ned ferdigbygde biblioteker
+      if: inputs.artefaktnavn != ''
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      with:
+        name: ${{ inputs.artefaktnavn }}
+        path: ~/.m2/repository/no/nav/bidrag
+    - name: Hent testede fellesbiblioteker fra cache
+      id: felles
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.felles == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-*
+        key: biblioteker-felles-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.grupper.outputs.toolchain }}-testet-${{ hashFiles('pom.xml', '.editorconfig', '.mvn/**', 'libs/bidrag-felles/*/pom.xml', 'libs/bidrag-felles/*/src/**', '.github/actions/klargjor-biblioteker/action.yaml') }}
+    - name: Hent fellesbiblioteker bygget uten tester fra cache
+      id: felles_uten_tester
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.felles == 'true' && steps.felles.outputs.cache-hit != 'true' && steps.grupper.outputs.test_felles == 'false'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-*
+        key: biblioteker-felles-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.grupper.outputs.toolchain }}-uten-tester-${{ hashFiles('pom.xml', '.editorconfig', '.mvn/**', 'libs/bidrag-felles/*/pom.xml', 'libs/bidrag-felles/*/src/**', '.github/actions/klargjor-biblioteker/action.yaml') }}
+    - name: Hent beregningsbiblioteker fra cache
+      id: beregn
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.beregn == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-beregn-*
+        key: biblioteker-beregn-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.grupper.outputs.toolchain }}-${{ inputs.skip_tester }}-${{ hashFiles('pom.xml', '.editorconfig', '.mvn/**', 'libs/bidrag-felles/*/pom.xml', 'libs/bidrag-felles/*/src/**', 'libs/bidrag-beregn-felles/*/pom.xml', 'libs/bidrag-beregn-felles/*/src/**', '.github/actions/klargjor-biblioteker/action.yaml') }}
+    - name: Hent oppgavebiblioteker fra cache
+      id: oppgave
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.oppgave == 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-client
+          ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-dto
+        key: biblioteker-oppgave-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.grupper.outputs.toolchain }}-${{ inputs.skip_tester }}-${{ hashFiles('pom.xml', '.editorconfig', '.mvn/**', 'libs/bidrag-oppgave-client/pom.xml', 'libs/bidrag-oppgave-client/src/**', 'libs/bidrag-oppgave-dto/pom.xml', 'libs/bidrag-oppgave-dto/src/**', '.github/actions/klargjor-biblioteker/action.yaml') }}
+    - name: Bygg bibliotekene som mangler i cachen
+      if: inputs.artefaktnavn == ''
+      shell: bash
+      env:
+        FELLES: ${{ steps.grupper.outputs.felles }}
+        BEREGN: ${{ steps.grupper.outputs.beregn }}
+        OPPGAVE: ${{ steps.grupper.outputs.oppgave }}
+        FELLES_CACHE: ${{ steps.felles.outputs.cache-hit == 'true' || steps.felles_uten_tester.outputs.cache-hit == 'true' }}
+        BEREGN_CACHE: ${{ steps.beregn.outputs.cache-hit }}
+        OPPGAVE_CACHE: ${{ steps.oppgave.outputs.cache-hit }}
+        SKIP_TESTS: ${{ inputs.skip_tester }}
+        TEST_FELLES: ${{ steps.grupper.outputs.test_felles }}
+        FELLES_MODULER: >-
+          libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
+        BEREGN_MODULER: >-
+          libs/bidrag-beregn-felles/bidrag-beregn-core,libs/bidrag-beregn-felles/bidrag-beregn-forskudd,libs/bidrag-beregn-felles/bidrag-beregn-boforhold,libs/bidrag-beregn-felles/bidrag-beregn-inntekt,libs/bidrag-beregn-felles/bidrag-beregn-sivilstand,libs/bidrag-beregn-felles/bidrag-beregn-særbidrag,libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering,libs/bidrag-beregn-felles/bidrag-beregn-vedtak,libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag
+        OPPGAVE_MODULER: libs/bidrag-oppgave-client,libs/bidrag-oppgave-dto
+      run: |
+        # Installer parent-POM-ene uten å bygge appene som arver fra dem.
+        prosjekter=".,apps/bidrag-admin,apps/bidrag-dokumenthåndtering"
+        bygget=""
+        if [ "$FELLES" = true ] && [ "$FELLES_CACHE" != true ]; then
+          prosjekter+=",$FELLES_MODULER"
+          if [ "$TEST_FELLES" = false ]; then
+            # Eget kall slik at testene i beregn og oppgave ikke påvirkes.
+            mvn -B -q -T 1C -pl "$prosjekter" -Dmaven.test.skip=true install
+            bygget="$prosjekter"
+            prosjekter=""
+            echo "Felles ble bygget uten testkompilering og testkjøring." >> "$GITHUB_STEP_SUMMARY"
+          fi
+        fi
+        if [ "$BEREGN" = true ] && [ "$BEREGN_CACHE" != true ]; then
+          prosjekter="${prosjekter:+$prosjekter,}$BEREGN_MODULER"
+        fi
+        if [ "$OPPGAVE" = true ] && [ "$OPPGAVE_CACHE" != true ]; then
+          prosjekter="${prosjekter:+$prosjekter,}$OPPGAVE_MODULER"
+        fi
+        if [ -n "$prosjekter" ]; then
+          args=(-B -q -T 1C -pl "$prosjekter")
+          if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
+          # Ikke -am: øvrige biblioteker er allerede hentet fra cache eller bygget over.
+          mvn "${args[@]}" install
+          bygget="${bygget:+$bygget,}$prosjekter"
+        fi
+        echo "Maven bygget disse modulene: \`$bygget\`. Resten av bibliotekene ble hentet fra cache." >> "$GITHUB_STEP_SUMMARY"
+    - name: Lagre testede fellesbiblioteker i cache
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.felles == 'true' && steps.grupper.outputs.test_felles == 'true' && steps.felles.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-*
+        key: ${{ steps.felles.outputs.cache-primary-key }}
+    - name: Lagre fellesbiblioteker bygget uten tester i cache
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.felles == 'true' && steps.grupper.outputs.test_felles == 'false' && steps.felles.outputs.cache-hit != 'true' && steps.felles_uten_tester.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-backend-*
+        key: ${{ steps.felles_uten_tester.outputs.cache-primary-key }}
+    - name: Lagre beregningsbiblioteker i cache
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.beregn == 'true' && steps.beregn.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.m2/repository/no/nav/bidrag/bidrag-beregn-*
+        key: ${{ steps.beregn.outputs.cache-primary-key }}
+    - name: Lagre oppgavebiblioteker i cache
+      if: inputs.artefaktnavn == '' && steps.grupper.outputs.oppgave == 'true' && steps.oppgave.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-client
+          ~/.m2/repository/no/nav/bidrag/bidrag-oppgave-dto
+        key: ${{ steps.oppgave.outputs.cache-primary-key }}

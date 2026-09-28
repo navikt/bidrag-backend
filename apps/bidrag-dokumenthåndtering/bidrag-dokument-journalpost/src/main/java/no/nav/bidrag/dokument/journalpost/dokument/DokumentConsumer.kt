@@ -1,8 +1,9 @@
 package no.nav.bidrag.dokument.journalpost.dokument
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.annotation.Timed
 import jakarta.activation.DataHandler
-import no.nav.bidrag.dokument.journalpost.BidragDokumentJournalpost.SECURE_LOGGER
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.journalpost.dto.Dokumentbestilling
 import no.nav.bidrag.dokument.journalpost.exception.DokumentErIkkeRTFException
 import no.nav.bidrag.dokument.journalpost.exception.DokumentetErIkkePdfException
@@ -10,14 +11,10 @@ import no.nav.bidrag.dokument.journalpost.exception.HentingAvDokumentFeiletExcep
 import no.nav.tjenester.brevogarkiv.dokumentbehandling.DokumentbehandlingPortType
 import no.nav.tjenester.brevogarkiv.dokumentbehandling.HentDokumentRequest
 import org.apache.commons.io.IOUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component
 import java.io.IOException
-import java.io.InputStreamReader
-import java.nio.charset.Charset
 import java.util.Optional
 
 @Component
@@ -31,19 +28,19 @@ class DokumentConsumer(
     )
     @Timed("hentDokumentRTF")
     fun henteDokumentRTF(dokumentbestilling: Dokumentbestilling): Optional<ByteArray> {
-        LOGGER.info("Henter RTF dokument med brevreferanse ${dokumentbestilling.brevreferanse} fra midlertidig brevlager")
+        LOGGER.debug { "Henter RTF dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager" }
 
         val hentDokumentRequest = HentDokumentRequest()
         hentDokumentRequest.brevreferanse = dokumentbestilling.brevreferanse
         hentDokumentRequest.systemId = dokumentbestilling.systemId
         hentDokumentRequest.token = dokumentbestilling.token
 
-        LOGGER.info("SystemId i hentDokumentRequest: ${hentDokumentRequest.systemId}")
+        LOGGER.debug { "SystemId i hentDokumentRequest: ${hentDokumentRequest.systemId.sanitizeForLog()}" }
         try {
             val dokumentrespons = port.hentDokument(hentDokumentRequest)
-            LOGGER.info(
-                "Dokument detaljer: contentType: ${dokumentrespons.dokumentData.contentType}, name: ${dokumentrespons.dokumentData.name}",
-            )
+            LOGGER.debug {
+                "Dokument detaljer: contentType: ${dokumentrespons.dokumentData.contentType?.sanitizeForLog()}, name: ${dokumentrespons.dokumentData.name?.sanitizeForLog()}"
+            }
             val returnertDokument = dokumentrespons.dokumentData
             verifiserErRTFDokument(returnertDokument)
             return tilByteArray(returnertDokument)
@@ -67,15 +64,17 @@ class DokumentConsumer(
     )
     @Timed("hentDokument")
     fun henteDokument(dokumentbestilling: Dokumentbestilling): Optional<ByteArray> {
-        LOGGER.info("Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse} fra midlertidig brevlager")
-        LOGGER.info("SystemId for dokumentbestilling: ${dokumentbestilling.systemId}")
+        LOGGER.debug {
+            "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
+                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}"
+        }
 
         val hentDokumentRequest = HentDokumentRequest()
         hentDokumentRequest.brevreferanse = dokumentbestilling.brevreferanse
         hentDokumentRequest.systemId = dokumentbestilling.systemId
         hentDokumentRequest.token = dokumentbestilling.token
 
-        LOGGER.info("SystemId i hentDokumentRequest: ${hentDokumentRequest.systemId}")
+        LOGGER.debug { "SystemId i hentDokumentRequest: ${hentDokumentRequest.systemId.sanitizeForLog()}" }
         try {
             val dokumentrespons = port.hentDokument(hentDokumentRequest)
             val returnertDokument = dokumentrespons.dokumentData
@@ -101,8 +100,10 @@ class DokumentConsumer(
     )
     @Timed("erFerdigstilt")
     fun erFerdigstilt(dokumentbestilling: Dokumentbestilling): Boolean {
-        LOGGER.debug("Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse} fra midlertidig brevlager")
-        LOGGER.debug("SystemId for dokumentbestilling: ${dokumentbestilling.systemId}")
+        LOGGER.debug {
+            "Henter dokument med brevreferanse ${dokumentbestilling.brevreferanse.sanitizeForLog()} fra midlertidig brevlager." +
+                "\nSystemId for dokumentbestilling: ${dokumentbestilling.systemId.sanitizeForLog()}"
+        }
 
         val hentDokumentRequest = HentDokumentRequest()
         hentDokumentRequest.brevreferanse = dokumentbestilling.brevreferanse
@@ -144,11 +145,11 @@ class DokumentConsumer(
 
     @Throws(IOException::class)
     private fun tilByteArray(dataHandler: DataHandler): Optional<ByteArray> {
-        LOGGER.info("Dokument hentet fra midlertidig brevlager, konverterer til byte array")
+        LOGGER.debug { "Dokument hentet fra midlertidig brevlager, konverterer til byte array" }
         return Optional.of(IOUtils.toByteArray(dataHandler.inputStream))
     }
 
     companion object {
-        private val LOGGER: Logger = LoggerFactory.getLogger(DokumentConsumer::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

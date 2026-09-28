@@ -37,10 +37,10 @@
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <slack-api.version>1.50.0</slack-api.version>
+    <slack-api.version>1.51.0</slack-api.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <mockk.version>1.14.11</mockk.version>
     <kotest.version>6.2.4</kotest.version>
     <!-- dependencies -->
@@ -232,7 +232,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.0</version>
         <configuration>
           <flattenMode>defaults</flattenMode>
           <updatePomFile>true</updatePomFile>

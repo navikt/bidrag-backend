@@ -57,6 +57,9 @@ azure_access_inbound:
   - application: bidrag-localauth
     namespace: bidrag
     cluster: dev-gcp
+  - application: bidrag-henvendelse-q2
+    namespace: bidrag
+    cluster: dev-gcp
 unleash:
   env: development
   secret_name: bidrag-tilgangskontroll-unleash-api-token

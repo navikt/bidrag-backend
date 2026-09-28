@@ -2,6 +2,16 @@ name: Bygg og deploy
 on:
   workflow_call:
     inputs:
+      bibliotekgrupper:
+        required: false
+        type: string
+        default: felles
+        description: Bibliotekgrupper appen trenger, skilt med komma (felles, beregn, oppgave). Bruk tom verdi for apper uten interne biblioteker.
+      bibliotekartefakt:
+        required: false
+        type: string
+        default: ''
+        description: Navn på artefaktet med ferdige biblioteker fra denne kjøringen. Tom verdi henter fra cache eller bygger bibliotekene appen trenger.
       java-version:
         required: false
         type: string
@@ -66,7 +76,7 @@ on:
         required: false
         type: string
         default: -B -fae
-        description: Ekstra options ved kjøring av maven bygget. Dette kan være lag eller profiler. Default -B (Batchmode, non-interactive), -fae (Fail at end).
+        description: Maven-argumenter med -pl for appmodulen. Ikke bruk -am, bibliotekene er allerede klargjort.
       maven_cache_paths:
         required: false
         type: string
@@ -80,7 +90,7 @@ on:
         required: false
         type: string
         default: src/**/*.kt
-        description: Path relativt til repo-rot hvor ktlint skal kjøre, f.eks. "apps/bidrag-oppgave/src/**/*.kt libs/bidrag-oppgave-dto/src/**/*.kt".
+        description: Filer som skal sjekkes med ktlint, relativt til roten av repoet. Bibliotekene sjekkes i sitt eget bygg.
       ktlint_version:
         required: false
         type: string
@@ -115,20 +125,6 @@ on:
         description: "Docker image digest"
         value: ${{ jobs.bygg_test_og_image.outputs.digest }}
 
-env:
-  # De 5 bidrag-felles-modulene som (nesten) alle app-moduler avhenger av med
-  # ${project.version} (SNAPSHOT, aldri reelt publisert). Uten dette måtte hver av de
-  # 32 app-pipelinene kompilert (og delvis testet) disse fra kildekode på nytt via
-  # `-pl app -am`, uansett om bidrag-felles faktisk var endret. Nå caches ferdig
-  # installerte jar-er på tvers av alle app-workflows, nøkkelet på innholdet i
-  # libs/bidrag-felles/**, og bygges kun på nytt når det innholdet faktisk endres.
-  FELLES_MODULER: >-
-    libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
-  # De 9 bidrag-beregn-felles-modulene caches på samme måte som FELLES_MODULER over,
-  # nøkkelet på innholdet i libs/bidrag-beregn-felles/**.
-  BEREGN_FELLES_MODULER: >-
-    libs/bidrag-beregn-felles/bidrag-beregn-core,libs/bidrag-beregn-felles/bidrag-beregn-forskudd,libs/bidrag-beregn-felles/bidrag-beregn-boforhold,libs/bidrag-beregn-felles/bidrag-beregn-inntekt,libs/bidrag-beregn-felles/bidrag-beregn-sivilstand,libs/bidrag-beregn-felles/bidrag-beregn-særbidrag,libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering,libs/bidrag-beregn-felles/bidrag-beregn-vedtak,libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag
-
 jobs:
   # Bygger, kjører tester og lager Docker-image. Kjører uansett om det skal deploye eller ikke, slik at
   # PR-er alltid får bygg+test-feedback.
@@ -152,7 +148,26 @@ jobs:
         if: inputs.skip_tester
         run: echo "::warning::Deploy tvinges gjennom av ${{ github.actor }} med tester og ktlint hoppet over (skip_tester=true)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          fetch-depth: ${{ inputs.bibliotekartefakt == '' && '0' || '1' }}
+      - name: Sjekk om felles er endret
+        if: inputs.bibliotekartefakt == ''
+        id: felles_endringer
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$REF" = refs/heads/main ]; then
+            filer="$(git diff-tree --root --no-commit-id --name-only --no-renames -r --diff-merges=first-parent HEAD -- libs/bidrag-felles/)"
+          else
+            base="$(git merge-base HEAD refs/remotes/origin/main)"
+            filer="$(git diff --name-only --no-renames "$base" HEAD -- libs/bidrag-felles/)"
+          fi
+          if [ -n "$filer" ]; then
+            echo "endret=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "endret=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           java-version: ${{ inputs.java-version }}
           distribution: 'temurin'
@@ -184,53 +199,13 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
-      # Delt cache for de ferdig installerte bidrag-felles-artefaktene, nøkkelet på
-      # innholdet i libs/bidrag-felles/** uavhengig av hvilken app som bygges. Denne
-      # cachen gjenbrukes på tvers av alle workflows, slik at bidrag-felles kun
-      # bygges fra kildekode når den faktisk endres.
-      - name: Gjenopprett cache for bidrag-felles-artefakter
-        id: felles_cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: Klargjør bibliotekene appen trenger
+        uses: ./.github/actions/klargjor-biblioteker
         with:
-          path: |
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-domene
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-transport
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-commons-test
-            ~/.m2/repository/no/nav/bidrag/bidrag-backend-generer-testdata
-          key: felles-m2-${{ hashFiles('libs/bidrag-felles/**') }}
-      # Bygger, installerer og tester bidrag-felles-modulene i det lokale Maven-repoet
-      # ved cache-miss Merk: siden alle app-workflows som avhenger av
-      # bidrag-felles trigges av samme push når libs/bidrag-felles/** endres, vil flere
-      # av dem kunne cache-misse og bygge+teste felles samtidig. De neste urelaterte
-      # app-pushene vil deretter treffe den nå varme cachen.
-      - name: Installer bidrag-felles i lokalt repo (kun ved cache-miss)
-        if: steps.felles_cache.outputs.cache-hit != 'true'
-        run: mvn -B -q -T 1C -pl ${{ env.FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
-      # Delt cache for de ferdig installerte bidrag-beregn-felles-artefaktene.
-      - name: Gjenopprett cache for bidrag-beregn-felles-artefakter
-        id: beregn_felles_cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-core
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-forskudd
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-boforhold
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-inntekt
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-sivilstand
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-saerbidrag
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-indeksregulering
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-vedtak
-            ~/.m2/repository/no/nav/bidrag/bidrag-beregn-barnebidrag
-          key: beregn-felles-m2-${{ hashFiles('libs/bidrag-beregn-felles/**') }}
-      # Bygger, installerer og tester bidrag-beregn-felles-modulene ved cache-miss.
-      # Kjøres etter bidrag-felles-installasjonen over, siden beregn-felles-modulene
-      # avhenger av bidrag-felles (bidrag-domene/bidrag-commons m.fl.) og derfor må
-      # finne dem i det lokale Maven-repoet.
-      - name: Installer bidrag-beregn-felles i lokalt repo (kun ved cache-miss)
-        if: steps.beregn_felles_cache.outputs.cache-hit != 'true'
-        run: mvn -B -q -T 1C -pl ${{ env.BEREGN_FELLES_MODULER }} -am ${{ inputs.skip_tester && '-DskipTests' || '' }} install
+          grupper: ${{ inputs.bibliotekgrupper }}
+          artefaktnavn: ${{ inputs.bibliotekartefakt }}
+          skip_tester: ${{ inputs.skip_tester }}
+          felles_endret: ${{ steps.felles_endringer.outputs.endret == 'true' }}
       # Kjører ktlint direkte via CLI (ikke via Maven). Dette unngår at multi-modul-reactoren
       # må kompilere og at direkte plugin-goal-kall (f.eks. `mvn antrun:run@ktlint`)
       # feiler for moduler med interne avhengigheter
@@ -242,21 +217,44 @@ jobs:
           key: ktlint-cli-${{ inputs.ktlint_version }}
       - name: Verifiser formatering med ktlint
         if: '!inputs.skip_tester'
+        env:
+          KTLINT_VERSION: ${{ inputs.ktlint_version }}
+          KTLINT_PATHS: ${{ inputs.ktlint_paths }}
         run: |
           if [ ! -x ~/.local/bin/ktlint ]; then
             mkdir -p ~/.local/bin
-            curl -sSL -o ~/.local/bin/ktlint "https://github.com/pinterest/ktlint/releases/download/${{ inputs.ktlint_version }}/ktlint"
+            curl -fsSL -o ~/.local/bin/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
             chmod +x ~/.local/bin/ktlint
           fi
-          ~/.local/bin/ktlint ${{ inputs.ktlint_paths }}
+          read -r -a paths <<< "$KTLINT_PATHS"
+          ~/.local/bin/ktlint "${paths[@]}"
       - name: Bygg og kjør tester
         # -Dmaven.antrun.skip=true: hopper over ktlint-antrun-executionen som er bundet til
         # `verify`-fasen i rot-pom.xml. Den er allerede dekket av CLI-steget over, og
         # maven-antrun-plugin brukes kun til ktlint, så skip her påvirker ikke andre antrun-mål.
         # -DskipTests (kun når skip_tester=true): hopper i tillegg over selve testkjøringen,
         # slik at `package`/`verify` fullfører og Docker-imaget likevel kan bygges.
-        run: mvn -T 1C ${{ inputs.maven_options }} ${{ inputs.skip_tester && '-DskipTests' || '' }} clean verify -Dmaven.antrun.skip=true
-      - uses: nais/docker-build-push@8e41f1f58749b9248e376c25d33bfbdd2b1163c0 # v0
+        env:
+          MAVEN_OPTIONS: ${{ inputs.maven_options }}
+          SKIP_TESTS: ${{ inputs.skip_tester }}
+        run: |
+          read -r -a args <<< "$MAVEN_OPTIONS"
+          har_modul=false
+          for arg in "${args[@]}"; do
+            case "$arg" in
+              -pl) har_modul=true ;;
+              -am|--also-make)
+                echo "::error::Appbygg med ferdige biblioteker skal ikke bruke -am"
+                exit 1 ;;
+            esac
+          done
+          if [ "$har_modul" != true ]; then
+            echo "::error::Appbygget må velge modul med -pl"
+            exit 1
+          fi
+          if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
+          mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
+      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
         if: github.actor != 'dependabot[bot]'
         id: docker-push
         env:
@@ -270,6 +268,8 @@ jobs:
           image_suffix: ${{ inputs.image_suffix }}
           tag: ${{ inputs.tag }}
           salsa: false
+          push_image: ${{ inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod }}
+          cache_to: ${{ (inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod) && 'type=gha,mode=max' || '' }}
     outputs:
       image: ${{ steps.docker-push.outputs.image }}
       tag: ${{ steps.docker-push.outputs.tag }}
@@ -278,6 +278,9 @@ jobs:
   salsa:
     name: Generate SBOM, attest and sign image
     needs: bygg_test_og_image
+    # Attestering signerer et image i registeret. Uten opplasting finnes det ikke noe
+    # image å signere, så jobben hører sammen med de samme miljøene som deployer.
+    if: inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod
     runs-on: ubuntu-latest
     permissions:
       id-token: "write"
@@ -299,7 +302,7 @@ jobs:
           echo "REPO_NAME=$repo_name" >> $GITHUB_OUTPUT
       - name: Generate SBOM, attest and sign image
         id: attest-sign
-        uses: nais/attest-sign@65d1aaa8b7dc5913ae02b80f16f7c1cf9bad6491 # v2.0.17
+        uses: nais/attest-sign@c778867caf15ed06f2893afd5723898560b2dcc9 # v2.0.18
         with:
           image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
     outputs:
@@ -317,12 +320,12 @@ jobs:
       contents: "read"
       id-token: "write"
     concurrency:
-      group: deploy-${{ github.workflow }}-q1
+      group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-q1
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -338,12 +341,12 @@ jobs:
       contents: "read"
       id-token: "write"
     concurrency:
-      group: deploy-${{ github.workflow }}-q2
+      group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-q2
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -359,12 +362,12 @@ jobs:
       contents: "read"
       id-token: "write"
     concurrency:
-      group: deploy-${{ github.workflow }}-prod
-      cancel-in-progress: true
+      group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-prod
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
         env:
           CLUSTER: prod-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}

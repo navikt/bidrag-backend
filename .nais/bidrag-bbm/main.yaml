@@ -1,7 +1,7 @@
 name: bidrag-bbm
 min_replicas: 1
 ingresses:
-  - https://bidrag-bbm.dev.intern.nav.no
+  - https://bidrag-bbm.intern.dev.nav.no
   - https://bidrag-bbm.dev-fss-pub.nais.io
 env:
   DB_HOST: ztest.test.local

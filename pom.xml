@@ -71,6 +71,11 @@
         <kotlin.version>2.4.10</kotlin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
+        <!-- spring-boot-starter-parent 4.1.1 drar inn Tomcat 11.0.24, som er sårbar for
+             CVE-2026-65182 (security constraint bypass). Overstyres her til fikset versjon
+             siden alle moduler arver tomcat transitivt via spring-boot-starter-web/-tomcat/-validation. -->
+        <tomcat.version>11.0.25</tomcat.version>
+
         <!-- Plugin-versjoner -->
         <ktlint.version>1.8.0</ktlint.version>
         <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>

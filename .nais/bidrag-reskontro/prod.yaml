@@ -16,7 +16,7 @@ env:
   SKATT_URL: https://ske-elin-api-bisysresk.elin.innkreving.skatteetaten.no
   SKATT_HOST: ske-elin-api-bisysresk.elin.innkreving.skatteetaten.no
   MASKINPORTEN_SCOPES: "skatteetaten:barnebidragreskontro"
-  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure:
   inbound:
     rules:

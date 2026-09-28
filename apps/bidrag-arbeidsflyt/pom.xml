@@ -19,7 +19,7 @@
     <shedlock.version>7.9.0</shedlock.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <okhttp.version>5.5.0</okhttp.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <mockk.version>1.14.11</mockk.version>
     <mockito-kotlin.version>6.3.0</mockito-kotlin.version>

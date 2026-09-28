@@ -1,8 +1,8 @@
 package no.nav.bidrag.sak.security.authentication.ldap.annotation
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.sak.security.authentication.ldap.LdapUserService
 import no.nav.security.token.support.spring.EnableJwtTokenValidationConfiguration
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.FilterType
@@ -17,7 +17,7 @@ class EnableBasicAndOidcAuthenticationConfig(
     private val ldapUserService: LdapUserService,
     environment: Environment,
 ) : EnableJwtTokenValidationConfiguration(environment) {
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = KotlinLogging.logger {}
 
     private lateinit var enableBasicAuthentication: AnnotationAttributes
 
@@ -35,7 +35,7 @@ class EnableBasicAndOidcAuthenticationConfig(
     }
 
     private fun controllerInterceptor(): BasicAuthenticationControllerHandlerInterceptor {
-        logger.debug("registering basic authentication controller handler interceptor")
+        logger.debug { "registering basic authentication controller handler interceptor" }
         return BasicAuthenticationControllerHandlerInterceptor(
             ldapUserService,
         )

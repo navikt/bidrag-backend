@@ -21,7 +21,7 @@
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <okhttp.version>5.5.0</okhttp.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.4</kotest.version>

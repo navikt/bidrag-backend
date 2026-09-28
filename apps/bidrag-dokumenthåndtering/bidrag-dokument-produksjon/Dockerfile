@@ -1,17 +1,21 @@
-FROM ubuntu:26.04 AS locales
-RUN apt-get update && apt-get install -y locales
-RUN locale-gen nb_NO.UTF-8 && \
-    update-locale LANG=nb_NO.UTF-8 LANGUAGE="nb_NO:nb" LC_ALL=nb_NO.UTF-8
+# Chainguard/Wolfi-basert dev-image: kilde for nb-locale (apk) og busybox (sh/printenv),
+# siden minimal-varianten av jre-imaget verken har pakkehåndtering eller shell.
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21-dev AS tools
+USER root
+RUN apk add --no-cache glibc-locale-nb
 
-FROM gcr.io/distroless/java21
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/jre:openjdk-21
 LABEL maintainer="Team Bidrag" \
       email="bidrag@nav.no"
 
-COPY --from=busybox:1.35.0-glibc /bin/sh /bin/sh
-COPY --from=busybox:1.35.0-glibc /bin/printenv /bin/printenv
+COPY --from=tools /bin/busybox /bin/sh
+COPY --from=tools /bin/busybox /bin/printenv
+# busybox er dynamisk lenket mot libcrypt, som ikke finnes i minimal-imaget
+COPY --from=tools /usr/lib/libcrypt.so.1.1.0 /usr/lib/libcrypt.so.1.1.0
+COPY --from=tools /usr/lib/libcrypt.so.1 /usr/lib/libcrypt.so.1
 
-# Copy locale files from the locales stage
-COPY --from=locales /usr/lib/locale/ /usr/lib/locale/
+# Copy locale files from the tools-stage
+COPY --from=tools /usr/lib/locale/ /usr/lib/locale/
 
 WORKDIR /app
 
@@ -26,4 +30,6 @@ ENV SPRING_PROFILES_ACTIVE=nais
 ENV DISABLE_PDF_GET="false"
 ENV ENABLE_HTML_ENDPOINT="true"
 
+# Chainguard sitt jre-image har kun ["java"] som default entrypoint (ikke ["java","-jar"] som distroless)
+ENTRYPOINT ["java", "-jar"]
 CMD ["app.jar"]

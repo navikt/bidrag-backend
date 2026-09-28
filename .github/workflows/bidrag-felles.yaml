@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - 'libs/bidrag-felles/**'
   workflow_dispatch:
@@ -14,10 +16,26 @@ env:
     libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
 
 jobs:
+  detect_changes:
+    name: "Sjekk om bidrag-felles faktisk er endret"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "read"
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/utled-app-endringer
+        id: detect
+
   oppdater_release_draft:
     name: "Oppdater release-draft"
-    # Publiseringen skal kun skje ved push til main, ikke fra dependabot-brancher.
-    if: github.actor != 'dependabot[bot]'
+    needs: detect_changes
+    # Publiseringen skal kun skje ved push til main, ikke fra dependabot-brancher, og kun
+    # når bidrag-felles faktisk er endret og ikke bare dratt inn via merge fra main.
+    if: needs.detect_changes.outputs.changed == 'true' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: "write"
@@ -56,7 +74,7 @@ jobs:
       packages: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'

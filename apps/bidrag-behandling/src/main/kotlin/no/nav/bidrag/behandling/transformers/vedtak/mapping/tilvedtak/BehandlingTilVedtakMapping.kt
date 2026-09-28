@@ -1075,7 +1075,7 @@ class BehandlingTilVedtakMapping(
                     }.toSet()
                         .map(BaseGrunnlag::tilOpprettRequestDto)
 
-                byggOpprettVedtakRequestObjekt(request?.enhet, byggGrunnlagForSøknadsbarn).copy(
+                byggOpprettVedtakRequestObjekt(request?.enhet, søknadsbarnISøknad).copy(
                     unikReferanse = opprettUnikReferanse("søknad_$søknadsid"),
                     stønadsendringListe =
                     if (erRevurderingsbarn) {

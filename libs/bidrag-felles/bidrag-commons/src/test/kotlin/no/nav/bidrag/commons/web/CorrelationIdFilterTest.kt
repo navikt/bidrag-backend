@@ -128,13 +128,21 @@ internal class CorrelationIdFilterTest {
 
     @Test
     fun `skal legge correlation id på ThreadLocal som kan leses for konfigurasjon`() {
-        every { httpServletRequestMock.requestURI } returns "go somewhere"
+        val firstRequestMock: HttpServletRequest = mockk(relaxed = true)
+        val secondRequestMock: HttpServletRequest = mockk(relaxed = true)
+        val firstResponseMock: HttpServletResponseWrapper = mockk(relaxed = true)
+        val secondResponseMock: HttpServletResponseWrapper = mockk(relaxed = true)
+        every { firstRequestMock.requestURI } returns "go somewhere one"
+        every { secondRequestMock.requestURI } returns "go somewhere two"
+        every { firstRequestMock.method } returns "GET"
+        every { secondRequestMock.method } returns "GET"
+        every { firstRequestMock.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER) } returns null
+        every { secondRequestMock.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER) } returns null
         val aCorrelationIdThread =
-            CorrelationIdThread { correlationIdFilter.doFilter(httpServletRequestMock, httpServletResponseMock, filterChainMock) }
+            CorrelationIdThread { correlationIdFilter.doFilter(firstRequestMock, firstResponseMock, filterChainMock) }
         val anotherCorrelationIdThread =
-            CorrelationIdThread { correlationIdFilter.doFilter(httpServletRequestMock, httpServletResponseMock, filterChainMock) }
+            CorrelationIdThread { correlationIdFilter.doFilter(secondRequestMock, secondResponseMock, filterChainMock) }
         aCorrelationIdThread.start()
-        Thread.sleep(10) // to be sure the value is not from the same millis
         anotherCorrelationIdThread.start()
         aCorrelationIdThread.join()
         anotherCorrelationIdThread.join()

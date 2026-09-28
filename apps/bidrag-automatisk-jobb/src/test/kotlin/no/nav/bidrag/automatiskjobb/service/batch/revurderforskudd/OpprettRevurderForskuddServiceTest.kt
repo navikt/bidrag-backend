@@ -12,7 +12,6 @@ import no.nav.bidrag.automatiskjobb.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.automatiskjobb.persistence.entity.Barn
 import no.nav.bidrag.automatiskjobb.persistence.entity.enums.Status
 import no.nav.bidrag.automatiskjobb.persistence.repository.RevurderForskuddRepository
-import no.nav.bidrag.automatiskjobb.testdata.TestDataPerson
 import no.nav.bidrag.beregn.barnebidrag.service.external.SisteManuelleVedtak
 import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -128,6 +127,36 @@ class OpprettRevurderForskuddServiceTest {
         resultat shouldNotBe null
         verify(exactly = 1) { vedtakService.finnSisteManuelleVedtak(any()) }
         resultat?.status shouldBe Status.UBEHANDLET
+    }
+
+    @Test
+    fun `skal fjerne duplikate barn fra input før revurdering forskudd opprettes`() {
+        val kravhaver = genererFødselsnummer()
+        val skyldner = genererFødselsnummer()
+        val saksnummer = "2500001"
+        every { bidragBehandlingConsumer.hentÅpneBehandlingerForBarn(kravhaver) } returns
+            mockk<HentÅpneBehandlingerRespons> {
+                every { behandlinger } returns emptyList()
+            }
+        val cutoffTidspunkt = LocalDateTime.now().minusDays(1)
+        every { vedtakService.finnSisteManuelleVedtak(any()) } returns
+            mockk<SisteManuelleVedtak> {
+                every { vedtak.opprettetTidspunkt } returns cutoffTidspunkt.minusHours(1)
+            }
+
+        val barn =
+            mockk<Barn>().apply {
+                every { this@apply.kravhaver } returns kravhaver
+                every { this@apply.skyldner } returns skyldner
+                every { this@apply.saksnummer } returns saksnummer
+                every { this@apply.id } returns 1
+                every { this@apply.fødselsdato } returns LocalDate.now().minusYears(5)
+            }
+
+        val resultat = opprettRevurderForskuddService.opprettRevurdereForskudd(listOf(barn, barn), "batchId", cutoffTidspunkt)
+
+        resultat shouldNotBe null
+        resultat?.barn?.size shouldBe 1
     }
 
     @Test

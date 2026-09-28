@@ -1,6 +1,5 @@
 name: bidrag-sak
 ingresses:
-  - https://bidrag-sak.nais.adeo.no/
   - https://bidrag-sak.intern.nav.no
   - https://bidrag-sak.prod-fss-pub.nais.io
 database:

@@ -14,19 +14,12 @@ import no.nav.bidrag.grunnlag.exception.RestResponse
 import no.nav.tjenester.aordningen.inntektsinformasjon.ArbeidsInntektMaaned
 import no.nav.tjenester.aordningen.inntektsinformasjon.tilleggsinformasjondetaljer.Etterbetalingsperiode
 import no.nav.tjenester.aordningen.inntektsinformasjon.tilleggsinformasjondetaljer.TilleggsinformasjonDetaljerType
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Service
 
 @Service
 class InntektskomponentenService(private val inntektskomponentenConsumer: InntektskomponentenConsumer) {
-    companion object {
-        @JvmStatic
-        val LOGGER: Logger = LoggerFactory.getLogger(InntektskomponentenService::class.java)
-    }
-
     // Kaller inntektskomponenten. Prøver først å hente abonnerte inntekter. Hvis det feiler og man spør på en dato bakover i tid kastes exception.
     // Ellers gjøres det et forsøk på å kalle hentInntektListe (uten abonnement)
     fun hentInntekt(inntektListeRequest: HentInntektListeRequest): HentInntektListeResponseIntern {

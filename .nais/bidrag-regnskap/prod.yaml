@@ -44,7 +44,7 @@ env:
   BIDRAG_RESKONTRO_SCOPE: prod-gcp.bidrag.bidrag-reskontro
   BIDRAG_RESKONTRO_HOST: bidrag-reskontro.intern.nav.no
   MASKINPORTEN_SCOPES: "skatteetaten:barnebidragkrav"
-  JAVA_OPTS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
+  JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
   KONTERINGER_FORELDET_DATO: 2006-04
   SEND_KRAV_CRON: "0 */10 * * * *" #Hvert 10. minutt
   RESEND_KRAV_CRON: "0 2 4 * * *" #Hver dag kl 04:02

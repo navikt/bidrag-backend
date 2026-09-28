@@ -2,16 +2,14 @@ package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
-import no.nav.bidrag.arbeidsflyt.UnleashFeatures
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OpprettJournalforingsOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.hendelse.dto.OppgaveKafkaHendelse
 import no.nav.bidrag.arbeidsflyt.model.OppdaterOppgaveFraHendelse
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -230,7 +228,7 @@ class BehandleOppgaveHendelseService(
         oppgave: OppgaveData,
     ) {
         try {
-            SECURE_LOGGER.info(
+            secureLogger.info {
                 "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med " +
                     buildList {
                         add("oppgaveId ${oppgaveHendelse.oppgave.oppgaveId}")
@@ -241,8 +239,8 @@ class BehandleOppgaveHendelseService(
                         add("tildelt ${oppgaveHendelse.oppgave.tilordning?.navIdent} (enhet ${oppgaveHendelse.oppgave.tilordning?.enhetsnr})")
                         add("utførtAv ${oppgaveHendelse.utfortAv?.navIdent} (enhet ${oppgaveHendelse.utfortAv?.enhetsnr})")
                         add("hendelse $oppgaveHendelse")
-                    }.joinToString(", "),
-            )
+                    }.joinToString(", ")
+            }
         } catch (e: Exception) {
             LOGGER.error(e) { "Det skjedde en feil ved logging av hendelse" }
         }

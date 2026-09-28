@@ -29,6 +29,16 @@ class OpprettRevurderForskuddService(
         batchId: String,
         cutoffTidspunktForManueltVedtak: LocalDateTime,
     ): RevurderingForskudd? {
+        // Readeren kan i sjeldne tilfeller hente samme barn flere ganger for samme
+        // sak om det kommer inn ett vedtak under kjøring av batchen.
+        val barn = barn.distinctBy { it.id }.also { unike ->
+            if (unike.size != barn.size) {
+                LOGGER.warn {
+                    "Fant ${barn.size - unike.size} duplikate barn i input for sak ${barn.first().saksnummer}. " +
+                        "Fjerner duplikater før revurdering av forskudd opprettes."
+                }
+            }
+        }
         val inneværendeMåned = YearMonth.now()
         if (finnesEksisterendeRevurderingForskudd(barn.first().saksnummer, inneværendeMåned)) {
             LOGGER.info {

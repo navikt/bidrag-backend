@@ -35,15 +35,21 @@ interface BarnRepository : JpaRepository<Barn, Int> {
 
     fun findAllBySkyldner(skyldner: String): List<Barn>
 
+    /**
+     * Keyset/seek-paginering for å hente barn som skal revurderes for forskudd.
+     */
     @Query(
         "SELECT b FROM barn b WHERE b.forskuddFra IS NOT NULL " +
             "AND (b.forskuddTil IS NULL OR b.forskuddTil > :forskuddDato) " +
+            "AND (b.saksnummer > :sisteSaksnummer OR (b.saksnummer = :sisteSaksnummer AND b.id > :sisteId)) " +
             "ORDER BY b.saksnummer, b.id",
     )
-    fun findBarnSomSkalRevurdereForskudd(
+    fun finnBarnSomSkalRevurdereForskuddEtter(
         @Param("forskuddDato") forskuddDato: LocalDate,
+        @Param("sisteSaksnummer") sisteSaksnummer: String,
+        @Param("sisteId") sisteId: Int,
         pageable: Pageable,
-    ): Page<Barn>
+    ): List<Barn>
 
     @Query(
         "SELECT b FROM barn b WHERE b.forskuddFra IS NOT NULL " +

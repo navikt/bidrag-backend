@@ -70,8 +70,9 @@ class ForholdsmessigFordelingSøknadService(
         val sak = sakConsumer.hentSak(saksnummer)
         val bmFødselsnummer = hentNyesteIdent(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
 
-        val barnUtenInnkreving = løpendeBidragssak.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
-        val barnMedInnkreving = løpendeBidragssak.filter { it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
+        val løpendeBidragssakForSaksnummer = løpendeBidragssak.filter { it.saksnummer == saksnummer }
+        val barnUtenInnkreving = løpendeBidragssakForSaksnummer.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
+        val barnMedInnkreving = løpendeBidragssakForSaksnummer.filter { it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
         val ffDetaljerBarn =
             ForholdsmessigFordelingSøknadBarn(
                 søknadsid = 0, // Settes senere når søknad opprettes
@@ -367,7 +368,12 @@ class ForholdsmessigFordelingSøknadService(
         medInnkreving: Boolean,
     ): ForholdsmessigFordelingSøknadBarn {
         val bidragspliktigFnr = behandling.bidragspliktig!!.ident!!
-
+        val behandlingstema =
+            if (stønadstype == Stønadstype.BIDRAG18AAR) {
+                Behandlingstema.BIDRAG_18_ÅR
+            } else {
+                Behandlingstema.BIDRAG
+            }
         val åpenFFSøknad =
             kravhaverService.hentÅpenSøknadFFForBP(
                 bidragspliktigFnr,
@@ -396,16 +402,10 @@ class ForholdsmessigFordelingSøknadService(
             return åpenFFSøknad.tilForholdsmessigFordelingSøknad().copy(
                 søktAvType = SøktAvType.NAV_BIDRAG,
                 behandlingstype = behandling.behandlingstypeForFF,
-                behandlingstema = Behandlingstema.BIDRAG,
+                behandlingstema = behandlingstema,
                 saksnummer = saksnummer,
             )
         } else {
-            val behandlingstema =
-                if (stønadstype == Stønadstype.BIDRAG18AAR) {
-                    Behandlingstema.BIDRAG_18_ÅR
-                } else {
-                    Behandlingstema.BIDRAG
-                }
             val søknad =
                 bbmConsumer.opprettSøknader(
                     OpprettSøknadRequest(
@@ -428,6 +428,7 @@ class ForholdsmessigFordelingSøknadService(
                 behandlingstema = behandlingstema,
                 mottattDato = LocalDate.now(),
                 søknadFomDato = søktFomDato,
+                status = Behandlingstatus.UNDER_BEHANDLING,
                 søknadsid = søknad.søknadsid,
                 enhet = behandling.behandlerEnhet,
                 saksnummer = saksnummer,

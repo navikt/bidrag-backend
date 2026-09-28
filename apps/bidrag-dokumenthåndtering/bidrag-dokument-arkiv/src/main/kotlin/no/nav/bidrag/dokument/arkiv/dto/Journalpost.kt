@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.dto.DokumentSoknadDto
 import no.nav.bidrag.dokument.arkiv.model.JournalpostDataException
@@ -46,8 +45,6 @@ import org.apache.logging.log4j.util.Strings
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
-
-private val LOGGER = KotlinLogging.logger {}
 
 // Max key length is 20
 const val RETUR_DETALJER_KEY = "retur"
@@ -266,11 +263,6 @@ data class Journalpost(
                         land = landkode2,
                     )
                 }
-//                SECURE_LOGGER.info {
-//                    "Lest og mappet postadresse fra SAF ${
-//                        it.split("\n").joinToString("\\n")
-//                    } til $adresse"
-//                }
                 return adresse
             }
         } catch (e: Exception) {

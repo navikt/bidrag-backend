@@ -1,7 +1,8 @@
 package no.nav.bidrag.statistikk.hendelse
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.statistikk.SECURE_LOGGER
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.statistikk.service.BehandleHendelseService
 import no.nav.bidrag.statistikk.service.JsonMapperService
 import org.springframework.kafka.annotation.KafkaListener
@@ -21,11 +22,7 @@ open class PojoVedtakHendelseListener(
             val vedtakHendelse = jsonMapperService.mapHendelse(hendelse)
             behandeHendelseService.behandleHendelse(vedtakHendelse)
         } catch (e: Exception) {
-            LOGGER.error(e) { "Behandling av vedtakshendelse feilet, se sikker logg for mer info" }
-            SECURE_LOGGER.error(
-                "Behandling av vedtakshendelse feilet for: $hendelse",
-                e,
-            )
+            secureLogger.error(e) { "Behandling av vedtakshendelse feilet for: $hendelse".sanitizeForLog() }
             throw e
         }
     }

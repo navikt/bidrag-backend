@@ -1,6 +1,5 @@
 package no.nav.bidrag.dokument.arkiv.controller
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -18,8 +17,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController
-
-private val LOGGER = KotlinLogging.logger {}
 
 @RestController
 @Protected
@@ -71,7 +68,6 @@ class DokumentController(private val dokumentService: DokumentService) {
         @PathVariable(required = false) journalpostId: String?,
         @PathVariable(required = false) dokumentreferanse: String?,
     ): ResponseEntity<List<DokumentMetadata>> {
-        LOGGER.info { "Henter dokument for journalpost $journalpostId og dokumentId $dokumentreferanse" }
         if (journalpostId.isNullOrEmpty() && dokumentreferanse.isNullOrEmpty()) {
             return ResponseEntity
                 .badRequest()

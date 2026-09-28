@@ -11,7 +11,6 @@ import no.nav.bidrag.dokument.arkiv.dto.TilknyttetJournalpost
 import no.nav.bidrag.dokument.arkiv.model.kanIkkeHenteJournalMedUgyldigFagomrade
 import no.nav.bidrag.transport.dokument.JournalpostDto
 import no.nav.bidrag.transport.person.PersonDto
-import org.slf4j.LoggerFactory
 import java.util.Optional
 
 class JournalpostService(
@@ -56,7 +55,6 @@ class JournalpostService(
             return listOf()
         }
         val dokumentInfoId = journalpost.dokumenter[0].dokumentInfoId
-        LOGGER.info("Henter tilknyttede journalposter for journalpost ${journalpost.journalpostId} med dokumentinfoId $dokumentInfoId")
         return dokumentInfoId?.let { finnTilknyttedeJournalposter(it) } ?: emptyList()
     }
 
@@ -76,7 +74,6 @@ class JournalpostService(
             .filterNotNull()
             .filter { it != journalpostFagsakId }.toList()
         val sakerNoDuplicates = HashSet(saker).stream().toList()
-        LOGGER.info("Fant ${saker.size + 1} saker for journalpost ${journalpost.journalpostId}")
         journalpost.tilknyttedeSaker = sakerNoDuplicates
         return journalpost
     }
@@ -101,9 +98,5 @@ class JournalpostService(
             journalpost.bruker = Bruker(brukerId.verdi, BrukerType.FNR.name)
         }
         return journalpost
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(JournalpostService::class.java)
     }
 }

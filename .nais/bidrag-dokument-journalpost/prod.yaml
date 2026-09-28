@@ -2,7 +2,6 @@ name: bidrag-dokument-journalpost
 image: {{ image }}
 min_replicas: 2
 ingresses:
-  - https://bidrag-dokument-journalpost.nais.adeo.no/
   - https://bidrag-dokument-journalpost.intern.nav.no/
   - https://bidrag-dokument-journalpost.prod-fss-pub.nais.io
 kafka:

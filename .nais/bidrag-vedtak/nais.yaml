@@ -86,6 +86,8 @@ spec:
             value: "write,role,ddl"
           - name: "pgaudit.log_parameter"
             value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"
   env:
     - name: TOPIC_VEDTAK
       value: {{ kafka-topic-vedtak }}
