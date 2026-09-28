@@ -5,17 +5,41 @@ på Java 21, kjører på Nais.
 
 ## Bygg og deploy
 
-Ved pull requests og push til `main` starter
+Ved pull requests, i merge-køen og ved push til `main` starter
 [`bygg-apper.yaml`](.github/workflows/bygg-apper.yaml) bygg for appene som er
 berørt av endringene. Bibliotekene de trenger, klargjøres i én felles jobb.
 Deretter bygges og testes appene parallelt. Deploy følger miljøreglene i
 workflowen til hver app.
 
 Hvilke filer som utløser bygg av en app, står i `env.APP_PATHS` i appens
-workflow, med ett filmønster per linje. De samme filtrene brukes for push og
-PR. Endrer du et felles bibliotek, kan flere apper bli bygget, men de deler
-det samme bibliotekbygget. Endringer bare i denne README-en eller under
+workflow, med ett filmønster per linje. De samme filtrene brukes for push, PR
+og merge-kø. Endrer du et felles bibliotek, kan flere apper bli bygget, men de
+deler det samme bibliotekbygget. Endringer bare i denne README-en eller under
 `util/` starter ikke workflowen.
+
+### Merge-kø
+
+Statussjekken på en PR sier bare at greina var grønn mot main slik main så ut
+sist sjekken kjørte. Flytter main seg etterpå, kan en grønn hake være foreldet,
+og feilen oppdages først etter merge, med rød main og en app som ikke ble
+deployet.
+
+Merge-køen løser dette: GitHub bygger kandidaten merget med main-tuppen, og
+merger bare hvis bygget er grønt. Alternativet, «Require branches to be up to
+date before merging», ville tvunget alle åpne PR-er til å rebase og kjøre hele
+pipelinen på nytt for hver eneste merge. I et monorepo med 34 apper, der de
+fleste endringer treffer ulike apper, koster det langt mer byggetid enn det
+gir.
+
+Køen bygger og tester, men deployer aldri. Alle `deploy_*`-flaggene krever
+enten `workflow_dispatch` eller push til `refs/heads/main`, og en
+merge_group-kjøring er ingen av delene. Deploy skjer først når køen har merget
+og push-kjøringen på `main` er grønn.
+
+Køen må slås på i repo-innstillingene (Settings → Rules → main → «Require merge
+queue»). Required status check skal være `Alle bygg fullført`, samlejobben i
+`bygg-apper.yaml`. Alle andre sjekker som gjøres required, må også kjøre på
+`merge_group`, ellers står køen og venter på en sjekk som aldri kommer.
 
 ### Deploy manuelt
 
@@ -27,6 +51,19 @@ endret. Bibliotekene hentes fra cache eller bygges ved behov.
 Du kan hoppe over tester ved deploy til q1/q2, men ikke til prod.
 «Deploy alle til q1/q2» starter én manuell kjøring per app. Disse bruker
 bibliotekcachen, men har ikke en felles bibliotekjobb.
+
+### Docker-image
+
+Imaget lastes bare opp til registeret når kjøringen faktisk skal deploye,
+altså ved `workflow_dispatch` til q1, q2 eller prod, eller ved push til `main`.
+PR-kjøringer og merge-køen bygger imaget, men pusher det ikke. Dockerfilen og
+byggkonteksten blir altså fortsatt verifisert, uten at hver eneste PR-push
+legger igjen et image per app som ingen skal bruke.
+
+Attestering og signering (`salsa`-jobben) og eksport av Docker-lagcachen følger
+den samme regelen. Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`,
+må `push_image`, `cache_to` og `salsa`-jobben oppdateres med det nye flagget.
+En test i `test_finn_berorte_apper.py` feiler hvis du glemmer det.
 
 ### Slik deles bibliotekene
 

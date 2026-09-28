@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - 'libs/bidrag-felles/**'
   workflow_dispatch:
