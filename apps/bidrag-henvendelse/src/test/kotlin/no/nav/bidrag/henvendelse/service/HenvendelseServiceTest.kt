@@ -8,12 +8,12 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.generer.testdata.person.genererAktørid
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.henvendelse.aop.IngenTilgangException
 import no.nav.bidrag.henvendelse.consumer.BidragPersonConsumer
 import no.nav.bidrag.henvendelse.consumer.HenvendelseConsumer
 import no.nav.bidrag.henvendelse.dto.Henvendelsestype
-import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import org.hamcrest.CoreMatchers.startsWith
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
@@ -204,6 +204,6 @@ class HenvendelseServiceTest {
     companion object {
         private const val BASE_URL = "http://sf-henvendelse"
         private val FNR = genererFødselsnummer()
-        private val AKTØRID = genererAktøridMed13Siffer()
+        private val AKTØRID = genererAktørid()
     }
 }
