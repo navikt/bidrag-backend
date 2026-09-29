@@ -1,7 +1,5 @@
 package no.nav.bidrag.grunnlag.consumer.ecb
 
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCache
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCacheRepository
 import no.nav.bidrag.grunnlag.consumer.valutakurs.ECBValutakursRestKlient
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
@@ -20,7 +18,6 @@ import java.time.YearMonth
 @Import(ECBValutakursRestKlient::class)
 class ECBService(
     private val ecbValutakursRestKlient: ECBValutakursRestKlient,
-    private val ecbValutakursCacheRepository: ECBValutakursCacheRepository,
 ) {
     private val logger: Logger = LoggerFactory.getLogger(ECBService::class.java)
 
@@ -33,36 +30,24 @@ class ECBService(
     fun hentValutakurs(
         utenlandskValuta: String,
         kursDato: LocalDate,
-    ): ECBValutakursCache {
-        val valutakurs = ecbValutakursCacheRepository.findByValutakodeAndValutakursdato(utenlandskValuta, kursDato)?.firstOrNull()
-        if (valutakurs == null) {
-            logger.info("Henter valutakurs for ${utenlandskValuta.saner()} på $kursDato")
-            try {
-                val valutakurser =
-                    ecbValutakursRestKlient.hentValutakurs(Frequency.Monthly, listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }), kursDato)
-                validateExchangeRates(utenlandskValuta, kursDato, valutakurser)
-                val valutakursNOK = valutakurser.exchangeRateForCurrency(ECBConstants.NOK)!!
-                val lagretValutakurs =
-                    if (utenlandskValuta == ECBConstants.EUR) {
-                        ecbValutakursCacheRepository.save(ECBValutakursCache(kurs = valutakursNOK.kurs, valutakode = utenlandskValuta, valutakursdato = kursDato))
-                    } else {
-                        val valutakursUtenlandskValuta = valutakurser.exchangeRateForCurrency(utenlandskValuta)!!
-                        ecbValutakursCacheRepository.save(
-                            ECBValutakursCache(
-                                kurs = beregnValutakursINOK(valutakursUtenlandskValuta.kurs, valutakursNOK.kurs),
-                                valutakode = utenlandskValuta,
-                                valutakursdato = kursDato,
-                            ),
-                        )
-                    }
-
-                return lagretValutakurs
-            } catch (e: ValutakursClientException) {
-                throw ECBServiceException(e.message, e)
-            }
+    ): Valutakurs {
+        logger.info("Henter valutakurs for ${utenlandskValuta.saner()} på $kursDato")
+        try {
+            val valutakurser =
+                ecbValutakursRestKlient.hentValutakurs(Frequency.Monthly, listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }), kursDato)
+            validateExchangeRates(utenlandskValuta, kursDato, valutakurser)
+            val valutakursNOK = valutakurser.exchangeRateForCurrency(ECBConstants.NOK)!!
+            val kurs =
+                if (utenlandskValuta == ECBConstants.EUR) {
+                    valutakursNOK.kurs
+                } else {
+                    val valutakursUtenlandskValuta = valutakurser.exchangeRateForCurrency(utenlandskValuta)!!
+                    beregnValutakursINOK(valutakursUtenlandskValuta.kurs, valutakursNOK.kurs)
+                }
+            return Valutakurs(utenlandskValuta, kurs, kursDato)
+        } catch (e: ValutakursClientException) {
+            throw ECBServiceException(e.message, e)
         }
-        logger.info("Valutakurs ble hentet fra cache for ${utenlandskValuta.saner()} på $kursDato")
-        return valutakurs
     }
 
     private fun beregnValutakursINOK(

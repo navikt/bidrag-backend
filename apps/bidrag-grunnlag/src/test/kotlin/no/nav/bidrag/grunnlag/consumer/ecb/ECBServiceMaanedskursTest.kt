@@ -1,7 +1,5 @@
 package no.nav.bidrag.grunnlag.consumer.ecb
 
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCache
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCacheRepository
 import no.nav.bidrag.grunnlag.consumer.valutakurs.ECBValutakursRestKlient
 import no.nav.bidrag.grunnlag.consumer.valutakurs.config.SDMXValutakursRestKlientConfig
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
@@ -17,8 +15,7 @@ import java.time.LocalDate
 
 class ECBServiceMaanedskursTest {
     private val klient = Mockito.mock(ECBValutakursRestKlient::class.java)
-    private val cache = Mockito.mock(ECBValutakursCacheRepository::class.java)
-    private val service = ECBService(klient, cache)
+    private val service = ECBService(klient)
     private val sisteJuni = LocalDate.of(2025, 6, 30)
 
     @Test
@@ -42,27 +39,38 @@ class ECBServiceMaanedskursTest {
     }
 
     @Test
-    fun `ECB krysskurs lagres som NOK per USD`() {
+    fun `ECB krysskurs beregnes som NOK per USD`() {
         Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni)).thenReturn(
             listOf(
                 Valutakurs("NOK", BigDecimal("11.584133333333332"), sisteJuni),
                 Valutakurs("USD", BigDecimal("1.1518"), sisteJuni),
             ),
         )
-        Mockito.`when`(cache.save(Mockito.any(ECBValutakursCache::class.java))).thenAnswer { it.getArgument(0) }
-
         val kurs = service.hentValutakurs("USD", sisteJuni)
 
         assertEquals(BigDecimal("10.0574173757"), kurs.kurs)
+        assertEquals("USD", kurs.valuta)
+        assertEquals(sisteJuni, kurs.kursDato)
     }
 
     @Test
     fun `EUR bruker bare NOK-serien`() {
         Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK"), sisteJuni))
             .thenReturn(listOf(Valutakurs("NOK", BigDecimal("11.5841"), sisteJuni)))
-        Mockito.`when`(cache.save(Mockito.any(ECBValutakursCache::class.java))).thenAnswer { it.getArgument(0) }
-
         assertEquals(BigDecimal("11.5841"), service.hentValutakurs("EUR", sisteJuni).kurs)
+    }
+
+    @Test
+    fun `ECB-kurs hentes på nytt ved neste forespørsel`() {
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK"), sisteJuni))
+            .thenReturn(
+                listOf(Valutakurs("NOK", BigDecimal("11.5"), sisteJuni)),
+                listOf(Valutakurs("NOK", BigDecimal("11.6"), sisteJuni)),
+            )
+
+        assertEquals(BigDecimal("11.5"), service.hentValutakurs("EUR", sisteJuni).kurs)
+        assertEquals(BigDecimal("11.6"), service.hentValutakurs("EUR", sisteJuni).kurs)
+        Mockito.verify(klient, Mockito.times(2)).hentValutakurs(Frequency.Monthly, listOf("NOK"), sisteJuni)
     }
 
     @Test
@@ -71,6 +79,5 @@ class ECBServiceMaanedskursTest {
             .thenReturn(listOf(Valutakurs("NOK", BigDecimal("11"), sisteJuni), Valutakurs("USD", BigDecimal.ZERO, sisteJuni)))
 
         assertThrows<ECBServiceException> { service.hentValutakurs("USD", sisteJuni) }
-        Mockito.verify(cache, Mockito.never()).save(Mockito.any(ECBValutakursCache::class.java))
     }
 }

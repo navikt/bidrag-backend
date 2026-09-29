@@ -4,7 +4,6 @@ import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.grunnlag.consumer.ecb.ECBService
 import no.nav.bidrag.grunnlag.consumer.ecb.ECBServiceException
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCache
 import no.nav.bidrag.grunnlag.consumer.valutakurs.NorgesBankValutakursRestKlient
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
@@ -30,7 +29,7 @@ class HentValutakursServiceMockTest {
 
     @Test
     fun `desembers ECB-kurs brukes fra januar med én enhet valuta`() {
-        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenReturn(ECBValutakursCache(valutakode = "USD", valutakursdato = desember, kurs = BigDecimal("10.50")))
+        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenReturn(Valutakurs("USD", BigDecimal("10.50"), desember))
 
         val resultat = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.USD)))).hentetValutakursListe.single()
 
@@ -70,8 +69,8 @@ class HentValutakursServiceMockTest {
     fun `hver valuta og hvert halvår hentes med sin observasjonsmåned`() {
         val juli = LocalDate.of(2025, 7, 1)
         val juni = LocalDate.of(2025, 6, 30)
-        Mockito.`when`(ecb.hentValutakurs("EUR", desember)).thenReturn(ECBValutakursCache(valutakode = "EUR", valutakursdato = desember, kurs = BigDecimal("11")))
-        Mockito.`when`(ecb.hentValutakurs("USD", juni)).thenReturn(ECBValutakursCache(valutakode = "USD", valutakursdato = juni, kurs = BigDecimal("10")))
+        Mockito.`when`(ecb.hentValutakurs("EUR", desember)).thenReturn(Valutakurs("EUR", BigDecimal("11"), desember))
+        Mockito.`when`(ecb.hentValutakurs("USD", juni)).thenReturn(Valutakurs("USD", BigDecimal("10"), juni))
 
         val resultater = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.EUR), HentValutakurs(juli, Valutakode.USD)))).hentetValutakursListe
 
