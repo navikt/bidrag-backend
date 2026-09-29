@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
+import net.javacrumbs.shedlock.core.LockProvider
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import no.nav.bidrag.commons.cache.EnableUserCache
 import no.nav.bidrag.commons.security.api.EnableSecurityConfiguration
 import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvider
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
 import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.http.client.observation.DefaultClientRequestObservationConvention
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.retry.annotation.EnableRetry
 import org.springframework.web.client.RestTemplate
 import java.time.Duration
@@ -43,6 +46,14 @@ const val LIVE_PROFILE = "live"
 @EnableSaksbehandlernavnProvider
 @Import(CorrelationIdFilter::class, UserMdcFilter::class, DefaultCorsFilter::class, RestOperationsAzure::class)
 class BidragGrunnlagConfig {
+
+    @Bean
+    fun lockProvider(jdbcTemplate: JdbcTemplate): LockProvider = JdbcTemplateLockProvider(
+        JdbcTemplateLockProvider.Configuration.builder()
+            .withJdbcTemplate(jdbcTemplate)
+            .usingDbTime()
+            .build(),
+    )
 
     @Bean
     fun clientRequestObservationConvention() = DefaultClientRequestObservationConvention()

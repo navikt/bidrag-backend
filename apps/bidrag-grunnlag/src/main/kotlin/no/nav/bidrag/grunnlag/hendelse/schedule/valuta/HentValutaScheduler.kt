@@ -1,6 +1,9 @@
 package no.nav.bidrag.grunnlag.hendelse.schedule.valuta
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import net.javacrumbs.shedlock.core.LockAssert
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.Periode
@@ -10,53 +13,43 @@ import no.nav.bidrag.grunnlag.service.HentValutakursService
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.annotation.Scheduled
 import java.time.LocalDate
+import java.time.ZoneId
 
 private val LOGGER = KotlinLogging.logger { }
 
-// @EnableSchedulerLock(defaultLockAtMostFor = "PT10M")
 @Configuration
 @EnableScheduling
+@EnableSchedulerLock(defaultLockAtMostFor = "PT6H")
 class HentValutaScheduler(
     private val hentValutakursService: HentValutakursService,
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
 ) {
-//            @Scheduled
+    @Scheduled(cron = "0 0 5 1 1,7 *", zone = "Europe/Oslo")
+    @SchedulerLock(name = "hentValutakursgrunnlag", lockAtLeastFor = "PT15M")
     fun hentValutakurs() {
-        LOGGER.info { "Henter valutakurs" }
-        val valutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
+        LockAssert.assertLocked()
+        hentValutakurs(LocalDate.now(ZoneId.of("Europe/Oslo")))
+    }
+
+    internal fun hentValutakurs(dato: LocalDate) {
+        require(dato.dayOfMonth == 1 && dato.monthValue in listOf(1, 7)) { "Valutakursgrunnlag må starte 1. januar eller 1. juli" }
+        LOGGER.info { "Henter valutakursgrunnlag for $dato" }
+        val valutakoder = Valutakode.entries.filter { it != Valutakode.NOK && it.aktiv(dato) }
         val hentValutakursRequest = HentValutakursRequest(
             hentValutakursListe = valutakoder.map { valutakode ->
                 HentValutakurs(
-                    dato = LocalDate.now(),
+                    dato = dato,
                     valutakode = valutakode,
                 )
             },
         )
 
-        val gyldighetsperiode = lagGyldighetsperiode()
-        try {
-            val hentvalutakursResponse = hentValutakursService.hentValutakurs(hentValutakursRequest)
-            valutakursgrunnlagService.opprettValutakursgrunnlag(hentvalutakursResponse.hentetValutakursListe, gyldighetsperiode)
-
-            // TODO sett forrige grunnlag som inaktiv
-        } catch (e: NoSuchElementException) {
-            LOGGER.error(e) { "Feil ved henting av valutakurs" }
-        } catch (e: Exception) { // TODO mer spesifikk exception i service
-            LOGGER.error(e) { "Feil ved henting av valutakurs" }
-            // TODO varsle på slack
-        }
+        val gyldighetsperiode = lagGyldighetsperiode(dato)
+        val hentvalutakursResponse = hentValutakursService.hentValutakurs(hentValutakursRequest)
+        valutakursgrunnlagService.opprettValutakursgrunnlag(hentvalutakursResponse.hentetValutakursListe, gyldighetsperiode)
     }
 
-    // 1. januar til 1. juli eller 1. juli til 1. januar avhengig av når metoden kalles
-    fun lagGyldighetsperiode(): Periode<LocalDate> {
-        val nå = LocalDate.now()
-        val fom = if (nå.monthValue < 7) {
-            LocalDate.of(nå.year, 1, 1)
-        } else {
-            LocalDate.of(nå.year, 7, 1)
-        }
-
-        return Datoperiode(fom, fom.plusMonths(6))
-    }
+    internal fun lagGyldighetsperiode(dato: LocalDate): Periode<LocalDate> = Datoperiode(dato, dato.plusMonths(6))
 }
