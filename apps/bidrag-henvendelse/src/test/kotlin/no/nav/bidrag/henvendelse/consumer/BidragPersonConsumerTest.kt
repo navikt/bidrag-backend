@@ -3,9 +3,9 @@ package no.nav.bidrag.henvendelse.consumer
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.generer.testdata.person.genererAktørid
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.henvendelse.aop.PersonIkkeFunnetException
-import no.nav.bidrag.henvendelse.genererAktøridMed13Siffer
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -91,8 +91,8 @@ class BidragPersonConsumerTest {
 
     companion object {
         private val FNR = genererFødselsnummer()
-        private val AKTØRID = genererAktøridMed13Siffer()
-        private val HISTORISK_AKTØRID = genererAktøridMed13Siffer()
+        private val AKTØRID = genererAktørid()
+        private val HISTORISK_AKTØRID = genererAktørid()
     }
 }
 

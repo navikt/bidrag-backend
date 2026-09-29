@@ -19,6 +19,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotBeBlank
 import io.kotest.matchers.string.shouldNotContain
+import no.nav.bidrag.generer.testdata.person.genererAktørid
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.security.mock.oauth2.MockOAuth2Server
 import no.nav.security.mock.oauth2.token.DefaultOAuth2TokenCallback
@@ -563,7 +564,7 @@ class HenvendelseIntegrasjonTest {
 
     companion object {
         private val FNR = genererFødselsnummer()
-        private val AKTØRID = genererAktøridMed13Siffer()
+        private val AKTØRID = genererAktørid()
         private const val NAVIDENT = "Z999999"
         private const val MASKINOID = "11111111-2222-3333-4444-555555555555"
         private const val HENVENDELSESTI = "/henvendelse/api/henvendelseinfo/henvendelseliste"
