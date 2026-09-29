@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDateTime
 
 private val LOGGER = KotlinLogging.logger { }
@@ -93,7 +93,9 @@ class EndreMottakerService(
             val feilmeldingFraSkatt = when (e) {
                 is HttpStatusCodeException ->
                     "${e.statusCode.value()} ${e.statusText}".take(MAKS_LENGDE_FEILMELDING)
+
                 is JwtTokenUnauthorizedException -> "Uautorisert kall til skatt"
+
                 else -> "Uventet feil ved kall til skatt"
             }
             endreMottaker.overførtTilSkattTidspunkt = nå
