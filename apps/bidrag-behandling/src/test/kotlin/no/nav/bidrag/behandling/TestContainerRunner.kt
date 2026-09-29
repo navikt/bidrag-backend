@@ -17,7 +17,7 @@ class TestContainerRunner : SpringTestRunner() {
         @JvmStatic
         @DynamicPropertySource
         fun postgresqlProperties(registry: DynamicPropertyRegistry) {
-            TestPostgres.registrerProperties(registry)
+            TestPostgres.registrerProperties(registry, TestPostgres.testContainerRunnerDb)
         }
     }
 }

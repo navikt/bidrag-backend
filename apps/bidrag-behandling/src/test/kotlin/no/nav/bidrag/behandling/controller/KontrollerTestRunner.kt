@@ -33,7 +33,7 @@ abstract class KontrollerTestRunner : CommonTestRunner() {
         @JvmStatic
         @DynamicPropertySource
         fun postgresqlProperties(registry: DynamicPropertyRegistry) {
-            TestPostgres.registrerProperties(registry)
+            TestPostgres.registrerProperties(registry, TestPostgres.kontrollerTestRunnerDb)
             registry.add("spring.datasource.hikari.connection-timeout") { 30000 }
         }
     }
