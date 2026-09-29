@@ -68,7 +68,8 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        queries: security-and-quality
+        # security-extended kjører kun spørringer som er tagget «security»
+        queries: security-extended
 
     - name: Run manual build steps
       # Bygger hele Maven-reactoren (alle moduler) fremfor kun én app, siden CodeQL
