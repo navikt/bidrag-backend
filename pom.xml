@@ -52,6 +52,7 @@
         <module>apps/bidrag-bbm</module>
         <module>apps/bidrag-bidragskalkulator</module>
         <module>apps/bidrag-grunnlag</module>
+        <module>apps/bidrag-henvendelse</module>
         <module>apps/bidrag-organisasjon</module>
         <module>apps/bidrag-samhandler</module>
         <module>apps/bidrag-sak</module>
