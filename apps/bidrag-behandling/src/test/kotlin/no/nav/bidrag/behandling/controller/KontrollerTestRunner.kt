@@ -6,6 +6,7 @@ import io.getunleash.Unleash
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockkObject
+import no.nav.bidrag.behandling.TestPostgres
 import no.nav.bidrag.behandling.service.CommonTestRunner
 import no.nav.bidrag.behandling.utils.StubUtils
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
@@ -24,31 +25,15 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.postgresql.PostgreSQLContainer
 
 @ActiveProfiles(value = ["test", "testcontainer"])
 abstract class KontrollerTestRunner : CommonTestRunner() {
     companion object {
-        protected val postgreSqlDb =
-            PostgreSQLContainer("postgres:latest").apply {
-                withDatabaseName("bidrag-behandling")
-                withUsername("cloudsqliamuser")
-                withPassword("admin")
-                withInitScript("db/init.sql")
-                start()
-            }
-
         @Suppress("unused")
         @JvmStatic
         @DynamicPropertySource
         fun postgresqlProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.jpa.database") { "POSTGRESQL" }
-            registry.add("spring.datasource.type") { "com.zaxxer.hikari.HikariDataSource" }
-            registry.add("spring.flyway.enabled") { true }
-            registry.add("spring.flyway.locations") { "classpath:/db/migration" }
-            registry.add("spring.datasource.url", postgreSqlDb::getJdbcUrl)
-            registry.add("spring.datasource.password", postgreSqlDb::getPassword)
-            registry.add("spring.datasource.username", postgreSqlDb::getUsername)
+            TestPostgres.registrerProperties(registry)
             registry.add("spring.datasource.hikari.connection-timeout") { 30000 }
         }
     }

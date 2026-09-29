@@ -133,7 +133,8 @@ class GrunnlagServiceTest : TestContainerRunner() {
     @Autowired
     lateinit var grunnlagService: GrunnlagService
 
-    @MockkBean
+    // Samme mock-oppsett som BoforholdServiceTest, slik at de deler Spring-kontekst
+    @MockkBean(relaxed = true)
     lateinit var bidragPersonConsumer: BidragPersonConsumer
 
     @MockkSpyBean
