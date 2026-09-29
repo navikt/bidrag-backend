@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.service
 
+import jakarta.persistence.EntityManager
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
@@ -45,6 +46,8 @@ import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlagspost
 import no.nav.bidrag.grunnlag.persistence.entity.UtvidetBarnetrygdOgSmaabarnstillegg
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektBo
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektspostBo
 import no.nav.bidrag.grunnlag.persistence.entity.toGrunnlagspakkeEntity
@@ -74,7 +77,13 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagspostDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.UtvidetBarnetrygdOgSmaabarnstilleggDto
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -92,6 +101,7 @@ class PersistenceService(
     val kontantstotteRepository: KontantstotteRepository,
     val barnetilsynRepository: BarnetilsynRepository,
     val valutakursgrunnlagRepository: ValutakursgrunnlagRepository,
+    val entityManager: EntityManager,
 ) {
 
     fun opprettNyGrunnlagspakke(opprettGrunnlagspakkeRequestDto: OpprettGrunnlagspakkeRequestDto): Grunnlagspakke {
@@ -151,9 +161,30 @@ class PersistenceService(
         return barnetilsynRepository.save(nyBarnetilsyn)
     }
 
+    @Transactional
     fun opprettValutakursgrunnlag(valutakursgrunnlagBo: ValutakursgrunnlagBo): Valutakursgrunnlag {
+        val eksisterende = valutakursgrunnlagRepository.findByBasisvalutaAndBrukFra(valutakursgrunnlagBo.basisvaluta, valutakursgrunnlagBo.brukFra)
+        if (eksisterende?.status == ValutakursgrunnlagStatus.OVERSTYRT) return eksisterende
         val nyValutakurs = valutakursgrunnlagBo.toValutakursgrunnlagEntity()
-        return valutakursgrunnlagRepository.save(nyValutakurs)
+        val lagret = valutakursgrunnlagRepository.saveAndFlush(
+            if (eksisterende == null) nyValutakurs else nyValutakurs.copy(valutakursgrunnlagId = eksisterende.valutakursgrunnlagId),
+        )
+        entityManager.refresh(lagret)
+        return lagret
+    }
+
+    @Transactional
+    fun overstyrValutakursgrunnlag(id: Int, kurs: BigDecimal): Valutakursgrunnlag {
+        if (kurs.signum() <= 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurs må være større enn null")
+        val eksisterende = valutakursgrunnlagRepository.findById(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Valutakursgrunnlag finnes ikke") }
+        val overstyrt = valutakursgrunnlagRepository.saveAndFlush(
+            eksisterende.copy(kurs = kurs, multiplikator = 0, feiletHenting = false, kilde = ValutakursgrunnlagKilde.MANUELL, observasjonsdato = null).apply {
+                status = ValutakursgrunnlagStatus.OVERSTYRT
+            },
+        )
+        entityManager.refresh(overstyrt)
+        return overstyrt
     }
 
     fun oppdaterEksisterendeBarnetilleggPensjonTilInaktiv(grunnlagspakkeId: Int, personIdListe: List<String>, timestampOppdatering: LocalDateTime) {
@@ -606,7 +637,7 @@ class PersistenceService(
         return barnetilsynDtoListe
     }
 
-    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag? {
-        return valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato.atStartOfDay())
-    }
+    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag? = valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato.atStartOfDay())
+
+    fun hentFeiledeValutakursgrunnlag(pageable: Pageable): Page<Valutakursgrunnlag> = valutakursgrunnlagRepository.findByStatus(ValutakursgrunnlagStatus.FEILET, pageable)
 }

@@ -5,7 +5,6 @@ import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCacheRepository
 import no.nav.bidrag.grunnlag.consumer.valutakurs.ECBValutakursRestKlient
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
-import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency.Daily
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.exchangeRateForCurrency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursClientException
 import org.slf4j.Logger
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
-import java.time.Month
+import java.time.YearMonth
 
 @Service
 @Import(ECBValutakursRestKlient::class)
@@ -40,7 +39,7 @@ class ECBService(
             logger.info("Henter valutakurs for ${utenlandskValuta.saner()} på $kursDato")
             try {
                 val valutakurser =
-                    ecbValutakursRestKlient.hentValutakurs(Frequency.Monthly, listOf(ECBConstants.NOK, utenlandskValuta), kursDato)
+                    ecbValutakursRestKlient.hentValutakurs(Frequency.Monthly, listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }), kursDato)
                 validateExchangeRates(utenlandskValuta, kursDato, valutakurser)
                 val valutakursNOK = valutakurser.exchangeRateForCurrency(ECBConstants.NOK)!!
                 val lagretValutakurs =
@@ -91,8 +90,8 @@ class ECBService(
         exchangeRateDate: LocalDate,
         expectedSize: Int,
     ) = exchangeRates.size == expectedSize &&
-        exchangeRates.all { it.kursDato.isEqual(exchangeRateDate) } &&
-        exchangeRates.map { it.valuta }.containsAll(currencies)
+        exchangeRates.all { YearMonth.from(it.kursDato) == YearMonth.from(exchangeRateDate) && it.kurs.signum() > 0 } &&
+        exchangeRates.map { it.valuta }.toSet() == currencies.toSet()
 
     private fun throwValidationException(
         currency: String,

@@ -22,7 +22,7 @@ import java.time.LocalDate
 @Import(SDMXValutakursRestKlientConfig::class)
 class ECBValutakursRestKlient(
     @Qualifier("sdmxXmlRestClient") restClient: RestClient,
-    @param:Value("\${ECB_URL}") private val ecbApiUrl: String = "https://data-api.ecb.europa.eu/service/data/EXR/",
+    @param:Value("\${ECB_URL}") private val ecbApiUrl: String = "https://data-api.ecb.europa.eu",
 ) : SDMXRestKlient(restClient) {
     /**
      * Henter valutakurser fra ECB (European Central Bank) for *currencies*
@@ -50,19 +50,17 @@ class ECBValutakursRestKlient(
         }
     }
 
-    private fun lagECBURI(
+    internal fun lagECBURI(
         frequency: Frequency,
         currencies: List<String>,
         exchangeRateDate: LocalDate,
-    ): URI =
-        URI.create(
-            "${ecbApiUrl}${frequency.toFrequencyParam()}.${currencies.toCurrencyParams()}.EUR.SP00.A${frequency.toQueryParams(
-                exchangeRateDate,
-            )}",
-        )
+    ): URI = URI.create(
+        "${ecbApiUrl.trimEnd('/').removeSuffix("/service/data/EXR")}/service/data/EXR/${frequency.toFrequencyParam()}.${currencies.toCurrencyParams()}.EUR.SP00.A${frequency.toQueryParams(
+            exchangeRateDate,
+        )}",
+    )
 
-    private fun List<String>.toCurrencyParams(): String =
-        this.reduceIndexed { index, params, currency -> if (index != 0) "$params+$currency" else currency }
+    private fun List<String>.toCurrencyParams(): String = this.reduceIndexed { index, params, currency -> if (index != 0) "$params+$currency" else currency }
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(ECBValutakursRestKlient::class.java)

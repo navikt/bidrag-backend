@@ -10,16 +10,16 @@ import org.springframework.web.client.RestClient
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.dataformat.xml.XmlMapper
 import tools.jackson.module.kotlin.KotlinModule
+import java.time.Duration
 
 @Suppress("SpringFacetCodeInspection")
 @Configuration
 class SDMXValutakursRestKlientConfig {
-    fun xmlMapper(): XmlMapper =
-        XmlMapper
-            .xmlBuilder()
-            .addModule(KotlinModule.Builder().build())
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .build()
+    fun xmlMapper(): XmlMapper = XmlMapper
+        .xmlBuilder()
+        .addModule(KotlinModule.Builder().build())
+        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        .build()
 
     @Bean("sdmxXmlRestClient")
     fun xmlRestClient(): RestClient {
@@ -34,7 +34,12 @@ class SDMXValutakursRestKlientConfig {
             }
         return RestClient
             .builder()
-            .requestFactory(SimpleClientHttpRequestFactory())
+            .requestFactory(
+                SimpleClientHttpRequestFactory().apply {
+                    setConnectTimeout(Duration.ofSeconds(5))
+                    setReadTimeout(Duration.ofSeconds(10))
+                },
+            )
             .configureMessageConverters { it.addCustomConverter(converter) }
             .build()
     }

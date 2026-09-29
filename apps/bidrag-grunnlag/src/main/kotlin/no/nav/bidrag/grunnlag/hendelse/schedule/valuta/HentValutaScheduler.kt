@@ -14,9 +14,9 @@ import java.time.LocalDate
 
 private val LOGGER = KotlinLogging.logger { }
 
+// @EnableSchedulerLock(defaultLockAtMostFor = "PT10M")
 @Configuration
 @EnableScheduling
-//@EnableSchedulerLock(defaultLockAtMostFor = "PT10M")
 class HentValutaScheduler(
     private val hentValutakursService: HentValutakursService,
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
@@ -28,9 +28,11 @@ class HentValutaScheduler(
         val hentValutakursRequest = HentValutakursRequest(
             hentValutakursListe = valutakoder.map { valutakode ->
                 HentValutakurs(
-                    dato = LocalDate.now(), valutakode = valutakode
+                    dato = LocalDate.now(),
+                    valutakode = valutakode,
                 )
-            })
+            },
+        )
 
         val gyldighetsperiode = lagGyldighetsperiode()
         try {

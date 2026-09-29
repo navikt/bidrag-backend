@@ -17,12 +17,13 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.net.URI
 import java.time.LocalDate
+import java.time.YearMonth
 
 @Component
 @Import(SDMXValutakursRestKlientConfig::class)
 class NorgesBankValutakursRestKlient(
     @Qualifier("sdmxXmlRestClient") restClient: RestClient,
-    @param:Value("\${NORGESBANK_URL}") private val norgesBankApiUrl: String = "https://data.norges-bank.no/api/data/EXR/",
+    @param:Value("\${NORGESBANK_URL}") private val norgesBankApiUrl: String = "https://data.norges-bank.no",
 ) : SDMXRestKlient(restClient) {
     /**
      * Henter valutakurser fra ECB (European Central Bank) via Norges Bank for *valuta*
@@ -48,14 +49,13 @@ class NorgesBankValutakursRestKlient(
         }
     }
 
-    private fun lagNorgesBankURI(
+    internal fun lagNorgesBankURI(
         frekvens: Frekvens,
         valuta: String,
         kursDato: LocalDate,
-    ): URI =
-        URI.create(
-            "${norgesBankApiUrl}${frekvens.verdi}.$valuta.NOK.SP?format=sdmx-generic-2.1&startPeriod=$kursDato&endPeriod=$kursDato",
-        )
+    ): URI = URI.create(
+        "${norgesBankApiUrl.trimEnd('/').removeSuffix("/api/data/EXR")}/api/data/EXR/${frekvens.verdi}.$valuta.NOK.SP?format=sdmx-generic-2.1&startPeriod=${if (frekvens == Frekvens.MÅNEDLIG) YearMonth.from(kursDato) else kursDato}&endPeriod=${if (frekvens == Frekvens.MÅNEDLIG) YearMonth.from(kursDato) else kursDato}",
+    )
 
     companion object {
         val logger: Logger = LoggerFactory.getLogger(NorgesBankValutakursRestKlient::class.java)

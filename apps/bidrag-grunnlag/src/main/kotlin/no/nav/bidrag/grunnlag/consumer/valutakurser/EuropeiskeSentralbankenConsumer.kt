@@ -37,10 +37,10 @@ class EuropeiskeSentralbankenConsumer(
             httpEntity = grunnlagConsumer.initHttpEntityEcb(valutakode),
             responseType = SdmxData::class.java,
             fallbackBody = SdmxData(
-                    dataSets = emptyList(),
-                    structure = SdmxStructure(
-                        dimensions = SdmxDimensions(series = emptyList()),
-                    ),
+                dataSets = emptyList(),
+                structure = SdmxStructure(
+                    dimensions = SdmxDimensions(series = emptyList()),
+                ),
             ),
         )
 
