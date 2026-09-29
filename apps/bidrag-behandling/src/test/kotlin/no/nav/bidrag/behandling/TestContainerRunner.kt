@@ -5,11 +5,8 @@ import no.nav.bidrag.commons.service.sjablon.SjablonService
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 
-@Testcontainers
 @ActiveProfiles(value = ["test", "testcontainer"])
 class TestContainerRunner : SpringTestRunner() {
     // Delt spy slik at tester kan stubbe sjabloner uten å opprette egen Spring-kontekst
@@ -18,7 +15,6 @@ class TestContainerRunner : SpringTestRunner() {
 
     companion object {
         @JvmStatic
-        @Container
         protected val postgreSqlDb =
             PostgreSQLContainer("postgres:latest").apply {
                 withDatabaseName("bidrag-behandling")

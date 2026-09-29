@@ -24,15 +24,11 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.postgresql.PostgreSQLContainer
 
-@Testcontainers
 @ActiveProfiles(value = ["test", "testcontainer"])
 abstract class KontrollerTestRunner : CommonTestRunner() {
     companion object {
-        @Container
         protected val postgreSqlDb =
             PostgreSQLContainer("postgres:latest").apply {
                 withDatabaseName("bidrag-behandling")
