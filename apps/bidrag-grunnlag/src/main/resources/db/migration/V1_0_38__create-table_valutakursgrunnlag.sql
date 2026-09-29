@@ -12,9 +12,12 @@ CREATE TABLE IF NOT EXISTS valutakursgrunnlag
     kvoteringsvaluta varchar(3) NOT NULL,
     feilet_henting boolean DEFAULT false NOT NULL,
     status varchar(10) NOT NULL,
+    kilde varchar(20),
+    observasjonsdato date,
     CONSTRAINT valutakursgrunnlag_pkey PRIMARY KEY (valutakursgrunnlag_id),
     CONSTRAINT valutakursgrunnlag_periode_unique UNIQUE (basisvaluta, bruk_fra),
     CONSTRAINT valutakursgrunnlag_status_check CHECK (status IN ('FEILET', 'HENTET', 'OVERSTYRT')),
+    CONSTRAINT valutakursgrunnlag_kilde_check CHECK (kilde IN ('ECB', 'NORGES_BANK', 'MANUELL')),
     CONSTRAINT valutakursgrunnlag_halvar_check CHECK (
         EXTRACT(MONTH FROM bruk_fra) IN (1, 7)
         AND EXTRACT(DAY FROM bruk_fra) = 1
