@@ -2,6 +2,7 @@ package no.nav.bidrag.grunnlag.consumer.valutakurser.dto
 
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -22,5 +23,6 @@ sealed interface HentetValutakursResultat {
         val basisvaluta: Valutakode,
         val kvoteringsvaluta: Valutakode,
         val hentetTidspunkt: LocalDateTime,
+        val kilde: ValutakursgrunnlagKilde,
     ) : HentetValutakursResultat
 }

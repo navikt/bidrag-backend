@@ -3,7 +3,10 @@ package no.nav.bidrag.grunnlag.bo
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.reflect.full.memberProperties
 
@@ -37,15 +40,26 @@ data class ValutakursgrunnlagBo(
 
     @Schema(description = "Dersom true har henting av valutakurs feilet. Det kan være på grunn av at valutakurs ikke er støttet eller en annen teknisk feil")
     val feiletHenting: Boolean = false,
+
+    @Schema(description = "Status for kursgrunnlaget")
+    val status: ValutakursgrunnlagStatus = if (feiletHenting) ValutakursgrunnlagStatus.FEILET else ValutakursgrunnlagStatus.HENTET,
+
+    @Schema(description = "Tidspunktet kursgrunnlaget sist ble oppdatert")
+    val oppdatertTidspunkt: LocalDateTime? = null,
+
+    @Schema(description = "Kilden til kursen, eller null hvis ingen kurs ble funnet")
+    val kilde: ValutakursgrunnlagKilde? = null,
+
+    @Schema(description = "Første dag i måneden kursen er hentet fra, eller null hvis ingen kurs ble funnet")
+    val observasjonsdato: LocalDate? = null,
 )
 
 fun ValutakursgrunnlagBo.toValutakursgrunnlagEntity() = with(::Valutakursgrunnlag) {
     val propertiesByName = ValutakursgrunnlagBo::class.memberProperties.associateBy { it.name }
     callBy(
-        parameters.associateWith { parameter ->
-            when (parameter.name) {
-                else -> propertiesByName[parameter.name]?.get(this@toValutakursgrunnlagEntity)
-            }
-        },
-    )
+        parameters.mapNotNull { parameter ->
+            val name = parameter.name ?: return@mapNotNull null
+            propertiesByName[name]?.let { parameter to it.get(this@toValutakursgrunnlagEntity) }
+        }.toMap(),
+    ).also { it.status = status }
 }

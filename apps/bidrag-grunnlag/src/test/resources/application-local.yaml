@@ -8,7 +8,8 @@ BIDRAG_PERSON_URL: http://localhost:${wiremock.server.port}/bidragperson
 FAMILIEKSSAK_URL: http://localhost:${wiremock.server.port}/familiekssak
 AAREG_URL: http://localhost:${wiremock.server.port}/aareg
 EREG_URL: http://localhost:${wiremock.server.port}/ereg
-NORGESBANK_URL: http://localhost:${wiremock.server.port}/norgesbank
+NORGESBANK_URL: https://data.norges-bank.no
+ECB_URL: https://data-api.ecb.europa.eu
 BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
 TILLEGGSSTONADERSAK_URL: http://localhost:${wiremock.server.port}/tilleggsstonadersak
 NAIS_APP_NAME: bidrag-grunnlag

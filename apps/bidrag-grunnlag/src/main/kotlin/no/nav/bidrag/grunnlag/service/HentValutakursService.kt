@@ -5,60 +5,65 @@ import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.grunnlag.consumer.ecb.ECBService
 import no.nav.bidrag.grunnlag.consumer.ecb.ECBServiceException
+import no.nav.bidrag.grunnlag.consumer.valutakurs.NorgesBankValutakursRestKlient
+import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
+import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.IngenValutakursException
+import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursClientException
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursResponse
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentetValutakursResultat
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 
 private val LOGGER = KotlinLogging.logger {}
 
 @Service
 class HentValutakursService(
     private val ecbService: ECBService,
-//    private val norgesBankValutakursRestKlient: NorgesBankValutakursRestKlient,
+    private val norgesBankValutakursRestKlient: NorgesBankValutakursRestKlient,
 ) {
     fun hentValutakurs(request: HentValutakursRequest): HentValutakursResponse {
-        val dato = request.hentValutakursListe.first().dato // TODO
-
-        return request.hentValutakursListe
-            .filter { (dato, valutakode) -> valutakode.aktiv(dato) }
-            .map { (_, valutakode) ->
-                hentValutakurs(dato, valutakode)
-            }.let {
-                HentValutakursResponse(it)
-            }
+        require(request.hentValutakursListe.isNotEmpty()) { "Minst én valuta må oppgis" }
+        require(request.hentValutakursListe.all { it.dato.dayOfMonth == 1 && it.dato.monthValue in listOf(1, 7) && !it.dato.isAfter(LocalDate.now()) }) {
+            "Kursgrunnlag må starte 1. januar eller 1. juli og kan ikke starte i fremtiden"
+        }
+        return HentValutakursResponse(request.hentValutakursListe.map { (dato, valutakode) -> hentValutakurs(dato, valutakode) })
     }
 
     private fun hentValutakurs(dato: LocalDate, utenlandskValutakode: Valutakode): HentetValutakursResultat {
+        require(utenlandskValutakode != Valutakode.NOK) { "NOK trenger ikke kursgrunnlag" }
+        val observasjonsmåned = YearMonth.from(dato.minusMonths(1))
+        val periode = ÅrMånedsperiode(observasjonsmåned, YearMonth.from(dato))
+        if (utenlandskValutakode.utgåttDato?.let { !dato.isBefore(it) } == true) {
+            return HentetValutakursResultat.FeiledValutakurs(periode, utenlandskValutakode, Valutakode.NOK)
+        }
         try {
-            val valutakurs = ecbService.hentValutakurs(utenlandskValutakode.name, dato)
-            LOGGER.info { "Hentet valutakurs for $utenlandskValutakode." } // TODO fjernes eller debug
+            val valutakurs = ecbService.hentValutakurs(utenlandskValutakode.name, observasjonsmåned.atEndOfMonth())
+            if (valutakurs.kurs.signum() <= 0) throw ECBServiceException("Ugyldig ECB-kurs for $utenlandskValutakode")
             return HentetValutakursResultat.HentetValutakurs(
-                periode = ÅrMånedsperiode(dato, dato), // TODO
+                periode = periode,
                 valutakursSnitt = valutakurs.kurs,
-                multiplikator = 10, // TODO
+                multiplikator = 0,
                 basisvaluta = utenlandskValutakode,
                 kvoteringsvaluta = Valutakode.NOK,
-                hentetTidspunkt = LocalDateTime.now()
+                hentetTidspunkt = LocalDateTime.now(),
+                kilde = ValutakursgrunnlagKilde.ECB,
             )
         } catch (e: ECBServiceException) {
-            LOGGER.error(e) { "Feil ved henting av valutakurs for $utenlandskValutakode." }
-            return HentetValutakursResultat.FeiledValutakurs(
-                periode = ÅrMånedsperiode(dato, dato), // TODO
-                basisvaluta = utenlandskValutakode,
-                kvoteringsvaluta = Valutakode.NOK,
-            )
-//            val valutakurs = norgesBankValutakursRestKlient.hentValutakurs(Frekvens.MÅNEDLIG, utenlandskValutakode.name, dato)
-//            return HentetValutakurs(
-//                periode = ÅrMånedsperiode(dato, dato), // TODO
-//                valutakursSnitt = valutakurs.kurs,
-//                multiplikator = 10, // TODO
-//                basisvaluta = utenlandskValutakode,
-//                kvoteringsvaluta = Valutakode.NOK,
-//                hentetTidspunkt = LocalDateTime.now()
-//            )
+            LOGGER.warn { "ECB-kurs mangler for $utenlandskValutakode i $observasjonsmåned: ${e.message}. Prøver Norges Bank" }
+        }
+        return try {
+            val valutakurs = norgesBankValutakursRestKlient.hentValutakurs(Frekvens.MÅNEDLIG, utenlandskValutakode.name, observasjonsmåned.atEndOfMonth())
+            if (valutakurs.kurs.signum() <= 0 || YearMonth.from(valutakurs.kursDato) != observasjonsmåned || valutakurs.valuta != utenlandskValutakode.name) {
+                throw IngenValutakursException("Ugyldig kurs fra Norges Bank", null)
+            }
+            HentetValutakursResultat.HentetValutakurs(periode, valutakurs.kurs, 0, utenlandskValutakode, Valutakode.NOK, LocalDateTime.now(), ValutakursgrunnlagKilde.NORGES_BANK)
+        } catch (e: ValutakursClientException) {
+            LOGGER.error { "Ingen lagringsbar kurs fra ECB eller Norges Bank for $utenlandskValutakode i $observasjonsmåned: ${e.message}" }
+            HentetValutakursResultat.FeiledValutakurs(periode, utenlandskValutakode, Valutakode.NOK)
         }
     }
 }

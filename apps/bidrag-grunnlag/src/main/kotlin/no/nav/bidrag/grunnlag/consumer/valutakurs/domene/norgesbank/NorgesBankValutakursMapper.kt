@@ -4,8 +4,8 @@ import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.NorgesBankValutakursMappingException
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeParseException
-import kotlin.math.pow
 
 object NorgesBankValutakursMapper {
     @Throws(NorgesBankValutakursMappingException::class)
@@ -15,7 +15,7 @@ object NorgesBankValutakursMapper {
         kursDato: LocalDate,
     ): Valutakurs {
         this.valider(valuta, frekvens, kursDato)
-        return Valutakurs(valuta = valuta, kurs = this.tilKalkulertKurs(), kursDato = kursDato)
+        return Valutakurs(valuta = valuta, kurs = this.tilKalkulertKurs(), kursDato = this.dataSet.series.hentKursDato())
     }
 
     private fun NorgesBankValutakursData.valider(
@@ -28,25 +28,22 @@ object NorgesBankValutakursMapper {
         valutaData.validerFrekvens(forventetFrekvens)
         valutaData.validerKursDato(forventetKursDato)
         valutaData.validerErKalkulertValutakurs()
-        valutaData.validerInnsamlingstidspunkt()
+        valutaData.validerInnsamlingstidspunkt(forventetFrekvens)
     }
 
-    fun NorgesBankValutakursSeries.hentSeriesKey(id: String): String =
-        this.seriesKeys.singleOrNull { it.id == id }?.value
-            ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
+    fun NorgesBankValutakursSeries.hentSeriesKey(id: String): String = this.seriesKeys.singleOrNull { it.id == id }?.value
+        ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
 
-    fun NorgesBankValutakursSeries.hentAttribute(id: String): String =
-        this.attributes.singleOrNull { it.id == id }?.value
-            ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
+    fun NorgesBankValutakursSeries.hentAttribute(id: String): String = this.attributes.singleOrNull { it.id == id }?.value
+        ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler informasjon om $id")
 
     fun NorgesBankValutakursSeries.hentKurs(): BigDecimal = observations.sdmxExchangeRateValue.value
 
-    fun NorgesBankValutakursSeries.hentKursDato(): LocalDate =
-        try {
-            LocalDate.parse(observations.date.value)
-        } catch (e: DateTimeParseException) {
-            throw NorgesBankValutakursMappingException.UgyldigData("Respons inneholder ugyldig datoformat.", e)
-        }
+    fun NorgesBankValutakursSeries.hentKursDato(): LocalDate = try {
+        if (observations.date.value.length == 7) YearMonth.parse(observations.date.value).atEndOfMonth() else LocalDate.parse(observations.date.value)
+    } catch (e: DateTimeParseException) {
+        throw NorgesBankValutakursMappingException.UgyldigData("Respons inneholder ugyldig datoformat.", e)
+    }
 
     private fun NorgesBankValutakursSeries.validerValuta(forventetValuta: String) {
         val valuta = hentSeriesKey("BASE_CUR")
@@ -65,7 +62,11 @@ object NorgesBankValutakursMapper {
     }
 
     private fun NorgesBankValutakursSeries.validerErKalkulertValutakurs() {
-        val kalkulertVerdi: Boolean = hentAttribute("CALCULATED").toBoolean()
+        val kalkulertVerdi = when (hentAttribute("CALCULATED")) {
+            "true" -> true
+            "false" -> false
+            else -> throw NorgesBankValutakursMappingException.UgyldigData("Ugyldig CALCULATED-verdi.")
+        }
 
         if (kalkulertVerdi) {
             throw NorgesBankValutakursMappingException.UgyldigData(
@@ -74,18 +75,19 @@ object NorgesBankValutakursMapper {
         }
     }
 
-    private fun NorgesBankValutakursSeries.validerInnsamlingstidspunkt() {
+    private fun NorgesBankValutakursSeries.validerInnsamlingstidspunkt(frekvens: Frekvens) {
         val innsamlingstidspunkt = hentAttribute("COLLECTION")
-        if (innsamlingstidspunkt != "C") {
+        val forventet = if (frekvens == Frekvens.MÅNEDLIG) "A" else "C"
+        if (innsamlingstidspunkt != forventet) {
             throw NorgesBankValutakursMappingException.UgyldigData(
-                "Forventer at innsamlingstidspunkt er 'C' men fikk '$innsamlingstidspunkt'.",
+                "Forventer at innsamlingstidspunkt er '$forventet' men fikk '$innsamlingstidspunkt'.",
             )
         }
     }
 
     private fun NorgesBankValutakursSeries.validerKursDato(forventetDato: LocalDate) {
         val kursDato: LocalDate = hentKursDato()
-        if (!forventetDato.isEqual(kursDato)) {
+        if (if (hentSeriesKey("FREQ") == Frekvens.MÅNEDLIG.verdi) YearMonth.from(forventetDato) != YearMonth.from(kursDato) else forventetDato != kursDato) {
             throw NorgesBankValutakursMappingException.UgyldigData("Forventet kursdato $forventetDato men fikk $kursDato.")
         }
     }
@@ -99,15 +101,13 @@ object NorgesBankValutakursMapper {
      * Resultatet får derimot ikke nødvendigvis en kompakt skala (f.eks. kan 10.0000/1 bli "10.000" i stedet for "10"), så vi bruker stripTrailingZeros() for å normalisere til et minimalt antall desimaler.
      */
     private fun NorgesBankValutakursData.tilKalkulertKurs(): BigDecimal {
-        val enhetMultiplikator: Double =
-            this.dataSet.series
-                .hentAttribute("UNIT_MULT")
-                .toDouble()
-
-        val kurs: BigDecimal = this.dataSet.series.hentKurs()
-
+        val enhetMultiplikator = this.dataSet.series.hentAttribute("UNIT_MULT").toIntOrNull()
+            ?: throw NorgesBankValutakursMappingException.UgyldigData("Ugyldig UNIT_MULT.")
+        if (enhetMultiplikator !in -12..12) throw NorgesBankValutakursMappingException.UgyldigData("Ugyldig UNIT_MULT.")
+        val kurs = this.dataSet.series.hentKurs()
+        if (kurs.signum() <= 0) throw NorgesBankValutakursMappingException.UgyldigData("Ugyldig valutakurs.")
         return kurs
-            .divide(BigDecimal.valueOf(10.0.pow(enhetMultiplikator)))
+            .scaleByPowerOfTen(-enhetMultiplikator)
             .stripTrailingZeros()
             // Passer på at scale ikke blir negativ, da dette kan føre til at 100.00 blir til 1E+2, som ikke er ønskelig.
             .let { if (it.scale() < 0) it.setScale(0) else it }

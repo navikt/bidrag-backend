@@ -1,7 +1,6 @@
-package no.nav.bidrag.grunnlag.service;
+package no.nav.bidrag.grunnlag.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.annotation.PostConstruct
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.Periode
@@ -27,14 +26,13 @@ class HentHistoriskeValutakurserService(
 
         listOf(
             Datoperiode(LocalDate.of(år.year, 1, 1), førsteJuli),
-            Datoperiode(førsteJuli, førsteJuli.plusMonths(6))
+            Datoperiode(førsteJuli, førsteJuli.plusMonths(6)),
         )
     }
 
     // TODO Api for å trigge manuelt
     // TODO Api for å hente en spesifikk valuta for en periode
 
-    @PostConstruct
     fun hentHistoriskeValutakurser() {
         val utenlandskeValutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
         try {
@@ -51,7 +49,8 @@ class HentHistoriskeValutakurserService(
                 val hentValutakursListe =
                     valutakoder.map { valutakode ->
                         HentValutakurs(
-                            dato = periode.fom, valutakode = valutakode
+                            dato = periode.fom,
+                            valutakode = valutakode,
                         )
                     }
 

@@ -16,13 +16,12 @@ data class ECBValutakursData(
     val sdmxExchangeRatesDataSet: SDMXExchangeRatesDataSet,
 )
 
-fun ECBValutakursData.exchangeRatesForCurrency(currency: String): List<SDMXExchangeRate> =
-    this.sdmxExchangeRatesDataSet.sdmxExchangeRatesForCurrencies
-        .filter {
-            it.sdmxExchangeRateKeys.any { ecbKeyValue ->
-                ecbKeyValue.id == "CURRENCY" && ecbKeyValue.value == currency
-            }
-        }.flatMap { it.sdmxExchangeRates }
+fun ECBValutakursData.exchangeRatesForCurrency(currency: String): List<SDMXExchangeRate> = this.sdmxExchangeRatesDataSet.sdmxExchangeRatesForCurrencies
+    .filter {
+        it.sdmxExchangeRateKeys.any { ecbKeyValue ->
+            ecbKeyValue.id == "CURRENCY" && ecbKeyValue.value == currency
+        }
+    }.flatMap { it.sdmxExchangeRates }
 
 @Throws(ValutakursTransformationException::class)
 fun ECBValutakursData.toExchangeRates(): List<Valutakurs> {
