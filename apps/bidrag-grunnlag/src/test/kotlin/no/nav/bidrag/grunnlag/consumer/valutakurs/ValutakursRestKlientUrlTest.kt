@@ -4,9 +4,9 @@ import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
 import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
+import no.nav.bidrag.grunnlag.consumer.valutakurser.NorgesBankConsumer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestTemplate
 import java.net.URI
 import java.time.LocalDate
@@ -27,10 +27,10 @@ class ValutakursRestKlientUrlTest {
 
     @Test
     fun `Norges Bank-URL inneholder API-stien kun én gang`() {
-        val forventet = URI.create("https://data.norges-bank.no/api/data/EXR/M.USD.NOK.SP?format=sdmx-generic-2.1&startPeriod=2025-06&endPeriod=2025-06")
+        val forventet = URI.create("https://data.norges-bank.no/api/data/EXR/M.USD.NOK.SP?format=sdmx-json&startPeriod=2025-06&endPeriod=2025-06&locale=no")
 
         for (baseUrl in listOf("https://data.norges-bank.no", "https://data.norges-bank.no/api/data/EXR/")) {
-            val klient = NorgesBankValutakursRestKlient(RestClient.create(), baseUrl)
+            val klient = NorgesBankConsumer(URI.create(baseUrl), RestTemplate(), GrunnlagConsumer())
 
             assertEquals(forventet, klient.lagNorgesBankURI(Frekvens.MÅNEDLIG, "USD", kursDato))
         }
