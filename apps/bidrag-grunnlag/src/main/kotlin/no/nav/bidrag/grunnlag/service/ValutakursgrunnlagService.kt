@@ -123,7 +123,7 @@ class ValutakursgrunnlagService(
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Valutakursgrunnlag finnes ikke")
         val kurs = grunnlag.kurs
         if (grunnlag.feiletHenting || kurs == null || kurs.signum() <= 0 || grunnlag.multiplikator != 0) {
-            throw ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Valutakurs er ikke tilgjengelig")
+            throw ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Valutakurs er ikke tilgjengelig")
         }
         return GyldigKursgrunnlag(kurs, grunnlag)
     }

@@ -53,7 +53,7 @@ class ValutakursgrunnlagController(
         val grunnlag = valutakursgrunnlagService.hentValutakursgrunnlag(valutakode, dato)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Valutakursgrunnlag finnes ikke")
         if (grunnlag.feiletHenting || grunnlag.kurs == null || grunnlag.kurs.signum() <= 0 || grunnlag.multiplikator != 0) {
-            throw ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Valutakurs er ikke tilgjengelig")
+            throw ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Valutakurs er ikke tilgjengelig")
         }
         return grunnlag
     }
