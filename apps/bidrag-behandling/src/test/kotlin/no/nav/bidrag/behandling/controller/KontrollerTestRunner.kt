@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.controller
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.getunleash.Unleash
 import io.mockk.clearMocks
 import io.mockk.every
@@ -13,6 +14,7 @@ import no.nav.bidrag.behandling.utils.testdata.TestdataManager
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
+import no.nav.bidrag.commons.service.sjablon.SjablonService
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import org.junit.jupiter.api.BeforeEach
@@ -70,6 +72,9 @@ abstract class KontrollerTestRunner : CommonTestRunner() {
     @MockkBean
     lateinit var unleashInstance: Unleash
 
+    @MockkSpyBean
+    lateinit var sjablonService: SjablonService
+
     val stubUtils: StubUtils = StubUtils()
 
     protected fun rootUriV1(): String = "http://localhost:$port/api/v1"
@@ -79,7 +84,7 @@ abstract class KontrollerTestRunner : CommonTestRunner() {
     @BeforeEach
     fun initMocks() {
         stubVedtakConsumer()
-        clearMocks(unleashInstance)
+        clearMocks(unleashInstance, sjablonService)
         every { unleashInstance.isEnabled(any(), any<Boolean>()) } returns true
         every { unleashInstance.isEnabled(eq("vedtakssperre"), any<Boolean>()) } returns false
         mockkObject(SaksbehandlernavnProvider)
