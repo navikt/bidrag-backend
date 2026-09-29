@@ -4,8 +4,6 @@ import jakarta.persistence.EntityManager
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.BidragGrunnlag
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCache
-import no.nav.bidrag.grunnlag.consumer.ecb.domene.ECBValutakursCacheRepository
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
@@ -28,7 +26,6 @@ import java.time.LocalDate
 @TestPropertySource(properties = ["spring.flyway.enabled=false", "spring.jpa.hibernate.ddl-auto=create-drop"])
 class ValutakursgrunnlagJpaTest(
     @Autowired private val repository: ValutakursgrunnlagRepository,
-    @Autowired private val cacheRepository: ECBValutakursCacheRepository,
     @Autowired private val entityManager: EntityManager,
     @Autowired private val persistenceService: PersistenceService,
 ) {
@@ -71,12 +68,22 @@ class ValutakursgrunnlagJpaTest(
     }
 
     @Test
-    fun `ECB-krysskurs beholder presisjonen i lokal database`() {
-        val dato = LocalDate.of(2025, 6, 30)
-        cacheRepository.saveAndFlush(ECBValutakursCache(valutakursdato = dato, valutakode = "USD", kurs = BigDecimal("10.0574173757")))
+    fun `ECB-krysskurs beholder presisjonen i kursgrunnlaget`() {
+        val dato = LocalDate.of(2025, 7, 1)
+        val lagret = persistenceService.opprettValutakursgrunnlag(
+            ValutakursgrunnlagBo(
+                brukFra = dato.atStartOfDay(),
+                brukTil = dato.plusMonths(6).atStartOfDay(),
+                kurs = BigDecimal("10.0574173757"),
+                multiplikator = 0,
+                basisvaluta = Valutakode.USD,
+                kilde = ValutakursgrunnlagKilde.ECB,
+                observasjonsdato = dato.minusMonths(1),
+            ),
+        )
         entityManager.clear()
 
-        assertEquals(BigDecimal("10.0574173757000000"), cacheRepository.findByValutakodeAndValutakursdato("USD", dato)?.single()?.kurs)
+        assertEquals(BigDecimal("10.0574173757000000"), repository.findById(lagret.valutakursgrunnlagId).orElseThrow().kurs)
     }
 
     @Test
