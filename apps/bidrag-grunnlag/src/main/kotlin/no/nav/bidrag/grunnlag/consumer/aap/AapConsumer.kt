@@ -1,7 +1,7 @@
 package no.nav.bidrag.grunnlag.consumer.aap
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPRequest
 import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
@@ -20,7 +20,7 @@ class AapConsumer(
     @Value("\${AAP_URL}") aapUrl: URI,
     @Qualifier("azureService") private val restTemplate: RestTemplate,
     private val grunnlagConsumer: GrunnlagConsumer,
-) : AbstractRestClient(restTemplate, "aap-api") {
+) : AbstractRestClient(restTemplate, "aap") {
 
     private val hentAapUri =
         UriComponentsBuilder
@@ -30,7 +30,7 @@ class AapConsumer(
             .toUriString()
 
     fun hentBarnetillegg(request: HentBarnetilleggAAPRequest): RestResponse<HentBarnetilleggAAPResponse> {
-        SECURE_LOGGER.info("Henter barnetillegg AAP med url: $hentAapUri")
+        secureLogger.info { "Henter barnetillegg AAP med url: $hentAapUri" }
         val restResponse = restTemplate.tryExchange(
             url = hentAapUri,
             httpMethod = HttpMethod.POST,
