@@ -9,6 +9,7 @@ import no.nav.bidrag.belopshistorikk.persistence.repository.PeriodeRepository
 import no.nav.bidrag.belopshistorikk.persistence.repository.StønadRepository
 import no.nav.bidrag.belopshistorikk.service.PersistenceService
 import no.nav.bidrag.commons.web.test.HttpHeaderTestRestTemplate
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
@@ -28,8 +29,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
@@ -204,14 +207,17 @@ class BeløpshistorikkControllerTest {
     }
 
     @Test
-    fun `skal finne engangsbeløp for sak`() {
+    fun `skal finne engangsbeløp for sak, tester også at type engangsbeløp overstyres fra SAERTILSKUDD og SÆRTILSKUDD til SÆRBIDRAG`() {
         // Oppretter to engangsbeløp for SAK-001
-        persistenceService.opprettEngangsbeløp(TestUtil.byggEngangsbeløpRequest())
-        persistenceService.opprettEngangsbeløp(TestUtil.byggEngangsbeløpRequest2())
+        persistenceService.opprettEngangsbeløp(TestUtil.byggEngangsbeløpRequest3())
+        persistenceService.opprettEngangsbeløp(TestUtil.byggEngangsbeløpRequest4())
 
         val response =
-            securedTestRestTemplate.getForEntity<List<EngangsbeløpDto>>(
+            securedTestRestTemplate.exchange(
                 "${makeFullContextPath()}/engangsbelop/SAK-001",
+                HttpMethod.GET,
+                null,
+                object : ParameterizedTypeReference<List<EngangsbeløpDto>>() {},
             )
 
         assertAll(
@@ -219,6 +225,8 @@ class BeløpshistorikkControllerTest {
             { assertThat(response.statusCode).isEqualTo(HttpStatus.OK) },
             { assertThat(response.body).isNotNull },
             { assertThat(response.body).hasSize(2) },
+            { assertThat(response.body?.get(0)?.type).isEqualTo(Engangsbeløptype.SÆRBIDRAG) },
+            { assertThat(response.body?.get(1)?.type).isEqualTo(Engangsbeløptype.SÆRBIDRAG) },
         )
     }
 

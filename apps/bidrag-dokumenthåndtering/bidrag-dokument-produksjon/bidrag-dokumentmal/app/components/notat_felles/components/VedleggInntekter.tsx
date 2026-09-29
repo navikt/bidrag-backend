@@ -29,7 +29,7 @@ import { VedleggProps } from "~/types/commonTypes";
 export default function VedleggInntekter({ vedleggNummer = 2 }: VedleggProps) {
   const { erAvslag, bidragsmottaker, bidragspliktig, søknadsbarn, type } =
     useNotatFelles();
-  if (erAvslag) return null;
+  if (erAvslag && type != NotatMalType.BIDRAG) return null;
 
   return (
     <div>

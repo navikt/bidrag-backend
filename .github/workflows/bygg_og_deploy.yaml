@@ -254,8 +254,8 @@ jobs:
           fi
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
           mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
-      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
-        if: github.actor != 'dependabot[bot]'
+      - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
+        if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push
         env:
           TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
@@ -302,7 +302,7 @@ jobs:
           echo "REPO_NAME=$repo_name" >> $GITHUB_OUTPUT
       - name: Generate SBOM, attest and sign image
         id: attest-sign
-        uses: nais/attest-sign@c778867caf15ed06f2893afd5723898560b2dcc9 # v2.0.18
+        uses: nais/attest-sign@fb682a4e2e92380274d6fd5332324831b62c1961 # v2.0.19
         with:
           image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
     outputs:
@@ -325,7 +325,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -346,7 +346,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -367,7 +367,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: prod-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}

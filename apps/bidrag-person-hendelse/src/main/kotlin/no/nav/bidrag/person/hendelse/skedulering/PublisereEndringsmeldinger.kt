@@ -21,24 +21,17 @@ class PublisereEndringsmeldinger(
         lockAtMostFor = $$"${publisere_personhendelser.lås.max}",
     )
     fun identifisereOgPublisere() {
-        // Hente aktør med personidenter til til personer med nylige endringer i personopplysninger
-        val aktørerPersonopplysninger = databasetjeneste.hentePubliseringsklareHendelser()
+        // Hente aktør med personidenter til til personer med nylige endringer i personopplysninger.
+        // Uttrekket er begrenset i databasen for å holde minnebruken under kontroll.
+        val aktørerPersonopplysninger =
+            databasetjeneste.hentePubliseringsklareHendelser(
+                egenskaper.generelt.maksAntallMeldingerSomSendesTilBidragTopicOmGangen,
+            )
         log.info { "Fant ${aktørerPersonopplysninger.size} unike personer med nylige endringer i personopplysninger." }
 
-        val subsetMedAktørider =
-            aktørerPersonopplysninger.keys
-                .take(
-                    egenskaper.generelt.maksAntallMeldingerSomSendesTilBidragTopicOmGangen,
-                ).toSet()
-
-        if (subsetMedAktørider.size < aktørerPersonopplysninger.size) {
-            log.info { "Begrenser antall meldinger som skal publiseres til ${subsetMedAktørider.size}" }
-        }
-
         // Publisere melding til intern topic for samtlige personer med endringer
-        subsetMedAktørider.forEach {
-            val opplysninger = aktørerPersonopplysninger.getValue(it)
-            bidragtopic.publisereEndringsmelding(it.aktorid, opplysninger.personidenter, opplysninger)
+        aktørerPersonopplysninger.forEach { (aktør, opplysninger) ->
+            bidragtopic.publisereEndringsmelding(aktør.aktorid, opplysninger.personidenter, opplysninger)
         }
     }
 
