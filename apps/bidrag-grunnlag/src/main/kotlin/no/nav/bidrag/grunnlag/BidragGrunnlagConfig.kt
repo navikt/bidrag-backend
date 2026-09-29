@@ -16,9 +16,12 @@ import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Primary
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.http.client.observation.DefaultClientRequestObservationConvention
 import org.springframework.retry.annotation.EnableRetry
 import org.springframework.web.client.RestTemplate
+import java.time.Duration
 
 const val LIVE_PROFILE = "live"
 
@@ -45,5 +48,14 @@ class BidragGrunnlagConfig {
     fun clientRequestObservationConvention() = DefaultClientRequestObservationConvention()
 
     @Bean
+    @Primary
     fun restTemplate(): RestTemplate = RestTemplate()
+
+    @Bean("ecbRestTemplate")
+    fun ecbRestTemplate(): RestTemplate = RestTemplate(
+        SimpleClientHttpRequestFactory().apply {
+            setConnectTimeout(Duration.ofSeconds(5))
+            setReadTimeout(Duration.ofSeconds(10))
+        },
+    )
 }

@@ -1,10 +1,13 @@
 package no.nav.bidrag.grunnlag.consumer.valutakurs
 
+import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
+import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestTemplate
 import java.net.URI
 import java.time.LocalDate
 
@@ -16,7 +19,7 @@ class ValutakursRestKlientUrlTest {
         val forventet = URI.create("https://data-api.ecb.europa.eu/service/data/EXR/M.NOK+USD.EUR.SP00.A?startPeriod=2025-06&endPeriod=2025-06")
 
         for (baseUrl in listOf("https://data-api.ecb.europa.eu", "https://data-api.ecb.europa.eu/service/data/EXR/")) {
-            val klient = ECBValutakursRestKlient(RestClient.create(), baseUrl)
+            val klient = ECBConsumer(URI.create(baseUrl), RestTemplate(), GrunnlagConsumer())
 
             assertEquals(forventet, klient.lagECBURI(Frequency.Monthly, listOf("NOK", "USD"), kursDato))
         }

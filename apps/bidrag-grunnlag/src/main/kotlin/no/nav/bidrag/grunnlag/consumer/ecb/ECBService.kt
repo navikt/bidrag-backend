@@ -1,13 +1,14 @@
 package no.nav.bidrag.grunnlag.consumer.ecb
 
-import no.nav.bidrag.grunnlag.consumer.valutakurs.ECBValutakursRestKlient
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.exchangeRateForCurrency
-import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursClientException
+import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursTransformationException
+import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
+import no.nav.bidrag.grunnlag.consumer.valutakurser.api.toExchangeRates
+import no.nav.bidrag.grunnlag.exception.RestResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.context.annotation.Import
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -15,9 +16,8 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 @Service
-@Import(ECBValutakursRestKlient::class)
 class ECBService(
-    private val ecbValutakursRestKlient: ECBValutakursRestKlient,
+    private val ecbConsumer: ECBConsumer,
 ) {
     private val logger: Logger = LoggerFactory.getLogger(ECBService::class.java)
 
@@ -33,8 +33,11 @@ class ECBService(
     ): Valutakurs {
         logger.info("Henter valutakurs for ${utenlandskValuta.saner()} på $kursDato")
         try {
-            val valutakurser =
-                ecbValutakursRestKlient.hentValutakurs(Frequency.Monthly, listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }), kursDato)
+            val respons = ecbConsumer.hentValutakurs(Frequency.Monthly, listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }), kursDato)
+            val valutakurser = when (respons) {
+                is RestResponse.Success -> respons.body.toExchangeRates()
+                is RestResponse.Failure -> throw ECBServiceException("ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}", respons.restClientException)
+            }
             validateExchangeRates(utenlandskValuta, kursDato, valutakurser)
             val valutakursNOK = valutakurser.exchangeRateForCurrency(ECBConstants.NOK)!!
             val kurs =
@@ -45,7 +48,7 @@ class ECBService(
                     beregnValutakursINOK(valutakursUtenlandskValuta.kurs, valutakursNOK.kurs)
                 }
             return Valutakurs(utenlandskValuta, kurs, kursDato)
-        } catch (e: ValutakursClientException) {
+        } catch (e: ValutakursTransformationException) {
             throw ECBServiceException(e.message, e)
         }
     }
