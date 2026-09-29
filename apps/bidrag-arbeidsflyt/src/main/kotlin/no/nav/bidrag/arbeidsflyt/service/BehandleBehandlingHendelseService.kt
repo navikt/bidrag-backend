@@ -116,12 +116,24 @@ class BehandleBehandlingHendelseService(
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
+            oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
+    private fun oppdaterOppgaverMedBehandlingId(
+        åpneOppgaver: List<OppgaveData>,
+        hendelse: BehandlingHendelse,
+    ) {
+        if (hendelse.behandlingsid == null) return
+        åpneOppgaver.filter { it.behandlingsid == null || it.behandlingsid != hendelse.behandlingsid?.toString() }.forEach {
+            oppgaveService.oppdaterOppgave(
+                OppdaterOppgave(it).oppdaterBehandlingsid(hendelse.behandlingsid),
+            )
+        }
+    }
     private fun overføreOppgaverTilSaksbehandlerSomOpprettetFF(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -149,17 +161,20 @@ class BehandleBehandlingHendelseService(
 
                 // Forsikre at oppgaver ikke overføres flere ganger hvis feks SB manuelt overfører til en annen
                 behandling.oppgaverOverførtEtterFFOpprettet = LocalDateTime.now()
+            } else {
+                if (ff.opprettetAvSaksbehandler == null) {
+                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
+                    return
+                }
+                val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandling.behandlingsid ?: hendelse.behandlingsid ?: return)
+                val oppgaveTilordnet = oppgaverBehandling.find { !it.tilordnetRessurs.isNullOrEmpty() } ?: return
+                val tilordnetEnhet = oppgaveTilordnet.tildeltEnhetsnr
+                val tilordnetRessurs = oppgaveTilordnet.tilordnetRessurs
+                overførOppgaverEtterFF(hendelse, behandling, tilordnetRessurs, tilordnetEnhet) {
+                    // Overfør nye oppgaver til saksbehandler
+                    it.tilordnetRessurs == null
+                }
             }
-//            else {
-//                if (ff.opprettetAvSaksbehandler == null) {
-//                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
-//                    return
-//                }
-//                overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
-//                    // Overfør nye oppgaver til saksbehandler
-//                    it.tilordnetRessurs == null
-//                }
-//            }
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved overføring av oppgaver etter FF er opprettet for behandling ${behandling.behandlingsid} og hendelse $hendelse" }
         }
@@ -246,6 +261,9 @@ class BehandleBehandlingHendelseService(
         hendelse: BehandlingHendelse,
         overførtTilEnhet: String?,
     ): OppgaveData {
+        val eksisterendeOppgaverForBehandling = hendelse.behandlingsid?.let { oppgaveService.finnOppgaverForBehandling(it) }?.firstOrNull()
+        val tilhørerEnhet = eksisterendeOppgaverForBehandling?.tildeltEnhetsnr
+        val tilhørerSaksbehandler = eksisterendeOppgaverForBehandling?.tilordnetRessurs
         val oppgave =
             oppgaveService.opprettOppgave(
                 OpprettSøknadsoppgaveRequest(
@@ -253,13 +271,18 @@ class BehandleBehandlingHendelseService(
                     saksreferanse = barn.saksnummer,
                     innhold = opprettOppgaveBeskrivelse(barn),
                     frist = finnFristForSøknadsgruppe(behandling, barn),
-                    tildeltEnhetsnr = overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
+                    tildeltEnhetsnr = tilhørerEnhet ?: overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
                     tema = finnFagområdeForSøknad(barn.stønadstype),
                     oppgavetype = finnOppgavetypeForStønadstype(barn.behandlingstema),
                     søknadsid = barn.søknadsid,
                     behandlingsid = hendelse.behandlingsid,
-                    sporingsdata = hendelse.sporingsdata,
+                    sporingsdata = tilhørerSaksbehandler?.let {
+                        hendelse.sporingsdata.copy(
+                            brukerident = tilhørerSaksbehandler,
+                        )
+                    } ?: hendelse.sporingsdata,
                     overførtTilEnhet = overførtTilEnhet,
+
                 ),
             )
         val oppgaveDetaljer = behandling.oppgave ?: BehandlingOppgave(oppgaver = setOf())
