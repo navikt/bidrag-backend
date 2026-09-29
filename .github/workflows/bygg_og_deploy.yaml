@@ -174,9 +174,15 @@ jobs:
       # Egen, smal cache-nøkkel (kun denne appens pom-kjede via maven_cache_paths) istedenfor
       # innebygd `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed invalideres
       # av endringer i moduler denne jobben ikke bygger.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Kun restore her; cachen lagres bare fra main (se "Lagre Maven-cache"). PR-brancher får da
+      # ikke egne kopier som fyller opp repoets cache-kvote og fortrenger main-cachene.
+      # Egne bidrag-biblioteker (no/nav/bidrag) holdes utenfor – de hentes via klargjor-biblioteker.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: maven-cache
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
           key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
           restore-keys: |
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
@@ -253,7 +259,15 @@ jobs:
             exit 1
           fi
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
-          mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
+          mvn -T 1C -Dmaven.artifact.threads=16 "${args[@]}" clean verify -Dmaven.antrun.skip=true
+      - name: Lagre Maven-cache
+        if: always() && github.ref == 'refs/heads/main' && steps.maven-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
+          key: ${{ steps.maven-cache.outputs.cache-primary-key }}
       - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
         if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push

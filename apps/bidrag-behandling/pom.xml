@@ -582,6 +582,16 @@
             <id>default-test-kapt</id>
             <phase>none</phase>
           </execution>
+          <!-- extensions=true i root-pom gir allerede default-compile/default-test-compile.
+               De eksplisitte executions fra root-pom kompilerer da alt på nytt (~2 min i CI). -->
+          <execution>
+            <id>compile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>test-compile</id>
+            <phase>none</phase>
+          </execution>
         </executions>
       </plugin>
     </plugins>
