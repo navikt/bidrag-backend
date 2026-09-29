@@ -58,4 +58,12 @@ class BidragGrunnlagConfig {
             setReadTimeout(Duration.ofSeconds(10))
         },
     )
+
+    @Bean("norgesBankRestTemplate")
+    fun norgesBankRestTemplate(): RestTemplate = RestTemplate(
+        SimpleClientHttpRequestFactory().apply {
+            setConnectTimeout(Duration.ofSeconds(5))
+            setReadTimeout(Duration.ofSeconds(10))
+        },
+    )
 }
