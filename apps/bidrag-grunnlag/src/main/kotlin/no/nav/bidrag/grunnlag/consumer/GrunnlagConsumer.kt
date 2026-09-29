@@ -125,7 +125,6 @@ class GrunnlagConsumer {
     fun <T : Any> initHttpEntityEcb(body: T): HttpEntity<T> {
         val httpHeaders = HttpHeaders()
         httpHeaders.contentType = MediaType.APPLICATION_JSON
-//        httpHeaders.accept = listOf(MediaType.APPLICATION_JSON) // TODO application/vnd.sdmx.data+json
         httpHeaders.accept = listOf(MediaType.parseMediaType("application/vnd.sdmx.data+json"))
         return HttpEntity(body, httpHeaders)
     }
