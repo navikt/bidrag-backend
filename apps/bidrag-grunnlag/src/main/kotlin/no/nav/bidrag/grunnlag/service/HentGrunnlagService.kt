@@ -6,9 +6,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.commons.util.RequestContextAsyncContext
 import no.nav.bidrag.commons.util.SecurityCoroutineContext
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.ArbeidsforholdConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.EnhetsregisterConsumer
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
@@ -284,7 +284,7 @@ class HentGrunnlagService(
             if (!historiskeIdenterMap.values.any { grunnlagDto.personId in it }) {
                 val historiskeIdenterListe = hentIdenterFraConsumer(grunnlagDto.personId)
                 if (historiskeIdenterListe.size > 1) {
-                    SECURE_LOGGER.info("Hentet historiske identer for personId: ${grunnlagDto.personId} og fikk tilbake: $historiskeIdenterListe")
+                    secureLogger.debug { "Hentet historiske identer for personId: ${grunnlagDto.personId} og fikk tilbake: $historiskeIdenterListe" }
                 }
 
                 val key = historiskeIdenterListe.find { !it.historisk }?.personId
@@ -309,7 +309,7 @@ class HentGrunnlagService(
         }
 
         is RestResponse.Failure -> {
-            SECURE_LOGGER.warn("Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response")
+            secureLogger.warn { "Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response" }
             listOf(HistoriskIdent(personId, false))
         }
     }
@@ -321,7 +321,7 @@ class HentGrunnlagService(
             // lik personId.
             val aktivIdent = historiskeIdenterMap.entries.find { grunnlagRequestDto.personId in it.value }?.key ?: grunnlagRequestDto.personId
             if (aktivIdent != grunnlagRequestDto.personId) {
-                SECURE_LOGGER.info("Hentet nyeste ident for personId: ${grunnlagRequestDto.personId} og fikk tilbake: $aktivIdent")
+                secureLogger.debug { "Hentet nyeste ident for personId: ${grunnlagRequestDto.personId} og fikk tilbake: $aktivIdent" }
             }
             grunnlagRequestDto.copy(personId = aktivIdent)
         }

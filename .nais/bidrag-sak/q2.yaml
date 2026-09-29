@@ -32,7 +32,7 @@ env:
     value: dev-fss.bidrag.bidrag-organisasjon
   - name: TOPIC_SAK
     value: bidrag.sak-q2
-  - name: JAVA_OPTS
+  - name: JAVA_TOOL_OPTIONS
     value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
   - name: KODEVERK_URL
     value: https://bidrag-kodeverk.intern.dev.nav.no

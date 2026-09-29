@@ -210,7 +210,7 @@ class AldersjusteringService(
             LOGGER.info { "Opprettet aldersjustering ${aldersjustering.id} for barn ${barn.id}." }
             return aldersjustering
         } else {
-            LOGGER.info { "Aldersjustering for barn ${barn.id} er allerede opprettet." }
+            LOGGER.debug { "Aldersjustering for barn ${barn.id} er allerede opprettet." }
             return null
         }
     }

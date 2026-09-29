@@ -7,6 +7,7 @@ import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
 import no.nav.bidrag.behandling.database.datamodell.minified.RolleSimple
+import no.nav.bidrag.behandling.behandlingNotFoundException
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -59,7 +60,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     WHERE b.id = :id
 """
     )
-    fun findBehandlingSimpleData(id: Long): BehandlingSimple
+    fun findBehandlingSimpleData(id: Long): BehandlingSimple?
 
     @Query(
         """
@@ -77,7 +78,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
 
     fun findBehandlingSimple(id: Long): BehandlingSimple {
-        val behandling = findBehandlingSimpleData(id)
+        val behandling = findBehandlingSimpleData(id) ?: behandlingNotFoundException(id)
         val roller = findRolleSimpleData(id)
         val privatAvtaleAndreBarn = findPrivatAvtaleAndreBarn(id)
         val harPrivatAvtaleAndreBarn = privatAvtaleAndreBarn.isNotEmpty()

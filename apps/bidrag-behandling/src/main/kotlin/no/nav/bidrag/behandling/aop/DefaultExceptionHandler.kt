@@ -2,11 +2,11 @@ package no.nav.bidrag.behandling.aop
 
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.BeregningAvResultatForBehandlingFeilet
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.ifTrue
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
-import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.core.convert.ConversionFailedException
@@ -28,7 +28,7 @@ import java.net.SocketException
 @Suppress("unused")
 class DefaultExceptionHandler {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DefaultExceptionHandler::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ResponseBody
@@ -50,7 +50,7 @@ class DefaultExceptionHandler {
             validationError?.fieldErrors?.joinToString(", ") { "${it.field}: ${it.message}" }
                 ?: exception.message
 
-        LOGGER.error(feilmelding, exception)
+        LOGGER.error(exception) { "$feilmelding" }
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
@@ -67,7 +67,6 @@ class DefaultExceptionHandler {
         val payloadFeilmelding =
             exception.responseBodyAsString.isEmpty().ifTrue { exception.message }
                 ?: exception.responseBodyAsString
-        LOGGER.warn(feilmelding, exception)
         secureLogger.warn(exception) { "Feilmelding: $feilmelding. Innhold: $payloadFeilmelding" }
         return ResponseEntity
             .status(exception.statusCode)
@@ -78,7 +77,7 @@ class DefaultExceptionHandler {
     @ResponseBody
     @ExceptionHandler(BeregningAvResultatForBehandlingFeilet::class)
     fun handleBeregningAvResultatForBehandlingFeilet(exception: BeregningAvResultatForBehandlingFeilet): ResponseEntity<*> {
-        LOGGER.warn(exception.message, exception)
+        LOGGER.warn(exception) { "${exception.message}" }
         val response = ResponseEntity.status(exception.statusCode)
         exception.feilmeldinger.forEach { response.header(HttpHeaders.WARNING, it) }
         return response.build<Any>()
@@ -87,7 +86,7 @@ class DefaultExceptionHandler {
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun tilgangsfeil(exception: JwtTokenUnauthorizedException): ResponseEntity<*> {
-        LOGGER.warn("Sakbehandler eller applikasjon mangler tilgang: ${exception.cause?.message ?: exception.message}", exception)
+        LOGGER.warn(exception) { "Sakbehandler eller applikasjon mangler tilgang: ${exception.cause?.message ?: exception.message}" }
         val response = ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         return response.body("Ingen tilgang")
     }
@@ -95,14 +94,14 @@ class DefaultExceptionHandler {
     @ResponseBody
     @ExceptionHandler(AsyncRequestNotUsableException::class, SocketException::class)
     fun handleClientDisconnect(exception: Exception): ResponseEntity<*> {
-        LOGGER.info("Klient lukket tilkoblingen før responsen var ferdig sendt: ${exception.message}")
+        LOGGER.info { "Klient lukket tilkoblingen før responsen var ferdig sendt: ${exception.message}" }
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build<Any>()
     }
 
     @ResponseBody
     @ExceptionHandler(Exception::class)
     fun handleOtherExceptions(exception: Exception): ResponseEntity<*> {
-        LOGGER.error("Det skjedde en ukjent feil: ${exception.message}", exception)
+        LOGGER.error(exception) { "Det skjedde en ukjent feil: ${exception.message}" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, "Ukjent feil")

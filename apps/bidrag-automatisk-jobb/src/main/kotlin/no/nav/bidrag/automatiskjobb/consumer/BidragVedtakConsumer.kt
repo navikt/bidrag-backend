@@ -10,6 +10,7 @@ import no.nav.bidrag.transport.behandling.vedtak.request.HentManuelleVedtakReque
 import no.nav.bidrag.transport.behandling.vedtak.request.HentVedtakForStønadRequest
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.response.HentVedtakForStønadResponse
+import no.nav.bidrag.transport.behandling.vedtak.response.OpprettVedtakResponseDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -33,6 +34,11 @@ class BidragVedtakConsumer(
     BeregningVedtakConsumer {
     private val bidragVedtakUri
         get() = UriComponentsBuilder.fromUri(bidragVedtakUrl)
+
+    fun opprettVedtak(request: OpprettVedtakRequestDto): OpprettVedtakResponseDto = postForNonNullEntity(
+        bidragVedtakUri.pathSegment("vedtak").build().toUri(),
+        request,
+    )
 
     fun hentVedtaksforslagBasertPåReferanase(referanse: String): VedtakDto? = postForEntity(
         bidragVedtakUri

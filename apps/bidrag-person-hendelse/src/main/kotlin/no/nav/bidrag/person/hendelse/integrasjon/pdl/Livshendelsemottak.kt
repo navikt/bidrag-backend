@@ -1,5 +1,7 @@
 package no.nav.bidrag.person.hendelse.integrasjon.pdl
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.domene.Foedselsdato
 import no.nav.bidrag.person.hendelse.domene.Folkeregisteridentifikator
 import no.nav.bidrag.person.hendelse.domene.Innflytting
@@ -20,8 +22,6 @@ import no.nav.person.pdl.leesah.doedsfall.Doedsfall
 import no.nav.person.pdl.leesah.kontaktadresse.Kontaktadresse
 import no.nav.person.pdl.leesah.oppholdsadresse.Oppholdsadresse
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.annotation.KafkaListener
@@ -56,30 +56,27 @@ class Livshendelsemottak(
         @Payload personhendelse: Personhendelse,
         cr: ConsumerRecord<String, Personhendelse>,
     ) {
-        log.info("Livshendelse med hendelseid {} mottatt.", personhendelse.hendelseId)
-        slog.info("Har mottatt leesah-hendelse $cr")
+        secureLogger.info { "Har mottatt leesah-hendelse $cr" }
 
         val opplysningstype = konvertereOpplysningstype(personhendelse.opplysningstype)
 
         if (Livshendelse.Opplysningstype.IKKE_STØTTET == opplysningstype || opplysningstype == Livshendelse.Opplysningstype.FOEDSEL_V1) {
-            log.info("Mottok opplysningstype som ikke støttes av løsningen - avbryter videre prosessering.")
-            slog.info("Mottok opplysningstype som ikke støttes av løsningen - avbryter videre prosessering. $personhendelse")
+            secureLogger.info { "Mottok opplysningstype som ikke støttes av løsningen - avbryter videre prosessering. $personhendelse" }
             return
         }
 
         if (personhendelse.personidenter.isNullOrEmpty()) {
-            log.warn("Mottok hendelse uten personidenter - avbryter videre prosessering")
+            log.warn { "Mottok hendelse uten personidenter - avbryter videre prosessering" }
             return
         }
 
         try {
             personhendelse.personidenter?.first { it.length == 13 }
-        } catch (nsee: NoSuchElementException) {
-            log.warn("Mottok hendelse uten aktørid - avbryter videre prosessering")
-            slog.warn(
+        } catch (e: NoSuchElementException) {
+            secureLogger.warn(e) {
                 "Fant ikke aktørid i hendelse med hendelseid: " +
-                    "${personhendelse.hendelseId} og personidenter: {${personhendelse.personidenter}}",
-            )
+                    "${personhendelse.hendelseId} og personidenter: {${personhendelse.personidenter}}"
+            }
             return
         }
 
@@ -118,7 +115,7 @@ class Livshendelsemottak(
             MDC.put(MdcKonstanter.MDC_KALLID, livshendelse.hendelseid)
             livshendelsebehandler.prosesserNyHendelse(livshendelse)
         } catch (e: RuntimeException) {
-            slog.error("Feil i prosessering av leesah-hendelse", e)
+            secureLogger.error(e) { "Feil i prosessering av leesah-hendelse" }
             throw RuntimeException("Feil i prosessering av leesah-hendelse")
         } finally {
             MDC.clear()
@@ -127,25 +124,21 @@ class Livshendelsemottak(
 
     private fun konvertereOpplysningstype(pdlOpplysningstype: CharSequence?): Livshendelse.Opplysningstype = try {
         Livshendelse.Opplysningstype.valueOf(pdlOpplysningstype.toString())
-    } catch (iae: IllegalArgumentException) {
-        log.info(
-            "Mottok livshendelse med opplysningstype ({}) fra PDL. Denne ignoreres av løsningen.",
-            pdlOpplysningstype.toString(),
-        )
+    } catch (_: IllegalArgumentException) {
+        log.info { "Mottok livshendelse med opplysningstype ($pdlOpplysningstype) fra PDL. Denne ignoreres av løsningen." }
         Livshendelse.Opplysningstype.IKKE_STØTTET
     }
 
     private fun konvertereEndringstype(pdlEndringstype: Endringstype?): no.nav.bidrag.person.hendelse.domene.Endringstype {
         if (pdlEndringstype == null) {
-            log.error("Endringstype i mottatt melding var null. Avbryter prosessering")
+            log.error { "Endringstype i mottatt melding var null. Avbryter prosessering" }
             throw HendelsemottakException("Endringstype i mottatt melding var null!")
         } else {
             try {
                 return no.nav.bidrag.person.hendelse.domene.Endringstype
                     .valueOf(pdlEndringstype.name)
-            } catch (iae: IllegalArgumentException) {
-                log.error("Mottok ukjent endringstype ({}) fra PDL", pdlEndringstype.name)
-                iae.printStackTrace()
+            } catch (e: IllegalArgumentException) {
+                log.error(e) { "Mottok ukjent endringstype (${pdlEndringstype.name}) fra PDL" }
                 throw HendelsemottakException("Ukjent endringstype: $pdlEndringstype")
             }
         }
@@ -262,7 +255,6 @@ class Livshendelsemottak(
     }
 
     companion object {
-        val slog: Logger = LoggerFactory.getLogger("secureLogger")
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
+        val log = KotlinLogging.logger {}
     }
 }
