@@ -9,5 +9,5 @@ data class FinnOppgaverRequest(
     val aktoerId: AktorId? = null,
     val saksbehandler: NavIdent? = null,
     val enhetsnummer: Enhetsnummer? = null,
-    val limit: Int = 100,
+    val limit: Int? = 100,
 )
