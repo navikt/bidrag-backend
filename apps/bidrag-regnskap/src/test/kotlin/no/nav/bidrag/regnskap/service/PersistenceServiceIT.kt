@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.bidrag.regnskap.BidragRegnskapLocal
+import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import no.nav.bidrag.regnskap.utils.TestData
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.junit.jupiter.api.BeforeAll
@@ -207,5 +208,35 @@ internal class PersistenceServiceIT {
         val driftsavvikForPåløp = persistenceService.hentDriftsavvikForPåløp(påløpId)
 
         driftsavvikForPåløp shouldNotBe null
+    }
+
+    @Test
+    fun `skal hente eldste ikke-godkjente mottakerendring per sak`() {
+        val tidspunkt = LocalDateTime.of(2024, 1, 1, 12, 0)
+        fun lagre(sak: String, opprettet: LocalDateTime) = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = 1,
+                saksnummer = sak,
+                barnIdent = "11111111111",
+                nyMottakerIdent = "22222222222",
+                opprettetTidspunkt = opprettet,
+            ),
+        )
+
+        val eldste = lagre("sak-a", tidspunkt)
+        val nesteMedSammeTidspunkt = lagre("sak-a", tidspunkt)
+        val nyeste = lagre("sak-a", tidspunkt.plusSeconds(1))
+        val annenSak = lagre("sak-b", tidspunkt)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(eldste.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annenSak) shouldBe false
+
+        eldste.godkjentAvSkattTidspunkt = tidspunkt.plusMinutes(1)
+        persistenceService.lagreEndreMottaker(eldste)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(nesteMedSammeTidspunkt.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe false
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
     }
 }

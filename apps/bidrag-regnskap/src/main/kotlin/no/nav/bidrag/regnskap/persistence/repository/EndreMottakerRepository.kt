@@ -8,46 +8,42 @@ import java.time.LocalDateTime
 
 interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
     @Query(
-        value = """
-            SELECT kandidat.*
+        """
+            SELECT kandidat
             FROM endre_mottaker kandidat
-            WHERE kandidat.godkjent_av_skatt_tidspunkt IS NULL
+            WHERE kandidat.godkjentAvSkattTidspunkt IS NULL
               AND NOT EXISTS (
                 SELECT 1
                 FROM endre_mottaker eldre
                 WHERE eldre.saksnummer = kandidat.saksnummer
-                  AND eldre.godkjent_av_skatt_tidspunkt IS NULL
+                  AND eldre.godkjentAvSkattTidspunkt IS NULL
                   AND (
-                    eldre.opprettet_tidspunkt < kandidat.opprettet_tidspunkt
+                    eldre.opprettetTidspunkt < kandidat.opprettetTidspunkt
                     OR (
-                        eldre.opprettet_tidspunkt = kandidat.opprettet_tidspunkt
+                        eldre.opprettetTidspunkt = kandidat.opprettetTidspunkt
                         AND eldre.id < kandidat.id
                     )
                   )
               )
-            ORDER BY kandidat.saksnummer, kandidat.opprettet_tidspunkt, kandidat.id
+            ORDER BY kandidat.saksnummer, kandidat.opprettetTidspunkt, kandidat.id
         """,
-        nativeQuery = true,
     )
     fun hentEldsteIkkeGodkjentePerSak(): List<EndreMottaker>
 
     @Query(
-        value = """
-            SELECT EXISTS (
-                SELECT 1
-                FROM endre_mottaker eldre
-                WHERE eldre.saksnummer = :saksnummer
-                  AND eldre.godkjent_av_skatt_tidspunkt IS NULL
-                  AND (
-                    eldre.opprettet_tidspunkt < :opprettetTidspunkt
-                    OR (
-                        eldre.opprettet_tidspunkt = :opprettetTidspunkt
-                        AND eldre.id < :id
-                    )
-                  )
+        """
+            SELECT CASE WHEN COUNT(eldre) > 0 THEN true ELSE false END
+            FROM endre_mottaker eldre
+            WHERE eldre.saksnummer = :saksnummer
+              AND eldre.godkjentAvSkattTidspunkt IS NULL
+              AND (
+                eldre.opprettetTidspunkt < :opprettetTidspunkt
+                OR (
+                    eldre.opprettetTidspunkt = :opprettetTidspunkt
+                    AND eldre.id < :id
+                )
             )
         """,
-        nativeQuery = true,
     )
     fun finnesEldreIkkeGodkjentForSak(
         @Param("saksnummer") saksnummer: String,
