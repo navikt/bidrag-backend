@@ -324,7 +324,7 @@ class ForholdsmessigFordelingKlageService(
                         saksnummer = opprettetSøknad.saksnummer,
                         status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
                         enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
-                        opprettetEtterHovedsøknad = true,
+                        opprettetEtterHovedsøknad = !behandling.erNyBehandlingIkkeOpprettet,
                     ),
                 )
             }
@@ -362,7 +362,7 @@ class ForholdsmessigFordelingKlageService(
                 barn.forholdsmessigFordeling
                     ?.søknaderUnderBehandling
                     ?.filter {
-                        it.behandlingstype == Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE &&
+                        it.behandlingstype!!.erForholdsmessigFordeling &&
                             it.søknadsid != null &&
                             it.søknadsid != opprettetSøknad.søknadsid
                     }?.map { it.søknadsid!! to barn } ?: emptyList()
@@ -476,10 +476,10 @@ class ForholdsmessigFordelingKlageService(
             }
 
         behandling.søknadsbarn
-            .filter { barn -> barn.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.behandlingstype == Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE } == true }
+            .filter { barn -> barn.forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.behandlingstype?.erForholdsmessigFordeling == true } == true }
             .flatMap { barn ->
                 barn.forholdsmessigFordeling!!.søknaderUnderBehandling.filter {
-                    it.søknadsid != hovedsøknadsid && it.behandlingstype?.erForholdsmessigFordeling != true
+                    it.søknadsid != hovedsøknadsid && it.behandlingstype?.erForholdsmessigFordeling == true
                 }
             }.mapNotNull { it.søknadsid }
             .distinct()
