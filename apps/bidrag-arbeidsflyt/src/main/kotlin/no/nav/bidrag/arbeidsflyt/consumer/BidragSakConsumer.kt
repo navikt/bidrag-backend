@@ -2,6 +2,7 @@ package no.nav.bidrag.arbeidsflyt.consumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.CacheConfig
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Qualifier
@@ -35,7 +36,7 @@ class BidragSakConsumer(
         try {
             return getForNonNullEntity(createUri("/sak/$saksnr"))
         } catch (e: HttpStatusCodeException) {
-            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak $saksnr" }
+            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak ${saksnr.sanitizeForLog()}" }
             throw e
         }
     }

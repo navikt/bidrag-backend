@@ -1,10 +1,10 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.BarnType
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.BarnetilleggBo
 import no.nav.bidrag.grunnlag.consumer.pensjon.PensjonConsumer
 import no.nav.bidrag.grunnlag.consumer.pensjon.api.HentBarnetilleggPensjonRequest
@@ -35,7 +35,7 @@ class OppdaterBarnetillegg(
                 tom = personIdOgPeriode.periodeTil.minusDays(1),
             )
 
-            SECURE_LOGGER.info("Kaller barnetillegg pensjon med request: ${tilJson(hentBarnetilleggPensjonRequest)}")
+            secureLogger.debug { "Kaller barnetillegg pensjon med request: ${tilJson(hentBarnetilleggPensjonRequest)}" }
 
             try {
                 when (
@@ -45,7 +45,7 @@ class OppdaterBarnetillegg(
                     is RestResponse.Success -> {
                         val barnetilleggPensjonResponse = restResponseBarnetilleggPensjon.body
 
-                        SECURE_LOGGER.info("Barnetillegg pensjon ga følgende respons: ${tilJson(barnetilleggPensjonResponse)}")
+                        secureLogger.debug { "Barnetillegg pensjon ga følgende respons: ${tilJson(barnetilleggPensjonResponse)}" }
 
                         persistenceService.oppdaterEksisterendeBarnetilleggPensjonTilInaktiv(
                             grunnlagspakkeId = grunnlagspakkeId,

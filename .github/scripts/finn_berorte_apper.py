@@ -41,9 +41,12 @@ def path_matches_filters(path, patterns):
     return selected
 
 
+SUPPORTED_EVENTS = {"push", "pull_request", "merge_group"}
+
+
 def select_affected_apps(app_filters, event_name, branch, changed_paths):
-    if event_name not in {"push", "pull_request"}:
-        raise ValueError(f"Appvalg støtter bare push og pull_request, ikke {event_name}")
+    if event_name not in SUPPORTED_EVENTS:
+        raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     if event_name == "push" and branch != "main":
         return []
     return [app for app, patterns in app_filters.items()
@@ -63,6 +66,9 @@ def find_changed_files(root, event_name, event):
         pr = event["pull_request"]
         head = validate_sha(pr["head"]["sha"])
         base = git_output("merge-base", validate_sha(pr["base"]["sha"]), head).decode().strip()
+    elif event_name == "merge_group":
+        group = event["merge_group"]
+        head, base = validate_sha(group["head_sha"]), validate_sha(group["base_sha"])
     elif event_name == "push":
         head, base = validate_sha(event["after"]), validate_sha(event["before"])
         if head == "0" * 40:
@@ -131,8 +137,6 @@ def required_library_groups(root, apps):
     groups = set()
     for app in apps:
         config = build_config(root, app)
-        if str(config.get("java-version", "21")) != "21":
-            raise ValueError(f"{app} bruker en annen Java-versjon enn bibliotekjobben, som bruker Java 21")
         configured = config.get("bibliotekgrupper", "felles")
         selected = set(configured.split(",")) if configured else set()
         if not selected <= {"felles", "beregn", "oppgave"}:
@@ -143,16 +147,26 @@ def required_library_groups(root, apps):
     return ",".join(group for group in ("felles", "beregn", "oppgave") if group in groups)
 
 
+def target_branch(event_name, event):
+    """Greina endringene havner på: PR-basen, køens base, eller greina som ble pushet."""
+    if event_name == "pull_request":
+        reference = event["pull_request"]["base"]["ref"]
+    elif event_name == "merge_group":
+        reference = event["merge_group"]["base_ref"]
+    else:
+        reference = event["ref"]
+    return reference.removeprefix("refs/heads/")
+
+
 def main():
     root = Path.cwd()
     app_filters = load_app_filters(root)
     with open(os.environ["GITHUB_EVENT_PATH"]) as stream:
         event = json.load(stream)
     event_name = os.environ["GITHUB_EVENT_NAME"]
-    if event_name not in {"push", "pull_request"}:
-        raise ValueError(f"Appvalg støtter bare push og pull_request, ikke {event_name}")
-    branch = (event["pull_request"]["base"]["ref"] if event_name == "pull_request"
-              else event["ref"].removeprefix("refs/heads/"))
+    if event_name not in SUPPORTED_EVENTS:
+        raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
+    branch = target_branch(event_name, event)
     changed_paths = find_changed_files(root, event_name, event)
     apps, unmerged_apps = split_on_merged_module(
         root, select_affected_apps(app_filters, event_name, branch, changed_paths))

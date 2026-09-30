@@ -26,7 +26,6 @@ class KodeverkConsumer(
 
     @BrukerCacheable(KODEVERK_CACHE)
     fun hentKodeverk(kodeverk: String): KodeverkKoderBetydningerResponse {
-        log.debug("Henter kodeverk for $kodeverk")
         val header = HttpHeaders()
         header.add("Nav-Call-Id", CorrelationId.fetchCorrelationIdForThread())
         header.add("Nav-Consumer-Id", appName)

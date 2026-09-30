@@ -1,5 +1,7 @@
 package no.nav.bidrag.commons.tilgang
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.commons.web.config.RestOperationsAzure
 import no.nav.bidrag.domene.ident.Personident
@@ -10,7 +12,6 @@ import no.nav.bidrag.transport.tilgang.SporingsdataSakRequest
 import no.nav.bidrag.transport.tilgang.TilgangTilPersonRequest
 import no.nav.bidrag.transport.tilgang.TilgangTilSakRequest
 import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Import
@@ -19,13 +20,14 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
+private val LOGGER = KotlinLogging.logger {}
+
 @Component
 @Import(RestOperationsAzure::class)
 class TilgangClient(
     @param:Value($$"${BIDRAG_TILGANG_URL}") private val tilgangURI: URI,
     @param:Qualifier("azure") private val restTemplate: RestTemplate,
 ) : AbstractRestClient(restTemplate, "tilgang") {
-    private val logger = LoggerFactory.getLogger(this::class.java)
 
     val sakUri =
         UriComponentsBuilder
@@ -57,7 +59,7 @@ class TilgangClient(
             val response: TilgangskontrollResponse = postForNonNullEntity(sakUri, TilgangTilSakRequest(saksnummer))
             return response.harTilgang
         } catch (e: Exception) {
-            logger.error("Feil ved sjekk på tilgang til saksnummer $saksnummer ", e)
+            LOGGER.error(e) { "Feil ved sjekk på tilgang til saksnummer ${saksnummer.sanitizeForLog()} " }
             throw e
         }
     }
@@ -67,7 +69,7 @@ class TilgangClient(
             val response: TilgangskontrollResponse = postForNonNullEntity(personUri, TilgangTilPersonRequest(personident))
             return response.harTilgang
         } catch (e: Exception) {
-            logger.error("Feil ved sjekk på tilgang til person ", e)
+            LOGGER.error(e) { "Feil ved sjekk på tilgang til person " }
             throw e
         }
     }
@@ -76,7 +78,7 @@ class TilgangClient(
         try {
             return postForNonNullEntity(sporingsdataSakUri, SporingsdataSakRequest(saksnummer))
         } catch (e: Exception) {
-            logger.error("Feil ved henting av sporingsdata for sak $saksnummer ", e)
+            LOGGER.error(e) { "Feil ved henting av sporingsdata for sak ${saksnummer.sanitizeForLog()} " }
             throw e
         }
     }
@@ -85,7 +87,7 @@ class TilgangClient(
         try {
             return postForNonNullEntity(sporingsdataPersonUri, SporingsdataPersonRequest(personident))
         } catch (e: Exception) {
-            logger.error("Feil ved henting av sporingsdata for person ", e)
+            LOGGER.error(e) { "Feil ved henting av sporingsdata for person " }
             throw e
         }
     }

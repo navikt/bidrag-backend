@@ -2,16 +2,16 @@ package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
-import no.nav.bidrag.arbeidsflyt.UnleashFeatures
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OpprettJournalforingsOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.hendelse.dto.OppgaveKafkaHendelse
 import no.nav.bidrag.arbeidsflyt.model.OppdaterOppgaveFraHendelse
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -71,6 +71,7 @@ class BehandleOppgaveHendelseService(
             opprettNyJournalforingOppgaveHvisNodvendig(oppgave)
         } else {
             overførSøknadsoppgaverTilSammeEnhet(oppgave)
+            overførSøknadsoppgaverTilSammeSaksbehandler(oppgave)
             opprettSøknadsoppgaveHvisBehandlingIkkeAvsluttet(oppgave)
 
             behandlingService.oppdaterStatusPåOppgaverBehandlingTilFerdigstilt(oppgave)
@@ -173,7 +174,13 @@ class BehandleOppgaveHendelseService(
             behandlingHendelseService.behandleHendelse(behandling.hendelse!!)
         }
     }
+    fun overførSøknadsoppgaverTilSammeSaksbehandler(oppgave: OppgaveData) {
+        if (oppgave.endretAvArbeidsflyt()) return
+        if (!erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave)) return
 
+        oppgaveService.oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave)
+        behandlingService.oppdaterBehandlingEnhet(oppgave)
+    }
     fun overførSøknadsoppgaverTilSammeEnhet(oppgave: OppgaveData) {
         if (oppgave.endretAvArbeidsflyt()) return
         if (!erSøknadsoppgaveEnhetEndretTilNoeAnnet(oppgave)) return
@@ -181,7 +188,16 @@ class BehandleOppgaveHendelseService(
         oppgaveService.oppdaterAlleOppgaverSomTilhørerSammeBehandling(oppgave)
         behandlingService.oppdaterBehandlingEnhet(oppgave)
     }
+    fun erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave: OppgaveData): Boolean {
+        if (!oppgave.erSøknadsoppgave) {
+            return false
+        }
 
+        val prevOppgaveState = persistenceService.hentOppgave(oppgave.id) ?: return false
+
+        // Ikke gjør noe hvis forrige status var null, det skal enten settes av systemet eller av SB. Hvis den settes til null senere å er det noe som er gjort manuelt
+        return (prevOppgaveState.tilordnetRessurs != null || oppgave.tilordnetRessurs != null) && (prevOppgaveState.tilordnetRessurs != oppgave.tilordnetRessurs)
+    }
     fun erSøknadsoppgaveEnhetEndretTilNoeAnnet(oppgave: OppgaveData): Boolean {
         if (!oppgave.erSøknadsoppgave) {
             return false
@@ -230,19 +246,9 @@ class BehandleOppgaveHendelseService(
         oppgave: OppgaveData,
     ) {
         try {
-            SECURE_LOGGER.info(
-                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med " +
-                    buildList {
-                        add("oppgaveId ${oppgaveHendelse.oppgave.oppgaveId}")
-                        add("versjon ${oppgaveHendelse.oppgave.versjon}")
-                        add("opgpavetype ${oppgaveHendelse.oppgave.kategorisering?.oppgavetype}")
-                        add("tema ${oppgaveHendelse.oppgave.kategorisering?.tema}")
-                        add("journalpostId ${oppgave.journalpostId}")
-                        add("tildelt ${oppgaveHendelse.oppgave.tilordning?.navIdent} (enhet ${oppgaveHendelse.oppgave.tilordning?.enhetsnr})")
-                        add("utførtAv ${oppgaveHendelse.utfortAv?.navIdent} (enhet ${oppgaveHendelse.utfortAv?.enhetsnr})")
-                        add("hendelse $oppgaveHendelse")
-                    }.joinToString(", "),
-            )
+            secureLogger.info {
+                "Mottatt oppgave ${oppgaveHendelse.hendelse.hendelsestype} med ${commonObjectmapper.writeValueAsString(oppgaveHendelse)} "
+            }
         } catch (e: Exception) {
             LOGGER.error(e) { "Det skjedde en feil ved logging av hendelse" }
         }

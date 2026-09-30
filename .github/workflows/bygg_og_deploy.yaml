@@ -174,9 +174,15 @@ jobs:
       # Egen, smal cache-nøkkel (kun denne appens pom-kjede via maven_cache_paths) istedenfor
       # innebygd `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed invalideres
       # av endringer i moduler denne jobben ikke bygger.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Kun restore her; cachen lagres bare fra main (se "Lagre Maven-cache"). PR-brancher får da
+      # ikke egne kopier som fyller opp repoets cache-kvote og fortrenger main-cachene.
+      # Egne bidrag-biblioteker (no/nav/bidrag) holdes utenfor – de hentes via klargjor-biblioteker.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: maven-cache
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
           key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
           restore-keys: |
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
@@ -238,24 +244,51 @@ jobs:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
           SKIP_TESTS: ${{ inputs.skip_tester }}
         run: |
-          read -r -a args <<< "$MAVEN_OPTIONS"
-          har_modul=false
-          for arg in "${args[@]}"; do
+          # Bytter `-pl <modul>` til `-f <modul>/pom.xml` slik at Maven bare leser appens pom
+          # (og foreldre via relativePath) i stedet for å skanne hele reactoren. Bibliotekene er
+          # allerede installert i ~/.m2 av forrige steg, så reactoren trengs ikke.
+          read -r -a opts <<< "$MAVEN_OPTIONS"
+          args=()
+          modul=""
+          i=0
+          while [ $i -lt ${#opts[@]} ]; do
+            arg="${opts[$i]}"
             case "$arg" in
-              -pl) har_modul=true ;;
+              -pl)
+                if [ -n "$modul" ]; then
+                  echo "::error::Appbygget støtter kun én -pl"
+                  exit 1
+                fi
+                i=$((i + 1))
+                modul="${opts[$i]}"
+                case "$modul" in *,*)
+                  echo "::error::Appbygget støtter kun én modul i -pl"
+                  exit 1 ;;
+                esac ;;
               -am|--also-make)
                 echo "::error::Appbygg med ferdige biblioteker skal ikke bruke -am"
                 exit 1 ;;
+              *) args+=("$arg") ;;
             esac
+            i=$((i + 1))
           done
-          if [ "$har_modul" != true ]; then
+          if [ -z "$modul" ]; then
             echo "::error::Appbygget må velge modul med -pl"
             exit 1
           fi
+          args+=(-f "$modul/pom.xml")
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
-          mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
-      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
-        if: github.actor != 'dependabot[bot]'
+          mvn -T 1C -Dmaven.artifact.threads=16 "${args[@]}" clean verify -Dmaven.antrun.skip=true
+      - name: Lagre Maven-cache
+        if: always() && github.ref == 'refs/heads/main' && steps.maven-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
+          key: ${{ steps.maven-cache.outputs.cache-primary-key }}
+      - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
+        if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push
         env:
           TRIVY_JAVA_DB_REPOSITORY: "public.ecr.aws/aquasecurity/trivy-java-db:1"
@@ -268,6 +301,8 @@ jobs:
           image_suffix: ${{ inputs.image_suffix }}
           tag: ${{ inputs.tag }}
           salsa: false
+          push_image: ${{ inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod }}
+          cache_to: ${{ (inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod) && 'type=gha,mode=max' || '' }}
     outputs:
       image: ${{ steps.docker-push.outputs.image }}
       tag: ${{ steps.docker-push.outputs.tag }}
@@ -276,6 +311,9 @@ jobs:
   salsa:
     name: Generate SBOM, attest and sign image
     needs: bygg_test_og_image
+    # Attestering signerer et image i registeret. Uten opplasting finnes det ikke noe
+    # image å signere, så jobben hører sammen med de samme miljøene som deployer.
+    if: inputs.deploy_q1 || inputs.deploy_q2 || inputs.deploy_prod
     runs-on: ubuntu-latest
     permissions:
       id-token: "write"
@@ -297,7 +335,7 @@ jobs:
           echo "REPO_NAME=$repo_name" >> $GITHUB_OUTPUT
       - name: Generate SBOM, attest and sign image
         id: attest-sign
-        uses: nais/attest-sign@c778867caf15ed06f2893afd5723898560b2dcc9 # v2.0.18
+        uses: nais/attest-sign@fb682a4e2e92380274d6fd5332324831b62c1961 # v2.0.19
         with:
           image_ref: ${{ steps.login.outputs.registry }}/${{ steps.setup.outputs.REPO_NAME }}@${{ needs.bygg_test_og_image.outputs.digest }}
     outputs:
@@ -320,7 +358,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -341,7 +379,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -358,11 +396,11 @@ jobs:
       id-token: "write"
     concurrency:
       group: deploy-${{ inputs.image_suffix || inputs.tag || github.workflow }}-prod
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
-        uses: nais/deploy/actions/deploy@1de80da70ad26556ecdc5964a8b7ec3bbed98120 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: prod-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
