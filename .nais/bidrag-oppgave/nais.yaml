@@ -62,7 +62,6 @@ spec:
         - application: {{rule.application }}
       {{/each}}
       external:
-        - host: {{unleash.host}}
       {{#each outbound.external as |host|}}
         - host: {{host}}
       {{/each}}
