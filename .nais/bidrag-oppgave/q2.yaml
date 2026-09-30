@@ -1,6 +1,7 @@
-name: bidrag-oppgave-q2
+name: bidrag-oppgave
 ingresses:
   - https://bidrag-oppgave-q2.intern.dev.nav.no
+  - https://bidrag-oppgave.intern.dev.nav.no
 replicas:
   max: 1
   min: 1
