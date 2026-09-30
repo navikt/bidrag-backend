@@ -1426,7 +1426,7 @@ class BehandlingTilVedtakMapping(
                 grunnlagListe =
                 (grunnlagListe + tilPersonobjekter() + resultatEngangsbeløpGebyr.grunnlagsliste + grunnlagVirkningstidspunkt).map(
                     BaseGrunnlag::tilOpprettRequestDto,
-                ),
+                ).distinct(),
             )
     }
 

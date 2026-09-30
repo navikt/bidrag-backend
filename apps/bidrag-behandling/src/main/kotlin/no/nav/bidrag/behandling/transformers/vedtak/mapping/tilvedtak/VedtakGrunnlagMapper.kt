@@ -440,12 +440,14 @@ class VedtakGrunnlagMapper(
             )
         }
         val grunnlagGebyr = (if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste) else grunnlagsliste).toMutableList()
-        grunnlagGebyr.addAll(
-            behandling.grunnlag
-                .toList()
-                .mapAinntekt(behandling.tilPersonobjekter())
-                .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
-        )
+        if (behandling.erAvslagForAlle) {
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .mapAinntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
+        }
         val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
         val delberegningSummInntektGrunnlag = gebyrBeregning.filtrerBasertPåFremmedReferanse(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, rolle.tilGrunnlagsreferanse()).firstOrNull()
