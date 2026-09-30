@@ -1,7 +1,6 @@
 package no.nav.bidrag.texas
 
 import org.slf4j.LoggerFactory
-import org.springframework.core.env.Environment
 import org.springframework.web.client.RestClient.builder
 
 class NaisTokenService(

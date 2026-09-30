@@ -27,6 +27,7 @@
         <module>libs/bidrag-felles/bidrag-commons</module>
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
+        <module>libs/bidrag-felles/bidrag-texas</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-core</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-forskudd</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-boforhold</module>
@@ -62,7 +63,6 @@
         <module>apps/bidrag-tilgangskontroll</module>
         <module>apps/bidrag-reisekostnad-api</module>
         <module>apps/bidrag-vedtak</module>
-        <module>libs/bidrag-texas</module>
     </modules>
 
     <!-- Versjonsegenskaper her er kun de som root-pom-en selv trenger for sin
