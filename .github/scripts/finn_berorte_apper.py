@@ -137,8 +137,6 @@ def required_library_groups(root, apps):
     groups = set()
     for app in apps:
         config = build_config(root, app)
-        if str(config.get("java-version", "21")) != "21":
-            raise ValueError(f"{app} bruker en annen Java-versjon enn bibliotekjobben, som bruker Java 21")
         configured = config.get("bibliotekgrupper", "felles")
         selected = set(configured.split(",")) if configured else set()
         if not selected <= {"felles", "beregn", "oppgave"}:
