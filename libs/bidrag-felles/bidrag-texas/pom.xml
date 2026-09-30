@@ -13,7 +13,8 @@
 
     <artifactId>bidrag-texas</artifactId>
     <name>bidrag-texas</name>
-    <description>Lib for å håndtere token exchange på nais måten</description>
+    <packaging>jar</packaging>
+    <description>Lib for å håndtere token exchange på nais måten via Texas</description>
 
     <dependencies>
         <dependency>
