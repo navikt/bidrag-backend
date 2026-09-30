@@ -125,6 +125,7 @@ Den andre filen, avstsum er en summering over hvor mange av hver transaksjonskod
 Se [AvstemmingsfilerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendelse/schedule/avstemning/AvstemmingsfilerScheduler.kt).
 
 ### Endring av mottaker
+Funksjonen styres av Unleash-flagget `regnskap.endre_mottaker` (av som standard). Når flagget er av, fortsetter ordinær oppdragsbehandling, men RM-endringer lagres ikke, overføres ikke og varsles ikke; ventende endringer kan resendes når flagget slås på igjen.
 Ved vedtak av type `ENDRING_MOTTAKER` oppdaterer bidrag-regnskap regnskapsmottaker (RM) i ELIN via bidrag-reskontro sitt `/endreRmForSak`-endepunkt (saksnummer, barn og ny mottaker – ingen perioder, kun gjeldende mottaker settes).
 Hvert vedtak lagres som en egen historikkrad i `endre_mottaker`-tabellen og forsøkes overført umiddelbart. Fordi ELIN er ustabilt, resendes ikke-godkjente endringer også skedulert. Endringer per sak sendes i samme rekkefølge som vedtakene ble mottatt, slik at en nyere endring ikke kan overskrive en eldre endring som fortsatt venter på behandling. En gang per dag varsles det i Slack dersom det finnes endringer som fremdeles ikke er godkjent av skatt.
 Se [EndreMottakerScheduler.kt](src/main/kotlin/no/nav/bidrag/regnskap/hendelse/schedule/krav/EndreMottakerScheduler.kt).

@@ -9,11 +9,16 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.util.PåløpException
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -49,8 +54,15 @@ class VedtakshendelseServiceTest {
 
     @BeforeEach
     fun setup() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
         every { persistenceService.harAktivtDriftsavvik(false) } returns false
         every { kravService.erVedlikeholdsmodusPåslått() } returns false
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Test
@@ -176,6 +188,16 @@ class VedtakshendelseServiceTest {
                 nyMottakerIdent = any(),
             )
         }
+    }
+
+    @Test
+    fun `skal ikke lagre mottakerendring naar funksjonen er deaktivert`() {
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
+
+        vedtakshendelseService.behandleHendelse(opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER"))
+
+        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        verify(exactly = 1) { oppdragService.lagreHendelse(any(), false) }
     }
 
     private fun opprettVedtakshendelse(

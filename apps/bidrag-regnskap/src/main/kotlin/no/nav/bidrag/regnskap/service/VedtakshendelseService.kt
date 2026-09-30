@@ -10,6 +10,7 @@ import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.dto.vedtak.Hendelse
 import no.nav.bidrag.regnskap.dto.vedtak.Periode
 import no.nav.bidrag.regnskap.util.PåløpException
@@ -65,7 +66,7 @@ class VedtakshendelseService(
             }
         }
 
-        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
+        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
             behandleEndringAvMottaker(vedtakHendelse)
         }
 

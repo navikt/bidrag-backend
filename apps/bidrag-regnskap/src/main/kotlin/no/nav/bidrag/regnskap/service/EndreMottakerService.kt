@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.consumer.BidragReskontroConsumer
 import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
@@ -54,6 +55,11 @@ class EndreMottakerService(
         noRollbackFor = [HttpClientErrorException::class, HttpServerErrorException::class, JwtTokenUnauthorizedException::class],
     )
     fun overførEndreMottaker(id: Long) {
+        if (!UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+            LOGGER.info { "Endring av mottaker er deaktivert. Overfører ikke til skatt." }
+            return
+        }
+
         val endreMottaker = persistenceService.hentEndreMottaker(id)
         if (endreMottaker == null) {
             LOGGER.error { "Fant ingen endring av mottaker med id: $id. Kan ikke overføre til skatt." }

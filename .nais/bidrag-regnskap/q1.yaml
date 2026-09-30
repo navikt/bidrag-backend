@@ -21,6 +21,9 @@ bucket:
   navn: bidrag-regnskap-q1
 maskinporten:
   url: https://test.maskinporten.no
+unleash:
+  env: development
+  secret_name: bidrag-regnskap-unleash-api-token
 env:
   SPRING_PROFILES_ACTIVE: database-new
   SKATT_URL: https://bidrag-elin-stub.intern.dev.nav.no/bidrag/v1/bidragskrav

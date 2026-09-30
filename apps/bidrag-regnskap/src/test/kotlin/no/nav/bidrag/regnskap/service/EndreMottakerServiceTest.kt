@@ -8,12 +8,17 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
+import io.mockk.mockkObject
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.consumer.BidragReskontroConsumer
 import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -47,7 +52,14 @@ class EndreMottakerServiceTest {
 
     @BeforeEach
     fun setup() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
         every { persistenceService.finnesEldreIkkeGodkjentEndreMottaker(any()) } returns false
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     private fun endreMottaker(godkjent: LocalDateTime? = null, overført: LocalDateTime? = null) = EndreMottaker(
@@ -152,5 +164,15 @@ class EndreMottakerServiceTest {
 
         verify(exactly = 0) { bidragReskontroConsumer.endreRmForSak(any(), any(), any()) }
         verify(exactly = 0) { persistenceService.lagreEndreMottaker(any()) }
+    }
+
+    @Test
+    fun `skal ikke overfoere ventende endringer naar funksjonen er deaktivert`() {
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
+
+        endreMottakerService.overførEndreMottaker(id)
+
+        verify(exactly = 0) { persistenceService.hentEndreMottaker(any()) }
+        verify(exactly = 0) { bidragReskontroConsumer.endreRmForSak(any(), any(), any()) }
     }
 }

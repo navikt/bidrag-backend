@@ -21,6 +21,9 @@ bucket:
   navn: bidrag-regnskap-prod
 maskinporten:
   url: https://maskinporten.no
+unleash:
+  env: production
+  secret_name: bidrag-regnskap-unleash-api-token
 env:
   SPRING_PROFILES_ACTIVE: database-legacy
   SKATT_URL: https://tolking2predator-proxy-ske-elin.elin.innkreving.skatteetaten.no/Tolkning2PredatorV2.RestApi

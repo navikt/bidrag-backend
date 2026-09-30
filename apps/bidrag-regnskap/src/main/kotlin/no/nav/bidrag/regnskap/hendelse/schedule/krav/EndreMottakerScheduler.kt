@@ -5,6 +5,7 @@ import net.javacrumbs.shedlock.core.LockAssert
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import no.nav.bidrag.commons.service.slack.SlackService
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.service.EndreMottakerService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
@@ -26,6 +27,8 @@ class EndreMottakerScheduler(
     @SchedulerLock(name = "skedulertResendingAvEndringAvMottaker")
     fun skedulertResendingAvEndringAvMottaker() {
         LockAssert.assertLocked()
+        if (!UnleashFeatures.ENDRE_MOTTAKER.isEnabled) return
+
         val ikkeGodkjente = endreMottakerService.hentIkkeGodkjenteEndringer()
         if (ikkeGodkjente.isEmpty()) {
             LOGGER.info { "Det finnes ingen endringer av mottaker som ikke er godkjent av skatt." }
@@ -40,6 +43,8 @@ class EndreMottakerScheduler(
     @SchedulerLock(name = "dagligVarslingOmFeiledeEndringerAvMottaker")
     fun dagligVarslingOmFeiledeEndringer() {
         LockAssert.assertLocked()
+        if (!UnleashFeatures.ENDRE_MOTTAKER.isEnabled) return
+
         val feilede = endreMottakerService.hentFeiledeOverføringer()
 
         if (feilede.isEmpty()) {
