@@ -334,7 +334,7 @@ public class JournalpostController {
       @RequestHeader(EnhetFilter.X_ENHET_HEADER) List<String> enheter
   ) {
     String enhet = !enheter.isEmpty() ? enheter.get(0) : null;
-    LOGGER.info("Patch journalpost {} av enhet {}", bidJournalpostId, enhet);
+    LOGGER.info("Patch journalpost {} av enhet {}", sanitizeForLog(bidJournalpostId), sanitizeForLog(enhet));
 
     // Kaster exception med HttpStatus.FORBIDDEN (403) hvis tilgangskontroll feiler.
     endreJournalpostCommand.getTilknyttSaker().forEach(tilgangskontrollService::sjekkTilgangSak);

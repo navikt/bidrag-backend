@@ -242,7 +242,7 @@ fun mapTilBeregningresultatBarn(
         .finnBeregnTilDatoBehandling(søknadsbarn)
         ?.toYearMonth(),
     innkrevesFraDato = behandling.finnInnkrevesFraDato(søknadsbarn),
-    innkrevesFraPerioder = behandling.finnSkalInnkrevesPeriode(søknadsbarn),
+    innkrevesFraPerioder = if (endeligResultat?.periodeListe?.isNotEmpty() == true) behandling.finnSkalInnkrevesPeriode(søknadsbarn) else emptyList(),
     opphørsdato = søknadsbarn.opphørsdato?.toYearMonth(),
     løperBidrag = behandling.løperBidragEtterEldsteVirkning(søknadsbarn),
     resultat =
@@ -292,7 +292,11 @@ fun BeregnGebyrResultat.tilDto(
             skattepliktigInntekt = skattepliktigInntekt,
             maksBarnetillegg = maksBarnetillegg,
         ),
-        beregnetIlagtGebyr = ilagtGebyr,
+        beregnetIlagtGebyr = if (erManueltOverstyrt) {
+            !(gebyr.manueltOverstyrtGebyr?.ilagtGebyr ?: (rolle.gebyr!!.ilagtGebyr == true))
+        } else {
+            ilagtGebyr
+        },
         begrunnelse = if (erManueltOverstyrt) gebyr.manueltOverstyrtGebyr?.begrunnelse ?: rolle.gebyr?.begrunnelse else null,
         endeligIlagtGebyr =
         if (erManueltOverstyrt) {

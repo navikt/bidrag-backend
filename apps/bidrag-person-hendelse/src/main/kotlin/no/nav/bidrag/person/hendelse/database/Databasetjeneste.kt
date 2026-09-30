@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager
 import no.nav.bidrag.person.hendelse.domene.Endringstype
 import no.nav.bidrag.person.hendelse.domene.Livshendelse
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.Egenskaper
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -12,8 +13,8 @@ import java.time.LocalDateTime
 
 @Service
 class Databasetjeneste(
-    open val aktorDao: AktorDao,
-    open val hendelsemottakDao: HendelsemottakDao,
+    val aktorDao: AktorDao,
+    val hendelsemottakDao: HendelsemottakDao,
     val egenskaper: Egenskaper,
     val entityManager: EntityManager,
 ) {
@@ -118,28 +119,39 @@ class Databasetjeneste(
         readOnly = true,
         noRollbackFor = [Exception::class],
     )
-    fun hentePubliseringsklareHendelser(): HashMap<Aktor, HendelseMottakerForAktor> = tilHashMap(
-        hendelsemottakDao.hentePubliseringsklareOverførteHendelser(
+    fun hentePubliseringsklareHendelser(maksAntallAktører: Int): HashMap<Aktor, HendelseMottakerForAktor> {
+        val publisertFør =
             LocalDateTime
                 .now()
                 .minusHours(
                     egenskaper.generelt.antallTimerSidenForrigePublisering.toLong(),
-                ),
-        ),
-    )
+                )
+
+        // Begrenser uttrekket i databasen for å unngå at hele hendelsetabellen lastes inn i minnet
+        val aktørider =
+            hendelsemottakDao.henteIdTilAktørerMedPubliseringsklareHendelser(
+                publisertFør,
+                PageRequest.of(0, maksAntallAktører),
+            )
+
+        if (aktørider.isEmpty()) return HashMap()
+
+        return tilHashMap(hendelsemottakDao.hentePubliseringsklareOverførteHendelserForAktører(aktørider))
+    }
 
     private fun tilHashMap(liste: Set<Hendelsemottak>): HashMap<Aktor, HendelseMottakerForAktor> = liste
-        .associate {
-            it.aktor to
-                HendelseMottakerForAktor(
-                    it.personidenter
-                        .split(
-                            ',',
-                        ).map { ident -> ident.trim() }
-                        .toSet(),
-                    liste.filter { l -> l.aktor == it.aktor },
-                )
-        }.toMutableMap() as HashMap<Aktor, HendelseMottakerForAktor>
+        .groupBy { it.aktor }
+        .mapValuesTo(HashMap()) { (_, hendelser) ->
+            HendelseMottakerForAktor(
+                hendelser
+                    .last()
+                    .personidenter
+                    .split(',')
+                    .map { ident -> ident.trim() }
+                    .toSet(),
+                hendelser,
+            )
+        }
 
     private fun kansellereTidligereHendelse(livshendelse: Livshendelse): Status {
         val tidligereHendelseMedStatusMottatt =

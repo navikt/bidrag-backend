@@ -10,6 +10,7 @@ import no.nav.bidrag.arbeidsflyt.model.OppdaterOppgaveFraHendelse
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
@@ -178,7 +179,6 @@ class BehandleOppgaveHendelseService(
         if (!erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave)) return
 
         oppgaveService.oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave)
-        behandlingService.oppdaterBehandlingEnhet(oppgave)
     }
     fun overførSøknadsoppgaverTilSammeEnhet(oppgave: OppgaveData) {
         if (oppgave.endretAvArbeidsflyt()) return

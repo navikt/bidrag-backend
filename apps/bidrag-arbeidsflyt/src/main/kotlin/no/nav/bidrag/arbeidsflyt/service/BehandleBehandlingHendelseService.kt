@@ -116,12 +116,24 @@ class BehandleBehandlingHendelseService(
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
+            oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
+    private fun oppdaterOppgaverMedBehandlingId(
+        åpneOppgaver: List<OppgaveData>,
+        hendelse: BehandlingHendelse,
+    ) {
+        if (hendelse.behandlingsid == null) return
+        åpneOppgaver.filter { it.behandlingsid == null || it.behandlingsid != hendelse.behandlingsid?.toString() }.forEach {
+            oppgaveService.oppdaterOppgave(
+                OppdaterOppgave(it).oppdaterBehandlingsid(hendelse.behandlingsid),
+            )
+        }
+    }
     private fun overføreOppgaverTilSaksbehandlerSomOpprettetFF(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -249,6 +261,9 @@ class BehandleBehandlingHendelseService(
         hendelse: BehandlingHendelse,
         overførtTilEnhet: String?,
     ): OppgaveData {
+        val eksisterendeOppgaverForBehandling = hendelse.behandlingsid?.let { oppgaveService.finnOppgaverForBehandling(it) }?.firstOrNull()
+        val tilhørerEnhet = eksisterendeOppgaverForBehandling?.tildeltEnhetsnr
+        val tilhørerSaksbehandler = eksisterendeOppgaverForBehandling?.tilordnetRessurs
         val oppgave =
             oppgaveService.opprettOppgave(
                 OpprettSøknadsoppgaveRequest(
@@ -256,13 +271,18 @@ class BehandleBehandlingHendelseService(
                     saksreferanse = barn.saksnummer,
                     innhold = opprettOppgaveBeskrivelse(barn),
                     frist = finnFristForSøknadsgruppe(behandling, barn),
-                    tildeltEnhetsnr = overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
+                    tildeltEnhetsnr = tilhørerEnhet ?: overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
                     tema = finnFagområdeForSøknad(barn.stønadstype),
                     oppgavetype = finnOppgavetypeForStønadstype(barn.behandlingstema),
                     søknadsid = barn.søknadsid,
                     behandlingsid = hendelse.behandlingsid,
-                    sporingsdata = hendelse.sporingsdata,
+                    sporingsdata = tilhørerSaksbehandler?.let {
+                        hendelse.sporingsdata.copy(
+                            brukerident = tilhørerSaksbehandler,
+                        )
+                    } ?: hendelse.sporingsdata,
                     overførtTilEnhet = overførtTilEnhet,
+
                 ),
             )
         val oppgaveDetaljer = behandling.oppgave ?: BehandlingOppgave(oppgaver = setOf())

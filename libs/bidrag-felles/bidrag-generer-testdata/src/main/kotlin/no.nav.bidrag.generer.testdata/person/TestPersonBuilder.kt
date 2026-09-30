@@ -219,7 +219,8 @@ class TestPersonBuilder {
         val aktørIder =
             (0 until antallAktoerIder).map { i ->
                 TestPersonIdent(
-                    (100000000000L + RandomTestData.random().nextLong(200000000000L)).toString(),
+                    // En aktørid har 13 siffer, og SensitiveLogMasker i bidrag-commons maskerer bare nøyaktig 13.
+                    (1000000000000L + RandomTestData.random().nextLong(2000000000000L)).toString(),
                     i == 0,
                     true,
                 )

@@ -13,6 +13,7 @@
   <artifactId>bidrag-behandling</artifactId>
   <name>bidrag-behandling</name>
   <properties>
+    <surefire.forkCount>4</surefire.forkCount>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
@@ -556,11 +557,13 @@
 
   <build>
     <plugins>
-      <!-- Kjør tester i flere JVM-forker parallelt for å utnytte flere CPU-kjerner på CI-runneren -->
+      <!-- Hver fork har sin egen Spring-kontekstcache og egne Postgres-containere. Målt lokalt (12 kjerner):
+           2 forker 443 s, 3 forker 288 s, 4 forker 201 s. 6 forker (0.5C) ga feil fordi Docker-VM-en
+           (Colima, 2 CPU/2 GB) ikke taklet 12 Postgres-containere. Overstyr med -Dsurefire.forkCount=N. -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <forkCount>1C</forkCount>
+          <forkCount>${surefire.forkCount}</forkCount>
           <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
@@ -580,6 +583,16 @@
           </execution>
           <execution>
             <id>default-test-kapt</id>
+            <phase>none</phase>
+          </execution>
+          <!-- extensions=true i root-pom gir allerede default-compile/default-test-compile.
+               De eksplisitte executions fra root-pom kompilerer da alt på nytt (~2 min i CI). -->
+          <execution>
+            <id>compile</id>
+            <phase>none</phase>
+          </execution>
+          <execution>
+            <id>test-compile</id>
             <phase>none</phase>
           </execution>
         </executions>

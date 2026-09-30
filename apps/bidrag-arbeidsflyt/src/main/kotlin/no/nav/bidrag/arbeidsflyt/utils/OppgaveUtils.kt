@@ -10,4 +10,10 @@ fun lagSaksbehandlerInfo(saksbehandlerIdent: String?) = if (saksbehandlerIdent.i
     )
 }
 
-private fun hentBrukeridentMedSaksbehandler(saksbehandlerIdent: String) = "${EnhetProvider.hentSaksbehandlernavn(saksbehandlerIdent) ?: "Ukjent"} ${saksbehandlerIdent.let { "($it)" }}"
+private fun hentBrukeridentMedSaksbehandler(saksbehandlerIdent: String): String {
+    val saksbehandlerNavn = EnhetProvider.hentSaksbehandlernavn(saksbehandlerIdent)
+    if (saksbehandlerNavn.isNullOrEmpty()) {
+        return saksbehandlerIdent
+    }
+    return "$saksbehandlerNavn ${saksbehandlerIdent.let { "($it)" }}"
+}
