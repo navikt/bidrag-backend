@@ -13,6 +13,11 @@ jobs:
   detect_changes:
     name: Finn berørte apper
     runs-on: ubuntu-latest
+    # actions/pull-requests: read trengs for å se om merge-køen kan gjenbruke et grønt PR-bygg.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     outputs:
       apps: ${{ steps.appvalg.outputs.apps }}
       bibliotekgrupper: ${{ steps.appvalg.outputs.bibliotekgrupper }}
@@ -30,6 +35,8 @@ jobs:
           bash .github/scripts/test-pr-endringsoversikt.sh
       - name: Finn apper som må bygges
         id: appvalg
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/finn_berorte_apper.py
 
   biblioteker:

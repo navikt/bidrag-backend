@@ -21,6 +21,7 @@ from finn_berorte_apper import (
     select_affected_apps,
     split_on_merged_module,
     target_branch,
+    tested_pr_head,
 )
 
 
@@ -270,6 +271,108 @@ class AppFiltersTest(unittest.TestCase):
             self.assertEqual(values["bibliotekgrupper"], "felles,beregn")
 
 
+class MergeQueueReuseTest(unittest.TestCase):
+    """Merge-køen hopper over bygget bare når PR-hodet med identisk tre allerede er grønt."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.directory.name)
+        self.git("init", "--quiet", "--initial-branch=main")
+        self.git("config", "user.email", "ci@example.com")
+        self.git("config", "user.name", "CI")
+        self.git("config", "commit.gpgsign", "false")
+        self.main = self.commit("README.md", "main")
+        self.pr_head = self.commit("apps/a/A.kt", "pr")
+        # Køen legger PR-endringen oppå main: samme tre som PR-hodet, men en ny commit.
+        self.git("checkout", "--quiet", "--detach", self.main)
+        self.queue_head = self.commit("apps/a/A.kt", "pr", message="kø")
+        self.env = patch.dict(os.environ, {"GITHUB_REPOSITORY": "navikt/bidrag-backend", "GITHUB_TOKEN": "t"})
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+        self.directory.cleanup()
+
+    def git(self, *args):
+        return subprocess.check_output(["git", "-C", str(self.root), *args], text=True).strip()
+
+    def commit(self, path, content, message="endring"):
+        file = self.root / path
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text(content)
+        self.git("add", path)
+        self.git("commit", "--quiet", "-m", message)
+        return self.git("rev-parse", "HEAD")
+
+    def event(self, head=None, base=None, pr=7):
+        return {"merge_group": {"head_sha": head or self.queue_head, "base_sha": base or self.main,
+                                "base_ref": "refs/heads/main",
+                                "head_ref": f"refs/heads/gh-readonly-queue/main/pr-{pr}-{base or self.main}"}}
+
+    def api(self, successful_runs=1):
+        def get(path):
+            if path == "/repos/navikt/bidrag-backend/pulls/7":
+                return {"head": {"sha": self.pr_head}}
+            self.assertIn(f"head_sha={self.pr_head}", path)
+            self.assertIn("event=pull_request", path)
+            self.assertIn("status=success", path)
+            self.assertIn("/actions/workflows/bygg-apper.yaml/runs", path)
+            return {"total_count": successful_runs}
+        return patch("finn_berorte_apper.github_get", side_effect=get)
+
+    def test_identical_tree_with_green_pr_build_is_reused(self):
+        with self.api():
+            self.assertEqual(tested_pr_head(self.root, self.event(), "bygg-apper.yaml"), self.pr_head)
+
+    def test_without_a_green_pr_build_the_queue_builds(self):
+        with self.api(successful_runs=0):
+            self.assertIsNone(tested_pr_head(self.root, self.event(), "bygg-apper.yaml"))
+
+    def test_pr_behind_main_is_built_even_with_a_green_pr_build(self):
+        # main har fått en ny commit etter PR-bygget: køens tre er ikke testet før.
+        self.git("checkout", "--quiet", "--detach", self.main)
+        new_main = self.commit("apps/b/B.kt", "ny main")
+        queue_head = self.commit("apps/a/A.kt", "pr", message="kø")
+        with self.api():
+            self.assertIsNone(tested_pr_head(self.root, self.event(queue_head, new_main), "bygg-apper.yaml"))
+
+    def test_different_tree_is_built(self):
+        self.git("checkout", "--quiet", "--detach", self.main)
+        other = self.commit("apps/a/A.kt", "noe annet", message="kø")
+        with self.api():
+            self.assertIsNone(tested_pr_head(self.root, self.event(other), "bygg-apper.yaml"))
+
+    def test_unknown_queue_ref_does_not_call_the_api(self):
+        event = self.event()
+        event["merge_group"]["head_ref"] = "refs/heads/something-else"
+        with patch("finn_berorte_apper.github_get") as get:
+            self.assertIsNone(tested_pr_head(self.root, event, "bygg-apper.yaml"))
+        get.assert_not_called()
+
+    def run_main(self, **patches):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / "event.json"
+            output = Path(directory) / "output"
+            event.write_text(json.dumps(self.event()))
+            env = {"GITHUB_EVENT_NAME": "merge_group", "GITHUB_EVENT_PATH": str(event),
+                   "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
+            with patch.dict(os.environ, env), patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
+                    patch("finn_berorte_apper.find_changed_files",
+                          return_value=["apps/bidrag-behandling/src/main/kotlin/App.kt"]), \
+                    patch("builtins.print"), patch("finn_berorte_apper.tested_pr_head", **patches):
+                main()
+            return dict(line.split("=", 1) for line in output.read_text().splitlines())
+
+    def test_main_skips_all_apps_when_the_pr_build_is_reused(self):
+        values = self.run_main(return_value=self.pr_head)
+        self.assertEqual(json.loads(values["apps"]), [])
+        self.assertEqual(values["bibliotekgrupper"], "")
+
+    def test_main_builds_as_usual_when_the_check_fails(self):
+        values = self.run_main(side_effect=OSError("nettverksfeil"))
+        self.assertEqual(json.loads(values["apps"]), ["bidrag-behandling"])
+
+
 class MergedModuleTest(unittest.TestCase):
     def app_root(self, directory, maven_options="-B -fae -pl apps/bidrag-ny"):
         root = Path(directory)
@@ -449,19 +552,20 @@ class WorkflowIntegrationTest(unittest.TestCase):
 
     def test_image_is_only_uploaded_when_the_run_actually_deploys(self):
         # Et image per PR-push per app fylte registeret uten at noen brukte dem. Bygget
-        # beholdes, så en ødelagt Dockerfile fortsatt fanges i PR-en, men opplastingen,
-        # attesteringen og cache-eksporten skjer bare når kjøringen skal deploye.
+        # beholdes, så en ødelagt Dockerfile fortsatt fanges i PR-en, men opplastingen og
+        # attesteringen skjer bare når kjøringen skal deploye. Lagcachen eksporteres aldri.
         document = workflow("bygg_og_deploy.yaml")
         deploy_flags = [name for name in triggers(document)["workflow_call"]["inputs"]
                         if name.startswith("deploy_")]
         self.assertTrue(deploy_flags)
         job = document["jobs"]["bygg_test_og_image"]
         step = next(s for s in job["steps"] if s.get("uses", "").startswith("nais/docker-build-push@"))
+        self.assertIs(step["with"]["no_cache"], True)
+        self.assertNotIn("cache_to", step["with"])
         for flag in deploy_flags:
             with self.subTest(flag=flag):
                 # Alle miljøer som kan deploye, må også utløse opplasting og attestering.
                 self.assertIn(f"inputs.{flag}", step["with"]["push_image"])
-                self.assertIn(f"inputs.{flag}", step["with"]["cache_to"])
                 self.assertIn(f"inputs.{flag}", document["jobs"]["salsa"]["if"])
 
     def test_deploy_concurrency_uses_app_identity(self):
