@@ -9,14 +9,13 @@ object TestPostgres {
     val testContainerRunnerDb: PostgreSQLContainer by lazy { startContainer() }
     val kontrollerTestRunnerDb: PostgreSQLContainer by lazy { startContainer() }
 
-    private fun startContainer(): PostgreSQLContainer =
-        PostgreSQLContainer("postgres:15-alpine").apply {
-            withDatabaseName("bidrag-behandling")
-            withUsername("cloudsqliamuser")
-            withPassword("admin")
-            withInitScript("db/init.sql")
-            start()
-        }
+    private fun startContainer(): PostgreSQLContainer = PostgreSQLContainer("postgres:15-alpine").apply {
+        withDatabaseName("bidrag-behandling")
+        withUsername("cloudsqliamuser")
+        withPassword("admin")
+        withInitScript("db/init.sql")
+        start()
+    }
 
     fun registrerProperties(
         registry: DynamicPropertyRegistry,
