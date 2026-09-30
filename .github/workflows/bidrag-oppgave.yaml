@@ -51,7 +51,7 @@ jobs:
     secrets: inherit
     with:
       bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
-      bibliotekgrupper: felles,oppgave
+      bibliotekgrupper: oppgave,felles
       nais_hovedfil_navn: bidrag-oppgave/nais.yaml
       nais_variabler_filnavn_q1: bidrag-oppgave/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
