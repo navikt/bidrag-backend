@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-texas</artifactId>
+            <artifactId>bidrag-backend-texas</artifactId>
             <version>${project.version}</version>
         </dependency>
 

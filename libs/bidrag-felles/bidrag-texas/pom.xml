@@ -11,8 +11,7 @@
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>bidrag-texas</artifactId>
-    <name>bidrag-texas</name>
+    <artifactId>bidrag-backend-texas</artifactId>
     <packaging>jar</packaging>
     <description>Lib for å håndtere token exchange på nais måten via Texas</description>
 
