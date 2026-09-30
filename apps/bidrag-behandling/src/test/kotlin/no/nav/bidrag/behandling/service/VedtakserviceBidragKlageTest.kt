@@ -556,6 +556,70 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
     }
 
     @Test
+    fun `Skal ikke fatte innkrevingsvedtak for klage uten innkreving når vedtaket ikke har perioder`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        behandling.innkrevingstype = Innkrevingstype.UTEN_INNKREVING
+        søknadsbarn.virkningstidspunkt = LocalDate.parse("2025-02-01")
+        behandling.virkningstidspunkt = søknadsbarn.virkningstidspunkt
+        søknadsbarn.beregnTil = BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+        søknadsbarn.opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01")
+        behandling.omgjøringsdetaljer =
+            Omgjøringsdetaljer(
+                klageMottattdato = LocalDate.parse("2025-01-10"),
+                omgjørVedtakId = 2,
+                opprinneligVedtakId = 3,
+                opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+            )
+        initBehandlingTestdata(behandling)
+        behandling.leggTilNotat("Begrunnelse virkningstidspunkt", NotatType.VIRKNINGSTIDSPUNKT, søknadsbarn, true)
+        behandling.leggTilGrunnlagManuelleVedtak(søknadsbarn)
+
+        val opprettVedtakSlot = mutableListOf<OpprettVedtakRequestDto>()
+        every { vedtakConsumer.fatteVedtak(capture(opprettVedtakSlot)) } returns OpprettVedtakResponseDto(1, emptyList())
+
+        // Beregningen gir ingen perioder, så det finnes ingenting å kreve inn selv om det er innkrevingsperioder
+        val innkrevesFra = behandling.virkningstidspunkt!!.plusMonths(2)
+        every { bidragsberegningOrkestrator.utførBidragsberegningV3(any()) } returns
+            BidragsberegningOrkestratorResponseV2(
+                listOf(søknadsbarn.tilGrunnlagPerson()),
+                listOf(
+                    BidragsberegningResultatBarnV2(
+                        søknadsbarn.tilGrunnlagsreferanse(),
+                        listOf(true, false).map { omgjøringsvedtak ->
+                            ResultatVedtakV2(
+                                vedtakstype = Vedtakstype.KLAGE,
+                                omgjøringsvedtak = omgjøringsvedtak,
+                                beregnet = true,
+                                periodeListe = emptyList(),
+                            )
+                        },
+                    ),
+                ),
+            )
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            søknadsbarn,
+            listOf(
+                opprettStønadPeriodeDto(
+                    ÅrMånedsperiode(innkrevesFra, null),
+                    beløp = BigDecimal("2000"),
+                ),
+            ),
+        )
+        every { vedtakServiceBeregning.finnSisteVedtaksid(any()) } returns 1
+
+        vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = null))
+
+        opprettVedtakSlot shouldHaveSize 1
+        opprettVedtakSlot[0].type shouldBe Vedtakstype.KLAGE
+        opprettVedtakSlot.none { it.type == Vedtakstype.INNKREVING } shouldBe true
+    }
+
+    @Test
     fun `Skal fatte vedtak for klage uten innkreving med opphør`() {
         stubPersonConsumer()
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)

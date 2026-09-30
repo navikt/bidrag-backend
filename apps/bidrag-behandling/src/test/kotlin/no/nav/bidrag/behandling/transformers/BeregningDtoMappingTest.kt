@@ -2,9 +2,13 @@ package no.nav.bidrag.behandling.transformers
 
 import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBarnebidragsberegningPeriodeDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegningBarn
@@ -12,7 +16,11 @@ import no.nav.bidrag.behandling.dto.v1.beregning.ResultatForskuddsberegningBarn
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalInnkrevesPeriode
 import no.nav.bidrag.behandling.utils.testdata.TestDataPerson
+import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
+import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteUtgift
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
@@ -23,11 +31,17 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvvisning
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningResultatBarnV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatVedtakV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 import no.nav.bidrag.transport.behandling.beregning.forskudd.BeregnetForskuddResultat
 import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatBeregning
 import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatPeriode
@@ -353,6 +367,91 @@ class BeregningDtoMappingTest {
             beregning shouldBe behandling.utgift?.tilBeregningDto()
         }
     }
+
+    @Test
+    fun `skal ikke sette innkrevesFraPerioder når endelig resultat ikke har perioder`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+        val søknadsbarn = behandling.søknadsbarn.first()
+        behandling.finnSkalInnkrevesPeriode(søknadsbarn).shouldNotBeEmpty()
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = opprettEndeligResultat(emptyList()))
+
+        resultat.innkrevesFraPerioder.shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal ikke sette innkrevesFraPerioder når endelig resultat mangler`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = null)
+
+        resultat.innkrevesFraPerioder.shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal sette innkrevesFraPerioder når endelig resultat har perioder`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+        val søknadsbarn = behandling.søknadsbarn.first()
+        val endeligResultat =
+            opprettEndeligResultat(
+                listOf(
+                    ResultatPeriodeBB(
+                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                        resultat = ResultatBeregningBB(BigDecimal(1000)),
+                        grunnlagsreferanseListe = emptyList(),
+                    ),
+                ),
+            )
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = endeligResultat)
+
+        resultat.innkrevesFraPerioder shouldBe behandling.finnSkalInnkrevesPeriode(søknadsbarn)
+        resultat.innkrevesFraPerioder.shouldNotBeEmpty()
+    }
+
+    private fun opprettBehandlingUtenInnkrevingMedBeløpshistorikk(): Behandling {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.innkrevingstype = Innkrevingstype.UTEN_INNKREVING
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            behandling.søknadsbarn.first(),
+            listOf(
+                opprettStønadPeriodeDto(
+                    ÅrMånedsperiode(behandling.virkningstidspunkt!!.plusMonths(2), null),
+                    beløp = BigDecimal("2000"),
+                ),
+            ),
+        )
+        return behandling
+    }
+
+    private fun opprettEndeligResultat(perioder: List<ResultatPeriodeBB>) = ResultatVedtakV2(
+        periodeListe = perioder,
+        vedtakstype = Vedtakstype.FASTSETTELSE,
+        beregnet = true,
+    )
+
+    private fun mapTilBeregningresultatBarn(
+        behandling: Behandling,
+        endeligResultat: ResultatVedtakV2?,
+    ) = mapTilBeregningresultatBarn(
+        søknadsbarn = behandling.søknadsbarn.first(),
+        erAvvistRevurdering = false,
+        resultatBarn =
+        BidragsberegningResultatBarnV2(
+            søknadsbarnreferanse = behandling.søknadsbarn.first().tilGrunnlagsreferanse(),
+            resultatVedtakListe = listOfNotNull(endeligResultat),
+        ),
+        grunnlagBarn = emptyList(),
+        grunnlagBeregning =
+        BidragsberegningOrkestratorRequestV2(
+            beregningsperiode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+            beregningBarn = emptyList(),
+            grunnlagsliste = emptyList(),
+        ),
+        behandling = behandling,
+        endeligResultat = endeligResultat,
+    )
 
     private fun opprettResultatBidragsberegningBarn(
         testDataPerson: TestDataPerson,
