@@ -54,6 +54,7 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -185,7 +186,15 @@ class VedtakTilBehandlingMapping(
                 },
                 // TODO: Er dette riktig? Hva skjer hvis det finnes flere stønadsendringer/engangsbeløp? Fungerer for Forskudd men todo fram fremtiden
                 stonadstype = stønadsendringstype,
-                engangsbeloptype = if (stønadsendringstype == null) engangsbeløpListe.firstOrNull()?.type else null,
+                engangsbeloptype = if (stønadsendringstype == null) {
+                    val engangsbeløptype = engangsbeløpListe.firstOrNull()?.type
+                    when (engangsbeløptype) {
+                        Engangsbeløptype.SÆRBIDRAG, Engangsbeløptype.SAERTILSKUDD, Engangsbeløptype.SÆRTILSKUDD -> Engangsbeløptype.SÆRBIDRAG
+                        else -> engangsbeløptype
+                    }
+                } else {
+                    null
+                },
                 behandlerEnhet = enhet ?: enhetsnummer?.verdi!!,
                 opprettetAv = opprettetAv,
                 opprettetAvNavn = opprettetAvNavn,
