@@ -179,7 +179,6 @@ class BehandleOppgaveHendelseService(
         if (!erSøknadsoppgaveSaksbehandlerEndretTilNoeAnnet(oppgave)) return
 
         oppgaveService.oppdaterSaksbehandlerPåAlleOppgaverSomTilhørerSammeBehandling(oppgave)
-        behandlingService.oppdaterBehandlingEnhet(oppgave)
     }
     fun overførSøknadsoppgaverTilSammeEnhet(oppgave: OppgaveData) {
         if (oppgave.endretAvArbeidsflyt()) return
