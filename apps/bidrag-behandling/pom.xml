@@ -13,6 +13,7 @@
   <artifactId>bidrag-behandling</artifactId>
   <name>bidrag-behandling</name>
   <properties>
+    <surefire.forkCount>4</surefire.forkCount>
     <nav-token-support.version>6.0.12</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
@@ -556,13 +557,13 @@
 
   <build>
     <plugins>
-      <!-- Hver fork har sin egen Spring-kontekstcache. Testene bruker ~12 ulike kontekster
-           (ulike @MockkBean-sett), så med 1C (4 forker) ble hver kontekst startet opptil 4 ganger
-           og alle forkene konkurrerte om CPU og minne. 2 forker gir færre kontekststarter. -->
+      <!-- Hver fork har sin egen Spring-kontekstcache og egne Postgres-containere. Målt lokalt (12 kjerner):
+           2 forker 443 s, 3 forker 288 s, 4 forker 201 s. 6 forker (0.5C) ga feil fordi Docker-VM-en
+           (Colima, 2 CPU/2 GB) ikke taklet 12 Postgres-containere. Overstyr med -Dsurefire.forkCount=N. -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <forkCount>2</forkCount>
+          <forkCount>${surefire.forkCount}</forkCount>
           <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
