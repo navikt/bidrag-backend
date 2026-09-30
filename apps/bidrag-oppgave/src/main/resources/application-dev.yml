@@ -1,0 +1,21 @@
+AZURE_OPENID_CONFIG_ISSUER: http://dev-azure-mocked
+AZURE_APP_CLIENT_ID: mocked
+
+NAIS_APP_IMAGE: latest
+NAIS_CLUSTER_NAME: dev
+
+nais:
+  token:
+    endpoint: http://token-dev-mocked
+    exchange:
+      endpoint: http://token-exchange-dev-mocked
+
+app:
+  oppgave:
+    url: http://oppgave-dev.mocked
+    audience: api://mock.oppgave/.default
+
+spring:
+  main:
+    banner-mode: "off"
+
