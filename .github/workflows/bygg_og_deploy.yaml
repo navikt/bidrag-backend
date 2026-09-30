@@ -174,9 +174,15 @@ jobs:
       # Egen, smal cache-nøkkel (kun denne appens pom-kjede via maven_cache_paths) istedenfor
       # innebygd `cache: maven`, som hasher **alle** pom.xml i monorepoet og dermed invalideres
       # av endringer i moduler denne jobben ikke bygger.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Kun restore her; cachen lagres bare fra main (se "Lagre Maven-cache"). PR-brancher får da
+      # ikke egne kopier som fyller opp repoets cache-kvote og fortrenger main-cachene.
+      # Egne bidrag-biblioteker (no/nav/bidrag) holdes utenfor – de hentes via klargjor-biblioteker.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: maven-cache
         with:
-          path: ~/.m2/repository
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
           key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
           restore-keys: |
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
@@ -238,22 +244,49 @@ jobs:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
           SKIP_TESTS: ${{ inputs.skip_tester }}
         run: |
-          read -r -a args <<< "$MAVEN_OPTIONS"
-          har_modul=false
-          for arg in "${args[@]}"; do
+          # Bytter `-pl <modul>` til `-f <modul>/pom.xml` slik at Maven bare leser appens pom
+          # (og foreldre via relativePath) i stedet for å skanne hele reactoren. Bibliotekene er
+          # allerede installert i ~/.m2 av forrige steg, så reactoren trengs ikke.
+          read -r -a opts <<< "$MAVEN_OPTIONS"
+          args=()
+          modul=""
+          i=0
+          while [ $i -lt ${#opts[@]} ]; do
+            arg="${opts[$i]}"
             case "$arg" in
-              -pl) har_modul=true ;;
+              -pl)
+                if [ -n "$modul" ]; then
+                  echo "::error::Appbygget støtter kun én -pl"
+                  exit 1
+                fi
+                i=$((i + 1))
+                modul="${opts[$i]}"
+                case "$modul" in *,*)
+                  echo "::error::Appbygget støtter kun én modul i -pl"
+                  exit 1 ;;
+                esac ;;
               -am|--also-make)
                 echo "::error::Appbygg med ferdige biblioteker skal ikke bruke -am"
                 exit 1 ;;
+              *) args+=("$arg") ;;
             esac
+            i=$((i + 1))
           done
-          if [ "$har_modul" != true ]; then
+          if [ -z "$modul" ]; then
             echo "::error::Appbygget må velge modul med -pl"
             exit 1
           fi
+          args+=(-f "$modul/pom.xml")
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
-          mvn -T 1C "${args[@]}" clean verify -Dmaven.antrun.skip=true
+          mvn -T 1C -Dmaven.artifact.threads=16 "${args[@]}" clean verify -Dmaven.antrun.skip=true
+      - name: Lagre Maven-cache
+        if: always() && github.ref == 'refs/heads/main' && steps.maven-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.m2/repository
+            !~/.m2/repository/no/nav/bidrag
+          key: ${{ steps.maven-cache.outputs.cache-primary-key }}
       - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
         if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push

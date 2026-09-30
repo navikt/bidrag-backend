@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,6 +15,7 @@ import io.mockk.every
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import no.nav.bidrag.behandling.TestContainerRunner
+import no.nav.bidrag.behandling.consumer.BidragGrunnlagConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
@@ -78,8 +80,12 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatTyp
 
 @RunWith(Enclosed::class)
 class BoforholdServiceTest : TestContainerRunner() {
+    // Samme mock-oppsett som GrunnlagServiceTest, slik at de deler Spring-kontekst
     @MockkBean(relaxed = true)
     lateinit var bidragPersonConsumer: BidragPersonConsumer
+
+    @MockkSpyBean
+    lateinit var bidragGrunnlagConsumer: BidragGrunnlagConsumer
 
     @Autowired
     lateinit var boforholdService: BoforholdService
