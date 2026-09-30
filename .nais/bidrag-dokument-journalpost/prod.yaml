@@ -1,5 +1,4 @@
 name: bidrag-dokument-journalpost
-image: {{ image }}
 min_replicas: 2
 ingresses:
   - https://bidrag-dokument-journalpost.intern.nav.no/
