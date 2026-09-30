@@ -441,10 +441,13 @@ class BehandlingTilVedtakMapping(
                         emptyList()
                     }
 
+                val allePerioder = periodeliste + opphørPeriode
+                // Ingenting å kreve inn hvis det er tomme perioder
+                if (allePerioder.isEmpty()) return@mapNotNull null
                 it.copy(
                     innkreving = Innkrevingstype.MED_INNKREVING,
                     grunnlagReferanseListe = stønadsendringGrunnlag.map(OpprettGrunnlagRequestDto::referanse),
-                    periodeListe = periodeliste + opphørPeriode,
+                    periodeListe = allePerioder,
                 )
             },
         )
