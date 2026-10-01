@@ -410,14 +410,18 @@ class WorkflowIntegrationTest(unittest.TestCase):
         cls.app_filters = load_app_filters(ROOT)
         cls.build_workflow = workflow("bygg-apper.yaml")
 
-    def test_one_library_job_before_all_app_jobs(self):
+    def test_library_jobs_before_all_app_jobs(self):
+        # Biblioteklogikken er delt i to jobber som begge bruker klargjor-biblioteker:
+        # "biblioteker" bygger raskt uten tester (appjobbene trenger bare jar-ene), mens
+        # "biblioteker_tester" kjører selve testsuiten i parallell med app-byggene - uten at
+        # appjobbene venter på den. Den gater i stedet merge via "Alle bygg fullført".
         jobs = self.build_workflow["jobs"]
-        library_jobs = [job for job in jobs.values()
+        library_jobs = {name: job for name, job in jobs.items()
                         if any(step.get("uses") == "./.github/actions/klargjor-biblioteker"
-                               for step in job.get("steps", []))]
-        self.assertEqual(len(library_jobs), 1)
+                               for step in job.get("steps", []))}
+        self.assertEqual(set(library_jobs), {"biblioteker", "biblioteker_tester"})
+
         library_job = jobs["biblioteker"]
-        self.assertEqual(library_jobs[0], library_job)
         self.assertEqual(library_job["needs"], "detect_changes")
         self.assertEqual(library_job["if"], "needs.detect_changes.outputs.apps != '[]'")
         self.assertEqual(library_job["permissions"], {"contents": "read"})
@@ -427,9 +431,24 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(prepare["with"], {
             "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+            "skip_tester": True,
         })
+
+        tester_job = jobs["biblioteker_tester"]
+        self.assertEqual(tester_job["needs"], "detect_changes")
+        self.assertEqual(tester_job["if"], "needs.detect_changes.outputs.bibliotekgrupper != ''")
+        self.assertEqual(tester_job["permissions"], {"contents": "read"})
+        self.assertNotIn("outputs", tester_job)
+        test_step = next(step for step in tester_job["steps"]
+                         if step.get("uses") == "./.github/actions/klargjor-biblioteker")
+        self.assertEqual(test_step["with"], {
+            "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
+            "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+        })
+
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
-        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker", "alle_bygg_fullfort"}, set(self.app_filters))
+        self.assertEqual(set(jobs) - set(library_jobs) - {"detect_changes", "alle_bygg_fullfort"},
+                         set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
                 self.assertEqual(set(jobs[app]["needs"]), {"detect_changes", "biblioteker"})
