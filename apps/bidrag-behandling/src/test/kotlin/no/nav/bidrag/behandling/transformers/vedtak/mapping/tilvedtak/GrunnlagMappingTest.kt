@@ -814,6 +814,80 @@ class GrunnlagMappingTest {
         val skattegrunnlagGrunnlagsreferanseListe = listOf("skattegrunnlag_2023")
 
         @Test
+        fun `skal bare mappe egne inntekter for barn det bygges grunnlag for`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            behandling.søknadsbarn.forEach { barn ->
+                val barnGrunnlag = personobjekter.single { it.referanse == barn.tilGrunnlagsreferanse() }
+                listOf(true, false).forEach { inkluderAlle ->
+                    val grunnlag =
+                        behandling.tilGrunnlagInntekt(
+                            personobjekter,
+                            søknadsbarn = barnGrunnlag,
+                            byggForRoller = listOf(barn),
+                            inkluderAlle = inkluderAlle,
+                        )
+                    val antallInntekterPerRolle = if (inkluderAlle) 3 else 2
+
+                    assertSoftly {
+                        grunnlag shouldHaveSize antallInntekterPerRolle * 3
+                        grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                            mapOf(
+                                grunnlagBm.referanse to antallInntekterPerRolle,
+                                grunnlagBp.referanse to antallInntekterPerRolle,
+                                barnGrunnlag.referanse to antallInntekterPerRolle,
+                            )
+                        grunnlag.forEach {
+                            it.type shouldBe Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE
+                            if (!inkluderAlle) {
+                                it.innholdTilObjekt<InntektsrapporteringPeriode>().valgt shouldBe true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Test
+        fun `skal mappe egne inntekter for alle barn når byggForRoller ikke er angitt`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            val grunnlag = behandling.tilGrunnlagInntekt(personobjekter)
+
+            assertSoftly {
+                grunnlag shouldHaveSize 12
+                grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                    personobjekter.associate { it.referanse to 3 }
+            }
+        }
+
+        @Test
+        fun `skal bare mappe inntekter for voksne når byggForRoller ikke inneholder barn`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            val grunnlag =
+                behandling.tilGrunnlagInntekt(
+                    personobjekter,
+                    byggForRoller = behandling.roller.filter { it.rolletype != Rolletype.BARN },
+                )
+
+            assertSoftly {
+                grunnlag shouldHaveSize 6
+                grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                    mapOf(grunnlagBm.referanse to 3, grunnlagBp.referanse to 3)
+            }
+        }
+
+        private fun opprettBehandlingMedInntekterForAlleRoller(): Behandling {
+            val behandling = oppretteTestbehandling(inkludereBp = true)
+            listOf(testdataBM, testdataBP, testdataBarn1, testdataBarn2).forEach { person ->
+                behandling.grunnlag.addAll(opprettInntekterBearbeidetGrunnlag(behandling, person))
+                behandling.inntekter.addAll(opprettInntekter(behandling, person))
+            }
+            return behandling
+        }
+
+        @Test
         fun `skal mappe inntekt til grunnlag`(): Unit = behandlingTilGrunnlagMapping.run {
             val behandling = oppretteTestbehandling()
             behandling.grunnlag =
