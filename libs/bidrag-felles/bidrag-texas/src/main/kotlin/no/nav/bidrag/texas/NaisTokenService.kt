@@ -35,6 +35,6 @@ class NaisTokenService(
         return texas.oboToken(target, token).access_token
     }
 
-    /** Henter token for denne applikajsonen */
+    /** Henter token for denne applikasjonen */
     fun m2mToken(target: String): String = texas.m2mToken(target).access_token
 }
