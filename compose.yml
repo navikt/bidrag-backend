@@ -3,14 +3,13 @@ services:
   texas:
     image: ghcr.io/nais/texas:2026-09-10-134043-f55778d@sha256:5ade8a0fcdf609b54072fcd191410e5015351c7e9cd47816ecccaf1dc3ed9022
     ports: [ "127.0.0.1:4010:4010" ]
+    env_file:
+      - .env.texas
     environment:
       AZURE_APP_CLIENT_ID: "43b293e0-2115-468e-b744-086f435bf53d"
       BIND_ADDRESS: "0.0.0.0:4010"
       AZURE_APP_WELL_KNOWN_URL: "https://localauth-bidrag.intern.dev.nav.no/entraid/.well-known/openid-configuration"
       AZURE_ENABLED: "true"
-      # Throwaway JWK: localauth replaces the assertion, so this key is never used.
-      AZURE_APP_JWK: >
-        {"use":"sig","kty":"RSA","kid":"localauth-dummy","alg":"RS256","n":"vHwjQpUuqcOyyaQUd4RZeRUAR06pFRpP9adY7uaD7MjSdXT71ESHhvOxTm7j4g0ovA1ETKBckCRmpw8rO4bcFNXxqIKYf-TVEDohpZ5c-mrzC_oDeC_UhVg0nuH6SH5w6FmoHqWZW-UfXJADc8b7j9fNTBYb3eENYCm6TTSKpXoct2EXbHBZLlw88mzUcwMx3f-1sEYbBvK2OceejMe66QZxtMrm6asgvQC4fMM_3FsR3FLdt8i04WuS95wAeAX5Qmr7vJKs6mDR0sy25ZPrSv3yWkeZPBjSf3koqHR9YTW7MvLNBg3AeBy2Yb_PyIaUgTVzJyOt429QZvVEfEw3hQ","e":"AQAB","d":"KtVGGQs4Zb1ym5a1TPzPbW_7lnjWfVRzr9ZmJDJP8CcqBqW9Vd119BHcrP-Pu270nxmfuA8oQdx31Iaisz4gNP7ykjINcGEDF1MyksXUiNb1oTbhg3ZRJDVpjeK6Qy-yvmajiUVmPscok5spoa2qPOPUhHIwxoEujjglXYavbE-Z4QLwouF-tCjAbnQl1av2UQ2ytwmaTpDitsibOHoFbbz-IaSBuadIEzBfvqEJwK8x4Qc3GRtAkuSWaYWwu23SAYmbI-2BSkDb4v6foDw809DVNnt-83onxdz4L0yVc3AZ_Y11jlxDUh9XNK67NB7VPwrJE8zcEeOc6OScdaOqsQ","p":"7bqu9r0H3gstisO84kN62da82UdXDLk9OGD4wLM8ytuEHSquYAjp6SrmajCYLg2IvzDoEWAm-KHzUk0Xm3EXZ8G40tO4U7KnR2mZOXS2Mc5miX-TZU5s7anPnFmVUaA1fT2_8agLzp0PtJyB5wiZEBkIT-1T_9JFoYONTw6kJJU","q":"yviS1SNqFjN09FkOimxQ_b9IMYwXvZgRzN7SsOqTwMQDvWTzZD5g-NKiqtNqPKJ_ESMTpdioxE-1538MebzeMDla-nxe5LXky1uXcSLQL-jLHRRt-EHcgAQ8ayraFlcg9DOUEUDmsVoE0tgYTlA93pUiMvTibCfmlceFWIgPmzE","dp":"ILkKrmH0vEaznR82V7rMJUIeupXMUK8K00Dd3MCPRKkUtWMTn5p6gCLsln9b4zLvuMmFmCaxFpZMRO7hqf7WJu0OgM6t16-GwRizA6qiDZcInDKYWmCCM_Ck6DOYjyTLWBLw4dWs0mLiL40_gEq5rvKTJ1VWs6cA-Kt__vrX80U","dq":"uugYXolUIcmUw4ZW64U_N8uzcVzuZ7rneV8faac6FGLshrW1o_QFXFyrSt-QjvGcTW2dpDVVhCFbAyhtlpUjjgjjDJMG11ngrJtVY-uJBvU6RTcQ5XHQ2VoNQSqe1b-6KuZsTU8UoPCiTH6OM1-U-akfawkykCJWJksrMhFpPaE","qi":"QOsGOU_F5KbuCyZ1GX7XOfJlFnakmBnI_BFuJovssmbz3baxP5Ss-Ty8UPuFH5yBca_E-FWX0RjVY8-uFQth_R5yVSIo4qbGJg_moaRGdFTZPg3b8MutAYpyzVDu8dq2OvQslZSXTLpr8_r-qCE2jpCsesALrg-6_lnCy8sGhgc"}
       AZURE_OPENID_CONFIG_ISSUER: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0
       AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: https://localauth-bidrag.intern.dev.nav.no/entraid/oauth2/token
       AZURE_OPENID_CONFIG_JWKS_URI: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/discovery/v2.0/keys
