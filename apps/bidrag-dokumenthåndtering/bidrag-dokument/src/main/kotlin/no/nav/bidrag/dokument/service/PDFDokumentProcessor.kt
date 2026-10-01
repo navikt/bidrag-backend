@@ -93,7 +93,7 @@ class PDFDokumentProcessor {
                     if (withCompression) CompressParameters.DEFAULT_COMPRESSION else CompressParameters.NO_COMPRESSION
                 this.document?.isAllSecurityToBeRemoved = true
 
-                log.info { "Lagrer dokument med kompresjon ${compression.isCompress}" }
+                log.debug { "Lagrer dokument med kompresjon ${compression.isCompress}" }
                 saveDocument(documentByteStream, compression)
 
                 this.document?.close()

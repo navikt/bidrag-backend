@@ -47,7 +47,7 @@ class DokumentController(
         @PathVariable journalpostId: String,
         @PathVariable(required = false) dokumentreferanse: String?,
     ): List<DokumentMetadata> {
-        log.info { "Henter dokument metadata med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse" }
+        log.debug { "Henter dokument metadata med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse" }
         val dokument = DokumentRef(journalpostId, dokumentreferanse, null)
         return dokumentService.hentDokumentMetadata(dokument)
     }
@@ -59,7 +59,7 @@ class DokumentController(
         @PathVariable journalpostId: String,
         @PathVariable(required = false) dokumentreferanse: String?,
     ): List<DokumentMetadata> {
-        log.info { "Henter dokument metadata med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse" }
+        log.debug { "Henter dokument metadata med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse" }
         val dokument = DokumentRef(journalpostId, dokumentreferanse, null)
         return dokumentService.hentDokumentMetadata(dokument)
     }
@@ -71,14 +71,14 @@ class DokumentController(
         @RequestParam(required = false) resizeToA4: Boolean,
         @RequestParam(required = false, defaultValue = "true") optimizeForPrint: Boolean,
     ): ResponseEntity<ByteArray> {
-        log.info { "Henter dokument med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse, resizeToA4=$resizeToA4" }
+        log.debug { "Henter dokument med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse, resizeToA4=$resizeToA4" }
         val dokument = DokumentRef(journalpostId, dokumentreferanse, null)
         val response =
             dokumentService.hentDokument(dokument, DocumentProperties(resizeToA4, optimizeForPrint))
 
         response.body
             ?.also {
-                log.info {
+                log.debug {
                     "Hentet dokument med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse med total størrelse ${
                         PDFDokumentProcessor.bytesIntoHumanReadable(
                             it.size.toLong(),
@@ -94,7 +94,7 @@ class DokumentController(
     fun erFerdigstilt(
         @PathVariable dokumentreferanse: String,
     ): Boolean {
-        log.info { "Sjekker om dokument $dokumentreferanse er ferdigstilt" }
+        log.debug { "Sjekker om dokument $dokumentreferanse er ferdigstilt" }
         return dokumentService
             .erFerdigstilt(dokumentreferanse)
             .body ?: false
@@ -111,7 +111,7 @@ class DokumentController(
         @RequestParam(required = false, defaultValue = "true") optimizeForPrint: Boolean,
         @RequestParam(required = false) resizeToA4: Boolean,
     ): ResponseEntity<ByteArray> {
-        log.info { "Henter dokumenter $dokumentreferanseList med resizeToA4=$resizeToA4, optimizeForPrint=$optimizeForPrint" }
+        log.debug { "Henter dokumenter $dokumentreferanseList med resizeToA4=$resizeToA4, optimizeForPrint=$optimizeForPrint" }
         val response =
             dokumentService.hentDokumenter(
                 dokumentreferanseList,
@@ -119,7 +119,7 @@ class DokumentController(
             )
 
         response.body?.also {
-            log.info {
+            log.debug {
                 "Hentet dokumenter $dokumentreferanseList med total størrelse ${
                     PDFDokumentProcessor.bytesIntoHumanReadable(
                         it.size.toLong(),

@@ -50,4 +50,9 @@
 
   <logger name="org.hibernate.orm.connections.pooling" level="warn"/>
 
+  <!-- Suppresser PDFBox varsler om sammenslåing av tagged PDF-er med overlappende RoleMap-nøkler -->
+  <logger name="org.apache.pdfbox.multipdf.PDFMergerUtility" level="error"/>
+  <!-- Suppresser PDFbox varsel om at feil font er satt fra bidrag-ui -->
+  <logger name="org.apache.pdfbox.pdmodel.font.PDType1Font" level="error"/>
+
 </configuration>

@@ -115,7 +115,7 @@ class BidragDokumentConsumer(
                 .path("/journal")
         fagomrade.forEach { uriBuilder.queryParam(PARAM_FAGOMRADE, it) }
         val uri = uriBuilder.build().encode().toUri()
-        log.info { "Henter journalposter for sak $saksnummer" }
+        log.debug { "Henter journalposter for sak $saksnummer" }
         val timer = metricsRegistry.timer("finnJournalposter", "service", name)
         return try {
             val journalposterFraArkiv =
