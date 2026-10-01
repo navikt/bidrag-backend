@@ -13,6 +13,11 @@ jobs:
   detect_changes:
     name: Finn berørte apper
     runs-on: ubuntu-latest
+    # actions/pull-requests: read trengs for å se om merge-køen kan gjenbruke et grønt PR-bygg.
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     outputs:
       apps: ${{ steps.appvalg.outputs.apps }}
       bibliotekgrupper: ${{ steps.appvalg.outputs.bibliotekgrupper }}
@@ -30,13 +35,17 @@ jobs:
           bash .github/scripts/test-pr-endringsoversikt.sh
       - name: Finn apper som må bygges
         id: appvalg
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/finn_berorte_apper.py
 
   biblioteker:
     name: Klargjør biblioteker
     needs: detect_changes
     if: needs.detect_changes.outputs.apps != '[]'
-    runs-on: ubuntu-latest
+    # 4 kjerner gir -T 1C (reaktor) flere tråder å bygge de uavhengige modulene i - billig
+    # på et offentlig repo, og kutter kompileringstiden på kald cache merkbart.
+    runs-on: ubuntu-latest-4-cores
     permissions:
       contents: read
     outputs:
@@ -63,10 +72,12 @@ jobs:
               {"id": "github", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"},
               {"id": "github2", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"}
             ]
+      # skip_tester: true her - appjobbene trenger kun ferdigbygde jar-er, ikke testresultatet.
       - uses: ./.github/actions/klargjor-biblioteker
         with:
           grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
           felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
+          skip_tester: true
       - name: Sett artefaktnavn for denne kjøringen
         id: artefakt
         run: echo "navn=biblioteker-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
@@ -84,6 +95,43 @@ jobs:
             ~/.m2/repository/no/nav/bidrag/bidrag-dokumenthandtering
           if-no-files-found: error
           retention-days: 14
+
+  biblioteker_tester:
+    name: Test biblioteker
+    needs: detect_changes
+    if: needs.detect_changes.outputs.bibliotekgrupper != ''
+    runs-on: ubuntu-latest-4-cores
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '21'
+          distribution: temurin
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-bibliotek-avhengigheter-${{ hashFiles('pom.xml', 'libs/**/pom.xml') }}
+          restore-keys: |
+            maven-bibliotek-avhengigheter-
+      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+        with:
+          githubServer: false
+          servers: |
+            [
+              {"id": "github", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"},
+              {"id": "github2", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"}
+            ]
+      # Bygger og tester bibliotekene på nytt i hver kjøring, parallelt med app-byggene.
+      - uses: ./.github/actions/klargjor-biblioteker
+        with:
+          grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
+          felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
+          bruk_bibliotekcache: false
+          kjor_ktlint: true
 
   bidrag-admin-fss:
     name: Bidrag-admin-fss
@@ -499,6 +547,7 @@ jobs:
     needs:
       - detect_changes
       - biblioteker
+      - biblioteker_tester
       - bidrag-admin-fss
       - bidrag-admin
       - bidrag-aktoerregister
