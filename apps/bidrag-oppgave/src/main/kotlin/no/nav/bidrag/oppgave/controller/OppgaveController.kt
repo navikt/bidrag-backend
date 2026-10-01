@@ -1,6 +1,7 @@
 package no.nav.bidrag.oppgave.controller
 
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,7 +19,7 @@ class OppgaveController(
 
     @GetMapping("/oppgaver")
     fun hentOppgaverForSak(
-        @RequestParam saksnummer: String,
+        @RequestParam @NotBlank saksnummer: String,
     ): List<OppgaveDto> = oppgaveService.finnOppgaver(
         FinnOppgaverRequest(
             saksnummer = saksnummer,

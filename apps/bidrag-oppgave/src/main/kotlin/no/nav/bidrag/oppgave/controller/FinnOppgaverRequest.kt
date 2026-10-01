@@ -7,6 +7,8 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
 
+@AvgrensetOppgavesøk
+@Schema(description = "Minst ett søkekriterium må oppgis: saksnummer, aktør-ID, saksbehandler eller enhetsnummer.")
 data class FinnOppgaverRequest(
     val saksnummer: String? = null,
     val aktoerId: AktorId? = null,

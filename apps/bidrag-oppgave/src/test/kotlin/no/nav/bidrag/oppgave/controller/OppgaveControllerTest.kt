@@ -71,6 +71,18 @@ class OppgaveControllerTest {
         assertThat(params.limit).isEqualTo(100)
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["", "   "])
+    fun `GET oppgaver avviser blankt saksnummer`(saksnummer: String) {
+        val resultat = mockMvc.get()
+            .uri("/api/oppgaver?saksnummer={saksnummer}", saksnummer)
+            .with(jwtToken())
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
+        verifyNoInteractions(oppgaveClient)
+    }
+
     @Test
     fun `POST oppgaver videresender alle sokefelter og returnerer mappet oppgave`() {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
@@ -115,11 +127,59 @@ class OppgaveControllerTest {
             .uri("/api/oppgaver")
             .with(jwtToken())
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"limit": $limit}""")
+            .content("""{"saksnummer": "SAK-123", "limit": $limit}""")
             .exchange()
 
         assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
         verifyNoInteractions(oppgaveClient)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "{}",
+            """{"limit": 1}""",
+            """{"saksnummer": null, "aktoerId": null, "saksbehandler": null, "enhetsnummer": null}""",
+            """{"saksnummer": "  "}""",
+            """{"aktoerId": ""}""",
+            """{"saksbehandler": "  "}""",
+            """{"enhetsnummer": ""}""",
+        ],
+    )
+    fun `POST oppgaver avviser søk uten avgrensning`(body: String) {
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body)
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
+        verifyNoInteractions(oppgaveClient)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            """{"saksnummer": "SAK-123"}""",
+            """{"aktoerId": "1234567890123"}""",
+            """{"saksbehandler": "Z999999"}""",
+            """{"enhetsnummer": "4100"}""",
+        ],
+    )
+    fun `POST oppgaver godtar hvert søkekriterium alene`(body: String) {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse())
+
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body)
+            .exchange()
+
+        assertThat(resultat).hasStatusOk()
+        verify(oppgaveClient).finnOppgaver(anyFinnOppgaverParams())
     }
 
     @Test
@@ -131,7 +191,7 @@ class OppgaveControllerTest {
             .uri("/api/oppgaver")
             .with(jwtToken())
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"limit": null}""")
+            .content("""{"saksnummer": "SAK-123", "limit": null}""")
             .exchange()
 
         assertThat(resultat).hasStatusOk()
@@ -148,7 +208,7 @@ class OppgaveControllerTest {
             .uri("/api/oppgaver")
             .with(jwtToken())
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"limit": $limit}""")
+            .content("""{"saksnummer": "SAK-123", "limit": $limit}""")
             .exchange()
 
         assertThat(resultat).hasStatusOk()
