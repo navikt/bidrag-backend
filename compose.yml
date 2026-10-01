@@ -1,7 +1,7 @@
 services:
 
   texas:
-    image: ghcr.io/nais/texas:latest
+    image: ghcr.io/nais/texas:2026-09-10-134043-f55778d@sha256:5ade8a0fcdf609b54072fcd191410e5015351c7e9cd47816ecccaf1dc3ed9022
     ports: [ "4010:4010" ]
     environment:
       AZURE_APP_CLIENT_ID: "43b293e0-2115-468e-b744-086f435bf53d"
