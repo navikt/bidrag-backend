@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester
 @ActiveProfiles("junit")
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(SecurityTest.TestConfig::class)
 class SecurityTest {
 
     @Autowired
@@ -61,5 +62,13 @@ class SecurityTest {
             .contains("\"bearer-key\"")
             .contains("\"scheme\":\"bearer\"")
             .contains("\"bearerFormat\":\"JWT\"")
+    }
+
+    @TestConfiguration
+    class TestConfig {
+        @Bean
+        fun jwtDecoder(): JwtDecoder = JwtDecoder {
+            error("JwtDecoder skal ikke kalles når testen bruker jwt()")
+        }
     }
 }
