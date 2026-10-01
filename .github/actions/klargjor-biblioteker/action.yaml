@@ -122,7 +122,7 @@ runs:
           prosjekter+=",$FELLES_MODULER"
           if [ "$TEST_FELLES" = false ]; then
             # Eget kall slik at testene i beregn og oppgave ikke påvirkes.
-            mvn -B -q -T 1C -nsu -Dmaven.artifact.threads=16 -pl "$prosjekter" -Dmaven.test.skip=true install
+            mvn -B -q -T 1C -nsu -pl "$prosjekter" -Dmaven.test.skip=true install
             bygget="$prosjekter"
             prosjekter=""
             echo "Felles ble bygget uten testkompilering og testkjøring." >> "$GITHUB_STEP_SUMMARY"
@@ -135,7 +135,7 @@ runs:
           prosjekter="${prosjekter:+$prosjekter,}$OPPGAVE_MODULER"
         fi
         if [ -n "$prosjekter" ]; then
-          args=(-B -q -T 1C -nsu -Dmaven.artifact.threads=16 -pl "$prosjekter")
+          args=(-B -q -T 1C -nsu -pl "$prosjekter")
           if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
           # Ikke -am: øvrige biblioteker er allerede hentet fra cache eller bygget over.
           mvn "${args[@]}" install
