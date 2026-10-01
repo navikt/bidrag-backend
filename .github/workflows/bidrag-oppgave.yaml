@@ -40,6 +40,7 @@ env:
     apps/bidrag-oppgave/**
     libs/bidrag-oppgave-dto/**
     libs/bidrag-oppgave-client/**
+    libs/bidrag-felles/**
 
 jobs:
   bygg_test_og_deploy:
