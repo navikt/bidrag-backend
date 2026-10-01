@@ -7,7 +7,7 @@ Autentisering skjer med bearertoken. Det er satt opp autentisering via https://g
 
 Start opp Docker-containeren med `docker compose up -d`
 
-Start app med spring profil `dev`
+Start app med spring profil `test`
 
 Token kan hentes fra https://azure-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:bidrag:bidrag-localauth
 

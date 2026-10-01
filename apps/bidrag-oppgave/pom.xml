@@ -33,6 +33,11 @@
             <artifactId>bidrag-backend-sikkerhet</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>no.nav.bidrag</groupId>
+            <artifactId>bidrag-backend-feilhandtering</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
         <!-- Spring Boot -->
@@ -87,6 +92,16 @@
             <groupId>io.github.oshai</groupId>
             <artifactId>kotlin-logging-jvm</artifactId>
             <version>${kotlin-logging-jvm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>9.0</version>
         </dependency>
 
         <!-- Test -->

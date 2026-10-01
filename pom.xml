@@ -27,6 +27,7 @@
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
         <module>libs/bidrag-backend-sikkerhet</module>
+        <module>libs/bidrag-backend-feilhandtering</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-core</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-forskudd</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-boforhold</module>
