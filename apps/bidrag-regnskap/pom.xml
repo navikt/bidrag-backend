@@ -33,6 +33,9 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- unleash-client-java (via launchdarkly okhttp-eventsource) trekker inn okhttp 4.x,
+                 som kolliderer med mock-oauth2-server sin okhttp-jvm 5.x på testclasspath
+                 (NoSuchMethodError: TaskRunner.<init>). -->
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>

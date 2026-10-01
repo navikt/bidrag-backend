@@ -5,6 +5,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 
 @Configuration
-@Profile("!test & !h2")
+@Profile("nais")
 @EnableUnleashFeatures
 class UnleashConfig
