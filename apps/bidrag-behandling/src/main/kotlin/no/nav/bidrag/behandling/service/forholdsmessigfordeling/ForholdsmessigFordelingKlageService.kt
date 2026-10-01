@@ -138,6 +138,7 @@ class ForholdsmessigFordelingKlageService(
 
         oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid)
         feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, opprettetSøknad, hovedsøknadsid)
+        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
 
         val søknadsbarnOrdinæreSøknader =
             opprettKlagesøknaderForTilknyttedeSøknader(
@@ -146,15 +147,15 @@ class ForholdsmessigFordelingKlageService(
                 relevanteKravhavere,
                 åpneSøknaderForVedtaksid,
                 hovedsøknadsid,
+                rollerITilknyttedeSøknader,
             )
 
         fjernSøknaderSomIkkeErDelAvKlagebehandlingen(behandling)
-        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
 
         val gjenværendeKravhavere =
             relevanteKravhavere
                 .filter { rk -> søknadsbarnOrdinæreSøknader.none { it.first == rk.kravhaver && it.second == rk.stønadstype } }
-                .filter { rk -> rollerITilknyttedeSøknader.none { it.first == rk.kravhaver && it.second == rk.stønadstype } }
+                .filter { rk -> rollerITilknyttedeSøknader.none { it.kravhaverIdent == rk.kravhaver && it.stønadstype == rk.stønadstype } }
                 .filter { rk -> !behandling.harSøknadSomErstatterFFKlagesøknad(rk.kravhaver, rk.stønadstype) }
                 .toSet()
         opprettRevurderingssøknaderForGjenværendeKravhavere(
@@ -229,13 +230,16 @@ class ForholdsmessigFordelingKlageService(
         .åpneSøknader
         .filter { it.refVedtaksid == behandling.omgjøringsdetaljer?.omgjørVedtakId }
 
-    private fun finnAlleBarnIOpprettetSøknader(hovedsøknadsid: Long): List<Pair<String?, Stønadstype?>> {
+    private fun finnAlleBarnIOpprettetSøknader(hovedsøknadsid: Long): List<OpprettetSøknad> {
         val tilknyttedeSøknaderBehandling =
             bbmConsumer.finnSammenknytningerHovedsøknad(
                 hovedsøknadsid,
                 SøknadsknytningStatus.Aktiv,
             )
-        return tilknyttedeSøknaderBehandling.søknader.flatMap { it.parterUnderBehandling.map { p -> p.personident to it.behandlingstema.tilStønadstype() } }.distinct()
+        return tilknyttedeSøknaderBehandling.søknader.flatMap {
+            it.parterUnderBehandling.filter { it.personident != null }
+                .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.søknadsid) }
+        }.distinct()
     }
     private fun sammeknyttSøknadHvisNødvendig(
         hovedsøknadsid: Long,
@@ -506,6 +510,7 @@ class ForholdsmessigFordelingKlageService(
         relevanteKravhavere: Set<SakKravhaver>,
         åpneSøknaderForVedtaksid: List<HentSøknad>,
         hovedsøknadsid: Long,
+        rollerITilknyttedeSøknader: List<OpprettetSøknad>,
     ): List<Pair<String?, Stønadstype?>> {
         val vedtak = behandling.omgjøringsdetaljer!!.omgjørVedtakId?.let { hentVedtak(it) }
         val søknaderOpprinneligVedtak =
@@ -536,7 +541,9 @@ class ForholdsmessigFordelingKlageService(
                 relevanteKravhavere,
                 behandling.søknadsbarn,
                 behandling.soknadsid!!,
-            )
+            ).filter { søknad ->
+                rollerITilknyttedeSøknader.none { søknad.søknadsid != it.refSøknadsid }
+            }
 
         val søknadsbarnOpprettetSøknad =
             opprettetSøknad.parterUnderBehandling.map {
