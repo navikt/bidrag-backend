@@ -56,11 +56,6 @@
             <version>${springdoc-openapi-ui.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-kotlin</artifactId>
-        </dependency>
-
         <!-- Security: valider innkommende Azure-brukertoken + OBO token exchange -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
