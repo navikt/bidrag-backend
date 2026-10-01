@@ -8,6 +8,9 @@ spring:
         jwt:
           issuer-uri: ${AZURE_OPENID_CONFIG_ISSUER}
           audiences: ${AZURE_APP_CLIENT_ID}
+  mvc:
+    problemdetails:
+      enabled: true
 
 springdoc:
   packages-to-scan: no.nav.bidrag.oppgave.controller

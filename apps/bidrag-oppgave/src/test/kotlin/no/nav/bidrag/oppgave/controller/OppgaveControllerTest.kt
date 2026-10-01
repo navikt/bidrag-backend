@@ -2,6 +2,7 @@ package no.nav.bidrag.oppgave.controller
 
 import no.nav.bidrag.oppgave.OppgaveTestData.forventetBidragOppgaveDto
 import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveResponse
+import no.nav.bidrag.oppgave.config.RestConfig
 import no.nav.bidrag.oppgave.config.SecurityConfig
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
@@ -33,10 +34,11 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.assertj.MockMvcTester
 import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.web.client.HttpClientErrorException
 import tools.jackson.databind.ObjectMapper
 
 @WebMvcTest(OppgaveController::class)
-@Import(OppgaveService::class, SecurityConfig::class, OppgaveControllerTest.TestConfig::class)
+@Import(OppgaveService::class, SecurityConfig::class, RestConfig::class, OppgaveControllerTest.TestConfig::class)
 class OppgaveControllerTest {
 
     @Autowired
@@ -213,6 +215,26 @@ class OppgaveControllerTest {
 
         assertThat(resultat).hasStatusOk()
         assertThat(capturedParams().limit).isEqualTo(limit)
+    }
+
+    @Test
+    fun `Returnerer ProblemDetail ved feil fra eksternt API`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willThrow(HttpClientErrorException(HttpStatus.NOT_ACCEPTABLE, "Bad Gateway"))
+
+        val resultat = mockMvc.get()
+            .uri("/api/oppgaver?saksnummer=SAK-123")
+            .with(jwtToken())
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.NOT_ACCEPTABLE)
+        assertThat(resultat.response.contentType)
+            .isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE)
+        assertThat(resultat.response.contentAsString)
+            .contains(
+                "\"status\":406",
+                "\"title\":\"Feil mot ekstern tjeneste\"",
+            )
     }
 
     private fun capturedParams(): FinnOppgaverParams {

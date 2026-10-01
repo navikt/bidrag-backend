@@ -198,7 +198,7 @@ tar imot rotloggeren. Skal auditsporet siden et annet sted, er det destinasjonen
 `logback-spring.xml` som byttes.
 
 `AuditLogger` kaster selv 403 ved avslag, som en `HttpClientErrorException`.
-`DefaultRestControllerAdvice` oversetter den slags til 502 ("tjenesten vi kaller feilet"), så
+`GlobalRestControllerAdvice` oversetter den slags til 502 ("tjenesten vi kaller feilet"), så
 `Tilgangskontroll` bytter den til `IngenTilgangException`. Avgjørelsen håndheves i tillegg
 eksplisitt, siden `AuditLogger` hopper over både logging og avslag for maskintoken.
 
