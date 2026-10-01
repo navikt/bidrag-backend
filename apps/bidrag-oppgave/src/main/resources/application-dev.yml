@@ -1,19 +1,20 @@
-AZURE_OPENID_CONFIG_ISSUER: http://dev-azure-mocked
-AZURE_APP_CLIENT_ID: mocked
 
-NAIS_APP_IMAGE: latest
-NAIS_CLUSTER_NAME: dev
+# Henter fra https://localauth-bidrag.intern.dev.nav.no/entraid/env
+AZURE_OPENID_CONFIG_ISSUER: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0
+AZURE_APP_CLIENT_ID: 43b293e0-2115-468e-b744-086f435bf53d
 
+
+# Texas via docker compose opplegg
 nais:
   token:
-    endpoint: http://token-dev-mocked
+    endpoint: http://localhost:4010/api/v1/token
     exchange:
-      endpoint: http://token-exchange-dev-mocked
+      endpoint: http://localhost:4010/api/v1/token/exchange
 
 app:
   oppgave:
-    url: http://oppgave-dev.mocked
-    audience: api://mock.oppgave/.default
+    url: https://oppgave.intern.dev.nav.no/
+    audience: api://dev-fss.oppgavehandtering.oppgave/.default
 
 spring:
   main:
