@@ -445,6 +445,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
             "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
             "bruk_bibliotekcache": False,
+            "kjor_ktlint": True,
         })
 
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
@@ -637,7 +638,7 @@ class LibraryBuildTest(unittest.TestCase):
             env = {**os.environ, **self.build["env"],
                    "FELLES": "false", "BEREGN": "false", "OPPGAVE": "false",
                    "FELLES_CACHE": "", "BEREGN_CACHE": "", "OPPGAVE_CACHE": "",
-                   "SKIP_TESTS": "false", "TEST_FELLES": "true", **state,
+                   "SKIP_TESTS": "false", "KJOR_KTLINT": "true", "TEST_FELLES": "true", **state,
                    "PATH": f"{path}:{os.environ['PATH']}",
                    "MAVEN_ARGS_OUTPUT": str(path / "args"), "GITHUB_STEP_SUMMARY": str(path / "summary")}
             subprocess.run(["bash", "-euo", "pipefail", "-c", self.build["run"]], env=env, check=True)
@@ -680,7 +681,8 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertEqual(len(projects), 3 + 5)
         self.assertIn("libs/bidrag-felles/bidrag-commons-test", projects)
         self.assertNotIn("-am", args)
-        self.assertNotIn("-Dmaven.antrun.skip=true", args)
+        self.assertIn("-Dmaven.antrun.skip=true", self.run_build(
+            FELLES="true", TEST_FELLES="false", KJOR_KTLINT="false"))
 
     def test_unchanged_felles_is_built_first_without_skipping_other_library_tests(self):
         calls = self.run_build_calls(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="false")
@@ -699,7 +701,7 @@ class LibraryBuildTest(unittest.TestCase):
         calls = self.run_build_calls(FELLES="true", BEREGN="true", TEST_FELLES="false", SKIP_TESTS="true")
         self.assertEqual(len(calls), 2)
         self.assertIn("-Dmaven.test.skip=true", calls[0])
-        self.assertIn("-DskipTests", calls[1])
+        self.assertIn("-Dmaven.test.skip=true", calls[1])
 
     def test_cached_unchanged_felles_is_not_rebuilt(self):
         args = self.run_build(FELLES="true", FELLES_CACHE="true", TEST_FELLES="false", BEREGN="true")
@@ -708,10 +710,21 @@ class LibraryBuildTest(unittest.TestCase):
 
     def test_oppgave_does_not_build_felles(self):
         args = self.run_build(OPPGAVE="true", SKIP_TESTS="true")
-        self.assertIn("-DskipTests", args)
+        self.assertIn("-Dmaven.test.skip=true", args)
         selected = args[args.index("-pl") + 1]
         self.assertNotIn("libs/bidrag-felles/", selected)
         self.assertIn("libs/bidrag-oppgave-client", selected)
+
+    def test_app_library_build_skips_test_compilation_and_ktlint(self):
+        self.assertEqual(self.action["inputs"]["kjor_ktlint"]["default"], "false")
+        self.assertEqual(self.build["env"]["KJOR_KTLINT"], "${{ inputs.kjor_ktlint }}")
+        calls = self.run_build_calls(FELLES="true", BEREGN="true", OPPGAVE="true",
+                                     TEST_FELLES="false", SKIP_TESTS="true", KJOR_KTLINT="false")
+        self.assertEqual(len(calls), 2)
+        for args in calls:
+            self.assertIn("-Dmaven.test.skip=true", args)
+            self.assertIn("-Dmaven.antrun.skip=true", args)
+            self.assertNotIn("-DskipTests", args)
 
     def test_caches_are_exact_and_beregn_includes_its_felles_inputs(self):
         restores = {step["id"]: step for step in self.steps
@@ -757,6 +770,7 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertIn("libs/bidrag-oppgave-client", projects)
         self.assertNotIn("-DskipTests", args)
         self.assertNotIn("-Dmaven.test.skip=true", args)
+        self.assertNotIn("-Dmaven.antrun.skip=true", args)
 
     def test_untested_cache_cannot_satisfy_a_build_that_requires_felles_tests(self):
         restores = {step["id"]: step for step in self.steps

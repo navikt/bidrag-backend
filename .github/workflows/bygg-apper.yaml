@@ -131,6 +131,7 @@ jobs:
           grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
           felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
           bruk_bibliotekcache: false
+          kjor_ktlint: true
 
   bidrag-admin-fss:
     name: Bidrag-admin-fss

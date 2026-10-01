@@ -8,11 +8,14 @@ inputs:
     description: Navn på artefaktet med ferdige biblioteker fra denne kjøringen. Tom verdi bruker cache eller bygger ved behov.
     default: ''
   skip_tester:
-    description: Hopp over tester ved manuell deploy til q1/q2. Bruker en egen cache.
+    description: Hopp over testkompilering og testkjøring ved bygg uten tester. Bruker en egen cache.
     default: 'false'
   bruk_bibliotekcache:
     description: Hent og lagre ferdigbygde biblioteker. Sett til false i testjobben slik at testene alltid kjøres.
     default: 'true'
+  kjor_ktlint:
+    description: Kjør ktlint ved Maven-bygg. Kun bibliotektestjobben skal gjøre dette.
+    default: 'false'
   felles_endret:
     description: Om kjøringen har endringer under libs/bidrag-felles. Med bibliotekcache bygges uendret felles uten tester.
     required: true
@@ -116,6 +119,7 @@ runs:
         BEREGN_CACHE: ${{ steps.beregn.outputs.cache-hit }}
         OPPGAVE_CACHE: ${{ steps.oppgave.outputs.cache-hit }}
         SKIP_TESTS: ${{ inputs.skip_tester }}
+        KJOR_KTLINT: ${{ inputs.kjor_ktlint }}
         TEST_FELLES: ${{ steps.grupper.outputs.test_felles }}
         FELLES_MODULER: >-
           libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
@@ -126,11 +130,17 @@ runs:
         # Installer parent-POM-ene uten å bygge appene som arver fra dem.
         prosjekter=".,apps/bidrag-admin,apps/bidrag-dokumenthåndtering"
         bygget=""
+        case "$KJOR_KTLINT" in
+          true|false) ;;
+          *) echo "::error::kjor_ktlint må være true eller false"; exit 1 ;;
+        esac
+        maven_args=(-B -q -T 1C -nsu)
+        if [ "$KJOR_KTLINT" = false ]; then maven_args+=(-Dmaven.antrun.skip=true); fi
         if [ "$FELLES" = true ] && [ "$FELLES_CACHE" != true ]; then
           prosjekter+=",$FELLES_MODULER"
           if [ "$TEST_FELLES" = false ]; then
             # Eget kall slik at testene i beregn og oppgave ikke påvirkes.
-            mvn -B -q -T 1C -nsu -pl "$prosjekter" -Dmaven.test.skip=true install
+            mvn "${maven_args[@]}" -pl "$prosjekter" -Dmaven.test.skip=true install
             bygget="$prosjekter"
             prosjekter=""
             echo "Felles ble bygget uten testkompilering og testkjøring." >> "$GITHUB_STEP_SUMMARY"
@@ -143,8 +153,8 @@ runs:
           prosjekter="${prosjekter:+$prosjekter,}$OPPGAVE_MODULER"
         fi
         if [ -n "$prosjekter" ]; then
-          args=(-B -q -T 1C -nsu -pl "$prosjekter")
-          if [ "$SKIP_TESTS" = true ]; then args+=(-DskipTests); fi
+          args=("${maven_args[@]}" -pl "$prosjekter")
+          if [ "$SKIP_TESTS" = true ]; then args+=(-Dmaven.test.skip=true); fi
           # Ikke -am: øvrige biblioteker er allerede hentet fra cache eller bygget over.
           mvn "${args[@]}" install
           bygget="${bygget:+$bygget,}$prosjekter"
