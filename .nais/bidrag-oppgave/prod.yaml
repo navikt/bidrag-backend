@@ -11,6 +11,8 @@ replicas:
 env:
   APP_OPPGAVE_URL: https://oppgave.prod-fss-pub.nais.io
   APP_OPPGAVE_AUDIENCE: api://prod-fss.oppgavehandtering.oppgave/.default
+  APP_TILGANGSKONTROLL_URL: http://bidrag-tilgangskontroll
+  APP_TILGANGSKONTROLL_AUDIENCE: api://prod-gcp.bidrag.bidrag-tilgangskontroll/.default
 
 inbound:
   rules:
@@ -20,6 +22,6 @@ inbound:
 
 outbound:
   rules:
-#    - application: bidrag-admin
+    - application: bidrag-tilgangskontroll
   external:
     - oppgave.prod-fss-pub.nais.io

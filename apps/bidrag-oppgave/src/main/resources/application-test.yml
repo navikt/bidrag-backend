@@ -15,6 +15,9 @@ app:
   oppgave:
     url: https://oppgave.intern.dev.nav.no/
     audience: api://dev-fss.oppgavehandtering.oppgave/.default
+  tilgangskontroll:
+    url: https://bidrag-tilgangskontroll.intern.dev.nav.no
+    audience: api://dev-gcp.bidrag.bidrag-tilgangskontroll/.default
 
 spring:
   main:
