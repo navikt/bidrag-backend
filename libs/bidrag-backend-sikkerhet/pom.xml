@@ -8,12 +8,12 @@
         <groupId>no.nav.bidrag</groupId>
         <artifactId>bidrag-backend</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>bidrag-backend-texas</artifactId>
+    <artifactId>bidrag-backend-sikkerhet</artifactId>
     <packaging>jar</packaging>
-    <description>Lib for å håndtere token exchange på nais måten via Texas</description>
+    <description>Lib for å håndtere sikkerhet</description>
 
     <dependencies>
         <dependency>
