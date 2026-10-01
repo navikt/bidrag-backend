@@ -125,11 +125,12 @@ jobs:
               {"id": "github", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"},
               {"id": "github2", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"}
             ]
-      # Kjører den faktiske testsuiten for felles/beregn/oppgave parallelt med app-byggene.
+      # Bygger og tester bibliotekene på nytt i hver kjøring, parallelt med app-byggene.
       - uses: ./.github/actions/klargjor-biblioteker
         with:
           grupper: ${{ needs.detect_changes.outputs.bibliotekgrupper }}
           felles_endret: ${{ needs.detect_changes.outputs.felles_endret }}
+          bruk_bibliotekcache: false
 
   bidrag-admin-fss:
     name: Bidrag-admin-fss

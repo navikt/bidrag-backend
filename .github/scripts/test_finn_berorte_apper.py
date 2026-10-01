@@ -444,6 +444,7 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(test_step["with"], {
             "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+            "bruk_bibliotekcache": False,
         })
 
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
@@ -717,6 +718,7 @@ class LibraryBuildTest(unittest.TestCase):
                     if step.get("uses", "").startswith("actions/cache/restore@")}
         self.assertEqual(set(restores), {"felles", "felles_uten_tester", "beregn", "oppgave"})
         for step in restores.values():
+            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
             key = step["with"]["key"]
             if step["id"] in ("beregn", "oppgave"):
                 self.assertIn("inputs.skip_tester", key)
@@ -729,7 +731,32 @@ class LibraryBuildTest(unittest.TestCase):
         saves = [step for step in self.steps if step.get("uses", "").startswith("actions/cache/save@")]
         self.assertEqual(len(saves), 4)
         for step in saves:
+            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
             self.assertIn("cache-primary-key", step["with"]["key"])
+
+    def test_test_job_builds_all_selected_groups_without_library_cache(self):
+        select = self.steps[0]
+        self.assertEqual(self.action["inputs"]["bruk_bibliotekcache"]["default"], "true")
+        self.assertEqual(select["env"]["LIBRARY_CACHE"], "${{ inputs.bruk_bibliotekcache }}")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            fake_maven = path / "mvn"
+            fake_maven.write_text("#!/bin/sh\nprintf 'Apache Maven 3.9.0\\nJava version: 21\\n'\n")
+            fake_maven.chmod(0o755)
+            output = path / "output"
+            subprocess.run(["bash", "-euo", "pipefail", "-c", select["run"]],
+                           env={**os.environ, "PATH": f"{path}:{os.environ['PATH']}",
+                                "LIBRARY_GROUPS": "felles,beregn,oppgave", "SKIP_TESTS": "false",
+                                "LIBRARY_CACHE": "false", "FELLES_ENDRET": "false",
+                                "GITHUB_OUTPUT": str(output)}, check=True)
+            self.assertIn("test_felles=true", output.read_text())
+        args = self.run_build(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="true")
+        projects = args[args.index("-pl") + 1]
+        self.assertIn("libs/bidrag-felles/bidrag-domene", projects)
+        self.assertIn("libs/bidrag-beregn-felles/bidrag-beregn-core", projects)
+        self.assertIn("libs/bidrag-oppgave-client", projects)
+        self.assertNotIn("-DskipTests", args)
+        self.assertNotIn("-Dmaven.test.skip=true", args)
 
     def test_untested_cache_cannot_satisfy_a_build_that_requires_felles_tests(self):
         restores = {step["id"]: step for step in self.steps
