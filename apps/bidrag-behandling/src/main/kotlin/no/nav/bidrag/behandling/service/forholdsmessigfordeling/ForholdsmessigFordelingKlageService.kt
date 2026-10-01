@@ -238,7 +238,7 @@ class ForholdsmessigFordelingKlageService(
             )
         return tilknyttedeSøknaderBehandling.søknader.flatMap {
             it.parterUnderBehandling.filter { it.personident != null }
-                .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.søknadsid) }
+                .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.refSøknadsid) }
         }.distinct()
     }
     private fun sammeknyttSøknadHvisNødvendig(
@@ -542,7 +542,7 @@ class ForholdsmessigFordelingKlageService(
                 behandling.søknadsbarn,
                 behandling.soknadsid!!,
             ).filter { søknad ->
-                rollerITilknyttedeSøknader.none { søknad.søknadsid != it.refSøknadsid }
+                rollerITilknyttedeSøknader.none { søknad.søknadsid == it.refSøknadsid }
             }
 
         val søknadsbarnOpprettetSøknad =
