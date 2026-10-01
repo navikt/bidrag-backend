@@ -21,6 +21,7 @@ from finn_berorte_apper import (
     select_affected_apps,
     split_on_merged_module,
     target_branch,
+    tested_pr_head,
 )
 
 
@@ -270,6 +271,108 @@ class AppFiltersTest(unittest.TestCase):
             self.assertEqual(values["bibliotekgrupper"], "felles,beregn")
 
 
+class MergeQueueReuseTest(unittest.TestCase):
+    """Merge-køen hopper over bygget bare når PR-hodet med identisk tre allerede er grønt."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.root = Path(self.directory.name)
+        self.git("init", "--quiet", "--initial-branch=main")
+        self.git("config", "user.email", "ci@example.com")
+        self.git("config", "user.name", "CI")
+        self.git("config", "commit.gpgsign", "false")
+        self.main = self.commit("README.md", "main")
+        self.pr_head = self.commit("apps/a/A.kt", "pr")
+        # Køen legger PR-endringen oppå main: samme tre som PR-hodet, men en ny commit.
+        self.git("checkout", "--quiet", "--detach", self.main)
+        self.queue_head = self.commit("apps/a/A.kt", "pr", message="kø")
+        self.env = patch.dict(os.environ, {"GITHUB_REPOSITORY": "navikt/bidrag-backend", "GITHUB_TOKEN": "t"})
+        self.env.start()
+
+    def tearDown(self):
+        self.env.stop()
+        self.directory.cleanup()
+
+    def git(self, *args):
+        return subprocess.check_output(["git", "-C", str(self.root), *args], text=True).strip()
+
+    def commit(self, path, content, message="endring"):
+        file = self.root / path
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_text(content)
+        self.git("add", path)
+        self.git("commit", "--quiet", "-m", message)
+        return self.git("rev-parse", "HEAD")
+
+    def event(self, head=None, base=None, pr=7):
+        return {"merge_group": {"head_sha": head or self.queue_head, "base_sha": base or self.main,
+                                "base_ref": "refs/heads/main",
+                                "head_ref": f"refs/heads/gh-readonly-queue/main/pr-{pr}-{base or self.main}"}}
+
+    def api(self, successful_runs=1):
+        def get(path):
+            if path == "/repos/navikt/bidrag-backend/pulls/7":
+                return {"head": {"sha": self.pr_head}}
+            self.assertIn(f"head_sha={self.pr_head}", path)
+            self.assertIn("event=pull_request", path)
+            self.assertIn("status=success", path)
+            self.assertIn("/actions/workflows/bygg-apper.yaml/runs", path)
+            return {"total_count": successful_runs}
+        return patch("finn_berorte_apper.github_get", side_effect=get)
+
+    def test_identical_tree_with_green_pr_build_is_reused(self):
+        with self.api():
+            self.assertEqual(tested_pr_head(self.root, self.event(), "bygg-apper.yaml"), self.pr_head)
+
+    def test_without_a_green_pr_build_the_queue_builds(self):
+        with self.api(successful_runs=0):
+            self.assertIsNone(tested_pr_head(self.root, self.event(), "bygg-apper.yaml"))
+
+    def test_pr_behind_main_is_built_even_with_a_green_pr_build(self):
+        # main har fått en ny commit etter PR-bygget: køens tre er ikke testet før.
+        self.git("checkout", "--quiet", "--detach", self.main)
+        new_main = self.commit("apps/b/B.kt", "ny main")
+        queue_head = self.commit("apps/a/A.kt", "pr", message="kø")
+        with self.api():
+            self.assertIsNone(tested_pr_head(self.root, self.event(queue_head, new_main), "bygg-apper.yaml"))
+
+    def test_different_tree_is_built(self):
+        self.git("checkout", "--quiet", "--detach", self.main)
+        other = self.commit("apps/a/A.kt", "noe annet", message="kø")
+        with self.api():
+            self.assertIsNone(tested_pr_head(self.root, self.event(other), "bygg-apper.yaml"))
+
+    def test_unknown_queue_ref_does_not_call_the_api(self):
+        event = self.event()
+        event["merge_group"]["head_ref"] = "refs/heads/something-else"
+        with patch("finn_berorte_apper.github_get") as get:
+            self.assertIsNone(tested_pr_head(self.root, event, "bygg-apper.yaml"))
+        get.assert_not_called()
+
+    def run_main(self, **patches):
+        with tempfile.TemporaryDirectory() as directory:
+            event = Path(directory) / "event.json"
+            output = Path(directory) / "output"
+            event.write_text(json.dumps(self.event()))
+            env = {"GITHUB_EVENT_NAME": "merge_group", "GITHUB_EVENT_PATH": str(event),
+                   "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
+            with patch.dict(os.environ, env), patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
+                    patch("finn_berorte_apper.find_changed_files",
+                          return_value=["apps/bidrag-behandling/src/main/kotlin/App.kt"]), \
+                    patch("builtins.print"), patch("finn_berorte_apper.tested_pr_head", **patches):
+                main()
+            return dict(line.split("=", 1) for line in output.read_text().splitlines())
+
+    def test_main_skips_all_apps_when_the_pr_build_is_reused(self):
+        values = self.run_main(return_value=self.pr_head)
+        self.assertEqual(json.loads(values["apps"]), [])
+        self.assertEqual(values["bibliotekgrupper"], "")
+
+    def test_main_builds_as_usual_when_the_check_fails(self):
+        values = self.run_main(side_effect=OSError("nettverksfeil"))
+        self.assertEqual(json.loads(values["apps"]), ["bidrag-behandling"])
+
+
 class MergedModuleTest(unittest.TestCase):
     def app_root(self, directory, maven_options="-B -fae -pl apps/bidrag-ny"):
         root = Path(directory)
@@ -307,14 +410,18 @@ class WorkflowIntegrationTest(unittest.TestCase):
         cls.app_filters = load_app_filters(ROOT)
         cls.build_workflow = workflow("bygg-apper.yaml")
 
-    def test_one_library_job_before_all_app_jobs(self):
+    def test_library_jobs_before_all_app_jobs(self):
+        # Biblioteklogikken er delt i to jobber som begge bruker klargjor-biblioteker:
+        # "biblioteker" bygger raskt uten tester (appjobbene trenger bare jar-ene), mens
+        # "biblioteker_tester" kjører selve testsuiten i parallell med app-byggene - uten at
+        # appjobbene venter på den. Den gater i stedet merge via "Alle bygg fullført".
         jobs = self.build_workflow["jobs"]
-        library_jobs = [job for job in jobs.values()
+        library_jobs = {name: job for name, job in jobs.items()
                         if any(step.get("uses") == "./.github/actions/klargjor-biblioteker"
-                               for step in job.get("steps", []))]
-        self.assertEqual(len(library_jobs), 1)
+                               for step in job.get("steps", []))}
+        self.assertEqual(set(library_jobs), {"biblioteker", "biblioteker_tester"})
+
         library_job = jobs["biblioteker"]
-        self.assertEqual(library_jobs[0], library_job)
         self.assertEqual(library_job["needs"], "detect_changes")
         self.assertEqual(library_job["if"], "needs.detect_changes.outputs.apps != '[]'")
         self.assertEqual(library_job["permissions"], {"contents": "read"})
@@ -324,9 +431,26 @@ class WorkflowIntegrationTest(unittest.TestCase):
         self.assertEqual(prepare["with"], {
             "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
             "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+            "skip_tester": True,
         })
+
+        tester_job = jobs["biblioteker_tester"]
+        self.assertEqual(tester_job["needs"], "detect_changes")
+        self.assertEqual(tester_job["if"], "needs.detect_changes.outputs.bibliotekgrupper != ''")
+        self.assertEqual(tester_job["permissions"], {"contents": "read"})
+        self.assertNotIn("outputs", tester_job)
+        test_step = next(step for step in tester_job["steps"]
+                         if step.get("uses") == "./.github/actions/klargjor-biblioteker")
+        self.assertEqual(test_step["with"], {
+            "grupper": "${{ needs.detect_changes.outputs.bibliotekgrupper }}",
+            "felles_endret": "${{ needs.detect_changes.outputs.felles_endret }}",
+            "bruk_bibliotekcache": False,
+            "kjor_ktlint": True,
+        })
+
         self.assertEqual(jobs["detect_changes"]["outputs"]["felles_endret"], "${{ steps.appvalg.outputs.felles_endret }}")
-        self.assertEqual(set(jobs) - {"detect_changes", "biblioteker", "alle_bygg_fullfort"}, set(self.app_filters))
+        self.assertEqual(set(jobs) - set(library_jobs) - {"detect_changes", "alle_bygg_fullfort"},
+                         set(self.app_filters))
         for app in self.app_filters:
             with self.subTest(app=app):
                 self.assertEqual(set(jobs[app]["needs"]), {"detect_changes", "biblioteker"})
@@ -449,19 +573,20 @@ class WorkflowIntegrationTest(unittest.TestCase):
 
     def test_image_is_only_uploaded_when_the_run_actually_deploys(self):
         # Et image per PR-push per app fylte registeret uten at noen brukte dem. Bygget
-        # beholdes, så en ødelagt Dockerfile fortsatt fanges i PR-en, men opplastingen,
-        # attesteringen og cache-eksporten skjer bare når kjøringen skal deploye.
+        # beholdes, så en ødelagt Dockerfile fortsatt fanges i PR-en, men opplastingen og
+        # attesteringen skjer bare når kjøringen skal deploye. Lagcachen eksporteres aldri.
         document = workflow("bygg_og_deploy.yaml")
         deploy_flags = [name for name in triggers(document)["workflow_call"]["inputs"]
                         if name.startswith("deploy_")]
         self.assertTrue(deploy_flags)
         job = document["jobs"]["bygg_test_og_image"]
         step = next(s for s in job["steps"] if s.get("uses", "").startswith("nais/docker-build-push@"))
+        self.assertIs(step["with"]["no_cache"], True)
+        self.assertNotIn("cache_to", step["with"])
         for flag in deploy_flags:
             with self.subTest(flag=flag):
                 # Alle miljøer som kan deploye, må også utløse opplasting og attestering.
                 self.assertIn(f"inputs.{flag}", step["with"]["push_image"])
-                self.assertIn(f"inputs.{flag}", step["with"]["cache_to"])
                 self.assertIn(f"inputs.{flag}", document["jobs"]["salsa"]["if"])
 
     def test_deploy_concurrency_uses_app_identity(self):
@@ -513,7 +638,7 @@ class LibraryBuildTest(unittest.TestCase):
             env = {**os.environ, **self.build["env"],
                    "FELLES": "false", "BEREGN": "false", "OPPGAVE": "false",
                    "FELLES_CACHE": "", "BEREGN_CACHE": "", "OPPGAVE_CACHE": "",
-                   "SKIP_TESTS": "false", "TEST_FELLES": "true", **state,
+                   "SKIP_TESTS": "false", "KJOR_KTLINT": "true", "TEST_FELLES": "true", **state,
                    "PATH": f"{path}:{os.environ['PATH']}",
                    "MAVEN_ARGS_OUTPUT": str(path / "args"), "GITHUB_STEP_SUMMARY": str(path / "summary")}
             subprocess.run(["bash", "-euo", "pipefail", "-c", self.build["run"]], env=env, check=True)
@@ -556,7 +681,8 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertEqual(len(projects), 3 + 5)
         self.assertIn("libs/bidrag-felles/bidrag-commons-test", projects)
         self.assertNotIn("-am", args)
-        self.assertNotIn("-Dmaven.antrun.skip=true", args)
+        self.assertIn("-Dmaven.antrun.skip=true", self.run_build(
+            FELLES="true", TEST_FELLES="false", KJOR_KTLINT="false"))
 
     def test_unchanged_felles_is_built_first_without_skipping_other_library_tests(self):
         calls = self.run_build_calls(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="false")
@@ -575,7 +701,7 @@ class LibraryBuildTest(unittest.TestCase):
         calls = self.run_build_calls(FELLES="true", BEREGN="true", TEST_FELLES="false", SKIP_TESTS="true")
         self.assertEqual(len(calls), 2)
         self.assertIn("-Dmaven.test.skip=true", calls[0])
-        self.assertIn("-DskipTests", calls[1])
+        self.assertIn("-Dmaven.test.skip=true", calls[1])
 
     def test_cached_unchanged_felles_is_not_rebuilt(self):
         args = self.run_build(FELLES="true", FELLES_CACHE="true", TEST_FELLES="false", BEREGN="true")
@@ -584,16 +710,28 @@ class LibraryBuildTest(unittest.TestCase):
 
     def test_oppgave_does_not_build_felles(self):
         args = self.run_build(OPPGAVE="true", SKIP_TESTS="true")
-        self.assertIn("-DskipTests", args)
+        self.assertIn("-Dmaven.test.skip=true", args)
         selected = args[args.index("-pl") + 1]
         self.assertNotIn("libs/bidrag-felles/", selected)
         self.assertIn("libs/bidrag-oppgave-client", selected)
+
+    def test_app_library_build_skips_test_compilation_and_ktlint(self):
+        self.assertEqual(self.action["inputs"]["kjor_ktlint"]["default"], "false")
+        self.assertEqual(self.build["env"]["KJOR_KTLINT"], "${{ inputs.kjor_ktlint }}")
+        calls = self.run_build_calls(FELLES="true", BEREGN="true", OPPGAVE="true",
+                                     TEST_FELLES="false", SKIP_TESTS="true", KJOR_KTLINT="false")
+        self.assertEqual(len(calls), 2)
+        for args in calls:
+            self.assertIn("-Dmaven.test.skip=true", args)
+            self.assertIn("-Dmaven.antrun.skip=true", args)
+            self.assertNotIn("-DskipTests", args)
 
     def test_caches_are_exact_and_beregn_includes_its_felles_inputs(self):
         restores = {step["id"]: step for step in self.steps
                     if step.get("uses", "").startswith("actions/cache/restore@")}
         self.assertEqual(set(restores), {"felles", "felles_uten_tester", "beregn", "oppgave"})
         for step in restores.values():
+            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
             key = step["with"]["key"]
             if step["id"] in ("beregn", "oppgave"):
                 self.assertIn("inputs.skip_tester", key)
@@ -606,7 +744,33 @@ class LibraryBuildTest(unittest.TestCase):
         saves = [step for step in self.steps if step.get("uses", "").startswith("actions/cache/save@")]
         self.assertEqual(len(saves), 4)
         for step in saves:
+            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
             self.assertIn("cache-primary-key", step["with"]["key"])
+
+    def test_test_job_builds_all_selected_groups_without_library_cache(self):
+        select = self.steps[0]
+        self.assertEqual(self.action["inputs"]["bruk_bibliotekcache"]["default"], "true")
+        self.assertEqual(select["env"]["LIBRARY_CACHE"], "${{ inputs.bruk_bibliotekcache }}")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            fake_maven = path / "mvn"
+            fake_maven.write_text("#!/bin/sh\nprintf 'Apache Maven 3.9.0\\nJava version: 21\\n'\n")
+            fake_maven.chmod(0o755)
+            output = path / "output"
+            subprocess.run(["bash", "-euo", "pipefail", "-c", select["run"]],
+                           env={**os.environ, "PATH": f"{path}:{os.environ['PATH']}",
+                                "LIBRARY_GROUPS": "felles,beregn,oppgave", "SKIP_TESTS": "false",
+                                "LIBRARY_CACHE": "false", "FELLES_ENDRET": "false",
+                                "GITHUB_OUTPUT": str(output)}, check=True)
+            self.assertIn("test_felles=true", output.read_text())
+        args = self.run_build(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="true")
+        projects = args[args.index("-pl") + 1]
+        self.assertIn("libs/bidrag-felles/bidrag-domene", projects)
+        self.assertIn("libs/bidrag-beregn-felles/bidrag-beregn-core", projects)
+        self.assertIn("libs/bidrag-oppgave-client", projects)
+        self.assertNotIn("-DskipTests", args)
+        self.assertNotIn("-Dmaven.test.skip=true", args)
+        self.assertNotIn("-Dmaven.antrun.skip=true", args)
 
     def test_untested_cache_cannot_satisfy_a_build_that_requires_felles_tests(self):
         restores = {step["id"]: step for step in self.steps
