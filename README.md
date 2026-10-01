@@ -88,7 +88,7 @@ henter eller bygger bibliotekene. De er samlet i tre grupper:
 | --- | --- |
 | `felles` | Bibliotekene under `libs/bidrag-felles` |
 | `beregn` | Beregningsbibliotekene under `libs/bidrag-beregn-felles`. Trenger også `felles`. |
-| `oppgave` | `bidrag-oppgave-client` og `bidrag-oppgave-dto` |
+| `oppgave` |  og `bidrag-oppgave-dto` |
 
 Appene bruker `felles` som standard. Trenger en app andre grupper, angis de i
 `bibliotekgrupper` i kallet til `bygg_og_deploy.yaml`. Bruk tom verdi (`''`)
