@@ -373,6 +373,7 @@ class BehandlingTilGrunnlagMappingV2(
         return inntekter
             .asSequence()
             .filter { personobjekter.hentPersonNyesteIdent(it.gjelderIdent) != null && (inkluderAlle || it.taMed) }
+            .filter { it.rolle?.rolletype != Rolletype.BARN || byggForSøknadsbarn.any { rolle -> rolle.erSammeRolle(it.rolle!!) } }
             .groupBy { it.gjelderRolle }
             .flatMap { (rolle, innhold) ->
                 val gjelder = personobjekter.hentPersonMedReferanse(rolle!!.tilGrunnlagsreferanse())!! as GrunnlagDto
