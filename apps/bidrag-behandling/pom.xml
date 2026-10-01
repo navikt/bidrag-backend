@@ -567,36 +567,6 @@
           <reuseForks>true</reuseForks>
         </configuration>
       </plugin>
-      <!-- kapt kjører her uten at noen annotation processor faktisk er konfigurert
-           (ingen <annotationProcessorPaths>), og produserer 0 genererte filer
-           (bekreftet i target/generated-sources/kapt*). Det eneste den gjør er å
-           auto-oppdage prosessorer på compile-classpath (deprecated oppførsel) og
-           deretter varsle at de mangler i kapt-classpath. Deaktiverer de to
-           arvede kapt-kjøringene for denne modulen for å spare kjøretid. -->
-      <plugin>
-        <groupId>org.jetbrains.kotlin</groupId>
-        <artifactId>kotlin-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>default-kapt</id>
-            <phase>none</phase>
-          </execution>
-          <execution>
-            <id>default-test-kapt</id>
-            <phase>none</phase>
-          </execution>
-          <!-- extensions=true i root-pom gir allerede default-compile/default-test-compile.
-               De eksplisitte executions fra root-pom kompilerer da alt på nytt (~2 min i CI). -->
-          <execution>
-            <id>compile</id>
-            <phase>none</phase>
-          </execution>
-          <execution>
-            <id>test-compile</id>
-            <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 

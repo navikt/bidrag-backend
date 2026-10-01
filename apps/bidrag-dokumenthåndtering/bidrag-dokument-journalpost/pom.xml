@@ -351,6 +351,9 @@
                     <execution>
                         <id>compile</id>
                         <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                         <configuration>
                             <sourceDirs>
                                 <source>src/main/java</source>
@@ -361,6 +364,9 @@
                     <execution>
                         <id>test-compile</id>
                         <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
                         <configuration>
                             <sourceDirs>
                                 <source>src/test/java</source>
@@ -368,27 +374,15 @@
                             </sourceDirs>
                         </configuration>
                     </execution>
-                    <!-- kotlin-maven-plugin sin lifecycle-extension (extensions=true i root-pom) legger
-                         automatisk til egne "default-compile"/"default-testCompile"-executions i tillegg
-                         til de over. Uten sourceDirs her bruker de kun standard src/main/kotlin og finner
-                         ikke Java-kildene i src/main/java, som feiler kompileringen. -->
+                    <!-- extensions=true i root-pom legger til default-compile/default-test-compile i tillegg.
+                         Slås av så Kotlin bare kompileres én gang (i process-sources over). -->
                     <execution>
                         <id>default-compile</id>
-                        <configuration>
-                            <sourceDirs>
-                                <source>src/main/java</source>
-                                <source>src/main/kotlin</source>
-                            </sourceDirs>
-                        </configuration>
+                        <phase>none</phase>
                     </execution>
                     <execution>
-                        <id>default-testCompile</id>
-                        <configuration>
-                            <sourceDirs>
-                                <source>src/test/java</source>
-                                <source>src/test/kotlin</source>
-                            </sourceDirs>
-                        </configuration>
+                        <id>default-test-compile</id>
+                        <phase>none</phase>
                     </execution>
                 </executions>
             </plugin>

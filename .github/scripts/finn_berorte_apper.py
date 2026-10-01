@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import urllib.request
 
 import yaml
 
@@ -56,11 +57,6 @@ def select_affected_apps(app_filters, event_name, branch, changed_paths):
 def find_changed_files(root, event_name, event):
     def git_output(*args):
         return subprocess.check_output(["git", "-C", str(root), *args])
-
-    def validate_sha(value):
-        if not re.fullmatch(r"[a-f0-9]{40}", value):
-            raise ValueError("Ugyldig commit-SHA i hendelsen")
-        return value
 
     if event_name == "pull_request":
         pr = event["pull_request"]
@@ -158,6 +154,56 @@ def target_branch(event_name, event):
     return reference.removeprefix("refs/heads/")
 
 
+QUEUE_REF = re.compile(r"refs/heads/gh-readonly-queue/[^/]+/pr-([0-9]+)-[a-f0-9]{40}")
+
+
+def github_get(path):
+    request = urllib.request.Request(
+        f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}{path}",
+        headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                 "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        return json.load(response)
+
+
+def tested_pr_head(root, event, workflow_file):
+    """PR-hodet som allerede er bygget grønt med nøyaktig samme tre som merge-køen skal teste.
+
+    Når PR-branchen var à jour med main, er køens commit bare PR-hodet lagt oppå main, med
+    identisk filtre. PR-kjøringen har da allerede bygget og testet akkurat dette treet, og det
+    er ingenting nytt å teste. Returnerer None ved minste tvil, slik at køen bygger som vanlig.
+    """
+    group = event["merge_group"]
+    match = QUEUE_REF.fullmatch(group.get("head_ref", ""))
+    if not match:
+        return None
+    head, base = validate_sha(group["head_sha"]), validate_sha(group["base_sha"])
+    repository = os.environ["GITHUB_REPOSITORY"]
+    pr_head = validate_sha(github_get(f"/repos/{repository}/pulls/{match.group(1)}")["head"]["sha"])
+
+    def git(*args):
+        return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True)
+
+    if git("cat-file", "-e", f"{pr_head}^{{commit}}").returncode != 0 and \
+            git("fetch", "--quiet", "--no-tags", "origin", f"refs/pull/{match.group(1)}/head").returncode != 0:
+        return None
+    # base må være med i PR-hodet: da ga også PR-kjøringens merge med (en eldre) main det samme treet.
+    if git("merge-base", "--is-ancestor", base, pr_head).returncode != 0:
+        return None
+    trees = [git("rev-parse", f"{sha}^{{tree}}").stdout.strip() for sha in (head, pr_head)]
+    if not trees[0] or trees[0] != trees[1]:
+        return None
+    runs = github_get(f"/repos/{repository}/actions/workflows/{workflow_file}/runs"
+                      f"?event=pull_request&status=success&head_sha={pr_head}&per_page=1")
+    return pr_head if runs.get("total_count", 0) > 0 else None
+
+
+def validate_sha(value):
+    if not re.fullmatch(r"[a-f0-9]{40}", value):
+        raise ValueError("Ugyldig commit-SHA i hendelsen")
+    return value
+
+
 def main():
     root = Path.cwd()
     app_filters = load_app_filters(root)
@@ -167,6 +213,21 @@ def main():
     if event_name not in SUPPORTED_EVENTS:
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     branch = target_branch(event_name, event)
+    if event_name == "merge_group" and os.environ.get("GITHUB_TOKEN"):
+        try:
+            pr_head = tested_pr_head(root, event, "bygg-apper.yaml")
+        except (OSError, KeyError, ValueError) as error:
+            print(f"::warning::Kunne ikke sjekke om PR-bygget kan gjenbrukes, bygger som vanlig: {error}")
+            pr_head = None
+        if pr_head:
+            with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
+                stream.write("apps=[]\nbibliotekgrupper=\nfelles_endret=false\n")
+            message = (f"Merge-køen har samme filtre som PR-hodet {pr_head}, som allerede er bygget og testet grønt. "
+                       "Hopper over bygg og test.")
+            print(message)
+            with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as stream:
+                stream.write(message + "\n")
+            return
     changed_paths = find_changed_files(root, event_name, event)
     apps, unmerged_apps = split_on_merged_module(
         root, select_affected_apps(app_filters, event_name, branch, changed_paths))
