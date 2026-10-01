@@ -13,15 +13,19 @@ import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.BDDMockito.given
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -64,6 +68,7 @@ class OppgaveControllerTest {
         assertThat(params.saksreferanse).containsExactly("SAK-123")
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
+        assertThat(params.limit).isEqualTo(100)
     }
 
     @Test
@@ -100,6 +105,54 @@ class OppgaveControllerTest {
         assertThat(params.tildeltEnhetsnr).isEqualTo(Enhetsnummer("4100"))
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
+        assertThat(params.limit).isEqualTo(100)
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["-1", "0", "101", "2147483647", "999999999999999999999999"])
+    fun `POST oppgaver avviser ugyldig limit`(limit: String) {
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"limit": $limit}""")
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
+        verifyNoInteractions(oppgaveClient)
+    }
+
+    @Test
+    fun `POST oppgaver bruker standardgrense når limit er null`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse())
+
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"limit": null}""")
+            .exchange()
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(capturedParams().limit).isEqualTo(100)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [1, 55, 100])
+    fun `POST oppgaver godtar limit på grenseverdiene og midt i mellom`(limit: Int) {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse())
+
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"limit": $limit}""")
+            .exchange()
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(capturedParams().limit).isEqualTo(limit)
     }
 
     private fun capturedParams(): FinnOppgaverParams {

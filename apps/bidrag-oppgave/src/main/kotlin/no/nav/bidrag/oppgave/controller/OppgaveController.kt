@@ -1,5 +1,6 @@
 package no.nav.bidrag.oppgave.controller
 
+import jakarta.validation.Valid
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,6 +27,6 @@ class OppgaveController(
 
     @PostMapping("/oppgaver")
     fun finnOppgaver(
-        @RequestBody request: FinnOppgaverRequest,
+        @RequestBody @Valid request: FinnOppgaverRequest,
     ): List<OppgaveDto> = oppgaveService.finnOppgaver(request)
 }
