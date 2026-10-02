@@ -66,15 +66,16 @@ private fun OppgaveDto.tilBidragOppgave(): BidragOppgaveDto = BidragOppgaveDto(
     tildeltEnhetsnr = tildeltEnhetsnr,
     tilordnetRessurs = tilordnetRessurs,
     beskrivelse = beskrivelse,
-    beskrivelseshistorikk = OppgaveBeskrivelseParser.parse(
+    beskrivelseListe = OppgaveBeskrivelseParser.parse(
         beskrivelse = beskrivelse,
         sistEndretTidspunkt = endretTidspunkt ?: opprettetTidspunkt,
         sistEndretAv = endretAv ?: opprettetAv,
         sistEndretEnhetsnr = endretAvEnhetsnr ?: opprettetAvEnhetsnr,
         oppgaveId = id.verdi,
     ),
+    fristFerdigstillelse = fristFerdigstillelse,
     status = status,
-    opprettet = opprettetTidspunkt,
+    opprettetTidspunkt = opprettetTidspunkt,
 )
 
 private val OppgaveDto.brukerFnr: Personident?

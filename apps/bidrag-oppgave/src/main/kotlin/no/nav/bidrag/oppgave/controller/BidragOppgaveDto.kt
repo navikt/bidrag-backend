@@ -6,6 +6,7 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
@@ -18,9 +19,9 @@ data class BidragOppgaveDto(
      * `null` betyr at vi ikke klarte å utlede noen historikk. Tom liste betyr at tolkningen lyktes,
      * men at det ikke fantes noen innslag.
      */
-    val beskrivelseshistorikk: List<Beskrivelseinnslag>? = null,
+    val beskrivelseListe: List<Beskrivelseinnslag>? = null,
     val status: OppgaveDto.Status,
-    val opprettet: OffsetDateTime? = null,
+    val opprettetTidspunkt: OffsetDateTime? = null,
     val tema: String,
     val oppgavetype: String,
     val journalpostId: EksternJournalpostId?,
@@ -29,6 +30,7 @@ data class BidragOppgaveDto(
     val brukerFnr: Personident?,
     val saksreferanse: String?,
     val prioritet: OppgaveDto.Prioritet,
+    val fristFerdigstillelse: LocalDate?,
 )
 
 data class Beskrivelseinnslag(

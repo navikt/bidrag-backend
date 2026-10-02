@@ -23,6 +23,8 @@ object OppgaveTestData {
         prioritet = OppgaveDto.Prioritet.NORM,
         status = OppgaveDto.Status.OPPRETTET,
         aktivDato = LocalDate.of(2026, 1, 15),
+        opprettetTidspunkt = OffsetDateTime.parse("2026-01-15T09:00:00Z"),
+        fristFerdigstillelse = LocalDate.of(2026, 1, 25),
     )
 
     private val bidragsoppgaveDto = oppgaveDto.copy(
@@ -35,7 +37,6 @@ object OppgaveTestData {
         tildeltEnhetsnr = Enhetsnummer("4100"),
         tilordnetRessurs = NavIdent("Z123456"),
         beskrivelse = "En bidragsoppgave",
-        opprettetTidspunkt = OffsetDateTime.parse("2026-01-15T09:00:00Z"),
         bruker = OppgaveDto.Bruker(
             ident = "12345678901",
             type = OppgaveDto.Bruker.BrukerType.PERSON,
@@ -46,14 +47,14 @@ object OppgaveTestData {
     val forventetBidragOppgaveDto = BidragOppgaveDto(
         id = EksternOppgaveId(123),
         beskrivelse = "En bidragsoppgave",
-        beskrivelseshistorikk = listOf(
+        beskrivelseListe = listOf(
             Beskrivelseinnslag(
                 tidspunkt = LocalDateTime.of(2026, 1, 15, 9, 0),
                 kommentar = "En bidragsoppgave",
             ),
         ),
         status = OppgaveDto.Status.UNDER_BEHANDLING,
-        opprettet = OffsetDateTime.parse("2026-01-15T09:00:00Z"),
+        opprettetTidspunkt = OffsetDateTime.parse("2026-01-15T09:00:00Z"),
         tema = "BID",
         oppgavetype = "BEH_SAK",
         journalpostId = EksternJournalpostId("JP-123"),
@@ -62,6 +63,8 @@ object OppgaveTestData {
         brukerFnr = Personident("12345678901"),
         saksreferanse = "SAK-123",
         prioritet = OppgaveDto.Prioritet.NORM,
+        fristFerdigstillelse = LocalDate.of(2026, 1, 25),
+
     )
 
     fun oppgaveResponse(oppgaver: List<OppgaveDto> = listOf(bidragsoppgaveDto)): SokOppgaverResponse = SokOppgaverResponse(
