@@ -8,11 +8,8 @@ import no.nav.bidrag.oppgave.config.RestConfig
 import no.nav.bidrag.oppgave.config.SecurityConfig
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
-import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
-import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
-import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import no.nav.bidrag.tilgang.TilgangskontrollException
 import no.nav.bidrag.tilgang.TilgangskontrollService
@@ -90,8 +87,6 @@ class FinnOppgaverControllerTest {
             FinnOppgaverRequest(
                 saksnummer = "SAK-123",
                 aktoerId = AktorId("1234567890123"),
-                saksbehandler = NavIdent("Z999999"),
-                enhetsnummer = Enhetsnummer("4100"),
             ),
         )
 
@@ -104,8 +99,6 @@ class FinnOppgaverControllerTest {
         val params = capturedParams()
         assertThat(params.saksreferanse).containsExactly("SAK-123")
         assertThat(params.aktoerId).containsExactly(AktorId("1234567890123"))
-        assertThat(params.tilordnetRessurs).isEqualTo(NavIdent("Z999999"))
-        assertThat(params.tildeltEnhetsnr).isEqualTo(Enhetsnummer("4100"))
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
         assertThat(params.limit).isEqualTo(100)
@@ -294,8 +287,8 @@ class FinnOppgaverControllerTest {
 
     private fun anyFinnOppgaverParams(): FinnOppgaverParams = any(FinnOppgaverParams::class.java) ?: FinnOppgaverParams()
 
-    private fun org.springframework.test.web.servlet.assertj.MvcTestResult.oppgaver(): List<OppgaveDto> = objectMapper
-        .readValue(response.contentAsByteArray, Array<OppgaveDto>::class.java)
+    private fun org.springframework.test.web.servlet.assertj.MvcTestResult.oppgaver(): List<BidragOppgaveDto> = objectMapper
+        .readValue(response.contentAsByteArray, Array<BidragOppgaveDto>::class.java)
         .toList()
 
     private fun jwtToken(): RequestPostProcessor = jwt()
@@ -307,16 +300,12 @@ class FinnOppgaverControllerTest {
             FinnOppgaverRequest(limit = 1),
             FinnOppgaverRequest(saksnummer = "  "),
             FinnOppgaverRequest(aktoerId = AktorId("")),
-            FinnOppgaverRequest(saksbehandler = NavIdent("  ")),
-            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("")),
         )
 
         @JvmStatic
         fun søkMedEttKriterium() = listOf(
             FinnOppgaverRequest(saksnummer = "SAK-123"),
             FinnOppgaverRequest(aktoerId = AktorId("1234567890123")),
-            FinnOppgaverRequest(saksbehandler = NavIdent("Z999999")),
-            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("4100")),
         )
     }
 
