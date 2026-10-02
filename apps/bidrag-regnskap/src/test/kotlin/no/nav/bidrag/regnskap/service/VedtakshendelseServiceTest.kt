@@ -9,11 +9,16 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.util.PåløpException
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -41,13 +46,23 @@ class VedtakshendelseServiceTest {
     @MockK(relaxed = true)
     private lateinit var driftsavvikService: DriftsavvikService
 
+    @MockK(relaxed = true)
+    private lateinit var endreMottakerService: EndreMottakerService
+
     @InjectMockKs
     private lateinit var vedtakshendelseService: VedtakshendelseService
 
     @BeforeEach
     fun setup() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
         every { persistenceService.harAktivtDriftsavvik(false) } returns false
         every { kravService.erVedlikeholdsmodusPåslått() } returns false
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Test
@@ -147,10 +162,51 @@ class VedtakshendelseServiceTest {
         verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
-    private fun opprettVedtakshendelse(): String = """
+    @Test
+    fun `Skal ikke behandle endring av mottaker uten innkreving`() {
+        val hendelse = opprettVedtakshendelse(
+            vedtakstype = "ENDRING_MOTTAKER",
+            innkrevingstype = "UTEN_INNKREVING",
+        )
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `skal opprette endring av mottaker med vedtakets mottaker`() {
+        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 1) {
+            endreMottakerService.opprettEndreMottaker(
+                vedtakId = 123,
+                sakId = any(),
+                barnIdent = any(),
+                nyMottakerIdent = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `skal ikke lagre mottakerendring naar funksjonen er deaktivert`() {
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
+
+        vedtakshendelseService.behandleHendelse(opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER"))
+
+        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        verify(exactly = 1) { oppdragService.lagreHendelse(any(), false) }
+    }
+
+    private fun opprettVedtakshendelse(
+        vedtakstype: String = "INNKREVING",
+        innkrevingstype: String = "MED_INNKREVING",
+    ): String = """
       {
         "kilde":"MANUELT",
-        "type":"INNKREVING",
+        "type":"$vedtakstype",
         "id":"123",
         "vedtakstidspunkt":"2022-06-01T00:00:00.000000000",
         "enhetsnummer":"4812",
@@ -164,7 +220,7 @@ class VedtakshendelseServiceTest {
             "skyldner":"${genererFødselsnummer()}",
             "kravhaver":"${genererFødselsnummer()}",
             "mottaker":"${genererFødselsnummer()}",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "beslutning":"ENDRING",
             "periodeListe":[
               {
@@ -199,7 +255,7 @@ class VedtakshendelseServiceTest {
             "belop":"1790",
             "valutakode":"NOK",
             "resultatkode":"GIGI",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "referanse":"REFERANSE",
             "beslutning":"ENDRING"
           }

@@ -4,12 +4,24 @@ import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.regnskap.BidragRegnskapLocal
+import no.nav.bidrag.regnskap.UnleashFeatures
+import no.nav.bidrag.regnskap.consumer.BidragReskontroConsumer
+import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import no.nav.bidrag.regnskap.utils.TestData
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.Pageable
@@ -17,7 +29,10 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.ResourceAccessException
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -50,6 +65,15 @@ internal class PersistenceServiceIT {
     @Autowired
     private lateinit var persistenceService: PersistenceService
 
+    @Autowired
+    private lateinit var endreMottakerService: EndreMottakerService
+
+    @MockitoBean
+    private lateinit var bidragReskontroConsumer: BidragReskontroConsumer
+
+    @MockitoBean
+    private lateinit var kravService: KravService
+
     private lateinit var oppdragTestData: no.nav.bidrag.regnskap.persistence.entity.Oppdrag
 
     @BeforeAll
@@ -59,6 +83,17 @@ internal class PersistenceServiceIT {
         val konteringer = TestData.opprettKontering(oppdragsperiode = oppdragsperiode)
         oppdragsperiode.konteringer = listOf(konteringer)
         oppdragTestData.oppdragsperioder = listOf(oppdragsperiode)
+    }
+
+    @BeforeEach
+    fun enableEndreMottakerFeature() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+    }
+
+    @AfterEach
+    fun resetEndreMottakerFeature() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Test
@@ -207,5 +242,65 @@ internal class PersistenceServiceIT {
         val driftsavvikForPåløp = persistenceService.hentDriftsavvikForPåløp(påløpId)
 
         driftsavvikForPåløp shouldNotBe null
+    }
+
+    @Test
+    fun `skal hente eldste ikke-godkjente mottakerendring per sak`() {
+        val tidspunkt = LocalDateTime.of(2024, 1, 1, 12, 0)
+        fun lagre(sak: String, opprettet: LocalDateTime) = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = 1,
+                saksnummer = sak,
+                barnIdent = "11111111111",
+                nyMottakerIdent = "22222222222",
+                opprettetTidspunkt = opprettet,
+            ),
+        )
+
+        val eldste = lagre("sak-a", tidspunkt)
+        val nesteMedSammeTidspunkt = lagre("sak-a", tidspunkt)
+        val nyeste = lagre("sak-a", tidspunkt.plusSeconds(1))
+        val annenSak = lagre("sak-b", tidspunkt)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(eldste.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annenSak) shouldBe false
+
+        eldste.godkjentAvSkattTidspunkt = tidspunkt.plusMinutes(1)
+        persistenceService.lagreEndreMottaker(eldste)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(nesteMedSammeTidspunkt.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe false
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `skal lagre nettverksfeil slik at mottakerendringen kan resendes`() {
+        val endring = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = 10,
+                saksnummer = "sak-for-nettverksfeil",
+                barnIdent = "11111111111",
+                nyMottakerIdent = "22222222222",
+            ),
+        )
+        val endringId = endring.id!!
+        Mockito.doThrow(ResourceAccessException("Connection refused"))
+            .`when`(bidragReskontroConsumer)
+            .endreRmForSak(
+                Saksnummer(endring.saksnummer),
+                Personident(endring.barnIdent),
+                Personident(endring.nyMottakerIdent),
+            )
+        Mockito.`when`(kravService.erVedlikeholdsmodusPåslått()).thenReturn(false)
+
+        endreMottakerService.overførEndreMottaker(endringId)
+
+        val lagretEndring = persistenceService.hentEndreMottaker(endringId)
+        lagretEndring?.godkjentAvSkattTidspunkt shouldBe null
+        lagretEndring?.overførtTilSkattTidspunkt shouldNotBe null
+        lagretEndring?.feilmeldingFraSkatt shouldBe "Uventet feil ved kall til skatt"
+        endreMottakerService.hentFeiledeOverføringer().map { it.id } shouldBe listOf(endringId)
     }
 }
