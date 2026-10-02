@@ -1,6 +1,5 @@
 package no.nav.bidrag.sak.service
 
-import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
@@ -18,7 +17,6 @@ import no.nav.bidrag.sak.mapper.model.rmFødselsnummer
 import no.nav.bidrag.sak.mapper.model.rmSamhandlerId
 import no.nav.bidrag.sak.mapper.model.tilFødselsdatoMap
 import no.nav.bidrag.sak.mapper.model.type
-import no.nav.bidrag.sak.util.sammePerson
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -27,7 +25,6 @@ import java.time.LocalDate
 class RolleService(
     private val bidragPersonClient: BidragPersonClient,
     private val samhandlerClient: BidragSamhandlerClient,
-    private val identConsumer: IdentConsumer,
 ) {
     fun oppdaterRollerMedReelleMottager(
         lagredeRoller: Set<Rolle>,
@@ -67,13 +64,13 @@ class RolleService(
         barn to rm.rolleId
     }
 
-    fun tilpassIdentForEksisterendeBarn(eksisterende: Collection<Rolle>, forespørsel: Set<RolleDto>): Set<RolleDto> {
+    fun brukLagretIdentForSammeBarn(eksisterende: Collection<Rolle>, forespørsel: Set<RolleDto>): Set<RolleDto> {
         return forespørsel.map { rolle ->
             if (rolle.type != Rolletype.BARN) return@map rolle
             val fødselsnummer = rolle.fødselsnummer ?: return@map rolle
             val eksisterendeIdent = eksisterende.firstOrNull {
                 it.rolleType == Rolletype.BARN &&
-                    identConsumer.sammePerson(it.fødselsnummer, fødselsnummer.verdi)
+                    sammePerson(it.fødselsnummer, fødselsnummer.verdi)
             }?.fødselsnummer
             if (eksisterendeIdent == null || eksisterendeIdent == fødselsnummer.verdi) {
                 rolle
@@ -83,12 +80,16 @@ class RolleService(
         }.toSet()
     }
 
+    private fun sammePerson(lagretIdent: String?, ident: String): Boolean = lagretIdent != null &&
+        (lagretIdent == ident || ident in bidragPersonClient.hentAlleIdenter(lagretIdent) || lagretIdent in bidragPersonClient.hentAlleIdenter(ident))
+
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,
         requestRolleDtoer: Set<RolleDto>,
+        fødselsdatoer: Map<Personident, LocalDate?>,
     ): Set<Rolle> {
         val lagredeRoller = eksisterendeBidragssak.roller
-        val berikRequestRolleDtoer = berikRollerMedFødselsdato(requestRolleDtoer)
+        val berikRequestRolleDtoer = berikRollerMedFødselsdato(requestRolleDtoer, fødselsdatoer)
 
         val (dtoRollerTilOppdatering, nyeDtoRoller) =
             berikRequestRolleDtoer.partition {
@@ -117,9 +118,8 @@ class RolleService(
         return (oppdaterteRoller + nyeRoller).toSet()
     }
 
-    fun validerRollerOgHentFødselsdatoer(roller: Set<RolleDto>): Map<Personident, LocalDate?> {
+    fun validerRoller(roller: Set<RolleDto>, fødselsdatoer: Map<Personident, LocalDate?>) {
         val fødselsnumre = roller.mapNotNull { it.fødselsnummer } + roller.mapNotNull { it.rmFødselsnummer() }
-        val fødselsdatoer = if (fødselsnumre.isEmpty()) mapOf() else bidragPersonClient.hentFødselsdatoer(fødselsnumre)
 
         require(fødselsdatoer.keys.containsAll(fødselsnumre)) {
             "Rolle forsøk opprettet for person som ikke finnes."
@@ -130,12 +130,10 @@ class RolleService(
             // Sjekk at samhandlere eksisterer (kaster feil hvis de ikke finnes).
             samhandlerClient.hentSamhandler(it)
         }
-
-        return fødselsdatoer
     }
 
-    fun berikRollerMedFødselsdato(roller: Set<RolleDto>): List<RolleMedFødselsdato> {
-        val fødselsdatoer = validerRollerOgHentFødselsdatoer(roller)
+    fun berikRollerMedFødselsdato(roller: Set<RolleDto>, fødselsdatoer: Map<Personident, LocalDate?>): List<RolleMedFødselsdato> {
+        validerRoller(roller, fødselsdatoer)
         return roller.map { it.medFødselsdato(fødselsdatoer) }
     }
 

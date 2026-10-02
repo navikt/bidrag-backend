@@ -25,7 +25,6 @@ import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
-import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
@@ -71,7 +70,7 @@ class BidragSakService(
     private val bidragssakRepository: BidragssakRepository,
     private val rolleRepository: RolleRepository,
     private val tilgangClient: Tilgangskontroll,
-    private val cachedKodeverkService: CachedKodeverkService,
+    private val valideringsgrunnlagService: ValideringsgrunnlagService,
     private val arbeidsfordelingService: ArbeidsfordelingService,
     private val rolleService: RolleService,
     private val rollehistorikkService: RollehistorikkService,
@@ -192,7 +191,8 @@ class BidragSakService(
 
     @Transactional
     fun opprettSak(opprettSakRequest: OpprettSakRequest): OpprettSakResponse {
-        bidragssakValidator.valider(opprettSakRequest)
+        val grunnlag = valideringsgrunnlagService.hentForOpprettelse(opprettSakRequest)
+        bidragssakValidator.valider(opprettSakRequest, grunnlag)
 
         val bPFnr =
             opprettSakRequest.roller
@@ -229,9 +229,9 @@ class BidragSakService(
             }
         }
 
-        val fødselsdatoer = hentFødselsdatoer(opprettSakRequest)
+        rolleService.validerRoller(opprettSakRequest.roller, grunnlag.fødselsdatoer)
         val saksnummer = hentNyttSaksnummerFraDatabase()
-        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, fødselsdatoer)
+        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, grunnlag.fødselsdatoer)
         val opprettetBidragssak = bidragssakRepository.save(bidragssak)
 
         val rollerFørOppdatering = opprettetBidragssak.roller.toRolleDto(true)
@@ -315,45 +315,32 @@ class BidragSakService(
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = tilpassOgValiderForespurteRoller(sak, oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukLagretIdentForSammeBarn(sak.roller, oppdaterSakRequest.roller)
+        val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, land = null)
+        bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
         sak.apply {
-            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering).toMutableSet()
+            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering, grunnlag.fødselsdatoer).toMutableSet()
         }
-        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller)
+        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
         return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
     }
 
     @Transactional
     fun oppdaterSak(oppdaterSakRequest: OppdaterSakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
-        validerLandkode(oppdaterSakRequest)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = tilpassOgValiderForespurteRoller(sak, oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukLagretIdentForSammeBarn(sak.roller, oppdaterSakRequest.roller)
+        val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, oppdaterSakRequest.landkode)
+        bidragssakValidator.validerSaksopplysninger(oppdaterSakRequest, grunnlag)
+        bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
         oppdaterSaksopplysninger(sak, oppdaterSakRequest)
         sak.apply {
-            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering).toMutableSet()
+            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering, grunnlag.fødselsdatoer).toMutableSet()
         }
-        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller)
+        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
         arbeidsfordelingService.utførArbeidsfordeling(sak)
         return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
-    }
-
-    private fun validerLandkode(oppdaterSakRequest: OppdaterSakRequest) {
-        require(
-            oppdaterSakRequest.landkode == null ||
-                cachedKodeverkService
-                    .hentLandkoder()
-                    .containsKey(oppdaterSakRequest.landkode),
-        ) {
-            "Bidragssak ${oppdaterSakRequest.saksnummer} forsøkt oppdatert med ugyldig land: ${oppdaterSakRequest.landkode}"
-        }
-    }
-
-    private fun tilpassOgValiderForespurteRoller(sak: Bidragssak, forespørsel: Set<RolleDto>): Set<RolleDto> {
-        val rollerTilOppdatering = rolleService.tilpassIdentForEksisterendeBarn(sak.roller, forespørsel)
-        bidragssakValidator.validerForespurteRoller(rollerTilOppdatering)
-        return rollerTilOppdatering
     }
 
     private fun oppdaterSaksopplysninger(sak: Bidragssak, oppdaterSakRequest: OppdaterSakRequest) {
@@ -490,8 +477,6 @@ class BidragSakService(
         rolleService.oppdaterRollerMedReelleMottager(bidragssak.roller, rollerMedReelleMottagere)
         return bidragssakRepository.save(bidragssak)
     }
-
-    private fun hentFødselsdatoer(opprettSakRequest: OpprettSakRequest): Map<Personident, LocalDate?> = rolleService.validerRollerOgHentFødselsdatoer(opprettSakRequest.roller)
 
     private fun hentSammenknytninger(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
         bbmConsumer.finnSammenknytningerHovedsøknad(søknadsid)

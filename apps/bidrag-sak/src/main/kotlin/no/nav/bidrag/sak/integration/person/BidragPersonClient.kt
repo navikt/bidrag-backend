@@ -4,6 +4,7 @@ import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
+import no.nav.bidrag.domene.ident.Ident
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.sak.util.takeIfNotNullOrEmpty
 import no.nav.bidrag.transport.person.Fødselsdatoer
@@ -13,9 +14,12 @@ import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.person.PersonidentDto
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.http.HttpStatus
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -33,11 +37,30 @@ class BidragPersonClient(
             .build()
             .toUri()
 
+    private val personidenterUri =
+        UriComponentsBuilder
+            .fromUri(bidragPersonBaseUrl)
+            .pathSegment("personidenter")
+            .build()
+            .toUri()
+
     @Retryable(value = [Exception::class], backoff = Backoff(delay = 500))
     fun hentFødselsdatoer(personIdent: List<Personident>): Map<Personident, LocalDate?> {
         val fødselsdatoer: Fødselsdatoer = postForNonNullEntity(bidragPersonUri, personIdent)
 
         return fødselsdatoer.identerTilDatoer
+    }
+
+    @Cacheable(value = ["bidrag-sak_hentAlleIdenter_cache"], key = "#ident")
+    @Retryable(value = [Exception::class], backoff = Backoff(delay = 500))
+    fun hentAlleIdenter(ident: String): Set<String> {
+        if (!Ident(ident).erPersonIdent()) return setOf(ident)
+        val request = HentePersonidenterRequest(ident, setOf(Identgruppe.FOLKEREGISTERIDENT, Identgruppe.NPID), true)
+        return try {
+            postForEntity<Array<PersonidentDto>>(personidenterUri, request)?.map { it.ident }?.toSet() ?: setOf(ident)
+        } catch (e: RestClientResponseException) {
+            if (e.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) setOf(ident) else throw e
+        }
     }
 }
 

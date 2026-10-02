@@ -29,7 +29,6 @@ import no.nav.bidrag.sak.domain.BidragssakTest.Companion.createRolle
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
-import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
@@ -42,6 +41,7 @@ import no.nav.bidrag.sak.service.RolleService
 import no.nav.bidrag.sak.service.RollehistorikkService
 import no.nav.bidrag.sak.service.SaksnummerSerie.hentMinimumsgrenseForAarstall
 import no.nav.bidrag.sak.service.Tilgangskontroll
+import no.nav.bidrag.sak.service.ValideringsgrunnlagService
 import no.nav.bidrag.sak.util.FnrGenerator
 import no.nav.bidrag.sak.validering.BidragssakValidator
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
@@ -631,7 +631,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
         private val rolleRepositoryMock: RolleRepository = mockk()
         private val vedtakOverføringRepositoryMock: VedtakOverføringRepository = mockk()
 
-        private val cachedKodeverkService: CachedKodeverkService = mockk()
+        private val valideringsgrunnlagService: ValideringsgrunnlagService = mockk(relaxed = true)
 
         private val arbeidsfordelingService: ArbeidsfordelingService = mockk(relaxed = true)
 
@@ -649,7 +649,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     rolleRepository = rolleRepositoryMock,
                     vedtakOverføringRepository = vedtakOverføringRepositoryMock,
                     tilgangClient = tilgangClientMock,
-                    cachedKodeverkService = cachedKodeverkService,
+                    valideringsgrunnlagService = valideringsgrunnlagService,
                     arbeidsfordelingService = arbeidsfordelingService,
                     rolleService = rolleService,
                     rollehistorikkService = rollehistorikkService,

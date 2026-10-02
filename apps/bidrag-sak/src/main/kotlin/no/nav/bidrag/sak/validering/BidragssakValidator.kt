@@ -1,17 +1,11 @@
 package no.nav.bidrag.sak.validering
 
-import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
-import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Rolle
-import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
-import no.nav.bidrag.sak.util.sammePerson
 import no.nav.bidrag.transport.felles.commonObjectmapper
-import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Component
@@ -20,12 +14,7 @@ import java.time.Period
 import kotlin.text.isNotBlank
 
 @Component
-class BidragssakValidator(
-    private val identConsumer: IdentConsumer,
-    private val cachedKodeverkService: CachedKodeverkService,
-    private val bidragPersonClient: BidragPersonClient,
-) {
-
+class BidragssakValidator {
     data class Saksrolle(val id: Int?, val type: Rolletype, val ident: String?) {
         constructor(rolle: Rolle) : this(rolle.rolleId, rolle.rolleType, rolle.fødselsnummer?.takeIf { it.isNotBlank() })
         constructor(rolle: RolleDto) : this(null, rolle.type, rolle.fødselsnummer?.verdi?.takeIf { it.isNotBlank() })
@@ -33,20 +22,28 @@ class BidragssakValidator(
         val erKjent get() = ident != null
     }
 
-    fun valider(opprettSakRequest: OpprettSakRequest) {
+    fun valider(opprettSakRequest: OpprettSakRequest, grunnlag: Valideringsgrunnlag) {
         opprettSakRequest.land?.let {
-            require(cachedKodeverkService.hentLandkoder().containsKey(opprettSakRequest.land)) {
+            require(it in grunnlag.landkoder) {
                 "Bidragssak forsøkt opprettet med ugyldig land: ${opprettSakRequest.land?.verdi}"
             }
         }
 
-        validerForespurteRoller(opprettSakRequest.roller)
+        validerForespurteRoller(opprettSakRequest.roller, grunnlag)
 
         loggHvisEierenhetOppretterSakUtenBarn(opprettSakRequest)
 
         val roller = opprettSakRequest.roller.map { Saksrolle(it) }
         validerMinstÉnKjentRolle(roller)
-        validerÉnRollePerPerson(roller)
+        validerÉnRollePerPerson(roller, grunnlag)
+    }
+
+    fun validerSaksopplysninger(oppdaterSakRequest: OppdaterSakRequest, grunnlag: Valideringsgrunnlag) {
+        oppdaterSakRequest.landkode?.let {
+            require(it in grunnlag.landkoder) {
+                "Bidragssak ${oppdaterSakRequest.saksnummer} forsøkt oppdatert med ugyldig land: ${oppdaterSakRequest.landkode}"
+            }
+        }
     }
 
     private fun loggHvisEierenhetOppretterSakUtenBarn(opprettSakRequest: OpprettSakRequest) {
@@ -60,7 +57,7 @@ class BidragssakValidator(
         }
     }
 
-    private fun validerRolle(rolle: RolleDto) {
+    private fun validerRolle(rolle: RolleDto, grunnlag: Valideringsgrunnlag) {
         rolle.fødselsnummer?.let { fnr ->
             require(fnr.verdi.isNotBlank()) { "Fødselsnummer kan ikke være tom streng." }
         }
@@ -70,17 +67,15 @@ class BidragssakValidator(
         }
 
         val fnr = rolle.fødselsnummer ?: return
-        val personinfo = identConsumer.hentPersonInformasjon(fnr)
-            ?: throw IllegalArgumentException("Person finnes ikke for rolle av type ${rolle.type}.")
+        require(grunnlag.finnes(fnr)) { "Person finnes ikke for rolle av type ${rolle.type}." }
 
         if (rolle.type == Rolletype.BARN) {
-            validerAlderOgRm(fnr, rolle.harRM(), personinfo)
+            validerAlderOgRm(rolle.harRM(), grunnlag.fødselsdato(fnr))
         }
     }
 
-    private fun validerAlderOgRm(fnr: Personident, harRm: Boolean, personinfo: PersonDto) {
+    private fun validerAlderOgRm(harRm: Boolean, fødselsdato: LocalDate?) {
         if (harRm) return
-        val fødselsdato = personinfo.fødselsdato ?: hentFødselsdato(fnr)
         if (fødselsdato != null) {
             require(beregnAlder(fødselsdato) < 18) {
                 "Hvis barnet er myndig, må reell mottaker (RM) være satt."
@@ -88,11 +83,9 @@ class BidragssakValidator(
         }
     }
 
-    private fun hentFødselsdato(fnr: Personident): LocalDate? = bidragPersonClient.hentFødselsdatoer(listOf(fnr))[fnr]
-
-    fun validerForespurteRoller(roller: Collection<RolleDto>) {
+    fun validerForespurteRoller(roller: Collection<RolleDto>, grunnlag: Valideringsgrunnlag) {
         validerMaksEnBpOgBm(roller.map { Saksrolle(it) })
-        roller.forEach { validerRolle(it) }
+        roller.forEach { validerRolle(it, grunnlag) }
     }
 
     private fun validerMaksEnBpOgBm(roller: List<Saksrolle>) {
@@ -104,21 +97,25 @@ class BidragssakValidator(
         require(roller.any { it.erKjent && erBpBmEllerBarn(it.type) }) { "Minst én person må ha en kjent rolle i saken." }
     }
 
-    private fun validerÉnRollePerPerson(roller: List<Saksrolle>) {
-        require(rollerMedSammePerson(roller).isEmpty()) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
+    private fun validerÉnRollePerPerson(roller: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
+        require(rollerMedSammePerson(roller, grunnlag).isEmpty()) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
     }
 
-    private fun validerÉnRollePerPersonUnntattEksisterende(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>) {
+    private fun validerÉnRollePerPersonUnntattEksisterende(
+        rollerFør: List<Saksrolle>,
+        rollerEtter: List<Saksrolle>,
+        grunnlag: Valideringsgrunnlag,
+    ) {
         val eksisterendeIder = rollerFør.filter { it.erKjent }.map { it.id }.toSet()
         require(
-            rollerMedSammePerson(rollerEtter).all { (rolle, annen) -> rolle.id in eksisterendeIder && annen.id in eksisterendeIder },
+            rollerMedSammePerson(rollerEtter, grunnlag).all { (rolle, annen) -> rolle.id in eksisterendeIder && annen.id in eksisterendeIder },
         ) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
     }
 
-    private fun rollerMedSammePerson(roller: List<Saksrolle>): List<Pair<Saksrolle, Saksrolle>> {
+    private fun rollerMedSammePerson(roller: List<Saksrolle>, grunnlag: Valideringsgrunnlag): List<Pair<Saksrolle, Saksrolle>> {
         val rollerMedÉnRollePerPerson = roller.filter { it.erKjent && !erUnntattÉnRollePerPerson(it.type) }
         return rollerMedÉnRollePerPerson.flatMapIndexed { index, rolle ->
-            rollerMedÉnRollePerPerson.drop(index + 1).filter { annen -> identConsumer.sammePerson(rolle.ident, annen.ident) }.map { rolle to it }
+            rollerMedÉnRollePerPerson.drop(index + 1).filter { annen -> grunnlag.sammePerson(rolle.ident, annen.ident) }.map { rolle to it }
         }
     }
 
@@ -132,29 +129,29 @@ class BidragssakValidator(
         Rolletype.REELMOTTAKER, Rolletype.FEILREGISTRERT -> false
     }
 
-    fun validerRolleendring(rollerFør: List<Saksrolle>, lagredeRoller: Collection<Rolle>) {
+    fun validerRolleendring(rollerFør: List<Saksrolle>, lagredeRoller: Collection<Rolle>, grunnlag: Valideringsgrunnlag) {
         val rollerEtter = lagredeRoller.map { Saksrolle(it) }
         validerMaksEnBpOgBm(rollerEtter)
         validerMinstÉnKjentRolle(rollerEtter)
-        validerKjenteRollerBeholdt(rollerFør, rollerEtter)
-        validerÉnRollePerPersonVedEndring(rollerFør, rollerEtter)
+        validerKjenteRollerBeholdt(rollerFør, rollerEtter, grunnlag)
+        validerÉnRollePerPersonVedEndring(rollerFør, rollerEtter, grunnlag)
     }
 
-    private fun validerÉnRollePerPersonVedEndring(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>) {
-        if (UnleashFeatures.TILLAT_EKSISTERENDE_DOBLE_SAKSROLLER.isEnabled) {
-            validerÉnRollePerPersonUnntattEksisterende(rollerFør, rollerEtter)
+    private fun validerÉnRollePerPersonVedEndring(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
+        if (grunnlag.tillatEksisterendeDobleRoller) {
+            validerÉnRollePerPersonUnntattEksisterende(rollerFør, rollerEtter, grunnlag)
         } else {
-            validerÉnRollePerPerson(rollerEtter)
+            validerÉnRollePerPerson(rollerEtter, grunnlag)
         }
     }
 
-    private fun validerKjenteRollerBeholdt(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>) {
+    private fun validerKjenteRollerBeholdt(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
         rollerFør.filter { it.erKjent && !kanEndres(it.type) }.forEach { opprinnelig ->
             require(
                 rollerEtter.any { rolle ->
                     rolle.id == opprinnelig.id &&
                         rolle.type == opprinnelig.type &&
-                        identConsumer.sammePerson(rolle.ident, opprinnelig.ident)
+                        grunnlag.sammePerson(rolle.ident, opprinnelig.ident)
                 },
             ) { "En kjent rolle kan ikke fjernes eller endres." }
         }
