@@ -1,5 +1,6 @@
 package no.nav.bidrag.oppgave.controller
 
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.OppgaveTestData.forventetBidragOppgaveDto
 import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveResponse
@@ -246,7 +247,7 @@ class OppgaveControllerTest {
     }
 
     @Test
-    fun `Avvist tilgang gir 403`() {
+    fun `Avvist tilgang til sak gir 403`() {
         willThrow(TilgangskontrollException(TilgangskontrollResponse(false, emptyList())))
             .given(tilgangkontrollService)
             .sjekkTilgangSaksnummer(Saksnummer("SAK-123"))
@@ -256,6 +257,24 @@ class OppgaveControllerTest {
             .with(jwtToken())
             .contentType(MediaType.APPLICATION_JSON)
             .content("""{"saksnummer": "SAK-123"}""")
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.FORBIDDEN)
+        assertThat(resultat.response.contentType)
+            .isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE)
+    }
+
+    @Test
+    fun `Avvist tilgang til person gir 403`() {
+        willThrow(TilgangskontrollException(TilgangskontrollResponse(false, emptyList())))
+            .given(tilgangkontrollService)
+            .sjekkTilgangPerson(Personident("1234567890123"))
+
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"aktoerId": "1234567890123"}""")
             .exchange()
 
         assertThat(resultat).hasStatus(HttpStatus.FORBIDDEN)

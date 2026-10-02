@@ -1,5 +1,6 @@
 package no.nav.bidrag.oppgave.service
 
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
@@ -18,8 +19,11 @@ class OppgaveService(
 ) {
 
     fun finnOppgaver(query: FinnOppgaverRequest): List<OppgaveDto> {
-        query.saksnummer?.let { saksnummer ->
-            tilgangService.sjekkTilgangSaksnummer(Saksnummer(saksnummer))
+        query.saksnummer?.let {
+            tilgangService.sjekkTilgangSaksnummer(Saksnummer(it))
+        }
+        query.aktoerId?.let {
+            tilgangService.sjekkTilgangPerson(Personident(it.verdi))
         }
         return oppgaveClient
             .finnOppgaver(
