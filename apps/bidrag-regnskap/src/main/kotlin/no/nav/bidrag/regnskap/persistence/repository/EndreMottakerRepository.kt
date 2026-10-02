@@ -16,6 +16,7 @@ interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
                 SELECT 1
                 FROM endre_mottaker eldre
                 WHERE eldre.saksnummer = kandidat.saksnummer
+                  AND eldre.barnIdent = kandidat.barnIdent
                   AND eldre.godkjentAvSkattTidspunkt IS NULL
                   AND (
                     eldre.opprettetTidspunkt < kandidat.opprettetTidspunkt
@@ -25,16 +26,17 @@ interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
                     )
                   )
               )
-            ORDER BY kandidat.saksnummer, kandidat.opprettetTidspunkt, kandidat.id
+            ORDER BY kandidat.saksnummer, kandidat.barnIdent, kandidat.opprettetTidspunkt, kandidat.id
         """,
     )
-    fun hentEldsteIkkeGodkjentePerSak(): List<EndreMottaker>
+    fun hentEldsteIkkeGodkjentePerSakOgBarn(): List<EndreMottaker>
 
     @Query(
         """
             SELECT CASE WHEN COUNT(eldre) > 0 THEN true ELSE false END
             FROM endre_mottaker eldre
             WHERE eldre.saksnummer = :saksnummer
+              AND eldre.barnIdent = :barnIdent
               AND eldre.godkjentAvSkattTidspunkt IS NULL
               AND (
                 eldre.opprettetTidspunkt < :opprettetTidspunkt
@@ -45,8 +47,9 @@ interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
             )
         """,
     )
-    fun finnesEldreIkkeGodkjentForSak(
+    fun finnesEldreIkkeGodkjentForSakOgBarn(
         @Param("saksnummer") saksnummer: String,
+        @Param("barnIdent") barnIdent: String,
         @Param("opprettetTidspunkt") opprettetTidspunkt: LocalDateTime,
         @Param("id") id: Long,
     ): Boolean

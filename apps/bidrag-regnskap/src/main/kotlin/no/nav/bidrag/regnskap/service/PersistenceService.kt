@@ -192,9 +192,10 @@ class PersistenceService(
 
     fun lagreEndreMottaker(endreMottaker: EndreMottaker): EndreMottaker = endreMottakerRepository.save(endreMottaker)
     fun hentEndreMottaker(id: Long): EndreMottaker? = endreMottakerRepository.findById(id).orElse(null)
-    fun hentEldsteIkkeGodkjenteEndreMottakerPerSak(): List<EndreMottaker> = endreMottakerRepository.hentEldsteIkkeGodkjentePerSak()
-    fun finnesEldreIkkeGodkjentEndreMottaker(endreMottaker: EndreMottaker): Boolean = endreMottakerRepository.finnesEldreIkkeGodkjentForSak(
+    fun hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn(): List<EndreMottaker> = endreMottakerRepository.hentEldsteIkkeGodkjentePerSakOgBarn()
+    fun finnesEldreIkkeGodkjentEndreMottaker(endreMottaker: EndreMottaker): Boolean = endreMottakerRepository.finnesEldreIkkeGodkjentForSakOgBarn(
         saksnummer = endreMottaker.saksnummer,
+        barnIdent = endreMottaker.barnIdent,
         opprettetTidspunkt = endreMottaker.opprettetTidspunkt,
         id = endreMottaker.id!!,
     )

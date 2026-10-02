@@ -245,13 +245,13 @@ internal class PersistenceServiceIT {
     }
 
     @Test
-    fun `skal hente eldste ikke-godkjente mottakerendring per sak`() {
+    fun `skal hente eldste ikke-godkjente mottakerendring per sak og barn`() {
         val tidspunkt = LocalDateTime.of(2024, 1, 1, 12, 0)
-        fun lagre(sak: String, opprettet: LocalDateTime) = persistenceService.lagreEndreMottaker(
+        fun lagre(sak: String, opprettet: LocalDateTime, barn: String = "11111111111") = persistenceService.lagreEndreMottaker(
             EndreMottaker(
                 vedtakId = 1,
                 saksnummer = sak,
-                barnIdent = "11111111111",
+                barnIdent = barn,
                 nyMottakerIdent = "22222222222",
                 opprettetTidspunkt = opprettet,
             ),
@@ -260,16 +260,19 @@ internal class PersistenceServiceIT {
         val eldste = lagre("sak-a", tidspunkt)
         val nesteMedSammeTidspunkt = lagre("sak-a", tidspunkt)
         val nyeste = lagre("sak-a", tidspunkt.plusSeconds(1))
+        val annetBarn = lagre("sak-a", tidspunkt.plusSeconds(1), "33333333333")
         val annenSak = lagre("sak-b", tidspunkt)
 
-        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(eldste.id, annenSak.id)
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn().map { it.id } shouldBe listOf(eldste.id, annetBarn.id, annenSak.id)
         persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annetBarn) shouldBe false
         persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annenSak) shouldBe false
 
         eldste.godkjentAvSkattTidspunkt = tidspunkt.plusMinutes(1)
         persistenceService.lagreEndreMottaker(eldste)
 
-        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak().map { it.id } shouldBe listOf(nesteMedSammeTidspunkt.id, annenSak.id)
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn().map { it.id } shouldBe listOf(nesteMedSammeTidspunkt.id, annetBarn.id, annenSak.id)
         persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe false
         persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
     }

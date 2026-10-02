@@ -112,9 +112,9 @@ class EndreMottakerService(
         persistenceService.lagreEndreMottaker(oppdatert)
     }
 
-    fun hentIkkeGodkjenteEndringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak()
+    fun hentIkkeGodkjenteEndringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn()
 
-    fun hentFeiledeOverføringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSak()
+    fun hentFeiledeOverføringer(): List<EndreMottaker> = persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn()
         .filter { it.overførtTilSkattTidspunkt != null }
 
     private fun overføringErBlokkert(): Boolean = persistenceService.harAktivtDriftsavvik(erInnlesing = false) || kravService.erVedlikeholdsmodusPåslått()
