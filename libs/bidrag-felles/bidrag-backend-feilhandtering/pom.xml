@@ -8,17 +8,17 @@
         <groupId>no.nav.bidrag</groupId>
         <artifactId>bidrag-backend</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>bidrag-backend-sikkerhet</artifactId>
+    <artifactId>bidrag-backend-feilhandtering</artifactId>
     <packaging>jar</packaging>
-    <description>Lib for å håndtere sikkerhet</description>
+    <description>Lib for felles feilhåntering</description>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-restclient</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -32,18 +32,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-backend-transport</artifactId>
-            <version>${project.version}</version>
+            <groupId>io.github.oshai</groupId>
+            <artifactId>kotlin-logging-jvm</artifactId>
+            <version>8.0.4</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-backend-domene</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>9.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

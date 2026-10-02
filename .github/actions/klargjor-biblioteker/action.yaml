@@ -121,7 +121,7 @@ runs:
         KJOR_KTLINT: ${{ inputs.kjor_ktlint }}
         TEST_FELLES: ${{ steps.grupper.outputs.test_felles }}
         FELLES_MODULER: >-
-          libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata,libs/bidrag-backend-sikkerhet,libs/bidrag-backend-feilhandtering
+          libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata,libs/bidrag-felles/bidrag-backend-sikkerhet,libs/bidrag-felles/bidrag-backend-feilhandtering
         BEREGN_MODULER: >-
           libs/bidrag-beregn-felles/bidrag-beregn-core,libs/bidrag-beregn-felles/bidrag-beregn-forskudd,libs/bidrag-beregn-felles/bidrag-beregn-boforhold,libs/bidrag-beregn-felles/bidrag-beregn-inntekt,libs/bidrag-beregn-felles/bidrag-beregn-sivilstand,libs/bidrag-beregn-felles/bidrag-beregn-særbidrag,libs/bidrag-beregn-felles/bidrag-beregn-indeksregulering,libs/bidrag-beregn-felles/bidrag-beregn-vedtak,libs/bidrag-beregn-felles/bidrag-beregn-barnebidrag
         OPPGAVE_MODULER: libs/bidrag-oppgave-dto
