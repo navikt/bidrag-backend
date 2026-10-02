@@ -28,6 +28,7 @@ class BidragPersonTestConfig {
             slot.clear()
             answer
         }
+        every { bidragPersonClient.hentAlleIdenter(any()) } answers { setOf(firstArg()) }
         return bidragPersonClient
     }
 }
