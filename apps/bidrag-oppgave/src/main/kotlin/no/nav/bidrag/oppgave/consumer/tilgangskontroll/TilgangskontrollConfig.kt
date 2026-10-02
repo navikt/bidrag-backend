@@ -1,6 +1,7 @@
 package no.nav.bidrag.oppgave.consumer.tilgangskontroll
 
 import no.nav.bidrag.mdc.CallIdClientRequestInterceptor
+import no.nav.bidrag.oppgave.config.brukernavnFraJwt
 import no.nav.bidrag.texas.NaisTokenClientRequestInterceptor
 import no.nav.bidrag.texas.NaisTokenService
 import no.nav.bidrag.tilgang.TilgangskontrollClient
@@ -30,7 +31,7 @@ class TilgangskontrollConfig {
 
         return TilgangskontrollService(
             tilgangskontrollClient = tilgangskontrollClient,
-            navIdentSupplier = { SecurityContextHolder.getContext().authentication?.name ?: throw IllegalStateException("Ingen innlogget bruker") },
+            navIdentSupplier = { brukernavnFraJwt() ?: throw IllegalStateException("Ingen innlogget bruker") },
         )
     }
 }

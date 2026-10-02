@@ -16,7 +16,7 @@ class SecurityConfig(environment: Environment) {
 
     private val mdcFilter = MdcFilter(
         appName = environment.getRequiredProperty("spring.application.name"),
-        userNameSupplier = { SecurityContextHolder.getContext().authentication?.name },
+        userNameSupplier = { brukernavnFraJwt() },
     )
 
     @Bean
