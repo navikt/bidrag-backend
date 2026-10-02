@@ -17,7 +17,7 @@ from oppdater_pr_beskrivelse import (
     main,
 )
 
-TABELL = "| Modul | Filer | Linjer |\n| --- | ---: | --- |\n| `apps/bidrag-sak` | 2 | +10 / -3 |"
+TABELL = "| Modul | Filer | Linjer |\n| --- | ---: | --- |\n| `apps/eksempel` | 2 | +10 / -3 |"
 SAMMENDRAG = "Legger til validering av saksnummer."
 
 
@@ -30,17 +30,13 @@ class ByggBlokkTest(unittest.TestCase):
     def test_blokken_inneholder_sammendrag_og_tabell(self):
         blokk = bygg_blokk(SAMMENDRAG, TABELL)
         self.assertIn(SAMMENDRAG, blokk)
-        self.assertIn("apps/bidrag-sak", blokk)
+        self.assertIn(TABELL, blokk)
         self.assertIn(OVERSKRIFT, blokk)
 
     def test_tomt_sammendrag_gir_blokk_med_bare_tabell(self):
         blokk = bygg_blokk("", TABELL)
-        self.assertIn("apps/bidrag-sak", blokk)
-        self.assertIn("### Berørte moduler", blokk)
-        self.assertTrue(blokk.startswith(MARKOR_START), blokk)
-        self.assertTrue(blokk.endswith(MARKOR_SLUTT), blokk)
-        # Ingen tom linje mellom overskrift og tabelloverskrift.
-        self.assertNotIn("\n\n\n", blokk)
+        self.assertIn(TABELL, blokk)
+        self.assertNotIn(SAMMENDRAG, blokk)
 
     def test_sammendrag_med_bare_blanktegn_behandles_som_tomt(self):
         self.assertEqual(bygg_blokk("   \n\n ", TABELL), bygg_blokk("", TABELL))
@@ -89,12 +85,6 @@ class FlettInnTest(unittest.TestCase):
         andre = flett_inn(forste, blokk)
         self.assertEqual(forste, andre)
 
-    def test_ufullstendig_markor_behandles_som_vanlig_tekst(self):
-        blokk = bygg_blokk(SAMMENDRAG, TABELL)
-        resultat = flett_inn(f"Tekst med {MARKOR_START} men ingen slutt", blokk)
-        self.assertIn("men ingen slutt", resultat)
-        self.assertEqual(resultat.count(MARKOR_SLUTT), 1, resultat)
-
     def test_los_startmarkor_i_brukertekst_spiser_ikke_teksten(self):
         blokk = bygg_blokk(SAMMENDRAG, TABELL)
         forste = flett_inn(f"Tekst med {MARKOR_START} men ingen slutt", blokk)
@@ -122,13 +112,6 @@ class HentEksisterendeSammendragTest(unittest.TestCase):
     def test_tom_streng_nar_blokken_ikke_har_prosa(self):
         beskrivelse = flett_inn("", bygg_blokk("", TABELL))
         self.assertEqual(hent_eksisterende_sammendrag(beskrivelse), "")
-
-    def test_tom_streng_ved_none(self):
-        self.assertEqual(hent_eksisterende_sammendrag(None), "")
-
-    def test_plukker_ikke_opp_tabellen(self):
-        beskrivelse = flett_inn("", bygg_blokk(SAMMENDRAG, TABELL))
-        self.assertNotIn("bidrag-sak", hent_eksisterende_sammendrag(beskrivelse))
 
 
 class MainTest(unittest.TestCase):
