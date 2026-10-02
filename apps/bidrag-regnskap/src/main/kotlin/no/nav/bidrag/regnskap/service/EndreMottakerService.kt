@@ -22,7 +22,7 @@ private val LOGGER = KotlinLogging.logger { }
 /**
  * Overføringen til ELIN skjer først etter at persist-transaksjonen er committet (via
  * [EndreMottakerOpprettetEvent]), slik at et ikke-reverserbart ELIN-kall aldri gjøres i en transaksjon som kan
- * rulle tilbake. `endreRmForSak` antas idempotent, så at-least-once-resending er trygt.
+ * rulle tilbake. Overføringer for samme sak og barn serialiseres gjennom en transaksjonslås i databasen.
  */
 @Service
 class EndreMottakerService(
@@ -60,6 +60,7 @@ class EndreMottakerService(
             return
         }
 
+        persistenceService.låsEndreMottakerForOverføring(id)
         val endreMottaker = persistenceService.hentEndreMottaker(id)
         if (endreMottaker == null) {
             LOGGER.error { "Fant ingen endring av mottaker med id: $id. Kan ikke overføre til skatt." }

@@ -8,6 +8,16 @@ import java.time.LocalDateTime
 
 interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
     @Query(
+        value = """
+            SELECT pg_advisory_xact_lock(hashtext(saksnummer), hashtext(barn_ident))::text
+            FROM endre_mottaker
+            WHERE id = :id
+        """,
+        nativeQuery = true,
+    )
+    fun låsForOverføring(@Param("id") id: Long): String?
+
+    @Query(
         """
             SELECT kandidat
             FROM endre_mottaker kandidat

@@ -54,6 +54,7 @@ class EndreMottakerServiceTest {
     fun setup() {
         mockkObject(UnleashFeaturesProvider)
         every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+        every { persistenceService.låsEndreMottakerForOverføring(any()) } returns Unit
         every { persistenceService.finnesEldreIkkeGodkjentEndreMottaker(any()) } returns false
     }
 

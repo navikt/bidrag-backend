@@ -191,6 +191,9 @@ class PersistenceService(
     )
 
     fun lagreEndreMottaker(endreMottaker: EndreMottaker): EndreMottaker = endreMottakerRepository.save(endreMottaker)
+    fun låsEndreMottakerForOverføring(id: Long) {
+        endreMottakerRepository.låsForOverføring(id)
+    }
     fun hentEndreMottaker(id: Long): EndreMottaker? = endreMottakerRepository.findById(id).orElse(null)
     fun hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn(): List<EndreMottaker> = endreMottakerRepository.hentEldsteIkkeGodkjentePerSakOgBarn()
     fun finnesEldreIkkeGodkjentEndreMottaker(endreMottaker: EndreMottaker): Boolean = endreMottakerRepository.finnesEldreIkkeGodkjentForSakOgBarn(

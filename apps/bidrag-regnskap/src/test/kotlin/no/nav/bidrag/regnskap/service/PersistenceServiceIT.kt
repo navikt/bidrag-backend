@@ -21,7 +21,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
+import org.mockito.stubbing.Answer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.Pageable
@@ -36,6 +38,11 @@ import org.springframework.web.client.ResourceAccessException
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Transactional
 @DirtiesContext
@@ -305,5 +312,69 @@ internal class PersistenceServiceIT {
         lagretEndring?.overførtTilSkattTidspunkt shouldNotBe null
         lagretEndring?.feilmeldingFraSkatt shouldBe "Uventet feil ved kall til skatt"
         endreMottakerService.hentFeiledeOverføringer().map { it.id } shouldBe listOf(endringId)
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `skal serialisere overføring per sak og barn på tvers av samtidige kall`() {
+        fun lagre(barn: String, mottaker: String) = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = 10,
+                saksnummer = "sak-for-serialisering",
+                barnIdent = barn,
+                nyMottakerIdent = mottaker,
+            ),
+        )
+
+        val eldste = lagre("11111111111", "22222222222")
+        val nyere = lagre("11111111111", "33333333333")
+        val annetBarn = lagre("44444444444", "55555555555")
+        val eldsteKallStartet = CountDownLatch(1)
+        val fullførEldsteKall = CountDownLatch(1)
+        val overførte = Collections.synchronizedList(mutableListOf<String>())
+        Mockito.`when`(kravService.erVedlikeholdsmodusPåslått()).thenReturn(false)
+        val svar = Answer<Any?> { invocation ->
+            val mottaker = invocation.getArgument<Personident>(2).verdi
+            overførte.add(mottaker)
+            if (mottaker == eldste.nyMottakerIdent) {
+                eldsteKallStartet.countDown()
+                check(fullførEldsteKall.await(10, TimeUnit.SECONDS))
+            }
+            null
+        }
+        listOf(eldste, nyere, annetBarn).forEach {
+            Mockito.doAnswer(svar).`when`(bidragReskontroConsumer).endreRmForSak(
+                Saksnummer(it.saksnummer),
+                Personident(it.barnIdent),
+                Personident(it.nyMottakerIdent),
+            )
+        }
+
+        val executor = Executors.newFixedThreadPool(4)
+        try {
+            val første = executor.submit { endreMottakerService.overførEndreMottaker(eldste.id!!) }
+            check(eldsteKallStartet.await(10, TimeUnit.SECONDS))
+            val duplikat = executor.submit { endreMottakerService.overførEndreMottaker(eldste.id!!) }
+            val neste = executor.submit { endreMottakerService.overførEndreMottaker(nyere.id!!) }
+            val uavhengig = executor.submit { endreMottakerService.overførEndreMottaker(annetBarn.id!!) }
+
+            uavhengig.get(5, TimeUnit.SECONDS)
+            assertThrows<TimeoutException> { neste.get(200, TimeUnit.MILLISECONDS) }
+            assertThrows<TimeoutException> { duplikat.get(200, TimeUnit.MILLISECONDS) }
+
+            fullførEldsteKall.countDown()
+            første.get(10, TimeUnit.SECONDS)
+            duplikat.get(10, TimeUnit.SECONDS)
+            neste.get(10, TimeUnit.SECONDS)
+
+            overførte.filter { it == eldste.nyMottakerIdent || it == nyere.nyMottakerIdent } shouldBe
+                listOf(eldste.nyMottakerIdent, nyere.nyMottakerIdent)
+            listOf(eldste, nyere, annetBarn).forEach {
+                persistenceService.hentEndreMottaker(it.id!!)?.godkjentAvSkattTidspunkt shouldNotBe null
+            }
+        } finally {
+            fullførEldsteKall.countDown()
+            executor.shutdownNow()
+        }
     }
 }
