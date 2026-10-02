@@ -68,6 +68,23 @@ object BidragssakMapper {
         )
     }
 
+    fun Collection<RolleDto>.mapBpBmTilRoller(
+        fødselsdatoer: Map<Personident, LocalDate?>,
+        bidragssak: Bidragssak,
+    ): List<Rolle> = this
+        .filter { it.type == Rolletype.BIDRAGSPLIKTIG || it.type == Rolletype.BIDRAGSMOTTAKER }
+        .map { dto ->
+            Rolle(
+                fødselsnummer = dto.fødselsnummer?.verdi,
+                rolleType = dto.type,
+                objektnummer = if (dto.type == Rolletype.BIDRAGSPLIKTIG) "01" else "02",
+                ukjentPart = if (dto.fødselsnummer == null) UkjentPart.UK else null,
+                mottagerErVerge = dto.mottagerErVerge,
+                fødselsdato = fødselsdatoer[dto.fødselsnummer],
+                bidragssak = bidragssak,
+            )
+        }
+
     fun Collection<RolleDto>.mapBarnTilRoller(
         fødselsdatoer: Map<Personident, LocalDate?>,
         førsteLedigeObjektnummer: Int = 3,

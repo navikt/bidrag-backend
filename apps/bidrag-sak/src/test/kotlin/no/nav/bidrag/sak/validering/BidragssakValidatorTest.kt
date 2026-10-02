@@ -3,7 +3,10 @@ package no.nav.bidrag.sak.validering
 import io.kotest.assertions.throwables.shouldThrowMessage
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
@@ -12,28 +15,216 @@ import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.land.Landkode
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
+import no.nav.bidrag.sak.config.UnleashFeatures
+import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
+import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.util.FnrGenerator
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThatCode
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-class OpprettSakValidatorTest {
+class BidragssakValidatorTest {
     private val identConsumer: IdentConsumer = mockk(relaxed = true)
     private val cachedKodeverkService: CachedKodeverkService = mockk(relaxed = true)
+    private val bidragPersonClient: BidragPersonClient = mockk()
 
-    private lateinit var validator: OpprettSakValidator
+    private lateinit var validator: BidragssakValidator
 
     @BeforeEach
     fun setup() {
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
-        validator = OpprettSakValidator(identConsumer, cachedKodeverkService)
+        every { bidragPersonClient.hentFødselsdatoer(any()) } returns emptyMap()
+        validator = BidragssakValidator(identConsumer, cachedKodeverkService, bidragPersonClient)
+    }
+
+    @AfterEach
+    fun ryddUnleash() {
+        unmockkObject(UnleashFeaturesProvider.Companion)
+    }
+
+    private fun aktiverUnntak(vararg flagg: UnleashFeatures) {
+        mockkObject(UnleashFeaturesProvider.Companion)
+        every {
+            UnleashFeaturesProvider.isEnabled(any(), false, false)
+        } answers {
+            firstArg<String>() in flagg.map { it.featureName }
+        }
+    }
+
+    @Nested
+    inner class Personroller {
+        @Test
+        fun `krever minst en kjent BP BM eller BA`() {
+            shouldThrowMessage("Minst én person må ha en kjent rolle i saken.") {
+                validator.valider(OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = emptySet()))
+            }
+        }
+
+        @Nested
+        inner class Rolleendring {
+            @Test
+            fun `målrettet unntak tillater bare eksisterende rollekonflikt`() {
+                val ident = genererPersonident()
+                val annen = genererPersonident()
+                val før = listOf(
+                    BidragssakValidator.Saksrolle(1, Rolletype.BIDRAGSMOTTAKER, ident.verdi),
+                    BidragssakValidator.Saksrolle(2, Rolletype.BIDRAGSPLIKTIG, ident.verdi),
+                )
+                val bm = Rolle(rolleId = 1, fødselsnummer = ident.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER)
+                val bp = Rolle(rolleId = 2, fødselsnummer = ident.verdi, rolleType = Rolletype.BIDRAGSPLIKTIG)
+                aktiverUnntak(UnleashFeatures.TILLAT_EKSISTERENDE_DOBLE_SAKSROLLER)
+
+                assertThatCode { validator.validerRolleendring(før, listOf(bm, bp)) }.doesNotThrowAnyException()
+
+                val nyttBarn = Rolle(rolleId = 0, fødselsnummer = ident.verdi, rolleType = Rolletype.BARN)
+                shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                    validator.validerRolleendring(før, listOf(bm, bp, nyttBarn))
+                }
+
+                val nyBp = Rolle(rolleId = 2, fødselsnummer = annen.verdi, rolleType = Rolletype.BIDRAGSPLIKTIG)
+                shouldThrowMessage("En kjent rolle kan ikke fjernes eller endres.") {
+                    validator.validerRolleendring(før, listOf(bm, nyBp))
+                }
+            }
+
+            @Test
+            fun `duplikatroller avvises uten flagg og tillates med flagg også uten bruker`() {
+                val ident = genererPersonident()
+                val før = listOf(
+                    BidragssakValidator.Saksrolle(1, Rolletype.BIDRAGSMOTTAKER, ident.verdi),
+                    BidragssakValidator.Saksrolle(2, Rolletype.BIDRAGSPLIKTIG, ident.verdi),
+                )
+                val etter = listOf(
+                    Rolle(rolleId = 1, fødselsnummer = ident.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER),
+                    Rolle(rolleId = 2, fødselsnummer = ident.verdi, rolleType = Rolletype.BIDRAGSPLIKTIG),
+                )
+                shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                    validator.validerRolleendring(før, etter)
+                }
+
+                aktiverUnntak(UnleashFeatures.TILLAT_EKSISTERENDE_DOBLE_SAKSROLLER)
+                assertThatCode { validator.validerRolleendring(før, etter) }.doesNotThrowAnyException()
+            }
+
+            @Test
+            fun `avviser at kjent BM byttes ut`() {
+                val opprinnelig = genererPersonident()
+                val ny = genererPersonident()
+                val før = listOf(BidragssakValidator.Saksrolle(1, Rolletype.BIDRAGSMOTTAKER, opprinnelig.verdi))
+                val etter = listOf(Rolle(rolleId = 1, fødselsnummer = ny.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER))
+
+                shouldThrowMessage("En kjent rolle kan ikke fjernes eller endres.") {
+                    validator.validerRolleendring(før, etter)
+                }
+            }
+
+            @Test
+            fun `avviser at kjent barn fjernes selv med kjent BM`() {
+                val barn = genererPersonident()
+                val bm = genererPersonident()
+                val før = listOf(
+                    BidragssakValidator.Saksrolle(1, Rolletype.BARN, barn.verdi),
+                    BidragssakValidator.Saksrolle(2, Rolletype.BIDRAGSMOTTAKER, bm.verdi),
+                )
+                val etter = listOf(Rolle(rolleId = 2, fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER))
+
+                shouldThrowMessage("En kjent rolle kan ikke fjernes eller endres.") {
+                    validator.validerRolleendring(før, etter)
+                }
+            }
+
+            @Test
+            fun `sjekker ikke RM for myndig barn som ikke er med i forespørselen`() {
+                val barn = genererPersonident()
+                val lagretBarn = Rolle(rolleId = 3, fødselsnummer = barn.verdi, rolleType = Rolletype.BARN)
+                every { identConsumer.hentPersonInformasjon(barn) } returns
+                    mockPersoninfo(barn, LocalDate.now().minusYears(18))
+
+                assertThatCode {
+                    validator.validerRolleendring(listOf(BidragssakValidator.Saksrolle(lagretBarn)), listOf(lagretBarn))
+                }.doesNotThrowAnyException()
+            }
+
+            @Test
+            fun `sjekker RM for myndig barn som er med i forespørselen`() {
+                val barn = genererPersonident()
+                every { identConsumer.hentPersonInformasjon(barn) } returns mockPersoninfo(barn, null)
+                every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } returns
+                    mapOf(barn to LocalDate.now().minusYears(18))
+
+                shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
+                    validator.validerForespurteRoller(setOf(rolleBarnUtenRm(barn)))
+                }
+            }
+
+            @Test
+            fun `tillater registrering av tidligere ukjent BM`() {
+                val barn = genererPersonident()
+                val bm = genererPersonident()
+                every { identConsumer.hentPersonInformasjon(barn) } returns
+                    mockPersoninfo(barn, LocalDate.now().minusYears(10))
+                val før = listOf(BidragssakValidator.Saksrolle(3, Rolletype.BARN, barn.verdi))
+                val etter = listOf(
+                    Rolle(rolleId = 2, fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER),
+                    Rolle(rolleId = 3, fødselsnummer = barn.verdi, rolleType = Rolletype.BARN),
+                )
+
+                assertThatCode { validator.validerRolleendring(før, etter) }.doesNotThrowAnyException()
+            }
+        }
+
+        @Test
+        fun `avviser samme person i to ulike roller`() {
+            val ident = genererPersonident()
+            shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                validator.valider(
+                    OpprettSakRequest(
+                        eierfogd = Enhetsnummer("1701"),
+                        roller = setOf(rolleBp(ident), rolleBm(ident)),
+                    ),
+                )
+            }
+        }
+
+        @Test
+        fun `avviser to roller for historisk og gjeldende ident for samme person`() {
+            val gammelIdent = genererPersonident()
+            val nyIdent = genererPersonident()
+            every { identConsumer.hentAlleIdenter(gammelIdent.verdi) } returns
+                listOf(gammelIdent.verdi, nyIdent.verdi)
+
+            shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                validator.valider(
+                    OpprettSakRequest(
+                        eierfogd = Enhetsnummer("1701"),
+                        roller = setOf(rolleBp(gammelIdent), rolleBm(nyIdent)),
+                    ),
+                )
+            }
+        }
+
+        @Test
+        fun `tillater at barnet selv er RM`() {
+            val barn = genererPersonident()
+            every { identConsumer.hentPersonInformasjon(barn) } returns
+                mockPersoninfo(barn, LocalDate.now().minusYears(18))
+            val rolle = RolleDto(
+                fødselsnummer = barn,
+                type = Rolletype.BARN,
+                reellMottaker = ReellMottakerDto(ReellMottaker(barn.verdi)),
+            )
+            assertThatCode {
+                validator.valider(OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolle)))
+            }.doesNotThrowAnyException()
+        }
     }
 
     // ==========================================================
@@ -91,20 +282,21 @@ class OpprettSakValidatorTest {
         }
 
         @Test
-        fun `skal kaste feil når BM mangler og ikke alle barn har RM`() {
+        fun `skal godta barn under 18 uten RM når BM mangler`() {
+            val barn = genererPersonident()
+            every { identConsumer.hentPersonInformasjon(barn) } returns
+                mockPersoninfo(barn, LocalDate.now().minusYears(10))
             val req =
                 OpprettSakRequest(
                     eierfogd = Enhetsnummer("1701"),
                     roller =
                     setOf(
                         rolleBp(),
-                        rolleBarnUtenRm(), // mangler RM
+                        rolleBarnUtenRm(barn),
                     ),
                 )
 
-            shouldThrowMessage("Når bidragsmottaker (BM) mangler, må alle barn (BA) ha reell mottaker (RM).") {
-                validator.valider(req)
-            }
+            assertThatCode { validator.valider(req) }.doesNotThrowAnyException()
         }
 
         @Test
@@ -299,6 +491,40 @@ class OpprettSakValidatorTest {
 
             assertThatCode { validator.valider(req) }.doesNotThrowAnyException()
             verify(exactly = 1) { identConsumer.hentPersonInformasjon(fnr) }
+            verify(exactly = 1) { bidragPersonClient.hentFødselsdatoer(listOf(fnr)) }
+        }
+
+        @Test
+        fun `skal kreve RM når PDL-reserveoppslag finner at barnet er myndig`() {
+            val barn = genererPersonident()
+            every { identConsumer.hentPersonInformasjon(barn) } returns mockPersoninfo(barn, null)
+            every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } returns
+                mapOf(barn to LocalDate.now().minusYears(18))
+
+            shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
+                validator.valider(
+                    OpprettSakRequest(
+                        eierfogd = Enhetsnummer("1701"),
+                        roller = setOf(rolleBarnUtenRm(barn)),
+                    ),
+                )
+            }
+        }
+
+        @Test
+        fun `feil i PDL-reserveoppslag går videre`() {
+            val barn = genererPersonident()
+            every { identConsumer.hentPersonInformasjon(barn) } returns mockPersoninfo(barn, null)
+            every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } throws IllegalStateException("PDL utilgjengelig")
+
+            shouldThrowMessage("PDL utilgjengelig") {
+                validator.valider(
+                    OpprettSakRequest(
+                        eierfogd = Enhetsnummer("1701"),
+                        roller = setOf(rolleBarnUtenRm(barn)),
+                    ),
+                )
+            }
         }
 
         @Test

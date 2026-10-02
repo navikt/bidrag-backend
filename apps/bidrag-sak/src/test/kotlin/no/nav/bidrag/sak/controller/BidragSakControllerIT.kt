@@ -43,7 +43,7 @@ import no.nav.bidrag.sak.service.RollehistorikkService
 import no.nav.bidrag.sak.service.SaksnummerSerie.hentMinimumsgrenseForAarstall
 import no.nav.bidrag.sak.service.Tilgangskontroll
 import no.nav.bidrag.sak.util.FnrGenerator
-import no.nav.bidrag.sak.validering.OpprettSakValidator
+import no.nav.bidrag.sak.validering.BidragssakValidator
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
 import no.nav.bidrag.transport.sak.OpprettSakRequest
@@ -77,7 +77,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
 
     @Autowired
     private lateinit var bidragssakService: BidragSakService
-    private val opprettSakValidator: OpprettSakValidator = mockk()
+    private val bidragssakValidator: BidragssakValidator = mockk()
     private val bbmConsumerMock: BidragBBMConsumer = mockk()
 
     private fun makeFullContextPath(): String = "http://localhost:$port"
@@ -655,7 +655,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
                     rollehistorikkService = rollehistorikkService,
                     hendelseService = hendelseService,
                     identConsumer = identConsumer,
-                    opprettSakValidator = opprettSakValidator,
+                    bidragssakValidator = bidragssakValidator,
                     bbmConsumer = bbmConsumerMock,
                 ),
             )

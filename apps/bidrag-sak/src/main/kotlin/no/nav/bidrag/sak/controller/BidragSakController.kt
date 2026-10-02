@@ -163,8 +163,16 @@ class BidragSakController(
 
     @PostMapping("/sak/oppdater/roller")
     @Operation(
-        description = "Oppdater sak roller",
+        summary = "Oppdater roller i sak",
+        description = "Rollene i forespørselen legges til eller oppdateres. Roller som ikke er med, blir stående uendret.\n\n" +
+            SAKSROLLE_REGLER,
         security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Rollene er oppdatert"),
+            ApiResponse(responseCode = "400", description = "Forespørselen bryter en av reglene for saksroller"),
+        ],
     )
     fun oppdaterSakRoller(
         @RequestBody request: OppdaterRollerISakRequest,
@@ -175,8 +183,16 @@ class BidragSakController(
 
     @PostMapping("/sak/oppdater")
     @Operation(
-        description = "Oppdater sak",
+        summary = "Oppdater sak",
+        description = "Oppdaterer metadata og roller i saken. Felt som er null, blir stående uendret.\n\n" +
+            SAKSROLLE_REGLER,
         security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Saken er oppdatert"),
+            ApiResponse(responseCode = "400", description = "Forespørselen bryter en av reglene for saksroller"),
+        ],
     )
     fun oppdaterSak(
         @RequestBody oppdaterSakRequest: OppdaterSakRequest,
@@ -299,5 +315,15 @@ class BidragSakController(
         const val SAK_SOK = "/sak"
         const val PERSON_SAK = "/person/sak"
         const val SAK_NY = "/sak/ny"
+
+        const val SAKSROLLE_REGLER =
+            "**Regler for saksroller**\n" +
+                "- Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.\n" +
+                "- En person kan bare ha én rolle i saken, med unntak av RM og FR.\n" +
+                "- Saken kan ha maks én BM og én BP.\n" +
+                "- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.\n" +
+                "- Barn fra og med 18 år må ha RM. Regelen sjekkes bare for barn som er med i forespørselen. " +
+                "Barn som ikke er med, valideres ikke på nytt, selv om de mangler RM i dag.\n" +
+                "- Hvis fødselsdatoen til barnet er ukjent etter oppslag, krever vi ikke RM. Feiler oppslaget, feiler forespørselen."
     }
 }

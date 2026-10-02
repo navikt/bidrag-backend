@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
@@ -8,6 +9,7 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBarnTilRoller
+import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBpBmTilRoller
 import no.nav.bidrag.sak.mapper.medFødselsdato
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.sak.mapper.model.fødselsnummer
@@ -16,6 +18,7 @@ import no.nav.bidrag.sak.mapper.model.rmFødselsnummer
 import no.nav.bidrag.sak.mapper.model.rmSamhandlerId
 import no.nav.bidrag.sak.mapper.model.tilFødselsdatoMap
 import no.nav.bidrag.sak.mapper.model.type
+import no.nav.bidrag.sak.util.sammePerson
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -24,6 +27,7 @@ import java.time.LocalDate
 class RolleService(
     private val bidragPersonClient: BidragPersonClient,
     private val samhandlerClient: BidragSamhandlerClient,
+    private val identConsumer: IdentConsumer,
 ) {
     fun oppdaterRollerMedReelleMottager(
         lagredeRoller: Set<Rolle>,
@@ -63,6 +67,22 @@ class RolleService(
         barn to rm.rolleId
     }
 
+    fun tilpassIdentForEksisterendeBarn(eksisterende: Collection<Rolle>, forespørsel: Set<RolleDto>): Set<RolleDto> {
+        return forespørsel.map { rolle ->
+            if (rolle.type != Rolletype.BARN) return@map rolle
+            val fødselsnummer = rolle.fødselsnummer ?: return@map rolle
+            val eksisterendeIdent = eksisterende.firstOrNull {
+                it.rolleType == Rolletype.BARN &&
+                    identConsumer.sammePerson(it.fødselsnummer, fødselsnummer.verdi)
+            }?.fødselsnummer
+            if (eksisterendeIdent == null || eksisterendeIdent == fødselsnummer.verdi) {
+                rolle
+            } else {
+                rolle.copy(fødselsnummer = Personident(eksisterendeIdent))
+            }
+        }.toSet()
+    }
+
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,
         requestRolleDtoer: Set<RolleDto>,
@@ -72,10 +92,15 @@ class RolleService(
 
         val (dtoRollerTilOppdatering, nyeDtoRoller) =
             berikRequestRolleDtoer.partition {
-                it.type in setOf(Rolletype.BIDRAGSMOTTAKER, Rolletype.BIDRAGSPLIKTIG) ||
-                    lagredeRoller.any { eksisterende ->
-                        it.fødselsnummer?.verdi == eksisterende.fødselsnummer && eksisterende.rolleType == Rolletype.BARN
-                    }
+                when (it.type) {
+                    Rolletype.BIDRAGSMOTTAKER, Rolletype.BIDRAGSPLIKTIG ->
+                        lagredeRoller.any { eksisterende -> eksisterende.rolleType == it.type }
+
+                    else ->
+                        lagredeRoller.any { eksisterende ->
+                            it.fødselsnummer?.verdi == eksisterende.fødselsnummer && eksisterende.rolleType == Rolletype.BARN
+                        }
+                }
             }
 
         val oppdaterteRoller = oppdaterEksiterendeRoller(dtoRollerTilOppdatering, eksisterendeBidragssak)
@@ -87,7 +112,7 @@ class RolleService(
                     berikRequestRolleDtoer.tilFødselsdatoMap(),
                     finnFørsteLedigeObjektnummer(lagredeRoller),
                     eksisterendeBidragssak,
-                )
+                ) + nyeDtoRoller.map { it.rolle }.mapBpBmTilRoller(berikRequestRolleDtoer.tilFødselsdatoMap(), eksisterendeBidragssak)
 
         return (oppdaterteRoller + nyeRoller).toSet()
     }
@@ -114,7 +139,7 @@ class RolleService(
         return roller.map { it.medFødselsdato(fødselsdatoer) }
     }
 
-    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>) = eksisterendeRoller.maxOf { it.objektnummer?.toInt() ?: 2 } + 1
+    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>) = (eksisterendeRoller.maxOfOrNull { it.objektnummer?.toInt() ?: 2 } ?: 2) + 1
 
     private fun oppdaterEksiterendeRoller(
         dtoRollerTilOppdatering: List<RolleMedFødselsdato>,

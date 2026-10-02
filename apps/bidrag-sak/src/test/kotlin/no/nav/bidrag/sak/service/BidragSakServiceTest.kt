@@ -37,7 +37,7 @@ import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
 import no.nav.bidrag.sak.repository.VedtakOverføringRepository
 import no.nav.bidrag.sak.util.FnrGenerator
-import no.nav.bidrag.sak.validering.OpprettSakValidator
+import no.nav.bidrag.sak.validering.BidragssakValidator
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
@@ -72,7 +72,7 @@ internal class BidragSakServiceTest {
 
     private val hendelseService: HendelseService = mockk(relaxed = true)
     private val identConsumer: IdentConsumer = mockk(relaxed = false)
-    private val opprettSakValidator: OpprettSakValidator = mockk(relaxed = true)
+    private val bidragssakValidator: BidragssakValidator = mockk(relaxed = true)
 
     private lateinit var bidragSakService: BidragSakService
 
@@ -84,6 +84,7 @@ internal class BidragSakServiceTest {
         every { bidragssakRepositoryMock.save(capture(saveSakSlot)) }.answers { saveSakSlot.captured }
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+        every { rolleService.tilpassIdentForEksisterendeBarn(any(), any()) } answers { secondArg() }
 
         bidragSakService =
             BidragSakService(
@@ -98,7 +99,7 @@ internal class BidragSakServiceTest {
                 rollehistorikkService = rollehistorikkService,
                 hendelseService = hendelseService,
                 identConsumer = identConsumer,
-                opprettSakValidator = opprettSakValidator,
+                bidragssakValidator = bidragssakValidator,
                 bbmConsumer = bbmConsumerMock,
             )
     }
@@ -262,7 +263,7 @@ internal class BidragSakServiceTest {
 
         @Test
         fun `skal kaste feil hvis validering feiler for rolle (RM kun tillatt på BA)`() {
-            every { opprettSakValidator.validerRolle(any()) } throws
+            every { bidragssakValidator.validerForespurteRoller(any()) } throws
                 IllegalArgumentException("Reell mottaker (RM) kan kun registreres på barn (BA).")
 
             // RM på BP -> skal trigge require i RolleDto.valider()

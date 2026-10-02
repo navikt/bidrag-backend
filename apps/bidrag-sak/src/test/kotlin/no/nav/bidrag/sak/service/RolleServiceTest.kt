@@ -4,6 +4,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
 import no.nav.bidrag.domene.ident.Personident
@@ -22,7 +23,8 @@ import java.time.LocalDate
 internal class RolleServiceTest {
     val bidragPersonClient = mockk<BidragPersonClient>()
     val samhandlerClient = mockk<BidragSamhandlerClient>()
-    val rolleService = RolleService(bidragPersonClient, samhandlerClient)
+    val identConsumer = mockk<IdentConsumer>()
+    val rolleService = RolleService(bidragPersonClient, samhandlerClient, identConsumer)
 
     val fødselsnummerBarn1 = genererFødselsnummer(LocalDate.now().minusYears(1))
     val fødselsnummerBarn2 = genererFødselsnummer(LocalDate.now().minusYears(2))
@@ -306,5 +308,17 @@ internal class RolleServiceTest {
         val result = rolleService.oppdaterRollerMedReelleMottager(lagredeRoller, emptyList())
 
         result shouldBe lagredeRoller
+    }
+
+    @Test
+    fun `tilpasser ny ident for eksisterende barn uten å opprette ny barnrolle`() {
+        val gammelIdent = Personident(fødselsnummerBarn1)
+        val nyIdent = Personident(fødselsnummerBarn2)
+        every { identConsumer.hentAlleIdenter(gammelIdent.verdi) } returns listOf(gammelIdent.verdi, nyIdent.verdi)
+        val eksisterende = listOf(Rolle(rolleId = 3, fødselsnummer = gammelIdent.verdi, rolleType = Rolletype.BARN))
+
+        val resultat = rolleService.tilpassIdentForEksisterendeBarn(eksisterende, setOf(RolleDto(type = Rolletype.BARN, fødselsnummer = nyIdent)))
+
+        resultat.single().fødselsnummer shouldBe gammelIdent
     }
 }

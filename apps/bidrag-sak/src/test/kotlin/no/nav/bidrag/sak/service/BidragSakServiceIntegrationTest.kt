@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -25,12 +26,14 @@ import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.SpringH2TestRunner
 import no.nav.bidrag.sak.config.BidragOrganisasjonTestConfig
 import no.nav.bidrag.sak.domain.Hendelse
+import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.TransactionHelper
 import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
@@ -162,6 +165,60 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             oppdatertSak.konvensjonsdato shouldBe LocalDate.now()
             oppdatertSak.ffuReferansenr shouldBe "Foo"
             oppdatertSak.roller shouldHaveSize 7
+        }
+
+        @Test
+        fun `kan ikke bytte kjent BM via noen av oppdateringsendepunktene`() {
+            val endringer = setOf(RolleDto(fnrBM2, Rolletype.BIDRAGSMOTTAKER))
+
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = saksnummer, roller = endringer))
+            }
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterRollerISak(OppdaterRollerISakRequest(saksnummer = saksnummer, roller = endringer))
+            }
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                sak.roller.first { it.rolleType == Rolletype.BIDRAGSMOTTAKER }.fødselsnummer shouldBe fnrBM.verdi
+            }
+        }
+
+        @Test
+        fun `eldre sak kan opprettes tom men krever kjent person ved oppdatering`() {
+            val tomSak = bidragssakService.nySak(NySakCommandDto(Enhetsnummer("1701"))).saksnummer
+
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = tomSak))
+            }
+
+            bidragssakService.oppdaterSak(
+                OppdaterSakRequest(
+                    saksnummer = tomSak,
+                    roller = setOf(RolleDto(fnrBM, Rolletype.BIDRAGSMOTTAKER)),
+                ),
+            )
+
+            th.transactional {
+                bidragssakRepository.findByIdOrThrow(tomSak.verdi).roller
+                    .single { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
+                    .fødselsnummer shouldBe fnrBM.verdi
+            }
+        }
+
+        @Test
+        fun `metadata kan oppdateres når myndig barn uten RM ikke er med i forespørselen`() {
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                sak.roller.first { it.rolleType == Rolletype.BARN && it.fødselsnummer == fnrBA1.verdi }.rmRolleId = null
+                bidragssakRepository.save(sak)
+            }
+
+            bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = saksnummer, status = Bidragssakstatus.AK))
+
+            th.transactional {
+                bidragssakRepository.findByIdOrThrow(saksnummer.verdi).status shouldBe Bidragssakstatus.AK
+            }
         }
 
         @Test
