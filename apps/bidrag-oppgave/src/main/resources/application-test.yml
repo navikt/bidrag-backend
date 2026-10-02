@@ -1,0 +1,25 @@
+
+# Henter fra https://localauth-bidrag.intern.dev.nav.no/entraid/env
+AZURE_OPENID_CONFIG_ISSUER: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0
+AZURE_APP_CLIENT_ID: 43b293e0-2115-468e-b744-086f435bf53d
+
+
+# Texas via docker compose opplegg
+nais:
+  token:
+    endpoint: http://localhost:4010/api/v1/token
+    exchange:
+      endpoint: http://localhost:4010/api/v1/token/exchange
+
+app:
+  oppgave:
+    url: https://oppgave.intern.dev.nav.no/
+    audience: api://dev-fss.oppgavehandtering.oppgave/.default
+  tilgangskontroll:
+    url: https://bidrag-tilgangskontroll.intern.dev.nav.no
+    audience: api://dev-gcp.bidrag.bidrag-tilgangskontroll/.default
+
+spring:
+  main:
+    banner-mode: "off"
+
