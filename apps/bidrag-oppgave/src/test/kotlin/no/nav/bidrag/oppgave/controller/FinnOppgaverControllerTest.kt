@@ -61,14 +61,11 @@ class FinnOppgaverControllerTest {
     private lateinit var tilgangkontrollService: TilgangskontrollService
 
     @Test
-    fun `GET oppgaver videresender saksnummer og returnerer mappet oppgave`() {
+    fun `POST oppgaver med kun saksnummer bruker standardverdier`() {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
-        val resultat = mockMvc.get()
-            .uri("/api/oppgaver?saksnummer=SAK-123")
-            .with(jwtToken())
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123"))
 
         assertThat(resultat).hasStatusOk()
         assertThat(resultat.oppgaver())
@@ -81,18 +78,7 @@ class FinnOppgaverControllerTest {
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
         assertThat(params.limit).isEqualTo(100)
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = ["", "   "])
-    fun `GET oppgaver avviser blankt saksnummer`(saksnummer: String) {
-        val resultat = mockMvc.get()
-            .uri("/api/oppgaver?saksnummer={saksnummer}", saksnummer)
-            .with(jwtToken())
-            .exchange()
-
-        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
-        verifyNoInteractions(oppgaveClient)
+        assertThat(params.offset).isEqualTo(0)
     }
 
     @Test
@@ -126,7 +112,7 @@ class FinnOppgaverControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [-1, 0, 101, Int.MAX_VALUE])
+    @ValueSource(ints = [-1, 0])
     fun `POST oppgaver avviser ugyldig limit`(limit: Int) {
         val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", limit = limit))
 
@@ -181,8 +167,8 @@ class FinnOppgaverControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = [1, 55, 100])
-    fun `POST oppgaver godtar limit på grenseverdiene og midt i mellom`(limit: Int) {
+    @ValueSource(ints = [1, 100, 101, 5000])
+    fun `POST oppgaver godtar limit uten øvre grense`(limit: Int) {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
@@ -193,14 +179,69 @@ class FinnOppgaverControllerTest {
     }
 
     @Test
+    fun `POST oppgaver sender offset og limit direkte videre`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse())
+
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", offset = 60, limit = 20))
+
+        assertThat(resultat).hasStatusOk()
+        val params = capturedParams()
+        assertThat(params.limit).isEqualTo(20)
+        assertThat(params.offset).isEqualTo(60)
+    }
+
+    @Test
+    fun `POST oppgaver bruker offset 0 når offset er null`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse())
+
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", offset = null))
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(resultat).hasHeader(OppgaveController.HEADER_OFFSET, "0")
+        assertThat(capturedParams().offset).isEqualTo(0)
+    }
+
+    @Test
+    fun `POST oppgaver avviser negativ offset`() {
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", offset = -1))
+
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
+        verifyNoInteractions(oppgaveClient)
+    }
+
+    @Test
+    fun `POST oppgaver returnerer pagineringsheadere`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse().copy(antallTreffTotalt = 42))
+
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", offset = 20, limit = 10))
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(resultat)
+            .hasHeader(OppgaveController.HEADER_OFFSET, "20")
+            .hasHeader(OppgaveController.HEADER_LIMIT, "10")
+            .hasHeader(OppgaveController.HEADER_TOTAL_COUNT, "42")
+    }
+
+    @Test
+    fun `POST oppgaver utelater X-Total-Count når oppgave-API ikke oppgir totalt antall`() {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse().copy(antallTreffTotalt = null))
+
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123"))
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(resultat).doesNotContainHeader(OppgaveController.HEADER_TOTAL_COUNT)
+    }
+
+    @Test
     fun `Returnerer ProblemDetail ved feil fra eksternt API`() {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willThrow(HttpClientErrorException(HttpStatus.NOT_ACCEPTABLE, "Bad Gateway"))
 
-        val resultat = mockMvc.get()
-            .uri("/api/oppgaver?saksnummer=SAK-123")
-            .with(jwtToken())
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123"))
 
         assertThat(resultat).hasStatus(HttpStatus.NOT_ACCEPTABLE)
         assertThat(resultat.response.contentType)

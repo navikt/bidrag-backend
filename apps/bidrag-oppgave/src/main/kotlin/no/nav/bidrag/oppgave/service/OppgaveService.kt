@@ -18,32 +18,42 @@ class OppgaveService(
     private val tilgangService: TilgangskontrollService,
 ) {
 
-    fun finnOppgaver(query: FinnOppgaverRequest): List<OppgaveDto> {
+    fun finnOppgaver(query: FinnOppgaverRequest): FinnOppgaverResultat {
         query.saksnummer?.let {
             tilgangService.sjekkTilgangSaksnummer(Saksnummer(it))
         }
         query.aktoerId?.let {
             tilgangService.sjekkTilgangPerson(Personident(it.verdi))
         }
-        return oppgaveClient
-            .finnOppgaver(
-                query.toOppgaveParams(),
-            )
-            .oppgaver
-            .orEmpty()
-            .map { it.tilBidragOppgave() }
+        val offset = query.offset ?: FinnOppgaverRequest.STANDARD_OFFSET
+        val limit = query.limit ?: FinnOppgaverRequest.STANDARD_LIMIT
+        val respons = oppgaveClient.finnOppgaver(query.toOppgaveParams(offset, limit))
+        return FinnOppgaverResultat(
+            oppgaver = respons.oppgaver.orEmpty().map { it.tilBidragOppgave() },
+            offset = offset,
+            limit = limit,
+            antallTreffTotalt = respons.antallTreffTotalt,
+        )
     }
 
-    private fun FinnOppgaverRequest.toOppgaveParams(): FinnOppgaverParams = FinnOppgaverParams(
+    private fun FinnOppgaverRequest.toOppgaveParams(offset: Int, limit: Int): FinnOppgaverParams = FinnOppgaverParams(
         saksreferanse = saksnummer?.let { listOf(it) },
         aktoerId = aktoerId?.let { listOf(it) },
         tildeltEnhetsnr = enhetsnummer,
         tilordnetRessurs = saksbehandler,
         tema = listOf(FellesKodeverkTema.BID),
         statuskategori = "AAPEN",
-        limit = this.limit ?: 100,
+        limit = limit,
+        offset = offset,
     )
 }
+
+data class FinnOppgaverResultat(
+    val oppgaver: List<OppgaveDto>,
+    val offset: Int,
+    val limit: Int,
+    val antallTreffTotalt: Long?,
+)
 
 private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
     id = id.verdi,

@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
 import org.springframework.test.context.ActiveProfiles
@@ -29,9 +30,11 @@ class SecurityTest {
     private lateinit var mockMvc: MockMvcTester
 
     @Test
-    fun `get kall mot api uten token gir 401`() {
-        val resultat = mockMvc.get()
-            .uri("/api/oppgaver?saksnummer=SAK-123")
+    fun `kall mot api uten token gir 401`() {
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"saksnummer": "SAK-123"}""")
             .exchange()
 
         assertThat(resultat).hasStatus(HttpStatus.UNAUTHORIZED)
@@ -39,9 +42,11 @@ class SecurityTest {
 
     @Test
     fun `autentisert kall slipper gjennom sikkerhetsfilteret`() {
-        val resultat = mockMvc.get()
+        val resultat = mockMvc.post()
             .uri("/api/oppgaver")
             .with(jwt())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{}")
             .exchange()
 
         assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
