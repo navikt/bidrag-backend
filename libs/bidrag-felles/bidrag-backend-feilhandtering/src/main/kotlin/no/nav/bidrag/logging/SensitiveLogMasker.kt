@@ -5,6 +5,7 @@ import tools.jackson.core.TokenStreamContext
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+// Kopiert fra bidrag-commons, men tester mangler
 class SensitiveLogMasker : ValueMasker {
     companion object {
         private val FNR_PATTERN: Pattern = "(?<!\\bcorrelationId\":\")(\\b[0-7]\\d{10}\\b)(?!\\d)".toPattern()
