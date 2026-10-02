@@ -17,7 +17,7 @@ annotation class AvgrensetOppgavesøk(
 
 class AvgrensetOppgavesøkValidator : ConstraintValidator<AvgrensetOppgavesøk, FinnOppgaverRequest> {
     override fun isValid(request: FinnOppgaverRequest, context: ConstraintValidatorContext): Boolean = !request.saksnummer.isNullOrBlank() ||
-        !request.aktoerId?.verdi.isNullOrBlank() ||
-        !request.saksbehandler?.verdi.isNullOrBlank() ||
-        !request.enhetsnummer?.verdi.isNullOrBlank()
+        !request.aktoerId?.verdi.isNullOrBlank()
+//        !request.saksbehandler?.verdi.isNullOrBlank() ||
+//        !request.enhetsnummer?.verdi.isNullOrBlank()
 }

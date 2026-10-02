@@ -89,8 +89,8 @@ class FinnOppgaverControllerTest {
             FinnOppgaverRequest(
                 saksnummer = "SAK-123",
                 aktoerId = AktorId("1234567890123"),
-                saksbehandler = NavIdent("Z999999"),
-                enhetsnummer = Enhetsnummer("4100"),
+//                saksbehandler = NavIdent("Z999999"),
+//                enhetsnummer = Enhetsnummer("4100"),
             ),
         )
 
@@ -103,8 +103,8 @@ class FinnOppgaverControllerTest {
         val params = capturedParams()
         assertThat(params.saksreferanse).containsExactly("SAK-123")
         assertThat(params.aktoerId).containsExactly(AktorId("1234567890123"))
-        assertThat(params.tilordnetRessurs).isEqualTo(NavIdent("Z999999"))
-        assertThat(params.tildeltEnhetsnr).isEqualTo(Enhetsnummer("4100"))
+//        assertThat(params.tilordnetRessurs).isEqualTo(NavIdent("Z999999"))
+//        assertThat(params.tildeltEnhetsnr).isEqualTo(Enhetsnummer("4100"))
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
         assertThat(params.limit).isEqualTo(100)
@@ -306,16 +306,16 @@ class FinnOppgaverControllerTest {
             FinnOppgaverRequest(limit = 1),
             FinnOppgaverRequest(saksnummer = "  "),
             FinnOppgaverRequest(aktoerId = AktorId("")),
-            FinnOppgaverRequest(saksbehandler = NavIdent("  ")),
-            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("")),
+//            FinnOppgaverRequest(saksbehandler = NavIdent("  ")),
+//            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("")),
         )
 
         @JvmStatic
         fun søkMedEttKriterium() = listOf(
             FinnOppgaverRequest(saksnummer = "SAK-123"),
             FinnOppgaverRequest(aktoerId = AktorId("1234567890123")),
-            FinnOppgaverRequest(saksbehandler = NavIdent("Z999999")),
-            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("4100")),
+//            FinnOppgaverRequest(saksbehandler = NavIdent("Z999999")),
+//            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("4100")),
         )
     }
 

@@ -13,9 +13,9 @@ data class FinnOppgaverRequest(
     val saksnummer: String? = null,
     @Size(min = 13, max = 13)
     val aktoerId: AktorId? = null,
-    val saksbehandler: NavIdent? = null,
-    @field:Size(min = 4, max = 4)
-    val enhetsnummer: Enhetsnummer? = null,
+//    val saksbehandler: NavIdent? = null,
+//    @field:Size(min = 4, max = 4)
+//    val enhetsnummer: Enhetsnummer? = null,
     @field:Min(1)
     val limit: Int? = STANDARD_LIMIT,
     @field:Min(0)
