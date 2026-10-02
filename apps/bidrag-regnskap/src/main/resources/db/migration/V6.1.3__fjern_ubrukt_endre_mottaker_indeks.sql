@@ -1,0 +1,1 @@
+DROP INDEX endre_mottaker_sak_barn_opprettet_index;
