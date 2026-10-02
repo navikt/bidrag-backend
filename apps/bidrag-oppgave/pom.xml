@@ -24,11 +24,6 @@
         <!-- Intern DTO-modul -->
         <dependency>
             <groupId>no.nav.bidrag</groupId>
-            <artifactId>bidrag-oppgave-dto</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-backend-sikkerhet</artifactId>
             <version>${project.version}</version>
         </dependency>

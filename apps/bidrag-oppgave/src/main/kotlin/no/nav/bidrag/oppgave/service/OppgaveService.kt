@@ -5,12 +5,11 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import no.nav.bidrag.oppgave.controller.BidragOppgaveDto
 import no.nav.bidrag.oppgave.controller.FinnOppgaverRequest
-import no.nav.bidrag.oppgave.dto.OppgaveDto
-import no.nav.bidrag.oppgave.dto.OppgaveStatus
 import no.nav.bidrag.tilgang.TilgangskontrollService
 import org.springframework.stereotype.Service
-import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto as OppgaveApiDto
 
 @Service
 class OppgaveService(
@@ -49,15 +48,22 @@ class OppgaveService(
 }
 
 data class FinnOppgaverResultat(
-    val oppgaver: List<OppgaveDto>,
+    val oppgaver: List<BidragOppgaveDto>,
     val offset: Int,
     val limit: Int,
     val antallTreffTotalt: Long?,
 )
 
-private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
-    id = id.verdi,
-    tittel = "$tema - $oppgavetype",
+private fun OppgaveDto.tilBidragOppgave(): BidragOppgaveDto = BidragOppgaveDto(
+    id = id,
+    tema = tema,
+    oppgavetype = oppgavetype,
+    brukerFnr = brukerFnr,
+    saksreferanse = saksreferanse,
+    prioritet = prioritet,
+    journalpostId = journalpostId,
+    tildeltEnhetsnr = tildeltEnhetsnr,
+    tilordnetRessurs = tilordnetRessurs,
     beskrivelse = beskrivelse,
     beskrivelseshistorikk = OppgaveBeskrivelseParser.parse(
         beskrivelse = beskrivelse,
@@ -66,12 +72,12 @@ private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
         sistEndretEnhetsnr = endretAvEnhetsnr ?: opprettetAvEnhetsnr,
         oppgaveId = id.verdi,
     ),
-    status = status.tilBidragStatus(),
+    status = status,
     opprettet = opprettetTidspunkt,
 )
 
-private fun OppgaveApiDto.Status.tilBidragStatus(): OppgaveStatus = when (this) {
-    OppgaveApiDto.Status.OPPRETTET, OppgaveApiDto.Status.AAPNET -> OppgaveStatus.OPPRETTET
-    OppgaveApiDto.Status.UNDER_BEHANDLING -> OppgaveStatus.UNDER_BEHANDLING
-    OppgaveApiDto.Status.FERDIGSTILT, OppgaveApiDto.Status.FEILREGISTRERT -> OppgaveStatus.FERDIG
-}
+private val OppgaveDto.brukerFnr: Personident?
+    get() = when (bruker?.type) {
+        OppgaveDto.Bruker.BrukerType.PERSON -> Personident(bruker.ident)
+        else -> null
+    }

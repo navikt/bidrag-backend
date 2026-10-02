@@ -12,7 +12,6 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
-import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import no.nav.bidrag.tilgang.TilgangskontrollException
 import no.nav.bidrag.tilgang.TilgangskontrollService
@@ -294,8 +293,8 @@ class FinnOppgaverControllerTest {
 
     private fun anyFinnOppgaverParams(): FinnOppgaverParams = any(FinnOppgaverParams::class.java) ?: FinnOppgaverParams()
 
-    private fun org.springframework.test.web.servlet.assertj.MvcTestResult.oppgaver(): List<OppgaveDto> = objectMapper
-        .readValue(response.contentAsByteArray, Array<OppgaveDto>::class.java)
+    private fun org.springframework.test.web.servlet.assertj.MvcTestResult.oppgaver(): List<BidragOppgaveDto> = objectMapper
+        .readValue(response.contentAsByteArray, Array<BidragOppgaveDto>::class.java)
         .toList()
 
     private fun jwtToken(): RequestPostProcessor = jwt()
