@@ -75,7 +75,7 @@ class RolleService(
             if (eksisterendeIdent == null || eksisterendeIdent == fødselsnummer.verdi) {
                 rolle
             } else {
-                rolle.copy(fødselsnummer = Personident(eksisterendeIdent))
+                Personident(eksisterendeIdent).let { rolle.copy(fødselsnummer = it, foedselsnummer = it) }
             }
         }.toSet()
     }

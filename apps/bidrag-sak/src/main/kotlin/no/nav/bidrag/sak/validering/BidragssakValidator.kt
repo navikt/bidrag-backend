@@ -85,7 +85,13 @@ class BidragssakValidator {
 
     fun validerForespurteRoller(roller: Collection<RolleDto>, grunnlag: Valideringsgrunnlag) {
         validerMaksEnBpOgBm(roller.map { Saksrolle(it) })
+        validerBarnMaksÉnGang(roller)
         roller.forEach { validerRolle(it, grunnlag) }
+    }
+
+    private fun validerBarnMaksÉnGang(roller: Collection<RolleDto>) {
+        val barn = roller.filter { it.type == Rolletype.BARN }.mapNotNull { it.fødselsnummer?.verdi?.takeIf { fnr -> fnr.isNotBlank() } }
+        require(barn.size == barn.distinct().size) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
     }
 
     private fun validerMaksEnBpOgBm(roller: List<Saksrolle>) {

@@ -75,6 +75,15 @@ class BidragssakValidatorTest {
         }
 
         @Test
+        fun `avviser samme barn to ganger i forespørselen`() {
+            val barn = genererPersonident()
+
+            shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                validator.validerForespurteRoller(setOf(rolleBarnUtenRm(barn), rolleBarnMedRm(barn)), grunnlag(barn))
+            }
+        }
+
+        @Test
         fun `feiler når grunnlaget mangler identer for en rolle`() {
             val bm = genererPersonident()
             val bp = genererPersonident()
@@ -134,6 +143,23 @@ class BidragssakValidatorTest {
             val nyBp = Rolle(rolleId = 2, fødselsnummer = annen.verdi, rolleType = Rolletype.BIDRAGSPLIKTIG)
             shouldThrowMessage("En kjent rolle kan ikke fjernes eller endres.") {
                 validator.validerRolleendring(før, listOf(bm, nyBp), medUnntak)
+            }
+        }
+
+        @Test
+        fun `unntak for doble roller gjelder ikke ny konflikt med tidligere ukjent rolle`() {
+            val bm = genererPersonident()
+            val før = listOf(
+                BidragssakValidator.Saksrolle(1, Rolletype.BIDRAGSMOTTAKER, bm.verdi),
+                BidragssakValidator.Saksrolle(2, Rolletype.BIDRAGSPLIKTIG, null),
+            )
+            val etter = listOf(
+                Rolle(rolleId = 1, fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER),
+                Rolle(rolleId = 2, fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSPLIKTIG),
+            )
+
+            shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                validator.validerRolleendring(før, etter, grunnlag(bm).medUnntakForDobleRoller())
             }
         }
 
