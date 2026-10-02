@@ -23,6 +23,7 @@ import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
+import no.nav.bidrag.behandling.transformers.grunnlag.tilInnhentetGrunnlagInntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
@@ -446,6 +447,12 @@ class VedtakGrunnlagMapper(
                 behandling.grunnlag
                     .toList()
                     .mapAinntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .tilInnhentetGrunnlagInntekt(behandling.tilPersonobjekter())
                     .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
             )
         }
