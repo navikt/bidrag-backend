@@ -334,6 +334,15 @@ class ForholdsmessigFordelingKlageService(
             }
     }
 
+    fun kanEndreSøknadStatus(søknadsid: Long): Boolean {
+        val behandling =
+            behandlingService.hentEksisterendeBehandling(søknadsid)
+                ?: bbmConsumer.hentSøknad(søknadsid)?.søknad?.behandlingsid?.let { behandlingService.hentBehandlingById(it) }
+                ?: return true
+        if (!behandling.erKlageEllerOmgjøring) return true
+        return behandling.erSøknadOpprettetEtterHovedsøknad(søknadsid)
+    }
+
     private fun Behandling.erSøknadOpprettetEtterHovedsøknad(søknadsid: Long) = roller.any { it.finnSøknad(søknadsid)?.opprettetEtterHovedsøknad == true }
 
     private fun Behandling.harSøknadSomErstatterFFKlagesøknad(
