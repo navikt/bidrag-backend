@@ -9,8 +9,6 @@ import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
-import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
-import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.dto.vedtak.Hendelse
 import no.nav.bidrag.regnskap.dto.vedtak.Periode
 import no.nav.bidrag.regnskap.util.PåløpException
@@ -34,7 +32,6 @@ class VedtakshendelseService(
     private val persistenceService: PersistenceService,
     private val identUtils: IdentUtils,
     private val driftsavvikService: DriftsavvikService,
-    private val endreMottakerService: EndreMottakerService,
 ) {
 
     @Transactional
@@ -44,14 +41,6 @@ class VedtakshendelseService(
         }
 
         val vedtakHendelse = mapVedtakHendelse(hendelse)
-
-        // Endring av mottaker skal ikke trigge andre vedtakshendelser.
-        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
-            if (UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
-                behandleEndringAvMottaker(vedtakHendelse)
-            }
-            return emptyList()
-        }
 
         if (oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(vedtakHendelse.id).isNotEmpty()) {
             LOGGER.warn { "VedtakHendelse med vedtakid: ${vedtakHendelse.id} er allerede behandlet. Ignorerer hendelse." }
@@ -186,33 +175,4 @@ class VedtakshendelseService(
     private fun erVedlikeholdsmodusPåslått(): Boolean = kravService.erVedlikeholdsmodusPåslått()
 
     private fun harAktiveDriftAvvik(erInnlesning: Boolean = false): Boolean = persistenceService.harAktivtDriftsavvik(erInnlesning)
-
-    private fun behandleEndringAvMottaker(vedtakHendelse: VedtakHendelse) {
-        val endringer = vedtakHendelse.stønadsendringListe
-            ?.filter { stønadsendring ->
-                erInnkrevingOgEndring(
-                    "Endring av mottaker (vedtakId: ${vedtakHendelse.id}, sak: ${stønadsendring.sak.verdi}",
-                    stønadsendring.innkreving,
-                    stønadsendring.beslutning,
-                )
-            }
-            ?.map { stønadsendring ->
-                Triple(
-                    stønadsendring.sak.verdi,
-                    identUtils.hentNyesteIdent(stønadsendring.kravhaver).verdi,
-                    identUtils.hentNyesteIdent(stønadsendring.mottaker).verdi,
-                )
-            }
-            ?.distinct()
-            ?: emptyList()
-        endringer.forEach { (sakId, barnIdent, nyMottakerIdent) ->
-            LOGGER.info { "Behandler endring av mottaker for vedtak: ${vedtakHendelse.id}, sak: $sakId." }
-            endreMottakerService.opprettEndreMottaker(
-                vedtakId = vedtakHendelse.id,
-                sakId = sakId,
-                barnIdent = barnIdent,
-                nyMottakerIdent = nyMottakerIdent,
-            )
-        }
-    }
 }

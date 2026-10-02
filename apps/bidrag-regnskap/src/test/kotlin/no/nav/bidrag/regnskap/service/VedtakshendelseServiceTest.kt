@@ -46,9 +46,6 @@ class VedtakshendelseServiceTest {
     @MockK(relaxed = true)
     private lateinit var driftsavvikService: DriftsavvikService
 
-    @MockK(relaxed = true)
-    private lateinit var endreMottakerService: EndreMottakerService
-
     @InjectMockKs
     private lateinit var vedtakshendelseService: VedtakshendelseService
 
@@ -168,56 +165,59 @@ class VedtakshendelseServiceTest {
 
         vedtakshendelseService.behandleHendelse(hendelse)
 
-        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
     @Test
-    fun `skal opprette endring av mottaker med vedtakets mottaker`() {
+    fun `skal behandle mottakerendring uten perioder som annen stonadsendring`() {
         val hendelse = opprettMottakerendringsHendelse()
+        every { oppdragService.lagreHendelse(any(), false) } returns null
 
         val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
 
-        oppdrag shouldBe emptyList()
         verify(exactly = 1) {
-            endreMottakerService.opprettEndreMottaker(
-                vedtakId = 648462,
-                sakId = any(),
-                barnIdent = any(),
-                nyMottakerIdent = any(),
-            )
+            oppdragService.lagreHendelse(match { it.vedtakId == 648462 && it.periodeListe.isEmpty() }, false)
         }
-        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
-        verify(exactly = 0) { oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(any()) }
+        oppdrag shouldBe emptyList()
     }
 
     @Test
-    fun `skal sende mottakerendring uten perioder til idempotent lagring ved ny levering`() {
+    fun `skal behandle mottakerendring uten perioder ved ny levering`() {
         val hendelse = opprettMottakerendringsHendelse()
 
         vedtakshendelseService.behandleHendelse(hendelse)
         vedtakshendelseService.behandleHendelse(hendelse)
 
-        verify(exactly = 2) { endreMottakerService.opprettEndreMottaker(648462, any(), any(), any()) }
-        verify(exactly = 0) { oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(any()) }
-        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
+        verify(exactly = 2) { oppdragService.lagreHendelse(match { it.vedtakId == 648462 && it.periodeListe.isEmpty() }, false) }
     }
 
     @Test
-    fun `skal ikke lagre mottakerendring naar funksjonen er deaktivert`() {
+    fun `skal behandle periodefri mottakerendring selv om Elin er deaktivert`() {
         every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
 
         vedtakshendelseService.behandleHendelse(opprettMottakerendringsHendelse())
 
-        verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
-        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.periodeListe.isEmpty() }, false) }
     }
 
-    private fun opprettMottakerendringsHendelse(innkrevingstype: String = "MED_INNKREVING"): String =
-        requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmOppdatering.json")).readText()
-            .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
-            .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
-            .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
-            .replace("\"MED_INNKREVING\"", "\"$innkrevingstype\"")
+    @Test
+    fun `skal behandle mottakerendring med perioder i vanlig oppdragsflyt`() {
+        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+        every { oppdragService.lagreHendelse(any(), any()) } returns 1
+
+        val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
+
+        oppdrag shouldBe listOf(1, 1)
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.periodeListe.isNotEmpty() }, false) }
+    }
+
+    private fun opprettMottakerendringsHendelse(
+        innkrevingstype: String = "MED_INNKREVING",
+    ): String = requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmOppdatering.json")).readText()
+        .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"MED_INNKREVING\"", "\"$innkrevingstype\"")
 
     private fun opprettVedtakshendelse(
         vedtakstype: String = "INNKREVING",

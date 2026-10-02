@@ -31,4 +31,27 @@ class ReskontroApiWireMock {
             ),
         )
     }
+
+    internal fun endreRmForSakMedGyldigResponse() {
+        mock.stubFor(
+            WireMock.patch(WireMock.urlPathEqualTo("/endreRmForSak"))
+                .willReturn(WireMock.aResponse().withStatus(200)),
+        )
+    }
+
+    internal fun nullstillForespørsler() {
+        mock.resetRequests()
+    }
+
+    internal fun verifiserEndreRmForSak(saksnummer: String, barn: String, nyMottaker: String) {
+        mock.verify(
+            1,
+            WireMock.patchRequestedFor(WireMock.urlPathEqualTo("/endreRmForSak"))
+                .withRequestBody(
+                    WireMock.equalToJson(
+                        """{"saksnummer":"$saksnummer","barn":"$barn","nyttFødselsnummer":"$nyMottaker"}""",
+                    ),
+                ),
+        )
+    }
 }

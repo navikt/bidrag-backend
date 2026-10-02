@@ -8,6 +8,7 @@ import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.consumer.BidragPersonConsumer
 import no.nav.bidrag.regnskap.consumer.BidragSakConsumer
 import no.nav.bidrag.regnskap.dto.patch.OppdaterUtsattTilDatoRequest
@@ -29,6 +30,7 @@ class OppdragService(
     private val bidragSakConsumer: BidragSakConsumer,
     private val personhendelseService: PersonhendelseService,
     private val bidragPersonConsumer: BidragPersonConsumer,
+    private val endreMottakerService: EndreMottakerService,
 ) {
 
     @Transactional
@@ -46,18 +48,31 @@ class OppdragService(
         }
 
         val erOppdatering = hentetOppdrag != null
+        val mottakerErEndret = erOppdatering && hentetOppdrag.mottakerIdent != hendelse.mottakerIdent
         val oppdrag = hentetOppdrag ?: opprettOppdrag(hendelse)
-        val sisteOverførtePeriode = persistenceService.finnSisteOverførtePeriode()
 
-        // For oppdateringer på engangsbeløp skal fra og til dato være lik det opprinnelige engangsbeløpet.
-        if (erOppdatering && erEngangsbeløp) {
-            settNyPeriodeFraOgTilDatoForOppdateringPåEngangsbeløp(hendelse, hentetOppdrag)
+        if (hendelse.periodeListe.isNotEmpty()) {
+            val sisteOverførtePeriode = persistenceService.finnSisteOverførtePeriode()
+
+            // For oppdateringer på engangsbeløp skal fra og til dato være lik det opprinnelige engangsbeløpet.
+            if (erOppdatering && erEngangsbeløp) {
+                settNyPeriodeFraOgTilDatoForOppdateringPåEngangsbeløp(hendelse, hentetOppdrag)
+            }
+
+            behandlePerioder(hendelse, oppdrag, erOppdatering, sisteOverførtePeriode)
         }
-
-        behandlePerioder(hendelse, oppdrag, erOppdatering, sisteOverførtePeriode)
 
         oppdatererVerdierPåOppdrag(hendelse, oppdrag)
         val oppdragId = persistenceService.lagreOppdrag(oppdrag)
+
+        if (mottakerErEndret && !erEngangsbeløp && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+            endreMottakerService.opprettEndreMottaker(
+                vedtakId = hendelse.vedtakId,
+                sakId = hendelse.sakId,
+                barnIdent = checkNotNull(hendelse.kravhaverIdent) { "Mangler kravhaver på mottakerendring for vedtak ${hendelse.vedtakId}" },
+                nyMottakerIdent = hendelse.mottakerIdent,
+            )
+        }
 
         LOGGER.debug { "Oppdrag med ID: $oppdragId er ${if (erOppdatering) "oppdatert." else "opprettet."}" }
 

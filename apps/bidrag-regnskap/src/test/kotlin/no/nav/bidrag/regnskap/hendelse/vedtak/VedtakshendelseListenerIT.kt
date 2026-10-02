@@ -10,8 +10,12 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.domene.enums.regnskap.Søknadstype
 import no.nav.bidrag.domene.enums.regnskap.Transaksjonskode
 import no.nav.bidrag.domene.enums.regnskap.Type
@@ -19,6 +23,7 @@ import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.regnskap.BidragRegnskapLocal
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.consumer.KravApiWireMock
 import no.nav.bidrag.regnskap.consumer.PersonApiWireMock
 import no.nav.bidrag.regnskap.consumer.ReskontroApiWireMock
@@ -683,6 +688,7 @@ internal class VedtakshendelseListenerIT {
 
     val endreRmBmBidrag = genererFødselsnummer()
     val endreRmBmNyBidrag = genererFødselsnummer()
+    val endreRmBmEndaNyBidrag = genererFødselsnummer()
     val endreRmBpBidrag = genererFødselsnummer()
     val endreRmBarn1Bidrag = genererFødselsnummer()
 
@@ -711,25 +717,36 @@ internal class VedtakshendelseListenerIT {
     @Test
     @Order(24)
     fun `skal endre rm oppdatering`() {
-        hentFilOgSendPåKafka(
-            "endreRmOppdatering.json",
-            178,
-            bm = endreRmBmNyBidrag,
-            bp = endreRmBpBidrag,
-            barn1 = endreRmBarn1Bidrag,
-        )
+        reskontroApiWireMock.nullstillForespørsler()
+        reskontroApiWireMock.endreRmForSakMedGyldigResponse()
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+            val vedtakHendelse = hentFilOgSendPåKafka(
+                "endreRmOppdatering.json",
+                null,
+                bm = endreRmBmNyBidrag,
+                bp = endreRmBpBidrag,
+                barn1 = endreRmBarn1Bidrag,
+            )
 
-        // Siden antall konteringer ikke øker ved endre-rm-oppdatering, er await i hentFilOgSendPåKafka
-        // umiddelbart sann. Vi må derfor vente eksplisitt på at mottakerIdent faktisk er oppdatert.
-        // entityManager.clear() brukes for å sikre at JPA L1-cachen (som kan ha cachet oppdrag med
-        // gammel mottakerIdent via findAll()-kallene i hentFilOgSendPåKafka) ikke returnerer stale data.
-        await().atMost(Duration.ofSeconds(30)).until {
+            await().atMost(Duration.ofSeconds(30)).until {
+                entityManager.clear()
+                persistenceService.endreMottakerRepository
+                    .findByVedtakIdAndBarnIdent(vedtakHendelse.id, endreRmBarn1Bidrag)
+                    ?.godkjentAvSkattTidspunkt != null &&
+                    persistenceService.hentOppdrag(100000019)?.mottakerIdent == endreRmBmNyBidrag
+            }
+
             entityManager.clear()
-            return@until persistenceService.hentOppdrag(100000019)?.mottakerIdent == endreRmBmNyBidrag
+            val oppdrag = requireNotNull(persistenceService.hentOppdrag(100000019))
+            oppdrag.mottakerIdent shouldBe endreRmBmNyBidrag
+            oppdrag.oppdragsperioder shouldHaveSize 1
+            persistenceService.konteringRepository.count() shouldBe 178
+            reskontroApiWireMock.verifiserEndreRmForSak("2203234", endreRmBarn1Bidrag, endreRmBmNyBidrag)
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
         }
-
-        val oppdrag = persistenceService.hentOppdrag(100000019)
-        oppdrag?.mottakerIdent shouldBe endreRmBmNyBidrag
     }
 
     @Test
@@ -745,6 +762,41 @@ internal class VedtakshendelseListenerIT {
             100000014,
             Søknadstype.EN,
         )
+    }
+
+    @Test
+    @Order(26)
+    fun `skal sende mottakerendring fra vanlig vedtak med periode til Elin`() {
+        reskontroApiWireMock.nullstillForespørsler()
+        reskontroApiWireMock.endreRmForSakMedGyldigResponse()
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+            val vedtakHendelse = hentFilOgSendPåKafka(
+                "endreRmVanligVedtak.json",
+                null,
+                bm = endreRmBmEndaNyBidrag,
+                bp = endreRmBpBidrag,
+                barn1 = endreRmBarn1Bidrag,
+            )
+
+            await().atMost(Duration.ofSeconds(30)).until {
+                entityManager.clear()
+                persistenceService.endreMottakerRepository
+                    .findByVedtakIdAndBarnIdent(vedtakHendelse.id, endreRmBarn1Bidrag)
+                    ?.godkjentAvSkattTidspunkt != null &&
+                    persistenceService.hentOppdrag(100000019)?.mottakerIdent == endreRmBmEndaNyBidrag
+            }
+
+            entityManager.clear()
+            val oppdrag = requireNotNull(persistenceService.hentOppdrag(100000019))
+            oppdrag.oppdragsperioder shouldHaveSize 2
+            oppdrag.oppdragsperioder.last().vedtakId shouldBe vedtakHendelse.id
+            oppdrag.mottakerIdent shouldBe endreRmBmEndaNyBidrag
+            reskontroApiWireMock.verifiserEndreRmForSak("2203234", endreRmBarn1Bidrag, endreRmBmEndaNyBidrag)
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
     }
 
     @Test
@@ -853,7 +905,7 @@ internal class VedtakshendelseListenerIT {
 
     private fun hentFilOgSendPåKafka(
         filnavn: String,
-        antallKonteringerTotalt: Int,
+        antallKonteringerTotalt: Int?,
         kravhaverIdent: String = genererFødselsnummer(),
         mottaker: String = genererFødselsnummer(),
         bm: String = genererFødselsnummer(),
@@ -866,8 +918,10 @@ internal class VedtakshendelseListenerIT {
 
         kafkaTemplate.send(topic, vedtakFilString)
 
-        await().atMost(Duration.ofSeconds(30)).until {
-            return@until persistenceService.konteringRepository.count() == antallKonteringerTotalt.toLong()
+        if (antallKonteringerTotalt != null) {
+            await().atMost(Duration.ofSeconds(30)).until {
+                return@until persistenceService.konteringRepository.count() == antallKonteringerTotalt.toLong()
+            }
         }
         return objectmapper.readValue(vedtakFilString, VedtakHendelse::class.java)
     }

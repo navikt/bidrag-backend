@@ -5,18 +5,26 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.consumer.BidragPersonConsumer
 import no.nav.bidrag.regnskap.consumer.BidragSakConsumer
+import no.nav.bidrag.regnskap.persistence.entity.Oppdrag
 import no.nav.bidrag.regnskap.utils.TestData
 import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonidentDto
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -44,8 +52,22 @@ class OppdragServiceTest {
     @MockK(relaxed = true)
     private lateinit var bidragPersonConsumer: BidragPersonConsumer
 
+    @MockK(relaxed = true)
+    private lateinit var endreMottakerService: EndreMottakerService
+
     @InjectMockKs
     private lateinit var oppdragService: OppdragService
+
+    @BeforeEach
+    fun aktiverEndreMottaker() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+    }
+
+    @AfterEach
+    fun tilbakestillEndreMottaker() {
+        unmockkObject(UnleashFeaturesProvider)
+    }
 
     @Nested
     inner class OpprettOppdrag {
@@ -87,6 +109,16 @@ class OppdragServiceTest {
 
             oppdragId shouldBe null
         }
+
+        @Test
+        fun `skal ikke opprette oppdrag eller sende til Elin uten perioder`() {
+            val hendelse = TestData.opprettHendelse(periodeListe = emptyList())
+
+            oppdragService.lagreEllerOppdaterOppdrag(null, hendelse, false) shouldBe null
+
+            verify(exactly = 0) { persistenceService.lagreOppdrag(any<Oppdrag>()) }
+            verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        }
     }
 
     @Nested
@@ -102,6 +134,78 @@ class OppdragServiceTest {
             oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, false)
 
             verify { persistenceService.lagreOppdrag(oppdrag) }
+        }
+
+        @Test
+        fun `skal lagre mottakerendring for eksisterende oppdrag uten nye perioder`() {
+            val barnIdent = genererFødselsnummer()
+            val nyMottaker = genererFødselsnummer()
+            val hendelse = TestData.opprettHendelse(
+                vedtakType = Vedtakstype.ENDRING_MOTTAKER,
+                kravhaverIdent = barnIdent,
+                mottakerIdent = nyMottaker,
+                periodeListe = emptyList(),
+            )
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = genererFødselsnummer())
+
+            oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, false)
+
+            oppdrag.mottakerIdent shouldBe nyMottaker
+            verify(exactly = 0) { oppdragsperiodeService.opprettNyOppdragsperiode(any(), any(), any()) }
+            verify(exactly = 0) { persistenceService.finnSisteOverførtePeriode() }
+            verify(exactly = 1) { persistenceService.lagreOppdrag(oppdrag) }
+            verify(exactly = 1) {
+                endreMottakerService.opprettEndreMottaker(hendelse.vedtakId, hendelse.sakId, barnIdent, nyMottaker)
+            }
+        }
+
+        @Test
+        fun `skal lagre mottakerendring fra andre vedtakstyper med perioder`() {
+            val barnIdent = genererFødselsnummer()
+            val nyMottaker = genererFødselsnummer()
+            val hendelse = TestData.opprettHendelse(kravhaverIdent = barnIdent, mottakerIdent = nyMottaker)
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = genererFødselsnummer())
+            every { oppdragsperiodeService.opprettNyOppdragsperiode(any(), any(), any()) } returns TestData.opprettOppdragsperiode()
+
+            oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, false)
+
+            verify(exactly = 1) { oppdragsperiodeService.opprettNyOppdragsperiode(any(), any(), any()) }
+            verify(exactly = 1) {
+                endreMottakerService.opprettEndreMottaker(hendelse.vedtakId, hendelse.sakId, barnIdent, nyMottaker)
+            }
+        }
+
+        @Test
+        fun `skal ikke sende mottakerendring naar mottaker er uendret`() {
+            val mottaker = genererFødselsnummer()
+            val hendelse = TestData.opprettHendelse(mottakerIdent = mottaker, periodeListe = emptyList())
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = mottaker)
+
+            oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, false)
+
+            verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        }
+
+        @Test
+        fun `skal ikke sende mottakerendring naar funksjonen er deaktivert`() {
+            every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
+            val hendelse = TestData.opprettHendelse(periodeListe = emptyList())
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = genererFødselsnummer())
+
+            oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, false)
+
+            oppdrag.mottakerIdent shouldBe hendelse.mottakerIdent
+            verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        }
+
+        @Test
+        fun `skal ikke sende mottakerendring for engangsbelop`() {
+            val hendelse = TestData.opprettHendelse(periodeListe = emptyList())
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = genererFødselsnummer())
+
+            oppdragService.lagreEllerOppdaterOppdrag(oppdrag, hendelse, true)
+
+            verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
         }
 
         @Test

@@ -203,6 +203,7 @@ class PersistenceService(
             "Fant ikke nyopprettet mottakerendring for vedtak ${endreMottaker.vedtakId}"
         }
     }
+
     fun låsEndreMottakerForOverføring(id: Long) {
         endreMottakerRepository.låsForOverføring(id)
     }
