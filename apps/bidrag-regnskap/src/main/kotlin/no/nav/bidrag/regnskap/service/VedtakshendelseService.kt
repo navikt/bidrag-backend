@@ -45,6 +45,14 @@ class VedtakshendelseService(
 
         val vedtakHendelse = mapVedtakHendelse(hendelse)
 
+        // Endring av mottaker skal ikke trigge andre vedtakshendelser.
+        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
+            if (UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+                behandleEndringAvMottaker(vedtakHendelse)
+            }
+            return emptyList()
+        }
+
         if (oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(vedtakHendelse.id).isNotEmpty()) {
             LOGGER.warn { "VedtakHendelse med vedtakid: ${vedtakHendelse.id} er allerede behandlet. Ignorerer hendelse." }
             return emptyList()
@@ -64,10 +72,6 @@ class VedtakshendelseService(
             opprettOppdragForEngangsbeløp(vedtakHendelse, engangsbelop)?.let {
                 opprettedeOppdrag.add(it)
             }
-        }
-
-        if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
-            behandleEndringAvMottaker(vedtakHendelse)
         }
 
         return opprettedeOppdrag
