@@ -105,6 +105,7 @@ function UnderholdskostnaderSøknadsbarn({
           <StønadTilBarnetilsynTabell data={data} />
           <FaktiskeTilsynsutgifterTabell data={data} />
           <TilleggstønadTabell data={data} />
+          <ForpleiningTabell data={data} />
         </>
       )}
       <UnderholdskostnaderTabell data={data} />
@@ -146,6 +147,36 @@ function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
                 content: beløpstypeVisningsnavn(d.beløpstype),
               },
               { content: formatterBeløpForBeregning(d.total) },
+            ],
+          })),
+        }}
+      />
+    </div>
+  );
+}
+
+function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
+  if (!data.forpleining?.length) return null;
+
+  return (
+    <div className={"mb-4 mt-4"}>
+      <h4>Forpleining</h4>
+      <CommonTable
+        layoutAuto
+        width={"320px"}
+        data={{
+          headers: [
+            {
+              name: tekster.tabell.felles.fraTilOgMed,
+            },
+            {
+              name: tekster.tabell.underholdskostnader.forpleining.beløp,
+            },
+          ],
+          rows: data.forpleining.map((d) => ({
+            columns: [
+              { content: formatPeriode(d.periode.fom, d.periode.tom) },
+              { content: formatterBeløpForBeregning(d.beløp) },
             ],
           })),
         }}
@@ -273,6 +304,10 @@ function UnderholdskostnaderTabell({ data }: { data: NotatUnderholdBarnDto }) {
               width: "80px",
             },
             {
+              name: tekster.tabell.underholdskostnader.beregning.forpleining,
+              width: "80px",
+            },
+            {
               name: tekster.tabell.underholdskostnader.beregning
                 .underholdskostnad,
             },
@@ -286,6 +321,7 @@ function UnderholdskostnaderTabell({ data }: { data: NotatUnderholdBarnDto }) {
                 { content: formatterBeløpForBeregning(d.stønadTilBarnetilsyn) },
                 { content: formatterBeløpForBeregning(d.tilsynsutgifter) },
                 { content: formatterBeløpForBeregning(d.barnetrygd) },
+                { content: formatterBeløpForBeregning(d.forpleining ?? 0) },
                 { content: formatterBeløpForBeregning(d.total) },
               ],
             },

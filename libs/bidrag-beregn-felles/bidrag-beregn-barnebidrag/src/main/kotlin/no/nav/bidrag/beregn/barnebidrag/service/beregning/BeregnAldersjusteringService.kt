@@ -276,6 +276,7 @@ class BeregnAldersjusteringService : BeregnService() {
                     nettoTilsynsutgift = aldersjusteringGrunnlag.nettoTilsynsutgift,
                 )
             },
+            forpleining = null,
             sjablonSjablontallBeregningGrunnlagListe = aldersjusteringGrunnlag.sjablonSjablontallPeriodeGrunnlagListe
                 .filter { it.sjablonSjablontallPeriode.periode.inneholder(aldersjusteringGrunnlag.beregningsperiode) }
                 .map {
