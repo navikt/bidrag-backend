@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
@@ -14,6 +15,7 @@ import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterBeregnTilDatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
@@ -30,6 +32,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -1369,6 +1372,164 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                 val sistePeriode = maxByOrNull { it.fom }
                 sistePeriode!!.tom shouldBe YearMonth.now().minusMonths(2).atEndOfMonth()
             }
+        }
+
+        @Test
+        fun `skal beholde perioder for underholdskostnad når opphørsdato slettes`() {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.virkningstidspunkt = YearMonth.now().minusMonths(8).atDay(1)
+            val søknadsbarn = behandling.søknadsbarn.first()
+            søknadsbarn.opphørsdato = YearMonth.now().minusMonths(1).atDay(1)
+            val søknadsbarn2 = opprettSøknadsbarn2UtenOpphør(behandling)
+            val underholdskostnadBarn1 = opprettUnderholdskostnadMedPerioder(behandling, søknadsbarn)
+            val underholdskostnadBarn2 = opprettUnderholdskostnadMedLøpendeBarnetilsyn(behandling, søknadsbarn2)
+
+            behandling.underholdskostnader = mutableSetOf(underholdskostnadBarn1, underholdskostnadBarn2)
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+            virkningstidspunktService.oppdaterOpphørsdato(1, OppdaterOpphørsdatoRequestDto(søknadsbarn.id!!, opphørsdato = null))
+
+            assertSoftly {
+                underholdskostnadBarn1.barnetilsyn shouldHaveSize 2
+                underholdskostnadBarn1.tilleggsstønad shouldHaveSize 2
+                underholdskostnadBarn2.barnetilsyn shouldHaveSize 1
+            }
+        }
+
+        @Test
+        fun `skal beholde perioder for underholdskostnad når beregn til endres til inneværende måned`() {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.virkningstidspunkt = YearMonth.now().minusMonths(8).atDay(1)
+            val søknadsbarn = behandling.søknadsbarn.first()
+            val søknadsbarn2 = opprettSøknadsbarn2UtenOpphør(behandling)
+            val underholdskostnadBarn1 = opprettUnderholdskostnadMedPerioder(behandling, søknadsbarn)
+            val underholdskostnadBarn2 = opprettUnderholdskostnadMedLøpendeBarnetilsyn(behandling, søknadsbarn2)
+
+            behandling.underholdskostnader = mutableSetOf(underholdskostnadBarn1, underholdskostnadBarn2)
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+            virkningstidspunktService.oppdaterBeregnTilDato(
+                1,
+                OppdaterBeregnTilDatoRequestDto(søknadsbarn.id!!, beregnTil = BeregnTil.INNEVÆRENDE_MÅNED),
+            )
+
+            assertSoftly {
+                underholdskostnadBarn1.barnetilsyn shouldHaveSize 2
+                underholdskostnadBarn1.tilleggsstønad shouldHaveSize 2
+                underholdskostnadBarn2.barnetilsyn shouldHaveSize 1
+            }
+        }
+
+        @Test
+        fun `skal fjerne periode som starter på opphørsdatoen`() {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.virkningstidspunkt = YearMonth.now().minusMonths(8).atDay(1)
+            val søknadsbarn = behandling.søknadsbarn.first()
+            val underholdskostnadBarn1 = opprettUnderholdskostnadMedPerioder(behandling, søknadsbarn)
+            val opphørsdato = YearMonth.now().minusMonths(6).atDay(1)
+
+            behandling.underholdskostnader = mutableSetOf(underholdskostnadBarn1)
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+            virkningstidspunktService.oppdaterOpphørsdato(1, OppdaterOpphørsdatoRequestDto(søknadsbarn.id!!, opphørsdato = opphørsdato))
+
+            assertSoftly(underholdskostnadBarn1.barnetilsyn) {
+                shouldHaveSize(1)
+                first().fom shouldBe behandling.virkningstidspunkt
+            }
+        }
+
+        private fun opprettSøknadsbarn2UtenOpphør(behandling: Behandling): Rolle {
+            val søknadsbarn2 =
+                Rolle(
+                    ident = testdataBarn2.ident,
+                    rolletype = Rolletype.BARN,
+                    behandling = behandling,
+                    fødselsdato = testdataBarn2.fødselsdato,
+                    id = 5,
+                )
+            behandling.roller.add(søknadsbarn2)
+            return søknadsbarn2
+        }
+
+        private fun opprettUnderholdskostnadMedPerioder(behandling: Behandling, søknadsbarn: Rolle): Underholdskostnad {
+            val underholdskostnad =
+                Underholdskostnad(
+                    behandling = behandling,
+                    id = 1,
+                    person =
+                    Person(
+                        id = 1,
+                        rolle = mutableSetOf(søknadsbarn),
+                        ident = testdataBarn1.ident,
+                        navn = testdataBarn1.navn,
+                        fødselsdato = testdataBarn1.fødselsdato,
+                    ),
+                )
+            underholdskostnad.barnetilsyn =
+                mutableSetOf(
+                    Barnetilsyn(
+                        id = 1,
+                        underholdskostnad = underholdskostnad,
+                        fom = behandling.virkningstidspunkt!!,
+                        tom = YearMonth.now().minusMonths(7).atEndOfMonth(),
+                        under_skolealder = true,
+                        omfang = Tilsynstype.DELTID,
+                        kilde = Kilde.MANUELL,
+                    ),
+                    Barnetilsyn(
+                        id = 2,
+                        underholdskostnad = underholdskostnad,
+                        fom = YearMonth.now().minusMonths(6).atDay(1),
+                        tom = YearMonth.now().minusMonths(2).atEndOfMonth(),
+                        under_skolealder = true,
+                        omfang = Tilsynstype.DELTID,
+                        kilde = Kilde.MANUELL,
+                    ),
+                )
+            underholdskostnad.tilleggsstønad =
+                mutableSetOf(
+                    Tilleggsstønad(
+                        id = 1,
+                        underholdskostnad = underholdskostnad,
+                        fom = behandling.virkningstidspunkt!!,
+                        tom = YearMonth.now().minusMonths(7).atEndOfMonth(),
+                        `beløp` = BigDecimal(1000),
+                    ),
+                    Tilleggsstønad(
+                        id = 2,
+                        underholdskostnad = underholdskostnad,
+                        fom = YearMonth.now().minusMonths(6).atDay(1),
+                        tom = YearMonth.now().minusMonths(2).atEndOfMonth(),
+                        `beløp` = BigDecimal(1000),
+                    ),
+                )
+            return underholdskostnad
+        }
+
+        private fun opprettUnderholdskostnadMedLøpendeBarnetilsyn(behandling: Behandling, søknadsbarn: Rolle): Underholdskostnad {
+            val underholdskostnad =
+                Underholdskostnad(
+                    behandling = behandling,
+                    id = 2,
+                    person =
+                    Person(
+                        id = 2,
+                        rolle = mutableSetOf(søknadsbarn),
+                        ident = testdataBarn2.ident,
+                        navn = testdataBarn2.navn,
+                        fødselsdato = testdataBarn2.fødselsdato,
+                    ),
+                )
+            underholdskostnad.barnetilsyn =
+                mutableSetOf(
+                    Barnetilsyn(
+                        id = 3,
+                        underholdskostnad = underholdskostnad,
+                        fom = behandling.virkningstidspunkt!!,
+                        under_skolealder = true,
+                        omfang = Tilsynstype.DELTID,
+                        kilde = Kilde.MANUELL,
+                    ),
+                )
+            return underholdskostnad
         }
 
         @Test
