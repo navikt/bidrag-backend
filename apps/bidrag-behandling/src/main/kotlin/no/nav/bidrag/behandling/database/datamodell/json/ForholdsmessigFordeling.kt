@@ -75,6 +75,5 @@ data class ForholdsmessigFordelingSøknadBarn(
     var status: Behandlingstatus? = null,
     // Søknaden ble opprettet samtidig med eller etter hovedsøknaden, og kan derfor bli hovedsøknad hvis hovedsøknaden slettes
     var opprettetEtterHovedsøknad: Boolean = false,
-    // FF-klagesøknad som ble feilregistrert for barnet da denne søknaden ble opprettet. Gjenopprettes hvis denne søknaden slettes
     var erstatterFFKlagesøknadsid: Long? = null,
 )

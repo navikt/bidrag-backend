@@ -63,6 +63,8 @@ data class OpprettetSøknad(
     val kravhaverIdent: String,
     val stønadstype: Stønadstype?,
     val refSøknadsid: Long?,
+    val søknadsid: Long? = null,
+    val behandlingstype: Behandlingstype? = null,
 )
 data class OppdaterBarnFraFFRequest(
     val rollerSomSkalLeggesTilDto: List<OpprettRolleDto>,
