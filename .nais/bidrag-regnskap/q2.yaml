@@ -25,7 +25,7 @@ unleash:
   env: development
   secret_name: bidrag-regnskap-unleash-api-token
 env:
-  SPRING_PROFILES_ACTIVE: database-new
+  SPRING_PROFILES_ACTIVE: database-new,nais
   SKATT_URL: https://tolking2predator-proxy-ske-elin.synt.elin.innkreving.skatteetaten-test.no/Tolkning2PredatorV2.RestApi
   SKATT_HOST: tolking2predator-proxy-ske-elin.synt.elin.innkreving.skatteetaten-test.no
   TOPIC_VEDTAK: bidrag.vedtak-q2

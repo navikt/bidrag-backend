@@ -25,7 +25,7 @@ unleash:
   env: development
   secret_name: bidrag-regnskap-unleash-api-token
 env:
-  SPRING_PROFILES_ACTIVE: database-new
+  SPRING_PROFILES_ACTIVE: database-new,nais
   SKATT_URL: https://bidrag-elin-stub.intern.dev.nav.no/bidrag/v1/bidragskrav
   SKATT_HOST: bidrag-elin-stub.intern.dev.nav.no
   TOPIC_VEDTAK: bidrag.vedtak-q1
