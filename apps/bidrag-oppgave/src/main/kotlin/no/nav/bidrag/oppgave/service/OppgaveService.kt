@@ -38,9 +38,6 @@ class OppgaveService(
     private fun FinnOppgaverRequest.toOppgaveParams(offset: Int, limit: Int): FinnOppgaverParams = FinnOppgaverParams(
         saksreferanse = saksnummer?.let { listOf(it) },
         aktoerId = aktoerId?.let { listOf(it) },
-        // Midlertidig deaktivert til det er behov
-//        tildeltEnhetsnr = enhetsnummer,
-//        tilordnetRessurs = saksbehandler,
         tema = listOf(FellesKodeverkTema.BID),
         statuskategori = "AAPEN",
         limit = limit,
