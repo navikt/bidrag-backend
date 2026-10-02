@@ -852,6 +852,9 @@ class ForholdsmessigFordelingService(
         søknadsidSomSlettes: Long,
     ) = klageService.slettEllerGjennopprettKlageSøknader(behandling, søknadsidSomSlettes)
 
+    @Transactional(readOnly = true)
+    fun kanEndreSøknadStatus(søknadsid: Long): Boolean = klageService.kanEndreSøknadStatus(søknadsid)
+
     // endregion
 
     // ═══════════════════════════════════════════════════════════════════
