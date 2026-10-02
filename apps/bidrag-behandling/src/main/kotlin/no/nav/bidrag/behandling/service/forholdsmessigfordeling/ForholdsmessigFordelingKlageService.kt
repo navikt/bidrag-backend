@@ -92,7 +92,8 @@ class ForholdsmessigFordelingKlageService(
             bbmConsumer.fjernSammenknytning(søknadsidSomSlettes)
         } else {
             val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
-            if (søknadSomSlettes.refSøknadsid != behandling.soknadsid) {
+            val erSøknadOpprettetEtterHovedsøknad = behandling.erSøknadOpprettetEtterHovedsøknad(søknadsidSomSlettes)
+            if (søknadSomSlettes.refSøknadsid != behandling.soknadsid && !erSøknadOpprettetEtterHovedsøknad) {
                 // Var ikke hovedsøknad som ble slettet. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
                 opprettKlageSøknad(søknadSomSlettes, behandling, emptyList(), behandling.soknadsid)
                 bbmConsumer.fjernSammenknytning(søknadsidSomSlettes)
