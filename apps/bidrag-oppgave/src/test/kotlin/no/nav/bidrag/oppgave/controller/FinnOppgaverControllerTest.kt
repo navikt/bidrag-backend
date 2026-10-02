@@ -20,6 +20,7 @@ import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -44,8 +45,8 @@ import org.springframework.web.client.HttpClientErrorException
 import tools.jackson.databind.ObjectMapper
 
 @WebMvcTest(OppgaveController::class)
-@Import(OppgaveService::class, SecurityConfig::class, RestConfig::class, OppgaveControllerTest.TestConfig::class)
-class OppgaveControllerTest {
+@Import(OppgaveService::class, SecurityConfig::class, RestConfig::class, FinnOppgaverControllerTest.TestConfig::class)
+class FinnOppgaverControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvcTester
@@ -99,21 +100,14 @@ class OppgaveControllerTest {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(
-                """
-                {
-                  "saksnummer": "SAK-123",
-                  "aktoerId": "1234567890123",
-                  "saksbehandler": "Z999999",
-                  "enhetsnummer": "4100"
-                }
-                """.trimIndent(),
-            )
-            .exchange()
+        val resultat = postOppgaver(
+            FinnOppgaverRequest(
+                saksnummer = "SAK-123",
+                aktoerId = AktorId("1234567890123"),
+                saksbehandler = NavIdent("Z999999"),
+                enhetsnummer = Enhetsnummer("4100"),
+            ),
+        )
 
         assertThat(resultat).hasStatusOk()
         assertThat(resultat.oppgaver())
@@ -132,13 +126,22 @@ class OppgaveControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["-1", "0", "101", "2147483647", "999999999999999999999999"])
-    fun `POST oppgaver avviser ugyldig limit`(limit: String) {
+    @ValueSource(ints = [-1, 0, 101, Int.MAX_VALUE])
+    fun `POST oppgaver avviser ugyldig limit`(limit: Int) {
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", limit = limit))
+
+        assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
+        verifyNoInteractions(oppgaveClient)
+    }
+
+    // Verdien er større enn Int og kan ikke uttrykkes med FinnOppgaverRequest, så her sendes rå JSON.
+    @Test
+    fun `POST oppgaver avviser limit som ikke passer i Int`() {
         val resultat = mockMvc.post()
             .uri("/api/oppgaver")
             .with(jwtToken())
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"saksnummer": "SAK-123", "limit": $limit}""")
+            .content("""{"saksnummer": "SAK-123", "limit": 999999999999999999999999}""")
             .exchange()
 
         assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
@@ -146,48 +149,21 @@ class OppgaveControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(
-        strings = [
-            "{}",
-            """{"limit": 1}""",
-            """{"saksnummer": null, "aktoerId": null, "saksbehandler": null, "enhetsnummer": null}""",
-            """{"saksnummer": "  "}""",
-            """{"aktoerId": ""}""",
-            """{"saksbehandler": "  "}""",
-            """{"enhetsnummer": ""}""",
-        ],
-    )
-    fun `POST oppgaver avviser søk uten avgrensning`(body: String) {
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body)
-            .exchange()
+    @MethodSource("søkUtenAvgrensning")
+    fun `POST oppgaver avviser søk uten avgrensning`(request: FinnOppgaverRequest) {
+        val resultat = postOppgaver(request)
 
         assertThat(resultat).hasStatus(HttpStatus.BAD_REQUEST)
         verifyNoInteractions(oppgaveClient)
     }
 
     @ParameterizedTest
-    @ValueSource(
-        strings = [
-            """{"saksnummer": "SAK-123"}""",
-            """{"aktoerId": "1234567890123"}""",
-            """{"saksbehandler": "Z999999"}""",
-            """{"enhetsnummer": "4100"}""",
-        ],
-    )
-    fun `POST oppgaver godtar hvert søkekriterium alene`(body: String) {
+    @MethodSource("søkMedEttKriterium")
+    fun `POST oppgaver godtar hvert søkekriterium alene`(request: FinnOppgaverRequest) {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body)
-            .exchange()
+        val resultat = postOppgaver(request)
 
         assertThat(resultat).hasStatusOk()
         verify(oppgaveClient).finnOppgaver(anyFinnOppgaverParams())
@@ -198,12 +174,7 @@ class OppgaveControllerTest {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"saksnummer": "SAK-123", "limit": null}""")
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", limit = null))
 
         assertThat(resultat).hasStatusOk()
         assertThat(capturedParams().limit).isEqualTo(100)
@@ -215,12 +186,7 @@ class OppgaveControllerTest {
         given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
             .willReturn(oppgaveResponse())
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"saksnummer": "SAK-123", "limit": $limit}""")
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123", limit = limit))
 
         assertThat(resultat).hasStatusOk()
         assertThat(capturedParams().limit).isEqualTo(limit)
@@ -252,12 +218,7 @@ class OppgaveControllerTest {
             .given(tilgangkontrollService)
             .sjekkTilgangSaksnummer(Saksnummer("SAK-123"))
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"saksnummer": "SAK-123"}""")
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123"))
 
         assertThat(resultat).hasStatus(HttpStatus.FORBIDDEN)
         assertThat(resultat.response.contentType)
@@ -270,17 +231,19 @@ class OppgaveControllerTest {
             .given(tilgangkontrollService)
             .sjekkTilgangPerson(Personident("1234567890123"))
 
-        val resultat = mockMvc.post()
-            .uri("/api/oppgaver")
-            .with(jwtToken())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"aktoerId": "1234567890123"}""")
-            .exchange()
+        val resultat = postOppgaver(FinnOppgaverRequest(aktoerId = AktorId("1234567890123")))
 
         assertThat(resultat).hasStatus(HttpStatus.FORBIDDEN)
         assertThat(resultat.response.contentType)
             .isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE)
     }
+
+    private fun postOppgaver(request: FinnOppgaverRequest) = mockMvc.post()
+        .uri("/api/oppgaver")
+        .with(jwtToken())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(objectMapper.writeValueAsString(request))
+        .exchange()
 
     private fun capturedParams(): FinnOppgaverParams {
         val captor = ArgumentCaptor.forClass(FinnOppgaverParams::class.java)
@@ -295,6 +258,26 @@ class OppgaveControllerTest {
         .toList()
 
     private fun jwtToken(): RequestPostProcessor = jwt()
+
+    companion object {
+        @JvmStatic
+        fun søkUtenAvgrensning() = listOf(
+            FinnOppgaverRequest(),
+            FinnOppgaverRequest(limit = 1),
+            FinnOppgaverRequest(saksnummer = "  "),
+            FinnOppgaverRequest(aktoerId = AktorId("")),
+            FinnOppgaverRequest(saksbehandler = NavIdent("  ")),
+            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("")),
+        )
+
+        @JvmStatic
+        fun søkMedEttKriterium() = listOf(
+            FinnOppgaverRequest(saksnummer = "SAK-123"),
+            FinnOppgaverRequest(aktoerId = AktorId("1234567890123")),
+            FinnOppgaverRequest(saksbehandler = NavIdent("Z999999")),
+            FinnOppgaverRequest(enhetsnummer = Enhetsnummer("4100")),
+        )
+    }
 
     @TestConfiguration
     @EnableWebSecurity
