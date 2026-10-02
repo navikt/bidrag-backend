@@ -75,13 +75,23 @@ class EndreMottakerServiceTest {
 
     @Test
     fun `skal lagre pending rad og publisere event ved oppretting`() {
-        every { persistenceService.lagreEndreMottaker(any()) } returns endreMottaker()
+        every { persistenceService.opprettEndreMottakerHvisIkkeFinnes(any()) } returns endreMottaker()
 
         endreMottakerService.opprettEndreMottaker(1, sakId, barnIdent, nyMottakerIdent)
 
-        verify(exactly = 1) { persistenceService.lagreEndreMottaker(match { it.godkjentAvSkattTidspunkt == null }) }
+        verify(exactly = 1) { persistenceService.opprettEndreMottakerHvisIkkeFinnes(match { it.godkjentAvSkattTidspunkt == null }) }
         verify(exactly = 1) { applicationEventPublisher.publishEvent(EndreMottakerOpprettetEvent(id)) }
         verify(exactly = 0) { bidragReskontroConsumer.endreRmForSak(any(), any(), any()) }
+    }
+
+    @Test
+    fun `skal ikke publisere ny overfoering ved duplikat av vedtak og barn`() {
+        every { persistenceService.opprettEndreMottakerHvisIkkeFinnes(any()) } returnsMany listOf(endreMottaker(), null)
+
+        endreMottakerService.opprettEndreMottaker(1, sakId, barnIdent, nyMottakerIdent)
+        endreMottakerService.opprettEndreMottaker(1, sakId, barnIdent, nyMottakerIdent)
+
+        verify(exactly = 1) { applicationEventPublisher.publishEvent(EndreMottakerOpprettetEvent(id)) }
     }
 
     @Test

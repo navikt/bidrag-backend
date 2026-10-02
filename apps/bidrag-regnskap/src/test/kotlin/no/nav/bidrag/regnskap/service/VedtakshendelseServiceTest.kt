@@ -164,10 +164,7 @@ class VedtakshendelseServiceTest {
 
     @Test
     fun `Skal ikke behandle endring av mottaker uten innkreving`() {
-        val hendelse = opprettVedtakshendelse(
-            vedtakstype = "ENDRING_MOTTAKER",
-            innkrevingstype = "UTEN_INNKREVING",
-        )
+        val hendelse = opprettMottakerendringsHendelse("UTEN_INNKREVING")
 
         vedtakshendelseService.behandleHendelse(hendelse)
 
@@ -176,29 +173,51 @@ class VedtakshendelseServiceTest {
 
     @Test
     fun `skal opprette endring av mottaker med vedtakets mottaker`() {
-        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+        val hendelse = opprettMottakerendringsHendelse()
 
-        vedtakshendelseService.behandleHendelse(hendelse)
+        val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
 
+        oppdrag shouldBe emptyList()
         verify(exactly = 1) {
             endreMottakerService.opprettEndreMottaker(
-                vedtakId = 123,
+                vedtakId = 648462,
                 sakId = any(),
                 barnIdent = any(),
                 nyMottakerIdent = any(),
             )
         }
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
+        verify(exactly = 0) { oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(any()) }
+    }
+
+    @Test
+    fun `skal sende mottakerendring uten perioder til idempotent lagring ved ny levering`() {
+        val hendelse = opprettMottakerendringsHendelse()
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 2) { endreMottakerService.opprettEndreMottaker(648462, any(), any(), any()) }
+        verify(exactly = 0) { oppdragsperiodeService.hentAlleOppdragsperiodeMedVedtaksId(any()) }
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
     @Test
     fun `skal ikke lagre mottakerendring naar funksjonen er deaktivert`() {
         every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
 
-        vedtakshendelseService.behandleHendelse(opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER"))
+        vedtakshendelseService.behandleHendelse(opprettMottakerendringsHendelse())
 
         verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
-        verify(exactly = 1) { oppdragService.lagreHendelse(any(), false) }
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
+
+    private fun opprettMottakerendringsHendelse(innkrevingstype: String = "MED_INNKREVING"): String =
+        requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmOppdatering.json")).readText()
+            .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"MED_INNKREVING\"", "\"$innkrevingstype\"")
 
     private fun opprettVedtakshendelse(
         vedtakstype: String = "INNKREVING",

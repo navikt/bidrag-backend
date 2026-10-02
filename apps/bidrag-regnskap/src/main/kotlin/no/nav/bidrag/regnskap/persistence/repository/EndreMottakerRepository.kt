@@ -2,11 +2,30 @@ package no.nav.bidrag.regnskap.persistence.repository
 
 import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
 interface EndreMottakerRepository : JpaRepository<EndreMottaker, Long> {
+    @Modifying
+    @Query(
+        value = """
+            INSERT INTO endre_mottaker (vedtak_id, saksnummer, barn_ident, ny_mottaker_ident)
+            VALUES (:vedtakId, :saksnummer, :barnIdent, :nyMottakerIdent)
+            ON CONFLICT (vedtak_id, barn_ident) DO NOTHING
+        """,
+        nativeQuery = true,
+    )
+    fun opprettHvisIkkeFinnes(
+        @Param("vedtakId") vedtakId: Int,
+        @Param("saksnummer") saksnummer: String,
+        @Param("barnIdent") barnIdent: String,
+        @Param("nyMottakerIdent") nyMottakerIdent: String,
+    ): Int
+
+    fun findByVedtakIdAndBarnIdent(vedtakId: Int, barnIdent: String): EndreMottaker?
+
     @Query(
         value = """
             SELECT pg_advisory_xact_lock(hashtext(saksnummer), hashtext(barn_ident))::text

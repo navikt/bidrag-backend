@@ -38,7 +38,7 @@ class EndreMottakerService(
 
     @Transactional
     fun opprettEndreMottaker(vedtakId: Int, sakId: String, barnIdent: String, nyMottakerIdent: String) {
-        val endreMottaker = persistenceService.lagreEndreMottaker(
+        val endreMottaker = persistenceService.opprettEndreMottakerHvisIkkeFinnes(
             EndreMottaker(
                 vedtakId = vedtakId,
                 saksnummer = sakId,
@@ -46,6 +46,10 @@ class EndreMottakerService(
                 nyMottakerIdent = nyMottakerIdent,
             ),
         )
+        if (endreMottaker == null) {
+            LOGGER.info { "Endring av mottaker for vedtak: $vedtakId er allerede lagret. Ignorerer duplikat." }
+            return
+        }
         LOGGER.info { "Lagret endring av mottaker for vedtak: $vedtakId, sak: $sakId (id: ${endreMottaker.id})." }
         applicationEventPublisher.publishEvent(EndreMottakerOpprettetEvent(endreMottaker.id!!))
     }

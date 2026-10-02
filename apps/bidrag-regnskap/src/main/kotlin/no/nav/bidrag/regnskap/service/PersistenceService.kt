@@ -191,6 +191,18 @@ class PersistenceService(
     )
 
     fun lagreEndreMottaker(endreMottaker: EndreMottaker): EndreMottaker = endreMottakerRepository.save(endreMottaker)
+    fun opprettEndreMottakerHvisIkkeFinnes(endreMottaker: EndreMottaker): EndreMottaker? {
+        val opprettet = endreMottakerRepository.opprettHvisIkkeFinnes(
+            endreMottaker.vedtakId,
+            endreMottaker.saksnummer,
+            endreMottaker.barnIdent,
+            endreMottaker.nyMottakerIdent,
+        )
+        if (opprettet == 0) return null
+        return checkNotNull(endreMottakerRepository.findByVedtakIdAndBarnIdent(endreMottaker.vedtakId, endreMottaker.barnIdent)) {
+            "Fant ikke nyopprettet mottakerendring for vedtak ${endreMottaker.vedtakId}"
+        }
+    }
     fun låsEndreMottakerForOverføring(id: Long) {
         endreMottakerRepository.låsForOverføring(id)
     }

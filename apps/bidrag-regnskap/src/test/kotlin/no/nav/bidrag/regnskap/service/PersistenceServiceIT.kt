@@ -254,9 +254,10 @@ internal class PersistenceServiceIT {
     @Test
     fun `skal hente eldste ikke-godkjente mottakerendring per sak og barn`() {
         val tidspunkt = LocalDateTime.of(2024, 1, 1, 12, 0)
+        var vedtakId = 1
         fun lagre(sak: String, opprettet: LocalDateTime, barn: String = "11111111111") = persistenceService.lagreEndreMottaker(
             EndreMottaker(
-                vedtakId = 1,
+                vedtakId = vedtakId++,
                 saksnummer = sak,
                 barnIdent = barn,
                 nyMottakerIdent = "22222222222",
@@ -285,11 +286,36 @@ internal class PersistenceServiceIT {
     }
 
     @Test
+    fun `skal opprette mottakerendring kun en gang per vedtak og barn`() {
+        val endring = EndreMottaker(
+            vedtakId = 987654,
+            saksnummer = "sak-for-duplikat",
+            barnIdent = "11111111111",
+            nyMottakerIdent = "22222222222",
+        )
+
+        val opprettet = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)!!
+        val duplikat = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)
+        opprettet.godkjentAvSkattTidspunkt = LocalDateTime.now()
+        persistenceService.lagreEndreMottaker(opprettet)
+        val duplikatEtterGodkjenning = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)
+        val annetVedtak = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring.copy(vedtakId = 987655))
+        val annetBarn = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring.copy(barnIdent = "33333333333"))
+
+        opprettet.id shouldNotBe null
+        duplikat shouldBe null
+        duplikatEtterGodkjenning shouldBe null
+        annetVedtak?.id shouldNotBe null
+        annetBarn?.id shouldNotBe null
+        persistenceService.endreMottakerRepository.findByVedtakIdAndBarnIdent(987654, "11111111111")?.id shouldBe opprettet.id
+    }
+
+    @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun `skal lagre nettverksfeil slik at mottakerendringen kan resendes`() {
         val endring = persistenceService.lagreEndreMottaker(
             EndreMottaker(
-                vedtakId = 10,
+                vedtakId = 987656,
                 saksnummer = "sak-for-nettverksfeil",
                 barnIdent = "11111111111",
                 nyMottakerIdent = "22222222222",
@@ -317,9 +343,10 @@ internal class PersistenceServiceIT {
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun `skal serialisere overføring per sak og barn på tvers av samtidige kall`() {
+        var vedtakId = 987657
         fun lagre(barn: String, mottaker: String) = persistenceService.lagreEndreMottaker(
             EndreMottaker(
-                vedtakId = 10,
+                vedtakId = vedtakId++,
                 saksnummer = "sak-for-serialisering",
                 barnIdent = barn,
                 nyMottakerIdent = mottaker,
