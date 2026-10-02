@@ -1,5 +1,6 @@
 package no.nav.bidrag.oppgave
 
+import no.nav.bidrag.tilgang.TilgangskontrollService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.assertj.MockMvcTester
 
 @ActiveProfiles("junit")
@@ -19,6 +21,9 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester
 @AutoConfigureMockMvc
 @Import(SecurityTest.TestConfig::class)
 class SecurityTest {
+
+    @MockitoBean
+    private lateinit var tilgangkontrollService: TilgangskontrollService
 
     @Autowired
     private lateinit var mockMvc: MockMvcTester

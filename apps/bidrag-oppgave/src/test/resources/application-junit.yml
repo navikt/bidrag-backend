@@ -11,6 +11,9 @@ app:
   oppgave:
     url: http://oppgave-junit.mocked
     audience: api://mock.oppgave/.default
+  tilgangskontroll:
+    url: http://tilgang-junit.mocked
+    audience: api://mock.tilgang/.default
 
 spring:
   main:

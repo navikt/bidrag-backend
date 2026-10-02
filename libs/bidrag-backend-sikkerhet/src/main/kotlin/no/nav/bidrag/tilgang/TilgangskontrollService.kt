@@ -58,7 +58,10 @@ class TilgangskontrollService(
      */
     fun sjekkTilgangSaksnummer(saksnummer: Saksnummer) {
         val response = hentTilgangSaksnummer(saksnummer)
-        if (!response.harTilgang) throw TilgangskontrollException(response)
+        if (!response.harTilgang) {
+            log.info("Saksbehandler ${navIdentSupplier()} har ikke tilgang til sak ${saksnummer.verdi}. Detaljer: ${response.detaljer}")
+            throw TilgangskontrollException(response)
+        }
     }
 
     /**
@@ -67,7 +70,10 @@ class TilgangskontrollService(
      */
     fun sjekkTilgangPerson(personident: Personident) {
         val response = hentTilgangPerson(personident)
-        if (!response.harTilgang) throw TilgangskontrollException(response)
+        if (!response.harTilgang) {
+            log.info("Saksbehandler ${navIdentSupplier()} har ikke tilgang til person. Detaljer: ${response.detaljer}")
+            throw TilgangskontrollException(response)
+        }
     }
 
     private fun ingenTilgangVedFeil(e: Exception, gjelder: String): TilgangskontrollResponse {

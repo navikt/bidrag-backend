@@ -1,5 +1,6 @@
 package no.nav.bidrag.oppgave.controller
 
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.OppgaveTestData.forventetBidragOppgaveDto
 import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveResponse
 import no.nav.bidrag.oppgave.config.RestConfig
@@ -12,6 +13,9 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
+import no.nav.bidrag.tilgang.TilgangskontrollException
+import no.nav.bidrag.tilgang.TilgangskontrollService
+import no.nav.bidrag.transport.tilgang.TilgangskontrollResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,6 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.willThrow
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
@@ -49,6 +54,9 @@ class OppgaveControllerTest {
 
     @MockitoBean
     private lateinit var oppgaveClient: OppgaveClient
+
+    @MockitoBean
+    private lateinit var tilgangkontrollService: TilgangskontrollService
 
     @Test
     fun `GET oppgaver videresender saksnummer og returnerer mappet oppgave`() {
@@ -235,6 +243,24 @@ class OppgaveControllerTest {
                 "\"status\":406",
                 "\"title\":\"Feil mot ekstern tjeneste\"",
             )
+    }
+
+    @Test
+    fun `Avvist tilgang gir 403`() {
+        willThrow(TilgangskontrollException(TilgangskontrollResponse(false, emptyList())))
+            .given(tilgangkontrollService)
+            .sjekkTilgangSaksnummer(Saksnummer("SAK-123"))
+
+        val resultat = mockMvc.post()
+            .uri("/api/oppgaver")
+            .with(jwtToken())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"saksnummer": "SAK-123"}""")
+            .exchange()
+
+        assertThat(resultat).hasStatus(HttpStatus.FORBIDDEN)
+        assertThat(resultat.response.contentType)
+            .isEqualTo(MediaType.APPLICATION_PROBLEM_JSON_VALUE)
     }
 
     private fun capturedParams(): FinnOppgaverParams {

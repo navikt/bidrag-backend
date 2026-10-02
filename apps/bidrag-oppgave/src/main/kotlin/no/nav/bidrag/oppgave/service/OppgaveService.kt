@@ -1,26 +1,34 @@
 package no.nav.bidrag.oppgave.service
 
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
 import no.nav.bidrag.oppgave.controller.FinnOppgaverRequest
 import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.dto.OppgaveStatus
+import no.nav.bidrag.tilgang.TilgangskontrollService
 import org.springframework.stereotype.Service
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto as OppgaveApiDto
 
 @Service
 class OppgaveService(
     private val oppgaveClient: OppgaveClient,
+    private val tilgangService: TilgangskontrollService,
 ) {
 
-    fun finnOppgaver(query: FinnOppgaverRequest): List<OppgaveDto> = oppgaveClient
-        .finnOppgaver(
-            query.toOppgaveParams(),
-        )
-        .oppgaver
-        .orEmpty()
-        .map { it.tilBidragOppgave() }
+    fun finnOppgaver(query: FinnOppgaverRequest): List<OppgaveDto> {
+        query.saksnummer?.let { saksnummer ->
+            tilgangService.sjekkTilgangSaksnummer(Saksnummer(saksnummer))
+        }
+        return oppgaveClient
+            .finnOppgaver(
+                query.toOppgaveParams(),
+            )
+            .oppgaver
+            .orEmpty()
+            .map { it.tilBidragOppgave() }
+    }
 
     private fun FinnOppgaverRequest.toOppgaveParams(): FinnOppgaverParams = FinnOppgaverParams(
         saksreferanse = saksnummer?.let { listOf(it) },
