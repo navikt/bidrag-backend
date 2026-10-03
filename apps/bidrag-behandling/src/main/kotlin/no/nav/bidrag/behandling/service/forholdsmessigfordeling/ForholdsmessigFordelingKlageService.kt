@@ -35,7 +35,6 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.beregning.felles.Barn
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
-import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadForPerson
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -364,27 +363,32 @@ class ForholdsmessigFordelingKlageService(
         val klagesøknadsid: Long,
     )
 
-    /** Finner barn som er med i både en åpen FF-søknad og en annen (ikke-FF) søknad tilknyttet hovedsøknaden */
+    /** Finner barn som er med i både en åpen FF-søknad i behandlingen og en annen (ikke-FF) søknad tilknyttet hovedsøknaden */
     private fun finnBarnIBådeFFOgKlagesøknad(behandling: Behandling): List<BarnIFFOgKlagesøknad> {
         val hovedsøknadsid = behandling.soknadsid!!
-        val (rollerIFFSøknader, rollerIKlagesøknader) =
+        val (rollerIFFOpprettetSøknader, rollerIKlagesøknader) =
             finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
-                .filter { it.søknadsid != null && it.søknadsid != hovedsøknadsid && it.behandlingstype != null }
+                .filter { it.søknadsid != null && it.behandlingstype != null }
                 .partition { it.behandlingstype!!.erForholdsmessigFordeling }
+        val rollerIFFOpprettetSøknaderMap = rollerIFFOpprettetSøknader.mapNotNull { r ->
+            behandling.roller.find { it.erSammeRolle(r.kravhaverIdent, r.stønadstype) }?.let { it to r.søknadsid!! }
+        }
+        val rollerIFFSøknaderLagret = behandling.søknadsbarn.flatMap { barn ->
+            barn.forholdsmessigFordeling
+                ?.søknaderUnderBehandling
+                ?.filter { it.behandlingstype?.erForholdsmessigFordeling == true && it.søknadsid != null && it.søknadsid != hovedsøknadsid }
+                ?.map { barn to it.søknadsid!! }
+                .orEmpty()
+        }
+        val rollerIFFSøknader = rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap
 
-        return rollerIFFSøknader.mapNotNull { ff ->
-            val klage = rollerIKlagesøknader.find { it.erSammeKravhaver(ff) } ?: return@mapNotNull null
-            val barn = behandling.søknadsbarn.find { it.erKravhaverIÅpenSøknad(ff) } ?: return@mapNotNull null
-            BarnIFFOgKlagesøknad(barn, ffSøknadsid = ff.søknadsid!!, klagesøknadsid = klage.søknadsid!!)
+        return rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
+            val klage = rollerIKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
+            BarnIFFOgKlagesøknad(barn, ffSøknadsid = ffSøknadsid, klagesøknadsid = klage.søknadsid!!)
         }
     }
 
-    private fun OpprettetSøknad.erSammeKravhaver(annen: OpprettetSøknad) = kravhaverIdent == annen.kravhaverIdent && stønadstype == annen.stønadstype
-
-    private fun Rolle.erKravhaverIÅpenSøknad(søknad: OpprettetSøknad) =
-        ident == søknad.kravhaverIdent &&
-            stønadstype == søknad.stønadstype &&
-            forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.søknadsid == søknad.søknadsid } == true
+    private fun OpprettetSøknad.gjelder(barn: Rolle) = kravhaverIdent == barn.ident && stønadstype == barn.stønadstype
 
     /**
      * Feilregistrerer hele FF-søknaden hvis ingen andre barn er igjen i den, ellers kun barna.
@@ -414,9 +418,7 @@ class ForholdsmessigFordelingKlageService(
             .forEach { it.barn.finnSøknad(it.klagesøknadsid)?.erstatterFFKlagesøknadsid = ffSøknadsid }
     }
 
-    private fun gjenopprettFFKlagesøknaderErstattetAvSøknad(
-        behandling: Behandling,
-    ) {
+    private fun gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling: Behandling) {
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling.soknadsid!!)
         val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, behandling.behandlerEnhet)
