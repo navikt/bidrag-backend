@@ -1,8 +1,6 @@
 package no.nav.bidrag.bbm.service
 
 import no.nav.bidrag.bbm.bo.Gebyrsøknad
-import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingRequest
-import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
@@ -34,6 +32,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknader
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest

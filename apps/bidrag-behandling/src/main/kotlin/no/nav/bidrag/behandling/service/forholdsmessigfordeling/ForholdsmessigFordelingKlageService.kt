@@ -226,6 +226,14 @@ class ForholdsmessigFordelingKlageService(
                 }
             }
     }
+    private fun hentÅpneSøknaderForBehandling(behandling: Behandling): List<OpprettetSøknad> {
+        val søknader = bbmConsumer
+            .hentÅpneSøknaderForBehandling(behandling.id!!).søknader
+        return søknader.flatMap {
+            it.parterUnderBehandling.filter { it.personident != null }
+                .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.refSøknadsid, it.søknadsid, it.behandlingstype) }
+        }.distinct()
+    }
 
     private fun hentÅpneSøknaderForVedtak(behandling: Behandling): List<HentSøknad> = bbmConsumer
         .hentÅpneSøknaderForBp(behandling.bidragspliktig!!.ident!!)
@@ -367,12 +375,13 @@ class ForholdsmessigFordelingKlageService(
     private fun finnBarnIBådeFFOgKlagesøknad(behandling: Behandling): List<BarnIFFOgKlagesøknad> {
         val hovedsøknadsid = behandling.soknadsid!!
         val (rollerIFFOpprettetSøknader, rollerIKlagesøknader) =
-            finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
+            hentÅpneSøknaderForBehandling(behandling)
                 .filter { it.søknadsid != null && it.behandlingstype != null }
                 .partition { it.behandlingstype!!.erForholdsmessigFordeling }
         val rollerIFFOpprettetSøknaderMap = rollerIFFOpprettetSøknader.mapNotNull { r ->
             behandling.roller.find { it.erSammeRolle(r.kravhaverIdent, r.stønadstype) }?.let { it to r.søknadsid!! }
         }
+
         val rollerIFFSøknaderLagret = behandling.søknadsbarn.flatMap { barn ->
             barn.forholdsmessigFordeling
                 ?.søknaderUnderBehandling

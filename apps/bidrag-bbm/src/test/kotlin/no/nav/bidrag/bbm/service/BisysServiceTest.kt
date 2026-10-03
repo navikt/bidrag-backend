@@ -6,7 +6,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.bidrag.bbm.CommonTestRunner
-import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
@@ -38,6 +37,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
