@@ -1,6 +1,8 @@
 package no.nav.bidrag.bbm.service
 
 import no.nav.bidrag.bbm.bo.Gebyrsøknad
+import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
@@ -962,6 +964,15 @@ class BisysService(
                 søktAvType = SøktAvType.fraKode(blankettRepository.finnSøknadFraKode(søknad.blankettid))!!,
             ),
         )
+    }
+
+    fun hentSøknaderForBehandling(request: HentSøknaderForBehandlingRequest): HentSøknaderForBehandlingResponse {
+        secureLogger.info { "Request mottatt for å hente søknader for behandling med id: ${request.behandlingsid} " }
+        val søknader =
+            søknadRepository
+                .finnSøknaderForBehandling(request.behandlingsid.toString())
+                .map { hentSøknad(HentSøknadRequest(it.søknadsid!!)).søknad }
+        return HentSøknaderForBehandlingResponse(søknader)
     }
 
     private fun erFFSøknad(søknadsid: Long): Boolean {

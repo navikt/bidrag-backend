@@ -16,3 +16,11 @@ data class SlettHovedsøknadRequest(
     val nyHovedsøknadsid: Long? = null,
     val feilregistrerFFSøknader: Boolean = false,
 )
+
+data class HentSøknaderForBehandlingRequest(
+    val behandlingsid: Long,
+)
+
+data class HentSøknaderForBehandlingResponse(
+    val søknader: List<HentSøknad>,
+)

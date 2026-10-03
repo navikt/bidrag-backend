@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
+import no.nav.bidrag.bbm.bo.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.bbm.bo.SammenknyttSøknaderRequest
 import no.nav.bidrag.bbm.bo.SlettHovedsøknadRequest
 import no.nav.bidrag.bbm.bo.SlettSammenknytningForSøknadRequest
@@ -208,6 +209,23 @@ class BidragBeregningController(
     fun hentSøknad(
         @Valid @RequestBody request: HentSøknadRequest,
     ) = bisysService.hentSøknad(request)
+
+    @PostMapping("/hentsoknaderforbehandling")
+    @Operation(
+        description = "Henter alle søknader for angitt behandlingsid",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Søknader hentet. Vil returnere tom liste hvis ingen søknader finnes for behandlingen",
+            ),
+        ],
+    )
+    fun hentSøknaderForBehandling(
+        @Valid @RequestBody request: HentSøknaderForBehandlingRequest,
+    ) = bisysService.hentSøknaderForBehandling(request)
 
     @PostMapping("/oppdaterreferansegebyr")
     @Operation(
