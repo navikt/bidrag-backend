@@ -22,6 +22,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknader
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
@@ -137,6 +139,16 @@ class BidragBBMConsumer(
     fun lagreBehandlerEnhet(request: OppdaterBehandlerenhetRequest) = postForEntity<Unit>(
         bidragBBMUri.pathSegment("oppdaterbehandlerenhet").build().toUri(),
         request,
+    )
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun hentÅpneSøknaderForBehandling(behandlingsid: Long): HentSøknaderForBehandlingResponse = postForNonNullEntity(
+        bidragBBMUri.pathSegment("hentsoknaderforbehandling").build().toUri(),
+        HentSøknaderForBehandlingRequest(behandlingsid),
     )
 
     @Retryable(

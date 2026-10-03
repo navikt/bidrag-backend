@@ -478,7 +478,7 @@ class ForholdsmessigFordelingService(
         ignorerSynkTimer: Boolean = false,
     ): Boolean {
         if (!behandling.erIForholdsmessigFordeling) return false
-        if (!ignorerSynkTimer && !foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())) return false
+//        if (!ignorerSynkTimer && !foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())) return false
         val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
         if (erVedtakFattet) return false
 
@@ -522,6 +522,7 @@ class ForholdsmessigFordelingService(
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
+            klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
             behandling.oppdaterFFSistSynkronisert()
@@ -850,6 +851,9 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         søknadsidSomSlettes: Long,
     ) = klageService.slettEllerGjennopprettKlageSøknader(behandling, søknadsidSomSlettes)
+
+    @Transactional(readOnly = true)
+    fun kanEndreSøknadStatus(søknadsid: Long): Boolean = klageService.kanEndreSøknadStatus(søknadsid)
 
     // endregion
 

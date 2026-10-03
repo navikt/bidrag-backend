@@ -59,6 +59,13 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
+data class OpprettetSøknad(
+    val kravhaverIdent: String,
+    val stønadstype: Stønadstype?,
+    val refSøknadsid: Long?,
+    val søknadsid: Long? = null,
+    val behandlingstype: Behandlingstype? = null,
+)
 data class OppdaterBarnFraFFRequest(
     val rollerSomSkalLeggesTilDto: List<OpprettRolleDto>,
     val rollerSomSkalSlettes: List<OpprettRolleDto> = emptyList(),
