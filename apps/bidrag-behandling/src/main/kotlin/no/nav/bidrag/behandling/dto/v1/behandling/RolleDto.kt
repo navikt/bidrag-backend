@@ -2,6 +2,9 @@ package no.nav.bidrag.behandling.dto.v1.behandling
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
+import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -38,4 +41,11 @@ data class RolleSøknadDto(
     val søknadFra: SøktAvType,
     val enhet: String,
     val vedtakstype: Vedtakstype,
+    val status: Behandlingstatus? = null,
+    val behandlingstype: Behandlingstype? = null,
+    val behandlingstema: Behandlingstema? = null,
+    val omgjørSøknadsid: Long? = null,
+    val innkreving: Boolean? = null,
+    val mottattDato: LocalDate? = null,
+    val søknadFomDato: LocalDate? = null,
 )

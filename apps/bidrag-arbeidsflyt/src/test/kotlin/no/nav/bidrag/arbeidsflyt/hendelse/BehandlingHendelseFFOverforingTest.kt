@@ -12,8 +12,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.arbeidsflyt.UnleashFeatures
-import no.nav.bidrag.arbeidsflyt.consumer.BehandlingDetaljerDtoV2
-import no.nav.bidrag.arbeidsflyt.consumer.ForholdmessigFordelingDetaljerDto
 import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_BEHANDLING_ID
 import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_SØKNAD_ID
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
@@ -26,10 +24,15 @@ import no.nav.bidrag.arbeidsflyt.utils.opprettSakForBehandling
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerForholdsmessigFordelingDto
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerRolleDto
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerRolleSøknadDto
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
@@ -65,11 +68,13 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
 
     private fun stubHentBehandlingDetaljer(
         behandlingsid: Long,
-        forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? =
-            ForholdmessigFordelingDetaljerDto(
+        forholdsmessigFordeling: BehandlingDetaljerForholdsmessigFordelingDto? =
+            BehandlingDetaljerForholdsmessigFordelingDto(
                 opprettetAvSaksbehandler = SAKSBEHANDLER_SOM_OPPRETTET_FF,
                 opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF,
             ),
+        roller: Set<BehandlingDetaljerRolleDto> = emptySet(),
+        erVedtakFattet: Boolean = false,
     ) {
         val respons =
             BehandlingDetaljerDtoV2(
@@ -77,6 +82,8 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
                 saksnummer = SAKSNUMMER,
                 opprettetAv = SaksbehandlerDto("Z999999", "Testbruker"),
                 forholdsmessigFordeling = forholdsmessigFordeling,
+                roller = roller,
+                erVedtakFattet = erVedtakFattet,
             )
         stubFor(
             get(urlEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid"))
@@ -166,6 +173,46 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val behandling = behandlingRepository.finnForBehandlingId(behandlingsid)
         behandling.shouldNotBeNull()
         return behandling
+    }
+
+    @Test
+    fun `skal bruke siste data fra behandlingsdetaljer i stedet for innholdet i hendelsen`() {
+        val behandlingsid = 555590L
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubOppgaveForSaken(behandlingsid, tilordnetRessurs = SAKSBEHANDLER_SOM_OPPRETTET_FF, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
+        stubHentBehandlingDetaljer(
+            behandlingsid,
+            erVedtakFattet = true,
+            roller =
+            setOf(
+                BehandlingDetaljerRolleDto(
+                    rolletype = Rolletype.BARN,
+                    ident = "123213",
+                    stønadstype = Stønadstype.BIDRAG,
+                    saksnummer = SAKSNUMMER,
+                    søknader =
+                    listOf(
+                        BehandlingDetaljerRolleSøknadDto(
+                            søknadsId = 999,
+                            søknadFra = SøktAvType.BIDRAGSPLIKTIG,
+                            enhet = ENHET_SOM_OPPRETTET_FF,
+                            behandlingstype = Behandlingstype.KLAGE,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        behandleHendelseService.behandleHendelse(hendelse)
+
+        val lagretHendelse = hentBehandling(behandlingsid).hendelse!!
+        lagretHendelse.type shouldBe BehandlingHendelseType.AVSLUTTET
+        lagretHendelse.barn.map { it.søknadsid } shouldBe listOf(999L)
+        lagretHendelse.barn.first().status shouldBe Behandlingstatus.VEDTAK_FATTET
+        lagretHendelse.barn.first().behandlingstype shouldBe Behandlingstype.KLAGE
+        lagretHendelse.barn.first().søktAv shouldBe SøktAvType.BIDRAGSPLIKTIG
+        lagretHendelse.sporingsdata.correlationId shouldBe hendelse.sporingsdata.correlationId
     }
 
     @Test
@@ -310,7 +357,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val andreHendelse = førsteFFOverføring(behandlingsid)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
         )
         stubHentOppgaveContaining(
             listOf(
@@ -332,7 +379,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)
@@ -351,7 +398,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)

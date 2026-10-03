@@ -86,7 +86,7 @@ class KafkaDLQRetryScheduler(
     fun ferdigstillOppgaverSomIkkeLengerErÅpenBehandling() {
         val behandlinger =
             behandlingRepository.finnBehandlingerMedSøknadUnderBehandlingStatusSjekketEldreEnn(
-                LocalDateTime.now().minusHours(12),
+                LocalDateTime.now().minusHours(1),
             )
         LOGGER.info { "Fant ${behandlinger.size} behandlinger som fortsatt er åpen. Sjekker og oppdaterer status" }
 

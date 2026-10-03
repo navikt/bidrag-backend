@@ -93,6 +93,7 @@ import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.commons.service.forsendelse.bidragspliktig
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.behandling.tilBehandlingstema
 import no.nav.bidrag.domene.enums.diverse.Kilde
@@ -587,6 +588,13 @@ fun Rolle.tilDto() = RolleDto(
             søknadFra = it.søktAvType,
             vedtakstype = it.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
             enhet = it.enhet,
+            status = it.status ?: Behandlingstatus.UNDER_BEHANDLING,
+            behandlingstype = it.behandlingstype ?: behandling.søknadstype,
+            behandlingstema = behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema,
+            omgjørSøknadsid = it.omgjørSøknadsid,
+            innkreving = it.innkreving,
+            mottattDato = it.mottattDato,
+            søknadFomDato = it.søknadFomDato ?: behandling.søktFomDato,
         )
     } ?: behandling.soknadsid?.let {
         listOf(
@@ -595,6 +603,13 @@ fun Rolle.tilDto() = RolleDto(
                 søknadFra = behandling.soknadFra,
                 vedtakstype = behandling.vedtakstype,
                 enhet = behandling.behandlerEnhet,
+                status = behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+                behandlingstype = behandling.søknadstype,
+                behandlingstema = behandlingstema ?: behandling.behandlingstema,
+                omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                innkreving = innkrevingstype?.let { it == Innkrevingstype.MED_INNKREVING },
+                mottattDato = behandling.mottattdato,
+                søknadFomDato = behandling.søktFomDato,
             ),
         )
     } ?: emptyList(),
