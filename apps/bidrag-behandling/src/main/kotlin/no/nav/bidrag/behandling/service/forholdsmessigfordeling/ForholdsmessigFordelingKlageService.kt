@@ -79,14 +79,23 @@ class ForholdsmessigFordelingKlageService(
                 behandling.soknadsid = annenSøknadForSammePåklagetSøknad.søknadsid
                 bbmConsumer.fjernSammeknytningHovedsøknad(søknadsidSomSlettes, annenSøknadForSammePåklagetSøknad.søknadsid)
                 val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
-                // Hovedsøknad ble slettet men behandlinger er ikke lukket. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
-                opprettKlageSøknad(
-                    søknadSomSlettes,
-                    behandling,
-                    emptyList(),
-                    behandling.soknadsid,
-                    søknadSomSlettes.søknadMottattDato,
-                )
+                val tilknyttedeSøknaderOmgjortSøknad =
+                    bbmConsumer.finnSammenknytningerHovedsøknad(
+                        behandling.omgjøringsdetaljer!!.soknadRefId!!,
+                        SøknadsknytningStatus.Deaktiv,
+                    )
+
+                if (tilknyttedeSøknaderOmgjortSøknad.hovedsøknadsid == søknadSomSlettes.refSøknadsid) {
+                    // Hovedsøknad ble slettet men behandlinger er ikke lukket. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
+                    opprettKlageSøknad(
+                        søknadSomSlettes,
+                        behandling,
+                        emptyList(),
+                        behandling.soknadsid,
+                        søknadSomSlettes.søknadMottattDato,
+                    )
+                }
+
                 behandling.roller.filter { it.harSøknad(søknadsidSomSlettes) }.forEach { rolle ->
                     val lagretSøknad = rolle.finnSøknad(søknadsidSomSlettes)!!
                     lagretSøknad.status = Behandlingstatus.FEILREGISTRERT
@@ -102,6 +111,7 @@ class ForholdsmessigFordelingKlageService(
                 }
                 bbmConsumer.fjernSammeknytningHovedsøknad(søknadsidSomSlettes)
                 behandlingService.logiskSlettBehandling(behandling)
+                søknadService.slettAlleSøknaderKnyttetTilBehandling(behandling)
                 true
             }
         } else {

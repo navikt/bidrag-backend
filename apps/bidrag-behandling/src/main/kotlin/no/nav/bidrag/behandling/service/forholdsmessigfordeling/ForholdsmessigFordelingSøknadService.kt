@@ -30,6 +30,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import java.time.LocalDate
@@ -52,6 +53,13 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     // region Opprettelse av søknader
     // ═══════════════════════════════════════════════════════════════════
+    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
+        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
+        søknaderBehandling.søknader.filter { listOfNotNull(BehandlingStatusType.UNDER_BEHANDLING, BehandlingStatusType.ÅPEN).contains(it.behandlingStatusType) }
+            .forEach {
+                bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
+            }
+    }
 
     /**
      * Oppretter roller og revurderingssøknader for en gitt sak.
