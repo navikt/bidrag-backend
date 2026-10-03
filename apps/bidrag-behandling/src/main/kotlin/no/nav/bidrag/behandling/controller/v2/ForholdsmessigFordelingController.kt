@@ -45,7 +45,7 @@ class ForholdsmessigFordelingController(
     @GetMapping("/kanendresoknadstatus/{soknadsid}")
     @Operation(
         description =
-            "Sjekker om status på søknad kan endres. For klage/omgjøring kan status kun endres hvis søknaden er opprettet etter hovedsøknaden. Returnerer alltid true ellers.",
+        "Sjekker om status på søknad kan endres. For klage/omgjøring kan status kun endres hvis søknaden er opprettet etter hovedsøknaden. Returnerer alltid true ellers.",
     )
     fun kanEndreSøknadStatus(
         @PathVariable soknadsid: Long,
