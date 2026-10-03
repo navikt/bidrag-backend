@@ -40,6 +40,8 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadForPerson
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.felles.toYearMonth
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
+import org.springframework.cglib.core.Local
+import java.time.LocalDate
 
 private val KLAGE_LOGGER = KotlinLogging.logger {}
 
@@ -97,7 +99,13 @@ class ForholdsmessigFordelingKlageService(
             val erSøknadOpprettetEtterHovedsøknad = behandling.erSøknadOpprettetEtterHovedsøknad(søknadsidSomSlettes)
             if (søknadSomSlettes.refSøknadsid != behandling.soknadsid && !erSøknadOpprettetEtterHovedsøknad) {
                 // Var ikke hovedsøknad som ble slettet. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
-                opprettKlageSøknad(søknadSomSlettes, behandling, emptyList(), behandling.soknadsid)
+                opprettKlageSøknad(
+                    søknadSomSlettes,
+                    behandling,
+                    emptyList(),
+                    behandling.soknadsid,
+                    søknadSomSlettes.søknadMottattDato,
+                )
                 bbmConsumer.fjernSammenknytning(søknadsidSomSlettes)
             }
         }
@@ -107,6 +115,7 @@ class ForholdsmessigFordelingKlageService(
             val søknad = it.finnSøknad(søknadsidSomSlettes)!!
             søknad.status = Behandlingstatus.FEILREGISTRERT
         }
+        gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
     }
 
     fun opprettSøknaderForKlageEllerOmgjøring(
@@ -418,7 +427,7 @@ class ForholdsmessigFordelingKlageService(
             if (harAndreBarnIFFSøknad) {
                 barn.filter { søknadService.feilregistrerBarnFraSøknad(it, ffSøknadsid) != null }
             } else {
-                val ffSøknad = barn.first().finnSøknad(ffSøknadsid)!!
+                val ffSøknad = barn.first().finnSøknad(ffSøknadsid) ?: bbmConsumer.hentSøknad(ffSøknadsid)!!.søknad.tilForholdsmessigFordelingSøknad()
                 if (søknadService.feilregistrerSøknad(ffSøknad, behandling)) barn else emptyList()
             }
 
@@ -628,6 +637,7 @@ class ForholdsmessigFordelingKlageService(
         behandling: Behandling,
         åpneSøknaderForVedtaksid: List<HentSøknad>,
         hovedsøknadsid: Long?,
+        mottattDato: LocalDate? = null,
     ): Long {
         val hovedsøknad = hovedsøknadsid?.let { bbmConsumer.hentSøknad(it)?.søknad }
         val behandlingstype =
@@ -673,7 +683,7 @@ class ForholdsmessigFordelingKlageService(
                         behandlerenhet = originalSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                         hovedsøknadsid = hovedsøknadsid,
                         søktAv = søktAvType,
-                        søknadMottattDato = behandling.mottattdato,
+                        søknadMottattDato = mottattDato ?: behandling.mottattdato,
                         behandlingstema = originalSøknad.behandlingstema,
                         søknadFomDato = originalSøknad.søknadFomDato!!,
                         innkreving = originalSøknad.innkreving,
