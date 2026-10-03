@@ -62,7 +62,7 @@ class ForholdsmessigFordelingKlageService(
         behandling: Behandling,
         søknadsidSomSlettes: Long,
     ) {
-        if (behandling.soknadsid == søknadsidSomSlettes) {
+        val behandlingSlettet = if (behandling.soknadsid == søknadsidSomSlettes) {
             val tilknyttedeSøknader =
                 bbmConsumer.finnSammenknytningerHovedsøknad(
                     søknadsidSomSlettes,
@@ -83,6 +83,7 @@ class ForholdsmessigFordelingKlageService(
                     val lagretSøknad = rolle.finnSøknad(søknadsidSomSlettes)!!
                     lagretSøknad.status = Behandlingstatus.FEILREGISTRERT
                 }
+                false
             } else {
                 tilknyttedeSøknader.søknader.forEach { søknad ->
                     bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(søknad.søknadsid))
@@ -93,6 +94,7 @@ class ForholdsmessigFordelingKlageService(
                 }
                 bbmConsumer.fjernSammeknytningHovedsøknad(søknadsidSomSlettes)
                 behandlingService.logiskSlettBehandling(behandling)
+                true
             }
         } else {
             val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
@@ -108,6 +110,7 @@ class ForholdsmessigFordelingKlageService(
                 )
                 bbmConsumer.fjernSammenknytning(søknadsidSomSlettes)
             }
+            false
         }
 
         // Gjør dette helt til slutt da det sjekkes om barn var feilregistrert i original søknad ved gjennopprettelse
@@ -115,7 +118,9 @@ class ForholdsmessigFordelingKlageService(
             val søknad = it.finnSøknad(søknadsidSomSlettes)!!
             søknad.status = Behandlingstatus.FEILREGISTRERT
         }
-        gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
+        if (!behandlingSlettet) {
+            gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
+        }
     }
 
     fun opprettSøknaderForKlageEllerOmgjøring(
@@ -437,6 +442,7 @@ class ForholdsmessigFordelingKlageService(
     }
 
     private fun gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling: Behandling) {
+        if (!behandlingService.behandlingFinnes(behandling.id!!)) return
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling.soknadsid!!)
         val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, behandling.behandlerEnhet)

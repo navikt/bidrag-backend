@@ -710,6 +710,9 @@ class BehandlingService(
         .filter { it.stonadstype != null }
         .map { ÅpenBehandling(it.stonadstype!!, it.id!!, emptyList()) }
 
+    fun behandlingFinnes(behandlingId: Long): Boolean = !behandlingRepository
+        .findBehandlingById(behandlingId).isEmpty
+
     @Transactional(readOnly = true)
     fun hentBehandlingById(behandlingId: Long): Behandling {
         val behandling =
