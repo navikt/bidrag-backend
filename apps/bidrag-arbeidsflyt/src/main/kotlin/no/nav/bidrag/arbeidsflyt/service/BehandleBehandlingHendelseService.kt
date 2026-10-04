@@ -31,10 +31,10 @@ import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
-import no.nav.bidrag.transport.dokument.Sporingsdata
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -123,7 +123,7 @@ class BehandleBehandlingHendelseService(
             oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
         // Behandlingsdetaljene inneholder ikke feilregistrerte søknader eller slettede barn, så oppgavene til disse må ferdigstilles separat
-        ferdigstillOppgaverSomErSlettet(hendelse.behandlingsid)
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
@@ -135,15 +135,16 @@ class BehandleBehandlingHendelseService(
         return behandlingDetaljer.tilBehandlingHendelse(this)
     }
 
-    fun ferdigstillOppgaverSomErSlettet(behandlingsid: Long?) {
+    fun ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid: Long?) {
         if (behandlingsid == null) return
 
         val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandlingsid)
         oppgaverBehandling.forEach {
             try {
+                if (!it.erSøknadsoppgave) return@forEach
                 if (it.søknadsid == null) return@forEach
-                val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong())) ?: return@forEach
-                if (søknad.søknad.behandlingStatusType.erAvsluttet) {
+                val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong()))?.søknad ?: return@forEach
+                if (søknad.behandlingStatusType.erAvsluttet) {
                     oppgaveService.oppdaterOppgave(
                         OppdaterOppgave(it)
                             .ferdigstill(),
@@ -534,21 +535,21 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: Beha
             ?: throw IllegalStateException("Behandling med id=$id mangler behandlerenhet")
     return BehandlingHendelse(
         type =
-            when {
-                erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
-                else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
-            },
+        when {
+            erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
+            else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
+        },
         status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
         vedtakstype =
-            vedtakstype ?: mottattHendelse?.vedtakstype
-                ?: throw IllegalStateException("Behandling med id=$id mangler vedtakstype"),
+        vedtakstype ?: mottattHendelse?.vedtakstype
+            ?: throw IllegalStateException("Behandling med id=$id mangler vedtakstype"),
         opprettetTidspunkt = opprettetTidspunkt ?: mottattHendelse?.opprettetTidspunkt ?: nå,
         endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
         mottattDato = mottattdato ?: mottattHendelse?.mottattDato ?: nå.toLocalDate(),
         barn = tilBehandlingHendelseBarn(),
         sporingsdata =
-            mottattHendelse?.sporingsdata
-                ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerEnhet),
+        mottattHendelse?.sporingsdata
+            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerEnhet),
         behandlingsid = id,
         omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
         behandlerEnhet = behandlerEnhet,
@@ -557,28 +558,27 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: Beha
     )
 }
 
-internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> =
-    roller
-        .filter { it.rolletype == Rolletype.BARN && it.ident != null }
-        .flatMap { rolle ->
-            rolle.søknader.map { søknad ->
-                BehandlingHendelseBarn(
-                    saksnummer = rolle.saksnummer,
-                    ident = rolle.ident!!,
-                    stønadstype = rolle.stønadstype,
-                    engangsbeløptype = engangsbeløptype,
-                    særbidragskategori = kategori?.kategori,
-                    søknadsid = søknad.søknadsId,
-                    omgjørSøknadsid = søknad.omgjørSøknadsid,
-                    omgjørVedtaksid = søknad.omgjørVedtaksid,
-                    søktAv = søknad.søknadFra,
-                    behandlerEnhet = søknad.enhet,
-                    behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
-                    behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
-                    medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
-                    søktFraDato = søknad.søknadFomDato ?: søktFomDato,
-                    mottattDato = søknad.mottattDato ?: mottattdato,
-                    status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
-                )
-            }
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> = roller
+    .filter { it.rolletype == Rolletype.BARN && it.ident != null }
+    .flatMap { rolle ->
+        rolle.søknader.map { søknad ->
+            BehandlingHendelseBarn(
+                saksnummer = rolle.saksnummer,
+                ident = rolle.ident!!,
+                stønadstype = rolle.stønadstype,
+                engangsbeløptype = engangsbeløptype,
+                særbidragskategori = kategori?.kategori,
+                søknadsid = søknad.søknadsId,
+                omgjørSøknadsid = søknad.omgjørSøknadsid,
+                omgjørVedtaksid = søknad.omgjørVedtaksid,
+                søktAv = søknad.søknadFra,
+                behandlerEnhet = søknad.enhet,
+                behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
+                behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
+                medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
+                søktFraDato = søknad.søknadFomDato ?: søktFomDato,
+                mottattDato = søknad.mottattDato ?: mottattdato,
+                status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
+            )
         }
+    }

@@ -40,4 +40,18 @@ class BidragBehandlingConsumer(
             throw e
         }
     }
+
+    @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
+    fun erBehandlingSlettet(behandlingId: Long): Boolean? = try {
+        getForEntity<Boolean>(
+            createUri("/api/v2/behandling/$behandlingId/slettet"),
+        )
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.NOT_FOUND) {
+            null
+        } else {
+            LOGGER.warn(e) { "Det skjedde en feil ved sjekk om behandling $behandlingId er slettet" }
+            throw e
+        }
+    }
 }

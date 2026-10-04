@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.controller.v2
 
+import no.nav.bidrag.behandling.behandlingNotFoundException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -399,6 +400,22 @@ class BehandlingControllerV2(
 
         requestManglerDataException(behandlingsid, Ressurstype.BOFORHOLD)
     }
+
+    @Suppress("unused")
+    @GetMapping("/behandling/{behandlingsid}/slettet")
+    @Operation(
+        description = "Sjekker om behandling er slettet. Returnerer true hvis behandlingen er slettet og false ellers",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Fant behandling"),
+            ApiResponse(responseCode = "404", description = "Fant ikke behandling"),
+        ],
+    )
+    fun erBehandlingSlettet(
+        @PathVariable behandlingsid: Long,
+    ): Boolean = behandlingRepository.erBehandlingSlettet(behandlingsid) ?: behandlingNotFoundException(behandlingsid)
 
     @Suppress("unused")
     @GetMapping("/behandling/detaljer/soknad/{søknadsid}")

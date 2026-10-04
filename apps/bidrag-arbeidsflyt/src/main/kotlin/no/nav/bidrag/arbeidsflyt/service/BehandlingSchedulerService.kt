@@ -3,6 +3,7 @@ package no.nav.bidrag.arbeidsflyt.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.persistence.repository.BehandlingRepository
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -28,7 +29,14 @@ class BehandlingSchedulerService(
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun behandleOgOppdaterStatusSjekket(behandlingId: Long) {
-        val behandling = behandlingRepository.findById(behandlingId).orElse(null)
+        val behandling = behandlingRepository.finnForBehandlingId(behandlingId)
+        if (bidragBehandlingConsumer.erBehandlingSlettet(behandlingId) == true) {
+            LOGGER.info { "Behandling med behandlingsid=$behandlingId er slettet. Setter status til avbrutt og ferdigstiller tilhørende søknadsoppgaver" }
+            behandling?.status = BehandlingStatusType.AVBRUTT
+            behandling?.statusSjekketTidspunkt = LocalDateTime.now()
+            behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingId)
+            return
+        }
         if (behandling?.hendelse == null) {
             // Behandlingen eller lagret hendelse mangler. Prøver å gjenskape hendelsen fra bidrag-behandling
             val behandlingsid = behandling?.behandlingsid ?: behandlingId
@@ -36,8 +44,8 @@ class BehandlingSchedulerService(
             val hendelse =
                 bidragBehandlingConsumer.hentBehandling(behandlingsid)?.tilBehandlingHendelse()
             if (hendelse == null) {
-                LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Den er mest sannsynlig slettet. Forsøker å ferdigstille alle tilhørende oppgaver" }
-                behandleBehandlingHendelseService.ferdigstillOppgaverSomErSlettet(behandlingsid)
+                LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Den er mest sannsynlig avsluttet. Forsøker å ferdigstille alle tilhørende oppgaver" }
+                behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid)
                 return
             }
             behandleBehandlingHendelseService.behandleHendelse(hendelse, true)
