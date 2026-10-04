@@ -6,6 +6,11 @@ spring:
 spring.application:
   name: bidrag-organisasjon
 management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
   endpoints:
     web:
       exposure:
@@ -58,4 +63,3 @@ cache:
   warming:
     enabled: true
     enheter: 2103,4251,4252,4253,4255,4294,4295,4296,4806,4812,4817,4820,4833,4849,4860,4865,4883
-

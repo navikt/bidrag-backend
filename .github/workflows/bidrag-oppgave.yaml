@@ -39,7 +39,8 @@ env:
     .nais/bidrag-oppgave/**.yaml
     apps/bidrag-oppgave/**
     libs/bidrag-oppgave-dto/**
-    libs/bidrag-oppgave-client/**
+    libs/bidrag-felles/bidrag-backend-sikkerhet/**
+    libs/bidrag-felles/bidrag-backend-feilhandtering/**
 
 jobs:
   bygg_test_og_deploy:
@@ -51,7 +52,7 @@ jobs:
     secrets: inherit
     with:
       bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
-      bibliotekgrupper: oppgave
+      bibliotekgrupper: oppgave,felles
       nais_hovedfil_navn: bidrag-oppgave/nais.yaml
       nais_variabler_filnavn_q1: bidrag-oppgave/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
