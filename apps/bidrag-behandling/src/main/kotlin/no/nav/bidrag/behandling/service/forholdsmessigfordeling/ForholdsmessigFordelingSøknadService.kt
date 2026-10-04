@@ -92,6 +92,8 @@ class ForholdsmessigFordelingSøknadService(
                 enhet = behandlerEnhet,
                 status = Behandlingstatus.UNDER_BEHANDLING,
                 saksnummer = saksnummer,
+                omgjørSøknadsid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.soknadRefId else null,
+                omgjørVedtaksid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.omgjørVedtakId else null,
             )
         val søknadsidUtenInnkreving =
             opprettEllerOppdaterRevurderingssøknadForBarn(

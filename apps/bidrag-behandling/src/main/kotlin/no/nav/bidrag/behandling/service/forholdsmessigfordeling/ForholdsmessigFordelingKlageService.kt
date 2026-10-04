@@ -666,6 +666,7 @@ class ForholdsmessigFordelingKlageService(
                     saksnummerLøpendeBidrag.second,
                     søktFomDato,
                     true,
+
                 )
             }
     }
