@@ -148,6 +148,7 @@ class BehandleBehandlingHendelseService(
                             særbidragskategori = behandlingDetaljer.kategori?.kategori,
                             søknadsid = søknad.søknadsId,
                             omgjørSøknadsid = søknad.omgjørSøknadsid,
+                            omgjørVedtaksid = søknad.omgjørVedtaksid,
                             søktAv = søknad.søknadFra,
                             behandlerEnhet = søknad.enhet,
                             behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,

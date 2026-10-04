@@ -45,6 +45,7 @@ data class RolleSøknadDto(
     val behandlingstype: Behandlingstype? = null,
     val behandlingstema: Behandlingstema? = null,
     val omgjørSøknadsid: Long? = null,
+    val omgjørVedtaksid: Int? = null,
     val innkreving: Boolean? = null,
     val mottattDato: LocalDate? = null,
     val søknadFomDato: LocalDate? = null,
