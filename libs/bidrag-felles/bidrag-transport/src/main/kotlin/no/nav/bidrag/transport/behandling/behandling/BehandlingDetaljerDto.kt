@@ -12,6 +12,7 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 /** Respons fra bidrag-behandling sitt endepunkt `/api/v2/behandling/detaljer/{behandlingsid}` */
 data class BehandlingDetaljerDtoV2(
@@ -30,6 +31,7 @@ data class BehandlingDetaljerDtoV2(
     val mottattdato: LocalDate? = null,
     val behandlerenhet: String? = null,
     val kategori: BehandlingDetaljerSærbidragKategoriDto? = null,
+    val opprettetTidspunkt: LocalDateTime? = null,
 )
 
 data class BehandlingDetaljerSærbidragKategoriDto(

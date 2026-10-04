@@ -518,7 +518,7 @@ fun Behandling.tilBehandlingDetaljerDtoV2() = BehandlingDetaljerDtoV2(
     roller =
     roller
         .map {
-            it.tilDto()
+            it.tilDto(true)
         }.toSet(),
     søknadRefId = omgjøringsdetaljer?.soknadRefId,
     vedtakRefId = omgjøringsdetaljer?.omgjørVedtakId,
@@ -564,65 +564,66 @@ fun Person.tilDto(stønadstype: Stønadstype? = null) = RolleDto(
     saksnummer = "",
 )
 
-fun Rolle.tilDto() = RolleDto(
-    id!!,
-    rolletype,
-    ident,
-    navn ?: hentPersonVisningsnavn(ident),
-    fødselsdato,
-    harInnvilgetTilleggsstønad = this.harInnvilgetTilleggsstønad(),
-    delAvOpprinneligBehandling = forholdsmessigFordeling?.delAvOpprinneligBehandling == true,
-    erRevurdering =
-    forholdsmessigFordeling?.erRevurdering == true ||
-        behandling.lesemodusVedtak?.inneholderBareRevurderingsbarn == true,
-    stønadstype = if (rolletype == Rolletype.BARN) stønadstype ?: behandling.stonadstype else null,
-    saksnummer = forholdsmessigFordeling?.tilhørerSak ?: behandling.saksnummer,
-    beregnFraDato = finnBeregnFra(),
-    beregnTilDato = finnBeregnTil(),
-    harLøpendeForskudd = behandling.finnesLøpendeForskuddForRolle(this),
-    harLøpendeBidrag = behandling.finnesLøpendeBidragForRolle(this),
-    søknader =
-    forholdsmessigFordeling?.søknaderUnderBehandling?.map {
-        RolleSøknadDto(
-            søknadsId = it.søknadsid!!,
-            søknadFra = it.søktAvType,
-            vedtakstype = it.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
-            enhet = it.enhet,
-            status = it.status ?: Behandlingstatus.UNDER_BEHANDLING,
-            behandlingstype = it.behandlingstype ?: behandling.søknadstype,
-            behandlingstema = behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema,
-            omgjørSøknadsid = it.omgjørSøknadsid,
-            omgjørVedtaksid = it.omgjørVedtaksid,
-            innkreving = it.innkreving,
-            mottattDato = it.mottattDato,
-            søknadFomDato = it.søknadFomDato ?: behandling.søktFomDato,
-        )
-    } ?: behandling.soknadsid?.let {
-        listOf(
+fun Rolle.tilDto(inkluderAlleSøknader: Boolean = false): RolleDto {
+    val søknader = if (inkluderAlleSøknader) forholdsmessigFordeling?.søknader else forholdsmessigFordeling?.søknaderUnderBehandling
+    return RolleDto(
+        id!!,
+        rolletype,
+        ident,
+        navn ?: hentPersonVisningsnavn(ident),
+        fødselsdato,
+        harInnvilgetTilleggsstønad = this.harInnvilgetTilleggsstønad(),
+        delAvOpprinneligBehandling = forholdsmessigFordeling?.delAvOpprinneligBehandling == true,
+        erRevurdering =
+        forholdsmessigFordeling?.erRevurdering == true ||
+            behandling.lesemodusVedtak?.inneholderBareRevurderingsbarn == true,
+        stønadstype = if (rolletype == Rolletype.BARN) stønadstype ?: behandling.stonadstype else null,
+        saksnummer = forholdsmessigFordeling?.tilhørerSak ?: behandling.saksnummer,
+        beregnFraDato = finnBeregnFra(),
+        beregnTilDato = finnBeregnTil(),
+        harLøpendeForskudd = behandling.finnesLøpendeForskuddForRolle(this),
+        harLøpendeBidrag = behandling.finnesLøpendeBidragForRolle(this),
+        søknader = søknader?.map {
             RolleSøknadDto(
-                søknadsId = behandling.soknadsid!!,
-                søknadFra = behandling.soknadFra,
-                vedtakstype = behandling.vedtakstype,
-                enhet = behandling.behandlerEnhet,
-                status = behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
-                behandlingstype = behandling.søknadstype,
-                behandlingstema = behandlingstema ?: behandling.behandlingstema,
-                omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
-                omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
-                innkreving = innkrevingstype?.let { it == Innkrevingstype.MED_INNKREVING },
-                mottattDato = behandling.mottattdato,
-                søknadFomDato = behandling.søktFomDato,
-            ),
-        )
-    } ?: emptyList(),
-    bidragsmottaker =
-    if (rolletype == Rolletype.BARN) {
-        forholdsmessigFordeling?.bidragsmottaker ?: behandling.bidragsmottaker?.ident
-    } else {
-        null
-    },
-)
-
+                søknadsId = it.søknadsid!!,
+                søknadFra = it.søktAvType,
+                vedtakstype = it.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
+                enhet = it.enhet,
+                status = it.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                behandlingstype = it.behandlingstype ?: behandling.søknadstype,
+                behandlingstema = behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema,
+                omgjørSøknadsid = it.omgjørSøknadsid,
+                omgjørVedtaksid = it.omgjørVedtaksid,
+                innkreving = it.innkreving,
+                mottattDato = it.mottattDato,
+                søknadFomDato = it.søknadFomDato ?: behandling.søktFomDato,
+            )
+        } ?: behandling.soknadsid?.let {
+            listOf(
+                RolleSøknadDto(
+                    søknadsId = behandling.soknadsid!!,
+                    søknadFra = behandling.soknadFra,
+                    vedtakstype = behandling.vedtakstype,
+                    enhet = behandling.behandlerEnhet,
+                    status = behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+                    behandlingstype = behandling.søknadstype,
+                    behandlingstema = behandlingstema ?: behandling.behandlingstema,
+                    omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                    omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
+                    innkreving = innkrevingstype?.let { it == Innkrevingstype.MED_INNKREVING },
+                    mottattDato = behandling.mottattdato,
+                    søknadFomDato = behandling.søktFomDato,
+                ),
+            )
+        } ?: emptyList(),
+        bidragsmottaker =
+        if (rolletype == Rolletype.BARN) {
+            forholdsmessigFordeling?.bidragsmottaker ?: behandling.bidragsmottaker?.ident
+        } else {
+            null
+        },
+    )
+}
 fun Rolle.tilSøknadsdetaljerDto(søknadsid: Long): SøknadDetaljerDto {
     val søknadsdetaljer = forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == søknadsid }
     val barn = behandling.søknadsbarnForSøknad(søknadsid)

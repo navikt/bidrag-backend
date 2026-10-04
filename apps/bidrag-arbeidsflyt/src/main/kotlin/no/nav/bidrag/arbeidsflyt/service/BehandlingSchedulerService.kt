@@ -3,11 +3,6 @@ package no.nav.bidrag.arbeidsflyt.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.persistence.repository.BehandlingRepository
-import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
-import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -58,25 +53,5 @@ class BehandlingSchedulerService(
         } finally {
             behandling.statusSjekketTidspunkt = LocalDateTime.now()
         }
-    }
-
-    /** Barn, status og søknadsdata fylles inn fra behandlingsdetaljene i [BehandleBehandlingHendelseService.behandleHendelse] */
-    private fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(): BehandlingHendelse {
-        val nå = LocalDateTime.now()
-        val vedtakstype = vedtakstype ?: throw IllegalStateException("Behandling med id=$id mangler vedtakstype")
-        val behandlerenhet = behandlerenhet ?: throw IllegalStateException("Behandling med id=$id mangler behandlerenhet")
-        return BehandlingHendelse(
-            type = if (erVedtakFattet) BehandlingHendelseType.AVSLUTTET else BehandlingHendelseType.ENDRET,
-            status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
-            vedtakstype = vedtakstype,
-            opprettetTidspunkt = nå,
-            endretTidspunkt = nå,
-            mottattDato = mottattdato ?: nå.toLocalDate(),
-            sporingsdata = Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
-            behandlingsid = id,
-            behandlerEnhet = behandlerenhet,
-            søknadsid = søknadsid,
-            omgjørSøknadsid = søknadRefId,
-        )
     }
 }

@@ -31,6 +31,7 @@ import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
+import no.nav.bidrag.transport.dokument.Sporingsdata
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -128,48 +129,10 @@ class BehandleBehandlingHendelseService(
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
-    /**
-     * Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert.
-     * Beholder sporingsdata og hendelsetype fra mottatt hendelse, med mindre vedtak er fattet.
-     */
+    /** Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert. */
     private fun BehandlingHendelse.medSisteBehandlingsdata(behandlingDetaljer: BehandlingDetaljerDtoV2?): BehandlingHendelse {
         if (behandlingDetaljer == null || behandlingDetaljer.roller.isEmpty()) return this
-        val erVedtakFattet = behandlingDetaljer.erVedtakFattet
-        val barn =
-            behandlingDetaljer.roller
-                .filter { it.rolletype == Rolletype.BARN && it.ident != null }
-                .flatMap { rolle ->
-                    rolle.søknader.map { søknad ->
-                        BehandlingHendelseBarn(
-                            saksnummer = rolle.saksnummer,
-                            ident = rolle.ident!!,
-                            stønadstype = rolle.stønadstype,
-                            engangsbeløptype = behandlingDetaljer.engangsbeløptype,
-                            særbidragskategori = behandlingDetaljer.kategori?.kategori,
-                            søknadsid = søknad.søknadsId,
-                            omgjørSøknadsid = søknad.omgjørSøknadsid,
-                            omgjørVedtaksid = søknad.omgjørVedtaksid,
-                            søktAv = søknad.søknadFra,
-                            behandlerEnhet = søknad.enhet,
-                            behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
-                            behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
-                            medInnkreving = søknad.innkreving ?: (behandlingDetaljer.innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
-                            søktFraDato = søknad.søknadFomDato ?: behandlingDetaljer.søktFomDato,
-                            mottattDato = søknad.mottattDato ?: behandlingDetaljer.mottattdato,
-                            status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
-                        )
-                    }
-                }
-        return copy(
-            barn = barn,
-            søknadsid = behandlingDetaljer.søknadsid ?: søknadsid,
-            omgjørSøknadsid = behandlingDetaljer.søknadRefId,
-            vedtakstype = behandlingDetaljer.vedtakstype ?: vedtakstype,
-            mottattDato = behandlingDetaljer.mottattdato ?: mottattDato,
-            behandlerEnhet = behandlingDetaljer.behandlerenhet ?: behandlerEnhet,
-            status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
-            type = if (erVedtakFattet) BehandlingHendelseType.AVSLUTTET else type,
-        )
+        return behandlingDetaljer.tilBehandlingHendelse(this)
     }
 
     fun ferdigstillOppgaverSomErSlettet(behandlingsid: Long?) {
@@ -559,3 +522,63 @@ class BehandleBehandlingHendelseService(
         else -> Fagomrade.BIDRAG
     }
 }
+
+/**
+ * Lager hendelse fra behandlingsdetaljene. Verdier som ikke finnes i behandlingsdetaljene
+ * (sporingsdata, omgjørBehandlingsid og hendelsetype før vedtak er fattet) hentes fra [mottattHendelse] hvis den finnes.
+ */
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
+    val nå = LocalDateTime.now()
+    val behandlerEnhet =
+        behandlerenhet ?: mottattHendelse?.behandlerEnhet
+            ?: throw IllegalStateException("Behandling med id=$id mangler behandlerenhet")
+    return BehandlingHendelse(
+        type =
+            when {
+                erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
+                else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
+            },
+        status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
+        vedtakstype =
+            vedtakstype ?: mottattHendelse?.vedtakstype
+                ?: throw IllegalStateException("Behandling med id=$id mangler vedtakstype"),
+        opprettetTidspunkt = opprettetTidspunkt ?: mottattHendelse?.opprettetTidspunkt ?: nå,
+        endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
+        mottattDato = mottattdato ?: mottattHendelse?.mottattDato ?: nå.toLocalDate(),
+        barn = tilBehandlingHendelseBarn(),
+        sporingsdata =
+            mottattHendelse?.sporingsdata
+                ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerEnhet),
+        behandlingsid = id,
+        omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
+        behandlerEnhet = behandlerEnhet,
+        søknadsid = søknadsid ?: mottattHendelse?.søknadsid,
+        omgjørSøknadsid = søknadRefId,
+    )
+}
+
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> =
+    roller
+        .filter { it.rolletype == Rolletype.BARN && it.ident != null }
+        .flatMap { rolle ->
+            rolle.søknader.map { søknad ->
+                BehandlingHendelseBarn(
+                    saksnummer = rolle.saksnummer,
+                    ident = rolle.ident!!,
+                    stønadstype = rolle.stønadstype,
+                    engangsbeløptype = engangsbeløptype,
+                    særbidragskategori = kategori?.kategori,
+                    søknadsid = søknad.søknadsId,
+                    omgjørSøknadsid = søknad.omgjørSøknadsid,
+                    omgjørVedtaksid = søknad.omgjørVedtaksid,
+                    søktAv = søknad.søknadFra,
+                    behandlerEnhet = søknad.enhet,
+                    behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
+                    behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
+                    medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
+                    søktFraDato = søknad.søknadFomDato ?: søktFomDato,
+                    mottattDato = søknad.mottattDato ?: mottattdato,
+                    status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                )
+            }
+        }
