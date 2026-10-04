@@ -122,7 +122,7 @@ class BehandleBehandlingHendelseService(
             oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
         // Behandlingsdetaljene inneholder ikke feilregistrerte søknader eller slettede barn, så oppgavene til disse må ferdigstilles separat
-        ferdigstillOppgaverSomErSlettet(hendelse)
+        ferdigstillOppgaverSomErSlettet(hendelse.behandlingsid)
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
@@ -172,10 +172,10 @@ class BehandleBehandlingHendelseService(
         )
     }
 
-    private fun ferdigstillOppgaverSomErSlettet(behandlingHendelse: BehandlingHendelse) {
-        if (behandlingHendelse.behandlingsid == null) return
+    fun ferdigstillOppgaverSomErSlettet(behandlingsid: Long?) {
+        if (behandlingsid == null) return
 
-        val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandlingHendelse.behandlingsid!!)
+        val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandlingsid)
         oppgaverBehandling.forEach {
             try {
                 if (it.søknadsid == null) return@forEach
