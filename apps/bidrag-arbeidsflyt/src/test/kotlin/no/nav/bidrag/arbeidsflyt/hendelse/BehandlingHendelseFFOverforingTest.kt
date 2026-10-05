@@ -24,15 +24,16 @@ import no.nav.bidrag.arbeidsflyt.utils.opprettSakForBehandling
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
 import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
-import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerForholdsmessigFordelingDto
-import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerRolleDto
-import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerRolleSøknadDto
+import no.nav.bidrag.transport.behandling.behandling.ForholdmessigFordelingDetaljerDto
+import no.nav.bidrag.transport.behandling.behandling.RolleDto
+import no.nav.bidrag.transport.behandling.behandling.RolleSøknadDto
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
@@ -68,17 +69,27 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
 
     private fun stubHentBehandlingDetaljer(
         behandlingsid: Long,
-        forholdsmessigFordeling: BehandlingDetaljerForholdsmessigFordelingDto? =
-            BehandlingDetaljerForholdsmessigFordelingDto(
+        forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? =
+            ForholdmessigFordelingDetaljerDto(
+                barn = emptyList(),
                 opprettetAvSaksbehandler = SAKSBEHANDLER_SOM_OPPRETTET_FF,
                 opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF,
             ),
-        roller: Set<BehandlingDetaljerRolleDto> = emptySet(),
+        roller: Set<RolleDto> = emptySet(),
         erVedtakFattet: Boolean = false,
     ) {
         val respons =
             BehandlingDetaljerDtoV2(
                 id = behandlingsid,
+                type = TypeBehandling.BIDRAG,
+                vedtakstype = Vedtakstype.ENDRING,
+                erKlageEllerOmgjøring = false,
+                opprettetTidspunkt = LocalDateTime.now(),
+                søktFomDato = LocalDate.parse("2020-06-01"),
+                mottattdato = LocalDate.parse("2020-06-01"),
+                søktAv = SøktAvType.BIDRAGSMOTTAKER,
+                søknadsid = 123,
+                behandlerenhet = ANNEN_ENHET,
                 saksnummer = SAKSNUMMER,
                 opprettetAv = SaksbehandlerDto("Z999999", "Testbruker"),
                 forholdsmessigFordeling = forholdsmessigFordeling,
@@ -186,15 +197,19 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
             erVedtakFattet = true,
             roller =
             setOf(
-                BehandlingDetaljerRolleDto(
+                RolleDto(
+                    id = 1,
                     rolletype = Rolletype.BARN,
+                    delAvOpprinneligBehandling = true,
+                    erRevurdering = false,
                     ident = "123213",
                     stønadstype = Stønadstype.BIDRAG,
                     saksnummer = SAKSNUMMER,
                     søknader =
                     listOf(
-                        BehandlingDetaljerRolleSøknadDto(
+                        RolleSøknadDto(
                             søknadsId = 999,
+                            vedtakstype = Vedtakstype.KLAGE,
                             søknadFra = SøktAvType.BIDRAGSPLIKTIG,
                             enhet = ENHET_SOM_OPPRETTET_FF,
                             behandlingstype = Behandlingstype.KLAGE,
@@ -357,7 +372,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val andreHendelse = førsteFFOverføring(behandlingsid)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
         )
         stubHentOppgaveContaining(
             listOf(
@@ -379,7 +394,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)
@@ -398,7 +413,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = BehandlingDetaljerForholdsmessigFordelingDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)

@@ -530,9 +530,6 @@ class BehandleBehandlingHendelseService(
  */
 internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
     val nå = LocalDateTime.now()
-    val behandlerEnhet =
-        behandlerenhet ?: mottattHendelse?.behandlerEnhet
-            ?: throw IllegalStateException("Behandling med id=$id mangler behandlerenhet")
     return BehandlingHendelse(
         type =
         when {
@@ -540,20 +537,18 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: Beha
             else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
         },
         status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
-        vedtakstype =
-        vedtakstype ?: mottattHendelse?.vedtakstype
-            ?: throw IllegalStateException("Behandling med id=$id mangler vedtakstype"),
-        opprettetTidspunkt = opprettetTidspunkt ?: mottattHendelse?.opprettetTidspunkt ?: nå,
+        vedtakstype = vedtakstype,
+        opprettetTidspunkt = opprettetTidspunkt,
         endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
-        mottattDato = mottattdato ?: mottattHendelse?.mottattDato ?: nå.toLocalDate(),
+        mottattDato = mottattdato,
         barn = tilBehandlingHendelseBarn(),
         sporingsdata =
         mottattHendelse?.sporingsdata
-            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerEnhet),
+            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
         behandlingsid = id,
         omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
-        behandlerEnhet = behandlerEnhet,
-        søknadsid = søknadsid ?: mottattHendelse?.søknadsid,
+        behandlerEnhet = behandlerenhet,
+        søknadsid = søknadsid,
         omgjørSøknadsid = søknadRefId,
     )
 }
