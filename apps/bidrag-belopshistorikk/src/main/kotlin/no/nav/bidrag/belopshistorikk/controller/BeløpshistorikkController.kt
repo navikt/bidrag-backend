@@ -11,6 +11,8 @@ import jakarta.validation.constraints.NotNull
 import no.nav.bidrag.belopshistorikk.service.BeløpshistorikkService
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.rest.exceptions.RessursIkkeFunnetException
+import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentEngangsbeløpRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadHistoriskRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.LøpendeBidragPeriodeRequest
@@ -24,6 +26,7 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadMedPeriodeBeløpResponse
 import no.nav.security.token.support.core.api.Protected
 import org.springframework.http.HttpStatus
+import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,6 +38,21 @@ import org.springframework.web.bind.annotation.RestController
 @Protected
 @Timed
 class BeløpshistorikkController(private val beløpshistorikkService: BeløpshistorikkService) {
+
+    @PostMapping("hent-engangsbelop")
+    @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finn engangsbeløp fra type, sak, skyldner, kravhaver og referanse")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Engangsbeløp funnet"),
+            ApiResponse(responseCode = "404", description = "Engangsbeløp ikke funnet", content = [Content(schema = Schema(implementation = ProblemDetail::class))]),
+        ],
+    )
+    fun hentEngangsbeløp(
+        @NotNull @RequestBody request: HentEngangsbeløpRequest,
+    ): ResponseEntity<EngangsbeløpDto> = ResponseEntity(
+        beløpshistorikkService.hentEngangsbeløp(request) ?: throw RessursIkkeFunnetException("Engangsbeløp"),
+        HttpStatus.OK,
+    )
 
     @PostMapping(HENT_STØNAD)
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finn alle data for en stønad")
@@ -51,7 +69,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
                 description = "Saksbehandler mangler tilgang til å lese data for aktuell stønad",
                 content = [Content(schema = Schema(hidden = true))],
             ),
-            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(hidden = true))]),
+            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(implementation = ProblemDetail::class))]),
             ApiResponse(responseCode = "500", description = "Serverfeil", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "503", description = "Tjeneste utilgjengelig", content = [Content(schema = Schema(hidden = true))]),
         ],
@@ -61,7 +79,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         @RequestBody
         request: HentStønadRequest,
     ): ResponseEntity<StønadDto> {
-        val stønadFunnet = beløpshistorikkService.hentStønad(request)
+        val stønadFunnet = beløpshistorikkService.hentStønad(request) ?: throw RessursIkkeFunnetException("Stønad")
         secureLogger.debug { "Følgende stønad ble hentet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
@@ -81,7 +99,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
                 description = "Saksbehandler mangler tilgang til å lese data for aktuell stønad",
                 content = [Content(schema = Schema(hidden = true))],
             ),
-            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(hidden = true))]),
+            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(implementation = ProblemDetail::class))]),
             ApiResponse(responseCode = "500", description = "Serverfeil", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "503", description = "Tjeneste utilgjengelig", content = [Content(schema = Schema(hidden = true))]),
         ],
@@ -90,7 +108,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         @NotNull @RequestBody
         request: HentStønadHistoriskRequest,
     ): ResponseEntity<StønadDto> {
-        val stønadFunnet = beløpshistorikkService.hentStønadHistorisk(request)
+        val stønadFunnet = beløpshistorikkService.hentStønadHistorisk(request) ?: throw RessursIkkeFunnetException("Stønad")
         secureLogger.debug { "Følgende historiske stønad ble hentet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
@@ -110,7 +128,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
                 description = "Saksbehandler mangler tilgang til å lese data for aktuell stønad",
                 content = [Content(schema = Schema(hidden = true))],
             ),
-            ApiResponse(responseCode = "404", description = "Stønader ikke funnet", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "500", description = "Serverfeil", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "503", description = "Tjeneste utilgjengelig", content = [Content(schema = Schema(hidden = true))]),
         ],
@@ -143,7 +160,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
                 description = "Saksbehandler mangler tilgang til å lese data for aktuelle stønader",
                 content = [Content(schema = Schema(hidden = true))],
             ),
-            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "500", description = "Serverfeil", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "503", description = "Tjeneste utilgjengelig", content = [Content(schema = Schema(hidden = true))]),
         ],
@@ -191,7 +207,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
                 description = "Saksbehandler mangler tilgang til å lese data for aktuell stønad",
                 content = [Content(schema = Schema(hidden = true))],
             ),
-            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(hidden = true))]),
+            ApiResponse(responseCode = "404", description = "Stønad ikke funnet", content = [Content(schema = Schema(implementation = ProblemDetail::class))]),
             ApiResponse(responseCode = "500", description = "Serverfeil", content = [Content(schema = Schema(hidden = true))]),
             ApiResponse(responseCode = "503", description = "Tjeneste utilgjengelig", content = [Content(schema = Schema(hidden = true))]),
         ],
@@ -200,7 +216,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         @NotNull @RequestBody
         request: HentStønadRequest,
     ): ResponseEntity<StønadMedPeriodeBeløpResponse> {
-        val stønadFunnet = beløpshistorikkService.hentStønadMedPeriodebeløp(request)
+        val stønadFunnet = beløpshistorikkService.hentStønadMedPeriodebeløp(request) ?: throw RessursIkkeFunnetException("Stønad")
         secureLogger.debug { "Følgende stønad med periodebeløp ble funnet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
