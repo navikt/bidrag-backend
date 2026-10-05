@@ -162,17 +162,12 @@ class DokumentMetadataCollector(
             )
         }
 
-        val soknadsbarn = mutableListOf<String>()
-        if (forespørsel.barnIBehandling.isNotEmpty()) {
-            soknadsbarn.addAll(forespørsel.barnIBehandling)
-        } else if (forespørsel.vedtakId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.VEDTAK)) {
-            soknadsbarn.addAll(
-                vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId),
-            )
-        } else if (forespørsel.behandlingId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING)) {
-            soknadsbarn.addAll(behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId))
+        val soknadsbarn = if (forespørsel.vedtakId != null) {
+            vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId)
+        } else if (forespørsel.behandlingId != null) {
+            behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
-            soknadsbarn.addAll(forespørsel.barnIBehandling)
+            forespørsel.barnIBehandling
         }
 
         val barn = sak.roller.filter { it.type == Rolletype.BARN }
@@ -245,17 +240,12 @@ class DokumentMetadataCollector(
             )
         }
 
-        val soknadsbarn = mutableListOf<String>()
-        if (forespørsel.barnIBehandling.isNotEmpty()) {
-            soknadsbarn.addAll(forespørsel.barnIBehandling)
-        } else if (forespørsel.vedtakId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.VEDTAK)) {
-            soknadsbarn.addAll(
-                vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId),
-            )
-        } else if (forespørsel.behandlingId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING)) {
-            soknadsbarn.addAll(behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId))
+        val soknadsbarn = if (forespørsel.vedtakId != null) {
+            vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId)
+        } else if (forespørsel.behandlingId != null) {
+            behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
-            soknadsbarn.addAll(forespørsel.barnIBehandling)
+            forespørsel.barnIBehandling
         }
 
         val barn = sak.roller.filter { it.type == Rolletype.BARN }
