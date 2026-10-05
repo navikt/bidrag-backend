@@ -28,9 +28,16 @@ class BidragBehandlingConsumer(
         .toUri()
 
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
-    fun hentBehandling(behandlingId: Long): BehandlingDetaljerDtoV2? = try {
+    fun hentBehandling(
+        behandlingId: Long,
+        inkluderSlettet: Boolean = false,
+    ): BehandlingDetaljerDtoV2? = try {
         getForEntity<BehandlingDetaljerDtoV2>(
-            createUri("/api/v2/behandling/detaljer/$behandlingId"),
+            UriComponentsBuilder
+                .fromUri(createUri("/api/v2/behandling/detaljer/$behandlingId"))
+                .queryParam("inkluderSlettet", inkluderSlettet)
+                .build()
+                .toUri(),
         )
     } catch (e: HttpStatusCodeException) {
         if (e.statusCode == HttpStatus.NOT_FOUND) {

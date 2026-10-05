@@ -7,6 +7,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.patchRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -97,7 +98,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
                 erVedtakFattet = erVedtakFattet,
             )
         stubFor(
-            get(urlEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid"))
+            get(urlPathEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid"))
                 .willReturn(
                     aResponse()
                         .withHeader(HttpHeaders.CONNECTION, "close")
@@ -167,7 +168,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         behandlingsid: Long,
         antall: Int,
     ) {
-        verify(antall, getRequestedFor(urlEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid")))
+        verify(antall, getRequestedFor(urlPathEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid")))
     }
 
     private fun verifyOppgaveOverfortTilSaksbehandler(

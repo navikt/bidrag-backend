@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.controller.v2
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
@@ -447,7 +448,10 @@ class BehandlingControllerV2(
     )
     fun henteBehandlingDetaljer(
         @PathVariable behandlingsid: Long,
-    ): BehandlingDetaljerDtoV2 = behandlingService.henteBehandlingDetaljer(behandlingsid)
+        @Parameter(description = "Returner også behandlingen hvis den er slettet")
+        @RequestParam(required = false, defaultValue = "false")
+        inkluderSlettet: Boolean = false,
+    ): BehandlingDetaljerDtoV2 = behandlingService.henteBehandlingDetaljer(behandlingsid, inkluderSlettet)
 
     @Suppress("unused")
     @GetMapping("/behandling/{behandlingsid}")

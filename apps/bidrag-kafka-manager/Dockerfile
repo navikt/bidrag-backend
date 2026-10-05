@@ -1,3 +1,3 @@
-FROM ghcr.io/kafbat/kafka-ui:v1.5.0
+FROM ghcr.io/kafbat/kafka-ui:0c481c0
 
 COPY config.yml config.yml

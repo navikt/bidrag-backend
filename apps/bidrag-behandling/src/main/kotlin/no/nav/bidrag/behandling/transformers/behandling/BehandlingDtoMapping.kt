@@ -515,6 +515,7 @@ fun Behandling.tilBehandlingDetaljerDtoV2() = BehandlingDetaljerDtoV2(
     saksnummer = saksnummer,
     søknadsid = soknadsid!!,
     behandlerenhet = behandlerEnhet,
+    slettet = deleted,
     roller =
     roller
         .map {

@@ -81,12 +81,13 @@ class BehandleBehandlingHendelseService(
         mottattHendelse: BehandlingHendelse,
         sjekkOglukkÅpneOppgaver: Boolean = false,
     ) {
-        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
+        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) }
         val hendelse = mottattHendelse.medSisteBehandlingsdata(behandlingDetaljer)
         val behandling = hentHendelse(hendelse)
 
         if (behandling.id != 0L && behandling.status.erAvsluttet && !sjekkOglukkÅpneOppgaver) {
-            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Ignorerer hendelse $hendelse" }
+            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Avslutter relaterte oppgaver. $hendelse" }
+            ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse, behandling)
             return
         }
         if (hendelse.behandlingsid == null && behandling.behandlesAvFlereSøknader) {
@@ -109,14 +110,13 @@ class BehandleBehandlingHendelseService(
                         behandlingId = hendelse.behandlingsid,
                         saksnr = saksnummer,
                         tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
-//                        oppgaveType = finnOppgavetypeForStønadstype(førsteBarn.behandlingstema),
                     ).dataForHendelse
             secureLogger.debug { "Fant ${åpneOppgaver.size} åpne søknadsoppgaver for sak $saksnummer og søknadsid $søknadsid og behandlingsid = ${hendelse.behandlingsid}" }
             oppdaterNormDatoOgMottattdato(hendelse, behandling, førsteBarn)
             if (kreverOppgave && åpneOppgaver.isEmpty() && !sjekkOglukkÅpneOppgaver) {
                 opprettOppgave(behandling, førsteBarn, hendelse, overførtTilEnhet)
             } else if (!kreverOppgave) {
-                ferdigstillOppgaver(åpneOppgaver, hendelse)
+                ferdigstillOppgaver(åpneOppgaver)
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
@@ -127,6 +127,25 @@ class BehandleBehandlingHendelseService(
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
+    }
+
+    private fun ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse: BehandlingHendelse, behandling: Behandling) {
+        hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
+            val saksnummer = saksnummerSøknadPair.first
+            val søknadsid = saksnummerSøknadPair.second
+            val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
+            val åpneOppgaver =
+                oppgaveService
+                    .finnOppgaverForSøknad(
+                        søknadId = søknadsid,
+                        behandlingId = hendelse.behandlingsid,
+                        saksnr = saksnummer,
+                        tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
+                    ).dataForHendelse
+            ferdigstillOppgaver(åpneOppgaver)
+        }
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
+        oppdaterOgLagreBehandling(hendelse, behandling)
     }
 
     /** Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert. */
@@ -336,10 +355,7 @@ class BehandleBehandlingHendelseService(
         return oppgave
     }
 
-    private fun ferdigstillOppgaver(
-        åpneOppgaver: List<OppgaveData>,
-        hendelse: BehandlingHendelse,
-    ) {
+    private fun ferdigstillOppgaver(åpneOppgaver: List<OppgaveData>) {
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
                 oppgaveService.oppdaterOppgave(
@@ -388,6 +404,11 @@ class BehandleBehandlingHendelseService(
             )
         }
 
+    fun oppdaterBehandlingIDatabasen(behandling: Behandling?) {
+        val behandlingDetaljer = behandling?.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) } ?: return
+        val hendelse = behandlingDetaljer.tilBehandlingHendelse(behandling.hendelse).medSisteBehandlingsdata(behandlingDetaljer)
+        oppdaterOgLagreBehandling(hendelse, behandling)
+    }
     private fun oppdaterOgLagreBehandling(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -533,10 +554,15 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: Beha
     return BehandlingHendelse(
         type =
         when {
-            erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
+            erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
             else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
         },
-        status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
+        status =
+        when {
+            slettet -> BehandlingStatusType.AVBRUTT
+            erVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
+            else -> BehandlingStatusType.UNDER_BEHANDLING
+        },
         vedtakstype = vedtakstype,
         opprettetTidspunkt = opprettetTidspunkt,
         endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
@@ -573,7 +599,12 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<Behandlin
                 medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
                 søktFraDato = søknad.søknadFomDato ?: søktFomDato,
                 mottattDato = søknad.mottattDato ?: mottattdato,
-                status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                status =
+                when {
+                    slettet -> Behandlingstatus.FEILREGISTRERT
+                    erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
+                    else -> søknad.status ?: Behandlingstatus.UNDER_BEHANDLING
+                },
             )
         }
     }
