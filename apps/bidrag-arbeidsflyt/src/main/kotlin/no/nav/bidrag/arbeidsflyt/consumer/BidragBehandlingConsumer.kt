@@ -2,7 +2,7 @@ package no.nav.bidrag.arbeidsflyt.consumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.web.client.AbstractRestClient
-import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -15,19 +15,6 @@ import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
 private val LOGGER = KotlinLogging.logger { }
-
-data class BehandlingDetaljerDtoV2(
-    val id: Long,
-    val saksnummer: String,
-    val opprettetAv: SaksbehandlerDto,
-    val forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? = null,
-)
-
-data class ForholdmessigFordelingDetaljerDto(
-    val opprettetAvSaksbehandler: String? = null,
-    val opprettetAvEnhet: String? = null,
-    val overførtTilEnhet: String? = null,
-)
 
 @Service
 class BidragBehandlingConsumer(
@@ -50,6 +37,20 @@ class BidragBehandlingConsumer(
             null
         } else {
             LOGGER.warn(e) { "Det skjedde en feil ved henting av behandling $behandlingId" }
+            throw e
+        }
+    }
+
+    @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0))
+    fun erBehandlingSlettet(behandlingId: Long): Boolean? = try {
+        getForEntity<Boolean>(
+            createUri("/api/v2/behandling/$behandlingId/slettet"),
+        )
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.NOT_FOUND) {
+            null
+        } else {
+            LOGGER.warn(e) { "Det skjedde en feil ved sjekk om behandling $behandlingId er slettet" }
             throw e
         }
     }

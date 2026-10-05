@@ -1,7 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.arbeidsflyt.consumer.BehandlingDetaljerDtoV2
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragSakConsumer
@@ -23,15 +22,19 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.tilBeskrivelse
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.util.visningsnavn
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -75,9 +78,11 @@ class BehandleBehandlingHendelseService(
 
     @Transactional
     fun behandleHendelse(
-        hendelse: BehandlingHendelse,
+        mottattHendelse: BehandlingHendelse,
         sjekkOglukkÅpneOppgaver: Boolean = false,
     ) {
+        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
+        val hendelse = mottattHendelse.medSisteBehandlingsdata(behandlingDetaljer)
         val behandling = hentHendelse(hendelse)
 
         if (behandling.id != 0L && behandling.status.erAvsluttet && !sjekkOglukkÅpneOppgaver) {
@@ -89,7 +94,6 @@ class BehandleBehandlingHendelseService(
             return
         }
 
-        val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
         val overførtTilEnhet = behandlingDetaljer?.forholdsmessigFordeling?.overførtTilEnhet
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
@@ -118,11 +122,40 @@ class BehandleBehandlingHendelseService(
             }
             oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
+        // Behandlingsdetaljene inneholder ikke feilregistrerte søknader eller slettede barn, så oppgavene til disse må ferdigstilles separat
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
+    /** Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert. */
+    private fun BehandlingHendelse.medSisteBehandlingsdata(behandlingDetaljer: BehandlingDetaljerDtoV2?): BehandlingHendelse {
+        if (behandlingDetaljer == null || behandlingDetaljer.roller.isEmpty()) return this
+        return behandlingDetaljer.tilBehandlingHendelse(this)
+    }
+
+    fun ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid: Long?) {
+        if (behandlingsid == null) return
+
+        val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandlingsid)
+        oppgaverBehandling.forEach {
+            try {
+                if (!it.erSøknadsoppgave) return@forEach
+                if (it.søknadsid == null) return@forEach
+                val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong()))?.søknad ?: return@forEach
+                if (søknad.behandlingStatusType.erAvsluttet) {
+                    oppgaveService.oppdaterOppgave(
+                        OppdaterOppgave(it)
+                            .ferdigstill(),
+                    )
+                    secureLogger.info { "Ferdigstilte søknadsoppgave ${it.id} for sak ${it.saksreferanse} og søknadsid ${it.søknadsid} og behandlingsid ${it.behandlingsid}" }
+                }
+            } catch (e: Exception) {
+                LOGGER.error(e) { "Det skjedde en feil ved ferdigstillelse av søknadsoppgave ${it.id}" }
+            }
+        }
+    }
     private fun oppdaterOppgaverMedBehandlingId(
         åpneOppgaver: List<OppgaveData>,
         hendelse: BehandlingHendelse,
@@ -490,3 +523,57 @@ class BehandleBehandlingHendelseService(
         else -> Fagomrade.BIDRAG
     }
 }
+
+/**
+ * Lager hendelse fra behandlingsdetaljene. Verdier som ikke finnes i behandlingsdetaljene
+ * (sporingsdata, omgjørBehandlingsid og hendelsetype før vedtak er fattet) hentes fra [mottattHendelse] hvis den finnes.
+ */
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
+    val nå = LocalDateTime.now()
+    return BehandlingHendelse(
+        type =
+        when {
+            erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
+            else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
+        },
+        status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
+        vedtakstype = vedtakstype,
+        opprettetTidspunkt = opprettetTidspunkt,
+        endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
+        mottattDato = mottattdato,
+        barn = tilBehandlingHendelseBarn(),
+        sporingsdata =
+        mottattHendelse?.sporingsdata
+            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
+        behandlingsid = id,
+        omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
+        behandlerEnhet = behandlerenhet,
+        søknadsid = søknadsid,
+        omgjørSøknadsid = søknadRefId,
+    )
+}
+
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> = roller
+    .filter { it.rolletype == Rolletype.BARN && it.ident != null }
+    .flatMap { rolle ->
+        rolle.søknader.map { søknad ->
+            BehandlingHendelseBarn(
+                saksnummer = rolle.saksnummer,
+                ident = rolle.ident!!,
+                stønadstype = rolle.stønadstype,
+                engangsbeløptype = engangsbeløptype,
+                særbidragskategori = kategori?.kategori,
+                søknadsid = søknad.søknadsId,
+                omgjørSøknadsid = søknad.omgjørSøknadsid,
+                omgjørVedtaksid = søknad.omgjørVedtaksid,
+                søktAv = søknad.søknadFra,
+                behandlerEnhet = søknad.enhet,
+                behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
+                behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
+                medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
+                søktFraDato = søknad.søknadFomDato ?: søktFomDato,
+                mottattDato = søknad.mottattDato ?: mottattdato,
+                status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
+            )
+        }
+    }

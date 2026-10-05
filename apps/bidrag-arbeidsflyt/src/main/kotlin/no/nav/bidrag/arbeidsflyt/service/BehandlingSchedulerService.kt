@@ -1,7 +1,9 @@
 package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.persistence.repository.BehandlingRepository
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -18,6 +20,7 @@ private val LOGGER = KotlinLogging.logger {}
 class BehandlingSchedulerService(
     private val behandlingRepository: BehandlingRepository,
     private val behandleBehandlingHendelseService: BehandleBehandlingHendelseService,
+    private val bidragBehandlingConsumer: BidragBehandlingConsumer,
 ) {
     /**
      * Processes a single behandling and unconditionally updates statusSjekketTidspunkt
@@ -26,10 +29,29 @@ class BehandlingSchedulerService(
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun behandleOgOppdaterStatusSjekket(behandlingId: Long) {
-        val behandling =
-            behandlingRepository.findById(behandlingId).orElseThrow {
-                IllegalStateException("Behandling med id=$behandlingId ikke funnet")
+        val behandling = behandlingRepository.finnForBehandlingId(behandlingId)
+        if (bidragBehandlingConsumer.erBehandlingSlettet(behandlingId) == true) {
+            LOGGER.info { "Behandling med behandlingsid=$behandlingId er slettet. Setter status til avbrutt og ferdigstiller tilhørende søknadsoppgaver" }
+            behandling?.status = BehandlingStatusType.AVBRUTT
+            behandling?.statusSjekketTidspunkt = LocalDateTime.now()
+            behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingId)
+            return
+        }
+        if (behandling?.hendelse == null) {
+            // Behandlingen eller lagret hendelse mangler. Prøver å gjenskape hendelsen fra bidrag-behandling
+            val behandlingsid = behandling?.behandlingsid ?: behandlingId
+            LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Gjenskaper hendelse fra bidrag-behandling med behandlingsid=$behandlingsid" }
+            val hendelse =
+                bidragBehandlingConsumer.hentBehandling(behandlingsid)?.tilBehandlingHendelse()
+            if (hendelse == null) {
+                LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Den er mest sannsynlig avsluttet. Forsøker å ferdigstille alle tilhørende oppgaver" }
+                behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid)
+                return
             }
+            behandleBehandlingHendelseService.behandleHendelse(hendelse, true)
+            behandlingRepository.finnForBehandlingId(behandlingsid)?.statusSjekketTidspunkt = LocalDateTime.now()
+            return
+        }
 
         try {
             LOGGER.info { "Sjekker og behandler behandling med id med id=$behandlingId" }
