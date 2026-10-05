@@ -86,6 +86,7 @@ class BehandleBehandlingHendelseService(
         val behandling = hentHendelse(hendelse)
 
         if (behandling.id != 0L && behandling.status.erAvsluttet && !sjekkOglukkÅpneOppgaver) {
+            ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
             secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Ignorerer hendelse $hendelse" }
             return
         }
