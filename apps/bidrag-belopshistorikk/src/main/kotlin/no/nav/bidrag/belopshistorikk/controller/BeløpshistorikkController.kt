@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController
 @Timed
 class BeløpshistorikkController(private val beløpshistorikkService: BeløpshistorikkService) {
 
-    @PostMapping(HENT_ENGANGSBELØP)
+    @PostMapping("hent-engangsbelop")
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finn engangsbeløp fra type, sak, skyldner, kravhaver og referanse")
     @ApiResponses(
         value = [
