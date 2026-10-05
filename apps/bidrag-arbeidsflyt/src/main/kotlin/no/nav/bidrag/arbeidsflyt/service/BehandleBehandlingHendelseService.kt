@@ -116,7 +116,7 @@ class BehandleBehandlingHendelseService(
             if (kreverOppgave && åpneOppgaver.isEmpty() && !sjekkOglukkÅpneOppgaver) {
                 opprettOppgave(behandling, førsteBarn, hendelse, overførtTilEnhet)
             } else if (!kreverOppgave) {
-                ferdigstillOppgaver(åpneOppgaver, hendelse)
+                ferdigstillOppgaver(åpneOppgaver)
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
@@ -336,10 +336,7 @@ class BehandleBehandlingHendelseService(
         return oppgave
     }
 
-    private fun ferdigstillOppgaver(
-        åpneOppgaver: List<OppgaveData>,
-        hendelse: BehandlingHendelse,
-    ) {
+    private fun ferdigstillOppgaver(åpneOppgaver: List<OppgaveData>) {
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
                 oppgaveService.oppdaterOppgave(
