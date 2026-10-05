@@ -20,7 +20,7 @@ internal object UnderholdskostnadMapper : CoreMapper() {
     fun mapUnderholdskostnadGrunnlag(mottattGrunnlag: BeregnGrunnlag, sjablonGrunnlag: List<GrunnlagDto>): UnderholdskostnadPeriodeGrunnlag = UnderholdskostnadPeriodeGrunnlag(
         beregningsperiode = mottattGrunnlag.periode,
         søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
-        barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),
+        barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
         nettoTilsynsutgiftPeriodeGrunnlagListe = mapNettoTilsynsutgift(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
         sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
         sjablonBarnetilsynPeriodeGrunnlagListe = mapSjablonBarnetilsyn(sjablonGrunnlag),
@@ -45,10 +45,11 @@ internal object UnderholdskostnadMapper : CoreMapper() {
         }
     }
 
-    private fun mapBarnetilsynMedStønad(beregnGrunnlag: BeregnGrunnlag): List<BarnetilsynMedStønadPeriodeGrunnlag> {
+    private fun mapBarnetilsynMedStønad(beregnGrunnlag: BeregnGrunnlag, gjelderBarn: Grunnlagsreferanse): List<BarnetilsynMedStønadPeriodeGrunnlag> {
         try {
             return beregnGrunnlag.grunnlagListe
                 .filtrerOgKonverterBasertPåEgenReferanse<BarnetilsynMedStønadPeriode>(Grunnlagstype.BARNETILSYN_MED_STØNAD_PERIODE)
+                .filter { it.gjelderBarnReferanse == null || it.gjelderBarnReferanse == gjelderBarn }
                 .map {
                     BarnetilsynMedStønadPeriodeGrunnlag(
                         referanse = it.referanse,
