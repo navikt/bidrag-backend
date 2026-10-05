@@ -21,7 +21,6 @@
     </properties>
 
     <dependencies>
-        <!-- Intern DTO-modul -->
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-backend-sikkerhet</artifactId>
