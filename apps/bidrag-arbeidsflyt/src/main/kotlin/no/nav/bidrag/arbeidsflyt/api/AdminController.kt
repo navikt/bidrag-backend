@@ -18,9 +18,9 @@ class AdminController(
     @PostMapping("/behandling/{behandlingId}/rekjor")
     @Operation(
         description =
-            "Rekjører siste lagrede behandlingshendelse for en behandling med oppdaterte data fra bidrag-behandling. " +
-                "Oppretter, oppdaterer og ferdigstiller oppgaver slik at de stemmer med behandlingen, " +
-                "og lukker åpne oppgaver hvis behandlingen ikke lenger er åpen.",
+        "Rekjører siste lagrede behandlingshendelse for en behandling med oppdaterte data fra bidrag-behandling. " +
+            "Oppretter, oppdaterer og ferdigstiller oppgaver slik at de stemmer med behandlingen, " +
+            "og lukker åpne oppgaver hvis behandlingen ikke lenger er åpen.",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun rekjørBehandlingHendelser(@PathVariable behandlingId: Long) {
