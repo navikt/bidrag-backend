@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController
 @Timed
 class BeløpshistorikkController(private val beløpshistorikkService: BeløpshistorikkService) {
 
-    @PostMapping("hent-engangsbelop")
+    @PostMapping(HENT_ENGANGSBELØP)
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finn engangsbeløp fra type, sak, skyldner, kravhaver og referanse")
     @ApiResponses(
         value = [
@@ -242,6 +242,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         return ResponseEntity(respons, HttpStatus.OK)
     }
 
+    @Deprecated("Bruk @PostMapping i steden", ReplaceWith("BeløpshistorikkController.hentEngangsbeløp"))
     @GetMapping("engangsbelop/{sak}")
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finner alle engangsbeløp innenfor angitt sak")
     fun hentEngangsbelopForSak(
@@ -254,6 +255,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     }
 
     companion object {
+        const val HENT_ENGANGSBELØP = "/hent-engangsbelop/"
         const val HENT_STØNAD = "/hent-stonad/"
         const val HENT_STØNAD_HISTORISK = "/hent-stonad-historisk/"
         const val HENT_STØNADER_FOR_SAK = "/hent-stonader-for-sak/{sak}"
