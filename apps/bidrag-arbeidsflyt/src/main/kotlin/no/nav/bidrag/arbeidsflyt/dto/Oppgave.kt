@@ -574,6 +574,15 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val erEnhetEndret get() = tildeltEnhetsnr != null && (eksisterendeTildeltEnhet) != tildeltEnhetsnr
 }
 
+class EndreBehandlingstypeRequest() : PatchOppgaveRequest() {
+    var behandlingstype: String? = null
+
+    constructor(oppgaveDataForHendelse: OppgaveData, nyBehandlingstype: String) : this() {
+        leggTilObligatoriskeVerdier(oppgaveDataForHendelse)
+        behandlingstype = nyBehandlingstype
+    }
+}
+
 class UpdateOppgaveAfterOpprettRequest(
     var journalpostId: String,
 ) : PatchOppgaveRequest() {

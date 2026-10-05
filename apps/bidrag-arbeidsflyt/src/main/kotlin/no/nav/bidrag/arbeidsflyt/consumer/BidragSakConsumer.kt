@@ -7,6 +7,7 @@ import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -33,6 +34,17 @@ class BidragSakConsumer(
     @Cacheable(CacheConfig.SAK_CACHE, unless = "#result==null")
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0), exceptionExpression = "@bidragSakConsumer.shouldRetry")
     fun hentSak(saksnr: String): BidragssakDto {
+        try {
+            return getForNonNullEntity(createUri("/sak/$saksnr"))
+        } catch (e: HttpStatusCodeException) {
+            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak ${saksnr.sanitizeForLog()}" }
+            throw e
+        }
+    }
+
+    @CachePut(CacheConfig.SAK_CACHE, key = "#saksnr")
+    @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0), exceptionExpression = "@bidragSakConsumer.shouldRetry")
+    fun hentSakUtenCache(saksnr: String): BidragssakDto {
         try {
             return getForNonNullEntity(createUri("/sak/$saksnr"))
         } catch (e: HttpStatusCodeException) {

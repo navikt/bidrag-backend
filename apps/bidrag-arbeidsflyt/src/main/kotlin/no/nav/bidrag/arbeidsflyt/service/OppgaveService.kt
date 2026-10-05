@@ -3,6 +3,7 @@ package no.nav.bidrag.arbeidsflyt.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.consumer.OppgaveConsumer
 import no.nav.bidrag.arbeidsflyt.dto.DefaultOpprettOppgaveRequest
+import no.nav.bidrag.arbeidsflyt.dto.EndreBehandlingstypeRequest
 import no.nav.bidrag.arbeidsflyt.dto.EndreForNyttDokumentRequest
 import no.nav.bidrag.arbeidsflyt.dto.EndreMellomBidragFagomrader
 import no.nav.bidrag.arbeidsflyt.dto.FerdigstillOppgaveRequest
@@ -15,6 +16,8 @@ import no.nav.bidrag.arbeidsflyt.dto.OpprettBehandleDokumentOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.dto.OpprettJournalforingsOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.dto.OverforOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.dto.OverforOppgaveTilSaksbehandlerRequest
+import no.nav.bidrag.arbeidsflyt.dto.behandlingstypeNasjonal
+import no.nav.bidrag.arbeidsflyt.dto.behandlingstypeUtland
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import no.nav.bidrag.arbeidsflyt.model.OppgaverForHendelse
 import no.nav.bidrag.arbeidsflyt.model.journalpostIdUtenPrefix
@@ -23,6 +26,7 @@ import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgaveDetaljert
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
@@ -151,6 +155,17 @@ class OppgaveService(
         return OppgaverForHendelse(
             oppgaveConsumer.søkOppgaver(oppgaveSokRequest).oppgaver,
         )
+    }
+
+    fun endreBehandlingstypeForSak(
+        saksnummer: String,
+        kategori: Sakskategori,
+    ) {
+        val nyBehandlingstype = if (kategori == Sakskategori.UTLAND) behandlingstypeUtland else behandlingstypeNasjonal
+        val oppgaver = oppgaveConsumer.søkOppgaver(OppgaveSokRequest().leggTilSaksreferanse(saksnummer)).oppgaver
+        oppgaver.filter { it.behandlingstype != nyBehandlingstype }.forEach {
+            oppgaveConsumer.endreOppgave(EndreBehandlingstypeRequest(it, nyBehandlingstype))
+        }
     }
 
     internal fun hentOppgave(oppgaveId: Long): OppgaveData = oppgaveConsumer.hentOppgave(oppgaveId)
