@@ -226,7 +226,6 @@ class ForholdsmessigFordelingService(
             syncGebyrSøknadReferanse(behandling)
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
             behandlingService.sendOppdatertHendelse(behandling.id!!, false)
-            throw RuntimeException("asdsad")
         } catch (e: Exception) {
             LOGGER.error(e) {
                 "Feil ved opprettelse/oppdatering av FF for behandlingId=$behandlingId. " +
