@@ -36,10 +36,10 @@ class BehandlingSchedulerService(
             secureLogger.warn { "Fant ikke behandling med databaseId=$behandlingEntityId" }
             return
         }
+        behandling?.statusSjekketTidspunkt = LocalDateTime.now()
         if (bidragBehandlingConsumer.erBehandlingSlettet(behandlingId) == true) {
             LOGGER.info { "Behandling med behandlingsid=$behandlingId er slettet. Setter status til avbrutt og ferdigstiller tilhørende søknadsoppgaver" }
-            behandling?.status = BehandlingStatusType.AVBRUTT
-            behandling?.statusSjekketTidspunkt = LocalDateTime.now()
+            behandleBehandlingHendelseService.oppdaterBehandlingIDatabasen(behandling)
             behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingId)
             return
         }
@@ -48,9 +48,10 @@ class BehandlingSchedulerService(
             val behandlingsid = behandling?.behandlingsid ?: behandlingId
             LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Gjenskaper hendelse fra bidrag-behandling med behandlingsid=$behandlingsid" }
             val hendelse =
-                bidragBehandlingConsumer.hentBehandling(behandlingsid)?.tilBehandlingHendelse()
+                bidragBehandlingConsumer.hentBehandling(behandlingsid, inkluderSlettet = true)?.tilBehandlingHendelse()
             if (hendelse == null) {
                 LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Den er mest sannsynlig avsluttet. Forsøker å ferdigstille alle tilhørende oppgaver" }
+                behandleBehandlingHendelseService.oppdaterBehandlingIDatabasen(behandling)
                 behandleBehandlingHendelseService.ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid)
                 return
             }

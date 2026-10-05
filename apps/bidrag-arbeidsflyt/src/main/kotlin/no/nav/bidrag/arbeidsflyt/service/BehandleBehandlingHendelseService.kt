@@ -81,7 +81,7 @@ class BehandleBehandlingHendelseService(
         mottattHendelse: BehandlingHendelse,
         sjekkOglukkÅpneOppgaver: Boolean = false,
     ) {
-        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
+        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) }
         val hendelse = mottattHendelse.medSisteBehandlingsdata(behandlingDetaljer)
         val behandling = hentHendelse(hendelse)
 
@@ -385,6 +385,11 @@ class BehandleBehandlingHendelseService(
             )
         }
 
+    fun oppdaterBehandlingIDatabasen(behandling: Behandling?) {
+        val behandlingDetaljer = behandling?.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) } ?: return
+        val hendelse = behandlingDetaljer.tilBehandlingHendelse(behandling.hendelse).medSisteBehandlingsdata(behandlingDetaljer)
+        oppdaterOgLagreBehandling(hendelse, behandling)
+    }
     private fun oppdaterOgLagreBehandling(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -530,10 +535,15 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: Beha
     return BehandlingHendelse(
         type =
         when {
-            erVedtakFattet -> BehandlingHendelseType.AVSLUTTET
+            erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
             else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
         },
-        status = if (erVedtakFattet) BehandlingStatusType.VEDTAK_FATTET else BehandlingStatusType.UNDER_BEHANDLING,
+        status =
+        when {
+            slettet -> BehandlingStatusType.AVBRUTT
+            erVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
+            else -> BehandlingStatusType.UNDER_BEHANDLING
+        },
         vedtakstype = vedtakstype,
         opprettetTidspunkt = opprettetTidspunkt,
         endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
@@ -570,7 +580,12 @@ internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<Behandlin
                 medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
                 søktFraDato = søknad.søknadFomDato ?: søktFomDato,
                 mottattDato = søknad.mottattDato ?: mottattdato,
-                status = if (erVedtakFattet) Behandlingstatus.VEDTAK_FATTET else søknad.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                status =
+                when {
+                    slettet -> Behandlingstatus.FEILREGISTRERT
+                    erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
+                    else -> søknad.status ?: Behandlingstatus.UNDER_BEHANDLING
+                },
             )
         }
     }
