@@ -172,6 +172,10 @@ class OppdragService(
     }
 
     fun oppdatererVerdierPåOppdrag(hendelse: Hendelse, oppdrag: Oppdrag) {
+        if (hendelse.vedtakType == Vedtakstype.ENDRING_MOTTAKER && !UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+            LOGGER.warn { "Endring av mottaker er ikke slått på enda!" }
+            return
+        }
         oppdrag.endretTidspunkt = LocalDateTime.now()
         // Utsatt til dato skal ikke kunne forkortes eller fjernes om først satt via vedtak
         if (oppdrag.utsattTilDato == null || hendelse.utsattTilDato?.isAfter(oppdrag.utsattTilDato) == true) {
