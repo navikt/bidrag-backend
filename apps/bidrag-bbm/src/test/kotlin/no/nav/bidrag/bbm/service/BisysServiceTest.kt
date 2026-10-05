@@ -37,6 +37,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
@@ -1407,6 +1408,47 @@ class BisysServiceTest(
         val response = bisysService.hentSøknad(HentSøknadRequest(søknadsid = søknad.søknadsid!!))
 
         response.søknad.behandlingStatusType shouldBe BehandlingStatusType.UNDER_BEHANDLING
+    }
+
+    @Test
+    fun `skal hente alle søknader for angitt behandlingsid`() {
+        testdataManager.lagreKodeSøknadsstatus(listOf(opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0")))
+        val roller =
+            testdataManager.lagreRoller(
+                listOf(
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
+                ),
+            )
+        val blankett =
+            testdataManager
+                .lagreBlankettListe(listOf(opprettBlankett(saksnummer = SAKSNUMMER_1, søknadstype = "FA", søknadFraKode = "MO")))
+                .first()
+        val søknader =
+            testdataManager.lagreSøknadListe(
+                listOf("100", "100", "200").map {
+                    opprettSøknad(blankettid = blankett.blankettid!!, søknadsgruppekode = "BI", saksnummer = SAKSNUMMER_1, behandlingsid = it)
+                },
+            )
+        testdataManager.lagreSøknadslinjeListe(
+            søknader.map {
+                opprettSøknadslinje(
+                    søknadsid = it.søknadsid!!,
+                    rolleid = roller[2].rolleid!!,
+                    søknadsstatuskode = "UB",
+                    saksnummer = SAKSNUMMER_1,
+                    innbetaltBeløp = null,
+                    gruppeKombinasjonskode = "BI",
+                )
+            },
+        )
+
+        val response = bisysService.hentSøknaderForBehandling(HentSøknaderForBehandlingRequest(behandlingsid = 100))
+
+        response.søknader.map { it.søknadsid } shouldBe listOf(søknader[0].søknadsid, søknader[1].søknadsid)
+        response.søknader.forEach { it.behandlingsid shouldBe 100 }
+        bisysService.hentSøknaderForBehandling(HentSøknaderForBehandlingRequest(behandlingsid = 999)).søknader shouldHaveSize 0
     }
 
     @Test
