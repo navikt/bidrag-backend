@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:22-alpine3.22 AS build
+FROM node:26-alpine3.22 AS build
 ENV NODE_ENV=production
 LABEL maintainer="Team Bidrag"
 WORKDIR /app
@@ -21,7 +21,7 @@ COPY . .
 RUN npm run build
 RUN npm prune --omit=dev && npm cache clean --force
 
-FROM node:22-alpine3.22 AS runtime
+FROM node:26-alpine3.22 AS runtime
 ENV NODE_ENV=production
 ENV PORT=8080
 
