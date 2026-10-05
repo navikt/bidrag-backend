@@ -164,6 +164,21 @@ internal class PersistenceServiceIT {
     }
 
     @Test
+    fun `skal feile ved flere perioder med samme referanse og vedtakId`() {
+        val referanse = "TvetydigReferanse"
+        repeat(2) {
+            val oppdrag = TestData.opprettOppdrag(oppdragsperioder = emptyList())
+            val periode = TestData.opprettOppdragsperiode(oppdrag = oppdrag, referanse = referanse, vedtakId = 987654)
+            oppdrag.oppdragsperioder = listOf(periode)
+            persistenceService.lagreOppdrag(oppdrag)
+        }
+
+        assertThrows<IllegalStateException> {
+            persistenceService.hentOppdragPåReferanseOgOmgjørVedtakId(referanse, 987654)
+        }
+    }
+
+    @Test
     fun `skal lagre nytt påløp`() {
         val påløpJan = TestData.opprettPåløp(forPeriode = "2022-01")
         val påløpFeb = TestData.opprettPåløp(forPeriode = "2022-02")

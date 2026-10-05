@@ -1,6 +1,7 @@
 package no.nav.bidrag.regnskap.hendelse.vedtak
 
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -689,8 +690,10 @@ internal class VedtakshendelseListenerIT {
     val endreRmBmBidrag = genererFødselsnummer()
     val endreRmBmNyBidrag = genererFødselsnummer()
     val endreRmBmEndaNyBidrag = genererFødselsnummer()
+    val endreRmBmEngangsBidrag = genererFødselsnummer()
     val endreRmBpBidrag = genererFødselsnummer()
     val endreRmBarn1Bidrag = genererFødselsnummer()
+    val endreRmBarnEngangsBidrag = genererFødselsnummer()
 
     @Test
     @Order(23)
@@ -752,7 +755,11 @@ internal class VedtakshendelseListenerIT {
     @Test
     @Order(25)
     fun `skal opprette særbidrag med betalt beløp`() {
-        val vedtakHendelse = hentFilOgSendPåKafka("særbidrag_betaltbeløp.json", 179)
+        val vedtakHendelse = hentFilOgSendPåKafka(
+            "særbidrag_betaltbeløp.json",
+            179,
+            kravhaverIdent = endreRmBarnEngangsBidrag,
+        )
 
         assertVedOpprettelseAvEngangsbeløp(
             100000020,
@@ -766,6 +773,100 @@ internal class VedtakshendelseListenerIT {
 
     @Test
     @Order(26)
+    fun `skal endre mottaker på eksisterende særbidrag og stønad uten nye perioder eller konteringer`() {
+        reskontroApiWireMock.nullstillForespørsler()
+        reskontroApiWireMock.endreRmForSakMedGyldigResponse()
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+            val antallOppdrag = persistenceService.oppdragRepository.count()
+            val antallPerioder = persistenceService.oppdragsperiodeRepository.count()
+            val antallKonteringer = persistenceService.konteringRepository.count()
+            val vedtakHendelse = hentFilOgSendPåKafka(
+                "endreRmMedEngangsbeløp.json",
+                null,
+                bm = endreRmBmEngangsBidrag,
+                bp = endreRmBpBidrag,
+                barn1 = endreRmBarn1Bidrag,
+                barn2 = endreRmBarnEngangsBidrag,
+            )
+
+            await().atMost(Duration.ofSeconds(30)).until {
+                entityManager.clear()
+                persistenceService.endreMottakerRepository
+                    .findByVedtakIdAndBarnIdent(vedtakHendelse.id, endreRmBarnEngangsBidrag)
+                    ?.godkjentAvSkattTidspunkt != null &&
+                    persistenceService.endreMottakerRepository
+                        .findByVedtakIdAndBarnIdent(vedtakHendelse.id, endreRmBarn1Bidrag)
+                        ?.godkjentAvSkattTidspunkt != null
+            }
+
+            entityManager.clear()
+            persistenceService.hentOppdrag(100000020)?.mottakerIdent shouldBe endreRmBmEngangsBidrag
+            requireNotNull(persistenceService.hentOppdrag(100000020)).oppdragsperioder shouldHaveSize 1
+            persistenceService.hentOppdrag(100000019)?.mottakerIdent shouldBe endreRmBmEngangsBidrag
+            persistenceService.oppdragRepository.count() shouldBe antallOppdrag
+            persistenceService.oppdragsperiodeRepository.count() shouldBe antallPerioder
+            persistenceService.konteringRepository.count() shouldBe antallKonteringer
+            persistenceService.oppdragsperiodeRepository.findAllByVedtakId(vedtakHendelse.id) shouldHaveSize 0
+            reskontroApiWireMock.verifiserEndreRmForSak("2200400", endreRmBarnEngangsBidrag, endreRmBmEngangsBidrag)
+            reskontroApiWireMock.verifiserEndreRmForSak("2203234", endreRmBarn1Bidrag, endreRmBmEngangsBidrag)
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    @Order(27)
+    fun `skal endre mottaker for engangsbeløp uten stønad og sende kun en endring per barn`() {
+        reskontroApiWireMock.nullstillForespørsler()
+        reskontroApiWireMock.endreRmForSakMedGyldigResponse()
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+            val antallOppdrag = persistenceService.oppdragRepository.count()
+            val antallPerioder = persistenceService.oppdragsperiodeRepository.count()
+            val antallKonteringer = persistenceService.konteringRepository.count()
+            val nyMottaker = genererFødselsnummer()
+            val hendelse = objectmapper.readTree(
+                leggInnGenererteIdenter(
+                    hentTestfil("endreRmMedEngangsbeløp.json"),
+                    endreRmBarnEngangsBidrag,
+                    nyMottaker,
+                    nyMottaker,
+                    endreRmBpBidrag,
+                    endreRmBarn1Bidrag,
+                    endreRmBarnEngangsBidrag,
+                ),
+            ) as ObjectNode
+            hendelse.put("id", 648465)
+            hendelse.putArray("stønadsendringListe")
+            val engangsbeløp = hendelse.withArray("engangsbeløpListe")
+            engangsbeløp.add(engangsbeløp[0].deepCopy())
+
+            kafkaTemplate.send(topic, objectmapper.writeValueAsString(hendelse))
+
+            await().atMost(Duration.ofSeconds(30)).until {
+                entityManager.clear()
+                persistenceService.endreMottakerRepository
+                    .findByVedtakIdAndBarnIdent(648465, endreRmBarnEngangsBidrag)
+                    ?.godkjentAvSkattTidspunkt != null
+            }
+
+            entityManager.clear()
+            persistenceService.hentOppdrag(100000020)?.mottakerIdent shouldBe nyMottaker
+            persistenceService.oppdragRepository.count() shouldBe antallOppdrag
+            persistenceService.oppdragsperiodeRepository.count() shouldBe antallPerioder
+            persistenceService.konteringRepository.count() shouldBe antallKonteringer
+            persistenceService.oppdragsperiodeRepository.findAllByVedtakId(648465) shouldHaveSize 0
+            reskontroApiWireMock.verifiserEndreRmForSak("2200400", endreRmBarnEngangsBidrag, nyMottaker)
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    @Order(28)
     fun `skal sende mottakerendring fra vanlig vedtak med periode til Elin`() {
         reskontroApiWireMock.nullstillForespørsler()
         reskontroApiWireMock.endreRmForSakMedGyldigResponse()
@@ -800,7 +901,7 @@ internal class VedtakshendelseListenerIT {
     }
 
     @Test
-    @Order(26)
+    @Order(29)
     fun `skal ikke behandle samme vedtakshendelse to ganger for å sikre idempotens`() {
         val vedtakFilString = hentTestfil("gebyrSkyldner.json")
 

@@ -6,6 +6,7 @@ import no.nav.bidrag.commons.util.SjekkForNyIdent
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.regnskap.UnleashFeatures
@@ -65,7 +66,7 @@ class OppdragService(
         oppdatererVerdierPåOppdrag(hendelse, oppdrag)
         val oppdragId = persistenceService.lagreOppdrag(oppdrag)
 
-        if (mottakerErEndret && !erEngangsbeløp && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+        if (mottakerErEndret && (!erEngangsbeløp || hendelse.vedtakType == Vedtakstype.ENDRING_MOTTAKER) && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
             endreMottakerService.opprettEndreMottaker(
                 vedtakId = hendelse.vedtakId,
                 sakId = hendelse.sakId,

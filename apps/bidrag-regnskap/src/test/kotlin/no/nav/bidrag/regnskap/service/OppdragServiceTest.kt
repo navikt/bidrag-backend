@@ -119,6 +119,19 @@ class OppdragServiceTest {
             verify(exactly = 0) { persistenceService.lagreOppdrag(any<Oppdrag>()) }
             verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
         }
+
+        @Test
+        fun `skal hoppe over mottakerendring for engangsbeløp uten matchende oppdrag`() {
+            val hendelse = TestData.opprettHendelse(vedtakType = Vedtakstype.ENDRING_MOTTAKER, periodeListe = emptyList())
+            every { persistenceService.hentOppdragPåReferanseOgOmgjørVedtakId("referanse", 8002) } returns null
+            val endring = hendelse.copy(referanse = "referanse", omgjørVedtakId = 8002)
+
+            oppdragService.lagreHendelse(endring, true) shouldBe null
+
+            verify(exactly = 0) { persistenceService.lagreOppdrag(any<Oppdrag>()) }
+            verify(exactly = 0) { oppdragsperiodeService.opprettNyOppdragsperiode(any(), any(), any()) }
+            verify(exactly = 0) { endreMottakerService.opprettEndreMottaker(any(), any(), any(), any()) }
+        }
     }
 
     @Nested
@@ -157,6 +170,29 @@ class OppdragServiceTest {
             verify(exactly = 1) {
                 endreMottakerService.opprettEndreMottaker(hendelse.vedtakId, hendelse.sakId, barnIdent, nyMottaker)
             }
+        }
+
+        @Test
+        fun `skal oppdatere mottaker på eksisterende engangsbeløp uten periode eller kontering`() {
+            val barnIdent = genererFødselsnummer()
+            val nyMottaker = genererFødselsnummer()
+            val hendelse = TestData.opprettHendelse(
+                vedtakType = Vedtakstype.ENDRING_MOTTAKER,
+                kravhaverIdent = barnIdent,
+                mottakerIdent = nyMottaker,
+                periodeListe = emptyList(),
+            ).copy(referanse = "referanse", omgjørVedtakId = 8002)
+            val oppdrag = TestData.opprettOppdrag(mottakerIdent = genererFødselsnummer())
+            every { persistenceService.hentOppdragPåReferanseOgOmgjørVedtakId("referanse", 8002) } returns oppdrag
+
+            oppdragService.lagreHendelse(hendelse, true)
+
+            oppdrag.mottakerIdent shouldBe nyMottaker
+            verify(exactly = 1) { persistenceService.lagreOppdrag(oppdrag) }
+            verify(exactly = 0) { persistenceService.finnSisteOverførtePeriode() }
+            verify(exactly = 0) { oppdragsperiodeService.opprettNyOppdragsperiode(any(), any(), any()) }
+            verify(exactly = 0) { konteringService.opprettNyeKonteringerPåOppdragsperiode(any(), any(), any()) }
+            verify(exactly = 1) { endreMottakerService.opprettEndreMottaker(hendelse.vedtakId, hendelse.sakId, barnIdent, nyMottaker) }
         }
 
         @Test

@@ -203,12 +203,34 @@ class VedtakshendelseServiceTest {
     @Test
     fun `skal behandle mottakerendring med perioder i vanlig oppdragsflyt`() {
         val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+            .replace("\"referanse\":\"REFERANSE\",", "\"referanse\":\"REFERANSE\",\"omgjørVedtakId\":123,")
         every { oppdragService.lagreHendelse(any(), any()) } returns 1
 
         val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
 
         oppdrag shouldBe listOf(1, 1)
         verify(exactly = 1) { oppdragService.lagreHendelse(match { it.periodeListe.isNotEmpty() }, false) }
+    }
+
+    @Test
+    fun `skal behandle mottakerendring med engangsbeløp uten perioder og sammen med stønad`() {
+        val hendelse = requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmMedEngangsbeløp.json")).readText()
+            .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BARN2\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.type == "BIDRAG" && it.periodeListe.isEmpty() }, false) }
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.type == "BIDRAG18AAR" && it.periodeListe.isEmpty() }, false) }
+        verify(exactly = 1) {
+            oppdragService.lagreHendelse(
+                match { it.type == "SÆRBIDRAG" && it.referanse == "SARTILSKUDD_REFERANSE" && it.omgjørVedtakId == 8002 && it.periodeListe.isEmpty() },
+                true,
+            )
+        }
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.referanse == "MANGLER" && it.periodeListe.isEmpty() }, true) }
     }
 
     private fun opprettMottakerendringsHendelse(
