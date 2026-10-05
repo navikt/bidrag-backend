@@ -1,6 +1,7 @@
 package no.nav.bidrag.automatiskjobb.service
 
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -8,6 +9,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.verify
@@ -17,6 +19,7 @@ import no.nav.bidrag.automatiskjobb.service.model.OpprettVedtakConflictResponse
 import no.nav.bidrag.automatiskjobb.utils.UnleashFeatures
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -27,7 +30,9 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
+import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentEngangsbeløpRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
+import no.nav.bidrag.transport.behandling.belopshistorikk.response.EngangsbeløpDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
@@ -79,6 +84,7 @@ class SakServiceTest {
             UnleashFeaturesProvider.isEnabled(eq(UnleashFeatures.FATTE_ENDRING_MOTTAKER_VEDTAK.featureName), any())
         } returns true
         every { identUtils.hentNyesteIdent(any()) } returnsArgument 0
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns emptyList()
     }
 
     @Test
@@ -115,18 +121,17 @@ class SakServiceTest {
     }
 
     @Test
-    fun `skal fatte vedtak for alle tre stønadstyper når disse løper`() {
+    fun `skal fatte ett vedtak for alle tre stønadstyper når disse løper`() {
         stubLøpendeStønad(Stønadstype.BIDRAG, mottaker = reellMottaker)
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         stubLøpendeStønad(Stønadstype.BIDRAG18AAR, mottaker = reellMottaker)
 
         behandle(reellMottaker = nyReellMottaker)
 
-        val requests = mutableListOf<OpprettVedtakRequestDto>()
-        verify(exactly = 3) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
-        requests
-            .map { it.stønadsendringListe.single().type }
-            .toSet() shouldBe setOf(Stønadstype.BIDRAG, Stønadstype.FORSKUDD, Stønadstype.BIDRAG18AAR)
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.stønadsendringListe.map { it.type }.toSet() shouldBe
+            setOf(Stønadstype.BIDRAG, Stønadstype.FORSKUDD, Stønadstype.BIDRAG18AAR)
     }
 
     @Test
@@ -217,7 +222,7 @@ class SakServiceTest {
     }
 
     @Test
-    fun `skal sette lesbar unik referanse av saksnummer, tidspunkt, hendelsestype, stønadstype og identer`() {
+    fun `skal sette lesbar unik referanse av saksnummer, tidspunkt, hendelsestype og barn`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
 
         behandle(reellMottaker = nyReellMottaker, hendelseTidspunkt = HENDELSE_TIDSPUNKT)
@@ -225,8 +230,8 @@ class SakServiceTest {
         val request = slot<OpprettVedtakRequestDto>()
         verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
         request.captured.unikReferanse shouldBe
-            "endring_mottaker_${saksnummer}_20260910083015123_ENDRING_FORSKUDD_" +
-            "${kravhaver}_${personidentNav.verdi}_$nyReellMottaker"
+            "endring_mottaker_${saksnummer}_20260910083015123_ENDRING_" +
+            "${kravhaver}_$nyReellMottaker"
     }
 
     @Test
@@ -242,15 +247,117 @@ class SakServiceTest {
     }
 
     @Test
-    fun `unik referanse skal skille ulike stønadstyper for samme hendelse`() {
+    fun `ulik stønadstype for samme barn samles i samme vedtak`() {
         stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
         stubLøpendeStønad(Stønadstype.BIDRAG, mottaker = reellMottaker)
 
         behandle(reellMottaker = nyReellMottaker)
 
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.stønadsendringListe shouldHaveSize 2
+    }
+
+    @Test
+    fun `skal fatte ett vedtak for flere særbidrag og løpende stønad for samme barn`() {
+        stubLøpendeStønad(Stønadstype.FORSKUDD, mottaker = reellMottaker)
+        val første = engangsbeløp("referanse-1", reellMottaker)
+        val andre = engangsbeløp("referanse-2", reellMottaker)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns listOf(første, andre)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) } answers {
+            when (firstArg<HentEngangsbeløpRequest>().referanse) {
+                "referanse-1" -> første
+                "referanse-2" -> andre
+                else -> error("Ukjent referanse")
+            }
+        }
+
+        behandle(reellMottaker = nyReellMottaker)
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.stønadsendringListe.single().periodeListe.shouldBeEmpty()
+        request.captured.engangsbeløpListe.map { it.referanse }.toSet() shouldBe setOf("referanse-1", "referanse-2")
+        request.captured.engangsbeløpListe.forEach {
+            it.omgjørVedtakId shouldBe 42
+            it.mottaker shouldBe Personident(nyReellMottaker)
+        }
+        verify(exactly = 2) { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) }
+    }
+
+    @Test
+    fun `skal fatte vedtak bare for endrede særbidrag`() {
+        val endret = engangsbeløp("referanse-1", reellMottaker)
+        val uendret = engangsbeløp("referanse-2", nyReellMottaker)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns listOf(endret, uendret)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) } answers {
+            if (firstArg<HentEngangsbeløpRequest>().referanse == "referanse-1") endret else uendret
+        }
+
+        behandle(reellMottaker = nyReellMottaker)
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.stønadsendringListe.shouldBeEmpty()
+        request.captured.engangsbeløpListe.single().referanse shouldBe "referanse-1"
+    }
+
+    @Test
+    fun `skal vurdere særbidrag uten innkreving når mottaker er endret`() {
+        val særbidrag = engangsbeløp("referanse-1", reellMottaker, innkrevingstype = Innkrevingstype.UTEN_INNKREVING)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns listOf(særbidrag)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) } returns særbidrag
+
+        behandle(reellMottaker = nyReellMottaker)
+
+        val request = slot<OpprettVedtakRequestDto>()
+        verify(exactly = 1) { bidragVedtakConsumer.opprettVedtak(capture(request)) }
+        request.captured.engangsbeløpListe.single().innkreving shouldBe Innkrevingstype.UTEN_INNKREVING
+    }
+
+    @Test
+    fun `skal fatte ett vedtak per barn med særbidrag`() {
+        val annetBarn = genererFødselsnummer()
+        val første = engangsbeløp("referanse-1", reellMottaker)
+        val andre = engangsbeløp("referanse-2", reellMottaker, annetBarn)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns listOf(første, andre)
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) } answers {
+            if (firstArg<HentEngangsbeløpRequest>().referanse == "referanse-1") første else andre
+        }
+
+        sakService.behandleSakHendelse(
+            sakHendelse(reellMottaker = nyReellMottaker).copy(
+                barn = listOf(
+                    BarnISak(ident = Personident(kravhaver), reellMottaker = ReellMottaker(nyReellMottaker)),
+                    BarnISak(ident = Personident(annetBarn), reellMottaker = ReellMottaker(nyReellMottaker)),
+                ),
+            ),
+            HENDELSE_TIDSPUNKT,
+        )
+
         val requests = mutableListOf<OpprettVedtakRequestDto>()
         verify(exactly = 2) { bidragVedtakConsumer.opprettVedtak(capture(requests)) }
+        requests.map { it.engangsbeløpListe.single().referanse }.toSet() shouldBe setOf("referanse-1", "referanse-2")
         requests.map { it.unikReferanse }.toSet() shouldHaveSize 2
+    }
+
+    @Test
+    fun `skal avbryte når særbidrag fra sakslisten ikke finnes i oppslag`() {
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } returns listOf(engangsbeløp("referanse-1", reellMottaker))
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløp(any()) } returns null
+
+        shouldThrow<IllegalStateException> { behandle(reellMottaker = nyReellMottaker) }
+
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
+    }
+
+    @Test
+    fun `skal ikke fatte vedtak når oppslag etter særbidrag feiler`() {
+        every { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) } throws IllegalStateException("Oppslag feilet")
+
+        shouldThrow<IllegalStateException> { behandle(reellMottaker = nyReellMottaker) }
+
+        verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
     @Test
@@ -263,6 +370,7 @@ class SakServiceTest {
         behandle(reellMottaker = nyReellMottaker)
 
         verify(exactly = 0) { bidragBeløpshistorikkConsumer.hentLøpendeStønad(any()) }
+        verify(exactly = 0) { bidragBeløpshistorikkConsumer.hentEngangsbeløpForSak(any()) }
         verify(exactly = 0) { bidragVedtakConsumer.opprettVedtak(any()) }
     }
 
@@ -313,6 +421,25 @@ class SakServiceTest {
             ),
         ),
     )
+
+    private fun engangsbeløp(
+        referanseForSærbidrag: String,
+        opprinneligMottaker: String,
+        barn: String = kravhaver,
+        innkrevingstype: Innkrevingstype = Innkrevingstype.MED_INNKREVING,
+    ): EngangsbeløpDto = mockk {
+        every { type } returns Engangsbeløptype.SÆRBIDRAG
+        every { sak } returns Saksnummer(saksnummer)
+        every { skyldner } returns Personident(bidragspliktig)
+        every { kravhaver } returns Personident(barn)
+        every { mottaker } returns Personident(opprinneligMottaker)
+        every { innkreving } returns innkrevingstype
+        every { referanse } returns referanseForSærbidrag
+        every { vedtaksid } returns 42
+        every { resultatkode } returns "SÆRBIDRAG_INNVILGET"
+        every { beløp } returns BigDecimal(1000)
+        every { valutakode } returns "NOK"
+    }
 
     private fun sakHendelse(reellMottaker: String?) = SakHendelse(
         saksnummer = Saksnummer(saksnummer),
