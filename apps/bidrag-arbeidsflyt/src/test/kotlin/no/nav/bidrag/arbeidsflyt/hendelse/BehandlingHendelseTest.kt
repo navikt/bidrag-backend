@@ -89,6 +89,26 @@ internal class BehandlingHendelseTest : AbstractBehandleHendelseTest() {
     }
 
     @Test
+    fun `skal ikke hente avsluttet behandling selv om barn fortsatt er under behandling`() {
+        val behandlingsid = 123123L
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        behandleHendelseService.behandleHendelse(hendelse)
+
+        val behandling = behandlingRepository.finnForBehandlingId(behandlingsid)
+        behandling.shouldNotBeNull()
+        val cutoff = LocalDateTime.now().plusHours(1)
+        behandlingRepository
+            .finnBehandlingerMedSøknadUnderBehandlingStatusSjekketEldreEnn(cutoff)
+            .map { it.id } shouldBe listOf(behandling.id)
+
+        behandling.status = BehandlingStatusType.AVBRUTT
+
+        behandlingRepository
+            .finnBehandlingerMedSøknadUnderBehandlingStatusSjekketEldreEnn(cutoff) shouldBe emptyList()
+    }
+
+    @Test
     fun `skal opprette oppgave for behandlinghendelse særbidrag`() {
         val behandlingsid = 123123L
 
