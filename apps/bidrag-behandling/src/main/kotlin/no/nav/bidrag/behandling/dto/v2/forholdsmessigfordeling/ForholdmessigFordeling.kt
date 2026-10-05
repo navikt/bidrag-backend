@@ -53,4 +53,3 @@ data class SøknadRevurdering(
     val hovedsøknadsid: Long? = null,
     val erDelAvFF: Boolean,
 )
-
