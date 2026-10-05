@@ -62,6 +62,8 @@ data class BehandlingDetaljerDtoV2(
     val kategori: SærbidragKategoriDto? = null,
     val opprettetAv: SaksbehandlerDto,
     val forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? = null,
+    @get:Schema(description = "Er true hvis behandlingen er slettet. Slettede behandlinger returneres kun hvis det er spesifisert i forespørselen")
+    val slettet: Boolean = false,
 )
 
 data class SærbidragKategoriDto(
