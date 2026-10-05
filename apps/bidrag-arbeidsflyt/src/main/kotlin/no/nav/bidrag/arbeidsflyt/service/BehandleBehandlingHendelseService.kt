@@ -86,8 +86,8 @@ class BehandleBehandlingHendelseService(
         val behandling = hentHendelse(hendelse)
 
         if (behandling.id != 0L && behandling.status.erAvsluttet && !sjekkOglukkÅpneOppgaver) {
-            ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
-            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Ignorerer hendelse $hendelse" }
+            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Avslutter relaterte oppgaver. $hendelse" }
+            ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse, behandling)
             return
         }
         if (hendelse.behandlingsid == null && behandling.behandlesAvFlereSøknader) {
@@ -110,7 +110,6 @@ class BehandleBehandlingHendelseService(
                         behandlingId = hendelse.behandlingsid,
                         saksnr = saksnummer,
                         tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
-//                        oppgaveType = finnOppgavetypeForStønadstype(førsteBarn.behandlingstema),
                     ).dataForHendelse
             secureLogger.debug { "Fant ${åpneOppgaver.size} åpne søknadsoppgaver for sak $saksnummer og søknadsid $søknadsid og behandlingsid = ${hendelse.behandlingsid}" }
             oppdaterNormDatoOgMottattdato(hendelse, behandling, førsteBarn)
@@ -128,6 +127,25 @@ class BehandleBehandlingHendelseService(
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
+    }
+
+    private fun ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse: BehandlingHendelse, behandling: Behandling) {
+        hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
+            val saksnummer = saksnummerSøknadPair.first
+            val søknadsid = saksnummerSøknadPair.second
+            val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
+            val åpneOppgaver =
+                oppgaveService
+                    .finnOppgaverForSøknad(
+                        søknadId = søknadsid,
+                        behandlingId = hendelse.behandlingsid,
+                        saksnr = saksnummer,
+                        tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
+                    ).dataForHendelse
+            ferdigstillOppgaver(åpneOppgaver)
+        }
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
+        oppdaterOgLagreBehandling(hendelse, behandling)
     }
 
     /** Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert. */
