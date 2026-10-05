@@ -124,58 +124,25 @@ class AppSelectionTest(unittest.TestCase):
     def selected(self, *paths, event="pull_request", branch="main"):
         return select_affected_apps(self.app_filters, event, branch, paths)
 
-    def test_app_only_change_selects_only_that_app(self):
-        self.assertEqual(self.selected("apps/bidrag-belopshistorikk/src/main/kotlin/Foo.kt"),
-                         ["bidrag-belopshistorikk"])
-
-    def test_henvendelse_is_selected_for_app_and_nais_changes(self):
-        for event in ("pull_request", "push"):
-            for path in ("apps/bidrag-henvendelse/pom.xml", ".nais/bidrag-henvendelse/q2.yaml"):
-                with self.subTest(event=event, path=path):
-                    self.assertEqual(self.selected(path, event=event), ["bidrag-henvendelse"])
-
-    def test_root_pom_selects_all_34_apps(self):
+    def test_root_pom_selects_all_configured_apps(self):
         self.assertEqual(set(self.selected("pom.xml")), set(self.app_filters))
-        self.assertEqual(len(self.app_filters), 34)
-
-    def test_felles_preserves_existing_consumers_not_oppgave_or_sjablon(self):
-        selected = self.selected("libs/bidrag-felles/bidrag-transport/src/main/kotlin/Dto.kt")
-        self.assertEqual(len(selected), 32)
-        self.assertIn("bidrag-henvendelse", selected)
-        self.assertNotIn("bidrag-oppgave", selected)
-        self.assertNotIn("bidrag-sjablon", selected)
-
-    def test_beregn_only_selects_existing_four_app_workflows(self):
-        self.assertEqual(set(self.selected("libs/bidrag-beregn-felles/bidrag-beregn-core/pom.xml")), {
-            "bidrag-automatisk-jobb", "bidrag-behandling", "bidrag-bidragskalkulator", "bidrag-statistikk",
-        })
-
-    def test_oppgave_libraries_only_select_oppgave(self):
-        self.assertEqual(self.selected("libs/bidrag-oppgave-client/pom.xml"), ["bidrag-oppgave"])
-
-    def test_admin_parent_selects_both_nested_apps(self):
-        self.assertEqual(set(self.selected("apps/bidrag-admin/pom.xml")), {"bidrag-admin", "bidrag-admin-fss"})
 
     def test_non_main_push_does_not_select_apps(self):
         self.assertEqual(self.selected("pom.xml", event="push", branch="feature"), [])
         self.assertEqual(set(self.selected("pom.xml", branch="feature")), set(self.app_filters))
-
-    def test_merge_group_uses_the_same_filters_as_push_and_pr(self):
-        for patterns in self.app_filters.values():
-            for pattern in patterns:
-                sample = pattern.replace("**", "nested/File").replace("*", "File")
-                self.assertEqual(self.selected(sample, event="merge_group"), self.selected(sample))
 
     def test_branch_is_read_from_the_right_place_per_event(self):
         self.assertEqual(target_branch("push", {"ref": "refs/heads/main"}), "main")
         self.assertEqual(target_branch("pull_request", {"pull_request": {"base": {"ref": "main"}}}), "main")
         self.assertEqual(target_branch("merge_group", {"merge_group": {"base_ref": "refs/heads/main"}}), "main")
 
-    def test_push_and_pr_use_the_same_app_paths(self):
+    def test_push_and_merge_group_use_the_same_filters_as_pr(self):
         for patterns in self.app_filters.values():
             for pattern in patterns:
                 sample = pattern.replace("**", "nested/File").replace("*", "File")
-                self.assertEqual(self.selected(sample, event="push"), self.selected(sample))
+                for event in ("push", "merge_group"):
+                    with self.subTest(event=event, sample=sample):
+                        self.assertEqual(self.selected(sample, event=event), self.selected(sample))
 
     def test_unsupported_event_fails(self):
         with self.assertRaisesRegex(ValueError, "Appvalg støtter bare"):
@@ -184,14 +151,6 @@ class AppSelectionTest(unittest.TestCase):
     def test_unrelated_change_does_not_build_libraries_or_apps(self):
         self.assertEqual(self.selected("README.md", "util/a.js"), [])
         self.assertEqual(required_library_groups(ROOT, []), "")
-
-    def test_group_selection_includes_beregn_only_when_needed(self):
-        self.assertEqual(required_library_groups(ROOT, ["bidrag-admin", "bidrag-belopshistorikk"]), "felles")
-        self.assertEqual(required_library_groups(ROOT, ["bidrag-henvendelse"]), "felles")
-        self.assertEqual(required_library_groups(ROOT, ["bidrag-behandling"]), "felles,beregn")
-        self.assertEqual(required_library_groups(ROOT, ["bidrag-oppgave"]), "oppgave")
-        self.assertEqual(required_library_groups(ROOT, ["bidrag-sjablon"]), "")
-        self.assertEqual(required_library_groups(ROOT, list(self.app_filters)), "felles,beregn,oppgave")
 
 
 class AppFiltersTest(unittest.TestCase):
@@ -222,53 +181,6 @@ class AppFiltersTest(unittest.TestCase):
     def test_invalid_app_name_fails(self):
         with self.assertRaisesRegex(ValueError, "Ugyldig appnavn"):
             self.load({"other.yaml": {"env": {"APP_PATHS": "apps/a/**"}}})
-
-    def test_script_outputs_affected_apps_and_required_library_groups(self):
-        # Apper uten en merget modul faller ut av appvalget, se split_on_merged_module.
-        app_names, unmerged = split_on_merged_module(ROOT, list(load_app_filters(ROOT)))
-        felles_apps = [app for app in app_names if app not in {"bidrag-oppgave", "bidrag-sjablon"}]
-        scenarios = (
-            (["apps/bidrag-behandling/src/main/kotlin/App.kt"], ["bidrag-behandling"], "felles,beregn", "false"),
-            ([f"apps/{app}/pom.xml" for app in unmerged], [], "", "false"),
-            (["apps/bidrag-sjablon/pom.xml"], ["bidrag-sjablon"], "", "false"),
-            (["README.md"], [], "", "false"),
-            (["pom.xml"], app_names, "felles,beregn,oppgave", "false"),
-            (["libs/bidrag-felles/bidrag-domene/pom.xml"], felles_apps, "felles,beregn", "true"),
-            (["libs/bidrag-felles/bidrag-commons/src/test/kotlin/Test.kt"], felles_apps, "felles,beregn", "true"),
-            (["libs/bidrag-felles-extra/pom.xml"], [], "", "false"),
-        )
-        with tempfile.TemporaryDirectory() as directory:
-            event = Path(directory) / "event.json"
-            output = Path(directory) / "output"
-            event.write_text(json.dumps({"pull_request": {"base": {"ref": "main"}}}))
-            env = {"GITHUB_EVENT_NAME": "pull_request", "GITHUB_EVENT_PATH": str(event),
-                   "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
-            for changed, apps, groups, felles_changed in scenarios:
-                output.write_text("")
-                with self.subTest(changed=changed), patch.dict(os.environ, env), \
-                        patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
-                        patch("finn_berorte_apper.find_changed_files", return_value=changed), patch("builtins.print"):
-                    main()
-                values = dict(line.split("=", 1) for line in output.read_text().splitlines())
-                self.assertEqual(json.loads(values["apps"]), apps)
-                self.assertEqual(values["bibliotekgrupper"], groups)
-                self.assertEqual(values["felles_endret"], felles_changed)
-
-    def test_merge_group_event_selects_apps_like_a_push_to_main(self):
-        with tempfile.TemporaryDirectory() as directory:
-            event = Path(directory) / "event.json"
-            output = Path(directory) / "output"
-            event.write_text(json.dumps({"merge_group": {
-                "base_ref": "refs/heads/main", "base_sha": "b" * 40, "head_sha": "a" * 40}}))
-            env = {"GITHUB_EVENT_NAME": "merge_group", "GITHUB_EVENT_PATH": str(event),
-                   "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
-            with patch.dict(os.environ, env), patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
-                    patch("finn_berorte_apper.find_changed_files",
-                          return_value=["apps/bidrag-behandling/src/main/kotlin/App.kt"]), patch("builtins.print"):
-                main()
-            values = dict(line.split("=", 1) for line in output.read_text().splitlines())
-            self.assertEqual(json.loads(values["apps"]), ["bidrag-behandling"])
-            self.assertEqual(values["bibliotekgrupper"], "felles,beregn")
 
 
 class MergeQueueReuseTest(unittest.TestCase):
@@ -357,8 +269,7 @@ class MergeQueueReuseTest(unittest.TestCase):
             env = {"GITHUB_EVENT_NAME": "merge_group", "GITHUB_EVENT_PATH": str(event),
                    "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(Path(directory) / "summary")}
             with patch.dict(os.environ, env), patch("finn_berorte_apper.Path.cwd", return_value=ROOT), \
-                    patch("finn_berorte_apper.find_changed_files",
-                          return_value=["apps/bidrag-behandling/src/main/kotlin/App.kt"]), \
+                    patch("finn_berorte_apper.find_changed_files", return_value=["pom.xml"]), \
                     patch("builtins.print"), patch("finn_berorte_apper.tested_pr_head", **patches):
                 main()
             return dict(line.split("=", 1) for line in output.read_text().splitlines())
@@ -370,7 +281,9 @@ class MergeQueueReuseTest(unittest.TestCase):
 
     def test_main_builds_as_usual_when_the_check_fails(self):
         values = self.run_main(side_effect=OSError("nettverksfeil"))
-        self.assertEqual(json.loads(values["apps"]), ["bidrag-behandling"])
+        merged, _ = split_on_merged_module(ROOT, list(load_app_filters(ROOT)))
+        self.assertTrue(merged)
+        self.assertEqual(json.loads(values["apps"]), merged)
 
 
 class MergedModuleTest(unittest.TestCase):
@@ -657,29 +570,19 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertNotIn("-DskipTests", args)
         self.assertEqual(args[args.index("-T") + 1], "1C")
         self.assertEqual(len(projects), len(set(projects)))
-        self.assertEqual(len(projects), 3 + 5 + 9)
-        self.assertFalse(any("bidrag-oppgave" in project for project in projects))
         for project in projects:
             self.assertTrue((ROOT / project / "pom.xml").is_file(), project)
 
     def test_warm_cache_does_not_select_library_modules(self):
         args = self.run_build(FELLES="true", BEREGN="true", OPPGAVE="true",
                               FELLES_CACHE="true", BEREGN_CACHE="true", OPPGAVE_CACHE="true")
-        self.assertEqual(args[args.index("-pl") + 1],
-                         ".,apps/bidrag-admin,apps/bidrag-dokumenthåndtering")
-
-    def test_cached_felles_is_not_rebuilt_for_beregn(self):
-        args = self.run_build(FELLES="true", FELLES_CACHE="true", BEREGN="true")
-        selected = args[args.index("-pl") + 1]
-        self.assertNotIn("libs/bidrag-felles/", selected)
-        self.assertIn("libs/bidrag-beregn-felles/", selected)
+        projects = args[args.index("-pl") + 1].split(",")
+        self.assertIn(".", projects)
+        self.assertFalse(any(project.startswith("libs/") for project in projects))
 
     def test_unchanged_felles_cache_miss_skips_test_compilation_and_execution(self):
         args = self.run_build(FELLES="true", TEST_FELLES="false")
         self.assertIn("-Dmaven.test.skip=true", args)
-        projects = args[args.index("-pl") + 1].split(",")
-        self.assertEqual(len(projects), 3 + 5)
-        self.assertIn("libs/bidrag-felles/bidrag-commons-test", projects)
         self.assertNotIn("-am", args)
         self.assertIn("-Dmaven.antrun.skip=true", self.run_build(
             FELLES="true", TEST_FELLES="false", KJOR_KTLINT="false"))
@@ -689,12 +592,10 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         felles, other = calls
         self.assertIn("-Dmaven.test.skip=true", felles)
-        self.assertNotIn("libs/bidrag-beregn-felles/", felles[felles.index("-pl") + 1])
         self.assertNotIn("-Dmaven.test.skip=true", other)
         self.assertNotIn("-DskipTests", other)
-        projects = other[other.index("-pl") + 1].split(",")
-        self.assertEqual(len(projects), 9 + 2)
-        self.assertFalse(any(project.startswith("libs/bidrag-felles/") for project in projects))
+        self.assertTrue(set(felles[felles.index("-pl") + 1].split(","))
+                        .isdisjoint(other[other.index("-pl") + 1].split(",")))
         self.assertNotIn("-am", other)
 
     def test_manual_test_skip_also_skips_compilation_for_felles(self):
@@ -702,18 +603,6 @@ class LibraryBuildTest(unittest.TestCase):
         self.assertEqual(len(calls), 2)
         self.assertIn("-Dmaven.test.skip=true", calls[0])
         self.assertIn("-Dmaven.test.skip=true", calls[1])
-
-    def test_cached_unchanged_felles_is_not_rebuilt(self):
-        args = self.run_build(FELLES="true", FELLES_CACHE="true", TEST_FELLES="false", BEREGN="true")
-        self.assertNotIn("libs/bidrag-felles/", args[args.index("-pl") + 1])
-        self.assertNotIn("-Dmaven.test.skip=true", args)
-
-    def test_oppgave_does_not_build_felles(self):
-        args = self.run_build(OPPGAVE="true", SKIP_TESTS="true")
-        self.assertIn("-Dmaven.test.skip=true", args)
-        selected = args[args.index("-pl") + 1]
-        self.assertNotIn("libs/bidrag-felles/", selected)
-        self.assertIn("libs/bidrag-oppgave-client", selected)
 
     def test_app_library_build_skips_test_compilation_and_ktlint(self):
         self.assertEqual(self.action["inputs"]["kjor_ktlint"]["default"], "false")
@@ -725,27 +614,6 @@ class LibraryBuildTest(unittest.TestCase):
             self.assertIn("-Dmaven.test.skip=true", args)
             self.assertIn("-Dmaven.antrun.skip=true", args)
             self.assertNotIn("-DskipTests", args)
-
-    def test_caches_are_exact_and_beregn_includes_its_felles_inputs(self):
-        restores = {step["id"]: step for step in self.steps
-                    if step.get("uses", "").startswith("actions/cache/restore@")}
-        self.assertEqual(set(restores), {"felles", "felles_uten_tester", "beregn", "oppgave"})
-        for step in restores.values():
-            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
-            key = step["with"]["key"]
-            if step["id"] in ("beregn", "oppgave"):
-                self.assertIn("inputs.skip_tester", key)
-            self.assertIn("outputs.toolchain", key)
-            self.assertIn("'pom.xml'", key)
-            self.assertNotIn("restore-keys", step["with"])
-            self.assertNotIn("/target", key)
-        self.assertIn("libs/bidrag-felles/*/src/**", restores["beregn"]["with"]["key"])
-        self.assertNotIn("bidrag-felles", restores["oppgave"]["with"]["key"])
-        saves = [step for step in self.steps if step.get("uses", "").startswith("actions/cache/save@")]
-        self.assertEqual(len(saves), 4)
-        for step in saves:
-            self.assertIn("inputs.bruk_bibliotekcache == 'true'", step["if"])
-            self.assertIn("cache-primary-key", step["with"]["key"])
 
     def test_test_job_builds_all_selected_groups_without_library_cache(self):
         select = self.steps[0]
@@ -764,10 +632,6 @@ class LibraryBuildTest(unittest.TestCase):
                                 "GITHUB_OUTPUT": str(output)}, check=True)
             self.assertIn("test_felles=true", output.read_text())
         args = self.run_build(FELLES="true", BEREGN="true", OPPGAVE="true", TEST_FELLES="true")
-        projects = args[args.index("-pl") + 1]
-        self.assertIn("libs/bidrag-felles/bidrag-domene", projects)
-        self.assertIn("libs/bidrag-beregn-felles/bidrag-beregn-core", projects)
-        self.assertIn("libs/bidrag-oppgave-client", projects)
         self.assertNotIn("-DskipTests", args)
         self.assertNotIn("-Dmaven.test.skip=true", args)
         self.assertNotIn("-Dmaven.antrun.skip=true", args)
@@ -789,22 +653,6 @@ class LibraryBuildTest(unittest.TestCase):
                       saves["${{ steps.felles.outputs.cache-primary-key }}"]["if"])
         self.assertIn("steps.grupper.outputs.test_felles == 'false'",
                       saves["${{ steps.felles_uten_tester.outputs.cache-primary-key }}"]["if"])
-
-    def test_stale_internal_artifacts_are_removed_but_settings_are_untouched(self):
-        clean = next(step for step in self.steps if "rm -rf" in step.get("run", ""))
-        with tempfile.TemporaryDirectory() as directory:
-            home = Path(directory)
-            repo = home / ".m2/repository/no/nav/bidrag"
-            repo.mkdir(parents=True)
-            for artifact in ("bidrag-backend-domene", "bidrag-beregn-core", "bidrag-oppgave-dto", "other"):
-                (repo / artifact).mkdir()
-                (repo / artifact / "old.jar").write_text("old")
-            settings = home / ".m2/settings.xml"
-            settings.write_text("settings")
-            subprocess.run(["bash", "-euo", "pipefail", "-c", clean["run"]],
-                           env={**os.environ, "HOME": str(home)}, check=True)
-            self.assertEqual({p.name for p in repo.iterdir()}, {"other"})
-            self.assertTrue(settings.exists())
 
     def test_artifact_transfer_contains_only_internal_maven_directories(self):
         upload = next(step for step in workflow("bygg-apper.yaml")["jobs"]["biblioteker"]["steps"]

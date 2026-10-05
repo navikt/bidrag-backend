@@ -3,6 +3,20 @@
 Monorepo for team Bidrag sine backend-tjenester. Bygget med Spring Boot og Kotlin
 på Java 21, kjører på Nais.
 
+## Lokal Texas-sidecar
+
+Generer en lokal RSA-nøkkel før du starter Texas med Compose:
+
+```sh
+node util/bidrag-dev/generate-texas-jwk.mjs
+docker compose up -d texas
+```
+
+Skriptet skriver `AZURE_APP_JWK` til `.env.texas`, som er ignorert av Git. Fila
+trengs for å kjøre lokal Texas-sidecar. Finnes fila allerede, varsler skriptet
+uten å overskrive. Slett fila og kjør skriptet på nytt hvis du
+trenger en ny nøkkel.
+
 ## Bygg og deploy
 
 Ved pull requests, i merge-køen og ved push til `main` starter
@@ -74,7 +88,7 @@ henter eller bygger bibliotekene. De er samlet i tre grupper:
 | --- | --- |
 | `felles` | Bibliotekene under `libs/bidrag-felles` |
 | `beregn` | Beregningsbibliotekene under `libs/bidrag-beregn-felles`. Trenger også `felles`. |
-| `oppgave` | `bidrag-oppgave-client` og `bidrag-oppgave-dto` |
+| `oppgave` |  `bidrag-oppgave-dto` |
 
 Appene bruker `felles` som standard. Trenger en app andre grupper, angis de i
 `bibliotekgrupper` i kallet til `bygg_og_deploy.yaml`. Bruk tom verdi (`''`)

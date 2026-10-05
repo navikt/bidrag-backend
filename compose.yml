@@ -1,0 +1,16 @@
+services:
+
+  texas:
+    image: ghcr.io/nais/texas:2026-09-10-134043-f55778d@sha256:5ade8a0fcdf609b54072fcd191410e5015351c7e9cd47816ecccaf1dc3ed9022
+    ports: [ "127.0.0.1:4010:4010" ]
+    env_file:
+      - .env.texas
+    environment:
+      AZURE_APP_CLIENT_ID: "43b293e0-2115-468e-b744-086f435bf53d"
+      BIND_ADDRESS: "0.0.0.0:4010"
+      AZURE_APP_WELL_KNOWN_URL: "https://localauth-bidrag.intern.dev.nav.no/entraid/.well-known/openid-configuration"
+      AZURE_ENABLED: "true"
+      AZURE_OPENID_CONFIG_ISSUER: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/v2.0
+      AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: https://localauth-bidrag.intern.dev.nav.no/entraid/oauth2/token
+      AZURE_OPENID_CONFIG_JWKS_URI: https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/discovery/v2.0/keys
+    restart: on-failure
