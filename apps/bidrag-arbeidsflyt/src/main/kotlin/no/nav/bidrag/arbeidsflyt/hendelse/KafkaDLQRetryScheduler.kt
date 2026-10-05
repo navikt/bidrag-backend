@@ -92,7 +92,7 @@ class KafkaDLQRetryScheduler(
 
         behandlinger.forEach {
             try {
-                behandlingSchedulerService.behandleOgOppdaterStatusSjekket(it.id)
+                behandlingSchedulerService.behandleOgOppdaterStatusSjekket(it.id, it.behandlingsid)
             } catch (e: Exception) {
                 LOGGER.error(e) { "Det skjedde feil ved prosessering av behandling med id=${it.id}" }
             }

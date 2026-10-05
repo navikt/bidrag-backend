@@ -24,6 +24,6 @@ class AdminController(
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun rekjørBehandlingHendelser(@PathVariable behandlingId: Long) {
-        behandlingSchedulerService.behandleOgOppdaterStatusSjekket(behandlingId)
+        behandlingSchedulerService.behandleOgOppdaterStatusSjekket(behandlingEntityId = null, behandlingId = behandlingId)
     }
 }
