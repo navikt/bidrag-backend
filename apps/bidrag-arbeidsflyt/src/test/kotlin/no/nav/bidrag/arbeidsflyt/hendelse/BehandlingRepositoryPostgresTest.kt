@@ -78,33 +78,32 @@ internal class BehandlingRepositoryPostgresTest : AbstractBehandleHendelseTest()
             .finnBehandlingerMedSøknadUnderBehandlingStatusSjekketEldreEnn(cutoff) shouldBe emptyList()
     }
 
-    private fun opprettHendelse(behandlingsid: Long) =
-        BehandlingHendelse(
-            type = BehandlingHendelseType.OPPRETTET,
-            status = BehandlingStatusType.UNDER_BEHANDLING,
-            vedtakstype = Vedtakstype.ENDRING,
-            opprettetTidspunkt = LocalDateTime.now(),
-            endretTidspunkt = LocalDateTime.now(),
-            mottattDato = LocalDate.parse("2020-06-01"),
-            behandlingsid = behandlingsid,
-            behandlerEnhet = "4806",
-            søknadsid = 123,
-            sporingsdata = Sporingsdata("test", "test", "test", "4806"),
-            barn =
-                listOf(
-                    BehandlingHendelseBarn(
-                        saksnummer = "123456",
-                        behandlingstype = Behandlingstype.ENDRING,
-                        behandlingstema = Behandlingstema.BIDRAG,
-                        status = Behandlingstatus.UNDER_BEHANDLING,
-                        stønadstype = Stønadstype.BIDRAG,
-                        medInnkreving = true,
-                        søktAv = SøktAvType.BIDRAGSMOTTAKER,
-                        søktFraDato = LocalDate.parse("2020-06-01"),
-                        ident = "123213",
-                        søknadsid = 123,
-                        behandlerEnhet = "4806",
-                    ),
-                ),
-        )
+    private fun opprettHendelse(behandlingsid: Long) = BehandlingHendelse(
+        type = BehandlingHendelseType.OPPRETTET,
+        status = BehandlingStatusType.UNDER_BEHANDLING,
+        vedtakstype = Vedtakstype.ENDRING,
+        opprettetTidspunkt = LocalDateTime.now(),
+        endretTidspunkt = LocalDateTime.now(),
+        mottattDato = LocalDate.parse("2020-06-01"),
+        behandlingsid = behandlingsid,
+        behandlerEnhet = "4806",
+        søknadsid = 123,
+        sporingsdata = Sporingsdata("test", "test", "test", "4806"),
+        barn =
+        listOf(
+            BehandlingHendelseBarn(
+                saksnummer = "123456",
+                behandlingstype = Behandlingstype.ENDRING,
+                behandlingstema = Behandlingstema.BIDRAG,
+                status = Behandlingstatus.UNDER_BEHANDLING,
+                stønadstype = Stønadstype.BIDRAG,
+                medInnkreving = true,
+                søktAv = SøktAvType.BIDRAGSMOTTAKER,
+                søktFraDato = LocalDate.parse("2020-06-01"),
+                ident = "123213",
+                søknadsid = 123,
+                behandlerEnhet = "4806",
+            ),
+        ),
+    )
 }
