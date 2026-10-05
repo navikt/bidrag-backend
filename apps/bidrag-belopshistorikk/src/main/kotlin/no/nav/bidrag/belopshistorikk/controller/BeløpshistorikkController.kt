@@ -117,7 +117,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finner alle stønader innenfor angitt sak")
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "Sak funnet"),
+            ApiResponse(responseCode = "200", description = "Stønader for saken, eller tom liste når ingen finnes"),
             ApiResponse(
                 responseCode = "401",
                 description = "Manglende eller utløpt id-token",
@@ -149,7 +149,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "Stønader funnet"),
+            ApiResponse(responseCode = "200", description = "Løpende bidragssaker, eller tom liste når ingen finnes"),
             ApiResponse(
                 responseCode = "401",
                 description = "Manglende eller utløpt id-token",
@@ -180,7 +180,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "Stønader funnet"),
+            ApiResponse(responseCode = "200", description = "Stønader for skyldner, eller tom liste når ingen finnes"),
         ],
     )
     fun hentAlleStønaderForSkyldner(
@@ -228,7 +228,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "200", description = "Stønader funnet"),
+            ApiResponse(responseCode = "200", description = "Løpende stønader i perioden, eller tom liste når ingen finnes"),
         ],
     )
     fun hentAlleLøpendeStønaderIPeriode(
@@ -242,9 +242,13 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         return ResponseEntity(respons, HttpStatus.OK)
     }
 
-    @Deprecated("Bruk @PostMapping i steden", ReplaceWith("BeløpshistorikkController.hentEngangsbeløp"))
     @GetMapping("engangsbelop/{sak}")
     @Operation(security = [SecurityRequirement(name = "bearer-key")], summary = "Finner alle engangsbeløp innenfor angitt sak")
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Engangsbeløp for saken, eller tom liste når ingen finnes"),
+        ],
+    )
     fun hentEngangsbelopForSak(
         @PathVariable @NotNull
         sak: Saksnummer,
@@ -255,7 +259,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
     }
 
     companion object {
-        const val HENT_ENGANGSBELØP = "/hent-engangsbelop/"
         const val HENT_STØNAD = "/hent-stonad/"
         const val HENT_STØNAD_HISTORISK = "/hent-stonad-historisk/"
         const val HENT_STØNADER_FOR_SAK = "/hent-stonader-for-sak/{sak}"
