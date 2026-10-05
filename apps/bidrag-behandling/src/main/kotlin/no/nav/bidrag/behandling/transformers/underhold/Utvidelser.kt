@@ -215,7 +215,7 @@ fun Underholdskostnad.justerPerioderForOpphørsdato(
         val beregnTilDato = behandling.finnBeregnTilDatoBehandling(this.rolle)
 
         barnetilsyn
-            .filter { opphørsdato == null || it.fom > beregnTilDato }
+            .filter { it.fom >= beregnTilDato }
             .forEach { periode ->
                 barnetilsyn.remove(periode)
             }
@@ -228,7 +228,7 @@ fun Underholdskostnad.justerPerioderForOpphørsdato(
             }
 
         faktiskeTilsynsutgifter
-            .filter { opphørsdato == null || it.fom > beregnTilDato }
+            .filter { it.fom >= beregnTilDato }
             .forEach { periode ->
                 faktiskeTilsynsutgifter.remove(periode)
             }
@@ -241,7 +241,7 @@ fun Underholdskostnad.justerPerioderForOpphørsdato(
             }
 
         tilleggsstønad
-            .filter { opphørsdato == null || it.fom > beregnTilDato }
+            .filter { it.fom >= beregnTilDato }
             .forEach { periode ->
                 tilleggsstønad.remove(periode)
             }
