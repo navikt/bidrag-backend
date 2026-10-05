@@ -421,7 +421,7 @@ class ForholdsmessigFordelingKlageService(
                 ?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }
-        val rollerIFFSøknader = rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap
+        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap).distinct()
 
         return rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
             val klage = rollerIKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
