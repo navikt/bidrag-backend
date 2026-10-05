@@ -162,9 +162,9 @@ class DokumentMetadataCollector(
             )
         }
 
-        val soknadsbarn = if (forespørsel.vedtakId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.VEDTAK)) {
+        val soknadsbarn = if (forespørsel.vedtakId != null) {
             vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId)
-        } else if (forespørsel.behandlingId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING)) {
+        } else if (forespørsel.behandlingId != null) {
             behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
             forespørsel.barnIBehandling
@@ -240,9 +240,9 @@ class DokumentMetadataCollector(
             )
         }
 
-        val soknadsbarn = if (forespørsel.vedtakId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.VEDTAK)) {
+        val soknadsbarn = if (forespørsel.vedtakId != null) {
             vedtakService.hentIdentSøknadsbarn(forespørsel.vedtakId, forespørsel.søknadId)
-        } else if (forespørsel.behandlingId != null && dokumentMal.inneholderDatagrunnlag(DataGrunnlag.BEHANDLING)) {
+        } else if (forespørsel.behandlingId != null) {
             behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
             forespørsel.barnIBehandling
