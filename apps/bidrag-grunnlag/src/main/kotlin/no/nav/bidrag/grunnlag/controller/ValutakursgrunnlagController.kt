@@ -1,7 +1,6 @@
 package no.nav.bidrag.grunnlag.controller
 
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
-import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.grunnlag.ISSUER
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
@@ -87,6 +86,7 @@ class ValutakursgrunnlagController(
 
     @PostMapping("/valutakursgrunnlag/historisk")
     fun innhentHistoriskeValutakursgrunnlag(@RequestBody request: InnhentHistoriskeRequest): List<ValutakursgrunnlagBo> {
+        krevLokalSkrivetilgang()
         return historiskeValutakurserService.hentHistoriskeValutakurser(request.fra, request.til)
     }
 

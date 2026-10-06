@@ -92,7 +92,7 @@ class ValutakursgrunnlagServiceTest {
 
         val feil = assertThrows<ResponseStatusException> { service.beregn(BigDecimal.ONE, Valutakode.USD, Valutakode.NOK, dato) }
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, feil.statusCode)
+        assertEquals(HttpStatus.UNPROCESSABLE_CONTENT, feil.statusCode)
     }
 
     @Test
