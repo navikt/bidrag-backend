@@ -84,6 +84,9 @@ class JournalpostService(
         }
         ).toResponseEntity()
 
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): ResponseEntity<JournalpostResponse> =
+        bidragArkivConsumer.hentJournalpostForEksternReferanseId(eksternReferanseId).toResponseEntity()
+
     fun finnAvvik(
         saksnummer: String?,
         kildesystemIdenfikator: KildesystemIdenfikator,
