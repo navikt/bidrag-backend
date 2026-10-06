@@ -178,7 +178,7 @@ import java.time.YearMonth
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
-val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_TILTAKSPENGER, Inntektstype.BARNETILLEGG_SUMMERT)
+val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_TILTAKSPENGER, Inntektstype.BARNETILLEGG_FORSVARET, Inntektstype.BARNETILLEGG_SUMMERT)
 
 fun Rolle.mapTilResultatBarn() = ResultatRolle(
     tilPersonident(),
