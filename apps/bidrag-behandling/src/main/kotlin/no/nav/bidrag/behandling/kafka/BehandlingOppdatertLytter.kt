@@ -72,6 +72,7 @@ class BehandlingOppdatertLytter(
                             behandlingstema = barn.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
                             søknadsid = behandling.soknadsid,
                             omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                            omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
                             behandlerEnhet = ff?.behandlerenhet ?: behandling.behandlerEnhet,
                             saksnummer = ff?.tilhørerSak ?: behandling.saksnummer,
                             behandlingstype = behandling.søknadstype ?: Behandlingstype.SØKNAD,
