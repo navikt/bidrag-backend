@@ -2,6 +2,7 @@ package no.nav.bidrag.grunnlag.controller
 
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,7 +20,8 @@ import java.time.LocalDate
 
 class ValutakursgrunnlagControllerTest {
     private val service = Mockito.mock(ValutakursgrunnlagService::class.java)
-    private val controller = ValutakursgrunnlagController(service, MockEnvironment())
+    private val historiskeValutakurserService = Mockito.mock(HentHistoriskeValutakurserService::class.java)
+    private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment())
     private val dato = LocalDate.of(2026, 7, 1)
 
     @Test
@@ -87,7 +89,7 @@ class ValutakursgrunnlagControllerTest {
 
     @Test
     fun `testflagget alene gir ikke skrivetilgang uten local-profil`() {
-        val testController = ValutakursgrunnlagController(service, MockEnvironment(), true)
+        val testController = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment(), true)
 
         val feil = assertThrows<ResponseStatusException> {
             testController.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("10.5")))
@@ -98,7 +100,7 @@ class ValutakursgrunnlagControllerTest {
 
     @Test
     fun `lokal innhenting og overstyring kan testes med eksplisitt aktivering`() {
-        val lokal = ValutakursgrunnlagController(service, MockEnvironment().apply { setActiveProfiles("local") }, true)
+        val lokal = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment().apply { setActiveProfiles("local") }, true)
         val request = InnhentValutakursgrunnlagRequest(Valutakode.USD, LocalDate.of(2025, 7, 1))
         val grunnlag = ValutakursgrunnlagBo(kurs = BigDecimal("10.5"), multiplikator = 0, basisvaluta = Valutakode.USD)
         Mockito.`when`(service.innhent(request.valutakode, request.gyldigFra)).thenReturn(grunnlag)

@@ -1,8 +1,10 @@
 package no.nav.bidrag.grunnlag.controller
 
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.grunnlag.ISSUER
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import no.nav.security.token.support.core.api.ProtectedWithClaims
@@ -29,6 +31,11 @@ data class InnhentValutakursgrunnlagRequest(
     val gyldigFra: LocalDate,
 )
 
+data class InnhentHistoriskeRequest(
+    val fra: LocalDate,
+    val til: LocalDate,
+)
+
 data class OverstyrValutakursgrunnlagRequest(val kurs: BigDecimal)
 
 data class BeregnValutaRequest(
@@ -42,6 +49,7 @@ data class BeregnValutaRequest(
 @ProtectedWithClaims(issuer = ISSUER)
 class ValutakursgrunnlagController(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
+    private val historiskeValutakurserService: HentHistoriskeValutakurserService,
     private val environment: Environment,
     @param:Value("\${valutakurs.skriving-lokalt-aktivert:false}") private val skrivingLokaltAktivert: Boolean = false,
 ) {
@@ -75,6 +83,11 @@ class ValutakursgrunnlagController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi en utenlandsk valuta og 1. januar eller 1. juli som startdato")
         }
         return valutakursgrunnlagService.innhent(request.valutakode, request.gyldigFra)
+    }
+
+    @PostMapping("/valutakursgrunnlag/historisk")
+    fun innhentHistoriskeValutakursgrunnlag(@RequestBody request: InnhentHistoriskeRequest): List<ValutakursgrunnlagBo> {
+        return historiskeValutakurserService.hentHistoriskeValutakurser(request.fra, request.til)
     }
 
     @PutMapping("/valutakursgrunnlag/{id}/kurs")
