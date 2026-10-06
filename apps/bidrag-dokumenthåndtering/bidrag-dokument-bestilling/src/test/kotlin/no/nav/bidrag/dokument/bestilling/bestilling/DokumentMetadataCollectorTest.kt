@@ -12,6 +12,8 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.verify
+import io.mockk.spyk
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentBestillingForespørsel
 import no.nav.bidrag.dokument.bestilling.api.dto.MottakerAdresseTo
 import no.nav.bidrag.dokument.bestilling.api.dto.MottakerTo
@@ -1120,6 +1122,99 @@ internal class DokumentMetadataCollectorTest {
             bestilling.roller.barn shouldHaveSize 1
             bestilling.roller.barn[0].fodselsnummer shouldBe BARN1.ident.verdi
         }
+
+        @Test
+        fun `skal hente søknadsbarn fra vedtak før barnIBehandling og behandling`() {
+            val vedtakServiceSpy = mockSakMedToBarnOgVedtakService()
+            every { vedtakServiceSpy.hentIdentSøknadsbarn(1, 2) } returns listOf(BARN2.ident.verdi)
+
+            val bestilling =
+                metadataCollector.collect(
+                    opprettForespørselForSøknadsbarn(vedtakId = 1, behandlingId = 3, barnIBehandling = listOf(BARN1.ident.verdi)),
+                    hentDokumentMal("BI01S02")!!,
+                )
+
+            assertSoftly {
+                bestilling.roller.barn shouldHaveSize 1
+                bestilling.roller.barn[0].fodselsnummer shouldBe BARN2.ident.verdi
+                bestilling.rollerV2.filter { it.rolle == Rolletype.BARN }.map { it.ident?.verdi } shouldBe listOf(BARN2.ident.verdi)
+            }
+            verify(exactly = 0) { behandlingService.hentIdentSøknadsbarn(any(), any()) }
+        }
+
+        @Test
+        fun `skal hente søknadsbarn fra behandling før barnIBehandling når vedtakId mangler`() {
+            mockSakMedToBarnOgVedtakService()
+            every { behandlingService.hentIdentSøknadsbarn(3, 2) } returns listOf(BARN2.ident.verdi)
+
+            val bestilling =
+                metadataCollector.collect(
+                    opprettForespørselForSøknadsbarn(behandlingId = 3, barnIBehandling = listOf(BARN1.ident.verdi)),
+                    hentDokumentMal("BI01S02")!!,
+                )
+
+            assertSoftly {
+                bestilling.roller.barn shouldHaveSize 1
+                bestilling.roller.barn[0].fodselsnummer shouldBe BARN2.ident.verdi
+                bestilling.rollerV2.filter { it.rolle == Rolletype.BARN }.map { it.ident?.verdi } shouldBe listOf(BARN2.ident.verdi)
+            }
+        }
+
+        @Test
+        fun `skal legge til alle barn i saken når vedtak ikke har søknadsbarn`() {
+            val vedtakServiceSpy = mockSakMedToBarnOgVedtakService()
+            every { vedtakServiceSpy.hentIdentSøknadsbarn(1, 2) } returns emptyList()
+
+            val bestilling =
+                metadataCollector.collect(
+                    opprettForespørselForSøknadsbarn(vedtakId = 1, barnIBehandling = listOf(BARN1.ident.verdi)),
+                    hentDokumentMal("BI01S02")!!,
+                )
+
+            bestilling.roller.barn.map { it.fodselsnummer } shouldBe listOf(BARN2.ident.verdi, BARN1.ident.verdi)
+        }
+
+        private fun mockSakMedToBarnOgVedtakService(): VedtakService {
+            mockDefaultValues()
+            every { sakService.hentSak(DEFAULT_SAKSNUMMER) } returns
+                createSakResponse().copy(
+                    roller =
+                    listOf(
+                        RolleDto(fødselsnummer = BM1.ident, type = Rolletype.BIDRAGSMOTTAKER),
+                        RolleDto(fødselsnummer = BARN1.ident, type = Rolletype.BARN),
+                        RolleDto(fødselsnummer = BARN2.ident, type = Rolletype.BARN),
+                    ),
+                )
+            val vedtakServiceSpy = spyk(vedtakService)
+            metadataCollector =
+                DokumentMetadataCollector(
+                    personService,
+                    sakService,
+                    kodeverkService,
+                    vedtakServiceSpy,
+                    behandlingService,
+                    sjablongService,
+                    saksbehandlerInfoManager,
+                    organisasjonService,
+                )
+            return vedtakServiceSpy
+        }
+
+        private fun opprettForespørselForSøknadsbarn(
+            vedtakId: Int? = null,
+            behandlingId: Int? = null,
+            barnIBehandling: List<String> = emptyList(),
+        ) = DokumentBestillingForespørsel(
+            mottakerId = BM1.ident.verdi,
+            saksnummer = DEFAULT_SAKSNUMMER,
+            tittel = DEFAULT_TITLE_DOKUMENT,
+            enhet = "4806",
+            spraak = "NB",
+            vedtakId = vedtakId,
+            behandlingId = behandlingId,
+            søknadId = 2,
+            barnIBehandling = barnIBehandling,
+        )
     }
 
     @Test
