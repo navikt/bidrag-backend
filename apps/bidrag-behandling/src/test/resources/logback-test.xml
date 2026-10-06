@@ -10,4 +10,6 @@
     <appender-ref ref="STDOUT" />
   </root>
   <logger name="secureLogger" level="OFF" additivity="false" />
+  <!-- WireMock logger også forventede 404-oppslag som ERROR. Slå på med -Dwiremock.test.log.level=ERROR ved stub-feilsøking. -->
+  <logger name="WireMock.wiremock" level="${wiremock.test.log.level:-OFF}" />
 </configuration>
