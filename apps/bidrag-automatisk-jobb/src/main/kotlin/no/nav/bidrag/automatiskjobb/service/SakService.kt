@@ -168,6 +168,7 @@ class SakService(
                 referanse = eksisterende.referanse,
                 resultatkode = eksisterende.resultatkode,
                 beløp = eksisterende.beløp,
+                betaltBeløp = eksisterende.betaltBeløp,
                 valutakode = eksisterende.valutakode,
                 grunnlagReferanseListe = emptyList(),
             )
