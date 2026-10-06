@@ -492,7 +492,7 @@ class VedtakGrunnlagMapper(
                 .flatMap { beregningBarn ->
                     beregningBarn.summertInntektListe.map {
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
                             innhold = POJONode(it),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),
