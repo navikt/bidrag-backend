@@ -13,13 +13,16 @@ fun lagSaksbehandlerInfoMedEnhet(
     saksbehandlerIdent: String?,
     enhetsnummer: String?,
     saksbehandlerNavn: String? = null,
-): String = if (saksbehandlerIdent.isNullOrEmpty()) {
-    "ukjent saksbehandler"
-} else {
-    val navn = saksbehandlerNavn ?: hentSaksbehandlernavn(saksbehandlerIdent) ?: "Ukjent $saksbehandlerIdent"
-    "$navn ($saksbehandlerIdent, ${enhetsnummer ?: "ukjent enhet"})"
+): String {
+    val enhet = enhetsnummer ?: "ukjent enhet"
+    return if (saksbehandlerIdent.isNullOrEmpty()) {
+        if (saksbehandlerNavn.isNullOrEmpty()) "ukjent saksbehandler ($enhet)" else "$saksbehandlerNavn ($enhet)"
+    } else {
+        val navn = saksbehandlerNavn ?: hentSaksbehandlernavn(saksbehandlerIdent) ?: "Ukjent $saksbehandlerIdent"
+        "$navn ($saksbehandlerIdent, $enhet)"
+    }
 }
 
-fun JournalpostHendelse.lagSaksbehandlerInfoMedEnhet(): String = lagSaksbehandlerInfoMedEnhet(sporing?.brukerident, hentEndretAvEnhetsnummer(), sporing?.saksbehandlersNavn)
+fun JournalpostHendelse.lagSaksbehandlerInfoMedEnhet(): String = lagSaksbehandlerInfoMedEnhet(sporing?.brukerident, sporing?.enhetsnummer, sporing?.saksbehandlersNavn)
 
 private fun hentSaksbehandlernavn(saksbehandlerIdent: String): String? = EnhetProvider.hentSaksbehandlernavn(saksbehandlerIdent)?.takeIf { it.isNotEmpty() }
