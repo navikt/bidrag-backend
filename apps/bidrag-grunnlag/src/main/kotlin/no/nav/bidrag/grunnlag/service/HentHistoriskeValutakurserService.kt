@@ -25,22 +25,6 @@ class HentHistoriskeValutakurserService(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
     private val hentValutakursService: HentValutakursService,
 ) {
-//    private val hentAntallÅr = 1
-
-    // Periodene 1. januar til 1. juli og 1. juli til 1. januar `hentAntallÅr` år bakover i tid
-//    private val historiskePerioder: List<Periode<LocalDate>> = (0..<hentAntallÅr).flatMap {
-//        val nå = LocalDate.now()
-//        val år = nå.minusYears(it.toLong())
-//        val førsteJuli = LocalDate.of(år.year, 7, 1)
-//
-//        listOf(
-//            Datoperiode(LocalDate.of(år.year, 1, 1), førsteJuli),
-//            Datoperiode(førsteJuli, førsteJuli.plusMonths(6)),
-//        )
-//    }
-
-    // TODO Api for å trigge manuelt
-    // TODO Api for å hente en spesifikk valuta for en periode
     fun hentHistoriskeValutakurser(fra: LocalDate, til: LocalDate): List<ValutakursgrunnlagBo> {
         if (fra.dayOfMonth != 1 || fra.month !in listOf(Month.JANUARY, Month.JULY)) {
             throw UgyldigDatoException("Kan ikke hente valutakurser med fra-dato $fra. Dato må være 1. januar eller 1. juli.")
@@ -52,12 +36,12 @@ class HentHistoriskeValutakurserService(
             throw UgyldigDatoException("Fra-dato må være før til-dato")
         }
         val nå = LocalDate.now()
-        if (fra.isAfter(nå) || til.isAfter(nå)) { // TODO frem til neste intervall-slutt
+        if (til.minusMonths(6).isAfter(nå)) {
             throw UgyldigDatoException("Dato kan ikke være i fremtiden")
         }
 
         // Bygger perioder 1. januar til 1. juli og 1. juli til 1. januar for årene i fra og til.
-        // Filtrerer bort perioder som
+        // Beholder bare halvår som starter på eller etter fra-dato og slutter på eller før til-dato.
         val perioder: List<Periode<LocalDate>> = (fra.year..til.year).flatMap { år ->
             val førsteJuli = LocalDate.of(år, 7, 1)
 

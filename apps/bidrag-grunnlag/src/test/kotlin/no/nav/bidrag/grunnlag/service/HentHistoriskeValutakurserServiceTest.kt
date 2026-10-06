@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.eq
@@ -73,6 +74,42 @@ class HentHistoriskeValutakurserServiceTest {
         assertEquals(fra.atStartOfDay(), resultat.single().brukFra)
         assertEquals(til.atStartOfDay(), resultat.single().brukTil)
         assertTrue(resultat.single().feiletHenting)
+    }
+
+    @Test
+    fun `inneværende halvår kan hentes selv om sluttdatoen er i fremtiden`() {
+        val iDag = LocalDate.of(2026, 10, 6)
+        val fra = LocalDate.of(2026, 7, 1)
+        val til = LocalDate.of(2027, 1, 1)
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+
+        Mockito.mockStatic(LocalDate::class.java, Mockito.CALLS_REAL_METHODS).use { dato ->
+            dato.`when`<LocalDate> { LocalDate.now() }.thenReturn(iDag)
+
+            service.hentHistoriskeValutakurser(fra, til)
+        }
+
+        val request = argumentCaptor<HentValutakursRequest>()
+        verify(hent).hentValutakurs(request.capture())
+        assertTrue(request.firstValue.hentValutakursListe.isNotEmpty())
+        assertTrue(request.firstValue.hentValutakursListe.all { it.dato == fra })
+        verify(grunnlag).opprettValutakursgrunnlag(emptyList(), Datoperiode(fra, til))
+    }
+
+    @Test
+    fun `neste halvår kan ikke hentes før det har startet`() {
+        val iDag = LocalDate.of(2026, 10, 6)
+        val fra = LocalDate.of(2027, 1, 1)
+        val til = LocalDate.of(2027, 7, 1)
+
+        Mockito.mockStatic(LocalDate::class.java, Mockito.CALLS_REAL_METHODS).use { dato ->
+            dato.`when`<LocalDate> { LocalDate.now() }.thenReturn(iDag)
+
+            val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(fra, til) }
+            assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+        }
+        verifyNoInteractions(hent, grunnlag)
     }
 
     @Test
@@ -141,7 +178,7 @@ class HentHistoriskeValutakurserServiceTest {
             januar to januar,
             juli to januar,
             LocalDate.of(LocalDate.now().year + 1, 1, 1) to LocalDate.of(LocalDate.now().year + 1, 7, 1),
-            januar to LocalDate.of(LocalDate.now().year + 1, 1, 1),
+            januar to LocalDate.of(LocalDate.now().year + 2, 1, 1),
         )
 
         ugyldige.forEach { (fra, til) ->
