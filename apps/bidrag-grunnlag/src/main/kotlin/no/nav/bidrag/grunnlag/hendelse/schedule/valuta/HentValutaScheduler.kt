@@ -48,7 +48,8 @@ class HentValutaScheduler(
 
         val gyldighetsperiode = lagGyldighetsperiode(dato)
         val hentvalutakursResponse = hentValutakursService.hentValutakurs(hentValutakursRequest)
-        valutakursgrunnlagService.opprettValutakursgrunnlag(hentvalutakursResponse.hentetValutakursListe, gyldighetsperiode)
+        val valutakursgrunnlag = valutakursgrunnlagService.opprettValutakursgrunnlag(hentvalutakursResponse.hentetValutakursListe, gyldighetsperiode)
+        LOGGER.info { "${valutakursgrunnlag.size} valutakursgrunnlag opprettet" }
     }
 
     internal fun lagGyldighetsperiode(dato: LocalDate): Periode<LocalDate> = Datoperiode(dato, dato.plusMonths(6))
