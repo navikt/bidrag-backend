@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDate
 import java.time.Month
+import java.time.temporal.ChronoUnit
 
 private val LOGGER = KotlinLogging.logger {}
 
@@ -37,6 +38,7 @@ class HentHistoriskeValutakurserService(
         if (til.minusMonths(6).isAfter(nå)) {
             throw UgyldigDatoException("Dato kan ikke være i fremtiden")
         }
+        validerAntallPerioder(ChronoUnit.MONTHS.between(fra, til) / 6)
 
         // Bygger perioder 1. januar til 1. juli og 1. juli til 1. januar for årene i fra og til.
         // Beholder bare halvår som starter på eller etter fra-dato og slutter på eller før til-dato.
@@ -56,6 +58,7 @@ class HentHistoriskeValutakurserService(
     }
 
     fun hentHistoriskeValutakurser(perioder: List<Periode<LocalDate>>): List<ValutakursgrunnlagBo> {
+        validerAntallPerioder(perioder.size.toLong())
         val utenlandskeValutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
         val valutakursgrunnlag = mutableListOf<ValutakursgrunnlagBo>()
         try {
@@ -91,6 +94,12 @@ class HentHistoriskeValutakurserService(
         }
 
         return buildList { addAll(valutakursgrunnlag) }
+    }
+
+    private fun validerAntallPerioder(antallPerioder: Long) {
+        if (antallPerioder > 10) {
+            throw UgyldigDatoException("Kan hente maksimalt 10 halvårsperioder av gangen")
+        }
     }
 }
 
