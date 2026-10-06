@@ -88,7 +88,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
             inntekterBarn2.shouldNotBeNull()
 
             assertSoftly(it.inntekter.barnetillegg.toList()) {
-                this shouldHaveSize 1
+                this shouldHaveSize 2
                 this[0].gjelderBarn shouldBe Personident(testdataBarn1.ident)
                 this[0].inntektsposter shouldHaveSize 1
                 this[0].inntektsposter.first().beløp shouldBe this[0].beløp
