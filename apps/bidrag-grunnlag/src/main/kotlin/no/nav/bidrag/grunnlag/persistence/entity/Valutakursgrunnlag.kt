@@ -14,7 +14,6 @@ import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.collections.get
 import kotlin.reflect.full.memberProperties
 
 @Entity

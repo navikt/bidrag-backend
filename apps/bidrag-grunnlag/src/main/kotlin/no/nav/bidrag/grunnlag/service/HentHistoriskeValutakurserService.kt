@@ -10,7 +10,6 @@ import no.nav.bidrag.grunnlag.comparator.isBeforeOrEqual
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakurs
 import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
 import no.nav.bidrag.grunnlag.persistence.entity.toValutakursgrunnlagBo
-import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
@@ -62,8 +61,9 @@ class HentHistoriskeValutakurserService(
         try {
             val perioderUtenGrunnlag = perioder.map { periode ->
                 val valutakoderUtenGrunnlag = utenlandskeValutakoder.filter { valutakode ->
+                    val eksisterende = valutakursgrunnlagService.hentValutakursgrunnlag(valutakode, periode.fom)
                     (valutakode.utgåttDato == null || periode.fom.isBefore(valutakode.utgåttDato)) &&
-                        valutakursgrunnlagService.hentValutakursgrunnlag(valutakode, periode.fom) == null
+                        (eksisterende == null || eksisterende.feiletHenting)
                 }
                 periode to valutakoderUtenGrunnlag
             }.filter { (_, valutakoder) -> valutakoder.isNotEmpty() }
