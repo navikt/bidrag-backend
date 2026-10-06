@@ -119,6 +119,5 @@ class TestPersonBuilderTest {
 
         aktørid shouldNotBe null
         aktørid2 shouldNotBe null
-
     }
 }
