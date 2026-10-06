@@ -185,6 +185,9 @@ class HentHistoriskeValutakurserServiceTest {
         assertFalse(forespørsler.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.ANG })
         assertTrue(forespørsler.allValues.all { it.hentValutakursListe.any { kurs -> kurs.valutakode == Valutakode.BGN } })
         assertTrue(forespørsler.allValues.all { it.hentValutakursListe.none { kurs -> kurs.valutakode == Valutakode.HRK } })
+        verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
+        verify(grunnlag).hentValutakursgrunnlag(Valutakode.ANG, LocalDate.of(2025, 1, 1))
+        verify(grunnlag, never()).hentValutakursgrunnlag(Valutakode.ANG, LocalDate.of(2025, 7, 1))
     }
 
     @Test
@@ -197,6 +200,7 @@ class HentHistoriskeValutakurserServiceTest {
         val request = argumentCaptor<HentValutakursRequest>()
         verify(hent).hentValutakurs(request.capture())
         assertFalse(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.HRK })
+        verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
     }
 
     @Test
