@@ -35,7 +35,7 @@ class HentValutaSchedulerTest {
     fun `jobben kjøres 1 januar og 1 juli i Oslo-tid`() {
         val plan = HentValutaScheduler::class.java.getMethod("hentValutakurs").getAnnotation(Scheduled::class.java)
 
-        assertEquals("0 0 9 1 1,7 *", plan.cron)
+        assertEquals("0 0 5 1 1,7 *", plan.cron)
         assertEquals("Europe/Oslo", plan.zone)
         val lås = HentValutaScheduler::class.java.getMethod("hentValutakurs").getAnnotation(SchedulerLock::class.java)
         assertEquals("hentValutakursgrunnlag", lås.name)
