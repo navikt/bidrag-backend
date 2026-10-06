@@ -438,6 +438,7 @@ class SakServiceTest {
         every { vedtaksid } returns 42
         every { resultatkode } returns "SÆRBIDRAG_INNVILGET"
         every { beløp } returns BigDecimal(1000)
+        every { betaltBeløp } returns null
         every { valutakode } returns "NOK"
     }
 
