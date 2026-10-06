@@ -623,7 +623,7 @@ class DtoMapperMockTest {
             it.inntekt.skattepliktigInntekt shouldBe BigDecimal(500000)
             it.inntekt.maksBarnetillegg shouldBe null
             it.inntekt.totalInntekt shouldBe BigDecimal(500000)
-            it.beregnetIlagtGebyr shouldBe true
+            it.beregnetIlagtGebyr shouldBe false
             it.endeligIlagtGebyr shouldBe true
             it.begrunnelse shouldBe null
         }

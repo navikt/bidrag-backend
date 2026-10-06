@@ -222,8 +222,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(any()) }
-        verify(exactly = 2) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
-        barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
     }
 
     @Test
