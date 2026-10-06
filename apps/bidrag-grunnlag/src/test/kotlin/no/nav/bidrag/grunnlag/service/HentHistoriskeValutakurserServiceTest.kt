@@ -184,7 +184,7 @@ class HentHistoriskeValutakurserServiceTest {
         assertTrue(forespørsler.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.ANG })
         assertFalse(forespørsler.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.ANG })
         assertTrue(forespørsler.allValues.all { it.hentValutakursListe.any { kurs -> kurs.valutakode == Valutakode.BGN } })
-        verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
+        assertTrue(forespørsler.allValues.all { it.hentValutakursListe.none { kurs -> kurs.valutakode == Valutakode.HRK } })
     }
 
     @Test
