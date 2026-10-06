@@ -1,6 +1,7 @@
 package no.nav.bidrag.rest
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.rest.exceptions.RessursIkkeFunnetException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -18,6 +19,12 @@ class GlobalRestControllerAdvice : ResponseEntityExceptionHandler() {
     companion object {
         private const val EXTERNAL_SERVICE_ERROR_PREFIX = "Det skjedde en feil ved kall mot ekstern tjeneste: "
     }
+
+    @ExceptionHandler(RessursIkkeFunnetException::class)
+    fun handleRessursIkkeFunnet(exception: RessursIkkeFunnetException): ProblemDetail = ProblemDetail.forStatusAndDetail(
+        HttpStatus.NOT_FOUND,
+        exception.message ?: "Ressurs ikke funnet",
+    )
 
     @ExceptionHandler(RestClientResponseException::class)
     fun handleRestTemplateException(
