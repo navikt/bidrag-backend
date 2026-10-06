@@ -59,6 +59,66 @@ class HentHistoriskeValutakurserServiceTest {
     }
 
     @Test
+    fun `inntil ti halvår tillates for et datointervall`() {
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+        val fra = LocalDate.of(2019, 7, 1)
+
+        service.hentHistoriskeValutakurser(fra, fra.plusYears(5))
+
+        val forespørsler = argumentCaptor<HentValutakursRequest>()
+        verify(hent, times(10)).hentValutakurs(forespørsler.capture())
+        assertEquals(
+            (0 until 10).map { fra.plusMonths(it * 6L) },
+            forespørsler.allValues.map { it.hentValutakursListe.map { kurs -> kurs.dato }.distinct().single() },
+        )
+    }
+
+    @Test
+    fun `elleve halvår og større datointervaller avvises før oppslag og innhenting`() {
+        val til = LocalDate.of(2024, 7, 1)
+        val starter = listOf(til.minusMonths(66), LocalDate.of(-999999999, 1, 1))
+
+        starter.forEach { fra ->
+            val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(fra, til) }
+
+            assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+            assertEquals("Kan hente maksimalt 10 halvårsperioder av gangen", feil.message)
+        }
+        verifyNoInteractions(hent, grunnlag)
+    }
+
+    @Test
+    fun `inntil ti halvår tillates ved direkte kall med periodeliste`() {
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+        val fra = LocalDate.of(2019, 1, 1)
+        val perioder = List(10) { indeks ->
+            val start = fra.plusMonths(indeks * 6L)
+            Datoperiode(start, start.plusMonths(6))
+        }
+
+        service.hentHistoriskeValutakurser(perioder)
+
+        verify(hent, times(10)).hentValutakurs(any())
+    }
+
+    @Test
+    fun `elleve halvår avvises ved direkte kall med periodeliste`() {
+        val fra = LocalDate.of(2019, 1, 1)
+        val perioder = List(11) { indeks ->
+            val start = fra.plusMonths(indeks * 6L)
+            Datoperiode(start, start.plusMonths(6))
+        }
+
+        val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(perioder) }
+
+        assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+        assertEquals("Kan hente maksimalt 10 halvårsperioder av gangen", feil.message)
+        verifyNoInteractions(hent, grunnlag)
+    }
+
+    @Test
     fun `juli til januar henter ett halvår og returnerer lagrede grunnlag`() {
         val fra = LocalDate.of(2024, 7, 1)
         val til = LocalDate.of(2025, 1, 1)
