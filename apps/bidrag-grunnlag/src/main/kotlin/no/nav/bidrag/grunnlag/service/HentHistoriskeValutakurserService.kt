@@ -64,9 +64,10 @@ class HentHistoriskeValutakurserService(
         try {
             val perioderUtenGrunnlag = perioder.map { periode ->
                 val valutakoderUtenGrunnlag = utenlandskeValutakoder.filter { valutakode ->
+                    valutakode.utgåttDato == null || periode.fom.isBefore(valutakode.utgåttDato)
+                }.filter { valutakode ->
                     val eksisterende = valutakursgrunnlagService.hentValutakursgrunnlag(valutakode, periode.fom)
-                    (valutakode.utgåttDato == null || periode.fom.isBefore(valutakode.utgåttDato)) &&
-                        (eksisterende == null || eksisterende.feiletHenting)
+                    eksisterende == null || eksisterende.feiletHenting
                 }
                 periode to valutakoderUtenGrunnlag
             }.filter { (_, valutakoder) -> valutakoder.isNotEmpty() }
