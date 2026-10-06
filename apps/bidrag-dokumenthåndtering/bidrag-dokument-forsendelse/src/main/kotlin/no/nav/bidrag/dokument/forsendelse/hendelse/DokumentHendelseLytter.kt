@@ -116,7 +116,6 @@ class DokumentHendelseLytter(
     }
 
     @KafkaListener(groupId = "bidrag-dokument-forsendelse", topics = [$$"${TOPIC_DOKUMENT}"])
-    @Transactional
     fun prossesserDokumentHendelse(melding: ConsumerRecord<String, String>) {
         val hendelse = tilDokumentHendelseObjekt(melding)
 
@@ -211,11 +210,8 @@ class DokumentHendelseLytter(
         }
     }
 
-    @Transactional
-    public fun ferdigstillHvisForsendelseErNotat(dokumenter: List<Dokument>) {
-        dokumenter.forEach {
-            val forsendelse = it.forsendelse
-
+    private fun ferdigstillHvisForsendelseErNotat(dokumenter: List<Dokument>) {
+        hentForsendelser(dokumenter).forEach { forsendelse ->
             if (forsendelse.forsendelseType == ForsendelseType.NOTAT && forsendelse.dokumenter.erAlleFerdigstilt) {
                 medApplikasjonKontekst {
                     log.info {
@@ -225,7 +221,7 @@ class DokumentHendelseLytter(
                     try {
                         ferdigstillForsendelseService.ferdigstillForsendelse(forsendelse.forsendelseId!!)
                     } catch (e: Exception) {
-                        log.error(e) { "Kunne ikke ferdigstille forsendelse ${it.forsendelseId}." }
+                        log.error(e) { "Kunne ikke ferdigstille forsendelse ${forsendelse.forsendelseId}." }
                     }
                 }
             }
