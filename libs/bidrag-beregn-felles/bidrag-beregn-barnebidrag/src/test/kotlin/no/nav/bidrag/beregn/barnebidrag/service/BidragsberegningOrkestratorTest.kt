@@ -44,7 +44,6 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.Bidragsberegning
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
 import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtaleGrunnlagV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -114,7 +113,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -134,7 +132,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -148,7 +145,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper
@@ -225,7 +221,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper
@@ -317,7 +312,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Grunnlagstyper
@@ -373,7 +367,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         // Sjekk at alle referanser er med i resultatet
         val alleReferanser = hentAlleReferanser(beregnResponse.grunnlagListe)
@@ -512,7 +505,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         }
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -526,7 +518,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper

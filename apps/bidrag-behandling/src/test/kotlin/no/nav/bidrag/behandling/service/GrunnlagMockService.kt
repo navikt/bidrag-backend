@@ -14,6 +14,7 @@ import no.nav.bidrag.behandling.consumer.BidragGrunnlagConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.consumer.HentetGrunnlag
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
@@ -65,6 +66,7 @@ import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadHistoriskRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.HentGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
@@ -665,32 +667,17 @@ class GrunnlagMockService {
 
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.FORSKUDD
-                    it.skyldner.verdi shouldBe personIdentNav.verdi
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.FORSKUDD) },
             )
         }
         verify(exactly = 0) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG18AAR) },
             )
         }
     }
@@ -751,32 +738,17 @@ class GrunnlagMockService {
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 0) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.FORSKUDD
-                    it.skyldner.verdi shouldBe personIdentNav.verdi
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.FORSKUDD) },
             )
         }
         verify(exactly = 0) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG18AAR) },
             )
         }
     }
@@ -827,32 +799,17 @@ class GrunnlagMockService {
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 0) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.FORSKUDD
-                    it.skyldner.verdi shouldBe personIdentNav.verdi
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.FORSKUDD) },
             )
         }
         verify(exactly = 0) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG18AAR) },
             )
         }
     }
@@ -912,22 +869,12 @@ class GrunnlagMockService {
 
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG18AAR) },
             )
         }
     }
@@ -961,22 +908,12 @@ class GrunnlagMockService {
 
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG18AAR) },
             )
         }
     }
@@ -1036,22 +973,12 @@ class GrunnlagMockService {
 
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.skyldner.verdi shouldBe behandling.bidragspliktig!!.ident
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.BIDRAG) },
             )
         }
         verify(exactly = 1) {
             bidragStønadConsumer.hentHistoriskeStønader(
-                withArg {
-                    it.type shouldBe Stønadstype.FORSKUDD
-                    it.skyldner.verdi shouldBe personIdentNav.verdi
-                    it.sak.verdi shouldBe behandling.saksnummer
-                    it.kravhaver.verdi shouldBe behandling.søknadsbarn.first().ident
-                },
+                match { erForventetHistoriskStønad(it, behandling, Stønadstype.FORSKUDD) },
             )
         }
     }
@@ -1092,5 +1019,17 @@ class GrunnlagMockService {
                 grunnlagBP,
             )
             )
+    }
+
+    private fun erForventetHistoriskStønad(
+        request: HentStønadHistoriskRequest,
+        behandling: Behandling,
+        type: Stønadstype,
+    ): Boolean {
+        val forventetSkyldner = if (type == Stønadstype.FORSKUDD) personIdentNav.verdi else behandling.bidragspliktig!!.ident
+        return request.type == type &&
+            request.skyldner.verdi == forventetSkyldner &&
+            request.sak.verdi == behandling.saksnummer &&
+            request.kravhaver.verdi == behandling.søknadsbarn.first().ident
     }
 }

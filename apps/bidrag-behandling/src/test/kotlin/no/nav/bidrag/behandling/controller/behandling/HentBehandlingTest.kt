@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.controller.behandling
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -234,7 +235,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
     }
 
     @Test
-    fun `skal hente behandling med informajson om feil ved siste grunnlagsinnhenting`() {
+    fun `skal hente behandling med informasjon om feil ved siste grunnlagsinnhenting`() {
         // gitt
         val fomdatoIFeilrespons = LocalDate.of(2020, 6, 1)
         val tildatoIFeilrespons = LocalDate.of(2023, 7, 1)
@@ -251,6 +252,10 @@ class HentBehandlingTest : BehandlingControllerTest() {
         stubUtils.stubHenteGrunnlag(
             tomRespons = true,
             rolleIdent = testdataBarn2.ident,
+        )
+        WireMock.stubFor(
+            WireMock.post(WireMock.urlEqualTo("/stonad/hent-stonad-historisk/"))
+                .willReturn(WireMock.aResponse().withStatus(HttpStatus.NOT_FOUND.value())),
         )
 
         val behandling = testdataManager.lagreBehandling(opprettBehandling())
@@ -269,7 +274,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
 
         assertSoftly(behandlingRes.body?.feilOppståttVedSisteGrunnlagsinnhenting) { feil ->
             feil shouldNotBe null
-            feil!! shouldHaveSize 3
+            feil!! shouldHaveSize 2
             val sjekkFeil = feil.find { it.rolle.rolletype == Rolletype.BIDRAGSMOTTAKER }!!
             sjekkFeil.rolle.id shouldBe behandling.bidragsmottaker!!.id!!
             sjekkFeil.periode?.fom shouldBe fomdatoIFeilrespons

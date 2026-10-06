@@ -11,6 +11,6 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 interface BeregningBeløpshistorikkConsumer {
     fun hentHistoriskeStønader(hentStønadHistoriskRequest: HentStønadHistoriskRequest): StønadDto?
     fun hentLøpendeStønad(hentStønadRequest: HentStønadRequest): StønadDto?
-    fun hentLøpendeBidrag(request: LøpendeBidragssakerRequest): LøpendeBidragssakerResponse
-    fun hentAlleLøpendeStønaderIPeriode(request: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse
+    fun hentLøpendeBidrag(løpendeBidragssakerRequest: LøpendeBidragssakerRequest): LøpendeBidragssakerResponse
+    fun hentAlleLøpendeStønaderIPeriode(løpendeBidragPeriodeRequest: LøpendeBidragPeriodeRequest): LøpendeBidragPeriodeResponse
 }

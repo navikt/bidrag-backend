@@ -180,9 +180,6 @@ no.nav.security.jwt:
 
 spring:
   config.activate.on-profile: test
-  logging:
-    level:
-      no.nav.security.spring.oidc.validation.interceptor=trace, org.hibernate.sql=info
 
 ---
 

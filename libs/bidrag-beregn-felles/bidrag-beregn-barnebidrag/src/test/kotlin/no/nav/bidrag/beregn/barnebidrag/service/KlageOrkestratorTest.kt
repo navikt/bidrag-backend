@@ -27,7 +27,6 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebid
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.OmgjøringOrkestratorGrunnlag
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
@@ -97,8 +96,6 @@ internal class KlageOrkestratorTest : FellesTest() {
             ),
         )
 
-        println(commonObjectmapper.writeValueAsString(klageResultat))
-
         assertSoftly(klageResultat) {
             it shouldHaveSize 2
             it[0].delvedtak shouldBe true
@@ -151,8 +148,6 @@ internal class KlageOrkestratorTest : FellesTest() {
                 erBeregningsperiodeLøpende = false,
             ),
         )
-
-        println(commonObjectmapper.writeValueAsString(klageResultat))
 
         assertSoftly(klageResultat) {
             it shouldHaveSize 4
@@ -220,8 +215,6 @@ internal class KlageOrkestratorTest : FellesTest() {
                 erBeregningsperiodeLøpende = false,
             ),
         )
-
-        println(commonObjectmapper.writeValueAsString(klageResultat))
 
         assertSoftly(klageResultat) {
             it shouldHaveSize 3
