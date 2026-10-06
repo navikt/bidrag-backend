@@ -853,7 +853,7 @@ data class RoleInntekterCache(
 )
 
 fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
-    val rolleInntekter = inntekter.groupBy { it.rolle?.id ?: return@groupBy null }.filterKeys { it != null }
+    val rolleInntekter = inntekter.groupBy { it.gjelderRolle?.id ?: return@groupBy null }.filterKeys { it != null }
 
     val barnetilleggPerRolle = mutableMapOf<Long, List<Inntekt>>()
     val kontantstøttePerRolle = mutableMapOf<Long, List<Inntekt>>()
