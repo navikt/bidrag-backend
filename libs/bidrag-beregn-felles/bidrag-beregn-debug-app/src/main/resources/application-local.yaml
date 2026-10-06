@@ -89,10 +89,6 @@ no.nav.security.jwt:
 server.port: 9898
 NAIS_APP_NAME: bidrag-behandling
 BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q1
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
 
 
 KODEVERK_URL: https://kodeverk-api.nav.no
