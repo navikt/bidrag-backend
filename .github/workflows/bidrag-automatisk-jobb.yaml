@@ -1,5 +1,20 @@
 name: Bidrag-automatisk-jobb
 on:
+  workflow_call:
+    inputs:
+      bibliotekartefakt:
+        description: Navn på artefaktet med ferdige biblioteker fra bygg-apper.
+        required: false
+        type: string
+        default: ''
+      miljo:
+        required: false
+        type: string
+        default: ''
+      hopp_over_tester:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       miljo:
@@ -17,48 +32,26 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    branches:
-      - 'main'
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - 'libs/bidrag-beregn-felles/**'
-      - '.nais/bidrag-automatisk-jobb/**.yaml'
-      - 'apps/bidrag-automatisk-jobb/**'
-  pull_request:
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - 'libs/bidrag-beregn-felles/**'
-      - '.nais/bidrag-automatisk-jobb/**.yaml'
-      - 'apps/bidrag-automatisk-jobb/**'
+
+env:
+  APP_PATHS: |
+    pom.xml
+    libs/bidrag-felles/**
+    libs/bidrag-beregn-felles/**
+    .nais/bidrag-automatisk-jobb/**.yaml
+    apps/bidrag-automatisk-jobb/**
 
 jobs:
-  detect_changes:
-    name: "Sjekk om appen faktisk er endret"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/utled-app-endringer
-        id: detect
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true'
     permissions:
       contents: "write"
       id-token: "write"
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
+      bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
+      bibliotekgrupper: felles,beregn
       nais_hovedfil_navn: bidrag-automatisk-jobb/nais.yaml
       nais_variabler_filnavn_q1: bidrag-automatisk-jobb/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
@@ -67,11 +60,11 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-automatisk-jobb/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-automatisk-jobb -am
+      maven_options: -B -fae -pl apps/bidrag-automatisk-jobb
       maven_cache_paths: |
         pom.xml
         apps/bidrag-automatisk-jobb/pom.xml
-      ktlint_paths: apps/bidrag-automatisk-jobb/src/**/*.kt libs/bidrag-beregn-felles/**/src/**/*.kt
+      ktlint_paths: apps/bidrag-automatisk-jobb/src/**/*.kt
       docker_context: ./apps/bidrag-automatisk-jobb
       image_suffix: bidrag-automatisk-jobb
       tag: bidrag-automatisk-jobb

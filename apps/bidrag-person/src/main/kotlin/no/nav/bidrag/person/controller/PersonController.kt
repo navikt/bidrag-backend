@@ -1,13 +1,15 @@
 package no.nav.bidrag.person.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.person.BidragPerson
 import no.nav.bidrag.person.dto.HusstandsmedlemmerRequest
 import no.nav.bidrag.person.model.BidragPersonFunctionalException
 import no.nav.bidrag.person.service.PersonService
@@ -26,7 +28,6 @@ import no.nav.bidrag.transport.person.PersondetaljerDto
 import no.nav.bidrag.transport.person.PersonidentDto
 import no.nav.bidrag.transport.person.SivilstandPdlHistorikkDto
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -38,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Protected
 class PersonController(private val personService: PersonService) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
+    private val logger = KotlinLogging.logger {}
 
     @PostMapping("/informasjon/detaljer")
     @Operation(
@@ -251,7 +252,7 @@ class PersonController(private val personService: PersonService) {
     fun hentPersonAdresse(
         @PathVariable ident: Personident,
     ): ResponseEntity<PersonAdresseDto> {
-        BidragPerson.SECURE_LOGGER.debug("Henter adresse for ident {}", ident)
+        secureLogger.debug { "Henter adresse for ident ${ident.sanitizeForLog()}" }
         val respons = personService.hentPersonPostadresse(ident)
         return ResponseEntity(respons, if (respons == null) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -279,7 +280,7 @@ class PersonController(private val personService: PersonService) {
         ],
     )
     fun hentPersonAdresser(@RequestBody request: @Valid PersonRequest): List<PersonAdresseDto> {
-        BidragPerson.SECURE_LOGGER.debug("Henter registrerte adresser for person med ident {}", request)
+        secureLogger.debug { "Henter registrerte adresser for person med ident ${request.sanitizeForLog()}" }
         return personService.hentPersonAdresser(request.ident)
     }
 
@@ -302,7 +303,7 @@ class PersonController(private val personService: PersonService) {
         ],
     )
     fun hentPersonPostadresse(@RequestBody request: @Valid PersonRequest): ResponseEntity<PersonAdresseDto> {
-        BidragPerson.SECURE_LOGGER.debug("Henter postadresse for person med ident {}", request)
+        secureLogger.debug { "Henter postadresse for person med ident ${request.sanitizeForLog()}" }
         val respons = personService.hentPersonPostadresse(request.ident)
         return ResponseEntity(respons, if (respons == null) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -325,7 +326,7 @@ class PersonController(private val personService: PersonService) {
         ],
     )
     fun hentPersonSpraak(@RequestBody request: @Valid PersonRequest): ResponseEntity<String> {
-        BidragPerson.SECURE_LOGGER.debug("Henter registrert språk fra Kontakt- og reservarsjonsregisteret for person med ident {}", request)
+        secureLogger.debug { "Henter registrert språk fra Kontakt- og reservarsjonsregisteret for person med ident ${request.sanitizeForLog()}" }
 
         // Tilgangskontroll, kaster 403 hvis ikke tilgang. Denne sjekken kan fjernes når alle konsumenter bruker Azure-onBehalfOf-token
         personService.hentPersonInfo(request.ident)
@@ -339,10 +340,10 @@ class PersonController(private val personService: PersonService) {
         @Valid @RequestBody
         request: HentePersonidenterRequest,
     ): List<PersonidentDto> {
-        BidragPerson.SECURE_LOGGER.debug(
-            "Henter personidenter for ident ${request.ident} med identgrupper ${request.grupper} " +
-                "Flagg for inkludering av historiske identer er satt til ${request.inkludereHistoriske}.",
-        )
+        secureLogger.debug {
+            "Henter personidenter for ident ${request.ident.sanitizeForLog()} med identgrupper ${request.grupper} " +
+                "Flagg for inkludering av historiske identer er satt til ${request.inkludereHistoriske}."
+        }
         return personService.hentePersonidenter(request.ident, request.inkludereHistoriske, request.grupper)
     }
 

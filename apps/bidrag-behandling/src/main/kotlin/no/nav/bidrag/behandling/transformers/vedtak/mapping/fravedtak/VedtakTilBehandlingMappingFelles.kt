@@ -798,7 +798,6 @@ internal fun List<GrunnlagDto>.mapInntekter(
     behandling: Behandling,
     lesemodus: Boolean,
 ): MutableSet<Inntekt> {
-    if (behandling.søknadsbarn.all { it.avslag != null }) return mutableSetOf()
     val inntekter =
         filtrerBasertPåEgenReferanse(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE)
             .mapIndexed { i, it ->

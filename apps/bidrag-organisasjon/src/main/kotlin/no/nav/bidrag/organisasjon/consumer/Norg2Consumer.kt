@@ -1,6 +1,8 @@
 package no.nav.bidrag.organisasjon.consumer
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.CacheConfig.Companion.ARBEIDSFORDELING_ENHET
@@ -15,7 +17,6 @@ import no.nav.bidrag.organisasjon.exception.ArbeidsfordelingConsumerException
 import no.nav.bidrag.organisasjon.exception.EnhetIkkeFunnetException
 import no.nav.bidrag.organisasjon.service.EnhetYamlConverter.hentAlleEnheterGrupper
 import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.core.ParameterizedTypeReference
@@ -41,42 +42,45 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
 
     @Cacheable(ARBEIDSFORDELING_ENHET)
     fun hentArbeidsfordelingForEnhet(enhetsnummer: Enhetsnummer): List<EnhetArbeidsfordelingRespons>? {
-        LOGGER.info("NORG2 hent enhetinfo for enhet {}", enhetsnummer)
+        val trygtEnhetsnummer = enhetsnummer.tilTrygtVerdi()
+        LOGGER.info { "NORG2 hent enhetinfo for enhet ${trygtEnhetsnummer.sanitizeForLog()}" }
         return try {
             val responseType = object : ParameterizedTypeReference<List<EnhetArbeidsfordelingRespons>>() {}
             restTemplate.exchange(
-                "/enhet/$enhetsnummer/arbeidsfordeling",
+                "/enhet/$trygtEnhetsnummer/arbeidsfordeling",
                 HttpMethod.GET,
                 createRequestEntity<Void>(),
                 responseType,
             ).body
         } catch (e: HttpClientErrorException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
-                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", enhetsnummer), e)
+                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", trygtEnhetsnummer), e)
             }
             val melding = "Feil ved kall til NORG2 Arbeidsfordeling API: " + e.message + ". Response body: " + e.responseBodyAsString
-            LOGGER.error(melding)
+            // Logges ikke lokalt her - ArbeidsfordelingConsumerException fanges og logges av
+            // HttpStatusRestControllerAdvice.handleFunctionalException (AOP), så dette unngår dobbeltlogging.
             throw ArbeidsfordelingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }
 
     fun hentEnhetInfo(enhetsnummer: Enhetsnummer): EnhetInfoResponse {
-        LOGGER.info("NORG2 hent enhetinfo for enhet {}", enhetsnummer)
+        val trygtEnhetsnummer = enhetsnummer.tilTrygtVerdi()
+        LOGGER.info { "NORG2 hent enhetinfo for enhet ${trygtEnhetsnummer.sanitizeForLog()}" }
         return try {
-            val response = restTemplate.exchange("/enhet/$enhetsnummer", HttpMethod.GET, createRequestEntity<Void>(), EnhetInfoResponse::class.java)
+            val response = restTemplate.exchange("/enhet/$trygtEnhetsnummer", HttpMethod.GET, createRequestEntity<Void>(), EnhetInfoResponse::class.java)
             response.body!!
         } catch (e: HttpClientErrorException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
-                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", enhetsnummer), e)
+                throw EnhetIkkeFunnetException(String.format("Enhet med id %s ikke funnet", trygtEnhetsnummer), e)
             }
             val melding = "Feil ved kall til NORG2 Arbeidsfordeling API: " + e.message + ". Response body: " + e.responseBodyAsString
-            LOGGER.error(melding)
+            // Logges ikke lokalt her - se kommentar i hentArbeidsfordelingForEnhet over.
             throw ArbeidsfordelingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }
 
     fun hentEnhetKontaktinfo(enhetsnummer: String): EnhetDetaljerDto? {
-        LOGGER.info("Hentet enhet kontaktinfo for enhet {}", enhetsnummer)
+        LOGGER.info { "Hentet enhet kontaktinfo for enhet ${enhetsnummer.sanitizeForLog()}" }
         return enhetKontaktinformasjonMap[enhetsnummer]
     }
 
@@ -84,14 +88,14 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
         arbeidsfordelingEnheterBestMatchRequest: ArbeidsfordelingEnheterBestMatchRequest,
     ): List<ArbeidsfordelingEnheterBestMatchResponse>? {
         val uri = UriComponentsBuilder.fromPath(PATH_ARBEIDSFORDELING_ENHETER_BESTMATCH).toUriString()
-        LOGGER.info("Arbeidsfordeling enheter bestmatch uri: $uri")
+        LOGGER.info { "Arbeidsfordeling enheter bestmatch uri: $uri" }
         return try {
             val response: ResponseEntity<List<ArbeidsfordelingEnheterBestMatchResponse>> =
                 restTemplate.exchange(uri, HttpMethod.POST, createRequestEntity(arbeidsfordelingEnheterBestMatchRequest))
             response.body
         } catch (e: HttpClientErrorException) {
             val melding = "Feil ved kall til NORG2 Arbeidsfordeling API. Feilmelding: " + getErrorMessage(e)
-            LOGGER.error(melding)
+            // Logges ikke lokalt her - se kommentar i hentArbeidsfordelingForEnhet over.
             throw ArbeidsfordelingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }
@@ -100,7 +104,7 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
         arbeidsfordelingEnheterRequest: ArbeidsfordelingEnheterRequest,
     ): HttpResponse<List<ArbeidsfordelingEnheterResponse>> {
         val uri = buildUriArbeidsfordelingEnheterListe(arbeidsfordelingEnheterRequest.typeListe)
-        LOGGER.info("Arbeidsfordeling enheter liste uri: $uri")
+        LOGGER.info { "Arbeidsfordeling enheter liste uri: $uri" }
         val requestEntity: HttpEntity<ArbeidsfordelingEnheterRequestBody> =
             createRequestEntity(ArbeidsfordelingEnheterRequestBody(arbeidsfordelingEnheterRequest.tema))
         return try {
@@ -111,7 +115,7 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
                 "Feil ved kall til NORG2 Arbeidsfordeling API (endpoint: " + PATH_ARBEIDSFORDELING_ENHETER_LISTE + ") : " + e.message +
                     ". Response body: " + e.responseBodyAsString
                 )
-            LOGGER.error(melding)
+            // Logges ikke lokalt her - se kommentar i hentArbeidsfordelingForEnhet over.
             throw ArbeidsfordelingConsumerException(melding, HttpStatus.valueOf(e.statusCode.value()))
         }
     }
@@ -128,12 +132,24 @@ class Norg2Consumer(@Value($$"${ARBEIDSFORDELING_URL}") arbeidsfordelingBaseUrl:
 
     private fun getErrorMessage(e: HttpClientErrorException): String = try {
         ObjectMapper().findAndRegisterModules().readTree(e.responseBodyAsString)["message"].asText()
-    } catch (err: Exception) {
+    } catch (_: Exception) {
         e.responseBodyAsString
     }
 
+    /**
+     * Validerer enhetsnummeret og utleder en ny verdi via et heltall før det settes inn i URL-en mot NORG2.
+     *
+     * Valideringen alene er ikke nok: CodeQL (java/ssrf) sporer taint gjennom en boolsk sjekk som
+     * [Enhetsnummer.gyldig]. Omveien via [Int] gir en primitiv verdi, som CodeQL regner som en sanitizer,
+     * og "%04d" gir de samme fire sifrene tilbake, inkludert ledende nuller.
+     */
+    private fun Enhetsnummer.tilTrygtVerdi(): String {
+        require(gyldig()) { "Ugyldig enhetsnummer, må bestå av nøyaktig fire siffer" }
+        return "%04d".format(verdi.toInt())
+    }
+
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(Norg2Consumer::class.java)
+        private val LOGGER = KotlinLogging.logger {}
         private const val PATH_ARBEIDSFORDELING_ENHETER_BESTMATCH = "/arbeidsfordeling/enheter/bestmatch"
         private const val PATH_ARBEIDSFORDELING_ENHETER_LISTE = "/arbeidsfordeling/enheter"
         private const val PATH_ENHET_KONTAKTINFO = "/enhet/%s/kontaktinformasjon"

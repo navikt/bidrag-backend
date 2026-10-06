@@ -8,6 +8,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
 import no.nav.bidrag.behandling.service.PersonService
@@ -27,11 +28,14 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.YearMonth
 
 @ExtendWith(MockKExtension::class)
@@ -91,6 +95,12 @@ class VedtakGrunnlagMapperTest {
                 ),
             )
 
+        val grunnlag =
+            with(vedtakGrunnlagMapper) {
+                behandling.beregnetInntekterGrunnlagForRolle(behandling.bidragsmottaker!!, false)
+            }
+        grunnlag.filter { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE } shouldHaveSize 2
+
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
             ilagtGebyr shouldBe true
@@ -98,9 +108,9 @@ class VedtakGrunnlagMapperTest {
             maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
             resultatkode shouldBe Resultatkode.GEBYR_ILAGT
-            grunnlagsreferanseListeEngangsbeløp shouldHaveSize 1
+            grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsliste shouldHaveSize 5
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
@@ -144,19 +154,20 @@ class VedtakGrunnlagMapperTest {
 
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
-            ilagtGebyr shouldBe false
+            ilagtGebyr shouldBe true
             skattepliktigInntekt shouldBe BigDecimal(900000)
-            maksBarnetillegg shouldBe null
+            maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
-            resultatkode shouldBe Resultatkode.GEBYR_FRITATT
+            resultatkode shouldBe Resultatkode.GEBYR_ILAGT
             grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }!!.referanse
-            grunnlagsliste shouldHaveSize 3
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
+            grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_INNTEKTSBASERT_GEBYR, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, antall = 1)
         }
     }
 
@@ -195,19 +206,20 @@ class VedtakGrunnlagMapperTest {
         behandling.bidragsmottaker!!.gebyr = GebyrRolle(true, true, "test")
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
-            ilagtGebyr shouldBe false
+            ilagtGebyr shouldBe true
             skattepliktigInntekt shouldBe BigDecimal(900000)
-            maksBarnetillegg shouldBe null
+            maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
-            resultatkode shouldBe Resultatkode.GEBYR_FRITATT
+            resultatkode shouldBe Resultatkode.GEBYR_ILAGT
             grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }!!.referanse
-            grunnlagsliste shouldHaveSize 3
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
+            grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_INNTEKTSBASERT_GEBYR, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, antall = 1)
         }
     }
 
@@ -321,5 +333,27 @@ class VedtakGrunnlagMapperTest {
         val resultat = perioder.filtrerOgJusterFraVirkningstidspunkt(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
 
         resultat shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
+    }
+
+    @Test
+    fun `finnBeregnFra skal ikke starte før barnets fødsel ved forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.stønadstype = Stønadstype.BIDRAG
+        søknadsbarn.fødselsdato = LocalDate.of(2023, 6, 15)
+
+        søknadsbarn.finnBeregnFra() shouldBe YearMonth.of(2023, 6)
+    }
+
+    @Test
+    fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.stønadstype = Stønadstype.BIDRAG
+        søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
+
+        søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
     }
 }

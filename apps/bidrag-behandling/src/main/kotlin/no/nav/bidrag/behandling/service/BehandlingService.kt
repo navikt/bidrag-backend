@@ -233,6 +233,7 @@ class BehandlingService(
                     søknadBleSlettet = true,
                 )
                 behandling.bidragspliktig?.fjernGebyr(søknadsid)
+                sendOppdatertHendelse(behandling.id!!, false)
             }
         } else {
             logiskSlettBehandling(behandling)
@@ -635,8 +636,16 @@ class BehandlingService(
         )
     }
 
-    fun henteBehandlingDetaljer(behandlingsid: Long): BehandlingDetaljerDtoV2 {
-        val behandling = hentBehandlingById(behandlingsid)
+    fun henteBehandlingDetaljer(
+        behandlingsid: Long,
+        inkluderSlettet: Boolean = false,
+    ): BehandlingDetaljerDtoV2 {
+        val behandling =
+            if (inkluderSlettet) {
+                behandlingRepository.hentBehandlingInkludertSlettet(behandlingsid) ?: behandlingNotFoundException(behandlingsid)
+            } else {
+                hentBehandlingById(behandlingsid)
+            }
         tilgangskontrollService.sjekkTilgangBehandling(behandling)
         return behandling.tilBehandlingDetaljerDtoV2()
     }
@@ -659,7 +668,8 @@ class BehandlingService(
         ikkeHentGrunnlag: Boolean = false,
     ): Behandling {
         val behandling = hentBehandlingById(behandlingsid)
-        if (!ikkeHentGrunnlag) {
+        val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
+        if (!ikkeHentGrunnlag && !erVedtakFattet) {
             if (behandling.erIForholdsmessigFordeling) {
                 forholdsmessigFordelingService?.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling).ifTrue {
                     behandlingRepository.save(behandling)

@@ -6,7 +6,6 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OpprettOppgaveRequest
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
-import org.slf4j.LoggerFactory
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
@@ -19,8 +18,6 @@ import org.springframework.web.client.body
 class OppgaveClient(
     private val restClient: RestClient,
 ) {
-
-    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun opprettOppgave(request: OpprettOppgaveRequest): OppgaveDto = restClient.post()
         .uri("/api/v1/oppgaver")
@@ -44,7 +41,6 @@ class OppgaveClient(
         .uri { uriBuilder ->
             val builder = uriBuilder.path("/api/v1/oppgaver")
             params.statuskategori?.let { builder.queryParam("statuskategori", it) }
-            params.statuser?.let { builder.queryParam("status", *it.map { s -> s.name }.toTypedArray()) }
             params.tema?.let { builder.queryParam("tema", *it.toTypedArray()) }
             params.oppgavetype?.let { builder.queryParam("oppgavetype", *it.toTypedArray()) }
             params.tildeltEnhetsnr?.let { builder.queryParam("tildeltEnhetsnr", it) }

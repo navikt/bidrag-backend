@@ -1,10 +1,12 @@
 package no.nav.bidrag.behandling.controller
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.getunleash.Unleash
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockkObject
+import no.nav.bidrag.behandling.TestPostgres
 import no.nav.bidrag.behandling.service.CommonTestRunner
 import no.nav.bidrag.behandling.utils.StubUtils
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
@@ -13,46 +15,25 @@ import no.nav.bidrag.behandling.utils.testdata.TestdataManager
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
+import no.nav.bidrag.commons.service.sjablon.SjablonService
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.resttestclient.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
-import org.testcontainers.postgresql.PostgreSQLContainer
 
-@Testcontainers
 @ActiveProfiles(value = ["test", "testcontainer"])
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 abstract class KontrollerTestRunner : CommonTestRunner() {
     companion object {
-        @Container
-        protected val postgreSqlDb =
-            PostgreSQLContainer("postgres:latest").apply {
-                withDatabaseName("bidrag-behandling")
-                withUsername("cloudsqliamuser")
-                withPassword("admin")
-                withInitScript("db/init.sql")
-                start()
-            }
-
         @Suppress("unused")
         @JvmStatic
         @DynamicPropertySource
         fun postgresqlProperties(registry: DynamicPropertyRegistry) {
-            registry.add("spring.jpa.database") { "POSTGRESQL" }
-            registry.add("spring.datasource.type") { "com.zaxxer.hikari.HikariDataSource" }
-            registry.add("spring.flyway.enabled") { true }
-            registry.add("spring.flyway.locations") { "classpath:/db/migration" }
-            registry.add("spring.datasource.url", postgreSqlDb::getJdbcUrl)
-            registry.add("spring.datasource.password", postgreSqlDb::getPassword)
-            registry.add("spring.datasource.username", postgreSqlDb::getUsername)
+            TestPostgres.registrerProperties(registry, TestPostgres.kontrollerTestRunnerDb)
             registry.add("spring.datasource.hikari.connection-timeout") { 30000 }
         }
     }
@@ -72,6 +53,9 @@ abstract class KontrollerTestRunner : CommonTestRunner() {
     @MockkBean
     lateinit var unleashInstance: Unleash
 
+    @MockkSpyBean
+    lateinit var sjablonService: SjablonService
+
     val stubUtils: StubUtils = StubUtils()
 
     protected fun rootUriV1(): String = "http://localhost:$port/api/v1"
@@ -81,7 +65,7 @@ abstract class KontrollerTestRunner : CommonTestRunner() {
     @BeforeEach
     fun initMocks() {
         stubVedtakConsumer()
-        clearMocks(unleashInstance)
+        clearMocks(unleashInstance, sjablonService)
         every { unleashInstance.isEnabled(any(), any<Boolean>()) } returns true
         every { unleashInstance.isEnabled(eq("vedtakssperre"), any<Boolean>()) } returns false
         mockkObject(SaksbehandlernavnProvider)

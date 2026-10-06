@@ -1,14 +1,13 @@
 package no.nav.bidrag.dokument.arkiv.controller
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.commons.util.KildesystemIdenfikator
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.EnhetFilter
-import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.dto.AvvikshendelseIntern
 import no.nav.bidrag.dokument.arkiv.service.AvvikService
 import no.nav.bidrag.transport.dokument.AvvikType
@@ -27,14 +26,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.util.Optional
-
-private val LOGGER = KotlinLogging.logger {}
 
 @RestController
 @Protected
 class AvvikController(private val avvikService: AvvikService) : BaseController() {
-    @GetMapping(ROOT_JOURNAL + "/{journalpostId}/avvik")
+    @GetMapping("$ROOT_JOURNAL/{journalpostId}/avvik")
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Henter mulige avvik for en journalpost, id på formatet '" +
@@ -60,12 +56,6 @@ class AvvikController(private val avvikService: AvvikService) : BaseController()
         )
         saksnummer: String?,
     ): ResponseEntity<List<AvvikType>> {
-        val muligSak = Optional.ofNullable(saksnummer)
-        if (muligSak.isPresent) {
-            LOGGER.info { "GET: journal/$journalpostId/avvik?saksnummer=$saksnummer" }
-        } else {
-            LOGGER.info { "GET: /journal/$journalpostId/avvik" }
-        }
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostId!!)
         return if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             ResponseEntity(
@@ -87,7 +77,7 @@ class AvvikController(private val avvikService: AvvikService) : BaseController()
     }
 
     @PostMapping(
-        value = [ROOT_JOURNAL + "/{journalpostId}/avvik"],
+        value = ["$ROOT_JOURNAL/{journalpostId}/avvik"],
         consumes = [MediaType.APPLICATION_JSON_VALUE],
     )
     @Operation(
@@ -124,10 +114,6 @@ class AvvikController(private val avvikService: AvvikService) : BaseController()
         @RequestBody avvikshendelse: Avvikshendelse,
         @RequestHeader(EnhetFilter.X_ENHET_HEADER) enhet: String?,
     ): ResponseEntity<BehandleAvvikshendelseResponse> {
-        LOGGER.info { "Behandle avvik ${avvikshendelse.avvikType} for journalpost $journalpostId" }
-        SECURE_LOGGER.info {
-            "Behandle avvik ${avvikshendelse.avvikType} for journalpost $journalpostId: $avvikshendelse"
-        }
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostId!!)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             return ResponseEntity(
@@ -143,7 +129,7 @@ class AvvikController(private val avvikService: AvvikService) : BaseController()
                 muligAvvikstype,
                 enhet,
             )
-            LOGGER.warn { message }
+            secureLogger.warn { message }
             return ResponseEntity(
                 initHttpHeadersWith(HttpHeaders.WARNING, message),
                 HttpStatus.BAD_REQUEST,

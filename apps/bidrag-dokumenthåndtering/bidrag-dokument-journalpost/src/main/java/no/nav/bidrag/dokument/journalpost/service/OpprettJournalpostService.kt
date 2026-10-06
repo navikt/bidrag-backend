@@ -1,6 +1,8 @@
 package no.nav.bidrag.dokument.journalpost.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.transaction.Transactional
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.journalpost.consumer.BidragPersonConsumer
 import no.nav.bidrag.dokument.journalpost.consumer.NorgConsumer
 import no.nav.bidrag.dokument.journalpost.dto.AvsenderMottaker
@@ -12,7 +14,6 @@ import no.nav.bidrag.dokument.journalpost.repository.JournalpostRepository
 import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
 import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 val OpprettJournalpostRequest.brevkode get() = dokumenter[0].brevkode
@@ -27,7 +28,7 @@ class OpprettJournalpostService(
     val sakService: SakService,
 ) {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(OpprettJournalpostService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @Transactional
@@ -47,13 +48,13 @@ class OpprettJournalpostService(
         opprettetJournalpost.leggTilDokumentreferanse()
         tilknyttTilSaker(opprettJournalpostIntern, opprettetJournalpost)
 
-        LOGGER.info(
+        LOGGER.info {
             "Opprettet journalpost med journalpostId=${opprettetJournalpost.journalpostId}, " +
-                "dokumentReferanse=${opprettetJournalpost.dokumentreferanse}, brevkode=${opprettJournalpostRequest.brevkode} " +
-                "og knyttet til saker ${opprettetJournalpost.journalsaker.joinToString(
-                    ",",
-                ) }}",
-        )
+                "dokumentReferanse=${opprettetJournalpost.dokumentreferanse}, brevkode=${opprettJournalpostRequest.brevkode.sanitizeForLog()} " +
+                "og knyttet til saker ${
+                    opprettetJournalpost.journalsaker.joinToString(",").sanitizeForLog()
+                }"
+        }
 
         return OpprettJournalpostResponse(
             journalpostId = opprettetJournalpost.journalpostId.toString(),
@@ -75,7 +76,7 @@ class OpprettJournalpostService(
         opprettJournalpost.tilknyttSaker.forEach { saksnummer: String? ->
             if (opprettetJournalpost.tilhorerIkkeSak(saksnummer)) {
                 sakService.lagre(Journalsak(opprettetJournalpost, saksnummer))
-                LOGGER.debug("Tilknyttet sak $saksnummer til journalpost ${opprettetJournalpost.journalpostId}")
+                LOGGER.debug { "Tilknyttet sak ${saksnummer?.sanitizeForLog()} til journalpost ${opprettetJournalpost.journalpostId}" }
             }
         }
     }
@@ -86,7 +87,7 @@ class OpprettJournalpostService(
             personConsumer
                 .hentPerson(mottakerId)
                 .ifPresent {
-                    LOGGER.debug("Mottakernavn mangler, populerer request objekt med mottakernavn. Mottakerid=$mottakerId")
+                    LOGGER.debug { "Mottakernavn mangler, populerer request objekt med mottakernavn. Mottakerid=${mottakerId.sanitizeForLog()}" }
                     opprettUtgaaendeJournalpostIntern.mottaker =
                         AvsenderMottaker(
                             avsenderNavn = it.navn ?: "",

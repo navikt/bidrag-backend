@@ -1,9 +1,9 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.BarnetilsynBo
 import no.nav.bidrag.grunnlag.consumer.familieefsak.FamilieEfSakConsumer
 import no.nav.bidrag.grunnlag.consumer.familieefsak.api.BarnetilsynRequest
@@ -36,7 +36,7 @@ class OppdaterBarnetilsyn(
                 personIdOgPeriode.periodeFra,
             )
 
-            SECURE_LOGGER.info("Kaller barnetilsyn enslig forsørger med request: ${tilJson(barnetilsynRequest)}")
+            secureLogger.debug { "Kaller barnetilsyn enslig forsørger med request: ${tilJson(barnetilsynRequest)}" }
 
             try {
                 when (
@@ -45,7 +45,7 @@ class OppdaterBarnetilsyn(
                 ) {
                     is RestResponse.Success -> {
                         val barnetilsynResponse = restResponseBarnetilsyn.body
-                        SECURE_LOGGER.info("Barnetilsyn ga følgende respons: ${tilJson(barnetilsynResponse)}")
+                        secureLogger.debug { "Barnetilsyn ga følgende respons: ${tilJson(barnetilsynResponse)}" }
 
                         persistenceService.oppdaterEksisterendeBarnetilsynTilInaktiv(
                             grunnlagspakkeId = grunnlagspakkeId,

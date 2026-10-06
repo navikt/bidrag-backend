@@ -1,6 +1,5 @@
 package no.nav.bidrag.behandling.service
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -38,9 +37,6 @@ class SamværMockTest : TestContainerRunner() {
 
     @Autowired
     lateinit var testdataManager: TestdataManager
-
-    @MockkBean
-    lateinit var sjablonService: SjablonService
 
     @BeforeEach
     fun initMock() {

@@ -1,12 +1,12 @@
 package no.nav.bidrag.dokument.arkiv.dto
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.dto.DokumentSoknadDto
 import no.nav.bidrag.dokument.arkiv.model.JournalpostDataException
@@ -46,8 +46,6 @@ import org.apache.logging.log4j.util.Strings
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
-
-private val LOGGER = KotlinLogging.logger {}
 
 // Max key length is 20
 const val RETUR_DETALJER_KEY = "retur"
@@ -266,11 +264,6 @@ data class Journalpost(
                         land = landkode2,
                     )
                 }
-//                SECURE_LOGGER.info {
-//                    "Lest og mappet postadresse fra SAF ${
-//                        it.split("\n").joinToString("\\n")
-//                    } til $adresse"
-//                }
                 return adresse
             }
         } catch (e: Exception) {
@@ -333,26 +326,7 @@ data class Journalpost(
 
     fun isFeilregistrert() = journalstatus == JournalStatus.FEILREGISTRERT
 
-    fun hentKanal(): Kanal? = when (kanal) {
-        JournalpostKanal.NAV_NO -> Kanal.NAV_NO
-
-        JournalpostKanal.NAV_NO_CHAT -> Kanal.NAV_NO
-
-        JournalpostKanal.NAV_NO_UINNLOGGET -> Kanal.NAV_NO
-
-        JournalpostKanal.SKAN_NETS -> Kanal.SKAN_NETS
-
-        //            JournalpostKanal.SKAN_IM -> Kanal.SKAN_IM
-        JournalpostKanal.LOKAL_UTSKRIFT -> Kanal.LOKAL_UTSKRIFT
-
-        JournalpostKanal.SENTRAL_UTSKRIFT -> Kanal.SENTRAL_UTSKRIFT
-
-        JournalpostKanal.SDP -> Kanal.SDP
-
-        JournalpostKanal.INGEN_DISTRIBUSJON -> Kanal.INGEN_DISTRIBUSJON
-
-        else -> null
-    }
+    fun hentKanal(): Kanal? = kanal?.tilKanalDto()
 
     fun isSentralPrint() = hentKanal() == Kanal.SENTRAL_UTSKRIFT
     fun harJournalforendeEnhetLik(enhet: String) = journalforendeEnhet == enhet
@@ -622,16 +596,20 @@ data class Journalpost(
 }
 
 enum class JournalpostKanal(val beskrivelse: String) {
-    NAV_NO("Nav.no"),
-    NAV_NO_UINNLOGGET("Nav.no uten ID-porten-pålogging"),
+    NAV_NO("Ditt NAV"),
+    NAV_NO_UINNLOGGET("Ditt NAV uten ID-porten-pålogging"),
     NAV_NO_CHAT("Innlogget samtale"),
-    INNSENDT_NAV_ANSATT("Registrert av Nav-ansatt"),
+    NAV_NO_UTEN_VARSLING("Presentert direkte på nav.no for innlogget bruker"),
+    INNSENDT_NAV_ANSATT("Innsendt av Nav-ansatt"),
     LOKAL_UTSKRIFT("Lokal utskrift"),
     SENTRAL_UTSKRIFT("Sentral utskrift"),
     ALTINN("Altinn"),
+    ALTINN_INNBOKS("Altinn Innboks"),
     EESSI("EESSI"),
     EIA("EIA"),
     EKST_OPPS("Eksternt oppslag"),
+    E_POST("E-post"),
+    HR_SYSTEM_API("HR-system med integrasjon mot Nav"),
     SDP("Digital postkasse til innbyggere"),
     TRYGDERETTEN("Trygderetten"),
     HELSENETTET("Helsenettet"),
@@ -642,18 +620,58 @@ enum class JournalpostKanal(val beskrivelse: String) {
     SKAN_NETS("Skanning Nets"),
     SKAN_PEN("Skanning Pensjon"),
     SKAN_IM("Skanning Iron Mountain"),
+    ;
+
+    companion object {
+        // Ukjente kanaler fra Joark skal ikke feile deserialisering
+        @JvmStatic
+        @JsonCreator
+        fun fraVerdi(verdi: String?): JournalpostKanal = entries.find { it.name == verdi } ?: UKJENT
+    }
 }
 
 fun JournalpostKanal.tilKanalDto() = when (this) {
-    JournalpostKanal.NAV_NO -> Kanal.NAV_NO
-    JournalpostKanal.NAV_NO_CHAT -> Kanal.NAV_NO
-    JournalpostKanal.NAV_NO_UINNLOGGET -> Kanal.NAV_NO
+    JournalpostKanal.NAV_NO,
+    JournalpostKanal.NAV_NO_CHAT,
+    JournalpostKanal.NAV_NO_UINNLOGGET,
+    JournalpostKanal.NAV_NO_UTEN_VARSLING,
+    -> Kanal.NAV_NO
+
+    JournalpostKanal.ALTINN_INNBOKS, JournalpostKanal.ALTINN -> Kanal.ALTINN
+
+    JournalpostKanal.HR_SYSTEM_API -> Kanal.HR_SYSTEM_API
+
+    JournalpostKanal.E_POST -> Kanal.E_POST
+
+    JournalpostKanal.EESSI -> Kanal.EESSI
+
+    JournalpostKanal.EIA -> Kanal.EIA
+
+    JournalpostKanal.EKST_OPPS -> Kanal.EKST_OPPS
+
+    JournalpostKanal.HELSENETTET -> Kanal.HELSENETTET
+
+    JournalpostKanal.TRYGDERETTEN -> Kanal.TRYGDERETTEN
+
+    JournalpostKanal.INNSENDT_NAV_ANSATT -> Kanal.INNSENDT_NAV_ANSATT
+
     JournalpostKanal.SKAN_NETS -> Kanal.SKAN_NETS
+
+    JournalpostKanal.SKAN_IM -> Kanal.SKAN_IM
+
+    JournalpostKanal.SKAN_PEN -> Kanal.SKAN_BID
+
     JournalpostKanal.LOKAL_UTSKRIFT -> Kanal.LOKAL_UTSKRIFT
+
     JournalpostKanal.SENTRAL_UTSKRIFT -> Kanal.SENTRAL_UTSKRIFT
-    JournalpostKanal.SDP -> Kanal.SDP
+
+    JournalpostKanal.SDP,
+    JournalpostKanal.DPVT,
+    -> Kanal.SDP
+
     JournalpostKanal.INGEN_DISTRIBUSJON -> Kanal.INGEN_DISTRIBUSJON
-    else -> null
+
+    JournalpostKanal.UKJENT -> null
 }
 
 enum class JournalpostUtsendingKanal {

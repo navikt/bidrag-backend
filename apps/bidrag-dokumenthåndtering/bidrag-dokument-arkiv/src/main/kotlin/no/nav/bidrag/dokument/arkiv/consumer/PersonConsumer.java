@@ -1,6 +1,5 @@
 package no.nav.bidrag.dokument.arkiv.consumer;
 
-import static no.nav.bidrag.dokument.arkiv.BidragDokumentArkivKt.SECURE_LOGGER;
 import static no.nav.bidrag.dokument.arkiv.CacheConfig.PERSON_ADRESSE_CACHE;
 import static no.nav.bidrag.dokument.arkiv.CacheConfig.PERSON_CACHE;
 
@@ -11,8 +10,6 @@ import no.nav.bidrag.domene.ident.Personident;
 import no.nav.bidrag.transport.person.PersonAdresseDto;
 import no.nav.bidrag.transport.person.PersonDto;
 import no.nav.bidrag.transport.person.PersonRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -26,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 public class PersonConsumer {
 
   private final RestTemplate restTemplate;
-  private static final Logger LOGGER = LoggerFactory.getLogger(PersonConsumer.class);
 
   public PersonConsumer(RestTemplate restTemplate) {
     this.restTemplate = restTemplate;
@@ -34,7 +30,7 @@ public class PersonConsumer {
 
   @Cacheable(value = PERSON_CACHE, unless = "#result==null")
   @Retryable(
-      value = Exception.class,
+      retryFor = Exception.class,
       maxAttempts = 5,
       backoff = @Backoff(delay = 500, maxDelay = 3000, multiplier = 2.0))
   public Optional<PersonDto> hentPerson(String id) {
@@ -51,8 +47,6 @@ public class PersonConsumer {
 
       return Optional.ofNullable(personResponse.getBody());
     } catch (HttpStatusCodeException e) {
-      LOGGER.warn("Det skjedde en feil ved henting av person", e);
-      SECURE_LOGGER.warn(e, () -> "Det skjedde en feil ved henting av person " + id);
       throw new PersonException("Det skjedde en feil ved henting av person");
     }
   }

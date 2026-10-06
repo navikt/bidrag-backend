@@ -1,5 +1,6 @@
 package no.nav.bidrag.reisekostnad.integrasjon.brukernotifikasjon;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig.SIKKER_LOGG;
 
 import java.net.URL;
@@ -33,15 +34,13 @@ public class Beskjedprodusent {
     try {
       kafkaTemplate.send(egenskaper.getBrukernotifikasjon().getEmneBrukernotifikasjon(), eventId, beskjed);
     } catch (Exception e) {
-      log.error("Opprettelse av beskjed {} til forelder feilet!", meldingTilBruker.getMelding(), e);
-      SIKKER_LOGG.error("Opprettelse av beskjed {} til forelder med personident {} feilet!", meldingTilBruker.getMelding(), personidentForelder);
+      SIKKER_LOGG.error("Opprettelse av beskjed {} til forelder med personident {} feilet!", meldingTilBruker.getMelding(),
+          sanitizeForLog(personidentForelder), e);
     }
 
     var medEllerUten = medEksternVarsling ? "med" : "uten";
-    log.info("Beskjed {}, {} ekstern varsling og eventId {} er sendt til forelder.", meldingTilBruker.getMelding(), medEllerUten,
-        eventId);
     SIKKER_LOGG.info("Beskjed {}, {} ekstern varsling og eventId {} er sendt til forelder med personid {}.", meldingTilBruker.getMelding(),
-        medEllerUten, eventId, personidentForelder);
+        medEllerUten, eventId, sanitizeForLog(personidentForelder));
   }
 
   private String oppretteBeskjed(String meldingTilBruker, URL lenke, String eventId, String fodselsnummer, Boolean medEksternVarsling) {

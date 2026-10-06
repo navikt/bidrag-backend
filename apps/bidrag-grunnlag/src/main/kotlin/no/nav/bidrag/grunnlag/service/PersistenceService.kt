@@ -1,12 +1,12 @@
 package no.nav.bidrag.grunnlag.service
 
 import jakarta.persistence.EntityManager
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.AinntektBo
 import no.nav.bidrag.grunnlag.bo.AinntektspostBo
 import no.nav.bidrag.grunnlag.bo.BarnetilleggBo
@@ -283,7 +283,7 @@ class PersistenceService(
             )
 
         // Setter utløpte Ainntekter til utløpt.
-        SECURE_LOGGER.debug("Setter ${comparatorResult.expiredEntities.size} eksisterende Ainntekter til utløpt.")
+        secureLogger.debug { "Setter ${comparatorResult.expiredEntities.size} eksisterende Ainntekter til utløpt." }
         comparatorResult.expiredEntities.forEach { expiredEntity ->
             val expiredAinntekt =
                 expiredEntity.periodEntity.copy(brukTil = timestampOppdatering, aktiv = false)
@@ -291,15 +291,15 @@ class PersistenceService(
             ainntektRepository.save(expiredAinntekt)
         }
         // Oppdaterer hentet tidspunkt for uendrede Ainntekter.
-        SECURE_LOGGER.debug("Oppdaterer ${comparatorResult.equalEntities.size} uendrede eksisterende Ainntekter med nytt hentet tidspunkt.")
+        secureLogger.debug { "Oppdaterer ${comparatorResult.equalEntities.size} uendrede eksisterende Ainntekter med nytt hentet tidspunkt." }
         comparatorResult.equalEntities.forEach { equalEntity ->
             val unchangedAinntekt =
                 equalEntity.periodEntity.copy(hentetTidspunkt = timestampOppdatering).toAinntektEntity()
-            SECURE_LOGGER.debug("Oppdaterer for inntektId = ${unchangedAinntekt.inntektId}")
+            secureLogger.debug { "Oppdaterer for inntektId = ${unchangedAinntekt.inntektId}" }
             ainntektRepository.save(unchangedAinntekt)
         }
         // Lagrer nye Ainntekter og Ainntektsposter.
-        SECURE_LOGGER.debug("Oppretter ${comparatorResult.updatedEntities.size} nye Ainntekter med underliggende inntektsposter")
+        secureLogger.debug { "Oppretter ${comparatorResult.updatedEntities.size} nye Ainntekter med underliggende inntektsposter" }
         comparatorResult.updatedEntities.forEach { updatedEntity ->
             val ainntekt = ainntektRepository.save(updatedEntity.periodEntity.toAinntektEntity())
             updatedEntity.children?.forEach { ainntektspostDto ->
@@ -331,7 +331,7 @@ class PersistenceService(
             )
 
         // Setter utløpte skattegrunnlag til utløpt.
-        SECURE_LOGGER.debug("Setter ${comparatorResult.expiredEntities.size} eksisterende skattegrunnlag til utløpt.")
+        secureLogger.debug { "Setter ${comparatorResult.expiredEntities.size} eksisterende skattegrunnlag til utløpt." }
         comparatorResult.expiredEntities.forEach { expiredEntity ->
             val expiredSkattegrunnlag =
                 expiredEntity.periodEntity.copy(aktiv = false, brukTil = timestampOppdatering)
@@ -339,7 +339,7 @@ class PersistenceService(
             skattegrunnlagRepository.save(expiredSkattegrunnlag)
         }
         // Oppdaterer hentet tidspunkt for uendrede skattegrunnlag.
-        SECURE_LOGGER.debug("Oppdaterer ${comparatorResult.equalEntities.size} uendrede eksisterende skattegrunnlag med nytt hentet tidspunkt.")
+        secureLogger.debug { "Oppdaterer ${comparatorResult.equalEntities.size} uendrede eksisterende skattegrunnlag med nytt hentet tidspunkt." }
         comparatorResult.equalEntities.forEach { equalEntity ->
             val unchangedSkattegrunnlag =
                 equalEntity.periodEntity.copy(hentetTidspunkt = timestampOppdatering)
@@ -347,7 +347,7 @@ class PersistenceService(
             skattegrunnlagRepository.save(unchangedSkattegrunnlag)
         }
         // Lagrer nye skattegrunnlag og skattegrunnlagsposter.
-        SECURE_LOGGER.debug("Oppretter ${comparatorResult.updatedEntities.size} nye skattegrunnlag med underliggende skattegrunnlagsposter")
+        secureLogger.debug { "Oppretter ${comparatorResult.updatedEntities.size} nye skattegrunnlag med underliggende skattegrunnlagsposter" }
         comparatorResult.updatedEntities.forEach { updatedEntity ->
             val updatedSkattegrunnlag =
                 skattegrunnlagRepository.save(updatedEntity.periodEntity.toSkattegrunnlagEntity())
@@ -404,7 +404,7 @@ class PersistenceService(
         val ainntektForPersonIdListe = mutableListOf<PeriodComparable<AinntektBo, AinntektspostBo>>()
         ainntektRepository.hentAinntekter(grunnlagspakkeId)
             .forEach { inntekt ->
-                SECURE_LOGGER.debug("Hentet eksisterende ainntekter med id ${inntekt.inntektId}")
+                secureLogger.debug { "Hentet eksisterende ainntekter med id ${inntekt.inntektId}" }
                 if (inntekt.personId in personIdListe) {
                     val ainntektspostListe = mutableListOf<AinntektspostBo>()
                     ainntektspostRepository.hentInntektsposter(inntekt.inntektId)

@@ -1,7 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.kafka
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.dto.Journalpost
 import no.nav.bidrag.dokument.arkiv.dto.Saksbehandler
 import no.nav.bidrag.dokument.arkiv.model.JournalpostHendelseException
@@ -11,7 +10,6 @@ import no.nav.bidrag.dokument.arkiv.security.SaksbehandlerInfoManager
 import no.nav.bidrag.dokument.arkiv.service.JournalpostService
 import no.nav.bidrag.transport.dokument.HendelseType
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -68,15 +66,9 @@ open class HendelserProducer(
     private fun publish(journalpostHendelse: JournalpostHendelse) {
         try {
             val message = objectMapper.writeValueAsString(journalpostHendelse)
-            SECURE_LOGGER.info { "Publiserer hendelse $message" }
-            LOGGER.info("Publiserer hendelse med journalpostId=${journalpostHendelse.journalpostId}")
             kafkaTemplate.send(topic, journalpostHendelse.journalpostId, message)
         } catch (e: JsonProcessingException) {
             throw JournalpostHendelseException(e.message!!, e)
         }
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(HendelserProducer::class.java)
     }
 }

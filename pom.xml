@@ -20,13 +20,14 @@
 
     <modules>
         <module>apps/bidrag-oppgave</module>
-        <module>libs/bidrag-oppgave-client</module>
         <module>libs/bidrag-oppgave-dto</module>
         <module>libs/bidrag-felles/bidrag-domene</module>
         <module>libs/bidrag-felles/bidrag-transport</module>
         <module>libs/bidrag-felles/bidrag-commons</module>
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
+        <module>libs/bidrag-felles/bidrag-backend-sikkerhet</module>
+        <module>libs/bidrag-felles/bidrag-backend-feilhandtering</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-core</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-forskudd</module>
         <module>libs/bidrag-beregn-felles/bidrag-beregn-boforhold</module>
@@ -52,6 +53,7 @@
         <module>apps/bidrag-bbm</module>
         <module>apps/bidrag-bidragskalkulator</module>
         <module>apps/bidrag-grunnlag</module>
+        <module>apps/bidrag-henvendelse</module>
         <module>apps/bidrag-organisasjon</module>
         <module>apps/bidrag-samhandler</module>
         <module>apps/bidrag-sak</module>
@@ -96,10 +98,23 @@
         </dependency>
     </dependencies>
 
+    <!-- Maven spør repositoryene i rekkefølgen de er deklarert, og super-POM-ens central kommer sist.
+         central legges derfor først, slik at de aller fleste avhengighetene løses uten å først
+         få bom mot confluent og GitHub Packages (som er tregt og krever autentisering). -->
     <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>confluent</id>
             <url>https://packages.confluent.io/maven/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
         <repository>
             <id>github</id>
@@ -157,20 +172,26 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${kotlin.version}</version>
                 <extensions>true</extensions>
+                <!-- extensions=true legger selv til både compile/test-compile og
+                     default-compile/default-test-compile (og kapt), som kompilerer alt to ganger.
+                     Vi beholder default-*-executions og slår av resten. kapt er slått av fordi ingen
+                     moduler har annotationProcessorPaths for kapt, så den genererer ingenting. -->
                 <executions>
                     <execution>
                         <id>compile</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
+                        <phase>none</phase>
                     </execution>
                     <execution>
                         <id>test-compile</id>
-                        <phase>test-compile</phase>
-                        <goals>
-                            <goal>test-compile</goal>
-                        </goals>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-kapt</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-test-kapt</id>
+                        <phase>none</phase>
                     </execution>
                 </executions>
                 <configuration>

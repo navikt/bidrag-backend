@@ -1,12 +1,11 @@
 package no.nav.bidrag.person.hendelse.database
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.person.hendelse.domene.Endringstype
 import no.nav.bidrag.person.hendelse.domene.Livshendelse
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.Egenskaper
-import no.nav.bidrag.person.hendelse.prosess.Livshendelsebehandler
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -14,8 +13,8 @@ import java.time.LocalDateTime
 
 @Service
 class Databasetjeneste(
-    open val aktorDao: AktorDao,
-    open val hendelsemottakDao: HendelsemottakDao,
+    val aktorDao: AktorDao,
+    val hendelsemottakDao: HendelsemottakDao,
     val egenskaper: Egenskaper,
     val entityManager: EntityManager,
 ) {
@@ -120,28 +119,39 @@ class Databasetjeneste(
         readOnly = true,
         noRollbackFor = [Exception::class],
     )
-    fun hentePubliseringsklareHendelser(): HashMap<Aktor, HendelseMottakerForAktor> = tilHashMap(
-        hendelsemottakDao.hentePubliseringsklareOverførteHendelser(
+    fun hentePubliseringsklareHendelser(maksAntallAktører: Int): HashMap<Aktor, HendelseMottakerForAktor> {
+        val publisertFør =
             LocalDateTime
                 .now()
                 .minusHours(
                     egenskaper.generelt.antallTimerSidenForrigePublisering.toLong(),
-                ),
-        ),
-    )
+                )
+
+        // Begrenser uttrekket i databasen for å unngå at hele hendelsetabellen lastes inn i minnet
+        val aktørider =
+            hendelsemottakDao.henteIdTilAktørerMedPubliseringsklareHendelser(
+                publisertFør,
+                PageRequest.of(0, maksAntallAktører),
+            )
+
+        if (aktørider.isEmpty()) return HashMap()
+
+        return tilHashMap(hendelsemottakDao.hentePubliseringsklareOverførteHendelserForAktører(aktørider))
+    }
 
     private fun tilHashMap(liste: Set<Hendelsemottak>): HashMap<Aktor, HendelseMottakerForAktor> = liste
-        .associate {
-            it.aktor to
-                HendelseMottakerForAktor(
-                    it.personidenter
-                        .split(
-                            ',',
-                        ).map { ident -> ident.trim() }
-                        .toSet(),
-                    liste.filter { l -> l.aktor == it.aktor },
-                )
-        }.toMutableMap() as HashMap<Aktor, HendelseMottakerForAktor>
+        .groupBy { it.aktor }
+        .mapValuesTo(HashMap()) { (_, hendelser) ->
+            HendelseMottakerForAktor(
+                hendelser
+                    .last()
+                    .personidenter
+                    .split(',')
+                    .map { ident -> ident.trim() }
+                    .toSet(),
+                hendelser,
+            )
+        }
 
     private fun kansellereTidligereHendelse(livshendelse: Livshendelse): Status {
         val tidligereHendelseMedStatusMottatt =
@@ -157,10 +167,10 @@ class Databasetjeneste(
             LocalDateTime.now()
 
         return if (Status.KANSELLERT == tidligereHendelseMedStatusMottatt?.status) {
-            log.info(
+            log.info {
                 "Livshendelse med hendelseid ${tidligereHendelseMedStatusMottatt.hendelseid} " +
-                    "ble erstattet av livshendelse med hendelseid ${livshendelse.hendelseid} og endringstype ${livshendelse.endringstype}.",
-            )
+                    "ble erstattet av livshendelse med hendelseid ${livshendelse.hendelseid} og endringstype ${livshendelse.endringstype}."
+            }
 
             if (Endringstype.KORRIGERT != livshendelse.endringstype) {
                 Status.KANSELLERT
@@ -173,10 +183,7 @@ class Databasetjeneste(
     }
 
     companion object {
-        val log: Logger =
-            LoggerFactory.getLogger(
-                Livshendelsebehandler::class.java,
-            )
+        val log = KotlinLogging.logger {}
     }
 }
 

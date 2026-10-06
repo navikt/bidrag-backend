@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - 'libs/bidrag-felles/**'
   workflow_dispatch:
@@ -51,7 +53,7 @@ jobs:
           PUBLISH="${{ github.ref == 'refs/heads/main' }}"
           echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
           echo "Kalenderversjon: ${VERSION} (publish=${PUBLISH})"
-      - uses: release-drafter/release-drafter@34d80673e067bdc0c24568d3af899c216adcfaa9 # v7.7.0
+      - uses: release-drafter/release-drafter@72967cdc98ddd3160f1fc3dff619de365e137dd0 # v7.9.0
         with:
           config-name: release-drafter-bidrag-felles.yml
           version: ${{ steps.sett_versjon.outputs.version }}
@@ -72,7 +74,7 @@ jobs:
       packages: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: '21'
