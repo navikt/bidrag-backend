@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import java.time.LocalDate
 import java.time.Month
-import java.util.Collections.addAll
 
 private val LOGGER = KotlinLogging.logger {}
 

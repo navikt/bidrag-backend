@@ -76,6 +76,9 @@ class PersistenceServiceMockTest {
     @Mock
     private lateinit var valutakursgrunnlagRepository: ValutakursgrunnlagRepository
 
+    @Mock
+    private lateinit var entityManager: jakarta.persistence.EntityManager
+
     @Test
     fun `Skal hente skattegrunnlag for 1 personid som finnes i lista`() {
         Mockito.`when`(skattegrunnlagRepositoryMock.hentSkattegrunnlag(1)).thenReturn(TestUtil.byggSkattegrunnlagRepositoryListeForEnIdent())

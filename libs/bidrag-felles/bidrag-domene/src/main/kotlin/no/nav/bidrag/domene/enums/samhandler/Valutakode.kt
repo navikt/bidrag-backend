@@ -40,7 +40,7 @@ enum class Valutakode(
     LVL("Latviske lat", LocalDate.of(2014, 1, 1)),
     MAD("Marokkansk dirham"),
     MMK("Myanmar kyat"),
-    MXN("Myanmar kyat"),
+    MXN("Meksikansk peso"),
     MYR("Malaysiske ringgit"),
     NOK("Norske kroner"),
     NZD("New Zealand dollar"),
@@ -62,7 +62,7 @@ enum class Valutakode(
     ZAR("Sør-Afrika Rep. rand"),
     ;
 
-    fun aktiv(dato: LocalDate = LocalDate.now()) = utgåttDato == null || (dato.isAfter(LocalDate.now()))
+    fun aktiv(dato: LocalDate = LocalDate.now()) = utgåttDato == null || dato.isBefore(utgåttDato)
 
     companion object {
         fun fraVisningsnavn(visningsnavn: String): Valutakode? = entries.firstOrNull { it.visningsnavn == visningsnavn }

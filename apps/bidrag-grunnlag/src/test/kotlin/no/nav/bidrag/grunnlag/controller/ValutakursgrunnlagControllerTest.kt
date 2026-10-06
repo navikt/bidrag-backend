@@ -50,7 +50,7 @@ class ValutakursgrunnlagControllerTest {
 
         val feil = assertThrows<ResponseStatusException> { controller.hent(Valutakode.USD, dato) }
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, feil.statusCode)
+        assertEquals(HttpStatus.UNPROCESSABLE_CONTENT, feil.statusCode)
     }
 
     @Test
