@@ -212,7 +212,7 @@ class DokumentHendelseLytter(
     }
 
     @Transactional
-    private fun ferdigstillHvisForsendelseErNotat(dokumenter: List<Dokument>) {
+    public fun ferdigstillHvisForsendelseErNotat(dokumenter: List<Dokument>) {
         dokumenter.forEach {
             val forsendelse = it.forsendelse
 
