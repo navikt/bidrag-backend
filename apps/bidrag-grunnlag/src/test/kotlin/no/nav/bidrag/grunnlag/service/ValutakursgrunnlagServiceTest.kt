@@ -15,10 +15,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class ValutakursgrunnlagServiceTest {
     private val persistence = Mockito.mock(PersistenceService::class.java)
@@ -82,6 +85,42 @@ class ValutakursgrunnlagServiceTest {
     fun `NOK til NOK trenger ikke kursgrunnlag`() {
         assertEquals(BigDecimal("1.2346"), service.beregn(BigDecimal("1.23456"), Valutakode.NOK, Valutakode.NOK, dato).beløp)
         Mockito.verifyNoInteractions(persistence)
+    }
+
+    @Test
+    fun `aktiv følger halvårsgrensene ved oppslag overstyring og beregning`() {
+        val fra = LocalDateTime.of(2026, 1, 1, 0, 0)
+        val til = LocalDateTime.of(2026, 7, 1, 0, 0)
+        val lagret = Valutakursgrunnlag(brukFra = fra, brukTil = til, basisvaluta = Valutakode.USD, kurs = BigDecimal.TEN, multiplikator = 0)
+        val oppslagsdato = fra.toLocalDate()
+        Mockito.`when`(persistence.hentValutakursgrunnlag(Valutakode.USD, oppslagsdato)).thenReturn(lagret)
+        Mockito.`when`(persistence.overstyrValutakursgrunnlag(42, BigDecimal.TEN)).thenReturn(lagret)
+        val tidspunkt = listOf(fra.minusNanos(1) to false, fra to true, til.minusNanos(1) to true, til to false, til.plusMonths(1) to false)
+
+        tidspunkt.forEach { (nå, forventet) ->
+            Mockito.mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS).use { tid ->
+                tid.`when`<LocalDateTime> { LocalDateTime.now() }.thenReturn(nå)
+
+                assertEquals(forventet, service.hentValutakursgrunnlag(Valutakode.USD, oppslagsdato)?.aktiv)
+                assertEquals(forventet, service.overstyr(42, BigDecimal.TEN).aktiv)
+                assertEquals(forventet, service.beregn(BigDecimal.ONE, Valutakode.USD, Valutakode.NOK, oppslagsdato).kursgrunnlag?.aktiv)
+            }
+        }
+    }
+
+    @Test
+    fun `liste over feilede grunnlag beregner aktiv ved lesing`() {
+        val nå = LocalDateTime.of(2026, 7, 1, 0, 0)
+        val utløpt = Valutakursgrunnlag(brukFra = nå.minusMonths(6), brukTil = nå, basisvaluta = Valutakode.USD, feiletHenting = true)
+        val gjeldende = Valutakursgrunnlag(brukFra = nå, brukTil = nå.plusMonths(6), basisvaluta = Valutakode.EUR, feiletHenting = true)
+        val pageable = PageRequest.of(0, 50)
+        Mockito.`when`(persistence.hentFeiledeValutakursgrunnlag(pageable)).thenReturn(PageImpl(listOf(utløpt, gjeldende)))
+
+        Mockito.mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS).use { tid ->
+            tid.`when`<LocalDateTime> { LocalDateTime.now() }.thenReturn(nå)
+
+            assertEquals(listOf(false, true), service.hentFeiledeValutakursgrunnlag(pageable).content.map { it.aktiv })
+        }
     }
 
     @Test
