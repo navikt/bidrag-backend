@@ -6,6 +6,7 @@ import no.nav.bidrag.grunnlag.bo.toValutakursgrunnlagEntity
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -28,7 +29,11 @@ class ValutakursgrunnlagMappingTest {
 
         assertEquals(ValutakursgrunnlagStatus.FEILET, entity.status)
         assertNull(entity.kurs)
-        assertEquals(bo.copy(oppdatertTidspunkt = entity.oppdatertTidspunkt), entity.toValutakursgrunnlagBo())
+        Mockito.mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS).use { tid ->
+            tid.`when`<LocalDateTime> { LocalDateTime.now() }.thenReturn(brukTil)
+
+            assertEquals(bo.copy(aktiv = false, oppdatertTidspunkt = entity.oppdatertTidspunkt), entity.toValutakursgrunnlagBo())
+        }
     }
 
     @Test
@@ -46,7 +51,14 @@ class ValutakursgrunnlagMappingTest {
         entity.status = ValutakursgrunnlagStatus.OVERSTYRT
         entity.oppdatertTidspunkt = LocalDateTime.of(2026, 2, 1, 12, 0)
 
-        assertEquals(bo.copy(status = ValutakursgrunnlagStatus.OVERSTYRT, oppdatertTidspunkt = entity.oppdatertTidspunkt), entity.toValutakursgrunnlagBo())
+        Mockito.mockStatic(LocalDateTime::class.java, Mockito.CALLS_REAL_METHODS).use { tid ->
+            tid.`when`<LocalDateTime> { LocalDateTime.now() }.thenReturn(brukTil)
+
+            assertEquals(
+                bo.copy(aktiv = false, status = ValutakursgrunnlagStatus.OVERSTYRT, oppdatertTidspunkt = entity.oppdatertTidspunkt),
+                entity.toValutakursgrunnlagBo(),
+            )
+        }
         assertEquals(ValutakursgrunnlagStatus.OVERSTYRT, entity.status)
     }
 }

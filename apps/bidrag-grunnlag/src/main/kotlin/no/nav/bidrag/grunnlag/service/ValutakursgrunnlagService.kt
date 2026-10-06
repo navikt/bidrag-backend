@@ -46,11 +46,8 @@ class ValutakursgrunnlagService(
         gyldighetsperiode: Periode<LocalDate>,
     ): List<Valutakursgrunnlag> {
         requireNotNull(gyldighetsperiode.til) { "Gyldighetsperioden må ha en sluttdato" }
-        val nå = LocalDate.now()
-        val aktiv = gyldighetsperiode.inneholder(nå)
-
         return hentetValutakurser.map {
-            val grunnlag = tilValutakursGrunnlagBo(it, gyldighetsperiode, nå, aktiv)
+            val grunnlag = tilValutakursGrunnlagBo(it, gyldighetsperiode)
             try {
                 persistenceService.opprettValutakursgrunnlag(grunnlag)
             } catch (e: DataIntegrityViolationException) {
@@ -62,13 +59,10 @@ class ValutakursgrunnlagService(
     private fun tilValutakursGrunnlagBo(
         hentetValutakursResultat: HentetValutakursResultat,
         gyldighetsperiode: Periode<LocalDate>,
-        nå: LocalDate,
-        aktiv: Boolean,
     ): ValutakursgrunnlagBo = when (hentetValutakursResultat) {
         is HentetValutakursResultat.FeiledValutakurs ->
             ValutakursgrunnlagBo(
                 feiletHenting = true,
-                aktiv = aktiv,
                 brukFra = gyldighetsperiode.fom.atStartOfDay(),
                 brukTil = gyldighetsperiode.til!!.atStartOfDay(),
                 hentetTidspunkt = LocalDateTime.now(),
@@ -80,7 +74,6 @@ class ValutakursgrunnlagService(
 
         is HentetValutakursResultat.HentetValutakurs ->
             ValutakursgrunnlagBo(
-                aktiv = aktiv,
                 brukFra = gyldighetsperiode.fom.atStartOfDay(),
                 brukTil = gyldighetsperiode.til!!.atStartOfDay(),
                 hentetTidspunkt = hentetValutakursResultat.hentetTidspunkt,

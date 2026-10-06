@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import java.math.BigDecimal
@@ -23,9 +24,6 @@ data class Valutakursgrunnlag(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "valutakursgrunnlag_id")
     val valutakursgrunnlagId: Int = 0,
-
-    @Column(nullable = false, name = "aktiv")
-    val aktiv: Boolean = true,
 
     @Column(nullable = false, name = "bruk_fra")
     val brukFra: LocalDateTime = LocalDateTime.now(),
@@ -60,6 +58,13 @@ data class Valutakursgrunnlag(
     @Column(name = "observasjonsdato")
     val observasjonsdato: LocalDate? = null,
 ) {
+    @get:Transient
+    val aktiv: Boolean
+        get() {
+            val nå = LocalDateTime.now()
+            return !nå.isBefore(brukFra) && (brukTil == null || nå.isBefore(brukTil))
+        }
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "status", length = 10)
     var status: ValutakursgrunnlagStatus = if (feiletHenting) ValutakursgrunnlagStatus.FEILET else ValutakursgrunnlagStatus.HENTET

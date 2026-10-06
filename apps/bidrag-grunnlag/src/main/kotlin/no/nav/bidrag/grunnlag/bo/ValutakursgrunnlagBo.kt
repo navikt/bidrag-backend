@@ -14,7 +14,7 @@ data class ValutakursgrunnlagBo(
     @Schema(description = "Valutakursgrunnlag-id")
     val valutakursgrunnlagId: Int = 0,
 
-    @Schema(description = "Angir om et valutakursgrunnlag er aktivt")
+    @Schema(description = "Angir om nåværende tidspunkt er på eller etter brukFra og før brukTil. Beregnes ved lesing, uavhengig av kursstatus.")
     val aktiv: Boolean = true,
 
     @Schema(description = "Tidspunkt valutakursgrunnlaget taes i bruk")

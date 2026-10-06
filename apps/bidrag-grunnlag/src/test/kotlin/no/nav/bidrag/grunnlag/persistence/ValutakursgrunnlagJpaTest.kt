@@ -7,6 +7,7 @@ import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
+import no.nav.bidrag.grunnlag.persistence.entity.toValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.persistence.repository.ValutakursgrunnlagRepository
 import no.nav.bidrag.grunnlag.service.PersistenceService
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -29,6 +30,27 @@ class ValutakursgrunnlagJpaTest(
     @Autowired private val entityManager: EntityManager,
     @Autowired private val persistenceService: PersistenceService,
 ) {
+    @Test
+    fun `lagret aktiv-flagg ignoreres for utløpt periode`() {
+        entityManager.createNativeQuery("ALTER TABLE valutakursgrunnlag ADD COLUMN IF NOT EXISTS aktiv BOOLEAN DEFAULT TRUE NOT NULL").executeUpdate()
+        val lagret = repository.saveAndFlush(
+            Valutakursgrunnlag(
+                brukFra = LocalDate.of(2020, 1, 1).atStartOfDay(),
+                brukTil = LocalDate.of(2020, 7, 1).atStartOfDay(),
+                basisvaluta = Valutakode.USD,
+            ),
+        )
+        entityManager.createNativeQuery("UPDATE valutakursgrunnlag SET aktiv = TRUE WHERE valutakursgrunnlag_id = :id")
+            .setParameter("id", lagret.valutakursgrunnlagId)
+            .executeUpdate()
+        entityManager.clear()
+
+        val lest = repository.findById(lagret.valutakursgrunnlagId).orElseThrow()
+
+        assertEquals(false, lest.aktiv)
+        assertEquals(false, lest.toValutakursgrunnlagBo().aktiv)
+    }
+
     @Test
     fun `gjenforsøk og overstyring bruker samme rad og bevarer manuell kurs`() {
         val dato = LocalDate.of(2024, 1, 1)
