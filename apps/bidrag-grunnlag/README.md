@@ -77,6 +77,16 @@ Også når man kjører applikasjonen lokalt vil man trenge et gyldig JWT-token f
 
 Kan vurdere å sette opp wiremocks for de eksterne tjenestene for å kunne kjøre opp en mer fullstedig applikasjon i fremtiden.
 
+## Teste PostgreSQL-migrasjoner
+
+`ValutakursgrunnlagMigrationTest` starter PostgreSQL 15 med Testcontainers og kjører alle Flyway-migrasjonene fra `db/migration`. Testen kontrollerer oppdateringstriggeren, halvårsgrenser, unik valuta per halvår, tillatte statuser og kilder samt kurskolonnens presisjon. Testbrukeren heter `cloudsqliamuser` fordi de eksisterende migrasjonene gir denne rollen tilgang.
+
+Docker må være tilgjengelig. Kjør fra repoets rot:
+
+```bash
+mvn -pl apps/bidrag-grunnlag -am -Dtest=ValutakursgrunnlagMigrationTest -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
 ## Testing i Swagger
 Applikasjonen testes enklest i Swagger (for generering av gyldig token, se over):
 ```
