@@ -18,6 +18,7 @@ import java.time.Month
 import java.time.temporal.ChronoUnit
 
 private val LOGGER = KotlinLogging.logger {}
+private val TIDLIGSTE_FRA_DATO = LocalDate.of(2000, 1, 1)
 
 @Service
 class HentHistoriskeValutakurserService(
@@ -25,6 +26,7 @@ class HentHistoriskeValutakurserService(
     private val hentValutakursService: HentValutakursService,
 ) {
     fun hentHistoriskeValutakurser(fra: LocalDate, til: LocalDate): List<ValutakursgrunnlagBo> {
+        validerTidligsteDato(fra)
         if (fra.dayOfMonth != 1 || fra.month !in listOf(Month.JANUARY, Month.JULY)) {
             throw UgyldigDatoException("Kan ikke hente valutakurser med fra-dato $fra. Dato må være 1. januar eller 1. juli.")
         }
@@ -58,6 +60,7 @@ class HentHistoriskeValutakurserService(
     }
 
     fun hentHistoriskeValutakurser(perioder: List<Periode<LocalDate>>): List<ValutakursgrunnlagBo> {
+        perioder.forEach { validerTidligsteDato(it.fom) }
         validerAntallPerioder(perioder.size.toLong())
         val utenlandskeValutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
         val valutakursgrunnlag = mutableListOf<ValutakursgrunnlagBo>()
@@ -95,6 +98,12 @@ class HentHistoriskeValutakurserService(
         }
 
         return buildList { addAll(valutakursgrunnlag) }
+    }
+
+    private fun validerTidligsteDato(fra: LocalDate) {
+        if (fra.isBefore(TIDLIGSTE_FRA_DATO)) {
+            throw UgyldigDatoException("Fra-dato kan ikke være før 1. januar 2000")
+        }
     }
 
     private fun validerAntallPerioder(antallPerioder: Long) {
