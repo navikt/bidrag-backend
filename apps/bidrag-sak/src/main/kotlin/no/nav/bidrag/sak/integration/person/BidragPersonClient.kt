@@ -51,18 +51,29 @@ class BidragPersonClient(
         return fødselsdatoer.identerTilDatoer
     }
 
-    @Cacheable(value = ["bidrag-sak_hentAlleIdenter_cache"], key = "#ident")
+    @Cacheable(value = ["bidrag-sak_hentPersonidenter_cache"], key = "#ident")
     @Retryable(value = [Exception::class], backoff = Backoff(delay = 500))
-    fun hentAlleIdenter(ident: String): Set<String> {
-        if (!Ident(ident).erPersonIdent()) return setOf(ident)
+    fun hentPersonidenter(ident: String): List<PersonidentDto> {
+        if (!Ident(ident).erPersonIdent()) return emptyList()
         val request = HentePersonidenterRequest(ident, setOf(Identgruppe.FOLKEREGISTERIDENT, Identgruppe.NPID), true)
         return try {
-            postForEntity<Array<PersonidentDto>>(personidenterUri, request)?.map { it.ident }?.toSet() ?: setOf(ident)
+            postForEntity<Array<PersonidentDto>>(personidenterUri, request).orEmpty().toList()
         } catch (e: RestClientResponseException) {
-            if (e.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) setOf(ident) else throw e
+            if (e.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) emptyList() else throw e
         }
     }
 }
+
+internal fun List<PersonidentDto>.gjeldendeIdent(): String? = asSequence()
+    .filter { !it.historisk }
+    .sortedBy {
+        when (it.gruppe) {
+            Identgruppe.FOLKEREGISTERIDENT -> 0
+            Identgruppe.NPID -> 1
+            Identgruppe.AKTORID -> 2
+        }
+    }.firstOrNull()
+    ?.ident
 
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {

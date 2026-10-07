@@ -15,7 +15,9 @@ import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
+import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.person.PersonidentDto
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
@@ -32,8 +34,8 @@ class ValideringsgrunnlagServiceTest {
     @BeforeEach
     fun setup() {
         every { identConsumer.hentPersonInformasjon(any()) } answers { PersonDto(ident = firstArg(), fødselsdato = null) }
-        every { bidragPersonClient.hentAlleIdenter(any()) } answers { setOf(firstArg()) }
         every { bidragPersonClient.hentFødselsdatoer(any()) } returns emptyMap()
+        every { bidragPersonClient.hentPersonidenter(any()) } returns emptyList()
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
     }
 
@@ -110,21 +112,10 @@ class ValideringsgrunnlagServiceTest {
     }
 
     @Test
-    fun `feil fra identoppslaget går videre`() {
-        val bm = genererPersonident()
-        every { bidragPersonClient.hentAlleIdenter(bm.verdi) } throws IllegalStateException("bidrag-person er nede")
-
-        shouldThrowMessage("bidrag-person er nede") {
-            service.hentForOpprettelse(opprett(rolle(Rolletype.BIDRAGSMOTTAKER, bm)))
-        }
-    }
-
-    @Test
     fun `slår ikke opp blanke identer`() {
         service.hentForOpprettelse(opprett(rolle(Rolletype.BIDRAGSMOTTAKER, Personident(""))))
 
         verify(exactly = 0) { identConsumer.hentPersonInformasjon(any()) }
-        verify(exactly = 0) { bidragPersonClient.hentAlleIdenter(any()) }
         verify(exactly = 0) { bidragPersonClient.hentFødselsdatoer(any()) }
     }
 
@@ -144,26 +135,6 @@ class ValideringsgrunnlagServiceTest {
     }
 
     @Test
-    fun `henter identer for både lagrede og forespurte roller ved endring`() {
-        val lagret = genererPersonident()
-        val forespurt = genererPersonident()
-        val historisk = genererPersonident()
-        every { bidragPersonClient.hentAlleIdenter(lagret.verdi) } returns setOf(lagret.verdi, historisk.verdi)
-
-        val grunnlag = service.hentForEndring(
-            listOf(Rolle(fødselsnummer = lagret.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER)),
-            listOf(rolle(Rolletype.BIDRAGSPLIKTIG, forespurt)),
-            null,
-        )
-
-        grunnlag.identer shouldBe mapOf(
-            forespurt.verdi to setOf(forespurt.verdi),
-            lagret.verdi to setOf(lagret.verdi, historisk.verdi),
-        )
-        grunnlag.personer.keys shouldBe setOf(forespurt.verdi)
-    }
-
-    @Test
     fun `slår opp samme person én gang`() {
         val ident = genererPersonident()
 
@@ -172,8 +143,28 @@ class ValideringsgrunnlagServiceTest {
 
         grunnlag.finnes(ident) shouldBe true
         verify(exactly = 1) { identConsumer.hentPersonInformasjon(ident) }
-        verify(exactly = 1) { bidragPersonClient.hentAlleIdenter(ident.verdi) }
         verify(exactly = 1) { bidragPersonClient.hentFødselsdatoer(listOf(ident)) }
+    }
+
+    @Test
+    fun `henter identer for lagrede og forespurte roller én gang per ident`() {
+        val gammelIdent = genererPersonident()
+        val nyIdent = genererPersonident()
+        val bm = genererPersonident()
+        every { bidragPersonClient.hentPersonidenter(nyIdent.verdi) } returns listOf(
+            PersonidentDto(nyIdent.verdi, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT),
+            PersonidentDto(gammelIdent.verdi, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT),
+        )
+        val lagredeRoller = listOf(
+            Rolle(fødselsnummer = gammelIdent.verdi, rolleType = Rolletype.BARN),
+            Rolle(fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER),
+        )
+
+        val grunnlag = service.hentForEndring(lagredeRoller, setOf(rolle(Rolletype.BARN, nyIdent), rolle(Rolletype.BIDRAGSMOTTAKER, bm)), land = null)
+
+        grunnlag.sammePerson(gammelIdent.verdi, nyIdent.verdi) shouldBe true
+        grunnlag.sammePerson(bm.verdi, nyIdent.verdi) shouldBe false
+        listOf(gammelIdent, nyIdent, bm).forEach { verify(exactly = 1) { bidragPersonClient.hentPersonidenter(it.verdi) } }
     }
 
     private fun rolle(type: Rolletype, fnr: Personident) = RolleDto(type = type, fødselsnummer = fnr)

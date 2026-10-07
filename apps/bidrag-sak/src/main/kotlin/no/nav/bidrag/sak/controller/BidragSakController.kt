@@ -322,6 +322,7 @@ class BidragSakController(
                 "- En person kan bare ha én rolle i saken, med unntak av RM og FR.\n" +
                 "- Saken kan ha maks én BM og én BP.\n" +
                 "- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.\n" +
+                "- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.\n" +
                 "- Barn fra og med 18 år må ha RM. Regelen sjekkes bare for barn som er med i forespørselen. " +
                 "Barn som ikke er med, valideres ikke på nytt, selv om de mangler RM i dag.\n" +
                 "- Hvis fødselsdatoen til barnet er ukjent etter oppslag, krever vi ikke RM. Feiler oppslaget, feiler forespørselen."

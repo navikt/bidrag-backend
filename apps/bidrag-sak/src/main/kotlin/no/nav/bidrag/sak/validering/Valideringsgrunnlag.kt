@@ -9,7 +9,6 @@ data class Valideringsgrunnlag(
     val fødselsdatoer: Map<Personident, LocalDate?>,
     val identer: Map<String, Set<String>>,
     val landkoder: Set<Landkode>,
-    val tillatEksisterendeDobleRoller: Boolean,
 ) {
     data class Person(val fødselsdato: LocalDate?)
 

@@ -5,6 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
@@ -13,6 +14,9 @@ import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
+import no.nav.bidrag.transport.person.Identgruppe
+import no.nav.bidrag.transport.person.PersonidentDto
+import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -298,27 +302,56 @@ internal class RolleServiceTest {
     }
 
     @Test
-    fun `tilpasser ny ident for eksisterende barn uten å opprette ny barnrolle`() {
-        val gammelIdent = Personident(fødselsnummerBarn1)
-        val nyIdent = Personident(fødselsnummerBarn2)
-        every { bidragPersonClient.hentAlleIdenter(gammelIdent.verdi) } returns setOf(gammelIdent.verdi, nyIdent.verdi)
-        val eksisterende = listOf(Rolle(rolleId = 3, fødselsnummer = gammelIdent.verdi, rolleType = Rolletype.BARN))
+    fun `oppdaterer lagret barn og RM til gjeldende ident med ENDRE_FNR-historikk`() {
+        val gammelBarnIdent = fødselsnummerBarn1
+        val nyBarnIdent = fødselsnummerBarn2
+        val gammelRmIdent = fødselsnummerRm
+        val nyRmIdent = fødselsnummerBp
+        every { bidragPersonClient.hentPersonidenter(gammelBarnIdent) } returns personidenter(nyBarnIdent, gammelBarnIdent)
+        every { bidragPersonClient.hentPersonidenter(gammelRmIdent) } returns personidenter(nyRmIdent, gammelRmIdent)
+        val barn = Rolle(rolleId = 3, fødselsnummer = gammelBarnIdent, rolleType = Rolletype.BARN, bidragssak = bidragssak)
+        val rm = Rolle(rolleId = 4, fødselsnummer = gammelRmIdent, rolleType = Rolletype.REELMOTTAKER, bidragssak = bidragssak)
 
-        val resultat = rolleService.brukLagretIdentForSammeBarn(eksisterende, setOf(RolleDto(type = Rolletype.BARN, fødselsnummer = nyIdent)))
+        rolleService.oppdaterTilGjeldendeIdent(listOf(barn, rm))
 
-        resultat.single().fødselsnummer shouldBe gammelIdent
+        barn.fødselsnummer shouldBe nyBarnIdent
+        rm.fødselsnummer shouldBe nyRmIdent
+        listOf(barn to gammelBarnIdent, rm to gammelRmIdent).forEach { (rolle, gammelIdent) ->
+            val historikk = rolle.rollehistorikk.single()
+            historikk.typeEndring shouldBe TypeEndring.ENDRE_FNR
+            historikk.type shouldBe rolle.rolleType
+            historikk.rolleFødselsnummer shouldBe gammelIdent
+            historikk.rmRolleFødselsnummer shouldBe rolle.fødselsnummer
+        }
     }
 
     @Test
-    fun `tilpasser ny ident når bare den nye identen kjenner den gamle`() {
-        val gammelIdent = Personident(fødselsnummerBarn1)
-        val nyIdent = Personident(fødselsnummerBarn2)
-        every { bidragPersonClient.hentAlleIdenter(gammelIdent.verdi) } returns setOf(gammelIdent.verdi)
-        every { bidragPersonClient.hentAlleIdenter(nyIdent.verdi) } returns setOf(gammelIdent.verdi, nyIdent.verdi)
-        val eksisterende = listOf(Rolle(rolleId = 3, fødselsnummer = gammelIdent.verdi, rolleType = Rolletype.BARN))
+    fun `endrer ikke rolle som allerede har gjeldende ident`() {
+        every { bidragPersonClient.hentPersonidenter(fødselsnummerBarn1) } returns personidenter(fødselsnummerBarn1)
+        val barn = Rolle(rolleId = 3, fødselsnummer = fødselsnummerBarn1, rolleType = Rolletype.BARN, bidragssak = bidragssak)
 
-        val resultat = rolleService.brukLagretIdentForSammeBarn(eksisterende, setOf(RolleDto(type = Rolletype.BARN, fødselsnummer = nyIdent)))
+        rolleService.oppdaterTilGjeldendeIdent(listOf(barn))
 
-        resultat.single().fødselsnummer shouldBe gammelIdent
+        barn.fødselsnummer shouldBe fødselsnummerBarn1
+        barn.rollehistorikk shouldHaveSize 0
     }
+
+    @Test
+    fun `bruker gjeldende ident for barn og RM i forespørsel`() {
+        every { bidragPersonClient.hentPersonidenter(fødselsnummerBarn1) } returns personidenter(fødselsnummerBarn2, fødselsnummerBarn1)
+        every { bidragPersonClient.hentPersonidenter(fødselsnummerRm) } returns personidenter(fødselsnummerBp, fødselsnummerRm)
+        val forespørsel = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = Personident(fødselsnummerBarn1),
+            reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm), verge = false),
+        )
+
+        val resultat = rolleService.brukGjeldendeIdent(setOf(forespørsel)).single()
+
+        resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
+        resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
+    }
+
+    private fun personidenter(gjeldende: String, vararg historiske: String) = listOf(PersonidentDto(gjeldende, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT)) +
+        historiske.map { PersonidentDto(it, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT) }
 }

@@ -82,7 +82,7 @@ internal class BidragSakServiceTest {
         saveSakSlot = slot()
         every { bidragssakRepositoryMock.save(capture(saveSakSlot)) }.answers { saveSakSlot.captured }
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-        every { rolleService.brukLagretIdentForSammeBarn(any(), any()) } answers { secondArg() }
+        every { rolleService.brukGjeldendeIdent(any()) } answers { firstArg() }
 
         bidragSakService =
             BidragSakService(

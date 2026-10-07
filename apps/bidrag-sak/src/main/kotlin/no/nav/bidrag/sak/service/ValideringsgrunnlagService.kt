@@ -3,7 +3,6 @@ package no.nav.bidrag.sak.service
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.land.Landkode
-import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
@@ -28,7 +27,6 @@ class ValideringsgrunnlagService(
         fødselsdatoer = hentFødselsdatoer(forespurteRoller),
         identer = hentIdenter(forespurteRoller.mapNotNull { it.fødselsnummer?.verdi } + lagredeIdenter),
         landkoder = if (land == null) emptySet() else cachedKodeverkService.hentLandkoder().keys,
-        tillatEksisterendeDobleRoller = UnleashFeatures.TILLAT_EKSISTERENDE_DOBLE_SAKSROLLER.isEnabled,
     )
 
     private fun hentPersoner(roller: Collection<RolleDto>): Map<String, Valideringsgrunnlag.Person> = ikkeBlanke(roller.mapNotNull { it.fødselsnummer })
@@ -43,7 +41,7 @@ class ValideringsgrunnlagService(
     private fun hentIdenter(identer: List<String>): Map<String, Set<String>> = identer
         .filter { it.isNotBlank() }
         .distinct()
-        .associateWith { bidragPersonClient.hentAlleIdenter(it) }
+        .associateWith { ident -> bidragPersonClient.hentPersonidenter(ident).map { it.ident }.toSet() }
 
     private fun ikkeBlanke(identer: List<Personident>): List<Personident> = identer.filter { it.verdi.isNotBlank() }.distinct()
 }

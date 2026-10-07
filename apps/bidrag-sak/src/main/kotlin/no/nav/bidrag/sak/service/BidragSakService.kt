@@ -313,9 +313,10 @@ class BidragSakService(
     @Transactional
     fun oppdaterRollerISak(oppdaterSakRequest: OppdaterRollerISakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
+        rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = rolleService.brukLagretIdentForSammeBarn(sak.roller, oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
         val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, land = null)
         bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
         sak.apply {
@@ -328,9 +329,10 @@ class BidragSakService(
     @Transactional
     fun oppdaterSak(oppdaterSakRequest: OppdaterSakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
+        rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = rolleService.brukLagretIdentForSammeBarn(sak.roller, oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
         val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, oppdaterSakRequest.landkode)
         bidragssakValidator.validerSaksopplysninger(oppdaterSakRequest, grunnlag)
         bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)

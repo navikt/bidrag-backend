@@ -11,7 +11,6 @@ import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.Period
-import kotlin.text.isNotBlank
 
 @Component
 class BidragssakValidator {
@@ -104,24 +103,9 @@ class BidragssakValidator {
     }
 
     private fun validerÉnRollePerPerson(roller: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
-        require(rollerMedSammePerson(roller, grunnlag).isEmpty()) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
-    }
-
-    private fun validerÉnRollePerPersonUnntattEksisterende(
-        rollerFør: List<Saksrolle>,
-        rollerEtter: List<Saksrolle>,
-        grunnlag: Valideringsgrunnlag,
-    ) {
-        val eksisterendeIder = rollerFør.filter { it.erKjent }.map { it.id }.toSet()
-        require(
-            rollerMedSammePerson(rollerEtter, grunnlag).all { (rolle, annen) -> rolle.id in eksisterendeIder && annen.id in eksisterendeIder },
-        ) { FEILMELDING_FLERE_ROLLER_FOR_PERSON }
-    }
-
-    private fun rollerMedSammePerson(roller: List<Saksrolle>, grunnlag: Valideringsgrunnlag): List<Pair<Saksrolle, Saksrolle>> {
-        val rollerMedÉnRollePerPerson = roller.filter { it.erKjent && !erUnntattÉnRollePerPerson(it.type) }
-        return rollerMedÉnRollePerPerson.flatMapIndexed { index, rolle ->
-            rollerMedÉnRollePerPerson.drop(index + 1).filter { annen -> grunnlag.sammePerson(rolle.ident, annen.ident) }.map { rolle to it }
+        val personroller = roller.filter { it.erKjent && !erUnntattÉnRollePerPerson(it.type) }
+        require(personroller.all { rolle -> personroller.count { grunnlag.sammePerson(rolle.ident, it.ident) } == 1 }) {
+            FEILMELDING_FLERE_ROLLER_FOR_PERSON
         }
     }
 
@@ -140,24 +124,14 @@ class BidragssakValidator {
         validerMaksEnBpOgBm(rollerEtter)
         validerMinstÉnKjentRolle(rollerEtter)
         validerKjenteRollerBeholdt(rollerFør, rollerEtter, grunnlag)
-        validerÉnRollePerPersonVedEndring(rollerFør, rollerEtter, grunnlag)
-    }
-
-    private fun validerÉnRollePerPersonVedEndring(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
-        if (grunnlag.tillatEksisterendeDobleRoller) {
-            validerÉnRollePerPersonUnntattEksisterende(rollerFør, rollerEtter, grunnlag)
-        } else {
-            validerÉnRollePerPerson(rollerEtter, grunnlag)
-        }
+        validerÉnRollePerPerson(rollerEtter, grunnlag)
     }
 
     private fun validerKjenteRollerBeholdt(rollerFør: List<Saksrolle>, rollerEtter: List<Saksrolle>, grunnlag: Valideringsgrunnlag) {
         rollerFør.filter { it.erKjent && !kanEndres(it.type) }.forEach { opprinnelig ->
             require(
                 rollerEtter.any { rolle ->
-                    rolle.id == opprinnelig.id &&
-                        rolle.type == opprinnelig.type &&
-                        grunnlag.sammePerson(rolle.ident, opprinnelig.ident)
+                    rolle.id == opprinnelig.id && rolle.type == opprinnelig.type && grunnlag.sammePerson(rolle.ident, opprinnelig.ident)
                 },
             ) { "En kjent rolle kan ikke fjernes eller endres." }
         }

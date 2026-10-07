@@ -8,7 +8,6 @@ enum class UnleashFeatures(
     defaultValue: Boolean,
 ) {
     TILGANG_TIL_AVSLUTTET_SAK("tilgang_til_avsluttet_sak", false),
-    TILLAT_EKSISTERENDE_DOBLE_SAKSROLLER("bidrag_sak_tillat_eksisterende_doble_saksroller", false),
     ;
 
     private var defaultValue = false

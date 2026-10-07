@@ -1,11 +1,17 @@
 package no.nav.bidrag.sak.service
 
+import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
+import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
+import no.nav.bidrag.sak.integration.person.gjeldendeIdent
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBarnTilRoller
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBpBmTilRoller
@@ -20,6 +26,7 @@ import no.nav.bidrag.sak.mapper.model.type
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class RolleService(
@@ -64,24 +71,47 @@ class RolleService(
         barn to rm.rolleId
     }
 
-    fun brukLagretIdentForSammeBarn(eksisterende: Collection<Rolle>, forespørsel: Set<RolleDto>): Set<RolleDto> {
-        return forespørsel.map { rolle ->
-            if (rolle.type != Rolletype.BARN) return@map rolle
-            val fødselsnummer = rolle.fødselsnummer ?: return@map rolle
-            val eksisterendeIdent = eksisterende.firstOrNull {
-                it.rolleType == Rolletype.BARN &&
-                    sammePerson(it.fødselsnummer, fødselsnummer.verdi)
-            }?.fødselsnummer
-            if (eksisterendeIdent == null || eksisterendeIdent == fødselsnummer.verdi) {
-                rolle
-            } else {
-                Personident(eksisterendeIdent).let { rolle.copy(fødselsnummer = it, foedselsnummer = it) }
-            }
-        }.toSet()
+    fun oppdaterTilGjeldendeIdent(roller: Collection<Rolle>) {
+        roller.filter { it.rolleType != Rolletype.FEILREGISTRERT }.forEach { rolle ->
+            val gammelIdent = rolle.fødselsnummer ?: return@forEach
+            val nyIdent = gjeldendeIdent(gammelIdent)
+            if (nyIdent == gammelIdent) return@forEach
+            rolle.fødselsnummer = nyIdent
+            rolle.rollehistorikk.add(
+                Rollehistorikk(
+                    saksnummer = rolle.bidragssak!!.saksnummer,
+                    rolleFødselsnummer = gammelIdent,
+                    type = rolle.rolleType,
+                    rmRolleFødselsnummer = nyIdent,
+                    typeEndring = TypeEndring.ENDRE_FNR,
+                    opprettetAv = TokenUtils.hentSaksbehandlerIdent() ?: TokenUtils.hentApplikasjonsnavn() ?: "",
+                    opprettetTidspunkt = LocalDateTime.now(),
+                    rolle = rolle,
+                ),
+            )
+        }
     }
 
-    private fun sammePerson(lagretIdent: String?, ident: String): Boolean = lagretIdent != null &&
-        (lagretIdent == ident || ident in bidragPersonClient.hentAlleIdenter(lagretIdent) || lagretIdent in bidragPersonClient.hentAlleIdenter(ident))
+    fun brukGjeldendeIdent(forespørsel: Set<RolleDto>): Set<RolleDto> {
+        val roller = forespørsel.map { rolle ->
+            val ident = rolle.fødselsnummer?.takeIf { rolle.type != Rolletype.FEILREGISTRERT }?.let { Personident(gjeldendeIdent(it.verdi)) }
+            val rmIdent = rolle.rmFødselsnummer()?.let { ReellMottaker(gjeldendeIdent(it.verdi)) }
+            rolle.copy(
+                fødselsnummer = ident ?: rolle.fødselsnummer,
+                foedselsnummer = ident ?: rolle.foedselsnummer,
+                reellMottaker = rmIdent?.let { rolle.reellMottaker?.copy(ident = it) } ?: rolle.reellMottaker,
+                reellMottager = rmIdent?.takeIf { rolle.reellMottager != null } ?: rolle.reellMottager,
+            )
+        }
+        require(roller.size == roller.toSet().size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
+        return roller.toSet()
+    }
+
+    private fun gjeldendeIdent(ident: String): String {
+        if (ident.isBlank()) return ident
+        return bidragPersonClient.hentPersonidenter(ident).gjeldendeIdent()
+            ?: ident.also { secureLogger.warn { "Fant ingen gjeldende ident for $it i bidrag-person. Bruker innsendt ident." } }
+    }
 
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,
