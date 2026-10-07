@@ -95,7 +95,7 @@ function UnderholdskostnaderSøknadsbarn({
       <DataViewTable
         data={[
           {
-            label: "Barn har tilsynsutgift",
+            label: "Barn har tilsynsutgift/forpleining",
             value: data.harTilsynsordning ? "Ja" : "Nei",
           },
         ]}
