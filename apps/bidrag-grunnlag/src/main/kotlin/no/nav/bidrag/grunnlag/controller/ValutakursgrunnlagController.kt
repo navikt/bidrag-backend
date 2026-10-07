@@ -152,7 +152,8 @@ class ValutakursgrunnlagController(
             "Fra-datoen er inkludert og til-datoen ekskludert. Begge datoer må være 1. januar eller 1. juli. Tidligste fra-dato er 1. januar 2000. " +
             "Maksimalt 10 halvår kan hentes per kall. Inneværende halvår er tillatt selv om sluttdatoen er i fremtiden, men fremtidige halvår avvises. " +
             "Eksisterende grunnlag hoppes over, unntatt FEILET-rader som forsøkes hentet på nytt. " +
-            "ECB brukes først, med Norges Bank som reserve. Svaret inneholder bare grunnlagene som ble behandlet i dette kallet.",
+            "ECB-kurser hentes samlet per observasjonsmåned. Norges Bank brukes for valutaer som mangler en gyldig ECB-kurs. " +
+            "Svaret inneholder bare grunnlagene som ble behandlet i dette kallet.",
     )
     @ApiResponses(
         value = [

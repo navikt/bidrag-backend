@@ -58,6 +58,43 @@ class ECBService(
         valutakursNOK: BigDecimal,
     ) = valutakursNOK.divide(valutakursUtenlandskValuta, 10, RoundingMode.HALF_UP)
 
+    fun hentValutakurser(utenlandskeValutaer: List<String>, kursDato: LocalDate): Map<String, Valutakurs> {
+        require(utenlandskeValutaer.isNotEmpty() && ECBConstants.NOK !in utenlandskeValutaer) { "Oppgi minst én utenlandsk valuta" }
+        val valutaer = utenlandskeValutaer.distinct()
+        val forespurteValutaer = (listOf(ECBConstants.NOK) + valutaer.filter { it != ECBConstants.EUR }).distinct()
+        logger.info("Henter ${valutaer.size} valutakurser fra ECB på $kursDato")
+        val valutakurser = try {
+            when (val respons = ecbConsumer.hentValutakurs(Frequency.Monthly, forespurteValutaer, kursDato)) {
+                is RestResponse.Success -> respons.body.toExchangeRates()
+                is RestResponse.Failure -> throw ECBServiceException("ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}", respons.restClientException)
+            }
+        } catch (e: ValutakursTransformationException) {
+            throw ECBServiceException(e.message, e)
+        }
+        if (valutakurser.any { it.valuta !in forespurteValutaer }) {
+            throw ECBServiceException("ECB-svaret inneholder valutaer som ikke ble forespurt")
+        }
+        val serier = valutakurser.groupBy { it.valuta }
+        fun gyldigKurs(valuta: String): Valutakurs? = serier[valuta]?.singleOrNull()
+            ?.takeIf { YearMonth.from(it.kursDato) == YearMonth.from(kursDato) && it.kurs.signum() > 0 }
+
+        val nok = gyldigKurs(ECBConstants.NOK)
+            ?: throw ECBServiceException("ECB-svaret mangler en gyldig NOK-kurs for $kursDato")
+        return valutaer.mapNotNull { valuta ->
+            val kurs = if (valuta == ECBConstants.EUR) {
+                nok.kurs
+            } else {
+                val utenlandskKurs = gyldigKurs(valuta)
+                if (utenlandskKurs == null) {
+                    logger.warn("ECB-svaret mangler en gyldig kurs for ${valuta.saner()} på $kursDato")
+                    return@mapNotNull null
+                }
+                beregnValutakursINOK(utenlandskKurs.kurs, nok.kurs)
+            }
+            valuta to Valutakurs(valuta, kurs, kursDato)
+        }.toMap()
+    }
+
     private fun validateExchangeRates(
         currency: String,
         exchangeRateDate: LocalDate,

@@ -31,7 +31,7 @@ class HentValutakursServiceMockTest {
 
     @Test
     fun `desembers ECB-kurs brukes fra januar med én enhet valuta`() {
-        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenReturn(Valutakurs("USD", BigDecimal("10.50"), desember))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenReturn(mapOf("USD" to Valutakurs("USD", BigDecimal("10.50"), desember)))
 
         val resultat = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.USD)))).hentetValutakursListe.single()
 
@@ -45,7 +45,7 @@ class HentValutakursServiceMockTest {
 
     @Test
     fun `Norges Bank brukes når ECB mangler kurs`() {
-        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenThrow(ECBServiceException("Mangler kurs"))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenThrow(ECBServiceException("Mangler kurs"))
         Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
             .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "USD", periode = "2024-12", kurs = "1075", multiplikator = "2")))
 
@@ -58,7 +58,7 @@ class HentValutakursServiceMockTest {
 
     @Test
     fun `feilet kurs bevares i respons når begge kilder svikter`() {
-        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenThrow(ECBServiceException("Mangler kurs"))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenThrow(ECBServiceException("Mangler kurs"))
         Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
             .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "EUR")))
 
@@ -69,7 +69,7 @@ class HentValutakursServiceMockTest {
 
     @Test
     fun `HTTP-feil fra Norges Bank blir feilresultat når ECB mangler kurs`() {
-        Mockito.`when`(ecb.hentValutakurs("USD", desember)).thenThrow(ECBServiceException("Mangler kurs"))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenThrow(ECBServiceException("Mangler kurs"))
         Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
             .thenReturn(RestResponse.Failure("Mangler kurs", HttpStatus.NOT_FOUND, IllegalStateException("Mangler kurs")))
 
@@ -82,15 +82,86 @@ class HentValutakursServiceMockTest {
     fun `hver valuta og hvert halvår hentes med sin observasjonsmåned`() {
         val juli = LocalDate.of(2025, 7, 1)
         val juni = LocalDate.of(2025, 6, 30)
-        Mockito.`when`(ecb.hentValutakurs("EUR", desember)).thenReturn(Valutakurs("EUR", BigDecimal("11"), desember))
-        Mockito.`when`(ecb.hentValutakurs("USD", juni)).thenReturn(Valutakurs("USD", BigDecimal("10"), juni))
+        Mockito.`when`(ecb.hentValutakurser(listOf("EUR"), desember)).thenReturn(mapOf("EUR" to Valutakurs("EUR", BigDecimal("11"), desember)))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), juni)).thenReturn(mapOf("USD" to Valutakurs("USD", BigDecimal("10"), juni)))
 
         val resultater = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.EUR), HentValutakurs(juli, Valutakode.USD)))).hentetValutakursListe
 
         assertEquals(2, resultater.size)
         assertEquals(ÅrMånedsperiode("2025-06", "2025-07"), assertInstanceOf(HentetValutakursResultat.HentetValutakurs::class.java, resultater[1]).periode)
-        Mockito.verify(ecb).hentValutakurs("EUR", desember)
-        Mockito.verify(ecb).hentValutakurs("USD", juni)
+        Mockito.verify(ecb).hentValutakurser(listOf("EUR"), desember)
+        Mockito.verify(ecb).hentValutakurser(listOf("USD"), juni)
+        Mockito.verifyNoMoreInteractions(ecb)
+    }
+
+    @Test
+    fun `valutaer grupperes per observasjonsmåned og bare manglende kurs hentes fra Norges Bank`() {
+        val juli = LocalDate.of(2025, 7, 1)
+        val juni = LocalDate.of(2025, 6, 30)
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD", "EUR", "DKK"), desember))
+            .thenReturn(mapOf("USD" to Valutakurs("USD", BigDecimal("10"), desember), "EUR" to Valutakurs("EUR", BigDecimal("11"), desember)))
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD"), juni))
+            .thenReturn(mapOf("USD" to Valutakurs("USD", BigDecimal("12"), juni)))
+        Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "DKK", desember))
+            .thenReturn(RestResponse.Success(norgesBankSvar(periode = "2024-12")))
+        val forespørsler = listOf(
+            HentValutakurs(januar, Valutakode.USD),
+            HentValutakurs(juli, Valutakode.USD),
+            HentValutakurs(januar, Valutakode.EUR),
+            HentValutakurs(januar, Valutakode.DKK),
+            HentValutakurs(januar, Valutakode.USD),
+        )
+
+        val resultat = service.hentValutakurs(HentValutakursRequest(forespørsler)).hentetValutakursListe
+            .map { assertInstanceOf(HentetValutakursResultat.HentetValutakurs::class.java, it) }
+
+        assertEquals(forespørsler.map { it.valutakode }, resultat.map { it.basisvaluta })
+        assertEquals(listOf(BigDecimal("10"), BigDecimal("12"), BigDecimal("11"), BigDecimal("1.5534"), BigDecimal("10")), resultat.map { it.valutakursSnitt })
+        assertEquals(ValutakursgrunnlagKilde.NORGES_BANK, resultat[3].kilde)
+        Mockito.verify(ecb).hentValutakurser(listOf("USD", "EUR", "DKK"), desember)
+        Mockito.verify(ecb).hentValutakurser(listOf("USD"), juni)
+        Mockito.verify(norgesBank).hentValutakurs(Frekvens.MÅNEDLIG, "DKK", desember)
+        Mockito.verifyNoMoreInteractions(ecb, norgesBank)
+    }
+
+    @Test
+    fun `ti halvår med flere valutaer gir ti ECB-kall`() {
+        val forespørsler = (0 until 10).flatMap { halvår ->
+            val dato = LocalDate.of(2020, 1, 1).plusMonths(halvår * 6L)
+            val sisteDag = dato.minusMonths(1).withDayOfMonth(dato.minusMonths(1).lengthOfMonth())
+            Mockito.`when`(ecb.hentValutakurser(listOf("USD", "EUR"), sisteDag))
+                .thenReturn(
+                    mapOf("USD" to Valutakurs("USD", BigDecimal.TEN, sisteDag), "EUR" to Valutakurs("EUR", BigDecimal.TEN, sisteDag)),
+                )
+            listOf(HentValutakurs(dato, Valutakode.USD), HentValutakurs(dato, Valutakode.EUR))
+        }
+
+        assertEquals(20, service.hentValutakurs(HentValutakursRequest(forespørsler)).hentetValutakursListe.size)
+
+        assertEquals(10, Mockito.mockingDetails(ecb).invocations.size)
+        Mockito.verifyNoInteractions(norgesBank)
+    }
+
+    @Test
+    fun `feilet ECB-batch bruker Norges Bank for alle aktive valutaer uten nye ECB-kall`() {
+        Mockito.`when`(ecb.hentValutakurser(listOf("USD", "DKK"), desember)).thenThrow(ECBServiceException("Mangler NOK-kurs"))
+        Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
+            .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "USD", periode = "2024-12")))
+        Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "DKK", desember))
+            .thenReturn(RestResponse.Success(norgesBankSvar(periode = "2024-12")))
+
+        val resultat = service.hentValutakurs(
+            HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.USD), HentValutakurs(januar, Valutakode.DKK))),
+        ).hentetValutakursListe
+
+        assertEquals(
+            listOf(ValutakursgrunnlagKilde.NORGES_BANK, ValutakursgrunnlagKilde.NORGES_BANK),
+            resultat.map { assertInstanceOf(HentetValutakursResultat.HentetValutakurs::class.java, it).kilde },
+        )
+        Mockito.verify(ecb).hentValutakurser(listOf("USD", "DKK"), desember)
+        Mockito.verify(norgesBank).hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember)
+        Mockito.verify(norgesBank).hentValutakurs(Frekvens.MÅNEDLIG, "DKK", desember)
+        Mockito.verifyNoMoreInteractions(ecb, norgesBank)
     }
 
     @Test

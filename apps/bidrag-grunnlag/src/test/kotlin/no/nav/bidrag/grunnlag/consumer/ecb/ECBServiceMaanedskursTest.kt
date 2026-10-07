@@ -110,6 +110,46 @@ class ECBServiceMaanedskursTest {
         assertThrows<ECBServiceException> { service.hentValutakurs("USD", sisteJuni) }
     }
 
+    @Test
+    fun `batch bruker én NOK-serie og beholder kurser når en valuta mangler`() {
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD", "DKK"), sisteJuni))
+            .thenReturn(respons("NOK" to "12", "USD" to "2"))
+
+        val kurser = service.hentValutakurser(listOf("USD", "EUR", "DKK", "USD"), sisteJuni)
+
+        assertEquals(setOf("USD", "EUR"), kurser.keys)
+        assertEquals(BigDecimal("6.0000000000"), kurser.getValue("USD").kurs)
+        assertEquals(BigDecimal("12"), kurser.getValue("EUR").kurs)
+        Mockito.verify(klient).hentValutakurs(Frequency.Monthly, listOf("NOK", "USD", "DKK"), sisteJuni)
+        Mockito.verifyNoMoreInteractions(klient)
+    }
+
+    @Test
+    fun `batch utelater ugyldig enkeltkurs uten å forkaste gyldige kurser`() {
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD", "DKK"), sisteJuni))
+            .thenReturn(respons("NOK" to "12", "USD" to "2", "DKK" to "0"))
+
+        assertEquals(setOf("USD"), service.hentValutakurser(listOf("USD", "DKK"), sisteJuni).keys)
+    }
+
+    @Test
+    fun `batch avviser manglende NOK duplisert NOK feil måned og uventet valuta`() {
+        val feilMåned = (respons("NOK" to "12", "USD" to "2") as RestResponse.Success).body.let { data ->
+            data.copy(structure = data.structure.copy(dimensions = data.structure.dimensions.copy(observation = listOf(SdmxDimension("TIME_PERIOD", listOf(SdmxValue("2025-05")))))))
+        }
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
+            .thenReturn(
+                respons("USD" to "2"),
+                respons("NOK" to "12", "NOK" to "13", "USD" to "2"),
+                RestResponse.Success(feilMåned),
+                respons("NOK" to "12", "USD" to "2", "DKK" to "1"),
+            )
+
+        repeat(4) {
+            assertThrows<ECBServiceException> { service.hentValutakurser(listOf("USD"), sisteJuni) }
+        }
+    }
+
     private fun respons(vararg kurser: Pair<String, String>): RestResponse<SdmxData> = RestResponse.Success(
         SdmxData(
             listOf(
