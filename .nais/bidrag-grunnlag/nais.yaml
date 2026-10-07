@@ -46,6 +46,8 @@ spec:
         - host: {{ azure.unsecure.ereg_url }}
         - host: {{ azure.unsecure.norgesbank_url }}
         - host: {{ azure.unsecure.ecb_url }}
+        - host: slack.com
+        - host: api.slack.com
       rules:
         - application: familie-ba-sak
           namespace: teamfamilie
@@ -87,7 +89,11 @@ spec:
   {{#each ingresses as |url|}}
      - {{url}}
   {{/each}}
+  envFrom:
+    - secret: bidrag-bot-slack-oauth-token
   env:
+    - name: SLACK_CHANNEL_ID
+      value: {{ slackChannelId }}
     - name: FAMILIEBASAK_URL
       value: https://{{ azure.familiebasak_url }}
     - name: FAMILIEBASAK_SCOPE
