@@ -273,6 +273,10 @@ class ForholdsmessigFordelingService(
         eksisterendeFFSøknadsider: Set<Long> = emptySet(),
     ) {
         try {
+            if (behandlingRepository.erBehandlingSlettet(behandlingId) == false) {
+                LOGGER.info { "Behandling $behandlingId er ikke slettet. Feilregistrerer derfor ikke noen søknader" }
+                return
+            }
             bbmConsumer
                 .hentÅpneSøknaderForBehandling(behandlingId)
                 .søknader

@@ -321,7 +321,6 @@ class ForholdsmessigFordelingKlageService(
                 }
                 bbmConsumer.fjernSammeknytningHovedsøknad(gjeldeneHovedsøknadsid, nyHovedsøknadsid)
                 behandling.soknadsid = nyHovedsøknadsid
-//                gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling, gjeldeneHovedsøknadsid)
                 return nyHovedsøknadsid
             }
         }
@@ -459,20 +458,6 @@ class ForholdsmessigFordelingKlageService(
             .forEach { it.barn.finnSøknad(it.klagesøknadsid)?.erstatterFFKlagesøknadsid = ffSøknadsid }
     }
 
-    private fun gjennopprettKlagesøknaderIkkeFFEtterAnnenSøknadSlettet(behandling: Behandling) {
-        val hovedsøknad = bbmConsumer.hentSøknad(behandling.soknadsid!!)!!.søknad
-        val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
-        val åpneSøknaderForVedtaksid = hentÅpneSøknaderForVedtak(behandling)
-        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling.soknadsid!!)
-        opprettKlagesøknaderForTilknyttedeSøknader(
-            behandling,
-            hovedsøknad,
-            relevanteKravhavere,
-            åpneSøknaderForVedtaksid,
-            behandling.soknadsid!!,
-            rollerITilknyttedeSøknader,
-        )
-    }
     private fun gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling: Behandling) {
         if (!behandlingService.behandlingFinnes(behandling.id!!)) return
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
