@@ -143,4 +143,12 @@ spec:
           - name: {{ dbname }}
             envVarPrefix: DB
         tier: {{ spec.gcp.sqlInstances.tier }}
-        # TODO add auditlogging
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "{{ dbauditlog }}"
+          - name: "pgaudit.log"
+            value: "write,role,ddl"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"

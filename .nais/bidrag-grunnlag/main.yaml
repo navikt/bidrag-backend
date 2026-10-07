@@ -35,6 +35,7 @@ azure:
     ecb_url: data-api.ecb.europa.eu
 dbname: bidrag-grunnlag-main-1
 dbinstancename: bidrag-grunnlag-main-1
+dbauditlog: "off"
 azureAccessInbound:
   - application: bisys
     namespace: bidrag
