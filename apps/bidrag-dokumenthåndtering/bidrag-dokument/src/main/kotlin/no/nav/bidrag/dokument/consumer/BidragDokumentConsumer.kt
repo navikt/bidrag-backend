@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.exchange
 import org.springframework.web.util.UriComponentsBuilder
 
 private val log = KotlinLogging.logger {}
@@ -102,6 +103,15 @@ class BidragDokumentConsumer(
             }
         return HttpResponse(journalpostExchange)
     }
+
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): HttpResponse<JournalpostResponse> = HttpResponse(
+        restTemplate.exchange<JournalpostResponse>(
+            "/journal/eksternreferanse/{eksternReferanseId}",
+            HttpMethod.GET,
+            null,
+            eksternReferanseId,
+        ),
+    )
 
     fun finnJournalposter(
         saksnummer: String?,

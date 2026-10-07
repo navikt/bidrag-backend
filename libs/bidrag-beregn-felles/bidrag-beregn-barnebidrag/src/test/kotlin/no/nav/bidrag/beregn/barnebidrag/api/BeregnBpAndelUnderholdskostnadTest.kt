@@ -7,7 +7,6 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspliktigesAndel
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -165,7 +164,6 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnad() {
         val request = lesFilOgByggRequest(filnavn)
         val bpAndelUnderholdskostnadResultat = api.beregnBpAndelUnderholdskostnad(request)
-        println(commonObjectmapper.writeValueAsString(bpAndelUnderholdskostnadResultat))
 
         val alleReferanser = hentAlleReferanser(bpAndelUnderholdskostnadResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(bpAndelUnderholdskostnadResultat)
@@ -264,7 +262,6 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnadFlerePerioder() {
         val request = lesFilOgByggRequest(filnavn)
         val bpAndelUnderholdskostnadResultat = api.beregnBpAndelUnderholdskostnad(request)
-        println(commonObjectmapper.writeValueAsString(bpAndelUnderholdskostnadResultat))
 
         val alleReferanser = hentAlleReferanser(bpAndelUnderholdskostnadResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(bpAndelUnderholdskostnadResultat)
