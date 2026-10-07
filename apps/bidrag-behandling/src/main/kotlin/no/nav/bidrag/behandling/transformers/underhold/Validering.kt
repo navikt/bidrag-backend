@@ -353,7 +353,9 @@ fun OppdatereTilleggsstønadRequest.validere(underholdskostnad: Underholdskostna
 
 fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
     this.id?.let { id ->
-        if (id > 0 && underholdskostnad.forpleining.find { id == it.id } == null) {
+        // En id som ikke er positiv finnes aldri. Uten denne kontrollen slipper den forbi her,
+        // og oppdateringen feiler siden med en serverfeil i stedet for en klientfeil.
+        if (id <= 0 || underholdskostnad.forpleining.find { id == it.id } == null) {
             ressursIkkeFunnetException("Fant ikke forpleining med id $id i behandling ${underholdskostnad.behandling.id}")
         }
     }

@@ -262,6 +262,8 @@ class UnderholdService(
         }
         underholdskostnad.tilleggsstønad.clear()
         underholdskostnad.barnetilsyn.clear()
+        // Underholdskostnaden blir et andre-barn-objekt under, og forpleining gjelder bare søknadsbarn.
+        underholdskostnad.forpleining.clear()
         underholdskostnad.rolle = underholdskostnad.behandling.bidragsmottaker
     }
 

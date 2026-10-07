@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -378,6 +379,40 @@ class UnderholdServiceTest {
             underholdService.endreUnderholdskostnadTilAndreBarn(behandling, request)
 
             // så
+            underholdskostnad.forpleining.shouldBeEmpty()
+        }
+
+        @Test
+        open fun `skal fjerne forpleining når rollen fjernes fra underholdskostnaden`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first { !it.gjelderAndreBarn }
+            val rolleBarn = underholdskostnad.rolle!!
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            every { personRepository.findFirstByIdent(any()) } returns
+                Person(
+                    ident = rolleBarn.ident,
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            // hvis
+            underholdService.fjernRolleFraUnderholdskostnad(underholdskostnad)
+
+            // så
+            underholdskostnad.gjelderAndreBarn.shouldBeTrue()
             underholdskostnad.forpleining.shouldBeEmpty()
         }
 

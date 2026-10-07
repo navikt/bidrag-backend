@@ -904,6 +904,17 @@ class ValideringTest {
         }
 
         @Test
+        fun `skal avvise en id som ikke er positiv`() {
+            shouldThrow<HttpClientErrorException> {
+                OppdatereForpleiningRequest(
+                    id = 0,
+                    periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), null),
+                    beløp = BigDecimal.valueOf(2000),
+                ).validere(underholdskostnad())
+            }
+        }
+
+        @Test
         fun `skal godta en periode der til og med er lik fra og med`() {
             OppdatereForpleiningRequest(
                 periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
