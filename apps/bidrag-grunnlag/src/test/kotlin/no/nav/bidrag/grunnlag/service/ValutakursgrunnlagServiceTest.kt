@@ -13,6 +13,8 @@ import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageImpl
@@ -85,6 +87,69 @@ class ValutakursgrunnlagServiceTest {
     fun `NOK til NOK trenger ikke kursgrunnlag`() {
         assertEquals(BigDecimal("1.2346"), service.beregn(BigDecimal("1.23456"), Valutakode.NOK, Valutakode.NOK, dato).beløp)
         Mockito.verifyNoInteractions(persistence)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "1E+1000000000",
+            "1E-1000000000",
+            "-1E+1000000000",
+            "0E+1000000000",
+            "0E-1000000000",
+            "1E+2147483647",
+            "1E-2147483647",
+            "1E+22",
+            "10000000000000000000000",
+            "0.00000000000000001",
+            "1.00000000000000000",
+            "9999999999999999999999.99999999999999999",
+        ],
+    )
+    fun `for store beløp og eksponenter avvises før kursoppslag i alle beregningsveier`(verdi: String) {
+        val beløp = BigDecimal(verdi)
+        val beregninger = listOf<() -> Any>(
+            { service.beregn(beløp, Valutakode.NOK, Valutakode.NOK, dato) },
+            { service.beregn(beløp, Valutakode.NOK, Valutakode.USD, dato) },
+            { service.beregn(beløp, Valutakode.USD, Valutakode.NOK, dato) },
+            { service.fraNok(beløp, Valutakode.NOK, dato) },
+            { service.fraNok(beløp, Valutakode.USD, dato) },
+            { service.tilNok(beløp, Valutakode.NOK, dato) },
+            { service.tilNok(beløp, Valutakode.USD, dato) },
+        )
+
+        beregninger.forEach { beregn ->
+            val feil = assertThrows<ResponseStatusException> { beregn() }
+            assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+            assertEquals("Beløp kan ha maksimalt 22 heltallssifre og 16 desimalplasser", feil.reason)
+        }
+        Mockito.verifyNoInteractions(persistence, hent)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "9999999999999999999999.9999999999999999",
+            "-9999999999999999999999.9999999999999999",
+            "1E+21",
+            "1E-16",
+            "0.0000000000000000",
+            "-1.23456",
+            "0",
+        ],
+    )
+    fun `representerbare beløp inkludert grenseverdier beholder avrundingen`(verdi: String) {
+        val beløp = BigDecimal(verdi)
+        val forventet = beløp.setScale(4, java.math.RoundingMode.HALF_UP)
+        lagreKurs(BigDecimal.ONE)
+
+        assertEquals(forventet, service.beregn(beløp, Valutakode.NOK, Valutakode.NOK, dato).beløp)
+        assertEquals(forventet, service.beregn(beløp, Valutakode.NOK, Valutakode.USD, dato).beløp)
+        assertEquals(forventet, service.beregn(beløp, Valutakode.USD, Valutakode.NOK, dato).beløp)
+        assertEquals(forventet, service.fraNok(beløp, Valutakode.NOK, dato))
+        assertEquals(forventet, service.fraNok(beløp, Valutakode.USD, dato))
+        assertEquals(forventet, service.tilNok(beløp, Valutakode.NOK, dato))
+        assertEquals(forventet, service.tilNok(beløp, Valutakode.USD, dato))
     }
 
     @Test
