@@ -52,7 +52,7 @@ data class OverstyrValutakursgrunnlagRequest(
 )
 
 data class BeregnValutaRequest(
-    @Schema(description = "Beløpet i fraValuta som skal regnes om.", example = "100.00")
+    @Schema(description = "Beløpet i fraValuta som skal regnes om. Maksimalt 22 heltallssifre og 16 desimalplasser, inkludert avsluttende nuller. Eksponentnotasjon må holde seg innenfor de samme grensene.", example = "100.00")
     val beløp: BigDecimal,
     @Schema(description = "Valutaen beløpet er oppgitt i.", example = "USD")
     val fraValuta: Valutakode,
@@ -203,7 +203,7 @@ class ValutakursgrunnlagController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Omregnet beløp, kurs og eventuelt brukt kursgrunnlag"),
-            ApiResponse(responseCode = "400", description = "Omregning mellom to utenlandske valutaer støttes ikke, eller forespørselen er ugyldig"),
+            ApiResponse(responseCode = "400", description = "Beløpet overskrider 22 heltallssifre eller 16 desimalplasser, omregning mellom to utenlandske valutaer støttes ikke, eller forespørselen er ugyldig"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
             ApiResponse(responseCode = "404", description = "Ingen lagret kurs for valgt valuta og dato"),
             ApiResponse(responseCode = "422", description = "Grunnlaget finnes, men har ingen gyldig, normalisert kurs"),

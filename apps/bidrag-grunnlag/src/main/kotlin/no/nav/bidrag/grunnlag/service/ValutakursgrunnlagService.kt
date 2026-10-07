@@ -91,16 +91,19 @@ class ValutakursgrunnlagService(
     fun hentFeiledeValutakursgrunnlag(pageable: Pageable): Page<ValutakursgrunnlagBo> = persistenceService.hentFeiledeValutakursgrunnlag(pageable).map { it.toValutakursgrunnlagBo() }
 
     fun fraNok(beløpNok: BigDecimal, valutakode: Valutakode, dato: LocalDate = LocalDate.now()): BigDecimal {
+        validerBeløp(beløpNok)
         if (valutakode == Valutakode.NOK) return beløpNok.setScale(4, RoundingMode.HALF_UP)
         return beløpNok.divide(hentGyldigKursgrunnlag(valutakode, dato).kurs, 4, RoundingMode.HALF_UP)
     }
 
     fun tilNok(beløp: BigDecimal, valutakode: Valutakode, dato: LocalDate = LocalDate.now()): BigDecimal {
+        validerBeløp(beløp)
         if (valutakode == Valutakode.NOK) return beløp.setScale(4, RoundingMode.HALF_UP)
         return beløp.multiply(hentGyldigKursgrunnlag(valutakode, dato).kurs).setScale(4, RoundingMode.HALF_UP)
     }
 
     fun beregn(beløp: BigDecimal, fraValuta: Valutakode, tilValuta: Valutakode, dato: LocalDate): Valutaberegning {
+        validerBeløp(beløp)
         if (fraValuta == Valutakode.NOK && tilValuta == Valutakode.NOK) return Valutaberegning(beløp.setScale(4, RoundingMode.HALF_UP), BigDecimal.ONE, null, fraValuta, tilValuta, dato)
         if (fraValuta != Valutakode.NOK && tilValuta != Valutakode.NOK) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kun omregning til eller fra NOK støttes")
@@ -109,6 +112,12 @@ class ValutakursgrunnlagService(
         val grunnlag = hentGyldigKursgrunnlag(valutakode, dato)
         val resultat = if (tilValuta == Valutakode.NOK) beløp.multiply(grunnlag.kurs) else beløp.divide(grunnlag.kurs, 4, RoundingMode.HALF_UP)
         return Valutaberegning(resultat.setScale(4, RoundingMode.HALF_UP), grunnlag.kurs, grunnlag.grunnlag, fraValuta, tilValuta, dato)
+    }
+
+    private fun validerBeløp(beløp: BigDecimal) {
+        if (beløp.precision() > 38 || beløp.scale() > 16 || beløp.precision().toLong() - beløp.scale().toLong() > 22) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Beløp kan ha maksimalt 22 heltallssifre og 16 desimalplasser")
+        }
     }
 
     private fun hentGyldigKursgrunnlag(valutakode: Valutakode, dato: LocalDate): GyldigKursgrunnlag {
