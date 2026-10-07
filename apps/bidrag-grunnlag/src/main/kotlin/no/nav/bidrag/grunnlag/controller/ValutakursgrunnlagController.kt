@@ -212,7 +212,6 @@ class ValutakursgrunnlagController(
     fun beregn(@RequestBody request: BeregnValutaRequest): Valutaberegning = valutakursgrunnlagService.beregn(request.beløp, request.fraValuta, request.tilValuta, request.dato)
 
     private fun krevLokalSkrivetilgang() {
-        return
         if (!skrivingLokaltAktivert || !environment.acceptsProfiles(Profiles.of("local"))) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Skriveoperasjonen er ikke aktivert")
         }
