@@ -7,6 +7,7 @@ import java.time.LocalDate
 enum class Valutakode(
     val visningsnavn: String,
     val utgåttDato: LocalDate? = null,
+    val gyldigFra: LocalDate? = null,
 ) {
     ALL("Albanske lek"),
     ANG("NL Antillene Gylden", LocalDate.of(2025, 4, 1)),
@@ -16,7 +17,7 @@ enum class Valutakode(
     BDT("Bangladeshi taka"),
     BGN("Bulgarsk lev", LocalDate.of(2026, 1, 1)),
     BRL("Brasilske reais"),
-    BYN("Belarusiske nye rubler"),
+    BYN("Belarusiske nye rubler", gyldigFra = LocalDate.of(2016, 7, 1)),
     CAD("Canadiske dollar"),
     CHF("Sveitsiske Franc"),
     CNY("Kinesiske Yen"),
@@ -62,7 +63,7 @@ enum class Valutakode(
     ZAR("Sør-Afrika Rep. rand"),
     ;
 
-    fun aktiv(dato: LocalDate = LocalDate.now()) = utgåttDato == null || dato.isBefore(utgåttDato)
+    fun aktiv(dato: LocalDate = LocalDate.now()) = (gyldigFra == null || !dato.isBefore(gyldigFra)) && (utgåttDato == null || dato.isBefore(utgåttDato))
 
     companion object {
         fun fraVisningsnavn(visningsnavn: String): Valutakode? = entries.firstOrNull { it.visningsnavn == visningsnavn }

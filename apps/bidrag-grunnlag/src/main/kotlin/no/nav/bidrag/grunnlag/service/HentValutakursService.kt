@@ -41,7 +41,7 @@ class HentValutakursService(
         require(utenlandskValutakode != Valutakode.NOK) { "NOK trenger ikke kursgrunnlag" }
         val observasjonsmåned = YearMonth.from(dato.minusMonths(1))
         val periode = ÅrMånedsperiode(observasjonsmåned, YearMonth.from(dato))
-        if (utenlandskValutakode.utgåttDato?.let { !dato.isBefore(it) } == true) {
+        if (!utenlandskValutakode.aktiv(dato)) {
             return HentetValutakursResultat.FeiledValutakurs(periode, utenlandskValutakode, Valutakode.NOK)
         }
         try {
