@@ -29,7 +29,7 @@ data class Valutakursgrunnlag(
     val brukFra: LocalDateTime = LocalDateTime.now(),
 
     @Column(nullable = false, name = "bruk_til")
-    val brukTil: LocalDateTime? = null,
+    val brukTil: LocalDateTime = brukFra.plusMonths(6),
 
     @Column(nullable = false, name = "hentet_tidspunkt")
     val hentetTidspunkt: LocalDateTime = LocalDateTime.now(),
@@ -62,7 +62,7 @@ data class Valutakursgrunnlag(
     val aktiv: Boolean
         get() {
             val nå = LocalDateTime.now()
-            return !nå.isBefore(brukFra) && (brukTil == null || nå.isBefore(brukTil))
+            return !nå.isBefore(brukFra) && nå.isBefore(brukTil)
         }
 
     @Enumerated(EnumType.STRING)

@@ -20,8 +20,8 @@ data class ValutakursgrunnlagBo(
     @Schema(description = "Tidspunkt valutakursgrunnlaget tas i bruk")
     val brukFra: LocalDateTime = LocalDateTime.now(),
 
-    @Schema(description = "Tidspunkt valutakursgrunnlaget ikke lenger er aktiv. Null betyr at valutagrunnlaget er aktivt")
-    val brukTil: LocalDateTime? = null,
+    @Schema(description = "Tidspunkt valutakursgrunnlaget ikke lenger er aktivt, nøyaktig seks måneder etter brukFra. Sluttidspunktet er ekskludert.")
+    val brukTil: LocalDateTime = brukFra.plusMonths(6),
 
     @Schema(description = "Hentet tidspunkt")
     val hentetTidspunkt: LocalDateTime = LocalDateTime.now(),
