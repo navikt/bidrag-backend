@@ -7,13 +7,12 @@ import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.patchRequestedFor
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.arbeidsflyt.UnleashFeatures
-import no.nav.bidrag.arbeidsflyt.consumer.BehandlingDetaljerDtoV2
-import no.nav.bidrag.arbeidsflyt.consumer.ForholdmessigFordelingDetaljerDto
 import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_BEHANDLING_ID
 import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_SØKNAD_ID
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
@@ -26,10 +25,16 @@ import no.nav.bidrag.arbeidsflyt.utils.opprettSakForBehandling
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
+import no.nav.bidrag.transport.behandling.behandling.ForholdmessigFordelingDetaljerDto
+import no.nav.bidrag.transport.behandling.behandling.RolleDto
+import no.nav.bidrag.transport.behandling.behandling.RolleSøknadDto
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
@@ -67,19 +72,33 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         behandlingsid: Long,
         forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? =
             ForholdmessigFordelingDetaljerDto(
+                barn = emptyList(),
                 opprettetAvSaksbehandler = SAKSBEHANDLER_SOM_OPPRETTET_FF,
                 opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF,
             ),
+        roller: Set<RolleDto> = emptySet(),
+        erVedtakFattet: Boolean = false,
     ) {
         val respons =
             BehandlingDetaljerDtoV2(
                 id = behandlingsid,
+                type = TypeBehandling.BIDRAG,
+                vedtakstype = Vedtakstype.ENDRING,
+                erKlageEllerOmgjøring = false,
+                opprettetTidspunkt = LocalDateTime.now(),
+                søktFomDato = LocalDate.parse("2020-06-01"),
+                mottattdato = LocalDate.parse("2020-06-01"),
+                søktAv = SøktAvType.BIDRAGSMOTTAKER,
+                søknadsid = 123,
+                behandlerenhet = ANNEN_ENHET,
                 saksnummer = SAKSNUMMER,
                 opprettetAv = SaksbehandlerDto("Z999999", "Testbruker"),
                 forholdsmessigFordeling = forholdsmessigFordeling,
+                roller = roller,
+                erVedtakFattet = erVedtakFattet,
             )
         stubFor(
-            get(urlEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid"))
+            get(urlPathEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid"))
                 .willReturn(
                     aResponse()
                         .withHeader(HttpHeaders.CONNECTION, "close")
@@ -149,7 +168,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         behandlingsid: Long,
         antall: Int,
     ) {
-        verify(antall, getRequestedFor(urlEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid")))
+        verify(antall, getRequestedFor(urlPathEqualTo("/behandling/api/v2/behandling/detaljer/$behandlingsid")))
     }
 
     private fun verifyOppgaveOverfortTilSaksbehandler(
@@ -166,6 +185,50 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val behandling = behandlingRepository.finnForBehandlingId(behandlingsid)
         behandling.shouldNotBeNull()
         return behandling
+    }
+
+    @Test
+    fun `skal bruke siste data fra behandlingsdetaljer i stedet for innholdet i hendelsen`() {
+        val behandlingsid = 555590L
+        val hendelse = opprettHendelse(behandlingsid)
+        stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubOppgaveForSaken(behandlingsid, tilordnetRessurs = SAKSBEHANDLER_SOM_OPPRETTET_FF, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
+        stubHentBehandlingDetaljer(
+            behandlingsid,
+            erVedtakFattet = true,
+            roller =
+            setOf(
+                RolleDto(
+                    id = 1,
+                    rolletype = Rolletype.BARN,
+                    delAvOpprinneligBehandling = true,
+                    erRevurdering = false,
+                    ident = "123213",
+                    stønadstype = Stønadstype.BIDRAG,
+                    saksnummer = SAKSNUMMER,
+                    søknader =
+                    listOf(
+                        RolleSøknadDto(
+                            søknadsId = 999,
+                            vedtakstype = Vedtakstype.KLAGE,
+                            søknadFra = SøktAvType.BIDRAGSPLIKTIG,
+                            enhet = ENHET_SOM_OPPRETTET_FF,
+                            behandlingstype = Behandlingstype.KLAGE,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        behandleHendelseService.behandleHendelse(hendelse)
+
+        val lagretHendelse = hentBehandling(behandlingsid).hendelse!!
+        lagretHendelse.type shouldBe BehandlingHendelseType.AVSLUTTET
+        lagretHendelse.barn.map { it.søknadsid } shouldBe listOf(999L)
+        lagretHendelse.barn.first().status shouldBe Behandlingstatus.VEDTAK_FATTET
+        lagretHendelse.barn.first().behandlingstype shouldBe Behandlingstype.KLAGE
+        lagretHendelse.barn.first().søktAv shouldBe SøktAvType.BIDRAGSPLIKTIG
+        lagretHendelse.sporingsdata.correlationId shouldBe hendelse.sporingsdata.correlationId
     }
 
     @Test
@@ -310,7 +373,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val andreHendelse = førsteFFOverføring(behandlingsid)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), opprettetAvEnhet = ENHET_SOM_OPPRETTET_FF),
         )
         stubHentOppgaveContaining(
             listOf(
@@ -332,7 +395,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ANNEN_ENHET)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)
@@ -351,7 +414,7 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = null, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
         stubHentBehandlingDetaljer(
             behandlingsid,
-            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
+            forholdsmessigFordeling = ForholdmessigFordelingDetaljerDto(barn = emptyList(), overførtTilEnhet = ENHET_SOM_OPPRETTET_FF),
         )
 
         behandleHendelseService.behandleHendelse(hendelse)

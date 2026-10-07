@@ -80,6 +80,29 @@ internal class JournalpostControllerTest : AbstractControllerTest() {
     }
 
     @Test
+    fun `skal hente journalpost for eksternReferanseId`() {
+        stubs.mockSafResponseHentJournalpost(responseJournalpostJson, HttpStatus.OK)
+        stubs.mockPersonResponse(PersonDto(PERSON_IDENT, aktørId = AKTOR_IDENT), HttpStatus.OK)
+        val responseEntity =
+            httpHeaderTestRestTemplate.getForEntity<JournalpostResponse>(initUrl() + "/journal/eksternreferanse/BID_123")
+        responseEntity.statusCode shouldBe HttpStatus.OK
+        responseEntity.body!!.journalpost!!.journalpostId shouldBe "JOARK-201028011"
+        stubs.verifyStub.harEnSafKallEtterHentJournalpost()
+        com.github.tomakehurst.wiremock.client.WireMock.verify(
+            com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor(com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo("/saf/graphql"))
+                .withRequestBody(com.github.tomakehurst.wiremock.client.WireMock.containing("\"eksternReferanseId\":\"BID_123\"")),
+        )
+    }
+
+    @Test
+    fun `skal få 404 når journalpost med eksternReferanseId ikke finnes`() {
+        stubs.mockSafResponseHentJournalpost(journalpostSafNotFoundResponse, HttpStatus.OK)
+        val responseEntity =
+            httpHeaderTestRestTemplate.getForEntity<String>(initUrl() + "/journal/eksternreferanse/BID_123")
+        responseEntity.statusCode shouldBe HttpStatus.NOT_FOUND
+    }
+
+    @Test
     @DisplayName("skal få 404 NOT FOUND når eksisterende journalpost er knyttet til annen sak")
     @Throws(IOException::class)
     fun skalFaNotFoundNarEksisterendeJournalpostErKnyttetTilAnnenSak() {

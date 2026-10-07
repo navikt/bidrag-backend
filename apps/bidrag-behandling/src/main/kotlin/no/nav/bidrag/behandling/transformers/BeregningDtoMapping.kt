@@ -242,7 +242,7 @@ fun mapTilBeregningresultatBarn(
         .finnBeregnTilDatoBehandling(søknadsbarn)
         ?.toYearMonth(),
     innkrevesFraDato = behandling.finnInnkrevesFraDato(søknadsbarn),
-    innkrevesFraPerioder = behandling.finnSkalInnkrevesPeriode(søknadsbarn),
+    innkrevesFraPerioder = if (endeligResultat?.periodeListe?.isNotEmpty() == true) behandling.finnSkalInnkrevesPeriode(søknadsbarn) else emptyList(),
     opphørsdato = søknadsbarn.opphørsdato?.toYearMonth(),
     løperBidrag = behandling.løperBidragEtterEldsteVirkning(søknadsbarn),
     resultat =

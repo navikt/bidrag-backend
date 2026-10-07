@@ -115,8 +115,3 @@ no.nav.security.jwt:
     tokenx:
       discoveryurl: ${TOKEN_X_WELL_KNOWN_URL}
       accepted_audience: aud-localhost
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-    no.nav.security: DEBUG

@@ -7,7 +7,6 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholdskostnad
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -319,7 +318,6 @@ internal class BeregnUnderholdskostnadTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatUnderholdskostnad(): List<DelberegningUnderholdskostnad> {
         val request = lesFilOgByggRequest(filnavn)
         val underholdskostnadResultat = api.beregnUnderholdskostnad(request)
-        println(commonObjectmapper.writeValueAsString(underholdskostnadResultat))
 
         val alleReferanser = hentAlleReferanser(underholdskostnadResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(underholdskostnadResultat)

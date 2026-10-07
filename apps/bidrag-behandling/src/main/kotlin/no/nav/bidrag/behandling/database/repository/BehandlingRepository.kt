@@ -18,6 +18,9 @@ import java.util.Optional
 
 interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandlingRepository {
 
+    @Query("select b.deleted from behandling b where b.id = :behandlingsid", nativeQuery = true)
+    fun erBehandlingSlettet(behandlingsid: Long): Boolean?
+
     @Modifying(flushAutomatically = true)
     @Query(
         """update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore(:metadataKey, :jsonValue) where b.id = :behandlingId and b.deleted = false""",

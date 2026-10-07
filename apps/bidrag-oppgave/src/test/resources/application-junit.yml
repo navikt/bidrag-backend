@@ -1,0 +1,21 @@
+AZURE_OPENID_CONFIG_ISSUER: http://junit-azure-mocked
+AZURE_APP_CLIENT_ID: mocked
+
+nais:
+  token:
+    endpoint: http://token-junit-mocked
+    exchange:
+      endpoint: http://token-exchange-junit-mocked
+
+app:
+  oppgave:
+    url: http://oppgave-junit.mocked
+    audience: api://mock.oppgave/.default
+  tilgangskontroll:
+    url: http://tilgang-junit.mocked
+    audience: api://mock.tilgang/.default
+
+spring:
+  main:
+    banner-mode: "off"
+

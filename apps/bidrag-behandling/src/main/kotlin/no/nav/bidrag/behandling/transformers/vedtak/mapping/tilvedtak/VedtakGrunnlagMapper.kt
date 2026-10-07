@@ -23,6 +23,7 @@ import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
+import no.nav.bidrag.behandling.transformers.grunnlag.tilInnhentetGrunnlagInntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
@@ -422,9 +423,10 @@ class VedtakGrunnlagMapper(
     ): BeregnGebyrResultat {
         if (behandling.lesemodusVedtak != null && behandling.grunnlagslisteFraVedtak != null && referanse != null) {
             val grunnlagGebyr = behandling.grunnlagslisteFraVedtak!!
-                .filtrerOgKonverterBasertPåFremmedReferanse<SluttberegningGebyr>(Grunnlagstype.SLUTTBEREGNING_GEBYR, rolle.tilGrunnlagsreferanse()).find { it.referanse.endsWith(referanse) }
-            val delberegningSumInntekt = grunnlagGebyr?.let {
-                behandling.grunnlagslisteFraVedtak!!.finnGrunnlagSomErReferertAv(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, grunnlagGebyr.grunnlag).toList()
+                .filtrerOgKonverterBasertPåFremmedReferanse<SluttberegningGebyr>(Grunnlagstype.SLUTTBEREGNING_GEBYR, rolle.tilGrunnlagsreferanse())
+            val grunnlagGebyrForReferanse = grunnlagGebyr.find { it.referanse.endsWith(referanse) } ?: grunnlagGebyr.firstOrNull()
+            val delberegningSumInntekt = grunnlagGebyrForReferanse?.let {
+                behandling.grunnlagslisteFraVedtak!!.finnGrunnlagSomErReferertAv(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, grunnlagGebyrForReferanse.grunnlag).toList()
                     .innholdTilObjekt<DelberegningSumInntekt>()
                     .maxByOrNull { it.barnetillegg ?: BigDecimal.ZERO }
             }
@@ -432,20 +434,28 @@ class VedtakGrunnlagMapper(
                 skattepliktigInntekt =
                 delberegningSumInntekt?.skattepliktigInntekt ?: BigDecimal.ZERO,
                 maksBarnetillegg = delberegningSumInntekt?.barnetillegg,
-                resultatkode = grunnlagGebyr?.innhold?.tilResultatkode() ?: Resultatkode.GEBYR_FRITATT,
-                beløpGebyrsats = if (grunnlagGebyr?.innhold?.ilagtGebyr == true) behandling.grunnlagslisteFraVedtak!!.gebyrBeløp!! else BigDecimal.ZERO,
+                resultatkode = grunnlagGebyrForReferanse?.innhold?.tilResultatkode() ?: Resultatkode.GEBYR_FRITATT,
+                beløpGebyrsats = if (grunnlagGebyrForReferanse?.innhold?.ilagtGebyr == true) behandling.grunnlagslisteFraVedtak!!.gebyrBeløp!! else BigDecimal.ZERO,
                 grunnlagsreferanseListeEngangsbeløp = emptyList(),
-                ilagtGebyr = grunnlagGebyr?.innhold?.ilagtGebyr ?: false,
+                ilagtGebyr = grunnlagGebyrForReferanse?.innhold?.ilagtGebyr ?: false,
                 grunnlagsliste = behandling.grunnlagslisteFraVedtak ?: emptyList(),
             )
         }
         val grunnlagGebyr = (if (behandling.erAvslagForAlle) (behandling.gebyrGrunnlagslisteDefaultVerdi(rolle) + grunnlagsliste) else grunnlagsliste).toMutableList()
-        grunnlagGebyr.addAll(
-            behandling.grunnlag
-                .toList()
-                .mapAinntekt(behandling.tilPersonobjekter())
-                .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
-        )
+        if (behandling.erAvslagForAlle) {
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .mapAinntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .tilInnhentetGrunnlagInntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
+        }
         val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
         val delberegningSummInntektGrunnlag = gebyrBeregning.filtrerBasertPåFremmedReferanse(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, rolle.tilGrunnlagsreferanse()).firstOrNull()
@@ -482,7 +492,7 @@ class VedtakGrunnlagMapper(
                 .flatMap { beregningBarn ->
                     beregningBarn.summertInntektListe.map {
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
                             innhold = POJONode(it),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),
