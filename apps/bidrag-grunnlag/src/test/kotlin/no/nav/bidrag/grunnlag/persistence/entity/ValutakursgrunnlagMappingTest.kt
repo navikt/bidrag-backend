@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import kotlin.reflect.full.primaryConstructor
 
 class ValutakursgrunnlagMappingTest {
     private val brukFra = LocalDateTime.of(2026, 1, 1, 0, 0)
@@ -23,8 +24,8 @@ class ValutakursgrunnlagMappingTest {
         assertEquals(brukTil, entity.brukTil)
         assertEquals(brukTil, bo.toValutakursgrunnlagEntity().brukTil)
         assertEquals(brukTil, entity.toValutakursgrunnlagBo().brukTil)
-        assertEquals(false, ValutakursgrunnlagBo::class.constructors.single().parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
-        assertEquals(false, Valutakursgrunnlag::class.constructors.single().parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
+        assertEquals(false, requireNotNull(ValutakursgrunnlagBo::class.primaryConstructor).parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
+        assertEquals(false, requireNotNull(Valutakursgrunnlag::class.primaryConstructor).parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
     }
 
     @Test
