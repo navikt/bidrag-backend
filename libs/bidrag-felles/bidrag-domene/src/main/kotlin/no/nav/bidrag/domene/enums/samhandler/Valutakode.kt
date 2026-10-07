@@ -14,7 +14,7 @@ enum class Valutakode(
     ARS("Argentinsk peso"),
     AUD("Australske dollar"),
     BAM("Bosniske Mark"),
-    BDT("Bangladeshi taka"),
+    BDT("Bangladeshisk taka"),
     BGN("Bulgarsk lev", LocalDate.of(2026, 1, 1)),
     BRL("Brasilske reais"),
     BYN("Belarusiske nye rubler", gyldigFra = LocalDate.of(2016, 7, 1)),
