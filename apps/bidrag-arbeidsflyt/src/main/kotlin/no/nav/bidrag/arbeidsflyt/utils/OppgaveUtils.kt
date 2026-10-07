@@ -18,7 +18,7 @@ fun lagSaksbehandlerInfoMedEnhet(
     return if (saksbehandlerIdent.isNullOrEmpty()) {
         if (saksbehandlerNavn.isNullOrEmpty()) "ukjent saksbehandler ($enhet)" else "$saksbehandlerNavn ($enhet)"
     } else {
-        val navn = saksbehandlerNavn ?: hentSaksbehandlernavn(saksbehandlerIdent) ?: "Ukjent $saksbehandlerIdent"
+        val navn = hentSaksbehandlernavn(saksbehandlerIdent) ?: saksbehandlerNavn ?: "Ukjent $saksbehandlerIdent"
         "$navn ($saksbehandlerIdent, $enhet)"
     }
 }
