@@ -47,7 +47,7 @@ data class InnhentHistoriskeRequest(
 )
 
 data class OverstyrValutakursgrunnlagRequest(
-    @Schema(description = "NOK per én enhet av grunnlagets utenlandske valuta. Må være større enn null.", example = "10.5000")
+    @Schema(description = "NOK per én enhet av grunnlagets utenlandske valuta. Må være større enn null og kunne lagres eksakt med maksimalt 22 heltallssifre og 16 desimaler. Avsluttende nuller teller ikke som ekstra desimaler.", example = "10.5000")
     val kurs: BigDecimal,
 )
 
@@ -177,7 +177,7 @@ class ValutakursgrunnlagController(
     @ApiResponses(
         value = [
             ApiResponse(responseCode = "200", description = "Oppdatert kursgrunnlag med status OVERSTYRT"),
-            ApiResponse(responseCode = "400", description = "Kursen er ikke større enn null eller forespørselen er ugyldig"),
+            ApiResponse(responseCode = "400", description = "Kursen er ikke større enn null, overskrider 22 heltallssifre eller 16 desimaler, eller forespørselen er ugyldig"),
             ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
             ApiResponse(responseCode = "404", description = "Valutakursgrunnlaget finnes ikke"),
         ],

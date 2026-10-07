@@ -3,6 +3,7 @@ package no.nav.bidrag.grunnlag.service
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.bo.toValutakursgrunnlagEntity
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
@@ -22,6 +23,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
@@ -117,5 +120,50 @@ class ValutakursgrunnlagPersistenceTest {
             assertThrows<ResponseStatusException> { service.overstyrValutakursgrunnlag(42, BigDecimal.ZERO) }.statusCode,
         )
         Mockito.verifyNoInteractions(repository)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "10000000000000000000000",
+            "99999999999999999999999.1234567890123456",
+            "1E+22",
+            "1E+2147483647",
+            "0.00000000000000001",
+            "10.12345678901234567",
+            "9999999999999999999999.99999999999999999",
+            "-1",
+        ],
+    )
+    fun `overstyring avviser kurser som ikke kan lagres eksakt før databaseoppslag`(verdi: String) {
+        val feil = assertThrows<ResponseStatusException> { service.overstyrValutakursgrunnlag(42, BigDecimal(verdi)) }
+
+        assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+        Mockito.verifyNoInteractions(repository, service.entityManager)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "9999999999999999999999.9999999999999999",
+            "9999999999999999999999",
+            "0.0000000000000001",
+            "1E+21",
+            "1E-16",
+            "10.1234567890123456000",
+            "9999999999999999999999.00000000000000000",
+            "0.0000000000000001000",
+        ],
+    )
+    fun `overstyring lagrer representerbare grenseverdier uten avrunding`(verdi: String) {
+        val kurs = BigDecimal(verdi)
+        val eksisterende = grunnlag.toValutakursgrunnlagEntity()
+        Mockito.`when`(repository.findById(42)).thenReturn(Optional.of(eksisterende))
+        Mockito.`when`(repository.saveAndFlush(Mockito.any(Valutakursgrunnlag::class.java))).thenAnswer { it.getArgument(0) }
+
+        val resultat = service.overstyrValutakursgrunnlag(42, kurs)
+
+        assertEquals(kurs, resultat.kurs)
+        assertEquals(ValutakursgrunnlagStatus.OVERSTYRT, resultat.status)
     }
 }
