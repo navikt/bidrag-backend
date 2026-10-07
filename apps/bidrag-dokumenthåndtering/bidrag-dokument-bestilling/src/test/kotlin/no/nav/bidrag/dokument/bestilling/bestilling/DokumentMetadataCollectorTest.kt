@@ -1120,6 +1120,38 @@ internal class DokumentMetadataCollectorTest {
             bestilling.roller.barn shouldHaveSize 1
             bestilling.roller.barn[0].fodselsnummer shouldBe BARN1.ident.verdi
         }
+
+        @Test
+        fun `skal bruke barnIBehandling hvis behandling ikke finnes`() {
+            mockDefaultValues()
+            val saksnummer = "22222"
+            val sak =
+                createSakResponse().copy(
+                    roller =
+                    listOf(
+                        RolleDto(fødselsnummer = BM1.ident, type = Rolletype.BIDRAGSMOTTAKER),
+                        RolleDto(fødselsnummer = BARN1.ident, type = Rolletype.BARN),
+                        RolleDto(fødselsnummer = BARN2.ident, type = Rolletype.BARN),
+                    ),
+                )
+            every { sakService.hentSak(saksnummer) } returns sak
+            every { behandlingService.hentIdentSøknadsbarn(123, null) } returns null
+
+            val request =
+                DokumentBestillingForespørsel(
+                    mottakerId = BM1.ident.verdi,
+                    saksnummer = saksnummer,
+                    tittel = DEFAULT_TITLE_DOKUMENT,
+                    enhet = "4806",
+                    spraak = "NB",
+                    samhandlerInformasjon = null,
+                    behandlingId = 123,
+                    barnIBehandling = listOf(BARN1.ident.verdi),
+                )
+            val bestilling = mapToBestillingsdata(request)
+            bestilling.roller.barn shouldHaveSize 1
+            bestilling.roller.barn[0].fodselsnummer shouldBe BARN1.ident.verdi
+        }
     }
 
     @Test

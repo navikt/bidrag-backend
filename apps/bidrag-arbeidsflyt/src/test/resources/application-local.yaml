@@ -1,6 +1,3 @@
-logging:
-  level:
-    root: INFO
 
 BIDRAG_PERSON_URL: https://bidrag-person-q2.dev.intern.nav.no/bidrag-sak
 BIDRAG_BEHANDLING_URL: https://bidrag-behandling-q2.intern.dev.nav.no

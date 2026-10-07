@@ -11,7 +11,6 @@ import no.nav.bidrag.beregn.inntekt.TestUtil
 import no.nav.bidrag.beregn.inntekt.testdata.StubUtils.Companion.kodeverkUrl
 import no.nav.bidrag.beregn.inntekt.util.VersionProvider.Companion.APP_VERSJON
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.RoundingMode
@@ -36,8 +35,6 @@ class InntektServiceTest : AbstractServiceTest() {
                 vedtakstidspunktOpprinneligeVedtak = emptyList(),
             ),
         )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekterResponseDto))
 
         assertSoftly {
             transformerteInntekterResponseDto.shouldNotBeNull()
@@ -93,8 +90,6 @@ class InntektServiceTest : AbstractServiceTest() {
                     vedtakstidspunktOpprinneligeVedtak = emptyList(),
                 ),
             )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekterResponseDto))
 
         assertSoftly {
             transformerteInntekterResponseDto.shouldNotBeNull()
@@ -172,8 +167,6 @@ class InntektServiceTest : AbstractServiceTest() {
                     vedtakstidspunktOpprinneligeVedtak = emptyList(),
                 ),
             )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekterResponseDto))
 
         assertSoftly {
             transformerteInntekterResponseDto.shouldNotBeNull()

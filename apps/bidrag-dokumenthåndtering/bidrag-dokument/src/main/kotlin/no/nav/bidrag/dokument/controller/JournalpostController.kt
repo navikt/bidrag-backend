@@ -100,6 +100,25 @@ class JournalpostController(
         return ResponseEntity.ok(journalposter)
     }
 
+    @GetMapping("/journal/eksternreferanse/{eksternReferanseId}")
+    @Operation(
+        security = [SecurityRequirement(name = "bearer-key")],
+        description = "Hent journalpost i Joark basert på eksternReferanseId (referanseId brukt ved opprettelse)",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Journalpost er hentet"),
+            ApiResponse(responseCode = "404", description = "Fant ikke journalpost med gitt eksternReferanseId"),
+        ],
+    )
+    @GlobalApiReponses
+    fun hentJournalpostForEksternReferanseId(
+        @PathVariable eksternReferanseId: String,
+    ): ResponseEntity<JournalpostResponse> {
+        log.info { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
+        return journalpostService.hentJournalpostForEksternReferanseId(eksternReferanseId)
+    }
+
     @GetMapping("/journal/{journalpostIdForKildesystem}")
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],

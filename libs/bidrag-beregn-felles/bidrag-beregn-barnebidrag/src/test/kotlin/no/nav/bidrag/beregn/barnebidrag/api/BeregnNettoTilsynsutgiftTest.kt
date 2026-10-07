@@ -15,7 +15,6 @@ import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningNettoTilsynsutgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -323,7 +322,6 @@ internal class BeregnNettoTilsynsutgiftTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatNettoTilsynsutgift(): List<DelberegningNettoTilsynsutgift> {
         val request = lesFilOgByggRequest(filnavn)
         val nettoTilsynsutgiftResultat = api.beregnNettoTilsynsutgift(request)
-        println(commonObjectmapper.writeValueAsString(nettoTilsynsutgiftResultat))
 
         val alleReferanser = hentAlleReferanser(nettoTilsynsutgiftResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(nettoTilsynsutgiftResultat)

@@ -11,7 +11,6 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEndringSjekkGrense
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.fail
@@ -122,7 +121,6 @@ internal class BeregnEndringSjekkGrenseTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultat() {
         val request = lesFilOgByggRequest(filnavn)
         val endringSjekkGrenseResultat = api.beregnEndringSjekkGrense(beregnGrunnlag = request)
-        println(commonObjectmapper.writeValueAsString(endringSjekkGrenseResultat))
 
         val alleReferanser = hentAlleReferanser(endringSjekkGrenseResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endringSjekkGrenseResultat)

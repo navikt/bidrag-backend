@@ -23,6 +23,7 @@ import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
+import no.nav.bidrag.behandling.transformers.grunnlag.tilInnhentetGrunnlagInntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
@@ -448,6 +449,12 @@ class VedtakGrunnlagMapper(
                     .mapAinntekt(behandling.tilPersonobjekter())
                     .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
             )
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .tilInnhentetGrunnlagInntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
         }
         val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
@@ -485,7 +492,7 @@ class VedtakGrunnlagMapper(
                 .flatMap { beregningBarn ->
                     beregningBarn.summertInntektListe.map {
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
                             innhold = POJONode(it),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),

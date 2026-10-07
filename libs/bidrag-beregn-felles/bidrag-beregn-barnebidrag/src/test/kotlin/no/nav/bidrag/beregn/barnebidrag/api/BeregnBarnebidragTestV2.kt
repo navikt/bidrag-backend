@@ -18,7 +18,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningAndelAvBid
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumBidragTilFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -2004,8 +2003,6 @@ internal class BeregnBarnebidragTestV2 : FellesTest() {
             grunnlagPrivatAvtaleListe = requestPrivatAvtale,
             grunnlagValutakursListe = requestValutakurs,
         )
-
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         barnebidragResultat.forEach { beregningResultat ->
 

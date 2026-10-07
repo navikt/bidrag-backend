@@ -77,6 +77,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-backend-feilhandtering</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>no.nav.security</groupId>
       <artifactId>token-validation-spring</artifactId>
       <version>${nav-token-support.version}</version>

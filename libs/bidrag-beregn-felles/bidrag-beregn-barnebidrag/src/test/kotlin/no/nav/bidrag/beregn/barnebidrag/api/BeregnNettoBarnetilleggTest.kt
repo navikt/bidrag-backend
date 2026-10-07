@@ -8,7 +8,6 @@ import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningNettoBarnetillegg
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -151,7 +150,6 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatNettoBarnetillegg(rolle: Grunnlagstype): List<DelberegningNettoBarnetillegg> {
         val request = lesFilOgByggRequest(filnavn)
         val nettoBarnetilleggResultat = api.beregnNettoBarnetillegg(request, rolle)
-        println(commonObjectmapper.writeValueAsString(nettoBarnetilleggResultat))
 
         val alleReferanser = hentAlleReferanser(nettoBarnetilleggResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(nettoBarnetilleggResultat)
