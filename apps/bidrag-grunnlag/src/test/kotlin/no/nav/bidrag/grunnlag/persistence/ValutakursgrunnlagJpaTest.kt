@@ -31,22 +31,29 @@ class ValutakursgrunnlagJpaTest(
     @Autowired private val persistenceService: PersistenceService,
 ) {
     @Test
-    fun `lagret aktiv-flagg ignoreres for utløpt periode`() {
-        entityManager.createNativeQuery("ALTER TABLE valutakursgrunnlag ADD COLUMN IF NOT EXISTS aktiv BOOLEAN DEFAULT TRUE NOT NULL").executeUpdate()
+    fun `aktiv beregnes for lagret grunnlag uten egen databasekolonne`() {
         val lagret = repository.saveAndFlush(
             Valutakursgrunnlag(
                 brukFra = LocalDate.of(2020, 1, 1).atStartOfDay(),
                 brukTil = LocalDate.of(2020, 7, 1).atStartOfDay(),
                 basisvaluta = Valutakode.USD,
+                kurs = BigDecimal("10.125"),
+                multiplikator = 0,
             ),
         )
-        entityManager.createNativeQuery("UPDATE valutakursgrunnlag SET aktiv = TRUE WHERE valutakursgrunnlag_id = :id")
-            .setParameter("id", lagret.valutakursgrunnlagId)
-            .executeUpdate()
         entityManager.clear()
 
         val lest = repository.findById(lagret.valutakursgrunnlagId).orElseThrow()
+        val antallAktivKolonner = entityManager.createNativeQuery(
+            "SELECT COUNT(*) FROM information_schema.columns WHERE LOWER(table_name) = 'valutakursgrunnlag' AND LOWER(column_name) = 'aktiv'",
+        ).singleResult as Number
 
+        assertEquals(0L, antallAktivKolonner.toLong())
+        assertEquals(lagret.brukFra, lest.brukFra)
+        assertEquals(lagret.brukTil, lest.brukTil)
+        assertEquals(lagret.basisvaluta, lest.basisvaluta)
+        assertEquals(0, lagret.kurs!!.compareTo(lest.kurs))
+        assertEquals(lagret.multiplikator, lest.multiplikator)
         assertEquals(false, lest.aktiv)
         assertEquals(false, lest.toValutakursgrunnlagBo().aktiv)
     }
