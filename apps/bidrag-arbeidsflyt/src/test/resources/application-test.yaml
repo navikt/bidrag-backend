@@ -1,7 +1,4 @@
 DEFAULT_PORT: 1232
-logging:
-  level:
-    root: INFO
 retry:
   enabled: false
 BIDRAG_TILGANGSKONTROLL_URL: http://localhost:${wiremock.server.port:0}/tilgangskontroll

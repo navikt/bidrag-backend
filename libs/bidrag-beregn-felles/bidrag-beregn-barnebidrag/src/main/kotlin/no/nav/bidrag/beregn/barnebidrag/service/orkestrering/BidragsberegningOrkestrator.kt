@@ -163,6 +163,17 @@ class BidragsberegningOrkestrator(
 
         Beregningstype.OMGJØRING_ENDELIG -> {
             secureLogger.debug { "Utfører omgjøringsberegning for request: $request" }
+            // Sjekk om det skal gis direkte avslag for alle barn
+            if (request.erDirekteAvslag) {
+                // Kaller beregning for ett og ett søknadsbarn
+                val respons = utforBeregningDirekteAvslag(request)
+                secureLogger.debug { "Direkte avslag, respons fra beregning: $${commonObjectmapper.writeValueAsString(respons)}" }
+
+                return BidragsberegningOrkestratorResponseV2(
+                    grunnlagListe = respons.flatMap { it.second }.distinct(),
+                    resultat = respons.map { it.first },
+                )
+            }
             val klageberegningResultat = orkestrerBeregning(request, true)
             val respons = klageberegningResultat.resultatListe.map { resultat ->
                 if (resultat.beregningsfeil != null) {
@@ -426,7 +437,8 @@ class BidragsberegningOrkestrator(
                     ResultatVedtakV2(
                         periodeListe = beregningResultat.beregnetBarnebidragPeriodeListe,
                         delvedtak = false,
-                        omgjøringsvedtak = false,
+                        omgjøringsvedtak = true,
+                        beregnet = true,
                         vedtakstype = Vedtakstype.ENDRING,
                     ),
                 ),
