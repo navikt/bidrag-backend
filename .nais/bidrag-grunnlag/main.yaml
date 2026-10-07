@@ -1,4 +1,5 @@
 name: bidrag-grunnlag
+slackChannelId: C05HQPLTFAA
 ingresses:
   - https://bidrag-grunnlag.intern.dev.nav.no
 azure:

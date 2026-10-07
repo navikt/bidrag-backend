@@ -10,6 +10,7 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import no.nav.bidrag.commons.cache.EnableUserCache
 import no.nav.bidrag.commons.security.api.EnableSecurityConfiguration
 import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvider
+import no.nav.bidrag.commons.service.slack.SlackService
 import no.nav.bidrag.commons.web.CorrelationIdFilter
 import no.nav.bidrag.commons.web.DefaultCorsFilter
 import no.nav.bidrag.commons.web.UserMdcFilter
@@ -44,7 +45,7 @@ const val LIVE_PROFILE = "live"
 @EnableRetry
 @EnableSecurityConfiguration
 @EnableSaksbehandlernavnProvider
-@Import(CorrelationIdFilter::class, UserMdcFilter::class, DefaultCorsFilter::class, RestOperationsAzure::class)
+@Import(CorrelationIdFilter::class, UserMdcFilter::class, DefaultCorsFilter::class, RestOperationsAzure::class, SlackService::class)
 class BidragGrunnlagConfig {
 
     @Bean

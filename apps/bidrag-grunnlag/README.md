@@ -32,6 +32,14 @@ Miljøer:
 * DEV-GCP ([https://bidrag-grunnlag.intern.dev.nav.no/](https://bidrag-grunnlag.dev.intern.nav.no/))
 * PROD-GCP ([https://bidrag-grunnlag.intern.nav.no/](https://bidrag-grunnlag.intern.nav.no/))
 
+## Planlagt innhenting av valutakursgrunnlag
+
+Jobben kjører 1. januar og 1. juli kl. 05.00 i Oslo-tid. Etter lagring sendes en Slack-melding med dato, miljø, antall opprettede grunnlag og valutakodene som ikke ble innhentet. Hvis alle kurser ble hentet, står det «Ingen». Manglende enkeltkurser hindrer ikke at kjøringen fullføres.
+
+Ved innhentings- eller lagringsfeil sendes et feilvarsel, og feilen kastes videre. Feilvarselet inneholder feiltype, ikke exception-meldingen. Detaljer finnes i applikasjonsloggene. Feil ved Slack-sending logges av den felles Slack-tjenesten.
+
+Nais-konfigurasjonen bruker secret `bidrag-bot-slack-oauth-token` og miljøvariabelen `SLACK_CHANNEL_ID`. Dev- og prod-kanalene er de samme som for `bidrag-regnskap`.
+
 ## Utstede gyldig token i dev-gcp
 For å kunne teste applikasjonen i `dev-gcp` trenger man et gyldig AzureAD JWT-token. 
 JWT-tokenet kan hentes ut manuelt eller ved hjelp at skriptet her: [hentJwtToken](https://github.com/navikt/bidrag-dev/blob/main/scripts/hentJwtToken.sh).

@@ -13,6 +13,8 @@ ECB_URL: http://localhost:${wiremock.server.port}/ecb
 BIDRAG_ORGANISASJON_URL: http://localhost:${wiremock.server.port}/organisasjon
 TILLEGGSSTONADERSAK_URL: http://localhost:${wiremock.server.port}/tilleggsstonadersak
 NAIS_APP_NAME: bidrag-grunnlag
+BIDRAG_BOT_SLACK_OAUTH_TOKEN: unused-test-token
+SLACK_CHANNEL_ID: unused-test-channel
 
 spring:
   config.activate.on-profile: test, local
