@@ -17,7 +17,7 @@ data class ValutakursgrunnlagBo(
     @Schema(description = "Angir om nåværende tidspunkt er på eller etter brukFra og før brukTil. Beregnes ved lesing, uavhengig av kursstatus.")
     val aktiv: Boolean = true,
 
-    @Schema(description = "Tidspunkt valutakursgrunnlaget taes i bruk")
+    @Schema(description = "Tidspunkt valutakursgrunnlaget tas i bruk")
     val brukFra: LocalDateTime = LocalDateTime.now(),
 
     @Schema(description = "Tidspunkt valutakursgrunnlaget ikke lenger er aktiv. Null betyr at valutagrunnlaget er aktivt")
@@ -26,7 +26,7 @@ data class ValutakursgrunnlagBo(
     @Schema(description = "Hentet tidspunkt")
     val hentetTidspunkt: LocalDateTime = LocalDateTime.now(),
 
-    @Schema(description = "Observert kurs. Null dersom henting av valuta feilets")
+    @Schema(description = "Observert kurs. Null dersom henting av valuta feilet")
     val kurs: BigDecimal?,
 
     @Schema(description = "Eksponent i tiende potens slik at en multiplikasjon av observasjonsverdien med 10^multiplikator gir verdien av en enhet. Null dersom henting av valuta feilet")
