@@ -148,7 +148,7 @@ class ValutakursgrunnlagController(
     @Operation(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Hent og lagre historiske halvårskurser",
-        description = "Henter kurser for alle utenlandske valutaer som var aktive ved hvert halvårs start. " +
+        description = "Henter kurser for utenlandske valutaer som var aktive ved hvert halvårs start, fra og med registrert gyldig-fra-dato og før utløpsdato. " +
             "Fra-datoen er inkludert og til-datoen ekskludert. Begge datoer må være 1. januar eller 1. juli. " +
             "Maksimalt 10 halvår kan hentes per kall. Inneværende halvår er tillatt selv om sluttdatoen er i fremtiden, men fremtidige halvår avvises. " +
             "Eksisterende grunnlag hoppes over, unntatt FEILET-rader som forsøkes hentet på nytt. " +

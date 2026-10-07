@@ -102,6 +102,16 @@ class HentValutakursServiceMockTest {
     }
 
     @Test
+    fun `valuta før innføringsdato får feilresultat uten eksternt kall`() {
+        val resultat = service.hentValutakurs(
+            HentValutakursRequest(listOf(HentValutakurs(LocalDate.of(2016, 1, 1), Valutakode.BYN))),
+        ).hentetValutakursListe.single()
+
+        assertInstanceOf(HentetValutakursResultat.FeiledValutakurs::class.java, resultat)
+        Mockito.verifyNoInteractions(ecb, norgesBank)
+    }
+
+    @Test
     fun `ugyldig halvårsdato og tom forespørsel avvises`() {
         assertThrows<IllegalArgumentException> { service.hentValutakurs(HentValutakursRequest(emptyList())) }
         assertThrows<IllegalArgumentException> {

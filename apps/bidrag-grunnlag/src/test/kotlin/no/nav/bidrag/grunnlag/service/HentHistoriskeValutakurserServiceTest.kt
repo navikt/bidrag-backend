@@ -54,7 +54,7 @@ class HentHistoriskeValutakurserServiceTest {
         }
         forespørsler.allValues.forEach { request ->
             val koder = request.hentValutakursListe.map { it.valutakode }
-            assertEquals(Valutakode.entries.filter { it != Valutakode.NOK && (it.utgåttDato == null || request.hentValutakursListe.first().dato.isBefore(it.utgåttDato)) }, koder)
+            assertEquals(Valutakode.entries.filter { it != Valutakode.NOK && it.aktiv(request.hentValutakursListe.first().dato) }, koder)
         }
     }
 
@@ -201,6 +201,39 @@ class HentHistoriskeValutakurserServiceTest {
         verify(hent).hentValutakurs(request.capture())
         assertFalse(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.HRK })
         verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
+    }
+
+    @Test
+    fun `BYN hentes først fra halvåret der koden ble innført`() {
+        val januar = LocalDate.of(2016, 1, 1)
+        val juli = LocalDate.of(2016, 7, 1)
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+
+        service.hentHistoriskeValutakurser(januar, LocalDate.of(2017, 1, 1))
+
+        val forespørsler = argumentCaptor<HentValutakursRequest>()
+        verify(hent, times(2)).hentValutakurs(forespørsler.capture())
+        assertFalse(forespørsler.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.BYN })
+        assertTrue(forespørsler.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.BYN })
+        verify(grunnlag, never()).hentValutakursgrunnlag(Valutakode.BYN, januar)
+        verify(grunnlag).hentValutakursgrunnlag(Valutakode.BYN, juli)
+    }
+
+    @Test
+    fun `valuta er aktiv fra og med innføringsdato og til men ikke med utløpsdato`() {
+        val bynFra = LocalDate.of(2016, 7, 1)
+        assertEquals(bynFra, Valutakode.BYN.gyldigFra)
+        assertFalse(Valutakode.BYN.aktiv(bynFra.minusDays(1)))
+        assertFalse(Valutakode.BYN.aktiv(LocalDate.MIN))
+        assertTrue(Valutakode.BYN.aktiv(bynFra))
+        assertTrue(Valutakode.BYN.aktiv(bynFra.plusDays(1)))
+
+        val bgnTil = LocalDate.of(2026, 1, 1)
+        assertTrue(Valutakode.BGN.aktiv(bgnTil.minusDays(1)))
+        assertFalse(Valutakode.BGN.aktiv(bgnTil))
+        assertFalse(Valutakode.BGN.aktiv(bgnTil.plusDays(1)))
+        assertTrue(Valutakode.USD.aktiv(LocalDate.of(2016, 1, 1)))
     }
 
     @Test
