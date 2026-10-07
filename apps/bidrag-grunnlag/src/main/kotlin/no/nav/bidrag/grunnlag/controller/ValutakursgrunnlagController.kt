@@ -40,7 +40,7 @@ data class InnhentValutakursgrunnlagRequest(
 )
 
 data class InnhentHistoriskeRequest(
-    @Schema(description = "Første halvårs startdato, inkludert. Må være 1. januar eller 1. juli.", example = "2024-01-01")
+    @Schema(description = "Første halvårs startdato, inkludert. Må være 1. januar eller 1. juli, tidligst 1. januar 2000.", example = "2024-01-01")
     val fra: LocalDate,
     @Schema(description = "Siste halvårs sluttdato, ekskludert. Må være 1. januar eller 1. juli og etter fra. Maksimalt fem år etter fra.", example = "2025-07-01")
     val til: LocalDate,
@@ -149,7 +149,7 @@ class ValutakursgrunnlagController(
         security = [SecurityRequirement(name = "bearer-key")],
         summary = "Hent og lagre historiske halvårskurser",
         description = "Henter kurser for utenlandske valutaer som var aktive ved hvert halvårs start, fra og med registrert gyldig-fra-dato og før utløpsdato. " +
-            "Fra-datoen er inkludert og til-datoen ekskludert. Begge datoer må være 1. januar eller 1. juli. " +
+            "Fra-datoen er inkludert og til-datoen ekskludert. Begge datoer må være 1. januar eller 1. juli. Tidligste fra-dato er 1. januar 2000. " +
             "Maksimalt 10 halvår kan hentes per kall. Inneværende halvår er tillatt selv om sluttdatoen er i fremtiden, men fremtidige halvår avvises. " +
             "Eksisterende grunnlag hoppes over, unntatt FEILET-rader som forsøkes hentet på nytt. " +
             "ECB brukes først, med Norges Bank som reserve. Svaret inneholder bare grunnlagene som ble behandlet i dette kallet.",

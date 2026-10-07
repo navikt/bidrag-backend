@@ -77,7 +77,7 @@ class HentHistoriskeValutakurserServiceTest {
     @Test
     fun `elleve halvår og større datointervaller avvises før oppslag og innhenting`() {
         val til = LocalDate.of(2024, 7, 1)
-        val starter = listOf(til.minusMonths(66), LocalDate.of(-999999999, 1, 1))
+        val starter = listOf(til.minusMonths(66), LocalDate.of(2000, 1, 1))
 
         starter.forEach { fra ->
             val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(fra, til) }
@@ -101,6 +101,49 @@ class HentHistoriskeValutakurserServiceTest {
         service.hentHistoriskeValutakurser(perioder)
 
         verify(hent, times(10)).hentValutakurs(any())
+    }
+
+    @Test
+    fun `datoer før januar 2000 avvises før datoberegninger og oppslag`() {
+        val starter = listOf(LocalDate.MIN, LocalDate.of(1999, 7, 1), LocalDate.of(1999, 12, 31))
+
+        starter.forEach { fra ->
+            val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(fra, fra.plusMonths(6)) }
+
+            assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+            assertEquals("Fra-dato kan ikke være før 1. januar 2000", feil.message)
+        }
+        verifyNoInteractions(hent, grunnlag)
+    }
+
+    @Test
+    fun `periodeliste med eldre dato avvises før noen perioder behandles`() {
+        val januar = LocalDate.of(2000, 1, 1)
+        val perioder = listOf(
+            Datoperiode(januar, januar.plusMonths(6)),
+            Datoperiode(LocalDate.MIN, LocalDate.MIN.plusMonths(6)),
+        )
+
+        val feil = assertThrows<HttpStatusCodeException> { service.hentHistoriskeValutakurser(perioder) }
+
+        assertEquals(HttpStatus.BAD_REQUEST, feil.statusCode)
+        assertEquals("Fra-dato kan ikke være før 1. januar 2000", feil.message)
+        verifyNoInteractions(hent, grunnlag)
+    }
+
+    @Test
+    fun `januar 2000 tillates som tidligste fra-dato`() {
+        val fra = LocalDate.of(2000, 1, 1)
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+
+        service.hentHistoriskeValutakurser(fra, fra.plusMonths(6))
+
+        val request = argumentCaptor<HentValutakursRequest>()
+        verify(hent).hentValutakurs(request.capture())
+        assertTrue(request.firstValue.hentValutakursListe.isNotEmpty())
+        assertTrue(request.firstValue.hentValutakursListe.all { it.dato == fra })
+        verify(grunnlag).opprettValutakursgrunnlag(emptyList(), Datoperiode(fra, fra.plusMonths(6)))
     }
 
     @Test
