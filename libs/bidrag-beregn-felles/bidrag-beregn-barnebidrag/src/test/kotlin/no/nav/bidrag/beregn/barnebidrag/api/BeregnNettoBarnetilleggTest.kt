@@ -149,7 +149,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
     }
 
     @Test
-    @DisplayName("Netto barnetillegg - eksempel 6 - Forsvaret er skattefritt selv om skattefaktor er oppgitt")
+    @DisplayName("Netto barnetillegg - eksempel 6 - Forsvaret er skattefritt selv om skattefaktor er oppgitt, og brutto er lik netto")
     fun testNettoBarnetillegg_Eksempel06() {
         filnavn = "src/test/resources/testfiler/nettobarnetillegg/netto_barnetillegg_eksempel6.json"
         val rolle = Grunnlagstype.PERSON_BIDRAGSPLIKTIG
@@ -157,7 +157,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
 
         assertAll(
             { assertThat(resultat).hasSize(1) },
-            { assertThat(resultat[0].summertBruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(1700).setScale(2)) },
+            { assertThat(resultat[0].summertBruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(4200).setScale(2)) },
             { assertThat(resultat[0].summertNettoBarnetillegg).isEqualTo(BigDecimal.valueOf(3605).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe).hasSize(2) },
 
@@ -165,7 +165,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
             { assertThat(resultat[0].barnetilleggTypeListe[0].bruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(1700).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe[0].nettoBarnetillegg).isEqualTo(BigDecimal.valueOf(1105).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].barnetilleggType).isEqualTo(Inntektstype.BARNETILLEGG_FORSVARET) },
-            { assertThat(resultat[0].barnetilleggTypeListe[1].bruttoBarnetillegg).isEqualTo(BigDecimal.ZERO.setScale(2)) },
+            { assertThat(resultat[0].barnetilleggTypeListe[1].bruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].nettoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
         )
     }
