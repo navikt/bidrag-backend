@@ -98,6 +98,7 @@ import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.behandling.tilBehandlingstema
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
@@ -1367,7 +1368,7 @@ fun List<Inntekt>.mapValideringsfeilForYtelse(
             erYtelse = true,
             manglerSkatteprosent =
             if (type == Inntektsrapportering.BARNETILLEGG && erBidrag) {
-                inntekterTaMed.any { it.inntektsposter.any { it.skattefaktor == null } }
+                inntekterTaMed.any { it.inntektsposter.any { it.skattefaktor == null && it.inntektstype != Inntektstype.BARNETILLEGG_FORSVARET } }
             } else {
                 false
             },
