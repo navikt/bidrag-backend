@@ -36,6 +36,8 @@ Miljøer:
 
 Jobben kjører 1. januar og 1. juli kl. 05.00 i Oslo-tid. Etter lagring sendes en Slack-melding med dato, miljø, antall opprettede grunnlag og valutakodene som ikke ble innhentet. Hvis alle kurser ble hentet, står det «Ingen». Manglende enkeltkurser hindrer ikke at kjøringen fullføres.
 
+En daglig kontroll kl. 06.00 varsler på Slack hvis databasen mangler valutakursgrunnlag for siste halvårskjøring.
+
 ECB-kurser hentes samlet per observasjonsmåned med én felles NOK-serie. Norges Bank brukes bare for valutaer som mangler en gyldig ECB-kurs. Hvis hele ECB-kallet feiler eller NOK-serien er ugyldig, brukes Norges Bank for alle forespurte valutaer i måneden. Historisk innhenting bruker samme batching, med ett ECB-kall per halvår før eventuelle retries.
 
 Ved innhentings- eller lagringsfeil sendes et feilvarsel, og feilen kastes videre. Feilvarselet inneholder feiltype, ikke exception-meldingen. Detaljer finnes i applikasjonsloggene. Feil ved Slack-sending logges av den felles Slack-tjenesten.

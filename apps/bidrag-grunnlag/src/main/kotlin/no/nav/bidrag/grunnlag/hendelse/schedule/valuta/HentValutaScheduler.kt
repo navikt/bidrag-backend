@@ -38,6 +38,24 @@ class HentValutaScheduler(
         hentValutakurs(LocalDate.now(ZoneId.of("Europe/Oslo")))
     }
 
+    @Scheduled(cron = "0 0 6 * * *", zone = "Europe/Oslo")
+    @SchedulerLock(name = "sjekkValutakursgrunnlag", lockAtLeastFor = "PT15M")
+    fun sjekkValutakursgrunnlag() {
+        LockAssert.assertLocked()
+        sjekkValutakursgrunnlag(LocalDate.now(ZoneId.of("Europe/Oslo")))
+    }
+
+    internal fun sjekkValutakursgrunnlag(dato: LocalDate) {
+        val forventetBrukFra = LocalDate.of(dato.year, if (dato.monthValue >= 7) 7 else 1, 1)
+        val sisteBrukFra = valutakursgrunnlagService.hentSisteBrukFra()
+        if (sisteBrukFra != forventetBrukFra) {
+            val nyesteGrunnlag = sisteBrukFra?.toString() ?: "ingen"
+            slackService.sendMelding(
+                "Planlagt innhenting av valutakursgrunnlag for $forventetBrukFra mangler i $clientId. Nyeste valutakursgrunnlag starter $nyesteGrunnlag.",
+            )
+        }
+    }
+
     internal fun hentValutakurs(dato: LocalDate) {
         val melding = try {
             require(dato.dayOfMonth == 1 && dato.monthValue in listOf(1, 7)) { "Valutakursgrunnlag må starte 1. januar eller 1. juli" }

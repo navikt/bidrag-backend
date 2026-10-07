@@ -14,6 +14,8 @@ import java.time.LocalDateTime
 interface ValutakursgrunnlagRepository : JpaRepository<Valutakursgrunnlag, Int> {
     fun findByStatus(status: ValutakursgrunnlagStatus, pageable: Pageable): Page<Valutakursgrunnlag>
 
+    fun findFirstByOrderByBrukFraDesc(): Valutakursgrunnlag?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     fun findByBasisvalutaAndBrukFra(basisvaluta: Valutakode, brukFra: LocalDateTime): Valutakursgrunnlag?
 
