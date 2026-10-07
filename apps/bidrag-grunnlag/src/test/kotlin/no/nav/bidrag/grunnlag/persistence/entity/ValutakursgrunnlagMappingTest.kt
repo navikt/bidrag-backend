@@ -15,6 +15,19 @@ class ValutakursgrunnlagMappingTest {
     private val brukTil = LocalDateTime.of(2026, 7, 1, 0, 0)
 
     @Test
+    fun `sluttidspunkt er ikke nullable og har seks måneders standardperiode`() {
+        val bo = ValutakursgrunnlagBo(brukFra = brukFra, kurs = null, multiplikator = null, basisvaluta = Valutakode.EUR)
+        val entity = Valutakursgrunnlag(brukFra = brukFra, basisvaluta = Valutakode.EUR)
+
+        assertEquals(brukTil, bo.brukTil)
+        assertEquals(brukTil, entity.brukTil)
+        assertEquals(brukTil, bo.toValutakursgrunnlagEntity().brukTil)
+        assertEquals(brukTil, entity.toValutakursgrunnlagBo().brukTil)
+        assertEquals(false, ValutakursgrunnlagBo::class.constructors.single().parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
+        assertEquals(false, Valutakursgrunnlag::class.constructors.single().parameters.single { it.name == "brukTil" }.type.isMarkedNullable)
+    }
+
+    @Test
     fun `feilet kurs kan mappes frem og tilbake uten kurs`() {
         val bo = ValutakursgrunnlagBo(
             brukFra = brukFra,

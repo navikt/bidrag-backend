@@ -55,7 +55,7 @@ class ValutakursgrunnlagServiceTest {
         val resultat = ValutakursgrunnlagService(repository, hent).innhent(Valutakode.USD, dato)
 
         assertEquals(dato, resultat.brukFra.toLocalDate())
-        assertEquals(dato.plusMonths(6), resultat.brukTil?.toLocalDate())
+        assertEquals(dato.plusMonths(6), resultat.brukTil.toLocalDate())
         assertEquals(Valutakode.USD, resultat.basisvaluta)
         assertEquals(null, resultat.kurs)
         assertEquals(true, resultat.feiletHenting)
