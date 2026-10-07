@@ -951,6 +951,22 @@ class ForholdsmessigFordelingService(
     )
 
     @Transactional
+    fun opprettSøknaderForKlageEllerOmgjøring(
+        behandlingId: Long,
+        opprettetEllerOppdaterSøknadsid: Long,
+        opprettetAvEnhet: String? = null,
+        fjernSøknaderFraPåklagetVedtak: Boolean = false,
+    ) {
+        val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+        opprettSøknaderForKlageEllerOmgjøring(behandling, opprettetEllerOppdaterSøknadsid, opprettetAvEnhet)
+        if (fjernSøknaderFraPåklagetVedtak) {
+            behandling.roller.forEach {
+                it.forholdsmessigFordeling?.søknader?.removeIf { søknad -> søknad.erFraPåklagetVedtak }
+            }
+        }
+    }
+
+    @Transactional
     fun slettEllerGjennopprettKlageSøknader(
         behandling: Behandling,
         søknadsidSomSlettes: Long,

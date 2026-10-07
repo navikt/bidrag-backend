@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.async
 import jakarta.transaction.Transactional
 import no.nav.bidrag.behandling.async.dto.GrunnlagInnhentingBestilling
 import no.nav.bidrag.behandling.async.dto.OpprettForsendelseBestilling
+import no.nav.bidrag.behandling.async.dto.OpprettSøknaderKlageOmgjøringBestilling
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
@@ -23,5 +24,12 @@ class BestillAsyncJobAfterCommitListener(
     fun bestillOpprettelseAvForsendelse(bestilling: OpprettForsendelseBestilling) {
         if (!bestilling.waitForCommit) return
         bestillAsyncJobListener.bestillOpprettelseAvForsendelseAsync(bestilling.copy(waitForCommit = false))
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    fun bestillOpprettelseAvSøknaderForKlageEllerOmgjøring(bestilling: OpprettSøknaderKlageOmgjøringBestilling) {
+        if (!bestilling.waitForCommit) return
+        bestillAsyncJobListener.bestillOpprettelseAvSøknaderForKlageEllerOmgjøringAsync(bestilling.copy(waitForCommit = false))
     }
 }

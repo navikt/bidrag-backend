@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import no.nav.bidrag.behandling.async.BestillAsyncJobService
+import no.nav.bidrag.behandling.async.dto.OpprettSøknaderKlageOmgjøringBestilling
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
@@ -97,6 +99,7 @@ class VedtakService(
     private val virkningstidspunktService: VirkningstidspunktService,
     private val forholdsmessigFordelingService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
+    private val bestillAsyncJobService: BestillAsyncJobService? = null,
 //    private val vedtakLocalConsumer: BidragVedtakConsumerLocal? = null,
 ) {
     fun konverterVedtakTilBehandlingForLesemodus(vedtakId: Int): Behandling? {
@@ -246,10 +249,12 @@ class VedtakService(
                     .finnHovedbehandlingForBpVedFF(bp!!.ident!!, påklagetVedtak)
                     ?.let { behandling ->
 
-                        forholdsmessigFordelingService!!.opprettSøknaderForKlageEllerOmgjøring(
-                            behandling,
-                            request.søknadsid,
-                            opprettetAvEnhet = request.behandlerenhet,
+                        bestillAsyncJobService!!.bestillOpprettelseAvSøknaderForKlageEllerOmgjøring(
+                            OpprettSøknaderKlageOmgjøringBestilling(
+                                behandlingId = behandling.id!!,
+                                søknadsid = request.søknadsid,
+                                opprettetAvEnhet = request.behandlerenhet,
+                            ),
                         )
 
                         return OpprettBehandlingResponse(behandling.id!!)
@@ -260,18 +265,24 @@ class VedtakService(
                 konverterVedtakTilBehandling(request, refVedtaksid)
                     ?: throw RuntimeException("Fant ikke vedtak for vedtakid $refVedtaksid")
 
-            if (konvertertBehandling.erIForholdsmessigFordeling) {
-                forholdsmessigFordelingService!!.opprettSøknaderForKlageEllerOmgjøring(
-                    konvertertBehandling,
-                    request.søknadsid,
-                    opprettetAvEnhet = request.behandlerenhet,
-                )
-            }
-            konvertertBehandling.roller.forEach {
-                it.forholdsmessigFordeling?.søknader?.removeIf { it.erFraPåklagetVedtak }
+            val skalOppretteKlagesøknader = konvertertBehandling.erIForholdsmessigFordeling
+            if (!skalOppretteKlagesøknader) {
+                konvertertBehandling.roller.forEach {
+                    it.forholdsmessigFordeling?.søknader?.removeIf { it.erFraPåklagetVedtak }
+                }
             }
             tilgangskontrollService.sjekkTilgangBehandling(konvertertBehandling)
             val behandlingDo = behandlingService.lagreBehandling(konvertertBehandling, true)
+            if (skalOppretteKlagesøknader) {
+                bestillAsyncJobService!!.bestillOpprettelseAvSøknaderForKlageEllerOmgjøring(
+                    OpprettSøknaderKlageOmgjøringBestilling(
+                        behandlingId = behandlingDo.id!!,
+                        søknadsid = request.søknadsid,
+                        opprettetAvEnhet = request.behandlerenhet,
+                        fjernSøknaderFraPåklagetVedtak = true,
+                    ),
+                )
+            }
             grunnlagService.oppdaterGrunnlagForBehandlingAsync(behandlingDo)
             if (behandlingDo.erBidrag()) {
                 behandlingDo.søknadsbarn.forEach { rolle ->

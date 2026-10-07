@@ -5,9 +5,11 @@ import jakarta.transaction.Transactional
 import no.nav.bidrag.behandling.async.dto.BehandlingOppdateringBestilling
 import no.nav.bidrag.behandling.async.dto.GrunnlagInnhentingBestilling
 import no.nav.bidrag.behandling.async.dto.OpprettForsendelseBestilling
+import no.nav.bidrag.behandling.async.dto.OpprettSøknaderKlageOmgjøringBestilling
 import no.nav.bidrag.behandling.async.dto.SøknadSlettetBestilling
 import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.service.GrunnlagService
+import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
 import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -19,6 +21,7 @@ private val log = KotlinLogging.logger {}
 class BestillAsyncJobListener(
     private val behandlingService: BehandlingService,
     private val grunnlagService: GrunnlagService,
+    private val forholdsmessigFordelingService: ForholdsmessigFordelingService,
 ) {
     @EventListener
     @Transactional(Transactional.TxType.REQUIRES_NEW)
@@ -49,5 +52,22 @@ class BestillAsyncJobListener(
     fun behandleBestillingEtterSøknadSlettet(bestilling: SøknadSlettetBestilling) {
         log.info { "Async: Behandler etter søknad slettet for søknadsid ${bestilling.søknadsid}" }
         behandlingService.behandleEtterSøknadSlettet(bestilling.søknadsid, bestilling.behandlingsid)
+    }
+
+    @EventListener
+    @Async
+    fun behandleBestillingAvSøknaderForKlageEllerOmgjøring(bestilling: OpprettSøknaderKlageOmgjøringBestilling) {
+        if (bestilling.waitForCommit) return
+        log.info { "Async: Oppretter søknader for klage/omgjøring for behandling ${bestilling.behandlingId} og søknadsid ${bestilling.søknadsid}" }
+        try {
+            forholdsmessigFordelingService.opprettSøknaderForKlageEllerOmgjøring(
+                bestilling.behandlingId,
+                bestilling.søknadsid,
+                bestilling.opprettetAvEnhet,
+                bestilling.fjernSøknaderFraPåklagetVedtak,
+            )
+        } catch (e: Exception) {
+            log.error(e) { "Async: Feilet opprettelse av søknader for klage/omgjøring for behandling ${bestilling.behandlingId}" }
+        }
     }
 }
