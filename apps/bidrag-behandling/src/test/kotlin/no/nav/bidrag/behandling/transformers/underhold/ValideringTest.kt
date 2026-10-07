@@ -879,6 +879,40 @@ class ValideringTest {
     }
 
     @Nested
+    open inner class ForpleiningsperiodeErGyldig {
+        private fun underholdskostnad(): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            return behandling.underholdskostnader.first()
+        }
+
+        @Test
+        fun `skal avvise en periode der til og med er for fra og med`() {
+            val feil =
+                shouldThrow<HttpClientErrorException> {
+                    OppdatereForpleiningRequest(
+                        periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
+                        beløp = BigDecimal.valueOf(2000),
+                    ).validere(underholdskostnad())
+                }
+
+            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `skal godta en periode der til og med er lik fra og med`() {
+            OppdatereForpleiningRequest(
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                beløp = BigDecimal.valueOf(2000),
+            ).validere(underholdskostnad())
+        }
+    }
+
+    @Nested
     open inner class BegrunnelseForForpleining {
         private fun behandlingMedForpleining(): Underholdskostnad {
             val behandling =

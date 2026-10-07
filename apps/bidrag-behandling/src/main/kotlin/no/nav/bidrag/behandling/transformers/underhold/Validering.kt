@@ -357,6 +357,11 @@ fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
             ressursIkkeFunnetException("Fant ikke forpleining med id $id i behandling ${underholdskostnad.behandling.id}")
         }
     }
+    periode.tom?.let { tom ->
+        if (tom < periode.fom) {
+            ugyldigForespørsel("Til og med kan ikke være før fra og med")
+        }
+    }
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
         ugyldigForespørsel("Kan ikke legge til periode før barnets fødselsdato")
     }
