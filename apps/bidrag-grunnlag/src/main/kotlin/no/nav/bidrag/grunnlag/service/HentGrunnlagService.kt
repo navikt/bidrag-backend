@@ -297,6 +297,7 @@ class HentGrunnlagService(
         return historiskeIdenterMap
     }
 
+    // TODO(bidrag-person-feil): Ved feil brukes bare innsendt ident, uten feilmelding. Skal feilen gå videre?
     // Henter historiske identer for personen. Returnerer en liste med historiske identer (inklusiv den aktive identen)
     private fun hentIdenterFraConsumer(personId: String): List<HistoriskIdent> = when (val response = bidragPersonConsumer.hentPersonidenter(personident = Personident(personId), inkludereHistoriske = true)) {
         is RestResponse.Success -> {

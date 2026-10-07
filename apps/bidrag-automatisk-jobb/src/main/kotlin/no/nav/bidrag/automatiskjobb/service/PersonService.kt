@@ -3,16 +3,15 @@ package no.nav.bidrag.automatiskjobb.service
 import no.nav.bidrag.automatiskjobb.consumer.BidragPersonConsumer
 import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.secureLogger
-import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
-import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
 import no.nav.bidrag.transport.person.PersonDto
 
+// TODO(bidrag-person-feil): Svelger alle feil fra bidrag-person. Skal feilen gå videre?
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(Personident(it))

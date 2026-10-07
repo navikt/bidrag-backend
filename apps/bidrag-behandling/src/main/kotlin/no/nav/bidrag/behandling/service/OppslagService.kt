@@ -65,6 +65,8 @@ fun sjekkTilgangSak(saksnummer: String): Boolean = try {
     secureLogger.debug(e) { "Feil ved henting av person for ident $saksnummer" }
     false
 }
+
+// TODO(bidrag-person-feil): Svelger alle feil fra bidrag-person. Skal feilen gå videre?
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
@@ -85,6 +87,7 @@ fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: P
 data class PersonService(
     val personConsumer: BidragPersonConsumer,
 ) {
+    // TODO(bidrag-person-feil): Svelger alle feil fra bidrag-person. Skal feilen gå videre?
     fun hentPerson(ident: String?): PersonDto? = try {
         ident.takeIfNotNullOrEmpty {
             personConsumer.hentPerson(it)
