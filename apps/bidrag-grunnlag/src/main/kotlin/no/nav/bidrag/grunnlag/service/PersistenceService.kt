@@ -176,6 +176,9 @@ class PersistenceService(
     @Transactional
     fun overstyrValutakursgrunnlag(id: Int, kurs: BigDecimal): Valutakursgrunnlag {
         if (kurs.signum() <= 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurs må være større enn null")
+        if (kurs.precision().toLong() - kurs.scale().toLong() > 22 || kurs.stripTrailingZeros().scale() > 16) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurs må kunne lagres eksakt med maksimalt 22 heltallssifre og 16 desimaler")
+        }
         val eksisterende = valutakursgrunnlagRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Valutakursgrunnlag finnes ikke") }
         val overstyrt = valutakursgrunnlagRepository.saveAndFlush(
