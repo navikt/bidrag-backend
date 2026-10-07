@@ -35,6 +35,7 @@ internal fun norgesBankSvar(
     calculated: String = "false",
     kurs: String = "155.34",
     multiplikator: String = "2",
+    tenor: String = "SP",
 ): SdmxSimplified = SdmxSimplified(
     SdmxData(
         listOf(SdmxDataSet(mapOf("0:0:0:0" to SdmxSeries(mapOf("0" to listOf(kurs)), listOf(0, 0, 0))))),
@@ -44,7 +45,7 @@ internal fun norgesBankSvar(
                     SdmxDimension("FREQ", listOf(SdmxValue("M"))),
                     SdmxDimension("BASE_CUR", listOf(SdmxValue(valuta))),
                     SdmxDimension("QUOTE_CUR", listOf(SdmxValue("NOK"))),
-                    SdmxDimension("TENOR", listOf(SdmxValue("SP"))),
+                    SdmxDimension("TENOR", listOf(SdmxValue(tenor))),
                 ),
                 listOf(SdmxDimension("TIME_PERIOD", listOf(SdmxValue(periode)))),
             ),
@@ -122,6 +123,49 @@ class NorgesBankMaanedskursTest {
     fun `kalkulert kurs avvises`() {
         assertThrows<NorgesBankValutakursMappingException.UgyldigData> {
             norgesBankSvar(calculated = "true").tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+        }
+    }
+
+    @Test
+    fun `annen tenor enn spot avvises`() {
+        assertThrows<NorgesBankValutakursMappingException.UgyldigData> {
+            norgesBankSvar(tenor = "1M").tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+        }
+    }
+
+    @Test
+    fun `tenor valideres fra seriens indeks selv om spot finnes i dimensjonen`() {
+        val svar = norgesBankSvar()
+        val struktur = svar.data.structure
+        val dimensjoner = struktur.dimensions.copy(
+            series = struktur.dimensions.series.map {
+                if (it.id == "TENOR") it.copy(values = listOf(SdmxValue("SP"), SdmxValue("1M"))) else it
+            },
+        )
+        val feilTenor = svar.copy(
+            data = svar.data.copy(
+                dataSets = listOf(SdmxDataSet(mapOf("0:0:0:1" to svar.data.dataSets.single().series.values.single()))),
+                structure = struktur.copy(dimensions = dimensjoner),
+            ),
+        )
+
+        assertThrows<NorgesBankValutakursMappingException.UgyldigData> {
+            feilTenor.tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+        }
+    }
+
+    @Test
+    fun `manglende tenordimensjon avvises`() {
+        val svar = norgesBankSvar()
+        val struktur = svar.data.structure
+        val utenTenor = svar.copy(
+            data = svar.data.copy(
+                structure = struktur.copy(dimensions = struktur.dimensions.copy(series = struktur.dimensions.series.filter { it.id != "TENOR" })),
+            ),
+        )
+
+        assertThrows<NorgesBankValutakursMappingException.ManglerFelt> {
+            utenTenor.tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
         }
     }
 

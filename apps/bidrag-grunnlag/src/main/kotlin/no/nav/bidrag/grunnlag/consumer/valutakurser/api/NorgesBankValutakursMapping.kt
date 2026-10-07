@@ -25,8 +25,10 @@ fun SdmxSimplified.tilValutakurs(valuta: String, frekvens: Frekvens, kursDato: L
             ?: throw NorgesBankValutakursMappingException.ManglerFelt("Mangler gyldig $id.")
     }
 
-    if (dimensjonsverdi("BASE_CUR") != valuta || dimensjonsverdi("QUOTE_CUR") != "NOK" || dimensjonsverdi("FREQ") != frekvens.verdi) {
-        throw NorgesBankValutakursMappingException.UgyldigData("Valuta eller frekvens samsvarer ikke med forespørselen.")
+    if (dimensjonsverdi("BASE_CUR") != valuta || dimensjonsverdi("QUOTE_CUR") != "NOK" || dimensjonsverdi("FREQ") != frekvens.verdi ||
+        dimensjonsverdi("TENOR") != "SP"
+    ) {
+        throw NorgesBankValutakursMappingException.UgyldigData("Valuta, frekvens eller tenor samsvarer ikke med forespørselen.")
     }
     if (attributtverdi("CALCULATED") != "false" || attributtverdi("COLLECTION") != (if (frekvens == Frekvens.MÅNEDLIG) "A" else "C")) {
         throw NorgesBankValutakursMappingException.UgyldigData("Forventet observert valutakurs med riktig innsamlingstidspunkt.")
