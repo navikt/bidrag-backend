@@ -57,6 +57,46 @@ class HentValutaSchedulerTest {
     }
 
     @Test
+    fun `kontrolljobben kjører daglig etter valutakursjobben i Oslo-tid`() {
+        val plan = HentValutaScheduler::class.java.getMethod("sjekkValutakursgrunnlag").getAnnotation(Scheduled::class.java)
+
+        assertEquals("0 0 6 * * *", plan.cron)
+        assertEquals("Europe/Oslo", plan.zone)
+        val lås = HentValutaScheduler::class.java.getMethod("sjekkValutakursgrunnlag").getAnnotation(SchedulerLock::class.java)
+        assertEquals("sjekkValutakursgrunnlag", lås.name)
+        assertEquals("PT15M", lås.lockAtLeastFor)
+    }
+
+    @Test
+    fun `varsler ikke når nyeste valutakursgrunnlag starter i gjeldende halvår`() {
+        Mockito.`when`(valutakursgrunnlagService.hentSisteBrukFra()).thenReturn(LocalDate.of(2026, 7, 1))
+
+        scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 10, 7))
+
+        Mockito.verifyNoInteractions(slackService)
+    }
+
+    @Test
+    fun `varsler når valutakursgrunnlag for gjeldende halvår mangler`() {
+        Mockito.`when`(valutakursgrunnlagService.hentSisteBrukFra()).thenReturn(LocalDate.of(2026, 1, 1))
+
+        scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 7, 2))
+
+        verify(slackService).sendMelding(
+            "Planlagt innhenting av valutakursgrunnlag for 2026-07-01 mangler i $clientId. Nyeste valutakursgrunnlag starter 2026-01-01.",
+        )
+    }
+
+    @Test
+    fun `varsler når det ikke finnes valutakursgrunnlag`() {
+        scheduler.sjekkValutakursgrunnlag(LocalDate.of(2026, 1, 2))
+
+        verify(slackService).sendMelding(
+            "Planlagt innhenting av valutakursgrunnlag for 2026-01-01 mangler i $clientId. Nyeste valutakursgrunnlag starter ingen.",
+        )
+    }
+
+    @Test
     fun `to samtidige pod-er kan ikke ta samme databaselås`() {
         val datakilde = DriverManagerDataSource("jdbc:h2:mem:valuta-shedlock;DB_CLOSE_DELAY=-1", "sa", "")
         datakilde.connection.use {

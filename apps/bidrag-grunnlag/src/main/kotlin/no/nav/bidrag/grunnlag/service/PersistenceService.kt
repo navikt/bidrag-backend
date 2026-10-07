@@ -642,5 +642,7 @@ class PersistenceService(
 
     fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag? = valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato.atStartOfDay())
 
+    fun hentSisteValutakursgrunnlag(): Valutakursgrunnlag? = valutakursgrunnlagRepository.findFirstByOrderByBrukFraDesc()
+
     fun hentFeiledeValutakursgrunnlag(pageable: Pageable): Page<Valutakursgrunnlag> = valutakursgrunnlagRepository.findByStatus(ValutakursgrunnlagStatus.FEILET, pageable)
 }

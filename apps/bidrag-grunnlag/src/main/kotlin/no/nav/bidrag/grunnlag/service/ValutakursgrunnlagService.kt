@@ -88,6 +88,8 @@ class ValutakursgrunnlagService(
 
     fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate): ValutakursgrunnlagBo? = persistenceService.hentValutakursgrunnlag(valutakode, dato)?.toValutakursgrunnlagBo()
 
+    fun hentSisteBrukFra(): LocalDate? = persistenceService.hentSisteValutakursgrunnlag()?.brukFra?.toLocalDate()
+
     fun hentFeiledeValutakursgrunnlag(pageable: Pageable): Page<ValutakursgrunnlagBo> = persistenceService.hentFeiledeValutakursgrunnlag(pageable).map { it.toValutakursgrunnlagBo() }
 
     fun fraNok(beløpNok: BigDecimal, valutakode: Valutakode, dato: LocalDate = LocalDate.now()): BigDecimal {
