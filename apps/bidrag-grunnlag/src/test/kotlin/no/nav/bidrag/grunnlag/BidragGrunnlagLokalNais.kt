@@ -8,6 +8,7 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
 import org.springframework.context.annotation.EnableAspectJAutoProxy
+import org.springframework.context.annotation.Profile
 
 @SpringBootApplication(
     exclude = [
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy
 )
 @EnableAspectJAutoProxy
 @EnableJwtTokenValidation(ignore = ["org.springdoc", "org.springframework"])
+@Profile("lokal-nais")
 class BidragGrunnlagLokalNais
 
 fun main(args: Array<String>) {
