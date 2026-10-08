@@ -4,6 +4,7 @@ import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
@@ -695,6 +696,16 @@ fun Underholdskostnad.kopierUnderholdskostnad(hovedbehandling: Behandling) {
                     tom = it.tom,
                     beløp = it.beløp,
                     beløpstype = it.beløpstype,
+                )
+            }.toMutableSet()
+    nyUnderholdskostnad.forpleining =
+        forpleining
+            .map {
+                Forpleining(
+                    underholdskostnad = nyUnderholdskostnad,
+                    fom = it.fom,
+                    tom = it.tom,
+                    beløp = it.beløp,
                 )
             }.toMutableSet()
     val rolleForNotat = if (nyUnderholdskostnad.gjelderAndreBarn) bmFraOverførtBehandling else this.rolle

@@ -8,6 +8,7 @@ import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import java.math.BigDecimal
 
 data class UnderholdskostnadPeriodeGrunnlag(
@@ -15,6 +16,7 @@ data class UnderholdskostnadPeriodeGrunnlag(
     val søknadsbarnPeriodeGrunnlag: SøknadsbarnPeriodeGrunnlag,
     val barnetilsynMedStønadPeriodeGrunnlagListe: List<BarnetilsynMedStønadPeriodeGrunnlag>,
     val nettoTilsynsutgiftPeriodeGrunnlagListe: List<NettoTilsynsutgiftPeriodeGrunnlagDto>,
+    val forpleiningPeriodeGrunnlagListe: List<ForpleiningPeriodeGrunnlag>,
     var sjablonSjablontallPeriodeGrunnlagListe: List<SjablonSjablontallPeriodeGrunnlag>,
     var sjablonBarnetilsynPeriodeGrunnlagListe: List<SjablonBarnetilsynPeriodeGrunnlag>,
     var sjablonForbruksutgifterPeriodeGrunnlagListe: List<SjablonForbruksutgifterPeriodeGrunnlag>,
@@ -22,6 +24,9 @@ data class UnderholdskostnadPeriodeGrunnlag(
 
 data class BarnetilsynMedStønadPeriodeGrunnlag(val referanse: String, val barnetilsynMedStønadPeriode: BarnetilsynMedStønadPeriode)
 data class BarnetilsynMedStønad(val referanse: String, val tilsynstype: Tilsynstype?, val skolealder: Skolealder?, val beløp: BigDecimal? = null)
+
+data class ForpleiningPeriodeGrunnlag(val referanse: String, val forpleiningPeriode: ForpleiningPeriode)
+data class Forpleining(val referanse: String, val beløp: BigDecimal)
 
 data class NettoTilsynsutgiftPeriodeGrunnlagDto(val referanse: String, val nettoTilsynsutgiftPeriodeGrunnlag: NettoTilsynsutgiftPeriode)
 data class NettoTilsynsutgiftPeriode(val referanse: String, val periode: ÅrMånedsperiode, val nettoTilsynsutgift: BigDecimal)
@@ -33,6 +38,7 @@ data class UnderholdskostnadBeregningGrunnlag(
     val søknadsbarn: SøknadsbarnBeregningGrunnlag,
     val barnetilsynMedStønad: BarnetilsynMedStønad?,
     val nettoTilsynsutgiftBeregningGrunnlag: NettoTilsynsutgift?,
+    val forpleining: Forpleining?,
     val sjablonSjablontallBeregningGrunnlagListe: MutableList<SjablonSjablontallBeregningGrunnlag>,
     val sjablonBarnetilsynBeregningGrunnlag: SjablonBarnetilsynBeregningGrunnlag?,
     val sjablonForbruksutgifterBeregningGrunnlag: SjablonForbruksutgifterBeregningGrunnlag,
@@ -53,6 +59,7 @@ data class UnderholdskostnadBeregningResultat(
     val barnetilsynMedStønad: BigDecimal?,
     val nettoTilsynsutgift: BigDecimal?,
     val barnetrygd: BigDecimal,
+    val forpleining: BigDecimal?,
     val underholdskostnad: BigDecimal,
     val grunnlagsreferanseListe: List<String>,
 )

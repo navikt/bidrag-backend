@@ -384,6 +384,13 @@ class NotatOpplysningerService(
                                     total = it.total,
                                 )
                             },
+                            forpleining =
+                            it.forpleining.map {
+                                NotatUnderholdBarnDto.NotatForpleiningDto(
+                                    periode = DatoperiodeDto(it.periode.fom, it.periode.tom),
+                                    beløp = it.beløp,
+                                )
+                            },
                             underholdskostnad =
                             it.underholdskostnad.map {
                                 NotatUnderholdBarnDto.NotatUnderholdskostnadBeregningDto(
@@ -393,6 +400,7 @@ class NotatOpplysningerService(
                                     stønadTilBarnetilsyn = it.stønadTilBarnetilsyn,
                                     tilsynsutgifter = it.tilsynsutgifter,
                                     barnetrygd = it.barnetrygd,
+                                    forpleining = it.forpleining,
                                     total = it.total,
                                     beregningsdetaljer =
                                     it.beregningsdetaljer?.let {

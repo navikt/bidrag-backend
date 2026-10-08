@@ -34,6 +34,7 @@ import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragForholdsmessigFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragForholdsmessigFordelingGrunnlag
@@ -245,6 +246,36 @@ fun Behandling.tilGrunnlagTilleggsstønad(): List<GrunnlagDto> = underholdskostn
                             beløpDagsats = it.beløp,
                             beløp = it.beløp ?: BigDecimal.ZERO,
                             beløpstype = it.beløpstype,
+                            manueltRegistrert = true,
+                        ),
+                    ),
+                ),
+            )
+        }
+    }.toSet()
+    .toList()
+
+fun Behandling.tilGrunnlagForpleining(): List<GrunnlagDto> = underholdskostnader
+    .flatMap { u ->
+        u.forpleining.flatMap {
+            val underholdRolle =
+                u.rolle
+                    ?: ugyldigForespørsel("Fant ikke person for underholdskostnad i behandlingen")
+            val bidragsmottaker = underholdRolle.bidragsmottaker
+            val underholdRolleGrunnlagobjekt = underholdRolle.tilGrunnlagPerson()
+            val gjelderBarnReferanse = underholdRolleGrunnlagobjekt.referanse
+            listOf(
+                underholdRolleGrunnlagobjekt,
+                GrunnlagDto(
+                    referanse = it.tilGrunnlagsreferanseForpleining(gjelderBarnReferanse),
+                    type = Grunnlagstype.FORPLEINING_PERIODE,
+                    gjelderReferanse = bidragsmottaker!!.tilGrunnlagsreferanse(),
+                    gjelderBarnReferanse = gjelderBarnReferanse,
+                    innhold =
+                    POJONode(
+                        ForpleiningPeriode(
+                            periode = ÅrMånedsperiode(it.fom, it.tom?.plusDays(1)),
+                            beløp = it.beløp,
                             manueltRegistrert = true,
                         ),
                     ),

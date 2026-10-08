@@ -21,10 +21,9 @@ import no.nav.bidrag.arbeidsflyt.model.journalpostIdUtenPrefix
 import no.nav.bidrag.arbeidsflyt.model.journalpostMedPrefix
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgaveDetaljert
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
-import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
+import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfoMedEnhet
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
-import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
 
 @Service
@@ -187,18 +186,10 @@ class OppgaveService(
                 oppgave,
                 opprettetAvEnhet,
                 oppgave.tilordnetRessurs?.let {
-                    Sporingsdata(
-                        brukerident = it,
-                        enhetsnummer = oppgave.tildeltEnhetsnr,
-                        saksbehandlersNavn = EnhetProvider.hentSaksbehandlernavn(it),
-                    ).lagSaksbehandlerInfo()
+                    lagSaksbehandlerInfoMedEnhet(it, oppgave.tildeltEnhetsnr)
                 },
                 overførtTilSaksbehandler?.let {
-                    Sporingsdata(
-                        brukerident = it,
-                        enhetsnummer = opprettetAvEnhet,
-                        saksbehandlersNavn = EnhetProvider.hentSaksbehandlernavn(it),
-                    ).lagSaksbehandlerInfo()
+                    lagSaksbehandlerInfoMedEnhet(it, opprettetAvEnhet)
                 },
                 overførtTilSaksbehandler,
             ),
@@ -216,7 +207,7 @@ class OppgaveService(
                 OverforOppgaveRequest(
                     it,
                     journalpostHendelse.enhetKonvertert ?: "na",
-                    journalpostHendelse.hentSaksbehandlerInfo(),
+                    journalpostHendelse.lagSaksbehandlerInfoMedEnhet(),
                 ),
             )
         }
@@ -235,7 +226,7 @@ class OppgaveService(
                 patchOppgaveRequest =
                 EndreMellomBidragFagomrader(
                     it,
-                    journalpostHendelse.hentSaksbehandlerInfo(),
+                    journalpostHendelse.lagSaksbehandlerInfoMedEnhet(),
                     fagomradeGammelt,
                     fagomradeNy,
                     overførTilFellesbenk = !saksbehandlerHarTilgang,
@@ -302,7 +293,7 @@ class OppgaveService(
                     tittel = journalpostHendelse.tittel!!,
                     dokumentDato = journalpostHendelse.dokumentDato,
                     sporingsdata = journalpostHendelse.sporing!!,
-                    saksbehandlersInfo = journalpostHendelse.hentSaksbehandlerInfo(),
+                    saksbehandlersInfo = journalpostHendelse.lagSaksbehandlerInfoMedEnhet(),
                 ),
             )
         }

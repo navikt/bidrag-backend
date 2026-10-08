@@ -7,6 +7,7 @@ import no.nav.bidrag.arbeidsflyt.service.OppgaveService
 import no.nav.bidrag.arbeidsflyt.service.OrganisasjonService
 import no.nav.bidrag.arbeidsflyt.service.PersistenceService
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
+import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfoMedEnhet
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 
@@ -28,7 +29,7 @@ class BehandleJournalpostHendelse(
 
     fun oppdaterEksterntFagomrade(): BehandleJournalpostHendelse {
         if (journalpostHendelse.erEksterntFagomrade) {
-            LOGGER.info { "Endring til eksternt fagområde av ${journalpostHendelse.hentSaksbehandlerInfo()}." }
+            LOGGER.info { "Endring til eksternt fagområde av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
 
             oppgaveService.ferdigstillJournalforingsOppgaver(
                 endretAvEnhetsnummer = journalpostHendelse.hentEndretAvEnhetsnummer(),
@@ -54,7 +55,7 @@ class BehandleJournalpostHendelse(
         val erEndringAvFagomrade = journalpost != null && journalpost.tema != fagområdeNy
 
         if (erEndringAvFagomrade || (!harTilgangTilTema && oppgaverForHendelse.erJournalforingsoppgaverTildeltSaksbehandler())) {
-            LOGGER.info { "Endring fra fagområde ${fagområdeGammelt ?: "UKJENT"} til $fagområdeNy av ${journalpostHendelse.hentSaksbehandlerInfo()}. Saksbehandler har tilgang til ny tema = $harTilgangTilTema" }
+            LOGGER.info { "Endring fra fagområde ${fagområdeGammelt ?: "UKJENT"} til $fagområdeNy av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}. Saksbehandler har tilgang til ny tema = $harTilgangTilTema" }
             oppgaveService.endreMellomBidragFagomrade(
                 oppgaverForHendelse = oppgaverForHendelse,
                 journalpostHendelse,
@@ -73,7 +74,7 @@ class BehandleJournalpostHendelse(
         finnOppgaverForHendelse()
 
         if (oppgaverForHendelse.erEndringAvTildeltEnhetsnummer(journalpostHendelse)) {
-            LOGGER.info { "Endret tilordnet ressurs utført av ${journalpostHendelse.hentSaksbehandlerInfo()}." }
+            LOGGER.info { "Endret tilordnet ressurs utført av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
             oppgaveService.overforOppgaver(oppgaverForHendelse, journalpostHendelse)
             finnOppdaterteOppgaverForHendelse = true
         }
@@ -85,7 +86,7 @@ class BehandleJournalpostHendelse(
         finnOppgaverForHendelse()
 
         if (oppgaverForHendelse.erEndringAvAktoerId(journalpostHendelse)) {
-            LOGGER.info { "Oppdaterer aktørid for oppgave. Rapportert av ${journalpostHendelse.hentSaksbehandlerInfo()}." }
+            LOGGER.info { "Oppdaterer aktørid for oppgave. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
             oppgaveService.oppdaterOppgaver(oppgaverForHendelse, journalpostHendelse)
             finnOppdaterteOppgaverForHendelse = true
         }
@@ -98,7 +99,7 @@ class BehandleJournalpostHendelse(
 
         if (!journalpostHendelse.erEksterntFagomrade && journalpostHendelse.erMottattStatus && oppgaverForHendelse.harIkkeJournalforingsoppgave()) {
             LOGGER.info {
-                "En mottaksregistert journalpost uten journalføringsoppgave. Rapportert av ${journalpostHendelse.hentSaksbehandlerInfo()}."
+                "En mottaksregistert journalpost uten journalføringsoppgave. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
             }
 
             val tildeltEnhetsnr = hentArbeidsfordeling()
@@ -119,7 +120,7 @@ class BehandleJournalpostHendelse(
                 )
             ) {
                 LOGGER.info {
-                    "En journalført journalpost skal ha oppdatert behandle dokument oppgaver for saker. Rapportert av ${journalpostHendelse.hentSaksbehandlerInfo()}."
+                    "En journalført journalpost skal ha oppdatert behandle dokument oppgaver for saker. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
                 }
                 validerGyldigDataForBehandleDokument()
                 oppgaveService.opprettEllerEndreBehandleDokumentOppgaver(journalpostHendelse, behandlingsOppgaver)
@@ -178,7 +179,7 @@ class BehandleJournalpostHendelse(
 
         if (journalpostHendelse.erJournalstatusEndretTilIkkeMottatt() && oppgaverForHendelse.harJournalforingsoppgaver()) {
             LOGGER.info {
-                "En journalført journalpost skal ikke ha journalføringsoppgaver. Rapportert av ${journalpostHendelse.hentSaksbehandlerInfo()}."
+                "En journalført journalpost skal ikke ha journalføringsoppgaver. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
             }
             oppgaveService.ferdigstillJournalforingsOppgaver(
                 endretAvEnhetsnummer = journalpostHendelse.hentEndretAvEnhetsnummer(),
