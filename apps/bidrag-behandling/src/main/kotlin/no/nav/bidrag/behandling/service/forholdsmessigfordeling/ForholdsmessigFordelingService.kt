@@ -283,11 +283,8 @@ class ForholdsmessigFordelingService(
             bbmConsumer
                 .hentÅpneSøknaderForBehandling(behandlingId)
                 .søknader
-                .filter {
-                    it.behandlingstype.erForholdsmessigFordeling &&
-                        it.behandlingStatusType.erÅpenStatus &&
-                        !eksisterendeFFSøknadsider.contains(it.søknadsid)
-                }
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .filter { it.behandlingstype.erForholdsmessigFordeling && !eksisterendeFFSøknadsider.contains(it.søknadsid) }
                 .forEach {
                     try {
                         LOGGER.info { "Feilregistrerer FF-søknad ${it.søknadsid} for behandlingId=$behandlingId etter feilet opprettelse av FF" }

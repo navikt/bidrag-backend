@@ -55,7 +55,8 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
         val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
-        søknaderBehandling.søknader.filter { listOfNotNull(BehandlingStatusType.UNDER_BEHANDLING, BehandlingStatusType.ÅPEN).contains(it.behandlingStatusType) }
+        søknaderBehandling.søknader
+            .filter { it.behandlingStatusType.erÅpenStatus }
             .forEach {
                 bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
             }

@@ -292,6 +292,7 @@ class ForholdsmessigFordelingKlageService(
     private fun hentÅpneSøknaderForBehandling(behandling: Behandling): List<OpprettetSøknad> {
         val søknader = bbmConsumer
             .hentÅpneSøknaderForBehandling(behandling.id!!).søknader
+            .filter { it.behandlingStatusType.erÅpenStatus }
         return søknader.flatMap {
             it.parterUnderBehandling.filter { it.personident != null }
                 .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.refSøknadsid, it.søknadsid, it.behandlingstype) }
