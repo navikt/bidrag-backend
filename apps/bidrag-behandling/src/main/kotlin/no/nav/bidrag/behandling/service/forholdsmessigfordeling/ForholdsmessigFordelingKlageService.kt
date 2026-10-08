@@ -495,10 +495,18 @@ class ForholdsmessigFordelingKlageService(
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling.soknadsid!!)
         val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, behandling.behandlerEnhet)
+        val barnIOriginaleVedtak = finnBarnIOriginaleVedtak(behandling)
+        val barnIBehandling = behandling.søknadsbarn.map { SakKravhaver(it.saksnummer, it.ident!!, stønadstype = it.stønadstype!!) }
 
         val gjenværendeKravhavere =
             relevanteKravhavere
                 .filter { rk -> rollerITilknyttedeSøknader.none { it.kravhaverIdent == rk.kravhaver && it.stønadstype == rk.stønadstype } }
+                .filter { rk ->
+                    // Enten så opprettes det FF søknader bare for barn i originale vedtak
+                    barnIOriginaleVedtak.any {
+                        rk.erSammePerson(it.kravhaver, it.stønadstype)
+                    } || barnIBehandling.any { rk.erSammePerson(it.kravhaver, it.stønadstype) }
+                }
                 .toSet()
         opprettRevurderingssøknaderForGjenværendeKravhavere(
             behandling,
