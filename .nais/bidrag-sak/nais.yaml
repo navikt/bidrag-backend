@@ -31,10 +31,12 @@ spec:
              {{#each permissions.roles}}
                  - {{this}}
              {{/each}}
+{{#if permissions.scopes}}
              scopes:
               {{#each permissions.scopes}}
                   - {{this}}
               {{/each}}
+{{/if}}
              {{/if}}
       {{/each}}
   azure:
