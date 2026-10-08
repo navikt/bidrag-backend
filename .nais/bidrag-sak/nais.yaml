@@ -27,18 +27,16 @@ spec:
            cluster: {{cluster}}
            {{#if permissions}}
            permissions:
-             {{#if permissions.roles}}
              roles:
              {{#each permissions.roles}}
                  - {{this}}
              {{/each}}
-             {{/if}}
-             {{#if permissions.scopes}}
+{{#if permissions.scopes}}
              scopes:
               {{#each permissions.scopes}}
                   - {{this}}
               {{/each}}
-             {{/if}}
+{{/if}}
              {{/if}}
       {{/each}}
   azure:

@@ -29,9 +29,7 @@ spec:
       {{#each azure_access_inbound}}
          - application: {{this.application}}
            namespace: {{this.namespace}}
-           {{#if this.cluster}}
-           cluster: {{this.cluster}}
-           {{/if}}
+           {{#if this.cluster}}cluster: {{this.cluster}}{{/if}}
       {{/each}}
   image: {{ image }}
   kafka:
@@ -51,7 +49,6 @@ spec:
     path: /actuator/prometheus
   resources:
     limits:
-      cpu: {{limits.cpu}}
       memory: {{limits.memory}}
     requests:
       cpu: {{requests.cpu}}
