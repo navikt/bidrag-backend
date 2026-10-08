@@ -9,6 +9,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -44,6 +45,9 @@ class ForholdsmessigFordelingKlageServiceTest {
     lateinit var bbmConsumer: BidragBBMConsumer
 
     @MockK(relaxed = true)
+    lateinit var vedtakConsumer: BidragVedtakConsumer
+
+    @MockK(relaxed = true)
     lateinit var behandlingService: BehandlingService
 
     @MockK
@@ -74,6 +78,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         val søknadService = ForholdsmessigFordelingSøknadService(bbmConsumer, mockk(), mockk(), kravhaverService, mockk())
         service =
             ForholdsmessigFordelingKlageService(
+                vedtakConsumer = vedtakConsumer,
                 bbmConsumer = bbmConsumer,
                 behandlingService = behandlingService,
                 grunnlagService = mockk(),
@@ -267,6 +272,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         val søknadServiceMock = mockk<ForholdsmessigFordelingSøknadService>(relaxed = true)
         val service =
             ForholdsmessigFordelingKlageService(
+                vedtakConsumer = vedtakConsumer,
                 bbmConsumer = bbmConsumer,
                 behandlingService = behandlingService,
                 grunnlagService = mockk(),
@@ -311,6 +317,7 @@ class ForholdsmessigFordelingKlageServiceTest {
     private fun serviceMedMocketSøknadService(): Pair<ForholdsmessigFordelingKlageService, ForholdsmessigFordelingSøknadService> {
         val søknadServiceMock = mockk<ForholdsmessigFordelingSøknadService>(relaxed = true)
         return ForholdsmessigFordelingKlageService(
+            vedtakConsumer = vedtakConsumer,
             bbmConsumer = bbmConsumer,
             behandlingService = behandlingService,
             grunnlagService = mockk(),

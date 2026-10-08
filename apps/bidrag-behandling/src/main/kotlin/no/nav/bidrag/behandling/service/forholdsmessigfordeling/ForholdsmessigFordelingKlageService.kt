@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -40,12 +41,12 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadForPerson
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.felles.toYearMonth
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
-import org.springframework.cglib.core.Local
 import java.time.LocalDate
 
 private val KLAGE_LOGGER = KotlinLogging.logger {}
 
 class ForholdsmessigFordelingKlageService(
+    private val vedtakConsumer: BidragVedtakConsumer,
     private val bbmConsumer: BidragBBMConsumer,
     private val behandlingService: BehandlingService,
     private val grunnlagService: GrunnlagService,
@@ -170,11 +171,11 @@ class ForholdsmessigFordelingKlageService(
                 hovedsøknadsid,
                 opprettetEllerOppdaterSøknadsid,
             )
-
         oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid)
         feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
 
+        val barnIOriginaleVedtak = finnBarnIOriginaleVedtak(behandling)
         val søknadsbarnOrdinæreSøknader =
             opprettKlagesøknaderForTilknyttedeSøknader(
                 behandling,
@@ -191,6 +192,14 @@ class ForholdsmessigFordelingKlageService(
             relevanteKravhavere
                 .filter { rk -> søknadsbarnOrdinæreSøknader.none { it.first == rk.kravhaver && it.second == rk.stønadstype } }
                 .filter { rk -> rollerITilknyttedeSøknader.none { it.kravhaverIdent == rk.kravhaver && it.stønadstype == rk.stønadstype } }
+                .filter { rk ->
+                    // Enten så opprettes det FF søknader bare for barn i originale vedtak
+                    barnIOriginaleVedtak.any {
+                        rk.erSammePerson(it.kravhaver, it.stønadstype)
+                    } ||
+                        // Eller hvis det blir manuelt lagt til av SB
+                        request?.detaljerBarn?.any { rk.erSammePerson(it.ident, it.stønadstype) } == true
+                }
                 .toSet()
         opprettRevurderingssøknaderForGjenværendeKravhavere(
             behandling,
@@ -223,6 +232,28 @@ class ForholdsmessigFordelingKlageService(
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
     }
 
+    private fun finnBarnIOriginaleVedtak(behandling: Behandling): List<SakKravhaver> {
+        val påklagetVedtak = behandling.omgjøringsdetaljer?.omgjørVedtakId?.let { vedtakConsumer.hentVedtak(it) }
+        if (påklagetVedtak != null) {
+            return påklagetVedtak.stønadsendringListe.map {
+                SakKravhaver(saksnummer = it.sak.verdi, kravhaver = it.kravhaver.verdi, stønadstype = it.type)
+            }
+        }
+        val tilknyttedeSøknaderOmgjortSøknad =
+            bbmConsumer.finnSammenknytningerHovedsøknad(
+                behandling.omgjøringsdetaljer!!.soknadRefId!!,
+                SøknadsknytningStatus.Deaktiv,
+            )
+        return tilknyttedeSøknaderOmgjortSøknad.søknader.flatMap { s ->
+            s.partISøknadListe.filterBarnVedtakFattet().map {
+                SakKravhaver(
+                    saksnummer = s.saksnummer,
+                    kravhaver = it.personident!!,
+                    stønadstype = s.behandlingstema.tilStønadstype(),
+                )
+            }
+        }
+    }
     private fun opprettVarselForsendelserForKlage(
         behandling: Behandling,
         hovedsøknadsid: Long,

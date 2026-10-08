@@ -5,6 +5,7 @@ import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
@@ -89,6 +90,7 @@ class ForholdsmessigFordelingService(
     private val beløpshistorikkConsumer: BidragBeløpshistorikkConsumer,
     private val grunnlagService: GrunnlagService,
     private val bbmConsumer: BidragBBMConsumer,
+    private val vedtakConsumer: BidragVedtakConsumer,
     private val forsendelseService: ForsendelseService,
     private val beregningService: BeregningService,
     private val virkningstidspunktService: VirkningstidspunktService,
@@ -126,6 +128,7 @@ class ForholdsmessigFordelingService(
 
     private val klageService =
         ForholdsmessigFordelingKlageService(
+            vedtakConsumer = vedtakConsumer,
             bbmConsumer = bbmConsumer,
             behandlingService = behandlingService,
             grunnlagService = grunnlagService,

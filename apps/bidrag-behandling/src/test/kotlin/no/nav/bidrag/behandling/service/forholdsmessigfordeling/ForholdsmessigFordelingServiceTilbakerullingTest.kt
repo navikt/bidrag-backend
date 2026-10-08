@@ -59,6 +59,7 @@ class ForholdsmessigFordelingServiceTilbakerullingTest {
 
     private fun opprettService(transactionManager: PlatformTransactionManager? = null) = ForholdsmessigFordelingService(
         sakConsumer = mockk(),
+        vedtakConsumer = mockk(),
         behandlingRepository = behandlingRepository,
         behandlingService = mockk(relaxed = true),
         beløpshistorikkConsumer = mockk(),
