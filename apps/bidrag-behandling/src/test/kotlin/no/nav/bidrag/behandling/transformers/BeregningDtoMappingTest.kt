@@ -20,6 +20,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalIn
 import no.nav.bidrag.behandling.utils.testdata.TestDataPerson
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteUtgift
@@ -28,7 +29,10 @@ import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvvisning
+import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
@@ -584,4 +588,42 @@ class BeregningDtoMappingTest {
             ),
         ),
     )
+
+    @Test
+    fun `skal bare trekke skattefrie barnetillegg ut av inntekten i inntektsberegningen`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val bidragspliktig = behandling.bidragspliktig!!
+        behandling.inntekter.removeIf { it.type == Inntektsrapportering.BARNETILLEGG }
+        behandling.inntekter.add(
+            opprettInntekt(
+                datoFom = YearMonth.parse("2023-02"),
+                type = Inntektsrapportering.BARNETILLEGG,
+                kilde = Kilde.MANUELL,
+                beløp = BigDecimal(50400),
+                inntektstyper = listOf(
+                    Inntektstype.BARNETILLEGG_PENSJON to BigDecimal(20400),
+                    Inntektstype.BARNETILLEGG_FORSVARET to BigDecimal(30000),
+                ),
+                behandling = behandling,
+                gjelderRolle = bidragspliktig,
+            ),
+        )
+        behandling.inntekter.add(
+            opprettInntekt(
+                datoFom = YearMonth.parse("2023-02"),
+                type = Inntektsrapportering.BARNETILLEGG,
+                kilde = Kilde.MANUELL,
+                beløp = BigDecimal(12000),
+                inntektstyper = listOf(Inntektstype.BARNETILLEGG_FORSVARET to BigDecimal(12000)),
+                behandling = behandling,
+                gjelderRolle = bidragspliktig,
+            ),
+        )
+
+        val barnetillegg = behandling.tilInntektberegningDto(bidragspliktig).grunnlagListe
+            .filter { it.inntektsrapportering == Inntektsrapportering.BARNETILLEGG }
+
+        barnetillegg shouldHaveSize 1
+        barnetillegg.first().beløp.compareTo(BigDecimal(20400)) shouldBe 0
+    }
 }
