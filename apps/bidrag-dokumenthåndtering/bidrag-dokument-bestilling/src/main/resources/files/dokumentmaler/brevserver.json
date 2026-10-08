@@ -577,7 +577,8 @@
   {
     "kode": "BI01H01",
     "tittel": "Farskap innkalling mor",
-    "type": "VARSEL",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
     "støttetSpråk": [
       "NB"
     ]
@@ -585,7 +586,8 @@
   {
     "kode": "BI01H03",
     "tittel": "Melding om blodprøver i farskapsak",
-    "type": "VARSEL",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
     "støttetSpråk": [
       "NB"
     ]
@@ -593,7 +595,8 @@
   {
     "kode": "BI01H04",
     "tittel": "Pålegg om å framstille barn for å gi blodprøve",
-    "type": "VARSEL",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
     "støttetSpråk": [
       "NB"
     ]
@@ -601,7 +604,8 @@
   {
     "kode": "BI01H05",
     "tittel": "Pålegg om blodprøve i farskapssak",
-    "type": "VARSEL",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
     "støttetSpråk": [
       "NB"
     ]
@@ -609,7 +613,8 @@
   {
     "kode": "BI01H02",
     "tittel": "Innkalling farskapssak oppgitt far",
-    "type": "VEDTAK",
+    "type": "VARSEL_STANDARD",
+    "enabled": true,
     "inneholderData": [
       "ROLLER",
       "ENHET_KONTAKT_INFO"
