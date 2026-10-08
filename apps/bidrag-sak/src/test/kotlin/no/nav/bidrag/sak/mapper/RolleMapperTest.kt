@@ -1,5 +1,11 @@
 package no.nav.bidrag.sak.mapper
 
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
@@ -7,10 +13,25 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class RolleMapperTest {
+    @BeforeEach
+    fun setUp() {
+        val identConsumer = mockk<IdentConsumer>()
+        every { identConsumer.hentPersonInformasjon(any()) } returns null
+        mockkObject(AppContext)
+        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(AppContext)
+    }
+
     @Nested
     inner class ToRolleDto {
         @Test

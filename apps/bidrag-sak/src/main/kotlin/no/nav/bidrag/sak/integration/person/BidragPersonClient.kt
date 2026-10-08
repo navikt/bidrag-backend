@@ -37,9 +37,8 @@ class BidragPersonClient(
     }
 }
 
-fun hentPerson(ident: String?): PersonDto? =
-    ident.takeIfNotNullOrEmpty {
-        AppContext.getBean(IdentConsumer::class.java).hentPersonInformasjon(Personident(it))
-    }
+fun hentPerson(ident: String?): PersonDto? = ident.takeIfNotNullOrEmpty {
+    AppContext.getBean(IdentConsumer::class.java).hentPersonInformasjon(Personident(it))
+}
 
 fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }
