@@ -14,12 +14,13 @@ import org.junit.jupiter.api.Test
 import java.time.YearMonth
 
 class InntektValideringsfeilBarnetilleggAvslagTest {
+    // Barnetillegg med fremtidig fra-dato gir valideringsfeil
     private fun behandlingMedUgyldigBarnetillegg(): Behandling {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
         val barn = behandling.søknadsbarn.first()
         behandling.inntekter.clear()
-        val fom = YearMonth.from(behandling.virkningstidspunkt)
-        listOf(fom to null, fom.plusMonths(1) to null).forEach { (periodeFom, periodeTom) ->
+        val fom = YearMonth.now().plusMonths(2)
+        listOf(fom to null).forEach { (periodeFom, periodeTom) ->
             behandling.inntekter.add(
                 opprettInntekt(
                     periodeFom,
@@ -38,7 +39,7 @@ class InntektValideringsfeilBarnetilleggAvslagTest {
     fun `skal gi valideringsfeil for barnetillegg uten avslag`() {
         val behandling = behandlingMedUgyldigBarnetillegg()
 
-        behandling.hentInntekterValideringsfeil(behandling.bidragsmottaker).barnetillegg.shouldNotBeNull().shouldNotBeEmpty()
+        behandling.hentInntekterValideringsfeil(behandling.bidragspliktig).barnetillegg.shouldNotBeNull().shouldNotBeEmpty()
     }
 
     @Test
@@ -47,6 +48,6 @@ class InntektValideringsfeilBarnetilleggAvslagTest {
         behandling.søknadsbarn.forEach { it.avslag = Resultatkode.AVSLAG }
 
         behandling.hentInntekterValideringsfeil().barnetillegg.shouldBeNull()
-        behandling.hentInntekterValideringsfeil(behandling.bidragsmottaker).barnetillegg.shouldNotBeNull().shouldBeEmpty()
+        behandling.hentInntekterValideringsfeil(behandling.bidragspliktig).barnetillegg.shouldNotBeNull().shouldBeEmpty()
     }
 }
