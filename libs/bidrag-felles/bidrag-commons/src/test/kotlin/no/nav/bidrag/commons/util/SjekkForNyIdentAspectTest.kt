@@ -159,7 +159,6 @@ class SjekkForNyIdentAspectTest {
 
     enum class Plassering { FUNKSJON, PARAMETER }
 
-
     @Suppress("unused")
     class ParameterAnnotasjoner {
         fun standardOppslag(@SjekkForNyIdent ident: String) = ident
