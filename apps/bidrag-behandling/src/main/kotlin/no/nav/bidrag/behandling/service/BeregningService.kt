@@ -129,7 +129,6 @@ class BeregningService(
     private val mapper: VedtakGrunnlagMapper,
     private val aldersjusteringOrchestrator: AldersjusteringOrchestrator,
     private val beregnBarnebidrag: BidragsberegningOrkestrator,
-    private val grunnlagService: GrunnlagService? = null,
 ) {
     private val beregnApi = BeregnForskuddApi()
     private val beregnSærbidragApi = BeregnSærbidragApi()
@@ -197,7 +196,6 @@ class BeregningService(
         simulerBeregning: Boolean = false,
     ): ResultatBidragsberegning {
         if (!simulerBeregning) {
-            grunnlagService?.aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling)
             mapper.validering.run {
                 behandling.validerForBeregningBidrag()
             }

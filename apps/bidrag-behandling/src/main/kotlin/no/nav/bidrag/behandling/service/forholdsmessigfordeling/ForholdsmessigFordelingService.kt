@@ -283,7 +283,11 @@ class ForholdsmessigFordelingService(
             bbmConsumer
                 .hentÅpneSøknaderForBehandling(behandlingId)
                 .søknader
-                .filter { it.behandlingstype.erForholdsmessigFordeling && !eksisterendeFFSøknadsider.contains(it.søknadsid) }
+                .filter {
+                    it.behandlingstype.erForholdsmessigFordeling &&
+                        it.behandlingStatusType.erÅpenStatus &&
+                        !eksisterendeFFSøknadsider.contains(it.søknadsid)
+                }
                 .forEach {
                     try {
                         LOGGER.info { "Feilregistrerer FF-søknad ${it.søknadsid} for behandlingId=$behandlingId etter feilet opprettelse av FF" }
@@ -322,10 +326,6 @@ class ForholdsmessigFordelingService(
     private fun tilbakestillBehandlingsidISøknader(endringer: List<OppdaterBehandlingsidRequest>) {
         endringer.reversed().forEach { endring ->
             val forrigeBehandlingsid = endring.eksisterendeBehandlingsid
-            if (forrigeBehandlingsid == null) {
-                LOGGER.warn { "Kan ikke tilbakestille behandlingsid for søknad ${endring.søknadsid} da den ikke hadde behandlingsid fra før" }
-                return@forEach
-            }
             LOGGER.info { "Tilbakestiller behandlingsid for søknad ${endring.søknadsid} fra ${endring.nyBehandlingsid} til $forrigeBehandlingsid" }
             bbmConsumer.lagreBehandlingsid(
                 OppdaterBehandlingsidRequest(
