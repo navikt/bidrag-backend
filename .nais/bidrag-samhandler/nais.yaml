@@ -29,7 +29,9 @@ spec:
       {{#each azure_access_inbound}}
          - application: {{this.application}}
            namespace: {{this.namespace}}
+           {{#if this.cluster}}
            cluster: {{this.cluster}}
+           {{/if}}
       {{/each}}
   image: {{ image }}
   kafka:
