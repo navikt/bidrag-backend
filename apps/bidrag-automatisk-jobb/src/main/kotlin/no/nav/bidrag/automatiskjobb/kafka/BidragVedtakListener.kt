@@ -1,8 +1,8 @@
 package no.nav.bidrag.automatiskjobb.kafka
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.automatiskjobb.service.OppgaveService
 import no.nav.bidrag.automatiskjobb.service.VedtakService
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.vedtak.VedtakHendelse
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.kafka.annotation.KafkaListener
@@ -10,8 +10,6 @@ import org.springframework.kafka.listener.ConsumerSeekAware
 import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.stereotype.Component
-
-private val LOGGER = KotlinLogging.logger { }
 
 @Component
 class BidragVedtakListener(
@@ -63,12 +61,12 @@ class BidragVedtakListener(
         hendelse: String,
         handler: (VedtakHendelse) -> Unit,
     ) {
-        LOGGER.info { "Behandler vedtakhendelse $hendelse med offset: $offset i consumergroup: $groupId for topic: $topic" }
+        secureLogger.info { "Behandler vedtakhendelse $hendelse med offset: $offset i consumergroup: $groupId for topic: $topic" }
         try {
             val vedtakHendelse = mapVedtakHendelse(hendelse)
             handler(vedtakHendelse)
         } catch (e: Exception) {
-            LOGGER.error(e) { "Det skjedde en feil ved prosessering av vedtak hendelse" }
+            secureLogger.error(e) { "Det skjedde en feil ved prosessering av vedtak hendelse" }
             throw e
         }
     }
@@ -76,6 +74,6 @@ class BidragVedtakListener(
     private fun mapVedtakHendelse(hendelse: String): VedtakHendelse = try {
         commonObjectmapper.readValue(hendelse, VedtakHendelse::class.java)
     } finally {
-        LOGGER.debug { "${"Leser hendelse: {}"} $hendelse" }
+        secureLogger.debug { "${"Leser hendelse: {}"} $hendelse" }
     }
 }

@@ -1,6 +1,7 @@
 package no.nav.bidrag.automatiskjobb.configuration
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -30,7 +31,7 @@ class KafkaConfiguration {
                 val offset = rec.offset()
                 val topic = rec.topic()
                 val partition = rec.partition()
-                LOGGER.error(e) {
+                secureLogger.error(e) {
                     "Kafka melding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. " +
                         "Melding som feilet: $value"
                 }
@@ -46,7 +47,7 @@ class KafkaRetryListener : RetryListener {
         exception: Exception?,
         deliveryAttempt: Int,
     ) {
-        LOGGER.error(
+        secureLogger.error(
             exception,
         ) {
             "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} feilet. Dette er $deliveryAttempt. forsøk"
@@ -57,7 +58,7 @@ class KafkaRetryListener : RetryListener {
         record: ConsumerRecord<*, *>,
         exception: Exception?,
     ) {
-        LOGGER.error(
+        secureLogger.error(
             exception,
         ) {
             "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} er enten suksess eller ignorert pågrunn av ugyldig data"
