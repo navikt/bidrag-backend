@@ -171,6 +171,8 @@ class GrunnlagMockService {
                 personRepository,
                 notatService,
                 personService,
+                vedtakGrunnlagMapper,
+                BeregnBarnebidragApi(),
             )
         val unleash = FakeUnleash()
         unleash.enableAll()
