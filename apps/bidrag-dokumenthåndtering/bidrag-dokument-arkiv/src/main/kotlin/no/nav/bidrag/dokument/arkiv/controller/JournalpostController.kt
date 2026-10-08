@@ -99,6 +99,26 @@ class JournalpostController(
             )
     }
 
+    @GetMapping("$ROOT_JOURNAL/eksternreferanse/{eksternReferanseId}")
+    @Operation(
+        description = "Hent journalpost i Joark basert på eksternReferanseId (referanseId brukt ved opprettelse)",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Journalpost er hentet"),
+            ApiResponse(responseCode = "404", description = "Fant ikke journalpost med gitt eksternReferanseId"),
+        ],
+    )
+    fun hentJournalpostForEksternReferanseId(@PathVariable eksternReferanseId: String): ResponseEntity<JournalpostResponse> {
+        LOGGER.info { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
+        return journalpostService.hentJournalpostForEksternReferanseId(eksternReferanseId)
+            ?.let { ResponseEntity.ok(it.tilJournalpostResponse()) }
+            ?: ResponseEntity.notFound()
+                .header(HttpHeaders.WARNING, "Fant ingen journalpost med eksternReferanseId $eksternReferanseId")
+                .build()
+    }
+
     private fun erIkkePrefixetMedJoark(joarkJournalpostId: String): Boolean = !joarkJournalpostId.startsWith(
         KildesystemIdenfikator.PREFIX_JOARK_COMPLETE,
     )

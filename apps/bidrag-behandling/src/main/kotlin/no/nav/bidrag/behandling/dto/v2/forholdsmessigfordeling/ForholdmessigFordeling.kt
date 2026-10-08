@@ -15,12 +15,13 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import java.time.LocalDate
 import java.time.YearMonth
 
-data class ForholdmessigFordelingDetaljerDto(
-    val barn: List<ForholdsmessigFordelingBarnDto>,
-    val opprettetAvSaksbehandler: String? = null,
-    val opprettetAvEnhet: String? = null,
-    val overførtTilEnhet: String? = null,
-)
+typealias ForholdmessigFordelingDetaljerDto = no.nav.bidrag.transport.behandling.behandling.ForholdmessigFordelingDetaljerDto
+
+typealias ForholdsmessigFordelingBarnDto = no.nav.bidrag.transport.behandling.behandling.ForholdsmessigFordelingBarnDto
+
+typealias ForholdsmessigFordelingPrivateAvtaleDto = no.nav.bidrag.transport.behandling.behandling.ForholdsmessigFordelingPrivateAvtaleDto
+
+typealias ForholdsmessigFordelingÅpenBehandlingDto = no.nav.bidrag.transport.behandling.behandling.ForholdsmessigFordelingÅpenBehandlingDto
 
 data class OpprettFFRequest(
     @JsonFormat(pattern = "dd.MM.yyyy")
@@ -51,44 +52,4 @@ data class SøknadRevurdering(
     val søknad: HentSøknad,
     val hovedsøknadsid: Long? = null,
     val erDelAvFF: Boolean,
-)
-
-data class ForholdsmessigFordelingBarnDto(
-    val ident: String,
-    val bidragsmottaker: RolleDto?,
-    val navn: String,
-    val fødselsdato: LocalDate?,
-    val saksnr: String?,
-    val enhet: String,
-    val erRevurdering: Boolean,
-    val harOpprettetForholdsmessigFordeling: Boolean,
-    val stønadstype: Stønadstype?,
-    val eldsteSøktFraDato: LocalDate?,
-    val harLøpendeBidrag: Boolean,
-    val innkrevesFraDato: YearMonth?,
-    val opphørsdato: YearMonth?,
-    val sammeSakSomBehandling: Boolean,
-    @get:Schema(name = "åpneBehandlinger")
-    val åpneBehandlinger: List<ForholdsmessigFordelingÅpenBehandlingDto> = emptyList(),
-    val privateAvtale: ForholdsmessigFordelingPrivateAvtaleDto? = null,
-)
-
-data class ForholdsmessigFordelingPrivateAvtaleDto(
-    val avtaleDato: LocalDate? = null,
-    val utenlandsk: Boolean = false,
-    val avtaleType: PrivatAvtaleType? = null,
-    val stønadstype: Stønadstype? = null,
-)
-
-data class ForholdsmessigFordelingÅpenBehandlingDto(
-    val søktFraDato: LocalDate?,
-    val mottattDato: LocalDate?,
-    val stønadstype: Stønadstype,
-    val behandlingstema: Behandlingstema?,
-    val behandlingstype: Behandlingstype? = null,
-    val søktAvType: SøktAvType,
-    val medInnkreving: Boolean,
-    val behandlerEnhet: String,
-    val behandlingId: Long?,
-    val søknadsid: Long?,
 )

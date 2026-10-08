@@ -7,6 +7,7 @@ import no.nav.bidrag.arbeidsflyt.model.isBidJournalpostId
 import no.nav.bidrag.arbeidsflyt.model.journalpostMedBareBIDPrefix
 import no.nav.bidrag.arbeidsflyt.model.tilFagområdeBeskrivelse
 import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfo
+import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfoMedEnhet
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
 import no.nav.bidrag.commons.util.VirkedagerProvider
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
@@ -351,7 +352,7 @@ class OpprettSøknadsoppgaveRequest(
             } else {
                 sporingsdata
             }
-        beskrivelse = lagBeskrivelseHeader(sporingsdataAdjusted.lagSaksbehandlerInfo()) + innhold
+        beskrivelse = lagBeskrivelseHeader(lagSaksbehandlerInfoMedEnhet(sporingsdataAdjusted.brukerident, sporingsdataAdjusted.enhetsnummer)) + innhold
         behandlingstype = if (tildeltEnhetsnr == "4865") behandlingstypeUtland else behandlingstypeNasjonal
         opprettetAvEnhetsnr = sporingsdata.enhetsnummer ?: "9999"
         fristFerdigstillelse = formatterDatoForOppgave(frist)
@@ -585,7 +586,7 @@ class UpdateOppgaveAfterOpprettRequest(
 class EndreForNyttDokumentRequest() : PatchOppgaveRequest() {
     constructor(oppgaveDataForHendelse: OppgaveData, journalpostHendelse: JournalpostHendelse) : this() {
         leggTilObligatoriskeVerdier(oppgaveDataForHendelse)
-        this.beskrivelse = "--- ${LocalDateTime.now().format(NORSK_TIDSSTEMPEL_FORMAT)} ${journalpostHendelse.hentSaksbehandlerInfo()} ---\r\n" +
+        this.beskrivelse = "--- ${LocalDateTime.now().format(NORSK_TIDSSTEMPEL_FORMAT)} ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()} ---\r\n" +
             "\u00B7 ${lagDokumentOppgaveTittel("Nytt dokument", journalpostHendelse.tittel ?: "", journalpostHendelse.dokumentDato!!)}\r\n" +
             "\u00B7 ${lagDokumenterVedlagtBeskrivelse(journalpostHendelse.journalpostId)}\r\n\r\n" +
             "${oppgaveDataForHendelse.beskrivelse}"

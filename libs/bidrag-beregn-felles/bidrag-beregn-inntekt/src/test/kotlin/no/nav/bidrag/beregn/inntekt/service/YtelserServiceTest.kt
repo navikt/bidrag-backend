@@ -4,7 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.beregn.inntekt.TestUtil
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -30,8 +29,6 @@ class YtelserServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ytelserService.beregnYtelser(inntektRequest.ainntektsposter, ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 assertNotNull(transformerteInntekter)
@@ -82,8 +79,6 @@ class YtelserServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ytelserService.beregnYtelser(inntektRequest.ainntektsposter, ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 assertNotNull(transformerteInntekter)
@@ -140,8 +135,6 @@ class YtelserServiceTest : AbstractServiceTest() {
             val transformerteInntekter =
                 ytelserServiceOvergangsstønad.beregnYtelser(inntektRequest.ainntektsposter, ainntektHentetDato)
 
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
-
             assertSoftly {
                 assertNotNull(transformerteInntekter)
                 assertTrue(transformerteInntekter.isNotEmpty())
@@ -195,8 +188,6 @@ class YtelserServiceTest : AbstractServiceTest() {
             val ytelserService = YtelserService()
 
             val transformerteInntekter = ytelserService.beregnYtelser(inntektRequest.ainntektsposter, ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 assertNotNull(transformerteInntekter)

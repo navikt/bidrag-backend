@@ -81,6 +81,7 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.TilleggsstønadGrunn
 import no.nav.bidrag.transport.dokument.JournalpostType
 import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
+import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBarnetilleggDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragsevneDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto
@@ -204,8 +205,7 @@ class NotatOpplysningerService(
                     ),
                 ),
             )
-        val response =
-            bidragDokumentConsumer.opprettJournalpost(forespørsel)
+        val response = opprettJournalpostEllerHentEksisterende(forespørsel)
         lagreJournalpostId(behandling, response.journalpostId)
         secureLogger.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
@@ -216,6 +216,24 @@ class NotatOpplysningerService(
                 "med journalpostId ${response.journalpostId}"
         }
         return response.journalpostId ?: ""
+    }
+
+    // Journalposten kan være opprettet i Joark selv om kallet feilet (f.eks. timeout). Sjekker derfor om den finnes via referanseId.
+    private fun opprettJournalpostEllerHentEksisterende(forespørsel: OpprettJournalpostRequest): OpprettJournalpostResponse = try {
+        bidragDokumentConsumer.opprettJournalpost(forespørsel)
+    } catch (e: Exception) {
+        val referanseId = forespørsel.referanseId ?: throw e
+        val eksisterendeJournalpostId =
+            bidragDokumentConsumer
+                .hentJournalpostForEksternReferanseId(referanseId)
+                ?.journalpost
+                ?.journalpostId
+                ?.substringAfter("-")
+                ?: throw e
+        log.warn(e) {
+            "Opprettelse av notat feilet, men fant eksisterende journalpost $eksisterendeJournalpostId med referanseId $referanseId. Bruker denne"
+        }
+        OpprettJournalpostResponse(journalpostId = eksisterendeJournalpostId)
     }
 
     private fun lagreJournalpostId(
@@ -1299,7 +1317,7 @@ private fun RolleDto.tilNotatRolle() = DokumentmalPersonDto(
     rolle = rolletype,
     navn = navn,
     fødselsdato = fødselsdato,
-    ident = ident?.let { Personident(ident) },
+    ident = ident?.let { Personident(it) },
     saksnummer = saksnummer,
     bidragsmottakerIdent = bidragsmottaker,
     harLøpendeBidrag = harLøpendeBidrag,
