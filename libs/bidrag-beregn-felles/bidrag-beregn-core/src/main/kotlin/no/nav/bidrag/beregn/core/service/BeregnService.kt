@@ -10,8 +10,8 @@ import no.nav.bidrag.beregn.core.mapping.sjablontallTilGrunnlagsobjekt
 import no.nav.bidrag.beregn.core.mapping.tilGrunnlagsobjekt
 import no.nav.bidrag.beregn.core.mapping.trinnvisSkattesatsTilGrunnlagsobjekt
 import no.nav.bidrag.beregn.core.util.InntektUtil.erKapitalinntekt
-import no.nav.bidrag.beregn.core.util.InntektUtil.inneholderBarnetilleggTiltakspenger
-import no.nav.bidrag.beregn.core.util.InntektUtil.justerForBarnetilleggTiltakspenger
+import no.nav.bidrag.beregn.core.util.InntektUtil.inneholderSkattefrieBarnetillegg
+import no.nav.bidrag.beregn.core.util.InntektUtil.justerForSkattefrieBarnetillegg
 import no.nav.bidrag.beregn.core.util.InntektUtil.justerKapitalinntekt
 import no.nav.bidrag.beregn.core.util.SjablonUtil.justerSjablonTomDato
 import no.nav.bidrag.commons.service.sjablon.Barnetilsyn
@@ -138,8 +138,8 @@ abstract class BeregnService {
                                     beløp = it.innhold.beløp,
                                     innslagKapitalinntektSjablonverdi = innslagKapitalinntektSjablonverdi,
                                 ).setScale(2)
-                            } else if (inneholderBarnetilleggTiltakspenger(it.innhold)) {
-                                justerForBarnetilleggTiltakspenger(it.innhold).setScale(2)
+                            } else if (inneholderSkattefrieBarnetillegg(it.innhold)) {
+                                justerForSkattefrieBarnetillegg(it.innhold).setScale(2)
                             } else {
                                 it.innhold.beløp.setScale(2)
                             },

@@ -8,6 +8,7 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Inntektspost
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForYtelse
 import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForYtelseSomGjelderBarn
 import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForÅrsinntekter
 import no.nav.bidrag.behandling.transformers.finnHullIPerioder
@@ -20,6 +21,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -475,6 +477,28 @@ class ValiderInntektPerioderTest {
                 gjelderBarn shouldBe barn2Ident
                 rolle!!.rolletype shouldBe Rolletype.BIDRAGSMOTTAKER
             }
+        }
+
+        @Test
+        fun `skal ikke kreve skattesats for barnetillegg fra Forsvaret i bidrag`() {
+            val behandling = oppretteBehandling(stønadstype = Stønadstype.BIDRAG)
+            val bidragspliktig = opprettRolle("31233123", Rolletype.BIDRAGSPLIKTIG, behandling = behandling)
+            behandling.roller.addAll(listOf(bidragspliktig, opprettRolle("21333123", Rolletype.BARN, behandling = behandling)))
+            fun barnetilleggUtenSkattefaktor(vararg inntektstyper: Inntektstype) = opprettInntekt(
+                YearMonth.parse("2022-01"),
+                null,
+                type = Inntektsrapportering.BARNETILLEGG,
+                inntektstyper = inntektstyper.toList(),
+                rolle = bidragspliktig,
+                behandling = behandling,
+            ).also { inntekt -> inntekt.inntektsposter.forEach { it.skattefaktor = null } }
+            fun manglerSkatteprosent(inntekt: Inntekt) = listOf(inntekt)
+                .mapValideringsfeilForYtelse(Inntektsrapportering.BARNETILLEGG, LocalDate.parse("2022-01-01"))
+                .firstOrNull()?.manglerSkatteprosent == true
+
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET)) shouldBe false
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET, Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
         }
     }
 

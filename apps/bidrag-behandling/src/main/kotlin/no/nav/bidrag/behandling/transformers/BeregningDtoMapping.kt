@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.transformers
 
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.hentNavn
 import no.nav.bidrag.behandling.dto.v1.beregning.BeregnetBidragBarnDto
@@ -55,6 +56,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnInnkre
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalInnkrevesPeriode
 import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX
+import no.nav.bidrag.beregn.core.util.InntektUtil.beløpTilÅrsbeløp
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvslag
@@ -66,6 +68,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -178,7 +181,7 @@ import java.time.YearMonth
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
-val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_TILTAKSPENGER, Inntektstype.BARNETILLEGG_SUMMERT)
+val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_SUMMERT)
 
 fun Rolle.mapTilResultatBarn() = ResultatRolle(
     tilPersonident(),
@@ -314,6 +317,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
     val inntekter = inntekterRolle
         .filter { it.taMed }
         .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
+        .filterNot { it.harBareSkattefrieBarnetillegg() }
         .ifEmpty {
             if (taMed12MndInntektHvisIngenValgt) {
                 inntekterRolle
@@ -351,7 +355,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
                 } else {
                     ÅrMånedsperiode(if (taMed12MndInntektHvisIngenValgt) eldsteVirkningstidspunkt else it.datoFom!!, it.datoTom?.plusDays(1))
                 },
-                beløp = it.belop,
+                beløp = it.beløpUtenSkattefrieBarnetillegg(),
                 inntektsrapportering = it.type,
                 inntektGjelderBarn =
                 it.gjelderBarnRolle.takeIfNotNullOrEmpty { PersonStønad(it.ident!!, it.stønadstype) }
@@ -2349,3 +2353,10 @@ fun List<GrunnlagDto>.finnTotalInntektForRolle(
     return delberegningSumInntektForRolle?.innholdTilObjekt<DelberegningSumInntekt>()?.totalinntekt
         ?: BigDecimal.ZERO
 }
+
+// Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt. Bare disse postene trekkes fra,
+// slik at andre barnetillegg i samme inntekt fortsatt tas med. Beløpet på inntekten og på postene kan være avrundet
+// ulikt ved lagring, så fratrekket kan ikke gi negativ inntekt. Uten skattefrie poster beholdes beløpet uendret.
+private fun Inntekt.beløpUtenSkattefrieBarnetillegg() = inntektsposter.filter { it.inntektstype?.erSkattefrittBarnetillegg == true }.takeIf { it.isNotEmpty() }?.let { skattefrie -> maxOf(belop - skattefrie.sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }, BigDecimal.ZERO) } ?: belop
+
+private fun Inntekt.harBareSkattefrieBarnetillegg() = inntektsposter.isNotEmpty() && inntektsposter.all { it.inntektstype?.erSkattefrittBarnetillegg == true }

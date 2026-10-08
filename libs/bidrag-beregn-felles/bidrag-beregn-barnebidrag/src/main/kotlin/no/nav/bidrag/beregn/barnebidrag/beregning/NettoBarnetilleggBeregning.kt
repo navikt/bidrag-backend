@@ -3,6 +3,7 @@ package no.nav.bidrag.beregn.barnebidrag.beregning
 import no.nav.bidrag.beregn.barnebidrag.bo.NettoBarnetilleggBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.NettoBarnetilleggBeregningResultat
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.util.avrundetMedToDesimaler
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Barnetillegg
 import java.math.BigDecimal
@@ -14,7 +15,8 @@ internal object NettoBarnetilleggBeregning {
     private val bigDecimal12 = BigDecimal.valueOf(12)
 
     fun beregn(grunnlag: NettoBarnetilleggBeregningGrunnlag): NettoBarnetilleggBeregningResultat {
-        // Barnetillegg tiltakspenger er skattefritt (nettoverdi). Filtreres bort fra sum brutto og legges til i sum netto.
+        // Skattefrie barnetillegg (tiltakspenger og Forsvaret) er nettoverdier og legges til i sum netto uten skattefradrag.
+        // Tiltakspenger filtreres bort fra sum brutto. Forsvarets barnetillegg har brutto lik netto.
         val barnetilleggTypeListe = grunnlag.barnetilleggBeregningGrunnlagListe.map {
             Barnetillegg(
                 barnetilleggType = it.barnetilleggstype,
@@ -23,13 +25,13 @@ internal object NettoBarnetilleggBeregning {
                 } else {
                     BigDecimal.ZERO
                 }.avrundetMedToDesimaler,
-                nettoBarnetillegg = if (it.barnetilleggstype != Inntektstype.BARNETILLEGG_TILTAKSPENGER) {
+                nettoBarnetillegg = if (!it.barnetilleggstype.erSkattefrittBarnetillegg) {
                     val skattefradrag = it.bruttoBarnetillegg.multiply(it.skattefaktor ?: BigDecimal.ZERO)
                     it.bruttoBarnetillegg.minus(skattefradrag).divide(bigDecimal12, 10, RoundingMode.HALF_UP)
                 } else {
                     it.bruttoBarnetillegg.divide(bigDecimal12, 10, RoundingMode.HALF_UP)
                 }.avrundetMedToDesimaler,
-                skattefaktor = it.skattefaktor ?: BigDecimal.ZERO,
+                skattefaktor = if (it.barnetilleggstype.erSkattefrittBarnetillegg) BigDecimal.ZERO else it.skattefaktor ?: BigDecimal.ZERO,
             )
         }
 
