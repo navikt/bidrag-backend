@@ -366,8 +366,6 @@ internal class BeregnAldersjusteringTest : FellesTest() {
             aldersjusteringResultat = api.beregnAldersjustering(request)
         }
 
-        println(commonObjectmapper.writeValueAsString(aldersjusteringResultat))
-
         val aldersjusteringResultatGrunnlagListe = aldersjusteringResultat.grunnlagListe
         val alleReferanser = hentAlleReferanser(aldersjusteringResultatGrunnlagListe)
         val alleRefererteReferanser = hentAlleRefererteReferanser(aldersjusteringResultatGrunnlagListe)

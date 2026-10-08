@@ -1,6 +1,7 @@
 package no.nav.bidrag.beregn.barnebidrag.mapper
 
 import no.nav.bidrag.beregn.barnebidrag.bo.BarnetilsynMedStønadPeriodeGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.ForpleiningPeriodeGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.NettoTilsynsutgiftPeriode
 import no.nav.bidrag.beregn.barnebidrag.bo.NettoTilsynsutgiftPeriodeGrunnlagDto
 import no.nav.bidrag.beregn.barnebidrag.bo.SøknadsbarnPeriodeGrunnlag
@@ -11,6 +12,7 @@ import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningNettoTilsynsutgift
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Grunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
@@ -22,6 +24,7 @@ internal object UnderholdskostnadMapper : CoreMapper() {
         søknadsbarnPeriodeGrunnlag = mapSøknadsbarn(mottattGrunnlag),
         barnetilsynMedStønadPeriodeGrunnlagListe = mapBarnetilsynMedStønad(mottattGrunnlag),
         nettoTilsynsutgiftPeriodeGrunnlagListe = mapNettoTilsynsutgift(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
+        forpleiningPeriodeGrunnlagListe = mapForpleining(mottattGrunnlag, mottattGrunnlag.søknadsbarnReferanse),
         sjablonSjablontallPeriodeGrunnlagListe = mapSjablonSjablontall(sjablonGrunnlag),
         sjablonBarnetilsynPeriodeGrunnlagListe = mapSjablonBarnetilsyn(sjablonGrunnlag),
         sjablonForbruksutgifterPeriodeGrunnlagListe = mapSjablonForbruksutgifter(sjablonGrunnlag),
@@ -58,6 +61,24 @@ internal object UnderholdskostnadMapper : CoreMapper() {
         } catch (e: Exception) {
             throw IllegalArgumentException(
                 "Ugyldig input ved mapping av barnetilsyn med stønad. Innhold i Grunnlagstype.BARNETILSYN_MED_STØNAD er ikke gyldig: " + e.message,
+            )
+        }
+    }
+
+    private fun mapForpleining(beregnGrunnlag: BeregnGrunnlag, gjelderBarn: Grunnlagsreferanse): List<ForpleiningPeriodeGrunnlag> {
+        try {
+            return beregnGrunnlag.grunnlagListe
+                .filtrerOgKonverterBasertPåEgenReferanse<ForpleiningPeriode>(Grunnlagstype.FORPLEINING_PERIODE)
+                .filter { it.gjelderBarnReferanse == gjelderBarn }
+                .map {
+                    ForpleiningPeriodeGrunnlag(
+                        referanse = it.referanse,
+                        forpleiningPeriode = it.innhold,
+                    )
+                }
+        } catch (e: Exception) {
+            throw IllegalArgumentException(
+                "Ugyldig input ved beregning av underholdskostnad. Innhold i Grunnlagstype.FORPLEINING_PERIODE er ikke gyldig: " + e.message,
             )
         }
     }
