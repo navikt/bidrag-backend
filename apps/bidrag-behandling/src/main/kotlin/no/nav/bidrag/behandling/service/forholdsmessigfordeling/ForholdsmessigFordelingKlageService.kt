@@ -165,7 +165,7 @@ class ForholdsmessigFordelingKlageService(
         val åpneSøknaderForVedtaksid = hentÅpneSøknaderForVedtak(behandling)
         sammeknyttSøknadHvisNødvendig(hovedsøknadsid, opprettetEllerOppdaterSøknadsid)
 
-        val opprettetSøknad = bbmConsumer.hentSøknad(opprettetEllerOppdaterSøknadsid)!!.søknad
+        var opprettetSøknad = bbmConsumer.hentSøknad(opprettetEllerOppdaterSøknadsid)!!.søknad
         hovedsøknadsid =
             håndterSlettetHovedsøknad(
                 opprettetSøknad,
@@ -174,6 +174,8 @@ class ForholdsmessigFordelingKlageService(
                 hovedsøknadsid,
                 opprettetEllerOppdaterSøknadsid,
             )
+        opprettetSøknad = if (opprettetSøknad.søknadsid != opprettetEllerOppdaterSøknadsid) bbmConsumer.hentSøknad(hovedsøknadsid)!!.søknad else opprettetSøknad
+
         oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid)
         feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
