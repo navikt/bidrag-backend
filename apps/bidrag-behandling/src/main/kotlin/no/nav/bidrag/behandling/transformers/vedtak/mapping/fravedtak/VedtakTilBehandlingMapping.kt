@@ -296,6 +296,8 @@ class VedtakTilBehandlingMapping(
             if (type == Vedtakstype.INDEKSREGULERING) mutableSetOf() else grunnlagListe.mapGrunnlag(behandling, lesemodus)
 
         mapBegrunnelser(behandling, lesemodus)
+        // Brukes i blant annet FF ved førstegangsopprettelse av behandling
+        behandling.erNyBehandlingIkkeOpprettet = true
         return behandling
     }
 
