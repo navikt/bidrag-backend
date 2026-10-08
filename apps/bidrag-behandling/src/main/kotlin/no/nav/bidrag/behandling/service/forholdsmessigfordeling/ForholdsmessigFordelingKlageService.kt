@@ -70,10 +70,13 @@ class ForholdsmessigFordelingKlageService(
                     SøknadsknytningStatus.Aktiv,
                 )
             val annenSøknadForSammePåklagetSøknad =
-                tilknyttedeSøknader.søknader.find {
-                    it.søknadsid != behandling.soknadsid &&
-                        it.refSøknadsid == behandling.omgjøringsdetaljer?.soknadRefId
-                } ?: tilknyttedeSøknader.søknader
+                tilknyttedeSøknader.søknader
+                    .filter { it.behandlingStatusType.erÅpenStatus }
+                    .find {
+                        it.søknadsid != behandling.soknadsid &&
+                            it.refSøknadsid == behandling.omgjøringsdetaljer?.soknadRefId
+                    } ?: tilknyttedeSøknader.søknader
+                    .filter { it.behandlingStatusType.erÅpenStatus }
                     .filter { it.søknadsid != behandling.soknadsid && behandling.erSøknadOpprettetEtterHovedsøknad(it.søknadsid) }
                     .minByOrNull { it.søknadsid }
             if (annenSøknadForSammePåklagetSøknad != null) {
