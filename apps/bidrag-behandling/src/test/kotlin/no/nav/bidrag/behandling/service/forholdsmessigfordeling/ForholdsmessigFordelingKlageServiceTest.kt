@@ -6,6 +6,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
@@ -25,8 +26,12 @@ import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
@@ -515,5 +520,228 @@ class ForholdsmessigFordelingKlageServiceTest {
         behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
         verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, OPPRETTET_SØKNADSID) }
         verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+    }
+
+    @Test
+    fun `håndterSlettetHovedsøknad skal returnere gjeldende hovedsøknad når opprettet søknad ikke er avbrutt`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+
+        val hovedsøknadsid =
+            service.håndterSlettetHovedsøknad(
+                hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.UNDER_BEHANDLING),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+                HOVEDSØKNADSID,
+            )
+
+        hovedsøknadsid shouldBe HOVEDSØKNADSID
+        behandling.soknadsid shouldBe HOVEDSØKNADSID
+        verify(exactly = 0) { bbmConsumer.hentSøknad(any()) }
+        verify(exactly = 0) { bbmConsumer.fjernSammeknytningHovedsøknad(any(), any()) }
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+    }
+
+    @Test
+    fun `håndterSlettetHovedsøknad skal returnere gjeldende hovedsøknad når hovedsøknaden fortsatt er åpen`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+        every { bbmConsumer.hentSøknad(HOVEDSØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.UNDER_BEHANDLING))
+
+        val hovedsøknadsid =
+            service.håndterSlettetHovedsøknad(
+                hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), status = BehandlingStatusType.AVBRUTT),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+                OPPRETTET_SØKNADSID,
+            )
+
+        hovedsøknadsid shouldBe HOVEDSØKNADSID
+        behandling.soknadsid shouldBe HOVEDSØKNADSID
+        verify(exactly = 0) { bbmConsumer.fjernSammeknytningHovedsøknad(any(), any()) }
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+    }
+
+    @Test
+    fun `skal gjenopprette klagesøknad med mottatt dato fra slettet søknad når søknad fra påklaget vedtak slettes`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        val mottattDatoSlettetSøknad = LocalDate.parse("2023-05-05")
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = false))
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns
+            HentSøknadResponse(
+                hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID)
+                    .copy(søknadMottattDato = mottattDatoSlettetSøknad),
+            )
+        every { bbmConsumer.hentSøknad(HOVEDSØKNADSID) } returns null
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val request = slot<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(request)) } returns OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID)
+        mockTilknyttedeSøknader()
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, OPPRETTET_SØKNADSID)
+
+        verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
+        verify(exactly = 1) { bbmConsumer.fjernSammenknytning(OPPRETTET_SØKNADSID) }
+        request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
+        request.captured.refSøknadsid shouldBe OPPRETTET_SØKNADSID
+        request.captured.hovedsøknadsid shouldBe HOVEDSØKNADSID
+        request.captured.barnListe.map { it.personident } shouldBe listOf(barn1.ident)
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+        barn1.søknadStatus(GJENOPPRETTET_FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        verify(exactly = 0) { behandlingService.logiskSlettBehandling(any()) }
+    }
+
+    @Test
+    fun `skal ikke gjenopprette klagesøknad når slettet søknad er opprettet etter hovedsøknad`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID))
+        mockTilknyttedeSøknader()
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, OPPRETTET_SØKNADSID)
+
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+        verify(exactly = 0) { bbmConsumer.fjernSammenknytning(any()) }
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+    }
+
+    @Test
+    fun `skal gjenopprette klagesøknad for slettet hovedsøknad når den var hovedsøknad i påklaget søknad og ny hovedsøknad finnes`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        val mottattDatoSlettetSøknad = LocalDate.parse("2023-05-05")
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetEtterHovedsøknad = true), barn2)
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(
+                søknader =
+                listOf(
+                    hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!)),
+                    hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                ),
+            )
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(OPPRETTET_SØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(søknader = emptyList())
+        every { bbmConsumer.hentSøknad(HOVEDSØKNADSID) } returns
+            HentSøknadResponse(
+                hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID)
+                    .copy(søknadMottattDato = mottattDatoSlettetSøknad),
+            )
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns null
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(PÅKLAGET_FF_SØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(hovedsøknadsid = PÅKLAGET_FF_SØKNADSID, søknader = emptyList())
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val request = slot<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(request)) } returns OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID)
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, HOVEDSØKNADSID)
+
+        behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
+        verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, OPPRETTET_SØKNADSID) }
+        verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
+        request.captured.refSøknadsid shouldBe HOVEDSØKNADSID
+        request.captured.hovedsøknadsid shouldBe OPPRETTET_SØKNADSID
+        request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
+        request.captured.barnListe.map { it.personident } shouldBe listOf(barn2.ident)
+        barn2.søknadStatus(HOVEDSØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+        barn2.søknadStatus(GJENOPPRETTET_FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        verify(exactly = 0) { behandlingService.logiskSlettBehandling(any()) }
+    }
+
+    @Test
+    fun `skal ikke gjenopprette klagesøknad for slettet hovedsøknad når den ikke var hovedsøknad i påklaget søknad`() {
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetEtterHovedsøknad = true), barn2)
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(
+                søknader =
+                listOf(
+                    hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!)),
+                    hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                ),
+            )
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(OPPRETTET_SØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(søknader = emptyList())
+        every { bbmConsumer.hentSøknad(HOVEDSØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), refSøknadsid = 8888L))
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(PÅKLAGET_FF_SØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(hovedsøknadsid = PÅKLAGET_FF_SØKNADSID, søknader = emptyList())
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, HOVEDSØKNADSID)
+
+        behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+        barn2.søknadStatus(HOVEDSØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+    }
+
+    @Test
+    fun `skal feilregistrere alle åpne søknader knyttet til behandlingen og ikke gjenopprette søknader når behandlingen slettes`() {
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID), barn1)
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(søknader = listOf(hentSøknad(HOVEDSØKNADSID, listOf(barn1.ident!!))))
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns
+            HentSøknaderForBehandlingResponse(
+                listOf(
+                    hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), status = BehandlingStatusType.UNDER_BEHANDLING),
+                    hentSøknad(OPPRETTET_SØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.ÅPEN),
+                    hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.VEDTAK_FATTET),
+                ),
+            )
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, HOVEDSØKNADSID)
+
+        verify(exactly = 1) { behandlingService.logiskSlettBehandling(behandling) }
+        verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, null) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == HOVEDSØKNADSID }) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == GJENOPPRETTET_FF_KLAGESØKNADSID }) }
+        verify(exactly = 0) { kravhaverService.hentAlleRelevanteKravhavere(any()) }
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+    }
+
+    @Test
+    fun `kanEndreSøknadStatus skal returnere true når søknaden ikke tilhører noen behandling`() {
+        every { behandlingService.hentEksisterendeBehandling(OPPRETTET_SØKNADSID) } returns null
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns null
+
+        service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe true
+    }
+
+    @Test
+    fun `kanEndreSøknadStatus skal returnere true når behandlingen ikke er klage eller omgjøring`() {
+        behandling.omgjøringsdetaljer = null
+        behandling.vedtakstype = Vedtakstype.ENDRING
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = false))
+        every { behandlingService.hentEksisterendeBehandling(OPPRETTET_SØKNADSID) } returns behandling
+
+        service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe true
+    }
+
+    @Test
+    fun `kanEndreSøknadStatus skal returnere false for klagesøknad som ikke er opprettet etter hovedsøknad`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = false))
+        every { behandlingService.hentEksisterendeBehandling(OPPRETTET_SØKNADSID) } returns behandling
+
+        service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe false
+    }
+
+    @Test
+    fun `kanEndreSøknadStatus skal returnere true for klagesøknad opprettet etter hovedsøknad`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
+        every { behandlingService.hentEksisterendeBehandling(OPPRETTET_SØKNADSID) } returns behandling
+
+        service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe true
+    }
+
+    @Test
+    fun `kanEndreSøknadStatus skal finne behandling via behandlingsid på søknaden når søknaden ikke er hovedsøknad`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = false))
+        every { behandlingService.hentEksisterendeBehandling(OPPRETTET_SØKNADSID) } returns null
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)).copy(behandlingsid = behandling.id))
+        every { behandlingService.hentBehandlingById(behandling.id!!) } returns behandling
+
+        service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe false
     }
 }

@@ -370,6 +370,7 @@ class ForholdsmessigFordelingKlageService(
                         status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
                         enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                         opprettetEtterHovedsøknad = !behandling.erNyBehandlingIkkeOpprettet,
+                        opprettetMedKlageHovedsøknadsid = opprettetEllerOppdaterSøknadsid,
                     ),
                 )
             }

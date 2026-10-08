@@ -76,4 +76,5 @@ data class ForholdsmessigFordelingSøknadBarn(
     // Søknaden ble opprettet samtidig med eller etter hovedsøknaden, og kan derfor bli hovedsøknad hvis hovedsøknaden slettes
     var opprettetEtterHovedsøknad: Boolean = false,
     var erstatterFFKlagesøknadsid: Long? = null,
+    var opprettetMedKlageHovedsøknadsid: Long? = null,
 )
