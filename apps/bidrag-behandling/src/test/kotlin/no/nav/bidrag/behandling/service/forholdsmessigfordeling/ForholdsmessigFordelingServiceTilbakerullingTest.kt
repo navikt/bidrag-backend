@@ -119,8 +119,8 @@ class ForholdsmessigFordelingServiceTilbakerullingTest {
             bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
             behandlingRepository.markerOpprettelseAvFFFeilet(behandlingId)
         }
-        verify(exactly = 2) { bbmConsumer.lagreBehandlingsid(any()) }
-        verify(exactly = 0) { bbmConsumer.lagreBehandlingsid(match { it.søknadsid == 2L }) }
+        verify(exactly = 3) { bbmConsumer.lagreBehandlingsid(any()) }
+        verify(exactly = 1) { bbmConsumer.lagreBehandlingsid(match { it.søknadsid == 2L }) }
         verify(exactly = 1) { bbmConsumer.lagreBehandlerEnhet(any()) }
         verify(exactly = 2) { bbmConsumer.stoppSporingAvEndringer() }
     }
