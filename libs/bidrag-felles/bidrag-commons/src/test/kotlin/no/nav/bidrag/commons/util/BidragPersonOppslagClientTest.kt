@@ -2,6 +2,7 @@ package no.nav.bidrag.commons.util
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import no.nav.bidrag.domene.ident.Personident
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestOperations
 import java.net.URI
 
@@ -49,6 +51,15 @@ class BidragPersonOppslagClientTest {
         stub(Svar("500") { throw HttpServerErrorException.create(HttpStatus.INTERNAL_SERVER_ERROR, "", HttpHeaders.EMPTY, ByteArray(0), null) })
 
         shouldThrow<HttpServerErrorException> { oppslag.kall(client) }
+    }
+
+    @ParameterizedTest
+    @MethodSource("oppslag")
+    fun `skal kaste timeout videre`(oppslag: Oppslag) {
+        val feil = ResourceAccessException("Timeout")
+        stub(Svar("timeout") { throw feil })
+
+        shouldThrow<RuntimeException> { oppslag.kall(client) }.cause shouldBe feil
     }
 
     private fun stub(svar: Svar) {

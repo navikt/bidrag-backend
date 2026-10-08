@@ -2,7 +2,6 @@ package no.nav.bidrag.sak.integration.person
 
 import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
-import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.sak.util.takeIfNotNullOrEmpty
@@ -38,14 +37,9 @@ class BidragPersonClient(
     }
 }
 
-// TODO(bidrag-person-feil): Svelger alle feil fra bidrag-person. Skal feilen gå videre?
-fun hentPerson(ident: String?): PersonDto? = try {
+fun hentPerson(ident: String?): PersonDto? =
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(IdentConsumer::class.java).hentPersonInformasjon(Personident(it))
     }
-} catch (e: Exception) {
-    secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-    null
-}
 
 fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }

@@ -42,7 +42,7 @@ class BidragPersonOppslagClient(
     private fun <T> nullHvisIkkeFunnet(oppslag: () -> T?): T? = try {
         oppslag()
     } catch (e: RestClientResponseException) {
-        if (e.statusCode.value() != HttpStatus.NOT_FOUND.value()) throw e
+        if (e.statusCode != HttpStatus.NOT_FOUND) throw e
         LOGGER.info {
             "Bidrag-person fant ingen person på kalt ident. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
         }
