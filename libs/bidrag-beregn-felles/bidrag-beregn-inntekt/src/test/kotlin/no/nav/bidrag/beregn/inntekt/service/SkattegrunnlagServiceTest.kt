@@ -4,7 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.beregn.inntekt.TestUtil
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -20,8 +19,6 @@ class SkattegrunnlagServiceTest : AbstractServiceTest() {
         val skattegrunnlagDto = TestUtil.byggSkattegrunnlagDto()
         val beregnedeKapsinntekter =
             skattegrunnlagService.beregnSkattegrunnlag(skattegrunnlagDto, Inntektsrapportering.KAPITALINNTEKT)
-
-        println(commonObjectmapper.writeValueAsString(beregnedeKapsinntekter))
 
         assertSoftly {
             assertNotNull(beregnedeKapsinntekter)
@@ -92,8 +89,6 @@ class SkattegrunnlagServiceTest : AbstractServiceTest() {
         val skattegrunnlagDto = TestUtil.byggSkattegrunnlagDto()
         val beregnedeLigsinntekter =
             skattegrunnlagService.beregnSkattegrunnlag(skattegrunnlagDto, Inntektsrapportering.LIGNINGSINNTEKT)
-
-        println(commonObjectmapper.writeValueAsString(beregnedeLigsinntekter))
 
         assertSoftly {
             with(beregnedeLigsinntekter[0]) {

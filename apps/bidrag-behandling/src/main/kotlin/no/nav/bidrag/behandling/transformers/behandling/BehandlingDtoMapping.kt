@@ -854,7 +854,7 @@ data class RoleInntekterCache(
 )
 
 fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
-    val rolleInntekter = inntekter.groupBy { it.rolle?.id ?: return@groupBy null }.filterKeys { it != null }
+    val rolleInntekter = inntekter.groupBy { it.gjelderRolle?.id ?: return@groupBy null }.filterKeys { it != null }
 
     val barnetilleggPerRolle = mutableMapOf<Long, List<Inntekt>>()
     val kontantstøttePerRolle = mutableMapOf<Long, List<Inntekt>>()
@@ -1190,6 +1190,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
+                    .filter { barn.kreverGrunnlagForBeregning }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.BARNETILLEGG,
                         eldsteVirkningstidspunkt,
@@ -1200,6 +1201,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
+            .filter { it.gjelderBarnRolle == null || it.gjelderBarnRolle!!.kreverGrunnlagForBeregning }
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.BARNETILLEGG,
                 eldsteVirkningstidspunkt,
@@ -1775,12 +1777,12 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
                     harOpprettetForholdsmessigFordeling = barn.forholdsmessigFordeling != null,
                     opphørsdato = barn.opphørsdato?.toYearMonth(),
                     eldsteSøktFraDato =
-                    barn.forholdsmessigFordeling!!
-                        .søknaderUnderBehandling
-                        .filter { it.søknadFomDato != null }
-                        .minOfOrNull { it.søknadFomDato!! },
+                    barn.forholdsmessigFordeling
+                        ?.søknaderUnderBehandling
+                        ?.filter { it.søknadFomDato != null }
+                        ?.minOfOrNull { it.søknadFomDato!! },
                     åpneBehandlinger =
-                    barn.forholdsmessigFordeling!!.søknaderUnderBehandling.map {
+                    barn.forholdsmessigFordeling?.søknaderUnderBehandling?.map {
                         ForholdsmessigFordelingÅpenBehandlingDto(
                             søktFraDato = it.søknadFomDato,
                             mottattDato = it.mottattDato,
@@ -1793,7 +1795,7 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
                             behandlingstype = it.behandlingstype,
                             behandlingstema = it.behandlingstema,
                         )
-                    },
+                    } ?: emptyList(),
                     enhet = barn.forholdsmessigFordeling?.behandlerenhet ?: "",
                 )
             }

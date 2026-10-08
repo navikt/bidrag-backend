@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
@@ -52,6 +53,8 @@ fun Set<FaktiskTilsynsutgift>.tilsynsutgiftTilDatoperioder() = this.map { Datope
 fun Set<Tilleggsstønad>.tilleggsstønadTilDatoperioder() = this.map { DatoperiodeDto(it.fom, it.tom) }
 
 fun Set<Tilleggsstønad>.tilleggsstønadTilUnderholdsperioder() = this.map { DatoperiodeDto(it.fom, it.tom) }
+
+fun Set<Forpleining>.forpleiningTilDatoperioder() = this.map { DatoperiodeDto(it.fom, it.tom) }
 
 fun Barnetilsyn.tilStønadTilBarnetilsynDto(): StønadTilBarnetilsynDto = StønadTilBarnetilsynDto(
     id = this.id,
@@ -204,6 +207,16 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
     tilleggsstønad.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
         periode.fom = virkningsdato
     }
+    forpleining.filter { it.fom < virkningsdato }.forEach { periode ->
+        if (periode.tom != null && virkningsdato >= periode.tom) {
+            forpleining.remove(periode)
+        } else {
+            periode.fom = virkningsdato
+        }
+    }
+    forpleining.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+        periode.fom = virkningsdato
+    }
 }
 
 fun Underholdskostnad.justerPerioderForOpphørsdato(
@@ -246,6 +259,19 @@ fun Underholdskostnad.justerPerioderForOpphørsdato(
                 tilleggsstønad.remove(periode)
             }
         tilleggsstønad
+            .filter { periode ->
+                periode.tom == null || periode.tom!!.isAfter(beregnTilDato) || periode.tom == forrigeOpphørsdato.sluttenAvForrigeMåned
+            }.maxByOrNull { it.fom }
+            ?.let {
+                it.tom = justerPeriodeTomOpphørsdato(opphørsdato)
+            }
+
+        forpleining
+            .filter { opphørsdato == null || it.fom > beregnTilDato }
+            .forEach { periode ->
+                forpleining.remove(periode)
+            }
+        forpleining
             .filter { periode ->
                 periode.tom == null || periode.tom!!.isAfter(beregnTilDato) || periode.tom == forrigeOpphørsdato.sluttenAvForrigeMåned
             }.maxByOrNull { it.fom }

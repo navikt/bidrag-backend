@@ -277,6 +277,7 @@ class BehandlingTilGrunnlagMappingV2(
     fun Behandling.tilGrunnlagUnderholdskostnad(personobjekter: Set<GrunnlagDto> = emptySet()) = listOf(
         tilGrunnlagBarnetilsyn(),
         tilGrunnlagTilleggsstønad(),
+        tilGrunnlagForpleining(),
         tilGrunnlagFaktiskeTilsynsutgifter(personobjekter),
     ).flatten()
 
