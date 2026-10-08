@@ -340,12 +340,7 @@ class GrunnlagService(
                 secureLogger.info {
                     "Aktiverer grunnlag automatisk hvis det ikke er noe endringer siden forrige grunnlagsinnhenting for behandling ${behandling.id} og saksnummer ${behandling.saksnummer}."
                 }
-                aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
-                aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
-                behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
-                aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+                aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling)
                 oppdaterVirkningstidspunktOgÅrsakForBarn(behandling)
                 inntektService.oppdaterInntektRolleOgGjelderBarnRolle(behandling)
             }
@@ -356,6 +351,14 @@ class GrunnlagService(
         }
     }
 
+    fun aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling: Behandling) {
+        aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
+        aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
+        behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
+        aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+    }
     suspend fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
         // Klage er pga at det skal være mulig å velge vedtak for aldersjustering hvis klagebehandling endrer resultat for aldersjusteringen
 

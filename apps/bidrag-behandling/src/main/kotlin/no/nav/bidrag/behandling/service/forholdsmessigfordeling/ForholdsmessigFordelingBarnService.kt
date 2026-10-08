@@ -160,6 +160,7 @@ class ForholdsmessigFordelingBarnService(
             avsluttForholdsmessigFordeling(behandling, slettBarn)
             behandlingService.logiskSlettBehandling(behandling)
             bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
+            søknadService.slettAlleSøknaderKnyttetTilBehandling(behandling)
         } else {
             slettBarn.forEach { slettBarnFraBehandlingFF(it, behandling, søknadsid) }
             behandlingService.sendOppdatertHendelse(behandling.id!!, false)
