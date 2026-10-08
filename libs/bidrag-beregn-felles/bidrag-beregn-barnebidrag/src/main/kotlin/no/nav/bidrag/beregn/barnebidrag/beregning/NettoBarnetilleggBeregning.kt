@@ -31,7 +31,7 @@ internal object NettoBarnetilleggBeregning {
                 } else {
                     it.bruttoBarnetillegg.divide(bigDecimal12, 10, RoundingMode.HALF_UP)
                 }.avrundetMedToDesimaler,
-                skattefaktor = it.skattefaktor ?: BigDecimal.ZERO,
+                skattefaktor = if (it.barnetilleggstype.erSkattefrittBarnetillegg) BigDecimal.ZERO else it.skattefaktor ?: BigDecimal.ZERO,
             )
         }
 

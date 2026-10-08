@@ -166,6 +166,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
             { assertThat(resultat[0].barnetilleggTypeListe[1].barnetilleggType).isEqualTo(Inntektstype.BARNETILLEGG_FORSVARET) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].bruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].nettoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
+            { assertThat(resultat[0].barnetilleggTypeListe[1].skattefaktor).isEqualByComparingTo(BigDecimal.ZERO) },
         )
     }
 
