@@ -103,6 +103,24 @@ internal class InntektTest {
         assertThat(inneholderSkattefrieBarnetillegg(barnetillegg)).isFalse()
     }
 
+    @Test
+    @DisplayName("Inntekt med bare barnetillegg fra Forsvaret gir 0 selv om beløpene er avrundet ulikt")
+    fun testSkattefrittBarnetilleggMedUlikAvrundingGirNull() {
+        // Lagret som 2500,50 * 12 = 30006,00 på inntekten, men 2501 på posten
+        val barnetillegg = InntektsrapporteringPeriode(
+            periode = ÅrMånedsperiode("2024-08", "2024-09"),
+            manueltRegistrert = true,
+            inntektsrapportering = Inntektsrapportering.BARNETILLEGG,
+            beløp = BigDecimal("30006.00"),
+            valgt = true,
+            inntektspostListe = listOf(
+                InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_FORSVARET, BigDecimal(2501), InntektBeløpstype.MÅNEDSBELØP),
+            ),
+        )
+
+        assertThat(justerForSkattefrieBarnetillegg(barnetillegg)).isEqualByComparingTo(BigDecimal.ZERO)
+    }
+
     private fun byggBarnetilleggInntekt(vararg inntektsposter: InntektsrapporteringPeriode.Inntektspost) = InntektsrapporteringPeriode(
         periode = ÅrMånedsperiode("2024-08", "2024-09"),
         manueltRegistrert = true,
