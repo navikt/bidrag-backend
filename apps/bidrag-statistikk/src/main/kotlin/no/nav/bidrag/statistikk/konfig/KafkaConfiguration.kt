@@ -2,8 +2,8 @@ package no.nav.bidrag.statistikk.konfig
 
 import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import no.nav.bidrag.statistikk.LOGGER
-import no.nav.bidrag.statistikk.konfig.KafkaRetryListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

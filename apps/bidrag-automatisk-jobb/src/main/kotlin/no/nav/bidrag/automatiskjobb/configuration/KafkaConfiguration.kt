@@ -1,12 +1,11 @@
 package no.nav.bidrag.automatiskjobb.configuration
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.apache.kafka.clients.consumer.ConsumerRecord
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
 import org.springframework.util.backoff.ExponentialBackOff
 
@@ -37,37 +36,5 @@ class KafkaConfiguration {
             }, backoffPolicy)
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler
-    }
-}
-
-class KafkaRetryListener : RetryListener {
-    override fun failedDelivery(
-        record: ConsumerRecord<*, *>,
-        exception: Exception?,
-        deliveryAttempt: Int,
-    ) {
-        LOGGER.error(
-            exception,
-        ) {
-            "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} feilet. Dette er $deliveryAttempt. forsøk"
-        }
-    }
-
-    override fun recovered(
-        record: ConsumerRecord<*, *>,
-        exception: Exception?,
-    ) {
-        LOGGER.error(
-            exception,
-        ) {
-            "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} er enten suksess eller ignorert pågrunn av ugyldig data"
-        }
-    }
-
-    override fun recoveryFailed(
-        record: ConsumerRecord<*, *>,
-        original: Exception?,
-        failure: Exception,
-    ) {
     }
 }

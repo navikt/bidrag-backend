@@ -112,6 +112,11 @@
         </dependency>
         <dependency>
             <groupId>no.nav.bidrag</groupId>
+            <artifactId>bidrag-backend-feilhandtering</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-beregn-core</artifactId>
             <version>${project.version}</version>
         </dependency>

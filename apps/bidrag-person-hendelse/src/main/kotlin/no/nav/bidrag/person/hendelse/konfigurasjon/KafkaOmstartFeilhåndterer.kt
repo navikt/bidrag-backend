@@ -1,7 +1,7 @@
 package no.nav.bidrag.person.hendelse.konfigurasjon
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -38,10 +38,7 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
             )
         } else {
             records.first().run {
-                secureLogger.warn {
-                    "Feil ved konsumering av melding fra ${this.topic()}. id ${this.key()}, " +
-                        "offset: ${this.offset()}, partition: ${this.partition()}, records: $records"
-                }
+                kafkaRetryListener.logFailure(this, e)
                 scheduleRestart(
                     e,
                     container,
@@ -112,6 +109,8 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
         private val COUNTER_RESET_TIME =
             SHORT_SLEEP * SLOW_ERROR_COUNT * 2 // 10 min
     }
+
+    private val kafkaRetryListener = KafkaRetryListener()
 
     init {
         this.executor = SimpleAsyncTaskExecutor()
