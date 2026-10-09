@@ -561,6 +561,7 @@ class BehandleBehandlingHendelseService(
         return BehandlingHendelse(
             type =
             when {
+                slettet && søknadStatus != null && !søknadStatus.erAvsluttet -> BehandlingHendelseType.ENDRET
                 erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
                 else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
             },
