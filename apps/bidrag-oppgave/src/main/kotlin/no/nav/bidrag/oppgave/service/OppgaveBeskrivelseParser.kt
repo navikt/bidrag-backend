@@ -1,7 +1,7 @@
 package no.nav.bidrag.oppgave.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.oppgave.dto.Beskrivelseinnslag
+import no.nav.bidrag.oppgave.controller.Beskrivelseinnslag
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
