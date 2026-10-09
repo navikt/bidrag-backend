@@ -27,7 +27,12 @@ data class BidragOppgaveDto(
     val journalpostId: EksternJournalpostId?,
     val tildeltEnhetsnr: Enhetsnummer,
     val tilordnetRessurs: NavIdent?,
-    val brukerFnr: Personident?,
+    /**
+     * Fødselsnummer, d-nummer eller NPID for personen oppgaven gjelder. Oppgave-API-et kan også
+     * levere en aktør-ID i samme felt; den sendes ikke videre, fordi frontend bruker identen til å
+     * lenke til personen. `null` også når oppgaven gjelder en arbeidsgiver eller samhandler.
+     */
+    val brukerIdent: Personident?,
     val saksreferanse: String?,
     val prioritet: OppgaveDto.Prioritet,
     val fristFerdigstillelse: LocalDate?,

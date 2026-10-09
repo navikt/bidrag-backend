@@ -56,7 +56,7 @@ private fun OppgaveDto.tilBidragOppgave(): BidragOppgaveDto = BidragOppgaveDto(
     id = id,
     tema = tema,
     oppgavetype = oppgavetype,
-    brukerFnr = brukerFnr,
+    brukerIdent = brukerIdent,
     saksreferanse = saksreferanse,
     prioritet = prioritet,
     journalpostId = journalpostId,
@@ -75,8 +75,10 @@ private fun OppgaveDto.tilBidragOppgave(): BidragOppgaveDto = BidragOppgaveDto(
     opprettetTidspunkt = opprettetTidspunkt,
 )
 
-private val OppgaveDto.brukerFnr: Personident?
-    get() = when (bruker?.type) {
-        OppgaveDto.Bruker.BrukerType.PERSON -> Personident(bruker.ident)
-        else -> null
-    }
+/** Fnr, dnr og NPID har 11 sifre; aktør-ID har 13 og filtreres bort. */
+private val OppgaveDto.brukerIdent: Personident?
+    get() = bruker
+        ?.takeIf { it.type == OppgaveDto.Bruker.BrukerType.PERSON && it.ident.length == PERSONIDENT_LENGDE }
+        ?.let { Personident(it.ident) }
+
+private const val PERSONIDENT_LENGDE = 11

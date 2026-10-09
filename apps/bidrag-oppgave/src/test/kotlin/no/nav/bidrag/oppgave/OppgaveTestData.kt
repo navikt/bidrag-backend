@@ -27,7 +27,7 @@ object OppgaveTestData {
         fristFerdigstillelse = LocalDate.of(2026, 1, 25),
     )
 
-    private val bidragsoppgaveDto = oppgaveDto.copy(
+    val bidragsoppgaveDto = oppgaveDto.copy(
         id = EksternOppgaveId(123),
         tema = "BID",
         oppgavetype = "BEH_SAK",
@@ -60,7 +60,7 @@ object OppgaveTestData {
         journalpostId = EksternJournalpostId("JP-123"),
         tildeltEnhetsnr = Enhetsnummer("4100"),
         tilordnetRessurs = NavIdent("Z123456"),
-        brukerFnr = Personident("12345678901"),
+        brukerIdent = Personident("12345678901"),
         saksreferanse = "SAK-123",
         prioritet = OppgaveDto.Prioritet.NORM,
         fristFerdigstillelse = LocalDate.of(2026, 1, 25),

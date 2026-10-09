@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
 
 @AvgrensetOppgavesøk
-@Schema(description = "Minst ett søkekriterium må oppgis: saksnummer, aktør-ID, saksbehandler eller enhetsnummer.")
+@Schema(description = "Minst ett søkekriterium må oppgis: saksnummer eller aktør-ID.")
 data class FinnOppgaverRequest(
     val saksnummer: String? = null,
     @Size(min = 13, max = 13)

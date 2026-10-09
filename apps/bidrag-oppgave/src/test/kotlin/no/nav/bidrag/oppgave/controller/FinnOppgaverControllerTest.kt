@@ -2,6 +2,7 @@ package no.nav.bidrag.oppgave.controller
 
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.oppgave.OppgaveTestData.bidragsoppgaveDto
 import no.nav.bidrag.oppgave.OppgaveTestData.forventetBidragOppgaveDto
 import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveResponse
 import no.nav.bidrag.oppgave.config.RestConfig
@@ -10,6 +11,7 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import no.nav.bidrag.tilgang.TilgangskontrollException
 import no.nav.bidrag.tilgang.TilgangskontrollService
@@ -102,6 +104,18 @@ class FinnOppgaverControllerTest {
         assertThat(params.tema).containsExactly(FellesKodeverkTema.BID)
         assertThat(params.statuskategori).isEqualTo("AAPEN")
         assertThat(params.limit).isEqualTo(100)
+    }
+
+    @ParameterizedTest
+    @MethodSource("brukereUtenPersonident")
+    fun `POST oppgaver sender ikke brukerIdent for aktør-ID eller andre brukertyper`(bruker: OppgaveDto.Bruker) {
+        given(oppgaveClient.finnOppgaver(anyFinnOppgaverParams()))
+            .willReturn(oppgaveResponse(listOf(bidragsoppgaveDto.copy(bruker = bruker))))
+
+        val resultat = postOppgaver(FinnOppgaverRequest(saksnummer = "SAK-123"))
+
+        assertThat(resultat).hasStatusOk()
+        assertThat(resultat.oppgaver()).singleElement().extracting { it.brukerIdent }.isNull()
     }
 
     @ParameterizedTest
@@ -306,6 +320,13 @@ class FinnOppgaverControllerTest {
         fun søkMedEttKriterium() = listOf(
             FinnOppgaverRequest(saksnummer = "SAK-123"),
             FinnOppgaverRequest(aktoerId = AktorId("1234567890123")),
+        )
+
+        @JvmStatic
+        fun brukereUtenPersonident() = listOf(
+            OppgaveDto.Bruker(ident = "1234567890123", type = OppgaveDto.Bruker.BrukerType.PERSON),
+            OppgaveDto.Bruker(ident = "123456789", type = OppgaveDto.Bruker.BrukerType.ARBEIDSGIVER),
+            OppgaveDto.Bruker(ident = "80000123456", type = OppgaveDto.Bruker.BrukerType.SAMHANDLER),
         )
     }
 
