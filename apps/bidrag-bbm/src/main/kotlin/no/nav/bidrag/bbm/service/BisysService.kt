@@ -53,6 +53,15 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
+val søknadsstatusFattet = listOf(
+    Behandlingstatus.VEDTAK_FATTET,
+    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.ERKJENT_AVSLUTTET,
+    Behandlingstatus.DØMT_AVSLUTTET,
+    Behandlingstatus.G4,
+    Behandlingstatus.SENDT_UTLANDET_LUKKET,
+)
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
 @Service
@@ -1029,12 +1038,11 @@ class BisysService(
         val alleBehandlingsstatuser = søknadslinjeListe.map { Behandlingstatus.fraKode(it.søknadStatuskode) }
 
         val alleLukket = alleBehandlingsstatuser.all { it?.lukketStatus == true }
-        val harVedtakFattet = alleBehandlingsstatuser.any { it?.bisysKode == "VF" }
-        val harFeilregistretSøknad = alleBehandlingsstatuser.any { it?.bisysKode == "FR" }
+        val harVedtakFattet = alleBehandlingsstatuser.any { søknadsstatusFattet.contains(it) }
 
         return when {
             alleLukket && harVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            alleLukket && harFeilregistretSøknad -> BehandlingStatusType.AVBRUTT
+            alleLukket && alleBehandlingsstatuser.isNotEmpty() -> BehandlingStatusType.AVBRUTT
             else -> BehandlingStatusType.UNDER_BEHANDLING
         }
     }

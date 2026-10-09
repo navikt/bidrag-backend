@@ -1506,7 +1506,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[3].rolleid!!,
-                    søknadsstatuskode = "ER",
+                    søknadsstatuskode = "UB",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",

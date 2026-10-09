@@ -35,6 +35,7 @@ import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.transport.behandling.behandling.ForholdmessigFordelingDetaljerDto
 import no.nav.bidrag.transport.behandling.behandling.RolleDto
 import no.nav.bidrag.transport.behandling.behandling.RolleSøknadDto
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
@@ -192,6 +193,17 @@ internal class BehandlingHendelseFFOverforingTest : AbstractBehandleHendelseTest
         val behandlingsid = 555590L
         val hendelse = opprettHendelse(behandlingsid)
         stubHentSak(opprettSakForBehandling(hendelse.barn.first()))
+        stubHentSøknadStatus(
+            status = BehandlingStatusType.VEDTAK_FATTET,
+            partISøknadListe =
+            listOf(
+                PartISøknad(
+                    personident = "123213",
+                    rolletype = Rolletype.BARN,
+                    behandlingstatus = Behandlingstatus.VEDTAK_FATTET,
+                ),
+            ),
+        )
         stubOppgaveForSaken(behandlingsid, tilordnetRessurs = SAKSBEHANDLER_SOM_OPPRETTET_FF, tildeltEnhetsnr = ENHET_SOM_OPPRETTET_FF)
         stubHentBehandlingDetaljer(
             behandlingsid,
