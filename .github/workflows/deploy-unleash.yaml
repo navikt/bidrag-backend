@@ -67,7 +67,7 @@ jobs:
       - name: Deploy Unleash-token til dev
         uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
-          CLUSTER: ${{ matrix.app == 'bidrag-admin-fss' && 'dev-fss' || 'dev-gcp' }}
+          CLUSTER: ${{ (matrix.app == 'bidrag-admin-fss' || matrix.app == 'bidrag-sak') && 'dev-fss' || 'dev-gcp' }}
           RESOURCE: .nais/${{ matrix.app }}/unleash.yaml
           VARS: .nais/${{ matrix.app }}/${{ (matrix.app == 'bidrag-admin' || matrix.app == 'bidrag-admin-fss') && 'dev.yaml' || 'q2.yaml' }}
 
@@ -93,6 +93,6 @@ jobs:
       - name: Deploy Unleash-token til prod
         uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
-          CLUSTER: ${{ matrix.app == 'bidrag-admin-fss' && 'prod-fss' || 'prod-gcp' }}
+          CLUSTER: ${{ (matrix.app == 'bidrag-admin-fss' || matrix.app == 'bidrag-sak') && 'prod-fss' || 'prod-gcp' }}
           RESOURCE: .nais/${{ matrix.app }}/unleash.yaml
           VARS: .nais/${{ matrix.app }}/prod.yaml
