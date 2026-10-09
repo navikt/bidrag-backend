@@ -25,14 +25,12 @@ import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
-import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
-import no.nav.bidrag.sak.repository.SøknadsknytningRepository
 import no.nav.bidrag.sak.repository.VedtakOverføringRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.VEDTAK_LINK
@@ -42,8 +40,8 @@ import no.nav.bidrag.sak.util.resultatIBisys
 import no.nav.bidrag.sak.util.tilEngangsbeløptype
 import no.nav.bidrag.sak.util.tilStønadstype
 import no.nav.bidrag.sak.util.tilVedtakstype
-import no.nav.bidrag.sak.validering.OpprettSakValidator
-import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.sak.validering.BidragssakValidator
+import no.nav.bidrag.sak.validering.BidragssakValidator.Saksrolle
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
@@ -55,14 +53,10 @@ import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
-import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import kotlin.collections.firstOrNull
-import kotlin.collections.ifEmpty
-import kotlin.collections.map
 
 fun Set<Tilgang>.finnMidlertidligTilgang(
     enhet: String,
@@ -76,13 +70,13 @@ class BidragSakService(
     private val bidragssakRepository: BidragssakRepository,
     private val rolleRepository: RolleRepository,
     private val tilgangClient: Tilgangskontroll,
-    private val cachedKodeverkService: CachedKodeverkService,
+    private val valideringsgrunnlagService: ValideringsgrunnlagService,
     private val arbeidsfordelingService: ArbeidsfordelingService,
     private val rolleService: RolleService,
     private val rollehistorikkService: RollehistorikkService,
     private val hendelseService: HendelseService,
     private val identConsumer: IdentConsumer,
-    private val opprettSakValidator: OpprettSakValidator,
+    private val bidragssakValidator: BidragssakValidator,
     private val hendelseRepository: HendelseRepository,
     private val vedtakOverføringRepository: VedtakOverføringRepository,
     private val bbmConsumer: BidragBBMConsumer,
@@ -197,7 +191,8 @@ class BidragSakService(
 
     @Transactional
     fun opprettSak(opprettSakRequest: OpprettSakRequest): OpprettSakResponse {
-        opprettSakValidator.valider(opprettSakRequest)
+        val grunnlag = valideringsgrunnlagService.hentForOpprettelse(opprettSakRequest)
+        bidragssakValidator.valider(opprettSakRequest, grunnlag)
 
         val bPFnr =
             opprettSakRequest.roller
@@ -215,9 +210,9 @@ class BidragSakService(
         // Sjekk at det ikke finnes eksisterende sak med BP og BM fra request. Hvis det finnes så returneres denne sakens saksnummer.
         if (!bMFnr.isNullOrEmpty()) {
             val eksisterendeSaker =
-                bPFnr?.let {
+                bPFnr?.let { eksisterendeSak ->
                     bidragssakRepository
-                        .findByRoller(listOf(it))
+                        .findByRoller(listOf(eksisterendeSak))
                         .filter { it.arbeidsfordeling == Arbeidsfordeling.EIERENHET }
                         .filter { sak ->
                             sak.roller.any {
@@ -234,9 +229,9 @@ class BidragSakService(
             }
         }
 
-        val fødselsdatoer = hentFødselsdatoer(opprettSakRequest)
+        rolleService.validerRoller(opprettSakRequest.roller, grunnlag.fødselsdatoer)
         val saksnummer = hentNyttSaksnummerFraDatabase()
-        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, fødselsdatoer)
+        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, grunnlag.fødselsdatoer)
         val opprettetBidragssak = bidragssakRepository.save(bidragssak)
 
         val rollerFørOppdatering = opprettetBidragssak.roller.toRolleDto(true)
@@ -318,47 +313,39 @@ class BidragSakService(
     @Transactional
     fun oppdaterRollerISak(oppdaterSakRequest: OppdaterRollerISakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
+        rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
-
-        oppdaterSakRequest.roller.forEach { opprettSakValidator.validerRolle(it) }
-
+        val saksrollerFør = sak.roller.map { Saksrolle(it) }
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
+        val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, land = null)
+        bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
         sak.apply {
-            roller = rolleService.oppdaterRoller(sak, oppdaterSakRequest.roller).toMutableSet()
+            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering, grunnlag.fødselsdatoer).toMutableSet()
         }
-
-        bidragssakRepository.save(sak)
-
-        val lagretSak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
-        val oppdatertBidragssak = oppdaterBidragsaksrollerMedReelleMottagere(lagretSak, oppdaterSakRequest.roller)
-        val rollerOppdatertMedRollehistorikk =
-            rollehistorikkService.oppdaterRollehistorikk(
-                rollerFørOppdatering,
-                oppdaterSakRequest.roller,
-                oppdatertBidragssak,
-            )
-        oppdatertBidragssak.roller = rollerOppdatertMedRollehistorikk
-
-        hendelseService.opprettKafkaHendelse(sak, oppdatertBidragssak)
-        return oppdatertBidragssak.tilOppdaterSakResponse()
+        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
+        return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
     }
 
     @Transactional
     fun oppdaterSak(oppdaterSakRequest: OppdaterSakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
-
-        require(
-            oppdaterSakRequest.landkode == null ||
-                cachedKodeverkService
-                    .hentLandkoder()
-                    .containsKey(oppdaterSakRequest.landkode),
-        ) {
-            "Bidragssak ${oppdaterSakRequest.saksnummer} forsøkt oppdatert med ugyldig land: ${oppdaterSakRequest.landkode}"
-        }
-
+        rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
+        val saksrollerFør = sak.roller.map { Saksrolle(it) }
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
+        val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, oppdaterSakRequest.landkode)
+        bidragssakValidator.validerSaksopplysninger(oppdaterSakRequest, grunnlag)
+        bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
+        oppdaterSaksopplysninger(sak, oppdaterSakRequest)
+        sak.apply {
+            roller = rolleService.oppdaterRoller(sak, rollerTilOppdatering, grunnlag.fødselsdatoer).toMutableSet()
+        }
+        bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
+        arbeidsfordelingService.utførArbeidsfordeling(sak)
+        return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
+    }
 
-        oppdaterSakRequest.roller.forEach { opprettSakValidator.validerRolle(it) }
-
+    private fun oppdaterSaksopplysninger(sak: Bidragssak, oppdaterSakRequest: OppdaterSakRequest) {
         sak.apply {
             status = oppdaterSakRequest.status ?: sak.status
             ansatt = oppdaterSakRequest.ansatt ?: sak.ansatt
@@ -371,23 +358,24 @@ class BidragSakService(
             konvensjon = oppdaterSakRequest.konvensjonskode ?: sak.konvensjon
             konvensjonsdato = oppdaterSakRequest.konvensjonsdato ?: sak.konvensjonsdato
             ffuReferansenr = oppdaterSakRequest.ffuReferansenr ?: sak.ffuReferansenr
-            roller = rolleService.oppdaterRoller(sak, oppdaterSakRequest.roller).toMutableSet()
         }
+    }
 
-        arbeidsfordelingService.utførArbeidsfordeling(sak)
-//        hendelseService.opprettHendelser(sak, oppdaterSakRequest)  // TODO: Dette fungerer ikke
+    private fun lagreOgPubliser(
+        sak: Bidragssak,
+        rollerFørOppdatering: List<RolleDto>,
+        rollerTilOppdatering: Set<RolleDto>,
+    ): OppdaterSakResponse {
         bidragssakRepository.save(sak)
 
-        val lagretSak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
-        val oppdatertBidragssak = oppdaterBidragsaksrollerMedReelleMottagere(lagretSak, oppdaterSakRequest.roller)
-        val rollerOppdatertMedRollehistorikk =
+        val lagretSak = bidragssakRepository.findByIdOrThrow(sak.saksnummer)
+        val oppdatertBidragssak = oppdaterBidragsaksrollerMedReelleMottagere(lagretSak, rollerTilOppdatering)
+        oppdatertBidragssak.roller =
             rollehistorikkService.oppdaterRollehistorikk(
                 rollerFørOppdatering,
-                oppdaterSakRequest.roller,
+                rollerTilOppdatering,
                 oppdatertBidragssak,
             )
-
-        oppdatertBidragssak.roller = rollerOppdatertMedRollehistorikk
 
         hendelseService.opprettKafkaHendelse(sak, oppdatertBidragssak)
         return oppdatertBidragssak.tilOppdaterSakResponse()
@@ -491,8 +479,6 @@ class BidragSakService(
         rolleService.oppdaterRollerMedReelleMottager(bidragssak.roller, rollerMedReelleMottagere)
         return bidragssakRepository.save(bidragssak)
     }
-
-    private fun hentFødselsdatoer(opprettSakRequest: OpprettSakRequest): Map<Personident, LocalDate?> = rolleService.validerRollerOgHentFødselsdatoer(opprettSakRequest.roller)
 
     private fun hentSammenknytninger(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
         bbmConsumer.finnSammenknytningerHovedsøknad(søknadsid)

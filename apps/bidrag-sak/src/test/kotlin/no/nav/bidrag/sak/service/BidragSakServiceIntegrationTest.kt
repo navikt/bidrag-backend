@@ -1,5 +1,7 @@
 package no.nav.bidrag.sak.service
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.assertions.throwables.shouldThrowMessage
 import io.kotest.matchers.collections.shouldExist
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -25,12 +27,17 @@ import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.SpringH2TestRunner
 import no.nav.bidrag.sak.config.BidragOrganisasjonTestConfig
 import no.nav.bidrag.sak.domain.Hendelse
+import no.nav.bidrag.sak.dto.NySakCommandDto
+import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.TransactionHelper
+import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonDto
+import no.nav.bidrag.transport.person.PersonidentDto
+import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
@@ -43,6 +50,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.CacheManager
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -59,6 +67,12 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
 
     @Autowired
     private lateinit var tilgangClientMock: Tilgangskontroll
+
+    @Autowired
+    private lateinit var bidragPersonClient: BidragPersonClient
+
+    @Autowired
+    private lateinit var cacheManager: CacheManager
 
     @Autowired
     private lateinit var th: TransactionHelper
@@ -162,6 +176,60 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             oppdatertSak.konvensjonsdato shouldBe LocalDate.now()
             oppdatertSak.ffuReferansenr shouldBe "Foo"
             oppdatertSak.roller shouldHaveSize 7
+        }
+
+        @Test
+        fun `kan ikke bytte kjent BM via noen av oppdateringsendepunktene`() {
+            val endringer = setOf(RolleDto(fnrBM2, Rolletype.BIDRAGSMOTTAKER))
+
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = saksnummer, roller = endringer))
+            }
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterRollerISak(OppdaterRollerISakRequest(saksnummer = saksnummer, roller = endringer))
+            }
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                sak.roller.first { it.rolleType == Rolletype.BIDRAGSMOTTAKER }.fødselsnummer shouldBe fnrBM.verdi
+            }
+        }
+
+        @Test
+        fun `eldre sak kan opprettes tom men krever kjent person ved oppdatering`() {
+            val tomSak = bidragssakService.nySak(NySakCommandDto(Enhetsnummer("1701"))).saksnummer
+
+            shouldThrow<IllegalArgumentException> {
+                bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = tomSak))
+            }
+
+            bidragssakService.oppdaterSak(
+                OppdaterSakRequest(
+                    saksnummer = tomSak,
+                    roller = setOf(RolleDto(fnrBM, Rolletype.BIDRAGSMOTTAKER)),
+                ),
+            )
+
+            th.transactional {
+                bidragssakRepository.findByIdOrThrow(tomSak.verdi).roller
+                    .single { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
+                    .fødselsnummer shouldBe fnrBM.verdi
+            }
+        }
+
+        @Test
+        fun `metadata kan oppdateres når myndig barn uten RM ikke er med i forespørselen`() {
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                sak.roller.first { it.rolleType == Rolletype.BARN && it.fødselsnummer == fnrBA1.verdi }.rmRolleId = null
+                bidragssakRepository.save(sak)
+            }
+
+            bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = saksnummer, status = Bidragssakstatus.AK))
+
+            th.transactional {
+                bidragssakRepository.findByIdOrThrow(saksnummer.verdi).status shouldBe Bidragssakstatus.AK
+            }
         }
 
         @Test
@@ -311,6 +379,67 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
                 sortertRollehistorikk[1].typeEndring shouldBe TypeEndring.SATT_RM
 
                 oppdatertSak.roller shouldHaveSize 8
+            }
+        }
+
+        @Test
+        fun `oppdaterer barn og RM til gjeldende ident og lagrer ENDRE_FNR-historikk`() {
+            val gammelRmIdent = genererPersonident()
+            bidragssakService.oppdaterSak(
+                OppdaterSakRequest(
+                    saksnummer = saksnummer,
+                    roller = setOf(rolleBarnMedRm(fnrBA3, rm = gammelRmIdent.verdi)),
+                ),
+            )
+            val rmRolleIdFør = bidragssakRepository.findByIdOrThrow(saksnummer.verdi).roller
+                .single { it.rolleType == Rolletype.REELMOTTAKER && it.fødselsnummer == gammelRmIdent.verdi }
+                .rolleId
+
+            val nyBarnIdent = genererPersonident()
+            val nyRmIdent = genererPersonident()
+            stubPerson(nyBarnIdent, LocalDate.now().minusYears(10))
+            stubPersonidenter(gjeldende = mapOf(fnrBA3 to nyBarnIdent, gammelRmIdent to nyRmIdent))
+
+            bidragssakService.oppdaterSak(
+                OppdaterSakRequest(
+                    saksnummer = saksnummer,
+                    roller = setOf(rolleBarnMedRm(nyBarnIdent, rm = nyRmIdent.verdi)),
+                ),
+            )
+
+            th.transactional {
+                val oppdatertSak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                val barn = oppdatertSak.roller.single { it.rolleType == Rolletype.BARN && it.fødselsnummer == nyBarnIdent.verdi }
+                val barnHistorikk = barn.rollehistorikk.single { it.typeEndring == TypeEndring.ENDRE_FNR }
+                barnHistorikk.rolleFødselsnummer shouldBe fnrBA3.verdi
+                barnHistorikk.rmRolleFødselsnummer shouldBe nyBarnIdent.verdi
+                barn.rollehistorikk.none { it.typeEndring == TypeEndring.SATT_RM } shouldBe true
+
+                val rm = oppdatertSak.roller.single { it.rolleType == Rolletype.REELMOTTAKER && it.fødselsnummer == nyRmIdent.verdi }
+                rm.rolleId shouldBe rmRolleIdFør
+                val rmHistorikk = rm.rollehistorikk.single { it.typeEndring == TypeEndring.ENDRE_FNR }
+                rmHistorikk.rolleFødselsnummer shouldBe gammelRmIdent.verdi
+                rmHistorikk.rmRolleFødselsnummer shouldBe nyRmIdent.verdi
+                rmHistorikk.rmRolleId shouldBe null
+                oppdatertSak.roller.count { it.rolleType == Rolletype.REELMOTTAKER } shouldBe 3
+            }
+        }
+
+        @Test
+        fun `avviser nytt barn med ny ident når lagret barn har gammel ident som ikke er oppdatert`() {
+            val nyBarnIdent = genererPersonident()
+            stubPerson(nyBarnIdent, LocalDate.now().minusYears(10))
+            stubPersonidenter(historiske = mapOf(nyBarnIdent to fnrBA3))
+
+            shouldThrowMessage("En person kan bare ha én rolle i saken, unntatt RM og FR.") {
+                bidragssakService.oppdaterSak(OppdaterSakRequest(saksnummer = saksnummer, roller = setOf(rolleBarnUtenRm(nyBarnIdent))))
+            }
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(saksnummer.verdi)
+                sak.roller.none { it.fødselsnummer == nyBarnIdent.verdi } shouldBe true
+                sak.roller.single { it.rolleType == Rolletype.BARN && it.fødselsnummer == fnrBA3.verdi }.rollehistorikk
+                    .none { it.typeEndring == TypeEndring.ENDRE_FNR } shouldBe true
             }
         }
 
@@ -1046,6 +1175,22 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             result.first().enhet.verdi shouldBe "4806"
             result.first().type shouldBe HendelseType.BRUKERSTØTTE
             result.first().resultat shouldBe "AVSLÅTT"
+        }
+    }
+
+    private fun stubPersonidenter(
+        gjeldende: Map<Personident, Personident> = emptyMap(),
+        historiske: Map<Personident, Personident> = emptyMap(),
+    ) {
+        cacheManager.getCache("bidrag-sak_hentPersonidenter_cache")?.clear()
+        val gjeldendeFor = gjeldende.entries.associate { it.key.verdi to it.value.verdi }
+        val historiskFor = historiske.entries.associate { it.key.verdi to it.value.verdi }
+        every { bidragPersonClient.hentPersonidenter(any()) } answers {
+            val ident = firstArg<String>()
+            val gjeldendeIdent = gjeldendeFor[ident] ?: ident
+            val historiskeIdenter = listOfNotNull(ident.takeIf { it != gjeldendeIdent }, historiskFor[ident])
+            listOf(PersonidentDto(gjeldendeIdent, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT)) +
+                historiskeIdenter.map { PersonidentDto(it, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT) }
         }
     }
 

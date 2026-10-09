@@ -7,6 +7,21 @@ Applikasjonen er delt inn i to logiske grupper med tilhørende endepunkter:
 - <b>Bidrag sak</b> leverer metadata for bidragsaker. Generelle konsumenter av bidrag saksinformasjon. Sikret med OpenId Connect vba [token-support](navikt/token-support). 
 - <b>Bidrag sak PIP</b> - Leverer metadata for bidragsaker. Fungerer som policy information point for Bidrag datakonsumenter i forbindelse med ABAC-oppslag. 
 
+### Regler for saksroller
+
+- Barn fra og med 18 år må ha RM, både ved opprettelse og endring. Ved endring sjekkes bare barn som er med i forespørselen.
+- Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.
+- En person kan bare ha én rolle i saken, med unntak av RM og FR.
+- Saken kan ha maks én BM og én BP.
+- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.
+- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
+
+Unntak:
+- Hvis fødselsdato fortsatt er ukjent etter oppslag mot bidrag-person/PDL, kan saken lagres uten RM. Feiler oppslaget, feiler forespørselen.
+- Eldre `POST /bidrag-sak/sak/ny` kan opprette en sak uten roller.
+  [«Kopier fra annet fagområde» i bidrag-frontend](https://github.com/navikt/bidrag-frontend/blob/main/apps/dokument/src/common/components/avvik/components/types/KopierFraAnnenFagomrade.tsx)
+  bruker endepunktet når et dokument skal knyttes til en ny sak. Senere oppdatering krever en kjent rolle.
+
 ### Sikkerhet
 <b>Bidrag sak</b> er sikret med navikt [token-validation-spring](https://github.com/navikt/token-support/tree/master/token-validation-spring)
 fra [token-support](https://github.com/navikt/token-support). Det betyr at gyldig OIDC-id-token må være inkludert som Bearer-token i Authorization header for alle
