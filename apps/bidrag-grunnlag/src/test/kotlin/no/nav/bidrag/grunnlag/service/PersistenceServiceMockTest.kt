@@ -21,6 +21,7 @@ import no.nav.bidrag.grunnlag.persistence.repository.SivilstandRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagspostRepository
 import no.nav.bidrag.grunnlag.persistence.repository.UtvidetBarnetrygdOgSmaabarnstilleggRepository
+import no.nav.bidrag.grunnlag.persistence.repository.ValutakursgrunnlagRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Test
@@ -71,6 +72,12 @@ class PersistenceServiceMockTest {
 
     @Mock
     private lateinit var barnetilsynRepositoryMock: BarnetilsynRepository
+
+    @Mock
+    private lateinit var valutakursgrunnlagRepository: ValutakursgrunnlagRepository
+
+    @Mock
+    private lateinit var entityManager: jakarta.persistence.EntityManager
 
     @Test
     fun `Skal hente skattegrunnlag for 1 personid som finnes i lista`() {
