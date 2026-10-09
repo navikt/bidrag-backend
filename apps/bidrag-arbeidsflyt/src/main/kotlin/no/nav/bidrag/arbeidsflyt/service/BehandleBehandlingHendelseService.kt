@@ -131,8 +131,6 @@ class BehandleBehandlingHendelseService(
     }
 
     private fun ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse: BehandlingHendelse, behandling: Behandling) {
-        if (!hendelse.status.erAvsluttet) return
-
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val saksnummer = saksnummerSøknadPair.first
             val søknadsid = saksnummerSøknadPair.second
@@ -279,16 +277,6 @@ class BehandleBehandlingHendelseService(
     } catch (e: Exception) {
         null
     }
-    private fun kreverSøknadsoppgave(søknadsid: Long?) = try {
-        if (søknadsid == null) {
-            false
-        } else {
-            bbmConsumer.hentSøknad(HentSøknadRequest(søknadsid))?.søknad?.kreverSøknadsoppgave == true
-        }
-    } catch (e: Exception) {
-        secureLogger.error(e) { "Feil ved henting av søknadstatus for søknadsid $søknadsid: ${e.message}" }
-        false
-    }
 
     private fun hentSøknadStatus(søknadsid: Long?) = try {
         if (søknadsid == null) {
@@ -372,16 +360,6 @@ class BehandleBehandlingHendelseService(
     private fun ferdigstillOppgaver(åpneOppgaver: List<OppgaveData>) {
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
-                // Søknad avsluttet hvis oppgave ikke er knyttet til en søknad
-                // Ellers avsluttet hvis søknaden er avsluttet og ikke krever oppgave lenger, hvis kallet feiler så ikke ferdigstill fordi det ikke er noe garanti om det er ikke avsluttet
-                // Bedre at SB avslutter oppgaven selv enn at systemet gjør det automatisk
-                val kreverOppgave = ferdigstillOppgave.søknadsid != null && kreverSøknadsoppgave(ferdigstillOppgave.søknadsid!!.toLong())
-                if (kreverOppgave) {
-                    secureLogger.info {
-                        "Søknad ${ferdigstillOppgave.søknadsid} har fortsatt status som krever oppgave. Ferdigstiller ikke oppgave ${ferdigstillOppgave.id}"
-                    }
-                    return@forEach
-                }
                 oppgaveService.oppdaterOppgave(
                     OppdaterOppgave(ferdigstillOppgave)
                         .ferdigstill(),
