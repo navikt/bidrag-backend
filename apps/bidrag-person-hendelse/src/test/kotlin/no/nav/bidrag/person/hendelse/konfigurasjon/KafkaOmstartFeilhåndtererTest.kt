@@ -6,6 +6,7 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -28,6 +29,14 @@ class KafkaOmstartFeilhåndtererTest {
     internal fun setUp() {
         MockKAnnotations.init(this)
         clearAllMocks()
+    }
+
+    @Test
+    fun `ventetid mellom omstarter er maksimalt ett minutt`() {
+        assertThat(errorHandler.restartDelay(1)).isEqualTo(20_000L)
+        assertThat(errorHandler.restartDelay(2)).isEqualTo(40_000L)
+        assertThat(errorHandler.restartDelay(3)).isEqualTo(60_000L)
+        assertThat(errorHandler.restartDelay(11)).isEqualTo(60_000L)
     }
 
     @Test

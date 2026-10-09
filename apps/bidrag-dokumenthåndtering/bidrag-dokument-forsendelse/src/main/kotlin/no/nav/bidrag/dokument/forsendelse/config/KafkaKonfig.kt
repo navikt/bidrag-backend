@@ -21,10 +21,7 @@ class KafkaKonfig {
         @Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int,
     ): DefaultErrorHandler {
         // Max retry should not be set in production
-        val backoffPolicy =
-            if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
-        backoffPolicy.multiplier = 2.0
-        backoffPolicy.maxInterval = 1800000L // 30 mins
+        val backoffPolicy = kafkaBackoffPolicy(maxRetry)
         log.info { "Initializing Kafka errorhandler with backoffpolicy $backoffPolicy, maxRetry=$maxRetry" }
         val errorHandler =
             DefaultErrorHandler({ rec, e ->
@@ -42,5 +39,13 @@ class KafkaKonfig {
         errorHandler.addNotRetryableExceptions(KunneIkkeLeseMeldingFraHendelse::class.java)
         errorHandler.addNotRetryableExceptions(KunneIkkeFerdigstilleForsendelse::class.java)
         return errorHandler
+    }
+
+    internal fun kafkaBackoffPolicy(maxRetry: Int): ExponentialBackOff {
+        val backoff = if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
+        return backoff.apply {
+            multiplier = 1.2
+            maxInterval = 60_000L // 1 min
+        }
     }
 }

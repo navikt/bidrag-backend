@@ -67,8 +67,8 @@ class HendelseConfiguration {
             } else {
                 run {
                     val strategy = ExponentialBackOffWithMaxRetries(maxRetries)
-                    strategy.multiplier = 2.0
-                    strategy.maxInterval = 1200000L // 20 minutes
+                    strategy.multiplier = 1.2
+                    strategy.maxInterval = 60_000L // 1 min
                     strategy
                 }
             }

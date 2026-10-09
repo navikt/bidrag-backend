@@ -14,7 +14,7 @@ class KafkaConfig {
 
     companion object {
         private const val BACKOFF_MULTIPLIER = 1.2
-        private const val MAX_INTERVAL_MS = 300000L // 5 mins
+        private const val MAX_INTERVAL_MS = 60_000L // 1 min
     }
 
     @Bean

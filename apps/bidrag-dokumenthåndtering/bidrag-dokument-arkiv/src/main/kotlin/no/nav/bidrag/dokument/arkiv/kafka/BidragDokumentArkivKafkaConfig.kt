@@ -15,7 +15,6 @@ import org.apache.kafka.common.config.SslConfigs
 import org.apache.kafka.common.serialization.LongDeserializer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -26,14 +25,10 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
-import org.springframework.kafka.listener.ContainerPausingBackOffHandler
 import org.springframework.kafka.listener.ContainerProperties
 import org.springframework.kafka.listener.DefaultErrorHandler
-import org.springframework.kafka.listener.ListenerContainerPauseService
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
-import org.springframework.scheduling.TaskScheduler
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.util.backoff.ExponentialBackOff
 import tools.jackson.databind.json.JsonMapper
 import java.time.Duration
@@ -59,13 +54,12 @@ class BidragDokumentArkivKafkaConfig {
     @Bean
     fun defaultErrorHandler(
         @Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int,
-        @Qualifier("kafkaRetryTaskScheduler") scheduler: TaskScheduler,
     ): DefaultErrorHandler {
         // Max retry should not be set in production
         val backoffPolicy =
             if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
-        backoffPolicy.multiplier = 2.0
-        backoffPolicy.maxInterval = 1800000L // 30 mins
+        backoffPolicy.multiplier = 1.2
+        backoffPolicy.maxInterval = 60_000L // 1 min
         LOGGER.debug("Initializing Kafka errorhandler with backoffpolicy {}, maxRetry={}", backoffPolicy, maxRetry)
         val errorHandler = DefaultErrorHandler(
             { rec: ConsumerRecord<*, *>, e: Exception? ->
@@ -79,17 +73,10 @@ class BidragDokumentArkivKafkaConfig {
                 }
             },
             backoffPolicy,
-            ContainerPausingBackOffHandler(ListenerContainerPauseService(null, scheduler)),
         )
         errorHandler.setRetryListeners(KafkaRetryListener())
         errorHandler.addNotRetryableExceptions(JournalpostHarIkkeKommetIRetur::class.java)
         return errorHandler
-    }
-
-    @Bean
-    fun kafkaRetryTaskScheduler(): ThreadPoolTaskScheduler = ThreadPoolTaskScheduler().apply {
-        poolSize = 1
-        setThreadNamePrefix("kafka-retry-")
     }
 
     @Bean
