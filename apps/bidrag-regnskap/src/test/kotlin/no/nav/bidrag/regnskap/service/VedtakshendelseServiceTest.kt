@@ -9,11 +9,16 @@ import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
+import no.nav.bidrag.regnskap.UnleashFeatures
 import no.nav.bidrag.regnskap.util.PåløpException
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -46,8 +51,15 @@ class VedtakshendelseServiceTest {
 
     @BeforeEach
     fun setup() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
         every { persistenceService.harAktivtDriftsavvik(false) } returns false
         every { kravService.erVedlikeholdsmodusPåslått() } returns false
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Test
@@ -147,10 +159,95 @@ class VedtakshendelseServiceTest {
         verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
     }
 
-    private fun opprettVedtakshendelse(): String = """
+    @Test
+    fun `Skal ikke behandle endring av mottaker uten innkreving`() {
+        val hendelse = opprettMottakerendringsHendelse("UTEN_INNKREVING")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 0) { oppdragService.lagreHendelse(any(), any()) }
+    }
+
+    @Test
+    fun `skal behandle mottakerendring uten perioder som annen stonadsendring`() {
+        val hendelse = opprettMottakerendringsHendelse()
+        every { oppdragService.lagreHendelse(any(), false) } returns null
+
+        val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 1) {
+            oppdragService.lagreHendelse(match { it.vedtakId == 648462 && it.periodeListe.isEmpty() }, false)
+        }
+        oppdrag shouldBe emptyList()
+    }
+
+    @Test
+    fun `skal behandle mottakerendring uten perioder ved ny levering`() {
+        val hendelse = opprettMottakerendringsHendelse()
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 2) { oppdragService.lagreHendelse(match { it.vedtakId == 648462 && it.periodeListe.isEmpty() }, false) }
+    }
+
+    @Test
+    fun `skal behandle periodefri mottakerendring selv om Elin er deaktivert`() {
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns false
+
+        vedtakshendelseService.behandleHendelse(opprettMottakerendringsHendelse())
+
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.periodeListe.isEmpty() }, false) }
+    }
+
+    @Test
+    fun `skal behandle mottakerendring med perioder i vanlig oppdragsflyt`() {
+        val hendelse = opprettVedtakshendelse(vedtakstype = "ENDRING_MOTTAKER")
+            .replace("\"referanse\":\"REFERANSE\",", "\"referanse\":\"REFERANSE\",\"omgjørVedtakId\":123,")
+        every { oppdragService.lagreHendelse(any(), any()) } returns 1
+
+        val oppdrag = vedtakshendelseService.behandleHendelse(hendelse)
+
+        oppdrag shouldBe listOf(1, 1)
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.periodeListe.isNotEmpty() }, false) }
+    }
+
+    @Test
+    fun `skal behandle mottakerendring med engangsbeløp uten perioder og sammen med stønad`() {
+        val hendelse = requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmMedEngangsbeløp.json")).readText()
+            .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BARN2\"", "\"${genererFødselsnummer()}\"")
+            .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
+
+        vedtakshendelseService.behandleHendelse(hendelse)
+
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.type == "BIDRAG" && it.periodeListe.isEmpty() }, false) }
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.type == "BIDRAG18AAR" && it.periodeListe.isEmpty() }, false) }
+        verify(exactly = 1) {
+            oppdragService.lagreHendelse(
+                match { it.type == "SÆRBIDRAG" && it.referanse == "SARTILSKUDD_REFERANSE" && it.omgjørVedtakId == 8002 && it.periodeListe.isEmpty() },
+                true,
+            )
+        }
+        verify(exactly = 1) { oppdragService.lagreHendelse(match { it.referanse == "MANGLER" && it.periodeListe.isEmpty() }, true) }
+    }
+
+    private fun opprettMottakerendringsHendelse(
+        innkrevingstype: String = "MED_INNKREVING",
+    ): String = requireNotNull(javaClass.getResource("/testfiler/hendelse/endreRmOppdatering.json")).readText()
+        .replace("\"BP\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"BARN1\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"BM\"", "\"${genererFødselsnummer()}\"")
+        .replace("\"MED_INNKREVING\"", "\"$innkrevingstype\"")
+
+    private fun opprettVedtakshendelse(
+        vedtakstype: String = "INNKREVING",
+        innkrevingstype: String = "MED_INNKREVING",
+    ): String = """
       {
         "kilde":"MANUELT",
-        "type":"INNKREVING",
+        "type":"$vedtakstype",
         "id":"123",
         "vedtakstidspunkt":"2022-06-01T00:00:00.000000000",
         "enhetsnummer":"4812",
@@ -164,7 +261,7 @@ class VedtakshendelseServiceTest {
             "skyldner":"${genererFødselsnummer()}",
             "kravhaver":"${genererFødselsnummer()}",
             "mottaker":"${genererFødselsnummer()}",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "beslutning":"ENDRING",
             "periodeListe":[
               {
@@ -199,7 +296,7 @@ class VedtakshendelseServiceTest {
             "belop":"1790",
             "valutakode":"NOK",
             "resultatkode":"GIGI",
-            "innkreving":"MED_INNKREVING",
+            "innkreving":"$innkrevingstype",
             "referanse":"REFERANSE",
             "beslutning":"ENDRING"
           }

@@ -18,6 +18,10 @@ class PersonApiWireMock {
         mock.start()
     }
 
+    internal fun stop() {
+        mock.stop()
+    }
+
     internal fun personidentMedGyldigResponse() {
         mock.stubFor(
             WireMock.post(WireMock.urlEqualTo("/personidenter")).willReturn(
