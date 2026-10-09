@@ -61,6 +61,7 @@ spec:
   envFrom:
     - secret: bidrag-regnskap-sftp-private-key
     - secret: bidrag-bot-slack-oauth-token
+    - secret: {{unleash.secret_name}}
   env:
   {{#each env}}
     - name: {{@key}}
@@ -94,6 +95,7 @@ spec:
         - host: {{ env.BIDRAG_VEDTAK_HOST }}
         - host: {{ env.SKATT_HOST }}
         - host: {{ env.BIDRAG_RESKONTRO_HOST }}
+        - host: bidrag-unleash-api.nav.cloud.nais.io
         - host: {{ env.SFTP_HOST }}
           ports:
             - port: 22
