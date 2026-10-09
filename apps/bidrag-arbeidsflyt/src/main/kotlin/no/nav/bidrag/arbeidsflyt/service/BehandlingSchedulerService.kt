@@ -47,8 +47,9 @@ class BehandlingSchedulerService(
             // Behandlingen eller lagret hendelse mangler. Prøver å gjenskape hendelsen fra bidrag-behandling
             val behandlingsid = behandling?.behandlingsid ?: behandlingId
             LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Gjenskaper hendelse fra bidrag-behandling med behandlingsid=$behandlingsid" }
-            val hendelse =
+            val hendelse = behandleBehandlingHendelseService.run {
                 bidragBehandlingConsumer.hentBehandling(behandlingsid, inkluderSlettet = true)?.tilBehandlingHendelse()
+            }
             if (hendelse == null) {
                 LOGGER.info { "Fant ikke lagret hendelse for behandling med id=$behandlingId. Den er mest sannsynlig avsluttet. Forsøker å ferdigstille alle tilhørende oppgaver" }
                 behandleBehandlingHendelseService.oppdaterBehandlingIDatabasen(behandling)
