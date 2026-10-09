@@ -11,8 +11,9 @@ CREATE TABLE IF NOT EXISTS endre_mottaker
     opprettet_tidspunkt           timestamp NOT NULL DEFAULT current_timestamp
 );
 
--- Dekker DISTINCT ON (saksnummer, barn_ident) med ORDER BY saksnummer, barn_ident,
--- opprettet_tidspunkt DESC, id DESC i hentNyesteIkkeGodkjentePerSakOgBarn, slik at nyeste rad
--- per (sak, barn) kan hentes uten et eget sorteringssteg. id DESC er tiebreak ved likt tidsstempel.
+CREATE UNIQUE INDEX endre_mottaker_vedtak_barn_unique
+    ON endre_mottaker (vedtak_id, barn_ident);
+
 CREATE INDEX endre_mottaker_sak_barn_opprettet_index
-    ON endre_mottaker (saksnummer, barn_ident, opprettet_tidspunkt DESC, id DESC);
+    ON endre_mottaker (saksnummer, barn_ident, opprettet_tidspunkt, id)
+    WHERE godkjent_av_skatt_tidspunkt IS NULL;
