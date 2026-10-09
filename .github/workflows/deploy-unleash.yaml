@@ -1,0 +1,98 @@
+name: Deploy Unleash-token
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.nais/**/unleash.yaml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.nais/**/unleash.yaml'
+  workflow_dispatch:
+    inputs:
+      miljo:
+        description: Miljø som skal deployes til
+        required: true
+        type: choice
+        options: [begge, dev, prod]
+        default: begge
+
+permissions:
+  contents: read
+
+jobs:
+  finn_unleash:
+    name: Finn Unleash-manifester
+    runs-on: ubuntu-latest
+    outputs:
+      apper: ${{ steps.finn.outputs.apper }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Finn apper med Unleash
+        id: finn
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          apper = sorted(path.parent.name for path in Path(".nais").glob("*/unleash.yaml"))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"apper={json.dumps(apper)}\n")
+          PY
+
+  deploy_dev:
+    name: "Deploy ${{ matrix.app }} til dev"
+    needs: finn_unleash
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'workflow_dispatch' && (inputs.miljo == 'dev' || inputs.miljo == 'begge'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.finn_unleash.outputs.apper) }}
+    concurrency:
+      group: unleash-${{ matrix.app }}-dev
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Deploy Unleash-token til dev
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
+        env:
+          CLUSTER: ${{ matrix.app == 'bidrag-admin-fss' && 'dev-fss' || 'dev-gcp' }}
+          RESOURCE: .nais/${{ matrix.app }}/unleash.yaml
+          VARS: .nais/${{ matrix.app }}/${{ (matrix.app == 'bidrag-admin' || matrix.app == 'bidrag-admin-fss') && 'dev.yaml' || 'q2.yaml' }}
+
+  deploy_prod:
+    name: "Deploy ${{ matrix.app }} til prod"
+    needs: finn_unleash
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && (inputs.miljo == 'prod' || inputs.miljo == 'begge'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.finn_unleash.outputs.apper) }}
+    concurrency:
+      group: unleash-${{ matrix.app }}-prod
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Deploy Unleash-token til prod
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
+        env:
+          CLUSTER: ${{ matrix.app == 'bidrag-admin-fss' && 'prod-fss' || 'prod-gcp' }}
+          RESOURCE: .nais/${{ matrix.app }}/unleash.yaml
+          VARS: .nais/${{ matrix.app }}/prod.yaml

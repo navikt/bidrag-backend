@@ -1,4 +1,7 @@
 name: bidrag-admin-fss
+unleash:
+  env: development
+  secret_name: bidrag-admin-fss-unleash-api-token
 ingresses:
   - https://bidrag-admin-fss.intern.dev.nav.no
 bisys_url: b27wasl00799.preprod.local
