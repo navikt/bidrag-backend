@@ -111,7 +111,7 @@ class JournalpostController(
         ],
     )
     fun hentJournalpostForEksternReferanseId(@PathVariable eksternReferanseId: String): ResponseEntity<JournalpostResponse> {
-        LOGGER.info { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
+        LOGGER.debug { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
         return journalpostService.hentJournalpostForEksternReferanseId(eksternReferanseId)
             ?.let { ResponseEntity.ok(it.tilJournalpostResponse()) }
             ?: ResponseEntity.notFound()
