@@ -609,7 +609,7 @@ fun Behandling.byggGrunnlagNotater(søknadsbarn: List<Rolle> = this.søknadsbarn
                 )
             }.filterNotNull()
 
-    val notatGrunnlagInntekter = byggGrunnlagInntekter()
+    val notatGrunnlagInntekter = byggGrunnlagInntekter(søknadsbarn)
 
     return (
         virkningstidspunktGrunnlag + notatGrunnlag + notatGrunnlagInntekter + notatSamvær + notatUnderhold + notatVurderingAvSkolegang +
@@ -617,7 +617,7 @@ fun Behandling.byggGrunnlagNotater(søknadsbarn: List<Rolle> = this.søknadsbarn
         ).toSet()
 }
 
-fun Behandling.byggGrunnlagInntekter(): List<GrunnlagDto> = roller
+fun Behandling.byggGrunnlagInntekter(søknadsbarn: List<Rolle> = this.søknadsbarn): List<GrunnlagDto> = roller
     .filter {
         it.rolletype != Rolletype.BARN ||
             søknadsbarn.any { sb -> sb.erSammeRolle(it) }
@@ -642,6 +642,7 @@ fun Behandling.byggGrunnlagInntekter(): List<GrunnlagDto> = roller
             },
         )
     }.filterNotNull()
+
 fun Behandling.tilSkyldner() = when (stonadstype) {
     Stønadstype.FORSKUDD -> {
         personIdentNav
