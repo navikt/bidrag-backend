@@ -216,6 +216,7 @@ class BehandlingService(
         if (behandling.erIForholdsmessigFordeling && UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG.isEnabled) {
             if (behandling.erKlageEllerOmgjøring) {
                 forholdsmessigFordelingService!!.slettEllerGjennopprettKlageSøknader(behandling, søknadsid ?: behandling.soknadsid!!)
+                sendOppdatertHendelse(behandling.id!!, false)
             } else if (søknadsid == null) {
                 forholdsmessigFordelingService!!.avsluttForholdsmessigFordeling(
                     behandling,
@@ -717,6 +718,9 @@ class BehandlingService(
         .finnÅpneBidragsbehandlingerForBarn(barnIdent)
         .filter { it.stonadstype != null }
         .map { ÅpenBehandling(it.stonadstype!!, it.id!!, emptyList()) }
+
+    fun behandlingFinnes(behandlingId: Long): Boolean = !behandlingRepository
+        .findBehandlingById(behandlingId).isEmpty
 
     @Transactional(readOnly = true)
     fun hentBehandlingById(behandlingId: Long): Behandling {
