@@ -59,6 +59,7 @@ data class OppgaveKafkaHendelse(
         val prioritet: Prioritet? = null,
     ) {
         enum class Prioritet {
+            KRITISK,
             HOY,
             NORMAL,
             LAV,
