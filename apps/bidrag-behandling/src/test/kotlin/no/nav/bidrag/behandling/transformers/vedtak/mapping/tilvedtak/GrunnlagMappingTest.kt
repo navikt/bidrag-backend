@@ -1956,6 +1956,80 @@ class GrunnlagMappingTest {
                 }
             }
         }
+
+        @Test
+        fun `skal opprette grunnlag for notater ved direkte avslag med inntekt og utgifter`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            behandling.leggTilNotat("virkning", NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT)
+            behandling.leggTilNotat("inntekt bm", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat(
+                "inntekt bm omgjort",
+                NotatGrunnlag.NotatType.INNTEKT,
+                behandling.bidragsmottaker,
+                erDelAvBehandlingen = false,
+            )
+            behandling.leggTilNotat("utgifter", NotatGrunnlag.NotatType.UTGIFTER)
+            behandling.leggTilNotat("boforhold", NotatGrunnlag.NotatType.BOFORHOLD, behandling.bidragsmottaker)
+
+            val notater = behandling.byggGrunnlagNotaterDirekteAvslag().map { it to it.innholdTilObjekt<NotatGrunnlag>() }
+
+            assertSoftly(notater) {
+                shouldHaveSize(4)
+                map { it.second.type } shouldContainAll
+                    listOf(
+                        NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
+                        NotatGrunnlag.NotatType.INNTEKT,
+                        NotatGrunnlag.NotatType.UTGIFTER,
+                    )
+                none { it.second.type == NotatGrunnlag.NotatType.BOFORHOLD } shouldBe true
+
+                val inntektsnotater = filter { it.second.type == NotatGrunnlag.NotatType.INNTEKT }
+                inntektsnotater shouldHaveSize 2
+                inntektsnotater.forEach {
+                    it.first.gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
+                }
+                inntektsnotater.single { !it.second.fraOmgjortVedtak }.second.innhold shouldBe "inntekt bm"
+                inntektsnotater.single { it.second.fraOmgjortVedtak }.second.innhold shouldBe "inntekt bm omgjort"
+
+                single { it.second.type == NotatGrunnlag.NotatType.UTGIFTER }.second.innhold shouldBe "utgifter"
+            }
+        }
+
+        @Test
+        fun `skal ikke opprette grunnlag for notater ved direkte avslag hvis notater er tomme`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            behandling.leggTilNotat("", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat("", NotatGrunnlag.NotatType.UTGIFTER)
+
+            behandling.byggGrunnlagNotaterDirekteAvslag().shouldBeEmpty()
+        }
+
+        @Test
+        fun `skal bare opprette inntektsnotat for søknadsbarn det bygges grunnlag for`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            val barn1 = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+            val barn2 = behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }
+            behandling.leggTilNotat("inntekt bm", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat("inntekt barn1", NotatGrunnlag.NotatType.INNTEKT, barn1)
+            behandling.leggTilNotat("inntekt barn2", NotatGrunnlag.NotatType.INNTEKT, barn2)
+
+            assertSoftly(behandling.byggGrunnlagInntekter().map { it.gjelderReferanse }) {
+                shouldHaveSize(3)
+            }
+            assertSoftly(behandling.byggGrunnlagInntekter(listOf(barn1)).map { it.gjelderReferanse }) {
+                shouldHaveSize(2)
+                shouldContainAll(behandling.bidragsmottaker!!.tilGrunnlagsreferanse(), barn1.tilGrunnlagsreferanse())
+            }
+            assertSoftly(
+                behandling
+                    .byggGrunnlagNotater(listOf(barn1))
+                    .filter { it.innholdTilObjekt<NotatGrunnlag>().type == NotatGrunnlag.NotatType.INNTEKT }
+                    .map { it.gjelderReferanse },
+            ) {
+                shouldHaveSize(2)
+                shouldContainAll(behandling.bidragsmottaker!!.tilGrunnlagsreferanse(), barn1.tilGrunnlagsreferanse())
+            }
+        }
     }
 
     @Nested
