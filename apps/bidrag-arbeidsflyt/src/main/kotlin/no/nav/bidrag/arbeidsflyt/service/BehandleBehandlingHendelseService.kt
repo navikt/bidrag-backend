@@ -135,16 +135,6 @@ class BehandleBehandlingHendelseService(
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val saksnummer = saksnummerSøknadPair.first
             val søknadsid = saksnummerSøknadPair.second
-            // Ikke gjør noe med søknad hvis status ikke kan hentes for å unngå at søknadsoppgave avsluttes uten å vite hva faktisk status er
-            val status = hentSøknadStatus(søknadsid) ?: return@forEach
-            if (!status.erAvsluttet) {
-                secureLogger.info {
-                    "Behandling ${behandling.id} er avsluttet men tilhørende søknad $søknadsid er ikke avsluttet. Det betyr at søknaden behandles i Bisys istedenfor i bidrag-behandling" +
-                        "Lukker ikke søknad"
-                }
-
-                return@forEach
-            }
             val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
             val åpneOppgaver =
                 oppgaveService
@@ -371,6 +361,17 @@ class BehandleBehandlingHendelseService(
     private fun ferdigstillOppgaver(åpneOppgaver: List<OppgaveData>) {
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
+                // Søknad avsluttet hvis oppgave ikke er knyttet til en søknad
+                // Ellers avsluttet hvis søknaden er avsluttet, hvis kallet feiler så ikke ferdigstill fordi det ikke er noe garanti om det er ikke avsluttet
+                // Bedre at SB avslutter oppgaven selv enn at systemet gjør det automatisk
+                val erSøknadAvsluttet = ferdigstillOppgave.søknadsid == null || hentSøknadStatus(ferdigstillOppgave.søknadsid!!.toLong())?.erAvsluttet ?: false
+                if (!erSøknadAvsluttet) {
+                    secureLogger.info {
+                        "Søknad ${ferdigstillOppgave.søknadsid} er ikke avsluttet. Det betyr at søknaden behandles i Bisys istedenfor i bidrag-behandling" +
+                            "Ferdigstiller ikke oppgave ${ferdigstillOppgave.id}"
+                    }
+                    return@forEach
+                }
                 oppgaveService.oppdaterOppgave(
                     OppdaterOppgave(ferdigstillOppgave)
                         .ferdigstill(),
@@ -431,7 +432,8 @@ class BehandleBehandlingHendelseService(
                 .map { it.søknadsid }
                 .distinct()
                 .size > 1
-        behandling.status = hentSøknadStatus(hendelse.søknadsid) ?: hendelse.status
+        // Sett default status til under behandling slik at scheduler kan ta det opp og sjekke igjen hvis status ikke er avsluttet
+        behandling.status = if (hendelse.søknadsid == null) hendelse.status else hentSøknadStatus(hendelse.søknadsid) ?: BehandlingStatusType.UNDER_BEHANDLING
         behandling.endretTidspunkt = hendelse.endretTidspunkt
         behandling.behandlesAvFlereSøknader = behandlesAvFlereSøknader
         behandling.hendelse = hendelse
