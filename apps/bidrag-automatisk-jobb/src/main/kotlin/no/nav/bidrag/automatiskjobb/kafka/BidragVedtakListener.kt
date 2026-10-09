@@ -20,6 +20,7 @@ class BidragVedtakListener(
         groupId = "\${VEDTAK_KAFKA_GROUP_ID_START:bidrag-automatisk-jobb-start}",
         topics = ["\${KAFKA_VEDTAK_TOPIC}"],
         properties = ["auto.offset.reset=earliest"],
+        ackMode = "RECORD",
     )
     fun lesHendelseFraStart(
         hendelse: String,
@@ -34,6 +35,7 @@ class BidragVedtakListener(
         groupId = "\${VEDTAK_KAFKA_GROUP_ID_SISTE:bidrag-automatisk-jobb-siste}",
         topics = ["\${KAFKA_VEDTAK_TOPIC}"],
         properties = ["auto.offset.reset=latest"],
+        ackMode = "RECORD",
     )
     fun lesHendelseFraSiste(
         hendelse: String,
