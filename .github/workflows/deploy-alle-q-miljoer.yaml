@@ -9,6 +9,8 @@
 name: Deploy alle apper til q1/q2
 
 on:
+  schedule:
+    - cron: "0 1 * * 1"
   workflow_dispatch:
     inputs:
       miljo:
@@ -92,7 +94,7 @@ jobs:
     name: "q1: ${{ matrix.workflow }}"
     needs: finn_apper
     if: |
-      (inputs.miljo == 'q1' || inputs.miljo == 'q1_og_q2') &&
+      (github.event_name == 'schedule' || inputs.miljo == 'q1' || inputs.miljo == 'q1_og_q2') &&
       needs.finn_apper.outputs.q1_apper != '[]'
     runs-on: ubuntu-latest
     permissions:
@@ -108,15 +110,15 @@ jobs:
         run: |
           gh workflow run "${{ matrix.workflow }}" \
             --repo "${{ github.repository }}" \
-            --ref "${{ inputs.ref }}" \
+            --ref "${{ github.event_name == 'schedule' && 'main' || inputs.ref }}" \
             -f miljo=q1 \
-            -f hopp_over_tester=${{ inputs.hopp_over_tester }}
+            -f hopp_over_tester=${{ github.event_name == 'schedule' || inputs.hopp_over_tester }}
 
   deploy_q2:
     name: "q2: ${{ matrix.workflow }}"
     needs: finn_apper
     if: |
-      (inputs.miljo == 'q2' || inputs.miljo == 'q1_og_q2') &&
+      (github.event_name == 'schedule' || inputs.miljo == 'q2' || inputs.miljo == 'q1_og_q2') &&
       needs.finn_apper.outputs.q2_apper != '[]'
     runs-on: ubuntu-latest
     permissions:
@@ -132,6 +134,6 @@ jobs:
         run: |
           gh workflow run "${{ matrix.workflow }}" \
             --repo "${{ github.repository }}" \
-            --ref "${{ inputs.ref }}" \
+            --ref "${{ github.event_name == 'schedule' && 'main' || inputs.ref }}" \
             -f miljo=q2 \
-            -f hopp_over_tester=${{ inputs.hopp_over_tester }}
+            -f hopp_over_tester=${{ github.event_name == 'schedule' || inputs.hopp_over_tester }}
