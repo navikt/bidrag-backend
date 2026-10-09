@@ -447,32 +447,30 @@ class BehandleBehandlingHendelseService(
     }
 
     private fun oppdaterBehandlingStatus(behandling: Behandling) {
-        try {
-            if (behandling.barn == null && behandling.hendelse == null) return
-            val barn =
-                behandling.hendelse!!.barn.map { b ->
-                    if (b.søknadsid == null) return@map b
+        if (behandling.barn == null) return
+        val hendelse = behandling.hendelse ?: return
+        val barn =
+            hendelse.barn.map { b ->
+                if (b.søknadsid == null) return@map b
+                try {
                     val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(b.søknadsid!!))
                     if (søknad == null) {
-                        b.copy(
-                            status = Behandlingstatus.TRUKKET,
-                        )
+                        b.copy(status = Behandlingstatus.TRUKKET)
                     } else {
-                        val søknadBarn = søknad.søknad.partISøknadListe.find { it.personident == b.ident } ?: return@map b
-                        b.copy(
-                            status = søknadBarn.behandlingstatus ?: b.status,
-                        )
+                        val status =
+                            søknad.søknad.partISøknadListe
+                                .find { it.personident == b.ident }
+                                ?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING
+                        b.copy(status = status)
                     }
+                } catch (e: Exception) {
+                    secureLogger.error(e) { "Feil ved henting av status for søknad ${b.søknadsid}" }
+                    b.copy(status = Behandlingstatus.UNDER_BEHANDLING)
                 }
+            }
 
-            behandling.barn!!.barn = barn
-            behandling.hendelse =
-                behandling.hendelse!!.copy(
-                    barn = barn,
-                )
-        } catch (e: Exception) {
-            LOGGER.error(e) { "Feil ved oppdatering av behandling ${behandling.hendelse}" }
-        }
+        behandling.barn!!.barn = barn
+        behandling.hendelse = hendelse.copy(barn = barn)
     }
 
     fun slettÅpneOppgaverUtenSøknadsreferanse(saksnr: String) {
