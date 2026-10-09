@@ -39,6 +39,7 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.dokument.JournalpostResponse
@@ -122,6 +123,7 @@ abstract class AbstractBehandleHendelseTest {
     fun stubHentSøknadStatus(
         søknadsid: Long = 123,
         status: BehandlingStatusType,
+        partISøknadListe: List<PartISøknad> = emptyList(),
     ) {
         stubFor(
             post("/bbm/api/beregning/hentsoknad").willReturn(
@@ -139,6 +141,7 @@ abstract class AbstractBehandleHendelseTest {
                                     innkreving = true,
                                     søktAvType = SøktAvType.BIDRAGSMOTTAKER,
                                     behandlingStatusType = status,
+                                    partISøknadListe = partISøknadListe,
                                 ),
                             ),
                         ),
