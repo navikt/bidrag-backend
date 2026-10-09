@@ -33,10 +33,14 @@ import no.nav.bidrag.arbeidsflyt.utils.opprettSakForBehandling
 import no.nav.bidrag.arbeidsflyt.utils.personident1
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
 import no.nav.bidrag.transport.dokument.JournalpostResponse
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.organisasjon.EnhetDto
@@ -111,6 +115,34 @@ abstract class AbstractBehandleHendelseTest {
         stubFor(
             get("/sak/sak/${response.saksnummer}").willReturn(
                 aClosedJsonResponse().withStatus(HttpStatus.OK.value()).withBody(objectMapper.writeValueAsString(response)),
+            ),
+        )
+    }
+
+    fun stubHentSøknadStatus(
+        søknadsid: Long = 123,
+        status: BehandlingStatusType,
+    ) {
+        stubFor(
+            post("/bbm/api/beregning/hentsoknad").willReturn(
+                aClosedJsonResponse()
+                    .withStatus(HttpStatus.OK.value())
+                    .withBody(
+                        objectMapper.writeValueAsString(
+                            HentSøknadResponse(
+                                søknad =
+                                HentSøknad(
+                                    søknadsid = søknadsid,
+                                    søknadMottattDato = LocalDate.parse("2020-06-01"),
+                                    behandlingstema = Behandlingstema.BIDRAG,
+                                    saksnummer = "123456",
+                                    innkreving = true,
+                                    søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+                                    behandlingStatusType = status,
+                                ),
+                            ),
+                        ),
+                    ),
             ),
         )
     }
