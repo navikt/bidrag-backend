@@ -107,10 +107,11 @@ jobs:
       - name: Trigger ${{ matrix.workflow }} mot q1
         env:
           GH_TOKEN: ${{ github.token }}
+          DEPLOY_REF: ${{ github.event_name == 'schedule' && 'main' || inputs.ref }}
         run: |
           gh workflow run "${{ matrix.workflow }}" \
             --repo "${{ github.repository }}" \
-            --ref "${{ github.event_name == 'schedule' && 'main' || inputs.ref }}" \
+            --ref "$DEPLOY_REF" \
             -f miljo=q1 \
             -f hopp_over_tester=${{ github.event_name == 'schedule' || inputs.hopp_over_tester }}
 
@@ -131,9 +132,10 @@ jobs:
       - name: Trigger ${{ matrix.workflow }} mot q2
         env:
           GH_TOKEN: ${{ github.token }}
+          DEPLOY_REF: ${{ github.event_name == 'schedule' && 'main' || inputs.ref }}
         run: |
           gh workflow run "${{ matrix.workflow }}" \
             --repo "${{ github.repository }}" \
-            --ref "${{ github.event_name == 'schedule' && 'main' || inputs.ref }}" \
+            --ref "$DEPLOY_REF" \
             -f miljo=q2 \
             -f hopp_over_tester=${{ github.event_name == 'schedule' || inputs.hopp_over_tester }}
