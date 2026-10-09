@@ -1,14 +1,18 @@
 package no.nav.bidrag.automatiskjobb.configuration
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpStatus
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
 import org.springframework.util.backoff.ExponentialBackOff
+import org.springframework.util.backoff.FixedBackOff
+import org.springframework.web.client.RestClientResponseException
 
 private val LOGGER = KotlinLogging.logger { }
 
@@ -30,15 +34,20 @@ class KafkaConfiguration {
                 val offset = rec.offset()
                 val topic = rec.topic()
                 val partition = rec.partition()
-                LOGGER.error(e) {
+                secureLogger.error(e) {
                     "Kafka melding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. " +
                         "Melding som feilet: $value"
                 }
             }, backoffPolicy)
+        errorHandler.setBackOffFunction { _, e -> if (e.erIkkeFunnet()) FixedBackOff(0, 0) else null }
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler
     }
 }
+
+// En 404 blir ikke rettet av seg selv, så retry ville blokkert partisjonen for alltid
+internal fun Throwable.erIkkeFunnet(): Boolean = generateSequence(this) { it.cause }
+    .any { it is RestClientResponseException && it.statusCode == HttpStatus.NOT_FOUND }
 
 class KafkaRetryListener : RetryListener {
     override fun failedDelivery(
@@ -46,7 +55,7 @@ class KafkaRetryListener : RetryListener {
         exception: Exception?,
         deliveryAttempt: Int,
     ) {
-        LOGGER.error(
+        secureLogger.error(
             exception,
         ) {
             "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} feilet. Dette er $deliveryAttempt. forsøk"
@@ -57,10 +66,10 @@ class KafkaRetryListener : RetryListener {
         record: ConsumerRecord<*, *>,
         exception: Exception?,
     ) {
-        LOGGER.error(
+        secureLogger.error(
             exception,
         ) {
-            "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} er enten suksess eller ignorert pågrunn av ugyldig data"
+            "Håndtering av kafka melding i topic ${record.topic()} med offset ${record.offset()} nøkkel ${record.key()} og innhold ${record.value()} er enten suksess eller ignorert på grunn av ugyldig data"
         }
     }
 
