@@ -10,6 +10,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveType
 import no.nav.bidrag.arbeidsflyt.dto.OpprettSøknadsoppgaveRequest
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.arbeidsflyt.model.kreverSøknadsoppgave
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgave
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
 import no.nav.bidrag.arbeidsflyt.persistence.entity.BehandlingBarn
@@ -70,7 +71,7 @@ class BehandleBehandlingHendelseService(
                 ).dataForHendelse
 
         secureLogger.info { "Fant $åpneOppgaver for opppgave ${oppgaveData.id} og søknad ${oppgaveData.søknadsid}" }
-        if (åpneOppgaver.isEmpty()) {
+        if (åpneOppgaver.isEmpty() && søknad.kreverSøknadsoppgave) {
             LOGGER.info { "Gjennoppretter oppgave for sak ${oppgaveData.saksreferanse} og søknadsid ${oppgaveData.søknadsid} og behandlingsid ${oppgaveData.behandlingsid}" }
             oppgaveService.opprettOppgave(oppgaveData.mapTilOpprettOppgave())
         }
@@ -278,6 +279,16 @@ class BehandleBehandlingHendelseService(
     } catch (e: Exception) {
         null
     }
+    private fun kreverSøknadsoppgave(søknadsid: Long?) = try {
+        if (søknadsid == null) {
+            false
+        } else {
+            bbmConsumer.hentSøknad(HentSøknadRequest(søknadsid))?.søknad?.kreverSøknadsoppgave == true
+        }
+    } catch (e: Exception) {
+        secureLogger.error(e) { "Feil ved henting av søknadstatus for søknadsid $søknadsid: ${e.message}" }
+        false
+    }
 
     private fun hentSøknadStatus(søknadsid: Long?) = try {
         if (søknadsid == null) {
@@ -362,13 +373,12 @@ class BehandleBehandlingHendelseService(
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
                 // Søknad avsluttet hvis oppgave ikke er knyttet til en søknad
-                // Ellers avsluttet hvis søknaden er avsluttet, hvis kallet feiler så ikke ferdigstill fordi det ikke er noe garanti om det er ikke avsluttet
+                // Ellers avsluttet hvis søknaden er avsluttet og ikke krever oppgave lenger, hvis kallet feiler så ikke ferdigstill fordi det ikke er noe garanti om det er ikke avsluttet
                 // Bedre at SB avslutter oppgaven selv enn at systemet gjør det automatisk
-                val erSøknadAvsluttet = ferdigstillOppgave.søknadsid == null || hentSøknadStatus(ferdigstillOppgave.søknadsid!!.toLong())?.erAvsluttet ?: false
-                if (!erSøknadAvsluttet) {
+                val kreverOppgave = ferdigstillOppgave.søknadsid != null && kreverSøknadsoppgave(ferdigstillOppgave.søknadsid!!.toLong())
+                if (kreverOppgave) {
                     secureLogger.info {
-                        "Søknad ${ferdigstillOppgave.søknadsid} er ikke avsluttet. Det betyr at søknaden behandles i Bisys istedenfor i bidrag-behandling" +
-                            "Ferdigstiller ikke oppgave ${ferdigstillOppgave.id}"
+                        "Søknad ${ferdigstillOppgave.søknadsid} har fortsatt status som krever oppgave. Ferdigstiller ikke oppgave ${ferdigstillOppgave.id}"
                     }
                     return@forEach
                 }
