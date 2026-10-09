@@ -1042,7 +1042,7 @@ class BisysService(
 
         return when {
             alleLukket && harVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            alleLukket -> BehandlingStatusType.AVBRUTT
+            alleLukket && alleBehandlingsstatuser.isNotEmpty() -> BehandlingStatusType.AVBRUTT
             else -> BehandlingStatusType.UNDER_BEHANDLING
         }
     }
