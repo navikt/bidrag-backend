@@ -14,7 +14,7 @@ class KafkaRetryListener : RetryListener {
 
     override fun recovered(record: ConsumerRecord<*, *>, exception: Exception?) {
         secureLogger.error(exception) {
-            "Håndtering av kafka melding ${record.value()} er enten suksess eller ignorert pågrunn av ugyldig data"
+            "Håndtering av kafka melding ${record.value()} er enten suksess eller ignorert på grunn av ugyldig data"
         }
     }
 
