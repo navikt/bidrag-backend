@@ -130,9 +130,21 @@ class BehandleBehandlingHendelseService(
     }
 
     private fun ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse: BehandlingHendelse, behandling: Behandling) {
+        if (!hendelse.status.erAvsluttet) return
+
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val saksnummer = saksnummerSøknadPair.first
             val søknadsid = saksnummerSøknadPair.second
+            // Ikke gjør noe med søknad hvis status ikke kan hentes for å unngå at søknadsoppgave avsluttes uten å vite hva faktisk status er
+            val status = hentSøknadStatus(søknadsid) ?: return@forEach
+            if (!status.erAvsluttet) {
+                secureLogger.info {
+                    "Behandling ${behandling.id} er avsluttet men tilhørende søknad $søknadsid er ikke avsluttet. Det betyr at søknaden behandles i Bisys istedenfor i bidrag-behandling" +
+                        "Lukker ikke søknad"
+                }
+
+                return@forEach
+            }
             val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
             val åpneOppgaver =
                 oppgaveService
@@ -284,6 +296,7 @@ class BehandleBehandlingHendelseService(
             bbmConsumer.hentSøknad(HentSøknadRequest(søknadsid))?.søknad?.behandlingStatusType
         }
     } catch (e: Exception) {
+        secureLogger.error(e) { "Feil ved henting av søknadstatus for søknadsid $søknadsid: ${e.message}" }
         null
     }
 
