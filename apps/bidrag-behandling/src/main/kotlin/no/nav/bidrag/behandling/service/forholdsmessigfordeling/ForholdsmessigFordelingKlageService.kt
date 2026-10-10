@@ -370,6 +370,7 @@ class ForholdsmessigFordelingKlageService(
                 behandling,
                 åpneSøknaderForVedtaksid,
                 if (varHovedsøknad) null else gjeldeneHovedsøknadsid,
+                varHovedsøknad = varHovedsøknad,
             )
         if (varHovedsøknad) {
             bbmConsumer.fjernSammeknytningHovedsøknad(gjeldeneHovedsøknadsid, nySøknadsid)
@@ -709,6 +710,7 @@ class ForholdsmessigFordelingKlageService(
         åpneSøknaderForVedtaksid: List<HentSøknad>,
         hovedsøknadsid: Long?,
         mottattDato: LocalDate? = null,
+        varHovedsøknad: Boolean = false,
     ): Long {
         val hovedsøknad = hovedsøknadsid?.let { bbmConsumer.hentSøknad(it)?.søknad }
         val behandlingstype =
@@ -741,7 +743,18 @@ class ForholdsmessigFordelingKlageService(
                 søknad.refSøknadsid == originalSøknad.søknadsid && søknad.behandlingstema == originalSøknad.behandlingstema
             }
 
-        val søktAvType = if (hovedsøknad == null || hovedsøknad.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType
+        val søktAvType = if (
+            // Hvis hovedsøknad ikke finnes bruk søkt av fra originale søknad
+            (hovedsøknad == null && hovedsøknadsid != null) ||
+            // Hvis original søknad ikke er hovedsøknad så skal det alltid være fra Nav
+            (hovedsøknad != null && hovedsøknad.refSøknadsid != originalSøknad.søknadsid) ||
+            // I tilfelle det er opprettet med eget tiltak fra nav så skal det alltid brukes Nav
+            hovedsøknad?.søktAvType == SøktAvType.NAV_BIDRAG
+        ) {
+            SøktAvType.NAV_BIDRAG
+        } else {
+            originalSøknad.søktAvType
+        }
         val nySøknadId =
             åpenFFSøknad?.søknadsid ?: bbmConsumer
                 .opprettSøknader(
