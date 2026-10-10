@@ -529,8 +529,8 @@ class ForholdsmessigFordelingSøknadService(
                 ffDetaljer.søknaderUnderBehandling
                     .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
                     .filter { it.søknadsid != null }
-                    // Søknader opprettet av bruker skal aldri feilregistreres automatisk
-                    .filter { !behandling.erSøknadOpprettetAvBruker(it.søknadsid) }
+                    // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk
+                    .filter { !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
 
             if (åpneFFSøknader.size <= 1) return@forEach
 

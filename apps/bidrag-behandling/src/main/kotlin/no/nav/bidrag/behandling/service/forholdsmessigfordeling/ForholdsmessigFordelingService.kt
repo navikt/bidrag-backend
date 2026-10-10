@@ -948,12 +948,12 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         opprettetEllerOppdaterSøknadsid: Long,
         opprettetAvEnhet: String? = null,
-        søknadOpprettetAvBruker: Boolean = false,
+        søknadOpprettetAvSaksbehandler: Boolean = false,
     ) = klageService.opprettSøknaderForKlageEllerOmgjøring(
         behandling,
         opprettetEllerOppdaterSøknadsid,
         request = OpprettFFRequest(opprettetAvEnhet = opprettetAvEnhet),
-        søknadOpprettetAvBruker = søknadOpprettetAvBruker,
+        søknadOpprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
     )
 
     @Transactional

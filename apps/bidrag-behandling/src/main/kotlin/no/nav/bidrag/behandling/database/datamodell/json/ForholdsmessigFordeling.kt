@@ -78,5 +78,6 @@ data class ForholdsmessigFordelingSøknadBarn(
     var erstatterFFKlagesøknadsid: Long? = null,
     var opprettetMedKlageHovedsøknadsid: Long? = null,
     // Søknaden er opprettet av saksbehandler (via opprettBehandlingFraVedtak) og skal aldri feilregistreres automatisk
-    var opprettetAvBruker: Boolean = false,
+    @JsonAlias("opprettetAvBruker")
+    var opprettetAvSaksbehandler: Boolean = false,
 )
