@@ -460,13 +460,14 @@ class ForholdsmessigFordelingKlageService(
                 ?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }
-        val rollerIOpprettetSøknad = opprettetSøknad?.parterUnderBehandling?.mapNotNull { barn ->
-            behandling.roller.find { it.erSammeRolle(barn.personident!!, opprettetSøknad.behandlingstema.tilStønadstype()) }?.let { it to opprettetSøknad.søknadsid }
-        } ?: emptyList()
-        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap + rollerIOpprettetSøknad).distinct()
+        val rollerIOpprettetSøknad = opprettetSøknad?.parterUnderBehandling?.filter { it.personident != null }
+            ?.map { p -> OpprettetSøknad(p.personident!!, opprettetSøknad.behandlingstema.tilStønadstype(), opprettetSøknad.refSøknadsid, opprettetSøknad.søknadsid, opprettetSøknad.behandlingstype) }
+            ?: emptyList()
+        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap).distinct()
+        val rollerIAlleKlagesøknader = (rollerIKlagesøknader + rollerIOpprettetSøknad).distinct()
 
         return rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
-            val klage = rollerIKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
+            val klage = rollerIAlleKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
             BarnIFFOgKlagesøknad(barn, ffSøknadsid = ffSøknadsid, klagesøknadsid = klage.søknadsid!!)
         }
     }
