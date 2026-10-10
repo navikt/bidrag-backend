@@ -121,7 +121,8 @@ class ForholdsmessigFordelingKlageService(
         } else {
             val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
             val erSøknadOpprettetEtterHovedsøknad = behandling.erSøknadOpprettetEtterHovedsøknad(søknadsidSomSlettes)
-            if (søknadSomSlettes.refSøknadsid != behandling.soknadsid && !erSøknadOpprettetEtterHovedsøknad) {
+            val erHovedsøknad = søknadSomSlettes.søknadsid == behandling.soknadsid
+            if (!erHovedsøknad && !erSøknadOpprettetEtterHovedsøknad) {
                 // Var ikke hovedsøknad som ble slettet. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
                 opprettKlageSøknad(
                     søknadSomSlettes,
@@ -740,7 +741,7 @@ class ForholdsmessigFordelingKlageService(
                 søknad.refSøknadsid == originalSøknad.søknadsid && søknad.behandlingstema == originalSøknad.behandlingstema
             }
 
-        val søktAvType = if (hovedsøknad?.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType
+        val søktAvType = if (hovedsøknad == null || hovedsøknad.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType
         val nySøknadId =
             åpenFFSøknad?.søknadsid ?: bbmConsumer
                 .opprettSøknader(
