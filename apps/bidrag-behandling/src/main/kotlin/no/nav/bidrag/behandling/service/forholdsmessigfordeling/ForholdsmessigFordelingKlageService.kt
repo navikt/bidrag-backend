@@ -491,9 +491,13 @@ class ForholdsmessigFordelingKlageService(
 
         val feilregistrerteBarn =
             if (harAndreBarnIFFSøknad) {
-                barn.filter { søknadService.feilregistrerBarnFraSøknad(it, ffSøknadsid) != null }
+                barn.filter {
+                    KLAGE_LOGGER.info { "Feilregistrerer barn ${it.ident} fra FF-klagesøknad $ffSøknadsid for behandling ${behandling.id}" }
+                    søknadService.feilregistrerBarnFraSøknad(it, ffSøknadsid) != null
+                }
             } else {
                 val ffSøknad = barn.first().finnSøknad(ffSøknadsid) ?: bbmConsumer.hentSøknad(ffSøknadsid)!!.søknad.tilForholdsmessigFordelingSøknad()
+                KLAGE_LOGGER.info { "Feilregistrerer FF-klagesøknad $ffSøknadsid for behandling ${behandling.id}" }
                 if (søknadService.feilregistrerSøknad(ffSøknad, behandling)) barn else emptyList()
             }
 
