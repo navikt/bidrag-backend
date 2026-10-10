@@ -10,6 +10,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveType
 import no.nav.bidrag.arbeidsflyt.dto.OpprettSøknadsoppgaveRequest
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.arbeidsflyt.model.kreverSøknadsoppgave
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgave
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
 import no.nav.bidrag.arbeidsflyt.persistence.entity.BehandlingBarn
@@ -70,7 +71,7 @@ class BehandleBehandlingHendelseService(
                 ).dataForHendelse
 
         secureLogger.info { "Fant $åpneOppgaver for opppgave ${oppgaveData.id} og søknad ${oppgaveData.søknadsid}" }
-        if (åpneOppgaver.isEmpty()) {
+        if (åpneOppgaver.isEmpty() && søknad.kreverSøknadsoppgave) {
             LOGGER.info { "Gjennoppretter oppgave for sak ${oppgaveData.saksreferanse} og søknadsid ${oppgaveData.søknadsid} og behandlingsid ${oppgaveData.behandlingsid}" }
             oppgaveService.opprettOppgave(oppgaveData.mapTilOpprettOppgave())
         }
