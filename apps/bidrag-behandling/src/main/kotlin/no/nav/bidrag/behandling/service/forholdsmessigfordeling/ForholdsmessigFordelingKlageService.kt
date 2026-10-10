@@ -414,32 +414,37 @@ class ForholdsmessigFordelingKlageService(
                 }
             }
         }
+        val nySøknad = {
+            ForholdsmessigFordelingSøknadBarn(
+                søknadsid = opprettetEllerOppdaterSøknadsid,
+                behandlingstema = opprettetSøknad.behandlingstema,
+                behandlingstype = opprettetSøknad.behandlingstype,
+                omgjørSøknadsid = opprettetSøknad.refSøknadsid ?: behandling.omgjøringsdetaljer?.soknadRefId,
+                omgjørVedtaksid = opprettetSøknad.refVedtaksid ?: behandling.omgjøringsdetaljer?.omgjørVedtakId,
+                innkreving = opprettetSøknad.innkreving,
+                mottattDato = opprettetSøknad.søknadMottattDato,
+                søktAvType = opprettetSøknad.søktAvType,
+                søknadFomDato = opprettetSøknad.søknadFomDato,
+                saksnummer = opprettetSøknad.saksnummer,
+                status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+                enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
+                opprettetEtterHovedsøknad = !behandling.erNyBehandlingIkkeOpprettet,
+                opprettetMedKlageHovedsøknadsid = opprettetEllerOppdaterSøknadsid,
+                opprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
+            )
+        }
         behandling.roller
             .filter {
                 opprettetSøknadRoller.contains(it.ident) &&
                     it.stønadstype == opprettetSøknad.behandlingstema.tilStønadstype() &&
                     !it.harSøknad(opprettetEllerOppdaterSøknadsid)
-            }.forEach {
-                it.forholdsmessigFordeling!!.søknader.add(
-                    ForholdsmessigFordelingSøknadBarn(
-                        søknadsid = opprettetEllerOppdaterSøknadsid,
-                        behandlingstema = opprettetSøknad.behandlingstema,
-                        behandlingstype = opprettetSøknad.behandlingstype,
-                        omgjørSøknadsid = opprettetSøknad.refSøknadsid ?: behandling.omgjøringsdetaljer?.soknadRefId,
-                        omgjørVedtaksid = opprettetSøknad.refVedtaksid ?: behandling.omgjøringsdetaljer?.omgjørVedtakId,
-                        innkreving = opprettetSøknad.innkreving,
-                        mottattDato = opprettetSøknad.søknadMottattDato,
-                        søktAvType = opprettetSøknad.søktAvType,
-                        søknadFomDato = opprettetSøknad.søknadFomDato,
-                        saksnummer = opprettetSøknad.saksnummer,
-                        status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
-                        enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
-                        opprettetEtterHovedsøknad = !behandling.erNyBehandlingIkkeOpprettet,
-                        opprettetMedKlageHovedsøknadsid = opprettetEllerOppdaterSøknadsid,
-                        opprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
-                    ),
-                )
-            }
+            }.forEach { it.forholdsmessigFordeling!!.søknader.add(nySøknad()) }
+
+        // Lagrer søknaden på BP slik at det er kjent at søknaden er opprettet av saksbehandler selv om barnet ikke er lagt til i behandlingen ennå
+        val bidragspliktig = behandling.bidragspliktig
+        if (søknadOpprettetAvSaksbehandler && bidragspliktig != null && !bidragspliktig.harSøknad(opprettetEllerOppdaterSøknadsid)) {
+            bidragspliktig.forholdsmessigFordeling?.søknader?.add(nySøknad())
+        }
     }
 
     fun kanEndreSøknadStatus(søknadsid: Long): Boolean {
@@ -508,6 +513,7 @@ class ForholdsmessigFordelingKlageService(
                 ?.søknaderUnderBehandling
                 ?.filter {
                     it.behandlingstype?.erForholdsmessigFordeling == false && it.erOpprettetAvSystem() &&
+                        !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) &&
                         it.søknadsid != null && it.søknadsid != hovedsøknadsid && it.søknadsid != opprettetSøknad?.søknadsid
                 }?.map { barn to it.søknadsid!! }
                 .orEmpty()
@@ -524,8 +530,7 @@ class ForholdsmessigFordelingKlageService(
     }
 
     /** Søknad lagret i behandlingen som er opprettet av systemet og ikke av saksbehandler */
-    private fun ForholdsmessigFordelingSøknadBarn.erOpprettetAvSystem() =
-        !opprettetAvSaksbehandler && !opprettetEtterHovedsøknad && opprettetMedKlageHovedsøknadsid == null
+    private fun ForholdsmessigFordelingSøknadBarn.erOpprettetAvSystem() = opprettetAvSystem && !opprettetAvSaksbehandler
 
     private fun Behandling.erSøknadOpprettetAvSaksbehandlerEllerEtterHovedsøknad(søknadsid: Long) =
         erSøknadOpprettetAvSaksbehandler(søknadsid) || erSøknadOpprettetEtterHovedsøknad(søknadsid) ||
@@ -852,6 +857,7 @@ class ForholdsmessigFordelingKlageService(
                 omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
                 status = Behandlingstatus.UNDER_BEHANDLING,
                 opprettetAvSaksbehandler = behandling.erSøknadOpprettetAvSaksbehandler(nySøknadId),
+                opprettetAvSystem = åpenFFSøknad == null,
             )
         behandling.søknadsbarn
             .filter {

@@ -748,6 +748,7 @@ class ForholdsmessigFordelingSøknadService(
                         }
                     it.tilForholdsmessigFordelingSøknad().copy(
                         status = status,
+                        opprettetAvSaksbehandler = rolle.behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid),
                     )
                 }.toMutableSet()
 

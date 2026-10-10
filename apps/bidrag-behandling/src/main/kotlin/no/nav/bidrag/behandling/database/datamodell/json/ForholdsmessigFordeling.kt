@@ -80,4 +80,6 @@ data class ForholdsmessigFordelingSøknadBarn(
     // Søknaden er opprettet av saksbehandler (via opprettBehandlingFraVedtak) og skal aldri feilregistreres automatisk
     @JsonAlias("opprettetAvBruker")
     var opprettetAvSaksbehandler: Boolean = false,
+    // Søknaden er opprettet av systemet og kan feilregistreres hvis saksbehandler oppretter søknad for samme barn
+    var opprettetAvSystem: Boolean = false,
 )
