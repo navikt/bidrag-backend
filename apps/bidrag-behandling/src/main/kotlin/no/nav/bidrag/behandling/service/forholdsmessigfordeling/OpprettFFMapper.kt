@@ -122,6 +122,9 @@ val Behandlingstype.erForholdsmessigFordeling get() =
         Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE,
     ).contains(this)
 
+fun Behandling.erSøknadOpprettetAvBruker(søknadsid: Long?) = søknadsid != null &&
+    roller.any { rolle -> rolle.forholdsmessigFordeling?.søknader?.any { it.søknadsid == søknadsid && it.opprettetAvBruker } == true }
+
 val Behandlingstatus.erFeilregistrert get() =
     listOf(
         Behandlingstatus.FEILREGISTRERT,

@@ -1,5 +1,7 @@
 package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 
+import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
@@ -114,6 +116,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         opprettetEtterHovedsøknad: Boolean = false,
         erstatterFFKlagesøknadsid: Long? = null,
         omgjørSøknadsid: Long? = null,
+        opprettetAvBruker: Boolean = false,
     ) = ForholdsmessigFordelingSøknadBarn(
         søknadsid = søknadsid,
         mottattDato = LocalDate.parse("2024-01-10"),
@@ -129,7 +132,12 @@ class ForholdsmessigFordelingKlageServiceTest {
         enhet = "4806",
         opprettetEtterHovedsøknad = opprettetEtterHovedsøknad,
         erstatterFFKlagesøknadsid = erstatterFFKlagesøknadsid,
+        opprettetAvBruker = opprettetAvBruker,
     )
+
+    private fun Rolle.settSomRevurderingsbarn() {
+        forholdsmessigFordeling!!.erRevurdering = true
+    }
 
     private fun Rolle.leggTilSøknad(søknad: ForholdsmessigFordelingSøknadBarn) {
         forholdsmessigFordeling!!.søknader.add(søknad)
@@ -283,6 +291,7 @@ class ForholdsmessigFordelingKlageServiceTest {
                 overføringService = mockk(),
             )
         behandling.omgjøringsdetaljer = Omgjøringsdetaljer(soknadRefId = PÅKLAGET_FF_SØKNADSID, omgjørVedtakId = OMGJØR_VEDTAKSID)
+        barn1.settSomRevurderingsbarn()
         listOf(barn1, barn2).forEach { barn ->
             leggTilSøknadForRoller(
                 søknad(FF_KLAGESØKNADSID, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE).copy(status = Behandlingstatus.FEILREGISTRERT),
@@ -356,6 +365,7 @@ class ForholdsmessigFordelingKlageServiceTest {
     @Test
     fun `skal opprette revurderingssøknad for barn som ikke lenger har åpen søknad når søknad som erstattet FF-klagesøknad slettes`() {
         val (service, søknadServiceMock) = serviceMedMocketSøknadService()
+        barn1.settSomRevurderingsbarn()
         leggTilFFKlagesøknad(barn1)
         barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, erstatterFFKlagesøknadsid = FF_KLAGESØKNADSID))
         every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns
@@ -390,6 +400,7 @@ class ForholdsmessigFordelingKlageServiceTest {
     @Test
     fun `skal opprette revurderingssøknad for barn i slettet hovedsøknad når søknad opprettet etter hovedsøknad blir ny hovedsøknad`() {
         val (service, søknadServiceMock) = serviceMedMocketSøknadService()
+        barn1.settSomRevurderingsbarn()
         leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetEtterHovedsøknad = true), barn1)
         barn2.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true))
         every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
@@ -411,6 +422,7 @@ class ForholdsmessigFordelingKlageServiceTest {
     @Test
     fun `synkronisering skal opprette revurderingssøknad for relevant kravhaver uten åpen søknad`() {
         val (service, søknadServiceMock) = serviceMedMocketSøknadService()
+        barn1.settSomRevurderingsbarn()
         barn1.leggTilSøknad(
             søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, erstatterFFKlagesøknadsid = FF_KLAGESØKNADSID)
                 .copy(status = Behandlingstatus.FEILREGISTRERT),
@@ -591,6 +603,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(OPPRETTET_SØKNADSID) }
         request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
+        request.captured.søktAv shouldBe SøktAvType.BIDRAGSMOTTAKER
         request.captured.refSøknadsid shouldBe OPPRETTET_SØKNADSID
         request.captured.hovedsøknadsid shouldBe HOVEDSØKNADSID
         request.captured.barnListe.map { it.personident } shouldBe listOf(barn1.ident)
@@ -649,6 +662,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         request.captured.refSøknadsid shouldBe HOVEDSØKNADSID
         request.captured.hovedsøknadsid shouldBe OPPRETTET_SØKNADSID
         request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
+        request.captured.søktAv shouldBe SøktAvType.BIDRAGSMOTTAKER
         request.captured.barnListe.map { it.personident } shouldBe listOf(barn2.ident)
         barn2.søknadStatus(HOVEDSØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
         barn2.søknadStatus(GJENOPPRETTET_FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
@@ -750,5 +764,191 @@ class ForholdsmessigFordelingKlageServiceTest {
         every { behandlingService.hentBehandlingById(behandling.id!!) } returns behandling
 
         service.kanEndreSøknadStatus(OPPRETTET_SØKNADSID) shouldBe false
+    }
+
+    @Test
+    fun `skal ikke feilregistrere søknad opprettet av bruker selv om den er lagret som FF-søknad`() {
+        leggTilFFKlagesøknad(barn1)
+        barn1.leggTilSøknad(
+            søknad(OPPRETTET_SØKNADSID, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE, opprettetEtterHovedsøknad = true, opprettetAvBruker = true),
+        )
+        mockTilknyttedeSøknader(
+            hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
+            hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn1.ident!!)),
+        )
+
+        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+    }
+
+    @Test
+    fun `skal feilregistrere FF-klagesøknad og ikke opprettet søknad når opprettet søknad ikke er knyttet til behandlingen i BBM`() {
+        leggTilFFKlagesøknad(barn1)
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE, opprettetEtterHovedsøknad = true))
+        mockTilknyttedeSøknader(
+            hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
+        )
+
+        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)))
+
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(any()) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+        barn1.finnSøknad(OPPRETTET_SØKNADSID)!!.erstatterFFKlagesøknadsid shouldBe FF_KLAGESØKNADSID
+    }
+
+    @Test
+    fun `slettDuplikatForholdsmessigFordelingSøknader skal ikke feilregistrere søknad opprettet av bruker`() {
+        val søknadService = ForholdsmessigFordelingSøknadService(bbmConsumer, mockk(), mockk(), kravhaverService, mockk())
+        leggTilFFKlagesøknad(barn1)
+        barn1.leggTilSøknad(
+            søknad(OPPRETTET_SØKNADSID, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE, opprettetAvBruker = true)
+                .copy(søknadFomDato = LocalDate.parse("2024-06-01")),
+        )
+
+        søknadService.slettDuplikatForholdsmessigFordelingSøknader(behandling)
+
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+        barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+    }
+
+    @Test
+    fun `skal gjøre søknad opprettet av bruker til ny hovedsøknad når hovedsøknad slettes`() {
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetAvBruker = true), barn2)
+        barn1.leggTilSøknad(søknad(GJENOPPRETTET_FF_KLAGESØKNADSID))
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, opprettetAvBruker = true))
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(
+                søknader =
+                listOf(
+                    hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!)),
+                    hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn1.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID),
+                    hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                ),
+            )
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, HOVEDSØKNADSID)
+
+        behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
+        verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, OPPRETTET_SØKNADSID) }
+        verify(exactly = 0) { behandlingService.logiskSlettBehandling(any()) }
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
+    }
+
+    @Test
+    fun `skal velge søknad opprettet av bruker med lavest søknadsid som ny hovedsøknad når hovedsøknad slettes`() {
+        val systemSøknadsid = OPPRETTET_SØKNADSID - 500
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetAvBruker = true), barn2)
+        barn1.leggTilSøknad(søknad(systemSøknadsid, opprettetEtterHovedsøknad = true))
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID + 1, opprettetEtterHovedsøknad = true, opprettetAvBruker = true))
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, opprettetAvBruker = true))
+        every { bbmConsumer.finnSammenknytningerHovedsøknad(HOVEDSØKNADSID, any()) } returns
+            FinnSammenknytningerHovedsøknadResponse(
+                søknader =
+                listOf(
+                    hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!)),
+                    hentSøknad(systemSøknadsid, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                    hentSøknad(OPPRETTET_SØKNADSID + 1, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                    hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = 9999L),
+                ),
+            )
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, HOVEDSØKNADSID)
+
+        behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
+        verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, OPPRETTET_SØKNADSID) }
+    }
+
+    @Test
+    fun `håndterSlettetHovedsøknad skal prioritere søknad opprettet av bruker som ny hovedsøknad`() {
+        val systemSøknadsid = OPPRETTET_SØKNADSID - 500
+        leggTilSøknadForRoller(søknad(HOVEDSØKNADSID, opprettetAvBruker = true), barn2)
+        barn1.leggTilSøknad(søknad(systemSøknadsid, opprettetEtterHovedsøknad = true))
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, opprettetAvBruker = true))
+
+        val nyHovedsøknadsid =
+            service.håndterSlettetHovedsøknad(
+                hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.AVBRUTT),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+                HOVEDSØKNADSID,
+            )
+
+        nyHovedsøknadsid shouldBe OPPRETTET_SØKNADSID
+        behandling.soknadsid shouldBe OPPRETTET_SØKNADSID
+    }
+
+    @Test
+    fun `skal ikke opprette revurderingssøknad for barn som ikke er revurderingsbarn når søknad som erstattet FF-klagesøknad slettes`() {
+        val (service, søknadServiceMock) = serviceMedMocketSøknadService()
+        leggTilFFKlagesøknad(barn1)
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, erstatterFFKlagesøknadsid = FF_KLAGESØKNADSID))
+        every { bbmConsumer.hentSøknad(OPPRETTET_SØKNADSID) } returns
+            mockk { every { søknad } returns hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = HOVEDSØKNADSID) }
+        relevanteKravhavere(barn1)
+        mockTilknyttedeSøknader(hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!)))
+
+        service.slettEllerGjennopprettKlageSøknader(behandling, OPPRETTET_SØKNADSID)
+
+        søknadServiceMock.verifiserIngenRevurderingssøknadOpprettet()
+        barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
+    }
+
+    @Test
+    fun `opprettKlageSøknad skal alltid bruke søkt av Nav for søknad opprettet av systemet`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        every { bbmConsumer.hentSøknad(HOVEDSØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(HOVEDSØKNADSID, listOf(barn2.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID))
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val request = slot<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(request)) } returns OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID)
+
+        service.opprettKlageSøknad(
+            hentSøknad(PÅKLAGET_FF_SØKNADSID, listOf(barn1.ident!!)),
+            behandling,
+            emptyList(),
+            HOVEDSØKNADSID,
+        )
+
+        request.captured.søktAv shouldBe SøktAvType.NAV_BIDRAG
+        barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.søktAvType shouldBe SøktAvType.NAV_BIDRAG
+        barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.opprettetAvBruker shouldBe false
+    }
+
+    @Test
+    fun `opprettKlageSøknad skal gjenbruke søknad opprettet av bruker uten å lagre den som FF-søknad`() {
+        barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetEtterHovedsøknad = true, opprettetAvBruker = true))
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val brukerSøknad = hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = PÅKLAGET_FF_SØKNADSID)
+
+        val søknadsid =
+            service.opprettKlageSøknad(
+                hentSøknad(
+                    PÅKLAGET_FF_SØKNADSID,
+                    listOf(barn1.ident!!, barn2.ident!!),
+                    behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+                ),
+                behandling,
+                listOf(brukerSøknad),
+                HOVEDSØKNADSID,
+            )
+
+        søknadsid shouldBe OPPRETTET_SØKNADSID
+        verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
+        assertSoftly(barn2.finnSøknad(OPPRETTET_SØKNADSID)!!) {
+            behandlingstype shouldBe Behandlingstype.KLAGE
+            søktAvType shouldBe SøktAvType.BIDRAGSMOTTAKER
+            opprettetAvBruker shouldBe true
+        }
+        barn1.forholdsmessigFordeling!!.søknader.filter { it.søknadsid == OPPRETTET_SØKNADSID } shouldHaveSize 1
     }
 }

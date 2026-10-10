@@ -77,4 +77,6 @@ data class ForholdsmessigFordelingSøknadBarn(
     var opprettetEtterHovedsøknad: Boolean = false,
     var erstatterFFKlagesøknadsid: Long? = null,
     var opprettetMedKlageHovedsøknadsid: Long? = null,
+    // Søknaden er opprettet av saksbehandler (via opprettBehandlingFraVedtak) og skal aldri feilregistreres automatisk
+    var opprettetAvBruker: Boolean = false,
 )
