@@ -178,7 +178,7 @@ class ForholdsmessigFordelingKlageService(
         opprettetSøknad = if (opprettetSøknad.søknadsid != opprettetEllerOppdaterSøknadsid) bbmConsumer.hentSøknad(hovedsøknadsid)!!.søknad else opprettetSøknad
 
         oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid)
-        feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, opprettetSøknad)
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
 
         val barnIOriginaleVedtak = finnBarnIOriginaleVedtak(behandling)
@@ -430,8 +430,8 @@ class ForholdsmessigFordelingKlageService(
      * Hvis et barn med FF-klagesøknad i behandlingen også er med i en tilknyttet søknad som ikke er FF,
      * så feilregistreres FF-klagesøknaden for barnet og den andre søknaden beholdes.
      */
-    internal fun feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling: Behandling) {
-        finnBarnIBådeFFOgKlagesøknad(behandling)
+    internal fun feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling: Behandling, opprettetSøknad: HentSøknad? = null) {
+        finnBarnIBådeFFOgKlagesøknad(behandling, opprettetSøknad)
             .groupBy { it.ffSøknadsid }
             .forEach { (ffSøknadsid, barnSomErstattes) -> feilregistrerBarnFraFFSøknad(behandling, ffSøknadsid, barnSomErstattes) }
     }
@@ -443,7 +443,7 @@ class ForholdsmessigFordelingKlageService(
     )
 
     /** Finner barn som er med i både en åpen FF-søknad i behandlingen og en annen (ikke-FF) søknad tilknyttet hovedsøknaden */
-    private fun finnBarnIBådeFFOgKlagesøknad(behandling: Behandling): List<BarnIFFOgKlagesøknad> {
+    private fun finnBarnIBådeFFOgKlagesøknad(behandling: Behandling, opprettetSøknad: HentSøknad? = null): List<BarnIFFOgKlagesøknad> {
         val hovedsøknadsid = behandling.soknadsid!!
         val (rollerIFFOpprettetSøknader, rollerIKlagesøknader) =
             hentÅpneSøknaderForBehandling(behandling)
@@ -460,7 +460,10 @@ class ForholdsmessigFordelingKlageService(
                 ?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }
-        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap).distinct()
+        val rollerIOpprettetSøknad = opprettetSøknad?.parterUnderBehandling?.mapNotNull { barn ->
+            behandling.roller.find { it.erSammeRolle(barn.personident!!, opprettetSøknad.behandlingstema.tilStønadstype()) }?.let { it to opprettetSøknad.søknadsid }
+        } ?: emptyList()
+        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap + rollerIOpprettetSøknad).distinct()
 
         return rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
             val klage = rollerIKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
