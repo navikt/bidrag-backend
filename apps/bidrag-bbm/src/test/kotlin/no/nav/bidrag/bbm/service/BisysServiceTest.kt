@@ -1214,10 +1214,10 @@ class BisysServiceTest(
     }
 
     @Test
-    fun `hent søknad - skal returnere VEDTAK_FATTET når alle søknadslinjer har lukketStatus = true og minst én har status VF`() {
+    fun `hent søknad - skal returnere VEDTAK_FATTET når alle søknadslinjer har lukketStatus = true og minst én har status MV`() {
         testdataManager.lagreKodeSøknadsstatus(
             listOf(
-                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "MV", lukketStatus = "1"),
                 opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
             ),
         )
@@ -1257,7 +1257,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[2].rolleid!!,
-                    søknadsstatuskode = "VF",
+                    søknadsstatuskode = "MV",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",
@@ -1279,10 +1279,10 @@ class BisysServiceTest(
     }
 
     @Test
-    fun `hent søknad - skal returnere AVBRUTT når alle søknadslinjer har lukketStatus = true og minst én har status FR`() {
+    fun `hent søknad - skal returnere AVBRUTT når alle søknadslinjer har lukketStatus = true og ingen har vedtaksstatus`() {
         testdataManager.lagreKodeSøknadsstatus(
             listOf(
-                opprettKodeSøknadStatus(kode = "FR", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "AV", lukketStatus = "1"),
                 opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
             ),
         )
@@ -1322,7 +1322,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[2].rolleid!!,
-                    søknadsstatuskode = "FR",
+                    søknadsstatuskode = "AV",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",
