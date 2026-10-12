@@ -77,6 +77,7 @@ import no.nav.bidrag.transport.felles.ifTrue
 import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.annotation.Lazy
 import org.springframework.dao.CannotAcquireLockException
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.HttpStatus
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -105,6 +106,11 @@ class BehandlingService(
     @Lazy
     private val forholdsmessigFordelingService: ForholdsmessigFordelingService? = null,
 ) {
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, multiplier = 2.0),
+    )
     @Transactional
     fun slettBehandling(
         behandlingId: Long,
@@ -590,7 +596,7 @@ class BehandlingService(
     }
 
     @Retryable(
-        value = [CannotAcquireLockException::class],
+        value = [CannotAcquireLockException::class, OptimisticLockingFailureException::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 200, multiplier = 2.0),
     )
@@ -664,6 +670,11 @@ class BehandlingService(
         }
     }
 
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, multiplier = 2.0),
+    )
     @Transactional
     fun henteBehandling(
         behandlingsid: Long,
@@ -762,6 +773,11 @@ class BehandlingService(
         )
     }
 
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, multiplier = 2.0),
+    )
     @Transactional
     fun oppdaterRoller(
         behandlingId: Long,

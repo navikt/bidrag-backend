@@ -6,6 +6,7 @@ import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
+import no.nav.bidrag.behandling.consumer.SporedeBBMEndringer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
@@ -69,6 +70,9 @@ import no.nav.bidrag.transport.behandling.vedtak.Periode
 import no.nav.bidrag.transport.felles.toYearMonth
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionDefinition
@@ -157,6 +161,11 @@ class ForholdsmessigFordelingService(
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
     }
 
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, multiplier = 2.0),
+    )
     @Transactional
     fun opprettEllerOppdaterForholdsmessigFordeling(
         behandlingId: Long,
@@ -230,6 +239,7 @@ class ForholdsmessigFordelingService(
             syncGebyrSøknadReferanse(behandling)
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
             behandlingService.sendOppdatertHendelse(behandling.id!!, false)
+            rullTilbakeBBMHvisCommitFeiler(behandlingId, bbmConsumer.stoppSporingAvEndringer())
         } catch (e: Exception) {
             LOGGER.error(e) {
                 "Feil ved opprettelse/oppdatering av FF for behandlingId=$behandlingId. " +
@@ -241,6 +251,27 @@ class ForholdsmessigFordelingService(
         } finally {
             bbmConsumer.stoppSporingAvEndringer()
         }
+    }
+
+    /**
+     * Optimistisk låsefeil oppdages først når transaksjonen committes, etter at metoden er ferdig.
+     * Ruller da tilbake endringer gjort i BBM slik at opprettelsen kan prøves på nytt.
+     */
+    private fun rullTilbakeBBMHvisCommitFeiler(
+        behandlingId: Long,
+        endringer: SporedeBBMEndringer,
+    ) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) return
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCompletion(status: Int) {
+                    if (status != TransactionSynchronization.STATUS_ROLLED_BACK) return
+                    LOGGER.warn { "Transaksjonen for opprettelse/oppdatering av FF for behandlingId=$behandlingId ble rullet tilbake. Ruller tilbake endringer i BBM" }
+                    tilbakestillBehandlingsidISøknader(endringer.behandlingsid)
+                    tilbakestillBehandlerenhetISøknader(endringer.behandlerenhet)
+                }
+            },
+        )
     }
 
     /**

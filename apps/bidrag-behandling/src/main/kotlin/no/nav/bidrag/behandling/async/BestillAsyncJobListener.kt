@@ -10,6 +10,9 @@ import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.event.EventListener
+import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 
@@ -21,6 +24,11 @@ class BestillAsyncJobListener(
     private val grunnlagService: GrunnlagService,
 ) {
     @EventListener
+    @Retryable(
+        value = [OptimisticLockingFailureException::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, multiplier = 2.0),
+    )
     @Transactional(Transactional.TxType.REQUIRES_NEW)
     @Async
     fun bestillInnhentingAvGrunnlag(bestilling: GrunnlagInnhentingBestilling) {
