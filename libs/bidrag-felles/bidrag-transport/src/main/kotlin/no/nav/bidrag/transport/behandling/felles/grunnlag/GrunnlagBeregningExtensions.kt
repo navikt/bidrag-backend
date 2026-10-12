@@ -194,7 +194,7 @@ fun List<GrunnlagDto>.byggSluttberegningBarnebidragDetaljer(
 
     val bidragJustertNedTil25ProsentAvInntekt = erBidragJustertNedTil25ProsentAvInntekt(grunnlagsreferanseListe)
     val sluttberegningInnhold = sluttberegning.innholdTilObjekt<SluttberegningBarnebidragV2>()
-    val bidragJustertForDeltBosted = andelDeltBosted != null
+    val bidragJustertForDeltBosted = andelDeltBosted != null && !sluttberegningInnhold.bidragIkkeBeregnetDeltBosted
     return DokumentmalSluttberegningBarnebidragDetaljer(
         bidragJustertNedTilEvne = erBidragJustertNedTilEvne(grunnlagsreferanseListe),
         nettoBidragEtterSamværsfradrag = beregnetBeløp ?: BigDecimal.ZERO,

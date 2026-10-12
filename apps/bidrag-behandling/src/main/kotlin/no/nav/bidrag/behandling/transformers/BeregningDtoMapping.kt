@@ -1075,7 +1075,11 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
         erEndringUnderGrense = erResultatEndringUnderGrense,
         erBeregnetAvslag =
         sluttberegning != null &&
-            (sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet),
+            (
+                sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet ||
+                    sluttberegning.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED ||
+                    sluttberegning.resultat == Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG
+                ),
         beregningsdetaljer =
         if (vedtakstype == Vedtakstype.INNKREVING) {
             null

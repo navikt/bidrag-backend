@@ -40,6 +40,8 @@ private val sluttberegningAvslagResultaterV2 =
     listOf(
         Resultatkode.IKKE_OMSORG,
         Resultatkode.BARNET_ER_SELVFORSØRGET,
+        Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
+        Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
     )
 
 fun List<GrunnlagDto>.finnBPsEvne(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal? {
@@ -144,6 +146,15 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
     return when {
         sluttberegningInnhold.ikkeOmsorgForBarnet -> {
             Resultatkode.IKKE_OMSORG
+        }
+
+        // Avslag skal gå foran justeringene under, fordi det ikke beregnes noe bidrag
+        sluttberegningInnhold.bidragIkkeBeregnetDeltBosted -> {
+            Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED
+        }
+
+        sluttberegningInnhold.forpleiningDekkerUnderholdskostnaden -> {
+            Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG
         }
 
         bpsBarnetillegg?.innhold?.erBidragJustertTilNettoBarnetilleggBP == true -> {
@@ -475,6 +486,8 @@ data class SluttberegningBarnebidragV2(
     val ikkeOmsorgForBarnet: Boolean = false,
     @Schema(description = "Delt bosted der BPs andel av U er 50 % eller lavere. Bidraget beregnes ikke, og perioden gir avslag eller opphør")
     val bidragIkkeBeregnetDeltBosted: Boolean = false,
+    @Schema(description = "Forpleiningen er lik eller høyere enn U. Bidraget beregnes ikke, og perioden gir avslag eller opphør")
+    val forpleiningDekkerUnderholdskostnaden: Boolean = false,
 ) : Sluttberegning
 
 data class DelberegningBidragTilFordelingLøpendeBidrag(

@@ -370,7 +370,9 @@ data class ResultatBarnebidragsberegningPeriodeDto(
         when {
             erOpphør -> {
                 if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
-                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true
+                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true ||
+                    beregningsdetaljer?.sluttberegning?.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED ||
+                    beregningsdetaljer?.sluttberegning?.resultat == Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG
                 ) {
                     beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
                 } else if (klageOmgjøringDetaljer?.omgjøringsvedtak == true && resultatKode != null) {

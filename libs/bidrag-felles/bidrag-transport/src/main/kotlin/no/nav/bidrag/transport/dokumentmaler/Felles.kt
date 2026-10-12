@@ -166,7 +166,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
         fun tilResultatkodeVisningsnavn(): String = when {
             erOpphør -> {
                 if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
-                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true
+                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true ||
+                    beregningsdetaljer?.sluttberegning?.erResultatAvslag == true
                 ) {
                     beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
                 } else if (resultatFraVedtak?.omgjøringsvedtak == true && resultatKode != null) {
@@ -280,7 +281,12 @@ data class DokumentmalSluttberegningBarnebidragDetaljer(
     val resultatVisningsnavn: Visningsnavn?,
 ) {
     @get:JsonIgnore
-    val erResultatAvslag get() = listOf(Resultatkode.IKKE_OMSORG, Resultatkode.BARNET_ER_SELVFORSØRGET).contains(resultat)
+    val erResultatAvslag get() = listOf(
+        Resultatkode.IKKE_OMSORG,
+        Resultatkode.BARNET_ER_SELVFORSØRGET,
+        Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
+        Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
+    ).contains(resultat)
 }
 
 data class DokumentmalDelberegningBarnetilleggDto(
