@@ -598,11 +598,6 @@ class ForholdsmessigFordelingKlageService(
     }
 
     /**
-     * Korrigerer FF-klagesøknader ved synkronisering:
-     * - Gjenoppretter FF-klagesøknader hvis søknaden som erstattet dem er lukket (feks slettet uten at det ble fanget opp)
-     * - Feilregistrerer FF-klagesøknader for barn som har en åpen søknad opprettet etter hovedsøknaden
-     */
-    /**
      * Feilretting: Sørger for at behandlingen har en åpen hovedsøknad før resten av søknadene korrigeres.
      * Hvis hovedsøknaden er avbrutt (feks slettet uten at det ble fanget opp) så blir en annen søknad hovedsøknad.
      */
