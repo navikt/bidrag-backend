@@ -525,11 +525,7 @@ class ForholdsmessigFordelingKlageService(
         val rollerISystemopprettedeKlagesøknader = behandling.søknadsbarn.flatMap { barn ->
             barn.forholdsmessigFordeling
                 ?.søknaderUnderBehandling
-                ?.filter {
-                    it.behandlingstype?.erForholdsmessigFordeling == false && it.opprettetAvSystem &&
-                        !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) &&
-                        it.søknadsid != null && it.søknadsid != hovedsøknadsid && it.søknadsid != opprettetSøknad?.søknadsid
-                }?.map { barn to it.søknadsid!! }
+                ?.filter { it.opprettetAvSystem && it.søknadsid != hovedsøknadsid }?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }.distinct()
         val rollerISaksbehandlersSøknader = rollerIAlleKlagesøknader.filter {
@@ -540,7 +536,7 @@ class ForholdsmessigFordelingKlageService(
             BarnMedErstattetSøknad(barn, erstattetSøknadsid = søknadsid)
         }
 
-        return barnIFFSøknader + barnISystemopprettedeKlagesøknader
+        return (barnIFFSøknader + barnISystemopprettedeKlagesøknader).distinct()
     }
 
     private fun OpprettetSøknad.gjelder(barn: Rolle) = kravhaverIdent == barn.ident && stønadstype == barn.stønadstype
@@ -864,7 +860,7 @@ class ForholdsmessigFordelingKlageService(
                         behandlerenhet = originalSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                         hovedsøknadsid = hovedsøknadsid,
                         // Søknader opprettet av systemet skal alltid være søkt av Nav
-                        søktAv = SøktAvType.NAV_BIDRAG,
+                        søktAv = SøktAvType.AUTOMATISK,
                         søknadMottattDato = mottattDato ?: behandling.mottattdato,
                         behandlingstema = originalSøknad.behandlingstema,
                         søknadFomDato = originalSøknad.søknadFomDato!!,
@@ -878,7 +874,7 @@ class ForholdsmessigFordelingKlageService(
                 mottattDato = behandling.mottattdato,
                 søknadFomDato = originalSøknad.søknadFomDato,
                 // Gjenbrukt søknad beholder egne verdier slik at f.eks. søknad opprettet av saksbehandler ikke blir lagret som FF-søknad
-                søktAvType = åpenFFSøknad?.søktAvType ?: SøktAvType.NAV_BIDRAG,
+                søktAvType = åpenFFSøknad?.søktAvType ?: SøktAvType.AUTOMATISK,
                 behandlingstype = åpenFFSøknad?.behandlingstype ?: behandlingstype,
                 behandlingstema = originalSøknad.behandlingstema,
                 innkreving = originalSøknad.innkreving,
@@ -888,7 +884,6 @@ class ForholdsmessigFordelingKlageService(
                 omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
                 status = Behandlingstatus.UNDER_BEHANDLING,
                 opprettetAvSaksbehandler = behandling.erSøknadOpprettetAvSaksbehandler(nySøknadId),
-                opprettetAvSystem = åpenFFSøknad == null,
             )
         behandling.søknadsbarn
             .filter {

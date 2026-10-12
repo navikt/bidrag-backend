@@ -87,7 +87,7 @@ class ForholdsmessigFordelingSøknadService(
                 søknadsid = 0, // Settes senere når søknad opprettes
                 mottattDato = LocalDate.now(),
                 søknadFomDato = søktFomDato,
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstema = stønadstype?.tilBehandlingstema() ?: behandling.behandlingstema,
                 behandlingstype = behandling.behandlingstypeForFF,
                 enhet = behandlerEnhet,
@@ -352,7 +352,7 @@ class ForholdsmessigFordelingSøknadService(
                 enhet = behandlerEnhet,
                 saksnummer = saksnummer,
                 status = Behandlingstatus.UNDER_BEHANDLING,
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
             )
 
         if (opprettForsendelse) {
@@ -411,7 +411,7 @@ class ForholdsmessigFordelingSøknadService(
                 )
             }
             return åpenFFSøknad.tilForholdsmessigFordelingSøknad().copy(
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstype = behandling.behandlingstypeForFF,
                 behandlingstema = behandlingstema,
                 saksnummer = saksnummer,
@@ -434,7 +434,7 @@ class ForholdsmessigFordelingSøknadService(
                 )
 
             return ForholdsmessigFordelingSøknadBarn(
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstype = behandling.behandlingstypeForFF,
                 behandlingstema = behandlingstema,
                 mottattDato = LocalDate.now(),
