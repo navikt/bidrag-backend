@@ -87,7 +87,11 @@ data class EndeligBidragBeregningAldersjusteringGrunnlag(
 
 data class BidragsevneDelberegningBeregningGrunnlag(val referanse: String, val beløp: BigDecimal, val sumInntekt25Prosent: BigDecimal)
 
-data class UnderholdskostnadDelberegningBeregningGrunnlag(val referanse: String, val beløp: BigDecimal)
+data class UnderholdskostnadDelberegningBeregningGrunnlag(
+    val referanse: String,
+    val beløp: BigDecimal,
+    val forpleining: BigDecimal? = null,
+)
 
 data class BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
     val referanse: String,
@@ -438,6 +442,7 @@ data class SluttberegningBarnebidragV2PeriodeGrunnlag(
     val bpAndelUnderholdskostnadDelberegningPeriodeGrunnlagListe: List<BpAndelUnderholdskostnadDelberegningPeriodeGrunnlag>,
     val bostatusPeriodeGrunnlagListe: List<BostatusPeriodeGrunnlag>,
     val bidragspliktigesAndelDeltBostedDelberegningPeriodeGrunnlagListe: List<BidragspliktigesAndelDeltBostedDelberegningPeriodeGrunnlag>,
+    val underholdskostnadDelberegningPeriodeGrunnlagListe: List<UnderholdskostnadDelberegningPeriodeGrunnlag> = emptyList(),
 )
 
 data class SluttberegningBarnebidragV2PeriodeResultat(val periode: ÅrMånedsperiode, val resultat: SluttberegningBarnebidragV2BeregningResultat)
@@ -448,6 +453,7 @@ data class SluttberegningBarnebidragV2BeregningGrunnlag(
     val bpAndelUnderholdskostnadBeregningGrunnlag: BpAndelUnderholdskostnadDelberegningBeregningGrunnlag,
     val søknadsbarnetBorHosBpGrunnlag: SøknadsbarnetBorHosBpGrunnlag,
     val bidragspliktigesAndelDeltBostedBeregningGrunnlag: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?,
+    val underholdskostnadBeregningGrunnlag: UnderholdskostnadDelberegningBeregningGrunnlag? = null,
 )
 
 data class SluttberegningBarnebidragV2BeregningResultat(
@@ -456,6 +462,7 @@ data class SluttberegningBarnebidragV2BeregningResultat(
     val barnetErSelvforsørget: Boolean = false,
     val ikkeOmsorgForBarnet: Boolean = false,
     val bidragIkkeBeregnetDeltBosted: Boolean = false,
+    val forpleiningDekkerUnderholdskostnaden: Boolean = false,
     val grunnlagsreferanseListe: List<String> = emptyList(),
 )
 

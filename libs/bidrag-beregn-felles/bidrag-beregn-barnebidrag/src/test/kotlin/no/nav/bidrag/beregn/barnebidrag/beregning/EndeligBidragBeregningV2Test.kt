@@ -183,6 +183,64 @@ class EndeligBidragBeregningV2Test {
             resultat.resultatBeløp?.compareTo(BigDecimal(800)) shouldBe 0
         }
     }
+
+    @Nested
+    inner class Forpleining {
+
+        @Test
+        fun `skal gi avslag når forpleiningen er lik eller høyere enn U`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal.ZERO,
+                    bpAndel = BigDecimal.ZERO,
+                    nettoBarnetilleggBM = null,
+                    forpleining = BigDecimal(9000),
+                ),
+            )
+
+            resultat.erAvslag shouldBe true
+        }
+
+        @Test
+        fun `skal ikke gi avslag når forpleiningen er lavere enn U`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal(1000),
+                    bpAndel = BigDecimal(600),
+                    nettoBarnetilleggBM = null,
+                    forpleining = BigDecimal(8000),
+                ),
+            )
+
+            resultat.erAvslag shouldBe false
+        }
+
+        @Test
+        fun `skal ikke gi avslag når U er 0 uten forpleining`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(underholdskostnad = BigDecimal.ZERO, bpAndel = BigDecimal.ZERO, nettoBarnetilleggBM = null),
+            )
+
+            resultat.erAvslag shouldBe false
+        }
+
+        @Test
+        fun `sluttberegning skal gi avslag uten beløp når forpleiningen dekker U`() {
+            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
+                sluttberegningGrunnlag(
+                    underholdskostnad = UnderholdskostnadDelberegningBeregningGrunnlag(
+                        referanse = "underholdskostnad",
+                        beløp = BigDecimal.ZERO,
+                        forpleining = BigDecimal(9000),
+                    ),
+                ),
+            )
+
+            resultat.forpleiningDekkerUnderholdskostnaden shouldBe true
+            resultat.beregnetBeløp shouldBe null
+            resultat.resultatBeløp shouldBe null
+        }
+    }
 }
 
 private fun andelDeltBosted(faktor: BigDecimal, beløp: BigDecimal) = BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
@@ -191,7 +249,10 @@ private fun andelDeltBosted(faktor: BigDecimal, beløp: BigDecimal) = Bidragspli
     bpAndelAvUVedDeltBostedBeløp = beløp,
 )
 
-private fun sluttberegningGrunnlag(andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?) = SluttberegningBarnebidragV2BeregningGrunnlag(
+private fun sluttberegningGrunnlag(
+    andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
+    underholdskostnad: UnderholdskostnadDelberegningBeregningGrunnlag? = null,
+) = SluttberegningBarnebidragV2BeregningGrunnlag(
     bidragJustertForBPBarnetilleggBeregningGrunnlag = BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag(
         referanse = "bidragJustertForBPBarnetillegg",
         bidragJustertForNettoBarnetilleggBP = andelDeltBosted?.bpAndelAvUVedDeltBostedBeløp ?: BigDecimal.ZERO,
@@ -205,6 +266,7 @@ private fun sluttberegningGrunnlag(andelDeltBosted: BidragspliktigesAndelDeltBos
     ),
     søknadsbarnetBorHosBpGrunnlag = SøknadsbarnetBorHosBpGrunnlag(referanse = "søknadsbarnetBorHosBp", søknadsbarnetBorHosBp = false),
     bidragspliktigesAndelDeltBostedBeregningGrunnlag = andelDeltBosted,
+    underholdskostnadBeregningGrunnlag = underholdskostnad,
 )
 
 private fun andelAvBidragsevneGrunnlag(bidragTilFordeling: BigDecimal?, sumBidragTilFordeling: BigDecimal, evne: BigDecimal) = AndelAvBidragsevneBeregningGrunnlag(
@@ -227,8 +289,13 @@ private fun bidragTilFordelingGrunnlag(
     bpAndel: BigDecimal,
     nettoBarnetilleggBM: BigDecimal?,
     andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
+    forpleining: BigDecimal? = null,
 ) = BidragTilFordelingBeregningGrunnlag(
-    underholdskostnadBeregningGrunnlag = UnderholdskostnadDelberegningBeregningGrunnlag(referanse = "underholdskostnad", beløp = underholdskostnad),
+    underholdskostnadBeregningGrunnlag = UnderholdskostnadDelberegningBeregningGrunnlag(
+        referanse = "underholdskostnad",
+        beløp = underholdskostnad,
+        forpleining = forpleining,
+    ),
     bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
         referanse = "bpAndelUnderholdskostnad",
         andelBeløp = bpAndel,

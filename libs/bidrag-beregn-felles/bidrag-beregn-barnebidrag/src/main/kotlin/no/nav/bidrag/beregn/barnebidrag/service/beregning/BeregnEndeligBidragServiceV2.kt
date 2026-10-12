@@ -991,6 +991,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 UnderholdskostnadDelberegningBeregningGrunnlag(
                     referanse = it.referanse,
                     beløp = it.underholdskostnadPeriode.underholdskostnad,
+                    forpleining = it.underholdskostnadPeriode.forpleining,
                 )
             }
             ?: throw IllegalArgumentException("Underholdskostnad grunnlag mangler for periode $bruddPeriode")
@@ -1086,6 +1087,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 UnderholdskostnadDelberegningBeregningGrunnlag(
                     referanse = it.referanse,
                     beløp = it.underholdskostnadPeriode.underholdskostnad,
+                    forpleining = it.underholdskostnadPeriode.forpleining,
                 )
             }
             ?: throw IllegalArgumentException("Underholdskostnad grunnlag mangler for periode $bruddPeriode")
@@ -1729,6 +1731,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 grunnlagListe.bidragspliktigesAndelDeltBostedDelberegningPeriodeGrunnlagListe.asSequence()
                     .map { it.bidragspliktigesAndelDeltBostedPeriode.periode },
             )
+            .plus(grunnlagListe.underholdskostnadDelberegningPeriodeGrunnlagListe.asSequence().map { it.underholdskostnadPeriode.periode })
             .plus(virkningFraPeriode?.let { sequenceOf(ÅrMånedsperiode(it, null)) } ?: emptySequence())
 
         return lagBruddPeriodeListe(periodeListe, beregningsperiode)
@@ -1785,12 +1788,24 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                     )
                 }
 
+        val underholdskostnadBeregningGrunnlag =
+            sluttberegningBarnebidragBeregnetPeriodeGrunnlag.underholdskostnadDelberegningPeriodeGrunnlagListe
+                .firstOrNull { it.underholdskostnadPeriode.periode.inneholder(bruddPeriode) }
+                ?.let {
+                    UnderholdskostnadDelberegningBeregningGrunnlag(
+                        referanse = it.referanse,
+                        beløp = it.underholdskostnadPeriode.underholdskostnad,
+                        forpleining = it.underholdskostnadPeriode.forpleining,
+                    )
+                }
+
         return SluttberegningBarnebidragV2BeregningGrunnlag(
             bidragJustertForBPBarnetilleggBeregningGrunnlag = bidragJustertForBPBarnetilleggBeregningGrunnlag,
             samværsfradragBeregningGrunnlag = samværsfradragBeregningGrunnlag,
             bpAndelUnderholdskostnadBeregningGrunnlag = bpAndelUnderholdskostnadBeregningGrunnlag,
             søknadsbarnetBorHosBpGrunnlag = søknadsbarnetBorHosBpGrunnlag,
             bidragspliktigesAndelDeltBostedBeregningGrunnlag = bidragspliktigesAndelDeltBostedBeregningGrunnlag,
+            underholdskostnadBeregningGrunnlag = underholdskostnadBeregningGrunnlag,
         )
     }
 
@@ -1815,6 +1830,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                         barnetErSelvforsørget = it.resultat.barnetErSelvforsørget,
                         ikkeOmsorgForBarnet = it.resultat.ikkeOmsorgForBarnet,
                         bidragIkkeBeregnetDeltBosted = it.resultat.bidragIkkeBeregnetDeltBosted,
+                        forpleiningDekkerUnderholdskostnaden = it.resultat.forpleiningDekkerUnderholdskostnaden,
                     ),
                 ),
                 grunnlagsreferanseListe = it.resultat.grunnlagsreferanseListe.sorted(),

@@ -38,6 +38,34 @@ class BeregnFatteVedtakServiceTest {
     }
 
     @Test
+    fun `skal ikke fatte vedtak for revurderingsbarn når søknadsbarnet er selvforsørget i siste periode`() {
+        val resultat = fatteVedtakForRevurderingsbarn(
+            sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
+                periode = periode,
+                beregnetBeløp = null,
+                resultatBeløp = null,
+                barnetErSelvforsørget = true,
+            ),
+        )
+
+        resultat.skalFatteVedtak shouldBe false
+    }
+
+    @Test
+    fun `skal ikke fatte vedtak for revurderingsbarn når forpleiningen dekker U for søknadsbarnet i siste periode`() {
+        val resultat = fatteVedtakForRevurderingsbarn(
+            sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
+                periode = periode,
+                beregnetBeløp = null,
+                resultatBeløp = null,
+                forpleiningDekkerUnderholdskostnaden = true,
+            ),
+        )
+
+        resultat.skalFatteVedtak shouldBe false
+    }
+
+    @Test
     fun `skal fatte vedtak for revurderingsbarn når søknadsbarnet har bidrag og BP mangler evne i siste periode`() {
         val resultat = fatteVedtakForRevurderingsbarn(
             sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
