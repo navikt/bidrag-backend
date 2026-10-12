@@ -45,7 +45,6 @@ import no.nav.bidrag.behandling.transformers.underhold.justerePerioderForBearbei
 import no.nav.bidrag.behandling.transformers.underhold.tilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.underhold.validerBarn
 import no.nav.bidrag.behandling.transformers.underhold.validere
-import no.nav.bidrag.behandling.transformers.underhold.validereMotUnderholdskostnad
 import no.nav.bidrag.behandling.transformers.underhold.validerePerioderStønadTilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrunnlagMapper
@@ -80,8 +79,6 @@ class UnderholdService(
     private val personRepository: PersonRepository,
     private val notatService: NotatService,
     private val personService: PersonService,
-    private val vedtakGrunnlagMapper: VedtakGrunnlagMapper,
-    private val beregnBarnebidragApi: BeregnBarnebidragApi,
 ) {
     @Transactional
     fun oppdatereBegrunnelse(
@@ -468,7 +465,6 @@ class UnderholdService(
         request: OppdatereForpleiningRequest,
     ) {
         request.validere(underholdskostnad)
-        request.validereMotUnderholdskostnad(underholdskostnad.beregneUnderholdskostnad())
 
         request.id?.let { id ->
             val forpleining = underholdskostnad.forpleining.find { id == it.id }!!
@@ -487,28 +483,6 @@ class UnderholdService(
             )
             underholdskostnad.harTilsynsordning = true
         }
-    }
-
-    private fun Underholdskostnad.beregneUnderholdskostnad(): Set<UnderholdskostnadDto> {
-        val søknadsbarn = rolle ?: return emptySet()
-        val beregning =
-            if (behandling.grunnlagslisteFraVedtak.isNullOrEmpty()) {
-                val grunnlag =
-                    vedtakGrunnlagMapper
-                        .byggGrunnlagForBeregning(behandling, søknadsbarn)
-                        .beregnGrunnlag
-                        .copy(opphørsdato = søknadsbarn.opphørsdatoYearMonth)
-                beregnBarnebidragApi.beregnNettoTilsynsutgiftOgUnderholdskostnad(grunnlag) +
-                    grunnlag.grunnlagListe.hentAllePersoner()
-            } else {
-                behandling.grunnlagslisteFraVedtak!!
-            } as List<GrunnlagDto>
-
-        val personobjekt =
-            beregning.hentPersonNyesteIdent(søknadsbarn.ident, søknadsbarn.stønadstype) ?: søknadsbarn.tilGrunnlagPerson()
-        return beregning
-            .finnAlleDelberegningUnderholdskostnad(personobjekt)
-            .tilUnderholdskostnadDto(beregning, behandling.erBisysVedtak)
     }
 
     @Transactional
