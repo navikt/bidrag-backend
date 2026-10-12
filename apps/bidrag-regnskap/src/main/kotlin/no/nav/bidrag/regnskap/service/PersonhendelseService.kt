@@ -24,60 +24,84 @@ class PersonhendelseService(
                 secureLogger.warn { "Mangler identifikasjonsnummer i endring fra personhendelse. Endring: $endring" }
                 return@forEach
             }
-            val nyeIdent = bidragPersonConsumer.hentPerson(Ident(identifikasjonsnummer))?.person?.ident?.verdi
-
-            if (nyeIdent == null) {
+            val person = bidragPersonConsumer.hentPerson(Ident(identifikasjonsnummer))
+            if (person == null) {
                 secureLogger.warn { "Person med ident $identifikasjonsnummer ble ikke funnet i bidrag-person" }
                 return@forEach
             }
+            val nyeIdent = person.person.ident.verdi
 
-            endringsmelding.personidenter.forEach {
-                oppdaterMottaker(it, nyeIdent)
-                oppdaterKravhaver(it, nyeIdent)
-                oppdaterSkyldner(it, nyeIdent)
-                oppdaterGjelder(it, nyeIdent)
+            val tidligereIdenter = person.tidligereIdenter.orEmpty()
+                .map { it.verdi }
+                .filter { it != nyeIdent && it !in endringsmelding.personidenter }
+                .distinct()
+
+            var fantMottaker = false
+            var fantKravhaver = false
+            var fantSkyldner = false
+            var fantGjelder = false
+            endringsmelding.personidenter.forEach { ident ->
+                if (oppdaterMottaker(ident, nyeIdent)) fantMottaker = true
+                if (oppdaterKravhaver(ident, nyeIdent)) fantKravhaver = true
+                if (oppdaterSkyldner(ident, nyeIdent)) fantSkyldner = true
+                if (oppdaterGjelder(ident, nyeIdent)) fantGjelder = true
+            }
+
+            tidligereIdenter.forEach { ident ->
+                if (!fantMottaker) oppdaterMottaker(ident, nyeIdent)
+                if (!fantKravhaver) oppdaterKravhaver(ident, nyeIdent)
+                if (!fantSkyldner) oppdaterSkyldner(ident, nyeIdent)
+                if (!fantGjelder) oppdaterGjelder(ident, nyeIdent)
             }
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun oppdaterGjelder(gamleIdent: String, nyeIdent: String) {
-        persistenceService.hentAlleGjelderMedIdent(gamleIdent)
+    fun oppdaterGjelder(gamleIdent: String, nyeIdent: String): Boolean {
+        val gjeldere = persistenceService.hentAlleGjelderMedIdent(gamleIdent)
+        gjeldere
             .filter { gjelder -> gjelder.gjelderIdent != nyeIdent }
             .forEach { gjelder ->
                 gjelder.gjelderIdent = nyeIdent
                 logIdentendring(gamleIdent, nyeIdent, gjelder, "gjelder")
             }
+        return gjeldere.isNotEmpty()
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun oppdaterSkyldner(gamleIdent: String, nyeIdent: String) {
-        persistenceService.hentAlleSkyldnereMedIdent(gamleIdent)
+    fun oppdaterSkyldner(gamleIdent: String, nyeIdent: String): Boolean {
+        val skyldnere = persistenceService.hentAlleSkyldnereMedIdent(gamleIdent)
+        skyldnere
             .filter { skyldner -> skyldner.skyldnerIdent != nyeIdent }
             .forEach { skyldner ->
                 skyldner.skyldnerIdent = nyeIdent
                 logIdentendring(gamleIdent, nyeIdent, skyldner, "skyldner")
             }
+        return skyldnere.isNotEmpty()
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun oppdaterKravhaver(gamleIdent: String, nyeIdent: String) {
-        persistenceService.hentAlleKravhavereMedIdent(gamleIdent)
+    fun oppdaterKravhaver(gamleIdent: String, nyeIdent: String): Boolean {
+        val kravhavere = persistenceService.hentAlleKravhavereMedIdent(gamleIdent)
+        kravhavere
             .filter { kravhaver -> kravhaver.kravhaverIdent != nyeIdent }
             .forEach { kravhaver ->
                 kravhaver.kravhaverIdent = nyeIdent
                 logIdentendring(gamleIdent, nyeIdent, kravhaver, "kravhaver")
             }
+        return kravhavere.isNotEmpty()
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun oppdaterMottaker(gamleIdent: String, nyeIdent: String) {
-        persistenceService.hentAlleMottakereMedIdent(gamleIdent)
+    fun oppdaterMottaker(gamleIdent: String, nyeIdent: String): Boolean {
+        val mottakere = persistenceService.hentAlleMottakereMedIdent(gamleIdent)
+        mottakere
             .filter { mottaker -> mottaker.mottakerIdent != nyeIdent }
             .forEach { mottaker ->
                 mottaker.mottakerIdent = nyeIdent
                 logIdentendring(gamleIdent, nyeIdent, mottaker, "mottaker")
             }
+        return mottakere.isNotEmpty()
     }
 
     fun logIdentendring(
