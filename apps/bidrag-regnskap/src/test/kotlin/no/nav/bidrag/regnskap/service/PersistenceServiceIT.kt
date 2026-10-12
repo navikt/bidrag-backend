@@ -4,12 +4,26 @@ import io.kotest.inspectors.forOne
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.regnskap.BidragRegnskapLocal
+import no.nav.bidrag.regnskap.UnleashFeatures
+import no.nav.bidrag.regnskap.consumer.BidragReskontroConsumer
+import no.nav.bidrag.regnskap.persistence.entity.EndreMottaker
 import no.nav.bidrag.regnskap.utils.TestData
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.assertThrows
+import org.mockito.Mockito
+import org.mockito.stubbing.Answer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.Pageable
@@ -17,10 +31,18 @@ import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.ResourceAccessException
 import org.testcontainers.postgresql.PostgreSQLContainer
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.Collections
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Transactional
 @DirtiesContext
@@ -50,6 +72,15 @@ internal class PersistenceServiceIT {
     @Autowired
     private lateinit var persistenceService: PersistenceService
 
+    @Autowired
+    private lateinit var endreMottakerService: EndreMottakerService
+
+    @MockitoBean
+    private lateinit var bidragReskontroConsumer: BidragReskontroConsumer
+
+    @MockitoBean
+    private lateinit var kravService: KravService
+
     private lateinit var oppdragTestData: no.nav.bidrag.regnskap.persistence.entity.Oppdrag
 
     @BeforeAll
@@ -59,6 +90,17 @@ internal class PersistenceServiceIT {
         val konteringer = TestData.opprettKontering(oppdragsperiode = oppdragsperiode)
         oppdragsperiode.konteringer = listOf(konteringer)
         oppdragTestData.oppdragsperioder = listOf(oppdragsperiode)
+    }
+
+    @BeforeEach
+    fun enableEndreMottakerFeature() {
+        mockkObject(UnleashFeaturesProvider)
+        every { UnleashFeaturesProvider.isEnabled(UnleashFeatures.ENDRE_MOTTAKER.featureName, false, false) } returns true
+    }
+
+    @AfterEach
+    fun resetEndreMottakerFeature() {
+        unmockkObject(UnleashFeaturesProvider)
     }
 
     @Test
@@ -119,6 +161,21 @@ internal class PersistenceServiceIT {
     fun `skal returne null ved ingen treff på referanse og vedtakId`() {
         val oppdrag = persistenceService.hentOppdragPåReferanseOgOmgjørVedtakId("ReferanseSomIkkeFinnes", 123)
         oppdrag shouldBe null
+    }
+
+    @Test
+    fun `skal feile ved flere perioder med samme referanse og vedtakId`() {
+        val referanse = "TvetydigReferanse"
+        repeat(2) {
+            val oppdrag = TestData.opprettOppdrag(oppdragsperioder = emptyList())
+            val periode = TestData.opprettOppdragsperiode(oppdrag = oppdrag, referanse = referanse, vedtakId = 987654)
+            oppdrag.oppdragsperioder = listOf(periode)
+            persistenceService.lagreOppdrag(oppdrag)
+        }
+
+        assertThrows<IllegalStateException> {
+            persistenceService.hentOppdragPåReferanseOgOmgjørVedtakId(referanse, 987654)
+        }
     }
 
     @Test
@@ -207,5 +264,159 @@ internal class PersistenceServiceIT {
         val driftsavvikForPåløp = persistenceService.hentDriftsavvikForPåløp(påløpId)
 
         driftsavvikForPåløp shouldNotBe null
+    }
+
+    @Test
+    fun `skal hente eldste ikke-godkjente mottakerendring per sak og barn`() {
+        val tidspunkt = LocalDateTime.of(2024, 1, 1, 12, 0)
+        var vedtakId = 1
+        fun lagre(sak: String, opprettet: LocalDateTime, barn: String = "11111111111") = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = vedtakId++,
+                saksnummer = sak,
+                barnIdent = barn,
+                nyMottakerIdent = "22222222222",
+                opprettetTidspunkt = opprettet,
+            ),
+        )
+
+        val eldste = lagre("sak-a", tidspunkt)
+        val nesteMedSammeTidspunkt = lagre("sak-a", tidspunkt)
+        val nyeste = lagre("sak-a", tidspunkt.plusSeconds(1))
+        val annetBarn = lagre("sak-a", tidspunkt.plusSeconds(1), "33333333333")
+        val annenSak = lagre("sak-b", tidspunkt)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn().map { it.id } shouldBe listOf(eldste.id, annetBarn.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annetBarn) shouldBe false
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(annenSak) shouldBe false
+
+        eldste.godkjentAvSkattTidspunkt = tidspunkt.plusMinutes(1)
+        persistenceService.lagreEndreMottaker(eldste)
+
+        persistenceService.hentEldsteIkkeGodkjenteEndreMottakerPerSakOgBarn().map { it.id } shouldBe listOf(nesteMedSammeTidspunkt.id, annetBarn.id, annenSak.id)
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nesteMedSammeTidspunkt) shouldBe false
+        persistenceService.finnesEldreIkkeGodkjentEndreMottaker(nyeste) shouldBe true
+    }
+
+    @Test
+    fun `skal opprette mottakerendring kun en gang per vedtak og barn`() {
+        val endring = EndreMottaker(
+            vedtakId = 987654,
+            saksnummer = "sak-for-duplikat",
+            barnIdent = "11111111111",
+            nyMottakerIdent = "22222222222",
+        )
+
+        val opprettet = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)!!
+        val duplikat = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)
+        opprettet.godkjentAvSkattTidspunkt = LocalDateTime.now()
+        persistenceService.lagreEndreMottaker(opprettet)
+        val duplikatEtterGodkjenning = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring)
+        val annetVedtak = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring.copy(vedtakId = 987655))
+        val annetBarn = persistenceService.opprettEndreMottakerHvisIkkeFinnes(endring.copy(barnIdent = "33333333333"))
+
+        opprettet.id shouldNotBe null
+        duplikat shouldBe null
+        duplikatEtterGodkjenning shouldBe null
+        annetVedtak?.id shouldNotBe null
+        annetBarn?.id shouldNotBe null
+        persistenceService.endreMottakerRepository.findByVedtakIdAndBarnIdent(987654, "11111111111")?.id shouldBe opprettet.id
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `skal lagre nettverksfeil slik at mottakerendringen kan resendes`() {
+        val endring = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = 987656,
+                saksnummer = "sak-for-nettverksfeil",
+                barnIdent = "11111111111",
+                nyMottakerIdent = "22222222222",
+            ),
+        )
+        val endringId = endring.id!!
+        Mockito.doThrow(ResourceAccessException("Connection refused"))
+            .`when`(bidragReskontroConsumer)
+            .endreRmForSak(
+                Saksnummer(endring.saksnummer),
+                Personident(endring.barnIdent),
+                Personident(endring.nyMottakerIdent),
+            )
+        Mockito.`when`(kravService.erVedlikeholdsmodusPåslått()).thenReturn(false)
+
+        endreMottakerService.overførEndreMottaker(endringId)
+
+        val lagretEndring = persistenceService.hentEndreMottaker(endringId)
+        lagretEndring?.godkjentAvSkattTidspunkt shouldBe null
+        lagretEndring?.overførtTilSkattTidspunkt shouldNotBe null
+        lagretEndring?.feilmeldingFraSkatt shouldBe "Uventet feil ved kall til skatt"
+        endreMottakerService.hentFeiledeOverføringer().map { it.id } shouldBe listOf(endringId)
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    fun `skal serialisere overføring per sak og barn på tvers av samtidige kall`() {
+        var vedtakId = 987657
+        fun lagre(barn: String, mottaker: String) = persistenceService.lagreEndreMottaker(
+            EndreMottaker(
+                vedtakId = vedtakId++,
+                saksnummer = "sak-for-serialisering",
+                barnIdent = barn,
+                nyMottakerIdent = mottaker,
+            ),
+        )
+
+        val eldste = lagre("11111111111", "22222222222")
+        val nyere = lagre("11111111111", "33333333333")
+        val annetBarn = lagre("44444444444", "55555555555")
+        val eldsteKallStartet = CountDownLatch(1)
+        val fullførEldsteKall = CountDownLatch(1)
+        val overførte = Collections.synchronizedList(mutableListOf<String>())
+        Mockito.`when`(kravService.erVedlikeholdsmodusPåslått()).thenReturn(false)
+        val svar = Answer<Any?> { invocation ->
+            val mottaker = invocation.getArgument<Personident>(2).verdi
+            overførte.add(mottaker)
+            if (mottaker == eldste.nyMottakerIdent) {
+                eldsteKallStartet.countDown()
+                check(fullførEldsteKall.await(10, TimeUnit.SECONDS))
+            }
+            null
+        }
+        listOf(eldste, nyere, annetBarn).forEach {
+            Mockito.doAnswer(svar).`when`(bidragReskontroConsumer).endreRmForSak(
+                Saksnummer(it.saksnummer),
+                Personident(it.barnIdent),
+                Personident(it.nyMottakerIdent),
+            )
+        }
+
+        val executor = Executors.newFixedThreadPool(4)
+        try {
+            val første = executor.submit { endreMottakerService.overførEndreMottaker(eldste.id!!) }
+            check(eldsteKallStartet.await(10, TimeUnit.SECONDS))
+            val duplikat = executor.submit { endreMottakerService.overførEndreMottaker(eldste.id!!) }
+            val neste = executor.submit { endreMottakerService.overførEndreMottaker(nyere.id!!) }
+            val uavhengig = executor.submit { endreMottakerService.overførEndreMottaker(annetBarn.id!!) }
+
+            uavhengig.get(5, TimeUnit.SECONDS)
+            assertThrows<TimeoutException> { neste.get(200, TimeUnit.MILLISECONDS) }
+            assertThrows<TimeoutException> { duplikat.get(200, TimeUnit.MILLISECONDS) }
+
+            fullførEldsteKall.countDown()
+            første.get(10, TimeUnit.SECONDS)
+            duplikat.get(10, TimeUnit.SECONDS)
+            neste.get(10, TimeUnit.SECONDS)
+
+            overførte.filter { it == eldste.nyMottakerIdent || it == nyere.nyMottakerIdent } shouldBe
+                listOf(eldste.nyMottakerIdent, nyere.nyMottakerIdent)
+            listOf(eldste, nyere, annetBarn).forEach {
+                persistenceService.hentEndreMottaker(it.id!!)?.godkjentAvSkattTidspunkt shouldNotBe null
+            }
+        } finally {
+            fullførEldsteKall.countDown()
+            executor.shutdownNow()
+        }
     }
 }

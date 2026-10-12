@@ -10,6 +10,7 @@ import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
@@ -32,6 +33,9 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
 class ForholdsmessigFordelingServiceSynkroniseringTest {
+    @MockK
+    lateinit var vedtakConsumer: BidragVedtakConsumer
+
     @MockK
     lateinit var sakConsumer: BidragSakConsumer
 
@@ -78,6 +82,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
                 beløpshistorikkConsumer,
                 grunnlagService,
                 bbmConsumer,
+                vedtakConsumer,
+
                 forsendelseService,
                 beregningService,
                 virkningstidspunktService,

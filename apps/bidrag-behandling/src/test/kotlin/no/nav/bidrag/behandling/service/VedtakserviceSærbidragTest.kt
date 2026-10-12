@@ -1104,7 +1104,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             request.stønadsendringListe.shouldBeEmpty()
             request.engangsbeløpListe shouldHaveSize 1
             withClue("Grunnlagliste skal inneholde 7 grunnlag") {
-                request.grunnlagListe shouldHaveSize 7
+                request.grunnlagListe shouldHaveSize 9
             }
         }
 
@@ -1121,7 +1121,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             it.resultatkode shouldBe Resultatkode.IKKE_NØDVENDIGE_UTGIFTER.name
             it.innkreving shouldBe Innkrevingstype.MED_INNKREVING
             it.beslutning shouldBe Beslutningstype.ENDRING
-            it.grunnlagReferanseListe shouldHaveSize 4
+            it.grunnlagReferanseListe shouldHaveSize 6
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
                 it.grunnlagReferanseListe,
@@ -1136,7 +1136,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
                 Grunnlagstype.NOTAT,
                 it.grunnlagReferanseListe,
             ) shouldHaveSize
-                1
+                3
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SØKNAD,
                 it.grunnlagReferanseListe,
@@ -1158,7 +1158,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             }
 
             assertSoftly(hentGrunnlagstyper(Grunnlagstype.NOTAT)) {
-                shouldHaveSize(1)
+                shouldHaveSize(3)
                 val innholdListe = innholdTilObjekt<NotatGrunnlag>()
                 innholdListe.find { it.type == NotatType.UTGIFTER }!!.innhold shouldBe
                     henteNotatinnhold(behandling, NotatType.UTGIFTER)
@@ -1285,7 +1285,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             request.stønadsendringListe.shouldBeEmpty()
             request.engangsbeløpListe shouldHaveSize 1
             withClue("Grunnlagliste skal inneholde 9 grunnlag") {
-                request.grunnlagListe shouldHaveSize 9
+                request.grunnlagListe shouldHaveSize 11
             }
         }
 
@@ -1302,7 +1302,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             it.resultatkode shouldBe Resultatkode.ALLE_UTGIFTER_ER_FORELDET.name
             it.innkreving shouldBe Innkrevingstype.MED_INNKREVING
             it.beslutning shouldBe Beslutningstype.ENDRING
-            it.grunnlagReferanseListe shouldHaveSize 6
+            it.grunnlagReferanseListe shouldHaveSize 8
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
                 it.grunnlagReferanseListe,
@@ -1317,7 +1317,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
                 Grunnlagstype.NOTAT,
                 it.grunnlagReferanseListe,
             ) shouldHaveSize
-                1
+                3
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SØKNAD,
                 it.grunnlagReferanseListe,
@@ -1339,7 +1339,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             }
 
             assertSoftly(hentGrunnlagstyper(Grunnlagstype.NOTAT)) {
-                shouldHaveSize(1)
+                shouldHaveSize(3)
                 val innholdListe = innholdTilObjekt<NotatGrunnlag>()
                 innholdListe.find { it.type == NotatType.UTGIFTER }!!.innhold shouldBe
                     henteNotatinnhold(behandling, NotatType.UTGIFTER)
@@ -1471,7 +1471,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             request.stønadsendringListe.shouldBeEmpty()
             request.engangsbeløpListe shouldHaveSize 1
             withClue("Grunnlagliste skal inneholde ${request.grunnlagListe.size} grunnlag") {
-                request.grunnlagListe shouldHaveSize 12
+                request.grunnlagListe shouldHaveSize 14
             }
             val sluttberegningSærbidrag = hentGrunnlagstyper(Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG)
 
@@ -1498,7 +1498,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             it.resultatkode shouldBe Resultatkode.GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS.name
             it.innkreving shouldBe Innkrevingstype.MED_INNKREVING
             it.beslutning shouldBe Beslutningstype.ENDRING
-            it.grunnlagReferanseListe shouldHaveSize 5
+            it.grunnlagReferanseListe shouldHaveSize 7
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SLUTTBEREGNING_SÆRBIDRAG,
                 it.grunnlagReferanseListe,
@@ -1513,7 +1513,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
                 Grunnlagstype.NOTAT,
                 it.grunnlagReferanseListe,
             ) shouldHaveSize
-                1
+                3
             grunnlagsliste.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(
                 Grunnlagstype.SØKNAD,
                 it.grunnlagReferanseListe,
@@ -1535,7 +1535,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
             }
 
             assertSoftly(hentGrunnlagstyper(Grunnlagstype.NOTAT)) {
-                shouldHaveSize(1)
+                shouldHaveSize(3)
                 val innholdListe = innholdTilObjekt<NotatGrunnlag>()
                 innholdListe.find { it.type == NotatType.UTGIFTER }!!.innhold shouldBe
                     henteNotatinnhold(behandling, NotatType.UTGIFTER)

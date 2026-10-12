@@ -9,6 +9,7 @@ import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.regnskap.dto.vedtak.Hendelse
 import no.nav.bidrag.regnskap.dto.vedtak.Periode
 import no.nav.bidrag.regnskap.util.PåløpException
@@ -144,17 +145,21 @@ class VedtakshendelseService(
                 utsattTilDato = vedtakHendelse.innkrevingUtsattTilDato,
                 referanse = engangsbeløp.referanse,
                 omgjørVedtakId = engangsbeløp.omgjørVedtakId,
-                periodeListe = listOf(
-                    Periode(
-                        periodeFomDato = vedtakHendelse.vedtakstidspunkt.toLocalDate().withDayOfMonth(1),
-                        periodeTilDato = vedtakHendelse.vedtakstidspunkt.toLocalDate().withDayOfMonth(1).plusMonths(1),
-                        beløp = engangsbeløp.beløp?.let { beløp ->
-                            maxOf(beløp - betaltBeløp, BigDecimal.ZERO)
-                        },
-                        valutakode = engangsbeløp.valutakode,
-                        delytelsesId = engangsbeløp.delytelseId?.let { Integer.valueOf(it) },
-                    ),
-                ),
+                periodeListe = if (vedtakHendelse.type == Vedtakstype.ENDRING_MOTTAKER) {
+                    emptyList()
+                } else {
+                    listOf(
+                        Periode(
+                            periodeFomDato = vedtakHendelse.vedtakstidspunkt.toLocalDate().withDayOfMonth(1),
+                            periodeTilDato = vedtakHendelse.vedtakstidspunkt.toLocalDate().withDayOfMonth(1).plusMonths(1),
+                            beløp = engangsbeløp.beløp?.let { beløp ->
+                                maxOf(beløp - betaltBeløp, BigDecimal.ZERO)
+                            },
+                            valutakode = engangsbeløp.valutakode,
+                            delytelsesId = engangsbeløp.delytelseId?.let { Integer.valueOf(it) },
+                        ),
+                    )
+                },
             )
             return oppdragService.lagreHendelse(hendelse, true)
         }

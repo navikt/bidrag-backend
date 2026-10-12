@@ -868,11 +868,11 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             request.type shouldBe Vedtakstype.FASTSETTELSE
 
             it.innkrevingUtsattTilDato shouldBe LocalDate.now().plusDays(3)
-            request.grunnlagListe shouldHaveSize 31
+            request.grunnlagListe shouldHaveSize 32
             hentGrunnlagstyper(Grunnlagstype.MANUELT_OVERSTYRT_GEBYR) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.SLUTTBEREGNING_GEBYR) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.SJABLON_SJABLONTALL) shouldHaveSize 2
-            hentGrunnlagstyper(Grunnlagstype.NOTAT) shouldHaveSize 1
+            hentGrunnlagstyper(Grunnlagstype.NOTAT) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.PERSON_BIDRAGSMOTTAKER) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_SØKNADSBARN) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_BIDRAGSPLIKTIG) shouldHaveSize 1
@@ -892,7 +892,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 it.skyldner shouldBe Personident(testdataBP.ident)
                 it.kravhaver shouldBe Personident(testdataBarn1.ident)
                 it.mottaker shouldBe Personident("REEL_MOTTAKER")
-                it.grunnlagReferanseListe shouldHaveSize 6
+                it.grunnlagReferanseListe shouldHaveSize 7
                 val vtGrunnlag = request.grunnlagListe.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(Grunnlagstype.VIRKNINGSTIDSPUNKT, it.grunnlagReferanseListe)
                 vtGrunnlag.size shouldBe 1
                 val virkningstidspunkt = vtGrunnlag.first().innholdTilObjekt<VirkningstidspunktGrunnlag>()

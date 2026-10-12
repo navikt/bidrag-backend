@@ -5,6 +5,7 @@ import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
@@ -41,7 +42,6 @@ import no.nav.bidrag.behandling.transformers.mapTilBeregnetBidragDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
 import no.nav.bidrag.behandling.ugyldigForespørsel
-import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
 import no.nav.bidrag.commons.util.secureLogger
@@ -56,6 +56,8 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilFordelingLøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
@@ -68,7 +70,13 @@ import no.nav.bidrag.transport.felles.toYearMonth
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.interceptor.TransactionAspectSupport
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -82,10 +90,12 @@ class ForholdsmessigFordelingService(
     private val beløpshistorikkConsumer: BidragBeløpshistorikkConsumer,
     private val grunnlagService: GrunnlagService,
     private val bbmConsumer: BidragBBMConsumer,
+    private val vedtakConsumer: BidragVedtakConsumer,
     private val forsendelseService: ForsendelseService,
     private val beregningService: BeregningService,
     private val virkningstidspunktService: VirkningstidspunktService,
     private val underholdService: UnderholdService,
+    private val transactionManager: PlatformTransactionManager? = null,
 ) {
     @Value($$"${min-antall-minutter-siden-synkroniser-forholdsmessig-fordeling:60}")
     lateinit var grenseSynkroniserFF: String
@@ -118,6 +128,7 @@ class ForholdsmessigFordelingService(
 
     private val klageService =
         ForholdsmessigFordelingKlageService(
+            vedtakConsumer = vedtakConsumer,
             bbmConsumer = bbmConsumer,
             behandlingService = behandlingService,
             grunnlagService = grunnlagService,
@@ -153,12 +164,14 @@ class ForholdsmessigFordelingService(
         request: OpprettFFRequest? = null,
         opprettetAvSaksbehandler: String? = null,
     ) {
+        bbmConsumer.startSporingAvEndringer()
         try {
             if (TokenUtils.hentBruker() != null && !UnleashFeatures.TILGANG_OPPRETTE_FF.isEnabled) {
                 LOGGER.info { "Opprettelse av forholdsmessig fordeling er deaktivert" }
                 ugyldigForespørsel("Opprettelse av forholdsmessig fordeling er deaktivert")
             }
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
             val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
             if (behandling.erKlageEllerOmgjøring) {
@@ -222,7 +235,102 @@ class ForholdsmessigFordelingService(
                     "Transaksjonen rulles tilbake. Se secureLogger for detaljer."
             }
             secureLogger.error(e) { "Det skjedde en feil ved opprettelse eller oppdatering av FF for behandling $behandlingId" }
+            rullTilbakeOpprettelseAvFF(behandlingId)
+            throw e
+        } finally {
+            bbmConsumer.stoppSporingAvEndringer()
+        }
+    }
+
+    /**
+     * Ruller tilbake databaseendringene, men lagrer at opprettelsen feilet i egen transaksjon etter tilbakerulling.
+     * Endringer gjort i BBM rulles tilbake manuelt ved å feilregistrere nye FF-søknader og tilbakestille behandlingsid.
+     */
+    private fun rullTilbakeOpprettelseAvFF(behandlingId: Long) {
+        val endringer = bbmConsumer.stoppSporingAvEndringer()
+        tilbakestillBehandlingsidISøknader(endringer.behandlingsid)
+        tilbakestillBehandlerenhetISøknader(endringer.behandlerenhet)
+        fjernSammenknytningHovedsøknad(behandlingId)
+        if (transactionManager == null || !TransactionSynchronizationManager.isSynchronizationActive()) {
             behandlingRepository.markerOpprettelseAvFFFeilet(behandlingId)
+            return
+        }
+        TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()
+        val markerFeiletINyTransaksjon =
+            TransactionTemplate(transactionManager).apply {
+                propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+            }
+        TransactionSynchronizationManager.registerSynchronization(
+            object : TransactionSynchronization {
+                override fun afterCompletion(status: Int) {
+                    markerFeiletINyTransaksjon.executeWithoutResult {
+                        behandlingRepository.markerOpprettelseAvFFFeilet(behandlingId)
+                    }
+                }
+            },
+        )
+    }
+
+    fun feilregistrerNyeFFSøknader(
+        behandlingId: Long,
+        eksisterendeFFSøknadsider: Set<Long> = emptySet(),
+    ) {
+        try {
+            if (behandlingRepository.erBehandlingSlettet(behandlingId) != true) {
+                LOGGER.info { "Behandling $behandlingId er ikke slettet. Feilregistrerer derfor ikke noen søknader" }
+                return
+            }
+            bbmConsumer
+                .hentÅpneSøknaderForBehandling(behandlingId)
+                .søknader
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .filter { it.behandlingstype.erForholdsmessigFordeling && !eksisterendeFFSøknadsider.contains(it.søknadsid) }
+                .forEach {
+                    try {
+                        LOGGER.info { "Feilregistrerer FF-søknad ${it.søknadsid} for behandlingId=$behandlingId etter feilet opprettelse av FF" }
+                        bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
+                    } catch (e: Exception) {
+                        LOGGER.error(e) { "Klarte ikke å feilregistrere FF-søknad ${it.søknadsid} for behandlingId=$behandlingId" }
+                    }
+                }
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke å hente søknader for behandlingId=$behandlingId for å feilregistrere FF-søknader" }
+        }
+    }
+    private fun fjernSammenknytningHovedsøknad(behandlingId: Long) {
+        try {
+            val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+            bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
+        } catch (e: Exception) {
+            LOGGER.error(e) { "Klarte ikke å fjerne sammenknytning for hovedsøknad for behandlingId=$behandlingId" }
+        }
+    }
+    private fun tilbakestillBehandlerenhetISøknader(forrigeBehandlerenheter: Map<Long, String?>) {
+        forrigeBehandlerenheter.forEach { (søknadsid, forrigeBehandlerenhet) ->
+            if (forrigeBehandlerenhet == null) {
+                LOGGER.warn { "Kan ikke tilbakestille behandlerenhet for søknad $søknadsid da forrige behandlerenhet er ukjent" }
+                return@forEach
+            }
+            try {
+                LOGGER.info { "Tilbakestiller behandlerenhet for søknad $søknadsid til $forrigeBehandlerenhet" }
+                bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknadsid, forrigeBehandlerenhet))
+            } catch (e: Exception) {
+                LOGGER.error(e) { "Klarte ikke å tilbakestille behandlerenhet for søknad $søknadsid" }
+            }
+        }
+    }
+
+    private fun tilbakestillBehandlingsidISøknader(endringer: List<OppdaterBehandlingsidRequest>) {
+        endringer.reversed().forEach { endring ->
+            val forrigeBehandlingsid = endring.eksisterendeBehandlingsid
+            LOGGER.info { "Tilbakestiller behandlingsid for søknad ${endring.søknadsid} fra ${endring.nyBehandlingsid} til $forrigeBehandlingsid" }
+            bbmConsumer.lagreBehandlingsid(
+                OppdaterBehandlingsidRequest(
+                    søknadsid = endring.søknadsid,
+                    eksisterendeBehandlingsid = endring.nyBehandlingsid,
+                    nyBehandlingsid = forrigeBehandlingsid,
+                ),
+            )
         }
     }
 
@@ -522,6 +630,7 @@ class ForholdsmessigFordelingService(
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
+            klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
             behandling.oppdaterFFSistSynkronisert()
@@ -850,6 +959,9 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         søknadsidSomSlettes: Long,
     ) = klageService.slettEllerGjennopprettKlageSøknader(behandling, søknadsidSomSlettes)
+
+    @Transactional(readOnly = true)
+    fun kanEndreSøknadStatus(søknadsid: Long): Boolean = klageService.kanEndreSøknadStatus(søknadsid)
 
     // endregion
 

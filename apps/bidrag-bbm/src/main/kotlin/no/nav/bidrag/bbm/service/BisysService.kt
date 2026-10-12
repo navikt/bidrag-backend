@@ -680,7 +680,7 @@ class BisysService(
         // Oppdaterer alle søknader under blankett
         val søknader = søknadRepository.finnAlleTilhørendeSøknader(søknad.blankettid)
         søknader.forEach {
-            it.behandlingsid = request.nyBehandlingsid.toString()
+            it.behandlingsid = request.nyBehandlingsid?.toString()
             søknadRepository.save(it)
         }
     }
