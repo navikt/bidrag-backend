@@ -69,7 +69,9 @@ internal object EndeligBidragBeregningV2 {
         val bpAndelAvUMinusSamværsfradrag = bpAndelBeløp - samværsfradrag
         val bidragTilFordeling = minOf(uMinusNettoBarnetilleggBM, bpAndelAvUMinusSamværsfradrag) + samværsfradrag
         val nettoBidragEtterBarnetilleggBM = maxOf(bidragTilFordeling - samværsfradrag, BigDecimal.ZERO)
-        val erBidragJustertForNettoBarnetilleggBM = uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag
+        // Uten sjekken på barnetillegg blir flagget satt når U er 0 (f.eks. ved forpleining), selv om BM ikke har barnetillegg
+        val erBidragJustertForNettoBarnetilleggBM =
+            nettoBarnetilleggBM > BigDecimal.ZERO && uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag
 
         // Sjekker om perioden vil gi avslag. Dette vil resultere i at det ikke mappes ut noe grunnlagsobjekt for denne perioden.
         val barnetErSelvforsørget = grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.barnetErSelvforsørget
@@ -273,7 +275,9 @@ internal object EndeligBidragBeregningV2 {
             bidragJustertForNettoBarnetilleggBP = bidragEtterFordelingAvBidragsevne
         }
 
-        val erBidragJustertTilNettoBarnetilleggBP = bidragJustertForNettoBarnetilleggBP == nettoBarnetilleggBP
+        // BPs barnetillegg brukes ikke ved delt bosted, og et barnetillegg på 0 kan ikke justere bidraget
+        val erBidragJustertTilNettoBarnetilleggBP =
+            !erDeltBosted && nettoBarnetilleggBP > BigDecimal.ZERO && bidragJustertForNettoBarnetilleggBP == nettoBarnetilleggBP
 
         return BidragJustertForBPBarnetilleggBeregningResultat(
             bidragJustertForNettoBarnetilleggBP = bidragJustertForNettoBarnetilleggBP.avrundetMedToDesimaler,

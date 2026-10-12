@@ -181,7 +181,7 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
             Resultatkode.MAKS_25_PROSENT_AV_INNTEKT
         }
 
-        bidragTilFordeling?.innhold?.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM -> {
+        erBidragJustertForNettoBarnetilleggBM(bidragTilFordeling, nettoBidragEtterBarnetilleggBM) -> {
             Resultatkode.BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM
         }
 
