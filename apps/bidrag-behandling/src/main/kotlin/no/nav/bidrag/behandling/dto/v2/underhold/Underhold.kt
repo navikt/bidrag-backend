@@ -96,8 +96,8 @@ data class UnderholdskostnadValideringsfeil(
     val manglerPerioderForTilsynsordning: Boolean = false,
     @get:Schema(description = "Må ha fylt ut begrunnelse hvis minst en periode er lagt til underholdskostnad")
     val manglerBegrunnelse: Boolean = false,
-    // Fylles ikke lenger: forpleining som er lik eller høyere enn U gir nå avslag/opphør i beregningen.
-    // Feltet beholdes til frontend ikke lenger leser det.
+    // forpleiningOverstigerUnderholdskostnad fylles ikke lenger, fordi forpleining som er lik eller høyere enn U
+    // nå gir avslag/opphør i beregningen. forpleiningOverstigerUnderholdskostnad beholdes til frontend ikke lenger leser det.
     @get:Schema(description = "Utgått. Er alltid tom.", deprecated = true)
     val forpleiningOverstigerUnderholdskostnad: Set<DatoperiodeDto> = emptySet(),
 ) {
