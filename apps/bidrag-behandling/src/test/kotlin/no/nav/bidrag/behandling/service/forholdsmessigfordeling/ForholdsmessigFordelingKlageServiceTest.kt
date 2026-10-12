@@ -601,7 +601,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(OPPRETTET_SØKNADSID) }
         request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
-        request.captured.søktAv shouldBe SøktAvType.NAV_BIDRAG
+        request.captured.søktAv shouldBe SøktAvType.AUTOMATISK
         request.captured.refSøknadsid shouldBe OPPRETTET_SØKNADSID
         request.captured.hovedsøknadsid shouldBe HOVEDSØKNADSID
         request.captured.barnListe.map { it.personident } shouldBe listOf(barn1.ident)
@@ -1111,7 +1111,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             HOVEDSØKNADSID,
         )
 
-        request.captured.søktAv shouldBe SøktAvType.NAV_BIDRAG
+        request.captured.søktAv shouldBe SøktAvType.AUTOMATISK
         barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.søktAvType shouldBe SøktAvType.NAV_BIDRAG
         barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.opprettetAvSaksbehandler shouldBe false
         barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.opprettetAvSystem shouldBe true
@@ -1251,13 +1251,13 @@ class ForholdsmessigFordelingKlageServiceTest {
         assertSoftly(request.captured) {
             refSøknadsid shouldBe PÅKLAGET_SØKNAD_2_SØKNADSID
             hovedsøknadsid shouldBe HOVEDSØKNADSID
-            søktAv shouldBe SøktAvType.NAV_BIDRAG
+            søktAv shouldBe SøktAvType.AUTOMATISK
             barnListe.map { it.personident } shouldBe listOf(barn1.ident)
         }
         barn1.søknadStatus(OPPRETTET_SØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
         assertSoftly(barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!) {
             status shouldBe Behandlingstatus.UNDER_BEHANDLING
-            søktAvType shouldBe SøktAvType.NAV_BIDRAG
+            søktAvType shouldBe SøktAvType.AUTOMATISK
             opprettetAvSaksbehandler shouldBe false
             opprettetAvSystem shouldBe true
         }
