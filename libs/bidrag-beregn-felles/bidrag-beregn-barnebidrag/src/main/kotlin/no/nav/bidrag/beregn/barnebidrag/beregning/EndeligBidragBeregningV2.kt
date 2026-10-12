@@ -139,8 +139,14 @@ internal object EndeligBidragBeregningV2 {
         val evneJustertForPrioriterteBidrag = maxOf(bidragsevne - sumPrioriterteBidragTilFordeling, BigDecimal.ZERO)
         val andelAvEvneBeløp = evneJustertForPrioriterteBidrag * andelAvSumBidragTilFordeling
         val bidragEtterFordeling = minOf(bidragTilFordeling, andelAvEvneBeløp)
-        val harBPFullEvne = (andelAvEvneBeløp >= bidragTilFordeling) &&
-            (!(bidragTilFordeling.compareTo(BigDecimal.ZERO) == 0 && sumBidragTilFordeling > BigDecimal.ZERO))
+        // Mangler bidrag til fordeling, gir perioden avslag for barnet (se beregnBidragTilFordeling). Barnet deltar da ikke i
+        // fordelingen, og skal ikke utløse forholdsmessig fordeling for de andre barna.
+        val erAvslag = grunnlag.bidragTilFordelingBeregningGrunnlag == null
+        val harBPFullEvne = erAvslag ||
+            (
+                (andelAvEvneBeløp >= bidragTilFordeling) &&
+                    (!(bidragTilFordeling.compareTo(BigDecimal.ZERO) == 0 && sumBidragTilFordeling > BigDecimal.ZERO))
+                )
 
         val bruttoBidragJustertForEvneOg25Prosent = minOf(bidragTilFordeling, evneJustertForPrioriterteBidrag)
 
