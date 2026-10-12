@@ -62,8 +62,7 @@ jobs:
           PUBLISH="${{ github.ref == 'refs/heads/main' }}"
           PRERELEASE=false
           if [ "$PUBLISH" != "true" ]; then
-            if { [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_PUBLISER" = "true" ]; } \
-              || { [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "$PRERELEASE_TEST_BRANCH" ]; }; then
+            if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_PUBLISER" = "true" ]; then
               PRERELEASE=true
               # Branchnavn som suffiks slik at prerelease ikke forveksles med vanlige releaser fra main
               VERSION="${VERSION}-$(echo "$REF_NAME" | sed -E 's/[^A-Za-z0-9._]+/_/g')"
