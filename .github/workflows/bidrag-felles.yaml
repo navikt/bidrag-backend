@@ -9,8 +9,6 @@ on:
       - '!gh-readonly-queue/**'
     paths:
       - 'libs/bidrag-felles/**'
-      # TODO: Midlertidig for å teste prerelease fra branch. Fjernes sammen med PRERELEASE_TEST_BRANCH
-      - '.github/workflows/bidrag-felles.yaml'
   workflow_dispatch:
     inputs:
       publiser:
@@ -19,8 +17,6 @@ on:
         default: false
 
 env:
-  # TODO: Midlertidig for å teste prerelease ved push. Fjernes når det er verifisert at manuell kjøring fungerer
-  PRERELEASE_TEST_BRANCH: soktavtype
   FELLES_MODULER: >-
     libs/bidrag-felles/bidrag-domene,libs/bidrag-felles/bidrag-transport,libs/bidrag-felles/bidrag-commons,libs/bidrag-felles/bidrag-commons-test,libs/bidrag-felles/bidrag-generer-testdata
 
