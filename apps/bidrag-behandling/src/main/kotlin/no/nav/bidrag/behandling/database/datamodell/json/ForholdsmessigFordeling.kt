@@ -74,6 +74,7 @@ data class ForholdsmessigFordelingSøknadBarn(
     val saksnummer: String?,
     var status: Behandlingstatus? = null,
     // Søknaden er opprettet av saksbehandler (via opprettBehandlingFraVedtak) og skal aldri feilregistreres automatisk
+    @JsonAlias("opprettetEtterHovedsøknad")
     var opprettetAvSaksbehandler: Boolean = false,
     // Søknaden er opprettet av systemet og kan feilregistreres hvis saksbehandler oppretter søknad for samme barn
     var opprettetAvSystem: Boolean = false,

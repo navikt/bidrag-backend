@@ -196,7 +196,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(FF_KLAGESØKNADSID) }
@@ -216,7 +216,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!, barn2.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 1) {
             bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == FF_KLAGESØKNADSID && it.personidentBarn == barn1.ident })
@@ -236,7 +236,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
             hentSøknad(HOVEDSØKNADSID, listOf(barn1.ident!!)),
         )
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(any()) }
         barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
@@ -251,7 +251,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
         )
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
@@ -266,7 +266,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn2.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
@@ -428,7 +428,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         relevanteKravhavere(barn1)
         mockTilknyttedeSøknader()
 
-        service.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+        service.korrigerKlagesøknader(behandling)
 
         søknadServiceMock.verifiserRevurderingssøknadOpprettetFor(barn1)
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
@@ -499,7 +499,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+        service.korrigerKlagesøknader(behandling)
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
         barn1.søknadStatus(FF_KLAGESØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
@@ -511,7 +511,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         leggTilFFKlagesøknad(barn2)
         barn2.leggTilSøknad(søknad(OPPRETTET_SØKNADSID + 1))
 
-        service.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+        service.korrigerKlagesøknader(behandling)
 
         verify(exactly = 0) { bbmConsumer.hentSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
@@ -776,7 +776,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
@@ -793,7 +793,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)))
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling, hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)))
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
@@ -967,7 +967,7 @@ class ForholdsmessigFordelingKlageServiceTest {
                 listOf(hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)).copy(refVedtaksid = OMGJØR_VEDTAKSID)),
             )
 
-        service.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+        service.korrigerKlagesøknader(behandling)
 
         søknadServiceMock.verifiserIngenRevurderingssøknadOpprettet()
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
@@ -1159,7 +1159,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         val opprettetSøknad = hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!), refSøknadsid = PÅKLAGET_SØKNAD_2_SØKNADSID)
         mockTilknyttedeSøknader(hentSøknad(SYSTEM_KLAGESØKNADSID, listOf(barn1.ident!!)))
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling, opprettetSøknad)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling, opprettetSøknad)
 
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == SYSTEM_KLAGESØKNADSID }) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
@@ -1177,7 +1177,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 1) {
             bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == SYSTEM_KLAGESØKNADSID && it.personidentBarn == barn1.ident })
@@ -1196,7 +1196,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
@@ -1211,7 +1211,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }
@@ -1293,7 +1293,7 @@ class ForholdsmessigFordelingKlageServiceTest {
             hentSøknad(OPPRETTET_SØKNADSID, listOf(barn1.ident!!)),
         )
 
-        service.feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+        service.feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
 
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknadsbarn(any()) }

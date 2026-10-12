@@ -30,7 +30,7 @@ fun hentLøpendeBidrag(bp: Personident): LøpendeBidragssakerResponse? = try {
 fun hentSammenknytningerHovedsøknad(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
     AppContext.getBean(BidragBBMConsumer::class.java).finnAktiveSammenknytningerHovedsøknadCached(søknadsid)
 } catch (e: Exception) {
-    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $søknadsid" }
+    secureLogger.debug(e) { "Feil ved henting av sammenknytninger for hovedsøknad $søknadsid" }
     null
 }
 

@@ -271,7 +271,7 @@ class GrunnlagService(
                             lagreBpsBarnUtenBidragsak(behandling).lagreFeilrapportering()
                         },
                         scope.async {
-                            lagreManuelleVedtakGrunnlagSuspend(behandling).lagreFeilrapportering()
+                            lagreManuelleVedtakGrunnlag(behandling).lagreFeilrapportering()
                         },
                     )
                 if (behandling.vedtakstype.kreverGrunnlag()) {
@@ -328,7 +328,7 @@ class GrunnlagService(
                             lagreBpsBarnUtenBidragsak(behandling)
                         },
                         scope.async {
-                            lagreManuelleVedtakGrunnlagSuspend(behandling)
+                            lagreManuelleVedtakGrunnlag(behandling)
                         },
                     ).awaitAll()
                 }
@@ -363,10 +363,7 @@ class GrunnlagService(
         behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
         aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
     }
-
-    suspend fun lagreManuelleVedtakGrunnlagSuspend(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> = lagreManuelleVedtakGrunnlag(behandling)
-
-    fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
+    suspend fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
         // Klage er pga at det skal være mulig å velge vedtak for aldersjustering hvis klagebehandling endrer resultat for aldersjusteringen
 
         if (!behandling.erBidrag()) {
@@ -424,10 +421,13 @@ class GrunnlagService(
                         behandling.grunnlag.add(nyGrunnlag)
                     }
                 } catch (e: Exception) {
-                    feilrapporteringer[Grunnlagsdatatype.MANUELLE_VEDTAK] = GrunnlagFeilDto(
-                        personId = barnUtenInnkrevdBidrag.ident.verdi,
-                        feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
-                        feilmelding = e.message,
+                    feilrapporteringer.put(
+                        Grunnlagsdatatype.MANUELLE_VEDTAK,
+                        GrunnlagFeilDto(
+                            personId = barnUtenInnkrevdBidrag.ident.verdi,
+                            feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
+                            feilmelding = e.message,
+                        ),
                     )
                 }
             }
@@ -462,10 +462,13 @@ class GrunnlagService(
                     behandling.grunnlag.add(nyGrunnlag)
                 }
             } catch (e: Exception) {
-                feilrapporteringer[Grunnlagsdatatype.MANUELLE_VEDTAK] = GrunnlagFeilDto(
-                    personId = søknadsbarn.personident!!.verdi,
-                    feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
-                    feilmelding = e.message,
+                feilrapporteringer.put(
+                    Grunnlagsdatatype.MANUELLE_VEDTAK,
+                    GrunnlagFeilDto(
+                        personId = søknadsbarn.personident!!.verdi,
+                        feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
+                        feilmelding = e.message,
+                    ),
                 )
             }
         }

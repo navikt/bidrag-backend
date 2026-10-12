@@ -81,7 +81,7 @@ class CacheConfig {
         )
         caffeineCacheManager.registerCustomCache(
             BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE,
-            Caffeine.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).build(),
+            Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build(),
         )
         caffeineCacheManager.registerCustomCache(
             STØNAD_LØPENDE_BIDRAG_CACHE,

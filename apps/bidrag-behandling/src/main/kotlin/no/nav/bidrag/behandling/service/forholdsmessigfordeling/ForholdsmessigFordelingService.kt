@@ -633,7 +633,7 @@ class ForholdsmessigFordelingService(
         if (behandling.erKlageEllerOmgjøring) {
             klageService.korrigerHovedsøknad(behandling)
             klageService.knyttSøknaderUtenBehandlingsidTilBehandling(behandling)
-            klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+            klageService.korrigerKlagesøknader(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
             behandling.oppdaterFFSistSynkronisert()
