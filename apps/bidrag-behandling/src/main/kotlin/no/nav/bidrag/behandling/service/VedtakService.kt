@@ -250,6 +250,7 @@ class VedtakService(
                             behandling,
                             request.søknadsid,
                             opprettetAvEnhet = request.behandlerenhet,
+                            søknadOpprettetAvSaksbehandler = true,
                         )
 
                         return OpprettBehandlingResponse(behandling.id!!)
@@ -265,6 +266,7 @@ class VedtakService(
                     konvertertBehandling,
                     request.søknadsid,
                     opprettetAvEnhet = request.behandlerenhet,
+                    søknadOpprettetAvSaksbehandler = true,
                 )
             }
             konvertertBehandling.roller.forEach {

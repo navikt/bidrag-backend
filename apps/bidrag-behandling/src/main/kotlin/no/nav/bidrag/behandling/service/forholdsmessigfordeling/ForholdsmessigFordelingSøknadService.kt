@@ -529,6 +529,8 @@ class ForholdsmessigFordelingSøknadService(
                 ffDetaljer.søknaderUnderBehandling
                     .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
                     .filter { it.søknadsid != null }
+                    // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk
+                    .filter { !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
 
             if (åpneFFSøknader.size <= 1) return@forEach
 
@@ -552,14 +554,28 @@ class ForholdsmessigFordelingSøknadService(
         if (!behandling.erIForholdsmessigFordeling) return
         val alleSøknadsknytninger = bbmConsumer.finnSammenknytningerHovedsøknad(behandling.soknadsid!!)
 
+        if (alleSøknadsknytninger.søknader.none { it.søknadsid == behandling.soknadsid }) {
+            LOGGER.info { "Mangler hovedsøknad ${behandling.soknadsid} i sammenknytningen. Legger til" }
+            // endreSammenknytningSøknad oppretter ikke knytning hvis hovedsøknaden ikke har noen aktiv knytning fra før (feks etter sammenslåing av behandlinger)
+            bbmConsumer.sammeknyttSøknader(behandling.soknadsid!!, behandling.soknadsid!!)
+        }
+
         val alleSøknader =
-            behandling.søknadsbarn
-                .mapNotNull {
-                    it.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { søknad -> søknad.søknadsid }
-                }.flatten()
-                .distinct()
+            (
+                behandling.søknadsbarn
+                    .mapNotNull {
+                        it.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { søknad -> søknad.søknadsid }
+                    }.flatten() +
+                    // Søknad opprettet av saksbehandler kan være lagret kun på BP hvis barnet ikke er lagt til i behandlingen ennå.
+                    // Beholder sammenknytningen slik at systemet ikke oppretter ny søknad for barnet som feilregistreres igjen etterpå
+                    behandling.roller
+                        .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
+                        .filter { it.opprettetAvSaksbehandler }
+                        .mapNotNull { it.søknadsid }
+                ).distinct()
 
         alleSøknader
+            .filter { it != behandling.soknadsid }
             .filter { søknadsid ->
                 alleSøknadsknytninger.søknader.none { it.søknadsid == søknadsid }
             }.forEach {
@@ -577,11 +593,6 @@ class ForholdsmessigFordelingSøknadService(
                 }
                 bbmConsumer.fjernSammenknytning(it.søknadsid)
             }
-
-        if (alleSøknadsknytninger.søknader.none { it.søknadsid == behandling.soknadsid }) {
-            LOGGER.info { "Mangler hovedsøknad i sammenknytningen. Legger til" }
-            bbmConsumer.endreSammenknytningSøknad(behandling.soknadsid!!, behandling.soknadsid!!)
-        }
     }
 
     fun finnApneSoknaderForBarn(
@@ -746,6 +757,7 @@ class ForholdsmessigFordelingSøknadService(
                         }
                     it.tilForholdsmessigFordelingSøknad().copy(
                         status = status,
+                        opprettetAvSaksbehandler = rolle.behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid),
                     )
                 }.toMutableSet()
 

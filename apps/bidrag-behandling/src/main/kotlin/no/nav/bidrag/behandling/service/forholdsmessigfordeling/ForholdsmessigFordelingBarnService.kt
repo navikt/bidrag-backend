@@ -598,26 +598,29 @@ class ForholdsmessigFordelingBarnService(
      */
     fun feilregistrerFFSøknad(rolle: Rolle) {
         if (rolle.forholdsmessigFordeling == null || !rolle.forholdsmessigFordeling!!.erRevurdering) return
-        rolle.forholdsmessigFordeling!!.søknaderUnderBehandling.forEach { søknad ->
-            val søknadsid = søknad.søknadsid
-            BARN_LOGGER.info { "Feilregistrerer søknad $søknadsid i behandling ${rolle.behandling.id}" }
-            try {
-                bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid!!))
-                bbmConsumer.fjernSammenknytning(søknadsid)
-                søknad.status = Behandlingstatus.FEILREGISTRERT
-                if (rolle.bidragsmottaker != null) {
-                    rolle.bidragsmottaker!!
-                        .forholdsmessigFordeling!!
-                        .søknaderUnderBehandling
-                        .find { it.søknadsid == søknad.søknadsid }
-                        ?.let {
-                            it.status = Behandlingstatus.FEILREGISTRERT
-                        }
+        rolle.forholdsmessigFordeling!!.søknaderUnderBehandling
+            // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk. Revurderingsbarn i klage kan ha søknad opprettet av saksbehandler
+            .filter { !rolle.behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
+            .forEach { søknad ->
+                val søknadsid = søknad.søknadsid
+                BARN_LOGGER.info { "Feilregistrerer søknad $søknadsid i behandling ${rolle.behandling.id}" }
+                try {
+                    bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid!!))
+                    bbmConsumer.fjernSammenknytning(søknadsid)
+                    søknad.status = Behandlingstatus.FEILREGISTRERT
+                    if (rolle.bidragsmottaker != null) {
+                        rolle.bidragsmottaker!!
+                            .forholdsmessigFordeling!!
+                            .søknaderUnderBehandling
+                            .find { it.søknadsid == søknad.søknadsid }
+                            ?.let {
+                                it.status = Behandlingstatus.FEILREGISTRERT
+                            }
+                    }
+                } catch (e: Exception) {
+                    BARN_LOGGER.error(e) { "Feil ved feilregistrering av søknad $søknadsid i behandling ${rolle.behandling.id}" }
                 }
-            } catch (e: Exception) {
-                BARN_LOGGER.error(e) { "Feil ved feilregistrering av søknad $søknadsid i behandling ${rolle.behandling.id}" }
             }
-        }
     }
 
     /**

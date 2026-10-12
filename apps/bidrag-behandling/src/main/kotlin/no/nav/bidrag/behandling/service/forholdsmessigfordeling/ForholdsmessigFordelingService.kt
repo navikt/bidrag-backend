@@ -170,6 +170,7 @@ class ForholdsmessigFordelingService(
                 LOGGER.info { "Opprettelse av forholdsmessig fordeling er deaktivert" }
                 ugyldigForespørsel("Opprettelse av forholdsmessig fordeling er deaktivert")
             }
+            behandlingRepository.låsBehandlingForOppdatering(behandlingId)
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
 
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
@@ -630,6 +631,8 @@ class ForholdsmessigFordelingService(
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
+            klageService.korrigerHovedsøknad(behandling)
+            klageService.knyttSøknaderUtenBehandlingsidTilBehandling(behandling)
             klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
@@ -948,10 +951,12 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         opprettetEllerOppdaterSøknadsid: Long,
         opprettetAvEnhet: String? = null,
+        søknadOpprettetAvSaksbehandler: Boolean = false,
     ) = klageService.opprettSøknaderForKlageEllerOmgjøring(
         behandling,
         opprettetEllerOppdaterSøknadsid,
         request = OpprettFFRequest(opprettetAvEnhet = opprettetAvEnhet),
+        søknadOpprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
     )
 
     @Transactional

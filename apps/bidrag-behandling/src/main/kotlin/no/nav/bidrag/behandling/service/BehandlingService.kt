@@ -111,6 +111,7 @@ class BehandlingService(
         søknadsid: Long? = null,
     ) {
         secureLogger.info { "Sletter behandling $behandlingId og søknad $søknadsid" }
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling = hentBehandlingById(behandlingId)
         if (behandling.erVedtakFattet) {
             throw HttpClientErrorException(
@@ -668,6 +669,7 @@ class BehandlingService(
         behandlingsid: Long,
         ikkeHentGrunnlag: Boolean = false,
     ): Behandling {
+        if (!ikkeHentGrunnlag) behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
         val behandling = hentBehandlingById(behandlingsid)
         val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
         if (!ikkeHentGrunnlag && !erVedtakFattet) {
@@ -766,6 +768,7 @@ class BehandlingService(
         request: OppdaterRollerRequest,
     ): OppdaterRollerResponse {
         val oppdaterRollerListe = request.rollerUnderBehandling
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling =
             behandlingRepository.findBehandlingById(behandlingId).get().let {
                 if (it.erIForholdsmessigFordeling && UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG.isEnabled) {

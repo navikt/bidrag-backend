@@ -232,6 +232,7 @@ class GrunnlagService(
 
     @Transactional
     fun oppdatereGrunnlagForBehandling(behandlingId: Long) {
+        behandlingRepository!!.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository?.findBehandlingById(behandlingId)!!.get()
         if (behandling.metadata?.lasterGrunnlagDetaljer()?.erBestilt() == false) {
             log.info { "Grunnlag for behandling $behandlingId lastes allerede, hopper over ny innhenting" }
@@ -270,7 +271,7 @@ class GrunnlagService(
                             lagreBpsBarnUtenBidragsak(behandling).lagreFeilrapportering()
                         },
                         scope.async {
-                            lagreManuelleVedtakGrunnlag(behandling).lagreFeilrapportering()
+                            lagreManuelleVedtakGrunnlagSuspend(behandling).lagreFeilrapportering()
                         },
                     )
                 if (behandling.vedtakstype.kreverGrunnlag()) {
@@ -326,6 +327,9 @@ class GrunnlagService(
                         scope.async {
                             lagreBpsBarnUtenBidragsak(behandling)
                         },
+                        scope.async {
+                            lagreManuelleVedtakGrunnlagSuspend(behandling)
+                        },
                     ).awaitAll()
                 }
             } else {
@@ -359,7 +363,10 @@ class GrunnlagService(
         behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
         aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
     }
-    suspend fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
+
+    suspend fun lagreManuelleVedtakGrunnlagSuspend(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> = lagreManuelleVedtakGrunnlag(behandling)
+
+    fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
         // Klage er pga at det skal være mulig å velge vedtak for aldersjustering hvis klagebehandling endrer resultat for aldersjusteringen
 
         if (!behandling.erBidrag()) {
@@ -417,13 +424,10 @@ class GrunnlagService(
                         behandling.grunnlag.add(nyGrunnlag)
                     }
                 } catch (e: Exception) {
-                    feilrapporteringer.put(
-                        Grunnlagsdatatype.MANUELLE_VEDTAK,
-                        GrunnlagFeilDto(
-                            personId = barnUtenInnkrevdBidrag.ident.verdi,
-                            feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
-                            feilmelding = e.message,
-                        ),
+                    feilrapporteringer[Grunnlagsdatatype.MANUELLE_VEDTAK] = GrunnlagFeilDto(
+                        personId = barnUtenInnkrevdBidrag.ident.verdi,
+                        feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
+                        feilmelding = e.message,
                     )
                 }
             }
@@ -458,13 +462,10 @@ class GrunnlagService(
                     behandling.grunnlag.add(nyGrunnlag)
                 }
             } catch (e: Exception) {
-                feilrapporteringer.put(
-                    Grunnlagsdatatype.MANUELLE_VEDTAK,
-                    GrunnlagFeilDto(
-                        personId = søknadsbarn.personident!!.verdi,
-                        feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
-                        feilmelding = e.message,
-                    ),
+                feilrapporteringer[Grunnlagsdatatype.MANUELLE_VEDTAK] = GrunnlagFeilDto(
+                    personId = søknadsbarn.personident!!.verdi,
+                    feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL,
+                    feilmelding = e.message,
                 )
             }
         }

@@ -91,6 +91,20 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
     fun findBehandlingById(id: Long): Optional<Behandling>
 
+    // Låser behandlingen og eventuell FF-hovedbehandling ut transaksjonen slik at samtidige oppdateringer kjøres etter hverandre.
+    // Må kalles før behandlingen lastes for at transaksjonen skal se siste committede tilstand.
+    @Query(
+        value = """
+        SELECT b.id FROM behandling b
+        WHERE b.id = :behandlingId
+           OR b.id = (SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint FROM behandling bb WHERE bb.id = :behandlingId)
+        ORDER BY b.id
+        FOR UPDATE
+    """,
+        nativeQuery = true,
+    )
+    fun låsBehandlingForOppdatering(@Param("behandlingId") behandlingId: Long): List<Long>
+
     @Query("select b.saksnummer from behandling b where b.id = :behandlingId")
     fun hentSaksnummer(@Param("behandlingId") behandlingId: Long): String?
 

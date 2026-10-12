@@ -123,7 +123,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         verify(exactly = 1) { grunnlagService.lagreBeløpshistorikkGrunnlag(behandling) }
         verify(exactly = 1) { grunnlagService.lagreBeløpshistorikkFraOpprinneligVedtakstidspunktGrunnlag(behandling) }
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(999L) }
-        verify(exactly = 1) { bbmConsumer.endreSammenknytningSøknad(behandling.soknadsid!!, behandling.soknadsid!!) }
+        verify(exactly = 1) { bbmConsumer.sammeknyttSøknader(behandling.soknadsid!!, behandling.soknadsid!!) }
+        verify(exactly = 0) { bbmConsumer.endreSammenknytningSøknad(any(), any()) }
     }
 
     @Test
