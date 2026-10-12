@@ -123,7 +123,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         søknadsid = søknadsid,
         mottattDato = LocalDate.parse("2024-01-10"),
         søknadFomDato = LocalDate.parse("2024-01-01"),
-        søktAvType = SøktAvType.NAV_BIDRAG,
+        søktAvType = if (opprettetAvSystem) SøktAvType.AUTOMATISK else SøktAvType.NAV_BIDRAG,
         behandlingstype = behandlingstype,
         behandlingstema = Behandlingstema.BIDRAG,
         omgjørSøknadsid = omgjørSøknadsid,
@@ -133,7 +133,6 @@ class ForholdsmessigFordelingKlageServiceTest {
         saksnummer = behandling.saksnummer,
         enhet = "4806",
         opprettetAvSaksbehandler = opprettetAvSaksbehandler,
-        opprettetAvSystem = opprettetAvSystem,
     )
 
     private fun Rolle.settSomRevurderingsbarn() {
