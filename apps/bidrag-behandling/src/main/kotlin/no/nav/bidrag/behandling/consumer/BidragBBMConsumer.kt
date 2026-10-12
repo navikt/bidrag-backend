@@ -22,6 +22,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknader
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
@@ -85,6 +87,17 @@ class BidragBBMConsumer(
         )
     }
 
+    private val sporedeEndringer = ThreadLocal<SporedeBBMEndringer?>()
+
+    /** Starter sporing av vellykkede kall til [lagreBehandlingsid] og [lagreBehandlerEnhet] i nåværende tråd slik at endringene kan rulles tilbake */
+    fun startSporingAvEndringer() = sporedeEndringer.set(SporedeBBMEndringer())
+
+    fun stoppSporingAvEndringer(): SporedeBBMEndringer {
+        val endringer = sporedeEndringer.get() ?: SporedeBBMEndringer()
+        sporedeEndringer.remove()
+        return endringer
+    }
+
     @Retryable(
         value = [Exception::class],
         maxAttempts = 3,
@@ -95,6 +108,7 @@ class BidragBBMConsumer(
             bidragBBMUri.pathSegment("settbehandlingsid").build().toUri(),
             request,
         )
+        sporedeEndringer.get()?.behandlingsid?.add(request)
     } catch (e: RestClientResponseException) {
         secureLogger.error(e) { "Feil ved oppdatering av behandlingsid av request=$request" }
     }
@@ -134,9 +148,31 @@ class BidragBBMConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    fun lagreBehandlerEnhet(request: OppdaterBehandlerenhetRequest) = postForEntity<Unit>(
-        bidragBBMUri.pathSegment("oppdaterbehandlerenhet").build().toUri(),
-        request,
+    fun lagreBehandlerEnhet(request: OppdaterBehandlerenhetRequest) {
+        val sporing = sporedeEndringer.get()
+        val forrigeBehandlerenhet =
+            if (sporing != null && !sporing.behandlerenhet.containsKey(request.søknadsid)) {
+                hentSøknad(request.søknadsid)?.søknad?.behandlerenhet
+            } else {
+                null
+            }
+        postForEntity<Unit>(
+            bidragBBMUri.pathSegment("oppdaterbehandlerenhet").build().toUri(),
+            request,
+        )
+        if (sporing != null && !sporing.behandlerenhet.containsKey(request.søknadsid)) {
+            sporing.behandlerenhet[request.søknadsid] = forrigeBehandlerenhet
+        }
+    }
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun hentÅpneSøknaderForBehandling(behandlingsid: Long): HentSøknaderForBehandlingResponse = postForNonNullEntity(
+        bidragBBMUri.pathSegment("hentsoknaderforbehandling").build().toUri(),
+        HentSøknaderForBehandlingRequest(behandlingsid),
     )
 
     @Retryable(
@@ -244,3 +280,9 @@ class BidragBBMConsumer(
         FinnSammenknytningerHovedsøknadRequest(søknadsid, status = status, statuser = listOf(status)),
     )
 }
+
+data class SporedeBBMEndringer(
+    val behandlingsid: MutableList<OppdaterBehandlingsidRequest> = mutableListOf(),
+    /** Søknadsid til behandlerenhet søknaden hadde før første endring */
+    val behandlerenhet: MutableMap<Long, String?> = linkedMapOf(),
+)
