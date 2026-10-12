@@ -5,12 +5,14 @@ import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BarnetilleggDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragJustertForBPBarnetilleggBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BpAndelUnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SamværsfradragDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.SluttberegningBarnebidragV2BeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SumBidragTilFordelingDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SøknadsbarnetBorHosBpGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.UnderholdskostnadDelberegningBeregningGrunnlag
@@ -127,7 +129,83 @@ class EndeligBidragBeregningV2Test {
             resultat.bidragJustertForNettoBarnetilleggBP.compareTo(BigDecimal(2000)) shouldBe 0
         }
     }
+
+    @Nested
+    inner class DeltBosted {
+
+        @Test
+        fun `skal gi avslag når BPs andel av U er under 50 prosent`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal(8000),
+                    bpAndel = BigDecimal(3200),
+                    nettoBarnetilleggBM = null,
+                    andelDeltBosted = andelDeltBosted(faktor = BigDecimal.ZERO, beløp = BigDecimal.ZERO),
+                ),
+            )
+
+            resultat.erAvslag shouldBe true
+        }
+
+        @Test
+        fun `skal ikke gi avslag når BPs andel av U er over 50 prosent`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal(8000),
+                    bpAndel = BigDecimal(4800),
+                    nettoBarnetilleggBM = null,
+                    andelDeltBosted = andelDeltBosted(faktor = BigDecimal("0.1"), beløp = BigDecimal(800)),
+                ),
+            )
+
+            resultat.erAvslag shouldBe false
+            resultat.bidragTilFordeling.compareTo(BigDecimal(800)) shouldBe 0
+        }
+
+        @Test
+        fun `sluttberegning skal gi avslag uten beløp når BPs andel av U er 50 prosent eller lavere`() {
+            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
+                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(faktor = BigDecimal.ZERO, beløp = BigDecimal.ZERO)),
+            )
+
+            resultat.bidragIkkeBeregnetDeltBosted shouldBe true
+            resultat.beregnetBeløp shouldBe null
+            resultat.resultatBeløp shouldBe null
+        }
+
+        @Test
+        fun `sluttberegning skal beregne bidrag når BPs andel av U er over 50 prosent`() {
+            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
+                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(faktor = BigDecimal("0.1"), beløp = BigDecimal(800))),
+            )
+
+            resultat.bidragIkkeBeregnetDeltBosted shouldBe false
+            resultat.resultatBeløp?.compareTo(BigDecimal(800)) shouldBe 0
+        }
+    }
 }
+
+private fun andelDeltBosted(faktor: BigDecimal, beløp: BigDecimal) = BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
+    referanse = "andelDeltBosted",
+    bpAndelAvUVedDeltBostedFaktor = faktor,
+    bpAndelAvUVedDeltBostedBeløp = beløp,
+)
+
+private fun sluttberegningGrunnlag(andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?) = SluttberegningBarnebidragV2BeregningGrunnlag(
+    bidragJustertForBPBarnetilleggBeregningGrunnlag = BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag(
+        referanse = "bidragJustertForBPBarnetillegg",
+        bidragJustertForNettoBarnetilleggBP = andelDeltBosted?.bpAndelAvUVedDeltBostedBeløp ?: BigDecimal.ZERO,
+    ),
+    samværsfradragBeregningGrunnlag = SamværsfradragDelberegningBeregningGrunnlag(referanse = "samværsfradrag", beløp = BigDecimal.ZERO),
+    bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
+        referanse = "bpAndelUnderholdskostnad",
+        andelBeløp = BigDecimal(4800),
+        andelFaktor = BigDecimal("0.6"),
+        barnetErSelvforsørget = false,
+    ),
+    søknadsbarnetBorHosBpGrunnlag = SøknadsbarnetBorHosBpGrunnlag(referanse = "søknadsbarnetBorHosBp", søknadsbarnetBorHosBp = false),
+    bidragspliktigesAndelDeltBostedBeregningGrunnlag = andelDeltBosted,
+)
 
 private fun andelAvBidragsevneGrunnlag(bidragTilFordeling: BigDecimal?, sumBidragTilFordeling: BigDecimal, evne: BigDecimal) = AndelAvBidragsevneBeregningGrunnlag(
     evne25ProsentAvInntektBeregningGrunnlag = Evne25ProsentAvInntektDelberegningBeregningGrunnlag(
@@ -144,7 +222,12 @@ private fun andelAvBidragsevneGrunnlag(bidragTilFordeling: BigDecimal?, sumBidra
     },
 )
 
-private fun bidragTilFordelingGrunnlag(underholdskostnad: BigDecimal, bpAndel: BigDecimal, nettoBarnetilleggBM: BigDecimal?) = BidragTilFordelingBeregningGrunnlag(
+private fun bidragTilFordelingGrunnlag(
+    underholdskostnad: BigDecimal,
+    bpAndel: BigDecimal,
+    nettoBarnetilleggBM: BigDecimal?,
+    andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
+) = BidragTilFordelingBeregningGrunnlag(
     underholdskostnadBeregningGrunnlag = UnderholdskostnadDelberegningBeregningGrunnlag(referanse = "underholdskostnad", beløp = underholdskostnad),
     bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
         referanse = "bpAndelUnderholdskostnad",
@@ -154,7 +237,7 @@ private fun bidragTilFordelingGrunnlag(underholdskostnad: BigDecimal, bpAndel: B
     ),
     barnetilleggBMBeregningGrunnlag = nettoBarnetilleggBM?.let { BarnetilleggDelberegningBeregningGrunnlag(referanse = "barnetilleggBM", beløp = it) },
     samværsfradragBeregningGrunnlag = SamværsfradragDelberegningBeregningGrunnlag(referanse = "samværsfradrag", beløp = BigDecimal.ZERO),
-    bidragspliktigesAndelDeltBostedBeregningGrunnlag = null,
+    bidragspliktigesAndelDeltBostedBeregningGrunnlag = andelDeltBosted,
     søknadsbarnetBorHosBpGrunnlag = SøknadsbarnetBorHosBpGrunnlag(referanse = "søknadsbarnetBorHosBp", søknadsbarnetBorHosBp = false),
 )
 
@@ -169,7 +252,7 @@ private fun bidragJustertForBPBarnetilleggGrunnlag(
     ),
     barnetilleggBPBeregningGrunnlag = nettoBarnetilleggBP?.let { BarnetilleggDelberegningBeregningGrunnlag(referanse = "barnetilleggBP", beløp = it) },
     bidragspliktigesAndelDeltBostedBeregningGrunnlag = if (erDeltBosted) {
-        BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(referanse = "andelDeltBosted", bpAndelAvUVedDeltBostedBeløp = bidragEtterFordeling)
+        andelDeltBosted(faktor = BigDecimal("0.1"), beløp = bidragEtterFordeling)
     } else {
         null
     },

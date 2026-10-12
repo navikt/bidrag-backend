@@ -1118,6 +1118,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
+                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }
@@ -1665,6 +1666,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
+                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }
@@ -1778,6 +1780,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
+                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }
@@ -1811,6 +1814,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                         resultatBeløp = it.resultat.resultatBeløp,
                         barnetErSelvforsørget = it.resultat.barnetErSelvforsørget,
                         ikkeOmsorgForBarnet = it.resultat.ikkeOmsorgForBarnet,
+                        bidragIkkeBeregnetDeltBosted = it.resultat.bidragIkkeBeregnetDeltBosted,
                     ),
                 ),
                 grunnlagsreferanseListe = it.resultat.grunnlagsreferanseListe.sorted(),

@@ -182,7 +182,11 @@ data class BidragspliktigesAndelDeltBostedDelberegningPeriodeGrunnlag(
     val bidragspliktigesAndelDeltBostedPeriode: DelberegningBidragspliktigesAndelDeltBosted,
 )
 
-data class BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(val referanse: String, val bpAndelAvUVedDeltBostedBeløp: BigDecimal)
+data class BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
+    val referanse: String,
+    val bpAndelAvUVedDeltBostedFaktor: BigDecimal,
+    val bpAndelAvUVedDeltBostedBeløp: BigDecimal,
+)
 
 data class BidragTilFordelingPeriodeGrunnlag(
     val beregningsperiode: ÅrMånedsperiode,
@@ -451,6 +455,7 @@ data class SluttberegningBarnebidragV2BeregningResultat(
     val resultatBeløp: BigDecimal?,
     val barnetErSelvforsørget: Boolean = false,
     val ikkeOmsorgForBarnet: Boolean = false,
+    val bidragIkkeBeregnetDeltBosted: Boolean = false,
     val grunnlagsreferanseListe: List<String> = emptyList(),
 )
 

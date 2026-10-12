@@ -473,6 +473,8 @@ data class SluttberegningBarnebidragV2(
     val resultatBeløp: BigDecimal?,
     val barnetErSelvforsørget: Boolean = false,
     val ikkeOmsorgForBarnet: Boolean = false,
+    @Schema(description = "Delt bosted der BPs andel av U er 50 % eller lavere. Bidraget beregnes ikke, og perioden gir avslag eller opphør")
+    val bidragIkkeBeregnetDeltBosted: Boolean = false,
 ) : Sluttberegning
 
 data class DelberegningBidragTilFordelingLøpendeBidrag(
