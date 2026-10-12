@@ -660,7 +660,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         request.captured.refSøknadsid shouldBe HOVEDSØKNADSID
         request.captured.hovedsøknadsid shouldBe OPPRETTET_SØKNADSID
         request.captured.søknadMottattDato shouldBe mottattDatoSlettetSøknad
-        request.captured.søktAv shouldBe SøktAvType.NAV_BIDRAG
+        request.captured.søktAv shouldBe SøktAvType.AUTOMATISK
         request.captured.barnListe.map { it.personident } shouldBe listOf(barn2.ident)
         barn2.søknadStatus(HOVEDSØKNADSID) shouldBe Behandlingstatus.FEILREGISTRERT
         barn2.søknadStatus(GJENOPPRETTET_FF_KLAGESØKNADSID) shouldBe Behandlingstatus.UNDER_BEHANDLING
@@ -1112,7 +1112,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         )
 
         request.captured.søktAv shouldBe SøktAvType.AUTOMATISK
-        barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.søktAvType shouldBe SøktAvType.NAV_BIDRAG
+        barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.søktAvType shouldBe SøktAvType.AUTOMATISK
         barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.opprettetAvSaksbehandler shouldBe false
         barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID)!!.opprettetAvSystem shouldBe true
     }
