@@ -1,9 +1,7 @@
 package no.nav.bidrag.behandling.database.repository
 
 import jakarta.persistence.EntityManager
-import jakarta.persistence.LockModeType
 import jakarta.persistence.PersistenceContext
-import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagAsyncStatus
 import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagDetaljer
 import no.nav.bidrag.behandling.transformers.toLocalDateTime
@@ -30,15 +28,5 @@ class CustomBehandlingRepositoryImpl : CustomBehandlingRepository {
         )
     } catch (e: Exception) {
         null
-    }
-
-    override fun låsBehandlingForOppdatering(behandlingId: Long) {
-        val behandling = entityManager.find(Behandling::class.java, behandlingId) ?: return
-        entityManager.lock(behandling, LockModeType.OPTIMISTIC_FORCE_INCREMENT)
-        behandling.forholdsmessigFordeling?.behandlesAvBehandling?.let {
-            entityManager.find(Behandling::class.java, it)?.let { hovedbehandling ->
-                entityManager.lock(hovedbehandling, LockModeType.OPTIMISTIC_FORCE_INCREMENT)
-            }
-        }
     }
 }

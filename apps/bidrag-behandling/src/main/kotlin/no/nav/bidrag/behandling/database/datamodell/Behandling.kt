@@ -13,7 +13,6 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
-import jakarta.persistence.Version
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDoConverter
 import no.nav.bidrag.behandling.database.datamodell.extensions.ÅrsakConverter
@@ -67,7 +66,7 @@ import java.time.YearMonth
 
 @Suppress("Unused")
 @Entity(name = "behandling")
-@SQLDelete(sql = "UPDATE behandling SET deleted = true, slettet_tidspunkt = now() WHERE id=? AND versjon=?")
+@SQLDelete(sql = "UPDATE behandling SET deleted = true, slettet_tidspunkt = now() WHERE id=?")
 @SQLRestriction(value = "deleted=false")
 open class Behandling(
     @Enumerated(EnumType.STRING)
@@ -220,10 +219,6 @@ open class Behandling(
     @Transient
     var historiskeStønader: MutableSet<StønadDto> = mutableSetOf(),
 ) {
-    // Optimistisk låsing slik at samtidige oppdateringer av behandlingen ikke overskriver hverandre
-    @Version
-    open var versjon: Long = 0
-
     fun hentEllerInitaliserMetadata(): BehandlingMetadataDo {
         if (metadata == null) {
             metadata = BehandlingMetadataDo()
