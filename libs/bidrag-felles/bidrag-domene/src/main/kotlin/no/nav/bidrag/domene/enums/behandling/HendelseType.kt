@@ -123,8 +123,10 @@ enum class HendelseType(
     KLAGEVEDTAK("VEKL", "Klagevedtak"),
     OMGJØRINGSVEDTAK("VEOM", "Omgjøringsvedtak"),
     FORHOLDSMESSIG_FORDELING("FFET", "Forholdsmessig fordeling"),
+    FORHOLDSMESSIG_FORDELING_AUTOMATISK("FFAU", "Forholdsmessig fordeling automatisk"),
     REVURDERING_TRUKKET("RTET", "Revurdering trukket"),
     FORHOLDSMESSIG_FORDELING_KLAGE("FKET", "Forholdsmessig fordeling klage"),
+    FORHOLDSMESSIG_FORDELING_KLAGE_AUTOMATISK("FKAU", "Forholdsmessig fordeling klage automatisk"),
     ;
 
     companion object {
