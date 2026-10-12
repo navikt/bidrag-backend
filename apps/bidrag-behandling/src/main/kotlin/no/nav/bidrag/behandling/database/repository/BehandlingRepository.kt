@@ -98,7 +98,10 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
         SELECT b.id FROM behandling b
         WHERE b.id = :behandlingId
            OR b.id = (SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint FROM behandling bb WHERE bb.id = :behandlingId)
-        ORDER BY b.id
+        ORDER BY CASE
+            WHEN b.id = (SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint FROM behandling bb WHERE bb.id = :behandlingId) THEN 0
+            ELSE 1
+        END, b.id
         FOR UPDATE
     """,
         nativeQuery = true,
