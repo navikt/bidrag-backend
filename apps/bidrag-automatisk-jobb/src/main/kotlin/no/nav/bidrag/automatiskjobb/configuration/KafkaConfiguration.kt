@@ -6,13 +6,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpStatus
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
 import org.springframework.util.backoff.ExponentialBackOff
-import org.springframework.util.backoff.FixedBackOff
-import org.springframework.web.client.RestClientResponseException
 
 private val LOGGER = KotlinLogging.logger { }
 
@@ -39,15 +36,10 @@ class KafkaConfiguration {
                         "Melding som feilet: $value"
                 }
             }, backoffPolicy)
-        errorHandler.setBackOffFunction { _, e -> if (e.erIkkeFunnet()) FixedBackOff(0, 0) else null }
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler
     }
 }
-
-// En 404 blir ikke rettet av seg selv, så retry ville blokkert partisjonen for alltid
-internal fun Throwable.erIkkeFunnet(): Boolean = generateSequence(this) { it.cause }
-    .any { it is RestClientResponseException && it.statusCode == HttpStatus.NOT_FOUND }
 
 class KafkaRetryListener : RetryListener {
     override fun failedDelivery(
