@@ -23,6 +23,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholds
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ResultatFraVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.erBeregnetAvslagBarnebidrag
 import no.nav.bidrag.transport.behandling.vedtak.response.erIndeksEllerAldersjustering
 import no.nav.bidrag.transport.dokumentmaler.notat.EndeligOrkestrertVedtak
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatMalType
@@ -167,7 +168,7 @@ data class DokumentmalResultatBidragsberegningBarnDto(
             erOpphør -> {
                 if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
                     beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true ||
-                    beregningsdetaljer?.sluttberegning?.erResultatAvslag == true
+                    beregningsdetaljer?.sluttberegning?.resultat?.erBeregnetAvslagBarnebidrag() == true
                 ) {
                     beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
                 } else if (resultatFraVedtak?.omgjøringsvedtak == true && resultatKode != null) {
@@ -281,12 +282,7 @@ data class DokumentmalSluttberegningBarnebidragDetaljer(
     val resultatVisningsnavn: Visningsnavn?,
 ) {
     @get:JsonIgnore
-    val erResultatAvslag get() = listOf(
-        Resultatkode.IKKE_OMSORG,
-        Resultatkode.BARNET_ER_SELVFORSØRGET,
-        Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
-        Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
-    ).contains(resultat)
+    val erResultatAvslag get() = resultat.erBeregnetAvslagBarnebidrag()
 }
 
 data class DokumentmalDelberegningBarnetilleggDto(

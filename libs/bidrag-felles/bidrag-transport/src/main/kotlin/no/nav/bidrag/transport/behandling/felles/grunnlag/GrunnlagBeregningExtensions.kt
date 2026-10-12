@@ -226,11 +226,11 @@ fun List<GrunnlagDto>.erBidragJustertForNettoBarnetilleggBM(
     bidragTilFordeling: InnholdMedReferanse<DelberegningBidragTilFordeling>?,
     nettoBidragEtterBarnetilleggBM: BigDecimal,
 ): Boolean {
-    if (bidragTilFordeling == null) return false
+    if (bidragTilFordeling == null || bidragTilFordeling.innhold.uMinusNettoBarnetilleggBM != nettoBidragEtterBarnetilleggBM) return false
     val nettoBarnetilleggBM =
         finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<DelberegningNettoBarnetillegg>(
             Grunnlagstype.DELBEREGNING_NETTO_BARNETILLEGG,
             bidragTilFordeling.grunnlag.grunnlagsreferanseListe,
         ).firstOrNull()?.innhold?.summertNettoBarnetillegg ?: BigDecimal.ZERO
-    return nettoBarnetilleggBM > BigDecimal.ZERO && bidragTilFordeling.innhold.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM
+    return nettoBarnetilleggBM > BigDecimal.ZERO
 }

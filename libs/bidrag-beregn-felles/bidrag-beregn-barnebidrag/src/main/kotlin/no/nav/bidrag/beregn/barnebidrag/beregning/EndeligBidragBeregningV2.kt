@@ -327,7 +327,10 @@ internal object EndeligBidragBeregningV2 {
                 forpleiningDekkerUnderholdskostnaden = true,
                 beregnetBeløp = null,
                 resultatBeløp = null,
-                grunnlagsreferanseListe = listOf(grunnlag.underholdskostnadBeregningGrunnlag!!.referanse),
+                grunnlagsreferanseListe = listOf(
+                    grunnlag.underholdskostnadBeregningGrunnlag!!.referanse,
+                    grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.referanse,
+                ),
             )
         }
 

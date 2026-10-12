@@ -206,7 +206,10 @@ fun List<GrunnlagDto>.tilResultatVisningsnavn(grunnlagsreferanseListe: List<Grun
 
 fun List<GrunnlagDto>.tilBisysResultatkode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): String = resultatSluttberegning(grunnlagsreferanseListe)?.legacyKode ?: "KBB"
 
-fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = sluttberegningAvslagResultaterV2.contains(resultatSluttberegning(grunnlagsreferanseListe))
+fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = resultatSluttberegning(grunnlagsreferanseListe).erBeregnetAvslagBarnebidrag()
+
+/** Resultater der beregningen av barnebidrag gir avslag/opphør uten beløp */
+fun Resultatkode?.erBeregnetAvslagBarnebidrag(): Boolean = this != null && sluttberegningAvslagResultaterV2.contains(this)
 
 data class SluttberegningBarnebidragAldersjustering(
     override val periode: ÅrMånedsperiode,

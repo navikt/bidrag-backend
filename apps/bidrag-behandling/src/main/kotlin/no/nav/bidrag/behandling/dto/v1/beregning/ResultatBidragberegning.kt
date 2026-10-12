@@ -37,6 +37,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.ResultatFraVedtakGrunn
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.erBeregnetAvslagBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.vedtak.response.erIndeksEllerAldersjustering
 import no.nav.bidrag.transport.felles.tilVisningsnavn
@@ -371,8 +372,7 @@ data class ResultatBarnebidragsberegningPeriodeDto(
             erOpphør -> {
                 if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
                     beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true ||
-                    beregningsdetaljer?.sluttberegning?.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED ||
-                    beregningsdetaljer?.sluttberegning?.resultat == Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG
+                    beregningsdetaljer?.sluttberegning?.resultat?.erBeregnetAvslagBarnebidrag() == true
                 ) {
                     beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
                 } else if (klageOmgjøringDetaljer?.omgjøringsvedtak == true && resultatKode != null) {
