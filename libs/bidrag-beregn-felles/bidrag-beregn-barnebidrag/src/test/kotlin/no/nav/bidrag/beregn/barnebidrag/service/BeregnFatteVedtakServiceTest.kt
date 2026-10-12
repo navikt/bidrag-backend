@@ -78,10 +78,36 @@ class BeregnFatteVedtakServiceTest {
         resultat.skalFatteVedtak shouldBe true
     }
 
-    private fun fatteVedtakForRevurderingsbarn(sluttberegningSøknadsbarn: SluttberegningBarnebidragV2) = BeregnFatteVedtakService
+    @Test
+    fun `revurderingsbarn med avslag for delt bosted skal ikke overlappe med søknadsbarnet`() {
+        val resultat = fatteVedtakForRevurderingsbarn(
+            sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
+                periode = periode,
+                beregnetBeløp = BigDecimal(1000),
+                resultatBeløp = BigDecimal(1000),
+            ),
+            sluttberegningRevurderingsbarn = SluttberegningBarnebidragV2(
+                periode = periode,
+                beregnetBeløp = null,
+                resultatBeløp = null,
+                bidragIkkeBeregnetDeltBosted = true,
+            ),
+        )
+
+        resultat.ingenOverlappendePerioderMedSøknadsbarn shouldBe true
+    }
+
+    private fun fatteVedtakForRevurderingsbarn(
+        sluttberegningSøknadsbarn: SluttberegningBarnebidragV2,
+        sluttberegningRevurderingsbarn: SluttberegningBarnebidragV2 =
+            SluttberegningBarnebidragV2(periode = periode, beregnetBeløp = BigDecimal(2000), resultatBeløp = BigDecimal(2000)),
+    ) = BeregnFatteVedtakService
         .delberegningFatteVedtak(
-            beregnGrunnlagGjeldendeBarn = grunnlagRevurderingsbarn(),
-            beregnGrunnlagAlleBarnListe = listOf(grunnlagSøknadsbarn(sluttberegningSøknadsbarn), grunnlagRevurderingsbarn()),
+            beregnGrunnlagGjeldendeBarn = grunnlagRevurderingsbarn(sluttberegningRevurderingsbarn),
+            beregnGrunnlagAlleBarnListe = listOf(
+                grunnlagSøknadsbarn(sluttberegningSøknadsbarn),
+                grunnlagRevurderingsbarn(sluttberegningRevurderingsbarn),
+            ),
             // Søknadsbarnet er markert uten full evne, slik at sjekken på avslag i sluttberegningen er det som avgjør
             grunnlagOpprinneligBeregningListe = listOf(
                 grunnlag(
@@ -113,7 +139,7 @@ class BeregnFatteVedtakServiceTest {
         virkningFraPeriode = periode.fom,
     )
 
-    private fun grunnlagRevurderingsbarn() = BeregnGrunnlagJustert(
+    private fun grunnlagRevurderingsbarn(sluttberegning: SluttberegningBarnebidragV2) = BeregnGrunnlagJustert(
         beregnGrunnlag = BeregnGrunnlag(
             periode = periode,
             søknadsbarnReferanse = revurderingsbarn,
@@ -121,7 +147,7 @@ class BeregnFatteVedtakServiceTest {
                 grunnlag(
                     type = Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
                     gjelderBarn = revurderingsbarn,
-                    innhold = SluttberegningBarnebidragV2(periode = periode, beregnetBeløp = BigDecimal(2000), resultatBeløp = BigDecimal(2000)),
+                    innhold = sluttberegning,
                 ),
             ),
         ),
