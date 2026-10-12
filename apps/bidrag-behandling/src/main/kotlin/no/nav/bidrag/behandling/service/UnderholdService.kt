@@ -29,12 +29,8 @@ import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilPerson
 import no.nav.bidrag.behandling.transformers.behandling.hentAlleBearbeidaBarnetilsyn
-import no.nav.bidrag.behandling.transformers.finnAlleDelberegningUnderholdskostnad
-import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
-import no.nav.bidrag.behandling.transformers.tilUnderholdskostnadDto
 import no.nav.bidrag.behandling.transformers.underhold.aktivereBarnetilsynHvisIngenEndringerMåAksepteres
 import no.nav.bidrag.behandling.transformers.underhold.erstatteOffentligePerioderIBarnetilsynstabellMedOppdatertGrunnlag
 import no.nav.bidrag.behandling.transformers.underhold.harAndreBarnIUnderhold
@@ -46,10 +42,7 @@ import no.nav.bidrag.behandling.transformers.underhold.tilBarnetilsyn
 import no.nav.bidrag.behandling.transformers.underhold.validerBarn
 import no.nav.bidrag.behandling.transformers.underhold.validere
 import no.nav.bidrag.behandling.transformers.underhold.validerePerioderStønadTilBarnetilsyn
-import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
-import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrunnlagMapper
 import no.nav.bidrag.behandling.ugyldigForespørsel
-import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
@@ -57,8 +50,6 @@ import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.Datoperiode
-import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
-import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

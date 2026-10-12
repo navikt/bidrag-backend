@@ -2,7 +2,6 @@ package no.nav.bidrag.behandling.transformers.beregning
 
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
-import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.barn
 import no.nav.bidrag.behandling.database.datamodell.voksneIHusstanden
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -10,13 +9,11 @@ import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle2
 import no.nav.bidrag.behandling.dto.v2.gebyr.validerGebyr
 import no.nav.bidrag.behandling.dto.v2.samvær.mapValideringsfeil
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.validering.BeregningValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.BoforholdPeriodeseringsfeil
 import no.nav.bidrag.behandling.dto.v2.validering.MåBekrefteNyeOpplysninger
 import no.nav.bidrag.behandling.dto.v2.validering.VirkningstidspunktFeilV2Dto
 import no.nav.bidrag.behandling.dto.v2.vedtak.FatteVedtakRequestDto
-import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.behandling.hentInntekterValideringsfeil
 import no.nav.bidrag.behandling.transformers.behandling.hentVirkningstidspunktValideringsfeil
 import no.nav.bidrag.behandling.transformers.behandling.hentVirkningstidspunktValideringsfeilV2
@@ -42,7 +39,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.ifTrue
-import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException

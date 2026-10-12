@@ -10,7 +10,6 @@ import no.nav.bidrag.behandling.behandlingNotFoundException
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
-import no.nav.bidrag.behandling.dto.v2.underhold.BeregnetUnderholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
@@ -21,7 +20,6 @@ import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.underhold.henteOgValidereUnderholdskostnad

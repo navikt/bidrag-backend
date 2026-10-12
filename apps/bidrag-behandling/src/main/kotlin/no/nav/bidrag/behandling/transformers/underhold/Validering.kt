@@ -19,7 +19,6 @@ import no.nav.bidrag.behandling.dto.v2.underhold.OverlappendePeriode
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadValideringsfeilTabell
 import no.nav.bidrag.behandling.ressursIkkeFunnetException

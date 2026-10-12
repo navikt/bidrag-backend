@@ -4,7 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,7 +16,6 @@ import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
