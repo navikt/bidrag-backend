@@ -40,7 +40,7 @@ import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
 import GjelderPerson from "~/components/GjelderPerson";
 import { VedleggProps } from "~/types/commonTypes";
-import { erSkattefrittBarnetillegg } from "~/constants/beregning";
+import { erSkattesatsIkkeRelevant } from "~/constants/beregning";
 
 export default function Inntekter({ vedleggNummer = 2 }: VedleggProps) {
   const { erAvslag, bidragsmottakere, bidragspliktig, søknadsbarn, type } =
@@ -289,7 +289,7 @@ function InntektPerBarnTable({
                                   content: d.beløpstypeVisningsnavn,
                                 },
                                 {
-                                  content: erSkattefrittBarnetillegg(d)
+                                  content: erSkattesatsIkkeRelevant(d)
                                     ? "Ikke relevant"
                                     : formatterProsent(d.skattefaktor),
                                 },
