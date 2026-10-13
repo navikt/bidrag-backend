@@ -148,7 +148,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
     }
 
     @Test
-    @DisplayName("Netto barnetillegg - eksempel 6 - Forsvaret er skattefritt selv om skattefaktor er oppgitt, og brutto er lik netto")
+    @DisplayName("Netto barnetillegg - eksempel 6 - Forsvaret uten skattefaktor har brutto lik netto")
     fun testNettoBarnetillegg_Eksempel06() {
         filnavn = "src/test/resources/testfiler/nettobarnetillegg/netto_barnetillegg_eksempel6.json"
         val rolle = Grunnlagstype.PERSON_BIDRAGSPLIKTIG
@@ -166,7 +166,7 @@ internal class BeregnNettoBarnetilleggTest : FellesTest() {
             { assertThat(resultat[0].barnetilleggTypeListe[1].barnetilleggType).isEqualTo(Inntektstype.BARNETILLEGG_FORSVARET) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].bruttoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
             { assertThat(resultat[0].barnetilleggTypeListe[1].nettoBarnetillegg).isEqualTo(BigDecimal.valueOf(2500).setScale(2)) },
-            { assertThat(resultat[0].barnetilleggTypeListe[1].skattefaktor).isEqualByComparingTo(BigDecimal.ZERO) },
+            { assertThat(resultat[0].barnetilleggTypeListe[1].skattefaktor).isEqualTo(BigDecimal.ZERO) },
         )
     }
 

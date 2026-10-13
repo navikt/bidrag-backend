@@ -61,8 +61,7 @@
           {
             "kode": "Inntekt",
             "inntekstype": "BARNETILLEGG_FORSVARET",
-            "beløp": 30000,
-            "skattefaktor": 0.35
+            "beløp": 30000
           }
         ]
       },
