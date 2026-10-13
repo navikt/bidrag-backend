@@ -139,7 +139,7 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
             // BP har full evne til søknadsbarn 1 i alle perioder, og søknadsbarn 1 får fullt bidrag
             andelerAvEvne(resultat, søknadsbarn1) shouldHaveSize 2
             andelerAvEvne(resultat, søknadsbarn1).forEach { it.harBPFullEvne shouldBe true }
-            sluttberegninger(resultat, søknadsbarn1).forEach { (it.resultatBeløp ?: BigDecimal.ZERO) shouldNotBe BigDecimal.ZERO }
+            sluttberegninger(resultat, søknadsbarn1).forEach { it.resultatBeløp?.signum() shouldBe 1 }
         }
     }
 
