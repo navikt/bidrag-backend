@@ -593,8 +593,6 @@ class ForholdsmessigFordelingSøknadService(
                     .mapNotNull {
                         it.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { søknad -> søknad.søknadsid }
                     }.flatten() +
-                    // Søknad opprettet av saksbehandler kan være lagret kun på BP hvis barnet ikke er lagt til i behandlingen ennå.
-                    // Beholder sammenknytningen slik at systemet ikke oppretter ny søknad for barnet som feilregistreres igjen etterpå
                     behandling.roller
                         .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
                         .filter { it.opprettetAvSaksbehandler }
