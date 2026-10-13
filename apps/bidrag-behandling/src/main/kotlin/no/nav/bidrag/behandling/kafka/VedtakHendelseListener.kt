@@ -106,12 +106,13 @@ class VedtakHendelseListener(
             .forEach { stønadsendring ->
 
                 val bp = stønadsendring.skyldner
-                val behandlinger = behandlingRepository.finnÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
-                behandlinger
-                    .sortedBy { it.id }
-                    .forEach { behandling ->
-                        behandlingRepository.låsBehandlingForOppdatering(behandling.id!!)
-                        behandlingRepository.refreshBehandling(behandling)
+                // Henter bare id slik at behandlingen lastes etter at den er låst og dermed har siste committede tilstand
+                behandlingRepository
+                    .finnIdÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
+                    .sorted()
+                    .forEach { behandlingId ->
+                        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+                        val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
                         behandleBehandlingHvisOpphorEllerInnkreving(stønadsendring, behandling)
                     }
             }

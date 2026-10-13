@@ -271,7 +271,6 @@ class VirkningstidspunktService(
             behandlingRepository
                 .findBehandlingById(behandlingsid)
                 .orElseThrow { behandlingNotFoundException(behandlingsid) }
-        behandlingRepository.refreshBehandling(behandling)
         behandling.let {
             log.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid" }
             secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
@@ -742,13 +741,17 @@ class VirkningstidspunktService(
         }
     }
 
+    // Virkningstidspunkt skal alltid være lik det som var i opprinnelig vedtaket.
+    // Oppdaterer derfor ikke virkningstidspunkt hvis behandlingen er klage eller omgjøring
+    fun Behandling.skalOppdatereVirkningstidspunktSærbidrag(): Boolean =
+        tilType() == TypeBehandling.SÆRBIDRAG &&
+            virkningstidspunkt != LocalDate.now().withDayOfMonth(1) &&
+            !erKlageEllerOmgjøring
+
     @Transactional
     fun Behandling.oppdatereVirkningstidspunktSærbidrag() {
-        if (tilType() != TypeBehandling.SÆRBIDRAG) return
         val nyVirkningstidspunkt = LocalDate.now().withDayOfMonth(1)
-        // Virkningstidspunkt skal alltid være lik det som var i opprinnelig vedtaket.
-        // Oppdaterer derfor ikke virkningstidspunkt hvis behandlingen er klage eller omgjøring
-        if (virkningstidspunkt != nyVirkningstidspunkt && !erKlageEllerOmgjøring) {
+        if (skalOppdatereVirkningstidspunktSærbidrag()) {
             log.info {
                 "Virkningstidspunkt $virkningstidspunkt på særbidrag er ikke riktig som følge av ny kalendermåned." +
                     " Endrer virkningstidspunkt til starten av nåværende kalendermåned $nyVirkningstidspunkt"

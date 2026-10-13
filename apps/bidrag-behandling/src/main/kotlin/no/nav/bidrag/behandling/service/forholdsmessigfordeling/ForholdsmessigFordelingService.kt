@@ -172,7 +172,6 @@ class ForholdsmessigFordelingService(
             }
             behandlingRepository.låsBehandlingForOppdatering(behandlingId)
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
-            behandlingRepository.refreshBehandling(behandling)
 
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
             val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
@@ -543,6 +542,11 @@ class ForholdsmessigFordelingService(
             emptyList(),
         )
     }
+
+    fun skalSynkronisereFF(behandling: Behandling): Boolean = behandling.erIForholdsmessigFordeling &&
+        !behandling.erVedtakFattet &&
+        behandling.vedtakDetaljer == null &&
+        foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())
 
     private fun foretaNySynkroniseringAvFF(
         behandling: Behandling,

@@ -669,8 +669,17 @@ class BehandlingService(
         behandlingsid: Long,
         ikkeHentGrunnlag: Boolean = false,
     ): Behandling {
-        if (!ikkeHentGrunnlag) behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
-        val behandling = hentBehandlingById(behandlingsid)
+        val behandlingUtenLås = hentBehandlingById(behandlingsid)
+        // Lås kun når hentingen faktisk skal skrive til behandlingen, slik at vanlige GET-kall ikke venter på låsen og holder DB-tilkoblinger.
+        // Behandlingen lastes på nytt etter låsen for å få siste committede tilstand.
+        val behandling =
+            if (skalOppdatereVedHenting(behandlingUtenLås, ikkeHentGrunnlag)) {
+                behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
+                behandlingRepository.tømPersistenceContext()
+                hentBehandlingById(behandlingsid)
+            } else {
+                behandlingUtenLås
+            }
         val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
         if (!ikkeHentGrunnlag && !erVedtakFattet) {
             if (behandling.erIForholdsmessigFordeling) {
@@ -684,6 +693,16 @@ class BehandlingService(
             behandling.oppdatereVirkningstidspunktSærbidrag()
         }
         return behandling
+    }
+
+    private fun skalOppdatereVedHenting(
+        behandling: Behandling,
+        ikkeHentGrunnlag: Boolean,
+    ): Boolean {
+        if (virkningstidspunktService.run { behandling.skalOppdatereVirkningstidspunktSærbidrag() }) return true
+        if (ikkeHentGrunnlag || behandling.erVedtakFattet || behandling.vedtakDetaljer != null) return false
+        return forholdsmessigFordelingService?.skalSynkronisereFF(behandling) == true ||
+            grunnlagService.skalOppdatereGrunnlagSynkront(behandling)
     }
 
     @Transactional(readOnly = true)

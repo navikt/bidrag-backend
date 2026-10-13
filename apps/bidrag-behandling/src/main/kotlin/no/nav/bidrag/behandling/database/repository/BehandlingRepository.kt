@@ -96,10 +96,10 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     @Query(
         value = """
         WITH hoved AS (
-            SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint AS id FROM behandling bb WHERE bb.id = :behandlingId
+            SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint AS id FROM behandling bb WHERE bb.id = :behandlingId and bb.deleted is false
         )
         SELECT b.id FROM behandling b
-        WHERE b.id = :behandlingId OR b.id = (SELECT id FROM hoved)
+        WHERE b.id = :behandlingId OR b.id = (SELECT id FROM hoved) and b.deleted is false
         ORDER BY CASE WHEN b.id = (SELECT id FROM hoved) THEN 0 ELSE 1 END, b.id
         FOR UPDATE
     """,
@@ -204,6 +204,22 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     fun finnÅpneBidragsbehandlingerForBpMedFF(
         @Param("bpIdent") bpIdent: String,
     ): List<Behandling>
+
+    @Query(
+        value = """
+        SELECT DISTINCT b.id FROM behandling b
+        JOIN rolle br ON br.behandling_id = b.id
+        WHERE br.rolletype = 'BIDRAGSPLIKTIG'
+          AND br.ident = :bpIdent
+          AND b.deleted = false
+          AND b.vedtak_detaljer IS NULL
+          AND b.forholdsmessig_fordeling IS not NULL AND (b.forholdsmessig_fordeling->>'erHovedbehandling') = 'true'
+    """,
+        nativeQuery = true,
+    )
+    fun finnIdÅpneBidragsbehandlingerForBpMedFF(
+        @Param("bpIdent") bpIdent: String,
+    ): List<Long>
 
     @Query(
         value = """
