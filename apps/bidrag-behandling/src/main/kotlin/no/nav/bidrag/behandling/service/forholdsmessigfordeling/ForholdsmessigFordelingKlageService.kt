@@ -15,7 +15,6 @@ import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
 import no.nav.bidrag.behandling.service.hentSak
-import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.behandling.oppdaterBehandlingEtterOppdatertRoller
 import no.nav.bidrag.behandling.transformers.erOverEllerLik18År
 import no.nav.bidrag.behandling.transformers.maxOfNullable
@@ -660,7 +659,7 @@ class ForholdsmessigFordelingKlageService(
         hovedsøknadsid: Long,
         rollerITilknyttedeSøknader: List<OpprettetSøknad>,
     ): List<Pair<String?, Stønadstype?>> {
-        val vedtak = behandling.omgjøringsdetaljer!!.omgjørVedtakId?.let { hentVedtak(it) }
+        val vedtak = behandling.omgjøringsdetaljer!!.omgjørVedtakId?.let { vedtakConsumer.hentVedtak(it) }
         val søknaderOpprinneligVedtak =
             vedtak?.stønadsendringListe?.mapNotNull {
                 vedtak.grunnlagListe.hentSøknadForPerson(it.kravhaver, it.type)
