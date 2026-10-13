@@ -289,7 +289,9 @@ function InntektPerBarnTable({
                                   content: d.beløpstypeVisningsnavn,
                                 },
                                 {
-                                  content: erSkattesatsIkkeRelevant(d)
+                                  content: erSkattesatsIkkeRelevant(
+                                    d.inntektsposter[0],
+                                  )
                                     ? "Ikke relevant"
                                     : formatterProsent(d.skattefaktor),
                                 },
