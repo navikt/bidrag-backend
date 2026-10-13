@@ -287,15 +287,33 @@ class ForholdsmessigFordelingBarnService(
     }
 
     /**
-     * Fjerner referanser til en sak (BM og gebyrsøknader) når det ikke lenger finnes søknadsbarn i saken.
-     * Gjelder ikke saken til behandlingen.
+     * Fjerner referanser til en sak (BM, søknader og gebyrsøknader) når det ikke lenger finnes søknadsbarn i saken.
+     * Hvis saken er behandlingens sak, flyttes behandlingen og gjenværende roller til saken med flest søknadsbarn.
      */
     private fun fjernSakUtenSøknadsbarn(
         behandling: Behandling,
         saksnummer: String,
     ) {
-        if (saksnummer == behandling.saksnummer) return
         if (behandling.søknadsbarn.any { it.saksnummer == saksnummer }) return
+        if (saksnummer == behandling.saksnummer) {
+            val nySaksnummer =
+                behandling.søknadsbarn
+                    .groupBy { it.saksnummer }
+                    .maxByOrNull { (_, barn) -> barn.count { !it.erRevurderingsbarn } }
+                    ?.key ?: return
+            behandling.roller
+                .filter { it.forholdsmessigFordeling?.tilhørerSak == saksnummer && it.rolletype != Rolletype.BIDRAGSMOTTAKER }
+                .forEach { it.forholdsmessigFordeling!!.tilhørerSak = nySaksnummer }
+            behandling.saksnummer = nySaksnummer
+            secureLogger.info { "Endret saksnummer i behandling ${behandling.id} fra $saksnummer til $nySaksnummer fordi saken ikke har flere søknadsbarn" }
+        }
+
+        behandling.roller.forEach { rolle ->
+            rolle.forholdsmessigFordeling
+                ?.søknaderUnderBehandling
+                ?.filter { it.saksnummer == saksnummer }
+                ?.forEach { it.status = Behandlingstatus.FEILREGISTRERT }
+        }
 
         behandling.roller.forEach { rolle ->
             val gebyr = rolle.gebyr ?: return@forEach
