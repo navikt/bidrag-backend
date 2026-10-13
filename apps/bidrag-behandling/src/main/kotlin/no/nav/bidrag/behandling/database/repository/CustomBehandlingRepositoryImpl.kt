@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.database.repository
 
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagAsyncStatus
 import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagDetaljer
 import no.nav.bidrag.behandling.transformers.toLocalDateTime
@@ -12,6 +13,10 @@ import java.time.format.DateTimeParseException
 class CustomBehandlingRepositoryImpl : CustomBehandlingRepository {
     @PersistenceContext
     private lateinit var entityManager: EntityManager
+
+    override fun refreshBehandling(behandling: Behandling) {
+        entityManager.refresh(behandling)
+    }
 
     override fun hentLasterGrunnlagStatus(id: Long): LasterGrunnlagDetaljer? = try {
         val query =
