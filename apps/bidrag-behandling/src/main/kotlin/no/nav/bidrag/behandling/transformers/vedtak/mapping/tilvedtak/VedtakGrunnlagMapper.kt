@@ -234,6 +234,8 @@ fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
     val tidligsteBeregnFra =
         if (stønadstype == Stønadstype.BIDRAG18AAR) {
             maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
+        } else if (avslag != null) {
+            virkningstidspunktRolle.toYearMonth()
         } else {
             // Virkning kan ikke vær før barnet er født
             maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
@@ -312,7 +314,7 @@ fun Behandling.finnBeregnTilDatoBehandling(
 
                 else -> {
                     val virkningstidspunkt = søknadsbarnRolle?.virkningstidspunkt ?: this.virkningstidspunkt!!
-                    if (virkningstidspunkt >= opprinneligVedtakstidspunktBeregnTil) {
+                    if (virkningstidspunkt > opprinneligVedtakstidspunktBeregnTil) {
                         // Revurderingsbarn så kan opphørsdato være før virkningstidspunkt. Feks hvis bidraget har opphørt før virkning men
                         // har løpende bidrag fra eldste virkningstidspunkt
                         minOfNullable(opphørsdato?.toLocalDate(), virkningstidspunkt.plusMonths(1).withDayOfMonth(1))!!

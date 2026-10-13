@@ -24,6 +24,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregn
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
@@ -557,7 +558,7 @@ class ForholdsmessigFordelingKlageService(
 
         if (harAndreBarnISøknad) {
             barn.forEach {
-                KLAGE_LOGGER.info { "Feilregistrerer barn ${it.ident} fra søknad $søknadsid for behandling ${behandling.id}" }
+                secureLogger.info { "Feilregistrerer barn ${it.ident} fra søknad $søknadsid for behandling ${behandling.id}" }
                 søknadService.feilregistrerBarnFraSøknad(it, søknadsid)
             }
         } else {
