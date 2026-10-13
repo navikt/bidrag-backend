@@ -743,10 +743,9 @@ class VirkningstidspunktService(
 
     // Virkningstidspunkt skal alltid være lik det som var i opprinnelig vedtaket.
     // Oppdaterer derfor ikke virkningstidspunkt hvis behandlingen er klage eller omgjøring
-    fun Behandling.skalOppdatereVirkningstidspunktSærbidrag(): Boolean =
-        tilType() == TypeBehandling.SÆRBIDRAG &&
-            virkningstidspunkt != LocalDate.now().withDayOfMonth(1) &&
-            !erKlageEllerOmgjøring
+    fun Behandling.skalOppdatereVirkningstidspunktSærbidrag(): Boolean = tilType() == TypeBehandling.SÆRBIDRAG &&
+        virkningstidspunkt != LocalDate.now().withDayOfMonth(1) &&
+        !erKlageEllerOmgjøring
 
     @Transactional
     fun Behandling.oppdatereVirkningstidspunktSærbidrag() {
