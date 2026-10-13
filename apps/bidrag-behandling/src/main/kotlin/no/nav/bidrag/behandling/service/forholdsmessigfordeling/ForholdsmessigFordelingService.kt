@@ -637,6 +637,7 @@ class ForholdsmessigFordelingService(
             klageService.korrigerKlagesøknader(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
+            barnService.fjernSakerUtenSøknadsbarn(behandling)
             behandling.oppdaterFFSistSynkronisert()
             return true
         }
@@ -662,6 +663,7 @@ class ForholdsmessigFordelingService(
         }
 
         søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
+        barnService.fjernSakerUtenSøknadsbarn(behandling)
 
         behandling.oppdaterFFSistSynkronisert()
         return true

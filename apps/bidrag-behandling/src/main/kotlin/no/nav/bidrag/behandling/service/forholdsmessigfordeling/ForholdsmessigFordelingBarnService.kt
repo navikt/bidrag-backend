@@ -287,23 +287,45 @@ class ForholdsmessigFordelingBarnService(
     }
 
     /**
+     * Fjerner referanser til alle saker i behandlingen som ikke lenger har søknadsbarn.
+     */
+    fun fjernSakerUtenSøknadsbarn(behandling: Behandling) {
+        val saker =
+            (
+                listOf(behandling.saksnummer) +
+                    behandling.roller.mapNotNull { it.forholdsmessigFordeling?.tilhørerSak } +
+                    behandling.roller.flatMap { rolle ->
+                        rolle.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { it.saksnummer } ?: emptyList()
+                    } +
+                    behandling.roller.flatMap { rolle -> rolle.gebyrSøknader.map { it.saksnummer } }
+            ).distinct()
+        saker.forEach { fjernSakUtenSøknadsbarn(behandling, it) }
+    }
+
+    /**
      * Fjerner referanser til en sak (BM, søknader og gebyrsøknader) når det ikke lenger finnes søknadsbarn i saken.
-     * Hvis saken er behandlingens sak, flyttes behandlingen og gjenværende roller til saken med flest søknadsbarn.
+     * BP og behandlingen som tilhører saken flyttes til behandlingens sak (barn og BM flyttes aldri),
+     * eller til saken med flest søknadsbarn hvis det er behandlingens sak som fjernes.
      */
     private fun fjernSakUtenSøknadsbarn(
         behandling: Behandling,
         saksnummer: String,
     ) {
+        if (behandling.søknadsbarn.isEmpty()) return
         if (behandling.søknadsbarn.any { it.saksnummer == saksnummer }) return
-        if (saksnummer == behandling.saksnummer) {
-            val nySaksnummer =
-                behandling.søknadsbarn
+        val nySaksnummer =
+            behandling.saksnummer.takeIf { sak -> sak != saksnummer && behandling.søknadsbarn.any { it.saksnummer == sak } }
+                ?: behandling.søknadsbarn
                     .groupBy { it.saksnummer }
                     .maxByOrNull { (_, barn) -> barn.count { !it.erRevurderingsbarn } }
                     ?.key ?: return
-            behandling.roller
-                .filter { it.forholdsmessigFordeling?.tilhørerSak == saksnummer && it.rolletype != Rolletype.BIDRAGSMOTTAKER }
-                .forEach { it.forholdsmessigFordeling!!.tilhørerSak = nySaksnummer }
+        behandling.roller
+            .filter { it.forholdsmessigFordeling?.tilhørerSak == saksnummer && it.rolletype == Rolletype.BIDRAGSPLIKTIG }
+            .forEach {
+                it.forholdsmessigFordeling!!.tilhørerSak = nySaksnummer
+                secureLogger.info { "Endret tilhørerSak for BP ${it.ident} i behandling ${behandling.id} fra $saksnummer til $nySaksnummer" }
+            }
+        if (saksnummer == behandling.saksnummer) {
             behandling.saksnummer = nySaksnummer
             secureLogger.info { "Endret saksnummer i behandling ${behandling.id} fra $saksnummer til $nySaksnummer fordi saken ikke har flere søknadsbarn" }
         }
