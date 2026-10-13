@@ -2354,9 +2354,8 @@ fun List<GrunnlagDto>.finnTotalInntektForRolle(
         ?: BigDecimal.ZERO
 }
 
-// Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt. Bare disse postene trekkes fra,
-// slik at andre barnetillegg i samme inntekt fortsatt tas med. Beløpet på inntekten og på postene kan være avrundet
-// ulikt ved lagring, så fratrekket kan ikke gi negativ inntekt. Uten skattefrie poster beholdes beløpet uendret.
-private fun Inntekt.beløpUtenSkattefrieBarnetillegg() = inntektsposter.filter { it.inntektstype?.erSkattefrittBarnetillegg == true }.takeIf { it.isNotEmpty() }?.let { skattefrie -> maxOf(belop - skattefrie.sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }, BigDecimal.ZERO) } ?: belop
+// Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt, og tas ikke med i inntekten. For en inntekt med
+// skattefrie poster summeres bare de andre postene, slik at andre barnetillegg i samme inntekt fortsatt tas med.
+private fun Inntekt.beløpUtenSkattefrieBarnetillegg() = if (inntektsposter.none { it.inntektstype?.erSkattefrittBarnetillegg == true }) belop else inntektsposter.filterNot { it.inntektstype?.erSkattefrittBarnetillegg == true }.sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
 
 private fun Inntekt.harBareSkattefrieBarnetillegg() = inntektsposter.isNotEmpty() && inntektsposter.all { it.inntektstype?.erSkattefrittBarnetillegg == true }

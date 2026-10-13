@@ -473,14 +473,11 @@ object InntektUtil {
         return if (kapitalinntekt < BigDecimal.ZERO) BigDecimal.ZERO else kapitalinntekt
     }
 
-    // Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt, og skal ikke være med i inntektsgrunnlaget som skal summeres
-    // Beløpet på inntekten og på postene kan være avrundet ulikt ved lagring. En inntekt med bare skattefrie poster gir derfor
-    // alltid 0, og fratrekket kan aldri gi negativ inntekt.
-    fun justerForSkattefrieBarnetillegg(inntektsrapporteringPeriode: InntektsrapporteringPeriode): BigDecimal {
-        val (skattefrie, andre) = inntektsrapporteringPeriode.inntektspostListe.partition { it.inntektstype?.erSkattefrittBarnetillegg == true }
-        if (andre.isEmpty()) return BigDecimal.ZERO
-        return maxOf(inntektsrapporteringPeriode.beløp - skattefrie.sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }, BigDecimal.ZERO)
-    }
+    // Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt etter barnebidragsforskriften § 4, og tas ikke med
+    // når inntekten summeres. Bare de andre postene i inntekten summeres.
+    fun beløpUtenSkattefrieBarnetillegg(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = inntektsrapporteringPeriode.inntektspostListe
+        .filterNot { it.inntektstype?.erSkattefrittBarnetillegg == true }
+        .sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
 
     // Sjekker om inntekten er kapitalinntekt
     fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) = inntektsrapportering in listOf(Inntektsrapportering.KAPITALINNTEKT, Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER)

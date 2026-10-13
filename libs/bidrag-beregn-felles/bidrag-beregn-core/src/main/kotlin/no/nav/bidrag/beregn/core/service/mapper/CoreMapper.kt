@@ -17,9 +17,9 @@ import no.nav.bidrag.beregn.core.dto.SjablonPeriodeCore
 import no.nav.bidrag.beregn.core.dto.TilleggsstønadPeriodeCore
 import no.nav.bidrag.beregn.core.dto.VoksneIHusstandenPeriodeCore
 import no.nav.bidrag.beregn.core.service.BeregnService.BeregnGrunnlagJustert
+import no.nav.bidrag.beregn.core.util.InntektUtil.beløpUtenSkattefrieBarnetillegg
 import no.nav.bidrag.beregn.core.util.InntektUtil.erKapitalinntekt
 import no.nav.bidrag.beregn.core.util.InntektUtil.inneholderSkattefrieBarnetillegg
-import no.nav.bidrag.beregn.core.util.InntektUtil.justerForSkattefrieBarnetillegg
 import no.nav.bidrag.beregn.core.util.InntektUtil.justerKapitalinntekt
 import no.nav.bidrag.commons.service.sjablon.Bidragsevne
 import no.nav.bidrag.commons.service.sjablon.Samværsfradrag
@@ -126,7 +126,7 @@ abstract class CoreMapper {
                                     innslagKapitalinntektSjablonverdi = innslagKapitalinntektSjablonverdi,
                                 )
                             } else if (inneholderSkattefrieBarnetillegg(it.innhold)) {
-                                justerForSkattefrieBarnetillegg(it.innhold)
+                                beløpUtenSkattefrieBarnetillegg(it.innhold)
                             } else {
                                 it.innhold.beløp
                             },
