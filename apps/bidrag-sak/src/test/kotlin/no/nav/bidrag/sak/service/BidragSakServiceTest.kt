@@ -5,14 +5,11 @@ import io.kotest.matchers.shouldBe
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.slot
-import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import no.nav.bidrag.commons.security.utils.TokenUtils
-import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
@@ -49,7 +46,6 @@ import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -88,9 +84,6 @@ internal class BidragSakServiceTest {
         every { bidragssakRepositoryMock.save(capture(saveSakSlot)) }.answers { saveSakSlot.captured }
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-        every { identConsumer.hentPersonInformasjon(any()) } returns null
-        mockkObject(AppContext)
-        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
 
         bidragSakService =
             BidragSakService(
@@ -108,11 +101,6 @@ internal class BidragSakServiceTest {
                 opprettSakValidator = opprettSakValidator,
                 bbmConsumer = bbmConsumerMock,
             )
-    }
-
-    @AfterEach
-    fun tearDown() {
-        unmockkObject(AppContext)
     }
 
     @Nested

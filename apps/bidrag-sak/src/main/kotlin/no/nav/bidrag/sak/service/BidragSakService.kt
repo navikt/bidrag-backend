@@ -32,6 +32,7 @@ import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
+import no.nav.bidrag.sak.repository.SøknadsknytningRepository
 import no.nav.bidrag.sak.repository.VedtakOverføringRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.VEDTAK_LINK
@@ -42,6 +43,7 @@ import no.nav.bidrag.sak.util.tilEngangsbeløptype
 import no.nav.bidrag.sak.util.tilStønadstype
 import no.nav.bidrag.sak.util.tilVedtakstype
 import no.nav.bidrag.sak.validering.OpprettSakValidator
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
@@ -53,11 +55,13 @@ import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
+import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import kotlin.collections.firstOrNull
+import kotlin.collections.ifEmpty
 import kotlin.collections.map
 
 fun Set<Tilgang>.finnMidlertidligTilgang(
@@ -146,7 +150,7 @@ class BidragSakService(
     }
 
     fun finnSakerFor(fodselsnummer: Personident): List<BidragssakDto> = bidragssakRepository
-        .findByRoller(identConsumer.hentAlleIdenter(fodselsnummer.verdi) ?: listOf(fodselsnummer.verdi))
+        .findByRoller(identConsumer.hentAlleIdenter(fodselsnummer.verdi))
         .filter {
             DefaultUnleashContextProvider.updateSaksnummer(it.saksnummer)
             !it.erAvsluttet() || UnleashFeatures.TILGANG_TIL_AVSLUTTET_SAK.isEnabled
