@@ -50,7 +50,7 @@ enum class Inntektstype {
 
         /**
          * Barnetillegg som er skattefrie etter skatteloven § 5-15 første ledd bokstav b (tiltakspenger) og f (forsørgertillegg til
-         * tjenestepliktige i Forsvaret). Netto er lik brutto, og tillegget er ikke personinntekt etter barnebidragsforskriften § 4.
+         * tjenestepliktige i Forsvaret). Tillegget er ikke personinntekt etter barnebidragsforskriften § 4, og tas ikke med i inntekten.
          */
         val Inntektstype.erSkattefrittBarnetillegg get() = this == BARNETILLEGG_TILTAKSPENGER || this == BARNETILLEGG_FORSVARET
     }
