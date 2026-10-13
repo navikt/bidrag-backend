@@ -215,6 +215,13 @@ class GrunnlagService(
         return gjelder to hentetGrunnlag
     }
 
+    // Asynkron innhenting tar egen lås i jobben, så da trenger ikke kallet å låse behandlingen.
+    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled &&
+        (
+            foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong()) ||
+                foretaNyGrunnlagsinnhenting(behandling, grenseInnhentingBeløpshistorikk.toLong())
+            )
+
     @Transactional
     fun oppdaterGrunnlagForBehandlingAsync(behandling: Behandling) {
         if (!UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled) {
@@ -232,6 +239,7 @@ class GrunnlagService(
 
     @Transactional
     fun oppdatereGrunnlagForBehandling(behandlingId: Long) {
+        behandlingRepository!!.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository?.findBehandlingById(behandlingId)!!.get()
         if (behandling.metadata?.lasterGrunnlagDetaljer()?.erBestilt() == false) {
             log.info { "Grunnlag for behandling $behandlingId lastes allerede, hopper over ny innhenting" }
@@ -325,6 +333,9 @@ class GrunnlagService(
                         },
                         scope.async {
                             lagreBpsBarnUtenBidragsak(behandling)
+                        },
+                        scope.async {
+                            lagreManuelleVedtakGrunnlag(behandling)
                         },
                     ).awaitAll()
                 }

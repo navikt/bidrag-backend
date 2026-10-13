@@ -365,7 +365,7 @@ class BisysServiceTest(
             hendelse!!.first().apply {
                 saksnummer shouldBe request.saksnummer
                 søknadsid shouldBe response.søknadsid
-                hendelsestype shouldBe "FFET"
+                hendelsestype shouldBe "FFAU"
                 enhet shouldBe request.behandlerenhet
                 søknadstype shouldBe "FF"
                 gruppeKombinasjonskode shouldBe "BI"

@@ -392,6 +392,7 @@ class BeregningService(
                     virkningstidspunkt = virkningstidspunktBeregning,
                     opphørsdato = it.beregnGrunnlag.opphørsdato,
                     stønadstype = it.beregnGrunnlag.stønadstype,
+                    erDirekteAvslag = søknadsbarn.erDirekteAvslag,
                     omgjøringOrkestratorGrunnlag = it.omgjøringOrkestratorGrunnlag,
                 )
             },
