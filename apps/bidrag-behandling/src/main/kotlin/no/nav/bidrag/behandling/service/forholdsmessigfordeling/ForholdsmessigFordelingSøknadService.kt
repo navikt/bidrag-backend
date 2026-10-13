@@ -515,7 +515,7 @@ class ForholdsmessigFordelingSøknadService(
                     søknader =
                     oppdaterLagredeSoknadsstatuserFraBbm(
                         ffDetaljer.søknader,
-                        alleSøknaderRelevantForBehandling.filter { it.saksnummer == rolle.saksnummer },
+                        alleSøknaderRelevantForBehandling.filter { rolle.rolletype == Rolletype.BIDRAGSPLIKTIG || it.saksnummer == rolle.saksnummer },
                         rolle,
                     ),
                 )
@@ -545,8 +545,35 @@ class ForholdsmessigFordelingSøknadService(
             åpneFFSøknader
                 .filter { it.søknadsid != søknadSomSkalBeholdes.søknadsid }
                 .forEach { duplikatSøknad ->
-                    feilregistrerSøknad(duplikatSøknad, behandling)
+                    feilregistrerBarnEllerHeleSøknad(rolle, duplikatSøknad, behandling)
                 }
+        }
+    }
+
+    /**
+     * Feilregistrerer hele søknaden hvis barnet er eneste barn under behandling i søknaden, ellers bare barnet fra søknaden.
+     */
+    fun feilregistrerBarnEllerHeleSøknad(
+        rolle: Rolle,
+        søknad: ForholdsmessigFordelingSøknadBarn,
+        behandling: Behandling,
+    ) {
+        val søknadsid = søknad.søknadsid ?: return
+        val harAndreBarnUnderBehandling =
+            try {
+                bbmConsumer
+                    .hentSøknad(søknadsid)
+                    ?.søknad
+                    ?.parterUnderBehandling
+                    ?.any { it.personident != rolle.ident } == true
+            } catch (e: Exception) {
+                LOGGER.warn(e) { "Kunne ikke hente søknad $søknadsid fra BBM. Feilregistrerer bare barnet fra søknaden" }
+                true
+            }
+        if (harAndreBarnUnderBehandling) {
+            feilregistrerBarnFraSøknad(rolle, søknadsid)
+        } else {
+            feilregistrerSøknad(søknad, behandling)
         }
     }
 

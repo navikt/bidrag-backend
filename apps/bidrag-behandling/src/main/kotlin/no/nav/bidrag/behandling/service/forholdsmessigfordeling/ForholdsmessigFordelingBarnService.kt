@@ -173,6 +173,32 @@ class ForholdsmessigFordelingBarnService(
     /**
      * Sletter revurderingsbarn som ikke lenger har løpende bidrag eller privat avtale.
      */
+    fun slettSøknadsbarnUtenÅpenSøknad(
+        behandling: Behandling,
+        rolle: Rolle,
+    ) {
+        if (rolle.erRevurderingsbarn || rolle.harLøpendeBidragFørOpphørEllerLøpende()) return
+        // Søknader som ikke hentes som relevante for FF (feks opphør) er bare lagret på rollen
+        val harÅpenSøknad =
+            rolle.forholdsmessigFordeling
+                ?.søknaderUnderBehandling
+                ?.any { it.behandlingstype?.erForholdsmessigFordeling != true } == true
+        if (harÅpenSøknad) {
+            secureLogger.info { "Sletter ikke søknadsbarn ${rolle.ident} fra behandling ${behandling.id} fordi barnet har åpen søknad" }
+            return
+        }
+        if (behandling.søknadsbarn.none { it != rolle && !it.erRevurderingsbarn }) {
+            secureLogger.info { "Sletter ikke søknadsbarn ${rolle.ident} fra behandling ${behandling.id} fordi det er siste søknadsbarn" }
+            return
+        }
+
+        feilregistrerBarnFraFFSøknad(rolle)
+        behandlingService.slettRolleFraBehandling(behandling, rolle)
+        behandling.roller.remove(rolle)
+        secureLogger.info { "Slettet søknadsbarn ${rolle.ident} uten åpen søknad eller løpende bidrag fra behandling ${behandling.id}" }
+        behandlingService.sendOppdatertHendelse(behandling.id!!, false)
+    }
+
     fun slettRevurderingsbarn(
         behandling: Behandling,
         rolle: Rolle,
@@ -186,11 +212,13 @@ class ForholdsmessigFordelingBarnService(
         behandling.roller.remove(rolle)
         secureLogger.info { "Slettet revurderingsbarn ${rolle.ident} fra behandling ${behandling.id}" }
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
+        val bmIdent = rolle.bidragsmottaker?.ident
+        if (eldsteSøknad == null || bmIdent == null) return
         søknadService.opprettForsendelseForNySøknad(
             rolle.saksnummer,
             behandling,
-            rolle.bidragsmottaker!!.ident!!,
-            eldsteSøknad!!,
+            bmIdent,
+            eldsteSøknad,
 //            listOf(SakKravhaver(kravhaver = rolle.ident!!, saksnummer = rolle.saksnummer, stønadstype = rolle.stønadstype)),
         )
     }
@@ -576,7 +604,7 @@ class ForholdsmessigFordelingBarnService(
                 søknad?.søknad?.behandlingStatusType == BehandlingStatusType.AVBRUTT
             }
 
-        rolle.behandling.bidragsmottaker
+        rolle.bidragsmottaker
             ?.forholdsmessigFordeling
             ?.søknaderUnderBehandling
             ?.filter { søknaderFeilregistrert.contains(it.søknadsid!!) }

@@ -73,6 +73,7 @@ class VedtakHendelseListener(
             "Mottok hendelse for vedtak ${vedtak.id} med type ${vedtak.type}, " +
                 "behandlingId ${vedtak.behandlingId} og saksnummer ${vedtak.saksnummer}: $vedtak"
         }
+        behandlingRepository.låsBehandlingForOppdatering(vedtak.behandlingId!!)
         val behandling = behandlingService.hentBehandlingById(vedtak.behandlingId!!)
 
         if (vedtak.erInnkrevingAvBidragOmgjøringsvedtak(behandling)) {
@@ -108,6 +109,7 @@ class VedtakHendelseListener(
                 val behandlinger = behandlingRepository.finnÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
                 behandlinger
                     .forEach { behandling ->
+                        behandlingRepository.låsBehandlingForOppdatering(behandling.id!!)
                         behandleBehandlingHvisOpphorEllerInnkreving(stønadsendring, behandling)
                     }
             }
