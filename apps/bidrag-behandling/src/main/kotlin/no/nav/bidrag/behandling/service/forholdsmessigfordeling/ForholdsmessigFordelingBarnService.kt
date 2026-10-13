@@ -298,7 +298,7 @@ class ForholdsmessigFordelingBarnService(
                         rolle.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { it.saksnummer } ?: emptyList()
                     } +
                     behandling.roller.flatMap { rolle -> rolle.gebyrSøknader.map { it.saksnummer } }
-            ).distinct()
+                ).distinct()
         saker.forEach { fjernSakUtenSøknadsbarn(behandling, it) }
     }
 
