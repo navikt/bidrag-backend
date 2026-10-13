@@ -12,8 +12,8 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erDirekteAvsl
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import java.time.LocalDate
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class BeregnTilTest {
     @Test
