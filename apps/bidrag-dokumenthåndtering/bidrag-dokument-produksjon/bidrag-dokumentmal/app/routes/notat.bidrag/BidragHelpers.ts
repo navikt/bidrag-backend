@@ -7,8 +7,8 @@ import {
 
 // Beregningen gir avslag/opphør uten beløp for disse resultatene, på samme måte som når barnet er selvforsørget
 const beregnetAvslagUtenBeløp = [
-  Resultatkode.BIDRAGIKKEBEREGNETDELTBOSTED,
-  Resultatkode.FULLTUNDERHOLDTAVOFFENTLIG,
+  Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
+  Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
 ];
 
 export function erBeregnetAvslagUtenBeløp(
