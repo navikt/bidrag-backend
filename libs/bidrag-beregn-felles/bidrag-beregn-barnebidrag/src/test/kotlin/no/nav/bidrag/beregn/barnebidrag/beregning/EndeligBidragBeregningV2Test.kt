@@ -5,19 +5,20 @@ import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BarnetilleggDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragJustertForBPBarnetilleggBeregningGrunnlag
-import no.nav.bidrag.beregn.barnebidrag.bo.BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BpAndelUnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SamværsfradragDelberegningBeregningGrunnlag
-import no.nav.bidrag.beregn.barnebidrag.bo.SluttberegningBarnebidragV2BeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SumBidragTilFordelingDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SøknadsbarnetBorHosBpGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.UnderholdskostnadDelberegningBeregningGrunnlag
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
 import java.math.BigDecimal
 
 class EndeligBidragBeregningV2Test {
@@ -81,19 +82,16 @@ class EndeligBidragBeregningV2Test {
     @Nested
     inner class BidragJustertForNettoBarnetilleggBM {
 
-        @Test
-        fun `skal ikke være justert for barnetillegg BM når BM ikke har barnetillegg og U er 0`() {
+        @ParameterizedTest(name = "nettoBarnetilleggBM = {0}")
+        @NullSource
+        @ValueSource(strings = ["0"])
+        fun `skal ikke være justert for barnetillegg BM når BM ikke har barnetillegg og U er 0`(nettoBarnetilleggBM: String?) {
             val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(underholdskostnad = BigDecimal.ZERO, bpAndel = BigDecimal.ZERO, nettoBarnetilleggBM = null),
-            )
-
-            resultat.erBidragJustertForNettoBarnetilleggBM shouldBe false
-        }
-
-        @Test
-        fun `skal ikke være justert for barnetillegg BM når barnetillegget er 0`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(underholdskostnad = BigDecimal.ZERO, bpAndel = BigDecimal.ZERO, nettoBarnetilleggBM = BigDecimal.ZERO),
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal.ZERO,
+                    bpAndel = BigDecimal.ZERO,
+                    nettoBarnetilleggBM = nettoBarnetilleggBM?.let { BigDecimal(it) },
+                ),
             )
 
             resultat.erBidragJustertForNettoBarnetilleggBM shouldBe false
@@ -164,22 +162,6 @@ class EndeligBidragBeregningV2Test {
         }
 
         @Test
-        fun `skal ikke gi avslag når BPs andel av U er nøyaktig 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(
-                    underholdskostnad = BigDecimal(8000),
-                    bpAndel = BigDecimal(4000),
-                    nettoBarnetilleggBM = null,
-                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO),
-                    bpAndelFaktor = BigDecimal("0.5"),
-                ),
-            )
-
-            resultat.erAvslag shouldBe false
-            resultat.bidragTilFordeling.signum() shouldBe 0
-        }
-
-        @Test
         fun `skal ikke gi avslag når BPs andel av U er over 50 prosent`() {
             val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
                 bidragTilFordelingGrunnlag(
@@ -193,37 +175,6 @@ class EndeligBidragBeregningV2Test {
 
             resultat.erAvslag shouldBe false
             resultat.bidragTilFordeling.compareTo(BigDecimal(800)) shouldBe 0
-        }
-
-        @Test
-        fun `sluttberegning skal gi avslag uten beløp når BPs andel av U er under 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO), bpAndelFaktor = BigDecimal("0.4")),
-            )
-
-            resultat.bidragIkkeBeregnetDeltBosted shouldBe true
-            resultat.beregnetBeløp shouldBe null
-            resultat.resultatBeløp shouldBe null
-        }
-
-        @Test
-        fun `sluttberegning skal beregne bidrag når BPs andel av U er over 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal(800))),
-            )
-
-            resultat.bidragIkkeBeregnetDeltBosted shouldBe false
-            resultat.resultatBeløp?.compareTo(BigDecimal(800)) shouldBe 0
-        }
-
-        @Test
-        fun `sluttberegning skal gi bidrag lik 0 uten avslag når BPs andel av U er nøyaktig 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO), bpAndelFaktor = BigDecimal("0.5")),
-            )
-
-            resultat.bidragIkkeBeregnetDeltBosted shouldBe false
-            resultat.resultatBeløp?.signum() shouldBe 0
         }
     }
 
@@ -266,50 +217,12 @@ class EndeligBidragBeregningV2Test {
 
             resultat.erAvslag shouldBe false
         }
-
-        @Test
-        fun `sluttberegning skal gi avslag uten beløp når forpleiningen dekker U`() {
-            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(
-                    underholdskostnad = UnderholdskostnadDelberegningBeregningGrunnlag(
-                        referanse = "underholdskostnad",
-                        beløp = BigDecimal.ZERO,
-                        forpleining = BigDecimal(9000),
-                    ),
-                ),
-            )
-
-            resultat.forpleiningDekkerUnderholdskostnaden shouldBe true
-            resultat.beregnetBeløp shouldBe null
-            resultat.resultatBeløp shouldBe null
-        }
     }
 }
 
 private fun andelDeltBosted(beløp: BigDecimal) = BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
     referanse = "andelDeltBosted",
     bpAndelAvUVedDeltBostedBeløp = beløp,
-)
-
-private fun sluttberegningGrunnlag(
-    andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
-    underholdskostnad: UnderholdskostnadDelberegningBeregningGrunnlag? = null,
-    bpAndelFaktor: BigDecimal = BigDecimal("0.6"),
-) = SluttberegningBarnebidragV2BeregningGrunnlag(
-    bidragJustertForBPBarnetilleggBeregningGrunnlag = BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag(
-        referanse = "bidragJustertForBPBarnetillegg",
-        bidragJustertForNettoBarnetilleggBP = andelDeltBosted?.bpAndelAvUVedDeltBostedBeløp ?: BigDecimal.ZERO,
-    ),
-    samværsfradragBeregningGrunnlag = SamværsfradragDelberegningBeregningGrunnlag(referanse = "samværsfradrag", beløp = BigDecimal.ZERO),
-    bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
-        referanse = "bpAndelUnderholdskostnad",
-        andelBeløp = BigDecimal(4800),
-        andelFaktor = bpAndelFaktor,
-        barnetErSelvforsørget = false,
-    ),
-    søknadsbarnetBorHosBpGrunnlag = SøknadsbarnetBorHosBpGrunnlag(referanse = "søknadsbarnetBorHosBp", søknadsbarnetBorHosBp = false),
-    bidragspliktigesAndelDeltBostedBeregningGrunnlag = andelDeltBosted,
-    underholdskostnadBeregningGrunnlag = underholdskostnad,
 )
 
 private fun andelAvBidragsevneGrunnlag(

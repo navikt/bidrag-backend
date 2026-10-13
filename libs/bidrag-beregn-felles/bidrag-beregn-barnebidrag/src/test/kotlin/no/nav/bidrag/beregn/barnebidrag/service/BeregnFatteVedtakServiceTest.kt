@@ -13,6 +13,8 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.math.BigDecimal
 import java.time.YearMonth
 
@@ -23,42 +25,19 @@ class BeregnFatteVedtakServiceTest {
     private val søknadsbarn = "Person_Søknadsbarn_01"
     private val revurderingsbarn = "Person_Søknadsbarn_02"
 
-    @Test
-    fun `skal ikke fatte vedtak for revurderingsbarn når søknadsbarnet har avslag for delt bosted i siste periode`() {
+    enum class Avslag { DELT_BOSTED, SELVFORSØRGET, FORPLEINING }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(Avslag::class)
+    fun `skal ikke fatte vedtak for revurderingsbarn når søknadsbarnet har avslag i siste periode`(avslag: Avslag) {
         val resultat = fatteVedtakForRevurderingsbarn(
             sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
                 periode = periode,
                 beregnetBeløp = null,
                 resultatBeløp = null,
-                bidragIkkeBeregnetDeltBosted = true,
-            ),
-        )
-
-        resultat.skalFatteVedtak shouldBe false
-    }
-
-    @Test
-    fun `skal ikke fatte vedtak for revurderingsbarn når søknadsbarnet er selvforsørget i siste periode`() {
-        val resultat = fatteVedtakForRevurderingsbarn(
-            sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
-                periode = periode,
-                beregnetBeløp = null,
-                resultatBeløp = null,
-                barnetErSelvforsørget = true,
-            ),
-        )
-
-        resultat.skalFatteVedtak shouldBe false
-    }
-
-    @Test
-    fun `skal ikke fatte vedtak for revurderingsbarn når forpleiningen dekker U for søknadsbarnet i siste periode`() {
-        val resultat = fatteVedtakForRevurderingsbarn(
-            sluttberegningSøknadsbarn = SluttberegningBarnebidragV2(
-                periode = periode,
-                beregnetBeløp = null,
-                resultatBeløp = null,
-                forpleiningDekkerUnderholdskostnaden = true,
+                bidragIkkeBeregnetDeltBosted = avslag == Avslag.DELT_BOSTED,
+                barnetErSelvforsørget = avslag == Avslag.SELVFORSØRGET,
+                forpleiningDekkerUnderholdskostnaden = avslag == Avslag.FORPLEINING,
             ),
         )
 
