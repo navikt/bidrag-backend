@@ -23,8 +23,13 @@ class BidragPersonOppslagClient(
     personUrl: String,
     restOperations: RestOperations,
 ) : AbstractRestClient(restOperations, "bidrag-person") {
-    private val personidenterUri = URI.create("$personUrl${IdentConsumer.PERSON_PATH}")
-    private val informasjonUri = URI.create("$personUrl${IdentConsumer.INFORMASJON_PATH}")
+    private val personidenterUri = URI.create("${personUrl.trimEnd('/')}$PERSON_PATH")
+    private val informasjonUri = URI.create("${personUrl.trimEnd('/')}$INFORMASJON_PATH")
+
+    companion object {
+        const val PERSON_PATH = "/personidenter"
+        const val INFORMASJON_PATH = "/informasjon"
+    }
 
     fun hentPersonidenter(
         ident: String,
