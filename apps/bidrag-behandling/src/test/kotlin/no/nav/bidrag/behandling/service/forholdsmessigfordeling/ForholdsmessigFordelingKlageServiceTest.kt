@@ -1137,13 +1137,14 @@ class ForholdsmessigFordelingKlageServiceTest {
 
         søknadsid shouldBe OPPRETTET_SØKNADSID
         verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
-        assertSoftly(barn2.finnSøknad(OPPRETTET_SØKNADSID)!!) {
+        assertSoftly(behandling.bidragspliktig!!.finnSøknad(OPPRETTET_SØKNADSID)!!) {
             behandlingstype shouldBe Behandlingstype.KLAGE
             søktAvType shouldBe SøktAvType.BIDRAGSMOTTAKER
             opprettetAvSaksbehandler shouldBe true
             opprettetAvSystem shouldBe false
         }
         barn1.forholdsmessigFordeling!!.søknader.filter { it.søknadsid == OPPRETTET_SØKNADSID } shouldHaveSize 1
+        barn2.forholdsmessigFordeling!!.søknader.none { it.søknadsid == OPPRETTET_SØKNADSID } shouldBe true
     }
 
     private fun leggTilSystemKlagesøknad(vararg barn: Rolle) = leggTilSøknadForRoller(

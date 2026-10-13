@@ -841,13 +841,14 @@ class ForholdsmessigFordelingKlageService(
                     }
                 }
 
-        val barnISøknadIdenter = barnISøknad.map { it.personident }.toSet()
         val løpendeBidraggsakerBP =
             kravhaverService.hentSisteLøpendeStønader(Personident(behandling.bidragspliktig!!.ident!!), behandling.finnBeregningsperiode())
         val åpenFFSøknad =
             åpneSøknaderForVedtaksid.find { søknad ->
                 søknad.refSøknadsid == originalSøknad.søknadsid && søknad.behandlingstema == originalSøknad.behandlingstema
             }
+        val barnISøknadIdenter =
+            åpenFFSøknad?.barn?.map { it.personident }?.toSet() ?: barnISøknad.map { it.personident }.toSet()
 
         val nySøknadId =
             åpenFFSøknad?.søknadsid ?: bbmConsumer
