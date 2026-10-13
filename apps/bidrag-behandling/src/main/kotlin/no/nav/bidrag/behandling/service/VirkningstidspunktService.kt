@@ -265,10 +265,14 @@ class VirkningstidspunktService(
     fun oppdatereVirkningstidspunkt(
         behandlingsid: Long,
         request: OppdatereVirkningstidspunkt,
-    ) = behandlingRepository
-        .findBehandlingById(behandlingsid)
-        .orElseThrow { behandlingNotFoundException(behandlingsid) }
-        .let {
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
+        val behandling =
+            behandlingRepository
+                .findBehandlingById(behandlingsid)
+                .orElseThrow { behandlingNotFoundException(behandlingsid) }
+        behandlingRepository.refreshBehandling(behandling)
+        behandling.let {
             log.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid" }
             secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
             request.valider(it)
@@ -300,8 +304,9 @@ class VirkningstidspunktService(
             }
             oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, it)
             forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(it, ignorerSynkTimer = true)
-            it
         }
+        behandling
+    }
 
     @Transactional
     fun oppdaterAvslagÅrsak(

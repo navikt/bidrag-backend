@@ -207,6 +207,22 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
     @Query(
         value = """
+        SELECT b.id FROM behandling b
+        JOIN rolle br ON br.behandling_id = b.id
+        WHERE br.rolletype = 'BIDRAGSPLIKTIG'
+          AND br.ident = :bpIdent
+          AND b.deleted = false
+          AND b.vedtak_detaljer IS NULL
+          AND b.forholdsmessig_fordeling IS not NULL AND (b.forholdsmessig_fordeling->>'erHovedbehandling') = 'true'
+    """,
+        nativeQuery = true,
+    )
+    fun finnÅpneBidragsbehandlingerForBpMedFFId(
+        @Param("bpIdent") bpIdent: String,
+    ): List<Long>
+
+    @Query(
+        value = """
         SELECT b.* FROM behandling b
         JOIN rolle br ON br.behandling_id = b.id
         WHERE br.rolletype = 'BIDRAGSPLIKTIG'
