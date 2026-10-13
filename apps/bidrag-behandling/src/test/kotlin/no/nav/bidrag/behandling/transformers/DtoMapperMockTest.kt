@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.transformers
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,6 +18,7 @@ import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.RolleManueltOverstyrtGebyr
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
@@ -528,6 +530,28 @@ class DtoMapperMockTest {
             .saker
             .map { it.gebyrRoller.mapNotNull { it.valideringsfeil } }
             .shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal vise inntekter for barn med avslag når behandling ikke er i forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.søknadsbarn.forEach { it.avslag = Resultatkode.AVSLAG }
+
+        val inntekter = with(dtomapper) { behandling.mapInntekterV2() }
+
+        inntekter.map { it.gjelder.ident } shouldContainAll behandling.roller.map { it.ident }
+    }
+
+    @Test
+    fun `skal ikke vise inntekter for barn med avslag uten løpende bidrag i forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val barnIdenter = behandling.søknadsbarn.map { it.ident }
+        behandling.søknadsbarn.forEach { it.avslag = Resultatkode.AVSLAG }
+
+        val inntekter = with(dtomapper) { behandling.mapInntekterV2() }
+
+        inntekter.map { it.gjelder.ident }.none { it in barnIdenter } shouldBe true
     }
 
     @Test

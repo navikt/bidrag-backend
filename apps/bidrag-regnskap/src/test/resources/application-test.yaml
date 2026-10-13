@@ -20,6 +20,10 @@ scheduler:
     cron: "-" #Disabled
   påløpkjøring:
     cron: "-" #Disabled
+  endremottaker:
+    cron: "-" #Disabled
+  endremottakervarsling:
+    cron: "-" #Disabled
 
 atlas.kafka.zookeeper.session.timeout.ms: 60000
 atlas.kafka.zookeeper.connection.timeout.ms: 30000

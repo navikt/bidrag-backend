@@ -111,10 +111,15 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     @Query("select r.* from rolle r where r.behandling_id = :behandlingsid", nativeQuery = true)
     fun hentRollerInkludertSlettet(behandlingsid: Long): List<Rolle>
 
+    // FF-behandlinger som ikke er hovedbehandling ignoreres fordi notatet lagres på hovedbehandlingen
     @Query(
-        "select b from behandling b where b.vedtaksid is not null and b.notatJournalpostId is null and b.vedtakstidspunkt >= :afterDate and b.vedtakstype != 'ALDERSJUSTERING'",
+        "select b.* from behandling b where b.deleted = false and b.vedtaksid is not null and b.notat_journalpost_id is null " +
+                "and b.vedtakstidspunkt >= :afterDate and b.vedtakstype != 'ALDERSJUSTERING' " +
+                "and (b.forholdsmessig_fordeling is null or b.forholdsmessig_fordeling ->> 'erHovedbehandling' = 'true')",
+        nativeQuery = true,
     )
     fun hentBehandlingerSomManglerNotater(afterDate: LocalDateTime): List<Behandling>
+
 
     @Query(
         "select * from behandling b " +

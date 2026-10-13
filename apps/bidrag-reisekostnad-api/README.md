@@ -11,9 +11,19 @@ teste med. Til <b>lokal-postgres</b>-profilen kreves det en lokal Postgres-insta
 
 #### Lokal H2 instans
 
+##### Sjekk at JAVA_HOME er satt
+
+```bash
+echo $JAVA_HOME
+```
+
+Hvis denne ikke er satt får man ikke kjørt opp lokalt. Sjekk også at Java versjon er samme versjon som definert i pom.xml.
+
+
+
 Eksempel på kommando for å starte applikasjonen lokalt med H2-database:
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn clean test-compile exec:java \
+mvn clean test-compile exec:java \
 -Dexec.mainClass="no.nav.bidrag.reisekostnad.BidragReisekostnadApiLokalTestapplikasjon" \
 -Dexec.classpathScope=test \
 -Dspring.profiles.active=lokal-h2

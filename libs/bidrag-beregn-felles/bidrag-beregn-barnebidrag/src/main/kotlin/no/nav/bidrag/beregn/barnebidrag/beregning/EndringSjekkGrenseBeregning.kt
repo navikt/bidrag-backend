@@ -35,7 +35,7 @@ internal object EndringSjekkGrenseBeregning {
     fun beregnV2(grunnlag: List<EndringSjekkGrensePeriodeDelberegningBeregningGrunnlag>): List<EndringSjekkGrenseBeregningResultat> {
         val alleBeløpMangler = grunnlag.all { it.løpendeBidragBeløp == null } && grunnlag.all { it.beregnetBidragBeløp == null }
         val førsteFomPeriodeOverGrense = grunnlag.filter { it.endringErOverGrense }.map { it.periode.fom }.firstOrNull()
-        val førsteFomPeriode = grunnlag.first().periode.fom
+        val førsteFomPeriode = grunnlag.firstOrNull()?.periode?.fom
 
         return grunnlag.map {
             val endringErOverGrense = when {

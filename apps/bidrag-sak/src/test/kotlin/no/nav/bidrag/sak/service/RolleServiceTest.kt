@@ -4,6 +4,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
@@ -12,10 +13,7 @@ import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
-import no.nav.bidrag.transport.person.Identgruppe
-import no.nav.bidrag.transport.person.PersonidentDto
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import org.junit.jupiter.api.BeforeEach
@@ -25,9 +23,9 @@ import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 internal class RolleServiceTest {
-    val bidragPersonClient = mockk<BidragPersonClient>()
+    val identConsumer = mockk<IdentConsumer>()
     val samhandlerClient = mockk<BidragSamhandlerClient>()
-    val rolleService = RolleService(bidragPersonClient, samhandlerClient)
+    val rolleService = RolleService(identConsumer, samhandlerClient)
 
     val fødselsnummerBarn1 = genererFødselsnummer(LocalDate.now().minusYears(1))
     val fødselsnummerBarn2 = genererFødselsnummer(LocalDate.now().minusYears(2))
@@ -136,12 +134,6 @@ internal class RolleServiceTest {
                     type = Rolletype.REELMOTTAKER,
                     reellMottager = ReellMottaker(fødselsnummerBarn1),
                 ),
-            )
-
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
-            mapOf(
-                Personident(fødselsnummerBarn1) to null,
-                Personident(fødselsnummerRm) to null,
             )
 
         val result = rolleService.oppdaterRollerMedReelleMottager(lagredeRoller, rolleDtoer)
@@ -307,8 +299,8 @@ internal class RolleServiceTest {
         val nyBarnIdent = fødselsnummerBarn2
         val gammelRmIdent = fødselsnummerRm
         val nyRmIdent = fødselsnummerBp
-        every { bidragPersonClient.hentPersonidenter(gammelBarnIdent) } returns personidenter(nyBarnIdent, gammelBarnIdent)
-        every { bidragPersonClient.hentPersonidenter(gammelRmIdent) } returns personidenter(nyRmIdent, gammelRmIdent)
+        every { identConsumer.sjekkIdent(gammelBarnIdent) } returns nyBarnIdent
+        every { identConsumer.sjekkIdent(gammelRmIdent) } returns nyRmIdent
         val barn = Rolle(rolleId = 3, fødselsnummer = gammelBarnIdent, rolleType = Rolletype.BARN, bidragssak = bidragssak)
         val rm = Rolle(rolleId = 4, fødselsnummer = gammelRmIdent, rolleType = Rolletype.REELMOTTAKER, bidragssak = bidragssak)
 
@@ -327,7 +319,7 @@ internal class RolleServiceTest {
 
     @Test
     fun `endrer ikke rolle som allerede har gjeldende ident`() {
-        every { bidragPersonClient.hentPersonidenter(fødselsnummerBarn1) } returns personidenter(fødselsnummerBarn1)
+        every { identConsumer.sjekkIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
         val barn = Rolle(rolleId = 3, fødselsnummer = fødselsnummerBarn1, rolleType = Rolletype.BARN, bidragssak = bidragssak)
 
         rolleService.oppdaterTilGjeldendeIdent(listOf(barn))
@@ -338,8 +330,8 @@ internal class RolleServiceTest {
 
     @Test
     fun `bruker gjeldende ident for barn og RM i forespørsel`() {
-        every { bidragPersonClient.hentPersonidenter(fødselsnummerBarn1) } returns personidenter(fødselsnummerBarn2, fødselsnummerBarn1)
-        every { bidragPersonClient.hentPersonidenter(fødselsnummerRm) } returns personidenter(fødselsnummerBp, fødselsnummerRm)
+        every { identConsumer.sjekkIdent(fødselsnummerBarn1) } returns fødselsnummerBarn2
+        every { identConsumer.sjekkIdent(fødselsnummerRm) } returns fødselsnummerBp
         val forespørsel = RolleDto(
             type = Rolletype.BARN,
             fødselsnummer = Personident(fødselsnummerBarn1),
@@ -352,6 +344,4 @@ internal class RolleServiceTest {
         resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
     }
 
-    private fun personidenter(gjeldende: String, vararg historiske: String) = listOf(PersonidentDto(gjeldende, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT)) +
-        historiske.map { PersonidentDto(it, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT) }
 }

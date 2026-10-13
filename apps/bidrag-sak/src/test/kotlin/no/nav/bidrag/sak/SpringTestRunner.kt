@@ -4,6 +4,9 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.nimbusds.jose.JOSEObjectType
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.sak.config.DbContainerInitializer
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -48,11 +51,15 @@ class SpringTestRunner {
     @BeforeEach
     fun mockSetup() {
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+        every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
         every { identConsumer.hentPersonInformasjon(any()) }.answers { null }
+        mockkObject(AppContext)
+        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
     }
 
     @AfterEach
     fun reset() {
+        unmockkObject(AppContext)
         resetWiremockServers()
     }
 

@@ -55,7 +55,9 @@ spec:
     path: /actuator/prometheus
   resources:
     limits:
+      {{#if spec.resources.limits.cpu}}
       cpu: {{ spec.resources.limits.cpu }}
+      {{/if}}
       memory: {{ spec.resources.limits.memory }}
     requests:
       cpu: {{ spec.resources.requests.cpu }}

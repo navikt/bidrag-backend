@@ -15,9 +15,7 @@ import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.integration.person.BidragPersonClient
-import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonDto
-import no.nav.bidrag.transport.person.PersonidentDto
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
@@ -34,8 +32,8 @@ class ValideringsgrunnlagServiceTest {
     @BeforeEach
     fun setup() {
         every { identConsumer.hentPersonInformasjon(any()) } answers { PersonDto(ident = firstArg(), fødselsdato = null) }
+        every { identConsumer.hentAlleIdenter(any()) } returns emptyList()
         every { bidragPersonClient.hentFødselsdatoer(any()) } returns emptyMap()
-        every { bidragPersonClient.hentPersonidenter(any()) } returns emptyList()
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
     }
 
@@ -151,10 +149,7 @@ class ValideringsgrunnlagServiceTest {
         val gammelIdent = genererPersonident()
         val nyIdent = genererPersonident()
         val bm = genererPersonident()
-        every { bidragPersonClient.hentPersonidenter(nyIdent.verdi) } returns listOf(
-            PersonidentDto(nyIdent.verdi, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT),
-            PersonidentDto(gammelIdent.verdi, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT),
-        )
+        every { identConsumer.hentAlleIdenter(nyIdent.verdi) } returns listOf(nyIdent.verdi, gammelIdent.verdi)
         val lagredeRoller = listOf(
             Rolle(fødselsnummer = gammelIdent.verdi, rolleType = Rolletype.BARN),
             Rolle(fødselsnummer = bm.verdi, rolleType = Rolletype.BIDRAGSMOTTAKER),
@@ -164,7 +159,7 @@ class ValideringsgrunnlagServiceTest {
 
         grunnlag.sammePerson(gammelIdent.verdi, nyIdent.verdi) shouldBe true
         grunnlag.sammePerson(bm.verdi, nyIdent.verdi) shouldBe false
-        listOf(gammelIdent, nyIdent, bm).forEach { verify(exactly = 1) { bidragPersonClient.hentPersonidenter(it.verdi) } }
+        listOf(gammelIdent, nyIdent, bm).forEach { verify(exactly = 1) { identConsumer.hentAlleIdenter(it.verdi) } }
     }
 
     private fun rolle(type: Rolletype, fnr: Personident) = RolleDto(type = type, fødselsnummer = fnr)

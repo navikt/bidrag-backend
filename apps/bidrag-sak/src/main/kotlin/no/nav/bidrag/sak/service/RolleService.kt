@@ -2,6 +2,7 @@ package no.nav.bidrag.sak.service
 
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.UkjentPart
@@ -10,8 +11,6 @@ import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
-import no.nav.bidrag.sak.integration.person.gjeldendeIdent
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBarnTilRoller
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBpBmTilRoller
@@ -30,7 +29,7 @@ import java.time.LocalDateTime
 
 @Service
 class RolleService(
-    private val bidragPersonClient: BidragPersonClient,
+    private val identConsumer: IdentConsumer,
     private val samhandlerClient: BidragSamhandlerClient,
 ) {
     fun oppdaterRollerMedReelleMottager(
@@ -109,7 +108,7 @@ class RolleService(
 
     private fun gjeldendeIdent(ident: String): String {
         if (ident.isBlank()) return ident
-        return bidragPersonClient.hentPersonidenter(ident).gjeldendeIdent()
+        return identConsumer.sjekkIdent(ident)
             ?: ident.also { secureLogger.warn { "Fant ingen gjeldende ident for $it i bidrag-person. Bruker innsendt ident." } }
     }
 

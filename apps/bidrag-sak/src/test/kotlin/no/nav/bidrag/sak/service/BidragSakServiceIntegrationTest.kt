@@ -34,9 +34,7 @@ import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
 import no.nav.bidrag.sak.util.TransactionHelper
-import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonDto
-import no.nav.bidrag.transport.person.PersonidentDto
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
@@ -50,7 +48,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.cache.CacheManager
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -70,9 +67,6 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
 
     @Autowired
     private lateinit var bidragPersonClient: BidragPersonClient
-
-    @Autowired
-    private lateinit var cacheManager: CacheManager
 
     @Autowired
     private lateinit var th: TransactionHelper
@@ -108,6 +102,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             stubPerson(fnrBA3, LocalDate.now().minusYears(10))
 
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
 
             // Sak 1: BA1/BA2 myndige -> har RM. BA3 umyndig -> kan være uten RM.
             saksnummer =
@@ -721,6 +716,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
         }
 
         @Test
@@ -879,6 +875,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
             every { identConsumer.hentPersonInformasjon(any()) } returns null
         }
 
@@ -996,6 +993,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
             every { identConsumer.hentPersonInformasjon(any()) } returns null
         }
 
@@ -1182,15 +1180,16 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         gjeldende: Map<Personident, Personident> = emptyMap(),
         historiske: Map<Personident, Personident> = emptyMap(),
     ) {
-        cacheManager.getCache("bidrag-sak_hentPersonidenter_cache")?.clear()
         val gjeldendeFor = gjeldende.entries.associate { it.key.verdi to it.value.verdi }
         val historiskFor = historiske.entries.associate { it.key.verdi to it.value.verdi }
-        every { bidragPersonClient.hentPersonidenter(any()) } answers {
+        every { identConsumer.sjekkIdent(any()) } answers {
+            val ident = firstArg<String>()
+            gjeldendeFor[ident] ?: ident
+        }
+        every { identConsumer.hentAlleIdenter(any()) } answers {
             val ident = firstArg<String>()
             val gjeldendeIdent = gjeldendeFor[ident] ?: ident
-            val historiskeIdenter = listOfNotNull(ident.takeIf { it != gjeldendeIdent }, historiskFor[ident])
-            listOf(PersonidentDto(gjeldendeIdent, historisk = false, gruppe = Identgruppe.FOLKEREGISTERIDENT)) +
-                historiskeIdenter.map { PersonidentDto(it, historisk = true, gruppe = Identgruppe.FOLKEREGISTERIDENT) }
+            listOfNotNull(gjeldendeIdent, ident.takeIf { it != gjeldendeIdent }, historiskFor[ident]).distinct()
         }
     }
 

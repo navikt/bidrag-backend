@@ -41,7 +41,7 @@ class ValideringsgrunnlagService(
     private fun hentIdenter(identer: List<String>): Map<String, Set<String>> = identer
         .filter { it.isNotBlank() }
         .distinct()
-        .associateWith { ident -> bidragPersonClient.hentPersonidenter(ident).map { it.ident }.toSet() }
+        .associateWith { ident -> identConsumer.hentAlleIdenter(ident).orEmpty().toSet() }
 
     private fun ikkeBlanke(identer: List<Personident>): List<Personident> = identer.filter { it.verdi.isNotBlank() }.distinct()
 }

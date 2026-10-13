@@ -72,7 +72,7 @@ data class HentSøknaderForBehandlingResponse(
 data class OppdaterBehandlingsidRequest(
     val søknadsid: Long,
     val eksisterendeBehandlingsid: Long? = null,
-    val nyBehandlingsid: Long,
+    val nyBehandlingsid: Long?,
 )
 
 data class OpprettSøknadRequest(

@@ -144,7 +144,7 @@ class BidragSakService(
     }
 
     fun finnSakerFor(fodselsnummer: Personident): List<BidragssakDto> = bidragssakRepository
-        .findByRoller(identConsumer.hentAlleIdenter(fodselsnummer.verdi))
+        .findByRoller(identConsumer.hentAlleIdenter(fodselsnummer.verdi) ?: listOf(fodselsnummer.verdi))
         .filter {
             DefaultUnleashContextProvider.updateSaksnummer(it.saksnummer)
             !it.erAvsluttet() || UnleashFeatures.TILGANG_TIL_AVSLUTTET_SAK.isEnabled

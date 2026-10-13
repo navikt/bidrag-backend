@@ -19,6 +19,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereUnderholdResponse
 import no.nav.bidrag.behandling.dto.v2.underhold.OpprettUnderholdskostnadBarnResponse
@@ -386,6 +387,76 @@ class UnderholdControllerTest : KontrollerTestRunner() {
                     periode.tom shouldBe forespørsel.periode.tom
                     dagsats shouldBe forespørsel.dagsats
                 }
+            }
+        }
+
+        @Test
+        open fun `skal oppdatere forpleining`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+
+            testdataManager.lagreBehandlingNewTransaction(behandling)
+            val underholdsid = behandling.underholdskostnader.first().id!!
+
+            val forespørsel =
+                OppdatereForpleiningRequest(
+                    periode = DatoperiodeDto(behandling.virkningstidspunktEllerSøktFomDato, null),
+                    beløp = BigDecimal(100),
+                )
+
+            // hvis
+            val svar =
+                httpHeaderTestRestTemplate.exchange(
+                    "${rootUriV2()}/behandling/${behandling.id}/underhold/$underholdsid/forpleining",
+                    HttpMethod.PUT,
+                    HttpEntity(forespørsel),
+                    OppdatereUnderholdResponse::class.java,
+                )
+
+            // så
+            assertSoftly(svar) {
+                statusCode shouldBe HttpStatus.OK
+                body.shouldNotBeNull()
+                body!!.forpleining shouldHaveSize 1
+                assertSoftly(body!!.forpleining.first()) {
+                    id.shouldNotBeNull()
+                    periode.fom shouldBe forespørsel.periode.fom
+                    periode.tom shouldBe forespørsel.periode.tom
+                    beløp shouldBe forespørsel.beløp
+                }
+            }
+        }
+
+        @Test
+        open fun `skal ikke oppdatere forpleining med beløp null`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+
+            testdataManager.lagreBehandlingNewTransaction(behandling)
+            val underholdsid = behandling.underholdskostnader.first().id!!
+
+            val forespørsel =
+                OppdatereForpleiningRequest(
+                    periode = DatoperiodeDto(behandling.virkningstidspunktEllerSøktFomDato, null),
+                    beløp = BigDecimal.ZERO,
+                )
+
+            // hvis, så
+            assertFailsWith<RestClientException> {
+                httpHeaderTestRestTemplate.exchange(
+                    "${rootUriV2()}/behandling/${behandling.id}/underhold/$underholdsid/forpleining",
+                    HttpMethod.PUT,
+                    HttpEntity(forespørsel),
+                    OppdatereUnderholdResponse::class.java,
+                )
             }
         }
     }

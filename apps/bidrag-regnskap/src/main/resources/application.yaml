@@ -15,6 +15,10 @@ scheduler:
     cron: ${PALOSKJORING_CRON}
   resendkrav:
     cron: ${RESEND_KRAV_CRON}
+  endremottaker:
+    cron: ${ENDRE_MOTTAKER_CRON}
+  endremottakervarsling:
+    cron: ${ENDRE_MOTTAKER_VARSLING_CRON}
 
 springdoc:
   packages-to-scan: no.nav.bidrag.regnskap.controller

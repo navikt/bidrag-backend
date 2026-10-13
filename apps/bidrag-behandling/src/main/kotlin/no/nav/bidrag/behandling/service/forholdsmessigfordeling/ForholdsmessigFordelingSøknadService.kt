@@ -30,6 +30,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import java.time.LocalDate
@@ -52,6 +53,14 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     // region Opprettelse av søknader
     // ═══════════════════════════════════════════════════════════════════
+    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
+        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
+        søknaderBehandling.søknader
+            .filter { it.behandlingStatusType.erÅpenStatus }
+            .forEach {
+                bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
+            }
+    }
 
     /**
      * Oppretter roller og revurderingssøknader for en gitt sak.
@@ -84,6 +93,8 @@ class ForholdsmessigFordelingSøknadService(
                 enhet = behandlerEnhet,
                 status = Behandlingstatus.UNDER_BEHANDLING,
                 saksnummer = saksnummer,
+                omgjørSøknadsid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.soknadRefId else null,
+                omgjørVedtaksid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.omgjørVedtakId else null,
             )
         val søknadsidUtenInnkreving =
             opprettEllerOppdaterRevurderingssøknadForBarn(

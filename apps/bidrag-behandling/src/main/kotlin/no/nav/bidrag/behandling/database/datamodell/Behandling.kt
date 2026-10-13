@@ -213,6 +213,8 @@ open class Behandling(
     @Transient
     var erVedtakUtenBeregning: Boolean = false,
     @Transient
+    var erNyBehandlingIkkeOpprettet: Boolean = false,
+    @Transient
     var grunnlagslisteFraVedtak: List<GrunnlagDto>? = emptyList(),
     @Transient
     var historiskeStønader: MutableSet<StønadDto> = mutableSetOf(),
