@@ -17,6 +17,7 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 
@@ -65,13 +66,17 @@ fun sjekkTilgangSak(saksnummer: String): Boolean = try {
     secureLogger.debug(e) { "Feil ved henting av person for ident $saksnummer" }
     false
 }
+
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
     }
-} catch (e: Exception) {
-    secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-    null
+} catch (e: HttpStatusCodeException) {
+    if (e.statusCode == HttpStatus.NOT_FOUND) {
+        null
+    } else {
+        throw e
+    }
 }
 
 fun harTilgangSak(saksnummer: String) = sjekkTilgangSak(saksnummer)
@@ -89,9 +94,12 @@ data class PersonService(
         ident.takeIfNotNullOrEmpty {
             personConsumer.hentPerson(it)
         }
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-        null
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.NOT_FOUND) {
+            null
+        } else {
+            throw e
+        }
     }
 
     fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
