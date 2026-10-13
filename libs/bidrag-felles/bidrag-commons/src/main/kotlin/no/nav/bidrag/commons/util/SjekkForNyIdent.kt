@@ -151,11 +151,6 @@ class IdentConsumer(
     @Value($$"${PERSON_URL:${BIDRAG_PERSON_URL}}") private val personUrl: String,
     @Qualifier("azure") private val restTemplate: RestOperations,
 ) {
-    companion object {
-        const val PERSON_PATH = "/personidenter"
-        const val INFORMASJON_PATH = "/informasjon"
-    }
-
     private val bidragPersonOppslagClient = BidragPersonOppslagClient(personUrl, restTemplate)
 
     /**
