@@ -369,7 +369,7 @@ private fun utledBeregnTilDato(
         // Avvisning kan bare velges hvis det allerede er et vedtak med opphør på rollen. Derfor hentes opphørsdato fra eksisterende vedtak
         val eksisterendeOpphør = søknadsbarnRolle.finnEksisterendeVedtakMedOpphørForRolle()
         // Default til beregnTilUtenAvslag. Grunnen til det er at hvis avvisning ble valgt ved opprettelse av behandling
-        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: beregnTilUtenAvslag
+        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle?.finnBeregnFra()?.toLocalDate() ?: beregnTilUtenAvslag
     } else if (opphørsdato == null || opphørsdato.isAfter(YearMonth.now().plusMonths(1))) {
         beregnTilUtenAvslag
     } else if (opprinneligVedtakstidspunkt != null) {
@@ -591,7 +591,7 @@ class VedtakGrunnlagMapper(
                 val beregningTilDato = finnBeregnTilDatoBehandling(søknadsbarnRolle)
                 val opphørsdato =
                     if (søknadsbarnRolle.avslag != null && søknadsbarnRolle.avslag!!.erAvvisning()) {
-                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato
+                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato ?: søknadsbarnRolle.virkningstidspunkt ?: søknadsbarnRolle.opphørsdato ?: beregnFraDato
                     } else if (søknadsbarnRolle.avslag != null) {
                         beregningTilDato
                     } else {
