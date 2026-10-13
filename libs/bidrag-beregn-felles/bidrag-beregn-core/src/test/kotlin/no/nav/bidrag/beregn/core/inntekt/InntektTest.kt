@@ -7,7 +7,6 @@ import no.nav.bidrag.beregn.core.TestUtil.byggSjablontallGrunnlagUtvidetBarnetry
 import no.nav.bidrag.beregn.core.bo.Avvik
 import no.nav.bidrag.beregn.core.util.InntektUtil.behandlUtvidetBarnetrygd
 import no.nav.bidrag.beregn.core.util.InntektUtil.beløpUtenSkattefrieBarnetillegg
-import no.nav.bidrag.beregn.core.util.InntektUtil.inneholderSkattefrieBarnetillegg
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
@@ -80,37 +79,16 @@ internal class InntektTest {
     }
 
     @Test
-    @DisplayName("Barnetillegg fra Forsvaret er skattefritt og tas ikke med når inntekten summeres")
-    fun testSkattefrittBarnetilleggForsvaretTasIkkeMedIInntekt() {
-        val barnetillegg = byggBarnetilleggInntekt(
-            InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_PENSJON, BigDecimal.valueOf(20400), InntektBeløpstype.ÅRSBELØP),
-            InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_FORSVARET, BigDecimal.valueOf(2500), InntektBeløpstype.MÅNEDSBELØP),
-        )
+    @DisplayName("Skattefrie barnetillegg (tiltakspenger og Forsvaret) tas ikke med i inntekten")
+    fun testSkattefrieBarnetilleggTasIkkeMedIInntekten() {
+        val pensjon = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_PENSJON, BigDecimal.valueOf(20400), InntektBeløpstype.ÅRSBELØP)
+        val forsvaret = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_FORSVARET, BigDecimal.valueOf(2500), InntektBeløpstype.MÅNEDSBELØP)
+        val tiltakspenger = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_TILTAKSPENGER, BigDecimal.valueOf(1000), InntektBeløpstype.MÅNEDSBELØP)
 
         assertAll(
-            { assertThat(inneholderSkattefrieBarnetillegg(barnetillegg)).isTrue() },
-            { assertThat(beløpUtenSkattefrieBarnetillegg(barnetillegg)).isEqualByComparingTo(BigDecimal.valueOf(20400)) },
+            { assertThat(beløpUtenSkattefrieBarnetillegg(byggBarnetilleggInntekt(pensjon, forsvaret, tiltakspenger))).isEqualByComparingTo(BigDecimal.valueOf(20400)) },
+            { assertThat(beløpUtenSkattefrieBarnetillegg(byggBarnetilleggInntekt(forsvaret, tiltakspenger))).isEqualByComparingTo(BigDecimal.ZERO) },
         )
-    }
-
-    @Test
-    @DisplayName("Inntekt med bare skattepliktige barnetillegg summeres som før")
-    fun testSkattepliktigBarnetilleggSummeresSomFør() {
-        val barnetillegg = byggBarnetilleggInntekt(
-            InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_PENSJON, BigDecimal.valueOf(20400), InntektBeløpstype.ÅRSBELØP),
-        )
-
-        assertThat(inneholderSkattefrieBarnetillegg(barnetillegg)).isFalse()
-    }
-
-    @Test
-    @DisplayName("Inntekt med bare barnetillegg fra Forsvaret gir 0 i inntekten")
-    fun testBareBarnetilleggForsvaretGirNull() {
-        val barnetillegg = byggBarnetilleggInntekt(
-            InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_FORSVARET, BigDecimal(2500), InntektBeløpstype.MÅNEDSBELØP),
-        )
-
-        assertThat(beløpUtenSkattefrieBarnetillegg(barnetillegg)).isEqualByComparingTo(BigDecimal.ZERO)
     }
 
     private fun byggBarnetilleggInntekt(vararg inntektsposter: InntektsrapporteringPeriode.Inntektspost) = InntektsrapporteringPeriode(

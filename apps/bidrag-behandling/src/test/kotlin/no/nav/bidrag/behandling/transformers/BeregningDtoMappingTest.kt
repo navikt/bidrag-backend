@@ -590,7 +590,7 @@ class BeregningDtoMappingTest {
     )
 
     @Test
-    fun `skal ikke ta med skattefrie barnetillegg i inntekten i inntektsberegningen`() {
+    fun `skal ikke ta med skattefrie barnetillegg i beregnet inntekt`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
         val bidragspliktig = behandling.bidragspliktig!!
         behandling.inntekter.removeIf { it.type == Inntektsrapportering.BARNETILLEGG }
