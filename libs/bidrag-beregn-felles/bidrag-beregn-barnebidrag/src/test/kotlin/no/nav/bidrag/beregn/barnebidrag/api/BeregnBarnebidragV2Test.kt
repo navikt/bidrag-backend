@@ -30,7 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import java.time.YearMonth
 
 @ExtendWith(MockitoExtension::class)
-internal class BeregnBarnebidragTestV2 : FellesTest() {
+internal class BeregnBarnebidragV2Test : FellesTest() {
     private lateinit var filnavnSøknadsbarn: String
     private var filnavnLøpendeBidrag: String = ""
     private var filnavnPrivatAvtale: String = ""
