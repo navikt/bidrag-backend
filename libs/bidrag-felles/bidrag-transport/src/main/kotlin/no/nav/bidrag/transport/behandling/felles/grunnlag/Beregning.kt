@@ -449,6 +449,8 @@ data class DelberegningBidragTilFordeling(
     val nettoBidragEtterBarnetilleggBM: BigDecimal = BigDecimal.ZERO,
     val bruttoBidragEtterBarnetilleggBM: BigDecimal = BigDecimal.ZERO,
     val erBidragJustertForNettoBarnetilleggBM: Boolean = false,
+    @Schema(description = "Søknadsbarnet har delt bosted. Bidrag til fordeling lik 0 betyr da ikke at BP mangler evne")
+    val erDeltBosted: Boolean = false,
 ) : Delberegning
 
 data class DelberegningSumBidragTilFordeling(

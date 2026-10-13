@@ -82,6 +82,38 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
         skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat)
     }
 
+    @Test
+    fun `delt bosted med BPs andel av U nøyaktig 50 prosent skal gi bidrag 0 uten avslag og uten evnesprekk`() {
+        val resultat = beregn("delt_bosted_50")
+
+        assertSoftly {
+            sluttberegninger(resultat, søknadsbarn2).forEach {
+                it.bidragIkkeBeregnetDeltBosted shouldBe false
+                it.resultatBeløp?.signum() shouldBe 0
+            }
+            resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe Resultatkode.BIDRAG_JUSTERT_FOR_DELT_BOSTED }
+            andelerAvEvne(resultat).forEach { it.harBPFullEvne shouldBe true }
+        }
+    }
+
+    @Test
+    fun `delt bosted med BPs andel av U nøyaktig 50 prosent og løpende bidrag skal beregnes uten exception`() {
+        val søknadsbarn: List<BeregnGrunnlag> =
+            lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_avslag_flere_barn_delt_bosted_50.json")
+        val løpendeBidrag: List<BeregnGrunnlag> =
+            lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_eksempel10A_løpende_bidrag.json")
+
+        val resultat = api.beregnBarnebidragV2(
+            beregningsperiode = beregningsperiode,
+            grunnlagSøknadsbarnListe = søknadsbarn,
+            grunnlagLøpendeBidragListe = løpendeBidrag,
+            grunnlagPrivatAvtaleListe = emptyList(),
+            grunnlagValutakursListe = emptyList(),
+        )
+
+        andelerAvEvne(resultat).forEach { it.harBPFullEvne shouldBe true }
+    }
+
     private fun skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat: List<BeregnetBarnebidragResultatV2>) {
         val bidragTilFordelingSøknadsbarn1 = grunnlag(resultat)
             .filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordeling>(Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING)

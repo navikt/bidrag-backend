@@ -45,6 +45,21 @@ class EndeligBidragBeregningV2Test {
         }
 
         @Test
+        fun `barn med delt bosted og bidrag til fordeling lik 0 skal ikke gi evnesprekk når evnen dekker de andre barna`() {
+            val resultat = EndeligBidragBeregningV2.beregnAndelAvBidragsevne(
+                andelAvBidragsevneGrunnlag(
+                    bidragTilFordeling = BigDecimal.ZERO,
+                    sumBidragTilFordeling = BigDecimal(5000),
+                    evne = BigDecimal(9000),
+                    erDeltBosted = true,
+                ),
+            )
+
+            resultat.harBPFullEvne shouldBe true
+            resultat.bidragEtterFordeling.signum() shouldBe 0
+        }
+
+        @Test
         fun `barn med bidrag til fordeling høyere enn andel av evne skal gi evnesprekk`() {
             val resultat = EndeligBidragBeregningV2.beregnAndelAvBidragsevne(
                 andelAvBidragsevneGrunnlag(bidragTilFordeling = BigDecimal(4000), sumBidragTilFordeling = BigDecimal(8000), evne = BigDecimal(6000)),
@@ -297,7 +312,12 @@ private fun sluttberegningGrunnlag(
     underholdskostnadBeregningGrunnlag = underholdskostnad,
 )
 
-private fun andelAvBidragsevneGrunnlag(bidragTilFordeling: BigDecimal?, sumBidragTilFordeling: BigDecimal, evne: BigDecimal) = AndelAvBidragsevneBeregningGrunnlag(
+private fun andelAvBidragsevneGrunnlag(
+    bidragTilFordeling: BigDecimal?,
+    sumBidragTilFordeling: BigDecimal,
+    evne: BigDecimal,
+    erDeltBosted: Boolean = false,
+) = AndelAvBidragsevneBeregningGrunnlag(
     evne25ProsentAvInntektBeregningGrunnlag = Evne25ProsentAvInntektDelberegningBeregningGrunnlag(
         referanse = "evne25ProsentAvInntekt",
         evneJustertFor25ProsentAvInntekt = evne,
@@ -308,7 +328,7 @@ private fun andelAvBidragsevneGrunnlag(bidragTilFordeling: BigDecimal?, sumBidra
         sumPrioriterteBidragTilFordeling = BigDecimal.ZERO,
     ),
     bidragTilFordelingBeregningGrunnlag = bidragTilFordeling?.let {
-        BidragTilFordelingDelberegningBeregningGrunnlag(referanse = "bidragTilFordeling", bidragTilFordeling = it)
+        BidragTilFordelingDelberegningBeregningGrunnlag(referanse = "bidragTilFordeling", bidragTilFordeling = it, erDeltBosted = erDeltBosted)
     },
 )
 

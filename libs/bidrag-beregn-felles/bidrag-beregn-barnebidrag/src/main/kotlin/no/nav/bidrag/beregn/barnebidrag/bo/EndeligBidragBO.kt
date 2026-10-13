@@ -217,12 +217,17 @@ data class BidragTilFordelingBeregningResultat(
     val bruttoBidragEtterBarnetilleggBM: BigDecimal,
     val erBidragJustertForNettoBarnetilleggBM: Boolean,
     val erAvslag: Boolean,
+    val erDeltBosted: Boolean = false,
     val grunnlagsreferanseListe: List<String> = emptyList(),
 )
 
 data class BidragTilFordelingDelberegningPeriodeGrunnlag(val referanse: String, val bidragTilFordelingPeriode: DelberegningBidragTilFordeling)
 
-data class BidragTilFordelingDelberegningBeregningGrunnlag(val referanse: String, val bidragTilFordeling: BigDecimal)
+data class BidragTilFordelingDelberegningBeregningGrunnlag(
+    val referanse: String,
+    val bidragTilFordeling: BigDecimal,
+    val erDeltBosted: Boolean = false,
+)
 
 data class SumBidragTilFordelingPeriodeGrunnlag(
     val beregningsperiode: ÅrMånedsperiode,
