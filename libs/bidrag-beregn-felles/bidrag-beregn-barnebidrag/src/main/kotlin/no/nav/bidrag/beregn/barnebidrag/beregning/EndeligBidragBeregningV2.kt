@@ -13,6 +13,7 @@ import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingPrivatAvtaleBeregni
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedBeregningResultat
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.BpAndelUnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektBeregningResultat
 import no.nav.bidrag.beregn.barnebidrag.bo.SluttberegningBarnebidragV2BeregningGrunnlag
@@ -78,7 +79,8 @@ internal object EndeligBidragBeregningV2 {
         // Sjekker om perioden vil gi avslag. Dette vil resultere i at det ikke mappes ut noe grunnlagsobjekt for denne perioden.
         val barnetErSelvforsørget = grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.barnetErSelvforsørget
         val søknadsbarnetBorHosBP = grunnlag.søknadsbarnetBorHosBpGrunnlag.søknadsbarnetBorHosBp
-        val bidragIkkeBeregnetDeltBosted = grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag.erBidragIkkeBeregnet()
+        val bidragIkkeBeregnetDeltBosted =
+            erBpsAndelUnder50ProsentVedDeltBosted(grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag, grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag)
         val forpleiningDekkerUnderholdskostnaden = grunnlag.underholdskostnadBeregningGrunnlag.erDekketAvForpleining()
 
         return BidragTilFordelingBeregningResultat(
@@ -334,8 +336,12 @@ internal object EndeligBidragBeregningV2 {
             )
         }
 
-        // Hvis BPs andel av U ved delt bosted er 50 % eller lavere skal det resultere i avslag og bidragsbeløp settes til null
-        if (grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag.erBidragIkkeBeregnet()) {
+        // Hvis BPs andel av U ved delt bosted er under 50 % skal det resultere i avslag og bidragsbeløp settes til null
+        if (erBpsAndelUnder50ProsentVedDeltBosted(
+                grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag,
+                grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag,
+            )
+        ) {
             return SluttberegningBarnebidragV2BeregningResultat(
                 bidragIkkeBeregnetDeltBosted = true,
                 beregnetBeløp = null,
@@ -378,8 +384,12 @@ internal object EndeligBidragBeregningV2 {
     }
 }
 
-// Ved delt bosted betaler BP bare for den delen av andelen som er over 50 %. Er andelen 50 % eller lavere, skal bidraget ikke beregnes.
-private fun BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?.erBidragIkkeBeregnet() = this != null && bpAndelAvUVedDeltBostedFaktor.signum() <= 0
+// Ved delt bosted betaler BP bare for den delen av andelen som er over 50 %. Er BPs andel under 50 %, gir perioden avslag.
+// Ved nøyaktig 50 % blir bidraget 0, men perioden gir ikke avslag.
+private fun erBpsAndelUnder50ProsentVedDeltBosted(
+    andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?,
+    bpAndelUnderholdskostnad: BpAndelUnderholdskostnadDelberegningBeregningGrunnlag,
+) = andelDeltBosted != null && bpAndelUnderholdskostnad.andelFaktor < BigDecimal("0.5")
 
 // U er 0 etter at forpleiningen er trukket fra (se UnderholdskostnadBeregning), altså er forpleiningen lik eller høyere enn U.
 private fun UnderholdskostnadDelberegningBeregningGrunnlag?.erDekketAvForpleining() = this != null && (forpleining ?: BigDecimal.ZERO) > BigDecimal.ZERO && beløp.signum() <= 0

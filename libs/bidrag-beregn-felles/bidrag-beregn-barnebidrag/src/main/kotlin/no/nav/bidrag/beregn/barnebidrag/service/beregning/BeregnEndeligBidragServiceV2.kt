@@ -1120,7 +1120,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
-                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }
@@ -1668,7 +1667,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
-                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }
@@ -1783,7 +1781,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 ?.let {
                     BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
                         referanse = it.referanse,
-                        bpAndelAvUVedDeltBostedFaktor = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedFaktor,
                         bpAndelAvUVedDeltBostedBeløp = it.bidragspliktigesAndelDeltBostedPeriode.bpAndelAvUVedDeltBostedBeløp,
                     )
                 }

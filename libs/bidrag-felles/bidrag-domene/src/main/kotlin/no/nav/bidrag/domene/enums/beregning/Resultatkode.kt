@@ -47,7 +47,7 @@ enum class Resultatkode(
         ResultatkodeType.AVSLAG,
     ),
 
-    // Beregnet avslag/opphør: BPs andel av U ved delt bosted er 50 % eller lavere
+    // Beregnet avslag/opphør: BPs andel av U er under 50 % ved delt bosted
     BIDRAG_IKKE_BEREGNET_DELT_BOSTED(
         listOf(BisysResultatkode("ADN", BisysResultatkodeType.AVSLAG), BisysResultatkode("ODN", BisysResultatkodeType.OPPHØR)),
         ResultatkodeType.BARNEBIDRAG,

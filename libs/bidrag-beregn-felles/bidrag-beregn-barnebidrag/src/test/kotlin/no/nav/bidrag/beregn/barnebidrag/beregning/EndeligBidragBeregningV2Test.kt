@@ -140,11 +140,28 @@ class EndeligBidragBeregningV2Test {
                     underholdskostnad = BigDecimal(8000),
                     bpAndel = BigDecimal(3200),
                     nettoBarnetilleggBM = null,
-                    andelDeltBosted = andelDeltBosted(faktor = BigDecimal.ZERO, beløp = BigDecimal.ZERO),
+                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO),
+                    bpAndelFaktor = BigDecimal("0.4"),
                 ),
             )
 
             resultat.erAvslag shouldBe true
+        }
+
+        @Test
+        fun `skal ikke gi avslag når BPs andel av U er nøyaktig 50 prosent`() {
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+                bidragTilFordelingGrunnlag(
+                    underholdskostnad = BigDecimal(8000),
+                    bpAndel = BigDecimal(4000),
+                    nettoBarnetilleggBM = null,
+                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO),
+                    bpAndelFaktor = BigDecimal("0.5"),
+                ),
+            )
+
+            resultat.erAvslag shouldBe false
+            resultat.bidragTilFordeling.signum() shouldBe 0
         }
 
         @Test
@@ -154,7 +171,8 @@ class EndeligBidragBeregningV2Test {
                     underholdskostnad = BigDecimal(8000),
                     bpAndel = BigDecimal(4800),
                     nettoBarnetilleggBM = null,
-                    andelDeltBosted = andelDeltBosted(faktor = BigDecimal("0.1"), beløp = BigDecimal(800)),
+                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal(800)),
+                    bpAndelFaktor = BigDecimal("0.6"),
                 ),
             )
 
@@ -163,9 +181,9 @@ class EndeligBidragBeregningV2Test {
         }
 
         @Test
-        fun `sluttberegning skal gi avslag uten beløp når BPs andel av U er 50 prosent eller lavere`() {
+        fun `sluttberegning skal gi avslag uten beløp når BPs andel av U er under 50 prosent`() {
             val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(faktor = BigDecimal.ZERO, beløp = BigDecimal.ZERO)),
+                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO), bpAndelFaktor = BigDecimal("0.4")),
             )
 
             resultat.bidragIkkeBeregnetDeltBosted shouldBe true
@@ -176,11 +194,21 @@ class EndeligBidragBeregningV2Test {
         @Test
         fun `sluttberegning skal beregne bidrag når BPs andel av U er over 50 prosent`() {
             val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
-                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(faktor = BigDecimal("0.1"), beløp = BigDecimal(800))),
+                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal(800))),
             )
 
             resultat.bidragIkkeBeregnetDeltBosted shouldBe false
             resultat.resultatBeløp?.compareTo(BigDecimal(800)) shouldBe 0
+        }
+
+        @Test
+        fun `sluttberegning skal gi bidrag lik 0 uten avslag når BPs andel av U er nøyaktig 50 prosent`() {
+            val resultat = EndeligBidragBeregningV2.beregnSluttberegningBarnebidrag(
+                sluttberegningGrunnlag(andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO), bpAndelFaktor = BigDecimal("0.5")),
+            )
+
+            resultat.bidragIkkeBeregnetDeltBosted shouldBe false
+            resultat.resultatBeløp?.signum() shouldBe 0
         }
     }
 
@@ -243,15 +271,15 @@ class EndeligBidragBeregningV2Test {
     }
 }
 
-private fun andelDeltBosted(faktor: BigDecimal, beløp: BigDecimal) = BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
+private fun andelDeltBosted(beløp: BigDecimal) = BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
     referanse = "andelDeltBosted",
-    bpAndelAvUVedDeltBostedFaktor = faktor,
     bpAndelAvUVedDeltBostedBeløp = beløp,
 )
 
 private fun sluttberegningGrunnlag(
     andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
     underholdskostnad: UnderholdskostnadDelberegningBeregningGrunnlag? = null,
+    bpAndelFaktor: BigDecimal = BigDecimal("0.6"),
 ) = SluttberegningBarnebidragV2BeregningGrunnlag(
     bidragJustertForBPBarnetilleggBeregningGrunnlag = BidragJustertForBPBarnetilleggDelberegningBeregningGrunnlag(
         referanse = "bidragJustertForBPBarnetillegg",
@@ -261,7 +289,7 @@ private fun sluttberegningGrunnlag(
     bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
         referanse = "bpAndelUnderholdskostnad",
         andelBeløp = BigDecimal(4800),
-        andelFaktor = BigDecimal("0.6"),
+        andelFaktor = bpAndelFaktor,
         barnetErSelvforsørget = false,
     ),
     søknadsbarnetBorHosBpGrunnlag = SøknadsbarnetBorHosBpGrunnlag(referanse = "søknadsbarnetBorHosBp", søknadsbarnetBorHosBp = false),
@@ -290,6 +318,7 @@ private fun bidragTilFordelingGrunnlag(
     nettoBarnetilleggBM: BigDecimal?,
     andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag? = null,
     forpleining: BigDecimal? = null,
+    bpAndelFaktor: BigDecimal = BigDecimal("0.5"),
 ) = BidragTilFordelingBeregningGrunnlag(
     underholdskostnadBeregningGrunnlag = UnderholdskostnadDelberegningBeregningGrunnlag(
         referanse = "underholdskostnad",
@@ -299,7 +328,7 @@ private fun bidragTilFordelingGrunnlag(
     bpAndelUnderholdskostnadBeregningGrunnlag = BpAndelUnderholdskostnadDelberegningBeregningGrunnlag(
         referanse = "bpAndelUnderholdskostnad",
         andelBeløp = bpAndel,
-        andelFaktor = BigDecimal("0.5"),
+        andelFaktor = bpAndelFaktor,
         barnetErSelvforsørget = false,
     ),
     barnetilleggBMBeregningGrunnlag = nettoBarnetilleggBM?.let { BarnetilleggDelberegningBeregningGrunnlag(referanse = "barnetilleggBM", beløp = it) },
@@ -319,7 +348,7 @@ private fun bidragJustertForBPBarnetilleggGrunnlag(
     ),
     barnetilleggBPBeregningGrunnlag = nettoBarnetilleggBP?.let { BarnetilleggDelberegningBeregningGrunnlag(referanse = "barnetilleggBP", beløp = it) },
     bidragspliktigesAndelDeltBostedBeregningGrunnlag = if (erDeltBosted) {
-        andelDeltBosted(faktor = BigDecimal("0.1"), beløp = bidragEtterFordeling)
+        andelDeltBosted(beløp = bidragEtterFordeling)
     } else {
         null
     },

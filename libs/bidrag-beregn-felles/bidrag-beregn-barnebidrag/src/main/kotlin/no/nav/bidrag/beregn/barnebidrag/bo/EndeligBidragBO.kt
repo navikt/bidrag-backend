@@ -186,11 +186,7 @@ data class BidragspliktigesAndelDeltBostedDelberegningPeriodeGrunnlag(
     val bidragspliktigesAndelDeltBostedPeriode: DelberegningBidragspliktigesAndelDeltBosted,
 )
 
-data class BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(
-    val referanse: String,
-    val bpAndelAvUVedDeltBostedFaktor: BigDecimal,
-    val bpAndelAvUVedDeltBostedBeløp: BigDecimal,
-)
+data class BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag(val referanse: String, val bpAndelAvUVedDeltBostedBeløp: BigDecimal)
 
 data class BidragTilFordelingPeriodeGrunnlag(
     val beregningsperiode: ÅrMånedsperiode,
