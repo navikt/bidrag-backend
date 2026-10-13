@@ -314,7 +314,12 @@ fun Behandling.finnBeregnTilDatoBehandling(
 
                 else -> {
                     val virkningstidspunkt = søknadsbarnRolle?.virkningstidspunkt ?: this.virkningstidspunkt!!
-                    if (virkningstidspunkt > opprinneligVedtakstidspunktBeregnTil) {
+                    val avslag = søknadsbarnRolle?.avslag
+                    val erDirekteAvslag = avslag != null && !avslag.erAvvisning() && avslag.erDirekteAvslag()
+                    // Ordinære barn skal alltid ha minst én måned å beregne. Direkte avslag beregnes til virkningstidspunktet
+                    if (virkningstidspunkt > opprinneligVedtakstidspunktBeregnTil ||
+                        (virkningstidspunkt == opprinneligVedtakstidspunktBeregnTil && !erDirekteAvslag)
+                    ) {
                         // Revurderingsbarn så kan opphørsdato være før virkningstidspunkt. Feks hvis bidraget har opphørt før virkning men
                         // har løpende bidrag fra eldste virkningstidspunkt
                         minOfNullable(opphørsdato?.toLocalDate(), virkningstidspunkt.plusMonths(1).withDayOfMonth(1))!!

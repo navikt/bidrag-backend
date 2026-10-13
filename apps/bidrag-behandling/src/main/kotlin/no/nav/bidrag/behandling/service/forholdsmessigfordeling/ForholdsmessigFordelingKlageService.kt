@@ -526,7 +526,11 @@ class ForholdsmessigFordelingKlageService(
         val rollerISystemopprettedeKlagesøknader = behandling.søknadsbarn.flatMap { barn ->
             barn.forholdsmessigFordeling
                 ?.søknaderUnderBehandling
-                ?.filter { it.opprettetAvSystem && it.søknadsid != hovedsøknadsid }?.map { barn to it.søknadsid!! }
+                ?.filter {
+                    it.opprettetAvSystem &&
+                        !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) &&
+                        it.søknadsid != hovedsøknadsid
+                }?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }.distinct()
         val rollerISaksbehandlersSøknader = rollerIAlleKlagesøknader.filter {

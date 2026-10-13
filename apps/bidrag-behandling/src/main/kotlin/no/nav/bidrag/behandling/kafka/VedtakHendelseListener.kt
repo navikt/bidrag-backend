@@ -106,20 +106,13 @@ class VedtakHendelseListener(
             .forEach { stønadsendring ->
 
                 val bp = stønadsendring.skyldner
-                val behandlinger = behandlingRepository.finnÅpneBidragsbehandlingerForBpMedFFId(bp.verdi)
+                val behandlinger = behandlingRepository.finnÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
                 behandlinger
+                    .sortedBy { it.id }
                     .forEach { behandling ->
-                        behandlingRepository.låsBehandlingForOppdatering(behandling)
-                        val oppdatertBehandling =
-                            behandlingRepository.findBehandlingById(behandling).orElse(null) ?: return@forEach
-                        behandlingRepository.refreshBehandling(oppdatertBehandling)
-                        if (oppdatertBehandling.deleted ||
-                            oppdatertBehandling.vedtakDetaljer != null ||
-                            oppdatertBehandling.forholdsmessigFordeling?.erHovedbehandling != true
-                        ) {
-                            return@forEach
-                        }
-                        behandleBehandlingHvisOpphorEllerInnkreving(stønadsendring, oppdatertBehandling)
+                        behandlingRepository.låsBehandlingForOppdatering(behandling.id!!)
+                        behandlingRepository.refreshBehandling(behandling)
+                        behandleBehandlingHvisOpphorEllerInnkreving(stønadsendring, behandling)
                     }
             }
     }
