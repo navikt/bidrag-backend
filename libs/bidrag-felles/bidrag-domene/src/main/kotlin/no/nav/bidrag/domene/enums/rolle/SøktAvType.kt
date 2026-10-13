@@ -14,7 +14,7 @@ enum class SøktAvType(
     BARN_18_ÅR("BB"),
     BM_I_ANNEN_SAK("AS"),
     NAV_BIDRAG("ET"), // TK
-    AUTOMATISK("AU"), // TK
+    AUTOMATISK("AU"),
     FYLKESNEMDA("FN"),
     NAV_INTERNASJONALT("IN"),
     KOMMUNE("KU"),
