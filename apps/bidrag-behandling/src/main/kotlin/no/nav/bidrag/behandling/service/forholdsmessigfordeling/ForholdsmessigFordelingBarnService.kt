@@ -195,6 +195,7 @@ class ForholdsmessigFordelingBarnService(
         feilregistrerBarnFraFFSøknad(rolle)
         behandlingService.slettRolleFraBehandling(behandling, rolle)
         behandling.roller.remove(rolle)
+        fjernSakUtenSøknadsbarn(behandling, rolle.saksnummer)
         secureLogger.info { "Slettet søknadsbarn ${rolle.ident} uten åpen søknad eller løpende bidrag fra behandling ${behandling.id}" }
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
     }
@@ -210,6 +211,7 @@ class ForholdsmessigFordelingBarnService(
         feilregistrerBarnFraFFSøknad(rolle)
         behandlingService.slettRolleFraBehandling(behandling, rolle)
         behandling.roller.remove(rolle)
+        fjernSakUtenSøknadsbarn(behandling, rolle.saksnummer)
         secureLogger.info { "Slettet revurderingsbarn ${rolle.ident} fra behandling ${behandling.id}" }
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
         val bmIdent = rolle.bidragsmottaker?.ident
@@ -279,8 +281,38 @@ class ForholdsmessigFordelingBarnService(
             feilregistrerBarnFraFFSøknad(barn)
             behandlingService.slettRolleFraBehandling(behandling, barn)
             behandling.roller.remove(barn)
+            fjernSakUtenSøknadsbarn(behandling, barn.saksnummer)
             secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
         }
+    }
+
+    /**
+     * Fjerner referanser til en sak (BM og gebyrsøknader) når det ikke lenger finnes søknadsbarn i saken.
+     * Gjelder ikke saken til behandlingen.
+     */
+    private fun fjernSakUtenSøknadsbarn(
+        behandling: Behandling,
+        saksnummer: String,
+    ) {
+        if (saksnummer == behandling.saksnummer) return
+        if (behandling.søknadsbarn.any { it.saksnummer == saksnummer }) return
+
+        behandling.roller.forEach { rolle ->
+            val gebyr = rolle.gebyr ?: return@forEach
+            if (gebyr.gebyrSøknader.none { it.saksnummer == saksnummer }) return@forEach
+            gebyr.gebyrSøknader = gebyr.gebyrSøknader.filter { it.saksnummer != saksnummer }.toMutableSet()
+            if (gebyr.gebyrSøknader.isEmpty()) rolle.harGebyrsøknad = false
+        }
+
+        behandling.alleBidragsmottakere
+            .filter { it.forholdsmessigFordeling?.tilhørerSak == saksnummer }
+            // Samme BM kan være i flere saker. Sletter ikke rollen da grunnlag for BM deles mellom rollene
+            .filter { bm -> behandling.roller.none { it != bm && it.ident == bm.ident } }
+            .forEach { bm ->
+                behandlingService.slettRolleFraBehandling(behandling, bm)
+                behandling.roller.remove(bm)
+                secureLogger.info { "Slettet bidragsmottaker ${bm.ident} i sak $saksnummer fra behandling ${behandling.id} fordi saken ikke har flere søknadsbarn" }
+            }
     }
 
     fun slettBarnEllerGjenopprettFFSøknad(
@@ -292,6 +324,7 @@ class ForholdsmessigFordelingBarnService(
             feilregistrerBarnFraFFSøknad(barn)
             behandlingService.slettRolleFraBehandling(behandling, barn)
             behandling.roller.remove(barn)
+            fjernSakUtenSøknadsbarn(behandling, barn.saksnummer)
             secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
         } else {
             val løpendeBidrag = behandling.finnSistePeriodeLøpendePeriodeInnenforSøktFomDato(barn)
