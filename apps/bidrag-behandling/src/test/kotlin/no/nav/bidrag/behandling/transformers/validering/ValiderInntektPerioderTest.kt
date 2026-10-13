@@ -480,7 +480,7 @@ class ValiderInntektPerioderTest {
         }
 
         @Test
-        fun `skal ikke kreve skattesats for barnetillegg fra Forsvaret i bidrag`() {
+        fun `skal ikke kreve skattesats for skattefrie barnetillegg i bidrag`() {
             val behandling = oppretteBehandling(stønadstype = Stønadstype.BIDRAG)
             val bidragspliktig = opprettRolle("31233123", Rolletype.BIDRAGSPLIKTIG, behandling = behandling)
             behandling.roller.addAll(listOf(bidragspliktig, opprettRolle("21333123", Rolletype.BARN, behandling = behandling)))
@@ -497,6 +497,7 @@ class ValiderInntektPerioderTest {
                 .firstOrNull()?.manglerSkatteprosent == true
 
             manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET)) shouldBe false
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_TILTAKSPENGER)) shouldBe false
             manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
             manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET, Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
         }
