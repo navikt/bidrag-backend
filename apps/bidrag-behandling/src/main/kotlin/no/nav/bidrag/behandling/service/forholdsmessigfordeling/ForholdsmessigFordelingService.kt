@@ -172,6 +172,7 @@ class ForholdsmessigFordelingService(
             }
             behandlingRepository.låsBehandlingForOppdatering(behandlingId)
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+            behandlingRepository.refreshBehandling(behandling)
 
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
             val nyesteLøpendeBidragGrunnlag = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = false).løpendeBidragBarn
