@@ -216,7 +216,11 @@ class GrunnlagService(
     }
 
     // Asynkron innhenting tar egen lås i jobben, så da trenger ikke kallet å låse behandlingen.
-    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled && foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong())
+    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled &&
+        (
+            foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong()) ||
+                foretaNyGrunnlagsinnhenting(behandling, grenseInnhentingBeløpshistorikk.toLong())
+            )
 
     @Transactional
     fun oppdaterGrunnlagForBehandlingAsync(behandling: Behandling) {
