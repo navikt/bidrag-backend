@@ -622,7 +622,9 @@ class ForholdsmessigFordelingService(
             behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
         }
 
-        leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, løpendeBidraggsakerBP)
+        val søknaderKnyttetTilBehandling =
+            if (behandling.erKlageEllerOmgjøring) klageService.knyttSøknaderUtenBehandlingsidTilBehandling(behandling) else emptyList()
+        leggTilManglendeBarnFraSøknaderIBehandling(behandling, løpendeBidraggsakerBP, søknaderKnyttetTilBehandling)
 
         behandling.søknadsbarn.forEach { rolle ->
             val løpendeBidrag = løpendeBidraggsakerBP.find { rolle.erSammeRolle(it.kravhaver.verdi, it.type) }
@@ -639,7 +641,6 @@ class ForholdsmessigFordelingService(
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
             klageService.korrigerHovedsøknad(behandling)
-            klageService.knyttSøknaderUtenBehandlingsidTilBehandling(behandling)
             klageService.korrigerKlagesøknader(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
@@ -676,18 +677,25 @@ class ForholdsmessigFordelingService(
     }
 
     /**
-     * Feilhåndtering: Legger til revurderingsbarn som er med i en åpen FF-søknad knyttet til behandlingen, men som mangler i behandlingen.
-     * Barnet får samme søkt fom dato som i FF-søknaden. Dette kan skje hvis feks systemet har opprettet FF søknad men det skjedde en feil ved opprettelse av rolle i behandlingen
+     * Feilhåndtering: Sørger for at barn under behandling i åpne søknader knyttet til behandlingen finnes i behandlingen.
+     * - Barn i FF-søknad legges til som revurderingsbarn med samme søkt fom dato som i FF-søknaden.
+     *   Dette kan skje hvis feks systemet har opprettet FF søknad men det skjedde en feil ved opprettelse av rolle i behandlingen
+     * - Barn i andre søknader (feks opprettet av saksbehandler) legges til som søknadsbarn
+     *
+     * @param søknaderKnyttetTilBehandling søknader som nettopp er knyttet til behandlingen og derfor kanskje ikke returneres fra BBM ennå
      */
-    internal fun leggTilManglendeRevurderingsbarnFraFFSøknader(
+    internal fun leggTilManglendeBarnFraSøknaderIBehandling(
         behandling: Behandling,
         løpendeBidraggsakerBP: List<LøpendeBidragSakPeriode>,
+        søknaderKnyttetTilBehandling: List<HentSøknad> = emptyList(),
     ) {
-        val åpneFFSøknader =
-            bbmConsumer
-                .hentÅpneSøknaderForBehandling(behandling.id!!)
-                .søknader
-                .filter { it.behandlingStatusType.erÅpenStatus && it.behandlingstype.erForholdsmessigFordeling }
+        val (åpneFFSøknader, åpneAndreSøknader) =
+            (bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!).søknader + søknaderKnyttetTilBehandling)
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .distinctBy { it.søknadsid }
+                .partition { it.behandlingstype.erForholdsmessigFordeling }
+
+        leggTilRollerFraRelevanteSøknaderSomIkkeErIBehandling(behandling, åpneAndreSøknader)
 
         åpneFFSøknader.forEach { søknad ->
             val stønadstype = søknad.behandlingstema.tilStønadstype() ?: Stønadstype.BIDRAG

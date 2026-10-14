@@ -404,7 +404,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         val ffSøknad = opprettFFSøknad(behandling, behandling.behandlingstypeForFF)
         every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
 
-        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
 
         assertRevurderingsbarnLagtTil(behandling, antallBarnFør, ffSøknad)
     }
@@ -419,7 +419,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         val ffSøknad = opprettFFSøknad(behandling, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
         every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
 
-        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
 
         assertRevurderingsbarnLagtTil(behandling, antallBarnFør, ffSøknad)
     }
@@ -435,9 +435,46 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
             opprettFFSøknad(behandling, behandling.behandlingstypeForFF, barnIdent = eksisterendeBarn.ident!!)
         every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
 
-        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
 
         behandling.roller shouldHaveSize antallRollerFør
+    }
+
+    @Test
+    fun `skal legge til manglende revurderingsbarn fra ff soknad som nettopp er knyttet til behandlingen`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val antallBarnFør = behandling.søknadsbarn.size
+        val ffSøknad = opprettFFSøknad(behandling, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE).copy(behandlingsid = null)
+
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList(), listOf(ffSøknad))
+
+        assertRevurderingsbarnLagtTil(behandling, antallBarnFør, ffSøknad)
+    }
+
+    @Test
+    fun `skal legge til manglende barn fra ikke ff soknad knyttet til behandlingen som soknadsbarn`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val antallBarnFør = behandling.søknadsbarn.size
+        val søknad = opprettFFSøknad(behandling, Behandlingstype.KLAGE).copy(behandlingsid = null)
+        every { sakConsumer.hentSakerPerson(any()) } returns emptyList()
+        every { behandlingRepository.finnÅpneBidragsbehandlingerForBp(any(), any()) } returns emptyList()
+        every { underholdService.oppretteUnderholdskostnad(any(), any(), any()) } returns mockk(relaxed = true)
+        every { virkningstidspunktService.oppdaterVirkningstidspunkt(any(), any(), any(), any(), any(), any()) } returns Unit
+        every { behandlingService.sendOppdatertHendelse(any(), any()) } returns Unit
+        every { behandlingService.lagreBehandling(any()) } answers { firstArg() }
+
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList(), listOf(søknad))
+
+        behandling.søknadsbarn shouldHaveSize antallBarnFør + 1
+        val nyttBarn = behandling.søknadsbarn.find { it.ident == NYTT_BARN_IDENT }!!
+        nyttBarn.forholdsmessigFordeling!!.erRevurdering shouldBe false
+        nyttBarn.forholdsmessigFordeling!!.søknader.any { it.søknadsid == søknad.søknadsid } shouldBe true
     }
 
     private fun assertRevurderingsbarnLagtTil(
