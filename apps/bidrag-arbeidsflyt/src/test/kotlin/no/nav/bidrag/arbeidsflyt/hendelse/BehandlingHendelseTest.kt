@@ -321,6 +321,7 @@ internal class BehandlingHendelseTest : AbstractBehandleHendelseTest() {
                 )
         val barnHendelse = hendelse.barn.first()
         stubHentOppgaveSok(emptyList())
+        stubHentSøknadStatus(status = BehandlingStatusType.ÅPEN)
         stubHentSak(
             opprettSakForBehandling(barnHendelse),
         )
@@ -423,6 +424,7 @@ internal class BehandlingHendelseTest : AbstractBehandleHendelseTest() {
                 ),
             ),
         )
+        stubHentSøknadStatus(status = BehandlingStatusType.VEDTAK_FATTET)
         stubHentSak(
             opprettSakForBehandling(barnHendelse),
         )

@@ -10,6 +10,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveType
 import no.nav.bidrag.arbeidsflyt.dto.OpprettSøknadsoppgaveRequest
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.arbeidsflyt.model.kreverSøknadsoppgave
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgave
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
 import no.nav.bidrag.arbeidsflyt.persistence.entity.BehandlingBarn
@@ -70,7 +71,7 @@ class BehandleBehandlingHendelseService(
                 ).dataForHendelse
 
         secureLogger.info { "Fant $åpneOppgaver for opppgave ${oppgaveData.id} og søknad ${oppgaveData.søknadsid}" }
-        if (åpneOppgaver.isEmpty()) {
+        if (åpneOppgaver.isEmpty() && søknad.kreverSøknadsoppgave) {
             LOGGER.info { "Gjennoppretter oppgave for sak ${oppgaveData.saksreferanse} og søknadsid ${oppgaveData.søknadsid} og behandlingsid ${oppgaveData.behandlingsid}" }
             oppgaveService.opprettOppgave(oppgaveData.mapTilOpprettOppgave())
         }
@@ -284,6 +285,7 @@ class BehandleBehandlingHendelseService(
             bbmConsumer.hentSøknad(HentSøknadRequest(søknadsid))?.søknad?.behandlingStatusType
         }
     } catch (e: Exception) {
+        secureLogger.error(e) { "Feil ved henting av søknadstatus for søknadsid $søknadsid: ${e.message}" }
         null
     }
 
@@ -418,7 +420,8 @@ class BehandleBehandlingHendelseService(
                 .map { it.søknadsid }
                 .distinct()
                 .size > 1
-        behandling.status = hentSøknadStatus(hendelse.søknadsid) ?: hendelse.status
+        // Sett default status til under behandling slik at scheduler kan ta det opp og sjekke igjen hvis status ikke er avsluttet
+        behandling.status = if (hendelse.søknadsid == null) hendelse.status else hentSøknadStatus(hendelse.søknadsid) ?: BehandlingStatusType.UNDER_BEHANDLING
         behandling.endretTidspunkt = hendelse.endretTidspunkt
         behandling.behandlesAvFlereSøknader = behandlesAvFlereSøknader
         behandling.hendelse = hendelse
@@ -432,32 +435,30 @@ class BehandleBehandlingHendelseService(
     }
 
     private fun oppdaterBehandlingStatus(behandling: Behandling) {
-        try {
-            if (behandling.barn == null && behandling.hendelse == null) return
-            val barn =
-                behandling.hendelse!!.barn.map { b ->
-                    if (b.søknadsid == null) return@map b
+        if (behandling.barn == null) return
+        val hendelse = behandling.hendelse ?: return
+        val barn =
+            hendelse.barn.map { b ->
+                if (b.søknadsid == null) return@map b
+                try {
                     val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(b.søknadsid!!))
                     if (søknad == null) {
-                        b.copy(
-                            status = Behandlingstatus.TRUKKET,
-                        )
+                        b.copy(status = Behandlingstatus.TRUKKET)
                     } else {
-                        val søknadBarn = søknad.søknad.partISøknadListe.find { it.personident == b.ident } ?: return@map b
-                        b.copy(
-                            status = søknadBarn.behandlingstatus ?: b.status,
-                        )
+                        val status =
+                            søknad.søknad.partISøknadListe
+                                .find { it.personident == b.ident }
+                                ?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING
+                        b.copy(status = status)
                     }
+                } catch (e: Exception) {
+                    secureLogger.error(e) { "Feil ved henting av status for søknad ${b.søknadsid}" }
+                    b.copy(status = Behandlingstatus.UNDER_BEHANDLING)
                 }
+            }
 
-            behandling.barn!!.barn = barn
-            behandling.hendelse =
-                behandling.hendelse!!.copy(
-                    barn = barn,
-                )
-        } catch (e: Exception) {
-            LOGGER.error(e) { "Feil ved oppdatering av behandling ${behandling.hendelse}" }
-        }
+        behandling.barn!!.barn = barn
+        behandling.hendelse = hendelse.copy(barn = barn)
     }
 
     fun slettÅpneOppgaverUtenSøknadsreferanse(saksnr: String) {
@@ -543,68 +544,91 @@ class BehandleBehandlingHendelseService(
         Stønadstype.MOTREGNING -> Fagomrade.BIDRAGINNKREVING
         else -> Fagomrade.BIDRAG
     }
-}
 
-/**
- * Lager hendelse fra behandlingsdetaljene. Verdier som ikke finnes i behandlingsdetaljene
- * (sporingsdata, omgjørBehandlingsid og hendelsetype før vedtak er fattet) hentes fra [mottattHendelse] hvis den finnes.
- */
-internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
-    val nå = LocalDateTime.now()
-    return BehandlingHendelse(
-        type =
-        when {
-            erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
-            else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
-        },
-        status =
-        when {
-            slettet -> BehandlingStatusType.AVBRUTT
-            erVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            else -> BehandlingStatusType.UNDER_BEHANDLING
-        },
-        vedtakstype = vedtakstype,
-        opprettetTidspunkt = opprettetTidspunkt,
-        endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
-        mottattDato = mottattdato,
-        barn = tilBehandlingHendelseBarn(),
-        sporingsdata =
-        mottattHendelse?.sporingsdata
-            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
-        behandlingsid = id,
-        omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
-        behandlerEnhet = behandlerenhet,
-        søknadsid = søknadsid,
-        omgjørSøknadsid = søknadRefId,
-    )
-}
-
-internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> = roller
-    .filter { it.rolletype == Rolletype.BARN && it.ident != null }
-    .flatMap { rolle ->
-        rolle.søknader.map { søknad ->
-            BehandlingHendelseBarn(
-                saksnummer = rolle.saksnummer,
-                ident = rolle.ident!!,
-                stønadstype = rolle.stønadstype,
-                engangsbeløptype = engangsbeløptype,
-                særbidragskategori = kategori?.kategori,
-                søknadsid = søknad.søknadsId,
-                omgjørSøknadsid = søknad.omgjørSøknadsid,
-                omgjørVedtaksid = søknad.omgjørVedtaksid,
-                søktAv = søknad.søknadFra,
-                behandlerEnhet = søknad.enhet,
-                behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
-                behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
-                medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
-                søktFraDato = søknad.søknadFomDato ?: søktFomDato,
-                mottattDato = søknad.mottattDato ?: mottattdato,
-                status =
-                when {
-                    slettet -> Behandlingstatus.FEILREGISTRERT
-                    erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
-                    else -> søknad.status ?: Behandlingstatus.UNDER_BEHANDLING
-                },
-            )
+    /**
+     * Lager hendelse fra behandlingsdetaljene. Verdier som ikke finnes i behandlingsdetaljene
+     * (sporingsdata, omgjørBehandlingsid og hendelsetype før vedtak er fattet) hentes fra [mottattHendelse] hvis den finnes.
+     */
+    internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
+        val nå = LocalDateTime.now()
+        val søknadStatus = if (slettet) {
+            val søknad = søknadsid.let { bbmConsumer.hentSøknad(HentSøknadRequest(it))?.søknad }
+            søknad?.behandlingStatusType
+        } else {
+            null
         }
+
+        return BehandlingHendelse(
+            type =
+            when {
+                slettet && søknadStatus != null && !søknadStatus.erAvsluttet -> BehandlingHendelseType.ENDRET
+                erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
+                else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
+            },
+            status =
+            when {
+                // Tilfelle hvor behandling er slettet fordi søknaden behandles i Bisys istedenfor bidrag-behandling
+                slettet && søknadStatus != null -> søknadStatus
+
+                slettet -> BehandlingStatusType.AVBRUTT
+
+                erVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
+
+                else -> BehandlingStatusType.UNDER_BEHANDLING
+            },
+            vedtakstype = vedtakstype,
+            opprettetTidspunkt = opprettetTidspunkt,
+            endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
+            mottattDato = mottattdato,
+            barn = tilBehandlingHendelseBarn(),
+            sporingsdata =
+            mottattHendelse?.sporingsdata
+                ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
+            behandlingsid = id,
+            omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
+            behandlerEnhet = behandlerenhet,
+            søknadsid = søknadsid,
+            omgjørSøknadsid = søknadRefId,
+        )
     }
+
+    internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> = roller
+        .filter { it.rolletype == Rolletype.BARN && it.ident != null }
+        .flatMap { rolle ->
+            rolle.søknader.map { søknad ->
+                val søknadStatus = if (slettet) {
+                    val søknadDetaljer = bbmConsumer.hentSøknad(HentSøknadRequest(søknad.søknadsId))
+                    søknadDetaljer?.søknad?.partISøknadListe?.find {
+                        it.personident == rolle.ident
+                    }?.behandlingstatus
+                } else {
+                    null
+                }
+
+                BehandlingHendelseBarn(
+                    saksnummer = rolle.saksnummer,
+                    ident = rolle.ident!!,
+                    stønadstype = rolle.stønadstype,
+                    engangsbeløptype = engangsbeløptype,
+                    særbidragskategori = kategori?.kategori,
+                    søknadsid = søknad.søknadsId,
+                    omgjørSøknadsid = søknad.omgjørSøknadsid,
+                    omgjørVedtaksid = søknad.omgjørVedtaksid,
+                    søktAv = søknad.søknadFra,
+                    behandlerEnhet = søknad.enhet,
+                    behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
+                    behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
+                    medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
+                    søktFraDato = søknad.søknadFomDato ?: søktFomDato,
+                    mottattDato = søknad.mottattDato ?: mottattdato,
+                    status =
+                    when {
+                        slettet && søknadStatus != null -> søknadStatus
+                        slettet -> Behandlingstatus.FEILREGISTRERT
+                        erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
+                        else -> søknad.status ?: Behandlingstatus.UNDER_BEHANDLING
+                    },
+                )
+            }
+        }
+}
