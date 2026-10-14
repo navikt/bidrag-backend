@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.service
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -18,6 +19,7 @@ import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
+import no.nav.bidrag.behandling.database.datamodell.leggTilGebyr
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
@@ -41,6 +43,7 @@ import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDate
 
 class ForholdsmessigFordelingServiceSynkroniseringTest {
@@ -563,6 +566,73 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         }
         verify(exactly = 1) { virkningstidspunktService.oppdaterVirkningstidspunkt(null, null, behandling, true, any(), any()) }
     }
+
+    @Test
+    fun `skal bevare gebyr og innbetalt belop fra bbm for gjenopprettede roller fra ff soknad`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val ffSøknad = opprettFFSøknadMedGebyr(behandling)
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
+
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
+
+        val nyttBarn = behandling.søknadsbarn.find { it.ident == NYTT_BARN_IDENT }!!
+        assertSoftly<Unit> {
+            nyttBarn.harGebyrsøknad shouldBe true
+            nyttBarn.innbetaltBeløp shouldBe BigDecimal(1000)
+            nyttBarn.gebyrSøknader.find { it.søknadsid == ffSøknad.søknadsid }!!.referanse shouldBe "gebyr_barn"
+            behandling.bidragsmottaker!!.harGebyrsøknad shouldBe true
+            behandling.bidragsmottaker!!.gebyrSøknader.find { it.søknadsid == ffSøknad.søknadsid }!!.referanse shouldBe "gebyr_bm"
+            behandling.bidragspliktig!!.harGebyrsøknad shouldBe true
+            behandling.bidragspliktig!!.gebyrSøknader.find { it.søknadsid == ffSøknad.søknadsid }!!.referanse shouldBe "gebyr_bp"
+        }
+    }
+
+    @Test
+    fun `skal ikke overskrive eksisterende gebyr for soknad ved gjenoppretting av roller fra ff soknad`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val ffSøknad = opprettFFSøknadMedGebyr(behandling)
+        behandling.bidragspliktig!!.leggTilGebyr(
+            listOf(GebyrRolleSøknad(saksnummer = behandling.saksnummer, søknadsid = ffSøknad.søknadsid, referanse = "eksisterende")),
+        )
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
+
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
+
+        val gebyrBp = behandling.bidragspliktig!!.gebyrSøknader.filter { it.søknadsid == ffSøknad.søknadsid }
+        gebyrBp shouldHaveSize 1
+        gebyrBp.first().referanse shouldBe "eksisterende"
+    }
+
+    private fun opprettFFSøknadMedGebyr(behandling: no.nav.bidrag.behandling.database.datamodell.Behandling) = opprettFFSøknad(behandling, behandling.behandlingstypeForFF).copy(
+        partISøknadListe =
+        listOf(
+            PartISøknad(
+                personident = behandling.bidragspliktig!!.ident,
+                rolletype = Rolletype.BIDRAGSPLIKTIG,
+                gebyr = true,
+                referanseGebyr = "gebyr_bp",
+            ),
+            PartISøknad(
+                personident = behandling.bidragsmottaker!!.ident,
+                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                behandlingstatus = Behandlingstatus.UNDER_BEHANDLING,
+                gebyr = true,
+                referanseGebyr = "gebyr_bm",
+            ),
+            PartISøknad(
+                personident = NYTT_BARN_IDENT,
+                rolletype = Rolletype.BARN,
+                behandlingstatus = Behandlingstatus.UNDER_BEHANDLING,
+                gebyr = true,
+                referanseGebyr = "gebyr_barn",
+                innbetaltBeløp = BigDecimal(1000),
+            ),
+        ),
+    )
 
     private fun opprettFFSøknad(
         behandling: no.nav.bidrag.behandling.database.datamodell.Behandling,

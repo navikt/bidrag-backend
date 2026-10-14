@@ -59,6 +59,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilFordelingLøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
@@ -747,6 +748,7 @@ class ForholdsmessigFordelingService(
 
             manglendeBarn.forEach { barnIdent ->
                 val løpendeBidrag = løpendeBidraggsakerBP.find { it.kravhaver.verdi == barnIdent && it.type == stønadstype }
+                val partISøknad = søknad.finnPartISøknad(barnIdent, Rolletype.BARN)
                 LOGGER.info {
                     "Legger til manglende revurderingsbarn fra FF-søknad ${søknad.søknadsid} i behandling ${behandling.id} " +
                         "med søkt fom dato ${søknad.søknadFomDato}"
@@ -757,6 +759,8 @@ class ForholdsmessigFordelingService(
                         Rolletype.BARN,
                         barnIdent,
                         stønadstype = stønadstype,
+                        harGebyrSøknad = søknad.tilGebyrRolleSøknad(partISøknad),
+                        innbetaltBeløp = partISøknad?.innbetaltBeløp,
                         innkrevesFraDato = if (søknad.innkreving) løpendeBidrag?.periodeFra else null,
                         medInnkreving = søknad.innkreving,
                         opphørsdato = løpendeBidrag?.periodeTil,
@@ -776,11 +780,13 @@ class ForholdsmessigFordelingService(
                 bm.forholdsmessigFordeling?.let { ff ->
                     if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
                 }
+                bm.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bmIdent, Rolletype.BIDRAGSMOTTAKER)))
             }
             behandling.bidragspliktig?.let { bp ->
                 if (bp.forholdsmessigFordeling == null) bp.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
                 val ff = bp.forholdsmessigFordeling!!
                 if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+                bp.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bp.ident, Rolletype.BIDRAGSPLIKTIG)))
             }
         }
 
@@ -793,6 +799,24 @@ class ForholdsmessigFordelingService(
                 emptyList(),
             )
         }
+    }
+
+    private fun HentSøknad.finnPartISøknad(
+        ident: String?,
+        rolletype: Rolletype,
+    ) = partISøknadListe.find { it.personident == ident && it.rolletype == rolletype }
+
+    private fun HentSøknad.tilGebyrRolleSøknad(partISøknad: PartISøknad?) = partISøknad?.takeIf { it.gebyr }?.let {
+        GebyrRolleSøknad(saksnummer = saksnummer, søknadsid = søknadsid, referanse = it.referanseGebyr)
+    }
+
+    /** Legger til gebyrsøknad hvis rollen ikke allerede har gebyr for søknaden, slik at eksisterende overstyring beholdes */
+    private fun Rolle.leggTilGebyrHvisMangler(gebyrSøknad: GebyrRolleSøknad?) {
+        if (gebyrSøknad == null) return
+        val gebyr = hentEllerOpprettGebyr()
+        if (gebyr.gebyrSøknader.none { it.søknadsid == gebyrSøknad.søknadsid }) gebyr.gebyrSøknader.add(gebyrSøknad)
+        this.gebyr = gebyr
+        harGebyrsøknad = true
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
