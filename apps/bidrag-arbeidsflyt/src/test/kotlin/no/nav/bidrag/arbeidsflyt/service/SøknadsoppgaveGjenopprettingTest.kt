@@ -1,9 +1,9 @@
 package no.nav.bidrag.arbeidsflyt.service
 
+import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import io.micrometer.core.instrument.MeterRegistry
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragSakConsumer
@@ -74,35 +74,33 @@ class SøknadsoppgaveGjenopprettingTest {
         verify(exactly = 0) { oppgaveService.oppdaterOppgave(any()) }
     }
 
-    private fun søknadsoppgave() =
-        OppgaveData(
-            id = 1L,
-            saksreferanse = "123456",
-            beskrivelse = "Behandle søknad",
-            fristFerdigstillelse = LocalDate.parse("2026-01-01"),
-            opprettetAvEnhetsnr = "4806",
-            oppgavetype = "BEH_SAK",
-            tema = "BID",
-            status = OppgaveStatus.FERDIGSTILT,
-            metadata = mapOf(METADATA_NØKKEL_SØKNAD_ID to "456", METADATA_NØKKEL_BEHANDLING_ID to "123"),
-        )
+    private fun søknadsoppgave() = OppgaveData(
+        id = 1L,
+        saksreferanse = "123456",
+        beskrivelse = "Behandle søknad",
+        fristFerdigstillelse = LocalDate.parse("2026-01-01"),
+        opprettetAvEnhetsnr = "4806",
+        oppgavetype = "BEH_SAK",
+        tema = "BID",
+        status = OppgaveStatus.FERDIGSTILT,
+        metadata = mapOf(METADATA_NØKKEL_SØKNAD_ID to "456", METADATA_NØKKEL_BEHANDLING_ID to "123"),
+    )
 
-    private fun søknad() =
-        HentSøknad(
-            søknadsid = 456L,
-            søknadMottattDato = LocalDate.parse("2026-01-01"),
-            behandlingstema = Behandlingstema.BIDRAG,
-            saksnummer = "123456",
-            innkreving = true,
-            søktAvType = SøktAvType.BIDRAGSMOTTAKER,
-            behandlingStatusType = BehandlingStatusType.VEDTAK_FATTET,
-            partISøknadListe =
-                listOf(
-                    PartISøknad(
-                        personident = "12345678901",
-                        rolletype = Rolletype.BARN,
-                        behandlingstatus = Behandlingstatus.MIDLERTIDLIG_VEDTAK,
-                    ),
-                ),
-        )
+    private fun søknad() = HentSøknad(
+        søknadsid = 456L,
+        søknadMottattDato = LocalDate.parse("2026-01-01"),
+        behandlingstema = Behandlingstema.BIDRAG,
+        saksnummer = "123456",
+        innkreving = true,
+        søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+        behandlingStatusType = BehandlingStatusType.VEDTAK_FATTET,
+        partISøknadListe =
+        listOf(
+            PartISøknad(
+                personident = "12345678901",
+                rolletype = Rolletype.BARN,
+                behandlingstatus = Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+            ),
+        ),
+    )
 }
