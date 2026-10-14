@@ -140,6 +140,78 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     }
 
     @Test
+    fun `beregn bidrag v3 - direkte avslag for barn med virkningstidspunkt lik opphørsdato gir avslagsperiode fra virkningstidspunkt`() {
+        val beregnRequest = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-01"), erDirekteAvslag = true)
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize 2
+            val periodeListeBarn1 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_01" }.resultatVedtakListe.single().periodeListe
+            periodeListeBarn1.all { it.resultat.beløp != null } shouldBe true
+
+            val periodeListeBarn2 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+            periodeListeBarn2 shouldHaveSize 1
+            periodeListeBarn2[0].periode shouldBe ÅrMånedsperiode(YearMonth.parse("2024-01"), null)
+            periodeListeBarn2[0].resultat.beløp shouldBe null
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - barn uten direkte avslag med virkningstidspunkt lik opphørsdato skal ikke få avslagsperiode`() {
+        val beregnRequest = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-01"), erDirekteAvslag = false)
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize 2
+            val resultatBarn2 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }
+            resultatBarn2.beregningsfeil shouldBe null
+            resultatBarn2.resultatVedtakListe.single().periodeListe shouldHaveSize 0
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - direkte avslag med opphørsdato ulik virkningstidspunkt skal ikke endre beregnet resultat`() {
+        val beregnRequestAvslag = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-06"), erDirekteAvslag = true)
+        val beregnRequestIkkeAvslag = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-06"), erDirekteAvslag = false)
+
+        val responseAvslag = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequestAvslag)
+        val responseIkkeAvslag = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequestIkkeAvslag)
+
+        val periodeListeAvslag =
+            responseAvslag.resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+        val periodeListeIkkeAvslag =
+            responseIkkeAvslag.resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+        assertSoftly {
+            periodeListeAvslag.map { it.periode } shouldBe periodeListeIkkeAvslag.map { it.periode }
+            periodeListeAvslag.map { it.resultat.beløp } shouldBe periodeListeIkkeAvslag.map { it.resultat.beløp }
+        }
+    }
+
+    private fun lagRequestMedOpphørForSøknadsbarn02(
+        opphørsdato: YearMonth?,
+        erDirekteAvslag: Boolean,
+    ): BidragsberegningOrkestratorRequestV2 {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag.json"
+        val request = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        return request.copy(
+            beregningBarn = request.beregningBarn.map {
+                if (it.søknadsbarnreferanse == "Person_Søknadsbarn_02") {
+                    val beregningsperiode = if (opphørsdato != null && opphørsdato == it.virkningstidspunkt) {
+                        ÅrMånedsperiode(opphørsdato, opphørsdato)
+                    } else {
+                        it.beregningsperiode.copy(til = opphørsdato ?: it.beregningsperiode.til)
+                    }
+                    it.copy(opphørsdato = opphørsdato, erDirekteAvslag = erDirekteAvslag, beregningsperiode = beregningsperiode)
+                } else {
+                    it
+                }
+            },
+        )
+    }
+
+    @Test
     fun `beregn bidrag v3 - 1 BM, 2 søknadsbarn med samme BM - privat avtale annet barn med samme BM`() {
         filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag_privat_avtale_1.json"
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
