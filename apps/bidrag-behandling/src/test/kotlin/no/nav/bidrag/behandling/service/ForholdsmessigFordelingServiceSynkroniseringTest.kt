@@ -1,6 +1,8 @@
 package no.nav.bidrag.behandling.service
 
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -18,17 +20,21 @@ import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
@@ -102,6 +108,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
                 every { åpneSøknader } returns emptyList()
             }
         every { bbmConsumer.hentSøknad(any()) } returns null
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(any()) } returns HentSøknaderForBehandlingResponse(emptyList())
         every { bbmConsumer.feilregistrerSøknad(any()) } returns Unit
         every { bbmConsumer.fjernSammenknytning(any()) } returns Unit
         every { bbmConsumer.endreSammenknytningSøknad(any(), any()) } returns null
@@ -388,6 +395,91 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == 1002L }) }
     }
 
+    @Test
+    fun `skal legge til manglende revurderingsbarn fra ff soknad med samme sokt fom dato`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val antallBarnFør = behandling.søknadsbarn.size
+        val ffSøknad = opprettFFSøknad(behandling, behandling.behandlingstypeForFF)
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
+
+        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+
+        assertRevurderingsbarnLagtTil(behandling, antallBarnFør, ffSøknad)
+    }
+
+    @Test
+    fun `skal legge til manglende revurderingsbarn fra ff klagesoknad i klagebehandling`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val antallBarnFør = behandling.søknadsbarn.size
+        val ffSøknad = opprettFFSøknad(behandling, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
+
+        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+
+        assertRevurderingsbarnLagtTil(behandling, antallBarnFør, ffSøknad)
+    }
+
+    @Test
+    fun `skal ikke legge til revurderingsbarn fra ff soknad nar barnet allerede finnes i behandlingen`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val eksisterendeBarn = behandling.søknadsbarn.first()
+        val antallRollerFør = behandling.roller.size
+        val ffSøknad =
+            opprettFFSøknad(behandling, behandling.behandlingstypeForFF, barnIdent = eksisterendeBarn.ident!!)
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns HentSøknaderForBehandlingResponse(listOf(ffSøknad))
+
+        service.leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, emptyList())
+
+        behandling.roller shouldHaveSize antallRollerFør
+    }
+
+    private fun assertRevurderingsbarnLagtTil(
+        behandling: no.nav.bidrag.behandling.database.datamodell.Behandling,
+        antallBarnFør: Int,
+        ffSøknad: HentSøknad,
+    ) {
+        behandling.søknadsbarn shouldHaveSize antallBarnFør + 1
+        val nyttBarn = behandling.søknadsbarn.find { it.ident == NYTT_BARN_IDENT }
+        nyttBarn shouldNotBe null
+        nyttBarn!!.virkningstidspunkt shouldBe ffSøknad.søknadFomDato
+        nyttBarn.forholdsmessigFordeling!!.erRevurdering shouldBe true
+        nyttBarn.forholdsmessigFordeling!!.delAvOpprinneligBehandling shouldBe false
+        nyttBarn.forholdsmessigFordeling!!.tilhørerSak shouldBe ffSøknad.saksnummer
+        nyttBarn.forholdsmessigFordeling!!.revurderingsdatoVedOpprettelseAvFF shouldBe ffSøknad.søknadFomDato
+        nyttBarn.forholdsmessigFordeling!!.søknader.any { it.søknadsid == ffSøknad.søknadsid } shouldBe true
+        behandling.bidragspliktig!!.forholdsmessigFordeling!!.søknader.any { it.søknadsid == ffSøknad.søknadsid } shouldBe true
+    }
+
+    private fun opprettFFSøknad(
+        behandling: no.nav.bidrag.behandling.database.datamodell.Behandling,
+        behandlingstype: Behandlingstype,
+        barnIdent: String = NYTT_BARN_IDENT,
+    ) = HentSøknad(
+        søknadsid = 5555L,
+        søknadMottattDato = LocalDate.parse("2024-03-10"),
+        søknadFomDato = LocalDate.parse("2024-03-01"),
+        behandlingstema = Behandlingstema.BIDRAG,
+        behandlingstype = behandlingstype,
+        behandlerenhet = behandling.behandlerEnhet,
+        saksnummer = behandling.saksnummer,
+        behandlingsid = behandling.id,
+        innkreving = true,
+        søktAvType = SøktAvType.NAV_BIDRAG,
+        behandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
+        partISøknadListe =
+        listOf(
+            PartISøknad(personident = behandling.bidragsmottaker!!.ident, rolletype = Rolletype.BIDRAGSMOTTAKER, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING),
+            PartISøknad(personident = barnIdent, rolletype = Rolletype.BARN, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING),
+        ),
+    )
+
     private fun opprettSøknad(
         søknadsid: Long,
         søknadFomDato: LocalDate,
@@ -405,4 +497,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         status = status,
         saksnummer = "",
     )
+
+    companion object {
+        private const val NYTT_BARN_IDENT = "01011512345"
+    }
 }

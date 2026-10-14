@@ -622,6 +622,8 @@ class ForholdsmessigFordelingService(
             behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
         }
 
+        leggTilManglendeRevurderingsbarnFraFFSøknader(behandling, løpendeBidraggsakerBP)
+
         behandling.søknadsbarn.forEach { rolle ->
             val løpendeBidrag = løpendeBidraggsakerBP.find { rolle.erSammeRolle(it.kravhaver.verdi, it.type) }
 
@@ -671,6 +673,81 @@ class ForholdsmessigFordelingService(
 
         behandling.oppdaterFFSistSynkronisert()
         return true
+    }
+
+    /**
+     * Feilhåndtering: Legger til revurderingsbarn som er med i en åpen FF-søknad knyttet til behandlingen, men som mangler i behandlingen.
+     * Barnet får samme søkt fom dato som i FF-søknaden. Dette kan skje hvis feks systemet har opprettet FF søknad men det skjedde en feil ved opprettelse av rolle i behandlingen
+     */
+    internal fun leggTilManglendeRevurderingsbarnFraFFSøknader(
+        behandling: Behandling,
+        løpendeBidraggsakerBP: List<LøpendeBidragSakPeriode>,
+    ) {
+        val åpneFFSøknader =
+            bbmConsumer
+                .hentÅpneSøknaderForBehandling(behandling.id!!)
+                .søknader
+                .filter { it.behandlingStatusType.erÅpenStatus && it.behandlingstype.erForholdsmessigFordeling }
+
+        åpneFFSøknader.forEach { søknad ->
+            val stønadstype = søknad.behandlingstema.tilStønadstype() ?: Stønadstype.BIDRAG
+            val manglendeBarn =
+                søknad.parterUnderBehandling
+                    .mapNotNull { it.personident }
+                    .filter { ident -> behandling.roller.none { it.erSammeRolle(ident, stønadstype) } }
+            if (manglendeBarn.isEmpty()) return@forEach
+
+            val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+            val bmIdent =
+                søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
+                    ?: behandling.bidragsmottakerForSak(søknad.saksnummer)?.ident
+            val ffDetaljer =
+                ForholdsmessigFordelingRolle(
+                    delAvOpprinneligBehandling = false,
+                    erRevurdering = true,
+                    tilhørerSak = søknad.saksnummer,
+                    behandlerenhet = søknadsdetaljer.enhet,
+                    bidragsmottaker = bmIdent,
+                    revurderingsdatoVedOpprettelseAvFF = søknad.søknadFomDato,
+                    søknader = mutableSetOf(),
+                )
+
+            manglendeBarn.forEach { barnIdent ->
+                val løpendeBidrag = løpendeBidraggsakerBP.find { it.kravhaver.verdi == barnIdent && it.type == stønadstype }
+                LOGGER.info {
+                    "Legger til manglende revurderingsbarn fra FF-søknad ${søknad.søknadsid} i behandling ${behandling.id} " +
+                        "med søkt fom dato ${søknad.søknadFomDato}"
+                }
+                opprettEllerOppdaterRolle(
+                    behandling,
+                    Rolletype.BARN,
+                    barnIdent,
+                    stønadstype = stønadstype,
+                    innkrevesFraDato = if (søknad.innkreving) løpendeBidrag?.periodeFra else null,
+                    medInnkreving = søknad.innkreving,
+                    opphørsdato = løpendeBidrag?.periodeTil,
+                    ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+                )
+            }
+
+            if (bmIdent != null) {
+                val bm =
+                    opprettEllerOppdaterRolle(
+                        behandling,
+                        Rolletype.BIDRAGSMOTTAKER,
+                        bmIdent,
+                        ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+                    )
+                bm.forholdsmessigFordeling?.let { ff ->
+                    if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+                }
+            }
+            behandling.bidragspliktig?.let { bp ->
+                if (bp.forholdsmessigFordeling == null) bp.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
+                val ff = bp.forholdsmessigFordeling!!
+                if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+            }
+        }
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
