@@ -117,6 +117,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
             mockk<LøpendeBidragPeriodeResponse> {
                 every { bidragListe } returns emptyList()
             }
+        every { underholdService.oppretteUnderholdskostnad(any(), any(), any()) } returns mockk(relaxed = true)
+        every { virkningstidspunktService.oppdaterVirkningstidspunkt(any(), any(), any(), any(), any(), any()) } returns Unit
     }
 
     @Test
@@ -438,6 +440,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList())
 
         behandling.roller shouldHaveSize antallRollerFør
+        verify(exactly = 0) { underholdService.oppretteUnderholdskostnad(any(), any(), any()) }
+        verify(exactly = 0) { virkningstidspunktService.oppdaterVirkningstidspunkt(any(), any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -464,8 +468,6 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         val søknad = opprettFFSøknad(behandling, Behandlingstype.KLAGE).copy(behandlingsid = null)
         every { sakConsumer.hentSakerPerson(any()) } returns emptyList()
         every { behandlingRepository.finnÅpneBidragsbehandlingerForBp(any(), any()) } returns emptyList()
-        every { underholdService.oppretteUnderholdskostnad(any(), any(), any()) } returns mockk(relaxed = true)
-        every { virkningstidspunktService.oppdaterVirkningstidspunkt(any(), any(), any(), any(), any(), any()) } returns Unit
         every { behandlingService.sendOppdatertHendelse(any(), any()) } returns Unit
         every { behandlingService.lagreBehandling(any()) } answers { firstArg() }
 
@@ -492,6 +494,13 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         nyttBarn.forholdsmessigFordeling!!.revurderingsdatoVedOpprettelseAvFF shouldBe ffSøknad.søknadFomDato
         nyttBarn.forholdsmessigFordeling!!.søknader.any { it.søknadsid == ffSøknad.søknadsid } shouldBe true
         behandling.bidragspliktig!!.forholdsmessigFordeling!!.søknader.any { it.søknadsid == ffSøknad.søknadsid } shouldBe true
+
+        behandling.samvær.any { it.rolle.ident == NYTT_BARN_IDENT } shouldBe true
+        behandling.husstandsmedlem.any { it.ident == NYTT_BARN_IDENT } shouldBe true
+        verify(exactly = 1) {
+            underholdService.oppretteUnderholdskostnad(behandling, match { it.personident?.verdi == NYTT_BARN_IDENT }, any())
+        }
+        verify(exactly = 1) { virkningstidspunktService.oppdaterVirkningstidspunkt(null, null, behandling, true, any(), any()) }
     }
 
     private fun opprettFFSøknad(

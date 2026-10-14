@@ -697,6 +697,7 @@ class ForholdsmessigFordelingService(
 
         leggTilRollerFraRelevanteSøknaderSomIkkeErIBehandling(behandling, åpneAndreSøknader)
 
+        val nyeRevurderingsbarn = mutableListOf<Rolle>()
         åpneFFSøknader.forEach { søknad ->
             val stønadstype = søknad.behandlingstema.tilStønadstype() ?: Stønadstype.BIDRAG
             val manglendeBarn =
@@ -726,15 +727,17 @@ class ForholdsmessigFordelingService(
                     "Legger til manglende revurderingsbarn fra FF-søknad ${søknad.søknadsid} i behandling ${behandling.id} " +
                         "med søkt fom dato ${søknad.søknadFomDato}"
                 }
-                opprettEllerOppdaterRolle(
-                    behandling,
-                    Rolletype.BARN,
-                    barnIdent,
-                    stønadstype = stønadstype,
-                    innkrevesFraDato = if (søknad.innkreving) løpendeBidrag?.periodeFra else null,
-                    medInnkreving = søknad.innkreving,
-                    opphørsdato = løpendeBidrag?.periodeTil,
-                    ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+                nyeRevurderingsbarn.add(
+                    opprettEllerOppdaterRolle(
+                        behandling,
+                        Rolletype.BARN,
+                        barnIdent,
+                        stønadstype = stønadstype,
+                        innkrevesFraDato = if (søknad.innkreving) løpendeBidrag?.periodeFra else null,
+                        medInnkreving = søknad.innkreving,
+                        opphørsdato = løpendeBidrag?.periodeTil,
+                        ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+                    ),
                 )
             }
 
@@ -755,6 +758,16 @@ class ForholdsmessigFordelingService(
                 val ff = bp.forholdsmessigFordeling!!
                 if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
             }
+        }
+
+        if (nyeRevurderingsbarn.isNotEmpty()) {
+            oppdaterBehandlingEtterOppdatertRoller(
+                behandling,
+                underholdService,
+                virkningstidspunktService,
+                nyeRevurderingsbarn.map { it.tilOpprettRolleDto() },
+                emptyList(),
+            )
         }
     }
 
