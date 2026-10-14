@@ -9,6 +9,7 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -639,6 +640,7 @@ class ForholdsmessigFordelingService(
 
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
+        fjernGebyrForFeilregistrerteSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
             klageService.korrigerHovedsøknad(behandling)
             klageService.korrigerKlagesøknader(behandling)
@@ -674,6 +676,28 @@ class ForholdsmessigFordelingService(
 
         behandling.oppdaterFFSistSynkronisert()
         return true
+    }
+
+    /**
+     * Feilhåndtering: Fjerner gebyrsøknader (for BP, BM og barn) som tilhører søknader som er feilregistrert i BBM.
+     * Søknaden regnes som feilregistrert hvis den er avbrutt eller alle barn i søknaden er feilregistrert.
+     * Gebyr fjernes ikke hvis søknaden ikke kan hentes fra BBM.
+     */
+    internal fun fjernGebyrForFeilregistrerteSøknader(behandling: Behandling) {
+        behandling.roller
+            .flatMap { rolle -> rolle.gebyrSøknader.map { it.søknadsid } }
+            .distinct()
+            .forEach { søknadsid ->
+                val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
+                val erFeilregistrert =
+                    søknad.behandlingStatusType == BehandlingStatusType.AVBRUTT ||
+                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.erFeilregistrert == true } }
+                if (!erFeilregistrert) return@forEach
+                val roller = behandling.fjernGebyrForSøknad(søknadsid)
+                LOGGER.info {
+                    "Fjernet gebyrsøknad for feilregistrert søknad $søknadsid fra ${roller.map { it.rolletype }} i behandling ${behandling.id}"
+                }
+            }
     }
 
     /**

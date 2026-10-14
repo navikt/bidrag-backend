@@ -15,6 +15,8 @@ import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
+import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
+import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -478,6 +480,65 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         nyttBarn.forholdsmessigFordeling!!.erRevurdering shouldBe false
         nyttBarn.forholdsmessigFordeling!!.søknader.any { it.søknadsid == søknad.søknadsid } shouldBe true
     }
+
+    @Test
+    fun `skal fjerne gebyrsoknad for bp og bm nar soknad er avbrutt i bbm`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val bp = behandling.bidragspliktig!!
+        val bm = behandling.bidragsmottaker!!
+        bp.gebyr = GebyrRolle(gebyrSøknader = mutableSetOf(gebyrSøknad(behandling, 5555L), gebyrSøknad(behandling, 6666L)))
+        bm.gebyr = GebyrRolle(gebyrSøknader = mutableSetOf(gebyrSøknad(behandling, 5555L)))
+        bm.harGebyrsøknad = true
+        val slettetSøknad = opprettFFSøknad(behandling, behandling.behandlingstypeForFF).copy(behandlingStatusType = BehandlingStatusType.AVBRUTT)
+        val åpenSøknad = opprettFFSøknad(behandling, behandling.behandlingstypeForFF).copy(søknadsid = 6666L)
+        every { bbmConsumer.hentSøknad(5555L) } returns HentSøknadResponse(slettetSøknad)
+        every { bbmConsumer.hentSøknad(6666L) } returns HentSøknadResponse(åpenSøknad)
+
+        service.fjernGebyrForFeilregistrerteSøknader(behandling)
+
+        bp.gebyrSøknader.map { it.søknadsid } shouldBe listOf(6666L)
+        bm.gebyrSøknader shouldHaveSize 0
+        bm.harGebyrsøknad shouldBe false
+    }
+
+    @Test
+    fun `skal fjerne gebyrsoknad nar alle barn i soknaden er feilregistrert`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val bm = behandling.bidragsmottaker!!
+        bm.gebyr = GebyrRolle(gebyrSøknader = mutableSetOf(gebyrSøknad(behandling, 5555L)))
+        val søknad = opprettFFSøknad(behandling, behandling.behandlingstypeForFF)
+        every { bbmConsumer.hentSøknad(5555L) } returns
+            HentSøknadResponse(
+                søknad.copy(
+                    partISøknadListe =
+                    søknad.partISøknadListe.map {
+                        if (it.rolletype == Rolletype.BARN) it.copy(behandlingstatus = Behandlingstatus.FEILREGISTRERT) else it
+                    },
+                ),
+            )
+
+        service.fjernGebyrForFeilregistrerteSøknader(behandling)
+
+        bm.gebyrSøknader.none { it.søknadsid == 5555L } shouldBe true
+    }
+
+    @Test
+    fun `skal ikke fjerne gebyrsoknad nar soknad er apen eller ikke kan hentes fra bbm`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val bm = behandling.bidragsmottaker!!
+        bm.gebyr = GebyrRolle(gebyrSøknader = mutableSetOf(gebyrSøknad(behandling, 5555L), gebyrSøknad(behandling, 6666L)))
+        every { bbmConsumer.hentSøknad(5555L) } returns HentSøknadResponse(opprettFFSøknad(behandling, behandling.behandlingstypeForFF))
+        every { bbmConsumer.hentSøknad(6666L) } returns null
+
+        service.fjernGebyrForFeilregistrerteSøknader(behandling)
+
+        bm.gebyrSøknader.map { it.søknadsid }.toSet() shouldBe setOf(5555L, 6666L)
+    }
+
+    private fun gebyrSøknad(
+        behandling: no.nav.bidrag.behandling.database.datamodell.Behandling,
+        søknadsid: Long,
+    ) = GebyrRolleSøknad(saksnummer = behandling.saksnummer, søknadsid = søknadsid)
 
     private fun assertRevurderingsbarnLagtTil(
         behandling: no.nav.bidrag.behandling.database.datamodell.Behandling,
