@@ -691,7 +691,7 @@ class ForholdsmessigFordelingService(
                 val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
                 val erFeilregistrert =
                     søknad.behandlingStatusType == BehandlingStatusType.AVBRUTT ||
-                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.lukketStatus == true } }
+                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.erFeilregistrert == true } }
                 if (!erFeilregistrert) return@forEach
                 val roller = behandling.fjernGebyrForSøknad(søknadsid)
                 LOGGER.info {

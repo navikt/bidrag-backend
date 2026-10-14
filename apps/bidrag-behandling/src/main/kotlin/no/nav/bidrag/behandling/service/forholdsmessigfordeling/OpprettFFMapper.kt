@@ -127,6 +127,12 @@ fun Behandling.erSøknadOpprettetAvSaksbehandler(søknadsid: Long?) = søknadsid
 
 val Behandlingstatus.erFeilregistrert get() =
     listOf(
+        Behandlingstatus.ERKJENT_AVSLUTTET,
+        Behandlingstatus.G4,
+        Behandlingstatus.DØMT_AVSLUTTET,
+        Behandlingstatus.AVVIST,
+        Behandlingstatus.SENDT_UTLANDET_LUKKET,
+        Behandlingstatus.TRUKKET,
         Behandlingstatus.FEILREGISTRERT,
     ).contains(this)
 
