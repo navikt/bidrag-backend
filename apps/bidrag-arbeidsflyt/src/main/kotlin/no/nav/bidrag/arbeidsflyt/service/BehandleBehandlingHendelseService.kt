@@ -58,7 +58,7 @@ class BehandleBehandlingHendelseService(
         oppgaveData: OppgaveData,
         søknad: HentSøknad,
     ) {
-        if (søknad.erAvsluttet) return
+        if (søknad.erAvsluttet && !søknad.kreverSøknadsoppgave) return
 
         val åpneOppgaver =
             oppgaveService
