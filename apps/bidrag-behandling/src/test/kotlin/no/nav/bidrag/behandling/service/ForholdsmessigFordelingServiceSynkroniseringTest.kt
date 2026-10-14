@@ -23,10 +23,13 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragPeriodeResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -123,7 +126,8 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         verify(exactly = 1) { grunnlagService.lagreBeløpshistorikkGrunnlag(behandling) }
         verify(exactly = 1) { grunnlagService.lagreBeløpshistorikkFraOpprinneligVedtakstidspunktGrunnlag(behandling) }
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(999L) }
-        verify(exactly = 1) { bbmConsumer.endreSammenknytningSøknad(behandling.soknadsid!!, behandling.soknadsid!!) }
+        verify(exactly = 1) { bbmConsumer.sammeknyttSøknader(behandling.soknadsid!!, behandling.soknadsid!!) }
+        verify(exactly = 0) { bbmConsumer.endreSammenknytningSøknad(any(), any()) }
     }
 
     @Test
@@ -294,6 +298,94 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         eldste.status shouldBe Behandlingstatus.UNDER_BEHANDLING
         vellykketDuplikat.status shouldBe Behandlingstatus.FEILREGISTRERT
         feiletDuplikat.status shouldBe Behandlingstatus.UNDER_BEHANDLING
+    }
+
+    @Test
+    fun `skal bare feilregistrere barnet fra duplikat ff soknad nar soknaden har andre barn under behandling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val rolle = behandling.søknadsbarn.first()
+
+        val eldste =
+            opprettSøknad(
+                søknadsid = 1001L,
+                søknadFomDato = LocalDate.parse("2024-01-01"),
+                mottattDato = LocalDate.parse("2024-01-10"),
+                behandlingstype = behandling.behandlingstypeForFF,
+            )
+        val duplikatMedSøsken =
+            opprettSøknad(
+                søknadsid = 1002L,
+                søknadFomDato = LocalDate.parse("2024-02-01"),
+                mottattDato = LocalDate.parse("2024-02-10"),
+                behandlingstype = behandling.behandlingstypeForFF,
+            )
+        rolle.forholdsmessigFordeling =
+            ForholdsmessigFordelingRolle(
+                tilhørerSak = behandling.saksnummer,
+                behandlerenhet = behandling.behandlerEnhet,
+                delAvOpprinneligBehandling = true,
+                erRevurdering = true,
+                bidragsmottaker = behandling.bidragsmottaker?.ident,
+                søknader = mutableSetOf(eldste, duplikatMedSøsken),
+            )
+
+        every { bbmConsumer.hentSøknad(1002L) } returns
+            HentSøknadResponse(
+                søknad =
+                mockk<HentSøknad> {
+                    every { partISøknadListe } returns
+                        listOf(
+                            PartISøknad(personident = rolle.ident, rolletype = Rolletype.BARN, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING),
+                            PartISøknad(personident = "søsken", rolletype = Rolletype.BARN, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING),
+                        )
+                },
+            )
+        every { bbmConsumer.feilregistrerSøknadsbarn(any()) } returns Unit
+
+        service.slettDuplikatForholdsmessigFordelingSøknader(behandling)
+
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == 1002L && it.personidentBarn == rolle.ident }) }
+        eldste.status shouldBe Behandlingstatus.UNDER_BEHANDLING
+        duplikatMedSøsken.status shouldBe Behandlingstatus.FEILREGISTRERT
+    }
+
+    @Test
+    fun `skal bare feilregistrere barnet fra duplikat ff soknad nar oppslag mot bbm feiler`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val rolle = behandling.søknadsbarn.first()
+
+        val eldste =
+            opprettSøknad(
+                søknadsid = 1001L,
+                søknadFomDato = LocalDate.parse("2024-01-01"),
+                mottattDato = LocalDate.parse("2024-01-10"),
+                behandlingstype = behandling.behandlingstypeForFF,
+            )
+        val duplikat =
+            opprettSøknad(
+                søknadsid = 1002L,
+                søknadFomDato = LocalDate.parse("2024-02-01"),
+                mottattDato = LocalDate.parse("2024-02-10"),
+                behandlingstype = behandling.behandlingstypeForFF,
+            )
+        rolle.forholdsmessigFordeling =
+            ForholdsmessigFordelingRolle(
+                tilhørerSak = behandling.saksnummer,
+                behandlerenhet = behandling.behandlerEnhet,
+                delAvOpprinneligBehandling = true,
+                erRevurdering = true,
+                bidragsmottaker = behandling.bidragsmottaker?.ident,
+                søknader = mutableSetOf(eldste, duplikat),
+            )
+
+        every { bbmConsumer.hentSøknad(1002L) } throws RuntimeException("BBM nede")
+        every { bbmConsumer.feilregistrerSøknadsbarn(any()) } returns Unit
+
+        service.slettDuplikatForholdsmessigFordelingSøknader(behandling)
+
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(any()) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknadsbarn(match { it.søknadsid == 1002L }) }
     }
 
     private fun opprettSøknad(

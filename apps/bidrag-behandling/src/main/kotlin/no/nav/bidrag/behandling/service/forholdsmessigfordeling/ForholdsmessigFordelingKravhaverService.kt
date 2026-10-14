@@ -287,7 +287,7 @@ class ForholdsmessigFordelingKravhaverService(
     fun hentÅpneSøknaderRevurdering(bidragspliktigFnr: String): List<HentSøknad> = bbmConsumer
         .hentÅpneSøknaderForBp(bidragspliktigFnr)
         .åpneSøknader
-        .filter { it.behandlingstype == Behandlingstype.REVURDERING && it.søktAvType == SøktAvType.NAV_BIDRAG }
+        .filter { it.behandlingstype == Behandlingstype.REVURDERING && (it.søktAvType == SøktAvType.NAV_BIDRAG || it.søktAvType == SøktAvType.AUTOMATISK) }
 
     fun hentÅpneSøknader(
         bidragspliktigFnr: String,

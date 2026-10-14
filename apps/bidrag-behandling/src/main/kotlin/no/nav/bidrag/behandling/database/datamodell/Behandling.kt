@@ -74,7 +74,7 @@ open class Behandling(
     @Column(name = "dato_fom")
     open var søktFomDato: LocalDate,
     open var mottattdato: LocalDate,
-    open val saksnummer: String,
+    open var saksnummer: String,
     open var soknadsid: Long?,
     open var behandlerEnhet: String,
     open var opprettetAv: String,

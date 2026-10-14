@@ -220,7 +220,7 @@ class BisysService(
                 val opprettBlankett =
                     Blankett(
                         saksnummer = request.saksnummer,
-                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.NAV_BIDRAG.kode,
+                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.AUTOMATISK.kode,
                         søknadstype = request.behandlingstype?.bisysKode ?: "FF",
                         // TODO(Her bør det kastes feil om behandlingstype er null)
                     )
@@ -655,7 +655,7 @@ class BisysService(
     }
 
     private fun bestemHendelseType(opprettSøknad: OpprettSøknadRequest): String {
-        val søktAv = opprettSøknad.søktAv ?: SøktAvType.NAV_BIDRAG
+        val søktAv = opprettSøknad.søktAv ?: SøktAvType.AUTOMATISK
         val behandlingstype = opprettSøknad.behandlingstype ?: Behandlingstype.FORHOLDSMESSIG_FORDELING
         return "${behandlingstype.bisysKode}${søktAv.kode}"
     }

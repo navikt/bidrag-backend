@@ -73,6 +73,7 @@ class VedtakHendelseListener(
             "Mottok hendelse for vedtak ${vedtak.id} med type ${vedtak.type}, " +
                 "behandlingId ${vedtak.behandlingId} og saksnummer ${vedtak.saksnummer}: $vedtak"
         }
+        behandlingRepository.låsBehandlingForOppdatering(vedtak.behandlingId!!)
         val behandling = behandlingService.hentBehandlingById(vedtak.behandlingId!!)
 
         if (vedtak.erInnkrevingAvBidragOmgjøringsvedtak(behandling)) {
@@ -105,9 +106,13 @@ class VedtakHendelseListener(
             .forEach { stønadsendring ->
 
                 val bp = stønadsendring.skyldner
-                val behandlinger = behandlingRepository.finnÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
-                behandlinger
-                    .forEach { behandling ->
+                // Henter bare id slik at behandlingen lastes etter at den er låst og dermed har siste committede tilstand
+                behandlingRepository
+                    .finnIdÅpneBidragsbehandlingerForBpMedFF(bp.verdi)
+                    .sorted()
+                    .forEach { behandlingId ->
+                        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+                        val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
                         behandleBehandlingHvisOpphorEllerInnkreving(stønadsendring, behandling)
                     }
             }
