@@ -335,6 +335,29 @@ class BidragssakValidatorTest {
     @Nested
     inner class ReellMottaker {
         @Test
+        fun `avviser RM som egen rolle ved opprettelse`() {
+            val req =
+                OpprettSakRequest(
+                    eierfogd = Enhetsnummer("1701"),
+                    roller = setOf(rolleBm(), RolleDto(type = Rolletype.REELMOTTAKER, fødselsnummer = genererPersonident())),
+                )
+
+            shouldThrowMessage("Reell mottaker (RM) kan kun registreres på barn (BA).") {
+                validator.valider(req, grunnlagFor(req))
+            }
+        }
+
+        @Test
+        fun `avviser RM som egen rolle ved endring`() {
+            val ident = genererPersonident()
+            val roller = setOf(RolleDto(type = Rolletype.REELMOTTAKER, fødselsnummer = ident))
+
+            shouldThrowMessage("Reell mottaker (RM) kan kun registreres på barn (BA).") {
+                validator.validerForespurteRoller(roller, grunnlag(ident))
+            }
+        }
+
+        @Test
         fun `skal godta når BM finnes selv om barn under 18 mangler RM`() {
             val barn = genererPersonident()
             val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnUtenRm(barn)))

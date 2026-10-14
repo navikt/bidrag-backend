@@ -61,6 +61,9 @@ class BidragssakValidator {
             require(fnr.verdi.isNotBlank()) { "Fødselsnummer kan ikke være tom streng." }
         }
 
+        require(rolle.type != Rolletype.REELMOTTAKER) {
+            "Reell mottaker (RM) kan kun registreres på barn (BA)."
+        }
         require(rolle.type == Rolletype.BARN || !rolle.harRM()) {
             "Reell mottaker (RM) kan kun registreres på barn (BA)."
         }
