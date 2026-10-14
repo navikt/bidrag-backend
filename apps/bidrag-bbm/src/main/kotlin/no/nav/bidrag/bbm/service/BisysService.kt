@@ -56,6 +56,7 @@ val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlin
 val søknadsstatusFattet = listOf(
     Behandlingstatus.VEDTAK_FATTET,
     Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
 )
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
