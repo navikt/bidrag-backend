@@ -28,7 +28,6 @@ import no.nav.bidrag.sak.SpringH2TestRunner
 import no.nav.bidrag.sak.config.BidragOrganisasjonTestConfig
 import no.nav.bidrag.sak.domain.Hendelse
 import no.nav.bidrag.sak.dto.NySakCommandDto
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
@@ -66,9 +65,6 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
     private lateinit var tilgangClientMock: Tilgangskontroll
 
     @Autowired
-    private lateinit var bidragPersonClient: BidragPersonClient
-
-    @Autowired
     private lateinit var th: TransactionHelper
 
     @Nested
@@ -86,6 +82,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         @BeforeEach
         fun setUp() {
             clearMocks(identConsumer)
+            every { identConsumer.hentPersonInformasjon(any()) } returns null
 
             MDC.put("callId", "NavCallId")
 
@@ -102,7 +99,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             stubPerson(fnrBA3, LocalDate.now().minusYears(10))
 
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
 
             // Sak 1: BA1/BA2 myndige -> har RM. BA3 umyndig -> kan være uten RM.
             saksnummer =
@@ -231,6 +228,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun `skal lagre nytt barn med reell mottaker`() {
             val nyttBarnFnr = genererPersonident()
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(40))
 
             stubPerson(nyttBarnFnr, LocalDate.now().minusYears(18).minusDays(1)) // myndig -> må ha RM
 
@@ -289,8 +287,24 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         }
 
         @Test
+        fun `avviser reell mottaker som ikke finnes`() {
+            val nyttBarnFnr = genererPersonident()
+            stubPerson(nyttBarnFnr, LocalDate.now().minusYears(10))
+
+            shouldThrowMessage("Rolle forsøk opprettet for person som ikke finnes.") {
+                bidragssakService.oppdaterSak(
+                    OppdaterSakRequest(
+                        saksnummer = saksnummer,
+                        roller = setOf(rolleBarnMedRm(nyttBarnFnr, rm = genererPersonident().verdi)),
+                    ),
+                )
+            }
+        }
+
+        @Test
         fun `skal lagre ny reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(40))
 
             // BA3 er under 18 i setup, men nå legger vi til RM på BA3 -> OK
             bidragssakService.oppdaterSak(
@@ -348,6 +362,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         @Test
         fun `skal lagre endring av reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(40))
 
             // BA1 er myndig -> fortsatt RM (bytter RM)
             bidragssakService.oppdaterSak(
@@ -380,6 +395,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         @Test
         fun `oppdaterer barn og RM til gjeldende ident og lagrer ENDRE_FNR-historikk`() {
             val gammelRmIdent = genererPersonident()
+            stubPerson(gammelRmIdent, LocalDate.now().minusYears(40))
             bidragssakService.oppdaterSak(
                 OppdaterSakRequest(
                     saksnummer = saksnummer,
@@ -392,6 +408,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
 
             val nyBarnIdent = genererPersonident()
             val nyRmIdent = genererPersonident()
+            stubPerson(nyRmIdent, LocalDate.now().minusYears(40))
             stubPerson(nyBarnIdent, LocalDate.now().minusYears(10))
             stubPersonidenter(gjeldende = mapOf(fnrBA3 to nyBarnIdent, gammelRmIdent to nyRmIdent))
 
@@ -480,6 +497,8 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun `skal takle internt bytte av reell mottager`() {
             val rm1 = genererPersonident().verdi
             val rm2 = genererPersonident().verdi
+            stubPerson(Personident(rm1), LocalDate.now().minusYears(40))
+            stubPerson(Personident(rm2), LocalDate.now().minusYears(40))
             bidragssakService.oppdaterSak(
                 OppdaterSakRequest(
                     saksnummer = saksnummer,
@@ -716,7 +735,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         }
 
         @Test
@@ -875,7 +894,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
             every { identConsumer.hentPersonInformasjon(any()) } returns null
         }
 
@@ -993,7 +1012,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
-            every { identConsumer.sjekkIdent(any()) }.answers { firstArg() }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
             every { identConsumer.hentPersonInformasjon(any()) } returns null
         }
 
@@ -1182,7 +1201,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
     ) {
         val gjeldendeFor = gjeldende.entries.associate { it.key.verdi to it.value.verdi }
         val historiskFor = historiske.entries.associate { it.key.verdi to it.value.verdi }
-        every { identConsumer.sjekkIdent(any()) } answers {
+        every { identConsumer.hentGjeldendeIdent(any()) } answers {
             val ident = firstArg<String>()
             gjeldendeFor[ident] ?: ident
         }

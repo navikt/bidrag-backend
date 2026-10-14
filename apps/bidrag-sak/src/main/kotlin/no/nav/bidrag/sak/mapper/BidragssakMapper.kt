@@ -1,5 +1,7 @@
 package no.nav.bidrag.sak.mapper
 
+import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
 import no.nav.bidrag.domene.enums.sak.UkjentPart
@@ -10,7 +12,6 @@ import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
-import no.nav.bidrag.sak.integration.person.hentNyesteIdent
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.transport.sak.BarnISak
@@ -137,7 +138,7 @@ object RolleMapper {
             val rmSamhandler = reellMottaker?.samhandlerIdent
 
             RolleDto(
-                fødselsnummer = it.fødselsnummer?.let { fødelsnummer -> hentNyesteIdent(fødelsnummer) },
+                fødselsnummer = it.fødselsnummer?.let { fødelsnummer -> hentGjeldendeIdent(fødelsnummer) },
                 type = it.rolleType,
                 objektnummer = it.objektnummer,
                 reellMottager =
@@ -170,7 +171,7 @@ object RollehistorikkMapper {
                 ?.let { rMRolleid -> roller.firstOrNull { it.rolleId == rMRolleid }?.samhandlerIdent }
 
         RollehistorikkDto(
-            fødselsnummer = rollehistorikk.rolleFødselsnummer?.let { fødselsnummer -> hentNyesteIdent(fødselsnummer) },
+            fødselsnummer = rollehistorikk.rolleFødselsnummer?.let { fødselsnummer -> hentGjeldendeIdent(fødselsnummer) },
             type = rollehistorikk.type!!,
             reellMottaker =
             if (rollehistorikk.rmRolleId != null &&
@@ -204,9 +205,11 @@ fun Collection<Rolle>.toBarnISak() = this
                 ?.let { ident -> ReellMottaker(ident) }
 
         BarnISak(
-            ident = it.fødselsnummer?.let { fødselsnummer -> hentNyesteIdent(fødselsnummer) },
+            ident = it.fødselsnummer?.let { fødselsnummer -> hentGjeldendeIdent(fødselsnummer) },
             reellMottaker = personidentReellMottaker,
         )
     }
 
 fun RolleDto.medFødselsdato(fødselsdatoer: Map<Personident, LocalDate?>) = RolleMedFødselsdato(this, this.fødselsnummer?.let { fødselsdatoer[it] })
+
+private fun hentGjeldendeIdent(ident: String) = Personident(AppContext.getBean(IdentConsumer::class.java).hentGjeldendeIdent(ident) ?: ident)

@@ -1,7 +1,6 @@
 package no.nav.bidrag.sak.service
 
 import no.nav.bidrag.commons.security.utils.TokenUtils
-import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.TypeEndring
@@ -106,11 +105,7 @@ class RolleService(
         return roller.toSet()
     }
 
-    private fun gjeldendeIdent(ident: String): String {
-        if (ident.isBlank()) return ident
-        return identConsumer.sjekkIdent(ident)
-            ?: ident.also { secureLogger.warn { "Fant ingen gjeldende ident for $it i bidrag-person. Bruker innsendt ident." } }
-    }
+    private fun gjeldendeIdent(ident: String) = identConsumer.hentGjeldendeIdent(ident) ?: ident
 
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,

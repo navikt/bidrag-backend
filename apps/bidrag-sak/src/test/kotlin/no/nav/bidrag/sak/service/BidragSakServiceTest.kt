@@ -88,6 +88,7 @@ internal class BidragSakServiceTest {
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
         every { rolleService.brukGjeldendeIdent(any()) } answers { firstArg() }
         every { identConsumer.hentPersonInformasjon(any()) } returns null
+        every { identConsumer.hentGjeldendeIdent(any()) } answers { firstArg() }
         mockkObject(AppContext)
         every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
 

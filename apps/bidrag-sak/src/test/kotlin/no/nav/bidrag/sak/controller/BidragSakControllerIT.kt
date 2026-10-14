@@ -94,6 +94,7 @@ internal class BidragSakControllerIT : SpringTestRunner() {
     fun setUp() {
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
         every { identConsumer.hentPersonInformasjon(any()) }.answers { null }
+        every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         MDC.put("callId", "NavCallId")
     }
 

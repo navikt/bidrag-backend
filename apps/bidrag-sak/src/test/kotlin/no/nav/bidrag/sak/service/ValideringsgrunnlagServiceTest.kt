@@ -14,7 +14,6 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
@@ -25,15 +24,13 @@ import java.time.LocalDate
 
 class ValideringsgrunnlagServiceTest {
     private val identConsumer: IdentConsumer = mockk()
-    private val bidragPersonClient: BidragPersonClient = mockk()
     private val cachedKodeverkService: CachedKodeverkService = mockk()
-    private val service = ValideringsgrunnlagService(identConsumer, bidragPersonClient, cachedKodeverkService)
+    private val service = ValideringsgrunnlagService(identConsumer, cachedKodeverkService)
 
     @BeforeEach
     fun setup() {
         every { identConsumer.hentPersonInformasjon(any()) } answers { PersonDto(ident = firstArg(), fødselsdato = null) }
         every { identConsumer.hentAlleIdenter(any()) } returns emptyList()
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns emptyMap()
         every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
     }
 
@@ -48,6 +45,22 @@ class ValideringsgrunnlagServiceTest {
     }
 
     @Test
+    fun `tar ikke med RM som ikke finnes i fødselsdatoene`() {
+        val barn = genererPersonident()
+        val rm = genererPersonident()
+        every { identConsumer.hentPersonInformasjon(rm) } returns null
+        val barnMedRm = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = barn,
+            reellMottaker = ReellMottakerDto(ident = ReellMottaker(rm.verdi), verge = false),
+        )
+
+        val grunnlag = service.hentForOpprettelse(opprett(barnMedRm))
+
+        grunnlag.fødselsdatoer shouldBe mapOf<Personident, LocalDate?>(barn to null)
+    }
+
+    @Test
     fun `feil fra personoppslaget går videre`() {
         val bm = genererPersonident()
         every { identConsumer.hentPersonInformasjon(bm) } throws IllegalStateException("bidrag-person er nede")
@@ -58,45 +71,25 @@ class ValideringsgrunnlagServiceTest {
     }
 
     @Test
-    fun `bruker fødselsdato fra fødselsdato-oppslaget når personinfo mangler den`() {
+    fun `henter fødselsdato fra personinformasjonen`() {
         val barn = genererPersonident()
-        val fødselsdato = LocalDate.now().minusYears(18)
-        every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } returns mapOf(barn to fødselsdato)
+        val fødselsdato = LocalDate.now().minusYears(10)
+        every { identConsumer.hentPersonInformasjon(barn) } returns PersonDto(ident = barn, fødselsdato = fødselsdato)
 
         val grunnlag = service.hentForOpprettelse(opprett(rolle(Rolletype.BARN, barn)))
 
         grunnlag.fødselsdato(barn) shouldBe fødselsdato
+        grunnlag.fødselsdatoer shouldBe mapOf(barn to fødselsdato)
     }
 
     @Test
-    fun `bruker fødselsdato fra personinfo først`() {
-        val barn = genererPersonident()
-        val fraPersoninfo = LocalDate.now().minusYears(10)
-        every { identConsumer.hentPersonInformasjon(barn) } returns PersonDto(ident = barn, fødselsdato = fraPersoninfo)
-        every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } returns mapOf(barn to LocalDate.now().minusYears(20))
-
-        val grunnlag = service.hentForOpprettelse(opprett(rolle(Rolletype.BARN, barn)))
-
-        grunnlag.fødselsdato(barn) shouldBe fraPersoninfo
-    }
-
-    @Test
-    fun `feil fra fødselsdato-oppslaget går videre`() {
-        val barn = genererPersonident()
-        every { bidragPersonClient.hentFødselsdatoer(listOf(barn)) } throws IllegalStateException("PDL utilgjengelig")
-
-        shouldThrowMessage("PDL utilgjengelig") {
-            service.hentForOpprettelse(opprett(rolle(Rolletype.BARN, barn)))
-        }
-    }
-
-    @Test
-    fun `henter fødselsdatoer for alle roller og RM i ett kall`() {
+    fun `henter fødselsdatoer for alle roller og RM`() {
         val barn = genererPersonident()
         val bm = genererPersonident()
         val rm = genererPersonident()
-        val fødselsdatoer = mapOf<Personident, LocalDate?>(barn to null, bm to null, rm to null)
-        every { bidragPersonClient.hentFødselsdatoer(listOf(barn, bm, rm)) } returns fødselsdatoer
+        val fødselsdatoRm = LocalDate.now().minusYears(40)
+        every { identConsumer.hentPersonInformasjon(rm) } returns PersonDto(ident = rm, fødselsdato = fødselsdatoRm)
+        val fødselsdatoer = mapOf<Personident, LocalDate?>(barn to null, bm to null, rm to fødselsdatoRm)
         val barnMedRm = RolleDto(
             type = Rolletype.BARN,
             fødselsnummer = barn,
@@ -106,7 +99,7 @@ class ValideringsgrunnlagServiceTest {
         val grunnlag = service.hentForOpprettelse(opprett(barnMedRm, rolle(Rolletype.BIDRAGSMOTTAKER, bm)))
 
         grunnlag.fødselsdatoer shouldBe fødselsdatoer
-        verify(exactly = 1) { bidragPersonClient.hentFødselsdatoer(any()) }
+        grunnlag.finnes(rm) shouldBe false
     }
 
     @Test
@@ -114,7 +107,6 @@ class ValideringsgrunnlagServiceTest {
         service.hentForOpprettelse(opprett(rolle(Rolletype.BIDRAGSMOTTAKER, Personident(""))))
 
         verify(exactly = 0) { identConsumer.hentPersonInformasjon(any()) }
-        verify(exactly = 0) { bidragPersonClient.hentFødselsdatoer(any()) }
     }
 
     @Test
@@ -141,7 +133,6 @@ class ValideringsgrunnlagServiceTest {
 
         grunnlag.finnes(ident) shouldBe true
         verify(exactly = 1) { identConsumer.hentPersonInformasjon(ident) }
-        verify(exactly = 1) { bidragPersonClient.hentFødselsdatoer(listOf(ident)) }
     }
 
     @Test

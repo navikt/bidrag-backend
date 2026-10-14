@@ -299,8 +299,8 @@ internal class RolleServiceTest {
         val nyBarnIdent = fødselsnummerBarn2
         val gammelRmIdent = fødselsnummerRm
         val nyRmIdent = fødselsnummerBp
-        every { identConsumer.sjekkIdent(gammelBarnIdent) } returns nyBarnIdent
-        every { identConsumer.sjekkIdent(gammelRmIdent) } returns nyRmIdent
+        every { identConsumer.hentGjeldendeIdent(gammelBarnIdent) } returns nyBarnIdent
+        every { identConsumer.hentGjeldendeIdent(gammelRmIdent) } returns nyRmIdent
         val barn = Rolle(rolleId = 3, fødselsnummer = gammelBarnIdent, rolleType = Rolletype.BARN, bidragssak = bidragssak)
         val rm = Rolle(rolleId = 4, fødselsnummer = gammelRmIdent, rolleType = Rolletype.REELMOTTAKER, bidragssak = bidragssak)
 
@@ -319,7 +319,7 @@ internal class RolleServiceTest {
 
     @Test
     fun `endrer ikke rolle som allerede har gjeldende ident`() {
-        every { identConsumer.sjekkIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
         val barn = Rolle(rolleId = 3, fødselsnummer = fødselsnummerBarn1, rolleType = Rolletype.BARN, bidragssak = bidragssak)
 
         rolleService.oppdaterTilGjeldendeIdent(listOf(barn))
@@ -330,8 +330,8 @@ internal class RolleServiceTest {
 
     @Test
     fun `bruker gjeldende ident for barn og RM i forespørsel`() {
-        every { identConsumer.sjekkIdent(fødselsnummerBarn1) } returns fødselsnummerBarn2
-        every { identConsumer.sjekkIdent(fødselsnummerRm) } returns fødselsnummerBp
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn2
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerRm) } returns fødselsnummerBp
         val forespørsel = RolleDto(
             type = Rolletype.BARN,
             fødselsnummer = Personident(fødselsnummerBarn1),
@@ -343,5 +343,4 @@ internal class RolleServiceTest {
         resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
         resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
     }
-
 }
