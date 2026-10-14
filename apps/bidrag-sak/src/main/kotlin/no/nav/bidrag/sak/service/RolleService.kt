@@ -101,8 +101,9 @@ class RolleService(
                 reellMottager = rmIdent?.takeIf { rolle.reellMottager != null } ?: rolle.reellMottager,
             )
         }
-        require(roller.size == roller.toSet().size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
-        return roller.toSet()
+        val unikeRoller = roller.toSet()
+        require(roller.size == unikeRoller.size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
+        return unikeRoller
     }
 
     private fun gjeldendeIdent(ident: String) = identConsumer.hentGjeldendeIdent(ident) ?: ident
@@ -129,17 +130,18 @@ class RolleService(
             }
 
         val oppdaterteRoller = oppdaterEksiterendeRoller(dtoRollerTilOppdatering, eksisterendeBidragssak)
-        val nyeRoller =
-            nyeDtoRoller
-                .map {
-                    it.rolle
-                }.mapBarnTilRoller(
-                    berikRequestRolleDtoer.tilFødselsdatoMap(),
-                    finnFørsteLedigeObjektnummer(lagredeRoller),
-                    eksisterendeBidragssak,
-                ) + nyeDtoRoller.map { it.rolle }.mapBpBmTilRoller(berikRequestRolleDtoer.tilFødselsdatoMap(), eksisterendeBidragssak)
+        val nyeRolleDtoer = nyeDtoRoller.map { it.rolle }
+        val fødselsdatoerForRoller = berikRequestRolleDtoer.tilFødselsdatoMap()
+        val nyeBarn =
+            nyeRolleDtoer.mapBarnTilRoller(
+                fødselsdatoerForRoller,
+                finnFørsteLedigeObjektnummer(lagredeRoller),
+                eksisterendeBidragssak,
+            )
+        val nyeBidragspliktigeOgMottakere =
+            nyeRolleDtoer.mapBpBmTilRoller(fødselsdatoerForRoller, eksisterendeBidragssak)
 
-        return (oppdaterteRoller + nyeRoller).toSet()
+        return (oppdaterteRoller + nyeBarn + nyeBidragspliktigeOgMottakere).toSet()
     }
 
     fun validerRoller(roller: Set<RolleDto>, fødselsdatoer: Map<Personident, LocalDate?>) {
