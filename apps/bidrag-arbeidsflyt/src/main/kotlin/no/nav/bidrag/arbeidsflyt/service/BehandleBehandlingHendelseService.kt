@@ -143,7 +143,10 @@ class BehandleBehandlingHendelseService(
                         saksnr = saksnummer,
                         tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
                     ).dataForHendelse
-            ferdigstillOppgaver(åpneOppgaver)
+            val kreverOppgave = barnliste.any { it.status.kreverOppgave }
+            if (!kreverOppgave) {
+                ferdigstillOppgaver(åpneOppgaver)
+            }
         }
         ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
         oppdaterOgLagreBehandling(hendelse, behandling)
