@@ -12,7 +12,7 @@ Applikasjonen er delt inn i to logiske grupper med tilhørende endepunkter:
 Reglene gjelder både ved opprettelse og endring av sak, hvis ikke annet står.
 
 #### Personer og identer
-- Alle roller med fødselsnummer (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler, må finnes som samhandler.
+- Alle roller med fødselsnummer i forespørselen (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler i forespørselen, må finnes som samhandler. Ved endring sjekkes ikke eksistensen til lagrede roller som ikke er med i forespørselen.
 - Fødselsnummer kan ikke være tom streng.
 - Feiler oppslaget mot bidrag-person, feiler forespørselen.
 - Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
@@ -23,7 +23,8 @@ Reglene gjelder både ved opprettelse og endring av sak, hvis ikke annet står.
 - En person kan bare ha én rolle i saken, med unntak av RM og FR.
 - Samme barn kan ikke sendes inn to ganger i én forespørsel.
 - RM kan bare registreres på barn.
-- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM og FR kan endres.
+- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.
+- `/sak/oppdater` og `/sak/oppdater/roller` støtter ikke oppdatering av FR. FR-roller i forespørselen ignoreres av oppdateringslogikken.
 
 #### Reell mottaker (RM)
 - Barn fra og med 18 år må ha RM. Ved endring sjekkes bare barn som er med i forespørselen.
