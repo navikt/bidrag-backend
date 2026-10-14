@@ -188,7 +188,12 @@ class VedtakHendelseListener(
         behandling: Behandling,
     ) {
         if (vedtak.type == Vedtakstype.ALDERSJUSTERING) return
-        behandling.saker.forEach { sak ->
+        val saker = if (vedtak.stønadsendringListe != null && vedtak.stønadsendringListe?.isNotEmpty() == true) {
+            vedtak.stønadsendringListe!!.map { it.sak.verdi }.distinct()
+        } else {
+            behandling.saker
+        }
+        saker.forEach { sak ->
             val søknader = behandling.søknadForSak(sak)
 
             søknader.forEach { opprettForSøknad ->
