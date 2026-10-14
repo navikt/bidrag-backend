@@ -9,15 +9,30 @@ Applikasjonen er delt inn i to logiske grupper med tilhørende endepunkter:
 
 ### Regler for saksroller
 
-- Barn fra og med 18 år må ha RM, både ved opprettelse og endring. Ved endring sjekkes bare barn som er med i forespørselen.
+Reglene gjelder både ved opprettelse og endring av sak, hvis ikke annet står.
+
+#### Personer og identer
+- Alle roller med fødselsnummer (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler, må finnes som samhandler.
+- Fødselsnummer kan ikke være tom streng.
+- Feiler oppslaget mot bidrag-person, feiler forespørselen.
+- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
+
+#### Roller i saken
+- Saken kan ha maks én BM og én BP.
 - Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.
 - En person kan bare ha én rolle i saken, med unntak av RM og FR.
-- Saken kan ha maks én BM og én BP.
-- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.
-- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.
+- Samme barn kan ikke sendes inn to ganger i én forespørsel.
+- RM kan bare registreres på barn.
+- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM og FR kan endres.
 
-Unntak:
-- Hvis fødselsdato fortsatt er ukjent etter oppslag mot bidrag-person/PDL, kan saken lagres uten RM. Feiler oppslaget, feiler forespørselen.
+#### Reell mottaker (RM)
+- Barn fra og med 18 år må ha RM. Ved endring sjekkes bare barn som er med i forespørselen.
+- Hvis fødselsdatoen til barnet er ukjent etter oppslag, kreves ikke RM.
+
+#### Land
+- Landkoden må finnes i kodeverket.
+
+#### Unntak
 - Eldre `POST /bidrag-sak/sak/ny` kan opprette en sak uten roller.
   [«Kopier fra annet fagområde» i bidrag-frontend](https://github.com/navikt/bidrag-frontend/blob/main/apps/dokument/src/common/components/avvik/components/types/KopierFraAnnenFagomrade.tsx)
   bruker endepunktet når et dokument skal knyttes til en ny sak. Senere oppdatering krever en kjent rolle.

@@ -318,11 +318,18 @@ class BidragSakController(
 
         const val SAKSROLLE_REGLER =
             "**Regler for saksroller**\n" +
+                "- Alle roller med fødselsnummer (BP, BM, BA, RM og FR) må finnes i bidrag-person. En RM som er samhandler, må finnes som samhandler.\n" +
+                "- Fødselsnummer kan ikke være tom streng.\n" +
                 "- Minst én av rollene BP, BM eller BA må være knyttet til en kjent person.\n" +
                 "- En person kan bare ha én rolle i saken, med unntak av RM og FR.\n" +
+                "- Samme barn kan ikke sendes inn to ganger i én forespørsel.\n" +
                 "- Saken kan ha maks én BM og én BP.\n" +
-                "- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM kan endres.\n" +
-                "- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.\n" +
+                "- RM kan bare registreres på barn.\n" +
+                "- Kjente BP-, BM- og BA-roller kan ikke fjernes eller endres. RM og FR kan endres.\n" +
+                "- Ved endring bruker bidrag-sak gjeldende ident fra bidrag-person for alle roller unntatt FR, både i forespørselen og for lagrede roller. " +
+                "Gjeldende ident er folkeregisteridenten, eller NPID hvis personen ikke har folkeregisterident. " +
+                "Identbytter på lagrede roller lagres i rollehistorikken som `ENDRE_FNR`. Historisk og gjeldende ident regnes som samme person.\n" +
+                "- Landkoden må finnes i kodeverket.\n" +
                 "- Barn fra og med 18 år må ha RM. Regelen sjekkes bare for barn som er med i forespørselen. " +
                 "Barn som ikke er med, valideres ikke på nytt, selv om de mangler RM i dag.\n" +
                 "- Hvis fødselsdatoen til barnet er ukjent etter oppslag, krever vi ikke RM. Feiler oppslaget, feiler forespørselen."
