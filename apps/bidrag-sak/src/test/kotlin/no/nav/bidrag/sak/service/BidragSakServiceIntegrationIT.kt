@@ -84,6 +84,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
             stubPerson(fnrBA3, LocalDate.now().minusYears(10))
 
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
 
             // Sak 1: BA1/BA2 myndige -> har RM. BA3 umyndig -> kan være uten RM.
             saksnummer =
@@ -396,6 +397,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         }
 
         @Test
