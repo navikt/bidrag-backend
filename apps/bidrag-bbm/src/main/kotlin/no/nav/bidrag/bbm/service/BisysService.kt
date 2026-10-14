@@ -55,12 +55,7 @@ import kotlin.jvm.optionals.getOrNull
 val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
 val søknadsstatusFattet = listOf(
     Behandlingstatus.VEDTAK_FATTET,
-    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
     Behandlingstatus.MIDLERTIDLIG_VEDTAK,
-    Behandlingstatus.ERKJENT_AVSLUTTET,
-    Behandlingstatus.DØMT_AVSLUTTET,
-    Behandlingstatus.G4,
-    Behandlingstatus.SENDT_UTLANDET_LUKKET,
 )
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
