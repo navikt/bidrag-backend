@@ -9,8 +9,8 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
@@ -691,7 +691,7 @@ class ForholdsmessigFordelingService(
                 val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
                 val erFeilregistrert =
                     søknad.behandlingStatusType == BehandlingStatusType.AVBRUTT ||
-                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.erFeilregistrert == true } }
+                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.lukketStatus == true } }
                 if (!erFeilregistrert) return@forEach
                 val roller = behandling.fjernGebyrForSøknad(søknadsid)
                 LOGGER.info {
