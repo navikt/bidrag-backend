@@ -164,7 +164,7 @@ class BehandleBehandlingHendelseService(
                 if (!it.erSøknadsoppgave) return@forEach
                 if (it.søknadsid == null) return@forEach
                 val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong()))?.søknad ?: return@forEach
-                if (søknad.behandlingStatusType.erAvsluttet) {
+                if (søknad.behandlingStatusType.erAvsluttet && !søknad.kreverSøknadsoppgave) {
                     oppgaveService.oppdaterOppgave(
                         OppdaterOppgave(it)
                             .ferdigstill(),
