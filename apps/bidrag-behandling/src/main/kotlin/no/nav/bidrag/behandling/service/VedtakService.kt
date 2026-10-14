@@ -629,9 +629,7 @@ class VedtakService(
             )
 
             if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                behandling.saker.forEach {
-                    opprettNotat(behandling, it)
-                }
+                opprettNotatForAlleSakerParallelt(behandling)
             } else {
                 opprettNotat(behandling)
             }
@@ -830,12 +828,6 @@ class VedtakService(
                     if (aldersjusteringBeregnet) {
                         behandling.vedtaksid = response.vedtaksid
                         forsendelseService.opprettForsendelseForAldersjustering(behandling)
-                    } else if (vedtakRequest.type != Vedtakstype.ALDERSJUSTERING) {
-                        if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                            opprettNotatForAlleSakerParallelt(behandling)
-                        } else {
-                            opprettNotat(behandling)
-                        }
                     }
                 }
 
@@ -876,6 +868,14 @@ class VedtakService(
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+            // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
+            if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
+                if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
+                    opprettNotatForAlleSakerParallelt(behandling)
+                } else {
+                    opprettNotat(behandling)
+                }
+            }
         }
 
         return BeregningVedtakResultat(vedtakRequestDtos, vedtaksid)

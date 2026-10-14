@@ -11,6 +11,7 @@ import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.slot
 import io.mockk.verify
+import io.mockk.verifyOrder
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
@@ -403,6 +404,13 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             )
 
         vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = 3))
+
+        verifyOrder {
+            vedtakConsumer.fatteVedtak(any())
+            behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any())
+            notatOpplysningerService.opprettNotat(behandling.id!!, any(), any())
+        }
+        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any(), any(), any()) }
 
         val opprettVedtakRequest = opprettVedtakSlot.captured
 
