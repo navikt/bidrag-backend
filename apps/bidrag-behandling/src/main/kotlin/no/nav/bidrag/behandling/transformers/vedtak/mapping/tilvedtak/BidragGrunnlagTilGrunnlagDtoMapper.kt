@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilSøknadsbarn
 import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerFeil
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.grunnlag.finnFødselsdato
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
@@ -93,7 +94,7 @@ fun RelatertPersonGrunnlagDto.tilPersonGrunnlag(): GrunnlagDto {
 
     val nyesteIdent =
         gjelderPersonId.takeIf { !it.isNullOrEmpty() }?.let {
-            val ident = hentNyesteIdent(it)
+            val ident = hentNyesteIdentIgnorerFeil(it)
             if (ident == null && !erBarn) Personident(it) else ident
         }
     val referanse =
