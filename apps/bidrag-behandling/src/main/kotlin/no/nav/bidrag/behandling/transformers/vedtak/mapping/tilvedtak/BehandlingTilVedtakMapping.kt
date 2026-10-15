@@ -1389,8 +1389,10 @@ class BehandlingTilVedtakMapping(
                 stønadsendringListe =
                 søknadsbarn.map {
                     val avslagKode = it.avslag ?: avslag
+                    // Revurderingsbarn med avslag skal avvises. Avslagsperioder kan føre til opphør av løpende bidrag.
+                    val erAvvisning = it.erRevurderingsbarn || avslagKode?.erAvvisning() == true
                     OpprettStønadsendringRequestDto(
-                        innkreving = innkrevingstype!!,
+                        innkreving = if (it.erRevurderingsbarn) Innkrevingstype.UTEN_INNKREVING else innkrevingstype!!,
                         skyldner = tilSkyldner(),
                         omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
                         kravhaver =
@@ -1403,7 +1405,7 @@ class BehandlingTilVedtakMapping(
                             ),
                         sak = Saksnummer(saksnummer),
                         type = it.stønadstype ?: stonadstype!!,
-                        beslutning = if (avslagKode?.erAvvisning() == true) Beslutningstype.AVVIST else Beslutningstype.ENDRING,
+                        beslutning = if (erAvvisning) Beslutningstype.AVVIST else Beslutningstype.ENDRING,
                         grunnlagReferanseListe =
                         grunnlagListe.map { it.referanse } +
                             grunnlagVirkningstidspunkt
@@ -1412,7 +1414,7 @@ class BehandlingTilVedtakMapping(
                                 }!!
                                 .referanse,
                         periodeListe =
-                        if (avslagKode?.erAvvisning() == true) {
+                        if (erAvvisning) {
                             emptyList()
                         } else {
                             listOf(

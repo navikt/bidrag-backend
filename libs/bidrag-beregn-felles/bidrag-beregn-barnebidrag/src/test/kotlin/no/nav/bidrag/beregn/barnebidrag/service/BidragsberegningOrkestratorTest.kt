@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
@@ -123,6 +124,75 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
                     vedtak.periodeListe.all { periode -> periode.resultat.beløp == null }
                 }
             } shouldBe true
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - direkte avslag med revurderingsbarn skal markere revurderingsbarn som avvist`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = true,
+            beregningBarn = beregnRequestFil.beregningBarn.map { it.copy(erDirekteAvslag = true) },
+        )
+        val revurderingsbarnReferanser = beregnRequest.grunnlagsliste
+            .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+            .filter { !it.innhold.delAvOpprinneligBehandling }
+            .map { it.referanse }
+        revurderingsbarnReferanser.shouldNotBeEmpty()
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat.forEach {
+                it.beregningsfeil shouldBe null
+                it.fatteVedtakAnbefalt shouldBe false
+                val erRevurderingsbarn = revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)
+                it.avvistRevurderingsbarn shouldBe erRevurderingsbarn
+                if (erRevurderingsbarn) {
+                    it.resultatVedtakListe shouldHaveSize 0
+                } else {
+                    it.resultatVedtakListe.flatMap { rv -> rv.periodeListe }.shouldNotBeEmpty()
+                }
+            }
+            resultat.count { !it.avvistRevurderingsbarn } shouldBe beregnRequest.beregningBarn.size - revurderingsbarnReferanser.size
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - revurderingsbarn med direkte avslag skal avvises uten perioder`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val revurderingsbarnReferanser = beregnRequestFil.grunnlagsliste
+            .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+            .filter { !it.innhold.delAvOpprinneligBehandling }
+            .map { it.referanse }
+        revurderingsbarnReferanser.shouldNotBeEmpty()
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = false,
+            beregningBarn = beregnRequestFil.beregningBarn.map {
+                if (revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)) {
+                    it.copy(erDirekteAvslag = true, opphørsdato = it.virkningstidspunkt)
+                } else {
+                    it
+                }
+            },
+        )
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat
+                .filter { revurderingsbarnReferanser.contains(it.søknadsbarnreferanse) }
+                .shouldHaveSize(revurderingsbarnReferanser.size)
+                .forEach {
+                    it.beregningsfeil shouldBe null
+                    it.avvistRevurderingsbarn shouldBe true
+                    it.fatteVedtakAnbefalt shouldBe false
+                    it.resultatVedtakListe shouldHaveSize 0
+                }
         }
     }
 

@@ -112,19 +112,24 @@ class BidragsberegningOrkestrator(
                             fatteVedtakAnbefalt = bergningResultat.fatteVedtakAnbefalt,
                             avvistRevurderingsbarn = bergningResultat.avvistRevurderingsbarn,
                             beregningsfeil = bergningResultat.beregningsfeil,
-                            resultatVedtakListe = bergningResultat.beregnetBarnebidragResultat?.let {
-                                listOf(
+                            // Avvist revurderingsbarn skal ikke ha vedtaksperioder da det kan føre til opphør av løpende bidrag
+                            resultatVedtakListe = if (bergningResultat.avvistRevurderingsbarn) {
+                                emptyList()
+                            } else {
+                                bergningResultat.beregnetBarnebidragResultat?.let {
+                                    listOf(
+                                        ResultatVedtakV2(
+                                            periodeListe = it.beregnetBarnebidragPeriodeListe,
+                                            vedtakstype = Vedtakstype.ENDRING,
+                                        ),
+                                    )
+                                } ?: listOf(
                                     ResultatVedtakV2(
-                                        periodeListe = it.beregnetBarnebidragPeriodeListe,
+                                        periodeListe = emptyList(),
                                         vedtakstype = Vedtakstype.ENDRING,
                                     ),
                                 )
-                            } ?: listOf(
-                                ResultatVedtakV2(
-                                    periodeListe = emptyList(),
-                                    vedtakstype = Vedtakstype.ENDRING,
-                                ),
-                            ),
+                            },
 
                         )
                     },
@@ -431,17 +436,26 @@ class BidragsberegningOrkestrator(
                         request.grunnlagsliste,
                     ).leggTilÅpenSluttperiodeHvisDirekteAvslagBeregning(),
                 )
+            // Ved direkte avslag skal det ikke fattes vedtak for revurderingsbarn
+            val erRevurderingsbarn =
+                request.grunnlagsliste.hentPersonMedReferanse(beregningBarn.søknadsbarnreferanse)?.erRevurderingsbarn == true
             BidragsberegningResultatBarnV2(
                 søknadsbarnreferanse = beregningBarn.søknadsbarnreferanse,
-                resultatVedtakListe = listOf(
-                    ResultatVedtakV2(
-                        periodeListe = beregningResultat.beregnetBarnebidragPeriodeListe,
-                        delvedtak = false,
-                        omgjøringsvedtak = true,
-                        beregnet = true,
-                        vedtakstype = Vedtakstype.ENDRING,
-                    ),
-                ),
+                avvistRevurderingsbarn = erRevurderingsbarn,
+                // Revurderingsbarn skal ikke få avslagsperioder da det kan føre til opphør av løpende bidrag
+                resultatVedtakListe = if (erRevurderingsbarn) {
+                    emptyList()
+                } else {
+                    listOf(
+                        ResultatVedtakV2(
+                            periodeListe = beregningResultat.beregnetBarnebidragPeriodeListe,
+                            delvedtak = false,
+                            omgjøringsvedtak = true,
+                            beregnet = true,
+                            vedtakstype = Vedtakstype.ENDRING,
+                        ),
+                    )
+                },
             ) to beregningResultat.grunnlagListe
         } catch (e: Exception) {
             BidragsberegningResultatBarnV2(
@@ -626,10 +640,21 @@ class BidragsberegningOrkestrator(
 
             beregningResultatListe.map { resultat ->
                 val beregningInput = request.beregningBarn.find { it.søknadsbarnreferanse == resultat.søknadsbarnreferanse }!!
+                val erRevurderingsbarn =
+                    request.grunnlagsliste.hentPersonMedReferanse(resultat.søknadsbarnreferanse)?.erRevurderingsbarn == true
 
-                // Hvis virkning er samme som opphørsdato så betyr det at saksbehandler har valgt direkte avslag fra virkningstidspunkt bildet.
-                // Virkningtidspunkt blir da samme som opphørsdat
-                if (beregningInput.erDirekteAvslag && beregningInput.virkningstidspunkt == beregningInput.opphørsdato) {
+                // Revurderingsbarn med direkte avslag skal avvises. Avslagsperioder kan føre til opphør av løpende bidrag.
+                if (beregningInput.erDirekteAvslag && erRevurderingsbarn) {
+                    resultat.copy(
+                        beregnetBarnebidragResultat = resultat.beregnetBarnebidragResultat.copy(
+                            beregnetBarnebidragPeriodeListe = emptyList(),
+                        ),
+                        fatteVedtakAnbefalt = false,
+                        avvistRevurderingsbarn = true,
+                    )
+                } else if (beregningInput.erDirekteAvslag && beregningInput.virkningstidspunkt == beregningInput.opphørsdato) {
+                    // Hvis virkning er samme som opphørsdato så betyr det at saksbehandler har valgt direkte avslag fra virkningstidspunkt bildet.
+                    // Virkningtidspunkt blir da samme som opphørsdat
                     val endeligResultat = resultat.beregnetBarnebidragResultat
                     val periodeListe = endeligResultat.beregnetBarnebidragPeriodeListe
                     val sistePeriode = periodeListe.maxByOrNull { it.periode.fom }
