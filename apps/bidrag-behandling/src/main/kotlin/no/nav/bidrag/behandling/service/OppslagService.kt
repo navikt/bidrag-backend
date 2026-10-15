@@ -88,8 +88,12 @@ fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: P
 fun hentNyesteIdentIgnorerFeil(ident: String?) = ident?.let {
     try {
         hentPerson(ident)?.ident ?: Personident(ident)
-    } catch (_: Exception) {
-        Personident(ident)
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.FORBIDDEN) {
+            null
+        } else {
+            throw e
+        }
     }
 }
 
