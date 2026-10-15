@@ -13,9 +13,10 @@ tilgang til de.
 Det kreves en GitHub konto tilknyttet navikt organisasjonen og et
 navikt autorisert Personal Access Token (PAT) med read:packages scope.
 
-Filen [lokal-settings.xml](../../util/bidrag-dev/maven/lokal-settings.xml) kan 
-brukes som utgangspunkt for å sette opp Maven med riktig autentisering, da 
-den refererer til _github_ definert i [bidrag-backend/pom.xml](../../pom.xml).
+Malen [lokal-settings.xml](../../util/bidrag-dev/maven/lokal-settings.xml) kan 
+brukes som utgangspunkt da den refererer til _github_ definert i 
+[bidrag-backend/pom.xml](../../pom.xml). Miljøvariablene i malen må 
+eksporteres for å få satt opp Maven med riktig autentisering.
 
 API-et til bidrag-reisekostnad-api er bygget med Spring Boot, Kotlin og Java.
 Java versjonen er definert i [bidrag-reisekostnad-api/pom.xml](pom.xml).
