@@ -776,19 +776,7 @@ class ForholdsmessigFordelingService(
                 )
             }
 
-            if (bmIdent != null) {
-                val bm =
-                    opprettEllerOppdaterRolle(
-                        behandling,
-                        Rolletype.BIDRAGSMOTTAKER,
-                        bmIdent,
-                        ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
-                    )
-                bm.forholdsmessigFordeling?.let { ff ->
-                    if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
-                }
-                bm.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bmIdent, Rolletype.BIDRAGSMOTTAKER)))
-            }
+            if (bmIdent != null) leggTilBidragsmottakerFraSøknad(behandling, søknad, bmIdent, ffDetaljer)
             behandling.bidragspliktig?.let { bp ->
                 if (bp.forholdsmessigFordeling == null) bp.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
                 val ff = bp.forholdsmessigFordeling!!
@@ -806,6 +794,28 @@ class ForholdsmessigFordelingService(
                 emptyList(),
             )
         }
+    }
+
+    /** Oppretter BM fra søknaden hvis den mangler, og knytter søknaden og eventuell gebyrsøknad til BM */
+    private fun leggTilBidragsmottakerFraSøknad(
+        behandling: Behandling,
+        søknad: HentSøknad,
+        bmIdent: String,
+        ffDetaljer: ForholdsmessigFordelingRolle,
+    ): Rolle {
+        val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+        val bm =
+            opprettEllerOppdaterRolle(
+                behandling,
+                Rolletype.BIDRAGSMOTTAKER,
+                bmIdent,
+                ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+            )
+        bm.forholdsmessigFordeling?.let { ff ->
+            if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+        }
+        bm.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bmIdent, Rolletype.BIDRAGSMOTTAKER)))
+        return bm
     }
 
     private fun HentSøknad.finnPartISøknad(
@@ -1016,12 +1026,34 @@ class ForholdsmessigFordelingService(
                             (rolle.stønadstype == null || rolle.stønadstype == søknad.behandlingstema.tilStønadstype())
                     }
                 }!!
+            // parterUnderBehandling inneholder bare barn, så BM må hentes fra alle parter i søknaden
+            val bmIdent = søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
+            if (bmIdent != null && behandling.roller.none { it.rolletype == Rolletype.BIDRAGSMOTTAKER && it.ident == bmIdent }) {
+                val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+                LOGGER.info {
+                    "Legger til manglende bidragsmottaker fra søknad ${søknad.søknadsid} i sak ${søknad.saksnummer} i behandling ${behandling.id}"
+                }
+                leggTilBidragsmottakerFraSøknad(
+                    behandling,
+                    søknad,
+                    bmIdent,
+                    ForholdsmessigFordelingRolle(
+                        delAvOpprinneligBehandling = true,
+                        behandlingsid = behandling.id,
+                        erRevurdering = false,
+                        tilhørerSak = søknad.saksnummer,
+                        behandlerenhet = søknadsdetaljer.enhet,
+                        bidragsmottaker = bmIdent,
+                        søknader = mutableSetOf(),
+                    ),
+                )
+            }
             barnService.leggTilEllerSlettBarnFraBehandlingSomErIFF(
                 OppdaterBarnFraFFRequest(
                     behandling = behandling,
                     søknadsid = søknad.søknadsid,
                     saksnummer = søknad.saksnummer,
-                    bmIdent = søknad.parterUnderBehandling.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident,
+                    bmIdent = bmIdent,
                     søktFraDato = søknad.søknadFomDato,
                     stønadstype = søknad.behandlingstema.tilStønadstype(),
                     søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad(),

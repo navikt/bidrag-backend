@@ -485,6 +485,53 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
     }
 
     @Test
+    fun `skal legge til manglende bidragsmottaker fra ikke ff soknad i annen sak og knytte barnet til bm`() {
+        stubPersonConsumer()
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val antallBmFør = behandling.alleBidragsmottakere.size
+        val søknad =
+            opprettFFSøknad(behandling, Behandlingstype.KLAGE).copy(
+                søknadsid = 6666L,
+                saksnummer = ANNEN_SAK,
+                behandlingsid = null,
+                partISøknadListe =
+                listOf(
+                    PartISøknad(
+                        personident = ANNEN_BM_IDENT,
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        behandlingstatus = Behandlingstatus.UNDER_BEHANDLING,
+                        gebyr = true,
+                        referanseGebyr = "gebyr_bm2",
+                    ),
+                    PartISøknad(personident = NYTT_BARN_IDENT, rolletype = Rolletype.BARN, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING),
+                ),
+            )
+        every { sakConsumer.hentSakerPerson(any()) } returns emptyList()
+        every { behandlingRepository.finnÅpneBidragsbehandlingerForBp(any(), any()) } returns emptyList()
+        every { behandlingService.sendOppdatertHendelse(any(), any()) } returns Unit
+        every { behandlingService.lagreBehandling(any()) } answers { firstArg() }
+
+        service.leggTilManglendeBarnFraSøknaderIBehandling(behandling, emptyList(), listOf(søknad))
+
+        behandling.alleBidragsmottakere shouldHaveSize antallBmFør + 1
+        val nyBm = behandling.alleBidragsmottakere.find { it.ident == ANNEN_BM_IDENT }!!
+        assertSoftly(nyBm.forholdsmessigFordeling!!) {
+            tilhørerSak shouldBe ANNEN_SAK
+            erRevurdering shouldBe false
+            søknader.map { it.søknadsid } shouldBe listOf(søknad.søknadsid)
+        }
+        nyBm.harGebyrsøknad shouldBe true
+        nyBm.gebyrSøknader.find { it.søknadsid == søknad.søknadsid }!!.referanse shouldBe "gebyr_bm2"
+
+        val nyttBarn = behandling.søknadsbarn.find { it.ident == NYTT_BARN_IDENT }!!
+        nyttBarn.forholdsmessigFordeling!!.bidragsmottaker shouldBe ANNEN_BM_IDENT
+        nyttBarn.bidragsmottaker!!.ident shouldBe ANNEN_BM_IDENT
+        verify { underholdService.oppretteUnderholdskostnad(behandling, any(), any()) }
+    }
+
+    @Test
     fun `skal fjerne gebyrsoknad for bp og bm nar soknad er avbrutt i bbm`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
         val bp = behandling.bidragspliktig!!
@@ -677,5 +724,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
 
     companion object {
         private const val NYTT_BARN_IDENT = "01011512345"
+        private const val ANNEN_BM_IDENT = "01018512345"
+        private const val ANNEN_SAK = "2400099"
     }
 }
