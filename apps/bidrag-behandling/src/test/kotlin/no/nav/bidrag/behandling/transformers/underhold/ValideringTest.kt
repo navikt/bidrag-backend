@@ -753,16 +753,21 @@ class ValideringTest {
         }
 
         @Test
-        fun `skal avvise en periode der til og med er for fra og med`() {
-            val feil =
-                shouldThrow<HttpClientErrorException> {
-                    OppdatereForpleiningRequest(
-                        periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
-                        beløp = BigDecimal.valueOf(2000),
-                    ).validere(underholdskostnad())
-                }
+        fun `skal avvise ugyldig periode`() {
+            listOf(
+                // Til og med før fra og med
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
+                // Uten varighet: beregningen bruker hele måneder
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 29)),
+            ).forEach { periode ->
+                val feil =
+                    shouldThrow<HttpClientErrorException> {
+                        OppdatereForpleiningRequest(periode = periode, beløp = BigDecimal.valueOf(2000)).validere(underholdskostnad())
+                    }
 
-            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+                feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+            }
         }
 
         @Test
@@ -786,9 +791,9 @@ class ValideringTest {
         }
 
         @Test
-        fun `skal godta en periode der til og med er lik fra og med`() {
+        fun `skal godta en periode på én måned`() {
             OppdatereForpleiningRequest(
-                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30)),
                 beløp = BigDecimal.valueOf(2000),
             ).validere(underholdskostnad())
         }

@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 fun OppdatereUnderholdRequest.validere() {
     if (this.harTilsynsordning == null && this.begrunnelse.isNullOrBlank()) {
@@ -334,9 +335,11 @@ fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
             ressursIkkeFunnetException("Fant ikke forpleining med id $id i behandling ${underholdskostnad.behandling.id}")
         }
     }
+    // Beregningen bruker hele måneder (se GrunnlagByggerBidrag). Slutter perioden før siste dag i måneden til fra og med,
+    // blir den uten varighet. Dette fanger også opp til og med før fra og med.
     periode.tom?.let { tom ->
-        if (tom < periode.fom) {
-            ugyldigForespørsel("Til og med kan ikke være før fra og med")
+        if (YearMonth.from(tom.plusDays(1)) <= YearMonth.from(periode.fom)) {
+            ugyldigForespørsel("Perioden må vare minst én måned")
         }
     }
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
