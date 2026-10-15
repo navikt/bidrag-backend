@@ -689,7 +689,14 @@ class ForholdsmessigFordelingService(
             .flatMap { rolle -> rolle.gebyrSøknader.map { it.søknadsid } }
             .distinct()
             .forEach { søknadsid ->
-                val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
+                val søknad =
+                    try {
+                        bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
+                    } catch (e: Exception) {
+                        LOGGER.warn { "Kunne ikke hente søknad $søknadsid fra BBM. Beholder gebyrsøknaden." }
+                        secureLogger.warn(e) { "Feil ved henting av gebyrsøknad $søknadsid fra BBM" }
+                        return@forEach
+                    }
                 val erFeilregistrert =
                     søknad.behandlingStatusType == BehandlingStatusType.AVBRUTT ||
                         søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.erFeilregistrert == true } }
