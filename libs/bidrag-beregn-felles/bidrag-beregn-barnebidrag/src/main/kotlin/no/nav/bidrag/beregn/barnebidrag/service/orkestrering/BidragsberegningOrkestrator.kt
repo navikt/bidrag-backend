@@ -629,7 +629,7 @@ class BidragsberegningOrkestrator(
 
                 // Hvis virkning er samme som opphørsdato så betyr det at saksbehandler har valgt direkte avslag fra virkningstidspunkt bildet.
                 // Virkningtidspunkt blir da samme som opphørsdat
-                if (beregningInput.virkningstidspunkt == beregningInput.opphørsdato) {
+                if (beregningInput.erDirekteAvslag && beregningInput.virkningstidspunkt == beregningInput.opphørsdato) {
                     val endeligResultat = resultat.beregnetBarnebidragResultat
                     val periodeListe = endeligResultat.beregnetBarnebidragPeriodeListe
                     val sistePeriode = periodeListe.maxByOrNull { it.periode.fom }

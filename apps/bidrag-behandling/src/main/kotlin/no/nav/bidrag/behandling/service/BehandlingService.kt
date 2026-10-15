@@ -15,6 +15,7 @@ import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Utgift
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.extensions.hentDefaultÅrsak
+import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.json.FattetVedtak
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
@@ -216,7 +217,9 @@ class BehandlingService(
     ) {
         if (behandling.erIForholdsmessigFordeling && UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG.isEnabled) {
             if (behandling.erKlageEllerOmgjøring) {
-                forholdsmessigFordelingService!!.slettEllerGjennopprettKlageSøknader(behandling, søknadsid ?: behandling.soknadsid!!)
+                val slettetSøknadsid = søknadsid ?: behandling.soknadsid!!
+                forholdsmessigFordelingService!!.slettEllerGjennopprettKlageSøknader(behandling, slettetSøknadsid)
+                behandling.fjernGebyrForSøknad(slettetSøknadsid)
                 sendOppdatertHendelse(behandling.id!!, false)
             } else if (søknadsid == null) {
                 forholdsmessigFordelingService!!.avsluttForholdsmessigFordeling(
@@ -234,7 +237,7 @@ class BehandlingService(
                     søknadsid,
                     søknadBleSlettet = true,
                 )
-                behandling.bidragspliktig?.fjernGebyr(søknadsid)
+                behandling.fjernGebyrForSøknad(søknadsid)
                 sendOppdatertHendelse(behandling.id!!, false)
             }
         } else {
