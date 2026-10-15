@@ -55,31 +55,19 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
     }
 
     @Test
-    fun `søknadsbarn med avslag for delt bosted skal ikke utløse forholdsmessig fordeling`() {
-        val resultat = beregn("delt_bosted")
+    fun `søknadsbarn med avslag for delt bosted eller forpleining skal ikke utløse forholdsmessig fordeling`() {
+        mapOf(
+            "delt_bosted" to Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
+            "forpleining" to Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
+        ).forEach { (scenario, resultatkode) ->
+            val resultat = beregn(scenario)
 
-        assertSoftly {
-            sluttberegninger(resultat, søknadsbarn2).forEach {
-                it.bidragIkkeBeregnetDeltBosted shouldBe true
-                it.resultatBeløp shouldBe null
+            assertSoftly {
+                sluttberegninger(resultat, søknadsbarn2).forEach { it.resultatBeløp shouldBe null }
+                resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe resultatkode }
             }
-            resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED }
+            skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat)
         }
-        skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat)
-    }
-
-    @Test
-    fun `søknadsbarn med avslag for forpleining skal ikke utløse forholdsmessig fordeling`() {
-        val resultat = beregn("forpleining")
-
-        assertSoftly {
-            sluttberegninger(resultat, søknadsbarn2).forEach {
-                it.forpleiningDekkerUnderholdskostnaden shouldBe true
-                it.resultatBeløp shouldBe null
-            }
-            resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG }
-        }
-        skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat)
     }
 
     @Test

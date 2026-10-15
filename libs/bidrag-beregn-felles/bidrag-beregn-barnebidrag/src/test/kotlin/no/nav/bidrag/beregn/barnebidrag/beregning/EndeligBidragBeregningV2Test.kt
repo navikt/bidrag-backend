@@ -1,5 +1,6 @@
 package no.nav.bidrag.beregn.barnebidrag.beregning
 
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneDelberegningBeregningGrunnlag
@@ -111,25 +112,17 @@ class EndeligBidragBeregningV2Test {
     inner class BidragJustertForNettoBarnetilleggBP {
 
         @Test
-        fun `skal ikke være justert til barnetillegg BP når barnetillegget og bidraget er 0`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragJustertForBPBarnetillegg(
+        fun `skal ikke være justert til barnetillegg BP når barnetillegget er 0 eller ved delt bosted`() {
+            listOf(
                 bidragJustertForBPBarnetilleggGrunnlag(bidragEtterFordeling = BigDecimal.ZERO, nettoBarnetilleggBP = BigDecimal.ZERO),
-            )
-
-            resultat.erBidragJustertTilNettoBarnetilleggBP shouldBe false
-        }
-
-        @Test
-        fun `skal ikke være justert til barnetillegg BP ved delt bosted`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragJustertForBPBarnetillegg(
                 bidragJustertForBPBarnetilleggGrunnlag(
                     bidragEtterFordeling = BigDecimal(2000),
                     nettoBarnetilleggBP = BigDecimal(2000),
                     erDeltBosted = true,
                 ),
-            )
-
-            resultat.erBidragJustertTilNettoBarnetilleggBP shouldBe false
+            ).forEach { grunnlag ->
+                EndeligBidragBeregningV2.beregnBidragJustertForBPBarnetillegg(grunnlag).erBidragJustertTilNettoBarnetilleggBP shouldBe false
+            }
         }
 
         @Test
@@ -143,79 +136,44 @@ class EndeligBidragBeregningV2Test {
         }
     }
 
-    @Nested
-    inner class DeltBosted {
+    @Test
+    fun `delt bosted skal gi avslag bare når BPs andel av U er under 50 prosent`() {
+        fun beregn(bpAndel: Int, andelDeltBosted: Int, bpAndelFaktor: String) = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+            bidragTilFordelingGrunnlag(
+                underholdskostnad = BigDecimal(8000),
+                bpAndel = BigDecimal(bpAndel),
+                nettoBarnetilleggBM = null,
+                andelDeltBosted = andelDeltBosted(beløp = BigDecimal(andelDeltBosted)),
+                bpAndelFaktor = BigDecimal(bpAndelFaktor),
+            ),
+        )
 
-        @Test
-        fun `skal gi avslag når BPs andel av U er under 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(
-                    underholdskostnad = BigDecimal(8000),
-                    bpAndel = BigDecimal(3200),
-                    nettoBarnetilleggBM = null,
-                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal.ZERO),
-                    bpAndelFaktor = BigDecimal("0.4"),
-                ),
-            )
+        val under50Prosent = beregn(bpAndel = 3200, andelDeltBosted = 0, bpAndelFaktor = "0.4")
+        val over50Prosent = beregn(bpAndel = 4800, andelDeltBosted = 800, bpAndelFaktor = "0.6")
 
-            resultat.erAvslag shouldBe true
-        }
-
-        @Test
-        fun `skal ikke gi avslag når BPs andel av U er over 50 prosent`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(
-                    underholdskostnad = BigDecimal(8000),
-                    bpAndel = BigDecimal(4800),
-                    nettoBarnetilleggBM = null,
-                    andelDeltBosted = andelDeltBosted(beløp = BigDecimal(800)),
-                    bpAndelFaktor = BigDecimal("0.6"),
-                ),
-            )
-
-            resultat.erAvslag shouldBe false
-            resultat.bidragTilFordeling.compareTo(BigDecimal(800)) shouldBe 0
+        assertSoftly {
+            under50Prosent.erAvslag shouldBe true
+            over50Prosent.erAvslag shouldBe false
+            over50Prosent.bidragTilFordeling.compareTo(BigDecimal(800)) shouldBe 0
         }
     }
 
-    @Nested
-    inner class Forpleining {
+    @Test
+    fun `forpleining skal gi avslag bare når den er lik eller høyere enn U`() {
+        fun erAvslag(underholdskostnad: Int, bpAndel: Int, forpleining: Int?) = EndeligBidragBeregningV2.beregnBidragTilFordeling(
+            bidragTilFordelingGrunnlag(
+                underholdskostnad = BigDecimal(underholdskostnad),
+                bpAndel = BigDecimal(bpAndel),
+                nettoBarnetilleggBM = null,
+                forpleining = forpleining?.let { BigDecimal(it) },
+            ),
+        ).erAvslag
 
-        @Test
-        fun `skal gi avslag når forpleiningen er lik eller høyere enn U`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(
-                    underholdskostnad = BigDecimal.ZERO,
-                    bpAndel = BigDecimal.ZERO,
-                    nettoBarnetilleggBM = null,
-                    forpleining = BigDecimal(9000),
-                ),
-            )
-
-            resultat.erAvslag shouldBe true
-        }
-
-        @Test
-        fun `skal ikke gi avslag når forpleiningen er lavere enn U`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(
-                    underholdskostnad = BigDecimal(1000),
-                    bpAndel = BigDecimal(600),
-                    nettoBarnetilleggBM = null,
-                    forpleining = BigDecimal(8000),
-                ),
-            )
-
-            resultat.erAvslag shouldBe false
-        }
-
-        @Test
-        fun `skal ikke gi avslag når U er 0 uten forpleining`() {
-            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordeling(
-                bidragTilFordelingGrunnlag(underholdskostnad = BigDecimal.ZERO, bpAndel = BigDecimal.ZERO, nettoBarnetilleggBM = null),
-            )
-
-            resultat.erAvslag shouldBe false
+        assertSoftly {
+            // U er 0 etter at forpleiningen er trukket fra
+            erAvslag(underholdskostnad = 0, bpAndel = 0, forpleining = 9000) shouldBe true
+            erAvslag(underholdskostnad = 1000, bpAndel = 600, forpleining = 8000) shouldBe false
+            erAvslag(underholdskostnad = 0, bpAndel = 0, forpleining = null) shouldBe false
         }
     }
 }
