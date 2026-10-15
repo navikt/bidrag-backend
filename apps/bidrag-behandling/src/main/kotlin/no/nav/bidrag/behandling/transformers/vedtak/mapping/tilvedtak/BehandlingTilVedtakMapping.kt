@@ -1382,6 +1382,9 @@ class BehandlingTilVedtakMapping(
         val grunnlagslisteGebyr = byggGrunnlagForGebyr()
         val resultatEngangsbeløpGebyr = mapEngangsbeløpGebyr(grunnlagListe.toList() + grunnlagslisteGebyr)
         val grunnlagVirkningstidspunkt = byggGrunnlagVirkningsttidspunkt()
+        val alleSøknadsbarnHarAvslag = søknadsbarn.filter { !it.erRevurderingsbarn }.let { barn ->
+            barn.isNotEmpty() && barn.all { (it.avslag ?: avslag) != null }
+        }
 
         return byggOpprettVedtakRequestObjekt(request?.enhet)
             .copy(
@@ -1389,10 +1392,12 @@ class BehandlingTilVedtakMapping(
                 stønadsendringListe =
                 søknadsbarn.map {
                     val avslagKode = it.avslag ?: avslag
-                    // Revurderingsbarn med avslag skal avvises. Avslagsperioder kan føre til opphør av løpende bidrag.
-                    val erAvvisning = it.erRevurderingsbarn || avslagKode?.erAvvisning() == true
+                    // Når alle søknadsbarn har avslag skal revurderingsbarn avvises uten perioder.
+                    // Avslagsperioder kan føre til opphør av løpende bidrag.
+                    val avvisRevurderingsbarn = alleSøknadsbarnHarAvslag && it.erRevurderingsbarn
+                    val erAvvisning = avvisRevurderingsbarn || avslagKode?.erAvvisning() == true
                     OpprettStønadsendringRequestDto(
-                        innkreving = if (it.erRevurderingsbarn) Innkrevingstype.UTEN_INNKREVING else innkrevingstype!!,
+                        innkreving = if (avvisRevurderingsbarn) Innkrevingstype.UTEN_INNKREVING else innkrevingstype!!,
                         skyldner = tilSkyldner(),
                         omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
                         kravhaver =

@@ -103,6 +103,7 @@ class BidragsberegningOrkestrator(
                 )
             } else {
                 val resultat = orkestrerBeregning(request)
+                val alleSøknadsbarnHarAvslag = request.alleSøknadsbarnHarAvslag()
                 BidragsberegningOrkestratorResponseV2(
                     grunnlagListe = resultat.grunnlagsliste,
                     resultat =
@@ -112,8 +113,8 @@ class BidragsberegningOrkestrator(
                             fatteVedtakAnbefalt = bergningResultat.fatteVedtakAnbefalt,
                             avvistRevurderingsbarn = bergningResultat.avvistRevurderingsbarn,
                             beregningsfeil = bergningResultat.beregningsfeil,
-                            // Avvist revurderingsbarn skal ikke ha vedtaksperioder da det kan føre til opphør av løpende bidrag
-                            resultatVedtakListe = if (bergningResultat.avvistRevurderingsbarn) {
+                            // Når alle søknadsbarn har avslag skal avvist revurderingsbarn ikke ha vedtaksperioder da det kan føre til opphør av løpende bidrag
+                            resultatVedtakListe = if (alleSøknadsbarnHarAvslag && bergningResultat.avvistRevurderingsbarn) {
                                 emptyList()
                             } else {
                                 bergningResultat.beregnetBarnebidragResultat?.let {
@@ -426,6 +427,13 @@ class BidragsberegningOrkestrator(
         }
     }
 
+    private fun BidragsberegningOrkestratorRequestV2.alleSøknadsbarnHarAvslag(): Boolean {
+        val søknadsbarn = beregningBarn.filter {
+            grunnlagsliste.hentPersonMedReferanse(it.søknadsbarnreferanse)?.erRevurderingsbarn != true
+        }
+        return søknadsbarn.isNotEmpty() && søknadsbarn.all { it.erDirekteAvslag }
+    }
+
     private fun utforBeregningDirekteAvslag(
         request: BidragsberegningOrkestratorRequestV2,
     ): List<Pair<BidragsberegningResultatBarnV2, List<GrunnlagDto>>> = request.beregningBarn.map { beregningBarn ->
@@ -436,7 +444,7 @@ class BidragsberegningOrkestrator(
                         request.grunnlagsliste,
                     ).leggTilÅpenSluttperiodeHvisDirekteAvslagBeregning(),
                 )
-            // Ved direkte avslag skal det ikke fattes vedtak for revurderingsbarn
+            // Ved direkte avslag for alle søknadsbarn skal det ikke fattes vedtak for revurderingsbarn
             val erRevurderingsbarn =
                 request.grunnlagsliste.hentPersonMedReferanse(beregningBarn.søknadsbarnreferanse)?.erRevurderingsbarn == true
             BidragsberegningResultatBarnV2(
@@ -638,13 +646,14 @@ class BidragsberegningOrkestrator(
 
             secureLogger.debug { "Resultat av bidragsberegning: $beregningResultatListe" }
 
+            val alleSøknadsbarnHarAvslag = request.alleSøknadsbarnHarAvslag()
             beregningResultatListe.map { resultat ->
                 val beregningInput = request.beregningBarn.find { it.søknadsbarnreferanse == resultat.søknadsbarnreferanse }!!
                 val erRevurderingsbarn =
                     request.grunnlagsliste.hentPersonMedReferanse(resultat.søknadsbarnreferanse)?.erRevurderingsbarn == true
 
-                // Revurderingsbarn med direkte avslag skal avvises. Avslagsperioder kan føre til opphør av løpende bidrag.
-                if (beregningInput.erDirekteAvslag && erRevurderingsbarn) {
+                // Når alle søknadsbarn har avslag skal revurderingsbarn avvises uten perioder.
+                if (alleSøknadsbarnHarAvslag && erRevurderingsbarn) {
                     resultat.copy(
                         beregnetBarnebidragResultat = resultat.beregnetBarnebidragResultat.copy(
                             beregnetBarnebidragPeriodeListe = emptyList(),

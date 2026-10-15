@@ -161,21 +161,47 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     }
 
     @Test
-    fun `beregn bidrag v3 - revurderingsbarn med direkte avslag skal avvises uten perioder`() {
+    fun `beregn bidrag v3 - revurderingsbarn med direkte avslag skal ikke fjerne vedtak når søknadsbarn ikke har avslag`() {
         filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
         val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
-        val revurderingsbarnReferanser = beregnRequestFil.grunnlagsliste
-            .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
-            .filter { !it.innhold.delAvOpprinneligBehandling }
-            .map { it.referanse }
-        revurderingsbarnReferanser.shouldNotBeEmpty()
+        val revurderingsbarnReferanser = hentRevurderingsbarnReferanser(beregnRequestFil)
         val beregnRequest = beregnRequestFil.copy(
             erDirekteAvslag = false,
             beregningBarn = beregnRequestFil.beregningBarn.map {
                 if (revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)) {
                     it.copy(erDirekteAvslag = true, opphørsdato = it.virkningstidspunkt)
                 } else {
-                    it
+                    it.copy(erDirekteAvslag = false)
+                }
+            },
+        )
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat
+                .filter { revurderingsbarnReferanser.contains(it.søknadsbarnreferanse) }
+                .shouldHaveSize(revurderingsbarnReferanser.size)
+                .forEach {
+                    it.beregningsfeil shouldBe null
+                    it.resultatVedtakListe.shouldNotBeEmpty()
+                }
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - revurderingsbarn skal avvises uten perioder når alle søknadsbarn har avslag`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val revurderingsbarnReferanser = hentRevurderingsbarnReferanser(beregnRequestFil)
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = false,
+            beregningBarn = beregnRequestFil.beregningBarn.map {
+                if (revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)) {
+                    it.copy(erDirekteAvslag = false)
+                } else {
+                    it.copy(erDirekteAvslag = true)
                 }
             },
         )
@@ -195,6 +221,12 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
                 }
         }
     }
+
+    private fun hentRevurderingsbarnReferanser(request: BidragsberegningOrkestratorRequestV2) = request.grunnlagsliste
+        .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+        .filter { !it.innhold.delAvOpprinneligBehandling }
+        .map { it.referanse }
+        .also { it.shouldNotBeEmpty() }
 
     @Test
     fun `beregn bidrag v3 - 1 BM, 2 søknadsbarn - ingen løpende stønader`() {
