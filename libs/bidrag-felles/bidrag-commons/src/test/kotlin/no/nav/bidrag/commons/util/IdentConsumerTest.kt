@@ -89,6 +89,27 @@ class IdentConsumerTest {
         verifiserAntallKall(0)
     }
 
+    @Test
+    fun `hentGjeldendeIdent skal returnere NPID når personen ikke har folkeregisterident`() {
+        stubSvar(listOf(PersonidentDto(NPID, false, Identgruppe.NPID)))
+
+        identConsumer.hentGjeldendeIdent(NPID) shouldBe NPID
+    }
+
+    @Test
+    fun `hentGjeldendeIdent skal foretrekke folkeregisterident foran NPID`() {
+        stubSvar(listOf(PersonidentDto(NPID, false, Identgruppe.NPID), PersonidentDto(IDENT, false, Identgruppe.FOLKEREGISTERIDENT)))
+
+        identConsumer.hentGjeldendeIdent(NPID) shouldBe IDENT
+    }
+
+    @Test
+    fun `hentGjeldendeIdent skal returnere innsendt ident uten kall når den ikke er personident`() {
+        identConsumer.hentGjeldendeIdent("123") shouldBe "123"
+
+        verifiserAntallKall(0)
+    }
+
     private fun stubSvar(svar: Any?) {
         every { restOperations.exchange(any<URI>(), HttpMethod.POST, any(), any<ParameterizedTypeReference<Any>>()) } returns
             ResponseEntity.ok().body<Any>(svar)
@@ -124,6 +145,7 @@ class IdentConsumerTest {
     companion object {
         private val IDENT = genererFødselsnummer()
         private val HISTORISK_IDENT = genererFødselsnummer()
+        private val NPID = genererFødselsnummer()
         private val PERSONIDENTER =
             listOf(
                 PersonidentDto(IDENT, false, Identgruppe.FOLKEREGISTERIDENT),
@@ -135,6 +157,7 @@ class IdentConsumerTest {
         fun oppslag() = listOf(
             Oppslag("hentAlleIdenter", PERSONIDENTER, listOf(IDENT, HISTORISK_IDENT)) { it.hentAlleIdenter(IDENT) },
             Oppslag("sjekkIdent", PERSONIDENTER, IDENT) { it.sjekkIdent(HISTORISK_IDENT) },
+            Oppslag("hentGjeldendeIdent", PERSONIDENTER, IDENT) { it.hentGjeldendeIdent(HISTORISK_IDENT) },
             Oppslag("hentPersonInformasjon", PERSON, PERSON) { it.hentPersonInformasjon(Personident(IDENT)) },
         )
     }

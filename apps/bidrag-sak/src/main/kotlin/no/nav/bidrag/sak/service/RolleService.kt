@@ -1,13 +1,18 @@
 package no.nav.bidrag.sak.service
 
+import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
+import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
 import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBarnTilRoller
+import no.nav.bidrag.sak.mapper.BidragssakMapper.mapBpBmTilRoller
 import no.nav.bidrag.sak.mapper.medFødselsdato
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.sak.mapper.model.fødselsnummer
@@ -19,10 +24,11 @@ import no.nav.bidrag.sak.mapper.model.type
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class RolleService(
-    private val bidragPersonClient: BidragPersonClient,
+    private val identConsumer: IdentConsumer,
     private val samhandlerClient: BidragSamhandlerClient,
 ) {
     fun oppdaterRollerMedReelleMottager(
@@ -63,38 +69,83 @@ class RolleService(
         barn to rm.rolleId
     }
 
+    fun oppdaterTilGjeldendeIdent(roller: Collection<Rolle>) {
+        roller.filter { it.rolleType != Rolletype.FEILREGISTRERT }.forEach { rolle ->
+            val gammelIdent = rolle.fødselsnummer ?: return@forEach
+            val nyIdent = gjeldendeIdent(gammelIdent)
+            if (nyIdent == gammelIdent) return@forEach
+            rolle.fødselsnummer = nyIdent
+            rolle.rollehistorikk.add(
+                Rollehistorikk(
+                    saksnummer = rolle.bidragssak!!.saksnummer,
+                    rolleFødselsnummer = gammelIdent,
+                    type = rolle.rolleType,
+                    rmRolleFødselsnummer = nyIdent,
+                    typeEndring = TypeEndring.ENDRE_FNR,
+                    opprettetAv = TokenUtils.hentSaksbehandlerIdent() ?: TokenUtils.hentApplikasjonsnavn() ?: "",
+                    opprettetTidspunkt = LocalDateTime.now(),
+                    rolle = rolle,
+                ),
+            )
+        }
+    }
+
+    fun brukGjeldendeIdent(forespørsel: Set<RolleDto>): Set<RolleDto> {
+        val roller = forespørsel.map { rolle ->
+            val ident = rolle.fødselsnummer?.takeIf { rolle.type != Rolletype.FEILREGISTRERT }?.let { Personident(gjeldendeIdent(it.verdi)) }
+            val rmIdent = rolle.rmFødselsnummer()?.let { ReellMottaker(gjeldendeIdent(it.verdi)) }
+            rolle.copy(
+                fødselsnummer = ident ?: rolle.fødselsnummer,
+                foedselsnummer = ident ?: rolle.foedselsnummer,
+                reellMottaker = rmIdent?.let { rolle.reellMottaker?.copy(ident = it) } ?: rolle.reellMottaker,
+                reellMottager = rmIdent?.takeIf { rolle.reellMottager != null } ?: rolle.reellMottager,
+            )
+        }
+        val unikeRoller = roller.toSet()
+        require(roller.size == unikeRoller.size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
+        return unikeRoller
+    }
+
+    private fun gjeldendeIdent(ident: String) = identConsumer.hentGjeldendeIdent(ident) ?: ident
+
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,
         requestRolleDtoer: Set<RolleDto>,
+        fødselsdatoer: Map<Personident, LocalDate?>,
     ): Set<Rolle> {
         val lagredeRoller = eksisterendeBidragssak.roller
-        val berikRequestRolleDtoer = berikRollerMedFødselsdato(requestRolleDtoer)
+        val berikRequestRolleDtoer = berikRollerMedFødselsdato(requestRolleDtoer, fødselsdatoer)
 
         val (dtoRollerTilOppdatering, nyeDtoRoller) =
             berikRequestRolleDtoer.partition {
-                it.type in setOf(Rolletype.BIDRAGSMOTTAKER, Rolletype.BIDRAGSPLIKTIG) ||
-                    lagredeRoller.any { eksisterende ->
-                        it.fødselsnummer?.verdi == eksisterende.fødselsnummer && eksisterende.rolleType == Rolletype.BARN
-                    }
+                when (it.type) {
+                    Rolletype.BIDRAGSMOTTAKER, Rolletype.BIDRAGSPLIKTIG ->
+                        lagredeRoller.any { eksisterende -> eksisterende.rolleType == it.type }
+
+                    else ->
+                        lagredeRoller.any { eksisterende ->
+                            it.fødselsnummer?.verdi == eksisterende.fødselsnummer && eksisterende.rolleType == Rolletype.BARN
+                        }
+                }
             }
 
         val oppdaterteRoller = oppdaterEksiterendeRoller(dtoRollerTilOppdatering, eksisterendeBidragssak)
-        val nyeRoller =
-            nyeDtoRoller
-                .map {
-                    it.rolle
-                }.mapBarnTilRoller(
-                    berikRequestRolleDtoer.tilFødselsdatoMap(),
-                    finnFørsteLedigeObjektnummer(lagredeRoller),
-                    eksisterendeBidragssak,
-                )
+        val nyeRolleDtoer = nyeDtoRoller.map { it.rolle }
+        val fødselsdatoerForRoller = berikRequestRolleDtoer.tilFødselsdatoMap()
+        val nyeBarn =
+            nyeRolleDtoer.mapBarnTilRoller(
+                fødselsdatoerForRoller,
+                finnFørsteLedigeObjektnummer(lagredeRoller),
+                eksisterendeBidragssak,
+            )
+        val nyeBidragspliktigeOgMottakere =
+            nyeRolleDtoer.mapBpBmTilRoller(fødselsdatoerForRoller, eksisterendeBidragssak)
 
-        return (oppdaterteRoller + nyeRoller).toSet()
+        return (oppdaterteRoller + nyeBarn + nyeBidragspliktigeOgMottakere).toSet()
     }
 
-    fun validerRollerOgHentFødselsdatoer(roller: Set<RolleDto>): Map<Personident, LocalDate?> {
+    fun validerRoller(roller: Set<RolleDto>, fødselsdatoer: Map<Personident, LocalDate?>) {
         val fødselsnumre = roller.mapNotNull { it.fødselsnummer } + roller.mapNotNull { it.rmFødselsnummer() }
-        val fødselsdatoer = if (fødselsnumre.isEmpty()) mapOf() else bidragPersonClient.hentFødselsdatoer(fødselsnumre)
 
         require(fødselsdatoer.keys.containsAll(fødselsnumre)) {
             "Rolle forsøk opprettet for person som ikke finnes."
@@ -105,16 +156,14 @@ class RolleService(
             // Sjekk at samhandlere eksisterer (kaster feil hvis de ikke finnes).
             samhandlerClient.hentSamhandler(it)
         }
-
-        return fødselsdatoer
     }
 
-    fun berikRollerMedFødselsdato(roller: Set<RolleDto>): List<RolleMedFødselsdato> {
-        val fødselsdatoer = validerRollerOgHentFødselsdatoer(roller)
+    fun berikRollerMedFødselsdato(roller: Set<RolleDto>, fødselsdatoer: Map<Personident, LocalDate?>): List<RolleMedFødselsdato> {
+        validerRoller(roller, fødselsdatoer)
         return roller.map { it.medFødselsdato(fødselsdatoer) }
     }
 
-    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>) = eksisterendeRoller.maxOf { it.objektnummer?.toInt() ?: 2 } + 1
+    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>) = (eksisterendeRoller.maxOfOrNull { it.objektnummer?.toInt() ?: 2 } ?: 2) + 1
 
     private fun oppdaterEksiterendeRoller(
         dtoRollerTilOppdatering: List<RolleMedFødselsdato>,
