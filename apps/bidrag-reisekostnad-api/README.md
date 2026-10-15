@@ -2,7 +2,47 @@
 
 Backend for å [fordele reisekostnader ved samvær med barn](https://www.nav.no/fordele-reisekostnader).
 
+## Oppsett av lokalt utviklingsmiljø
+
+### Forutsetninger
+
+Prosjektet inneholder avhengigheter til private navikt repository-er som 
+krever autentisering og Maven må konfigureres i `~/.m2/settings.xml` for å få 
+tilgang til de.
+
+Det kreves en GitHub konto tilknyttet navikt organisasjonen og et
+navikt autorisert Personal Access Token (PAT) med read:packages scope.
+
+Filen [lokal-settings.xml](../../util/bidrag-dev/maven/lokal-settings.xml) kan 
+brukes som utgangspunkt for å sette opp Maven med riktig autentisering, da 
+den refererer til _github_ definert i [bidrag-backend/pom.xml](../../pom.xml).
+
+API-et til bidrag-reisekostnad-api er bygget med Spring Boot, Kotlin og Java.
+Java versjonen er definert i [bidrag-reisekostnad-api/pom.xml](pom.xml).
+
+Java versjonen og $JAVA_HOME må derfor settes til samme versjon:
+```bash
+java --version
+```
+```bash
+echo $JAVA_HOME
+```
+
+API-et bygges fra mappen apps/bidrag-reisekostnad-api:
+
+```bash
+cd apps/bidrag-reisekostnad-api
+```
+
+For å bygge API-et og nødvendige interne moduler, kjøre testene og installere
+byggresultatene i det lokale Maven-repositoriet:
+
+```bash
+mvn -f ../../pom.xml -pl apps/bidrag-reisekostnad-api -am clean install -Dkotlin.compiler.daemon=false
+```
+
 ### Oppsett med lokal database-instans og WireMock API-simulering
+
 Ved lokal kjøring brukes Spring-boot-instansen 
 [BidragReisekostnadApiLokalTestapplikasjon](src/test/java/no/nav/bidrag/reisekostnad/BidragReisekostnadApiLokalTestapplikasjon.java).
 For lokal kjøring må Spring-profil settes til enten <b>lokal-h2</b> eller 
@@ -13,9 +53,7 @@ teste med. Til <b>lokal-postgres</b>-profilen kreves det en lokal Postgres-insta
 
 ##### Sjekk at JAVA_HOME er satt
 
-```bash
-echo $JAVA_HOME
-```
+
 
 Hvis denne ikke er satt får man ikke kjørt opp lokalt. Sjekk også at Java versjon er samme versjon som definert i pom.xml.
 
