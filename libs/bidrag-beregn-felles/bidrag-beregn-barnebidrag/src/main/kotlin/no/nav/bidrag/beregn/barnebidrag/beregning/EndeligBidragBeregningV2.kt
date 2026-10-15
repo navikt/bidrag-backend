@@ -12,12 +12,15 @@ import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingPrivatAvtaleBeregni
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingPrivatAvtaleBeregningResultat
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedBeregningResultat
+import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.BpAndelUnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektBeregningResultat
 import no.nav.bidrag.beregn.barnebidrag.bo.SluttberegningBarnebidragV2BeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SluttberegningBarnebidragV2BeregningResultat
 import no.nav.bidrag.beregn.barnebidrag.bo.SumBidragTilFordelingBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SumBidragTilFordelingBeregningResultat
+import no.nav.bidrag.beregn.barnebidrag.bo.UnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.ValutakursGrunnlagTilBeregning
 import no.nav.bidrag.beregn.barnebidrag.unleash.BarnebidragUnleashFeatures
 import no.nav.bidrag.domene.enums.sak.Sakskategori
@@ -69,11 +72,16 @@ internal object EndeligBidragBeregningV2 {
         val bpAndelAvUMinusSamværsfradrag = bpAndelBeløp - samværsfradrag
         val bidragTilFordeling = minOf(uMinusNettoBarnetilleggBM, bpAndelAvUMinusSamværsfradrag) + samværsfradrag
         val nettoBidragEtterBarnetilleggBM = maxOf(bidragTilFordeling - samværsfradrag, BigDecimal.ZERO)
-        val erBidragJustertForNettoBarnetilleggBM = uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag
+        // Uten sjekken på barnetillegg blir flagget satt når U er 0 (f.eks. ved forpleining), selv om BM ikke har barnetillegg
+        val erBidragJustertForNettoBarnetilleggBM =
+            nettoBarnetilleggBM > BigDecimal.ZERO && uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag
 
         // Sjekker om perioden vil gi avslag. Dette vil resultere i at det ikke mappes ut noe grunnlagsobjekt for denne perioden.
         val barnetErSelvforsørget = grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.barnetErSelvforsørget
         val søknadsbarnetBorHosBP = grunnlag.søknadsbarnetBorHosBpGrunnlag.søknadsbarnetBorHosBp
+        val bidragIkkeBeregnetDeltBosted =
+            erBpsAndelUnder50ProsentVedDeltBosted(grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag, grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag)
+        val forpleiningDekkerUnderholdskostnaden = grunnlag.underholdskostnadBeregningGrunnlag.erDekketAvForpleining()
 
         return BidragTilFordelingBeregningResultat(
             uMinusNettoBarnetilleggBM = uMinusNettoBarnetilleggBM.avrundetMedToDesimaler,
@@ -82,7 +90,8 @@ internal object EndeligBidragBeregningV2 {
             nettoBidragEtterBarnetilleggBM = nettoBidragEtterBarnetilleggBM.avrundetMedToDesimaler,
             bruttoBidragEtterBarnetilleggBM = bidragTilFordeling.avrundetMedToDesimaler,
             erBidragJustertForNettoBarnetilleggBM = erBidragJustertForNettoBarnetilleggBM,
-            erAvslag = barnetErSelvforsørget || søknadsbarnetBorHosBP,
+            erAvslag = barnetErSelvforsørget || søknadsbarnetBorHosBP || bidragIkkeBeregnetDeltBosted || forpleiningDekkerUnderholdskostnaden,
+            erDeltBosted = erDeltBosted,
             grunnlagsreferanseListe = listOfNotNull(
                 grunnlag.underholdskostnadBeregningGrunnlag.referanse,
                 grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.referanse,
@@ -137,8 +146,20 @@ internal object EndeligBidragBeregningV2 {
         val evneJustertForPrioriterteBidrag = maxOf(bidragsevne - sumPrioriterteBidragTilFordeling, BigDecimal.ZERO)
         val andelAvEvneBeløp = evneJustertForPrioriterteBidrag * andelAvSumBidragTilFordeling
         val bidragEtterFordeling = minOf(bidragTilFordeling, andelAvEvneBeløp)
-        val harBPFullEvne = (andelAvEvneBeløp >= bidragTilFordeling) &&
-            (!(bidragTilFordeling.compareTo(BigDecimal.ZERO) == 0 && sumBidragTilFordeling > BigDecimal.ZERO))
+        // Mangler bidrag til fordeling, gir perioden avslag for barnet (se beregnBidragTilFordeling). Barnet deltar da ikke i
+        // fordelingen, og skal ikke utløse forholdsmessig fordeling for de andre barna.
+        val erAvslag = grunnlag.bidragTilFordelingBeregningGrunnlag == null
+        // Et barn med 0 i bidrag til fordeling regnes som at BP mangler evne når summen av bidrag til fordeling er over 0.
+        // Unntak: ved delt bosted er bidrag til fordeling 0 når BPs andel av U er nøyaktig 50 %, fordi BP bare betaler for andelen
+        // over 50 % (se beregnBidragspliktigesAndelDeltBosted). Da sier 0 ingenting om BPs evne. Uten unntaket fikk barnet
+        // resultatkoden MAKS_25_PROSENT_AV_INNTEKT, og beregningen kastet IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
+        // når BP hadde løpende bidrag, selv om evnen dekket alle bidragene.
+        val erDeltBosted = grunnlag.bidragTilFordelingBeregningGrunnlag?.erDeltBosted == true
+        val harBPFullEvne = erAvslag ||
+            (
+                (andelAvEvneBeløp >= bidragTilFordeling) &&
+                    (!(bidragTilFordeling.compareTo(BigDecimal.ZERO) == 0 && sumBidragTilFordeling > BigDecimal.ZERO && !erDeltBosted))
+                )
 
         val bruttoBidragJustertForEvneOg25Prosent = minOf(bidragTilFordeling, evneJustertForPrioriterteBidrag)
 
@@ -273,7 +294,9 @@ internal object EndeligBidragBeregningV2 {
             bidragJustertForNettoBarnetilleggBP = bidragEtterFordelingAvBidragsevne
         }
 
-        val erBidragJustertTilNettoBarnetilleggBP = bidragJustertForNettoBarnetilleggBP == nettoBarnetilleggBP
+        // BPs barnetillegg brukes ikke ved delt bosted, og et barnetillegg på 0 kan ikke justere bidraget
+        val erBidragJustertTilNettoBarnetilleggBP =
+            !erDeltBosted && nettoBarnetilleggBP > BigDecimal.ZERO && bidragJustertForNettoBarnetilleggBP == nettoBarnetilleggBP
 
         return BidragJustertForBPBarnetilleggBeregningResultat(
             bidragJustertForNettoBarnetilleggBP = bidragJustertForNettoBarnetilleggBP.avrundetMedToDesimaler,
@@ -304,6 +327,33 @@ internal object EndeligBidragBeregningV2 {
                 beregnetBeløp = null,
                 resultatBeløp = null,
                 grunnlagsreferanseListe = listOf(grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.referanse),
+            )
+        }
+
+        // Hvis forpleiningen er lik eller høyere enn U skal det resultere i avslag og bidragsbeløp settes til null
+        if (grunnlag.underholdskostnadBeregningGrunnlag.erDekketAvForpleining()) {
+            return SluttberegningBarnebidragV2BeregningResultat(
+                forpleiningDekkerUnderholdskostnaden = true,
+                beregnetBeløp = null,
+                resultatBeløp = null,
+                grunnlagsreferanseListe = listOf(
+                    grunnlag.underholdskostnadBeregningGrunnlag!!.referanse,
+                    grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.referanse,
+                ),
+            )
+        }
+
+        // Hvis BPs andel av U ved delt bosted er under 50 % skal det resultere i avslag og bidragsbeløp settes til null
+        if (erBpsAndelUnder50ProsentVedDeltBosted(
+                grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag,
+                grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag,
+            )
+        ) {
+            return SluttberegningBarnebidragV2BeregningResultat(
+                bidragIkkeBeregnetDeltBosted = true,
+                beregnetBeløp = null,
+                resultatBeløp = null,
+                grunnlagsreferanseListe = listOf(grunnlag.bidragspliktigesAndelDeltBostedBeregningGrunnlag!!.referanse),
             )
         }
 
@@ -340,3 +390,13 @@ internal object EndeligBidragBeregningV2 {
             ?.valutakurs ?: throw IllegalArgumentException("Ikke mulig å finne valutakurs for omregning mellom $valutakodeFra og $valutakodeTil")
     }
 }
+
+// Ved delt bosted betaler BP bare for den delen av andelen som er over 50 %. Er BPs andel under 50 %, gir perioden avslag.
+// Ved nøyaktig 50 % blir bidraget 0, men perioden gir ikke avslag.
+private fun erBpsAndelUnder50ProsentVedDeltBosted(
+    andelDeltBosted: BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag?,
+    bpAndelUnderholdskostnad: BpAndelUnderholdskostnadDelberegningBeregningGrunnlag,
+) = andelDeltBosted != null && bpAndelUnderholdskostnad.andelFaktor < BigDecimal("0.5")
+
+// U er 0 etter at forpleiningen er trukket fra (se UnderholdskostnadBeregning), altså er forpleiningen lik eller høyere enn U.
+private fun UnderholdskostnadDelberegningBeregningGrunnlag?.erDekketAvForpleining() = this != null && (forpleining ?: BigDecimal.ZERO) > BigDecimal.ZERO && beløp.signum() <= 0

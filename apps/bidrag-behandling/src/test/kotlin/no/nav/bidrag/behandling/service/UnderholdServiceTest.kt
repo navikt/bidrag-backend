@@ -153,8 +153,6 @@ class UnderholdServiceTest {
                 personRepository,
                 notatService,
                 personService,
-                vedtakGrunnlagsmapper,
-                BeregnBarnebidragApi(),
             )
 
         stubUnderholdskostnadRepository(underholdskostnadRepository)

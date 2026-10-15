@@ -96,7 +96,9 @@ data class UnderholdskostnadValideringsfeil(
     val manglerPerioderForTilsynsordning: Boolean = false,
     @get:Schema(description = "Må ha fylt ut begrunnelse hvis minst en periode er lagt til underholdskostnad")
     val manglerBegrunnelse: Boolean = false,
-    @get:Schema(description = "Perioder der forpleiningen overstiger underholdskostnaden før forpleining er trukket fra")
+    // forpleiningOverstigerUnderholdskostnad fylles ikke lenger, fordi forpleining som er lik eller høyere enn U
+    // nå gir avslag/opphør i beregningen. forpleiningOverstigerUnderholdskostnad beholdes til frontend ikke lenger leser det.
+    @get:Schema(description = "Utgått. Er alltid tom.", deprecated = true)
     val forpleiningOverstigerUnderholdskostnad: Set<DatoperiodeDto> = emptySet(),
 ) {
     @get:JsonIgnore
@@ -107,7 +109,6 @@ data class UnderholdskostnadValideringsfeil(
                 stønadTilBarnetilsyn?.harFeil == true ||
                 forpleining?.harFeil == true ||
                 tilleggsstønadsperioderUtenFaktiskTilsynsutgift.isNotEmpty() ||
-                forpleiningOverstigerUnderholdskostnad.isNotEmpty() ||
                 manglerBegrunnelse ||
                 manglerPerioderForTilsynsordning
     val id get() = gjelderUnderholdskostnad?.id ?: -1

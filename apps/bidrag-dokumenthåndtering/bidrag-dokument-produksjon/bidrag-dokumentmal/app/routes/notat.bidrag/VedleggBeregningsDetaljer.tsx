@@ -24,6 +24,7 @@ import { BeregningBegrensetRevurdering } from "~/routes/notat.bidrag/beregningsd
 import { EndringUnderGrense } from "~/routes/notat.bidrag/beregningsdetaljer/EndringUnderGrense";
 import { AldersjusteringDetaljer } from "~/routes/notat.bidrag/beregningsdetaljer/AldersjusteringDetaljer";
 import { IndeksreguleringDetaljer } from "~/routes/notat.bidrag/beregningsdetaljer/IndeksreguleringDetaljer";
+import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
 import { BeregningForholdsmessigFordeling } from "~/routes/notat.bidrag/beregningsdetaljer/BeregningForholdsmessigFordelingDetaljer";
 import { PersonV2 } from "~/components/Person";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
@@ -230,8 +231,9 @@ function VedleggBeregningsDetaljerInnhold() {
                   .filter(
                     (d) =>
                       d.beregningsdetaljer?.sluttberegning &&
-                      !d.beregningsdetaljer.sluttberegning!
-                        .barnetErSelvforsørget &&
+                      !erBeregnetAvslagUtenBeløp(
+                        d.beregningsdetaljer.sluttberegning,
+                      ) &&
                       !d.beregningsdetaljer.sluttberegning!.ikkeOmsorgForBarnet,
                   )
                   .map((periode) => {
