@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpStatusCodeException
 
 fun hentPerson(ident: String?): PersonDto? = try {
+    if (ident.equals("NAV", ignoreCase = true)) return null
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(Personident(it))
     }
