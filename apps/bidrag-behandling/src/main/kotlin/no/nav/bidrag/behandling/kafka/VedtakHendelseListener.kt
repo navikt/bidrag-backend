@@ -242,7 +242,11 @@ class VedtakHendelseListener(
             stønadsendringListe.filter { it.sak.verdi == saksnummer }.map { it.grunnlagReferanseListe } +
                 engangsbeløpListe.filter { it.sak.verdi == saksnummer }.map { it.grunnlagReferanseListe }
         return grunnlagsreferanser
-            .mapNotNull { grunnlagListe.hentSøknadFraGrunnlagsreferanseListe(it)?.søknadsid }
+            .flatMap { referanser ->
+                referanser.mapNotNull { referanse ->
+                    grunnlagListe.hentSøknadFraGrunnlagsreferanseListe(listOf(referanse))?.søknadsid
+                }
+            }
             .toSet()
     }
 
