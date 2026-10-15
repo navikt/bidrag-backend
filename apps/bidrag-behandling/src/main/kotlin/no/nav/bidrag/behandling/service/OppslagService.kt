@@ -85,6 +85,13 @@ fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
 fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }
+fun hentNyesteIdentIgnorerFeil(ident: String?) = ident?.let {
+    try {
+        hentPerson(ident)?.ident ?: Personident(ident)
+    } catch (_: Exception) {
+        Personident(ident)
+    }
+}
 
 @Service
 data class PersonService(
