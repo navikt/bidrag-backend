@@ -132,6 +132,11 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-backend-feilhandtering</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-jetty</artifactId>
     </dependency>

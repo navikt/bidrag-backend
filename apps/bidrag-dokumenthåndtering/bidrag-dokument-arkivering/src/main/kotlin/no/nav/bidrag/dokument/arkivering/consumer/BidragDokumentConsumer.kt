@@ -24,6 +24,7 @@ import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.exchange
 import org.springframework.web.util.DefaultUriBuilderFactory
 import java.util.stream.Collectors
 
@@ -32,10 +33,10 @@ private val log = KotlinLogging.logger {}
 @Service
 class BidragDokumentConsumer(
     @Qualifier("base") baseRestTemplate: HttpHeaderRestTemplate,
-    @Value("\${bidrag.dokument.url}") bidragDokumentBaseUrl: String,
+    @Value($$"${bidrag.dokument.url}") bidragDokumentBaseUrl: String,
     securityTokenService: SecurityTokenService,
 ) {
-    private lateinit var restTemplate: RestTemplate
+    private var restTemplate: RestTemplate
 
     init {
         baseRestTemplate.uriTemplateHandler = DefaultUriBuilderFactory(bidragDokumentBaseUrl)
@@ -67,25 +68,24 @@ class BidragDokumentConsumer(
             )} til Joark journalpost $id ved å kalle bidrag-dokument$path"
         }
         val responsFraBdjp =
-            restTemplate.exchange(
+            restTemplate.exchange<JournalpostResponse>(
                 path,
                 HttpMethod.PATCH,
                 HttpEntity(endreJournalpostRequest, headers),
-                JournalpostResponse::class.java,
             )
         log.info { "Tilknytt saker fikk http status ${ responsFraBdjp.statusCode} fra bidrag-dokument" }
         return from(responsFraBdjp.statusCode, responsFraBdjp.body!!)
     }
 
     @Retryable(backoff = Backoff(delay = 500, maxDelay = 1500))
-    open fun hentDokument(journalpostId: String): ByteArray {
+    fun hentDokument(journalpostId: String): ByteArray {
         val safeJournalpostId =
             JOURNALPOST_ID_PATTERN.matchEntire(journalpostId)?.value
                 ?: throw IllegalArgumentException("Ugyldig journalpostId: $journalpostId")
         val path = String.format(HENTE_DOKUMENT_PATH, safeJournalpostId)
         log.info { "Henter dokument fra bidrag-dokument$path" }
         return try {
-            restTemplate.exchange(path, HttpMethod.GET, null, ByteArray::class.java).body!!
+            restTemplate.exchange<ByteArray>(path, HttpMethod.GET, null).body!!
         } catch (e: HttpStatusCodeException) {
             if (HttpStatus.NOT_FOUND == e.statusCode) {
                 throw HentingAvDokumentFeiletException(
@@ -109,9 +109,9 @@ class BidragDokumentConsumer(
         val safeId = id.toLongOrNull()?.toString() ?: throw IllegalArgumentException("Ugyldig journalpostId: $id")
         val bidragPrefix = "BID-"
         val path = String.format(HENTE_JOURNALPOST_PATH, bidragPrefix + safeId)
-        log.info { "Henter journalpost fra bidrag-dokument$path" }
+        log.debug { "Henter journalpost fra bidrag-dokument$path" }
         val responsFraBdjp =
-            restTemplate.exchange(path, HttpMethod.GET, null, JournalpostResponse::class.java)
+            restTemplate.exchange<JournalpostResponse>(path, HttpMethod.GET, null)
         log.info { "Hente journalpost fikk http status ${responsFraBdjp.statusCode} fra bidrag-dokument" }
         return from(responsFraBdjp.statusCode, responsFraBdjp.body!!)
     }
@@ -124,7 +124,7 @@ class BidragDokumentConsumer(
         headers.add(EnhetFilter.X_ENHET_HEADER, "")
         return try {
             log.info { "Sjekker om journalpost $journalpostId kan arkiveres" }
-            restTemplate.exchange(path, HttpMethod.GET, HttpEntity<Any>(headers), Void::class.java)
+            restTemplate.exchange<Void>(path, HttpMethod.GET, HttpEntity<Any>(headers))
             ArkiverDecision(true, null)
         } catch (statusCodeException: HttpStatusCodeException) {
             val reason = getWarningHeader(statusCodeException)
@@ -159,11 +159,10 @@ class BidragDokumentConsumer(
         val headers = HttpHeaders()
         headers.add(EnhetFilter.X_ENHET_HEADER, enhet)
         val respons =
-            restTemplate.exchange(
+            restTemplate.exchange<BehandleAvvikshendelseResponse>(
                 path,
                 HttpMethod.POST,
                 HttpEntity(avvikshendelse, headers),
-                BehandleAvvikshendelseResponse::class.java,
             )
         log.info {
             "Avvik ${avvikshendelse.avvikType} fikk http status ${respons.statusCode} fra bidrag-dokument"
