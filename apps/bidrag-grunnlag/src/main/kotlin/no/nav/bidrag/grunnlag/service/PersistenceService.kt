@@ -1,10 +1,12 @@
 package no.nav.bidrag.grunnlag.service
 
+import jakarta.persistence.EntityManager
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.bo.AinntektBo
 import no.nav.bidrag.grunnlag.bo.AinntektspostBo
 import no.nav.bidrag.grunnlag.bo.BarnetilleggBo
@@ -15,6 +17,7 @@ import no.nav.bidrag.grunnlag.bo.SivilstandBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagspostBo
 import no.nav.bidrag.grunnlag.bo.UtvidetBarnetrygdOgSmaabarnstilleggBo
+import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.bo.toAinntektEntity
 import no.nav.bidrag.grunnlag.bo.toAinntektspostEntity
 import no.nav.bidrag.grunnlag.bo.toBarnetilleggEntity
@@ -25,6 +28,7 @@ import no.nav.bidrag.grunnlag.bo.toSivilstandEntity
 import no.nav.bidrag.grunnlag.bo.toSkattegrunnlagEntity
 import no.nav.bidrag.grunnlag.bo.toSkattegrunnlagspostEntity
 import no.nav.bidrag.grunnlag.bo.toUtvidetBarnetrygdOgSmaabarnstilleggEntity
+import no.nav.bidrag.grunnlag.bo.toValutakursgrunnlagEntity
 import no.nav.bidrag.grunnlag.comparator.AinntektPeriodComparator
 import no.nav.bidrag.grunnlag.comparator.Period
 import no.nav.bidrag.grunnlag.comparator.PeriodComparable
@@ -41,6 +45,9 @@ import no.nav.bidrag.grunnlag.persistence.entity.Sivilstand
 import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.Skattegrunnlagspost
 import no.nav.bidrag.grunnlag.persistence.entity.UtvidetBarnetrygdOgSmaabarnstillegg
+import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektBo
 import no.nav.bidrag.grunnlag.persistence.entity.toAinntektspostBo
 import no.nav.bidrag.grunnlag.persistence.entity.toGrunnlagspakkeEntity
@@ -57,6 +64,7 @@ import no.nav.bidrag.grunnlag.persistence.repository.SivilstandRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagRepository
 import no.nav.bidrag.grunnlag.persistence.repository.SkattegrunnlagspostRepository
 import no.nav.bidrag.grunnlag.persistence.repository.UtvidetBarnetrygdOgSmaabarnstilleggRepository
+import no.nav.bidrag.grunnlag.persistence.repository.ValutakursgrunnlagRepository
 import no.nav.bidrag.transport.behandling.grunnlag.request.OpprettGrunnlagspakkeRequestDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektspostDto
@@ -69,7 +77,13 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagspostDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.UtvidetBarnetrygdOgSmaabarnstilleggDto
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -86,6 +100,8 @@ class PersistenceService(
     val sivilstandRepository: SivilstandRepository,
     val kontantstotteRepository: KontantstotteRepository,
     val barnetilsynRepository: BarnetilsynRepository,
+    val valutakursgrunnlagRepository: ValutakursgrunnlagRepository,
+    val entityManager: EntityManager,
 ) {
 
     fun opprettNyGrunnlagspakke(opprettGrunnlagspakkeRequestDto: OpprettGrunnlagspakkeRequestDto): Grunnlagspakke {
@@ -143,6 +159,35 @@ class PersistenceService(
     fun opprettBarnetilsyn(barnetilsynBo: BarnetilsynBo): Barnetilsyn {
         val nyBarnetilsyn = barnetilsynBo.toBarnetilsynEntity()
         return barnetilsynRepository.save(nyBarnetilsyn)
+    }
+
+    @Transactional
+    fun opprettValutakursgrunnlag(valutakursgrunnlagBo: ValutakursgrunnlagBo): Valutakursgrunnlag {
+        val eksisterende = valutakursgrunnlagRepository.findByBasisvalutaAndBrukFra(valutakursgrunnlagBo.basisvaluta, valutakursgrunnlagBo.brukFra)
+        if (eksisterende?.status == ValutakursgrunnlagStatus.OVERSTYRT) return eksisterende
+        val nyValutakurs = valutakursgrunnlagBo.toValutakursgrunnlagEntity()
+        val lagret = valutakursgrunnlagRepository.saveAndFlush(
+            if (eksisterende == null) nyValutakurs else nyValutakurs.copy(valutakursgrunnlagId = eksisterende.valutakursgrunnlagId),
+        )
+        entityManager.refresh(lagret)
+        return lagret
+    }
+
+    @Transactional
+    fun overstyrValutakursgrunnlag(id: Int, kurs: BigDecimal): Valutakursgrunnlag {
+        if (kurs.signum() <= 0) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurs må være større enn null")
+        if (kurs.precision().toLong() - kurs.scale().toLong() > 22 || kurs.stripTrailingZeros().scale() > 16) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Kurs må kunne lagres eksakt med maksimalt 22 heltallssifre og 16 desimaler")
+        }
+        val eksisterende = valutakursgrunnlagRepository.findById(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Valutakursgrunnlag finnes ikke") }
+        val overstyrt = valutakursgrunnlagRepository.saveAndFlush(
+            eksisterende.copy(kurs = kurs, multiplikator = 0, feiletHenting = false, kilde = ValutakursgrunnlagKilde.MANUELL, observasjonsdato = null).apply {
+                status = ValutakursgrunnlagStatus.OVERSTYRT
+            },
+        )
+        entityManager.refresh(overstyrt)
+        return overstyrt
     }
 
     fun oppdaterEksisterendeBarnetilleggPensjonTilInaktiv(grunnlagspakkeId: Int, personIdListe: List<String>, timestampOppdatering: LocalDateTime) {
@@ -594,4 +639,10 @@ class PersistenceService(
             }
         return barnetilsynDtoListe
     }
+
+    fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDate = LocalDate.now()): Valutakursgrunnlag? = valutakursgrunnlagRepository.hentValutakursgrunnlag(valutakode, dato.atStartOfDay())
+
+    fun hentSisteValutakursgrunnlag(): Valutakursgrunnlag? = valutakursgrunnlagRepository.findFirstByOrderByBrukFraDesc()
+
+    fun hentFeiledeValutakursgrunnlag(pageable: Pageable): Page<Valutakursgrunnlag> = valutakursgrunnlagRepository.findByStatus(ValutakursgrunnlagStatus.FEILET, pageable)
 }
