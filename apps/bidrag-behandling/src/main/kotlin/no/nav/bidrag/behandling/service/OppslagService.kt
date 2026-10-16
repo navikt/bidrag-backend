@@ -85,6 +85,17 @@ fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
 fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }
+fun hentNyesteIdentIgnorerFeil(ident: String?) = ident?.let {
+    try {
+        hentPerson(ident)?.ident ?: Personident(ident)
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode == HttpStatus.FORBIDDEN) {
+            Personident(ident)
+        } else {
+            throw e
+        }
+    }
+}
 
 @Service
 data class PersonService(
