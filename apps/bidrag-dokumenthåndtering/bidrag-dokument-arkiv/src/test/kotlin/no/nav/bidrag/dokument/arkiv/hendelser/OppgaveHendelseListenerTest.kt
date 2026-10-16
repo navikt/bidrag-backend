@@ -105,7 +105,9 @@ class OppgaveHendelseListenerTest {
                 0,
                 0L,
                 "key",
-                objectMapper.writeValueAsString(oppgaveData.toHendelse()),
+                objectMapper.writeValueAsString(
+                    oppgaveData.toHendelse(prioritet = OppgaveKafkaHendelse.Kategorisering.Prioritet.KRITISK),
+                ),
             )
         hendelseListener.lesOppgaveOpprettetHendelse(consumerRecord)
 
@@ -474,7 +476,10 @@ class OppgaveHendelseListenerTest {
         saksreferanse = saksref,
     )
 
-    fun OppgaveData.toHendelse(type: OppgaveKafkaHendelse.Hendelse.Hendelsestype? = null) = OppgaveKafkaHendelse(
+    fun OppgaveData.toHendelse(
+        type: OppgaveKafkaHendelse.Hendelse.Hendelsestype? = null,
+        prioritet: OppgaveKafkaHendelse.Kategorisering.Prioritet? = null,
+    ) = OppgaveKafkaHendelse(
         hendelse = OppgaveKafkaHendelse.Hendelse(
             type ?: when (status) {
                 OppgaveStatus.FERDIGSTILT -> OppgaveKafkaHendelse.Hendelse.Hendelsestype.OPPGAVE_FERDIGSTILT
@@ -492,6 +497,7 @@ class OppgaveHendelseListenerTest {
             kategorisering = OppgaveKafkaHendelse.Kategorisering(
                 tema ?: "BID",
                 oppgavetype = oppgavetype ?: "JFR",
+                prioritet = prioritet,
             ),
             bruker = OppgaveKafkaHendelse.Bruker(
                 aktoerId,
