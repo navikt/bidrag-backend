@@ -1,7 +1,7 @@
 package no.nav.bidrag.regnskap.config
 
-import no.nav.bidrag.kafka.KafkaRetryListener
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.DefaultErrorHandler
