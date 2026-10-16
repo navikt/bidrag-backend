@@ -72,7 +72,7 @@ jobs:
           echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "Kalenderversjon: ${VERSION} (publish=${PUBLISH}, prerelease=${PRERELEASE})"
-      - uses: release-drafter/release-drafter@72967cdc98ddd3160f1fc3dff619de365e137dd0 # v7.9.0
+      - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
         # Prerelease fra branch skal ikke publisere eller endre release-draften til main
         if: steps.sett_versjon.outputs.prerelease != 'true'
         with:
