@@ -947,7 +947,7 @@ class BehandlingTilVedtakMapping(
             if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
                 byggOpprettVedtakRequestSplittetFF(beregning, behandlingSaker, request)
             } else {
-                listOf(byggOpprettVedtakRequest(resultatBarn, behandlingSaker, request))
+                listOf(byggOpprettVedtakRequest(resultatBarn, behandlingSaker, request, beregning.grunnlagsliste))
             }
         return VedtakRequstDto(requests, erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
     }
@@ -1155,6 +1155,7 @@ class BehandlingTilVedtakMapping(
         beregning: List<ResultatBidragsberegningBarn>,
         behandlingSaker: Map<String, BidragssakDto>,
         request: FatteVedtakRequestDto? = null,
+        grunnlagslisteAlle: Set<GrunnlagDto>,
     ): OpprettVedtakRequestDto {
         val behandling = this
         mapper.run {
@@ -1243,7 +1244,7 @@ class BehandlingTilVedtakMapping(
                 engangsbeløpListe =
                 engangsbeløpGebyr.engangsbeløp + mapEngangsbeløpDirekteOppgjør(behandlingSaker),
                 grunnlagListe =
-                (grunnlagListe + engangsbeløpGebyr.grunnlagsliste + grunnlagVirkningstidspunkt).toSet().map(
+                (grunnlagListe + engangsbeløpGebyr.grunnlagsliste + grunnlagVirkningstidspunkt + grunnlagslisteAlle).toSet().map(
                     BaseGrunnlag::tilOpprettRequestDto,
                 ),
             )

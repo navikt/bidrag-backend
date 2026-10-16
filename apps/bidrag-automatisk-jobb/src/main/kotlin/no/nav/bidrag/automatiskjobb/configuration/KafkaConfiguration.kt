@@ -1,6 +1,7 @@
 package no.nav.bidrag.automatiskjobb.configuration
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.kafka.KafkaRetryListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -29,7 +30,7 @@ class KafkaConfiguration {
                 val offset = rec.offset()
                 val topic = rec.topic()
                 val partition = rec.partition()
-                LOGGER.error(e) {
+                secureLogger.error(e) {
                     "Kafka melding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. " +
                         "Melding som feilet: $value"
                 }

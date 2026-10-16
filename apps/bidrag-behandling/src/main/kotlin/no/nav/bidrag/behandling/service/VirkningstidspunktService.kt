@@ -265,10 +265,13 @@ class VirkningstidspunktService(
     fun oppdatereVirkningstidspunkt(
         behandlingsid: Long,
         request: OppdatereVirkningstidspunkt,
-    ) = behandlingRepository
-        .findBehandlingById(behandlingsid)
-        .orElseThrow { behandlingNotFoundException(behandlingsid) }
-        .let {
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
+        val behandling =
+            behandlingRepository
+                .findBehandlingById(behandlingsid)
+                .orElseThrow { behandlingNotFoundException(behandlingsid) }
+        behandling.let {
             log.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid" }
             secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
             request.valider(it)
@@ -300,8 +303,9 @@ class VirkningstidspunktService(
             }
             oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, it)
             forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(it, ignorerSynkTimer = true)
-            it
         }
+        behandling
+    }
 
     @Transactional
     fun oppdaterAvslagÅrsak(
@@ -737,13 +741,16 @@ class VirkningstidspunktService(
         }
     }
 
+    // Virkningstidspunkt skal alltid være lik det som var i opprinnelig vedtaket.
+    // Oppdaterer derfor ikke virkningstidspunkt hvis behandlingen er klage eller omgjøring
+    fun Behandling.skalOppdatereVirkningstidspunktSærbidrag(): Boolean = tilType() == TypeBehandling.SÆRBIDRAG &&
+        virkningstidspunkt != LocalDate.now().withDayOfMonth(1) &&
+        !erKlageEllerOmgjøring
+
     @Transactional
     fun Behandling.oppdatereVirkningstidspunktSærbidrag() {
-        if (tilType() != TypeBehandling.SÆRBIDRAG) return
         val nyVirkningstidspunkt = LocalDate.now().withDayOfMonth(1)
-        // Virkningstidspunkt skal alltid være lik det som var i opprinnelig vedtaket.
-        // Oppdaterer derfor ikke virkningstidspunkt hvis behandlingen er klage eller omgjøring
-        if (virkningstidspunkt != nyVirkningstidspunkt && !erKlageEllerOmgjøring) {
+        if (skalOppdatereVirkningstidspunktSærbidrag()) {
             log.info {
                 "Virkningstidspunkt $virkningstidspunkt på særbidrag er ikke riktig som følge av ny kalendermåned." +
                     " Endrer virkningstidspunkt til starten av nåværende kalendermåned $nyVirkningstidspunkt"

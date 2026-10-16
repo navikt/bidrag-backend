@@ -53,6 +53,11 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
+val søknadsstatusFattet = listOf(
+    Behandlingstatus.VEDTAK_FATTET,
+    Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
+)
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
 @Service
@@ -220,7 +225,7 @@ class BisysService(
                 val opprettBlankett =
                     Blankett(
                         saksnummer = request.saksnummer,
-                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.NAV_BIDRAG.kode,
+                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.AUTOMATISK.kode,
                         søknadstype = request.behandlingstype?.bisysKode ?: "FF",
                         // TODO(Her bør det kastes feil om behandlingstype er null)
                     )
@@ -655,7 +660,7 @@ class BisysService(
     }
 
     private fun bestemHendelseType(opprettSøknad: OpprettSøknadRequest): String {
-        val søktAv = opprettSøknad.søktAv ?: SøktAvType.NAV_BIDRAG
+        val søktAv = opprettSøknad.søktAv ?: SøktAvType.AUTOMATISK
         val behandlingstype = opprettSøknad.behandlingstype ?: Behandlingstype.FORHOLDSMESSIG_FORDELING
         return "${behandlingstype.bisysKode}${søktAv.kode}"
     }
@@ -1029,12 +1034,11 @@ class BisysService(
         val alleBehandlingsstatuser = søknadslinjeListe.map { Behandlingstatus.fraKode(it.søknadStatuskode) }
 
         val alleLukket = alleBehandlingsstatuser.all { it?.lukketStatus == true }
-        val harVedtakFattet = alleBehandlingsstatuser.any { it?.bisysKode == "VF" }
-        val harFeilregistretSøknad = alleBehandlingsstatuser.any { it?.bisysKode == "FR" }
+        val harVedtakFattet = alleBehandlingsstatuser.any { søknadsstatusFattet.contains(it) }
 
         return when {
             alleLukket && harVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            alleLukket && harFeilregistretSøknad -> BehandlingStatusType.AVBRUTT
+            alleLukket && alleBehandlingsstatuser.isNotEmpty() -> BehandlingStatusType.AVBRUTT
             else -> BehandlingStatusType.UNDER_BEHANDLING
         }
     }

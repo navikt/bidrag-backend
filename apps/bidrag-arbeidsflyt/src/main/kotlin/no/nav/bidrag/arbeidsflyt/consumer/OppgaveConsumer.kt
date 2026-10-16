@@ -67,12 +67,11 @@ class OppgaveConsumer(
         patchOppgaveRequest.endretAvEnhetsnr = endretAvEnhetsnummer
 
         try {
-            val responseEntity =
-                patchForEntity<OppgaveData>(
-                    baseUri.pathSegment(patchOppgaveRequest.id.toString()).build().toUri(),
-                    patchOppgaveRequest,
-                )
-            secureLogger.info { "Endret oppgave ${patchOppgaveRequest.id}, fikk respons $responseEntity" }
+            secureLogger.info { "Endrer oppgave ${patchOppgaveRequest.id} med $patchOppgaveRequest" }
+            patchForEntity<OppgaveData>(
+                baseUri.pathSegment(patchOppgaveRequest.id.toString()).build().toUri(),
+                patchOppgaveRequest,
+            )
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.BAD_REQUEST) {
                 throw EndreOppgaveFeiletFunksjoneltException(
