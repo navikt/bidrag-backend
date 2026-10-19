@@ -20,6 +20,8 @@ import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -110,6 +112,9 @@ val inntekterSomKanHaHullIPerioder = eksplisitteYtelser
 
 val BigDecimal?.skatteprosentTilFaktor get() = this?.divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
 val BigDecimal?.skattefaktorTilProsent get() = this?.multiply(BigDecimal(100))
+
+// Skattefrie barnetillegg (tiltakspenger og Forsvaret) har ingen skatteprosent, uansett hva som sendes inn
+fun Inntektstype?.skattefaktorFraSkatteprosent(skatteprosent: BigDecimal?) = if (this?.erSkattefrittBarnetillegg == true) null else skatteprosent.skatteprosentTilFaktor
 
 fun Behandling.tilType() = bestemTypeBehandling(stonadstype, engangsbeloptype)
 

@@ -16,6 +16,7 @@ import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
@@ -685,6 +686,9 @@ data class NotatInntektDto(
     val inntektsposter: List<NotatInntektspostDto> = emptyList(),
 ) {
     val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
+
+    @get:Schema(description = "Om barnetillegget er skattefritt (tiltakspenger og Forsvaret), og ikke har skatteprosent")
+    val erSkattefrittBarnetillegg get() = inntektsposter.firstOrNull()?.inntektstype?.erSkattefrittBarnetillegg == true
 
     val skattefaktor get() =
         if (type == Inntektsrapportering.BARNETILLEGG) {
