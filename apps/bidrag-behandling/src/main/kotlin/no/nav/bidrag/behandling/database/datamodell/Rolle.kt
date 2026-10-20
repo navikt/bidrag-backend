@@ -496,6 +496,14 @@ fun Rolle.leggTilGebyr(gebyrSøknader: List<GebyrRolleSøknad>) {
         }
 }
 
+/**
+ * Fjerner gebyrsøknad for søknaden fra alle roller i behandlingen (BP, BM og barn).
+ * @return roller som hadde gebyrsøknad for søknaden
+ */
+fun Behandling.fjernGebyrForSøknad(søknadsid: Long): List<Rolle> = roller
+    .filter { rolle -> rolle.gebyrSøknader.any { it.søknadsid == søknadsid } }
+    .onEach { it.fjernGebyr(søknadsid) }
+
 fun Set<Sivilstand>.tilSerialiseringsformat() = this.map {
     SivilstandUtenBehandling(
         datoFom = it.datoFom,

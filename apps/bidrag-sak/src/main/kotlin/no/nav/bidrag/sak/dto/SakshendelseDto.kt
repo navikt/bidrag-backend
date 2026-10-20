@@ -40,7 +40,13 @@ data class SakshendelseDto(
         get() = if (erDelAvFF && søknadsgruppe?.beskrivelse != null) {
             val postfiks = if (erHovedsøknad) {
                 " (HFF)"
-            } else if (type !in listOf(HendelseType.FORHOLDSMESSIG_FORDELING, HendelseType.FORHOLDSMESSIG_FORDELING_KLAGE)) {
+            } else if (type !in listOf(
+                    HendelseType.FORHOLDSMESSIG_FORDELING,
+                    HendelseType.FORHOLDSMESSIG_FORDELING_KLAGE,
+                    HendelseType.FORHOLDSMESSIG_FORDELING_AUTOMATISK,
+                    HendelseType.FORHOLDSMESSIG_FORDELING_KLAGE_AUTOMATISK,
+                )
+            ) {
                 " (FF)"
             } else {
                 ""

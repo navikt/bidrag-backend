@@ -25,6 +25,9 @@ val BehandlingStatusType.erAvsluttet get() =
     ).contains(this)
 val HentSøknad.erAvsluttet get() = behandlingStatusType.erAvsluttet
 
+val HentSøknad.kreverSøknadsoppgave get() = partISøknadListe.any {
+    it.behandlingstatus?.kreverOppgave == true
+}
 fun HentSøknadResponse.mapTilBehandling(endretAv: String) = Behandling(
     status = søknad.behandlingStatusType,
     mottattDato = søknad.søknadMottattDato,

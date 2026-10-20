@@ -7,6 +7,8 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
 import no.nav.bidrag.automatiskjobb.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.automatiskjobb.consumer.BidragPersonConsumer
@@ -46,6 +48,7 @@ import no.nav.bidrag.automatiskjobb.testdata.saksnummer
 import no.nav.bidrag.automatiskjobb.testdata.testdataBidragsmottaker
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.vedtak.Vedtaksfiltrering
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonService
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -63,9 +66,12 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.vedtak.response.HentVedtakForStønadResponse
 import no.nav.bidrag.transport.sak.RolleDto
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -105,6 +111,9 @@ class RevurderForskuddServiceTest {
         // commonObjectmapper.readValue(hentFil("/__files/vedtak_forskudd.json"))
 
         every { bidragSakConsumer.hentSak(any()) } returns opprettSakRespons()
+        mockkObject(AppContext)
+        every { AppContext.getBean(BidragPersonConsumer::class.java) } returns bidragPersonConsumer
+        every { bidragPersonConsumer.hentPerson(any()) } throws HttpClientErrorException(HttpStatus.NOT_FOUND)
         stubSjablonService()
         stubSjablonProvider()
         service =
@@ -119,6 +128,11 @@ class RevurderForskuddServiceTest {
                 reskontroService,
                 evaluerRevurderForskuddService,
             )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(AppContext)
     }
 
     @Test
