@@ -7,6 +7,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.database.repository.PersonRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -14,6 +15,7 @@ import no.nav.bidrag.behandling.dto.v2.privatavtale.OppdaterePrivatAvtalePeriode
 import no.nav.bidrag.behandling.dto.v2.privatavtale.OppdaterePrivatAvtaleRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.transformers.validerePrivatAvtale
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.stubPersonRepository
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
@@ -22,10 +24,12 @@ import no.nav.bidrag.behandling.utils.testdata.opprettPrivatAvtale
 import no.nav.bidrag.behandling.utils.testdata.opprettPrivatAvtalePeriode
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -44,8 +48,14 @@ class PrivatAvtaleServiceTest {
 
     @BeforeEach
     fun setUp() {
+        stubPersonConsumer()
         personRepository = stubPersonRepository()
         privatAvtaleService = PrivatAvtaleService(behandlingService, notatService, personRepository)
+    }
+
+    @AfterEach
+    fun unmockAppContext() {
+        unmockkObject(AppContext)
     }
 
     @Test

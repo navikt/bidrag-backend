@@ -223,7 +223,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-02-01").atStartOfDay()),
             )
         behandling.forholdsmessigFordeling = if (forholdsmessigFordeling) ForholdsmessigFordeling(erHovedbehandling = true) else null
 

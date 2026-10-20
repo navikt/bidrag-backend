@@ -15,7 +15,6 @@ import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
 import no.nav.bidrag.behandling.service.hentSak
-import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.behandling.oppdaterBehandlingEtterOppdatertRoller
 import no.nav.bidrag.behandling.transformers.erOverEllerLik18År
 import no.nav.bidrag.behandling.transformers.maxOfNullable
@@ -24,6 +23,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregn
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
@@ -36,6 +36,7 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.beregning.felles.Barn
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadForPerson
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -69,19 +70,22 @@ class ForholdsmessigFordelingKlageService(
                     søknadsidSomSlettes,
                     SøknadsknytningStatus.Aktiv,
                 )
-            val annenSøknadForSammePåklagetSøknad =
-                tilknyttedeSøknader.søknader
-                    .filter { it.behandlingStatusType.erÅpenStatus }
-                    .find {
-                        it.søknadsid != behandling.soknadsid &&
-                            it.refSøknadsid == behandling.omgjøringsdetaljer?.soknadRefId
-                    } ?: tilknyttedeSøknader.søknader
-                    .filter { it.behandlingStatusType.erÅpenStatus }
-                    .filter { it.søknadsid != behandling.soknadsid && behandling.erSøknadOpprettetEtterHovedsøknad(it.søknadsid) }
-                    .minByOrNull { it.søknadsid }
-            if (annenSøknadForSammePåklagetSøknad != null) {
-                behandling.soknadsid = annenSøknadForSammePåklagetSøknad.søknadsid
-                bbmConsumer.fjernSammeknytningHovedsøknad(søknadsidSomSlettes, annenSøknadForSammePåklagetSøknad.søknadsid)
+            val åpneTilknyttedeSøknader = tilknyttedeSøknader.søknader
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .filter { it.søknadsid != behandling.soknadsid }
+            val nyHovedsøknadsid =
+                åpneTilknyttedeSøknader
+                    .filter { behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
+                    .minOfOrNull { it.søknadsid }
+                    // Søknaden er ikke nødvendigvis sammenknyttet med hovedsøknaden i BBM (feks hvis sammenknytningen er deaktivert ved sletting)
+                    ?: behandling.finnÅpenSøknadSomKanBliHovedsøknad(søknadsidSomSlettes)
+                    ?: åpneTilknyttedeSøknader.find { it.refSøknadsid == behandling.omgjøringsdetaljer?.soknadRefId }?.søknadsid
+            if (nyHovedsøknadsid != null) {
+                KLAGE_LOGGER.info {
+                    "Hovedsøknad $søknadsidSomSlettes ble slettet. Setter søknad $nyHovedsøknadsid som ny hovedsøknad i behandling ${behandling.id}"
+                }
+                behandling.soknadsid = nyHovedsøknadsid
+                bbmConsumer.fjernSammeknytningHovedsøknad(søknadsidSomSlettes, nyHovedsøknadsid)
                 val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
                 val tilknyttedeSøknaderOmgjortSøknad =
                     bbmConsumer.finnSammenknytningerHovedsøknad(
@@ -120,8 +124,9 @@ class ForholdsmessigFordelingKlageService(
             }
         } else {
             val søknadSomSlettes = bbmConsumer.hentSøknad(søknadsidSomSlettes)!!.søknad
-            val erSøknadOpprettetEtterHovedsøknad = behandling.erSøknadOpprettetEtterHovedsøknad(søknadsidSomSlettes)
-            if (søknadSomSlettes.refSøknadsid != behandling.soknadsid && !erSøknadOpprettetEtterHovedsøknad) {
+            val erSøknadOpprettetAvSaksbehandler = behandling.erSøknadOpprettetAvSaksbehandler(søknadsidSomSlettes)
+            val erHovedsøknad = søknadSomSlettes.søknadsid == behandling.soknadsid
+            if (!erHovedsøknad && !erSøknadOpprettetAvSaksbehandler) {
                 // Var ikke hovedsøknad som ble slettet. Gjennopprett klagesøknad slik at samme struktur beholdes som i påklaget søknad
                 opprettKlageSøknad(
                     søknadSomSlettes,
@@ -141,8 +146,24 @@ class ForholdsmessigFordelingKlageService(
             søknad.status = Behandlingstatus.FEILREGISTRERT
         }
         if (!behandlingSlettet) {
+            gjenopprettKlagesøknaderErstattetAvSøknad(behandling)
             gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
         }
+    }
+
+    /** Gjenoppretter klagesøknader for søknader i påklaget vedtak der barna ikke lenger har en åpen søknad (feks fordi saksbehandler slettet søknaden som erstattet den) */
+    private fun gjenopprettKlagesøknaderErstattetAvSøknad(behandling: Behandling) {
+        if (!behandlingService.behandlingFinnes(behandling.id!!)) return
+        val hovedsøknadsid = behandling.soknadsid!!
+        val hovedsøknad = bbmConsumer.hentSøknad(hovedsøknadsid)?.søknad ?: return
+        opprettKlagesøknaderForTilknyttedeSøknader(
+            behandling,
+            hovedsøknad,
+            kravhaverService.hentAlleRelevanteKravhavere(behandling),
+            hentÅpneSøknaderForVedtak(behandling),
+            hovedsøknadsid,
+            finnAlleBarnIOpprettetSøknader(behandling, hovedsøknadsid),
+        )
     }
 
     fun opprettSøknaderForKlageEllerOmgjøring(
@@ -150,6 +171,7 @@ class ForholdsmessigFordelingKlageService(
         opprettetEllerOppdaterSøknadsid: Long,
         request: OpprettFFRequest? = null,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling> = emptyList(),
+        søknadOpprettetAvSaksbehandler: Boolean = false,
     ) {
         if (TokenUtils.hentBruker() != null && !UnleashFeatures.TILGANG_OPPRETTE_FF.isEnabled) {
             KLAGE_LOGGER.info { "Opprettelse av forholdsmessig fordeling er deaktivert" }
@@ -176,9 +198,9 @@ class ForholdsmessigFordelingKlageService(
             )
         opprettetSøknad = if (opprettetSøknad.søknadsid != opprettetEllerOppdaterSøknadsid) bbmConsumer.hentSøknad(hovedsøknadsid)!!.søknad else opprettetSøknad
 
-        oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid)
-        feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
-        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(hovedsøknadsid)
+        oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid, søknadOpprettetAvSaksbehandler)
+        feilregistrerSøknaderErstattetAvAnnenSøknad(behandling, opprettetSøknad)
+        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling, hovedsøknadsid, åpneSøknaderForVedtaksid)
 
         val barnIOriginaleVedtak = finnBarnIOriginaleVedtak(behandling)
         val søknadsbarnOrdinæreSøknader =
@@ -309,17 +331,33 @@ class ForholdsmessigFordelingKlageService(
         .åpneSøknader
         .filter { it.refVedtaksid == behandling.omgjøringsdetaljer?.omgjørVedtakId }
 
-    private fun finnAlleBarnIOpprettetSøknader(hovedsøknadsid: Long): List<OpprettetSøknad> {
+    /**
+     * Finner barn i søknadene som er knyttet til hovedsøknaden.
+     * Inkluderer også åpne søknader opprettet av saksbehandler selv om de ikke er sammenknyttet ennå (feks fordi barnet ikke er lagt til i behandlingen),
+     * slik at systemet ikke oppretter en søknad for barnet som feilregistreres igjen når søknaden blir sammenknyttet.
+     */
+    private fun finnAlleBarnIOpprettetSøknader(
+        behandling: Behandling,
+        hovedsøknadsid: Long,
+        åpneSøknaderForVedtaksid: List<HentSøknad> = hentÅpneSøknaderForVedtak(behandling),
+    ): List<OpprettetSøknad> {
         val tilknyttedeSøknaderBehandling =
             bbmConsumer.finnSammenknytningerHovedsøknad(
                 hovedsøknadsid,
                 SøknadsknytningStatus.Aktiv,
             )
-        return tilknyttedeSøknaderBehandling.søknader.flatMap {
-            it.parterUnderBehandling.filter { it.personident != null }
-                .map { p -> OpprettetSøknad(p.personident!!, it.behandlingstema.tilStønadstype(), it.refSøknadsid, it.søknadsid, it.behandlingstype) }
-        }.distinct()
+        val saksbehandlersSøknaderIkkeSammenknyttet =
+            åpneSøknaderForVedtaksid
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .filter { behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
+                .filter { søknad -> tilknyttedeSøknaderBehandling.søknader.none { it.søknadsid == søknad.søknadsid } }
+        return (tilknyttedeSøknaderBehandling.søknader + saksbehandlersSøknaderIkkeSammenknyttet).flatMap { it.tilOpprettedeSøknader() }.distinct()
     }
+
+    private fun HentSøknad.tilOpprettedeSøknader() = parterUnderBehandling
+        .filter { it.personident != null }
+        .map { p -> OpprettetSøknad(p.personident!!, behandlingstema.tilStønadstype(), refSøknadsid, søknadsid, behandlingstype) }
+
     private fun sammeknyttSøknadHvisNødvendig(
         hovedsøknadsid: Long,
         opprettetEllerOppdaterSøknadsid: Long,
@@ -351,7 +389,7 @@ class ForholdsmessigFordelingKlageService(
         if (hovedsøknad?.søknad?.behandlingStatusType?.erÅpenStatus == true) return gjeldeneHovedsøknadsid
         val varHovedsøknad = opprettetEllerOppdaterSøknadsid == gjeldeneHovedsøknadsid
         if (varHovedsøknad) {
-            val nyHovedsøknadsid = behandling.finnSøknadSomKanBliHovedsøknad(gjeldeneHovedsøknadsid)
+            val nyHovedsøknadsid = behandling.finnÅpenSøknadSomKanBliHovedsøknad(gjeldeneHovedsøknadsid)
             if (nyHovedsøknadsid != null) {
                 KLAGE_LOGGER.info {
                     "Hovedsøknad $gjeldeneHovedsøknadsid er avbrutt. Setter søknad $nyHovedsøknadsid som ble opprettet etter hovedsøknaden som ny hovedsøknad i behandling ${behandling.id}"
@@ -384,33 +422,45 @@ class ForholdsmessigFordelingKlageService(
         opprettetSøknad: HentSøknad,
         bmOgBidragspliktiIdenter: List<String>,
         opprettetEllerOppdaterSøknadsid: Long,
+        søknadOpprettetAvSaksbehandler: Boolean,
     ) {
         val opprettetSøknadRoller = opprettetSøknad.partISøknadListe.map { it.personident!! } + bmOgBidragspliktiIdenter
+        if (søknadOpprettetAvSaksbehandler) {
+            behandling.roller.forEach { rolle ->
+                rolle.forholdsmessigFordeling?.søknader?.filter { it.søknadsid == opprettetEllerOppdaterSøknadsid }?.forEach {
+                    it.opprettetAvSaksbehandler = true
+                }
+            }
+        }
+        val nySøknad = {
+            ForholdsmessigFordelingSøknadBarn(
+                søknadsid = opprettetEllerOppdaterSøknadsid,
+                behandlingstema = opprettetSøknad.behandlingstema,
+                behandlingstype = opprettetSøknad.behandlingstype,
+                omgjørSøknadsid = opprettetSøknad.refSøknadsid ?: behandling.omgjøringsdetaljer?.soknadRefId,
+                omgjørVedtaksid = opprettetSøknad.refVedtaksid ?: behandling.omgjøringsdetaljer?.omgjørVedtakId,
+                innkreving = opprettetSøknad.innkreving,
+                mottattDato = opprettetSøknad.søknadMottattDato,
+                søktAvType = opprettetSøknad.søktAvType,
+                søknadFomDato = opprettetSøknad.søknadFomDato,
+                saksnummer = opprettetSøknad.saksnummer,
+                status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+                enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
+                opprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
+            )
+        }
         behandling.roller
             .filter {
                 opprettetSøknadRoller.contains(it.ident) &&
                     it.stønadstype == opprettetSøknad.behandlingstema.tilStønadstype() &&
                     !it.harSøknad(opprettetEllerOppdaterSøknadsid)
-            }.forEach {
-                it.forholdsmessigFordeling!!.søknader.add(
-                    ForholdsmessigFordelingSøknadBarn(
-                        søknadsid = opprettetEllerOppdaterSøknadsid,
-                        behandlingstema = opprettetSøknad.behandlingstema,
-                        behandlingstype = opprettetSøknad.behandlingstype,
-                        omgjørSøknadsid = opprettetSøknad.refSøknadsid ?: behandling.omgjøringsdetaljer?.soknadRefId,
-                        omgjørVedtaksid = opprettetSøknad.refVedtaksid ?: behandling.omgjøringsdetaljer?.omgjørVedtakId,
-                        innkreving = opprettetSøknad.innkreving,
-                        mottattDato = opprettetSøknad.søknadMottattDato,
-                        søktAvType = opprettetSøknad.søktAvType,
-                        søknadFomDato = opprettetSøknad.søknadFomDato,
-                        saksnummer = opprettetSøknad.saksnummer,
-                        status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
-                        enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
-                        opprettetEtterHovedsøknad = !behandling.erNyBehandlingIkkeOpprettet,
-                        opprettetMedKlageHovedsøknadsid = opprettetEllerOppdaterSøknadsid,
-                    ),
-                )
-            }
+            }.forEach { it.forholdsmessigFordeling!!.søknader.add(nySøknad()) }
+
+        // Lagrer søknaden på BP slik at det er kjent at søknaden er opprettet av saksbehandler selv om barnet ikke er lagt til i behandlingen ennå
+        val bidragspliktig = behandling.bidragspliktig
+        if (søknadOpprettetAvSaksbehandler && bidragspliktig != null && !bidragspliktig.harSøknad(opprettetEllerOppdaterSøknadsid)) {
+            bidragspliktig.forholdsmessigFordeling?.søknader?.add(nySøknad())
+        }
     }
 
     fun kanEndreSøknadStatus(søknadsid: Long): Boolean {
@@ -418,30 +468,32 @@ class ForholdsmessigFordelingKlageService(
             behandlingService.hentEksisterendeBehandling(søknadsid)
                 ?: bbmConsumer.hentSøknad(søknadsid)?.søknad?.behandlingsid?.let { behandlingService.hentBehandlingById(it) }
                 ?: return true
-        if (!behandling.erKlageEllerOmgjøring) return true
-        return behandling.erSøknadOpprettetEtterHovedsøknad(søknadsid)
+        // Søknader opprettet av saksbehandler skal alltid kunne endres status på
+        return !behandling.erKlageEllerOmgjøring || behandling.erSøknadOpprettetAvSaksbehandler(søknadsid)
     }
-
-    private fun Behandling.erSøknadOpprettetEtterHovedsøknad(søknadsid: Long) = roller.any { it.finnSøknad(søknadsid)?.opprettetEtterHovedsøknad == true }
 
     /**
      * Hvis et barn med FF-klagesøknad i behandlingen også er med i en tilknyttet søknad som ikke er FF,
      * så feilregistreres FF-klagesøknaden for barnet og den andre søknaden beholdes.
+     * Tilsvarende feilregistreres klagesøknad opprettet av systemet for barnet hvis saksbehandler har opprettet søknad for samme barn.
      */
-    internal fun feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling: Behandling) {
-        finnBarnIBådeFFOgKlagesøknad(behandling)
-            .groupBy { it.ffSøknadsid }
-            .forEach { (ffSøknadsid, barnSomErstattes) -> feilregistrerBarnFraFFSøknad(behandling, ffSøknadsid, barnSomErstattes) }
+    internal fun feilregistrerSøknaderErstattetAvAnnenSøknad(behandling: Behandling, opprettetSøknad: HentSøknad? = null) {
+        finnBarnMedErstattetSøknad(behandling, opprettetSøknad)
+            .groupBy { it.erstattetSøknadsid }
+            .forEach { (søknadsid, barnSomErstattes) -> feilregistrerErstattetSøknadForBarn(behandling, søknadsid, barnSomErstattes) }
     }
 
-    private data class BarnIFFOgKlagesøknad(
+    private data class BarnMedErstattetSøknad(
         val barn: Rolle,
-        val ffSøknadsid: Long,
-        val klagesøknadsid: Long,
+        val erstattetSøknadsid: Long,
     )
 
-    /** Finner barn som er med i både en åpen FF-søknad i behandlingen og en annen (ikke-FF) søknad tilknyttet hovedsøknaden */
-    private fun finnBarnIBådeFFOgKlagesøknad(behandling: Behandling): List<BarnIFFOgKlagesøknad> {
+    /**
+     * Finner barn med søknad som er erstattet av en annen søknad:
+     * - Åpen FF-søknad i behandlingen der barnet også er med i en annen (ikke-FF) søknad tilknyttet hovedsøknaden
+     * - Klagesøknad opprettet av systemet der barnet også er med i hovedsøknaden eller en søknad opprettet av saksbehandler
+     */
+    private fun finnBarnMedErstattetSøknad(behandling: Behandling, opprettetSøknad: HentSøknad? = null): List<BarnMedErstattetSøknad> {
         val hovedsøknadsid = behandling.soknadsid!!
         val (rollerIFFOpprettetSøknader, rollerIKlagesøknader) =
             hentÅpneSøknaderForBehandling(behandling)
@@ -458,51 +510,74 @@ class ForholdsmessigFordelingKlageService(
                 ?.map { barn to it.søknadsid!! }
                 .orEmpty()
         }
-        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap).distinct()
+        val rollerIOpprettetSøknad = opprettetSøknad?.tilOpprettedeSøknader().orEmpty()
+        val rollerIFFSøknader = (rollerIFFSøknaderLagret + rollerIFFOpprettetSøknaderMap)
+            // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk
+            .filter { (_, søknadsid) -> søknadsid != opprettetSøknad?.søknadsid && !behandling.erSøknadOpprettetAvSaksbehandler(søknadsid) }
+            .distinct()
+        val rollerIAlleKlagesøknader = (rollerIKlagesøknader + rollerIOpprettetSøknad).distinct()
 
-        return rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
-            val klage = rollerIKlagesøknader.find { it.gjelder(barn) } ?: return@mapNotNull null
-            BarnIFFOgKlagesøknad(barn, ffSøknadsid = ffSøknadsid, klagesøknadsid = klage.søknadsid!!)
+        val barnIFFSøknader = rollerIFFSøknader.mapNotNull { (barn, ffSøknadsid) ->
+            if (rollerIAlleKlagesøknader.none { it.gjelder(barn) && it.søknadsid != ffSøknadsid }) return@mapNotNull null
+            BarnMedErstattetSøknad(barn, erstattetSøknadsid = ffSøknadsid)
         }
+
+        val rollerISystemopprettedeKlagesøknader = behandling.søknadsbarn.flatMap { barn ->
+            barn.forholdsmessigFordeling
+                ?.søknaderUnderBehandling
+                ?.filter {
+                    it.opprettetAvSystem &&
+                        !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) &&
+                        it.søknadsid != hovedsøknadsid
+                }?.map { barn to it.søknadsid!! }
+                .orEmpty()
+        }.distinct()
+        val rollerISaksbehandlersSøknader = rollerIAlleKlagesøknader.filter {
+            it.søknadsid == hovedsøknadsid || behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid!!)
+        }
+        val barnISystemopprettedeKlagesøknader = rollerISystemopprettedeKlagesøknader.mapNotNull { (barn, søknadsid) ->
+            if (rollerISaksbehandlersSøknader.none { it.gjelder(barn) && it.søknadsid != søknadsid }) return@mapNotNull null
+            BarnMedErstattetSøknad(barn, erstattetSøknadsid = søknadsid)
+        }
+
+        return (barnIFFSøknader + barnISystemopprettedeKlagesøknader).distinct()
     }
 
     private fun OpprettetSøknad.gjelder(barn: Rolle) = kravhaverIdent == barn.ident && stønadstype == barn.stønadstype
 
     /**
-     * Feilregistrerer hele FF-søknaden hvis ingen andre barn er igjen i den, ellers kun barna.
-     * Markerer at klagesøknaden til barna erstatter FF-søknaden.
+     * Feilregistrerer hele søknaden hvis ingen andre barn er igjen i den, ellers kun barna.
      */
-    private fun feilregistrerBarnFraFFSøknad(
+    private fun feilregistrerErstattetSøknadForBarn(
         behandling: Behandling,
-        ffSøknadsid: Long,
-        barnSomErstattes: List<BarnIFFOgKlagesøknad>,
+        søknadsid: Long,
+        barnSomErstattes: List<BarnMedErstattetSøknad>,
     ) {
         KLAGE_LOGGER.info {
-            "Barn med FF-klagesøknad $ffSøknadsid har annen søknad i behandling ${behandling.id}. Feilregistrerer FF-klagesøknaden for barna."
+            "Barn med søknad $søknadsid har annen søknad i behandling ${behandling.id}. Feilregistrerer søknaden $søknadsid for barna."
         }
         val barn = barnSomErstattes.map { it.barn }
-        val harAndreBarnIFFSøknad = behandling.søknadsbarn.any { it !in barn && it.finnSøknad(ffSøknadsid) != null }
+        val harAndreBarnISøknad = behandling.søknadsbarn.any { it !in barn && it.finnSøknad(søknadsid) != null }
 
-        val feilregistrerteBarn =
-            if (harAndreBarnIFFSøknad) {
-                barn.filter { søknadService.feilregistrerBarnFraSøknad(it, ffSøknadsid) != null }
-            } else {
-                val ffSøknad = barn.first().finnSøknad(ffSøknadsid) ?: bbmConsumer.hentSøknad(ffSøknadsid)!!.søknad.tilForholdsmessigFordelingSøknad()
-                if (søknadService.feilregistrerSøknad(ffSøknad, behandling)) barn else emptyList()
+        if (harAndreBarnISøknad) {
+            barn.forEach {
+                secureLogger.info { "Feilregistrerer barn ${it.ident} fra søknad $søknadsid for behandling ${behandling.id}" }
+                søknadService.feilregistrerBarnFraSøknad(it, søknadsid)
             }
-
-        barnSomErstattes
-            .filter { it.barn in feilregistrerteBarn }
-            .forEach { it.barn.finnSøknad(it.klagesøknadsid)?.erstatterFFKlagesøknadsid = ffSøknadsid }
+        } else {
+            val søknad = barn.first().finnSøknad(søknadsid) ?: bbmConsumer.hentSøknad(søknadsid)!!.søknad.tilForholdsmessigFordelingSøknad()
+            KLAGE_LOGGER.info { "Feilregistrerer søknad $søknadsid for behandling ${behandling.id}" }
+            søknadService.feilregistrerSøknad(søknad, behandling)
+        }
     }
 
     private fun gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling: Behandling) {
         if (!behandlingService.behandlingFinnes(behandling.id!!)) return
         val relevanteKravhavere = kravhaverService.hentAlleRelevanteKravhavere(behandling).toMutableSet()
-        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling.soknadsid!!)
+        val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling, behandling.soknadsid!!)
         val behandlerEnhet = kravhaverService.finnEnhetForBarnIBehandling(behandling, behandling.behandlerEnhet)
         val barnIOriginaleVedtak = finnBarnIOriginaleVedtak(behandling)
-        val barnIBehandling = behandling.søknadsbarn.map { SakKravhaver(it.saksnummer, it.ident!!, stønadstype = it.stønadstype!!) }
+        val revurderingsbarnIBehandling = behandling.revurderingdsbarn.map { SakKravhaver(it.saksnummer, it.ident!!, stønadstype = it.stønadstype!!) }
 
         val gjenværendeKravhavere =
             relevanteKravhavere
@@ -511,7 +586,7 @@ class ForholdsmessigFordelingKlageService(
                     // Enten så opprettes det FF søknader bare for barn i originale vedtak
                     barnIOriginaleVedtak.any {
                         rk.erSammePerson(it.kravhaver, it.stønadstype)
-                    } || barnIBehandling.any { rk.erSammePerson(it.kravhaver, it.stønadstype) }
+                    } || revurderingsbarnIBehandling.any { rk.erSammePerson(it.kravhaver, it.stønadstype) } // Eller revurderingsbarn i behandlingen
                 }
                 .toSet()
         opprettRevurderingssøknaderForGjenværendeKravhavere(
@@ -523,22 +598,55 @@ class ForholdsmessigFordelingKlageService(
     }
 
     /**
-     * Korrigerer FF-klagesøknader ved synkronisering:
-     * - Gjenoppretter FF-klagesøknader hvis søknaden som erstattet dem er lukket (feks slettet uten at det ble fanget opp)
-     * - Feilregistrerer FF-klagesøknader for barn som har en åpen søknad opprettet etter hovedsøknaden
+     * Feilretting: Sørger for at behandlingen har en åpen hovedsøknad før resten av søknadene korrigeres.
+     * Hvis hovedsøknaden er avbrutt (feks slettet uten at det ble fanget opp) så blir en annen søknad hovedsøknad.
      */
-    fun korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling: Behandling) {
-        if (behandling.soknadsid == null) return
-        gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
-        feilregistrerFFKlagesøknaderErstattetAvOpprettetSøknad(behandling)
+    fun korrigerHovedsøknad(behandling: Behandling) {
+        val hovedsøknadsid = behandling.soknadsid ?: return
+        val hovedsøknad = bbmConsumer.hentSøknad(hovedsøknadsid)?.søknad ?: return
+        if (hovedsøknad.behandlingStatusType != BehandlingStatusType.AVBRUTT) return
+        KLAGE_LOGGER.info { "Hovedsøknad $hovedsøknadsid i behandling ${behandling.id} er avbrutt. Korrigerer hovedsøknad" }
+        håndterSlettetHovedsøknad(hovedsøknad, behandling, hentÅpneSøknaderForVedtak(behandling), hovedsøknadsid, hovedsøknadsid)
     }
 
-    /** Finner eldste åpne søknad som er opprettet etter hovedsøknaden og som kan overta som hovedsøknad */
-    private fun Behandling.finnSøknadSomKanBliHovedsøknad(hovedsøknadsid: Long) = roller
+    /**
+     * Feilretting: Knytter søknader i behandlingen som mangler behandlingsid i BBM til behandlingen.
+     * Feks søknad opprettet av saksbehandler hvor BBM ikke har lagret behandlingsid etter opprettelse av behandlingen.
+     * Returnerer søknadene som ble knyttet, slik at manglende barn i søknadene kan legges til i behandlingen.
+     */
+    fun knyttSøknaderUtenBehandlingsidTilBehandling(behandling: Behandling): List<HentSøknad> {
+        val søknaderIBehandling =
+            behandling.roller
+                .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
+                .mapNotNull { it.søknadsid }
+                .toSet()
+        return hentÅpneSøknaderForVedtak(behandling)
+            .filter { it.søknadsid in søknaderIBehandling && it.behandlingsid == null }
+            .onEach {
+                KLAGE_LOGGER.info { "Søknad ${it.søknadsid} mangler behandlingsid. Knytter søknaden til behandling ${behandling.id}" }
+                bbmConsumer.lagreBehandlingsid(OppdaterBehandlingsidRequest(it.søknadsid, null, behandling.id!!))
+            }
+    }
+
+    /**
+     * Korrigerer klagesøknader ved synkronisering:
+     * - Gjenoppretter FF-klagesøknader hvis søknaden som erstattet dem er lukket (feks slettet uten at det ble fanget opp)
+     * - Feilregistrerer FF-klagesøknader og systemopprettede klagesøknader for barn som har en annen åpen søknad (feks opprettet av saksbehandler)
+     */
+    fun korrigerKlagesøknader(behandling: Behandling) {
+        if (behandling.soknadsid == null) return
+        gjenopprettFFKlagesøknaderErstattetAvSøknad(behandling)
+        feilregistrerSøknaderErstattetAvAnnenSøknad(behandling)
+    }
+
+    /** Finner eldste søknad opprettet av saksbehandler som kan overta som hovedsøknad og som fortsatt er åpen i BBM */
+    private fun Behandling.finnÅpenSøknadSomKanBliHovedsøknad(hovedsøknadsid: Long) = roller
         .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }
-        .filter { it.opprettetEtterHovedsøknad && it.søknadsid != null && it.søknadsid != hovedsøknadsid }
+        .filter { it.opprettetAvSaksbehandler && it.søknadsid != null && it.søknadsid != hovedsøknadsid }
         .mapNotNull { it.søknadsid }
-        .minOrNull()
+        .distinct()
+        .sorted()
+        .firstOrNull { bbmConsumer.hentSøknad(it)?.søknad?.behandlingStatusType?.erÅpenStatus == true }
 
     /**
      * Finner tilknyttede søknader fra påklaget vedtak og oppretter klagesøknader for dem.
@@ -552,7 +660,7 @@ class ForholdsmessigFordelingKlageService(
         hovedsøknadsid: Long,
         rollerITilknyttedeSøknader: List<OpprettetSøknad>,
     ): List<Pair<String?, Stønadstype?>> {
-        val vedtak = behandling.omgjøringsdetaljer!!.omgjørVedtakId?.let { hentVedtak(it) }
+        val vedtak = behandling.omgjøringsdetaljer!!.omgjørVedtakId?.let { vedtakConsumer.hentVedtak(it) }
         val søknaderOpprinneligVedtak =
             vedtak?.stønadsendringListe?.mapNotNull {
                 vedtak.grunnlagListe.hentSøknadForPerson(it.kravhaver, it.type)
@@ -591,6 +699,12 @@ class ForholdsmessigFordelingKlageService(
             }
 
         val håndterteSøknadsbarn = søknadsbarnOpprettetSøknad.toMutableSet()
+        // Barn som allerede har en åpen søknad (feks opprettet av saksbehandler) skal ikke få ny søknad opprettet av systemet
+        håndterteSøknadsbarn.addAll(
+            rollerITilknyttedeSøknader
+                .filter { it.behandlingstype?.erForholdsmessigFordeling == false }
+                .map { it.kravhaverIdent to it.stønadstype },
+        )
         tilknyttetSøknaderIkkeHovedsøknad.forEach { tilknyttetSøknad ->
             val søknadsbarnITilknyttetSøknad =
                 tilknyttetSøknad.parterVedtakFattet.map {
@@ -709,7 +823,6 @@ class ForholdsmessigFordelingKlageService(
         hovedsøknadsid: Long?,
         mottattDato: LocalDate? = null,
     ): Long {
-        val hovedsøknad = hovedsøknadsid?.let { bbmConsumer.hentSøknad(it)?.søknad }
         val behandlingstype =
             if (originalSøknad.behandlingstype.erForholdsmessigFordeling) {
                 Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE
@@ -732,15 +845,15 @@ class ForholdsmessigFordelingKlageService(
                     }
                 }
 
-        val barnISøknadIdenter = barnISøknad.map { it.personident }.toSet()
         val løpendeBidraggsakerBP =
             kravhaverService.hentSisteLøpendeStønader(Personident(behandling.bidragspliktig!!.ident!!), behandling.finnBeregningsperiode())
         val åpenFFSøknad =
             åpneSøknaderForVedtaksid.find { søknad ->
                 søknad.refSøknadsid == originalSøknad.søknadsid && søknad.behandlingstema == originalSøknad.behandlingstema
             }
+        val barnISøknadIdenter =
+            åpenFFSøknad?.barn?.map { it.personident }?.toSet() ?: barnISøknad.map { it.personident }.toSet()
 
-        val søktAvType = if (hovedsøknad?.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType
         val nySøknadId =
             åpenFFSøknad?.søknadsid ?: bbmConsumer
                 .opprettSøknader(
@@ -752,7 +865,8 @@ class ForholdsmessigFordelingKlageService(
                         behandlingstype = behandlingstype,
                         behandlerenhet = originalSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                         hovedsøknadsid = hovedsøknadsid,
-                        søktAv = søktAvType,
+                        // Søknader opprettet av systemet skal alltid være søkt av Nav
+                        søktAv = SøktAvType.AUTOMATISK,
                         søknadMottattDato = mottattDato ?: behandling.mottattdato,
                         behandlingstema = originalSøknad.behandlingstema,
                         søknadFomDato = originalSøknad.søknadFomDato!!,
@@ -765,8 +879,9 @@ class ForholdsmessigFordelingKlageService(
                 søknadsid = nySøknadId,
                 mottattDato = behandling.mottattdato,
                 søknadFomDato = originalSøknad.søknadFomDato,
-                søktAvType = søktAvType,
-                behandlingstype = behandlingstype,
+                // Gjenbrukt søknad beholder egne verdier slik at f.eks. søknad opprettet av saksbehandler ikke blir lagret som FF-søknad
+                søktAvType = åpenFFSøknad?.søktAvType ?: SøktAvType.AUTOMATISK,
+                behandlingstype = åpenFFSøknad?.behandlingstype ?: behandlingstype,
                 behandlingstema = originalSøknad.behandlingstema,
                 innkreving = originalSøknad.innkreving,
                 saksnummer = originalSøknad.saksnummer,
@@ -774,6 +889,7 @@ class ForholdsmessigFordelingKlageService(
                 omgjørSøknadsid = originalSøknad.søknadsid,
                 omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
                 status = Behandlingstatus.UNDER_BEHANDLING,
+                opprettetAvSaksbehandler = behandling.erSøknadOpprettetAvSaksbehandler(nySøknadId),
             )
         behandling.søknadsbarn
             .filter {

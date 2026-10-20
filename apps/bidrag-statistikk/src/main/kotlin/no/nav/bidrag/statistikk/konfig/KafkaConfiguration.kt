@@ -2,8 +2,8 @@ package no.nav.bidrag.statistikk.konfig
 
 import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import no.nav.bidrag.statistikk.LOGGER
-import no.nav.bidrag.statistikk.konfig.KafkaRetryListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,8 +17,8 @@ class KafkaConfiguration {
     fun defaultErrorHandler(@Value("\${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
         // Max retry should not be set in production
         val backoffPolicy = if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
-        backoffPolicy.multiplier = 2.0
-        backoffPolicy.maxInterval = 1800000L // 30 mins
+        backoffPolicy.multiplier = 1.2
+        backoffPolicy.maxInterval = 60_000L // 1 min
         LOGGER.info { "Initializing Kafka errorhandler with backoffpolicy $backoffPolicy, maxRetry=$maxRetry" }
         val errorHandler =
             DefaultErrorHandler({ rec, e ->

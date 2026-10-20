@@ -234,6 +234,8 @@ fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
     val tidligsteBeregnFra =
         if (stønadstype == Stønadstype.BIDRAG18AAR) {
             maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
+        } else if (avslag != null) {
+            virkningstidspunktRolle.toYearMonth()
         } else {
             // Virkning kan ikke vær før barnet er født
             maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
@@ -312,7 +314,12 @@ fun Behandling.finnBeregnTilDatoBehandling(
 
                 else -> {
                     val virkningstidspunkt = søknadsbarnRolle?.virkningstidspunkt ?: this.virkningstidspunkt!!
-                    if (virkningstidspunkt >= opprinneligVedtakstidspunktBeregnTil) {
+                    val avslag = søknadsbarnRolle?.avslag
+                    val erDirekteAvslag = avslag != null && !avslag.erAvvisning() && avslag.erDirekteAvslag()
+                    // Ordinære barn skal alltid ha minst én måned å beregne. Direkte avslag beregnes til virkningstidspunktet
+                    if (virkningstidspunkt > opprinneligVedtakstidspunktBeregnTil ||
+                        (virkningstidspunkt == opprinneligVedtakstidspunktBeregnTil && !erDirekteAvslag)
+                    ) {
                         // Revurderingsbarn så kan opphørsdato være før virkningstidspunkt. Feks hvis bidraget har opphørt før virkning men
                         // har løpende bidrag fra eldste virkningstidspunkt
                         minOfNullable(opphørsdato?.toLocalDate(), virkningstidspunkt.plusMonths(1).withDayOfMonth(1))!!
@@ -369,7 +376,7 @@ private fun utledBeregnTilDato(
         // Avvisning kan bare velges hvis det allerede er et vedtak med opphør på rollen. Derfor hentes opphørsdato fra eksisterende vedtak
         val eksisterendeOpphør = søknadsbarnRolle.finnEksisterendeVedtakMedOpphørForRolle()
         // Default til beregnTilUtenAvslag. Grunnen til det er at hvis avvisning ble valgt ved opprettelse av behandling
-        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: beregnTilUtenAvslag
+        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra()?.toLocalDate() ?: beregnTilUtenAvslag
     } else if (opphørsdato == null || opphørsdato.isAfter(YearMonth.now().plusMonths(1))) {
         beregnTilUtenAvslag
     } else if (opprinneligVedtakstidspunkt != null) {
@@ -591,7 +598,7 @@ class VedtakGrunnlagMapper(
                 val beregningTilDato = finnBeregnTilDatoBehandling(søknadsbarnRolle)
                 val opphørsdato =
                     if (søknadsbarnRolle.avslag != null && søknadsbarnRolle.avslag!!.erAvvisning()) {
-                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato
+                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato ?: søknadsbarnRolle.virkningstidspunkt ?: søknadsbarnRolle.opphørsdato ?: beregnFraDato
                     } else if (søknadsbarnRolle.avslag != null) {
                         beregningTilDato
                     } else {
