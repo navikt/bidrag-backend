@@ -919,7 +919,7 @@ class GrunnlagService(
         objekt: String? = null,
     ): String? {
         if (ident == null) return null
-        val nyIdent = hentNyesteIdent(ident)?.verdi
+        val nyIdent = hentNyesteIdentIgnorerForbidden(ident)?.verdi
         if (nyIdent != ident) {
             secureLogger.info { "Oppdaterer ident fra $ident til $nyIdent i behandling $behandlingId - $objekt" }
         }
