@@ -36,12 +36,29 @@ add_alias() {
     echo "Added alias to $config_file"
 }
 
-# Detect shell and add alias
+add_fish_function() {
+    local escaped_dist_path
+    escaped_dist_path=$("$SHELL" -c 'string escape --style=script -- $argv[1]' "$DIST_PATH")
+
+    if grep -Eq '^[[:space:]]*function[[:space:]]+bidrag-cli([[:space:]]|$)' "$SHELL_CONFIG" 2>/dev/null; then
+        echo "Function 'bidrag-cli' already exists in $SHELL_CONFIG"
+        return 0
+    fi
+
+    echo "" >> "$SHELL_CONFIG"
+    echo "# bidrag-cli function" >> "$SHELL_CONFIG"
+    printf 'function bidrag-cli\n    node %s $argv\nend\n' "$escaped_dist_path" >> "$SHELL_CONFIG"
+    echo "Added function to $SHELL_CONFIG"
+}
+
+# Detect shell and configure bidrag-cli
 SHELL_CONFIG=""
 if [[ "$SHELL" == *"zsh"* ]]; then
     SHELL_CONFIG="$HOME/.zshrc"
 elif [[ "$SHELL" == *"bash"* ]]; then
     SHELL_CONFIG="$HOME/.bashrc"
+elif [[ "$SHELL" == *"fish"* ]]; then
+    SHELL_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
 else
     echo "Unsupported shell: $SHELL"
     echo "Please manually add the alias to your shell configuration file:"
@@ -49,7 +66,11 @@ else
     exit 1
 fi
 
-if [[ -f "$SHELL_CONFIG" ]]; then
+if [[ "$SHELL" == *"fish"* ]]; then
+    mkdir -p "$(dirname "$SHELL_CONFIG")"
+    touch "$SHELL_CONFIG"
+    add_fish_function
+elif [[ -f "$SHELL_CONFIG" ]]; then
     add_alias "$SHELL_CONFIG"
 else
     echo "Shell config file $SHELL_CONFIG not found. Creating it..."
@@ -59,5 +80,5 @@ fi
 
 echo ""
 echo "Installation complete!"
-echo "Please restart your terminal or run 'source $SHELL_CONFIG' to use the alias."
+echo "Please restart your terminal or run 'source $SHELL_CONFIG' to use bidrag-cli."
 echo "You can now use 'bidrag-cli' command directly."
