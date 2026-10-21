@@ -66,4 +66,64 @@ class DokumentBestillingControllerBidragTest : AbstractControllerTest() {
             }
         }
     }
+
+    @Test
+    fun `skal sette hg og ug for søknad fra bidragsmottaker i vedtaksbrev bidrag`() {
+        val message = bestillVedtaksbrevBidrag("vedtak_response-bidrag-2.json")
+
+        assertSoftly {
+            message.brev?.soknadBost?.soknFraKode shouldBe "MO"
+            message.brev?.soknadBost?.hgKode shouldBe "BB"
+            message.brev?.soknadBost?.ugKode shouldBe "S2"
+            message.brev?.soknad?.undergrp shouldBe "S2"
+        }
+    }
+
+    @Test
+    fun `skal sette hg og ug for NAV_BIDRAG når søknad er opprettet automatisk i vedtaksbrev bidrag`() {
+        val message = bestillVedtaksbrevBidrag("vedtak_response-bidrag-automatisk.json")
+
+        assertSoftly {
+            message.brev?.soknadBost?.soknFraKode shouldBe "AU"
+            message.brev?.soknadBost?.hgKode shouldBe "BB"
+            message.brev?.soknadBost?.ugKode shouldBe "R"
+            message.brev?.soknad?.undergrp shouldBe "R"
+        }
+    }
+
+    private fun bestillVedtaksbrevBidrag(vedtakFil: String): BrevBestilling {
+        stubDefaultValues()
+        stubUtils.stubHentPerson("16451299577", ANNEN_MOTTAKER)
+        stubUtils.stubHentPerson("25451755601", ANNEN_MOTTAKER)
+        stubUtils.stubHentVedtak(vedtakFil)
+        stubUtils.stubHentAdresse(postAdresse = createPostAdresseResponse())
+        stubUtils.stubEnhetKontaktInfo(createEnhetKontaktInformasjon())
+        val dokumentMal = hentDokumentMal("BI01B01")!!
+
+        val request =
+            DokumentBestillingForespørsel(
+                mottakerId = BM1.ident.verdi,
+                gjelderId = BP1.ident.verdi,
+                saksnummer = "123213",
+                tittel = "Tittel på dokument",
+                vedtakId = 12312,
+                enhet = "4806",
+                spraak = "NB",
+                dokumentreferanse = "BIF1234567",
+            )
+
+        var message: BrevBestilling? = null
+        jmsTestConsumer.withOnlinebrev {
+            val response =
+                httpHeaderTestRestTemplate.exchange(
+                    "${rootUri()}/bestill/${dokumentMal.kode}",
+                    HttpMethod.POST,
+                    HttpEntity(request),
+                    DokumentBestillingResponse::class.java,
+                )
+            response.statusCode shouldBe HttpStatus.OK
+            message = this.getMessageAsObject(BrevBestilling::class.java)
+        }
+        return message!!
+    }
 }

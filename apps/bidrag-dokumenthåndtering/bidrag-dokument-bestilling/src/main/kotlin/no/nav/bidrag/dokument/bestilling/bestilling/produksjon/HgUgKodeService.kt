@@ -37,7 +37,9 @@ class HgUgKodeService {
         behandlingType: BehandlingType?,
     ): HgUgDto? {
         val behandlingTypeConverted = if (behandlingType == BehandlingType.BIDRAG18AAR) BehandlingType.BIDRAG_18_AR else behandlingType
-        return hgUgList.find { it.behandlingType == behandlingTypeConverted && it.soknadType == soknadType && it.soknadFra == soknadFra }
+        // Automatisk opprettede søknader (FF) har ingen rad i hg_ug.json. Bruk samme koder som for søknader opprettet av NAV.
+        val soknadFraOppslag = if (soknadFra == SøktAvType.AUTOMATISK) SøktAvType.NAV_BIDRAG else soknadFra
+        return hgUgList.find { it.behandlingType == behandlingTypeConverted && it.soknadType == soknadType && it.soknadFra == soknadFraOppslag }
     }
 
     private fun fetchHgUgKodeListFromFile(): List<HgUgDtoFromJson> = try {
