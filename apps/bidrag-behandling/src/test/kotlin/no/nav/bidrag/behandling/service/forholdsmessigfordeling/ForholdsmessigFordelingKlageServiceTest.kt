@@ -712,7 +712,7 @@ class ForholdsmessigFordelingKlageServiceTest {
         verify(exactly = 1) { behandlingService.logiskSlettBehandling(behandling) }
         verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, null) }
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == HOVEDSØKNADSID }) }
-        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == GJENOPPRETTET_FF_KLAGESØKNADSID }) }
         verify(exactly = 0) { kravhaverService.hentAlleRelevanteKravhavere(any()) }
