@@ -105,12 +105,9 @@ data class PersonService(
         ident.takeIfNotNullOrEmpty {
             personConsumer.hentPerson(it)
         }
-    } catch (e: HttpStatusCodeException) {
-        if (e.statusCode == HttpStatus.NOT_FOUND) {
-            null
-        } else {
-            throw e
-        }
+    } catch (_: HttpStatusCodeException) {
+        // TODO: Lag en bedre feilhåndtering her og ikke ignorer alle feil
+        null
     }
 
     fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
