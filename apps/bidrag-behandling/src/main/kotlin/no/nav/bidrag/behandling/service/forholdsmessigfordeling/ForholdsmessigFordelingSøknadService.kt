@@ -58,7 +58,7 @@ class ForholdsmessigFordelingSøknadService(
     fun slettAlleSøknaderKnyttetTilBehandling(behandlingId: Long) {
         val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandlingId)
         søknaderBehandling.søknader
-            .filter { it.behandlingStatusType.erÅpenStatus }
+            .filter { it.behandlingStatusType.erÅpenStatus && it.behandlingstype.erForholdsmessigFordeling }
             .forEach {
                 bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
             }
