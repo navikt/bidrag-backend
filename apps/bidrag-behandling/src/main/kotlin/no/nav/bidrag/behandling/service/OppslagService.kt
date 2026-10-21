@@ -84,7 +84,12 @@ fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
-fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }
+/**
+ * Henter gjeldende ident fra bidrag-person.
+ * Gir identen det ble søkt på når personen ikke finnes (404) eller bidrag-person svarer 403.
+ * 403 betyr at saksbehandler mangler tilgang, eller ved apptoken at tilgangsoppsettet mellom appene er feil.
+ * Andre feil kastes videre. Brukes bare til intern matching, ikke som tilgangskontroll.
+ */
 fun hentNyesteIdentIgnorerForbidden(ident: String?) = ident?.let {
     try {
         hentPerson(ident)?.ident ?: Personident(ident)

@@ -8,7 +8,6 @@ import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.hentAlleIkkeAktiv
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
-import no.nav.bidrag.behandling.service.hentNyesteIdent
 import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
@@ -69,14 +68,17 @@ fun Collection<GrunnlagDto>.hentPersonNyesteIdent(
 fun Collection<GrunnlagDto>.hentPersonerNyesteIdent(
     ident: String?,
     stønadstype: Stønadstype? = null,
-) = filter { it.erPerson() }
-    // Person barn BM havner nederst i listen. Det kan hende samme person er oppgitt som både husstandsmedlem og barn BM pga underholdskostnad
-    .sortedBy { listOf(Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER).indexOf(it.type) }
-    .toSet()
-    .filter {
-        (it.personIdent == hentNyesteIdentIgnorerForbidden(ident)?.verdi || it.personIdent == ident) &&
-            (stønadstype == null || it.stønadstype == null || stønadstype == it.stønadstype)
-    }.distinctBy { it.referanse }
+): List<GrunnlagDto> {
+    val nyesteIdent by lazy { hentNyesteIdentIgnorerForbidden(ident)?.verdi }
+    return filter { it.erPerson() }
+        // Person barn BM havner nederst i listen. Det kan hende samme person er oppgitt som både husstandsmedlem og barn BM pga underholdskostnad
+        .sortedBy { listOf(Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER).indexOf(it.type) }
+        .toSet()
+        .filter {
+            (it.personIdent == nyesteIdent || it.personIdent == ident) &&
+                (stønadstype == null || it.stønadstype == null || stønadstype == it.stønadstype)
+        }.distinctBy { it.referanse }
+}
 
 // TODO: Reel mottaker fra bidrag-sak?
 fun Set<Rolle>.reelMottakerEllerBidragsmottaker(rolle: RolleDto): Personident {
@@ -92,8 +94,8 @@ fun Set<Rolle>.reelMottakerEllerBidragsmottaker(rolle: RolleDto): Personident {
 
     val barnRolle =
         find { it.ident == rolle.fødselsnummer!!.verdi }
-            ?: return find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }!!.let { hentNyesteIdent(it.ident)!! }
-    return barnRolle.bidragsmottaker.let { hentNyesteIdent(it!!.ident)!! }
+            ?: return find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }!!.let { hentNyesteIdentIgnorerForbidden(it.ident)!! }
+    return barnRolle.bidragsmottaker.let { hentNyesteIdentIgnorerForbidden(it!!.ident)!! }
 }
 
 fun String?.nullIfEmpty() = if (this.isNullOrEmpty()) null else this
