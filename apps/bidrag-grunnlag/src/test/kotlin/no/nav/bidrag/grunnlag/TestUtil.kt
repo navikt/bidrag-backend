@@ -20,6 +20,10 @@ import no.nav.bidrag.grunnlag.bo.SivilstandBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagBo
 import no.nav.bidrag.grunnlag.bo.SkattegrunnlagspostBo
 import no.nav.bidrag.grunnlag.bo.UtvidetBarnetrygdOgSmaabarnstilleggBo
+import no.nav.bidrag.grunnlag.consumer.aap.api.Barn
+import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPRequest
+import no.nav.bidrag.grunnlag.consumer.aap.api.HentBarnetilleggAAPResponse
+import no.nav.bidrag.grunnlag.consumer.aap.api.PeriodeMedBarnetillegg
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.api.Ansettelsesperiode
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.api.Arbeidsforhold
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.api.Arbeidssted
@@ -1355,6 +1359,25 @@ class TestUtil {
             personId = "personident",
             periodeFra = LocalDate.parse("2023-01-01"),
             periodeTil = LocalDate.parse("2024-01-01"),
+        )
+
+        fun byggHentBarnetilleggAapRequest() = HentBarnetilleggAAPRequest(
+            personidentifikator = "personident",
+        )
+
+        fun byggHentBarnetilleggAapResponse() = HentBarnetilleggAAPResponse(
+            listOf(
+                Barn(
+                    ident = "1",
+                    perioderMedBarnetillegg = listOf(
+                        PeriodeMedBarnetillegg(
+                            fra = LocalDate.now().minusMonths(1),
+                            til = LocalDate.now(),
+                            beløp = BigDecimal.ONE,
+                        ),
+                    ),
+                ),
+            ),
         )
     }
 }
