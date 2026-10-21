@@ -38,7 +38,7 @@ add_alias() {
 
 add_fish_function() {
     local escaped_dist_path
-    escaped_dist_path=$("$SHELL" -c 'string escape --style=script -- $argv[1]' "$DIST_PATH")
+    escaped_dist_path=$("$SHELL" --no-config -c 'string escape --style=script -- $argv[1]' "$DIST_PATH")
 
     if grep -Eq '^[[:space:]]*function[[:space:]]+bidrag-cli([[:space:]]|$)' "$SHELL_CONFIG" 2>/dev/null; then
         echo "Function 'bidrag-cli' already exists in $SHELL_CONFIG"
