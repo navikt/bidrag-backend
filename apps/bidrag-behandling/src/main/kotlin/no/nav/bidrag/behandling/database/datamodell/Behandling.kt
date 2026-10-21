@@ -240,7 +240,7 @@ open class Behandling(
     }
 
     fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
-        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
+        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == finnSøknadsid } }
     } else if (soknadsid == finnSøknadsid) {
         ForholdsmessigFordelingSøknadBarn(
             mottattDato = mottattdato,

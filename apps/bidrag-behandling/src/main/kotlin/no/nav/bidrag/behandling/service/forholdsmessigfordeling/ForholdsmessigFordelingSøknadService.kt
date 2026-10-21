@@ -53,8 +53,10 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     // region Opprettelse av søknader
     // ═══════════════════════════════════════════════════════════════════
-    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
-        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
+    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) = slettAlleSøknaderKnyttetTilBehandling(behandling.id!!)
+
+    fun slettAlleSøknaderKnyttetTilBehandling(behandlingId: Long) {
+        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandlingId)
         søknaderBehandling.søknader
             .filter { it.behandlingStatusType.erÅpenStatus }
             .forEach {
