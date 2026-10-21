@@ -9,6 +9,7 @@ import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.hentAlleIkkeAktiv
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -73,7 +74,7 @@ fun Collection<GrunnlagDto>.hentPersonerNyesteIdent(
     .sortedBy { listOf(Grunnlagstype.PERSON_BARN_BIDRAGSMOTTAKER).indexOf(it.type) }
     .toSet()
     .filter {
-        (it.personIdent == hentNyesteIdent(ident)?.verdi || it.personIdent == ident) &&
+        (it.personIdent == hentNyesteIdentIgnorerForbidden(ident)?.verdi || it.personIdent == ident) &&
             (stønadstype == null || it.stønadstype == null || stønadstype == it.stønadstype)
     }.distinctBy { it.referanse }
 
