@@ -46,8 +46,8 @@ class PersonServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpStatus::class, names = ["NOT_FOUND", "NO_CONTENT"])
-    fun `skal returnere null ved manglende treff`(status: HttpStatus) {
+    @EnumSource(HttpStatus::class, names = ["NOT_FOUND", "NO_CONTENT", "FORBIDDEN"])
+    fun `skal returnere null ved manglende treff eller manglende tilgang`(status: HttpStatus) {
         server.expect(twice(), requestTo("http://bidrag-person/informasjon")).andRespond(withStatus(status))
 
         oppslag.forEach { it(ident).shouldBeNull() }
@@ -56,7 +56,7 @@ class PersonServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpStatus::class, names = ["BAD_REQUEST", "UNAUTHORIZED", "FORBIDDEN", "INTERNAL_SERVER_ERROR", "SERVICE_UNAVAILABLE"])
+    @EnumSource(HttpStatus::class, names = ["BAD_REQUEST", "UNAUTHORIZED", "INTERNAL_SERVER_ERROR", "SERVICE_UNAVAILABLE"])
     fun `skal kaste andre HTTP-feil videre`(status: HttpStatus) {
         server.expect(twice(), requestTo("http://bidrag-person/informasjon")).andRespond(withStatus(status))
 

@@ -67,12 +67,20 @@ fun sjekkTilgangSak(saksnummer: String): Boolean = try {
     false
 }
 
+private val statuserSomGirIngenPerson = setOf(HttpStatus.NOT_FOUND, HttpStatus.FORBIDDEN)
+
+/**
+ * Henter person fra bidrag-person.
+ * Gir null når personen ikke finnes (404) eller bidrag-person svarer 403, slik at kallstedet faller tilbake på lagrede opplysninger.
+ * 403 betyr at saksbehandler mangler tilgang, eller ved apptoken at tilgangsoppsettet mellom appene er feil.
+ * Andre feil kastes videre. Null betyr ikke at saksbehandler har tilgang, så funksjonen må ikke brukes som tilgangskontroll.
+ */
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
     }
 } catch (e: HttpStatusCodeException) {
-    if (e.statusCode == HttpStatus.NOT_FOUND) {
+    if (e.statusCode in statuserSomGirIngenPerson) {
         null
     } else {
         throw e
@@ -80,47 +88,46 @@ fun hentPerson(ident: String?): PersonDto? = try {
 }
 
 fun harTilgangSak(saksnummer: String) = sjekkTilgangSak(saksnummer)
+
+/** Fødselsdato fra bidrag-person, eller null etter samme regler som [hentPerson]. */
 fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
+/** Visningsnavn fra bidrag-person, eller null etter samme regler som [hentPerson]. */
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
 /**
  * Henter gjeldende ident fra bidrag-person.
- * Gir identen det ble søkt på når personen ikke finnes (404) eller bidrag-person svarer 403.
- * 403 betyr at saksbehandler mangler tilgang, eller ved apptoken at tilgangsoppsettet mellom appene er feil.
+ * Gir identen det ble søkt på når [hentPerson] gir null, altså ved 404 eller 403.
  * Andre feil kastes videre. Brukes bare til intern matching, ikke som tilgangskontroll.
  */
-fun hentNyesteIdentIgnorerForbidden(ident: String?) = ident?.let {
-    try {
-        hentPerson(ident)?.ident ?: Personident(ident)
-    } catch (e: HttpStatusCodeException) {
-        if (e.statusCode == HttpStatus.FORBIDDEN) {
-            Personident(ident)
-        } else {
-            throw e
-        }
-    }
-}
+fun hentNyesteIdentIgnorerForbidden(ident: String?) = ident?.let { hentPerson(it)?.ident ?: Personident(it) }
 
 @Service
 data class PersonService(
     val personConsumer: BidragPersonConsumer,
 ) {
+    /** Samme feilhåndtering som den frittstående [no.nav.bidrag.behandling.service.hentPerson]. */
     fun hentPerson(ident: String?): PersonDto? = try {
         ident.takeIfNotNullOrEmpty {
             personConsumer.hentPerson(it)
         }
     } catch (e: HttpStatusCodeException) {
-        if (e.statusCode == HttpStatus.NOT_FOUND) {
+        if (e.statusCode in statuserSomGirIngenPerson) {
             null
         } else {
             throw e
         }
     }
 
+    /** Fødselsdato fra bidrag-person, eller null etter samme regler som [hentPerson]. */
     fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
+    /** Visningsnavn fra bidrag-person, eller null etter samme regler som [hentPerson]. */
     fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
+    /**
+     * Gjeldende ident fra bidrag-person, eller null ved 404 og 403.
+     * Kallstedet må selv falle tilbake på søkt ident. Sammenlign aldri to null-svar som lik person.
+     */
     fun hentNyesteIdent(ident: String?) = hentPerson(ident)?.ident
 }
