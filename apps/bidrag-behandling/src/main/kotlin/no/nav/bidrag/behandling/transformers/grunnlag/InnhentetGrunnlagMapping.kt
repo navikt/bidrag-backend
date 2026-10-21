@@ -13,7 +13,7 @@ import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
 import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
 import no.nav.bidrag.behandling.transformers.vedtak.hentPersonerNyesteIdent
@@ -524,7 +524,7 @@ fun Set<Grunnlag>.hentGrunnlagsreferanserForInntekt(
         grunnlag.find {
             it.type == inntekt.type.tilGrunnlagsdataType() &&
                 it.erBearbeidet &&
-                hentNyesteIdent(
+                hentNyesteIdentIgnorerForbidden(
                     it.rolle.ident,
                 )?.verdi == gjelderIdent
         }
