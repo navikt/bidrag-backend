@@ -701,9 +701,9 @@ class ForholdsmessigFordelingKlageServiceTest {
         every { bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!) } returns
             HentSøknaderForBehandlingResponse(
                 listOf(
-                    hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), status = BehandlingStatusType.UNDER_BEHANDLING),
+                    hentSøknad(FF_KLAGESØKNADSID, listOf(barn1.ident!!), status = BehandlingStatusType.UNDER_BEHANDLING, behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING),
                     hentSøknad(OPPRETTET_SØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.ÅPEN),
-                    hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.VEDTAK_FATTET),
+                    hentSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID, listOf(barn2.ident!!), status = BehandlingStatusType.VEDTAK_FATTET, behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE),
                 ),
             )
 
@@ -712,8 +712,8 @@ class ForholdsmessigFordelingKlageServiceTest {
         verify(exactly = 1) { behandlingService.logiskSlettBehandling(behandling) }
         verify(exactly = 1) { bbmConsumer.fjernSammeknytningHovedsøknad(HOVEDSØKNADSID, null) }
         verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == HOVEDSØKNADSID }) }
-        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
-        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == FF_KLAGESØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == OPPRETTET_SØKNADSID }) }
         verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == GJENOPPRETTET_FF_KLAGESØKNADSID }) }
         verify(exactly = 0) { kravhaverService.hentAlleRelevanteKravhavere(any()) }
         verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
