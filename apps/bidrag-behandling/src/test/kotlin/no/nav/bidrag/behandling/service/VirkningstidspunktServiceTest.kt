@@ -34,6 +34,8 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -909,12 +911,19 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
             }
         }
 
-        @Test
-        fun `skal flytte BP-inntekt bakover når virkningstidspunkt på klage endres bakover og BP har virkningstidspunkt fra påklaget vedtak`() {
-            val feilVirkningstidspunkt = LocalDate.parse("2025-11-01")
-            val rettetVirkningstidspunkt = LocalDate.parse("2024-11-01")
+        @ParameterizedTest(name = "{0} -> {1}")
+        @CsvSource(
+            "2025-11-01, 2024-11-01",
+            "2024-11-01, 2025-11-01",
+            "2025-06-01, 2025-02-01",
+            "2025-02-01, 2025-06-01",
+        )
+        fun `skal flytte BP-inntekt når virkningstidspunkt på klage endres og BP har virkningstidspunkt fra påklaget vedtak`(
+            feilVirkningstidspunkt: LocalDate,
+            rettetVirkningstidspunkt: LocalDate,
+        ) {
             val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
-            behandling.søktFomDato = rettetVirkningstidspunkt
+            behandling.søktFomDato = minOf(feilVirkningstidspunkt, rettetVirkningstidspunkt)
             behandling.oppdaterVirkningstidspunktForAlle(feilVirkningstidspunkt)
 
             val bp = behandling.bidragspliktig!!
