@@ -259,6 +259,8 @@ fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
         } else {
             tidligsteBeregnFra
         }
+    } else if (rolletype == Rolletype.BIDRAGSPLIKTIG) {
+        behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
     } else {
         virkningstidspunktRolle.toYearMonth()
     }

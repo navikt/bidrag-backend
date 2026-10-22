@@ -16,6 +16,7 @@ import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
+    import no.nav.bidrag.behandling.transformers.behandling.tilDto
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
@@ -905,6 +906,57 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                 taMed shouldBe true
                 datoFom shouldBe nyVirkningstidspunkt
                 datoTom shouldBe null
+            }
+        }
+
+        @Test
+        fun `skal flytte BP-inntekt bakover når virkningstidspunkt på klage endres bakover og BP har virkningstidspunkt fra påklaget vedtak`() {
+            val feilVirkningstidspunkt = LocalDate.parse("2025-11-01")
+            val rettetVirkningstidspunkt = LocalDate.parse("2024-11-01")
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.søktFomDato = rettetVirkningstidspunkt
+            behandling.oppdaterVirkningstidspunktForAlle(feilVirkningstidspunkt)
+
+            val bp = behandling.bidragspliktig!!
+            bp.virkningstidspunkt = feilVirkningstidspunkt
+
+            val inntektBM =
+                opprettInntekt(
+                    datoFom = YearMonth.from(feilVirkningstidspunkt),
+                    datoTom = null,
+                    gjelderRolle = behandling.bidragsmottaker!!,
+                    taMed = true,
+                    kilde = Kilde.MANUELL,
+                    behandling = behandling,
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    medId = true,
+                )
+            val inntektBP =
+                opprettInntekt(
+                    datoFom = YearMonth.from(feilVirkningstidspunkt),
+                    datoTom = null,
+                    gjelderRolle = bp,
+                    taMed = true,
+                    kilde = Kilde.MANUELL,
+                    behandling = behandling,
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    medId = true,
+                )
+            behandling.inntekter = mutableSetOf(inntektBM, inntektBP)
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(1, OppdatereVirkningstidspunkt(virkningstidspunkt = rettetVirkningstidspunkt))
+
+            behandling.virkningstidspunkt shouldBe rettetVirkningstidspunkt
+            behandling.søknadsbarn.forEach { it.virkningstidspunkt shouldBe rettetVirkningstidspunkt }
+            bp.tilDto().beregnFraDato shouldBe YearMonth.from(rettetVirkningstidspunkt)
+            assertSoftly(inntektBM) {
+                taMed shouldBe true
+                datoFom shouldBe rettetVirkningstidspunkt
+            }
+            assertSoftly(inntektBP) {
+                taMed shouldBe true
+                datoFom shouldBe rettetVirkningstidspunkt
             }
         }
     }
