@@ -287,7 +287,11 @@ function InntektPerBarnTable({
                                 {
                                   content: d.beløpstypeVisningsnavn,
                                 },
-                                { content: formatterProsent(d.skattefaktor) },
+                                {
+                                  content: d.erSkattefrittBarnetillegg
+                                    ? "Ikke relevant"
+                                    : formatterProsent(d.skattefaktor),
+                                },
                                 { content: formatterBeløp(d.beløp) },
                               ]
                             : erBarnetillegg

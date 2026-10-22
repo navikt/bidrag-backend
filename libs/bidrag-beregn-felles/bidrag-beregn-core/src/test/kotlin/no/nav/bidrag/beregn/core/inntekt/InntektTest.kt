@@ -6,6 +6,12 @@ import no.nav.bidrag.beregn.core.TestUtil.byggSjablontallGrunnlagUtvidetBarnetry
 import no.nav.bidrag.beregn.core.TestUtil.byggSjablontallGrunnlagUtvidetBarnetrygdOvergang
 import no.nav.bidrag.beregn.core.bo.Avvik
 import no.nav.bidrag.beregn.core.util.InntektUtil.behandlUtvidetBarnetrygd
+import no.nav.bidrag.beregn.core.util.InntektUtil.beløpUtenSkattefrieBarnetillegg
+import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.DisplayName
@@ -71,4 +77,26 @@ internal class InntektTest {
             { assertThat(nyInntektGrunnlagListe[4].belop).isEqualTo(BigDecimal.valueOf(12500)) },
         )
     }
+
+    @Test
+    @DisplayName("Skattefrie barnetillegg (tiltakspenger og Forsvaret) tas ikke med i inntekten")
+    fun testSkattefrieBarnetilleggTasIkkeMedIInntekten() {
+        val pensjon = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_PENSJON, BigDecimal.valueOf(20400), InntektBeløpstype.ÅRSBELØP)
+        val forsvaret = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_FORSVARET, BigDecimal.valueOf(2500), InntektBeløpstype.MÅNEDSBELØP)
+        val tiltakspenger = InntektsrapporteringPeriode.Inntektspost("Inntekt", Inntektstype.BARNETILLEGG_TILTAKSPENGER, BigDecimal.valueOf(1000), InntektBeløpstype.MÅNEDSBELØP)
+
+        assertAll(
+            { assertThat(beløpUtenSkattefrieBarnetillegg(byggBarnetilleggInntekt(pensjon, forsvaret, tiltakspenger))).isEqualByComparingTo(BigDecimal.valueOf(20400)) },
+            { assertThat(beløpUtenSkattefrieBarnetillegg(byggBarnetilleggInntekt(forsvaret, tiltakspenger))).isEqualByComparingTo(BigDecimal.ZERO) },
+        )
+    }
+
+    private fun byggBarnetilleggInntekt(vararg inntektsposter: InntektsrapporteringPeriode.Inntektspost) = InntektsrapporteringPeriode(
+        periode = ÅrMånedsperiode("2024-08", "2024-09"),
+        manueltRegistrert = true,
+        inntektsrapportering = Inntektsrapportering.BARNETILLEGG,
+        beløp = inntektsposter.sumOf { if (it.beløpstype == InntektBeløpstype.MÅNEDSBELØP) it.beløp.multiply(BigDecimal.valueOf(12)) else it.beløp },
+        valgt = true,
+        inntektspostListe = inntektsposter.toList(),
+    )
 }

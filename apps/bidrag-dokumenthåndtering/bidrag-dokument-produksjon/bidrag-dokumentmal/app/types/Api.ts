@@ -334,6 +334,7 @@ export enum Inntektstype {
   BARNETILLEGG_KLP = "BARNETILLEGG_KLP",
   BARNETILLEGG_SPK = "BARNETILLEGG_SPK",
   BARNETILLEGG_TILTAKSPENGER = "BARNETILLEGG_TILTAKSPENGER",
+  BARNETILLEGG_FORSVARET = "BARNETILLEGG_FORSVARET",
   BARNETILLEGG_SUMMERT = "BARNETILLEGG_SUMMERT",
 }
 
@@ -1025,6 +1026,8 @@ export interface NotatInntektDto {
   historisk: boolean;
   inntektsposter: NotatInntektspostDto[];
   beløpstypeVisningsnavn: string;
+  /** Om barnetillegget er skattefritt (tiltakspenger og Forsvaret), og ikke har skatteprosent */
+  erSkattefrittBarnetillegg: boolean;
   visningsnavn: string;
   /** Avrundet dagsats for barnetillegg */
   dagsats?: number | null;
