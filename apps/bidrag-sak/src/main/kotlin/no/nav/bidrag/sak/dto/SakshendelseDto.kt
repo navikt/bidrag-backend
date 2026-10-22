@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.dto
 
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
@@ -22,6 +23,7 @@ data class SakshendelseDto(
     val behandlingsid: String?,
     /** Vedtaks-id fra ny løsning (bidrag-vedtak), dersom Bisys-hendelsen er overført dit. */
     val vedtaksid: String?,
+    val behandlingstype: Behandlingstype?,
     val erLukket: Boolean,
     val resultatIBisys: Boolean,
     val erBisysVedtakOgErOverført: Boolean,
