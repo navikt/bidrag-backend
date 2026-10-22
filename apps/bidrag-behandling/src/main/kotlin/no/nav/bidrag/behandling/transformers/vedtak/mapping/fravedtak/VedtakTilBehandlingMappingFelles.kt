@@ -854,7 +854,7 @@ fun List<GrunnlagDto>.innhentetTidspunkt(grunnlagstype: Grunnlagstype) = filtrer
     ?.get("hentetTidspunkt")
     ?.let {
         commonObjectmapper.treeToValue(it, LocalDateTime::class.java)
-    } ?: LocalDateTime.now()
+    } ?: LocalDateTime.from(LocalDate.now().atStartOfDay())
 
 fun <T> Map<String?, List<T>>.filterBarnIBehandling(
     grunnlagListe: List<GrunnlagDto>,
