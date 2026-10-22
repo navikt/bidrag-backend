@@ -1382,6 +1382,9 @@ class BehandlingTilVedtakMapping(
         val grunnlagslisteGebyr = byggGrunnlagForGebyr()
         val resultatEngangsbeløpGebyr = mapEngangsbeløpGebyr(grunnlagListe.toList() + grunnlagslisteGebyr)
         val grunnlagVirkningstidspunkt = byggGrunnlagVirkningsttidspunkt()
+        val alleSøknadsbarnHarAvslag = søknadsbarn.filter { !it.erRevurderingsbarn }.let { barn ->
+            barn.isNotEmpty() && barn.all { (it.avslag ?: avslag) != null }
+        }
 
         return byggOpprettVedtakRequestObjekt(request?.enhet)
             .copy(
@@ -1389,8 +1392,12 @@ class BehandlingTilVedtakMapping(
                 stønadsendringListe =
                 søknadsbarn.map {
                     val avslagKode = it.avslag ?: avslag
+                    // Når alle søknadsbarn har avslag skal revurderingsbarn avvises uten perioder.
+                    // Avslagsperioder kan føre til opphør av løpende bidrag.
+                    val avvisRevurderingsbarn = alleSøknadsbarnHarAvslag && it.erRevurderingsbarn
+                    val erAvvisning = avvisRevurderingsbarn || avslagKode?.erAvvisning() == true
                     OpprettStønadsendringRequestDto(
-                        innkreving = innkrevingstype!!,
+                        innkreving = if (avvisRevurderingsbarn) Innkrevingstype.UTEN_INNKREVING else innkrevingstype!!,
                         skyldner = tilSkyldner(),
                         omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
                         kravhaver =
@@ -1403,7 +1410,7 @@ class BehandlingTilVedtakMapping(
                             ),
                         sak = Saksnummer(saksnummer),
                         type = it.stønadstype ?: stonadstype!!,
-                        beslutning = if (avslagKode?.erAvvisning() == true) Beslutningstype.AVVIST else Beslutningstype.ENDRING,
+                        beslutning = if (erAvvisning) Beslutningstype.AVVIST else Beslutningstype.ENDRING,
                         grunnlagReferanseListe =
                         grunnlagListe.map { it.referanse } +
                             grunnlagVirkningstidspunkt
@@ -1412,7 +1419,7 @@ class BehandlingTilVedtakMapping(
                                 }!!
                                 .referanse,
                         periodeListe =
-                        if (avslagKode?.erAvvisning() == true) {
+                        if (erAvvisning) {
                             emptyList()
                         } else {
                             listOf(

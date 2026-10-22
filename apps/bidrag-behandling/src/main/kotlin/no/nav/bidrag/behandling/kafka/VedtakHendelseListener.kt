@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.kafka
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.transaction.Transactional
 import no.nav.bidrag.behandling.KunneIkkeLeseMeldingFraHendelse
+import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
@@ -23,11 +24,13 @@ import no.nav.bidrag.domene.enums.behandling.tilStønadstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.hentSøknadFraGrunnlagsreferanseListe
 import no.nav.bidrag.transport.behandling.vedtak.Stønadsendring
 import no.nav.bidrag.transport.behandling.vedtak.VedtakHendelse
 import no.nav.bidrag.transport.behandling.vedtak.behandlingId
 import no.nav.bidrag.transport.behandling.vedtak.erDelvedtak
 import no.nav.bidrag.transport.behandling.vedtak.erFattetGjennomBidragBehandling
+import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.behandling.vedtak.saksnummer
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -46,6 +49,7 @@ class VedtakHendelseListener(
     val grunnlagService: GrunnlagService,
     val behandlingRepository: BehandlingRepository,
     val forholdsmessigFordelingService: ForholdsmessigFordelingService,
+    val vedtakConsumer: BidragVedtakConsumer,
 ) {
     @KafkaListener(groupId = "bidrag-behandling2", topics = [$$"${TOPIC_VEDTAK}"])
     @Transactional
@@ -184,35 +188,66 @@ class VedtakHendelseListener(
     }
 
     private fun opprettForsendelse(
-        vedtak: VedtakHendelse,
+        vedtakHendelse: VedtakHendelse,
         behandling: Behandling,
     ) {
-        if (vedtak.type == Vedtakstype.ALDERSJUSTERING) return
-        behandling.saker.forEach { sak ->
-            val søknader = behandling.søknadForSak(sak)
+        if (vedtakHendelse.type == Vedtakstype.ALDERSJUSTERING) return
+        val saker = if (vedtakHendelse.stønadsendringListe != null && vedtakHendelse.stønadsendringListe?.isNotEmpty() == true) {
+            vedtakHendelse.stønadsendringListe!!.map { it.sak.verdi }.distinct()
+        } else {
+            behandling.saker
+        }
+        val vedtakDto = hentVedtak(vedtakHendelse.id)
+        saker.forEach { sak ->
+            val søknadsiderIVedtak = vedtakDto?.hentSøknadsiderForSak(sak) ?: emptySet()
+            // Oppretter bare forsendelse for søknader som tilhører vedtaket. Hvis vedtaket ikke har søknadsid så beholdes alle
+            val søknader =
+                behandling.søknadForSak(sak).filter {
+                    søknadsiderIVedtak.isEmpty() || søknadsiderIVedtak.contains(it.søknadsid)
+                }
 
             søknader.forEach { opprettForSøknad ->
 
                 forsendelseService.slettEllerOpprettForsendelse(
                     InitalizeForsendelseRequest(
                         saksnummer = sak,
-                        enhet = opprettForSøknad.enhet,
+                        enhet = vedtakHendelse.enhetsnummer?.verdi ?: opprettForSøknad.enhet,
                         behandlingInfo =
                         BehandlingInfoDto(
                             soknadId = opprettForSøknad.søknadsid.toString(),
-                            vedtakId = vedtak.id.toString(),
+                            vedtakId = vedtakHendelse.id.toString(),
                             behandlingId = behandling.id!!.toString(),
                             soknadFra = opprettForSøknad.søktAvType,
-                            stonadType = opprettForSøknad.behandlingstema?.tilStønadstype() ?: vedtak.stønadstype,
-                            engangsBelopType = if (vedtak.stønadstype == null) vedtak.engangsbeløptype else null,
+                            stonadType = opprettForSøknad.behandlingstema?.tilStønadstype() ?: vedtakHendelse.stønadstype,
+                            engangsBelopType = if (vedtakHendelse.stønadstype == null) vedtakHendelse.engangsbeløptype else null,
                             erFattetBeregnet = true,
-                            vedtakType = opprettForSøknad.behandlingstype?.tilVedtakstype() ?: vedtak.type,
+                            vedtakType = opprettForSøknad.behandlingstype?.tilVedtakstype() ?: vedtakHendelse.type,
                         ),
                         roller = behandling.tilForsendelseRolleDto(sak, opprettForSøknad),
                     ),
                 )
             }
         }
+    }
+
+    private fun hentVedtak(vedtaksid: Int): VedtakDto? = try {
+        vedtakConsumer.hentVedtak(vedtaksid)
+    } catch (e: Exception) {
+        log.warn(e) { "Kunne ikke hente vedtak $vedtaksid. Oppretter forsendelse for alle søknader i saken" }
+        null
+    }
+
+    private fun VedtakDto.hentSøknadsiderForSak(saksnummer: String): Set<Long> {
+        val grunnlagsreferanser =
+            stønadsendringListe.filter { it.sak.verdi == saksnummer }.map { it.grunnlagReferanseListe } +
+                engangsbeløpListe.filter { it.sak.verdi == saksnummer }.map { it.grunnlagReferanseListe }
+        return grunnlagsreferanser
+            .flatMap { referanser ->
+                referanser.mapNotNull { referanse ->
+                    grunnlagListe.hentSøknadFraGrunnlagsreferanseListe(listOf(referanse))?.søknadsid
+                }
+            }
+            .toSet()
     }
 
     private fun parseVedtakHendelse(melding: ConsumerRecord<String, String>): VedtakHendelse {

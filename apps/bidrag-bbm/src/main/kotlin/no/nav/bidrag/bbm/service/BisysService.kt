@@ -53,6 +53,11 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
+val søknadsstatusFattet = listOf(
+    Behandlingstatus.VEDTAK_FATTET,
+    Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
+)
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
 @Service
@@ -1029,12 +1034,11 @@ class BisysService(
         val alleBehandlingsstatuser = søknadslinjeListe.map { Behandlingstatus.fraKode(it.søknadStatuskode) }
 
         val alleLukket = alleBehandlingsstatuser.all { it?.lukketStatus == true }
-        val harVedtakFattet = alleBehandlingsstatuser.any { it?.bisysKode == "VF" }
-        val harFeilregistretSøknad = alleBehandlingsstatuser.any { it?.bisysKode == "FR" }
+        val harVedtakFattet = alleBehandlingsstatuser.any { søknadsstatusFattet.contains(it) }
 
         return when {
             alleLukket && harVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            alleLukket && harFeilregistretSøknad -> BehandlingStatusType.AVBRUTT
+            alleLukket && alleBehandlingsstatuser.isNotEmpty() -> BehandlingStatusType.AVBRUTT
             else -> BehandlingStatusType.UNDER_BEHANDLING
         }
     }
@@ -1119,7 +1123,7 @@ class BisysService(
             }
 
         if (søknadsknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
             return
         }
     }
@@ -1135,7 +1139,7 @@ class BisysService(
                 )
 
         if (eksisterendeSammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.referertSøknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.referertSøknadsid} " }
             return null
         }
 
@@ -1145,7 +1149,7 @@ class BisysService(
         if (eksisterendeSammenknytningNyHovedsøknad != null) {
             val melding =
                 "Søknader med id: ${request.hovedsøknadsid} og ${request.referertSøknadsid} er allerede sammenknyttet"
-            secureLogger.warn { melding }
+            secureLogger.debug { melding }
             return eksisterendeSammenknytningNyHovedsøknad
         }
 
@@ -1181,7 +1185,7 @@ class BisysService(
                 }
 
         if (eksisterendeSammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.eksisterendeHovedsøknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.eksisterendeHovedsøknadsid} " }
             return
         }
 
@@ -1226,7 +1230,7 @@ class BisysService(
 
         val hoveddsøknad = sammenknytninger.firstOrNull()?.hovedsøknadsid ?: request.søknadsid
         if (sammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
             return FinnSammenknytningerHovedsøknadResponse(hoveddsøknad, emptyList())
         }
 

@@ -7,6 +7,7 @@ import no.nav.bidrag.dokument.arkiv.model.JournalpostHarIkkeKommetIRetur
 import no.nav.bidrag.dokument.arkiv.model.ResourceByDiscriminator
 import no.nav.bidrag.dokument.arkiv.security.SaksbehandlerInfoManager
 import no.nav.bidrag.dokument.arkiv.service.JournalpostService
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -51,12 +52,14 @@ class BidragDokumentArkivKafkaConfig {
     )
 
     @Bean
-    fun defaultErrorHandler(@Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
+    fun defaultErrorHandler(
+        @Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int,
+    ): DefaultErrorHandler {
         // Max retry should not be set in production
         val backoffPolicy =
             if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
-        backoffPolicy.multiplier = 2.0
-        backoffPolicy.maxInterval = 1800000L // 30 mins
+        backoffPolicy.multiplier = 1.2
+        backoffPolicy.maxInterval = 60_000L // 1 min
         LOGGER.debug("Initializing Kafka errorhandler with backoffpolicy {}, maxRetry={}", backoffPolicy, maxRetry)
         val errorHandler = DefaultErrorHandler(
             { rec: ConsumerRecord<*, *>, e: Exception? ->
@@ -71,6 +74,7 @@ class BidragDokumentArkivKafkaConfig {
             },
             backoffPolicy,
         )
+        errorHandler.setRetryListeners(KafkaRetryListener())
         errorHandler.addNotRetryableExceptions(JournalpostHarIkkeKommetIRetur::class.java)
         return errorHandler
     }

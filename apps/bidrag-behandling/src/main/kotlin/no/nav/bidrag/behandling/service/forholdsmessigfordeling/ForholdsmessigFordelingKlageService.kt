@@ -612,16 +612,17 @@ class ForholdsmessigFordelingKlageService(
     /**
      * Feilretting: Knytter søknader i behandlingen som mangler behandlingsid i BBM til behandlingen.
      * Feks søknad opprettet av saksbehandler hvor BBM ikke har lagret behandlingsid etter opprettelse av behandlingen.
+     * Returnerer søknadene som ble knyttet, slik at manglende barn i søknadene kan legges til i behandlingen.
      */
-    fun knyttSøknaderUtenBehandlingsidTilBehandling(behandling: Behandling) {
+    fun knyttSøknaderUtenBehandlingsidTilBehandling(behandling: Behandling): List<HentSøknad> {
         val søknaderIBehandling =
             behandling.roller
                 .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
                 .mapNotNull { it.søknadsid }
                 .toSet()
-        hentÅpneSøknaderForVedtak(behandling)
+        return hentÅpneSøknaderForVedtak(behandling)
             .filter { it.søknadsid in søknaderIBehandling && it.behandlingsid == null }
-            .forEach {
+            .onEach {
                 KLAGE_LOGGER.info { "Søknad ${it.søknadsid} mangler behandlingsid. Knytter søknaden til behandling ${behandling.id}" }
                 bbmConsumer.lagreBehandlingsid(OppdaterBehandlingsidRequest(it.søknadsid, null, behandling.id!!))
             }
