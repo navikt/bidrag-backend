@@ -1,5 +1,11 @@
 package no.nav.bidrag.behandling.service
 
+import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.transport.felles.toYearMonth
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
+import io.kotest.matchers.comparables.shouldBeLessThan
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContainAll
@@ -245,6 +251,37 @@ class BeregningServiceTest {
         verify(exactly = 1) {
             bidragsberegningOrkestrator.utførBidragsberegningV3(any())
         }
+    }
+
+    @Test
+    fun `skal ikke sette beregnTil før beregnFra for barn med avslag som fyller 18 år før virkningstidspunkt`() {
+        val behandling =
+            opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        behandling.vedtakstype = Vedtakstype.FASTSETTELSE
+        behandling.virkningstidspunkt = LocalDate.now().minusMonths(12).withDayOfMonth(1)
+        behandling.synkSøknadsbarnVirkningstidspunkt()
+        behandling.leggTilSamvær(ÅrMånedsperiode(behandling.virkningstidspunkt!!, null), medId = true)
+        behandling.grunnlag =
+            opprettAlleAktiveGrunnlagFraFil(
+                behandling,
+                "grunnlagresponse.json",
+            ).toMutableSet()
+
+        val barnMedAvslag = behandling.søknadsbarn.find { it.ident == testdataBarn2.ident }!!
+        barnMedAvslag.stønadstype = Stønadstype.BIDRAG
+        barnMedAvslag.avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET
+        barnMedAvslag.virkningstidspunkt = LocalDate.now().minusMonths(1).withDayOfMonth(1)
+        barnMedAvslag.fødselsdato = LocalDate.now().minusYears(18).minusMonths(6)
+
+        val beregnFra = barnMedAvslag.finnBeregnFra()
+        behandling.finnBeregnTilDatoBehandling(barnMedAvslag).toYearMonth() shouldBeLessThan beregnFra
+
+        val request =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                .opprettGrunnlagBeregningBidragV2(behandling)
+
+        val beregningBarnMedAvslag = request.beregningBarn.find { it.søknadsbarnreferanse == barnMedAvslag.tilGrunnlagsreferanse() }!!
+        beregningBarnMedAvslag.beregningsperiode shouldBe ÅrMånedsperiode(beregnFra, beregnFra)
     }
 
     @Test

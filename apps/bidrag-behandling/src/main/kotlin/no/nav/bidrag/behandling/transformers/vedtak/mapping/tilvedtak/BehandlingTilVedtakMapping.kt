@@ -1106,11 +1106,7 @@ class BehandlingTilVedtakMapping(
                         }
                     } else {
                         stønadsendringPerioder.map { periode ->
-                            val sistePeriode =
-                                periode.perioder
-                                    .filter {
-                                        it.resultatkode != Resultatkode.OPPHØR.name
-                                    }.maxBy { it.periode.fom }
+                            val inneholderPerioder = periode.perioder.isNotEmpty()
                             val søknadsbarnReferanse = periode.barn.tilGrunnlagsreferanse()
                             val stønadsendringerBarn =
                                 stønadsendringGrunnlagListe.filter {
@@ -1121,7 +1117,7 @@ class BehandlingTilVedtakMapping(
                             behandling.opprettStønadsendringEndring(sak, periode.barn, stønadstype).copy(
                                 innkreving = if (innkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING,
                                 omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
-                                beslutning = Beslutningstype.ENDRING,
+                                beslutning = if (inneholderPerioder) Beslutningstype.ENDRING else Beslutningstype.AVVIST,
                                 grunnlagReferanseListe =
                                 stønadsendringerBarn.map(GrunnlagDto::referanse) +
                                     grunnlagVirkningstidspunkt
@@ -1130,11 +1126,19 @@ class BehandlingTilVedtakMapping(
                                         }!!
                                         .referanse,
                                 periodeListe = periode.perioder,
-                                førsteIndeksreguleringsår =
-                                grunnlagListe.toList().finnIndeksår(
-                                    søknadsbarnReferanse,
-                                    sistePeriode.periode,
-                                ),
+                                førsteIndeksreguleringsår = if (inneholderPerioder) {
+                                    val sistePeriode =
+                                        periode.perioder
+                                            .filter {
+                                                it.resultatkode != Resultatkode.OPPHØR.name
+                                            }.maxBy { it.periode.fom }
+                                    grunnlagListe.toList().finnIndeksår(
+                                        søknadsbarnReferanse,
+                                        sistePeriode.periode,
+                                    )
+                                } else {
+                                    null
+                                },
                             )
                         }
                     },
