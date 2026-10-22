@@ -1529,7 +1529,7 @@ class BehandlingTilVedtakMapping(
                         resultatkode = resultat.resultatkode.name,
                         valutakode = "NOK",
                         betaltBeløp = utgift!!.totalBeløpBetaltAvBp,
-                        innkreving = it.innkrevingstype!!,
+                        innkreving = innkrevingstype!!,
                         skyldner = tilSkyldner(),
                         referanse = hentUnikReferanseEngangsbeløp(kravhaver, engangsbeloptype!!),
                         omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
