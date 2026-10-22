@@ -181,7 +181,7 @@ fun Behandling.byggGrunnlagManueltOverstyrtGebyr() = roller
 
 fun Behandling.byggGrunnlagSøknad(søknadsbarn: List<Rolle> = this.søknadsbarn) = if (erIForholdsmessigFordeling) {
     søknadsbarn.flatMap {
-        it.forholdsmessigFordeling!!.søknaderUnderBehandling.map { søknad ->
+        it.forholdsmessigFordeling!!.søknaderUnderBehandling.distinctBy { it.søknadsid }.map { søknad ->
             GrunnlagDto(
                 referanse = "søknad_${it.tilGrunnlagsreferanse()}_${søknad.søknadsid}",
                 type = Grunnlagstype.SØKNAD,
