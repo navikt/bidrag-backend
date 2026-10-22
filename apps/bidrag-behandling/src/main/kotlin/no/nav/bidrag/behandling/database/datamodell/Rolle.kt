@@ -20,7 +20,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.oppdateringAvBoforholdFeilet
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.tilFFBarnDetaljer
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
@@ -460,7 +460,7 @@ data class RolleManueltOverstyrtGebyr(
 
 fun Rolle.tilPersonident() = ident?.let { Personident(it) }
 
-fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdent(it) }
+fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdentIgnorerForbidden(it) }
 
 fun Rolle.hentNavn() = navn ?: hentPersonVisningsnavn(ident) ?: ""
 

@@ -24,7 +24,7 @@ import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragberegningDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegningBarnDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.service.hentVedtak
@@ -1408,7 +1408,7 @@ internal fun List<BaseGrunnlag>.tilHusstandsmedlem(
     val gjelderRolle =
         behandling.roller
             .find {
-                val ident = hentNyesteIdent(gjelderPerson.ident?.verdi)
+                val ident = hentNyesteIdentIgnorerForbidden(gjelderPerson.ident?.verdi)
                 ident != null && it.erSammeRolle(ident.verdi, gjelderPerson.stønadstype)
             }
     val erBmBpBosstatus =

@@ -211,7 +211,7 @@ class VedtakHendelseListener(
                 forsendelseService.slettEllerOpprettForsendelse(
                     InitalizeForsendelseRequest(
                         saksnummer = sak,
-                        enhet = opprettForSøknad.enhet,
+                        enhet = vedtakHendelse.enhetsnummer?.verdi ?: opprettForSøknad.enhet,
                         behandlingInfo =
                         BehandlingInfoDto(
                             soknadId = opprettForSøknad.søknadsid.toString(),

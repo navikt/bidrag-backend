@@ -159,6 +159,16 @@ class ForholdsmessigFordelingService(
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
     }
 
+    /**
+     * Feilregistrerer åpne FF-søknader knyttet til en slettet behandling hvor opprettelse av FF feilet,
+     * og nullstiller feilmarkeringen slik at behandlingen ikke plukkes opp igjen.
+     */
+    @Transactional
+    fun ryddOppFFSøknaderForSlettetBehandling(behandlingId: Long) {
+        søknadService.slettAlleSøknaderKnyttetTilBehandling(behandlingId)
+        behandlingRepository.resetOpprettelseAvFFFeilet(behandlingId)
+    }
+
     @Transactional
     fun opprettEllerOppdaterForholdsmessigFordeling(
         behandlingId: Long,

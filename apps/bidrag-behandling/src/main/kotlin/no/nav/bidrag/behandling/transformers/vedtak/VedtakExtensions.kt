@@ -1,6 +1,6 @@
 package no.nav.bidrag.behandling.transformers.vedtak
 
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.sak.Stønadsid
@@ -29,8 +29,8 @@ val VedtakDto.innkrevingstype get() =
     }
 
 fun VedtakDto.finnStønadsendringNyesteIdent(stønad: Stønadsid) = stønadsendringListe.find {
-    hentNyesteIdent(it.kravhaver.verdi) == hentNyesteIdent(stønad.kravhaver.verdi) &&
-        hentNyesteIdent(it.skyldner.verdi) == hentNyesteIdent(stønad.skyldner.verdi) &&
+    hentNyesteIdentIgnorerForbidden(it.kravhaver.verdi) == hentNyesteIdentIgnorerForbidden(stønad.kravhaver.verdi) &&
+        hentNyesteIdentIgnorerForbidden(it.skyldner.verdi) == hentNyesteIdentIgnorerForbidden(stønad.skyldner.verdi) &&
         it.type == stønad.type
 }
 // val VedtakDto.mottatDato get() = hent

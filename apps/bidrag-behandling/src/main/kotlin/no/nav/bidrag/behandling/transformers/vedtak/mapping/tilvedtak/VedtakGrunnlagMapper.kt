@@ -51,6 +51,7 @@ import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssak
@@ -60,7 +61,6 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.Omgjøringorkest
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
-import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
@@ -68,7 +68,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
-import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnGrunnlagSomErReferertAv
@@ -400,16 +399,16 @@ class VedtakGrunnlagMapper(
     fun Behandling.tilPersonobjekter(søknadsbarnRolle: Rolle? = null) = mapper.run { tilPersonobjekter(søknadsbarnRolle) }
 
     fun List<BidragssakDto>.hentRolleMedFnr(fnr: String): RolleDto = flatMap { it.roller }.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-            personService.hentNyesteIdent(fnr)
+        nyesteIdentEllerSøkt(it.fødselsnummer?.verdi) == nyesteIdentEllerSøkt(fnr)
     }
-        ?: fantIkkeRolleISak(joinToString { it.saksnummer?.verdi ?: "" }, fnr)
+        ?: fantIkkeRolleISak(joinToString { it.saksnummer.verdi }, fnr)
 
     fun BidragssakDto.hentRolleMedFnr(fnr: String): RolleDto = roller.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-            personService.hentNyesteIdent(fnr)
+        nyesteIdentEllerSøkt(it.fødselsnummer?.verdi) == nyesteIdentEllerSøkt(fnr)
     }
         ?: fantIkkeRolleISak(saksnummer.verdi, fnr)
+
+    private fun nyesteIdentEllerSøkt(ident: String?) = ident?.let { personService.hentNyesteIdent(it) ?: Personident(it) }
 
     fun Behandling.byggGrunnlagForAvslagUgyldigUtgifter() = mapper.run {
         listOf(
