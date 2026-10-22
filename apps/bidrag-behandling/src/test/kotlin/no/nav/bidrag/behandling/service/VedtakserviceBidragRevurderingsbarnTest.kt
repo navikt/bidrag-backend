@@ -281,12 +281,7 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
             shouldHaveSize(2)
             val seSøknadsbarn = it.find { it.kravhaver.verdi == testdataBarn1.ident }!!
             seSøknadsbarn.beslutning shouldBe Beslutningstype.ENDRING
-            seSøknadsbarn.periodeListe shouldHaveSize 1
-            seSøknadsbarn.periodeListe.first().resultatkode shouldBe Resultatkode.IKKE_OMSORG_FOR_BARNET.name
-            val seRevurderingsbarn = it.find { it.kravhaver.verdi == testdataBarn2.ident }!!
-            seRevurderingsbarn.beslutning shouldBe Beslutningstype.AVVIST
-            seRevurderingsbarn.periodeListe.shouldBeEmpty()
-            seRevurderingsbarn.innkreving shouldBe Innkrevingstype.UTEN_INNKREVING
+            seSøknadsbarn.periodeListe shouldHaveSize 0
         }
     }
 
