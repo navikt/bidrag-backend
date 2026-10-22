@@ -1377,7 +1377,6 @@ class BehandlingTilVedtakMapping(
         }
 
     fun Behandling.byggOpprettVedtakRequestAvslagForBidrag(request: FatteVedtakRequestDto? = null): OpprettVedtakRequestDto = mapper.run {
-        val sak = sakConsumer.hentSak(saksnummer)
         val grunnlagListe = byggGrunnlagGenereltAvslag(request, false)
         val grunnlagslisteGebyr = byggGrunnlagForGebyr()
         val resultatEngangsbeløpGebyr = mapEngangsbeløpGebyr(grunnlagListe.toList() + grunnlagslisteGebyr)
@@ -1391,6 +1390,7 @@ class BehandlingTilVedtakMapping(
                 engangsbeløpListe = resultatEngangsbeløpGebyr.engangsbeløp,
                 stønadsendringListe =
                 søknadsbarn.map {
+                    val sak = sakConsumer.hentSak(it.saksnummer)
                     val avslagKode = it.avslag ?: avslag
                     // Når alle søknadsbarn har avslag skal revurderingsbarn avvises uten perioder.
                     // Avslagsperioder kan føre til opphør av løpende bidrag.
@@ -1408,7 +1408,7 @@ class BehandlingTilVedtakMapping(
                             .reelMottakerEllerBidragsmottaker(
                                 sak.hentRolleMedFnr(it.ident!!),
                             ),
-                        sak = Saksnummer(saksnummer),
+                        sak = Saksnummer(it.saksnummer),
                         type = it.stønadstype ?: stonadstype!!,
                         beslutning = if (erAvvisning) Beslutningstype.AVVIST else Beslutningstype.ENDRING,
                         grunnlagReferanseListe =
@@ -1424,7 +1424,7 @@ class BehandlingTilVedtakMapping(
                         } else {
                             listOf(
                                 OpprettPeriodeRequestDto(
-                                    periode = ÅrMånedsperiode(virkningstidspunktEllerSøktFomDato, null),
+                                    periode = ÅrMånedsperiode(it.virkningstidspunktRolle, null),
                                     beløp = null,
                                     resultatkode = avslagKode!!.name,
                                     valutakode = "NOK",
@@ -1529,7 +1529,7 @@ class BehandlingTilVedtakMapping(
                         resultatkode = resultat.resultatkode.name,
                         valutakode = "NOK",
                         betaltBeløp = utgift!!.totalBeløpBetaltAvBp,
-                        innkreving = innkrevingstype!!,
+                        innkreving = it.innkrevingstype!!,
                         skyldner = tilSkyldner(),
                         referanse = hentUnikReferanseEngangsbeløp(kravhaver, engangsbeloptype!!),
                         omgjørVedtakId = omgjøringsdetaljer?.omgjørVedtakId,
