@@ -521,7 +521,7 @@ fun Set<Grunnlag>.hentGrunnlagsreferanserForInntekt(
     val periode = ÅrMånedsperiode(inntekt.opprinneligFom!!, inntekt.opprinneligTom)
     val grunnlag = if (sjekkAktive) hentAlleAktiv() else hentAlleIkkeAktiv()
     val inntekterGjelderGrunnlag =
-        grunnlag.find {
+        grunnlag.filter {
             it.type == inntekt.type.tilGrunnlagsdataType() &&
                 it.erBearbeidet &&
                 hentNyesteIdentIgnorerForbidden(
@@ -530,18 +530,20 @@ fun Set<Grunnlag>.hentGrunnlagsreferanserForInntekt(
         }
 
     val inntekter =
-        inntekterGjelderGrunnlag
-            .konvertereData<SummerteInntekter<SummertÅrsinntekt>>()
-            ?.inntekter
+        inntekterGjelderGrunnlag.flatMap {
+            it.konvertereData<SummerteInntekter<SummertÅrsinntekt>>()
+                ?.inntekter ?: emptyList()
+        }
+
     val beregnetInntekt =
-        inntekter?.find {
+        inntekter.find {
             it.periode == periode &&
                 inntekt.type == it.inntektRapportering &&
                 (inntekt.gjelderBarnIdent.isNullOrEmpty() || inntekt.gjelderBarnIdent == it.gjelderBarnPersonId.trimToNull())
         }
     val behandling = firstOrNull()?.behandling
-    return if (UnleashFeatures.GRUNNLAGSINNHENTING_FUNKSJONELL_FEIL_TEKNISK.isEnabled && inntekterGjelderGrunnlag != null) {
-        opprettGrunnlagsreferanserForInntekt2(inntekt, inntekterGjelderGrunnlag!!.rolle.tilGrunnlagsreferanse())
+    return if (UnleashFeatures.GRUNNLAGSINNHENTING_FUNKSJONELL_FEIL_TEKNISK.isEnabled && inntekterGjelderGrunnlag.isNotEmpty()) {
+        opprettGrunnlagsreferanserForInntekt2(inntekt, inntekterGjelderGrunnlag.first().rolle.tilGrunnlagsreferanse())
     } else {
         beregnetInntekt?.grunnlagsreferanseListe?.filter { it.isNotEmpty() }
             ?: run {
