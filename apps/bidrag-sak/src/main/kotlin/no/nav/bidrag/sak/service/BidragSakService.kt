@@ -6,6 +6,7 @@ import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
@@ -447,6 +448,8 @@ class BidragSakService(
                     søknadsid = hendelse.søknad?.id?.toString(),
                     behandlingsid = hendelse.søknad?.behandlingId,
                     vedtaksid = vedtaksid,
+                    behandlingstype = hendelse.søknad
+                        ?.blankett?.soknType?.let { Behandlingstype.fraKode(it) },
                     erLukket =
                     hendelse.søknad
                         ?.søknadslinjer
