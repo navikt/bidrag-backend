@@ -340,14 +340,14 @@ class VirkningstidspunktService(
             log.info {
                 "Avslag endret bort fra ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD}, fjerner avslagsgrunn for alle barn ${behandling.id}"
             }
-            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null), true)
+            // Gjelder alle barn uavhengig av sak. saksnummer må nullstilles for å unngå uendelig rekursjon via bidragsmottaker
+            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null, saksnummer = null), true)
             oppdaterVirkningstidspunkt(
                 null,
                 behandling.eldsteVirkningstidspunkt,
                 behandling,
                 tvingEndring = true,
                 rekalkulerOpplysningerVedEndring = true,
-                saksnummer = request.saksnummer,
             )
             return
         }
@@ -355,7 +355,7 @@ class VirkningstidspunktService(
             log.info {
                 "Avslag er satt til ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD} for ene barnet, setter automatisk samme avslag for alle barn ${behandling.id}"
             }
-            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null), true)
+            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null, saksnummer = null), true)
             oppdaterVirkningstidspunkt(
                 null,
                 behandling.eldsteVirkningstidspunkt,
@@ -423,8 +423,10 @@ class VirkningstidspunktService(
                             )
                         }
                     } else if (forRolle != null && forRolle.avslag != null) {
+                        // Bidragsmottaker brukes når saksnummer er angitt. Da skal opphørsdato fjernes for barna i saken
+                        val idRolle = if (forRolle.rolletype == Rolletype.BARN) forRolle.id!! else null
                         oppdaterOpphørsdato(
-                            OppdaterOpphørsdatoRequestDto(forRolle.id!!, null),
+                            OppdaterOpphørsdatoRequestDto(idRolle, null, saksnummer = request.saksnummer),
                             behandling,
                         )
                     }
@@ -448,7 +450,13 @@ class VirkningstidspunktService(
         val gjelderBarn = behandling.søknadsbarn.find { it.id == rolleId }
         // Forrige virkningstidspunkt settes fra input til metoden hvis det var en revurderingsbarn som får ny virkningstidspunkt etter ny søknad
         val forrigeVirkningstidspunkt = forrigeVirkningstidspunkt ?: gjelderBarn?.virkningstidspunkt ?: behandling.eldsteVirkningstidspunkt
-        val erVirkningstidspunktEndret = tvingEndring || nyVirkningstidspunkt != forrigeVirkningstidspunkt
+        val forrigeVirkningstidspunktSak =
+            if (gjelderBarn == null && saksnummer != null) {
+                behandling.søknadsbarn.filter { it.saksnummer == saksnummer }.minOfOrNull { it.virkningstidspunktRolle }
+            } else {
+                null
+            }
+        val erVirkningstidspunktEndret = tvingEndring || nyVirkningstidspunkt != (forrigeVirkningstidspunktSak ?: forrigeVirkningstidspunkt)
 
         fun oppdatereUnderhold() {
             log.info { "Tilpasse perioder for underhold til ny virkningsdato i behandling ${behandling.id}" }
@@ -700,8 +708,15 @@ class VirkningstidspunktService(
     ) {
         val requestOpphørsmåned = request.opphørsdato?.withDayOfMonth(1)
         val rolle = behandling.roller.find { it.id == request.idRolle }
+        val søknadsbarnISak = behandling.søknadsbarn.filter { request.saksnummer == null || it.saksnummer == request.saksnummer }
         val forrigeOpphørsdato = rolle?.opphørsdato ?: behandling.globalOpphørsdato
-        val erOpphørsdatoEndret = tvingEndring || requestOpphørsmåned != forrigeOpphørsdato || request.simulerEndring
+        val forrigeOpphørsdatoSak =
+            if (rolle == null && request.saksnummer != null) {
+                søknadsbarnISak.takeIf { barn -> barn.none { it.opphørsdato == null } }?.maxOfOrNull { it.opphørsdato!! }
+            } else {
+                forrigeOpphørsdato
+            }
+        val erOpphørsdatoEndret = tvingEndring || requestOpphørsmåned != forrigeOpphørsdatoSak || request.simulerEndring
         val erOpphørSlettet = requestOpphørsmåned == null && forrigeOpphørsdato != null
 
         fun oppdatereUnderhold() {
@@ -742,7 +757,7 @@ class VirkningstidspunktService(
             if (rolle != null) {
                 rolle.opphørsdato = requestOpphørsmåned
             } else {
-                behandling.søknadsbarn.forEach {
+                søknadsbarnISak.forEach {
                     it.opphørsdato = requestOpphørsmåned
                 }
             }

@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
@@ -14,6 +15,8 @@ import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
+import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterBeregnTilDatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
@@ -22,6 +25,7 @@ import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
 import no.nav.bidrag.behandling.utils.testdata.opprettInntektsposter
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
+import no.nav.bidrag.behandling.utils.testdata.testdataHusstandsmedlem1
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
@@ -30,6 +34,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -267,6 +272,208 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         behandling.søknadsbarn.first().opphørsdato = LocalDate.parse("2024-12-01")
         virkningstidspunktService.oppdaterAvslagÅrsak(behandling, OppdatereVirkningstidspunkt(avslag = Resultatkode.BIDRAGSPLIKTIG_ER_DØD))
         behandling.søknadsbarn.first().opphørsdato shouldBe null
+    }
+
+    @Nested
+    inner class SaksnummerTest {
+        private val sak2 = "2222222"
+
+        private fun opprettBehandlingMedBarnIToSaker(): Triple<Behandling, Rolle, Rolle> {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+            val barn1 = behandling.søknadsbarn.first()
+            barn1.forholdsmessigFordeling = opprettFFRolle(behandling.saksnummer)
+            val barn2 =
+                Rolle(
+                    ident = testdataBarn2.ident,
+                    rolletype = Rolletype.BARN,
+                    behandling = behandling,
+                    fødselsdato = testdataBarn2.fødselsdato,
+                    id = 55,
+                    forholdsmessigFordeling = opprettFFRolle(sak2),
+                )
+            behandling.roller.add(barn2)
+            behandling.søktFomDato = LocalDate.parse("2024-02-01")
+            barn1.virkningstidspunkt = LocalDate.parse("2025-01-01")
+            barn2.virkningstidspunkt = LocalDate.parse("2025-03-01")
+            behandling.virkningstidspunkt = LocalDate.parse("2025-01-01")
+            behandling.søknadsbarn.forEach {
+                it.opphørsdato = null
+                it.avslag = null
+                it.årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            }
+            behandling.avslag = null
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+            return Triple(behandling, barn1, barn2)
+        }
+
+        private fun opprettFFRolle(saksnummer: String) = ForholdsmessigFordelingRolle(
+            tilhørerSak = saksnummer,
+            behandlerenhet = "4806",
+            delAvOpprinneligBehandling = true,
+            erRevurdering = false,
+            bidragsmottaker = null,
+        )
+
+        @Test
+        fun `skal oppdatere virkningstidspunkt kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+            )
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
+            behandling.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+        }
+
+        @Test
+        fun `skal oppdatere virkningstidspunkt for sak når ny dato er lik eldste virkningstidspunkt i behandlingen`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, virkningstidspunkt = LocalDate.parse("2025-01-01")),
+            )
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+        }
+
+        @Test
+        fun `skal oppdatere avslag kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+            )
+
+            barn1.avslag shouldBe Resultatkode.IKKE_OMSORG_FOR_BARNET
+            barn1.årsak shouldBe null
+            barn2.avslag shouldBe null
+            barn2.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            behandling.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal fjerne opphørsdato for barn i sak ved avslag når saksnummer er angitt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.opphørsdato = LocalDate.parse("2025-12-01")
+            barn2.opphørsdato = LocalDate.parse("2025-12-01")
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+            )
+
+            barn1.opphørsdato shouldBe null
+            barn2.opphørsdato shouldBe LocalDate.parse("2025-12-01")
+        }
+
+        @Test
+        fun `skal sette avslag bidragspliktig er død for alle barn selv om saksnummer er angitt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, avslag = Resultatkode.BIDRAGSPLIKTIG_ER_DØD),
+            )
+
+            barn1.avslag shouldBe Resultatkode.BIDRAGSPLIKTIG_ER_DØD
+            barn2.avslag shouldBe Resultatkode.BIDRAGSPLIKTIG_ER_DØD
+            behandling.avslag shouldBe Resultatkode.BIDRAGSPLIKTIG_ER_DØD
+        }
+
+        @Test
+        fun `skal fjerne avslag bidragspliktig er død for alle barn selv om saksnummer er angitt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(rolleId = barn1.id, avslag = Resultatkode.BIDRAGSPLIKTIG_ER_DØD),
+            )
+            barn2.avslag shouldBe Resultatkode.BIDRAGSPLIKTIG_ER_DØD
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(
+                    rolleId = barn1.id,
+                    saksnummer = behandling.saksnummer,
+                    årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
+                ),
+            )
+
+            barn1.avslag shouldBe null
+            barn2.avslag shouldBe null
+            behandling.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal oppdatere beregnTil kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdaterBeregnTilDato(
+                OppdaterBeregnTilDatoRequestDto(idRolle = null, beregnTil = BeregnTil.INNEVÆRENDE_MÅNED, saksnummer = sak2),
+                behandling,
+                rekalkulerOpplysningerVedEndring = false,
+            )
+
+            barn1.beregnTil shouldBe null
+            barn2.beregnTil shouldBe BeregnTil.INNEVÆRENDE_MÅNED
+        }
+
+        @Test
+        fun `skal oppdatere opphørsdato kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            virkningstidspunktService.oppdaterOpphørsdato(
+                OppdaterOpphørsdatoRequestDto(idRolle = null, opphørsdato = LocalDate.parse("2025-10-01"), saksnummer = sak2),
+                behandling,
+                rekalkulerOpplysningerVedEndring = false,
+            )
+
+            barn1.opphørsdato shouldBe null
+            barn2.opphørsdato shouldBe LocalDate.parse("2025-10-01")
+        }
+
+        @Test
+        fun `skal fjerne opphørsdato for barn i angitt sak selv om global opphørsdato er null`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.opphørsdato = LocalDate.parse("2025-10-01")
+
+            virkningstidspunktService.oppdaterOpphørsdato(
+                OppdaterOpphørsdatoRequestDto(idRolle = null, opphørsdato = null, saksnummer = behandling.saksnummer),
+                behandling,
+                rekalkulerOpplysningerVedEndring = false,
+            )
+
+            barn1.opphørsdato shouldBe null
+            barn2.opphørsdato shouldBe null
+        }
+
+        @Test
+        fun `skal bruke samme virkningstidspunkt kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val barn3 =
+                Rolle(
+                    ident = testdataHusstandsmedlem1.ident,
+                    rolletype = Rolletype.BARN,
+                    behandling = behandling,
+                    fødselsdato = testdataHusstandsmedlem1.fødselsdato,
+                    id = 56,
+                    virkningstidspunkt = LocalDate.parse("2025-06-01"),
+                    årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
+                    forholdsmessigFordeling = opprettFFRolle(sak2),
+                )
+            behandling.roller.add(barn3)
+
+            virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandling.id!!, sak2)
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
+            barn3.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
+        }
     }
 
     @Nested

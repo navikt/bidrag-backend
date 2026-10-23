@@ -643,6 +643,7 @@ class ForholdsmessigFordelingBarnService(
                     behandling,
                     OppdatereVirkningstidspunkt(
                         årsak = null,
+                        rolleId = rolle.id,
                         avslag = resultatkode,
                     ),
                     tvingEndring = true,
