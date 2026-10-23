@@ -408,7 +408,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
         return "Kan ikke behandle søknad for bidrag uten bidragspliktig"
     }
 
-    val løpendeBidrag = hentLøpendeBidrag(bidragspliktig!!.personident)
+    val løpendeBidrag = hentLøpendeBidrag(bidragspliktig!!.personident, søktFomDato)
 
     val kanBehandleFlereBarnLøpendeBidrag =
         if (kanBehandleSjekk) {
