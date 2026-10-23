@@ -6,11 +6,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.beløp.Beløp
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.tilBisysResultatkode
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.AldersgruppeForskudd
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.domene.util.Visningsnavn
@@ -204,7 +206,13 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
 
 fun List<GrunnlagDto>.tilResultatVisningsnavn(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Visningsnavn? = resultatSluttberegning(grunnlagsreferanseListe)?.visningsnavn
 
-fun List<GrunnlagDto>.tilBisysResultatkode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): String = resultatSluttberegning(grunnlagsreferanseListe)?.legacyKode ?: "KBB"
+/** Gir opphørskoden (f.eks. ODN i stedet for ADN) når vedtaket er et opphør eller bidraget løper ved vedtakstidspunktet */
+@JvmOverloads
+fun List<GrunnlagDto>.tilBisysResultatkode(
+    grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+    vedtakstype: Vedtakstype? = null,
+    løperBidrag: Boolean? = null,
+): String = resultatSluttberegning(grunnlagsreferanseListe)?.tilBisysResultatkode(vedtakstype, løperBidrag) ?: "KBB"
 
 fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = resultatSluttberegning(grunnlagsreferanseListe).erBeregnetAvslagBarnebidrag()
 
