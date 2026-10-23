@@ -19,7 +19,6 @@ import no.nav.bidrag.behandling.dto.v2.underhold.OverlappendePeriode
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadValideringsfeil
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadValideringsfeilTabell
 import no.nav.bidrag.behandling.ressursIkkeFunnetException
@@ -35,6 +34,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 fun OppdatereUnderholdRequest.validere() {
     if (this.harTilsynsordning == null && this.begrunnelse.isNullOrBlank()) {
@@ -231,13 +231,9 @@ fun Set<FaktiskTilsynsutgift>.validerePerioderFaktiskTilsynsutgift(): Underholds
     ),
 )
 
-fun Set<Underholdskostnad>.valider(
-    beregnetUnderholdskostnad: (Underholdskostnad) -> Set<UnderholdskostnadDto> = { emptySet() },
-) = this.map { it.valider(beregnetUnderholdskostnad(it)) }.filter { it.harFeil }.toSet()
+fun Set<Underholdskostnad>.valider() = this.map { it.valider() }.filter { it.harFeil }.toSet()
 
-fun Underholdskostnad.valider(
-    beregnetPerioder: Set<UnderholdskostnadDto> = emptySet(),
-): UnderholdskostnadValideringsfeil = UnderholdskostnadValideringsfeil(
+fun Underholdskostnad.valider(): UnderholdskostnadValideringsfeil = UnderholdskostnadValideringsfeil(
     gjelderUnderholdskostnad = this,
     stønadTilBarnetilsyn = barnetilsyn.validerePerioderBarnetilsyn().takeIf { it.harFeil },
     tilleggsstønad = tilleggsstønad.validerePerioderTilleggsstønad().takeIf { it.harFeil },
@@ -246,27 +242,7 @@ fun Underholdskostnad.valider(
     tilleggsstønadsperioderUtenFaktiskTilsynsutgift = finnTilleggsstønadsperioderSomIkkeOverlapperMedFaktiskTilsynsutgiftsperioder(),
     manglerPerioderForTilsynsordning = manglerPerioderForTilsynsordning(),
     manglerBegrunnelse = manglerBegrunnelse(),
-    forpleiningOverstigerUnderholdskostnad = finnForpleiningSomOverstigerUnderholdskostnad(beregnetPerioder),
 )
-
-/**
- * Kontrollen i endepunktet fanger bare opp beløpet når forpleiningen registreres. Underholdskostnaden
- * kan senere gå ned, for eksempel når en faktisk tilsynsutgift slettes, og da må feilen fortsatt vises.
- */
-fun Underholdskostnad.finnForpleiningSomOverstigerUnderholdskostnad(
-    beregnetPerioder: Set<UnderholdskostnadDto>,
-): Set<DatoperiodeDto> {
-    if (forpleining.isEmpty() || beregnetPerioder.isEmpty()) return emptySet()
-    return forpleining
-        .filter { registrert ->
-            beregnetPerioder.any {
-                it.periode.fom <= (registrert.tom ?: LocalDate.MAX) &&
-                    registrert.fom <= (it.periode.tom ?: LocalDate.MAX) &&
-                    registrert.beløp > it.forbruk + it.boutgifter + it.stønadTilBarnetilsyn + it.tilsynsutgifter - it.barnetrygd
-            }
-        }.map { DatoperiodeDto(it.fom, it.tom) }
-        .toSet()
-}
 
 fun Underholdskostnad.manglerBegrunnelse(): Boolean {
     // Bisys vedtak har ingen begrunnelse. Er ikke påkrevd for å unngå at saksbehandler må skrive inn begrunnelse der det ikke er behov
@@ -359,9 +335,11 @@ fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
             ressursIkkeFunnetException("Fant ikke forpleining med id $id i behandling ${underholdskostnad.behandling.id}")
         }
     }
+    // Beregningen bruker hele måneder (se GrunnlagByggerBidrag). Slutter perioden før siste dag i måneden til fra og med,
+    // blir den uten varighet. Dette fanger også opp til og med før fra og med.
     periode.tom?.let { tom ->
-        if (tom < periode.fom) {
-            ugyldigForespørsel("Til og med kan ikke være før fra og med")
+        if (YearMonth.from(tom.plusDays(1)) <= YearMonth.from(periode.fom)) {
+            ugyldigForespørsel("Perioden må vare minst én måned")
         }
     }
     if (periode.fom < underholdskostnad.personFødselsdato.withDayOfMonth(1)) {
@@ -372,28 +350,6 @@ fun OppdatereForpleiningRequest.validere(underholdskostnad: Underholdskostnad) {
     }
     if (underholdskostnad.gjelderAndreBarn) {
         ugyldigForespørsel("Forpleining kan bare registreres for søknadsbarn")
-    }
-}
-
-/**
- * Forpleiningen kan ikke overstige underholdskostnaden før forpleining er trukket fra.
- * Frontend gjør samme kontroll, men endepunktet kan kalles direkte.
- *
- * Underholdskostnaden splittes i flere perioder enn forpleiningen, så beløpet kontrolleres
- * mot den laveste i perioden. `total` er satt til null når forpleiningen overstiger
- * underholdskostnaden, derfor summeres komponentene i stedet for å bruke `total`.
- */
-fun OppdatereForpleiningRequest.validereMotUnderholdskostnad(beregnetPerioder: Set<UnderholdskostnadDto>) {
-    // Periode.overlapper er inklusiv i begge ender og ville regnet tilstøtende perioder som overlappende
-    val overlappende =
-        beregnetPerioder.filter {
-            it.periode.fom <= (periode.tom ?: LocalDate.MAX) && periode.fom <= (it.periode.tom ?: LocalDate.MAX)
-        }
-    if (overlappende.isEmpty()) return
-
-    val laveste = overlappende.minOf { it.forbruk + it.boutgifter + it.stønadTilBarnetilsyn + it.tilsynsutgifter - it.barnetrygd }
-    if (beløp > laveste) {
-        ugyldigForespørsel("Forpleining på $beløp overstiger underholdskostnaden på $laveste i perioden $periode")
     }
 }
 

@@ -29,7 +29,7 @@ I praksis for ikke-delt bosted blir beløpet `max(bidragEtterFordeling, nettoBar
 
 Flagg:
 
-- `erBidragJustertTilNettoBarnetilleggBP = (resultat == nettoBarnetilleggBP)`
+- `erBidragJustertTilNettoBarnetilleggBP = !erDeltBosted && nettoBarnetilleggBP > 0 && (resultat == nettoBarnetilleggBP)`
 
 Resultat avrundes til 2 desimaler.
 

@@ -164,12 +164,14 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
             beregnGrunnlag = mottattGrunnlag.grunnlagListe,
             gjelderBarnReferanse = mottattGrunnlag.søknadsbarnReferanse,
         ),
+        underholdskostnadDelberegningPeriodeGrunnlagListe = mapUnderholdskostnad(mottattGrunnlag),
     )
 
     private fun mapUnderholdskostnad(beregnGrunnlag: BeregnGrunnlag): List<UnderholdskostnadDelberegningPeriodeGrunnlag> {
         try {
             return beregnGrunnlag.grunnlagListe
                 .filtrerOgKonverterBasertPåEgenReferanse<DelberegningUnderholdskostnad>(Grunnlagstype.DELBEREGNING_UNDERHOLDSKOSTNAD)
+                .filter { it.gjelderBarnReferanse == null || it.gjelderBarnReferanse == beregnGrunnlag.søknadsbarnReferanse }
                 .map {
                     UnderholdskostnadDelberegningPeriodeGrunnlag(
                         referanse = it.referanse,

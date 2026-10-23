@@ -6,11 +6,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.beløp.Beløp
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.tilBisysResultatkode
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.AldersgruppeForskudd
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.domene.util.Visningsnavn
@@ -40,6 +42,8 @@ private val sluttberegningAvslagResultaterV2 =
     listOf(
         Resultatkode.IKKE_OMSORG,
         Resultatkode.BARNET_ER_SELVFORSØRGET,
+        Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
+        Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG,
     )
 
 fun List<GrunnlagDto>.finnBPsEvne(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal? {
@@ -146,6 +150,15 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
             Resultatkode.IKKE_OMSORG
         }
 
+        // Avslag skal gå foran justeringene under, fordi det ikke beregnes noe bidrag
+        sluttberegningInnhold.bidragIkkeBeregnetDeltBosted -> {
+            Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED
+        }
+
+        sluttberegningInnhold.forpleiningDekkerUnderholdskostnaden -> {
+            Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG
+        }
+
         bpsBarnetillegg?.innhold?.erBidragJustertTilNettoBarnetilleggBP == true -> {
             Resultatkode.BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BP
         }
@@ -181,7 +194,7 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
             Resultatkode.MAKS_25_PROSENT_AV_INNTEKT
         }
 
-        bidragTilFordeling?.innhold?.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM -> {
+        erBidragJustertForNettoBarnetilleggBM(bidragTilFordeling, nettoBidragEtterBarnetilleggBM) -> {
             Resultatkode.BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM
         }
 
@@ -193,9 +206,18 @@ fun List<GrunnlagDto>.resultatSluttberegning(grunnlagsreferanseListe: List<Grunn
 
 fun List<GrunnlagDto>.tilResultatVisningsnavn(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Visningsnavn? = resultatSluttberegning(grunnlagsreferanseListe)?.visningsnavn
 
-fun List<GrunnlagDto>.tilBisysResultatkode(grunnlagsreferanseListe: List<Grunnlagsreferanse>): String = resultatSluttberegning(grunnlagsreferanseListe)?.legacyKode ?: "KBB"
+/** Gir opphørskoden (f.eks. ODN i stedet for ADN) når vedtaket er et opphør eller bidraget løper ved vedtakstidspunktet */
+@JvmOverloads
+fun List<GrunnlagDto>.tilBisysResultatkode(
+    grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+    vedtakstype: Vedtakstype? = null,
+    løperBidrag: Boolean? = null,
+): String = resultatSluttberegning(grunnlagsreferanseListe)?.tilBisysResultatkode(vedtakstype, løperBidrag) ?: "KBB"
 
-fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = sluttberegningAvslagResultaterV2.contains(resultatSluttberegning(grunnlagsreferanseListe))
+fun List<GrunnlagDto>.erResultatAvslag(grunnlagsreferanseListe: List<Grunnlagsreferanse>): Boolean = resultatSluttberegning(grunnlagsreferanseListe).erBeregnetAvslagBarnebidrag()
+
+/** Resultater der beregningen av barnebidrag gir avslag/opphør uten beløp */
+fun Resultatkode?.erBeregnetAvslagBarnebidrag(): Boolean = this != null && sluttberegningAvslagResultaterV2.contains(this)
 
 data class SluttberegningBarnebidragAldersjustering(
     override val periode: ÅrMånedsperiode,
@@ -435,6 +457,8 @@ data class DelberegningBidragTilFordeling(
     val nettoBidragEtterBarnetilleggBM: BigDecimal = BigDecimal.ZERO,
     val bruttoBidragEtterBarnetilleggBM: BigDecimal = BigDecimal.ZERO,
     val erBidragJustertForNettoBarnetilleggBM: Boolean = false,
+    @Schema(description = "Søknadsbarnet har delt bosted. Bidrag til fordeling lik 0 betyr da ikke at BP mangler evne")
+    val erDeltBosted: Boolean = false,
 ) : Delberegning
 
 data class DelberegningSumBidragTilFordeling(
@@ -473,6 +497,10 @@ data class SluttberegningBarnebidragV2(
     val resultatBeløp: BigDecimal?,
     val barnetErSelvforsørget: Boolean = false,
     val ikkeOmsorgForBarnet: Boolean = false,
+    @Schema(description = "Delt bosted der BPs andel av U er under 50 %. Bidraget beregnes ikke, og perioden gir avslag eller opphør")
+    val bidragIkkeBeregnetDeltBosted: Boolean = false,
+    @Schema(description = "Forpleiningen er lik eller høyere enn U. Bidraget beregnes ikke, og perioden gir avslag eller opphør")
+    val forpleiningDekkerUnderholdskostnaden: Boolean = false,
 ) : Sluttberegning
 
 data class DelberegningBidragTilFordelingLøpendeBidrag(
