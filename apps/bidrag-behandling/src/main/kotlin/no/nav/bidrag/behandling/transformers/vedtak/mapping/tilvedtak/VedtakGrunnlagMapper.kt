@@ -229,43 +229,47 @@ fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
     behandling.finnBeregnTilDato().toYearMonth()
 }
 
-fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
-    val tidligsteBeregnFra =
-        if (stønadstype == Stønadstype.BIDRAG18AAR) {
-            maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
-        } else if (avslag != null) {
-            virkningstidspunktRolle.toYearMonth()
-        } else {
-            // Virkning kan ikke vær før barnet er født
-            maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
-        }
-    if (behandling.erIForholdsmessigFordeling) {
-        if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-            behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
-                it.finnBeregnFra()
-            } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
-        } else if (erRevurderingsbarn) {
-            behandling
-                .finnPeriodeLøperBidrag(this)
-                ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
-                ?.fom
-                ?.let {
-                    maxOf(
-                        it,
-                        tidligsteBeregnFra,
-                    )
-                }
-                ?: run { tidligsteBeregnFra }
-        } else {
-            tidligsteBeregnFra
-        }
-    } else if (rolletype == Rolletype.BIDRAGSPLIKTIG) {
-        behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
-    } else {
-        virkningstidspunktRolle.toYearMonth()
+/**
+ * Finner måneden rollen skal beregnes fra.
+ *
+ * - Forskudd og særbidrag: behandlingens virkningstidspunkt for alle roller.
+ * - Forholdsmessig fordeling:
+ *   - BM: tidligste beregnFra blant egne søknadsbarn.
+ *   - Revurderingsbarn: når løpende bidrag starter, men ikke før tidligste beregnFra.
+ *   - Andre: eldste virkningstidspunkt, avgrenset av fødsel, 18 år og avslag.
+ * - BP utenfor forholdsmessig fordeling: behandlingens virkningstidspunkt.
+ * - Andre roller: rollens eget virkningstidspunkt.
+ */
+fun Rolle.finnBeregnFra(): YearMonth = when {
+    !behandling.erBidrag() -> behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+
+    behandling.erIForholdsmessigFordeling && rolletype == Rolletype.BIDRAGSMOTTAKER ->
+        behandling.søknadsbarn
+            .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+            .minOfOrNull { it.finnBeregnFra() }
+            ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    behandling.erIForholdsmessigFordeling -> finnBeregnFraIForholdsmessigFordeling()
+
+    rolletype == Rolletype.BIDRAGSPLIKTIG -> behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+
+    else -> virkningstidspunktRolle.toYearMonth()
+}
+
+private fun Rolle.finnBeregnFraIForholdsmessigFordeling(): YearMonth {
+    val eldsteVirkningstidspunkt = behandling.eldsteVirkningstidspunkt.toYearMonth()
+    val tidligsteBeregnFra = when {
+        stønadstype == Stønadstype.BIDRAG18AAR -> maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), eldsteVirkningstidspunkt)
+        avslag != null -> virkningstidspunktRolle.toYearMonth()
+        else -> maxOf(eldsteVirkningstidspunkt, fødselsdato.withDayOfMonth(1).toYearMonth())
     }
-} else {
-    behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+    if (!erRevurderingsbarn) return tidligsteBeregnFra
+
+    val løpendeBidrag = behandling
+        .finnPeriodeLøperBidrag(this)
+        ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
+        ?: return tidligsteBeregnFra
+    return maxOf(løpendeBidrag.fom, tidligsteBeregnFra)
 }
 
 fun Behandling.finnBeregnTilDatoBehandling(
