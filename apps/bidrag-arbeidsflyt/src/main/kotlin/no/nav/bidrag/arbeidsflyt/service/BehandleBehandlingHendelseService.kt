@@ -211,7 +211,7 @@ class BehandleBehandlingHendelseService(
                         return
                     }
                     overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
-                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler || it.tildeltEnhetsnr != it.opprettetAvEnhetsnr
+                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler || it.tildeltEnhetsnr != ff.opprettetAvEnhet
                     }
                 }
 
