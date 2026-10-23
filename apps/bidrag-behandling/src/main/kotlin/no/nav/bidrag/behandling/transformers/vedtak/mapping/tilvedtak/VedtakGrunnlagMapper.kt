@@ -229,43 +229,42 @@ fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
     behandling.finnBeregnTilDato().toYearMonth()
 }
 
-fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
-    val tidligsteBeregnFra =
-        if (stønadstype == Stønadstype.BIDRAG18AAR) {
-            maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
-        } else if (avslag != null) {
-            virkningstidspunktRolle.toYearMonth()
-        } else {
-            // Virkning kan ikke vær før barnet er født
-            maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
-        }
-    if (behandling.erIForholdsmessigFordeling) {
-        if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-            behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
-                it.finnBeregnFra()
-            } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
-        } else if (erRevurderingsbarn) {
-            behandling
-                .finnPeriodeLøperBidrag(this)
-                ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
-                ?.fom
-                ?.let {
-                    maxOf(
-                        it,
-                        tidligsteBeregnFra,
-                    )
-                }
-                ?: run { tidligsteBeregnFra }
-        } else {
-            tidligsteBeregnFra
-        }
-    } else if (rolletype == Rolletype.BIDRAGSPLIKTIG) {
-        behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
-    } else {
-        virkningstidspunktRolle.toYearMonth()
-    }
-} else {
-    behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+/**
+ * Finner måneden rollen skal beregnes fra.
+ *
+ * - BM og BP: tidligste beregnFra blant egne barn. Uten barn: eldste virkningstidspunkt.
+ * - Andre roller: eget virkningstidspunkt. I forholdsmessig fordeling: når første bidrag
+ *   eller privat avtale starter, men ikke før virkningstidspunktet.
+ */
+fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
+    Rolletype.BIDRAGSMOTTAKER, Rolletype.BIDRAGSPLIKTIG ->
+        barn.minOfOrNull { it.finnBeregnFra() } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    Rolletype.BARN, Rolletype.REELMOTTAKER, Rolletype.FEILREGISTRERT -> finnBeregnFraForBarn()
+}
+
+private fun Rolle.finnBeregnFraForBarn(): YearMonth {
+    val beregnFra = virkningstidspunktRolle.toYearMonth()
+    if (!behandling.erIForholdsmessigFordeling) return beregnFra
+
+    val bidragsperioder = behandling
+        .hentGrunnlagBeløpshistorikkForRolle(this, grunnlagFraVedtakSomSkalOmgjøres = behandling.erKlageEllerOmgjøring)
+        .konverterTilStønadDto()
+        ?.periodeListe
+        ?.filter { it.beløp != null }
+        ?.map { it.periode }
+        .orEmpty()
+    val privatAvtaleperioder = behandling.privatAvtale
+        .find { it.gjelderPerson(ident!!, stønadstype) }
+        ?.perioder
+        ?.map { ÅrMånedsperiode(it.fom, it.tom) }
+        .orEmpty()
+    val førsteBidragFom = (bidragsperioder + privatAvtaleperioder)
+        .filter { it.overlapper(ÅrMånedsperiode(fom = beregnFra, til = null)) }
+        .minOfOrNull { it.fom }
+        ?: beregnFra
+
+    return maxOf(beregnFra, førsteBidragFom)
 }
 
 fun Behandling.finnBeregnTilDatoBehandling(
