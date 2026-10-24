@@ -93,17 +93,14 @@ class UnderholdService(
                 henteOgValidereUnderholdskostnad(behandling, it).rolle
             }
 
-        val rolleBm =
-            request.bidragsmottakerId?.let { bmId ->
-                val bm = behandling.alleBidragsmottakere.find { it.id == bmId }
-                if (behandling.alleBidragsmottakere.size > 1 && bm == null) {
-                    throw HttpClientErrorException(
-                        HttpStatus.BAD_REQUEST,
-                        "Bidragsmottaker id må settes hvis det finnes flere BMer i saken",
-                    )
-                }
-                bm
-            } ?: behandling.bidragsmottaker
+        val rolleBm = request.bidragsmottakerId?.let { bmId -> behandling.alleBidragsmottakere.find { it.id == bmId } }
+        // Begrunnelse for andre barn lagres på bidragsmottaker og må derfor angis når det finnes flere bidragsmottakere
+        if (behandling.alleBidragsmottakere.size > 1 && rolleBm == null && (request.bidragsmottakerId != null || rolleSøknadsbarn == null)) {
+            throw HttpClientErrorException(
+                HttpStatus.BAD_REQUEST,
+                "Bidragsmottaker id må settes hvis det finnes flere BMer i saken",
+            )
+        }
 
         if (request.underholdsid == null) {
             val underholdHarAndreBarn =
@@ -120,7 +117,7 @@ class UnderholdService(
             behandling,
             Notattype.UNDERHOLDSKOSTNAD,
             request.begrunnelse,
-            rolleSøknadsbarn ?: rolleBm!!,
+            rolleSøknadsbarn ?: rolleBm ?: behandling.bidragsmottaker!!,
         )
     }
 

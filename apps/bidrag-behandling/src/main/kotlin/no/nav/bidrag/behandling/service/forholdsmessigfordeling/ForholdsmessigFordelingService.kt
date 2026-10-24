@@ -751,7 +751,7 @@ class ForholdsmessigFordelingService(
             val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
             val bmIdent =
                 søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
-                    ?: behandling.bidragsmottakerForSak(søknad.saksnummer)?.ident
+                    ?: behandling.bidragsmottakerForSak(søknad.saksnummer).ident
             val ffDetaljer =
                 ForholdsmessigFordelingRolle(
                     delAvOpprinneligBehandling = false,
