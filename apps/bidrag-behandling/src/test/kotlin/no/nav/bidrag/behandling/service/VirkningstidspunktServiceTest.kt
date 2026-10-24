@@ -284,6 +284,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
     @Nested
     inner class SaksnummerTest {
         private val sak2 = "2222222"
+        private val ukjentRolleId = 9999L
 
         private fun opprettBehandlingMedBarnIToSaker(): Triple<Behandling, Rolle, Rolle> {
             val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
@@ -600,15 +601,14 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         ) = NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT, rolle.id!!)
 
         @Test
-        fun `skal feile når rolleId er bidragsmottaker i oppdatering av virkningstidspunkt`() {
+        fun `skal feile når rolleId ikke finnes i oppdatering av virkningstidspunkt`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
-            val bm2 = leggTilBidragsmottakerForSak2(behandling)
 
             val virkningstidspunktFør = listOf(barn1.virkningstidspunkt, barn2.virkningstidspunkt)
             shouldThrow<HttpClientErrorException> {
                 virkningstidspunktService.oppdatereVirkningstidspunkt(
                     behandling.id!!,
-                    OppdatereVirkningstidspunkt(rolleId = bm2.id, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+                    OppdatereVirkningstidspunkt(rolleId = ukjentRolleId, virkningstidspunkt = LocalDate.parse("2025-05-01")),
                 )
             }
 
@@ -616,13 +616,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
-        fun `skal feile når rolleId er bidragsmottaker ved avslag i oppdatering av virkningstidspunkt`() {
+        fun `skal feile når rolleId ikke finnes ved avslag i oppdatering av virkningstidspunkt`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
 
             shouldThrow<HttpClientErrorException> {
                 virkningstidspunktService.oppdatereVirkningstidspunkt(
                     behandling.id!!,
-                    OppdatereVirkningstidspunkt(rolleId = behandling.bidragsmottaker!!.id, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+                    OppdatereVirkningstidspunkt(rolleId = ukjentRolleId, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
                 )
             }
 
@@ -674,14 +674,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
-        fun `skal feile når rolleId er bidragsmottaker i begrunnelse for virkningstidspunkt`() {
+        fun `skal feile når rolleId ikke finnes i begrunnelse for virkningstidspunkt`() {
             val (behandling, _, _) = opprettBehandlingMedBarnIToSaker()
-            val bm2 = leggTilBidragsmottakerForSak2(behandling)
 
             shouldThrow<HttpClientErrorException> {
                 virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
                     behandling.id!!,
-                    OppdatereVirkningstidspunktBegrunnelseDto(rolleId = bm2.id, oppdatereBegrunnelse = OppdatereBegrunnelse("Sak 2")),
+                    OppdatereVirkningstidspunktBegrunnelseDto(rolleId = ukjentRolleId, oppdatereBegrunnelse = OppdatereBegrunnelse("Sak 2")),
                 )
             }
         }
