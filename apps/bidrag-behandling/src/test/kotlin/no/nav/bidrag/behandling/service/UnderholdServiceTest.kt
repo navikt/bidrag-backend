@@ -12,17 +12,17 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.behandling.database.datamodell.Behandling
 import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.hentAlleAktiv
@@ -1195,16 +1195,15 @@ class UnderholdServiceTest {
                 respons.shouldNotBeNull()
             }
 
-            private fun leggTilBidragsmottaker(behandling: Behandling) =
-                behandling.roller.add(
-                    Rolle(
-                        ident = "12345678910",
-                        rolletype = Rolletype.BIDRAGSMOTTAKER,
-                        behandling = behandling,
-                        fødselsdato = LocalDate.parse("1985-01-01"),
-                        id = 66,
-                    ),
-                )
+            private fun leggTilBidragsmottaker(behandling: Behandling) = behandling.roller.add(
+                Rolle(
+                    ident = "12345678910",
+                    rolletype = Rolletype.BIDRAGSMOTTAKER,
+                    behandling = behandling,
+                    fødselsdato = LocalDate.parse("1985-01-01"),
+                    id = 66,
+                ),
+            )
 
             @Test
             open fun `skal kreve bidragsmottaker id for begrunnelse for andre barn når det finnes flere bidragsmottakere`() {

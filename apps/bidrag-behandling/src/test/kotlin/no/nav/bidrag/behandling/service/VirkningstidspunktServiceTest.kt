@@ -1,8 +1,10 @@
 package no.nav.bidrag.behandling.service
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
@@ -11,9 +13,6 @@ import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
-import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
-import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunktBegrunnelseDto
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
@@ -22,6 +21,8 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterBeregnTilDatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
+import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunktBegrunnelseDto
+import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
@@ -32,19 +33,18 @@ import no.nav.bidrag.behandling.utils.testdata.testdataHusstandsmedlem1
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
-import io.kotest.matchers.string.shouldContain
-import no.nav.bidrag.domene.enums.vedtak.Stønadstype
-import org.springframework.web.client.HttpClientErrorException
-import io.kotest.assertions.throwables.shouldThrow
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -505,6 +505,50 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
             barn1.årsak shouldBe årsak
             barn1.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal ikke lagre årsak eller avslag på bidragsmottaker når saksnummer er angitt`() {
+            val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
+            val bidragsmottaker = behandling.bidragsmottakerForSak(behandling.saksnummer)
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+            )
+
+            barn1.avslag shouldBe Resultatkode.IKKE_OMSORG_FOR_BARNET
+            bidragsmottaker.årsak shouldBe null
+            bidragsmottaker.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal oppdatere alle barn i sak når barna har ulik årsak og avslag`() {
+            val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
+            val barn3 =
+                Rolle(
+                    ident = testdataHusstandsmedlem1.ident,
+                    rolletype = Rolletype.BARN,
+                    behandling = behandling,
+                    fødselsdato = testdataHusstandsmedlem1.fødselsdato,
+                    id = 58,
+                    virkningstidspunkt = LocalDate.parse("2025-01-01"),
+                    årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT,
+                    forholdsmessigFordeling = opprettFFRolle(behandling.saksnummer),
+                )
+            behandling.roller.add(barn3)
+            barn1.årsak = null
+            barn1.avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT),
+            )
+
+            barn1.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            barn1.avslag shouldBe null
+            barn3.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            barn3.avslag shouldBe null
         }
 
         @Test

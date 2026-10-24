@@ -319,23 +319,23 @@ class VirkningstidspunktService(
             gebyrService.oppdaterGebyrEtterEndringÅrsakAvslag(behandling)
         }
         val forRolle = if (behandling.erBidrag()) {
-            request.rolleId?.let { behandling.roller.find { it.id == request.rolleId } } ?: request.saksnummer?.let {
-                behandling.alleBidragsmottakere.find { it.saksnummer == request.saksnummer }
-            }
+            request.rolleId?.let { behandling.roller.find { it.id == request.rolleId } }
         } else {
             null
         }
+        val gjelderSak = behandling.erBidrag() && forRolle == null && request.saksnummer != null
+        val søknadsbarnISak = behandling.finnSøknadsbarnForSak(request.saksnummer).filter { !it.erRevurderingsbarn }
 
         val forrigeÅrsak = forRolle?.årsak ?: behandling.årsak
         val forrigeAvslag = forRolle?.avslag ?: behandling.avslag
-        // Bidragsmottakers årsak/avslag kan være utdatert hvis barna i saken er endret enkeltvis
-        val erEndretForBarnISak =
-            forRolle != null &&
-                forRolle.rolletype == Rolletype.BIDRAGSMOTTAKER &&
-                behandling.søknadsbarn
-                    .filter { it.saksnummer == forRolle.saksnummer && !it.erRevurderingsbarn }
-                    .any { it.årsak != request.årsak || it.avslag != request.avslag }
-        val erAvslagÅrsakEndret = tvingEndring || erEndretForBarnISak || request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
+        // Barna i saken kan ha ulik årsak/avslag hvis de er endret enkeltvis. Sammenlign derfor mot hvert barn i saken
+        val erAvslagÅrsakEndret =
+            tvingEndring ||
+                if (gjelderSak) {
+                    søknadsbarnISak.any { it.årsak != request.årsak || it.avslag != request.avslag }
+                } else {
+                    request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
+                }
 
         if (request.avslag == null && request.årsak == null) {
             log.warn { "Både avslag og årsak mangler i input for behandling ${behandling.id}. Minst ett av vediene må setttes" }
@@ -343,11 +343,12 @@ class VirkningstidspunktService(
         }
 
         val erBidragFlereBarn = behandling.erBidrag() && behandling.søknadsbarn.size > 1
-        if (forRolle != null && forrigeAvslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
+        val gjelderUtvalgteBarn = forRolle != null || gjelderSak
+        if (gjelderUtvalgteBarn && forrigeAvslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
             log.info {
                 "Avslag endret bort fra ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD}, fjerner avslagsgrunn for alle barn ${behandling.id}"
             }
-            // Gjelder alle barn uavhengig av sak. saksnummer må nullstilles for å unngå uendelig rekursjon via bidragsmottaker
+            // Gjelder alle barn uavhengig av sak. rolleId og saksnummer må nullstilles for å unngå uendelig rekursjon
             oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null, saksnummer = null), true)
             oppdaterVirkningstidspunkt(
                 null,
@@ -358,7 +359,7 @@ class VirkningstidspunktService(
             )
             return
         }
-        if (forRolle != null && request.avslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
+        if (gjelderUtvalgteBarn && request.avslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
             log.info {
                 "Avslag er satt til ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD} for ene barnet, setter automatisk samme avslag for alle barn ${behandling.id}"
             }
@@ -374,7 +375,7 @@ class VirkningstidspunktService(
         }
 
         if (erAvslagÅrsakEndret) {
-            if (forRolle != null && forRolle.rolletype == Rolletype.BARN) {
+            if (forRolle != null) {
                 forRolle.årsak = if (request.avslag != null) null else request.årsak ?: forRolle.årsak
                 forRolle.avslag = if (request.årsak != null) null else request.avslag ?: forRolle.avslag
             } else {
@@ -387,10 +388,6 @@ class VirkningstidspunktService(
                         }
                     it.årsak = if (request.avslag != null) null else nyÅrsak ?: it.årsak
                     it.avslag = if (nyÅrsak != null) null else request.avslag ?: it.avslag
-                }
-                if (forRolle != null) {
-                    forRolle.årsak = if (request.avslag != null) null else request.årsak ?: forRolle.årsak
-                    forRolle.avslag = if (request.årsak != null) null else request.avslag ?: forRolle.avslag
                 }
             }
             if (behandling.erAvslagForAlleIkkeRevurdering) {
@@ -429,11 +426,14 @@ class VirkningstidspunktService(
                                 behandling,
                             )
                         }
-                    } else if (forRolle != null && forRolle.avslag != null) {
-                        // Bidragsmottaker brukes når saksnummer er angitt. Da skal opphørsdato fjernes for barna i saken
-                        val idRolle = if (forRolle.rolletype == Rolletype.BARN) forRolle.id!! else null
+                    } else if (forRolle?.avslag != null) {
                         oppdaterOpphørsdato(
-                            OppdaterOpphørsdatoRequestDto(idRolle, null, saksnummer = request.saksnummer),
+                            OppdaterOpphørsdatoRequestDto(forRolle.id!!, null),
+                            behandling,
+                        )
+                    } else if (gjelderSak && søknadsbarnISak.isNotEmpty() && søknadsbarnISak.all { it.avslag != null }) {
+                        oppdaterOpphørsdato(
+                            OppdaterOpphørsdatoRequestDto(null, null, saksnummer = request.saksnummer),
                             behandling,
                         )
                     }
@@ -459,7 +459,7 @@ class VirkningstidspunktService(
         val forrigeVirkningstidspunkt = forrigeVirkningstidspunkt ?: gjelderBarn?.virkningstidspunkt ?: behandling.eldsteVirkningstidspunkt
         val forrigeVirkningstidspunktSak =
             if (gjelderBarn == null && saksnummer != null) {
-                // Hent virkningstidspunkt for sak istedenfor global virkningstidspunkt
+                // Hent eldste virkningstidspunkt for sak istedenfor global virkningstidspunkt
                 behandling.finnSøknadsbarnForSak(saksnummer).minOfOrNull { it.virkningstidspunktRolle }
             } else {
                 null
