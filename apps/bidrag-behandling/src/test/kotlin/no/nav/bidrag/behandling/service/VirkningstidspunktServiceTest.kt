@@ -489,7 +489,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         fun `skal oppdatere årsak for sak selv om barnet er endret per rolle etter forrige endring for saken`() {
             val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
             val sak1 = behandling.saksnummer
-            val årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            val årsak = VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE
 
             virkningstidspunktService.oppdaterAvslagÅrsak(behandling, OppdatereVirkningstidspunkt(saksnummer = sak1, årsak = årsak))
             virkningstidspunktService.oppdaterAvslagÅrsak(
