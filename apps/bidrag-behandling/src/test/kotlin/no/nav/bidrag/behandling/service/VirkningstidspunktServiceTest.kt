@@ -16,6 +16,7 @@ import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
+import no.nav.bidrag.behandling.transformers.behandling.tilDto
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
@@ -33,6 +34,8 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -905,6 +908,64 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                 taMed shouldBe true
                 datoFom shouldBe nyVirkningstidspunkt
                 datoTom shouldBe null
+            }
+        }
+
+        @ParameterizedTest(name = "{0} -> {1}")
+        @CsvSource(
+            "2025-11-01, 2024-11-01",
+            "2024-11-01, 2025-11-01",
+            "2025-06-01, 2025-02-01",
+            "2025-02-01, 2025-06-01",
+        )
+        fun `skal flytte BP-inntekt når virkningstidspunkt på klage endres og BP har virkningstidspunkt fra påklaget vedtak`(
+            feilVirkningstidspunkt: LocalDate,
+            rettetVirkningstidspunkt: LocalDate,
+        ) {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.søktFomDato = minOf(feilVirkningstidspunkt, rettetVirkningstidspunkt)
+            behandling.oppdaterVirkningstidspunktForAlle(feilVirkningstidspunkt)
+
+            val bp = behandling.bidragspliktig!!
+            bp.virkningstidspunkt = feilVirkningstidspunkt
+
+            val inntektBM =
+                opprettInntekt(
+                    datoFom = YearMonth.from(feilVirkningstidspunkt),
+                    datoTom = null,
+                    gjelderRolle = behandling.bidragsmottaker!!,
+                    taMed = true,
+                    kilde = Kilde.MANUELL,
+                    behandling = behandling,
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    medId = true,
+                )
+            val inntektBP =
+                opprettInntekt(
+                    datoFom = YearMonth.from(feilVirkningstidspunkt),
+                    datoTom = null,
+                    gjelderRolle = bp,
+                    taMed = true,
+                    kilde = Kilde.MANUELL,
+                    behandling = behandling,
+                    type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                    medId = true,
+                )
+            behandling.inntekter = mutableSetOf(inntektBM, inntektBP)
+            every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(1, OppdatereVirkningstidspunkt(virkningstidspunkt = rettetVirkningstidspunkt))
+
+            behandling.virkningstidspunkt shouldBe rettetVirkningstidspunkt
+            behandling.søknadsbarn.forEach { it.virkningstidspunkt shouldBe rettetVirkningstidspunkt }
+            bp.tilDto().beregnFraDato shouldBe YearMonth.from(rettetVirkningstidspunkt)
+            assertSoftly(inntektBM) {
+                taMed shouldBe true
+                datoFom shouldBe rettetVirkningstidspunkt
+            }
+            assertSoftly(inntektBP) {
+                taMed shouldBe true
+                datoFom shouldBe rettetVirkningstidspunkt
             }
         }
     }
