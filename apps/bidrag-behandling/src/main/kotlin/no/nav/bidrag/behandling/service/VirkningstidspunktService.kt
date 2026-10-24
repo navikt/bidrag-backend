@@ -234,7 +234,7 @@ class VirkningstidspunktService(
                         it,
                         NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
                         "",
-                        it.bidragsmottaker!!,
+                        it.bidragsmottakerForSak(gjelderBarnRolle.saksnummer),
                     )
                 } else {
                     // Når saksnummer er angitt oppdateres begrunnelsen kun for barn i den aktuelle saken,
@@ -254,7 +254,7 @@ class VirkningstidspunktService(
                         it,
                         NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
                         notat.nyBegrunnelse,
-                        it.bidragsmottaker!!,
+                        it.bidragsmottakerForSak(request.saksnummer),
                     )
                 }
             }

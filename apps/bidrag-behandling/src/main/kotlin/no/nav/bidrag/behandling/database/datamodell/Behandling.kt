@@ -309,6 +309,9 @@ open class Behandling(
     val erIForholdsmessigFordeling get() = forholdsmessigFordeling != null
     val grunnlagListe: List<Grunnlag> get() = grunnlag.toList()
     val søknadsbarn get() = roller.filter { it.rolletype == Rolletype.BARN }
+
+    // søknadsbarn.saksnummer: saksnummer til barnet hvis FF eller så fallbacker den til behandling saksnummer. Så den er aldri null
+    fun finnSøknadsbarnForSak(saksnummer: String?) = søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }
     val revurderingdsbarn get() = roller.filter { it.erRevurderingsbarn }
     val bidragsmottaker get() =
         roller.find {
@@ -326,7 +329,7 @@ open class Behandling(
         }
     }
 
-    fun bidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { it.forholdsmessigFordeling?.tilhørerSak == saksnummer }
+    fun bidragsmottakerForSak(saksnummer: String?) = if (saksnummer != null) alleBidragsmottakere.find { bm -> bm.saksnummer == saksnummer } ?: bidragsmottaker!! else bidragsmottaker!!
 
     val bidragspliktig get() = roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 

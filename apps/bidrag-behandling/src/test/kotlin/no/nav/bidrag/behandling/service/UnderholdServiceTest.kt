@@ -12,6 +12,9 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.database.datamodell.Behandling
+import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -1190,6 +1193,46 @@ class UnderholdServiceTest {
 
                 // så
                 respons.shouldNotBeNull()
+            }
+
+            private fun leggTilBidragsmottaker(behandling: Behandling) =
+                behandling.roller.add(
+                    Rolle(
+                        ident = "12345678910",
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        behandling = behandling,
+                        fødselsdato = LocalDate.parse("1985-01-01"),
+                        id = 66,
+                    ),
+                )
+
+            @Test
+            open fun `skal kreve bidragsmottaker id for begrunnelse for andre barn når det finnes flere bidragsmottakere`() {
+                val behandling = oppretteTestbehandling(setteDatabaseider = true, inkludereBp = true, behandlingstype = TypeBehandling.BIDRAG)
+                leggTilBidragsmottaker(behandling)
+
+                val respons =
+                    assertFailsWith<HttpClientErrorException> {
+                        underholdService.oppdatereBegrunnelse(behandling, OppdatereBegrunnelseRequest(begrunnelse = "Begrunnelse for annet barn"))
+                    }
+
+                respons.message shouldContain "Bidragsmottaker id må settes hvis det finnes flere BMer i saken"
+            }
+
+            @Test
+            open fun `skal ikke kreve bidragsmottaker id for begrunnelse for søknadsbarn når det finnes flere bidragsmottakere`() {
+                val behandling = oppretteTestbehandling(setteDatabaseider = true, inkludereBp = true, behandlingstype = TypeBehandling.BIDRAG)
+                leggTilBidragsmottaker(behandling)
+                val barn = behandling.søknadsbarn.first()
+                val underholdskostnad = behandling.underholdskostnader.find { it.rolle?.ident == barn.ident }.shouldNotBeNull()
+
+                underholdService.oppdatereBegrunnelse(
+                    behandling,
+                    OppdatereBegrunnelseRequest(underholdsid = underholdskostnad.id, begrunnelse = "Begrunnelse for søknadsbarn"),
+                )
+
+                NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD, barn.id!!) shouldBe
+                    "Begrunnelse for søknadsbarn"
             }
         }
     }

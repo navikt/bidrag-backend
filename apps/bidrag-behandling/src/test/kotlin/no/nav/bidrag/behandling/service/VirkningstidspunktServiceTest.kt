@@ -11,6 +11,9 @@ import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
+import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
+import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunktBegrunnelseDto
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
@@ -531,6 +534,112 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
             barn1.opphørsdato shouldBe null
             barn2.opphørsdato shouldBe LocalDate.parse("2025-10-01")
+        }
+
+        private fun leggTilBidragsmottakerForSak2(behandling: Behandling): Rolle {
+            val bm2 =
+                Rolle(
+                    ident = "12345678910",
+                    rolletype = Rolletype.BIDRAGSMOTTAKER,
+                    behandling = behandling,
+                    fødselsdato = LocalDate.parse("1985-01-01"),
+                    id = 66,
+                    forholdsmessigFordeling = opprettFFRolle(sak2),
+                )
+            behandling.roller.add(bm2)
+            return bm2
+        }
+
+        private fun virkningstidspunktNotat(
+            behandling: Behandling,
+            rolle: Rolle,
+        ) = NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT, rolle.id!!)
+
+        @Test
+        fun `skal feile når rolleId er bidragsmottaker i oppdatering av virkningstidspunkt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val bm2 = leggTilBidragsmottakerForSak2(behandling)
+
+            val virkningstidspunktFør = listOf(barn1.virkningstidspunkt, barn2.virkningstidspunkt)
+            shouldThrow<HttpClientErrorException> {
+                virkningstidspunktService.oppdatereVirkningstidspunkt(
+                    behandling.id!!,
+                    OppdatereVirkningstidspunkt(rolleId = bm2.id, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+                )
+            }
+
+            listOf(barn1.virkningstidspunkt, barn2.virkningstidspunkt) shouldBe virkningstidspunktFør
+        }
+
+        @Test
+        fun `skal feile når rolleId er bidragsmottaker ved avslag i oppdatering av virkningstidspunkt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            shouldThrow<HttpClientErrorException> {
+                virkningstidspunktService.oppdatereVirkningstidspunkt(
+                    behandling.id!!,
+                    OppdatereVirkningstidspunkt(rolleId = behandling.bidragsmottaker!!.id, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+                )
+            }
+
+            barn1.avslag shouldBe null
+            barn2.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal lagre begrunnelse for sak på bidragsmottaker i saken`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val bm1 = behandling.bidragsmottaker!!
+            val bm2 = leggTilBidragsmottakerForSak2(behandling)
+
+            virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
+                behandling.id!!,
+                OppdatereVirkningstidspunktBegrunnelseDto(saksnummer = behandling.saksnummer, oppdatereBegrunnelse = OppdatereBegrunnelse("Sak 1")),
+            )
+            virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
+                behandling.id!!,
+                OppdatereVirkningstidspunktBegrunnelseDto(saksnummer = sak2, oppdatereBegrunnelse = OppdatereBegrunnelse("Sak 2")),
+            )
+
+            virkningstidspunktNotat(behandling, bm1) shouldBe "Sak 1"
+            virkningstidspunktNotat(behandling, barn1) shouldBe "Sak 1"
+            virkningstidspunktNotat(behandling, bm2) shouldBe "Sak 2"
+            virkningstidspunktNotat(behandling, barn2) shouldBe "Sak 2"
+        }
+
+        @Test
+        fun `skal kun nullstille begrunnelse for bidragsmottaker i barnets sak ved begrunnelse for barn`() {
+            val (behandling, _, barn2) = opprettBehandlingMedBarnIToSaker()
+            val bm1 = behandling.bidragsmottaker!!
+            val bm2 = leggTilBidragsmottakerForSak2(behandling)
+            listOf(behandling.saksnummer to "Sak 1", sak2 to "Sak 2").forEach { (sak, tekst) ->
+                virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
+                    behandling.id!!,
+                    OppdatereVirkningstidspunktBegrunnelseDto(saksnummer = sak, oppdatereBegrunnelse = OppdatereBegrunnelse(tekst)),
+                )
+            }
+
+            virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
+                behandling.id!!,
+                OppdatereVirkningstidspunktBegrunnelseDto(rolleId = barn2.id, oppdatereBegrunnelse = OppdatereBegrunnelse("Barn 2")),
+            )
+
+            virkningstidspunktNotat(behandling, barn2) shouldBe "Barn 2"
+            virkningstidspunktNotat(behandling, bm2) shouldBe ""
+            virkningstidspunktNotat(behandling, bm1) shouldBe "Sak 1"
+        }
+
+        @Test
+        fun `skal feile når rolleId er bidragsmottaker i begrunnelse for virkningstidspunkt`() {
+            val (behandling, _, _) = opprettBehandlingMedBarnIToSaker()
+            val bm2 = leggTilBidragsmottakerForSak2(behandling)
+
+            shouldThrow<HttpClientErrorException> {
+                virkningstidspunktService.oppdatereVirkningstidspunktBegrunnelse(
+                    behandling.id!!,
+                    OppdatereVirkningstidspunktBegrunnelseDto(rolleId = bm2.id, oppdatereBegrunnelse = OppdatereBegrunnelse("Sak 2")),
+                )
+            }
         }
 
         @Test
