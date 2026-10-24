@@ -323,7 +323,7 @@ fun OppdatereUtgift.validerUtgiftspost(behandling: Behandling): List<String> {
 
 fun OppdatereVirkningstidspunktBegrunnelseDto.valider(behandling: Behandling) {
     val feilliste = mutableListOf<String>()
-    if (rolleId != null && behandling.søknadsbarn.none { it.id == rolleId }) {
+    if (rolleId != null && behandling.roller.none { it.id == rolleId }) {
         feilliste.add("Barn med id $rolleId finnes ikke i behandling ${behandling.id}")
     }
     if (oppdaterBegrunnelseVurderingAvSkolegang != null && !behandling.kanSkriveVurderingAvSkolegangAlle()) {
@@ -340,7 +340,7 @@ fun OppdatereVirkningstidspunktBegrunnelseDto.valider(behandling: Behandling) {
 
 fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
     val feilliste = mutableListOf<String>()
-    if (rolleId != null && behandling.søknadsbarn.none { it.id == rolleId }) {
+    if (rolleId != null && behandling.roller.none { it.id == rolleId }) {
         feilliste.add("Barn med id $rolleId finnes ikke i behandling ${behandling.id}")
     }
     if (oppdaterBegrunnelseVurderingAvSkolegang != null && !behandling.kanSkriveVurderingAvSkolegangAlle()) {
