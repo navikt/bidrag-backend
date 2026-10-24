@@ -328,7 +328,14 @@ class VirkningstidspunktService(
 
         val forrigeÅrsak = forRolle?.årsak ?: behandling.årsak
         val forrigeAvslag = forRolle?.avslag ?: behandling.avslag
-        val erAvslagÅrsakEndret = tvingEndring || request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
+        // Bidragsmottakers årsak/avslag kan være utdatert hvis barna i saken er endret enkeltvis
+        val erEndretForBarnISak =
+            forRolle != null &&
+                forRolle.rolletype == Rolletype.BIDRAGSMOTTAKER &&
+                behandling.søknadsbarn
+                    .filter { it.saksnummer == forRolle.saksnummer && !it.erRevurderingsbarn }
+                    .any { it.årsak != request.årsak || it.avslag != request.avslag }
+        val erAvslagÅrsakEndret = tvingEndring || erEndretForBarnISak || request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
 
         if (request.avslag == null && request.årsak == null) {
             log.warn { "Både avslag og årsak mangler i input for behandling ${behandling.id}. Minst ett av vediene må setttes" }
@@ -397,7 +404,7 @@ class VirkningstidspunktService(
                         }
                 }
             } else {
-                behandling.revurderingdsbarn.filter { request.saksnummer == null || it.saksnummer == request.saksnummer }.forEach {
+                behandling.revurderingdsbarn.forEach {
                     it.årsak = VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
                     it.avslag = null
                 }
@@ -452,6 +459,7 @@ class VirkningstidspunktService(
         val forrigeVirkningstidspunkt = forrigeVirkningstidspunkt ?: gjelderBarn?.virkningstidspunkt ?: behandling.eldsteVirkningstidspunkt
         val forrigeVirkningstidspunktSak =
             if (gjelderBarn == null && saksnummer != null) {
+                // Hent virkningstidspunkt for sak istedenfor global virkningstidspunkt
                 behandling.søknadsbarn.filter { it.saksnummer == saksnummer }.minOfOrNull { it.virkningstidspunktRolle }
             } else {
                 null

@@ -29,6 +29,10 @@ import no.nav.bidrag.behandling.utils.testdata.testdataHusstandsmedlem1
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import io.kotest.matchers.string.shouldContain
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import org.springframework.web.client.HttpClientErrorException
+import io.kotest.assertions.throwables.shouldThrow
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -450,6 +454,83 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
             barn1.opphørsdato shouldBe null
             barn2.opphørsdato shouldBe null
+        }
+
+        @Test
+        fun `skal tilbakestille revurderingsbarn i andre saker når ikke alle søknadsbarn har avslag lenger`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val revurderingsbarn =
+                Rolle(
+                    ident = testdataHusstandsmedlem1.ident,
+                    rolletype = Rolletype.BARN,
+                    behandling = behandling,
+                    fødselsdato = testdataHusstandsmedlem1.fødselsdato,
+                    id = 57,
+                    virkningstidspunkt = LocalDate.parse("2025-03-01"),
+                    forholdsmessigFordeling = opprettFFRolle(sak2).copy(delAvOpprinneligBehandling = false, erRevurdering = true),
+                )
+            behandling.roller.add(revurderingsbarn)
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(behandling, OppdatereVirkningstidspunkt(avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET))
+            revurderingsbarn.avslag shouldBe Resultatkode.AVSLAG
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = behandling.saksnummer, årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT),
+            )
+
+            barn1.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            barn2.avslag shouldBe Resultatkode.IKKE_OMSORG_FOR_BARNET
+            revurderingsbarn.avslag shouldBe null
+            revurderingsbarn.årsak shouldBe VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
+        }
+
+        @Test
+        fun `skal oppdatere årsak for sak selv om barnet er endret per rolle etter forrige endring for saken`() {
+            val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
+            val sak1 = behandling.saksnummer
+            val årsak = VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(behandling, OppdatereVirkningstidspunkt(saksnummer = sak1, årsak = årsak))
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(rolleId = barn1.id, avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET),
+            )
+            barn1.avslag shouldBe Resultatkode.IKKE_OMSORG_FOR_BARNET
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(behandling, OppdatereVirkningstidspunkt(saksnummer = sak1, årsak = årsak))
+
+            barn1.årsak shouldBe årsak
+            barn1.avslag shouldBe null
+        }
+
+        @Test
+        fun `skal validere opphørsdato mot virkningstidspunkt for barn i angitt sak`() {
+            val (behandling, _, _) = opprettBehandlingMedBarnIToSaker()
+
+            val exception =
+                shouldThrow<HttpClientErrorException> {
+                    virkningstidspunktService.oppdaterOpphørsdato(
+                        behandling.id!!,
+                        OppdaterOpphørsdatoRequestDto(idRolle = null, opphørsdato = LocalDate.parse("2025-02-01"), saksnummer = sak2),
+                    )
+                }
+            exception.message shouldContain "Opphørsdato kan ikke settes til før virkningstidspunkt"
+        }
+
+        @Test
+        fun `skal ikke validere 18 år for barn i andre saker ved oppdatering av opphørsdato for sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.stønadstype = Stønadstype.BIDRAG
+            barn1.fødselsdato = LocalDate.parse("2007-01-15")
+
+            virkningstidspunktService.oppdaterOpphørsdato(
+                behandling.id!!,
+                OppdaterOpphørsdatoRequestDto(idRolle = null, opphørsdato = LocalDate.parse("2025-10-01"), saksnummer = sak2),
+            )
+
+            barn1.opphørsdato shouldBe null
+            barn2.opphørsdato shouldBe LocalDate.parse("2025-10-01")
         }
 
         @Test
