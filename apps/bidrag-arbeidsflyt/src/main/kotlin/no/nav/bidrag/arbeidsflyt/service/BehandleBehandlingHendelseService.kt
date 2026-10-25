@@ -201,8 +201,9 @@ class BehandleBehandlingHendelseService(
             val ff = behandlingDetaljer.forholdsmessigFordeling ?: return
 
             if (behandling.oppgaverOverførtEtterFFOpprettet == null) {
-                if (ff.overførtTilEnhet != null) {
-                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = ff.opprettetAvSaksbehandler, tilEnhet = ff.overførtTilEnhet) {
+                if (ff.overførtTilEnhet != null && ff.overførtTilEnhet != ff.opprettetAvEnhet) {
+                    // Overfør til enhet og legg det til felles benk hvis enhet er endret
+                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = null, tilEnhet = ff.overførtTilEnhet) {
                         it.tildeltEnhetsnr != ff.overførtTilEnhet
                     }
                 } else {
