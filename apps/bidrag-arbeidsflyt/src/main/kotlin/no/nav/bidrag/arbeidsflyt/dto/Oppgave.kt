@@ -672,11 +672,12 @@ class OverforOppgaveTilSaksbehandlerRequest(
             this.mappeId = null
             nullstillMappe = eksisterendeMappeId != null
         }
+        val erSaksbehandlerEndret = (oppgaveDataForHendelse.tilordnetRessurs ?: "") != (saksbehandlerIdent ?: "")
 
         this.beskrivelse = "--- $dateFormatted $saksbehandlersInfo ---\r\n" +
             (if (erEnhetEndret) "· Oppgave overført fra enhet ${oppgaveDataForHendelse.tildeltEnhetsnr} til $nyttEnhetsnummer\r\n\r\n" else "") +
             (if (nullstillMappe) "· Mappe endret fra ${eksisterendeMappeNavn ?: eksisterendeMappeId} til ingen mappe\r\n\r\n" else "") +
-            "${"· Saksbehandler endret fra ${eksisterendeSaksbehandlerInfo ?: "ikke valgt"} til ${saksbehandlersInfo ?: "ikke valgt"}"}\r\n\r\n" +
+            (if (erSaksbehandlerEndret) "· Saksbehandler endret fra ${eksisterendeSaksbehandlerInfo ?: "ikke valgt"} til ${saksbehandlersInfo ?: "ikke valgt"}\r\n\r\n" else "") +
             (oppgaveDataForHendelse.beskrivelse ?: "")
     }
 }
