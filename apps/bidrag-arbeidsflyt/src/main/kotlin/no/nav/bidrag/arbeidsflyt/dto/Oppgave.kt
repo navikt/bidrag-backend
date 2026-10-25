@@ -595,7 +595,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val eksisterendeTilordnetRessurs get() = oppgaveDataForHendelse?.tilordnetRessurs
     private val eksisterendeTildeltEnhet get() = oppgaveDataForHendelse?.tildeltEnhetsnr
     private val eksisterendeOppgavetype get() = oppgaveDataForHendelse?.oppgavetype
-    private val eksisterendeMappeId get() = oppgaveDataForHendelse?.mappeId?.toIntOrNull()
+    private val eksisterendeMappeId get() = oppgaveDataForHendelse?.mappeId?.toLongOrNull()
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
     private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = tilordnetRessurs != null && !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
     private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = tilordnetRessurs != null && eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
