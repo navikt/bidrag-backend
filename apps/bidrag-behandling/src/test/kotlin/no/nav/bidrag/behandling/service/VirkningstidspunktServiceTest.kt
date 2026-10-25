@@ -337,6 +337,65 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
+        fun `skal ikke flytte samvær og inntekter for barn i annen sak som starter på forrige virkningstidspunkt i saken`() {
+            val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
+            val mars = LocalDate.parse("2025-03-01")
+            val samværBarn1 = Samvær(behandling = behandling, id = 1, rolle = barn1)
+            samværBarn1.perioder.add(
+                Samværsperiode(id = 1, samvær = samværBarn1, fom = mars, tom = null, samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0),
+            )
+            behandling.samvær = mutableSetOf(samværBarn1)
+            val inntektBarn1 =
+                opprettInntekt(
+                    datoFom = YearMonth.from(mars),
+                    type = Inntektsrapportering.BARNETILLEGG,
+                    gjelderBarn = barn1.ident,
+                    gjelderRolle = behandling.bidragsmottaker!!,
+                    behandling = behandling,
+                )
+            val inntektBM =
+                opprettInntekt(
+                    datoFom = YearMonth.from(mars),
+                    gjelderRolle = behandling.bidragsmottaker!!,
+                    behandling = behandling,
+                )
+            behandling.inntekter = mutableSetOf(inntektBarn1, inntektBM)
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+            )
+
+            samværBarn1.perioder.single().fom shouldBe mars
+            inntektBarn1.datoFom shouldBe mars
+            inntektBM.datoFom shouldBe mars
+        }
+
+        @Test
+        fun `skal kun flytte første samværsperiode som starter på forrige virkningstidspunkt`() {
+            val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
+            val januar = LocalDate.parse("2025-01-01")
+            val mars = LocalDate.parse("2025-03-01")
+            val samværBarn1 = Samvær(behandling = behandling, id = 1, rolle = barn1)
+            samværBarn1.perioder.add(
+                Samværsperiode(id = 1, samvær = samværBarn1, fom = januar, tom = mars.minusDays(1), samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0),
+            )
+            samværBarn1.perioder.add(
+                Samværsperiode(id = 2, samvær = samværBarn1, fom = mars, tom = null, samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1),
+            )
+            behandling.samvær = mutableSetOf(samværBarn1)
+
+            virkningstidspunktService.oppdaterVirkningstidspunkt(
+                barn1.id,
+                LocalDate.parse("2024-12-01"),
+                behandling,
+                forrigeVirkningstidspunkt = mars,
+            )
+
+            samværBarn1.perioder.find { it.id == 2L }!!.fom shouldBe mars
+        }
+
+        @Test
         fun `skal oppdatere virkningstidspunkt for sak når ny dato er lik eldste virkningstidspunkt i behandlingen`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
 

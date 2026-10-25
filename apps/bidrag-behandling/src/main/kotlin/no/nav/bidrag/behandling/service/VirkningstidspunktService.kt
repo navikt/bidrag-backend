@@ -465,10 +465,23 @@ class VirkningstidspunktService(
                 ?: saksnummer?.let { behandling.finnSøknadsbarnForSak(it).minOfOrNull { barn -> barn.virkningstidspunktRolle } }
                 ?: behandling.eldsteVirkningstidspunkt
         val erVirkningstidspunktEndret = tvingEndring || nyVirkningstidspunkt != forrigeVirkningstidspunkt
+        // Perioder som starter på forrige virkningstidspunkt flyttes kun for berørte barn når oppdateringen gjelder én rolle/sak.
+        // Hvis saken hadde eldste virkningstidspunkt kan endringen påvirke alle, og alle perioder justeres som før.
+        val søknadsbarnSomEndres =
+            when {
+                forrigeVirkningstidspunkt == behandling.eldsteVirkningstidspunkt -> null
+                gjelderBarn != null -> setOf(gjelderBarn)
+                saksnummer != null -> behandling.finnSøknadsbarnForSak(saksnummer).toSet()
+                else -> null
+            }
 
         fun oppdatereUnderhold() {
             log.info { "Tilpasse perioder for underhold til ny virkningsdato i behandling ${behandling.id}" }
-            underholdService.tilpasseUnderholdEtterVirkningsdato(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            underholdService.tilpasseUnderholdEtterVirkningsdato(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterBoforhold() {
@@ -492,13 +505,21 @@ class VirkningstidspunktService(
 
         fun oppdaterSamvær() {
             log.info { "Virkningstidspunkt er endret. Oppdaterer perioder på samvær for behandling ${behandling.id}" }
-            samværService.rekalkulerPerioderSamvær(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            samværService.rekalkulerPerioderSamvær(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterInntekter() {
             log.info { "Virkningstidspunkt er endret. Oppdaterer perioder på inntekter for behandling ${behandling.id}" }
             grunnlagService.oppdatereIkkeAktiveInntekterEtterEndretVirkningstidspunkt(behandling)
-            inntektService.rekalkulerPerioderInntekter(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            inntektService.rekalkulerPerioderInntekter(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterAndreVoksneIHusstanden() {
