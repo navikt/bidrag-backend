@@ -329,7 +329,9 @@ open class Behandling(
         }
     }
 
-    fun bidragsmottakerForSak(saksnummer: String?) = if (saksnummer != null) alleBidragsmottakere.find { bm -> bm.saksnummer == saksnummer } ?: bidragsmottaker!! else bidragsmottaker!!
+    fun finnBidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { bm -> bm.saksnummer == saksnummer }
+
+    fun bidragsmottakerForSak(saksnummer: String?) = saksnummer?.let { finnBidragsmottakerForSak(it) } ?: bidragsmottaker!!
 
     val bidragspliktig get() = roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 

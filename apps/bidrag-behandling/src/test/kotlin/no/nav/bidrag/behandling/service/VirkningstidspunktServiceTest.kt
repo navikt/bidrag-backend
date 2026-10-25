@@ -707,6 +707,115 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
             barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
             barn3.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
         }
+
+        private fun leggTilBarn3ISak2(behandling: Behandling) = Rolle(
+            ident = testdataHusstandsmedlem1.ident,
+            rolletype = Rolletype.BARN,
+            behandling = behandling,
+            fødselsdato = testdataHusstandsmedlem1.fødselsdato,
+            id = 56,
+            virkningstidspunkt = LocalDate.parse("2025-06-01"),
+            forholdsmessigFordeling = opprettFFRolle(sak2),
+        ).also { behandling.roller.add(it) }
+
+        @Test
+        fun `skal slå sammen opphørsdato, årsak og beregnTil kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val barn3 = leggTilBarn3ISak2(behandling)
+            barn3.avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET
+            barn2.opphørsdato = LocalDate.parse("2025-12-01")
+            barn3.opphørsdato = LocalDate.parse("2026-02-01")
+            barn2.beregnTil = BeregnTil.INNEVÆRENDE_MÅNED
+
+            virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandling.id!!, sak2)
+
+            assertSoftly {
+                // Opphørsdato i saken skal brukes, ikke global opphørsdato (som er null fordi barn1 ikke har opphør)
+                barn2.opphørsdato shouldBe LocalDate.parse("2026-02-01")
+                barn3.opphørsdato shouldBe LocalDate.parse("2026-02-01")
+                barn3.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+                barn3.avslag shouldBe null
+                barn3.beregnTil shouldBe BeregnTil.INNEVÆRENDE_MÅNED
+                barn1.opphørsdato shouldBe null
+                barn1.beregnTil shouldBe null
+                barn1.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            }
+        }
+
+        @Test
+        fun `skal bruke virkningstidspunkt og årsak fra behandling ved sammenslåing når barnet mangler verdier`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            val barn3 = leggTilBarn3ISak2(behandling)
+            barn3.avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET
+            barn2.virkningstidspunkt = null
+            barn2.årsak = null
+            behandling.årsak = VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE
+
+            virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandling.id!!, sak2)
+
+            assertSoftly {
+                barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+                barn3.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+                barn2.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE
+                barn3.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE
+                barn3.avslag shouldBe null
+                barn1.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+            }
+        }
+
+        @Test
+        fun `skal ikke endre årsak for sak når barnet mangler verdi og behandling har samme årsak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn2.årsak = null
+            behandling.årsak = VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE
+
+            virkningstidspunktService.oppdaterAvslagÅrsak(
+                behandling,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, årsak = VirkningstidspunktÅrsakstype.FRA_KRAVFREMSETTELSE),
+            )
+
+            barn2.årsak shouldBe null
+            barn1.årsak shouldBe VirkningstidspunktÅrsakstype.FRA_SØKNADSTIDSPUNKT
+        }
+
+        @Test
+        fun `skal slette opphørsdato kun for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.opphørsdato = LocalDate.parse("2025-10-01")
+            barn2.opphørsdato = LocalDate.parse("2025-12-01")
+
+            virkningstidspunktService.oppdaterOpphørsdato(
+                OppdaterOpphørsdatoRequestDto(null, null, saksnummer = sak2),
+                behandling,
+            )
+
+            barn1.opphørsdato shouldBe LocalDate.parse("2025-10-01")
+            barn2.opphørsdato shouldBe null
+        }
+
+        @Test
+        fun `skal nullstille beregnTil for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.beregnTil = BeregnTil.INNEVÆRENDE_MÅNED
+            barn2.beregnTil = BeregnTil.INNEVÆRENDE_MÅNED
+
+            virkningstidspunktService.oppdaterBeregnTilDato(
+                OppdaterBeregnTilDatoRequestDto(null, null, saksnummer = sak2),
+                behandling,
+            )
+
+            barn1.beregnTil shouldBe BeregnTil.INNEVÆRENDE_MÅNED
+            barn2.beregnTil shouldBe null
+        }
+
+        @Test
+        fun `skal ikke falle tilbake til hoved-BM når sak ikke har egen bidragsmottaker`() {
+            val (behandling) = opprettBehandlingMedBarnIToSaker()
+
+            behandling.finnBidragsmottakerForSak(sak2) shouldBe null
+            behandling.bidragsmottakerForSak(sak2) shouldBe behandling.bidragsmottaker
+            behandling.finnBidragsmottakerForSak(behandling.saksnummer) shouldBe behandling.bidragsmottaker
+        }
     }
 
     @Nested
