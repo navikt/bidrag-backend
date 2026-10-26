@@ -34,18 +34,18 @@
   </description>
 
   <properties>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <slack-api.version>1.51.0</slack-api.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <slack-api.version>1.52.0</slack-api.version>
+    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.4</kotest.version>
+    <kotest.version>6.2.6</kotest.version>
     <!-- dependencies -->
     <javax-activation.version>1.1.1</javax-activation.version>
-    <httpclient5.version>5.6.4</httpclient5.version>
+    <httpclient5.version>5.6.5</httpclient5.version>
     <aspectj.version>1.9.25.1</aspectj.version>
     <micrometer-registry.version>1.17.1</micrometer-registry.version>
   </properties>
