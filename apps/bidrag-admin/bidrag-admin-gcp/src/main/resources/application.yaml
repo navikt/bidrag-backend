@@ -51,6 +51,3 @@ spring:
   jpa:
     database: postgresql
     open-in-view: false
-logging:
-  level:
-    org.apache.kafka: WARN

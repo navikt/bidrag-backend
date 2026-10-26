@@ -14,9 +14,6 @@ management:
         include: "*"
 springdoc.packages-to-scan: no.nav.bidrag.belopshistorikk.controller
 
-logging.level:
-  secureLogger: INFO
-
 ---
 spring:
   config.activate.on-profile: "nais"

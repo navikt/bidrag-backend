@@ -178,11 +178,16 @@ class AldersjusteringOrchestratorTest {
             ÅrMånedsperiode(YearMonth.of(2023, 6), YearMonth.of(2023, 8)),
         )
 
+        val åpenPeriodeSlutt = YearMonth.now().plusYears(10000)
         val result = periods.map { period ->
-            period.til ?: YearMonth.now().plusYears(10000) // Handle null `til`
+            period.til ?: åpenPeriodeSlutt // Handle null `til`
         }
 
-        println(result)
+        result shouldBe listOf(
+            YearMonth.of(2023, 3),
+            åpenPeriodeSlutt,
+            YearMonth.of(2023, 8),
+        )
     }
 
     @Test

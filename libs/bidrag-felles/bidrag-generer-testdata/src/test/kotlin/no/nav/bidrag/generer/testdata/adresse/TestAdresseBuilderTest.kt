@@ -11,18 +11,15 @@ class TestAdresseBuilderTest {
         val adresse = genererAdresse().opprett()
         adresse shouldNotBe null
         genererPerson()
-        println(adresse)
 
         val adresse2 = genererAdresse().bolignummer("5").land(LandkoderIso3.AFG).opprett()
         adresse2 shouldNotBe null
-        println(adresse2)
     }
 
     @Test
     fun skalGenererEnkelAdresseString() {
         val adresse = genererEnkelAdresse()
         adresse shouldNotBe null
-        println(adresse)
     }
 
     @Test
@@ -32,13 +29,11 @@ class TestAdresseBuilderTest {
                 .postnummerOgSted("5000", "Bergen")
                 .opprett()
         adresse shouldNotBe null
-        println(adresse)
     }
 
     @Test
     fun skalGenerereEnkelAdresseMedPostnummerOgStedString() {
         val adresse = genererEnkelAdresseMedPoststed()
         adresse shouldNotBe null
-        println(adresse)
     }
 }

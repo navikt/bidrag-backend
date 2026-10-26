@@ -10,6 +10,7 @@ import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
@@ -1972,6 +1973,26 @@ fun Behandling.leggTilTillegsstønad(
             fom = periode.fom.atDay(1),
             tom = periode.til?.minusMonths(1)?.atEndOfMonth(),
             `beløp` = BigDecimal(50),
+        ),
+    )
+}
+
+fun Behandling.leggTilForpleining(
+    periode: ÅrMånedsperiode,
+    beløp: BigDecimal = BigDecimal(2500),
+    barn: TestDataPerson = testdataBarn1,
+    medId: Boolean = false,
+) {
+    val underholdskostnad =
+        underholdskostnader.find { it.personIdent == barn.ident }!!
+    underholdskostnad.harTilsynsordning = true
+    underholdskostnad.forpleining.add(
+        Forpleining(
+            id = if (medId) 1 else null,
+            underholdskostnad = underholdskostnad,
+            fom = periode.fom.atDay(1),
+            tom = periode.til?.minusMonths(1)?.atEndOfMonth(),
+            `beløp` = beløp,
         ),
     )
 }

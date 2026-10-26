@@ -13,7 +13,6 @@ import no.nav.bidrag.beregn.inntekt.testdata.StubUtils.Companion.kodeverkUrl
 import no.nav.bidrag.commons.service.KodeverkProvider
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.transport.behandling.inntekt.request.TransformerInntekterRequest
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -53,8 +52,6 @@ class InntektApiTest {
             ),
         )
 
-        println(commonObjectmapper.writeValueAsString(transformerteInntekter))
-
         assertSoftly {
             transformerteInntekter.shouldNotBeNull()
             transformerteInntekter.summertÅrsinntektListe.shouldHaveSize(12)
@@ -92,8 +89,6 @@ class InntektApiTest {
                 vedtakstidspunktOpprinneligeVedtak = emptyList(),
             ),
         )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
         assertSoftly {
             transformerteInntekter.shouldNotBeNull()
@@ -187,8 +182,6 @@ class InntektApiTest {
                 vedtakstidspunktOpprinneligeVedtak = emptyList(),
             ),
         )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
         assertSoftly {
             transformerteInntekter.shouldNotBeNull()

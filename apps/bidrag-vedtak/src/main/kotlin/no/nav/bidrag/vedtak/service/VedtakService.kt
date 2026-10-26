@@ -454,8 +454,8 @@ class VedtakService(
 
     // Hent alle vedtak for stønad
     fun hentVedtakForStønad(request: HentVedtakForStønadRequest): HentVedtakForStønadResponse {
-        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(request.skyldner)
-        val kravhaverAllePersonidenter = identUtils.hentAlleIdenter(request.kravhaver)
+        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(request.skyldner) ?: listOf(request.skyldner.verdi)
+        val kravhaverAllePersonidenter = identUtils.hentAlleIdenter(request.kravhaver) ?: listOf(request.kravhaver.verdi)
         val stønadsendringer = persistenceService.hentStønadsendringForStønad(request, skyldnerAllePersonidenter, kravhaverAllePersonidenter)
 
         if (stønadsendringer.isEmpty()) {
@@ -496,7 +496,7 @@ class VedtakService(
         // sjekk om det finnes et vedtak for mottatt vedtaksid. Hvis det ikke finnes må det kastes en exception
         try {
             persistenceService.hentVedtak(vedtaksid)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
             secureLogger.error { "$feilmelding: ${tilJson(vedtakRequest).sanitizeForLog()}" }
             throw IllegalArgumentException(feilmelding)
@@ -567,7 +567,7 @@ class VedtakService(
         // sjekk om det finnes et vedtak for mottatt vedtaksid. Hvis det ikke finnes må det kastes en exception
         try {
             persistenceService.hentVedtak(vedtaksid)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
             secureLogger.error { feilmelding.sanitizeForLog() }
             throw IllegalArgumentException(feilmelding)
@@ -601,7 +601,7 @@ class VedtakService(
         // sjekk om det finnes et vedtak for mottatt vedtaksid. Hvis det ikke finnes må det kastes en exception
         try {
             persistenceService.hentVedtak(vedtaksid)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             val feilmelding = "Fant ikke vedtaksforslag med vedtaksid $vedtaksid"
             secureLogger.error { feilmelding.sanitizeForLog() }
             throw IllegalArgumentException(feilmelding)
@@ -1342,7 +1342,7 @@ class VedtakService(
 
     // Hent alle manuelle vedtak for bp
     fun hentManuelleVedtak(request: HentManuelleVedtakRequest): HentVedtakForStønadResponse {
-        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(request.skyldner)
+        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(request.skyldner) ?: listOf(request.skyldner.verdi)
 
         val stønadsendringer = persistenceService.hentManuelleVedtakForBp(
             skyldnerListe = skyldnerAllePersonidenter,
@@ -1437,8 +1437,8 @@ class VedtakService(
         kravhaver: Personident,
         sisteVedtaksid: Int?,
     ): Boolean {
-        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(skyldner)
-        val kravhaverAllePersonidenter = identUtils.hentAlleIdenter(kravhaver)
+        val skyldnerAllePersonidenter = identUtils.hentAlleIdenter(skyldner) ?: listOf(skyldner.verdi)
+        val kravhaverAllePersonidenter = identUtils.hentAlleIdenter(kravhaver) ?: listOf(kravhaver.verdi)
         val sisteVedtaksidForStønad = persistenceService.hentSisteVedtaksidForStønad(
             saksnummer.verdi,
             type.name,

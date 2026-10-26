@@ -74,7 +74,7 @@ open class Behandling(
     @Column(name = "dato_fom")
     open var søktFomDato: LocalDate,
     open var mottattdato: LocalDate,
-    open val saksnummer: String,
+    open var saksnummer: String,
     open var soknadsid: Long?,
     open var behandlerEnhet: String,
     open var opprettetAv: String,
@@ -213,6 +213,8 @@ open class Behandling(
     @Transient
     var erVedtakUtenBeregning: Boolean = false,
     @Transient
+    var erNyBehandlingIkkeOpprettet: Boolean = false,
+    @Transient
     var grunnlagslisteFraVedtak: List<GrunnlagDto>? = emptyList(),
     @Transient
     var historiskeStønader: MutableSet<StønadDto> = mutableSetOf(),
@@ -238,7 +240,7 @@ open class Behandling(
     }
 
     fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
-        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
+        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == finnSøknadsid } }
     } else if (soknadsid == finnSøknadsid) {
         ForholdsmessigFordelingSøknadBarn(
             mottattDato = mottattdato,

@@ -9,7 +9,6 @@ import no.nav.bidrag.beregn.forskudd.core.bo.BarnIHusstanden
 import no.nav.bidrag.beregn.forskudd.core.bo.Bostatus
 import no.nav.bidrag.beregn.forskudd.core.bo.GrunnlagBeregning
 import no.nav.bidrag.beregn.forskudd.core.bo.Inntekt
-import no.nav.bidrag.beregn.forskudd.core.bo.ResultatBeregning
 import no.nav.bidrag.beregn.forskudd.core.bo.Sivilstand
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.person.Bostatuskode
@@ -68,8 +67,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 1") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "   * ")
     }
 
     @Test
@@ -104,8 +101,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 2") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "   **")
     }
 
     @Test
@@ -147,8 +142,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 4") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "*    ")
     }
 
     @Test
@@ -187,8 +180,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 5") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "*  * ")
     }
 
     @Test
@@ -227,8 +218,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 6") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "*  * ")
     }
 
     @Test
@@ -268,8 +257,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 7") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -309,8 +296,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 8") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -359,8 +344,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 9") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -409,8 +392,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 10") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -450,8 +431,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 11") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -491,8 +470,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 12") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -541,8 +518,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 13") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -591,8 +566,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 14") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -645,8 +618,6 @@ internal class ForskuddBeregningTest {
             { assertThat(resultat.regel).isEqualTo("REGEL 14") },
             { assertThat(resultat.sjablonListe).isEqualTo(sjablonPeriodeNavnVerdiListe) },
         )
-
-        printGrunnlagResultat(resultat, "***  ")
     }
 
     @Test
@@ -703,104 +674,6 @@ internal class ForskuddBeregningTest {
             sjablonPeriodeListe
                 .map { it.sjablon }
         return SjablonUtil.hentSjablonverdi(sjablonListe = sjablonListe, sjablonTallNavn = sjablonTallNavn)
-    }
-
-    private fun printGrunnlagResultat(resultat: ResultatBeregning?, betydning: String) {
-        println()
-        println()
-        println("SJABLONVERDIER:")
-        println("---------------")
-        println(
-            "0005 Forskuddssats 100%:                             " +
-                finnSjablonVerdi(sjablonPeriodeListe, SjablonTallNavn.FORSKUDDSSATS_BELØP),
-        )
-        println(
-            "0006 Innslag kapitalinntekt:                         " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.INNSLAG_KAPITALINNTEKT_BELØP,
-                ),
-        )
-        println(
-            "0013 Multiplikator:                                  " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.MAKS_INNTEKT_FORSKUDD_MOTTAKER_MULTIPLIKATOR,
-                ),
-        )
-        println(
-            "0033 Inntektsgrense 100%:                            " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.ØVRE_INNTEKTSGRENSE_FULLT_FORSKUDD_BELØP,
-                ),
-        )
-        println(
-            "0034 Inntektsgrense 75% enslig:                      " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.ØVRE_INNTEKTSGRENSE_75PROSENT_FORSKUDD_EN_BELØP,
-                ),
-        )
-        println(
-            "0035 Inntektsgrense 75% gift:                        " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.ØVRE_INNTEKTSGRENSE_75PROSENT_FORSKUDD_GS_BELØP,
-                ),
-        )
-        println(
-            "0036 Inntektsintervall:                              " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.INNTEKTSINTERVALL_FORSKUDD_BELØP,
-                ),
-        )
-        println(
-            "0038 Forskuddssats 75%:                              " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.FORSKUDDSSATS_75PROSENT_BELØP,
-                ),
-        )
-        println(
-            "0005x0013 Maks inntektsgrense:                       " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.FORSKUDDSSATS_BELØP,
-                ).multiply(
-                    finnSjablonVerdi(sjablonPeriodeListe, SjablonTallNavn.MAKS_INNTEKT_FORSKUDD_MOTTAKER_MULTIPLIKATOR),
-                ),
-        )
-        println()
-        println("GRUNNLAG:")
-        println("---------")
-        println(
-            "BM inntekt:                                        " + betydning[0] + " " + grunnlag!!.inntektListe,
-        )
-        println(
-            "BM sivilstand:                                     " + betydning[1] + " " +
-                grunnlag!!.sivilstand.kode.name,
-        )
-        println("Antall barn i husstand:                            " + betydning[2] + " " + grunnlag!!.barnIHusstandenListe.count())
-        println("Alder på søknadsbarn:                              " + betydning[3] + " " + grunnlag!!.søknadsbarnAlder)
-        println(
-            "Bostedsstatus søknadsbarn:                         " + betydning[4] + " " + grunnlag!!.søknadsbarnBostatus.kode.name,
-        )
-        println()
-        println(
-            "Inntektsintervall totalt (0036 x (antall barn - 1)): " +
-                finnSjablonVerdi(
-                    sjablonPeriodeListe,
-                    SjablonTallNavn.INNTEKTSINTERVALL_FORSKUDD_BELØP,
-                ).multiply(BigDecimal(grunnlag!!.barnIHusstandenListe.count() - 1)),
-        )
-        println()
-        println("RESULTAT:")
-        println("---------")
-        println("Beregnet beløp:                                      " + (resultat?.beløp?.toInt() ?: "null"))
-        println("Resultatkode:                                        " + (resultat?.kode?.name ?: "null"))
-        println("Regel brukt i beregning:                             " + (resultat?.regel ?: "null"))
     }
 
     companion object {

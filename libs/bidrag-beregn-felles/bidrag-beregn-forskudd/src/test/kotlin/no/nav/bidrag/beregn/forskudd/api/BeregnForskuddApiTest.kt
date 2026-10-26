@@ -395,8 +395,6 @@ internal class BeregnForskuddApiTest {
 
         val forskuddResultat = beregnForskuddService.beregn(request)
 
-        println(commonObjectmapper.writeValueAsString(forskuddResultat))
-
         assertAll(
             { assertThat(forskuddResultat).isNotNull },
             { assertThat(forskuddResultat.beregnetForskuddPeriodeListe).isNotNull },
@@ -432,8 +430,6 @@ internal class BeregnForskuddApiTest {
 
         // Kall rest-API for forskudd
         val forskuddResultat = beregnForskuddService.beregn(request)
-
-        println(commonObjectmapper.writeValueAsString(forskuddResultat))
 
         assertAll(
             { assertThat(forskuddResultat).isNotNull },
@@ -487,8 +483,6 @@ internal class BeregnForskuddApiTest {
 
         // Kall rest-API for forskudd
         val forskuddResultat = beregnForskuddService.beregn(request)
-
-        println(commonObjectmapper.writeValueAsString(forskuddResultat))
 
         assertAll(
             { assertThat(forskuddResultat).isNotNull },

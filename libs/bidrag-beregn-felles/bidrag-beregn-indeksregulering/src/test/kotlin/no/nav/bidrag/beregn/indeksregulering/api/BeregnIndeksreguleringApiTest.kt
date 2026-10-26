@@ -53,7 +53,6 @@ internal class BeregnIndeksreguleringApiTest {
     private fun utførBeregningerOgEvaluerResultatIndeksregulering(): List<SluttberegningIndeksregulering> {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = api.beregnIndeksregulering(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)

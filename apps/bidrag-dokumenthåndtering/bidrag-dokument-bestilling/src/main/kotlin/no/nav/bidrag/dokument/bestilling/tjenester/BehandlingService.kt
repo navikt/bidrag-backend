@@ -2,6 +2,7 @@ package no.nav.bidrag.dokument.bestilling.tjenester
 
 import no.nav.bidrag.dokument.bestilling.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.dokument.bestilling.consumer.dto.BehandlingDetaljerDtoV2
+import no.nav.bidrag.dokument.bestilling.model.fantIkkeBehandling
 import no.nav.bidrag.dokument.bestilling.model.fantIkkeVedtak
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.transport.dokumentmaler.VedtakDetaljer
@@ -12,13 +13,12 @@ import org.springframework.stereotype.Service
 class BehandlingService(
     private val bidragBehandlingConsumer: BidragBehandlingConsumer,
 ) {
-    fun hentBehandling(behandlingId: Int): BehandlingDetaljerDtoV2 = bidragBehandlingConsumer.hentBehandling(behandlingId) ?: fantIkkeVedtak(behandlingId)
-
+    fun hentBehandling(behandlingId: Int): BehandlingDetaljerDtoV2? = bidragBehandlingConsumer.hentBehandling(behandlingId)
     fun hentIdentSøknadsbarn(
         behandlingId: Int,
         søknadId: Long?,
-    ): List<String> {
-        val behandlingDto = hentBehandling(behandlingId)
+    ): List<String>? {
+        val behandlingDto = hentBehandling(behandlingId) ?: return null
         return behandlingDto.roller
             .filter { søknadId == null || it.søknader.any { søknad -> søknad.søknadsId == søknadId } }
             .filter { it.rolletype == Rolletype.BARN }
@@ -26,7 +26,7 @@ class BehandlingService(
     }
 
     fun hentVedtakDetaljer(behandlingId: Int): VedtakDetaljer {
-        val behandlingDto = hentBehandling(behandlingId)
+        val behandlingDto = hentBehandling(behandlingId) ?: fantIkkeBehandling(behandlingId)
         return VedtakDetaljer(
             årsakKode = behandlingDto.årsak,
             avslagsKode = behandlingDto.avslag,

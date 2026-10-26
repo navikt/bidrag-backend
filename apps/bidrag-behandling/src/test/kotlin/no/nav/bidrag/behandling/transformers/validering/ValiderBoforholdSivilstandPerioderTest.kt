@@ -3,17 +3,32 @@ package no.nav.bidrag.behandling.transformers.validering
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.transformers.validerBoforhold
 import no.nav.bidrag.behandling.transformers.validereSivilstand
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.tid.Datoperiode
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.YearMonth
 
 class ValiderBoforholdSivilstandPerioderTest {
+    @BeforeEach
+    fun stubPerson() {
+        stubPersonConsumer()
+    }
+
+    @AfterEach
+    fun unmockAppContext() {
+        unmockkObject(AppContext)
+    }
+
     @Nested
     inner class ValiderBoforholdPerioder {
         @Test
@@ -77,8 +92,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 4
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-01")
                 hullIPerioder shouldHaveSize 0
                 overlappendePerioder shouldHaveSize 0
                 ingenLøpendePeriode shouldBe false
@@ -87,8 +102,8 @@ class ValiderBoforholdSivilstandPerioderTest {
                 harFeil shouldBe false
             }
             assertSoftly(result.toList()[1]) {
-                barn!!.ident shouldBe "barn2"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-01")
+                barn.ident shouldBe "barn2"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-01")
                 overlappendePerioder shouldHaveSize 0
                 hullIPerioder shouldHaveSize 1
                 hullIPerioder[0].fom shouldBe LocalDate.parse("2023-01-31")
@@ -99,8 +114,8 @@ class ValiderBoforholdSivilstandPerioderTest {
                 harFeil shouldBe true
             }
             assertSoftly(result.toList()[2]) {
-                barn!!.ident shouldBe "barn3"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-02")
+                barn.ident shouldBe "barn3"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-02")
                 overlappendePerioder shouldHaveSize 0
                 hullIPerioder shouldHaveSize 0
                 ingenLøpendePeriode shouldBe false
@@ -109,8 +124,8 @@ class ValiderBoforholdSivilstandPerioderTest {
                 harFeil shouldBe true
             }
             assertSoftly(result.toList()[3]) {
-                barn!!.ident shouldBe "barn4"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-03")
+                barn.ident shouldBe "barn4"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-03")
                 overlappendePerioder shouldHaveSize 0
                 hullIPerioder shouldHaveSize 1
                 hullIPerioder[0].fom shouldBe LocalDate.parse("2022-01-01")
@@ -143,8 +158,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 1
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2023-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2023-01-01")
                 overlappendePerioder shouldHaveSize 1
                 hullIPerioder shouldHaveSize 0
                 ingenLøpendePeriode shouldBe false
@@ -175,8 +190,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 1
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2021-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2021-01-01")
                 overlappendePerioder shouldHaveSize 1
                 hullIPerioder shouldHaveSize 0
                 ingenLøpendePeriode shouldBe false
@@ -214,8 +229,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 1
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-01")
                 hullIPerioder shouldHaveSize 0
                 overlappendePerioder shouldHaveSize 3
                 ingenLøpendePeriode shouldBe false
@@ -274,8 +289,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 1
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-01")
                 hullIPerioder shouldHaveSize 0
                 overlappendePerioder shouldHaveSize 3
                 ingenLøpendePeriode shouldBe false
@@ -334,8 +349,8 @@ class ValiderBoforholdSivilstandPerioderTest {
 
             result shouldHaveSize 1
             assertSoftly(result.toList()[0]) {
-                barn!!.ident shouldBe "barn1"
-                barn!!.fødselsdato shouldBe LocalDate.parse("2020-01-01")
+                barn.ident shouldBe "barn1"
+                barn.fødselsdato shouldBe LocalDate.parse("2020-01-01")
                 hullIPerioder shouldHaveSize 0
                 overlappendePerioder shouldHaveSize 2
                 ingenLøpendePeriode shouldBe false

@@ -15,6 +15,7 @@ import no.nav.bidrag.dokument.arkiv.model.SafException
 import no.nav.bidrag.dokument.arkiv.query.DistribusjonInfoQuery
 import no.nav.bidrag.dokument.arkiv.query.DokumentoversiktFagsakQuery
 import no.nav.bidrag.dokument.arkiv.query.GraphQuery
+import no.nav.bidrag.dokument.arkiv.query.JournalpostEksternReferanseIdQuery
 import no.nav.bidrag.dokument.arkiv.query.JournalpostQuery
 import no.nav.bidrag.dokument.arkiv.query.TilknyttedeJournalposterQuery
 import org.springframework.http.HttpEntity
@@ -34,6 +35,8 @@ open class SafConsumer(private val restTemplate: RestTemplate) {
     )
 
     fun hentJournalpost(journalpostId: Long): Journalpost = consumeEnkelJournalpostQuery(JournalpostQuery(journalpostId))
+
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): Journalpost = consumeEnkelJournalpostQuery(JournalpostEksternReferanseIdQuery(eksternReferanseId))
 
     fun hentDistribusjonInfo(journalpostId: Long): DistribusjonsInfo {
         val response = consumeQuery(DistribusjonInfoQuery(journalpostId.toString())) { message: String? -> journalpostIkkeFunnetException(message) }

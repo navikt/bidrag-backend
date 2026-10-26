@@ -36,10 +36,12 @@ spec:
           cluster: {{this.cluster}}
       {{/each}}
     outbound:
+      {{#if outbound-access-hosts}}
       external:
       {{#each outbound-access-hosts}}
         - host: {{this}}
       {{/each}}
+      {{/if}}
       rules:
       {{#each outbound-access-apps}}
           - application: {{this}}

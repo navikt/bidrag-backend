@@ -168,7 +168,7 @@ class DokumentMetadataCollector(
             behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
             forespørsel.barnIBehandling
-        }
+        } ?: forespørsel.barnIBehandling
 
         val barn = sak.roller.filter { it.type == Rolletype.BARN }
         barn
@@ -246,7 +246,7 @@ class DokumentMetadataCollector(
             behandlingService.hentIdentSøknadsbarn(forespørsel.behandlingId, forespørsel.søknadId)
         } else {
             forespørsel.barnIBehandling
-        }
+        } ?: forespørsel.barnIBehandling
 
         val barn = sak.roller.filter { it.type == Rolletype.BARN }
         barn

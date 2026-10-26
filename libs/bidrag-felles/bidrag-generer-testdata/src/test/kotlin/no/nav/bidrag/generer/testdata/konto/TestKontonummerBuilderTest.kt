@@ -8,13 +8,11 @@ class TestKontonummerBuilderTest {
     fun skalGenerereKontonummer() {
         val kontonummer = genererKontonummer().opprett()
         kontonummer shouldNotBe null
-        println(kontonummer)
     }
 
     @Test
     fun skalGenerereUtenlandskKontonummer() {
         val kontonummer = genererKontonummer().norskKontonummer(false).opprett()
         kontonummer shouldNotBe null
-        println(kontonummer)
     }
 }

@@ -6,8 +6,6 @@ management:
 spring:
   mandatory-file-encoding: UTF-8
 DEBUG_MODE: false
-logging.level.secureLogger: DEBUG
-logging.level.no.nav.bidrag: DEBUG
 bidrag:
   rest:
     connect:

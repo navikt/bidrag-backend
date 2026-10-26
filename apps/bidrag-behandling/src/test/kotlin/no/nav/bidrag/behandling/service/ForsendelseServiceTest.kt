@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
+import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -28,6 +29,7 @@ import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.transport.dokument.BidragEnhet.ENHET_FARSKAP
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.dokument.forsendelse.JournalTema
+import no.nav.bidrag.transport.dokument.forsendelse.OpprettForsendelseForespørsel
 import no.nav.bidrag.transport.dokument.forsendelse.OpprettForsendelseRespons
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -240,33 +242,28 @@ class ForsendelseServiceTest {
                 ),
             )
         forsendelseService.slettEllerOpprettForsendelse(request)
+        val forespørsler = mutableListOf<OpprettForsendelseForespørsel>()
         verify(exactly = 2) {
-            bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.enhet shouldBe "4806"
-                    it.saksnummer shouldBe SAKSNUMMER
-                    it.tema shouldBe JournalTema.BID
-                    it.opprettTittel shouldBe true
-
-                    it.behandlingInfo shouldNotBe null
-                    it.behandlingInfo!!.soknadId shouldBe SOKNAD_ID
-                    it.behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG
-                },
-            )
+            bidragForsendelseConsumer.opprettForsendelse(capture(forespørsler))
+        }
+        forespørsler.forEach {
+            assertSoftly(it) {
+                enhet shouldBe "4806"
+                saksnummer shouldBe SAKSNUMMER
+                tema shouldBe JournalTema.BID
+                opprettTittel shouldBe true
+                behandlingInfo shouldNotBe null
+                behandlingInfo!!.soknadId shouldBe SOKNAD_ID
+                behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG
+            }
         }
 
         verify(ordering = Ordering.SEQUENCE) {
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBM.ident
-                    it.mottaker?.ident shouldBe testdataBM.ident
-                },
+                match { it.gjelderIdent == testdataBM.ident && it.mottaker?.ident == testdataBM.ident },
             )
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBP.ident
-                    it.mottaker?.ident shouldBe testdataBP.ident
-                },
+                match { it.gjelderIdent == testdataBP.ident && it.mottaker?.ident == testdataBP.ident },
             )
         }
     }
@@ -292,39 +289,31 @@ class ForsendelseServiceTest {
             )
         forsendelseService.slettEllerOpprettForsendelse(request)
 
+        val forespørsler = mutableListOf<OpprettForsendelseForespørsel>()
         verify(exactly = 3) {
-            bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.enhet shouldBe "4806"
-                    it.saksnummer shouldBe SAKSNUMMER
-                    it.tema shouldBe JournalTema.BID
-                    it.opprettTittel shouldBe true
-
-                    it.behandlingInfo shouldNotBe null
-                    it.behandlingInfo!!.soknadId shouldBe SOKNAD_ID
-                    it.behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG18AAR
-                },
-            )
+            bidragForsendelseConsumer.opprettForsendelse(capture(forespørsler))
+        }
+        forespørsler.forEach {
+            assertSoftly(it) {
+                enhet shouldBe "4806"
+                saksnummer shouldBe SAKSNUMMER
+                tema shouldBe JournalTema.BID
+                opprettTittel shouldBe true
+                behandlingInfo shouldNotBe null
+                behandlingInfo!!.soknadId shouldBe SOKNAD_ID
+                behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG18AAR
+            }
         }
 
         verify(ordering = Ordering.SEQUENCE) {
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBM.ident
-                    it.mottaker?.ident shouldBe testdataBM.ident
-                },
+                match { it.gjelderIdent == testdataBM.ident && it.mottaker?.ident == testdataBM.ident },
             )
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBP.ident
-                    it.mottaker?.ident shouldBe testdataBP.ident
-                },
+                match { it.gjelderIdent == testdataBP.ident && it.mottaker?.ident == testdataBP.ident },
             )
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBarn1.ident
-                    it.mottaker?.ident shouldBe testdataBarn1.ident
-                },
+                match { it.gjelderIdent == testdataBarn1.ident && it.mottaker?.ident == testdataBarn1.ident },
             )
         }
     }
@@ -414,33 +403,28 @@ class ForsendelseServiceTest {
             )
         forsendelseService.slettEllerOpprettForsendelse(request)
 
+        val forespørsler = mutableListOf<OpprettForsendelseForespørsel>()
         verify(exactly = 2) {
-            bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.enhet shouldBe "4806"
-                    it.saksnummer shouldBe SAKSNUMMER
-                    it.tema shouldBe JournalTema.BID
-                    it.opprettTittel shouldBe true
-
-                    it.behandlingInfo shouldNotBe null
-                    it.behandlingInfo!!.soknadId shouldBe SOKNAD_ID
-                    it.behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG
-                },
-            )
+            bidragForsendelseConsumer.opprettForsendelse(capture(forespørsler))
+        }
+        forespørsler.forEach {
+            assertSoftly(it) {
+                enhet shouldBe "4806"
+                saksnummer shouldBe SAKSNUMMER
+                tema shouldBe JournalTema.BID
+                opprettTittel shouldBe true
+                behandlingInfo shouldNotBe null
+                behandlingInfo!!.soknadId shouldBe SOKNAD_ID
+                behandlingInfo!!.stonadType shouldBe Stønadstype.BIDRAG
+            }
         }
 
         verify {
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBM.ident
-                    it.mottaker?.ident shouldBe testdataBM.ident
-                },
+                match { it.gjelderIdent == testdataBM.ident && it.mottaker?.ident == testdataBM.ident },
             )
             bidragForsendelseConsumer.opprettForsendelse(
-                withArg {
-                    it.gjelderIdent shouldBe testdataBP.ident
-                    it.mottaker?.ident shouldBe testdataBP.ident
-                },
+                match { it.gjelderIdent == testdataBP.ident && it.mottaker?.ident == testdataBP.ident },
             )
         }
 

@@ -283,6 +283,11 @@
       <artifactId>bidrag-backend-transport</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-backend-feilhandtering</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <!--Diverse-->
     <dependency>

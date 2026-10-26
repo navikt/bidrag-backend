@@ -20,9 +20,16 @@ class IdentUtils(
         @SjekkForNyIdent ident: Personident,
     ): LocalDate? = identConsumer.hentPersonInformasjon(ident)?.fødselsdato
 
+    /**
+     * Returnerer gjeldende ident fra bidrag-person, eller innsendt ident hvis personen ikke finnes.
+     * Andre feil fra bidrag-person kastes videre. Identen «NAV» erstattes med [NAV_TSS_IDENT].
+     */
     fun hentNyesteIdent(
         @SjekkForNyIdent ident: Personident,
     ): Personident = if (ident.verdi == "NAV") Personident(NAV_TSS_IDENT) else ident
 
-    fun hentAlleIdenter(ident: Personident) = identConsumer.hentAlleIdenter(ident.verdi)
+    /**
+     * Returnerer null når bidrag-person ikke finner personen. Andre feil kastes videre.
+     */
+    fun hentAlleIdenter(ident: Personident): List<String>? = identConsumer.hentAlleIdenter(ident.verdi)
 }

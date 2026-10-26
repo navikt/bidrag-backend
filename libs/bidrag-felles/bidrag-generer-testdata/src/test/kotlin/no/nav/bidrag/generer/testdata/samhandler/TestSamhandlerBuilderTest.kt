@@ -8,6 +8,5 @@ class TestSamhandlerBuilderTest {
     fun skalOppretteSamhandler() {
         val samhandler = genererSamhandler().opprett()
         samhandler shouldNotBe null
-        println(samhandler)
     }
 }

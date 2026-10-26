@@ -3,7 +3,7 @@ package no.nav.bidrag.behandling.transformers.grunnlag
 import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilSøknadsbarn
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -38,7 +38,7 @@ fun Rolle.tilGrunnlagPerson(): GrunnlagDto {
         innhold =
         POJONode(
             Person(
-                ident = ident.takeIf { !it.isNullOrEmpty() }?.let { hentNyesteIdent(it) },
+                ident = ident.takeIf { !it.isNullOrEmpty() }?.let { hentNyesteIdentIgnorerForbidden(it) },
                 navn = if (ident.isNullOrEmpty()) navn ?: hentPersonVisningsnavn(ident) else null,
                 stønadstype = if (rolletype == Rolletype.BARN) stønadstype else null,
                 bidragsmottaker =

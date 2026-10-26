@@ -8,6 +8,7 @@ import no.nav.bidrag.dokument.arkiv.dto.DistribusjonsInfo
 import no.nav.bidrag.dokument.arkiv.dto.Journalpost
 import no.nav.bidrag.dokument.arkiv.dto.Sak
 import no.nav.bidrag.dokument.arkiv.dto.TilknyttetJournalpost
+import no.nav.bidrag.dokument.arkiv.model.JournalpostIkkeFunnetException
 import no.nav.bidrag.dokument.arkiv.model.kanIkkeHenteJournalMedUgyldigFagomrade
 import no.nav.bidrag.transport.dokument.JournalpostDto
 import no.nav.bidrag.transport.person.PersonDto
@@ -18,6 +19,12 @@ class JournalpostService(
     private val personConsumer: PersonConsumer,
 ) {
     fun hentJournalpost(journalpostId: Long): Journalpost? = hentJournalpost(journalpostId, null)
+
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): Journalpost? = try {
+        safConsumer.hentJournalpostForEksternReferanseId(eksternReferanseId)
+    } catch (e: JournalpostIkkeFunnetException) {
+        null
+    }
 
     fun hentJournalpostMedTilknyttedeSaker(journalpostId: Long): Journalpost? = hentJournalpost(journalpostId)?.let { populerMedTilknyttedeSaker(it) }
 

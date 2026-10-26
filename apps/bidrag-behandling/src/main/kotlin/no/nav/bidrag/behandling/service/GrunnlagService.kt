@@ -215,6 +215,13 @@ class GrunnlagService(
         return gjelder to hentetGrunnlag
     }
 
+    // Asynkron innhenting tar egen lås i jobben, så da trenger ikke kallet å låse behandlingen.
+    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled &&
+        (
+            foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong()) ||
+                foretaNyGrunnlagsinnhenting(behandling, grenseInnhentingBeløpshistorikk.toLong())
+            )
+
     @Transactional
     fun oppdaterGrunnlagForBehandlingAsync(behandling: Behandling) {
         if (!UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled) {
@@ -232,6 +239,7 @@ class GrunnlagService(
 
     @Transactional
     fun oppdatereGrunnlagForBehandling(behandlingId: Long) {
+        behandlingRepository!!.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository?.findBehandlingById(behandlingId)!!.get()
         if (behandling.metadata?.lasterGrunnlagDetaljer()?.erBestilt() == false) {
             log.info { "Grunnlag for behandling $behandlingId lastes allerede, hopper over ny innhenting" }
@@ -326,6 +334,9 @@ class GrunnlagService(
                         scope.async {
                             lagreBpsBarnUtenBidragsak(behandling)
                         },
+                        scope.async {
+                            lagreManuelleVedtakGrunnlag(behandling)
+                        },
                     ).awaitAll()
                 }
             } else {
@@ -340,12 +351,7 @@ class GrunnlagService(
                 secureLogger.info {
                     "Aktiverer grunnlag automatisk hvis det ikke er noe endringer siden forrige grunnlagsinnhenting for behandling ${behandling.id} og saksnummer ${behandling.saksnummer}."
                 }
-                aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
-                aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
-                behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
-                aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+                aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling)
                 oppdaterVirkningstidspunktOgÅrsakForBarn(behandling)
                 inntektService.oppdaterInntektRolleOgGjelderBarnRolle(behandling)
             }
@@ -356,6 +362,14 @@ class GrunnlagService(
         }
     }
 
+    fun aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling: Behandling) {
+        aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
+        aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
+        behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
+        aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+    }
     suspend fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
         // Klage er pga at det skal være mulig å velge vedtak for aldersjustering hvis klagebehandling endrer resultat for aldersjusteringen
 
@@ -905,7 +919,7 @@ class GrunnlagService(
         objekt: String? = null,
     ): String? {
         if (ident == null) return null
-        val nyIdent = hentNyesteIdent(ident)?.verdi
+        val nyIdent = hentNyesteIdentIgnorerForbidden(ident)?.verdi
         if (nyIdent != ident) {
             secureLogger.info { "Oppdaterer ident fra $ident til $nyIdent i behandling $behandlingId - $objekt" }
         }

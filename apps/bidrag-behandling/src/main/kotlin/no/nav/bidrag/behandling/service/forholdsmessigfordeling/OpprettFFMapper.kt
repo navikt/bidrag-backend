@@ -4,6 +4,7 @@ import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
@@ -59,6 +60,13 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
+data class OpprettetSøknad(
+    val kravhaverIdent: String,
+    val stønadstype: Stønadstype?,
+    val refSøknadsid: Long?,
+    val søknadsid: Long? = null,
+    val behandlingstype: Behandlingstype? = null,
+)
 data class OppdaterBarnFraFFRequest(
     val rollerSomSkalLeggesTilDto: List<OpprettRolleDto>,
     val rollerSomSkalSlettes: List<OpprettRolleDto> = emptyList(),
@@ -114,8 +122,17 @@ val Behandlingstype.erForholdsmessigFordeling get() =
         Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE,
     ).contains(this)
 
+fun Behandling.erSøknadOpprettetAvSaksbehandler(søknadsid: Long?) = søknadsid != null &&
+    roller.any { rolle -> rolle.forholdsmessigFordeling?.søknader?.any { it.søknadsid == søknadsid && it.opprettetAvSaksbehandler } == true }
+
 val Behandlingstatus.erFeilregistrert get() =
     listOf(
+        Behandlingstatus.ERKJENT_AVSLUTTET,
+        Behandlingstatus.G4,
+        Behandlingstatus.DØMT_AVSLUTTET,
+        Behandlingstatus.AVVIST,
+        Behandlingstatus.SENDT_UTLANDET_LUKKET,
+        Behandlingstatus.TRUKKET,
         Behandlingstatus.FEILREGISTRERT,
     ).contains(this)
 
@@ -695,6 +712,16 @@ fun Underholdskostnad.kopierUnderholdskostnad(hovedbehandling: Behandling) {
                     tom = it.tom,
                     beløp = it.beløp,
                     beløpstype = it.beløpstype,
+                )
+            }.toMutableSet()
+    nyUnderholdskostnad.forpleining =
+        forpleining
+            .map {
+                Forpleining(
+                    underholdskostnad = nyUnderholdskostnad,
+                    fom = it.fom,
+                    tom = it.tom,
+                    beløp = it.beløp,
                 )
             }.toMutableSet()
     val rolleForNotat = if (nyUnderholdskostnad.gjelderAndreBarn) bmFraOverførtBehandling else this.rolle

@@ -11,7 +11,6 @@ import no.nav.bidrag.domene.util.avrundetMedToDesimaler
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEndringSjekkGrensePeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -261,7 +260,6 @@ internal class BeregnEndringSjekkGrensePeriodeTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultat() {
         val request = lesFilOgByggRequest(filnavn)
         val endringSjekkGrensePeriodeResultat = api.beregnEndringSjekkGrensePeriode(request)
-        println(commonObjectmapper.writeValueAsString(endringSjekkGrensePeriodeResultat))
 
         val alleReferanser = hentAlleReferanser(endringSjekkGrensePeriodeResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endringSjekkGrensePeriodeResultat)
@@ -342,7 +340,6 @@ internal class BeregnEndringSjekkGrensePeriodeTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatFlerePerioder() {
         val request = lesFilOgByggRequest(filnavn)
         val endringSjekkGrensePeriodeResultat = api.beregnEndringSjekkGrensePeriode(request)
-        println(commonObjectmapper.writeValueAsString(endringSjekkGrensePeriodeResultat))
 
         val alleReferanser = hentAlleReferanser(endringSjekkGrensePeriodeResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endringSjekkGrensePeriodeResultat)

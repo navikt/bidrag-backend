@@ -339,8 +339,6 @@ internal class BeregnSærbidragApiTest {
         val beregnetSærbidragPeriodeListe = totalSærbidragResultat.beregnetSærbidragPeriodeListe
         val grunnlagliste = totalSærbidragResultat.grunnlagListe
 
-        println(commonObjectmapper.writeValueAsString(totalSærbidragResultat))
-
         assertAll(
             { assertThat(totalSærbidragResultat).isNotNull },
 
@@ -365,8 +363,6 @@ internal class BeregnSærbidragApiTest {
         val totalSærbidragResultat = beregnSærbidragService.beregn(request, Vedtakstype.ENDRING)
         val beregnetSærbidragPeriodeListe = totalSærbidragResultat.beregnetSærbidragPeriodeListe
 
-        println(commonObjectmapper.writeValueAsString(totalSærbidragResultat))
-
         assertAll(
             { assertThat(totalSærbidragResultat).isNotNull },
 
@@ -388,8 +384,6 @@ internal class BeregnSærbidragApiTest {
         filnavn = "src/test/resources/testfiler/særbidrag_eksempel_inntekt_skjønn_mangler_dokumentasjon.json"
         val request = lesFilOgByggRequest(filnavn)
         val totalSærbidragResultat = beregnSærbidragService.beregn(request, Vedtakstype.FASTSETTELSE)
-
-        println(commonObjectmapper.writeValueAsString(totalSærbidragResultat))
 
         val referanseBP = request.grunnlagListe
             .filter { it.type == Grunnlagstype.PERSON_BIDRAGSPLIKTIG }
@@ -433,8 +427,6 @@ internal class BeregnSærbidragApiTest {
         val request = lesFilOgByggRequest(filnavn)
 
         val totalSærbidragResultat = beregnSærbidragService.beregn(request, Vedtakstype.FASTSETTELSE)
-
-        println(commonObjectmapper.writeValueAsString(totalSærbidragResultat))
 
         val alleReferanser = TestUtil.hentAlleReferanser(totalSærbidragResultat)
         val referanserIGrunnlagListe = totalSærbidragResultat.grunnlagListe.map(GrunnlagDto::referanse)

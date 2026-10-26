@@ -232,6 +232,8 @@ class VedtakserviceTest : TestContainerRunner() {
                 personRepository,
                 notatService,
                 personService,
+                vedtakGrunnlagMapper,
+                BeregnBarnebidragApi(),
             )
         val samværService = SamværService(samværRepository, behandlingRepository, notatService, BeregnSamværsklasseApi(stubSjablonService()))
         virkningstidspunktService =

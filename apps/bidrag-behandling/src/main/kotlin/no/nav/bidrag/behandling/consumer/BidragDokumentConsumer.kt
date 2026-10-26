@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.consumer
 
 import no.nav.bidrag.commons.web.client.AbstractRestClient
+import no.nav.bidrag.transport.dokument.JournalpostResponse
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
 import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import org.springframework.beans.factory.annotation.Qualifier
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -25,4 +27,18 @@ class BidragDokumentConsumer(
 
     @Retryable(value = [Exception::class], maxAttempts = 3, backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0))
     fun opprettJournalpost(opprettJournalpostRequest: OpprettJournalpostRequest): OpprettJournalpostResponse = postForNonNullEntity(createUri("/journalpost/JOARK"), opprettJournalpostRequest)
+
+    @Retryable(value = [Exception::class], noRetryFor = [HttpClientErrorException.NotFound::class], maxAttempts = 3, backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0))
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): JournalpostResponse? = try {
+        getForEntity(
+            UriComponentsBuilder
+                .fromUri(url)
+                .pathSegment("journal", "eksternreferanse", eksternReferanseId)
+                .encode()
+                .build()
+                .toUri(),
+        )
+    } catch (e: HttpClientErrorException.NotFound) {
+        null
+    }
 }

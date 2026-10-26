@@ -47,7 +47,7 @@ class JournalpostService(
     protected fun <T : Any> HttpResponse<T>.toResponseEntity(): ResponseEntity<T> {
         val response = ResponseEntity.status(responseEntity.statusCode)
         val headers = fetchHeaders()
-        secureLogger.info {
+        secureLogger.debug {
             "Fikk headere fra respons: ${headers.toSingleValueMap().map { "${it.key}: ${it.value.firstOrNull()}" }.joinToString(", ")}"
         }
         headers
@@ -83,6 +83,8 @@ class JournalpostService(
             )
         }
         ).toResponseEntity()
+
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): ResponseEntity<JournalpostResponse> = bidragArkivConsumer.hentJournalpostForEksternReferanseId(eksternReferanseId).toResponseEntity()
 
     fun finnAvvik(
         saksnummer: String?,

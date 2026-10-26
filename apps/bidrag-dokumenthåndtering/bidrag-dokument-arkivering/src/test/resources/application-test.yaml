@@ -1,6 +1,5 @@
 server.port: 8085
 
-logging.level.org.springframework.web.client.RestTemplate: DEBUG
 BIDRAG_DOKUMENT_URL: http://localhost:${wiremock.server.port:1234}/bidrag-dokument
 SRVBDARKIVERING_PWD: topp hemmelig
 DOKARKIV_URL: http://localhost:${wiremock.server.port:1234}

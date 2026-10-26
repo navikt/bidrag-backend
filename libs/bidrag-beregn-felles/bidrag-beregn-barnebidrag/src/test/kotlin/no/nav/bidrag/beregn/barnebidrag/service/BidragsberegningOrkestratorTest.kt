@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
@@ -44,7 +45,6 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.Bidragsberegning
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
 import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtaleGrunnlagV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -114,7 +114,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -129,12 +128,112 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     }
 
     @Test
+    fun `beregn bidrag v3 - direkte avslag med revurderingsbarn skal markere revurderingsbarn som avvist`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = true,
+            beregningBarn = beregnRequestFil.beregningBarn.map { it.copy(erDirekteAvslag = true) },
+        )
+        val revurderingsbarnReferanser = beregnRequest.grunnlagsliste
+            .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+            .filter { !it.innhold.delAvOpprinneligBehandling }
+            .map { it.referanse }
+        revurderingsbarnReferanser.shouldNotBeEmpty()
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat.forEach {
+                it.beregningsfeil shouldBe null
+                it.fatteVedtakAnbefalt shouldBe false
+                val erRevurderingsbarn = revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)
+                it.avvistRevurderingsbarn shouldBe erRevurderingsbarn
+                if (erRevurderingsbarn) {
+                    it.resultatVedtakListe shouldHaveSize 0
+                } else {
+                    it.resultatVedtakListe.flatMap { rv -> rv.periodeListe }.shouldNotBeEmpty()
+                }
+            }
+            resultat.count { !it.avvistRevurderingsbarn } shouldBe beregnRequest.beregningBarn.size - revurderingsbarnReferanser.size
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - revurderingsbarn med direkte avslag skal ikke fjerne vedtak når søknadsbarn ikke har avslag`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val revurderingsbarnReferanser = hentRevurderingsbarnReferanser(beregnRequestFil)
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = false,
+            beregningBarn = beregnRequestFil.beregningBarn.map {
+                if (revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)) {
+                    it.copy(erDirekteAvslag = true, opphørsdato = it.virkningstidspunkt)
+                } else {
+                    it.copy(erDirekteAvslag = false)
+                }
+            },
+        )
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat
+                .filter { revurderingsbarnReferanser.contains(it.søknadsbarnreferanse) }
+                .shouldHaveSize(revurderingsbarnReferanser.size)
+                .forEach {
+                    it.beregningsfeil shouldBe null
+                    it.resultatVedtakListe.shouldNotBeEmpty()
+                }
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - revurderingsbarn skal avvises uten perioder når alle søknadsbarn har avslag`() {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test03_v3_beregning_runde2_testB.json"
+        val beregnRequestFil = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        val revurderingsbarnReferanser = hentRevurderingsbarnReferanser(beregnRequestFil)
+        val beregnRequest = beregnRequestFil.copy(
+            erDirekteAvslag = false,
+            beregningBarn = beregnRequestFil.beregningBarn.map {
+                if (revurderingsbarnReferanser.contains(it.søknadsbarnreferanse)) {
+                    it.copy(erDirekteAvslag = false)
+                } else {
+                    it.copy(erDirekteAvslag = true)
+                }
+            },
+        )
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize beregnRequest.beregningBarn.size
+            resultat
+                .filter { revurderingsbarnReferanser.contains(it.søknadsbarnreferanse) }
+                .shouldHaveSize(revurderingsbarnReferanser.size)
+                .forEach {
+                    it.beregningsfeil shouldBe null
+                    it.avvistRevurderingsbarn shouldBe true
+                    it.fatteVedtakAnbefalt shouldBe false
+                    it.resultatVedtakListe shouldHaveSize 0
+                }
+        }
+    }
+
+    private fun hentRevurderingsbarnReferanser(request: BidragsberegningOrkestratorRequestV2) = request.grunnlagsliste
+        .filtrerOgKonverterBasertPåEgenReferanse<Person>(Grunnlagstype.PERSON_SØKNADSBARN)
+        .filter { !it.innhold.delAvOpprinneligBehandling }
+        .map { it.referanse }
+        .also { it.shouldNotBeEmpty() }
+
+    @Test
     fun `beregn bidrag v3 - 1 BM, 2 søknadsbarn - ingen løpende stønader`() {
         filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag.json"
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -143,12 +242,83 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     }
 
     @Test
+    fun `beregn bidrag v3 - direkte avslag for barn med virkningstidspunkt lik opphørsdato gir avslagsperiode fra virkningstidspunkt`() {
+        val beregnRequest = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-01"), erDirekteAvslag = true)
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize 2
+            val periodeListeBarn1 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_01" }.resultatVedtakListe.single().periodeListe
+            periodeListeBarn1.all { it.resultat.beløp != null } shouldBe true
+
+            val periodeListeBarn2 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+            periodeListeBarn2 shouldHaveSize 1
+            periodeListeBarn2[0].periode shouldBe ÅrMånedsperiode(YearMonth.parse("2024-01"), null)
+            periodeListeBarn2[0].resultat.beløp shouldBe null
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - barn uten direkte avslag med virkningstidspunkt lik opphørsdato skal ikke få avslagsperiode`() {
+        val beregnRequest = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-01"), erDirekteAvslag = false)
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        assertSoftly(beregnResponse) {
+            resultat shouldHaveSize 2
+            val resultatBarn2 = resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }
+            resultatBarn2.beregningsfeil shouldBe null
+            resultatBarn2.resultatVedtakListe.single().periodeListe shouldHaveSize 0
+        }
+    }
+
+    @Test
+    fun `beregn bidrag v3 - direkte avslag med opphørsdato ulik virkningstidspunkt skal ikke endre beregnet resultat`() {
+        val beregnRequestAvslag = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-06"), erDirekteAvslag = true)
+        val beregnRequestIkkeAvslag = lagRequestMedOpphørForSøknadsbarn02(opphørsdato = YearMonth.parse("2024-06"), erDirekteAvslag = false)
+
+        val responseAvslag = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequestAvslag)
+        val responseIkkeAvslag = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequestIkkeAvslag)
+
+        val periodeListeAvslag =
+            responseAvslag.resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+        val periodeListeIkkeAvslag =
+            responseIkkeAvslag.resultat.first { it.søknadsbarnreferanse == "Person_Søknadsbarn_02" }.resultatVedtakListe.single().periodeListe
+        assertSoftly {
+            periodeListeAvslag.map { it.periode } shouldBe periodeListeIkkeAvslag.map { it.periode }
+            periodeListeAvslag.map { it.resultat.beløp } shouldBe periodeListeIkkeAvslag.map { it.resultat.beløp }
+        }
+    }
+
+    private fun lagRequestMedOpphørForSøknadsbarn02(
+        opphørsdato: YearMonth?,
+        erDirekteAvslag: Boolean,
+    ): BidragsberegningOrkestratorRequestV2 {
+        filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag.json"
+        val request = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        return request.copy(
+            beregningBarn = request.beregningBarn.map {
+                if (it.søknadsbarnreferanse == "Person_Søknadsbarn_02") {
+                    val beregningsperiode = if (opphørsdato != null && opphørsdato == it.virkningstidspunkt) {
+                        ÅrMånedsperiode(opphørsdato, opphørsdato)
+                    } else {
+                        it.beregningsperiode.copy(til = opphørsdato ?: it.beregningsperiode.til)
+                    }
+                    it.copy(opphørsdato = opphørsdato, erDirekteAvslag = erDirekteAvslag, beregningsperiode = beregningsperiode)
+                } else {
+                    it
+                }
+            },
+        )
+    }
+
+    @Test
     fun `beregn bidrag v3 - 1 BM, 2 søknadsbarn med samme BM - privat avtale annet barn med samme BM`() {
         filnavnBeregnGrunnlag = "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag_privat_avtale_1.json"
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper
@@ -225,7 +395,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper
@@ -317,7 +486,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Grunnlagstyper
@@ -373,7 +541,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         // Sjekk at alle referanser er med i resultatet
         val alleReferanser = hentAlleReferanser(beregnResponse.grunnlagListe)
@@ -512,7 +679,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         }
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             grunnlagListe shouldHaveAtLeastSize 1
@@ -526,7 +692,6 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
 
         val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
-        println(commonObjectmapper.writeValueAsString(beregnResponse))
 
         assertSoftly(beregnResponse) {
             // Verifiser at grunnlagListe inneholder forventede grunnlagstyper

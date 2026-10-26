@@ -26,7 +26,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -166,7 +165,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBidragspliktigesAndelDeltBosted() {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = BeregnEndeligBidragServiceV2.delberegningBidragspliktigesAndelDeltBosted(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -238,7 +236,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBidragTilFordeling() {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = BeregnEndeligBidragServiceV2.delberegningBidragTilFordeling(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -376,7 +373,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
             beregningsperiode = ÅrMånedsperiode(YearMonth.parse("2024-08"), YearMonth.parse("2024-09")),
             mottattGrunnlagListe = request,
         )
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -460,7 +456,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
         val resultat = BeregnEndeligBidragServiceV2.delberegningEvne25ProsentAvInntekt(
             mottattGrunnlag = request,
         )
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -515,7 +510,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatAndelAvBidragsevne() {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = BeregnEndeligBidragServiceV2.delberegningAndelAvBidragsevne(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -691,7 +685,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
             mottattGrunnlag = request,
             valutakursGrunnlag = requestValutakurs.first(),
         )
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -800,7 +793,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
             mottattGrunnlag = request,
             valutakursGrunnlag = requestValutakurs.first(),
         )
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -902,7 +894,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBidragJustertForBPBarnetillegg() {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = BeregnEndeligBidragServiceV2.delberegningBidragJustertForBPBarnetillegg(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -990,7 +981,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatSluttberegningBarnebidrag() {
         val request = lesFilOgByggRequest(filnavn)
         val resultat = BeregnEndeligBidragServiceV2.sluttberegningBarnebidrag(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
@@ -1056,8 +1046,6 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
             grunnlagLøpendeBidragListe = requestLøpendeBidragGrunnlag.map { BeregnService.BeregnGrunnlagJustert(it, true) },
             grunnlagPrivatAvtaleListe = emptyList(),
         )
-
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         var teller = 0
 

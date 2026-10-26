@@ -10,7 +10,6 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningIndeksreguleringPrivatAvtale
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -138,7 +137,6 @@ internal class BeregnIndeksreguleringPrivatAvtaleTest : FellesTest() {
         } returns dummySjablonSjablontallListe()
 
         val resultat = api.beregnIndeksreguleringPrivatAvtaleV2(lesFilOgByggRequest(filnavn))
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val resultatListe = resultat
             .filtrerOgKonverterBasertPåEgenReferanse<DelberegningIndeksreguleringPrivatAvtale>(Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE)
@@ -187,7 +185,6 @@ internal class BeregnIndeksreguleringPrivatAvtaleTest : FellesTest() {
             ),
         )
         val resultat = api.beregnIndeksreguleringPrivatAvtaleV2(request)
-        println(commonObjectmapper.writeValueAsString(resultat))
 
         val alleReferanser = hentAlleReferanser(resultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(resultat)
