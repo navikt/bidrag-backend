@@ -31,6 +31,10 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -51,6 +55,10 @@ updates:
       timezone: "Europe/Oslo"
     groups:
       maven-dependencies:
+        patterns:
+          - "*"
+      maven-security:
+        applies-to: security-updates
         patterns:
           - "*"
     open-pull-requests-limit: 20
@@ -100,6 +108,10 @@ updates:
       pip-dependencies:
         patterns:
           - "*"
+      pip-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -115,6 +127,10 @@ updates:
       timezone: "Europe/Oslo"
     groups:
       github-actions-dependencies:
+        patterns:
+          - "*"
+      github-actions-security:
+        applies-to: security-updates
         patterns:
           - "*"
     labels:
