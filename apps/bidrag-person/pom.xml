@@ -15,14 +15,14 @@
     <description>Mikroservice for personinformasjon</description>
 
     <properties>
-        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
         <spring-retry.version>2.0.13</spring-retry.version>
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+        <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
         <mockk.version>1.14.11</mockk.version>
-        <kotest.version>6.2.4</kotest.version>
+        <kotest.version>6.2.6</kotest.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
     </properties>
 
@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.netflix.graphql.dgs</groupId>
             <artifactId>graphql-dgs-client</artifactId>
-            <version>12.0.1</version>
+            <version>12.1.0</version>
         </dependency>
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
