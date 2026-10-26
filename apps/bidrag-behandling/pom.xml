@@ -14,19 +14,19 @@
   <name>bidrag-behandling</name>
   <properties>
     <surefire.forkCount>4</surefire.forkCount>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.0</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.9.0</shedlock.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <shedlock.version>7.10.1</shedlock.version>
+    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <hypersistence-utils-hibernate.version>3.15.3</hypersistence-utils-hibernate.version>
-    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+    <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <springmockk.version>5.0.1</springmockk.version>
     <mockk.version>1.14.11</mockk.version>
-    <kotest.version>6.2.4</kotest.version>
+    <kotest.version>6.2.6</kotest.version>
     <swagger-annotations.version>2.2.55</swagger-annotations.version>
     <jetbrains.annotations.version>26.1.0</jetbrains.annotations.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
