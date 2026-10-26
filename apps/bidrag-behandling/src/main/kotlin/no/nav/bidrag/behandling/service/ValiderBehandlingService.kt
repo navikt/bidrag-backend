@@ -92,7 +92,7 @@ class ValiderBehandlingService(
             val sammeknytninger = hentSammenknytningerHovedsøknad(request.søknadsid)
             if (sammeknytninger != null && sammeknytninger.søknader.isNotEmpty()) {
                 @Suppress("ktlint:standard:max-line-length")
-                return "Kan ikke behandle FF i ny løsning når det er opprettet FF i gammel løsning. Feilregistrer revurderingssøknaden først for å kunne utløse FF i ny løsning."
+                return "Kan ikke behandle FF i ny løsning når FF er opprettet i gammel løsning. Feilregistrer revurderingssøknaden først for å kunne utløse FF i ny løsning."
             }
         }
         if (request.erBegrensetRevurdering() && !UnleashFeatures.BEGRENSET_REVURDERING.isEnabled) {
