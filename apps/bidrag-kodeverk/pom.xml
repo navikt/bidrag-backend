@@ -15,14 +15,14 @@
 	<name>bidrag-kodeverk</name>
 
 	<properties>
-		<nav-token-support.version>6.0.12</nav-token-support.version>
+		<nav-token-support.version>7.0.0</nav-token-support.version>
 		<kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-		<springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+		<springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
 		<logback-encoder.version>9.0</logback-encoder.version>
-		<wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+		<wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
 		<wiremock-standalone.version>3.13.2</wiremock-standalone.version>
 		<mockk.version>1.14.11</mockk.version>
-		<kotest.version>6.2.4</kotest.version>
+		<kotest.version>6.2.6</kotest.version>
 	</properties>
 
 	<dependencies>
