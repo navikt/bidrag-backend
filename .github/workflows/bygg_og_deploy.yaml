@@ -15,7 +15,7 @@ on:
       java-version:
         required: false
         type: string
-        default: 21
+        default: 25
         description: Hvilken versjon av java applikasjonen skal bygges med
       runner:
         required: false
