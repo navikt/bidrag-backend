@@ -101,7 +101,7 @@ class ForholdsmessigFordelingBarnService(
                         tilhørerSak = request.saksnummer,
                         delAvOpprinneligBehandling = true,
                         behandlingsid = request.behandling.id,
-                        bidragsmottaker = request.bmIdent ?: request.behandling.bidragsmottakerForSak(request.saksnummer)?.ident,
+                        bidragsmottaker = request.bmIdent ?: request.behandling.finnBidragsmottakerForSak(request.saksnummer)?.ident,
                         behandlerenhet = request.behandlerenhet,
                         erRevurdering = request.erRevurdering,
                         søknader = mutableSetOf(søknadsdetaljerBarn.copy(søknadsid = request.søknadsid)),
@@ -643,6 +643,7 @@ class ForholdsmessigFordelingBarnService(
                     behandling,
                     OppdatereVirkningstidspunkt(
                         årsak = null,
+                        rolleId = rolle.id,
                         avslag = resultatkode,
                     ),
                     tvingEndring = true,

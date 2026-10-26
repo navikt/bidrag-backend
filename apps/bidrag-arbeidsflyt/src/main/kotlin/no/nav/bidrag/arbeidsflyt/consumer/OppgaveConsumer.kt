@@ -2,6 +2,7 @@ package no.nav.bidrag.arbeidsflyt.consumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.dto.DefaultOpprettOppgaveRequest
+import no.nav.bidrag.arbeidsflyt.dto.MappeDto
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokRequest
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokResponse
@@ -50,6 +51,18 @@ class OppgaveConsumer(
             throw EndreOppgaveFeiletFunksjoneltException("Fant ikke oppgave med id $oppgaveId. Feilet med feilmelding ${e.message}", e)
         }
         throw e
+    }
+
+    fun hentMappeNavn(mappeId: String?): String? {
+        if (mappeId.isNullOrEmpty()) return null
+        return try {
+            getForEntity<MappeDto>(
+                UriComponentsBuilder.fromUri(url).path("/api/v1/mapper/").pathSegment(mappeId).build().toUri(),
+            )?.navn ?: mappeId
+        } catch (e: Exception) {
+            LOGGER.warn(e) { "Kunne ikke hente mappe med id $mappeId" }
+            mappeId
+        }
     }
 
     private fun initStringOf(oppgaveSokResponse: OppgaveSokResponse?): String {
