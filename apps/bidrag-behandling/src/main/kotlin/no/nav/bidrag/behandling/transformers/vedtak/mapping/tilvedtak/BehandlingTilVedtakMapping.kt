@@ -558,7 +558,7 @@ class BehandlingTilVedtakMapping(
 
             val saksnummer = søknadsbarnFiltered.first().saksnummer
             val erRevurderingsbarn = beregningerForSøknad.all { it.barn.erRevurderingsbarn }
-            val bidragsmottaker = behandling.bidragsmottakerForSak(saksnummer) ?: behandling.bidragsmottaker
+            val bidragsmottaker = behandling.bidragsmottakerForSak(saksnummer)
             val byggGrunnlagForSøknadsbarn =
                 if (erRevurderingsbarn) {
                     søknadsbarnFiltered
@@ -993,7 +993,6 @@ class BehandlingTilVedtakMapping(
             val førsteSøknadsbarn = søknadsbarnISøknad.first()
             val sak = behandlingSaker.getValue(førsteSøknadsbarn.saksnummer)
             val erRevurderingsbarn = førsteSøknadsbarn.forholdsmessigFordeling?.erRevurdering == true
-            val bidragsmottaker = behandling.bidragsmottakerForSak(førsteSøknadsbarn.saksnummer) ?: behandling.bidragsmottaker
             val byggGrunnlagForSøknadsbarn =
                 if (erRevurderingsbarn) {
                     søknadsbarnISøknad

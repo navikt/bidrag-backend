@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.behandlingNotFoundException
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagSomGjelderBarn
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -233,15 +234,11 @@ class VirkningstidspunktService(
                         it,
                         NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
                         "",
-                        it.bidragsmottaker!!,
+                        it.bidragsmottakerForSak(gjelderBarnRolle.saksnummer),
                     )
                 } else {
-                    // Når saksnummer er angitt oppdateres begrunnelsen kun for barn i den aktuelle saken,
-                    // ellers for alle barn.
-                    val søknadsbarn =
-                        request.saksnummer?.let { sak -> it.søknadsbarn.filter { barn -> barn.saksnummer == sak } }
-                            ?: it.søknadsbarn
-                    søknadsbarn.forEach { barn ->
+                    // Når saksnummer er angitt oppdateres begrunnelsen kun for barn i den aktuelle saken, ellers for alle barn
+                    it.finnSøknadsbarnForSak(request.saksnummer).forEach { barn ->
                         notatService.oppdatereNotat(
                             it,
                             NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
@@ -253,7 +250,7 @@ class VirkningstidspunktService(
                         it,
                         NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
                         notat.nyBegrunnelse,
-                        it.bidragsmottaker!!,
+                        it.bidragsmottakerForSak(request.saksnummer),
                     )
                 }
             }
@@ -284,12 +281,12 @@ class VirkningstidspunktService(
             if (stønadstype == Stønadstype.BIDRAG18AAR) {
                 request.oppdaterBegrunnelseVurderingAvSkolegang?.let { n ->
                     if (gjelderBarnRolle == null) {
-                        // Det valideres at det finnes bare ett barn i behandlingen hvis rolleId i requesten er null
+                        // Det valideres at det finnes bare ett barn i behandlingen hvis rolleId i requesten er null og oppdaterBegrunnelseVurderingAvSkolegang oppdateres
                         notatService.oppdatereNotat(
                             it,
                             NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
                             n.nyBegrunnelse,
-                            it.søknadsbarn.first(),
+                            it.finnSøknadsbarnForSak(request.saksnummer).first(),
                         )
                     } else {
                         notatService.oppdatereNotat(
@@ -301,7 +298,7 @@ class VirkningstidspunktService(
                     }
                 }
             }
-            oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, it)
+            oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, it, saksnummer = request.saksnummer)
             forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(it, ignorerSynkTimer = true)
         }
         behandling
@@ -317,11 +314,30 @@ class VirkningstidspunktService(
             log.info { "Virkningstidspunkt årsak/avslag er endret. Oppdaterer gebyr detaljer ${behandling.id}" }
             gebyrService.oppdaterGebyrEtterEndringÅrsakAvslag(behandling)
         }
-        val forRolle = if (behandling.erBidrag()) request.rolleId?.let { behandling.roller.find { it.id == request.rolleId } } else null
+        val forRolle = if (behandling.erBidrag()) {
+            request.rolleId?.let { behandling.roller.find { it.id == request.rolleId } }
+        } else {
+            null
+        }
+        val gjelderSak = behandling.erBidrag() && forRolle == null && request.saksnummer != null
+        val søknadsbarnISak = behandling.finnSøknadsbarnForSak(request.saksnummer).filter { !it.erRevurderingsbarn }
 
         val forrigeÅrsak = forRolle?.årsak ?: behandling.årsak
         val forrigeAvslag = forRolle?.avslag ?: behandling.avslag
-        val erAvslagÅrsakEndret = tvingEndring || request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
+        // Barna i saken kan ha ulik årsak/avslag hvis de er endret enkeltvis. Sammenlign derfor mot hvert barn i saken
+        val erAvslagÅrsakEndret =
+            tvingEndring ||
+                if (gjelderSak) {
+                    søknadsbarnISak.any {
+                        // Bakoverkompatibilitet: eldre behandlinger har årsak/avslag lagret på behandling og ikke på barnet
+                        val harVerdiPåBarn = it.årsak != null || it.avslag != null
+                        val årsak = if (harVerdiPåBarn) it.årsak else behandling.årsak
+                        val avslag = if (harVerdiPåBarn) it.avslag else behandling.avslag
+                        årsak != request.årsak || avslag != request.avslag
+                    }
+                } else {
+                    request.årsak != forrigeÅrsak || request.avslag != forrigeAvslag
+                }
 
         if (request.avslag == null && request.årsak == null) {
             log.warn { "Både avslag og årsak mangler i input for behandling ${behandling.id}. Minst ett av vediene må setttes" }
@@ -329,11 +345,13 @@ class VirkningstidspunktService(
         }
 
         val erBidragFlereBarn = behandling.erBidrag() && behandling.søknadsbarn.size > 1
-        if (forRolle != null && forrigeAvslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
+        val gjelderUtvalgteBarn = forRolle != null || gjelderSak
+        if (gjelderUtvalgteBarn && forrigeAvslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
             log.info {
                 "Avslag endret bort fra ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD}, fjerner avslagsgrunn for alle barn ${behandling.id}"
             }
-            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null), true)
+            // Gjelder alle barn uavhengig av sak. rolleId og saksnummer må nullstilles for å unngå uendelig rekursjon
+            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null, saksnummer = null), true)
             oppdaterVirkningstidspunkt(
                 null,
                 behandling.eldsteVirkningstidspunkt,
@@ -343,11 +361,11 @@ class VirkningstidspunktService(
             )
             return
         }
-        if (forRolle != null && request.avslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
+        if (gjelderUtvalgteBarn && request.avslag == Resultatkode.BIDRAGSPLIKTIG_ER_DØD && erBidragFlereBarn) {
             log.info {
                 "Avslag er satt til ${Resultatkode.BIDRAGSPLIKTIG_ER_DØD} for ene barnet, setter automatisk samme avslag for alle barn ${behandling.id}"
             }
-            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null), true)
+            oppdaterAvslagÅrsak(behandling, request.copy(rolleId = null, saksnummer = null), true)
             oppdaterVirkningstidspunkt(
                 null,
                 behandling.eldsteVirkningstidspunkt,
@@ -363,7 +381,7 @@ class VirkningstidspunktService(
                 forRolle.årsak = if (request.avslag != null) null else request.årsak ?: forRolle.årsak
                 forRolle.avslag = if (request.årsak != null) null else request.avslag ?: forRolle.avslag
             } else {
-                behandling.søknadsbarn.forEach {
+                behandling.finnSøknadsbarnForSak(request.saksnummer).forEach {
                     val nyÅrsak =
                         if (request.årsak != null && it.erRevurderingsbarn) {
                             VirkningstidspunktÅrsakstype.REVURDERING_MÅNEDEN_ETTER
@@ -402,7 +420,7 @@ class VirkningstidspunktService(
                 TypeBehandling.BIDRAG -> {
                     oppdaterGebyr()
                     if (behandling.avslag != null) {
-                        behandling.søknadsbarn.forEach {
+                        behandling.finnSøknadsbarnForSak(request.saksnummer).forEach {
                             // Nå er virkningstidspunkt/avslag/årsak ikke knyttet mot rolle. I V3 av bidrag skal det knyttes mot hver søknadsbarn
                             // Da må dette bare endre for søknadsbarn det endres for
                             oppdaterOpphørsdato(
@@ -410,9 +428,14 @@ class VirkningstidspunktService(
                                 behandling,
                             )
                         }
-                    } else if (forRolle != null && forRolle.avslag != null) {
+                    } else if (forRolle?.avslag != null) {
                         oppdaterOpphørsdato(
                             OppdaterOpphørsdatoRequestDto(forRolle.id!!, null),
+                            behandling,
+                        )
+                    } else if (gjelderSak && søknadsbarnISak.isNotEmpty() && søknadsbarnISak.all { it.avslag != null }) {
+                        oppdaterOpphørsdato(
+                            OppdaterOpphørsdatoRequestDto(null, null, saksnummer = request.saksnummer),
                             behandling,
                         )
                     }
@@ -431,15 +454,34 @@ class VirkningstidspunktService(
         tvingEndring: Boolean = false,
         rekalkulerOpplysningerVedEndring: Boolean = true,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        saksnummer: String? = null,
     ) {
         val gjelderBarn = behandling.søknadsbarn.find { it.id == rolleId }
         // Forrige virkningstidspunkt settes fra input til metoden hvis det var en revurderingsbarn som får ny virkningstidspunkt etter ny søknad
-        val forrigeVirkningstidspunkt = forrigeVirkningstidspunkt ?: gjelderBarn?.virkningstidspunkt ?: behandling.eldsteVirkningstidspunkt
+        // Ved oppdatering for sak brukes eldste virkningstidspunkt i saken istedenfor global virkningstidspunkt
+        val forrigeVirkningstidspunkt =
+            forrigeVirkningstidspunkt
+                ?: gjelderBarn?.virkningstidspunkt
+                ?: saksnummer?.let { behandling.finnSøknadsbarnForSak(it).minOfOrNull { barn -> barn.virkningstidspunktRolle } }
+                ?: behandling.eldsteVirkningstidspunkt
         val erVirkningstidspunktEndret = tvingEndring || nyVirkningstidspunkt != forrigeVirkningstidspunkt
+        // Perioder som starter på forrige virkningstidspunkt flyttes kun for berørte barn når oppdateringen gjelder én rolle/sak.
+        // Hvis saken hadde eldste virkningstidspunkt kan endringen påvirke alle, og alle perioder justeres som før.
+        val søknadsbarnSomEndres =
+            when {
+                forrigeVirkningstidspunkt == behandling.eldsteVirkningstidspunkt -> null
+                gjelderBarn != null -> setOf(gjelderBarn)
+                saksnummer != null -> behandling.finnSøknadsbarnForSak(saksnummer).toSet()
+                else -> null
+            }
 
         fun oppdatereUnderhold() {
             log.info { "Tilpasse perioder for underhold til ny virkningsdato i behandling ${behandling.id}" }
-            underholdService.tilpasseUnderholdEtterVirkningsdato(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            underholdService.tilpasseUnderholdEtterVirkningsdato(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterBoforhold() {
@@ -463,13 +505,21 @@ class VirkningstidspunktService(
 
         fun oppdaterSamvær() {
             log.info { "Virkningstidspunkt er endret. Oppdaterer perioder på samvær for behandling ${behandling.id}" }
-            samværService.rekalkulerPerioderSamvær(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            samværService.rekalkulerPerioderSamvær(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterInntekter() {
             log.info { "Virkningstidspunkt er endret. Oppdaterer perioder på inntekter for behandling ${behandling.id}" }
             grunnlagService.oppdatereIkkeAktiveInntekterEtterEndretVirkningstidspunkt(behandling)
-            inntektService.rekalkulerPerioderInntekter(behandling, forrigeVirkningstidspunkt = forrigeVirkningstidspunkt)
+            inntektService.rekalkulerPerioderInntekter(
+                behandling,
+                forrigeVirkningstidspunkt = forrigeVirkningstidspunkt,
+                søknadsbarnSomEndres = søknadsbarnSomEndres,
+            )
         }
 
         fun oppdaterAndreVoksneIHusstanden() {
@@ -491,16 +541,17 @@ class VirkningstidspunktService(
                 gjelderBarn.virkningstidspunkt =
                     maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
             } else {
-                behandling.søknadsbarn.forEach { gjelderBarn ->
-                    val eldsteSøktFomDato =
-                        gjelderBarn.forholdsmessigFordeling
-                            ?.eldsteSøknad
-                            ?.søknadFomDato
-                            ?.withDayOfMonth(1)
-                            ?: behandling.søktFomDato.withDayOfMonth(1)
-                    gjelderBarn.virkningstidspunkt =
-                        maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
-                }
+                behandling.finnSøknadsbarnForSak(saksnummer)
+                    .forEach { gjelderBarn ->
+                        val eldsteSøktFomDato =
+                            gjelderBarn.forholdsmessigFordeling
+                                ?.eldsteSøknad
+                                ?.søknadFomDato
+                                ?.withDayOfMonth(1)
+                                ?: behandling.søktFomDato.withDayOfMonth(1)
+                        gjelderBarn.virkningstidspunkt =
+                            maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
+                    }
             }
 
             behandling.virkningstidspunkt = behandling.eldsteVirkningstidspunkt
@@ -542,12 +593,12 @@ class VirkningstidspunktService(
     ) {
         val requestBeregnTil = request.beregnTil
         val rolle = behandling.roller.find { it.id == request.idRolle }
-        val nåværendeBeregnTil = rolle?.beregnTil
-        val erBeregnTilDatoEndret = tvingEndring || requestBeregnTil != nåværendeBeregnTil
+        val gjelderBarn = rolle?.let { listOf(it) } ?: behandling.finnSøknadsbarnForSak(request.saksnummer)
+        val erBeregnTilDatoEndret = tvingEndring || gjelderBarn.any { it.beregnTil != requestBeregnTil }
         val forrigeBeregnTilDato = behandling.finnBeregnTilDatoBehandling(rolle)
 
         val erBeregnTilEndretTilInneværende =
-            (rolle == null || rolle.beregnTil != BeregnTil.INNEVÆRENDE_MÅNED) && request.beregnTil == BeregnTil.INNEVÆRENDE_MÅNED
+            request.beregnTil == BeregnTil.INNEVÆRENDE_MÅNED && gjelderBarn.any { it.beregnTil != BeregnTil.INNEVÆRENDE_MÅNED }
 
         fun oppdatereUnderhold() {
             log.info { "Tilpasse perioder for underhold til ny opphørsdato i behandling ${behandling.id}" }
@@ -591,7 +642,7 @@ class VirkningstidspunktService(
             if (rolle != null) {
                 rolle.beregnTil = request.beregnTil
             } else {
-                behandling.søknadsbarn.forEach {
+                behandling.finnSøknadsbarnForSak(request.saksnummer).forEach {
                     it.beregnTil = request.beregnTil
                 }
             }
@@ -614,47 +665,40 @@ class VirkningstidspunktService(
             behandlingRepository
                 .findBehandlingById(behandlingId)
                 .orElseThrow { behandlingNotFoundException(behandlingId) }
-        val søknadsbarn =
-            saksnummer?.let { sak -> behandling.søknadsbarn.filter { it.saksnummer == sak } }
-                ?: behandling.søknadsbarn
+        val søknadsbarn = behandling.finnSøknadsbarnForSak(saksnummer)
         val barnMedEldstVirkningstidspunkt = søknadsbarn.minBy { it.virkningstidspunktRolle }
+        // Bakoverkompatibilitet: eldre behandlinger har årsak/avslag lagret på behandling og ikke på barnet
+        val harÅrsakAvslagPåBarn = barnMedEldstVirkningstidspunkt.årsak != null || barnMedEldstVirkningstidspunkt.avslag != null
 
-        // Når saksnummer er angitt oppdateres kun barn i den aktuelle saken (per rolle),
-        // ellers oppdateres alle barn under ett (idRolle = null).
-        val idRoller: List<Long?> = if (saksnummer == null) listOf(null) else søknadsbarn.map { it.id }
-
-        idRoller.forEachIndexed { index, idRolle ->
-            val erSisteRolle = index == idRoller.lastIndex
-            oppdaterOpphørsdato(
-                OppdaterOpphørsdatoRequestDto(idRolle, behandling.globalOpphørsdato),
-                behandling,
-                tvingEndring = true,
-                rekalkulerOpplysningerVedEndring = false,
-            )
-            oppdaterVirkningstidspunkt(
-                idRolle,
-                barnMedEldstVirkningstidspunkt.virkningstidspunkt,
-                behandling,
-                tvingEndring = true,
-                rekalkulerOpplysningerVedEndring = false,
-            )
-            oppdaterAvslagÅrsak(
-                behandling,
-                OppdatereVirkningstidspunkt(
-                    rolleId = idRolle,
-                    årsak = barnMedEldstVirkningstidspunkt.årsak,
-                    avslag = barnMedEldstVirkningstidspunkt.avslag,
-                ),
-                tvingEndring = true,
-            )
-
-            oppdaterBeregnTilDato(
-                OppdaterBeregnTilDatoRequestDto(idRolle, barnMedEldstVirkningstidspunkt.beregnTil),
-                behandling,
-                tvingEndring = true,
-                rekalkulerOpplysningerVedEndring = erSisteRolle,
-            )
-        }
+        // Med saksnummer oppdateres kun barna i saken, ellers alle barn (idRolle = null)
+        oppdaterOpphørsdato(
+            OppdaterOpphørsdatoRequestDto(null, søknadsbarn.opphørsdatoForBarn(), saksnummer = saksnummer),
+            behandling,
+            tvingEndring = true,
+            rekalkulerOpplysningerVedEndring = false,
+        )
+        oppdaterVirkningstidspunkt(
+            null,
+            barnMedEldstVirkningstidspunkt.virkningstidspunktRolle,
+            behandling,
+            tvingEndring = true,
+            rekalkulerOpplysningerVedEndring = false,
+            saksnummer = saksnummer,
+        )
+        oppdaterAvslagÅrsak(
+            behandling,
+            OppdatereVirkningstidspunkt(
+                saksnummer = saksnummer,
+                årsak = if (harÅrsakAvslagPåBarn) barnMedEldstVirkningstidspunkt.årsak else behandling.årsak,
+                avslag = if (harÅrsakAvslagPåBarn) barnMedEldstVirkningstidspunkt.avslag else behandling.avslag,
+            ),
+            tvingEndring = true,
+        )
+        oppdaterBeregnTilDato(
+            OppdaterBeregnTilDatoRequestDto(null, barnMedEldstVirkningstidspunkt.beregnTil, saksnummer = saksnummer),
+            behandling,
+            tvingEndring = true,
+        )
         var nyNotat = barnMedEldstVirkningstidspunkt.notat.find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT }?.innhold ?: ""
         søknadsbarn.forEach {
             if (it.id != barnMedEldstVirkningstidspunkt.id) {
@@ -683,7 +727,14 @@ class VirkningstidspunktService(
     ) {
         val requestOpphørsmåned = request.opphørsdato?.withDayOfMonth(1)
         val rolle = behandling.roller.find { it.id == request.idRolle }
-        val forrigeOpphørsdato = rolle?.opphørsdato ?: behandling.globalOpphørsdato
+        val søknadsbarnISak = behandling.finnSøknadsbarnForSak(request.saksnummer)
+        // Ved oppdatering for sak brukes opphørsdato til barna i saken istedenfor global opphørsdato
+        val forrigeOpphørsdato =
+            if (rolle == null && request.saksnummer != null) {
+                søknadsbarnISak.opphørsdatoForBarn()
+            } else {
+                rolle?.opphørsdato ?: behandling.globalOpphørsdato
+            }
         val erOpphørsdatoEndret = tvingEndring || requestOpphørsmåned != forrigeOpphørsdato || request.simulerEndring
         val erOpphørSlettet = requestOpphørsmåned == null && forrigeOpphørsdato != null
 
@@ -725,7 +776,7 @@ class VirkningstidspunktService(
             if (rolle != null) {
                 rolle.opphørsdato = requestOpphørsmåned
             } else {
-                behandling.søknadsbarn.forEach {
+                søknadsbarnISak.forEach {
                     it.opphørsdato = requestOpphørsmåned
                 }
             }
@@ -759,3 +810,6 @@ class VirkningstidspunktService(
         }
     }
 }
+
+// Opphørsdato gjelder kun hvis alle barna har opphørsdato. Da brukes seneste opphørsdato
+private fun List<Rolle>.opphørsdatoForBarn() = if (any { it.opphørsdato == null }) null else maxOfOrNull { it.opphørsdato!! }

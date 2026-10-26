@@ -88,8 +88,9 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
     if (rolle != null && rolle.rolletype != Rolletype.BARN) {
         feilliste.add("Opphørsdato kan kun settes for barn")
     }
+    val søknadsbarnISak = behandling.søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }
     if (rolle == null) {
-        behandling.søknadsbarn.forEach { søknadsbarn ->
+        søknadsbarnISak.forEach { søknadsbarn ->
             val stønadstype = søknadsbarn.stønadstype ?: behandling.stonadstype
             if (stønadstype == Stønadstype.BIDRAG &&
                 søknadsbarn.rolletype == Rolletype.BARN &&
@@ -108,7 +109,10 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
         }
     }
 
-    val virkningstidspunkt = rolle?.virkningstidspunktRolle ?: behandling.eldsteVirkningstidspunkt
+    val virkningstidspunkt =
+        rolle?.virkningstidspunktRolle
+            ?: saksnummer?.let { søknadsbarnISak.minOfOrNull { it.virkningstidspunktRolle } }
+            ?: behandling.eldsteVirkningstidspunkt
 
     if (opphørsdato == virkningstidspunkt) {
         feilliste.add("Opphørsdato kan ikke settes lik virkningstidspunkt")
