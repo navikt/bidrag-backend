@@ -240,7 +240,7 @@ open class Behandling(
     }
 
     fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
-        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
+        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == finnSøknadsid } }
     } else if (soknadsid == finnSøknadsid) {
         ForholdsmessigFordelingSøknadBarn(
             mottattDato = mottattdato,
@@ -309,6 +309,9 @@ open class Behandling(
     val erIForholdsmessigFordeling get() = forholdsmessigFordeling != null
     val grunnlagListe: List<Grunnlag> get() = grunnlag.toList()
     val søknadsbarn get() = roller.filter { it.rolletype == Rolletype.BARN }
+
+    // søknadsbarn.saksnummer: saksnummer til barnet hvis FF eller så fallbacker den til behandling saksnummer. Så den er aldri null
+    fun finnSøknadsbarnForSak(saksnummer: String?) = søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }
     val revurderingdsbarn get() = roller.filter { it.erRevurderingsbarn }
     val bidragsmottaker get() =
         roller.find {
@@ -326,7 +329,9 @@ open class Behandling(
         }
     }
 
-    fun bidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { it.forholdsmessigFordeling?.tilhørerSak == saksnummer }
+    fun finnBidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { bm -> bm.saksnummer == saksnummer }
+
+    fun bidragsmottakerForSak(saksnummer: String?) = saksnummer?.let { finnBidragsmottakerForSak(it) } ?: bidragsmottaker!!
 
     val bidragspliktig get() = roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 

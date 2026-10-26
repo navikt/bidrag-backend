@@ -20,7 +20,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.oppdateringAvBoforholdFeilet
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.tilFFBarnDetaljer
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
@@ -163,7 +163,7 @@ open class Rolle(
     val erDirekteAvslagIkkeAvvisning get() = avslag != null && avslag!!.erDirekteAvslag() && !avslag!!.erAvvisning()
     val løperBidragEtterEldsteVirkning get() = behandling.løperBidragEtterEldsteVirkning(this)
     val kreverGrunnlagForBeregning get() =
-        avslag == null || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
+        harGebyrsøknad || avslag == null || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
     val harSøknadMedInnkreving get() = forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.innkreving } == true
     val erRevurderingsbarn get() = rolletype == Rolletype.BARN && forholdsmessigFordeling != null && forholdsmessigFordeling!!.erRevurdering
     val erBarn get() = rolletype == Rolletype.BARN
@@ -460,7 +460,7 @@ data class RolleManueltOverstyrtGebyr(
 
 fun Rolle.tilPersonident() = ident?.let { Personident(it) }
 
-fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdent(it) }
+fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdentIgnorerForbidden(it) }
 
 fun Rolle.hentNavn() = navn ?: hentPersonVisningsnavn(ident) ?: ""
 

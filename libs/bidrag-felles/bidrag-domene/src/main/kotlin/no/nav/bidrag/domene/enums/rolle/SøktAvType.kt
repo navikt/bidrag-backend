@@ -29,4 +29,9 @@ enum class SøktAvType(
     companion object {
         fun fraKode(kode: String): SøktAvType? = entries.find { it.kode == kode }
     }
+
+    fun tilBakoverkompatibelBrev(): SøktAvType = when (this) {
+        AUTOMATISK -> NAV_BIDRAG
+        else -> this
+    }
 }

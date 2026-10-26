@@ -2,11 +2,13 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -19,6 +21,7 @@ import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunk
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
@@ -40,6 +43,8 @@ import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -47,6 +52,8 @@ import java.time.YearMonth
 @ExtendWith(MockKExtension::class)
 class VedtakGrunnlagMapperTest {
     lateinit var vedtakGrunnlagMapper: VedtakGrunnlagMapper
+
+    lateinit var personConsumer: BidragPersonConsumer
 
     @MockK
     lateinit var barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting
@@ -56,7 +63,8 @@ class VedtakGrunnlagMapperTest {
 
     @BeforeEach
     fun init() {
-        val personService = PersonService(stubPersonConsumer())
+        personConsumer = stubPersonConsumer()
+        val personService = PersonService(personConsumer)
         stubSjablonProvider()
         val behandlingTilGrunnlagMappingV2 = BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(stubSjablonService()))
         vedtakGrunnlagMapper =
@@ -68,6 +76,18 @@ class VedtakGrunnlagMapperTest {
                 personService,
                 BeregnGebyrApi(stubSjablonService()),
             )
+    }
+
+    @Test
+    fun `skal finne riktig rolle i sak når identoppslaget gir 403`() {
+        val sak = opprettSakForBehandling(opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG))
+        val søktRolle = sak.roller.last()
+        every { personConsumer.hentPerson(any<String>()) } throws HttpClientErrorException(HttpStatus.FORBIDDEN)
+
+        val rolle = with(vedtakGrunnlagMapper) { sak.hentRolleMedFnr(søktRolle.fødselsnummer!!.verdi) }
+
+        sak.roller shouldHaveAtLeastSize 2
+        rolle shouldBe søktRolle
     }
 
     @Test

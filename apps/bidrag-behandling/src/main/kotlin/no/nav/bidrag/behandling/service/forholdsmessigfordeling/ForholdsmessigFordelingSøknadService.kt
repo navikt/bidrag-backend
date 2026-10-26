@@ -11,7 +11,7 @@ import no.nav.bidrag.behandling.dto.v1.forsendelse.ForsendelseRolleDto
 import no.nav.bidrag.behandling.dto.v1.forsendelse.InitalizeForsendelseRequest
 import no.nav.bidrag.behandling.service.ForsendelseService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
@@ -30,7 +30,6 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import java.time.LocalDate
@@ -53,10 +52,12 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     // region Opprettelse av søknader
     // ═══════════════════════════════════════════════════════════════════
-    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
-        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
+    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) = slettAlleSøknaderKnyttetTilBehandling(behandling.id!!)
+
+    fun slettAlleSøknaderKnyttetTilBehandling(behandlingId: Long) {
+        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandlingId)
         søknaderBehandling.søknader
-            .filter { it.behandlingStatusType.erÅpenStatus }
+            .filter { it.behandlingStatusType.erÅpenStatus && it.behandlingstype.erForholdsmessigFordeling }
             .forEach {
                 bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
             }
@@ -77,7 +78,7 @@ class ForholdsmessigFordelingSøknadService(
         opprettForsendelse: Boolean = true,
     ) {
         val sak = sakConsumer.hentSak(saksnummer)
-        val bmFødselsnummer = hentNyesteIdent(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
+        val bmFødselsnummer = hentNyesteIdentIgnorerForbidden(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
 
         val løpendeBidragssakForSaksnummer = løpendeBidragssak.filter { it.saksnummer == saksnummer }
         val barnUtenInnkreving = løpendeBidragssakForSaksnummer.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
@@ -152,7 +153,7 @@ class ForholdsmessigFordelingSøknadService(
                 ffDetaljer = ffDetaljer,
             )
         } else {
-            behandling.roller.find { hentNyesteIdent(it.ident)?.verdi == bmFødselsnummer }?.let {
+            behandling.roller.find { hentNyesteIdentIgnorerForbidden(it.ident)?.verdi == bmFødselsnummer }?.let {
                 if (it.forholdsmessigFordeling == null) {
                     it.forholdsmessigFordeling = behandling.tilFFDetaljerBM()
                 }

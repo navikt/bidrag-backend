@@ -167,7 +167,7 @@ jobs:
           else
             echo "endret=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ inputs.java-version }}
           distribution: 'temurin'
@@ -186,7 +186,7 @@ jobs:
           key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
           restore-keys: |
             maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
-      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+      - uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
         with:
           # githubServer: false - vi definerer selv en "github"-server under, actionen
           # legger ellers automatisk til en egen "github"-server (med GITHUB_TOKEN),
@@ -289,7 +289,7 @@ jobs:
             ~/.m2/repository
             !~/.m2/repository/no/nav/bidrag
           key: ${{ steps.maven-cache.outputs.cache-primary-key }}
-      - uses: nais/docker-build-push@bfe52e3ad6d0e96fd1056a03acb7b619aaffb39d # v0
+      - uses: nais/docker-build-push@dd7421d5068057a020ca46ead966c26190c516b1 # v0
         if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push
         env:
@@ -360,7 +360,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q1 }}
-        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
+        uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -381,7 +381,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to dev-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_q2 }}
-        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
+        uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
         env:
           CLUSTER: dev-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}
@@ -402,7 +402,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Deploy to prod-${{ inputs.nais_cluster }} med ${{ inputs.nais_variabler_filnavn_prod }}
-        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
+        uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
         env:
           CLUSTER: prod-${{ inputs.nais_cluster }}
           RESOURCE: .nais/${{ inputs.nais_hovedfil_navn }}

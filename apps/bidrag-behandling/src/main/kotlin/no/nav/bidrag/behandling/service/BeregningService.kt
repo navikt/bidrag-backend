@@ -364,10 +364,11 @@ class BeregningService(
                         sb.tilGrunnlagsreferanse() ==
                             it.beregnGrunnlag.søknadsbarnReferanse
                     }
+                val beregnFra = søknadsbarn!!.finnBeregnFra()
                 val beregningsperiode =
                     ÅrMånedsperiode(
-                        søknadsbarn!!.finnBeregnFra(),
-                        behandling.finnBeregnTilDatoBehandling(søknadsbarn, beregningTilDato).toYearMonth(),
+                        beregnFra,
+                        maxOfNullable(beregnFra, behandling.finnBeregnTilDatoBehandling(søknadsbarn, beregningTilDato).toYearMonth()),
                     )
 
                 // Hacks

@@ -186,4 +186,33 @@ internal class OppdaterOppgaveTest {
                 "\"beskrivelse\":\"--- 10.09.2022 01:00 Automatisk jobb ---\\r\\n· Oppgavetype endret fra Vurder dokument til Journalføring\\r\\n· Saksbehandler endret fra Z99999 til ikke valgt\\r\\n\\r\\n\\r\\nEn beskrivelse fra før\"}",
         )
     }
+
+    @Test
+    fun `skal fjerne mappe og legge til beskrivelse når oppgave overføres til annen enhet`() {
+        val hendelse =
+            createOppgaveData(id = 1, beskrivelse = "Fra før", tildeltEnhetsnr = "4888").copy(mappeId = "100")
+        val oppdaterOppgave = OppdaterOppgave(hendelse)
+            .overforTilEnhet("4806", "Min mappe")
+            .oppdaterOppgaveBeskrivelse()
+
+        assertThat(oppdaterOppgave.beskrivelse).isEqualTo(
+            "--- 10.09.2022 01:00 Automatisk jobb ---\r\n" +
+                "· Oppgave overført fra enhet 4888 til 4806\r\n" +
+                "· Mappe endret fra Min mappe til ingen mappe\r\n" +
+                "\r\n\r\nFra før",
+        )
+        assertThat(ObjectMapper().writeValueAsString(oppdaterOppgave)).contains("\"mappeId\":null")
+    }
+
+    @Test
+    fun `skal ikke fjerne mappe når enhet ikke endres`() {
+        val hendelse =
+            createOppgaveData(id = 1, beskrivelse = "Fra før", tildeltEnhetsnr = "4888").copy(mappeId = "100")
+        val oppdaterOppgave = OppdaterOppgave(hendelse)
+            .overforTilEnhet("4888", "Min mappe")
+            .oppdaterOppgaveBeskrivelse()
+
+        assertThat(oppdaterOppgave.beskrivelse ?: "").doesNotContain("Mappe endret")
+        assertThat(ObjectMapper().writeValueAsString(oppdaterOppgave)).doesNotContain("mappeId")
+    }
 }
