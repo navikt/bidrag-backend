@@ -28,7 +28,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.0",
-    "undici": "^7.29.1",
+    "undici": "^7.30.1",
     "xss": "^1.0.15"
   },
   "devDependencies": {
@@ -62,9 +62,9 @@
     "postcss": "^8.5.6",
     "prettier": "^3.7.3",
     "swagger-typescript-api": "^13.0.22",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vite": "^7.3.2",
+    "vite": "^7.3.7",
     "vite-plugin-singlefile": "^2.3.0",
     "vite-tsconfig-paths": "^5.1.4"
   },
