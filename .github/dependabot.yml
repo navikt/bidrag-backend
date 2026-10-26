@@ -38,16 +38,8 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
-    # * matcher ett nivå. Appene under bidrag-dokumenthåndtering og bidrag-admin
-    # ligger ett hakk dypere enn /apps/* og må listes eksplisitt.
-    directories:
-      - "/"
-      - "/apps/*"
-      - "/apps/bidrag-dokumenthåndtering/*"
-      - "/apps/bidrag-admin/*"
-      - "/libs/*"
-      - "/libs/bidrag-felles/*"
-      - "/libs/bidrag-beregn-felles/*"
+    # Rot-pom.xml inkluderer alle Maven-modulene, også undermodulene.
+    directory: "/"
     cooldown:
       default-days: 7
     registries:
@@ -59,7 +51,8 @@ updates:
       timezone: "Europe/Oslo"
     groups:
       maven-dependencies:
-        group-by: dependency-name
+        patterns:
+          - "*"
     open-pull-requests-limit: 20
     labels:
       - "dependencies"
