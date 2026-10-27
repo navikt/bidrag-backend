@@ -116,9 +116,9 @@ on:
         value: ${{ jobs.bygg_test_og_image.outputs.digest }}
 
 jobs:
-  # Bygger og sjekker Docker-image også på PR-er. Ved deploy attesteres imaget før jobben fullfører.
+  # Tester appen før image bygges og attesteres i samme jobb.
   bygg_test_og_image:
-    name: Bygg og attester image
+    name: Bygg, test og attester image
     runs-on: ${{ inputs.runner }}
     permissions:
       contents: "read"
@@ -175,12 +175,40 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
+      - name: Cache ktlint CLI
+        if: ${{ !inputs.skip_tester }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.local/bin/ktlint
+          key: ktlint-cli-${{ inputs.ktlint_version }}
+      - name: Verifiser formatering med ktlint
+        if: ${{ !inputs.skip_tester }}
+        env:
+          KTLINT_VERSION: ${{ inputs.ktlint_version }}
+          KTLINT_PATHS: ${{ inputs.ktlint_paths }}
+        run: |
+          if [ ! -x ~/.local/bin/ktlint ]; then
+            mkdir -p ~/.local/bin
+            curl -fsSL -o ~/.local/bin/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
+            chmod +x ~/.local/bin/ktlint
+          fi
+          read -r -a paths <<< "$KTLINT_PATHS"
+          ~/.local/bin/ktlint "${paths[@]}"
       - name: Bygg app og avhengigheter uten tester
+        if: inputs.skip_tester
         env:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
         run: |
           read -r -a options <<< "$MAVEN_OPTIONS"
           mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am clean verify -Dmaven.test.skip=true -Dmaven.antrun.skip=true
+      - name: Bygg avhengigheter og kjør appens tester
+        if: ${{ !inputs.skip_tester }}
+        env:
+          MAVEN_OPTIONS: ${{ inputs.maven_options }}
+        run: |
+          read -r -a options <<< "$MAVEN_OPTIONS"
+          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am -Dmaven.test.skip=true -Dmaven.antrun.skip=true install
+          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" verify -Dmaven.antrun.skip=true
       - name: Lagre Maven-cache
         if: always() && github.ref == 'refs/heads/main' && steps.maven-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -210,89 +238,13 @@ jobs:
       tag: ${{ steps.docker-push.outputs.tag }}
       digest: ${{ steps.docker-push.outputs.digest }}
 
-  tester:
-    name: Kjør tester og ktlint
-    if: ${{ !inputs.skip_tester }}
-    runs-on: ${{ inputs.runner }}
-    permissions:
-      contents: "read"
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '1' }}
-      - name: Finn endrede biblioteker ved manuell kjøring
-        if: github.event_name == 'workflow_dispatch'
-        id: biblioteker
-        run: python3 .github/scripts/finn_berorte_apper.py --biblioteker
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          java-version: ${{ inputs.java-version }}
-          distribution: 'temurin'
-      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ~/.m2/repository
-            !~/.m2/repository/no/nav/bidrag
-          key: maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-${{ hashFiles(inputs.maven_cache_paths) }}
-          restore-keys: |
-            maven-${{ inputs.maven_cache_key || inputs.image_suffix || 'default' }}-
-      - uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
-        with:
-          githubServer: false
-          servers: |
-            [
-              {
-                "id": "github",
-                "username": "x-access-token",
-                "password": "${{secrets.READER_TOKEN}}"
-              },
-              {
-                "id": "github2",
-                "username": "x-access-token",
-                "password": "${{secrets.READER_TOKEN}}"
-              }
-            ]
-      - name: Test endrede biblioteker ved manuell kjøring
-        if: github.event_name == 'workflow_dispatch' && steps.biblioteker.outputs.biblioteker != '[]'
-        env:
-          BIBLIOTEKER: ${{ steps.biblioteker.outputs.biblioteker }}
-        run: |
-          prosjekter="$(python3 -c 'import json, os; print(",".join(json.loads(os.environ["BIBLIOTEKER"])))')"
-          mvn -B -T 1C -nsu -pl "$prosjekter" -am -Dmaven.test.skip=true -Dmaven.antrun.skip=true install
-          mvn -B -T 1C -nsu -pl "$prosjekter" clean verify
-      - name: Cache ktlint CLI
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.local/bin/ktlint
-          key: ktlint-cli-${{ inputs.ktlint_version }}
-      - name: Verifiser formatering med ktlint
-        env:
-          KTLINT_VERSION: ${{ inputs.ktlint_version }}
-          KTLINT_PATHS: ${{ inputs.ktlint_paths }}
-        run: |
-          if [ ! -x ~/.local/bin/ktlint ]; then
-            mkdir -p ~/.local/bin
-            curl -fsSL -o ~/.local/bin/ktlint "https://github.com/pinterest/ktlint/releases/download/${KTLINT_VERSION}/ktlint"
-            chmod +x ~/.local/bin/ktlint
-          fi
-          read -r -a paths <<< "$KTLINT_PATHS"
-          ~/.local/bin/ktlint "${paths[@]}"
-      - name: Bygg og kjør tester
-        env:
-          MAVEN_OPTIONS: ${{ inputs.maven_options }}
-        run: |
-          read -r -a options <<< "$MAVEN_OPTIONS"
-          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am -Dmaven.test.skip=true -Dmaven.antrun.skip=true install
-          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" clean verify -Dmaven.antrun.skip=true
-
-  # Deploy venter på både tester og et ferdig attestert image.
+  # Deploy venter på appens tester og et ferdig attestert image.
   deploy_q1:
     name: Deploy til q1
-    needs: [bygg_test_og_image, tester]
+    needs: bygg_test_og_image
     if: >-
       ${{ !cancelled() && inputs.deploy_q1 &&
-          needs.bygg_test_og_image.result == 'success' &&
-          (needs.tester.result == 'success' || (inputs.skip_tester && needs.tester.result == 'skipped')) }}
+          needs.bygg_test_og_image.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
@@ -312,11 +264,10 @@ jobs:
 
   deploy_q2:
     name: Deploy til q2
-    needs: [bygg_test_og_image, tester]
+    needs: bygg_test_og_image
     if: >-
       ${{ !cancelled() && inputs.deploy_q2 &&
-          needs.bygg_test_og_image.result == 'success' &&
-          (needs.tester.result == 'success' || (inputs.skip_tester && needs.tester.result == 'skipped')) }}
+          needs.bygg_test_og_image.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
@@ -336,11 +287,10 @@ jobs:
 
   deploy_prod:
     name: Deploy til prod
-    needs: [bygg_test_og_image, tester]
+    needs: bygg_test_og_image
     if: >-
       ${{ !cancelled() && inputs.deploy_prod &&
-          needs.bygg_test_og_image.result == 'success' &&
-          needs.tester.result == 'success' }}
+          needs.bygg_test_og_image.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: "read"

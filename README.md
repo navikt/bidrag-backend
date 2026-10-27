@@ -60,32 +60,33 @@ queue»). Required status check skal være `Alle bygg fullført`, samlejobben i
 Åpne appens workflow i GitHub Actions, velg «Run workflow» og angi branch og
 miljø. Du kan velge blant q1, q2 og prod, avhengig av hvilke miljøer appen
 støtter. Ved manuell kjøring bygges appen uten å sjekke hvilke filer som er
-endret. Bibliotekene hentes fra cache eller bygges ved behov.
+endret. Maven bygger bibliotekene appen trenger fra samme checkout med `-am`.
 
 Du kan hoppe over tester ved deploy til q1/q2, men ikke til prod.
-«Deploy alle til q1/q2» starter én manuell kjøring per app. Disse bruker
-bibliotekcachen, men har ikke en felles bibliotekjobb.
+«Deploy alle til q1/q2» starter én manuell kjøring per app. Hver app bygger
+sine egne bibliotekavhengigheter.
 
 ### Docker-image
 
 Imaget lastes bare opp til registeret når kjøringen faktisk skal deploye,
 altså ved `workflow_dispatch` til q1, q2 eller prod, eller ved push til `main`.
-PR-kjøringer og merge-køen bygger imaget, men pusher det ikke. Dockerfilen og
-byggkonteksten blir altså fortsatt verifisert, uten at hver eneste PR-push
-legger igjen et image per app som ingen skal bruke.
+PR-kjøringer bygger imaget etter at appens tester har bestått, men pusher det
+ikke. Merge-køen hopper over Docker-bygget. Dockerfilen og byggkonteksten
+blir dermed verifisert på PR-er uten at hver push legger igjen et image.
 
 Når imaget pushes, genererer og attesterer `nais/docker-build-push` SBOM før
-image-jobben fullfører. Deploy venter også på appens tester. Legger du til et
-nytt deploy-miljø i `bygg_og_deploy.yaml`, må `push_image` omfatte det nye
-flagget.
+jobben fullfører. Deploy venter dermed på både appens tester og attesteringen.
+Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`, må `push_image`
+omfatte det nye flagget.
 
 ### Bygg og test av biblioteker
 
 Hver app bygger bibliotekene den trenger med `mvn -pl <app> -am` fra rot-POM-en.
-Maven velger avhengighetene og bygger dem i riktig rekkefølge. Image-jobben
-bygger uten å kjøre tester. Testjobben installerer først appen og avhengighetene
-uten tester, og kjører deretter `verify` for bare appen. Dermed kjøres ikke
-tester i uendrede biblioteker for hvert appbygg.
+Maven velger avhengighetene og bygger dem i riktig rekkefølge. Appjobben
+installerer først appen og avhengighetene uten tester, kjører `verify` for
+bare appen og bygger deretter imaget. Dermed kjøres ikke tester i uendrede
+biblioteker for hvert appbygg. Med `skip_tester` bygger den appen og
+avhengighetene uten å kjøre tester eller ktlint.
 
 Når en fil under `libs/` endres, finner CI den tilhørende modulen i rot-POM-en.
 En egen testjobb bygger modulens avhengigheter uten tester og kjører `verify`,
@@ -95,8 +96,8 @@ alle bibliotekene. Jobben kjører også når ingen app er valgt, parallelt med
 appbyggene. Lib-testene inngår i samlet status og blokkerer merge hvis de
 feiler, men appbyggene venter ikke på dem. For PR-er brukes diffen fra
 merge-base, og ved push til `main` brukes filene som ble endret i pushen.
-Manuelle kjøringer sammenligner branchen med main; på main brukes siste
-commit. Ved manuell deploy kjører bibliotektestene i appens testjobb.
+Ved manuell deploy bygges bibliotekene med `-am`, men bare appens tester kjøres
+dersom tester ikke er hoppet over.
 
 Appjobbene cacher eksterne Maven-avhengigheter, men ikke interne
 `no/nav/bidrag`-artefakter. Bibliotekene bygges fra samme checkout som appen,
@@ -111,9 +112,9 @@ CI-endringer starter ikke automatisk prod-deploy ved merge til `main`.
 Se jobbsammendraget i GitHub Actions for hvilke apper og biblioteker som ble
 valgt. Feiler bibliotektestene, blir den samlede PR-statusen rød, mens
 appbyggene fortsetter. Ved push til `main` venter ikke automatisk deploy på
-lib-testene; appens egne tester må fortsatt bestå. Ved manuell deploy
-blokkerer lib-testfeil appens deploy. Feiler et appbygg, kan du kjøre jobben
-på nytt; Maven bygger da avhengighetene på nytt fra samme commit.
+lib-testene; appens egne tester må fortsatt bestå. Ved manuell deploy kjøres
+ikke egne lib-tester. Feiler et appbygg, kan du kjøre jobben på nytt; Maven
+bygger da avhengighetene på nytt fra samme commit.
 
 ### Legge til apper og biblioteker
 

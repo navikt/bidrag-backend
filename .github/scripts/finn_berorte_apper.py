@@ -7,9 +7,9 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
-import sys
 import urllib.request
 import xml.etree.ElementTree as ET
+
 
 def path_matches_filters(path, patterns):
     selected = False
@@ -77,12 +77,6 @@ def find_changed_files(root, event_name, event):
             base = subprocess.check_output(
                 ["git", "-C", str(root), "hash-object", "-w", "-t", "tree", "--stdin"], input=b"",
             ).decode().strip()
-    elif event_name == "workflow_dispatch":
-        head = git_output("rev-parse", "HEAD").decode().strip()
-        if os.environ["GITHUB_REF"] == "refs/heads/main":
-            base = git_output("rev-parse", "HEAD^").decode().strip()
-        else:
-            base = git_output("merge-base", "HEAD", "refs/remotes/origin/main").decode().strip()
     else:
         raise ValueError(f"Kan ikke finne endrede filer for hendelsen {event_name}")
     # --no-renames gir både gammel og ny sti ved flytting mellom appmoduler.
@@ -227,18 +221,11 @@ def validate_sha(value):
     return value
 
 
-def main(libraries_only=False):
+def main():
     root = Path.cwd()
     with open(os.environ["GITHUB_EVENT_PATH"]) as stream:
         event = json.load(stream)
     event_name = os.environ["GITHUB_EVENT_NAME"]
-    if libraries_only:
-        if event_name != "workflow_dispatch":
-            raise ValueError("--biblioteker kan bare brukes ved manuell kjøring")
-        modules = changed_library_modules(root, find_changed_files(root, event_name, event))
-        with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
-            stream.write(f"biblioteker={json.dumps(modules)}\n")
-        return
     if event_name not in SUPPORTED_EVENTS:
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     app_filters = load_app_filters(root)
@@ -282,6 +269,4 @@ def main(libraries_only=False):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--biblioteker"):
-        raise ValueError("Bruk --biblioteker kun for manuell kjøring av bibliotektester")
-    main(libraries_only=len(sys.argv) == 2)
+    main()
