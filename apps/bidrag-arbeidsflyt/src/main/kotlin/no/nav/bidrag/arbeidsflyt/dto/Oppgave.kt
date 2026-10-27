@@ -738,6 +738,7 @@ class FerdigstillOppgaveRequest(
 }
 
 enum class Prioritet {
+    KRITISK,
     HOY,
     NORM,
     LAV,
