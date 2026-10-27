@@ -176,10 +176,10 @@ function printenv
     end
 
     if test -n "$argv[2]"
-        kubectx dev-gcp
+        kubectx dev-gcp; or return $status
         set app "$app-$argv[2]"
     else
-        kubectx prod-gcp
+        kubectx prod-gcp; or return $status
     end
 
     kubectl exec --namespace bidrag --tty "deployment/$app" -- printenv
