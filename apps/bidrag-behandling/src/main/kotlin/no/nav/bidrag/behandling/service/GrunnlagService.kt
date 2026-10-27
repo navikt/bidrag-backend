@@ -2629,7 +2629,7 @@ class GrunnlagService(
         val sisteInnhentedeIkkeBearbeidaGrunnlag =
             behandling.grunnlag
                 .filter { grunnlagsdatatype == it.type && !it.erBearbeidet }
-                .filter { innhentetForRolle == it.rolle }
+                .filter { it.rolle.erSammeRolle(innhentetForRolle) }
                 .maxByOrNull { it.innhentet }
 
         sisteInnhentedeIkkeBearbeidaGrunnlag?.let {
@@ -2749,6 +2749,9 @@ class GrunnlagService(
                     behandling.grunnlag.remove(it)
                     grunnlagRepository.deleteById(it.id!!)
                 }
+            }
+            if (grunnlagstype.erBearbeidet && grunnlagSomSkalOppdateres?.aktiv != null) {
+                aktivereSisteInnhentedeRådata(grunnlagstype.type, rolle, behandling)
             }
         } else {
             log.debug { "Ingen endringer i grunnlag $grunnlagstype for behandling med id ${behandling.id!!}." }
