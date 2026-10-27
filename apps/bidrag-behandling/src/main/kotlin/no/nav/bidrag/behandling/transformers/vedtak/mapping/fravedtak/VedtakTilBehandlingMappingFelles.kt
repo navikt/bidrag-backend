@@ -1588,6 +1588,7 @@ private fun GrunnlagDto.tilRolle(
                 )
             }
         }
+    val stønadstype = stønadsendring?.type ?: søknadGrunnlag?.behandlingstema?.tilStønadstype() ?: behandling.stonadstype
     return Rolle(
         behandling,
         id = id,
@@ -1611,7 +1612,7 @@ private fun GrunnlagDto.tilRolle(
                 } else {
                     grunnlagsliste.hentSøknader(referanse)
                 }
-            val personGrunnlag = grunnlagsliste.hentPerson(personIdent)?.personObjekt!!
+            val personGrunnlag = grunnlagsliste.hentPerson(personIdent, stønadstype)?.personObjekt!!
             val erRevurdering = !personGrunnlag.delAvOpprinneligBehandling // søknader.all { it.behandlingstype?.erForholdsmessigFordeling == true }
             val førsteSøknad = søknader.firstOrNull()
             val bidragsmottakerIdent =
