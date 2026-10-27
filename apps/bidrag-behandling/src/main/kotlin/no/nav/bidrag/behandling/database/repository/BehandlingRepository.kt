@@ -270,6 +270,19 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun markerOpprettelseAvFFFeilet(behandling_id: Long)
 
+    @Query(
+        "select b.id from behandling b where b.deleted = true and b.metadata -> 'opprettelseEllerOppdateringAvFFFeilet' = 'true'",
+        nativeQuery = true
+    )
+    fun hentIdSlettedeBehandlingerHvorOpprettelseAvFFFeilet(): List<Long>
+
+    @Modifying
+    @Query(
+        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseEllerOppdateringAvFFFeilet', 'false') where b.id = :behandling_id",
+        nativeQuery = true
+    )
+    fun resetOpprettelseAvFFFeilet(behandling_id: Long)
+
     @Modifying
     @Query(
         "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('oppdateringAvFFRollerFeilet', :data) where b.id = :behandling_id",

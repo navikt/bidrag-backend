@@ -159,6 +159,16 @@ class ForholdsmessigFordelingService(
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
     }
 
+    /**
+     * Feilregistrerer åpne FF-søknader knyttet til en slettet behandling hvor opprettelse av FF feilet,
+     * og nullstiller feilmarkeringen slik at behandlingen ikke plukkes opp igjen.
+     */
+    @Transactional
+    fun ryddOppFFSøknaderForSlettetBehandling(behandlingId: Long) {
+        søknadService.slettAlleSøknaderKnyttetTilBehandling(behandlingId)
+        behandlingRepository.resetOpprettelseAvFFFeilet(behandlingId)
+    }
+
     @Transactional
     fun opprettEllerOppdaterForholdsmessigFordeling(
         behandlingId: Long,
@@ -741,7 +751,7 @@ class ForholdsmessigFordelingService(
             val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
             val bmIdent =
                 søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
-                    ?: behandling.bidragsmottakerForSak(søknad.saksnummer)?.ident
+                    ?: behandling.finnBidragsmottakerForSak(søknad.saksnummer)?.ident
             val ffDetaljer =
                 ForholdsmessigFordelingRolle(
                     delAvOpprinneligBehandling = false,

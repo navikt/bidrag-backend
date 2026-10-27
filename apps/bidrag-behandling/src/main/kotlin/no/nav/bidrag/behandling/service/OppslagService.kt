@@ -20,9 +20,10 @@ import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
+import java.time.LocalDate
 
-fun hentLøpendeBidrag(bp: Personident): LøpendeBidragssakerResponse? = try {
-    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp))
+fun hentLøpendeBidrag(bp: Personident, fraDato: LocalDate = LocalDate.now()): LøpendeBidragssakerResponse? = try {
+    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp, fraDato))
 } catch (e: Exception) {
     secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
     null

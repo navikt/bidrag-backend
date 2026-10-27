@@ -146,6 +146,7 @@ class InntektService(
         opphørSlettet: Boolean = false,
         forrigeOpphørsdato: LocalDate? = null,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         if (behandling.virkningstidspunkt == null) return
 
@@ -164,6 +165,7 @@ class InntektService(
         behandling.inntekter
             .filter { it.taMed && it.datoFom != null }
             .filter { it.datoFom!! == forrigeVirkningstidspunkt }
+            .filter { søknadsbarnSomEndres == null || (it.gjelderSøknadsbarn ?: it.gjelderRolle) in søknadsbarnSomEndres }
             .forEach { inntekt ->
                 inntekt.datoFom = inntekt.virkningstidspunktGjelderEllerBarn.toLocalDate()
             }

@@ -889,7 +889,7 @@ class VedtakService(
 
         return behandlingTilVedtakMapping
             .run {
-                if (behandling.erAvslagForAlle) {
+                if (behandling.erAvslagForAlle && !behandling.erIForholdsmessigFordeling) {
                     VedtakRequstDto(
                         listOf(behandling.byggOpprettVedtakRequestAvslagForBidrag(request)),
                         erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder = false,

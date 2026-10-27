@@ -50,6 +50,7 @@ jobs:
     secrets: inherit
     with:
       bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
+      java-version: '25'
       nais_hovedfil_navn: bidrag-reskontro/nais.yaml
       nais_variabler_filnavn_q1: bidrag-reskontro/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}

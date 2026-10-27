@@ -84,7 +84,7 @@ class DokumentBestillingControllerBidragTest : AbstractControllerTest() {
         val message = bestillVedtaksbrevBidrag("vedtak_response-bidrag-automatisk.json")
 
         assertSoftly {
-            message.brev?.soknadBost?.soknFraKode shouldBe "AU"
+            message.brev?.soknadBost?.soknFraKode shouldBe "ET"
             message.brev?.soknadBost?.hgKode shouldBe "BB"
             message.brev?.soknadBost?.ugKode shouldBe "R"
             message.brev?.soknad?.undergrp shouldBe "R"

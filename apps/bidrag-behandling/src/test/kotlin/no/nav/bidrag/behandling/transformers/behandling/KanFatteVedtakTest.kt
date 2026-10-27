@@ -200,7 +200,7 @@ class KanFatteVedtakTest {
     fun `skal ikke kunne fatte vedtak når det løper bidrag med utenlandsk valuta`() {
         val behandling = opprettBehandlingSimple()
 
-        every { hentLøpendeBidrag(any()) } returns opprettLøpendeBidragssakerResponse(opprettLøpendeBidragssak(SAKSNUMMER, UTENLANDSK_VALUTA))
+        every { hentLøpendeBidrag(any(), any()) } returns opprettLøpendeBidragssakerResponse(opprettLøpendeBidragssak(SAKSNUMMER, UTENLANDSK_VALUTA))
 
         behandling.kanFatteVedtakBegrunnelse() shouldBe BEGRUNNELSE_UTENLANDSK_VALUTA
     }
@@ -209,7 +209,7 @@ class KanFatteVedtakTest {
     fun `skal ikke kunne fatte vedtak når det løper oppfostringsbidrag`() {
         val behandling = opprettBehandlingSimple()
 
-        every { hentLøpendeBidrag(any()) } returns opprettLøpendeBidragssakerResponse(opprettLøpendeBidragssak(SAKSNUMMER, "NOK", Stønadstype.OPPFOSTRINGSBIDRAG))
+        every { hentLøpendeBidrag(any(), any()) } returns opprettLøpendeBidragssakerResponse(opprettLøpendeBidragssak(SAKSNUMMER, "NOK", Stønadstype.OPPFOSTRINGSBIDRAG))
 
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA)
         disableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_OPPFOSTRINGSBIDRAG)
