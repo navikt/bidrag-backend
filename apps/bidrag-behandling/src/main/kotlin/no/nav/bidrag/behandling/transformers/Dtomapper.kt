@@ -996,7 +996,7 @@ class Dtomapper(
                 .filter {
                     // Skal alltid vise inntekter for BM/BP (ikke barn).
                     // Men hvis barn ikke krever grunnlag pga avslag og ikke løpende bidrag så skal det ikke vises i innteksbilde
-                    !erIForholdsmessigFordeling || it.kreverGrunnlagForBeregning
+                    !erIForholdsmessigFordeling || it.kreverGrunnlagForBeregning || it.kreverGrunnlagForGebyrBeregning
                 }
         val beregnetInntekterForRolle =
             rollerForInntektsbilde

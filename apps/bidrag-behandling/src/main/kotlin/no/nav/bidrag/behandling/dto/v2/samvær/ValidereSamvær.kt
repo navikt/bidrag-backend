@@ -57,7 +57,7 @@ fun Samvær.mapValideringsfeil(): SamværValideringsfeilDto {
     val notatSæmvær = behandling.notater.find { it.type == NotatGrunnlag.NotatType.SAMVÆR && it.rolle.id == rolle.id }
     val perioder = perioder
     val opphørsdato = rolle.opphørsdato
-    if (rolle.avslag != null) {
+    if (!rolle.kreverGrunnlagForBeregning) {
         return SamværValideringsfeilDto(id!!, rolle.tilDto())
     }
     return SamværValideringsfeilDto(

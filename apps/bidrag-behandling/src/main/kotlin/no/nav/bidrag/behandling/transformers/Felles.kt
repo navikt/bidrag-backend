@@ -213,7 +213,7 @@ fun Behandling.løperBidragEtterEldsteVirkning(rolle: Rolle): Boolean {
     val tilPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).maxByOrNull { it.fom }?.til
     if (fraPeriodeLøperBidrag == null) return false
     if (tilPeriodeLøperBidrag == null) return true
-    return tilPeriodeLøperBidrag >= eldsteVirkningstidspunkt.toYearMonth()
+    return tilPeriodeLøperBidrag > eldsteVirkningstidspunkt.toYearMonth()
 }
 
 fun Behandling.finnPeriodeLøperBidrag(rolle: Rolle): ÅrMånedsperiode? {
