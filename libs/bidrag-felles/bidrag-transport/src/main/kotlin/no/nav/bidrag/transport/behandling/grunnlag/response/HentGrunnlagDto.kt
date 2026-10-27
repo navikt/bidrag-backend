@@ -12,7 +12,7 @@ data class HentGrunnlagDto(
     val utvidetBarnetrygdListe: List<UtvidetBarnetrygdGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet småbarnstillegg")
     val småbarnstilleggListe: List<SmåbarnstilleggGrunnlagDto>,
-    @Schema(description = "Periodisert liste over innhentet barnetillegg")
+    @Schema(description = "Periodisert liste over innhentede barnetillegg fra Pensjon og AAP")
     val barnetilleggListe: List<BarnetilleggGrunnlagDto>,
     @Schema(description = "Periodisert liste over innhentet kontantstøtte")
     val kontantstøtteListe: List<KontantstøtteGrunnlagDto>,
