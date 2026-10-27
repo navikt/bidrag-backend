@@ -883,9 +883,6 @@ fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
     )
 }
 
-// Samme filtrering som inntektsbildet. Inntekter for andre barn uten søknadsrolle (gjelderBarnRolle == null) beholdes
-val Rolle.skalViseInntekterSomGjelderBarn get() = kreverGrunnlagForBeregning || kreverGrunnlagForGebyrBeregning
-
 fun List<Inntekt>.filtrerBarnSomSkalVises() = filter { it.gjelderBarnRolle?.skalViseInntekterSomGjelderBarn ?: true }
 
 fun List<Inntekt>.filtrerInntektGjelderBarn(rolle: Rolle?) = filter { rolle == null || it.erSammeRolle(rolle) }

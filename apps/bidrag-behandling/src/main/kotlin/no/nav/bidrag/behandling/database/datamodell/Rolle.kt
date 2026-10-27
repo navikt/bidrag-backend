@@ -162,6 +162,9 @@ open class Rolle(
     val erAvvisning get() = avslag != null && avslag!!.erAvvisning()
     val erDirekteAvslagIkkeAvvisning get() = avslag != null && avslag!!.erDirekteAvslag() && !avslag!!.erAvvisning()
     val løperBidragEtterEldsteVirkning get() = behandling.løperBidragEtterEldsteVirkning(this)
+
+    // Samme filtrering som inntektsbildet. Inntekter for andre barn uten søknadsrolle (gjelderBarnRolle == null) beholdes
+    val skalViseInntekterSomGjelderBarn get() = kreverGrunnlagForBeregning || kreverGrunnlagForGebyrBeregning
     val kreverGrunnlagForGebyrBeregning get() = harGebyrsøknad
     val kreverGrunnlagForBeregning get() =
         (!erRevurderingsbarn && avslag == null) || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
