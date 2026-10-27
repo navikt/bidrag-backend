@@ -715,7 +715,7 @@ fun Behandling.tilInntektDtoV3(
         rolle.barn
             .sortedWith(
                 sorterPersonEtterEldsteFødselsdato({ it.fødselsdatoSortering }, { it.identifikator }),
-            ).filter { it.kreverGrunnlagForBeregning }
+            ).filter { it.skalViseInntekterSomGjelderBarn }
 
     // Use precomputed inntekterPerType from cache, fall back to per-role computation
     val inntekterPerType =
@@ -882,6 +882,11 @@ fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
         inntekterPerTypePerRolle = inntekterPerTypePerRolle,
     )
 }
+
+// Samme filtrering som inntektsbildet. Inntekter for andre barn uten søknadsrolle (gjelderBarnRolle == null) beholdes
+val Rolle.skalViseInntekterSomGjelderBarn get() = kreverGrunnlagForBeregning || kreverGrunnlagForGebyrBeregning
+
+fun List<Inntekt>.filtrerBarnSomSkalVises() = filter { it.gjelderBarnRolle?.skalViseInntekterSomGjelderBarn ?: true }
 
 fun List<Inntekt>.filtrerInntektGjelderBarn(rolle: Rolle?) = filter { rolle == null || it.erSammeRolle(rolle) }
     .filter {
@@ -1143,6 +1148,7 @@ fun Behandling.hentInntekterValideringsfeilV2(rolle: Rolle): InntektValideringsf
     inntekter
         .toList()
         .filtrerInntektGjelderBarn(rolle)
+        .filtrerBarnSomSkalVises()
         .mapValideringsfeilForYtelseSomGjelderBarn(
             Inntektsrapportering.BARNETILLEGG,
             eldsteVirkningstidspunkt,
@@ -1167,6 +1173,7 @@ fun Behandling.hentInntekterValideringsfeilV2(rolle: Rolle): InntektValideringsf
     inntekter
         .toList()
         .filtrerInntektGjelderBarn(rolle)
+        .filtrerBarnSomSkalVises()
         .mapValideringsfeilForYtelseSomGjelderBarn(
             Inntektsrapportering.KONTANTSTØTTE,
             eldsteVirkningstidspunkt,
@@ -1189,7 +1196,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
-                    .filter { barn.kreverGrunnlagForBeregning || barn.kreverGrunnlagForGebyrBeregning }
+                    .filter { barn.skalViseInntekterSomGjelderBarn }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.BARNETILLEGG,
                         eldsteVirkningstidspunkt,
@@ -1200,7 +1207,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
-            .filter { it.gjelderBarnRolle == null || it.gjelderBarnRolle!!.kreverGrunnlagForBeregning || it.gjelderBarnRolle!!.kreverGrunnlagForGebyrBeregning }
+            .filtrerBarnSomSkalVises()
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.BARNETILLEGG,
                 eldsteVirkningstidspunkt,
@@ -1228,6 +1235,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
+                    .filter { barn.skalViseInntekterSomGjelderBarn }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.KONTANTSTØTTE,
                         eldsteVirkningstidspunkt,
@@ -1238,6 +1246,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
+            .filtrerBarnSomSkalVises()
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.KONTANTSTØTTE,
                 eldsteVirkningstidspunkt,
