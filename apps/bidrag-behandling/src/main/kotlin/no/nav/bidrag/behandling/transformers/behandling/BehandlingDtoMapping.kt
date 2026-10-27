@@ -1189,7 +1189,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
-                    .filter { barn.kreverGrunnlagForBeregning }
+                    .filter { barn.kreverGrunnlagForBeregning || barn.kreverGrunnlagForGebyrBeregning }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.BARNETILLEGG,
                         eldsteVirkningstidspunkt,
@@ -1200,7 +1200,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
-            .filter { it.gjelderBarnRolle == null || it.gjelderBarnRolle!!.kreverGrunnlagForBeregning }
+            .filter { it.gjelderBarnRolle == null || it.gjelderBarnRolle!!.kreverGrunnlagForBeregning || it.gjelderBarnRolle!!.kreverGrunnlagForGebyrBeregning }
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.BARNETILLEGG,
                 eldsteVirkningstidspunkt,
