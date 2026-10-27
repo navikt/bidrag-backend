@@ -2,16 +2,6 @@ name: Bygg og deploy
 on:
   workflow_call:
     inputs:
-      bibliotekgrupper:
-        required: false
-        type: string
-        default: felles
-        description: Bibliotekgrupper appen trenger, skilt med komma (felles, beregn, oppgave). Bruk tom verdi for apper uten interne biblioteker.
-      bibliotekartefakt:
-        required: false
-        type: string
-        default: ''
-        description: Navn på artefaktet med ferdige biblioteker fra denne kjøringen. Tom verdi henter fra cache eller bygger bibliotekene appen trenger.
       java-version:
         required: false
         type: string
@@ -76,7 +66,7 @@ on:
         required: false
         type: string
         default: -B -fae
-        description: Maven-argumenter med -pl for appmodulen. Ikke bruk -am, bibliotekene er allerede klargjort.
+        description: Maven-argumenter med -pl for appmodulen. Bibliotekene bygges via -am.
       maven_cache_paths:
         required: false
         type: string
@@ -90,7 +80,7 @@ on:
         required: false
         type: string
         default: src/**/*.kt
-        description: Filer som skal sjekkes med ktlint, relativt til roten av repoet. Bibliotekene sjekkes i sitt eget bygg.
+        description: Filer som skal sjekkes med ktlint, relativt til roten av repoet. Endrede biblioteker sjekkes separat.
       ktlint_version:
         required: false
         type: string
@@ -147,25 +137,6 @@ jobs:
         if: inputs.skip_tester
         run: echo "::warning::Deploy tvinges gjennom av ${{ github.actor }} med tester og ktlint hoppet over (skip_tester=true)."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: ${{ inputs.bibliotekartefakt == '' && '0' || '1' }}
-      - name: Sjekk om felles er endret
-        if: inputs.bibliotekartefakt == ''
-        id: felles_endringer
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          if [ "$REF" = refs/heads/main ]; then
-            filer="$(git diff-tree --root --no-commit-id --name-only --no-renames -r --diff-merges=first-parent HEAD -- libs/bidrag-felles/)"
-          else
-            base="$(git merge-base HEAD refs/remotes/origin/main)"
-            filer="$(git diff --name-only --no-renames "$base" HEAD -- libs/bidrag-felles/)"
-          fi
-          if [ -n "$filer" ]; then
-            echo "endret=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "endret=false" >> "$GITHUB_OUTPUT"
-          fi
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ inputs.java-version }}
@@ -175,7 +146,7 @@ jobs:
       # av endringer i moduler denne jobben ikke bygger.
       # Kun restore her; cachen lagres bare fra main (se "Lagre Maven-cache"). PR-brancher får da
       # ikke egne kopier som fyller opp repoets cache-kvote og fortrenger main-cachene.
-      # Egne bidrag-biblioteker (no/nav/bidrag) holdes utenfor – de hentes via klargjor-biblioteker.
+      # Interne biblioteker bygges fra samme checkout med -am, ikke fra Maven-cachen.
       - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: maven-cache
         with:
@@ -204,18 +175,12 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
-      - name: Klargjør bibliotekene appen trenger
-        uses: ./.github/actions/klargjor-biblioteker
-        with:
-          grupper: ${{ inputs.bibliotekgrupper }}
-          artefaktnavn: ${{ inputs.bibliotekartefakt }}
-          skip_tester: true
-          felles_endret: ${{ steps.felles_endringer.outputs.endret == 'true' }}
-      - name: Bygg app uten tester
+      - name: Bygg app og avhengigheter uten tester
         env:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
-          SKIP_TESTS: 'true'
-        run: bash .github/scripts/bygg-app.sh
+        run: |
+          read -r -a options <<< "$MAVEN_OPTIONS"
+          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am clean verify -Dmaven.test.skip=true -Dmaven.antrun.skip=true
       - name: Lagre Maven-cache
         if: always() && github.ref == 'refs/heads/main' && steps.maven-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -254,24 +219,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: ${{ inputs.bibliotekartefakt == '' && '0' || '1' }}
-      - name: Sjekk om felles er endret
-        if: inputs.bibliotekartefakt == ''
-        id: felles_endringer
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          if [ "$REF" = refs/heads/main ]; then
-            filer="$(git diff-tree --root --no-commit-id --name-only --no-renames -r --diff-merges=first-parent HEAD -- libs/bidrag-felles/)"
-          else
-            base="$(git merge-base HEAD refs/remotes/origin/main)"
-            filer="$(git diff --name-only --no-renames "$base" HEAD -- libs/bidrag-felles/)"
-          fi
-          if [ -n "$filer" ]; then
-            echo "endret=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "endret=false" >> "$GITHUB_OUTPUT"
-          fi
+          fetch-depth: ${{ github.event_name == 'workflow_dispatch' && '0' || '1' }}
+      - name: Finn endrede biblioteker ved manuell kjøring
+        if: github.event_name == 'workflow_dispatch'
+        id: biblioteker
+        run: python3 .github/scripts/finn_berorte_apper.py --biblioteker
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           java-version: ${{ inputs.java-version }}
@@ -300,13 +252,14 @@ jobs:
                 "password": "${{secrets.READER_TOKEN}}"
               }
             ]
-      - name: Klargjør bibliotekene appen trenger
-        uses: ./.github/actions/klargjor-biblioteker
-        with:
-          grupper: ${{ inputs.bibliotekgrupper }}
-          artefaktnavn: ${{ inputs.bibliotekartefakt }}
-          skip_tester: false
-          felles_endret: ${{ steps.felles_endringer.outputs.endret == 'true' }}
+      - name: Test endrede biblioteker ved manuell kjøring
+        if: github.event_name == 'workflow_dispatch' && steps.biblioteker.outputs.biblioteker != '[]'
+        env:
+          BIBLIOTEKER: ${{ steps.biblioteker.outputs.biblioteker }}
+        run: |
+          prosjekter="$(python3 -c 'import json, os; print(",".join(json.loads(os.environ["BIBLIOTEKER"])))')"
+          mvn -B -T 1C -nsu -pl "$prosjekter" -am -Dmaven.test.skip=true -Dmaven.antrun.skip=true install
+          mvn -B -T 1C -nsu -pl "$prosjekter" clean verify
       - name: Cache ktlint CLI
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -327,8 +280,10 @@ jobs:
       - name: Bygg og kjør tester
         env:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
-          SKIP_TESTS: 'false'
-        run: bash .github/scripts/bygg-app.sh
+        run: |
+          read -r -a options <<< "$MAVEN_OPTIONS"
+          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am -Dmaven.test.skip=true -Dmaven.antrun.skip=true install
+          mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" clean verify -Dmaven.antrun.skip=true
 
   # Deploy venter på både tester og et ferdig attestert image.
   deploy_q1:

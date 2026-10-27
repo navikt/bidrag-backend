@@ -79,60 +79,41 @@ image-jobben fullfører. Deploy venter også på appens tester. Legger du til et
 nytt deploy-miljø i `bygg_og_deploy.yaml`, må `push_image` omfatte det nye
 flagget.
 
-### Slik deles bibliotekene
+### Bygg og test av biblioteker
 
-[`klargjor-biblioteker`](.github/actions/klargjor-biblioteker/action.yaml)
-henter eller bygger bibliotekene. De er samlet i tre grupper:
+Hver app bygger bibliotekene den trenger med `mvn -pl <app> -am` fra rot-POM-en.
+Maven velger avhengighetene og bygger dem i riktig rekkefølge. Image-jobben
+bygger uten å kjøre tester. Testjobben installerer først appen og avhengighetene
+uten tester, og kjører deretter `verify` for bare appen. Dermed kjøres ikke
+tester i uendrede biblioteker for hvert appbygg.
 
-| Gruppe | Innhold |
-| --- | --- |
-| `felles` | Bibliotekene under `libs/bidrag-felles` |
-| `beregn` | Beregningsbibliotekene under `libs/bidrag-beregn-felles`. Trenger også `felles`. |
-| `oppgave` |  `bidrag-oppgave-dto` |
+Når en fil under `libs/` endres, finner CI den tilhørende modulen i rot-POM-en.
+En egen testjobb bygger modulens avhengigheter uten tester og kjører `verify`,
+inkludert ktlint, for de endrede bibliotekene. Endringer i `pom.xml`,
+`.mvn/`, `.editorconfig` eller den felles CI-bygglogikken utløser tester i
+alle bibliotekene. Jobben kjører også når ingen app er valgt, parallelt med
+appbyggene. Lib-testene inngår i samlet status og blokkerer merge hvis de
+feiler, men appbyggene venter ikke på dem. For PR-er brukes diffen fra
+merge-base, og ved push til `main` brukes filene som ble endret i pushen.
+Manuelle kjøringer sammenligner branchen med main; på main brukes siste
+commit. Ved manuell deploy kjører bibliotektestene i appens testjobb.
 
-Appene bruker `felles` som standard. Trenger en app andre grupper, angis de i
-`bibliotekgrupper` i kallet til `bygg_og_deploy.yaml`. Bruk tom verdi (`''`)
-for apper uten interne biblioteker.
+Appjobbene cacher eksterne Maven-avhengigheter, men ikke interne
+`no/nav/bidrag`-artefakter. Bibliotekene bygges fra samme checkout som appen,
+også når en enkelt appjobb kjøres på nytt.
 
-Hver gruppe har sin egen cache. Maven bygger bare gruppene som ikke finnes i
-cachen, og sørger for riktig byggerekkefølge. Hvis alle gruppene finnes der,
-installeres bare parent-POM-ene. En endring i ett bibliotek kan dermed føre
-til at hele gruppen bygges på nytt, men bare én gang per workflow-kjøring.
-
-Ved cache-miss bygges uendret `felles` uten å kompilere eller kjøre tester.
-Testene kjøres bare når diffen inneholder endringer under `libs/bidrag-felles/`.
-For PR-er brukes diffen fra merge-base, og ved push til `main` brukes filene
-som ble endret i pushen. Manuelle kjøringer sammenligner branchen med main;
-på main brukes siste commit. Appens egne tester og testene i `beregn` og
-`oppgave` påvirkes ikke.
-
-En cache med testede fellesbiblioteker brukes hvis den finnes. Ellers kan
-uendret felles bruke en egen cache fra bygg uten tester. Denne cachen brukes
-aldri i stedet for å teste en faktisk felles-endring. Treffer kjøringen en
-cache med allerede testet innhold, kjøres ikke de samme testene på nytt.
-
-Cachen fornyes når kildekode, ressurser, POM-filer, Maven-/Java-versjon eller
-byggoppsett endres. Beregningsbibliotekene bygges også på nytt når
-fellesbibliotekene endres. Bygg med og uten tester har separate cacher.
-`target` og genererte POM-filer påvirker ikke cache-nøkkelen.
-
-Bibliotekjobben lagrer resultatet som et GitHub Actions-artefakt med JAR-er,
-POM-er og Maven-metadata. Hver appjobb fjerner gamle interne artefakter fra
-sin Maven-cache og laster ned de ferdige bibliotekene fra samme kjøring.
-Deretter bygger den bare appen, uten `-am`. Maven-innstillinger og
-innloggingsopplysninger følger ikke med artefaktet.
+Når en PR endrer den felles bygg-workflowen eller skriptet for appvalg, bygger
+CI alle appene. Ved endring i én app-workflow bygges denne appen. Slike rene
+CI-endringer starter ikke automatisk prod-deploy ved merge til `main`.
 
 ### Når et bygg feiler
 
-Se jobbsammendraget i GitHub Actions for hvilke apper og bibliotekgrupper som
-ble valgt, og hvilke Maven-moduler som ble bygget. Feiler bibliotekjobben,
-starter ikke appjobbene. Feiler en app, kan bibliotekene som allerede er
-lagret i cache, fortsatt brukes.
-
-Kjører du en appjobb på nytt, bruker den bibliotekartefaktet fra den
-vellykkede bibliotekjobben. Artefaktet beholdes i 14 dager. Er det slettet
-eller utløpt, må du kjøre hele workflowen på nytt. Appbygget stopper hvis det
-ikke får lastet ned artefaktet, fremfor å bruke gamle SNAPSHOT-er.
+Se jobbsammendraget i GitHub Actions for hvilke apper og biblioteker som ble
+valgt. Feiler bibliotektestene, blir den samlede PR-statusen rød, mens
+appbyggene fortsetter. Ved push til `main` venter ikke automatisk deploy på
+lib-testene; appens egne tester må fortsatt bestå. Ved manuell deploy
+blokkerer lib-testfeil appens deploy. Feiler et appbygg, kan du kjøre jobben
+på nytt; Maven bygger da avhengighetene på nytt fra samme commit.
 
 ### Legge til apper og biblioteker
 
@@ -140,18 +121,18 @@ For en ny Maven-app kan du ta utgangspunkt i en eksisterende app-workflow.
 Legg inn `APP_PATHS`, behold `workflow_call` og `workflow_dispatch`, og legg
 til en jobb som kaller appens workflow i `bygg-apper.yaml`. Ikke legg egne
 push- eller PR-triggere i appens workflow; da starter byggene utenom den
-felles bibliotekjobben.
+felles endringsdeteksjonen.
 
-Nye biblioteker legges i modullisten for riktig gruppe i
-`klargjor-biblioteker`. Pass også på at stiene for cache og opplasting av
-artefakter dekker bibliotekets Maven-koordinater. Maven håndterer
-avhengighetene og byggerekkefølgen.
+Legg nye biblioteker i rot-POM-en og deklarer dem som Maven-avhengigheter i
+appene som bruker dem. Oppdater `APP_PATHS` i disse appenes workflows slik at
+en endring i biblioteket også velger de berørte appene. Ingen egne
+bibliotekgrupper eller artefaktstier må vedlikeholdes.
 
 `bidrag-felles.yaml` publiserer fortsatt kalenderversjoner separat.
 
 Hvis du må gå tilbake til det gamle byggoppsettet, må du tilbakeføre
-`bygg-apper.yaml`, app-workflowene og endringene i `bygg_og_deploy.yaml`
-sammen. Ellers kan automatiske bygg utebli eller starte dobbelt. La pågående
+`bygg-apper.yaml`, app-workflowene, `bygg_og_deploy.yaml` og
+`finn_berorte_apper.py` sammen med bibliotek-actionen. La pågående
 deploy-jobber fullføre før du bytter oppsett.
 
 ## Automatisk PR-beskrivelse

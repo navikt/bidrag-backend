@@ -7,10 +7,9 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import sys
 import urllib.request
-
-import yaml
-
+import xml.etree.ElementTree as ET
 
 def path_matches_filters(path, patterns):
     selected = False
@@ -43,6 +42,11 @@ def path_matches_filters(path, patterns):
 
 
 SUPPORTED_EVENTS = {"push", "pull_request", "merge_group"}
+SHARED_BUILD_FILES = {
+    "pom.xml", ".editorconfig", ".github/workflows/bygg-apper.yaml",
+    ".github/workflows/bygg_og_deploy.yaml", ".github/scripts/finn_berorte_apper.py",
+}
+SHARED_CI_FILES = SHARED_BUILD_FILES - {"pom.xml", ".editorconfig"}
 
 
 def select_affected_apps(app_filters, event_name, branch, changed_paths):
@@ -73,6 +77,12 @@ def find_changed_files(root, event_name, event):
             base = subprocess.check_output(
                 ["git", "-C", str(root), "hash-object", "-w", "-t", "tree", "--stdin"], input=b"",
             ).decode().strip()
+    elif event_name == "workflow_dispatch":
+        head = git_output("rev-parse", "HEAD").decode().strip()
+        if os.environ["GITHUB_REF"] == "refs/heads/main":
+            base = git_output("rev-parse", "HEAD^").decode().strip()
+        else:
+            base = git_output("merge-base", "HEAD", "refs/remotes/origin/main").decode().strip()
     else:
         raise ValueError(f"Kan ikke finne endrede filer for hendelsen {event_name}")
     # --no-renames gir både gammel og ny sti ved flytting mellom appmoduler.
@@ -81,11 +91,17 @@ def find_changed_files(root, event_name, event):
             if path]
 
 
+def load_workflow(path):
+    import yaml
+
+    with open(path) as stream:
+        return yaml.safe_load(stream)
+
+
 def load_app_filters(root):
     app_filters = {}
     for path in sorted((root / ".github/workflows").glob("*.yaml")):
-        with open(path) as stream:
-            workflow = yaml.safe_load(stream)
+        workflow = load_workflow(path)
         env = workflow.get("env", {})
         if "APP_PATHS" not in env:
             continue
@@ -102,8 +118,7 @@ def load_app_filters(root):
 
 def build_config(root, app):
     """Verdiene appen sender videre til bygg_og_deploy.yaml."""
-    with open(root / f".github/workflows/{app}.yaml") as stream:
-        workflow = yaml.safe_load(stream)
+    workflow = load_workflow(root / f".github/workflows/{app}.yaml")
     build_jobs = [job for job in workflow["jobs"].values()
                   if job.get("uses") == "./.github/workflows/bygg_og_deploy.yaml"]
     if len(build_jobs) != 1:
@@ -129,18 +144,26 @@ def split_on_merged_module(root, apps):
     return merged, unmerged
 
 
-def required_library_groups(root, apps):
-    groups = set()
-    for app in apps:
-        config = build_config(root, app)
-        configured = config.get("bibliotekgrupper", "felles")
-        selected = set(configured.split(",")) if configured else set()
-        if not selected <= {"felles", "beregn", "oppgave"}:
-            raise ValueError(f"Ukjente bibliotekgrupper for {app}: {configured}")
-        groups.update(selected)
-    if "beregn" in groups:
-        groups.add("felles")
-    return ",".join(group for group in ("felles", "beregn", "oppgave") if group in groups)
+def changed_library_modules(root, changed_paths):
+    pom = ET.parse(root / "pom.xml")
+    modules = [
+        module.text for module in
+        pom.findall("./{http://maven.apache.org/POM/4.0.0}modules/{http://maven.apache.org/POM/4.0.0}module")
+        if module.text and module.text.startswith("libs/")
+    ]
+    if any(path in SHARED_BUILD_FILES or path.startswith(".mvn/")
+           for path in changed_paths):
+        return modules
+    changed = set()
+    for path in changed_paths:
+        if not path.startswith("libs/"):
+            continue
+        module = next((module for module in modules if path.startswith(f"{module}/")), None)
+        if module:
+            changed.add(module)
+        elif not path.endswith(".md"):
+            raise ValueError(f"Biblioteket som inneholder {path} mangler i rot-pom.xml")
+    return [module for module in modules if module in changed]
 
 
 def target_branch(event_name, event):
@@ -204,14 +227,21 @@ def validate_sha(value):
     return value
 
 
-def main():
+def main(libraries_only=False):
     root = Path.cwd()
-    app_filters = load_app_filters(root)
     with open(os.environ["GITHUB_EVENT_PATH"]) as stream:
         event = json.load(stream)
     event_name = os.environ["GITHUB_EVENT_NAME"]
+    if libraries_only:
+        if event_name != "workflow_dispatch":
+            raise ValueError("--biblioteker kan bare brukes ved manuell kjøring")
+        modules = changed_library_modules(root, find_changed_files(root, event_name, event))
+        with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
+            stream.write(f"biblioteker={json.dumps(modules)}\n")
+        return
     if event_name not in SUPPORTED_EVENTS:
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
+    app_filters = load_app_filters(root)
     branch = target_branch(event_name, event)
     if event_name == "merge_group" and os.environ.get("GITHUB_TOKEN"):
         try:
@@ -221,7 +251,7 @@ def main():
             pr_head = None
         if pr_head:
             with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
-                stream.write("apps=[]\nbibliotekgrupper=\nfelles_endret=false\n")
+                stream.write("apps=[]\nbiblioteker=[]\n")
             message = (f"Merge-køen har samme filtre som PR-hodet {pr_head}, som allerede er bygget og testet grønt. "
                        "Hopper over bygg og test.")
             print(message)
@@ -229,13 +259,21 @@ def main():
                 stream.write(message + "\n")
             return
     changed_paths = find_changed_files(root, event_name, event)
+    selected_apps = select_affected_apps(app_filters, event_name, branch, changed_paths)
+    if event_name != "push":
+        if any(path in SHARED_CI_FILES for path in changed_paths):
+            selected_apps = list(app_filters)
+        else:
+            selected_apps = [
+                app for app in app_filters
+                if app in selected_apps or f".github/workflows/{app}.yaml" in changed_paths
+            ]
     apps, unmerged_apps = split_on_merged_module(
-        root, select_affected_apps(app_filters, event_name, branch, changed_paths))
-    groups = required_library_groups(root, apps)
-    felles_changed = any(path.startswith("libs/bidrag-felles/") for path in changed_paths)
+        root, selected_apps)
+    libraries = changed_library_modules(root, changed_paths)
     with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
-        stream.write(f"apps={json.dumps(apps)}\nbibliotekgrupper={groups}\nfelles_endret={str(felles_changed).lower()}\n")
-    message = f"Apper som skal bygges: {', '.join(apps) or 'ingen'}. Bibliotekgrupper: {groups or 'ingen'}."
+        stream.write(f"apps={json.dumps(apps)}\nbiblioteker={json.dumps(libraries)}\n")
+    message = f"Apper som skal bygges: {', '.join(apps) or 'ingen'}. Biblioteker som skal testes: {', '.join(libraries) or 'ingen'}."
     if unmerged_apps:
         message += f" Hoppet over fordi appmodulen ikke er merget: {', '.join(unmerged_apps)}."
     print(message)
@@ -244,4 +282,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "--biblioteker"):
+        raise ValueError("Bruk --biblioteker kun for manuell kjøring av bibliotektester")
+    main(libraries_only=len(sys.argv) == 2)
