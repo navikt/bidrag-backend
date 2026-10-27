@@ -233,7 +233,11 @@ fun Set<FaktiskTilsynsutgift>.validerePerioderFaktiskTilsynsutgift(): Underholds
 
 fun Set<Underholdskostnad>.valider(
     beregnetUnderholdskostnad: (Underholdskostnad) -> Set<UnderholdskostnadDto> = { emptySet() },
-) = this.map { it.valider(beregnetUnderholdskostnad(it)) }.filter { it.harFeil }.toSet()
+) = this
+    .filter { it.rolle == null || it.gjelderAndreBarn || it.rolle!!.kreverGrunnlagForBeregning }
+    .map { it.valider(beregnetUnderholdskostnad(it)) }
+    .filter { it.harFeil }
+    .toSet()
 
 fun Underholdskostnad.valider(
     beregnetPerioder: Set<UnderholdskostnadDto> = emptySet(),
