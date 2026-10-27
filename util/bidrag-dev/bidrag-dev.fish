@@ -182,7 +182,7 @@ function printenv
         kubectx prod-gcp
     end
 
-    kubectl exec --tty "deployment/$app" -- printenv
+    kubectl exec --namespace bidrag --tty "deployment/$app" -- printenv
 end
 
 function token
