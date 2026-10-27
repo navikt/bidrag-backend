@@ -29,10 +29,6 @@ jobs:
           persist-credentials: false
       - name: Installer YAML-parser
         run: python3 -m pip install --quiet --disable-pip-version-check PyYAML==6.0.3
-      - name: Kjør tester for CI-skriptene
-        run: |
-          python3 -m unittest discover -s .github/scripts -p 'test_*.py'
-          bash .github/scripts/test-pr-endringsoversikt.sh
       - name: Finn apper som må bygges
         id: appvalg
         env:

@@ -22,8 +22,8 @@ trenger en ny nøkkel.
 Ved pull requests, i merge-køen og ved push til `main` starter
 [`bygg-apper.yaml`](.github/workflows/bygg-apper.yaml) bygg for appene som er
 berørt av endringene. Bibliotekene de trenger, klargjøres i én felles jobb.
-Deretter bygges og testes appene parallelt. Deploy følger miljøreglene i
-workflowen til hver app.
+For hver app kjører image-bygg og tester parallelt. Deploy venter på begge
+jobbene og følger miljøreglene i appens workflow.
 
 Hvilke filer som utløser bygg av en app, står i `env.APP_PATHS` i appens
 workflow, med ett filmønster per linje. De samme filtrene brukes for push, PR
@@ -74,10 +74,10 @@ PR-kjøringer og merge-køen bygger imaget, men pusher det ikke. Dockerfilen og
 byggkonteksten blir altså fortsatt verifisert, uten at hver eneste PR-push
 legger igjen et image per app som ingen skal bruke.
 
-Attestering og signering (`salsa`-jobben) og eksport av Docker-lagcachen følger
-den samme regelen. Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`,
-må `push_image`, `cache_to` og `salsa`-jobben oppdateres med det nye flagget.
-En test i `test_finn_berorte_apper.py` feiler hvis du glemmer det.
+Når imaget pushes, genererer og attesterer `nais/docker-build-push` SBOM før
+image-jobben fullfører. Deploy venter også på appens tester. Legger du til et
+nytt deploy-miljø i `bygg_og_deploy.yaml`, må `push_image` omfatte det nye
+flagget.
 
 ### Slik deles bibliotekene
 
