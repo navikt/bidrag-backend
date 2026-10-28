@@ -35,13 +35,14 @@ class ECBService(
             val respons = ecbConsumer.hentValutakurs(
                 Frequency.Monthly,
                 listOfNotNull(ECBConstants.NOK, utenlandskValuta.takeUnless { it == ECBConstants.EUR }),
-                kursDato
+                kursDato,
             )
             val valutakurser = when (respons) {
                 is RestResponse.Success -> respons.body.toExchangeRates()
+
                 is RestResponse.Failure -> throw ECBServiceException(
                     "ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}",
-                    respons.restClientException
+                    respons.restClientException,
                 )
             }
             validateExchangeRates(utenlandskValuta, kursDato, valutakurser)
@@ -72,9 +73,10 @@ class ECBService(
         val valutakurser = try {
             when (val respons = ecbConsumer.hentValutakurs(Frequency.Monthly, forespurteValutaer, kursDato)) {
                 is RestResponse.Success -> respons.body.toExchangeRates()
+
                 is RestResponse.Failure -> throw ECBServiceException(
                     "ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}",
-                    respons.restClientException
+                    respons.restClientException,
                 )
             }
         } catch (e: ValutakursTransformationException) {
@@ -124,14 +126,13 @@ class ECBService(
         exchangeRateDate: LocalDate,
         expectedSize: Int,
     ) = exchangeRates.size == expectedSize &&
-            exchangeRates.all { YearMonth.from(it.kursDato) == YearMonth.from(exchangeRateDate) && it.kurs.signum() > 0 } &&
-            exchangeRates.map { it.valuta }.toSet() == currencies.toSet()
+        exchangeRates.all { YearMonth.from(it.kursDato) == YearMonth.from(exchangeRateDate) && it.kurs.signum() > 0 } &&
+        exchangeRates.map { it.valuta }.toSet() == currencies.toSet()
 
     private fun throwValidationException(
         currency: String,
         exchangeRateDate: LocalDate,
-    ): Unit =
-        throw ECBServiceException("Fant ikke nødvendige valutakurser for valutakursdato $exchangeRateDate for å bestemme valutakursen $currency - NOK")
+    ): Unit = throw ECBServiceException("Fant ikke nødvendige valutakurser for valutakursdato $exchangeRateDate for å bestemme valutakursen $currency - NOK")
 }
 
 object ECBConstants {
