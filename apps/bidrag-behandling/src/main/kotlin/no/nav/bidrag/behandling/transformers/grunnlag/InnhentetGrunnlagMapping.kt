@@ -525,7 +525,9 @@ fun Set<Grunnlag>.hentGrunnlagsreferanserForInntekt(
     val inntekterGjelderGrunnlag =
         grunnlag.filter {
             it.type == inntekt.type.tilGrunnlagsdataType() &&
-                it.erBearbeidet && it.rolle.erSammeRolle(gjelderIdent, stønadstype)
+                it.erBearbeidet &&
+                hentNyesteIdentIgnorerForbidden(it.rolle.ident)?.verdi == gjelderIdent &&
+                it.rolle.erSammeRolle(it.rolle.ident!!, stønadstype)
         }
 
     val inntekter =
