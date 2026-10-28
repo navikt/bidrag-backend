@@ -2,11 +2,7 @@
 
 ## Project Context
 
-- **What**: Team Bidrag's (Nav) backend monorepo for child-support cases. It has about 35 Spring Boot apps in `apps/`, shared libraries in `libs/bidrag-felles` and `libs/bidrag-beregn-felles`, and Nais manifests in `.nais/<app>/`.
-- **Tech stack**: Kotlin (with some Java), Java 25, Spring Boot 4, Maven, JPA/Hibernate, Flyway, PostgreSQL, Kafka, Caffeine cache, and `RestTemplate` clients.
-- **Auth**: Azure AD/TokenX through token-support (`@EnableJwtTokenValidation`, `@Protected`, `@ProtectedWithClaims`) and Texas.
-- **Testing**: JUnit 5, Kotest matchers (`shouldBe`), MockK/mockito-kotlin, WireMock, H2/Testcontainers. Test names use backticks and Norwegian, for example ``fun `skal returnere tom liste når stønad mangler`()``.
-- **Code style**: ktlint `intellij_idea` (see `.editorconfig`). Domain terms are Norwegian (`stønad`, `vedtak`, `engangsbeløp`, `periode`).
+Shared project context, conventions, security, performance and testing rules live in [`AGENTS.md`](../AGENTS.md) at the repo root. Apply them when reviewing. This file only adds review-specific guidance.
 
 ## Review Language
 
@@ -41,54 +37,14 @@ Always write review comments in **English**.
 7. **Ask** when the intent is unclear, especially in period logic and payment calculations.
 8. **Respect scope**: flag unrelated renames, refactors, or reformatting bundled into the PR.
 
-## Security Review
-- No hardcoded secrets, tokens, or passwords in code, `application*.yaml`, tests, or `.nais/*.yaml`. Secrets come from Nais/Azure.
-- Never log tokens, headers, or full request/response bodies. PII goes only to `secureLogger` (team-logs).
-- Verify authentication for every new or changed endpoint, using `@Protected` or `@ProtectedWithClaims` at controller or method level where required. Require justification for `@Unprotected`, while preserving intentionally public endpoints. Person or case access must go through tilgangskontroll.- Validate input on DTOs (`@Valid`, Jakarta constraints) and Kafka payloads. Validation messages must not echo input (`${validatedValue}`).
-- SQL must use bind parameters, never string concatenation in `@Query(nativeQuery = true)` or `JdbcTemplate`.
-- For CodeQL fixes, a boolean `require()` or a denylist is not a sanitizer. Derive a new value, for example `Regex(...).matchEntire(value)?.value`.
-- GitHub Actions must be pinned to a SHA. Flag `pull_request_target`.
+## Rules to enforce
 
-```kotlin
-// ❌ BAD: PII in the regular log, and SQL built from input
-log.info { "Henter stønad for $fnr" }
-jdbcTemplate.query("SELECT * FROM stonad WHERE skyldner = '$fnr'", mapper)
+Enforce the Security, Performance, Code Quality and Testing sections of `AGENTS.md`. Also check:
 
-// ✅ GOOD
-secureLogger.info { "Henter stønad for $fnr" }
-jdbcTemplate.query("SELECT * FROM stonad WHERE skyldner = ?", mapper, fnr)
-```
-
-## Performance Considerations
-- **N+1**: lazy relations accessed in loops, repository or `RestTemplate` calls inside `map`/`forEach`, or new `FetchType.EAGER` on collections. Suggest fetch joins, `@EntityGraph`, or batch lookups.
-- **Transactions**: no remote calls or Kafka sends inside long `@Transactional` methods. `@Transactional`, `@Cacheable`, and `@Retryable` don't apply on self-invocation.
-- **Pagination**: large tables need paging or limits.
-- **Caching**: check the `@Cacheable` key and TTL, and never share user-specific data across users.
-- **Resources**: close streams and responses, and avoid `runBlocking` on request threads.
-
-```kotlin
-// ❌ BAD: one query per vedtak
-vedtakListe.map { vedtak -> stønadRepository.findByVedtakId(vedtak.id) }
-
-// ✅ GOOD: one query
-val stønaderPerVedtak = stønadRepository.findAllByVedtakIdIn(vedtakListe.map { it.id }).groupBy { it.vedtakId }
-```
-
-## Code Quality Standards
-- Use descriptive names that are consistent with the existing Norwegian domain terms.
-- Keep functions small and focused (ideally under 20–30 lines), with nesting no deeper than 3–4 levels. Prefer guard clauses and `require`/`check`.
-- No duplication. Reuse helpers from `bidrag-commons`/`bidrag-domene` instead of copying them.
-- No magic numbers or strings. Use constants or enums.
-- Prefer null-safety over `!!`, and immutable `val` and data classes.
-- Error handling: no silent `catch (e: Exception) {}`. Use meaningful messages (without PII) and the shared exceptions in `bidrag-backend-feilhandtering`. Kafka listeners must not swallow errors.
-- No commented-out code, and no TODO without a ticket.
-- Dependency versions are properties in the app's own `pom.xml`, not the root POM.
-- Flyway: never modify applied scripts, and follow the app's existing version format.
-
-## Testing Standards
-- New logic and bug fixes need tests. Cover edge cases: null values, empty lists, overlapping or open periods (`til = null`), and boundary dates.
-- Use descriptive backtick names, a Given/When/Then structure, and specific assertions (`shouldBe`, not `assertTrue(x != null)`).
-- Mock external services (WireMock/MockK), not domain logic. Tests must be independent and deterministic, with no reliance on `LocalDate.now()` without a fixed clock or input.
+- Verify authentication on every new or changed endpoint, and flag `@Unprotected` without justification.
+- Flag unpinned GitHub Actions and `pull_request_target`.
+- A CodeQL fix that only adds a boolean `require()` or a denylist is not a sanitizer. Expect a derived value, for example `Regex(...).matchEntire(value)?.value`.
+- Flag N+1 queries, remote calls inside `@Transactional`, and self-invocation of `@Transactional`/`@Cacheable`/`@Retryable`.
 
 ## Comment Format
 
