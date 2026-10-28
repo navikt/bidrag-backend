@@ -21,4 +21,7 @@ interface ValutakursgrunnlagRepository : JpaRepository<Valutakursgrunnlag, Int> 
 
     @Query("SELECT vg FROM Valutakursgrunnlag vg WHERE vg.basisvaluta = :valutakode AND vg.brukFra <= :dato AND vg.brukTil > :dato")
     fun hentValutakursgrunnlag(valutakode: Valutakode, dato: LocalDateTime): Valutakursgrunnlag?
+
+    @Query("SELECT vg FROM Valutakursgrunnlag vg WHERE vg.brukFra <= :dato AND vg.brukTil > :dato")
+    fun hentValutakursgrunnlagForDato(dato: LocalDateTime): List<Valutakursgrunnlag>
 }

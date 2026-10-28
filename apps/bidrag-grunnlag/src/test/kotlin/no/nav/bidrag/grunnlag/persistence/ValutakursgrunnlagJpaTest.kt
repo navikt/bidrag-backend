@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.persistence
 
+import io.kotest.matchers.shouldBe
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -38,6 +39,49 @@ class ValutakursgrunnlagJpaTest(
     @Autowired private val entityManager: EntityManager,
     @Autowired private val persistenceService: PersistenceService,
 ) {
+    @Test
+    fun `batchoppslag returnerer kun grunnlag aktivt på datoen`() {
+        val januar = LocalDate.of(2024, 1, 1)
+        val juli = LocalDate.of(2024, 7, 1)
+        val januarNeste = LocalDate.of(2025, 1, 1)
+        repository.saveAllAndFlush(
+            listOf(
+                Valutakursgrunnlag(
+                    brukFra = januar.atStartOfDay(),
+                    brukTil = juli.atStartOfDay(),
+                    basisvaluta = Valutakode.USD,
+                    kurs = BigDecimal.TEN,
+                    multiplikator = 0,
+                ),
+                Valutakursgrunnlag(
+                    brukFra = juli.atStartOfDay(),
+                    brukTil = januarNeste.atStartOfDay(),
+                    basisvaluta = Valutakode.USD,
+                    kurs = BigDecimal.TEN,
+                    multiplikator = 0,
+                ),
+                Valutakursgrunnlag(
+                    brukFra = juli.atStartOfDay(),
+                    brukTil = januarNeste.atStartOfDay(),
+                    basisvaluta = Valutakode.DKK,
+                    kurs = null,
+                    multiplikator = null,
+                    feiletHenting = true,
+                ),
+            ),
+        )
+        entityManager.clear()
+
+        val grunnlagJanuar = repository.hentValutakursgrunnlagForDato(januar.atStartOfDay())
+        val grunnlagJuli = repository.hentValutakursgrunnlagForDato(juli.atStartOfDay())
+
+        grunnlagJanuar.map { it.basisvaluta }.toSet() shouldBe setOf(Valutakode.USD)
+        grunnlagJanuar.single().brukFra shouldBe januar.atStartOfDay()
+        grunnlagJuli.map { it.basisvaluta }.toSet() shouldBe setOf(Valutakode.USD, Valutakode.DKK)
+        grunnlagJuli.all { it.brukFra == juli.atStartOfDay() } shouldBe true
+        grunnlagJuli.single { it.basisvaluta == Valutakode.DKK }.feiletHenting shouldBe true
+    }
+
     @Test
     fun `mislykket gjeninnhenting bevarer HENTET-kurs og tillater fortsatt omregning`() {
         val dato = LocalDate.of(2025, 7, 1)
