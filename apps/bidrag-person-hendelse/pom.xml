@@ -28,6 +28,16 @@
         <bouncycastle.version>1.85</bouncycastle.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <!-- com.ibm.mq.jakarta.client trekker inn Bouncy Castle 1.84, som er sårbar for
          CVE-2026-8763 (Name Constraints-bypass, CVSS 9.1). Pinnes til 1.85 her siden
          hverken root-pom eller spring-boot-parent styrer disse artefaktene. -->
