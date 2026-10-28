@@ -556,8 +556,10 @@ fun Set<Grunnlag>.hentGrunnlagsreferanserForInntekt(
                 } else if (UnleashFeatures.GRUNNLAGSINNHENTING_FUNKSJONELL_FEIL_TEKNISK.isEnabled) {
                     emptyList()
                 } else {
-                    val rolle = inntekterGjelderGrunnlag.firstOrNull()?.rolle ?: inntekt.rolle
-                    rolle?.let { opprettGrunnlagsreferanserForInntekt2(inntekt, it.tilGrunnlagsreferanse()) } ?: emptyList()
+                    grunnlagByggingFeilet(
+                        "Mangler grunnlagsreferanse for offentlig inntekt ${inntekt.type} " +
+                            "for periode (${inntekt.opprinneligFom}-${inntekt.opprinneligTom}) og barn ${inntekt.gjelderBarn}",
+                    )
                 }
             }
     }.map {
