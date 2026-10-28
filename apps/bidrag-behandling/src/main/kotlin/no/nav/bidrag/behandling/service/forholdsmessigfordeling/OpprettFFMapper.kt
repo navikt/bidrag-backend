@@ -461,6 +461,8 @@ fun kopierInntekt(
                     kode = inntektspost.kode,
                     inntektstype = inntektspost.inntektstype,
                     beløp = inntektspost.beløp,
+                    beløpstype = inntektspost.beløpstype,
+                    skattefaktor = inntektspost.skattefaktor,
                 ),
             )
         }
