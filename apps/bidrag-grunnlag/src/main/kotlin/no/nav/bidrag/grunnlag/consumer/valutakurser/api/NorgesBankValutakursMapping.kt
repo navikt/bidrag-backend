@@ -53,6 +53,6 @@ fun SdmxSimplified.tilValutakurs(valuta: String, frekvens: Frekvens, kursDato: L
     val kurs = observasjon.value?.singleOrNull()?.toBigDecimalOrNull()
         ?: throw NorgesBankValutakursMappingException.UgyldigData("Mangler gyldig valutakurs.")
     if (kurs.signum() <= 0) throw NorgesBankValutakursMappingException.UgyldigData("Ugyldig valutakurs.")
-    val normalisert = kurs.scaleByPowerOfTen(-multiplikator).stripTrailingZeros()
+    val normalisert = kurs.scaleByPowerOfTen(multiplikator).stripTrailingZeros()
     return Valutakurs(valuta, if (normalisert.scale() < 0) normalisert.setScale(0) else normalisert, observasjonsdato)
 }

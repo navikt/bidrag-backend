@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.consumer.valutakurser
 
+import io.kotest.matchers.shouldBe
 import no.nav.bidrag.grunnlag.consumer.GrunnlagConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.NorgesBankValutakursMappingException
@@ -34,7 +35,7 @@ internal fun norgesBankSvar(
     periode: String = "2025-06",
     calculated: String = "false",
     kurs: String = "155.34",
-    multiplikator: String = "2",
+    multiplikator: String = "-2",
     tenor: String = "SP",
 ): SdmxSimplified = SdmxSimplified(
     SdmxData(
@@ -64,6 +65,33 @@ class NorgesBankMaanedskursTest {
     private val dato = LocalDate.of(2025, 6, 30)
 
     @Test
+    fun `skal normalisere kurs per hundre enheter med negativ eksponent`() {
+        val svar = norgesBankSvar(kurs = "155.34", multiplikator = "-2")
+
+        val kurs = svar.tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+
+        kurs.kurs shouldBe BigDecimal("1.5534")
+    }
+
+    @Test
+    fun `skal beholde kurs per enhet med null som eksponent`() {
+        val svar = norgesBankSvar(kurs = "10.0285", multiplikator = "0")
+
+        val kurs = svar.tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+
+        kurs.kurs shouldBe BigDecimal("10.0285")
+    }
+
+    @Test
+    fun `skal multiplisere kurs med positiv eksponent uten negativ skala`() {
+        val svar = norgesBankSvar(kurs = "155.30", multiplikator = "2")
+
+        val kurs = svar.tilValutakurs("DKK", Frekvens.MÅNEDLIG, dato)
+
+        kurs.kurs shouldBe BigDecimal("15530")
+    }
+
+    @Test
     fun `JSON fra Norges Bank leses via felles consumer og kurs per enhet normaliseres`() {
         val json = """
             {
@@ -79,7 +107,7 @@ class NorgesBankMaanedskursTest {
                   "attributes": {"series": [
                     {"id": "DECIMALS", "values": [{"id": "2"}]},
                     {"id": "CALCULATED", "values": [{"id": "false"}]},
-                    {"id": "UNIT_MULT", "values": [{"id": "2"}]},
+                    {"id": "UNIT_MULT", "values": [{"id": "-2"}]},
                     {"id": "COLLECTION", "values": [{"id": "A"}]}
                   ]}
                 }
