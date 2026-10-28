@@ -65,11 +65,14 @@ class HentHistoriskeValutakurserService(
         val utenlandskeValutakoder = Valutakode.entries.toTypedArray().filter { it != Valutakode.NOK }
         val valutakursgrunnlag = mutableListOf<ValutakursgrunnlagBo>()
         try {
+            val grunnlagPerDato = perioder.map { it.fom }.distinct().associateWith { dato ->
+                valutakursgrunnlagService.hentValutakursgrunnlagForDato(dato).associateBy { it.basisvaluta }
+            }
             val perioderUtenGrunnlag = perioder.map { periode ->
                 val valutakoderUtenGrunnlag = utenlandskeValutakoder.filter { valutakode ->
                     valutakode.aktiv(periode.fom)
                 }.filter { valutakode ->
-                    val eksisterende = valutakursgrunnlagService.hentValutakursgrunnlag(valutakode, periode.fom)
+                    val eksisterende = grunnlagPerDato[periode.fom]?.get(valutakode)
                     eksisterende == null || eksisterende.feiletHenting
                 }
                 periode to valutakoderUtenGrunnlag

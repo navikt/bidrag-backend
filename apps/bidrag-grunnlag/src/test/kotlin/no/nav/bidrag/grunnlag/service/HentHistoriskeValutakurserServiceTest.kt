@@ -1,6 +1,7 @@
 package no.nav.bidrag.grunnlag.service
 
 import jakarta.annotation.PostConstruct
+import io.kotest.matchers.shouldBe
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -17,15 +18,16 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpStatusCodeException
+import java.math.BigDecimal
 import java.time.LocalDate
 
 class HentHistoriskeValutakurserServiceTest {
@@ -228,9 +230,6 @@ class HentHistoriskeValutakurserServiceTest {
         assertFalse(forespørsler.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.ANG })
         assertTrue(forespørsler.allValues.all { it.hentValutakursListe.any { kurs -> kurs.valutakode == Valutakode.BGN } })
         assertTrue(forespørsler.allValues.all { it.hentValutakursListe.none { kurs -> kurs.valutakode == Valutakode.HRK } })
-        verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
-        verify(grunnlag).hentValutakursgrunnlag(Valutakode.ANG, LocalDate.of(2025, 1, 1))
-        verify(grunnlag, never()).hentValutakursgrunnlag(Valutakode.ANG, LocalDate.of(2025, 7, 1))
     }
 
     @Test
@@ -243,7 +242,6 @@ class HentHistoriskeValutakurserServiceTest {
         val request = argumentCaptor<HentValutakursRequest>()
         verify(hent).hentValutakurs(request.capture())
         assertFalse(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.HRK })
-        verify(grunnlag, never()).hentValutakursgrunnlag(eq(Valutakode.HRK), any())
     }
 
     @Test
@@ -259,8 +257,6 @@ class HentHistoriskeValutakurserServiceTest {
         verify(hent, times(2)).hentValutakurs(forespørsler.capture())
         assertFalse(forespørsler.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.BYN })
         assertTrue(forespørsler.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.BYN })
-        verify(grunnlag, never()).hentValutakursgrunnlag(Valutakode.BYN, januar)
-        verify(grunnlag).hentValutakursgrunnlag(Valutakode.BYN, juli)
     }
 
     @Test
@@ -282,9 +278,22 @@ class HentHistoriskeValutakurserServiceTest {
     @Test
     fun `eksisterende grunnlag hentes ikke på nytt`() {
         val fra = LocalDate.of(2024, 1, 1)
-        whenever(grunnlag.hentValutakursgrunnlag(any(), eq(fra))).thenReturn(ValutakursgrunnlagBo(basisvaluta = Valutakode.USD, kurs = null, multiplikator = null))
+        val til = fra.plusMonths(6)
+        whenever(grunnlag.hentValutakursgrunnlagForDato(fra)).thenReturn(
+            Valutakode.entries
+                .filter { it != Valutakode.NOK && it.aktiv(fra) }
+                .map {
+                    ValutakursgrunnlagBo(
+                        brukFra = fra.atStartOfDay(),
+                        brukTil = til.atStartOfDay(),
+                        kurs = BigDecimal.TEN,
+                        multiplikator = 0,
+                        basisvaluta = it,
+                    )
+                },
+        )
 
-        assertTrue(service.hentHistoriskeValutakurser(fra, fra.plusMonths(6)).isEmpty())
+        assertTrue(service.hentHistoriskeValutakurser(fra, til).isEmpty())
 
         verifyNoInteractions(hent)
         verify(grunnlag, never()).opprettValutakursgrunnlag(any(), any())
@@ -293,8 +302,87 @@ class HentHistoriskeValutakurserServiceTest {
     @Test
     fun `bare valutaer uten grunnlag hentes i en delvis lagret periode`() {
         val fra = LocalDate.of(2024, 1, 1)
-        whenever(grunnlag.hentValutakursgrunnlag(eq(Valutakode.USD), eq(fra)))
-            .thenReturn(ValutakursgrunnlagBo(basisvaluta = Valutakode.USD, kurs = null, multiplikator = null))
+        val til = fra.plusMonths(6)
+        whenever(grunnlag.hentValutakursgrunnlagForDato(fra))
+            .thenReturn(
+                listOf(
+                    ValutakursgrunnlagBo(
+                        brukFra = fra.atStartOfDay(),
+                        brukTil = til.atStartOfDay(),
+                        kurs = BigDecimal.TEN,
+                        multiplikator = 0,
+                        basisvaluta = Valutakode.USD,
+                    ),
+                ),
+            )
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+
+        service.hentHistoriskeValutakurser(fra, til)
+
+        val request = argumentCaptor<HentValutakursRequest>()
+        verify(hent).hentValutakurs(request.capture())
+        assertFalse(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.USD })
+        assertTrue(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.EUR })
+    }
+
+    @Test
+    fun `ti fullstendige halvår gjør ti batchoppslag og ingen innhenting`() {
+        val fra = LocalDate.of(2019, 1, 1)
+        val perioder = List(10) { indeks ->
+            val start = fra.plusMonths(indeks * 6L)
+            Datoperiode(start, start.plusMonths(6))
+        }
+        perioder.forEach { periode ->
+            whenever(grunnlag.hentValutakursgrunnlagForDato(periode.fom)).thenReturn(
+                Valutakode.entries
+                    .filter { it != Valutakode.NOK && it.aktiv(periode.fom) }
+                    .map {
+                        ValutakursgrunnlagBo(
+                            basisvaluta = it,
+                            feiletHenting = false,
+                            brukFra = periode.fom.atStartOfDay(),
+                            brukTil = periode.fom.plusMonths(6).atStartOfDay(),
+                            kurs = BigDecimal.TEN,
+                            multiplikator = 0,
+                        )
+                    },
+            )
+        }
+
+        service.hentHistoriskeValutakurser(perioder)
+
+        val datoer = argumentCaptor<LocalDate>()
+        verify(grunnlag, times(10)).hentValutakursgrunnlagForDato(datoer.capture())
+        datoer.allValues shouldBe perioder.map { it.fom }
+        verifyNoInteractions(hent)
+        verifyNoMoreInteractions(grunnlag)
+    }
+
+    @Test
+    fun `blandet lagret feilet og manglende grunnlag henter bare feilet og manglende valutaer`() {
+        val fra = LocalDate.of(2024, 1, 1)
+        val til = fra.plusMonths(6)
+        whenever(grunnlag.hentValutakursgrunnlagForDato(fra)).thenReturn(
+            listOf(
+                ValutakursgrunnlagBo(
+                    brukFra = fra.atStartOfDay(),
+                    brukTil = til.atStartOfDay(),
+                    kurs = BigDecimal.TEN,
+                    multiplikator = 0,
+                    basisvaluta = Valutakode.USD,
+                    feiletHenting = false,
+                ),
+                ValutakursgrunnlagBo(
+                    brukFra = fra.atStartOfDay(),
+                    brukTil = til.atStartOfDay(),
+                    kurs = null,
+                    multiplikator = null,
+                    basisvaluta = Valutakode.DKK,
+                    feiletHenting = true,
+                ),
+            ),
+        )
         whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
         whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
 
@@ -302,8 +390,75 @@ class HentHistoriskeValutakurserServiceTest {
 
         val request = argumentCaptor<HentValutakursRequest>()
         verify(hent).hentValutakurs(request.capture())
-        assertFalse(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.USD })
-        assertTrue(request.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.EUR })
+        val valutaer = request.firstValue.hentValutakursListe.map { it.valutakode }
+        valutaer shouldBe Valutakode.entries.filter { it != Valutakode.NOK && it.aktiv(fra) && it != Valutakode.USD }
+        valutaer.contains(Valutakode.USD) shouldBe false
+        valutaer.contains(Valutakode.DKK) shouldBe true
+        valutaer.contains(Valutakode.EUR) shouldBe true
+    }
+
+    @Test
+    fun `tom periodeliste gjør ingen oppslag eller andre kall`() {
+        service.hentHistoriskeValutakurser(emptyList()) shouldBe emptyList()
+
+        verifyNoInteractions(hent, grunnlag)
+    }
+
+    @Test
+    fun `lagret valuta i første periode er fortsatt manglende i neste periode`() {
+        val førsteFra = LocalDate.of(2024, 1, 1)
+        val andreFra = førsteFra.plusMonths(6)
+        whenever(grunnlag.hentValutakursgrunnlagForDato(førsteFra)).thenReturn(
+            listOf(
+                ValutakursgrunnlagBo(
+                    brukFra = førsteFra.atStartOfDay(),
+                    brukTil = andreFra.atStartOfDay(),
+                    kurs = BigDecimal.TEN,
+                    multiplikator = 0,
+                    basisvaluta = Valutakode.USD,
+                    feiletHenting = false,
+                ),
+            ),
+        )
+        whenever(grunnlag.hentValutakursgrunnlagForDato(andreFra)).thenReturn(emptyList())
+        whenever(hent.hentValutakurs(any())).thenReturn(HentValutakursResponse(emptyList()))
+        whenever(grunnlag.opprettValutakursgrunnlag(any(), any())).thenReturn(emptyList())
+
+        service.hentHistoriskeValutakurser(
+            listOf(
+                Datoperiode(førsteFra, andreFra),
+                Datoperiode(andreFra, andreFra.plusMonths(6)),
+            ),
+        )
+
+        val requests = argumentCaptor<HentValutakursRequest>()
+        verify(hent, times(2)).hentValutakurs(requests.capture())
+        requests.firstValue.hentValutakursListe.any { it.valutakode == Valutakode.USD } shouldBe false
+        requests.secondValue.hentValutakursListe.any { it.valutakode == Valutakode.USD } shouldBe true
+    }
+
+    @Test
+    fun `samme periodestart hentes bare én gang fra batchgrunnlag`() {
+        val fra = LocalDate.of(2024, 1, 1)
+        val til = fra.plusMonths(6)
+        whenever(grunnlag.hentValutakursgrunnlagForDato(fra)).thenReturn(
+            Valutakode.entries
+                .filter { it != Valutakode.NOK && it.aktiv(fra) }
+                .map {
+                    ValutakursgrunnlagBo(
+                        brukFra = fra.atStartOfDay(),
+                        brukTil = til.atStartOfDay(),
+                        kurs = BigDecimal.TEN,
+                        multiplikator = 0,
+                        basisvaluta = it,
+                    )
+                },
+        )
+
+        service.hentHistoriskeValutakurser(listOf(Datoperiode(fra, til), Datoperiode(fra, til)))
+
+        verify(grunnlag, times(1)).hentValutakursgrunnlagForDato(fra)
+        verifyNoInteractions(hent)
     }
 
     @Test
