@@ -1026,8 +1026,6 @@ export interface NotatInntektDto {
   historisk: boolean;
   inntektsposter: NotatInntektspostDto[];
   beløpstypeVisningsnavn: string;
-  /** Om barnetillegget er skattefritt (tiltakspenger og Forsvaret), og ikke har skatteprosent */
-  erSkattefrittBarnetillegg: boolean;
   visningsnavn: string;
   /** Avrundet dagsats for barnetillegg */
   dagsats?: number | null;
