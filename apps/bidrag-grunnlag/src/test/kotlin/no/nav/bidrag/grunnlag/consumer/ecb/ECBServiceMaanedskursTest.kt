@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.consumer.ecb
 
+import io.kotest.matchers.shouldBe
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxData
@@ -133,8 +134,50 @@ class ECBServiceMaanedskursTest {
     }
 
     @Test
+    fun `skal beholde gyldige batchkurser når en valuta har null tom eller uleselig observasjon`() {
+        val svar = respons("NOK" to "12", "USD" to "2", "DKK" to "1")
+        val observasjoner = listOf(null, emptyList(), listOf(""), listOf("ugyldig"))
+
+        observasjoner.forEach { observasjon ->
+            val data = svar.body.copy(
+                dataSets = listOf(
+                    SdmxDataSet(svar.body.dataSets.single().series + ("2:0" to SdmxSeries(mapOf("0" to observasjon)))),
+                ),
+            )
+            Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD", "DKK"), sisteJuni))
+                .thenReturn(RestResponse.Success(data))
+
+            val kurser = service.hentValutakurser(listOf("USD", "EUR", "DKK"), sisteJuni)
+
+            kurser.keys shouldBe setOf("USD", "EUR")
+            kurser.getValue("USD").kurs shouldBe BigDecimal("6.0000000000")
+            kurser.getValue("EUR").kurs shouldBe BigDecimal("12")
+        }
+    }
+
+    @Test
+    fun `skal avvise batch når NOK har null tom eller uleselig observasjon`() {
+        val svar = respons("NOK" to "12", "USD" to "2")
+        val observasjoner = listOf(null, emptyList(), listOf(""), listOf("ugyldig"))
+
+        observasjoner.forEach { observasjon ->
+            val data = svar.body.copy(
+                dataSets = listOf(
+                    SdmxDataSet(svar.body.dataSets.single().series + ("0:0" to SdmxSeries(mapOf("0" to observasjon)))),
+                ),
+            )
+            Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
+                .thenReturn(RestResponse.Success(data))
+
+            val feil = assertThrows<ECBServiceException> { service.hentValutakurser(listOf("USD"), sisteJuni) }
+
+            feil.message shouldBe "ECB-svaret mangler en gyldig NOK-kurs for $sisteJuni"
+        }
+    }
+
+    @Test
     fun `batch avviser manglende NOK duplisert NOK feil måned og uventet valuta`() {
-        val feilMåned = (respons("NOK" to "12", "USD" to "2") as RestResponse.Success).body.let { data ->
+        val feilMåned = respons("NOK" to "12", "USD" to "2").body.let { data ->
             data.copy(structure = data.structure.copy(dimensions = data.structure.dimensions.copy(observation = listOf(SdmxDimension("TIME_PERIOD", listOf(SdmxValue("2025-05")))))))
         }
         Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
@@ -150,7 +193,7 @@ class ECBServiceMaanedskursTest {
         }
     }
 
-    private fun respons(vararg kurser: Pair<String, String>): RestResponse<SdmxData> = RestResponse.Success(
+    private fun respons(vararg kurser: Pair<String, String>): RestResponse.Success<SdmxData> = RestResponse.Success(
         SdmxData(
             listOf(
                 SdmxDataSet(

@@ -26,11 +26,11 @@ fun SdmxData.toExchangeRates(): List<Valutakurs> {
 
                 val valuta = dimensjonsverdi(valutaposisjon)
                 val frekvens = dimensjonsverdi(frekvensposisjon)
-                serie?.observations.orEmpty().map { (periodeindeks, observasjon) ->
+                serie?.observations.orEmpty().mapNotNull { (periodeindeks, observasjon) ->
                     val periode = periodeindeks.toIntOrNull()?.let { perioder.getOrNull(it)?.id }
                         ?: throw ValutakursTransformationException("ECB-svaret har ugyldig observasjonsperiode", null)
                     val kurs = observasjon?.firstOrNull()?.toBigDecimalOrNull()
-                        ?: throw ValutakursTransformationException("ECB-svaret mangler kurs", null)
+                        ?: return@mapNotNull null
                     val dato = when (frekvens) {
                         "M" -> YearMonth.parse(periode).atEndOfMonth()
                         "D" -> LocalDate.parse(periode)
