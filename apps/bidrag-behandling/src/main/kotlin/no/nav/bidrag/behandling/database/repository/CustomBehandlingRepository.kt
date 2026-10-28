@@ -4,4 +4,7 @@ import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagDet
 
 interface CustomBehandlingRepository {
     fun hentLasterGrunnlagStatus(id: Long): LasterGrunnlagDetaljer?
+
+    /** Flusher og tømmer persistence context slik at neste lasting henter siste tilstand fra databasen. Billigere enn refresh. */
+    fun tømPersistenceContext()
 }

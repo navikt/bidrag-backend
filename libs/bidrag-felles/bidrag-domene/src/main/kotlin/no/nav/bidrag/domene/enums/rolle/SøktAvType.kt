@@ -14,6 +14,7 @@ enum class SøktAvType(
     BARN_18_ÅR("BB"),
     BM_I_ANNEN_SAK("AS"),
     NAV_BIDRAG("ET"), // TK
+    AUTOMATISK("AU"),
     FYLKESNEMDA("FN"),
     NAV_INTERNASJONALT("IN"),
     KOMMUNE("KU"),
@@ -27,5 +28,10 @@ enum class SøktAvType(
 
     companion object {
         fun fraKode(kode: String): SøktAvType? = entries.find { it.kode == kode }
+    }
+
+    fun tilBakoverkompatibelBrev(): SøktAvType = when (this) {
+        AUTOMATISK -> NAV_BIDRAG
+        else -> this
     }
 }

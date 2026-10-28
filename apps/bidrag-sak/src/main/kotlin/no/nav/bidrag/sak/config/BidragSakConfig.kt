@@ -25,6 +25,8 @@ import no.nav.bidrag.commons.web.config.RestTemplateBuilderBean
 import no.nav.bidrag.sak.BidragSak
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.security.token.support.client.spring.oauth2.EnableOAuth2Client
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -32,6 +34,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.client.observation.ClientRequestObservationConvention
 import org.springframework.http.client.observation.DefaultClientRequestObservationConvention
 import org.springframework.http.converter.HttpMessageConverters
+import org.springframework.web.client.RestOperations
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import java.time.LocalDate
 import java.time.YearMonth
@@ -53,12 +56,17 @@ import java.time.format.DateTimeFormatter
     AuditAdvice::class,
     DefaultCorsFilter::class,
     ClientConfigurationWellknownProperties::class,
-    IdentConsumer::class,
     AppContext::class,
 )
 class BidragSakConfig {
     @Bean
     fun kotlinModule(): KotlinModule = KotlinModule.Builder().build()
+
+    @Bean
+    fun identConsumer(
+        @Value($$"${BIDRAG_PERSON_URL}") personUrl: String,
+        @Qualifier("azure") restOperations: RestOperations,
+    ): IdentConsumer = IdentConsumer(personUrl, restOperations)
 
     @Bean
     fun exceptionLogger(): ExceptionLogger = ExceptionLogger(BidragSak::class.java.simpleName)

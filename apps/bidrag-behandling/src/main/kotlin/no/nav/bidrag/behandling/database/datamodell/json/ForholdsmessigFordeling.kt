@@ -73,8 +73,9 @@ data class ForholdsmessigFordelingSøknadBarn(
     // TODO: Er dette nødvendig? Kan BM/Barn være i flere saker?
     val saksnummer: String?,
     var status: Behandlingstatus? = null,
-    // Søknaden ble opprettet samtidig med eller etter hovedsøknaden, og kan derfor bli hovedsøknad hvis hovedsøknaden slettes
-    var opprettetEtterHovedsøknad: Boolean = false,
-    var erstatterFFKlagesøknadsid: Long? = null,
-    var opprettetMedKlageHovedsøknadsid: Long? = null,
-)
+    // Søknaden er opprettet av saksbehandler (via opprettBehandlingFraVedtak) og skal aldri feilregistreres automatisk
+    @JsonAlias("opprettetEtterHovedsøknad")
+    var opprettetAvSaksbehandler: Boolean = false,
+) {
+    val opprettetAvSystem get() = søktAvType == SøktAvType.AUTOMATISK
+}

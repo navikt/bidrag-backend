@@ -64,6 +64,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettInnhentetHusstandsmedlemGrunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
+import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
 import no.nav.bidrag.transport.behandling.felles.grunnlag.tilInnholdMedReferanse
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettBehandlingsreferanseRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettGrunnlagRequestDto
@@ -181,7 +182,7 @@ fun Behandling.byggGrunnlagManueltOverstyrtGebyr() = roller
 
 fun Behandling.byggGrunnlagSøknad(søknadsbarn: List<Rolle> = this.søknadsbarn) = if (erIForholdsmessigFordeling) {
     søknadsbarn.flatMap {
-        it.forholdsmessigFordeling!!.søknaderUnderBehandling.map { søknad ->
+        it.forholdsmessigFordeling!!.søknaderUnderBehandling.distinctBy { it.søknadsid }.map { søknad ->
             GrunnlagDto(
                 referanse = "søknad_${it.tilGrunnlagsreferanse()}_${søknad.søknadsid}",
                 type = Grunnlagstype.SØKNAD,
@@ -788,6 +789,7 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
     grunnlagsreferanseListe =
     grunnlagListe.toSet().hentGrunnlagsreferanserForInntekt(
         gjelder.personIdent!!,
+        gjelder.stønadstype,
         this,
     ),
     gjelderReferanse = gjelder.referanse,

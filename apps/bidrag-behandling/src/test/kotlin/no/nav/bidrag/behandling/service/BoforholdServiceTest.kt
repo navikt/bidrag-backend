@@ -566,6 +566,55 @@ class BoforholdServiceTest : TestContainerRunner() {
 
             @Test
             @Transactional
+            open fun `skal oppdatere offentlig husstandsmedlem når identoppslaget gir 403`() {
+                val behandling = testdataManager.oppretteBehandling()
+                behandling.virkningstidspunkt = testdataBarn1.fødselsdato
+                every { bidragPersonConsumer.hentPerson(testdataBarn1.ident) } throws HttpClientErrorException(HttpStatus.FORBIDDEN)
+
+                val grunnlagBoforhold =
+                    listOf(
+                        RelatertPersonGrunnlagDto(
+                            partPersonId = behandling.bidragsmottaker!!.ident!!,
+                            relatertPersonPersonId = testdataBarn1.ident,
+                            fødselsdato = testdataBarn1.fødselsdato,
+                            erBarnAvBmBp = true,
+                            navn = testdataBarn1.navn,
+                            borISammeHusstandDtoListe =
+                            listOf(
+                                BorISammeHusstandDto(
+                                    periodeFra = testdataBarn1.fødselsdato,
+                                    periodeTil = null,
+                                ),
+                            ),
+                        ),
+                    )
+                val periodisertBoforhold =
+                    BoforholdApi.beregnBoforholdBarnV3(
+                        testdataBarn1.fødselsdato,
+                        null,
+                        null,
+                        behandling.tilTypeBoforhold(),
+                        grunnlagBoforhold.tilBoforholdBarnRequest(behandling),
+                    )
+
+                boforholdService.oppdatereAutomatiskInnhentetBoforhold(
+                    behandling,
+                    periodisertBoforhold,
+                    setOf(Personident(testdataBarn1.ident)),
+                    true,
+                    testdataBarn1.tilPersonStønad(),
+                )
+
+                assertSoftly(behandling.husstandsmedlem.filter { it.ident == testdataBarn1.ident }) { barn1 ->
+                    barn1 shouldHaveSize 1
+                    barn1.first().perioder.size shouldBe 1
+                    barn1.first().perioder.first().kilde shouldBe Kilde.OFFENTLIG
+                    barn1.first().perioder.first().bostatus shouldBe Bostatuskode.MED_FORELDER
+                }
+            }
+
+            @Test
+            @Transactional
             open fun `skal endre kilde til manuell for offentlig husstandsmedlem som ikke finnes i nyeste grunnlag`() {
                 // gitt
                 val behandling = testdataManager.oppretteBehandling(false, false, true)

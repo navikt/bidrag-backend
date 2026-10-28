@@ -24,7 +24,7 @@ import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragberegningDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegningBarnDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.service.hentVedtak
@@ -854,7 +854,7 @@ fun List<GrunnlagDto>.innhentetTidspunkt(grunnlagstype: Grunnlagstype) = filtrer
     ?.get("hentetTidspunkt")
     ?.let {
         commonObjectmapper.treeToValue(it, LocalDateTime::class.java)
-    } ?: LocalDateTime.now()
+    } ?: LocalDateTime.from(LocalDate.now().atStartOfDay())
 
 fun <T> Map<String?, List<T>>.filterBarnIBehandling(
     grunnlagListe: List<GrunnlagDto>,
@@ -1408,7 +1408,7 @@ internal fun List<BaseGrunnlag>.tilHusstandsmedlem(
     val gjelderRolle =
         behandling.roller
             .find {
-                val ident = hentNyesteIdent(gjelderPerson.ident?.verdi)
+                val ident = hentNyesteIdentIgnorerForbidden(gjelderPerson.ident?.verdi)
                 ident != null && it.erSammeRolle(ident.verdi, gjelderPerson.stønadstype)
             }
     val erBmBpBosstatus =
@@ -1588,6 +1588,7 @@ private fun GrunnlagDto.tilRolle(
                 )
             }
         }
+    val stønadstype = stønadsendring?.type ?: søknadGrunnlag?.behandlingstema?.tilStønadstype() ?: behandling.stonadstype
     return Rolle(
         behandling,
         id = id,
@@ -1611,7 +1612,7 @@ private fun GrunnlagDto.tilRolle(
                 } else {
                     grunnlagsliste.hentSøknader(referanse)
                 }
-            val personGrunnlag = grunnlagsliste.hentPerson(personIdent)?.personObjekt!!
+            val personGrunnlag = grunnlagsliste.hentPerson(personIdent, stønadstype)?.personObjekt!!
             val erRevurdering = !personGrunnlag.delAvOpprinneligBehandling // søknader.all { it.behandlingstype?.erForholdsmessigFordeling == true }
             val førsteSøknad = søknader.firstOrNull()
             val bidragsmottakerIdent =

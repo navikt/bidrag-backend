@@ -3,6 +3,12 @@ package no.nav.bidrag.sak.domain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
 import no.nav.bidrag.domene.enums.sak.Sakskategori
@@ -10,12 +16,27 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.BidragSakProfiles
 import no.nav.bidrag.sak.util.FnrGenerator
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.test.context.ActiveProfiles
 
 @ActiveProfiles(BidragSakProfiles.TEST)
 class BidragssakTest {
     private var bidragssak: Bidragssak? = null
+
+    @BeforeEach
+    fun setUp() {
+        val identConsumer = mockk<IdentConsumer>()
+        every { identConsumer.hentPersonInformasjon(any()) } returns null
+        mockkObject(AppContext)
+        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(AppContext)
+    }
 
     @Test
     fun `should map dto`() {

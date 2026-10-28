@@ -1,19 +1,18 @@
 package no.nav.bidrag.regnskap.config
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.util.backoff.ExponentialBackOff
-
-private val LOGGER = KotlinLogging.logger { }
 
 @Configuration
 class KafkaConfiguration {
 
     companion object {
         private const val BACKOFF_MULTIPLIER = 1.2
-        private const val MAX_INTERVAL_MS = 300000L // 5 mins
+        private const val MAX_INTERVAL_MS = 60_000L // 1 min
     }
 
     @Bean
@@ -29,7 +28,7 @@ class KafkaConfiguration {
         val offset = rec.offset()
         val topic = rec.topic()
         val partition = rec.partition()
-        LOGGER.error(e) {
+        secureLogger.error(e) {
             "Kafka melding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value"
         }
     }, opprettBackoffPolicy())

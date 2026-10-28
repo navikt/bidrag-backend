@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.verify
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
@@ -49,6 +50,8 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
@@ -831,5 +834,46 @@ class DtoMapperMockTest {
                 it.perioder[0].beløp shouldBe BigDecimal(1000)
             }
         }
+    }
+
+    private val skjermetPersoninfo = Personinfo(Personident("12345678910"), "Ola Nordmann", LocalDate.parse("1990-05-01"))
+    private val skjermetSaksnummer = Saksnummer("1234567")
+
+    @Test
+    fun `skal maskere person uten tilgang uten å sjekke beskyttelse`() {
+        every { tilgangskontrollService.harTilgang(any(), any()) } returns false
+        every { tilgangskontrollService.harBeskyttelse(any()) } throws IllegalStateException("bidrag-person feilet")
+
+        val resultat = dtomapper.tilgangskontrollerePersoninfo(skjermetPersoninfo, skjermetSaksnummer, true)
+
+        resultat shouldBe Personinfo(null, "Person skjermet, født 1990", null, erBeskyttet = true)
+        verify(exactly = 0) { tilgangskontrollService.harBeskyttelse(any()) }
+    }
+
+    @Test
+    fun `skal vise at fødselsdato mangler for maskert person uten fødselsdato`() {
+        every { tilgangskontrollService.harTilgang(any(), any()) } returns false
+
+        val resultat = dtomapper.tilgangskontrollerePersoninfo(skjermetPersoninfo.copy(fødselsdato = null), skjermetSaksnummer)
+
+        resultat.navn shouldBe "Person skjermet, fødselsdato mangler"
+    }
+
+    @Test
+    fun `skal maskere beskyttet person med tilgang når identitet skal skjules`() {
+        every { tilgangskontrollService.harBeskyttelse(any()) } returns true
+
+        val resultat = dtomapper.tilgangskontrollerePersoninfo(skjermetPersoninfo, skjermetSaksnummer, true)
+
+        resultat shouldBe Personinfo(null, "Person skjermet, født 1990", null, erBeskyttet = true)
+    }
+
+    @Test
+    fun `skal vise beskyttet person med tilgang når identitet ikke skal skjules`() {
+        every { tilgangskontrollService.harBeskyttelse(any()) } returns true
+
+        val resultat = dtomapper.tilgangskontrollerePersoninfo(skjermetPersoninfo, skjermetSaksnummer)
+
+        resultat shouldBe skjermetPersoninfo.copy(erBeskyttet = true)
     }
 }

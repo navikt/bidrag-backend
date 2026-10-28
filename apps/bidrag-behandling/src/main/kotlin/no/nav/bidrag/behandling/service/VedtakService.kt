@@ -250,6 +250,7 @@ class VedtakService(
                             behandling,
                             request.søknadsid,
                             opprettetAvEnhet = request.behandlerenhet,
+                            søknadOpprettetAvSaksbehandler = true,
                         )
 
                         return OpprettBehandlingResponse(behandling.id!!)
@@ -265,6 +266,7 @@ class VedtakService(
                     konvertertBehandling,
                     request.søknadsid,
                     opprettetAvEnhet = request.behandlerenhet,
+                    søknadOpprettetAvSaksbehandler = true,
                 )
             }
             konvertertBehandling.roller.forEach {
@@ -627,9 +629,7 @@ class VedtakService(
             )
 
             if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                behandling.saker.forEach {
-                    opprettNotat(behandling, it)
-                }
+                opprettNotatForAlleSakerParallelt(behandling)
             } else {
                 opprettNotat(behandling)
             }
@@ -828,12 +828,6 @@ class VedtakService(
                     if (aldersjusteringBeregnet) {
                         behandling.vedtaksid = response.vedtaksid
                         forsendelseService.opprettForsendelseForAldersjustering(behandling)
-                    } else if (vedtakRequest.type != Vedtakstype.ALDERSJUSTERING) {
-                        if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                            opprettNotatForAlleSakerParallelt(behandling)
-                        } else {
-                            opprettNotat(behandling)
-                        }
                     }
                 }
 
@@ -874,6 +868,14 @@ class VedtakService(
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+            // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
+            if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
+                if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
+                    opprettNotatForAlleSakerParallelt(behandling)
+                } else {
+                    opprettNotat(behandling)
+                }
+            }
         }
 
         return BeregningVedtakResultat(vedtakRequestDtos, vedtaksid)
@@ -887,7 +889,7 @@ class VedtakService(
 
         return behandlingTilVedtakMapping
             .run {
-                if (behandling.erAvslagForAlle) {
+                if (behandling.erAvslagForAlle && !behandling.erIForholdsmessigFordeling) {
                     VedtakRequstDto(
                         listOf(behandling.byggOpprettVedtakRequestAvslagForBidrag(request)),
                         erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder = false,

@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.shouldBe
@@ -35,12 +36,14 @@ import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -253,6 +256,32 @@ class VedtakserviceBidragRevurderingsbarnTest : CommonVedtakTilBehandlingTest() 
             shouldHaveSize(1)
             first().innhold.fatteVedtakRevurderingsbarn?.foreslåttFatteVedtak shouldBe true
             first().innhold.fatteVedtakRevurderingsbarn?.manueltOverstyrtForslagBegrunnelse shouldBe overstyringsbegrunnelse
+        }
+    }
+
+    @Test
+    fun `skal avvise revurderingsbarn uten perioder ved avslag for alle`() {
+        val behandling = opprettBehandlingMedRevurderingsbarn()
+        val søknadsbarn = behandling.søknadsbarn.find { it.ident == testdataBarn1.ident }!!
+        søknadsbarn.forholdsmessigFordeling = søknadsbarn.forholdsmessigFordeling!!.copy(erRevurdering = false)
+        behandling.søknadsbarn.forEach { it.avslag = Resultatkode.IKKE_OMSORG_FOR_BARNET }
+        behandling.søknadsbarn.forEach { behandling.leggTilNotat("Begrunnelse virkningstidspunkt", NotatType.VIRKNINGSTIDSPUNKT, it, true) }
+        behandling.erAvslagForAlle shouldBe true
+        val request = FatteVedtakRequestDto(fatteVedtakRevurderingsbarn = FatteVedtakRevurderingsbarn(foreslåttFatteVedtak = true))
+
+        every { behandlingService.hentBehandlingById(behandling.id!!) } returns behandling
+        every { sakConsumer.hentSak(any()) } returns opprettSakForBehandling(behandling)
+
+        val opprettVedtakSlot = slot<OpprettVedtakRequestDto>()
+        every { vedtakConsumer.fatteVedtak(capture(opprettVedtakSlot)) } returns OpprettVedtakResponseDto(1, emptyList())
+
+        vedtakService.fatteVedtak(behandling.id!!, request)
+
+        assertSoftly(opprettVedtakSlot.captured.stønadsendringListe) {
+            shouldHaveSize(2)
+            val seSøknadsbarn = it.find { it.kravhaver.verdi == testdataBarn1.ident }!!
+            seSøknadsbarn.beslutning shouldBe Beslutningstype.ENDRING
+            seSøknadsbarn.periodeListe shouldHaveSize 0
         }
     }
 

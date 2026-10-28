@@ -197,6 +197,32 @@ class ForholdsmessigFordelingServiceTilbakerullingTest {
     }
 
     @Test
+    fun `skal feilregistrere åpne søknader og nullstille feilmarkering for slettet behandling hvor opprettelse av FF feilet`() {
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandlingId) } returns
+            HentSøknaderForBehandlingResponse(
+                listOf(
+                    hentSøknad(1L, Behandlingstype.FORHOLDSMESSIG_FORDELING),
+                    hentSøknad(2L, Behandlingstype.FORHOLDSMESSIG_FORDELING).copy(behandlingStatusType = BehandlingStatusType.VEDTAK_FATTET),
+                ),
+            )
+
+        opprettService().ryddOppFFSøknaderForSlettetBehandling(behandlingId)
+
+        verify(exactly = 1) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == 1L }) }
+        verify(exactly = 0) { bbmConsumer.feilregistrerSøknad(match { it.søknadsid == 2L }) }
+        verify(exactly = 1) { behandlingRepository.resetOpprettelseAvFFFeilet(behandlingId) }
+    }
+
+    @Test
+    fun `skal ikke nullstille feilmarkering når feilregistrering av søknader feiler`() {
+        every { bbmConsumer.hentÅpneSøknaderForBehandling(behandlingId) } throws RuntimeException("BBM feilet")
+
+        shouldThrow<RuntimeException> { opprettService().ryddOppFFSøknaderForSlettetBehandling(behandlingId) }
+
+        verify(exactly = 0) { behandlingRepository.resetOpprettelseAvFFFeilet(any()) }
+    }
+
+    @Test
     fun `skal ikke kaste feil når henting av søknader for behandling feiler`() {
         every { behandlingRepository.erBehandlingSlettet(behandlingId) } returns null
         every { bbmConsumer.hentÅpneSøknaderForBehandling(behandlingId) } throws RuntimeException("BBM feilet")

@@ -11,7 +11,7 @@ import no.nav.bidrag.behandling.dto.v1.forsendelse.ForsendelseRolleDto
 import no.nav.bidrag.behandling.dto.v1.forsendelse.InitalizeForsendelseRequest
 import no.nav.bidrag.behandling.service.ForsendelseService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
@@ -30,7 +30,6 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.dokument.forsendelse.BehandlingInfoDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import java.time.LocalDate
@@ -53,10 +52,12 @@ class ForholdsmessigFordelingSøknadService(
     // ═══════════════════════════════════════════════════════════════════
     // region Opprettelse av søknader
     // ═══════════════════════════════════════════════════════════════════
-    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) {
-        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandling.id!!)
+    fun slettAlleSøknaderKnyttetTilBehandling(behandling: Behandling) = slettAlleSøknaderKnyttetTilBehandling(behandling.id!!)
+
+    fun slettAlleSøknaderKnyttetTilBehandling(behandlingId: Long) {
+        val søknaderBehandling = bbmConsumer.hentÅpneSøknaderForBehandling(behandlingsid = behandlingId)
         søknaderBehandling.søknader
-            .filter { it.behandlingStatusType.erÅpenStatus }
+            .filter { it.behandlingStatusType.erÅpenStatus && it.behandlingstype.erForholdsmessigFordeling }
             .forEach {
                 bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
             }
@@ -77,7 +78,7 @@ class ForholdsmessigFordelingSøknadService(
         opprettForsendelse: Boolean = true,
     ) {
         val sak = sakConsumer.hentSak(saksnummer)
-        val bmFødselsnummer = hentNyesteIdent(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
+        val bmFødselsnummer = hentNyesteIdentIgnorerForbidden(sak.bidragsmottaker?.fødselsnummer?.verdi)?.verdi
 
         val løpendeBidragssakForSaksnummer = løpendeBidragssak.filter { it.saksnummer == saksnummer }
         val barnUtenInnkreving = løpendeBidragssakForSaksnummer.filter { !it.løperBidragEtterDato(behandling.finnBeregnTilDato().toYearMonth()) }
@@ -87,7 +88,7 @@ class ForholdsmessigFordelingSøknadService(
                 søknadsid = 0, // Settes senere når søknad opprettes
                 mottattDato = LocalDate.now(),
                 søknadFomDato = søktFomDato,
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstema = stønadstype?.tilBehandlingstema() ?: behandling.behandlingstema,
                 behandlingstype = behandling.behandlingstypeForFF,
                 enhet = behandlerEnhet,
@@ -152,7 +153,7 @@ class ForholdsmessigFordelingSøknadService(
                 ffDetaljer = ffDetaljer,
             )
         } else {
-            behandling.roller.find { hentNyesteIdent(it.ident)?.verdi == bmFødselsnummer }?.let {
+            behandling.roller.find { hentNyesteIdentIgnorerForbidden(it.ident)?.verdi == bmFødselsnummer }?.let {
                 if (it.forholdsmessigFordeling == null) {
                     it.forholdsmessigFordeling = behandling.tilFFDetaljerBM()
                 }
@@ -352,7 +353,7 @@ class ForholdsmessigFordelingSøknadService(
                 enhet = behandlerEnhet,
                 saksnummer = saksnummer,
                 status = Behandlingstatus.UNDER_BEHANDLING,
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
             )
 
         if (opprettForsendelse) {
@@ -411,7 +412,7 @@ class ForholdsmessigFordelingSøknadService(
                 )
             }
             return åpenFFSøknad.tilForholdsmessigFordelingSøknad().copy(
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstype = behandling.behandlingstypeForFF,
                 behandlingstema = behandlingstema,
                 saksnummer = saksnummer,
@@ -434,7 +435,7 @@ class ForholdsmessigFordelingSøknadService(
                 )
 
             return ForholdsmessigFordelingSøknadBarn(
-                søktAvType = SøktAvType.NAV_BIDRAG,
+                søktAvType = SøktAvType.AUTOMATISK,
                 behandlingstype = behandling.behandlingstypeForFF,
                 behandlingstema = behandlingstema,
                 mottattDato = LocalDate.now(),
@@ -515,7 +516,7 @@ class ForholdsmessigFordelingSøknadService(
                     søknader =
                     oppdaterLagredeSoknadsstatuserFraBbm(
                         ffDetaljer.søknader,
-                        alleSøknaderRelevantForBehandling.filter { it.saksnummer == rolle.saksnummer },
+                        alleSøknaderRelevantForBehandling.filter { rolle.rolletype == Rolletype.BIDRAGSPLIKTIG || it.saksnummer == rolle.saksnummer },
                         rolle,
                     ),
                 )
@@ -529,6 +530,8 @@ class ForholdsmessigFordelingSøknadService(
                 ffDetaljer.søknaderUnderBehandling
                     .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
                     .filter { it.søknadsid != null }
+                    // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk
+                    .filter { !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
 
             if (åpneFFSøknader.size <= 1) return@forEach
 
@@ -543,8 +546,35 @@ class ForholdsmessigFordelingSøknadService(
             åpneFFSøknader
                 .filter { it.søknadsid != søknadSomSkalBeholdes.søknadsid }
                 .forEach { duplikatSøknad ->
-                    feilregistrerSøknad(duplikatSøknad, behandling)
+                    feilregistrerBarnEllerHeleSøknad(rolle, duplikatSøknad, behandling)
                 }
+        }
+    }
+
+    /**
+     * Feilregistrerer hele søknaden hvis barnet er eneste barn under behandling i søknaden, ellers bare barnet fra søknaden.
+     */
+    fun feilregistrerBarnEllerHeleSøknad(
+        rolle: Rolle,
+        søknad: ForholdsmessigFordelingSøknadBarn,
+        behandling: Behandling,
+    ) {
+        val søknadsid = søknad.søknadsid ?: return
+        val harAndreBarnUnderBehandling =
+            try {
+                bbmConsumer
+                    .hentSøknad(søknadsid)
+                    ?.søknad
+                    ?.parterUnderBehandling
+                    ?.any { it.personident != rolle.ident } == true
+            } catch (e: Exception) {
+                LOGGER.warn(e) { "Kunne ikke hente søknad $søknadsid fra BBM. Feilregistrerer bare barnet fra søknaden" }
+                true
+            }
+        if (harAndreBarnUnderBehandling) {
+            feilregistrerBarnFraSøknad(rolle, søknadsid)
+        } else {
+            feilregistrerSøknad(søknad, behandling)
         }
     }
 
@@ -552,14 +582,26 @@ class ForholdsmessigFordelingSøknadService(
         if (!behandling.erIForholdsmessigFordeling) return
         val alleSøknadsknytninger = bbmConsumer.finnSammenknytningerHovedsøknad(behandling.soknadsid!!)
 
+        if (alleSøknadsknytninger.søknader.none { it.søknadsid == behandling.soknadsid }) {
+            LOGGER.info { "Mangler hovedsøknad ${behandling.soknadsid} i sammenknytningen. Legger til" }
+            // endreSammenknytningSøknad oppretter ikke knytning hvis hovedsøknaden ikke har noen aktiv knytning fra før (feks etter sammenslåing av behandlinger)
+            bbmConsumer.sammeknyttSøknader(behandling.soknadsid!!, behandling.soknadsid!!)
+        }
+
         val alleSøknader =
-            behandling.søknadsbarn
-                .mapNotNull {
-                    it.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { søknad -> søknad.søknadsid }
-                }.flatten()
-                .distinct()
+            (
+                behandling.søknadsbarn
+                    .mapNotNull {
+                        it.forholdsmessigFordeling?.søknaderUnderBehandling?.mapNotNull { søknad -> søknad.søknadsid }
+                    }.flatten() +
+                    behandling.roller
+                        .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
+                        .filter { it.opprettetAvSaksbehandler }
+                        .mapNotNull { it.søknadsid }
+                ).distinct()
 
         alleSøknader
+            .filter { it != behandling.soknadsid }
             .filter { søknadsid ->
                 alleSøknadsknytninger.søknader.none { it.søknadsid == søknadsid }
             }.forEach {
@@ -577,11 +619,6 @@ class ForholdsmessigFordelingSøknadService(
                 }
                 bbmConsumer.fjernSammenknytning(it.søknadsid)
             }
-
-        if (alleSøknadsknytninger.søknader.none { it.søknadsid == behandling.soknadsid }) {
-            LOGGER.info { "Mangler hovedsøknad i sammenknytningen. Legger til" }
-            bbmConsumer.endreSammenknytningSøknad(behandling.soknadsid!!, behandling.soknadsid!!)
-        }
     }
 
     fun finnApneSoknaderForBarn(
@@ -746,6 +783,7 @@ class ForholdsmessigFordelingSøknadService(
                         }
                     it.tilForholdsmessigFordelingSøknad().copy(
                         status = status,
+                        opprettetAvSaksbehandler = rolle.behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid),
                     )
                 }.toMutableSet()
 

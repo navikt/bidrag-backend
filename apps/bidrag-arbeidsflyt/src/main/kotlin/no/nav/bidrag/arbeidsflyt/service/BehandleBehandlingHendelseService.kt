@@ -10,6 +10,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveType
 import no.nav.bidrag.arbeidsflyt.dto.OpprettSøknadsoppgaveRequest
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.arbeidsflyt.model.kreverSøknadsoppgave
 import no.nav.bidrag.arbeidsflyt.model.mapTilOpprettOppgave
 import no.nav.bidrag.arbeidsflyt.persistence.entity.Behandling
 import no.nav.bidrag.arbeidsflyt.persistence.entity.BehandlingBarn
@@ -57,7 +58,7 @@ class BehandleBehandlingHendelseService(
         oppgaveData: OppgaveData,
         søknad: HentSøknad,
     ) {
-        if (søknad.erAvsluttet) return
+        if (søknad.erAvsluttet && !søknad.kreverSøknadsoppgave) return
 
         val åpneOppgaver =
             oppgaveService
@@ -70,7 +71,7 @@ class BehandleBehandlingHendelseService(
                 ).dataForHendelse
 
         secureLogger.info { "Fant $åpneOppgaver for opppgave ${oppgaveData.id} og søknad ${oppgaveData.søknadsid}" }
-        if (åpneOppgaver.isEmpty()) {
+        if (åpneOppgaver.isEmpty() && søknad.kreverSøknadsoppgave) {
             LOGGER.info { "Gjennoppretter oppgave for sak ${oppgaveData.saksreferanse} og søknadsid ${oppgaveData.søknadsid} og behandlingsid ${oppgaveData.behandlingsid}" }
             oppgaveService.opprettOppgave(oppgaveData.mapTilOpprettOppgave())
         }
@@ -142,7 +143,10 @@ class BehandleBehandlingHendelseService(
                         saksnr = saksnummer,
                         tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
                     ).dataForHendelse
-            ferdigstillOppgaver(åpneOppgaver)
+            val kreverOppgave = barnliste.any { it.status.kreverOppgave }
+            if (!kreverOppgave) {
+                ferdigstillOppgaver(åpneOppgaver)
+            }
         }
         ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
         oppdaterOgLagreBehandling(hendelse, behandling)
@@ -163,7 +167,7 @@ class BehandleBehandlingHendelseService(
                 if (!it.erSøknadsoppgave) return@forEach
                 if (it.søknadsid == null) return@forEach
                 val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong()))?.søknad ?: return@forEach
-                if (søknad.behandlingStatusType.erAvsluttet) {
+                if (søknad.behandlingStatusType.erAvsluttet && !søknad.kreverSøknadsoppgave) {
                     oppgaveService.oppdaterOppgave(
                         OppdaterOppgave(it)
                             .ferdigstill(),
@@ -197,8 +201,9 @@ class BehandleBehandlingHendelseService(
             val ff = behandlingDetaljer.forholdsmessigFordeling ?: return
 
             if (behandling.oppgaverOverførtEtterFFOpprettet == null) {
-                if (ff.overførtTilEnhet != null) {
-                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = ff.opprettetAvSaksbehandler, tilEnhet = ff.overførtTilEnhet) {
+                if (ff.overførtTilEnhet != null && ff.overførtTilEnhet != ff.opprettetAvEnhet) {
+                    // Overfør til enhet og legg det til felles benk hvis enhet er endret
+                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = null, tilEnhet = ff.overførtTilEnhet) {
                         it.tildeltEnhetsnr != ff.overførtTilEnhet
                     }
                 } else {
@@ -207,7 +212,7 @@ class BehandleBehandlingHendelseService(
                         return
                     }
                     overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
-                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler
+                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler || it.tildeltEnhetsnr != ff.opprettetAvEnhet
                     }
                 }
 

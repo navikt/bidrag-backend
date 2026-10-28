@@ -1,5 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.dto
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonInclude
 import no.nav.bidrag.arbeidsflyt.model.ENHET_FAGPOST
@@ -429,8 +430,16 @@ open class PatchOppgaveRequest(
     open var tildeltEnhetsnr: String? = null,
     open var tilordnetRessurs: String? = null,
     open var beskrivelse: String? = null,
+    open var mappeId: Int? = null,
     open var metadata: Map<String, String>? = null,
 ) {
+    @JsonIgnore
+    protected var nullstillMappe: Boolean = false
+
+    // mappeId = null blir ikke serialisert pga NON_NULL, så den må legges til eksplisitt når mappe skal fjernes
+    @JsonAnyGetter
+    fun nullstillMappeFelt(): Map<String, Any?> = if (nullstillMappe) mapOf("mappeId" to null) else emptyMap()
+
     fun leggOppgaveIdPa(contextUrl: String) = "$contextUrl/$id".replace("//", "/")
 
     protected fun leggTilObligatoriskeVerdier(oppgaveDataForHendelse: OppgaveData) {
@@ -479,9 +488,16 @@ data class OpprettBehandleDokumentOppgaveRequest(
     override fun toString(): String = super.toString()
 }
 
+data class MappeDto(
+    val id: Long? = null,
+    val enhetsnr: String? = null,
+    val navn: String? = null,
+)
+
 class OppdaterOppgave() : PatchOppgaveRequest() {
     @Suppress("ktlint:standard:backing-property-naming")
     private var _hasChanged: Boolean = false
+    private var eksisterendeMappeNavn: String? = null
     private var saksbehandlerInfo: String = "Automatisk jobb"
     private var oppgaveDataForHendelse: OppgaveData? = null
 
@@ -520,9 +536,18 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         return this
     }
 
-    fun overforTilEnhet(nyTildeltEnhetsnr: String): OppdaterOppgave {
+    fun overforTilEnhet(
+        nyTildeltEnhetsnr: String,
+        eksisterendeMappeNavn: String? = null,
+    ): OppdaterOppgave {
         tildeltEnhetsnr = nyTildeltEnhetsnr
         tilordnetRessurs = ""
+        if (erEnhetEndret) {
+            // Ulike enheter har ikke samme mappeid så denne må resettes
+            mappeId = null
+            nullstillMappe = eksisterendeMappeId != null
+            this.eksisterendeMappeNavn = eksisterendeMappeNavn
+        }
         _hasChanged = true
         return this
     }
@@ -541,6 +566,10 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
 
         if (erEnhetEndret) {
             nyBeskrivelse += "\u00B7 Oppgave overført fra enhet $eksisterendeTildeltEnhet til $tildeltEnhetsnr\r\n"
+        }
+
+        if (nullstillMappe) {
+            nyBeskrivelse += "\u00B7 Mappe endret fra ${eksisterendeMappeNavn ?: eksisterendeMappeId} til ingen mappe\r\n"
         }
 
         if (erTilordnetRessursEndret) {
@@ -566,6 +595,7 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val eksisterendeTilordnetRessurs get() = oppgaveDataForHendelse?.tilordnetRessurs
     private val eksisterendeTildeltEnhet get() = oppgaveDataForHendelse?.tildeltEnhetsnr
     private val eksisterendeOppgavetype get() = oppgaveDataForHendelse?.oppgavetype
+    private val eksisterendeMappeId get() = oppgaveDataForHendelse?.mappeId?.toLongOrNull()
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
     private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = tilordnetRessurs != null && !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
     private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = tilordnetRessurs != null && eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
@@ -626,18 +656,28 @@ class OverforOppgaveTilSaksbehandlerRequest(
         eksisterendeSaksbehandlerInfo: String?,
         saksbehandlersInfo: String?,
         saksbehandlerIdent: String?,
+        eksisterendeMappeNavn: String? = null,
     ) : this(nyttEnhetsnummer) {
         leggTilObligatoriskeVerdier(oppgaveDataForHendelse)
         val dateFormatted = LocalDateTime.now().format(NORSK_TIDSSTEMPEL_FORMAT)
         this.tilordnetRessurs = saksbehandlerIdent ?: ""
+        val eksisterendeMappeId = oppgaveDataForHendelse.mappeId?.toIntOrNull()
+        val erEnhetEndret = !nyttEnhetsnummer.isNullOrEmpty() && nyttEnhetsnummer != oppgaveDataForHendelse.tildeltEnhetsnr
         if (!nyttEnhetsnummer.isNullOrEmpty()) {
             this.endretAvEnhetsnr = nyttEnhetsnummer
             this.tildeltEnhetsnr = nyttEnhetsnummer
         }
+        if (erEnhetEndret) {
+            // Ulike enheter har ikke samme mappeid så denne må resettes
+            this.mappeId = null
+            nullstillMappe = eksisterendeMappeId != null
+        }
+        val erSaksbehandlerEndret = (oppgaveDataForHendelse.tilordnetRessurs ?: "") != (saksbehandlerIdent ?: "")
 
         this.beskrivelse = "--- $dateFormatted $saksbehandlersInfo ---\r\n" +
-            (if (!nyttEnhetsnummer.isNullOrEmpty() && nyttEnhetsnummer != oppgaveDataForHendelse.tildeltEnhetsnr) "· Oppgave overført fra enhet ${oppgaveDataForHendelse.tildeltEnhetsnr} til $nyttEnhetsnummer\r\n\r\n" else "") +
-            "${"· Saksbehandler endret fra ${eksisterendeSaksbehandlerInfo ?: "ikke valgt"} til ${saksbehandlersInfo ?: "ikke valgt"}"}\r\n\r\n" +
+            (if (erEnhetEndret) "· Oppgave overført fra enhet ${oppgaveDataForHendelse.tildeltEnhetsnr} til $nyttEnhetsnummer\r\n\r\n" else "") +
+            (if (nullstillMappe) "· Mappe endret fra ${eksisterendeMappeNavn ?: eksisterendeMappeId} til ingen mappe\r\n\r\n" else "") +
+            (if (erSaksbehandlerEndret) "· Saksbehandler endret fra ${eksisterendeSaksbehandlerInfo ?: "ikke valgt"} til ${saksbehandlersInfo ?: "ikke valgt"}\r\n\r\n" else "") +
             (oppgaveDataForHendelse.beskrivelse ?: "")
     }
 }
@@ -698,6 +738,7 @@ class FerdigstillOppgaveRequest(
 }
 
 enum class Prioritet {
+    KRITISK,
     HOY,
     NORM,
     LAV,

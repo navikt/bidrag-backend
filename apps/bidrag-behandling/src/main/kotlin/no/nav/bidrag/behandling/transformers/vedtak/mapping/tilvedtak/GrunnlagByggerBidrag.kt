@@ -10,7 +10,7 @@ import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilSøknadsbarn
 import no.nav.bidrag.behandling.rolleManglerIdent
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
@@ -93,7 +93,7 @@ fun List<LøpendeBidragGrunnlagForholdsmessigFordeling>.tilGrunnlagDto(personGru
 
     fun opprettPersonGrunnlag(gjelderBarnIdent: String): GrunnlagDto {
         val fødselsdato = hentPersonFødselsdato(gjelderBarnIdent) ?: fantIkkeFødselsdatoTilSøknadsbarn(-1)
-        val nyesteIdent = (hentNyesteIdent(gjelderBarnIdent) ?: Personident(gjelderBarnIdent))
+        val nyesteIdent = (hentNyesteIdentIgnorerForbidden(gjelderBarnIdent) ?: Personident(gjelderBarnIdent))
 
         val referanse =
             Grunnlagstype.PERSON_BARN_BIDRAGSPLIKTIG.tilPersonreferanse(

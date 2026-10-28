@@ -34,6 +34,7 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.SivilstandGrunnlagDt
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SmåbarnstilleggGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.UtvidetBarnetrygdGrunnlagDto
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -309,8 +310,11 @@ class HentGrunnlagService(
         }
 
         is RestResponse.Failure -> {
-            secureLogger.warn { "Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response" }
-            listOf(HistoriskIdent(personId, false))
+            if (response.statusCode == HttpStatus.NOT_FOUND || response.statusCode == HttpStatus.NO_CONTENT) {
+                listOf(HistoriskIdent(personId, false))
+            } else {
+                throw response.restClientException
+            }
         }
     }
 

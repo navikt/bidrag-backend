@@ -54,7 +54,10 @@ class OppgaveService(
             if (it.id == oppgave.id) return@forEach
             oppdaterOppgave(
                 OppdaterOppgave(it)
-                    .overforTilEnhet(oppgave.tildeltEnhetsnr!!),
+                    .overforTilEnhet(
+                        oppgave.tildeltEnhetsnr!!,
+                        if (it.tildeltEnhetsnr != oppgave.tildeltEnhetsnr) oppgaveConsumer.hentMappeNavn(it.mappeId) else null,
+                    ),
             )
         }
     }
@@ -192,6 +195,7 @@ class OppgaveService(
                     lagSaksbehandlerInfoMedEnhet(it, opprettetAvEnhet)
                 },
                 overførtTilSaksbehandler,
+                if (!opprettetAvEnhet.isNullOrEmpty() && opprettetAvEnhet != oppgave.tildeltEnhetsnr) oppgaveConsumer.hentMappeNavn(oppgave.mappeId) else null,
             ),
         )
     }

@@ -908,7 +908,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-02-01").atStartOfDay()),
             )
         initBehandlingTestdata(behandling)
         behandling.leggTilNotat("Begrunnelse virkningstidspunkt", NotatType.VIRKNINGSTIDSPUNKT, søknadsbarn, true)
@@ -1252,7 +1252,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-02-01").atStartOfDay()),
             )
         initBehandlingTestdata(behandling)
         behandling.leggTilGrunnlagManuelleVedtak()
@@ -1609,7 +1609,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-02-01").atStartOfDay()),
             )
         initBehandlingTestdata(behandling)
         behandling.leggTilGrunnlagManuelleVedtak()
@@ -1951,7 +1951,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2024-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2024-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2024-02-01").atStartOfDay()),
             )
         initBehandlingTestdata(behandling)
         behandling.leggTilNotat("Begrunnelse virkningstidspunkt fra opprinnelig vedtak", NotatType.VIRKNINGSTIDSPUNKT, søknadsbarn, false)
@@ -2257,7 +2257,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2024-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2024-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2024-02-01").atStartOfDay()),
             )
 
         behandling.leggTilGrunnlagManuelleVedtak(

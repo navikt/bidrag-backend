@@ -12,7 +12,7 @@ import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
 import no.nav.bidrag.behandling.dto.v1.behandling.EtterfølgendeVedtakDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OpphørsdetaljerRolleDto.EksisterendeOpphørsvedtakDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentVedtak
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
 import no.nav.bidrag.behandling.transformers.vedtak.personIdentNav
@@ -213,7 +213,7 @@ fun Behandling.løperBidragEtterEldsteVirkning(rolle: Rolle): Boolean {
     val tilPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).maxByOrNull { it.fom }?.til
     if (fraPeriodeLøperBidrag == null) return false
     if (tilPeriodeLøperBidrag == null) return true
-    return tilPeriodeLøperBidrag >= eldsteVirkningstidspunkt.toYearMonth()
+    return tilPeriodeLøperBidrag > eldsteVirkningstidspunkt.toYearMonth()
 }
 
 fun Behandling.finnPeriodeLøperBidrag(rolle: Rolle): ÅrMånedsperiode? {
@@ -285,7 +285,7 @@ fun Behandling.hentNesteEtterfølgendeVedtakFelles(): EtterfølgendeVedtakDto? {
     val grunnlag = søknadsbarn.mapNotNull { hentNesteEtterfølgendeVedtak(it) }
     return grunnlag.sortedByDescending { it.virkningstidspunkt }.find {
         val vedtak = hentVedtak(it.vedtaksid)
-        val kravhavere = vedtak?.stønadsendringListe?.map { hentNyesteIdent(it.kravhaver.verdi)?.verdi } ?: emptyList()
+        val kravhavere = vedtak?.stønadsendringListe?.map { hentNyesteIdentIgnorerForbidden(it.kravhaver.verdi)?.verdi } ?: emptyList()
 
         val søknadsbarnIdenter = søknadsbarn.map { it.ident }
         søknadsbarnIdenter.sortedBy { it }.toSet() == kravhavere.sortedBy { it }.toSet()

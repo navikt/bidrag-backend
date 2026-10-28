@@ -287,7 +287,7 @@ class DokumentValgService(
         val dokumentValg =
             dokumentValgMap[behandlingTypeConverted]
                 ?.find {
-                    it.soknadFra.contains(soknadFra) &&
+                    it.soknadFra.contains(soknadFra?.tilBakoverkompatibelBrev()) &&
                         it.isVedtaktypeValid(vedtakType, soknadType) &&
                         it.behandlingStatus.isValid(erFattetBeregnet) &&
                         it.forvaltning.isValid(enhet) &&
@@ -368,9 +368,9 @@ class DokumentValgService(
                     request.vedtakType,
                     request.soknadType,
                 ) ||
-                    it.soknadFra.contains(request.soknadFra)
+                    it.soknadFra.contains(request.soknadFra?.tilBakoverkompatibelBrev())
             }?.find {
-                (it.soknadFra.isEmpty() || it.soknadFra.contains(request.soknadFra)) &&
+                (it.soknadFra.isEmpty() || it.soknadFra.contains(request.soknadFra?.tilBakoverkompatibelBrev())) &&
                     (it.vedtakType.isEmpty() || it.isVedtaktypeValid(request.vedtakType, request.soknadType)) &&
                     listOf(
                         it.stonadType?.name,

@@ -488,7 +488,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
     }
 
     private fun hentHistoriskeIdenter(personident: Personident): List<String> {
-        val identListe = identUtils.hentAlleIdenter(personident)
+        val identListe = identUtils.hentAlleIdenter(personident) ?: listOf(personident.verdi)
         if (identListe.size > 1) {
             LOGGER.warn { "Flere historiske identer funnet for personident" }
             secureLogger.warn { "Flere historiske identer funnet for personident ${personident.verdi}: $identListe" }

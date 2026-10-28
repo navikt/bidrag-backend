@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.consumer
 
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_ALLE_BEREGNINGER_CACHE
 import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_BEREGNING_CACHE
+import no.nav.bidrag.behandling.config.CacheConfig.Companion.BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE
 import no.nav.bidrag.behandling.consumer.dto.SammenknyttSøknaderRequest
 import no.nav.bidrag.behandling.consumer.dto.SlettHovedsøknadRequest
 import no.nav.bidrag.behandling.consumer.dto.SlettSammenknytningForSøknadRequest
@@ -34,6 +35,7 @@ import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component
@@ -278,6 +280,22 @@ class BidragBBMConsumer(
     ) = postForNonNullEntity<FinnSammenknytningerHovedsøknadResponse>(
         bidragBBMUri.pathSegment("finnsammenknytningerhovedsoknad").build().toUri(),
         FinnSammenknytningerHovedsøknadRequest(søknadsid, status = status, statuser = listOf(status)),
+    )
+
+    /** Cachet variant for oppslag som ikke trenger ferske data (feks validering). Bruk [finnSammenknytningerHovedsøknad] ved endringer */
+    @Cacheable(BBM_SAMMENKNYTNINGER_HOVEDSØKNAD_CACHE)
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun finnAktiveSammenknytningerHovedsøknadCached(søknadsid: Long) = postForNonNullEntity<FinnSammenknytningerHovedsøknadResponse>(
+        bidragBBMUri.pathSegment("finnsammenknytningerhovedsoknad").build().toUri(),
+        FinnSammenknytningerHovedsøknadRequest(
+            søknadsid,
+            status = SøknadsknytningStatus.Aktiv,
+            statuser = listOf(SøknadsknytningStatus.Aktiv),
+        ),
     )
 }
 

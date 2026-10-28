@@ -54,9 +54,6 @@ import no.nav.bidrag.behandling.dto.v2.boforhold.BoforholdDtoV2
 import no.nav.bidrag.behandling.dto.v2.boforhold.HusstandsmedlemDtoV2
 import no.nav.bidrag.behandling.dto.v2.boforhold.OppdatereBoforholdResponse
 import no.nav.bidrag.behandling.dto.v2.boforhold.egetBarnErEnesteVoksenIHusstanden
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdmessigFordelingDetaljerDto
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdsmessigFordelingBarnDto
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdsmessigFordelingÅpenBehandlingDto
 import no.nav.bidrag.behandling.dto.v2.gebyr.GebyrValideringsfeilDto
 import no.nav.bidrag.behandling.dto.v2.gebyr.validerGebyr
 import no.nav.bidrag.behandling.dto.v2.inntekt.BeregnetInntekterDto
@@ -176,8 +173,6 @@ import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.collections.filter
-import kotlin.collections.sortedBy
 
 private val log = KotlinLogging.logger {}
 
@@ -528,17 +523,22 @@ class Dtomapper(
         saksnummer: Saksnummer,
         skjuleIdentitietHvisBeskyttet: Boolean = false,
     ): Personinfo {
+        val maskertPersoninfo =
+            Personinfo(
+                null,
+                personinfo.fødselsdato?.let { "Person skjermet, født ${it.year}" } ?: "Person skjermet, fødselsdato mangler",
+                null,
+                erBeskyttet = true,
+            )
+
+        if (personinfo.ident != null && !tilgangskontrollService.harTilgang(personinfo.ident, saksnummer)) {
+            return maskertPersoninfo
+        }
+
         val erBeskytta = personinfo.ident?.let { tilgangskontrollService.harBeskyttelse(it) } ?: false
 
-        personinfo.ident?.let {
-            if (!tilgangskontrollService.harTilgang(it, saksnummer) || (skjuleIdentitietHvisBeskyttet && erBeskytta)) {
-                return Personinfo(
-                    null,
-                    "Person skjermet, født ${personinfo.fødselsdato?.year}",
-                    null,
-                    erBeskyttet = true,
-                )
-            }
+        if (skjuleIdentitietHvisBeskyttet && erBeskytta) {
+            return maskertPersoninfo
         }
 
         return Personinfo(
@@ -996,7 +996,7 @@ class Dtomapper(
                 .filter {
                     // Skal alltid vise inntekter for BM/BP (ikke barn).
                     // Men hvis barn ikke krever grunnlag pga avslag og ikke løpende bidrag så skal det ikke vises i innteksbilde
-                    !erIForholdsmessigFordeling || it.kreverGrunnlagForBeregning
+                    !erIForholdsmessigFordeling || it.kreverGrunnlagForBeregning || it.kreverGrunnlagForGebyrBeregning
                 }
         val beregnetInntekterForRolle =
             rollerForInntektsbilde

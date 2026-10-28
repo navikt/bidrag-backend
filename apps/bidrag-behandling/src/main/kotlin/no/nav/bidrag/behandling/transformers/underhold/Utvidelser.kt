@@ -183,7 +183,7 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
         }
     }
 
-    barnetilsyn.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+    barnetilsyn.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }?.let { periode ->
         periode.fom = virkningsdato
     }
 
@@ -194,7 +194,7 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
             periode.fom = virkningsdato
         }
     }
-    faktiskeTilsynsutgifter.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+    faktiskeTilsynsutgifter.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }?.let { periode ->
         periode.fom = virkningsdato
     }
     tilleggsstønad.filter { it.fom < virkningsdato }.forEach { periode ->
@@ -204,7 +204,7 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
             periode.fom = virkningsdato
         }
     }
-    tilleggsstønad.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+    tilleggsstønad.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }?.let { periode ->
         periode.fom = virkningsdato
     }
     forpleining.filter { it.fom < virkningsdato }.forEach { periode ->
@@ -214,7 +214,7 @@ fun Underholdskostnad.justerePerioder(forrigeVirkningstidspunkt: LocalDate? = nu
             periode.fom = virkningsdato
         }
     }
-    forpleining.filter { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }.forEach { periode ->
+    forpleining.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt && it.fom > virkningsdato }?.let { periode ->
         periode.fom = virkningsdato
     }
 }

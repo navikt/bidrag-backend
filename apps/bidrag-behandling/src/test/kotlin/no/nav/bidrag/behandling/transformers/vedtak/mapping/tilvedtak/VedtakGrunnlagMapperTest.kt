@@ -2,20 +2,29 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
 import no.nav.bidrag.behandling.service.PersonService
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunkt
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
+import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.behandling.utils.validerHarGrunnlag
 import no.nav.bidrag.behandling.utils.validerHarReferanseTilSjablon
 import no.nav.bidrag.beregn.barnebidrag.BeregnGebyrApi
@@ -34,6 +43,8 @@ import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
@@ -41,6 +52,8 @@ import java.time.YearMonth
 @ExtendWith(MockKExtension::class)
 class VedtakGrunnlagMapperTest {
     lateinit var vedtakGrunnlagMapper: VedtakGrunnlagMapper
+
+    lateinit var personConsumer: BidragPersonConsumer
 
     @MockK
     lateinit var barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting
@@ -50,7 +63,8 @@ class VedtakGrunnlagMapperTest {
 
     @BeforeEach
     fun init() {
-        val personService = PersonService(stubPersonConsumer())
+        personConsumer = stubPersonConsumer()
+        val personService = PersonService(personConsumer)
         stubSjablonProvider()
         val behandlingTilGrunnlagMappingV2 = BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(stubSjablonService()))
         vedtakGrunnlagMapper =
@@ -62,6 +76,18 @@ class VedtakGrunnlagMapperTest {
                 personService,
                 BeregnGebyrApi(stubSjablonService()),
             )
+    }
+
+    @Test
+    fun `skal finne riktig rolle i sak når identoppslaget gir 403`() {
+        val sak = opprettSakForBehandling(opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG))
+        val søktRolle = sak.roller.last()
+        every { personConsumer.hentPerson(any<String>()) } throws HttpClientErrorException(HttpStatus.FORBIDDEN)
+
+        val rolle = with(vedtakGrunnlagMapper) { sak.hentRolleMedFnr(søktRolle.fødselsnummer!!.verdi) }
+
+        sak.roller shouldHaveAtLeastSize 2
+        rolle shouldBe søktRolle
     }
 
     @Test
@@ -355,5 +381,70 @@ class VedtakGrunnlagMapperTest {
         søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
 
         søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
+    }
+
+    @Test
+    fun `skal sette opphørsdato til virkningstidspunkt ved avvisning uten eksisterende opphør`() {
+        every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
+        // Må ha et søknadsbarn uten avslag for at behandlingen ikke skal regnes som direkte avslag
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        val søknadsbarn = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.virkningstidspunkt = LocalDate.parse("2023-04-01")
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
+
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag!!
+
+        grunnlag.opphørsdato shouldBe YearMonth.of(2023, 4)
+    }
+
+    @Test
+    fun `skal sette opphørsdato til opphørsdato på rolle ved avvisning uten eksisterende opphør og virkningstidspunkt`() {
+        every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
+        // Må ha et søknadsbarn uten avslag for at behandlingen ikke skal regnes som direkte avslag
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        val søknadsbarn = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.virkningstidspunkt = null
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
+
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag!!
+
+        grunnlag.opphørsdato shouldBe YearMonth.of(2023, 8)
+    }
+
+    @Test
+    fun `Skal bruke beregn fra som beregn til dato ved avvisning uten eksisterende opphør eller opphørsdato`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = null
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe søknadsbarn.finnBeregnFra().atDay(1)
+    }
+
+    @Test
+    fun `Skal bruke opphørsdato som beregn til dato ved avvisning uten eksisterende opphør`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-06-01")
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2023-06-01")
+    }
+
+    @Test
+    fun `Skal bruke opphørsdato fra eksisterende vedtak som beregn til dato ved avvisning`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-06-01")
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            søknadsbarn,
+            listOf(opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2022-01-01"), LocalDate.parse("2024-03-01")))),
+        )
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2024-03-01")
     }
 }

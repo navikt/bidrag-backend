@@ -7,4 +7,5 @@ import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 data class OppdaterBeregnTilDatoRequestDto(
     val idRolle: Long?,
     val beregnTil: BeregnTil? = null,
+    val saksnummer: String? = null,
 )

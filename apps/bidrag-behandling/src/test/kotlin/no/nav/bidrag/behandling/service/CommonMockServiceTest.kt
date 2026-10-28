@@ -123,6 +123,7 @@ abstract class CommonMockServiceTest {
         personConsumer = stubPersonConsumer()
         personRepository = stubPersonRepository()
         husstandsmedlemRepository = stubHusstandrepository()
+        every { behandlingRepository.låsBehandlingForOppdatering(any()) } returns emptyList()
         stubSjablonService()
         stubSjablonProvider()
         every { forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(any(), any()) } returns false

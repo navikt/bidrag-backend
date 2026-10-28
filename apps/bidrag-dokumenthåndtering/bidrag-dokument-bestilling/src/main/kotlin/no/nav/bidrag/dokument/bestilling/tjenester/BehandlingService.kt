@@ -33,7 +33,7 @@ class BehandlingService(
             type = behandlingDto.type,
             virkningstidspunkt = behandlingDto.virkningstidspunkt,
             mottattDato = behandlingDto.mottattdato,
-            søknadFra = behandlingDto.søktAv,
+            søknadFra = behandlingDto.søktAv.tilBakoverkompatibelBrev(),
             soktFraDato = behandlingDto.søktFomDato,
             saksbehandlerInfo =
             VedtakSaksbehandlerInfo(
