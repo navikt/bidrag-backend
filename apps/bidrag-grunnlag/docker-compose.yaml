@@ -7,3 +7,9 @@ services:
       POSTGRES_USER: cloudsqliamuser
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: bidrag-grunnlag
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
+    driver: local
