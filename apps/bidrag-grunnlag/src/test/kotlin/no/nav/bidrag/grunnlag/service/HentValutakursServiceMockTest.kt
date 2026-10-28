@@ -47,7 +47,7 @@ class HentValutakursServiceMockTest {
     fun `Norges Bank brukes når ECB mangler kurs`() {
         Mockito.`when`(ecb.hentValutakurser(listOf("USD"), desember)).thenThrow(ECBServiceException("Mangler kurs"))
         Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", desember))
-            .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "USD", periode = "2024-12", kurs = "1075", multiplikator = "2")))
+            .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "USD", periode = "2024-12", kurs = "1075", multiplikator = "-2")))
 
         val resultat = service.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(januar, Valutakode.USD)))).hentetValutakursListe.single()
 
