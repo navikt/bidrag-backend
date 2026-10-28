@@ -341,7 +341,7 @@ fun LøpendeBidragOgBeregninger.tilBeregnGrunnlag(
         if (utlandssak || oppfostringsbidrag) {
             // Sjekker om referanse for BM ligger i grunnlaget, ellers oppretter vi en ny referanse. Egen logikk for oppfostring og utland siden
             // fødselsdato ikke ligger i PDL.
-            bMReferanse = request.grunnlagsliste.find {
+            bMReferanse = request.grunnlagsliste.filter { it.erPerson() }.find {
                 it.personIdent == løpendeBidrag.mottaker?.verdi
             }?.referanse ?: Grunnlagstype.PERSON_BIDRAGSMOTTAKER.tilPersonreferanse(
                 (løpendeBidrag.mottaker.hashCode().toString()),

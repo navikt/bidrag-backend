@@ -10,6 +10,11 @@ on:
     paths:
       - 'libs/bidrag-felles/**'
   workflow_dispatch:
+    inputs:
+      publiser:
+        description: "Publiser prerelease fra branchen (ignoreres på main)"
+        type: boolean
+        default: false
 
 env:
   FELLES_MODULER: >-
@@ -43,17 +48,33 @@ jobs:
     outputs:
       version: ${{ steps.sett_versjon.outputs.version }}
       publish: ${{ steps.sett_versjon.outputs.publish }}
+      prerelease: ${{ steps.sett_versjon.outputs.prerelease }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Bestem kalenderversjon
         id: sett_versjon
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_PUBLISER: ${{ inputs.publiser }}
         run: |
           VERSION="$(git log -1 --pretty='%ad' --date=format:'%Y.%m.%d.%H%M%S')"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           PUBLISH="${{ github.ref == 'refs/heads/main' }}"
+          PRERELEASE=false
+          if [ "$PUBLISH" != "true" ]; then
+            if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_PUBLISER" = "true" ]; then
+              PRERELEASE=true
+              # Branchnavn som suffiks slik at prerelease ikke forveksles med vanlige releaser fra main
+              VERSION="${VERSION}-$(echo "$REF_NAME" | sed -E 's/[^A-Za-z0-9._]+/_/g')"
+            fi
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
-          echo "Kalenderversjon: ${VERSION} (publish=${PUBLISH})"
-      - uses: release-drafter/release-drafter@72967cdc98ddd3160f1fc3dff619de365e137dd0 # v7.9.0
+          echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "Kalenderversjon: ${VERSION} (publish=${PUBLISH}, prerelease=${PRERELEASE})"
+      - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0 # v7.10.0
+        # Prerelease fra branch skal ikke publisere eller endre release-draften til main
+        if: steps.sett_versjon.outputs.prerelease != 'true'
         with:
           config-name: release-drafter-bidrag-felles.yml
           version: ${{ steps.sett_versjon.outputs.version }}
@@ -63,23 +84,36 @@ jobs:
           commitish: ${{ github.head_ref || github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Opprett prerelease fra branch
+        if: steps.sett_versjon.outputs.prerelease == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.sett_versjon.outputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "bidrag-felles $VERSION" \
+            --notes "Prerelease av bidrag-felles fra branch \`$REF_NAME\` (commit $GITHUB_SHA)."
 
   publiser:
     name: "Publiser til GitHub Packages"
     needs: oppdater_release_draft
-    if: needs.oppdater_release_draft.outputs.publish == 'true'
+    if: needs.oppdater_release_draft.outputs.publish == 'true' || needs.oppdater_release_draft.outputs.prerelease == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
       packages: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: maven
-      - uses: s4u/maven-settings-action@894661b3ddae382f1ae8edbeab60987e08cf0788 # v4.0.0
+      - uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb # v4.1.0
         with:
           githubServer: false
           servers: |

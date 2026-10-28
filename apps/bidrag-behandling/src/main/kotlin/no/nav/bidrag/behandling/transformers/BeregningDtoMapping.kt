@@ -1082,7 +1082,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
         } else if (resultatkode?.erAvslag() == true) {
             BidragPeriodeBeregningsdetaljer(
                 forskuddssats = finnForskuddssats(grunnlagsreferanseListe),
-                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER),
+                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER, personobjekt?.bidragsmottakerReferanse),
                 barnetilleggBP = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG),
                 sluttberegning = sluttberegning,
                 bpHarEvne = false,
@@ -1098,7 +1098,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                     ?.takeIf { it.erSluttberegningGammelStruktur() }
                     ?.innholdTilObjekt<SluttberegningBarnebidrag>(),
                 endringUnderGrense = delberegningGrensePeriode?.innhold,
-                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER),
+                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER, personobjekt?.bidragsmottakerReferanse),
                 barnetilleggBP = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG),
                 samværsfradrag =
                 finnDelberegningSamværsfradrag(
@@ -1608,8 +1608,9 @@ fun List<GrunnlagDto>.finnAlleDelberegningUnderholdskostnad(rolle: GrunnlagDto):
 fun List<GrunnlagDto>.finnBarnetillegg(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
     personGrunnlagstype: Grunnlagstype,
+    personreferanseBM: String? = null,
 ): DelberegningBarnetilleggDto {
-    val personGrunnlag = find { it.type == personGrunnlagstype } ?: return DelberegningBarnetilleggDto()
+    val personGrunnlag = find { it.type == personGrunnlagstype && (personreferanseBM == null || it.referanse == personreferanseBM) } ?: return DelberegningBarnetilleggDto()
     val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return DelberegningBarnetilleggDto()
     val nettoBarnetillegg =
         finnOgKonverterGrunnlagSomErReferertAv<DelberegningNettoBarnetillegg>(
@@ -1773,7 +1774,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
                     it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
                 }
             sumBidragTilFordelingGrunnlagsliste.find {
-                it.innhold.periode.omsluttesAv(sluttberegningPeriode)
+                it.innhold.periode.overlapper(sluttberegningPeriode)
             }
         }
 

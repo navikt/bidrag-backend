@@ -211,7 +211,7 @@ class BrevserverProducer(
                     gebyrsats = dokumentBestilling.sjablonDetaljer.fastsettelseGebyr
                     vedtakInfo?.let {
                         soknGrKode = it.behandlingType?.kode
-                        soknFraKode = it.søknadFra?.kode
+                        soknFraKode = it.søknadFra?.tilBakoverkompatibelBrev()?.kode
                         soknType = it.soknadType?.kode
                         virkningsDato = it.virkningstidspunkt
                         mottatDato = it.mottattDato

@@ -20,7 +20,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.oppdateringAvBoforholdFeilet
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.tilFFBarnDetaljer
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
@@ -162,8 +162,12 @@ open class Rolle(
     val erAvvisning get() = avslag != null && avslag!!.erAvvisning()
     val erDirekteAvslagIkkeAvvisning get() = avslag != null && avslag!!.erDirekteAvslag() && !avslag!!.erAvvisning()
     val løperBidragEtterEldsteVirkning get() = behandling.løperBidragEtterEldsteVirkning(this)
+
+    // Samme filtrering som inntektsbildet. Inntekter for andre barn uten søknadsrolle (gjelderBarnRolle == null) beholdes
+    val skalViseInntekterSomGjelderBarn get() = kreverGrunnlagForBeregning || kreverGrunnlagForGebyrBeregning
+    val kreverGrunnlagForGebyrBeregning get() = harGebyrsøknad
     val kreverGrunnlagForBeregning get() =
-        avslag == null || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
+        (!erRevurderingsbarn && avslag == null) || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
     val harSøknadMedInnkreving get() = forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.innkreving } == true
     val erRevurderingsbarn get() = rolletype == Rolletype.BARN && forholdsmessigFordeling != null && forholdsmessigFordeling!!.erRevurdering
     val erBarn get() = rolletype == Rolletype.BARN
@@ -460,7 +464,7 @@ data class RolleManueltOverstyrtGebyr(
 
 fun Rolle.tilPersonident() = ident?.let { Personident(it) }
 
-fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdent(it) }
+fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdentIgnorerForbidden(it) }
 
 fun Rolle.hentNavn() = navn ?: hentPersonVisningsnavn(ident) ?: ""
 
@@ -495,6 +499,14 @@ fun Rolle.leggTilGebyr(gebyrSøknader: List<GebyrRolleSøknad>) {
             it
         }
 }
+
+/**
+ * Fjerner gebyrsøknad for søknaden fra alle roller i behandlingen (BP, BM og barn).
+ * @return roller som hadde gebyrsøknad for søknaden
+ */
+fun Behandling.fjernGebyrForSøknad(søknadsid: Long): List<Rolle> = roller
+    .filter { rolle -> rolle.gebyrSøknader.any { it.søknadsid == søknadsid } }
+    .onEach { it.fjernGebyr(søknadsid) }
 
 fun Set<Sivilstand>.tilSerialiseringsformat() = this.map {
     SivilstandUtenBehandling(

@@ -55,6 +55,7 @@ data class OppdatereVirkningstidspunktBegrunnelseDto(
 
 data class OppdatereVirkningstidspunkt(
     val rolleId: Long? = null,
+    val saksnummer: String? = null,
     @get:JsonProperty("årsak")
     @get:Schema(
         name = "årsak",

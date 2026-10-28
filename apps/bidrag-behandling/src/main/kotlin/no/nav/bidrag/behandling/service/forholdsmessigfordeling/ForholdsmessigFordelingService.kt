@@ -10,6 +10,7 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
@@ -58,6 +59,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilFordelingLøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
@@ -157,6 +159,16 @@ class ForholdsmessigFordelingService(
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
     }
 
+    /**
+     * Feilregistrerer åpne FF-søknader knyttet til en slettet behandling hvor opprettelse av FF feilet,
+     * og nullstiller feilmarkeringen slik at behandlingen ikke plukkes opp igjen.
+     */
+    @Transactional
+    fun ryddOppFFSøknaderForSlettetBehandling(behandlingId: Long) {
+        søknadService.slettAlleSøknaderKnyttetTilBehandling(behandlingId)
+        behandlingRepository.resetOpprettelseAvFFFeilet(behandlingId)
+    }
+
     @Transactional
     fun opprettEllerOppdaterForholdsmessigFordeling(
         behandlingId: Long,
@@ -170,6 +182,7 @@ class ForholdsmessigFordelingService(
                 LOGGER.info { "Opprettelse av forholdsmessig fordeling er deaktivert" }
                 ugyldigForespørsel("Opprettelse av forholdsmessig fordeling er deaktivert")
             }
+            behandlingRepository.låsBehandlingForOppdatering(behandlingId)
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
 
             val erOppdateringAvBehandlingSomErIFF = behandling.erIForholdsmessigFordeling
@@ -542,6 +555,11 @@ class ForholdsmessigFordelingService(
         )
     }
 
+    fun skalSynkronisereFF(behandling: Behandling): Boolean = behandling.erIForholdsmessigFordeling &&
+        !behandling.erVedtakFattet &&
+        behandling.vedtakDetaljer == null &&
+        foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())
+
     private fun foretaNySynkroniseringAvFF(
         behandling: Behandling,
         antallMinutter: Long,
@@ -616,6 +634,10 @@ class ForholdsmessigFordelingService(
             behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
         }
 
+        val søknaderKnyttetTilBehandling =
+            if (behandling.erKlageEllerOmgjøring) klageService.knyttSøknaderUtenBehandlingsidTilBehandling(behandling) else emptyList()
+        leggTilManglendeBarnFraSøknaderIBehandling(behandling, løpendeBidraggsakerBP, søknaderKnyttetTilBehandling)
+
         behandling.søknadsbarn.forEach { rolle ->
             val løpendeBidrag = løpendeBidraggsakerBP.find { rolle.erSammeRolle(it.kravhaver.verdi, it.type) }
 
@@ -629,10 +651,13 @@ class ForholdsmessigFordelingService(
 
         oppdaterSøknadStatuserForAlleRoller(behandling)
         slettDuplikatForholdsmessigFordelingSøknader(behandling)
+        fjernGebyrForFeilregistrerteSøknader(behandling)
         if (behandling.erKlageEllerOmgjøring) {
-            klageService.korrigerFFKlagesøknaderForSøknaderOpprettetEtterHovedsøknad(behandling)
+            klageService.korrigerHovedsøknad(behandling)
+            klageService.korrigerKlagesøknader(behandling)
             opprettSøknaderForKlageEllerOmgjøring(behandling, behandling.soknadsid!!)
             søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
+            barnService.fjernSakerUtenSøknadsbarn(behandling)
             behandling.oppdaterFFSistSynkronisert()
             return true
         }
@@ -658,9 +683,167 @@ class ForholdsmessigFordelingService(
         }
 
         søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
+        barnService.fjernSakerUtenSøknadsbarn(behandling)
 
         behandling.oppdaterFFSistSynkronisert()
         return true
+    }
+
+    /**
+     * Feilhåndtering: Fjerner gebyrsøknader (for BP, BM og barn) som tilhører søknader som er feilregistrert i BBM.
+     * Søknaden regnes som feilregistrert hvis den er avbrutt eller alle barn i søknaden er feilregistrert.
+     * Gebyr fjernes ikke hvis søknaden ikke kan hentes fra BBM.
+     */
+    internal fun fjernGebyrForFeilregistrerteSøknader(behandling: Behandling) {
+        behandling.roller
+            .flatMap { rolle -> rolle.gebyrSøknader.map { it.søknadsid } }
+            .distinct()
+            .forEach { søknadsid ->
+                val søknad =
+                    try {
+                        bbmConsumer.hentSøknad(søknadsid)?.søknad ?: return@forEach
+                    } catch (e: Exception) {
+                        LOGGER.warn { "Kunne ikke hente søknad $søknadsid fra BBM. Beholder gebyrsøknaden." }
+                        secureLogger.warn(e) { "Feil ved henting av gebyrsøknad $søknadsid fra BBM" }
+                        return@forEach
+                    }
+                val erFeilregistrert =
+                    søknad.behandlingStatusType == BehandlingStatusType.AVBRUTT ||
+                        søknad.barnAlle.let { barn -> barn.isNotEmpty() && barn.all { it.behandlingstatus?.erFeilregistrert == true } }
+                if (!erFeilregistrert) return@forEach
+                val roller = behandling.fjernGebyrForSøknad(søknadsid)
+                LOGGER.info {
+                    "Fjernet gebyrsøknad for feilregistrert søknad $søknadsid fra ${roller.map { it.rolletype }} i behandling ${behandling.id}"
+                }
+            }
+    }
+
+    /**
+     * Feilhåndtering: Sørger for at barn under behandling i åpne søknader knyttet til behandlingen finnes i behandlingen.
+     * - Barn i FF-søknad legges til som revurderingsbarn med samme søkt fom dato som i FF-søknaden.
+     *   Dette kan skje hvis feks systemet har opprettet FF søknad men det skjedde en feil ved opprettelse av rolle i behandlingen
+     * - Barn i andre søknader (feks opprettet av saksbehandler) legges til som søknadsbarn
+     *
+     * @param søknaderKnyttetTilBehandling søknader som nettopp er knyttet til behandlingen og derfor kanskje ikke returneres fra BBM ennå
+     */
+    internal fun leggTilManglendeBarnFraSøknaderIBehandling(
+        behandling: Behandling,
+        løpendeBidraggsakerBP: List<LøpendeBidragSakPeriode>,
+        søknaderKnyttetTilBehandling: List<HentSøknad> = emptyList(),
+    ) {
+        val (åpneFFSøknader, åpneAndreSøknader) =
+            (bbmConsumer.hentÅpneSøknaderForBehandling(behandling.id!!).søknader + søknaderKnyttetTilBehandling)
+                .filter { it.behandlingStatusType.erÅpenStatus }
+                .distinctBy { it.søknadsid }
+                .partition { it.behandlingstype.erForholdsmessigFordeling }
+
+        leggTilRollerFraRelevanteSøknaderSomIkkeErIBehandling(behandling, åpneAndreSøknader)
+
+        val nyeRevurderingsbarn = mutableListOf<Rolle>()
+        åpneFFSøknader.forEach { søknad ->
+            val stønadstype = søknad.behandlingstema.tilStønadstype() ?: Stønadstype.BIDRAG
+            val manglendeBarn =
+                søknad.parterUnderBehandling
+                    .mapNotNull { it.personident }
+                    .filter { ident -> behandling.roller.none { it.erSammeRolle(ident, stønadstype) } }
+            if (manglendeBarn.isEmpty()) return@forEach
+
+            val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+            val bmIdent =
+                søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
+                    ?: behandling.finnBidragsmottakerForSak(søknad.saksnummer)?.ident
+            val ffDetaljer =
+                ForholdsmessigFordelingRolle(
+                    delAvOpprinneligBehandling = false,
+                    erRevurdering = true,
+                    tilhørerSak = søknad.saksnummer,
+                    behandlerenhet = søknadsdetaljer.enhet,
+                    bidragsmottaker = bmIdent,
+                    revurderingsdatoVedOpprettelseAvFF = søknad.søknadFomDato,
+                    søknader = mutableSetOf(),
+                )
+
+            manglendeBarn.forEach { barnIdent ->
+                val løpendeBidrag = løpendeBidraggsakerBP.find { it.kravhaver.verdi == barnIdent && it.type == stønadstype }
+                val partISøknad = søknad.finnPartISøknad(barnIdent, Rolletype.BARN)
+                LOGGER.info {
+                    "Legger til manglende revurderingsbarn fra FF-søknad ${søknad.søknadsid} i behandling ${behandling.id} " +
+                        "med søkt fom dato ${søknad.søknadFomDato}"
+                }
+                nyeRevurderingsbarn.add(
+                    opprettEllerOppdaterRolle(
+                        behandling,
+                        Rolletype.BARN,
+                        barnIdent,
+                        stønadstype = stønadstype,
+                        harGebyrSøknad = søknad.tilGebyrRolleSøknad(partISøknad),
+                        innbetaltBeløp = partISøknad?.innbetaltBeløp,
+                        innkrevesFraDato = if (søknad.innkreving) løpendeBidrag?.periodeFra else null,
+                        medInnkreving = søknad.innkreving,
+                        opphørsdato = løpendeBidrag?.periodeTil,
+                        ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+                    ),
+                )
+            }
+
+            if (bmIdent != null) leggTilBidragsmottakerFraSøknad(behandling, søknad, bmIdent, ffDetaljer)
+            behandling.bidragspliktig?.let { bp ->
+                if (bp.forholdsmessigFordeling == null) bp.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
+                val ff = bp.forholdsmessigFordeling!!
+                if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+                bp.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bp.ident, Rolletype.BIDRAGSPLIKTIG)))
+            }
+        }
+
+        if (nyeRevurderingsbarn.isNotEmpty()) {
+            oppdaterBehandlingEtterOppdatertRoller(
+                behandling,
+                underholdService,
+                virkningstidspunktService,
+                nyeRevurderingsbarn.map { it.tilOpprettRolleDto() },
+                emptyList(),
+            )
+        }
+    }
+
+    /** Oppretter BM fra søknaden hvis den mangler, og knytter søknaden og eventuell gebyrsøknad til BM */
+    private fun leggTilBidragsmottakerFraSøknad(
+        behandling: Behandling,
+        søknad: HentSøknad,
+        bmIdent: String,
+        ffDetaljer: ForholdsmessigFordelingRolle,
+    ): Rolle {
+        val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+        val bm =
+            opprettEllerOppdaterRolle(
+                behandling,
+                Rolletype.BIDRAGSMOTTAKER,
+                bmIdent,
+                ffDetaljer = ffDetaljer.copy(søknader = mutableSetOf(søknadsdetaljer.copy())),
+            )
+        bm.forholdsmessigFordeling?.let { ff ->
+            if (ff.søknader.none { it.søknadsid == søknad.søknadsid }) ff.søknader.add(søknadsdetaljer.copy())
+        }
+        bm.leggTilGebyrHvisMangler(søknad.tilGebyrRolleSøknad(søknad.finnPartISøknad(bmIdent, Rolletype.BIDRAGSMOTTAKER)))
+        return bm
+    }
+
+    private fun HentSøknad.finnPartISøknad(
+        ident: String?,
+        rolletype: Rolletype,
+    ) = partISøknadListe.find { it.personident == ident && it.rolletype == rolletype }
+
+    private fun HentSøknad.tilGebyrRolleSøknad(partISøknad: PartISøknad?) = partISøknad?.takeIf { it.gebyr }?.let {
+        GebyrRolleSøknad(saksnummer = saksnummer, søknadsid = søknadsid, referanse = it.referanseGebyr)
+    }
+
+    /** Legger til gebyrsøknad hvis rollen ikke allerede har gebyr for søknaden, slik at eksisterende overstyring beholdes */
+    private fun Rolle.leggTilGebyrHvisMangler(gebyrSøknad: GebyrRolleSøknad?) {
+        if (gebyrSøknad == null) return
+        val gebyr = hentEllerOpprettGebyr()
+        if (gebyr.gebyrSøknader.none { it.søknadsid == gebyrSøknad.søknadsid }) gebyr.gebyrSøknader.add(gebyrSøknad)
+        this.gebyr = gebyr
+        harGebyrsøknad = true
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
@@ -755,11 +938,15 @@ class ForholdsmessigFordelingService(
         } else if (åpneSøknaderFF.isNotEmpty() && !rolle.erRevurderingsbarn) {
             barnService.feilregistrerBarnFraFFSøknad(rolle)
         } else if (!rolle.erRevurderingsbarn && åpneSøknaderIkkeFF.isEmpty()) {
-            LOGGER.info {
-                "Barn ${rolle.ident} i ${behandling.id} er ikke markert som revurderingsbarn men har ingen åpne søknader." +
-                    "Oppretter eller legger til i eksisterende FF søknad og endrer barnet til revurderingsbarn"
+            if (rolle.harLøpendeBidragFørOpphørEllerLøpende()) {
+                LOGGER.info {
+                    "Barn ${rolle.ident} i ${behandling.id} er ikke markert som revurderingsbarn men har ingen åpne søknader." +
+                        "Oppretter eller legger til i eksisterende FF søknad og endrer barnet til revurderingsbarn"
+                }
+                håndterBarnSomSkalVæreRevurderingsbarn(behandling, rolle, lagretSøknader)
+            } else {
+                barnService.slettSøknadsbarnUtenÅpenSøknad(behandling, rolle)
             }
-            håndterBarnSomSkalVæreRevurderingsbarn(behandling, rolle, lagretSøknader)
         } else if (
             rolle.erRevurderingsbarn &&
             åpneSøknaderFF.isEmpty() &&
@@ -811,11 +998,7 @@ class ForholdsmessigFordelingService(
                 }
 
                 sisteFfSøknad == null -> {
-                    opprettEllerOppdaterForholdsmessigFordeling(
-                        behandlingId = behandling.id!!,
-                        reevaluerSøkndasbarn = Pair(rolle.ident!!, rolle.stønadstype),
-                    )
-                    return
+                    opprettFfSøknadForRevurderingsbarn(behandling, rolle, lagretSøknader)
                 }
 
                 else -> {
@@ -853,12 +1036,34 @@ class ForholdsmessigFordelingService(
                             (rolle.stønadstype == null || rolle.stønadstype == søknad.behandlingstema.tilStønadstype())
                     }
                 }!!
+            // parterUnderBehandling inneholder bare barn, så BM må hentes fra alle parter i søknaden
+            val bmIdent = søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
+            if (bmIdent != null && behandling.roller.none { it.rolletype == Rolletype.BIDRAGSMOTTAKER && it.ident == bmIdent }) {
+                val søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad()
+                LOGGER.info {
+                    "Legger til manglende bidragsmottaker fra søknad ${søknad.søknadsid} i sak ${søknad.saksnummer} i behandling ${behandling.id}"
+                }
+                leggTilBidragsmottakerFraSøknad(
+                    behandling,
+                    søknad,
+                    bmIdent,
+                    ForholdsmessigFordelingRolle(
+                        delAvOpprinneligBehandling = true,
+                        behandlingsid = behandling.id,
+                        erRevurdering = false,
+                        tilhørerSak = søknad.saksnummer,
+                        behandlerenhet = søknadsdetaljer.enhet,
+                        bidragsmottaker = bmIdent,
+                        søknader = mutableSetOf(),
+                    ),
+                )
+            }
             barnService.leggTilEllerSlettBarnFraBehandlingSomErIFF(
                 OppdaterBarnFraFFRequest(
                     behandling = behandling,
                     søknadsid = søknad.søknadsid,
                     saksnummer = søknad.saksnummer,
-                    bmIdent = søknad.parterUnderBehandling.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident,
+                    bmIdent = bmIdent,
                     søktFraDato = søknad.søknadFomDato,
                     stønadstype = søknad.behandlingstema.tilStønadstype(),
                     søknadsdetaljer = søknad.tilForholdsmessigFordelingSøknad(),
@@ -905,6 +1110,50 @@ class ForholdsmessigFordelingService(
         return søknadSomSkalBeholdes
     }
 
+    private fun opprettFfSøknadForRevurderingsbarn(
+        behandling: Behandling,
+        rolle: Rolle,
+        lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>,
+    ): ForholdsmessigFordelingSøknadBarn {
+        val bidragsmottaker = rolle.bidragsmottaker
+        val sakKravhaver =
+            SakKravhaver(
+                kravhaver = rolle.ident!!,
+                stønadstype = rolle.stønadstype,
+                saksnummer = rolle.saksnummer,
+                bidragsmottaker = bidragsmottaker?.ident,
+            )
+        val søktFomDato = finnSøktFomDatoForKravhaver(setOf(sakKravhaver), sakKravhaver, behandling, null)
+        val medInnkreving = rolle.forholdsmessigFordeling?.harLøpendeBidrag == true
+
+        val søknad =
+            søknadService.leggTilEllerOpprettSøknadForRevurderingsbarn(
+                behandling = behandling,
+                barnIdent = rolle.ident!!,
+                stønadstype = rolle.stønadstype,
+                saksnummer = rolle.saksnummer,
+                søktFomDato = søktFomDato,
+                medInnkreving = medInnkreving,
+            )
+        LOGGER.info { "Opprettet eller gjenbrukte FF-søknad ${søknad.søknadsid} for revurderingsbarn i behandling ${behandling.id}" }
+
+        lagretSøknader.add(søknad)
+        rolle.forholdsmessigFordeling?.erRevurdering = true
+        rolle.innkrevingstype = if (medInnkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING
+
+        listOfNotNull(bidragsmottaker, behandling.bidragspliktig).forEach { part ->
+            val ffDetaljer = part.forholdsmessigFordeling ?: return@forEach
+            if (ffDetaljer.søknader.none { it.søknadsid == søknad.søknadsid }) {
+                ffDetaljer.søknader.add(søknad.copy())
+            }
+        }
+
+        if (bidragsmottaker?.ident != null) {
+            søknadService.opprettForsendelseForNySøknad(rolle.saksnummer, behandling, bidragsmottaker.ident!!, søknad)
+        }
+        return søknad
+    }
+
     private fun finnAktivFFSøknad(lagretSøknader: MutableSet<ForholdsmessigFordelingSøknadBarn>) = lagretSøknader
         .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
         .filter { it.status == Behandlingstatus.UNDER_BEHANDLING || it.status == null }
@@ -921,17 +1170,14 @@ class ForholdsmessigFordelingService(
         rolle: Rolle,
     ) {
         lagretSøknader
-            .filter { it.søknadsid != søknadSomSkalBeholdes.søknadsid }
+            .filter { it.søknadsid != null && it.søknadsid != søknadSomSkalBeholdes.søknadsid }
             .filter { it.innkreving == søknadSomSkalBeholdes.innkreving }
+            .filter { it.status == Behandlingstatus.UNDER_BEHANDLING || it.status == null }
             .filter { it.behandlingstype?.erForholdsmessigFordeling == true }
+            // Søknader opprettet av saksbehandler skal aldri feilregistreres automatisk
+            .filter { !behandling.erSøknadOpprettetAvSaksbehandler(it.søknadsid) }
             .forEach { lagretSøknad ->
-                val søknad = bbmConsumer.hentSøknad(lagretSøknad.søknadsid!!)
-                val rollerISøknad = søknad?.søknad?.parterUnderBehandling ?: emptyList()
-                if (rollerISøknad.size == 1 && rollerISøknad.first().personident == rolle.ident) {
-                    søknadService.feilregistrerSøknad(lagretSøknad, behandling)
-                } else {
-                    søknadService.feilregistrerBarnFraSøknad(rolle, lagretSøknad.søknadsid!!)
-                }
+                søknadService.feilregistrerBarnEllerHeleSøknad(rolle, lagretSøknad, behandling)
             }
     }
 
@@ -948,10 +1194,12 @@ class ForholdsmessigFordelingService(
         behandling: Behandling,
         opprettetEllerOppdaterSøknadsid: Long,
         opprettetAvEnhet: String? = null,
+        søknadOpprettetAvSaksbehandler: Boolean = false,
     ) = klageService.opprettSøknaderForKlageEllerOmgjøring(
         behandling,
         opprettetEllerOppdaterSøknadsid,
         request = OpprettFFRequest(opprettetAvEnhet = opprettetAvEnhet),
+        søknadOpprettetAvSaksbehandler = søknadOpprettetAvSaksbehandler,
     )
 
     @Transactional

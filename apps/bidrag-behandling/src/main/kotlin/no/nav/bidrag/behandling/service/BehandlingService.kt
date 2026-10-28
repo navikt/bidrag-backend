@@ -15,6 +15,7 @@ import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Utgift
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
 import no.nav.bidrag.behandling.database.datamodell.extensions.hentDefaultÅrsak
+import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.json.FattetVedtak
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
@@ -111,6 +112,7 @@ class BehandlingService(
         søknadsid: Long? = null,
     ) {
         secureLogger.info { "Sletter behandling $behandlingId og søknad $søknadsid" }
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling = hentBehandlingById(behandlingId)
         if (behandling.erVedtakFattet) {
             throw HttpClientErrorException(
@@ -215,7 +217,9 @@ class BehandlingService(
     ) {
         if (behandling.erIForholdsmessigFordeling && UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG.isEnabled) {
             if (behandling.erKlageEllerOmgjøring) {
-                forholdsmessigFordelingService!!.slettEllerGjennopprettKlageSøknader(behandling, søknadsid ?: behandling.soknadsid!!)
+                val slettetSøknadsid = søknadsid ?: behandling.soknadsid!!
+                forholdsmessigFordelingService!!.slettEllerGjennopprettKlageSøknader(behandling, slettetSøknadsid)
+                behandling.fjernGebyrForSøknad(slettetSøknadsid)
                 sendOppdatertHendelse(behandling.id!!, false)
             } else if (søknadsid == null) {
                 forholdsmessigFordelingService!!.avsluttForholdsmessigFordeling(
@@ -233,7 +237,7 @@ class BehandlingService(
                     søknadsid,
                     søknadBleSlettet = true,
                 )
-                behandling.bidragspliktig?.fjernGebyr(søknadsid)
+                behandling.fjernGebyrForSøknad(søknadsid)
                 sendOppdatertHendelse(behandling.id!!, false)
             }
         } else {
@@ -668,7 +672,17 @@ class BehandlingService(
         behandlingsid: Long,
         ikkeHentGrunnlag: Boolean = false,
     ): Behandling {
-        val behandling = hentBehandlingById(behandlingsid)
+        val behandlingUtenLås = hentBehandlingById(behandlingsid)
+        // Lås kun når hentingen faktisk skal skrive til behandlingen, slik at vanlige GET-kall ikke venter på låsen og holder DB-tilkoblinger.
+        // Behandlingen lastes på nytt etter låsen for å få siste committede tilstand.
+        val behandling =
+            if (skalOppdatereVedHenting(behandlingUtenLås, ikkeHentGrunnlag)) {
+                behandlingRepository.låsBehandlingForOppdatering(behandlingsid)
+                behandlingRepository.tømPersistenceContext()
+                hentBehandlingById(behandlingsid)
+            } else {
+                behandlingUtenLås
+            }
         val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
         if (!ikkeHentGrunnlag && !erVedtakFattet) {
             if (behandling.erIForholdsmessigFordeling) {
@@ -682,6 +696,16 @@ class BehandlingService(
             behandling.oppdatereVirkningstidspunktSærbidrag()
         }
         return behandling
+    }
+
+    private fun skalOppdatereVedHenting(
+        behandling: Behandling,
+        ikkeHentGrunnlag: Boolean,
+    ): Boolean {
+        if (virkningstidspunktService.run { behandling.skalOppdatereVirkningstidspunktSærbidrag() }) return true
+        if (ikkeHentGrunnlag || behandling.erVedtakFattet || behandling.vedtakDetaljer != null) return false
+        return forholdsmessigFordelingService?.skalSynkronisereFF(behandling) == true ||
+            grunnlagService.skalOppdatereGrunnlagSynkront(behandling)
     }
 
     @Transactional(readOnly = true)
@@ -766,6 +790,7 @@ class BehandlingService(
         request: OppdaterRollerRequest,
     ): OppdaterRollerResponse {
         val oppdaterRollerListe = request.rollerUnderBehandling
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling =
             behandlingRepository.findBehandlingById(behandlingId).get().let {
                 if (it.erIForholdsmessigFordeling && UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG.isEnabled) {
@@ -889,7 +914,7 @@ class BehandlingService(
         rolle: Rolle,
     ) {
         // Sjekk for alle identer
-        val rolleIdenter = setOfNotNull(rolle.ident, rolle.personident?.verdi, hentNyesteIdent(rolle.ident)?.verdi)
+        val rolleIdenter = setOfNotNull(rolle.ident, rolle.personident?.verdi, hentNyesteIdentIgnorerForbidden(rolle.ident)?.verdi)
         val grunnlagSomSkalSlettes =
             behandling.grunnlag
                 .filter {
@@ -943,7 +968,7 @@ class BehandlingService(
         behandlingId: Long,
     ): String? {
         if (ident == null) return null
-        val nyIdent = hentNyesteIdent(ident)?.verdi
+        val nyIdent = hentNyesteIdentIgnorerForbidden(ident)?.verdi
         if (nyIdent != ident) {
             secureLogger.info { "Oppdaterer ident fra $ident til $nyIdent i behandling $behandlingId " }
         }

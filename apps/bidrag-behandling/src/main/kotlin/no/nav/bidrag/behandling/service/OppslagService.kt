@@ -17,20 +17,22 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpStatusCodeException
+import java.time.LocalDate
 
-fun hentLøpendeBidrag(bp: Personident): LøpendeBidragssakerResponse? = try {
-    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp))
+fun hentLøpendeBidrag(bp: Personident, fraDato: LocalDate = LocalDate.now()): LøpendeBidragssakerResponse? = try {
+    AppContext.getBean(BidragBeløpshistorikkConsumer::class.java).hentLøpendeBidrag(LøpendeBidragssakerRequest(bp, fraDato))
 } catch (e: Exception) {
     secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $bp" }
     null
 }
 
 fun hentSammenknytningerHovedsøknad(søknadsid: Long): FinnSammenknytningerHovedsøknadResponse? = try {
-    AppContext.getBean(BidragBBMConsumer::class.java).finnSammenknytningerHovedsøknad(søknadsid)
+    AppContext.getBean(BidragBBMConsumer::class.java).finnAktiveSammenknytningerHovedsøknadCached(søknadsid)
 } catch (e: Exception) {
-    secureLogger.debug(e) { "Feil ved henting av beløpshistorikk $søknadsid" }
+    secureLogger.debug(e) { "Feil ved henting av sammenknytninger for hovedsøknad $søknadsid" }
     null
 }
 
@@ -65,38 +67,68 @@ fun sjekkTilgangSak(saksnummer: String): Boolean = try {
     secureLogger.debug(e) { "Feil ved henting av person for ident $saksnummer" }
     false
 }
+
+private val statuserSomGirIngenPerson = setOf(HttpStatus.NOT_FOUND, HttpStatus.FORBIDDEN)
+
+/**
+ * Henter person fra bidrag-person.
+ * Gir null når personen ikke finnes (404) eller bidrag-person svarer 403, slik at kallstedet faller tilbake på lagrede opplysninger.
+ * 403 betyr at saksbehandler mangler tilgang, eller ved apptoken at tilgangsoppsettet mellom appene er feil.
+ * Andre feil kastes videre. Null betyr ikke at saksbehandler har tilgang, så funksjonen må ikke brukes som tilgangskontroll.
+ */
 fun hentPerson(ident: String?): PersonDto? = try {
     ident.takeIfNotNullOrEmpty {
         AppContext.getBean(BidragPersonConsumer::class.java).hentPerson(it)
     }
-} catch (e: Exception) {
-    secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-    null
+} catch (e: HttpStatusCodeException) {
+    if (e.statusCode in statuserSomGirIngenPerson) {
+        null
+    } else {
+        throw e
+    }
 }
 
 fun harTilgangSak(saksnummer: String) = sjekkTilgangSak(saksnummer)
+
+/** Fødselsdato fra bidrag-person, eller null etter samme regler som [hentPerson]. */
 fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
+/** Visningsnavn fra bidrag-person, eller null etter samme regler som [hentPerson]. */
 fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
-fun hentNyesteIdent(ident: String?) = ident?.let { hentPerson(ident)?.ident ?: Personident(ident) }
+/**
+ * Henter gjeldende ident fra bidrag-person.
+ * Gir identen det ble søkt på når [hentPerson] gir null, altså ved 404 eller 403.
+ * Andre feil kastes videre. Brukes bare til intern matching, ikke som tilgangskontroll.
+ */
+fun hentNyesteIdentIgnorerForbidden(ident: String?) = ident?.let { hentPerson(it)?.ident ?: Personident(it) }
 
 @Service
 data class PersonService(
     val personConsumer: BidragPersonConsumer,
 ) {
+    /** Samme feilhåndtering som den frittstående [no.nav.bidrag.behandling.service.hentPerson]. */
     fun hentPerson(ident: String?): PersonDto? = try {
         ident.takeIfNotNullOrEmpty {
             personConsumer.hentPerson(it)
         }
-    } catch (e: Exception) {
-        secureLogger.debug(e) { "Feil ved henting av person for ident $ident" }
-        null
+    } catch (e: HttpStatusCodeException) {
+        if (e.statusCode in statuserSomGirIngenPerson) {
+            null
+        } else {
+            throw e
+        }
     }
 
+    /** Fødselsdato fra bidrag-person, eller null etter samme regler som [hentPerson]. */
     fun hentPersonFødselsdato(ident: String?) = hentPerson(ident)?.fødselsdato
 
+    /** Visningsnavn fra bidrag-person, eller null etter samme regler som [hentPerson]. */
     fun hentPersonVisningsnavn(ident: String?) = hentPerson(ident)?.visningsnavn
 
+    /**
+     * Gjeldende ident fra bidrag-person, eller null ved 404 og 403.
+     * Kallstedet må selv falle tilbake på søkt ident. Sammenlign aldri to null-svar som lik person.
+     */
     fun hentNyesteIdent(ident: String?) = hentPerson(ident)?.ident
 }

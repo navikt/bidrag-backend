@@ -215,6 +215,13 @@ class GrunnlagService(
         return gjelder to hentetGrunnlag
     }
 
+    // Asynkron innhenting tar egen lås i jobben, så da trenger ikke kallet å låse behandlingen.
+    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled &&
+        (
+            foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong()) ||
+                foretaNyGrunnlagsinnhenting(behandling, grenseInnhentingBeløpshistorikk.toLong())
+            )
+
     @Transactional
     fun oppdaterGrunnlagForBehandlingAsync(behandling: Behandling) {
         if (!UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled) {
@@ -232,6 +239,7 @@ class GrunnlagService(
 
     @Transactional
     fun oppdatereGrunnlagForBehandling(behandlingId: Long) {
+        behandlingRepository!!.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository?.findBehandlingById(behandlingId)!!.get()
         if (behandling.metadata?.lasterGrunnlagDetaljer()?.erBestilt() == false) {
             log.info { "Grunnlag for behandling $behandlingId lastes allerede, hopper over ny innhenting" }
@@ -325,6 +333,9 @@ class GrunnlagService(
                         },
                         scope.async {
                             lagreBpsBarnUtenBidragsak(behandling)
+                        },
+                        scope.async {
+                            lagreManuelleVedtakGrunnlag(behandling)
                         },
                     ).awaitAll()
                 }
@@ -908,7 +919,7 @@ class GrunnlagService(
         objekt: String? = null,
     ): String? {
         if (ident == null) return null
-        val nyIdent = hentNyesteIdent(ident)?.verdi
+        val nyIdent = hentNyesteIdentIgnorerForbidden(ident)?.verdi
         if (nyIdent != ident) {
             secureLogger.info { "Oppdaterer ident fra $ident til $nyIdent i behandling $behandlingId - $objekt" }
         }
@@ -2618,7 +2629,7 @@ class GrunnlagService(
         val sisteInnhentedeIkkeBearbeidaGrunnlag =
             behandling.grunnlag
                 .filter { grunnlagsdatatype == it.type && !it.erBearbeidet }
-                .filter { innhentetForRolle == it.rolle }
+                .filter { it.rolle.erSammeRolle(innhentetForRolle) }
                 .maxByOrNull { it.innhentet }
 
         sisteInnhentedeIkkeBearbeidaGrunnlag?.let {
@@ -2738,6 +2749,9 @@ class GrunnlagService(
                     behandling.grunnlag.remove(it)
                     grunnlagRepository.deleteById(it.id!!)
                 }
+            }
+            if (grunnlagstype.erBearbeidet && grunnlagSomSkalOppdateres?.aktiv != null) {
+                aktivereSisteInnhentedeRådata(grunnlagstype.type, rolle, behandling)
             }
         } else {
             log.debug { "Ingen endringer i grunnlag $grunnlagstype for behandling med id ${behandling.id!!}." }
