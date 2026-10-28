@@ -1,7 +1,7 @@
 package no.nav.bidrag.grunnlag.service
 
-import jakarta.annotation.PostConstruct
 import io.kotest.matchers.shouldBe
+import jakarta.annotation.PostConstruct
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
