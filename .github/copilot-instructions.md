@@ -44,8 +44,7 @@ Always write review comments in **English**.
 ## Security Review
 - No hardcoded secrets, tokens, or passwords in code, `application*.yaml`, tests, or `.nais/*.yaml`. Secrets come from Nais/Azure.
 - Never log tokens, headers, or full request/response bodies. PII goes only to `secureLogger` (team-logs).
-- Every new or changed controller must have `@Protected` or `@ProtectedWithClaims`. Challenge any `@Unprotected`. Person or case access must go through tilgangskontroll.
-- Validate input on DTOs (`@Valid`, Jakarta constraints) and Kafka payloads. Validation messages must not echo input (`${validatedValue}`).
+- Verify authentication for every new or changed endpoint, using `@Protected` or `@ProtectedWithClaims` at controller or method level where required. Require justification for `@Unprotected`, while preserving intentionally public endpoints. Person or case access must go through tilgangskontroll.- Validate input on DTOs (`@Valid`, Jakarta constraints) and Kafka payloads. Validation messages must not echo input (`${validatedValue}`).
 - SQL must use bind parameters, never string concatenation in `@Query(nativeQuery = true)` or `JdbcTemplate`.
 - For CodeQL fixes, a boolean `require()` or a denylist is not a sanitizer. Derive a new value, for example `Regex(...).matchEntire(value)?.value`.
 - GitHub Actions must be pinned to a SHA. Flag `pull_request_target`.
@@ -94,7 +93,7 @@ val stønaderPerVedtak = stønadRepository.findAllByVedtakIdIn(vedtakListe.map {
 ## Comment Format
 
 ```markdown
-**[🔴 CRITICAL | 🟡 IMPORTANT | 🟢 SUGGESTION] Category: Brief title**
+**🔴 CRITICAL | 🟡 IMPORTANT | 🟢 SUGGESTION Category: Brief title**
 
 What the issue is (file and line).
 
