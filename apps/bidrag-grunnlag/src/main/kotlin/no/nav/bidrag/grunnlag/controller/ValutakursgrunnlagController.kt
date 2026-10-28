@@ -125,7 +125,8 @@ class ValutakursgrunnlagController(
         description = "Henter månedsmiddel fra desember for halvår som starter 1. januar, og fra juni for halvår som starter 1. juli. " +
             "ECB brukes først, med Norges Bank som reserve. Kursen lagres som NOK per én enhet utenlandsk valuta. " +
             "Et nytt kall oppdaterer samme grunnlag, men overskriver ikke en manuelt overstyrt kurs. " +
-            "Hvis ingen kurs kan hentes, lagres og returneres status FEILET med kurs=null.",
+            "Hvis innhentingen feiler, beholdes og returneres en eksisterende gyldig kurs. " +
+            "Uten en gyldig eksisterende kurs lagres og returneres status FEILET med kurs=null.",
     )
     @ApiResponses(
         value = [
