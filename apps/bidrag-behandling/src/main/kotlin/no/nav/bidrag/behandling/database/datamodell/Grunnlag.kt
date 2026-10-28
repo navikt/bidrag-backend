@@ -77,7 +77,7 @@ open class Grunnlag(
         "Grunnlag($type, erBearbeidet=$erBearbeidet, aktiv=$aktiv, id=$id, innhentet=$innhentet, gjelder=$gjelder)"
     }
 
-    val identifikator get() = type.name + rolle.ident + erBearbeidet + gjelder + gjelderBarnRolle?.identifikator
+    val identifikator get() = type.name + rolle.ident + erBearbeidet + gjelder + rolle.stønadstype + gjelderBarnRolle?.identifikator
     val identifikatorAlle get() =
         type.name + rolle.ident + erBearbeidet + gjelder + grunnlagFraVedtakSomSkalOmgjøres +
             gjelderBarnRolle?.identifikator
