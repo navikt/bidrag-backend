@@ -97,7 +97,8 @@ val behandlingstyperSomIkkeSkalInkluderesIFF =
 // ═══════════════════════════════════════════════════════════════════
 // region Extension functions — HentSøknad
 // ═══════════════════════════════════════════════════════════════════
-
+// FF-søknader for 18 år skal alltid gjelde ett barn, så en åpen søknad kan bare gjenbrukes hvis den kun gjelder samme barn
+fun HentSøknad.gjelderKunBarn(barnIdent: String?) = barnIdent != null && barn.isNotEmpty() && barn.all { it.personident == barnIdent }
 val HentSøknad.bidragsmottaker get() = partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }
 val HentSøknad.bidragspliktig get() = partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 val HentSøknad.barn get() =

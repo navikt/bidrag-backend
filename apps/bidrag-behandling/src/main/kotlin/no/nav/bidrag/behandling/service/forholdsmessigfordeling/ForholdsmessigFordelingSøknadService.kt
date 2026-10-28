@@ -97,43 +97,46 @@ class ForholdsmessigFordelingSøknadService(
                 omgjørSøknadsid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.soknadRefId else null,
                 omgjørVedtaksid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.omgjørVedtakId else null,
             )
+
+        // FF-søknader for 18 år skal alltid gjelde ett barn per søknad
+        fun List<SakKravhaver>.grupperPerSøknad(): List<List<SakKravhaver>> = if (stønadstype == Stønadstype.BIDRAG18AAR) map { listOf(it) } else listOf(this)
+
         val søknadsidUtenInnkreving =
-            opprettEllerOppdaterRevurderingssøknadForBarn(
-                behandling = behandling,
-                saksnummer = saksnummer,
-                barn = barnUtenInnkreving,
-                behandlerEnhet = behandlerEnhet,
-                stønadstype = stønadstype,
-                søktFomDato = søktFomDato,
-                medInnkreving = false,
-                erOppdateringAvBehandlingSomErIFF = erOppdateringAvBehandlingSomErIFF,
-                bmFødselsnummer = bmFødselsnummer,
-                ffDetaljerBarn = ffDetaljerBarn,
-            )
+            barnUtenInnkreving.grupperPerSøknad().mapNotNull { barn ->
+                opprettEllerOppdaterRevurderingssøknadForBarn(
+                    behandling = behandling,
+                    saksnummer = saksnummer,
+                    barn = barn,
+                    behandlerEnhet = behandlerEnhet,
+                    stønadstype = stønadstype,
+                    søktFomDato = søktFomDato,
+                    medInnkreving = false,
+                    erOppdateringAvBehandlingSomErIFF = erOppdateringAvBehandlingSomErIFF,
+                    bmFødselsnummer = bmFødselsnummer,
+                    ffDetaljerBarn = ffDetaljerBarn,
+                )
+            }
 
         val søknadsidInnkreving =
-            opprettEllerOppdaterRevurderingssøknadForBarn(
-                behandling = behandling,
-                saksnummer = saksnummer,
-                barn = barnMedInnkreving,
-                behandlerEnhet = behandlerEnhet,
-                stønadstype = stønadstype,
-                søktFomDato = søktFomDato,
-                medInnkreving = true,
-                erOppdateringAvBehandlingSomErIFF = erOppdateringAvBehandlingSomErIFF,
-                bmFødselsnummer = bmFødselsnummer,
-                ffDetaljerBarn = ffDetaljerBarn,
-            )
+            barnMedInnkreving.grupperPerSøknad().mapNotNull { barn ->
+                opprettEllerOppdaterRevurderingssøknadForBarn(
+                    behandling = behandling,
+                    saksnummer = saksnummer,
+                    barn = barn,
+                    behandlerEnhet = behandlerEnhet,
+                    stønadstype = stønadstype,
+                    søktFomDato = søktFomDato,
+                    medInnkreving = true,
+                    erOppdateringAvBehandlingSomErIFF = erOppdateringAvBehandlingSomErIFF,
+                    bmFødselsnummer = bmFødselsnummer,
+                    ffDetaljerBarn = ffDetaljerBarn,
+                )
+            }
 
         val alleSøknader =
-            setOfNotNull(
-                søknadsidInnkreving?.let {
-                    ffDetaljerBarn.copy(søknadsid = it)
-                },
-                søknadsidUtenInnkreving?.let {
-                    ffDetaljerBarn.copy(søknadsid = it)
-                },
-            ).toMutableSet()
+            (søknadsidInnkreving + søknadsidUtenInnkreving)
+                .map { ffDetaljerBarn.copy(søknadsid = it) }
+                .toMutableSet()
 
         val ffDetaljer =
             ForholdsmessigFordelingRolle(
@@ -307,6 +310,7 @@ class ForholdsmessigFordelingSøknadService(
                 søktFomDato = søktFomDato,
                 stønadstype = stønadstype,
                 omgjøringsdetaljer = behandling.omgjøringsdetaljer,
+                barnIdent = barnUtenSøknader.singleOrNull()?.kravhaver,
             )
         if (eksisterendeSøknad != null) {
             val søknadBarnIdenter = eksisterendeSøknad.barn.map { eksisterendeSøknad.tilIdentStønadstypeNøkkel(it.personident!!) }
@@ -395,6 +399,7 @@ class ForholdsmessigFordelingSøknadService(
                 søktFomDato = søktFomDato,
                 stønadstype = stønadstype,
                 omgjøringsdetaljer = behandling.omgjøringsdetaljer,
+                barnIdent = barnIdent,
             )
 
         if (åpenFFSøknad != null) {
