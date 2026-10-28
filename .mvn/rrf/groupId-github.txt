@@ -1,2 +1,5 @@
-# navikt/token-support publishes artifacts under this groupId.
+# Groups funnet via GitHub Packages i steden for Maven Central.
 no.nav.security
+no.nav.tms.varsel
+no.nav.tjenester
+com.ibm.db2
