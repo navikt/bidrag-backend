@@ -13,6 +13,8 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -61,8 +63,12 @@ class OpprettFFMapperTest {
         kopiertForpleining.underholdskostnad shouldBe kopiert
     }
 
-    @Test
-    fun `skal kopiere beløpstype og skattefaktor for inntektsposter`() {
+    @ParameterizedTest
+    @CsvSource("BARNETILLEGG_PENSJON,0.25", "BARNETILLEGG_TILTAKSPENGER,")
+    fun `skal kopiere beløpstype, og skattefaktor bare for skattepliktige barnetillegg`(
+        inntektstype: Inntektstype,
+        forventetSkattefaktor: BigDecimal?,
+    ) {
         // gitt
         val kildebehandling =
             oppretteTestbehandling(
@@ -94,7 +100,7 @@ class OpprettFFMapperTest {
             Inntektspost(
                 inntekt = inntekt,
                 kode = "",
-                inntektstype = Inntektstype.BARNETILLEGG_PENSJON,
+                inntektstype = inntektstype,
                 beløp = BigDecimal(2500),
                 beløpstype = InntektBeløpstype.MÅNEDSBELØP,
                 skattefaktor = BigDecimal("0.25"),
@@ -111,6 +117,6 @@ class OpprettFFMapperTest {
         val kopiertPost = kopiert.inntektsposter.single()
         kopiertPost.beløp shouldBe BigDecimal(2500)
         kopiertPost.beløpstype shouldBe InntektBeløpstype.MÅNEDSBELØP
-        kopiertPost.skattefaktor shouldBe BigDecimal("0.25")
+        kopiertPost.skattefaktor shouldBe forventetSkattefaktor
     }
 }

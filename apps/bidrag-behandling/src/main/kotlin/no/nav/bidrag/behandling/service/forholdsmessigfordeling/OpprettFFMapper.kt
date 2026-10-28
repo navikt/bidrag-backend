@@ -33,6 +33,7 @@ import no.nav.bidrag.behandling.service.hentPersonFødselsdato
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.behandling.finnRolle
 import no.nav.bidrag.behandling.transformers.boforhold.oppdaterePerioder
+import no.nav.bidrag.behandling.transformers.gyldigSkattefaktor
 import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.tilDato18årsBidrag
 import no.nav.bidrag.behandling.transformers.tilType
@@ -462,7 +463,7 @@ fun kopierInntekt(
                     inntektstype = inntektspost.inntektstype,
                     beløp = inntektspost.beløp,
                     beløpstype = inntektspost.beløpstype,
-                    skattefaktor = inntektspost.skattefaktor,
+                    skattefaktor = inntektspost.inntektstype.gyldigSkattefaktor(inntektspost.skattefaktor),
                 ),
             )
         }

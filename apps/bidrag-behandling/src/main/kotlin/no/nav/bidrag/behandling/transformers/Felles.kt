@@ -113,8 +113,10 @@ val inntekterSomKanHaHullIPerioder = eksplisitteYtelser
 val BigDecimal?.skatteprosentTilFaktor get() = this?.divide(BigDecimal(100), 10, RoundingMode.HALF_UP)
 val BigDecimal?.skattefaktorTilProsent get() = this?.multiply(BigDecimal(100))
 
-// Skattefrie barnetillegg (tiltakspenger og Forsvaret) har ingen skatteprosent, uansett hva som sendes inn
-fun Inntektstype?.skattefaktorFraSkatteprosent(skatteprosent: BigDecimal?) = if (this?.erSkattefrittBarnetillegg == true) null else skatteprosent.skatteprosentTilFaktor
+// Skattefrie barnetillegg (tiltakspenger og Forsvaret) har ingen skatteprosent, uansett hva som sendes inn eller er lagret fra før
+fun Inntektstype?.gyldigSkattefaktor(skattefaktor: BigDecimal?) = if (this?.erSkattefrittBarnetillegg == true) null else skattefaktor
+
+fun Inntektstype?.skattefaktorFraSkatteprosent(skatteprosent: BigDecimal?) = gyldigSkattefaktor(skatteprosent.skatteprosentTilFaktor)
 
 fun Behandling.tilType() = bestemTypeBehandling(stonadstype, engangsbeloptype)
 
