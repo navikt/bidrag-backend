@@ -44,7 +44,7 @@ jobs:
     secrets: inherit
     with:
       java-version: '25'
-      runner: ubuntu-latest-4-cores
+      runner: ubuntu-latest
       nais_hovedfil_navn: bidrag-reisekostnad-api/nais.yaml
       nais_variabler_filnavn_q1: bidrag-reisekostnad-api/preprod.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}

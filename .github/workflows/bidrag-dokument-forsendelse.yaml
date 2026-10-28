@@ -44,7 +44,7 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
-      runner: ubuntu-latest-4-cores
+      runner: ubuntu-latest
       nais_hovedfil_navn: bidrag-dokument-forsendelse/nais.yaml
       nais_variabler_filnavn_q1: bidrag-dokument-forsendelse/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}

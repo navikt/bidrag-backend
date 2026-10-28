@@ -31,6 +31,8 @@ on:
 env:
   APP_PATHS: |
     pom.xml
+    //TODO(LEGG INN DOCKERFILE I ALLE FILENE)
+    TODO(Skille dependabot major mot patch/minor
     libs/bidrag-felles/**
     libs/bidrag-beregn-felles/**
     .nais/bidrag-automatisk-jobb/**.yaml
