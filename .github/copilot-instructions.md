@@ -93,7 +93,7 @@ val stønaderPerVedtak = stønadRepository.findAllByVedtakIdIn(vedtakListe.map {
 ## Comment Format
 
 ```markdown
-**🔴 CRITICAL | 🟡 IMPORTANT | 🟢 SUGGESTION Category: Brief title**
+**🔴 CRITICAL | 🟡 IMPORTANT | 🟢 SUGGESTION - Category: Brief title**
 
 What the issue is (file and line).
 
