@@ -72,7 +72,6 @@ import no.nav.bidrag.behandling.transformers.behandling.hentEndringerInntekter
 import no.nav.bidrag.behandling.transformers.behandling.hentEndringerSivilstand
 import no.nav.bidrag.behandling.transformers.behandling.henteAktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforhold
-import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarn
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarnV2
 import no.nav.bidrag.behandling.transformers.behandling.henteUaktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
@@ -2131,6 +2130,7 @@ class GrunnlagService(
             val husstandsmedlemmerForBM = husstandsmedlemmer.filtrerSøknadsbarn(behandling, bidragsmottaker)
             val boforholdRequest = husstandsmedlemmerForBM.toSet().tilBoforholdBarnRequest(behandling)
 
+            // Opprett bearbeidet boforhold til BM hvis det ikke finnes for søknadsbarn til BM
             behandling.søknadsbarnForBidragsmottaker(bidragsmottaker).forEach { søknadsbarn ->
                 val gjelderBarnIdent = søknadsbarn.ident ?: return@forEach
                 val bearbeidetGrunnlagFinnes =
@@ -2173,7 +2173,7 @@ class GrunnlagService(
      * (tidligere ble boforhold for alle søknadsbarn lagret på samme BM).
      */
     private fun slettBearbeidetBoforholdBMSøknadsbarnLagretPåFeilBidragsmottaker(behandling: Behandling) {
-        val grunnlagSomSkalSlettes =
+        val bmBoforholdsSomInneholderSøknadsbarnSomTilhørerAnnenBM =
             behandling.grunnlag
                 .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet }
                 .filter { grunnlag ->
@@ -2182,12 +2182,13 @@ class GrunnlagService(
                             ?.takeIf { it.rolletype == Rolletype.BARN }
                             ?.let { listOf(it) }
                             ?: behandling.søknadsbarn.filter { it.ident != null && it.ident == grunnlag.gjelder }
-                    søknadsbarn.isNotEmpty() &&
+                    val grunnlagTilhørerIkkeBMTilSøknadsbarn = søknadsbarn.isNotEmpty() &&
                         søknadsbarn.none { barn ->
                             (barn.bidragsmottaker ?: behandling.bidragsmottaker)?.erSammeRolle(grunnlag.rolle) == true
                         }
+                    grunnlagTilhørerIkkeBMTilSøknadsbarn
                 }
-        grunnlagSomSkalSlettes.forEach { grunnlag ->
+        bmBoforholdsSomInneholderSøknadsbarnSomTilhørerAnnenBM.forEach { grunnlag ->
             secureLogger.info {
                 "Sletter bearbeidet boforhold ${grunnlag.id} for BM ${grunnlag.rolle.ident} i behandling ${behandling.id} " +
                     "fordi barnet ${grunnlag.gjelder} tilhører en annen bidragsmottaker"
