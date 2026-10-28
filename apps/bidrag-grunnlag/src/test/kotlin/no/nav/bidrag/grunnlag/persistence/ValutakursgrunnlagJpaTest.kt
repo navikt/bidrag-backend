@@ -2,17 +2,25 @@ package no.nav.bidrag.grunnlag.persistence
 
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.grunnlag.BidragGrunnlag
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakurs
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursResponse
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentetValutakursResultat
 import no.nav.bidrag.grunnlag.persistence.entity.Valutakursgrunnlag
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
 import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagStatus
 import no.nav.bidrag.grunnlag.persistence.entity.toValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.persistence.repository.ValutakursgrunnlagRepository
+import no.nav.bidrag.grunnlag.service.HentValutakursService
 import no.nav.bidrag.grunnlag.service.PersistenceService
+import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
 import org.springframework.context.annotation.Import
@@ -30,6 +38,40 @@ class ValutakursgrunnlagJpaTest(
     @Autowired private val entityManager: EntityManager,
     @Autowired private val persistenceService: PersistenceService,
 ) {
+    @Test
+    fun `mislykket gjeninnhenting bevarer HENTET-kurs og tillater fortsatt omregning`() {
+        val dato = LocalDate.of(2025, 7, 1)
+        val lagret = persistenceService.opprettValutakursgrunnlag(
+            ValutakursgrunnlagBo(
+                brukFra = dato.atStartOfDay(),
+                brukTil = dato.plusMonths(6).atStartOfDay(),
+                kurs = BigDecimal("10.125"),
+                multiplikator = 0,
+                basisvaluta = Valutakode.USD,
+                kilde = ValutakursgrunnlagKilde.ECB,
+                observasjonsdato = dato.minusMonths(1),
+            ),
+        ).toValutakursgrunnlagBo()
+        val hent = Mockito.mock(HentValutakursService::class.java)
+        Mockito.`when`(hent.hentValutakurs(HentValutakursRequest(listOf(HentValutakurs(dato, Valutakode.USD)))))
+            .thenReturn(
+                HentValutakursResponse(
+                    listOf(HentetValutakursResultat.FeiledValutakurs(ÅrMånedsperiode("2025-06", "2025-07"), Valutakode.USD, Valutakode.NOK)),
+                ),
+            )
+        val service = ValutakursgrunnlagService(persistenceService, hent)
+        entityManager.clear()
+
+        assertEquals(lagret, service.innhent(Valutakode.USD, dato))
+        entityManager.clear()
+
+        assertEquals(lagret, service.hentValutakursgrunnlag(Valutakode.USD, dato))
+        assertEquals(1L, repository.count())
+        val beregning = service.beregn(BigDecimal("100"), Valutakode.USD, Valutakode.NOK, dato)
+        assertEquals(BigDecimal("1012.5000"), beregning.beløp)
+        assertEquals(lagret, beregning.kursgrunnlag)
+    }
+
     @Test
     fun `aktiv beregnes for lagret grunnlag uten egen databasekolonne`() {
         val lagret = repository.saveAndFlush(

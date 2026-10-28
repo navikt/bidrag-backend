@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
@@ -87,6 +88,8 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+private val LOGGER = KotlinLogging.logger {}
+
 @Service
 class PersistenceService(
     val grunnlagspakkeRepository: GrunnlagspakkeRepository,
@@ -165,6 +168,17 @@ class PersistenceService(
     fun opprettValutakursgrunnlag(valutakursgrunnlagBo: ValutakursgrunnlagBo): Valutakursgrunnlag {
         val eksisterende = valutakursgrunnlagRepository.findByBasisvalutaAndBrukFra(valutakursgrunnlagBo.basisvaluta, valutakursgrunnlagBo.brukFra)
         if (eksisterende?.status == ValutakursgrunnlagStatus.OVERSTYRT) return eksisterende
+        val eksisterendeKurs = eksisterende?.kurs
+        if (valutakursgrunnlagBo.feiletHenting &&
+            eksisterende?.status == ValutakursgrunnlagStatus.HENTET &&
+            !eksisterende.feiletHenting && eksisterendeKurs != null &&
+            eksisterendeKurs.signum() > 0 && eksisterende.multiplikator == 0
+        ) {
+            LOGGER.warn {
+                "Gjeninnhenting feilet for ${eksisterende.basisvaluta} fra ${eksisterende.brukFra}. Beholder eksisterende kursgrunnlag."
+            }
+            return eksisterende
+        }
         val nyValutakurs = valutakursgrunnlagBo.toValutakursgrunnlagEntity()
         val lagret = valutakursgrunnlagRepository.saveAndFlush(
             if (eksisterende == null) nyValutakurs else nyValutakurs.copy(valutakursgrunnlagId = eksisterende.valutakursgrunnlagId),
