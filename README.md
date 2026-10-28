@@ -1,7 +1,7 @@
 # bidrag-backend
 
-Monorepo for team Bidrag sine backend-tjenester. Bygget med Spring Boot og Kotlin
-på Java 25, kjører på Nais.
+Monorepo for team Bidrags backend-tjenester. De bygges med Kotlin, Spring Boot
+og Java 25 og kjører på Nais.
 
 ## Lokal Texas-sidecar
 
@@ -21,34 +21,27 @@ trenger en ny nøkkel.
 
 Ved pull requests, i merge-køen og ved push til `main` starter
 [`bygg-apper.yaml`](.github/workflows/bygg-apper.yaml) bygg for appene som er
-berørt av endringene. Bibliotekene de trenger, klargjøres i én felles jobb.
-For hver app kjører image-bygg og tester parallelt. Deploy venter på begge
-jobbene og følger miljøreglene i appens workflow.
+berørt av endringene. For hver app bygger `bygg_test_og_image` bibliotekene
+appen trenger og kjører appens tester før Docker-bygget. Merge-køen hopper over
+Docker-bygget. Når imaget pushes, attesteres det før jobben fullfører. Deploy
+venter på appjobben og følger miljøreglene i appens workflow.
 
 Hvilke filer som utløser bygg av en app, står i `env.APP_PATHS` i appens
 workflow, med ett filmønster per linje. De samme filtrene brukes for push, PR
-og merge-kø. Endrer du et felles bibliotek, kan flere apper bli bygget, men de
-deler det samme bibliotekbygget. Endringer bare i denne README-en eller under
-`util/` starter ikke workflowen.
+og merge-kø. Endrer du et felles bibliotek, kan flere apper bli bygget. Hver
+app bygger da bibliotekavhengighetene sine separat. Endringer bare i denne
+README-en eller under `util/` utløser ikke appbygg eller bibliotektester.
 
 ### Merge-kø
 
-Statussjekken på en PR sier bare at greina var grønn mot main slik main så ut
-sist sjekken kjørte. Flytter main seg etterpå, kan en grønn hake være foreldet,
-og feilen oppdages først etter merge, med rød main og en app som ikke ble
-deployet.
+En grønn PR-sjekk kan bli foreldet hvis `main` endres etter at sjekken kjørte.
+Merge-køen sjekker PR-en mot gjeldende `main` før merge. Hvis PR-en allerede er
+bygget og testet med nøyaktig samme innhold, gjenbruker køen det grønne bygget.
+Ellers bygger og tester den på nytt. Slik slipper alle åpne PR-er å kjøre hele
+pipelinen på nytt for hver merge.
 
-Merge-køen løser dette: GitHub bygger kandidaten merget med main-tuppen, og
-merger bare hvis bygget er grønt. Alternativet, «Require branches to be up to
-date before merging», ville tvunget alle åpne PR-er til å rebase og kjøre hele
-pipelinen på nytt for hver eneste merge. I et monorepo med 34 apper, der de
-fleste endringer treffer ulike apper, koster det langt mer byggetid enn det
-gir.
-
-Køen bygger og tester, men deployer aldri. Alle `deploy_*`-flaggene krever
-enten `workflow_dispatch` eller push til `refs/heads/main`, og en
-merge_group-kjøring er ingen av delene. Deploy skjer først når køen har merget
-og push-kjøringen på `main` er grønn.
+Køen deployer aldri. Deploy skjer først etter merge, når push-kjøringen på
+`main` er grønn.
 
 Køen må slås på i repo-innstillingene (Settings → Rules → main → «Require merge
 queue»). Required status check skal være `Alle bygg fullført`, samlejobben i
@@ -70,9 +63,10 @@ sine egne bibliotekavhengigheter.
 
 Imaget lastes bare opp til registeret når kjøringen faktisk skal deploye,
 altså ved `workflow_dispatch` til q1, q2 eller prod, eller ved push til `main`.
-PR-kjøringer bygger imaget etter at appens tester har bestått, men pusher det
-ikke. Merge-køen hopper over Docker-bygget. Dockerfilen og byggkonteksten
-blir dermed verifisert på PR-er uten at hver push legger igjen et image.
+PR-kjøringer, bortsett fra Dependabot, bygger imaget etter at appens tester har
+bestått, men pusher det ikke. Merge-køen hopper over Docker-bygget. Slik
+verifiseres Dockerfilen og byggkonteksten på PR-er uten at hver push legger
+igjen et image.
 
 Når imaget pushes, genererer og attesterer `nais/docker-build-push` SBOM før
 jobben fullfører. Deploy venter dermed på både appens tester og attesteringen.
@@ -156,21 +150,19 @@ blir derimot overskrevet ved neste kjøring, så ikke rediger den.
 
 ### Når kjører den
 
-| Hendelse | Modultabell | AI-sammendrag |
+| Hendelse | Modultabell | KI-sammendrag |
 | --- | --- | --- |
 | PR opprettet eller gjenåpnet | ✅ | ✅ |
-| Draft merket som klar for review | ✅ | ✅ |
+| Utkast merket som klart for review | ✅ | ✅ |
 | Ny push til PR-en | ✅ | ♻️ beholdes fra forrige kjøring |
 | Etiketten `oppdater-beskrivelse` settes på | ✅ | ✅ |
 
-Modultabellen er ren git-utregning og oppdateres derfor på hver push.
-AI-sammendraget koster å kjøre, så det
-genereres bare når PR åpnes. Trenger du et nytt
-sammendrag etter PR er opprettet, sett på etiketten `oppdater-beskrivelse` (fjern den
-etterpå for å kunne bruke den igjen).
+Modultabellen oppdateres ved hver push til PR-en. Et tidligere sammendrag
+beholdes. Vil du lage et nytt, sett på etiketten `oppdater-beskrivelse`. Fjern
+etiketten etterpå hvis du vil bruke den igjen.
 
-Draft-PR-er får tabellen, men ikke AI-sammendrag — det kommer først når PR-en
-merkes klar for review. PR-er fra forks hoppes helt over, siden de får et
+PR-utkast får tabellen, men ikke KI-sammendrag. Det lages når PR-en merkes klar
+for review. PR-er fra forks hoppes helt over, siden de får et
 read-only token og uansett ikke kan oppdatere beskrivelsen. Feiler
 Copilot-kallet, blokkerer det ikke PR-en: tabellen legges inn, forrige
 sammendrag beholdes, og årsaken logges som en advarsel i jobben.
