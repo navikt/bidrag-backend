@@ -1,5 +1,7 @@
 server.port: 8086
 NAIS_APP_NAME: bidrag-grunnlag-local
+BIDRAG_BOT_SLACK_OAUTH_TOKEN: unused-local-token
+SLACK_CHANNEL_ID: unused-local-channel
 spring:
   flyway:
     enabled: false
