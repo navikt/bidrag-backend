@@ -201,7 +201,7 @@ jobs:
         run: |
           read -r -a options <<< "$MAVEN_OPTIONS"
           mvn -T 1C -nsu -Dmaven.artifact.threads=16 "${options[@]}" -am clean verify -Dmaven.test.skip=true -Dmaven.antrun.skip=true
-      - name: Bygg avhengigheter og kjør appens tester
+      - name: Bygg avhengigheter og kjør tester
         if: ${{ !inputs.skip_tester }}
         env:
           MAVEN_OPTIONS: ${{ inputs.maven_options }}
