@@ -245,8 +245,6 @@ class ForholdsmessigFordelingKlageService(
         overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
         kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
         // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
-        behandling.grunnlagSistInnhentet = null
-        grunnlagService.oppdatereGrunnlagForBehandling(behandling)
         oppdaterBehandlingEtterOppdatertRoller(
             behandling,
             underholdService,
@@ -254,6 +252,8 @@ class ForholdsmessigFordelingKlageService(
             behandling.søknadsbarn.map { it.tilOpprettRolleDto() },
             emptyList(),
         )
+        behandling.grunnlagSistInnhentet = null
+        grunnlagService.oppdatereGrunnlagForBehandling(behandling)
 
         opprettVarselForsendelserForKlage(behandling, hovedsøknadsid)
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
