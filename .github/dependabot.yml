@@ -70,8 +70,18 @@ updates:
       - "maven"
     commit-message:
       prefix: "[dependency] "
+  # Rot-POM-en trengs for arvede versjoner. Oppdater ignore-listene ved nye rotavhengigheter.
   - package-ecosystem: "maven"
     directory: "/libs/bidrag-oppgave-dto"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -97,6 +107,15 @@ updates:
   - package-ecosystem: "maven"
     directories:
       - "/libs/bidrag-felles/*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -122,6 +141,15 @@ updates:
   - package-ecosystem: "maven"
     directories:
       - "/libs/bidrag-beregn-felles/*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -147,6 +175,15 @@ updates:
   # Hver app har en jobb; parent-POM-ene dekker appenes undermoduler.
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-admin"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -171,6 +208,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-aktoerregister"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -195,6 +241,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-arbeidsflyt"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -219,6 +274,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-automatisk-jobb"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -243,6 +307,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-bbm"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -267,6 +340,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-behandling"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -291,6 +373,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-belopshistorikk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -315,6 +406,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-bidragskalkulator"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -339,6 +439,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-dokumenthåndtering"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -363,6 +472,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-elin-stub"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -387,6 +505,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-grunnlag"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -411,6 +538,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-henvendelse"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -435,6 +571,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-kodeverk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -459,6 +604,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-maskinporten-client"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -483,6 +637,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-oppgave"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -507,6 +670,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-organisasjon"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -531,6 +703,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-person"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -555,6 +736,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-person-hendelse"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -579,6 +769,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-regnskap"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -603,6 +802,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-reisekostnad-api"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -627,6 +835,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-reskontro"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -651,6 +868,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-sak"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -675,6 +901,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-samhandler"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -699,6 +934,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-sjablon"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -723,6 +967,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-statistikk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -747,6 +1000,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-tilgangskontroll"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
@@ -771,6 +1033,15 @@ updates:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
     directory: "/apps/bidrag-vedtak"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
     registries:
       - "maven-github"
     cooldown:
