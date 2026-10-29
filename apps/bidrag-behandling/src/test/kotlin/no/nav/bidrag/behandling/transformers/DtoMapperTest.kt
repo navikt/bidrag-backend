@@ -8,7 +8,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import no.nav.bidrag.behandling.TestContainerRunner
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Notat
 import no.nav.bidrag.behandling.database.datamodell.Person
@@ -25,7 +24,6 @@ import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.BehandlingTilGrunnlagMappingV2
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrunnlagMapper
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
-import no.nav.bidrag.behandling.utils.testdata.TestdataManager
 import no.nav.bidrag.behandling.utils.testdata.oppretteArbeidsforhold
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
@@ -55,14 +53,10 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class DtoMapperTest : TestContainerRunner() {
-    @Autowired
-    lateinit var testdataManager: TestdataManager
-
+class DtoMapperTest {
     lateinit var personService: PersonService
 
     val tilgangskontrollService: TilgangskontrollService = mockk()
@@ -105,7 +99,6 @@ class DtoMapperTest : TestContainerRunner() {
                 vedtakGrunnlagsmapper,
                 BeregnBarnebidragApi(),
             )
-        stubUtils.stubTilgangskontrollPersonISak()
         every { tilgangskontrollService.harBeskyttelse(any()) } returns false
         every { tilgangskontrollService.harTilgang(any(), any()) } returns true
     }
@@ -116,7 +109,7 @@ class DtoMapperTest : TestContainerRunner() {
         @Test
         fun `skal returnere diff for boforhold`() {
             // gitt
-            val behandling = testdataManager.oppretteBehandling(false)
+            val behandling = oppretteTestbehandling(setteDatabaseider = true)
             behandling.virkningstidspunkt = LocalDate.parse("2023-01-01")
             val nyFomdato = LocalDate.now().minusYears(10)
 
@@ -349,7 +342,7 @@ class DtoMapperTest : TestContainerRunner() {
         @Test
         fun `skal returnere diff for arbeidsforhold`() {
             // gitt
-            val b = oppretteTestbehandling(inkludereBp = true, inkludereArbeidsforhold = true)
+            val b = oppretteTestbehandling(inkludereBp = true, inkludereArbeidsforhold = true, setteDatabaseider = true)
             val nyttArbeidsforhold =
                 oppretteArbeidsforhold(b.bidragspliktig!!.ident!!).copy(
                     startdato = LocalDate.now(),
@@ -368,8 +361,6 @@ class DtoMapperTest : TestContainerRunner() {
                 ),
             )
 
-            testdataManager.lagreBehandlingNewTransaction(b)
-
             // hvis
             val ikkeAktivereGrunnlagsdata =
                 dtomapper.tilAktivereGrunnlagResponseV2(b).ikkeAktiverteEndringerIGrunnlagsdata
@@ -384,7 +375,7 @@ class DtoMapperTest : TestContainerRunner() {
         @Test
         open fun `skal returnere diff for sivilstand`() {
             // gitt
-            val behandling = testdataManager.oppretteBehandling(false)
+            val behandling = oppretteTestbehandling(setteDatabaseider = true)
             behandling.virkningstidspunkt = LocalDate.parse("2023-01-01")
 
             // gjeldende sivilstand
