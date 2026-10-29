@@ -42,8 +42,11 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
-    # Rot-pom.xml inkluderer alle Maven-modulene, også undermodulene.
+    # Avgrens versjonsoppdateringer til rot-POM; modulene har egne jobber.
     directory: "/"
+    exclude-paths:
+      - "apps/**"
+      - "libs/**"
     cooldown:
       default-days: 7
     registries:
@@ -54,14 +57,1008 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      maven-dependencies:
+      maven-root-dependencies:
         patterns:
           - "*"
-      maven-security:
+      maven-root-security:
         applies-to: security-updates
         patterns:
           - "*"
     open-pull-requests-limit: 20
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  # Rot-POM-en trengs for arvede versjoner. Oppdater ignore-listene ved nye rotavhengigheter.
+  - package-ecosystem: "maven"
+    directory: "/libs/bidrag-oppgave-dto"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-oppgave-dto-dependencies:
+        patterns:
+          - "*"
+      maven-oppgave-dto-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/libs/bidrag-felles/*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-felles-dependencies:
+        patterns:
+          - "*"
+      maven-felles-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/libs/bidrag-beregn-felles/*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-beregn-felles-dependencies:
+        patterns:
+          - "*"
+      maven-beregn-felles-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  # Hver app har en jobb; parent-POM-ene dekker appenes undermoduler.
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-admin"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-admin-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-admin-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-aktoerregister"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-aktoerregister-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-aktoerregister-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-arbeidsflyt"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-arbeidsflyt-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-arbeidsflyt-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-automatisk-jobb"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-automatisk-jobb-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-automatisk-jobb-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-bbm"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-bbm-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-bbm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-behandling"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-behandling-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-behandling-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-belopshistorikk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-belopshistorikk-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-belopshistorikk-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-bidragskalkulator"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-bidragskalkulator-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-bidragskalkulator-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-dokumenthåndtering"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-dokumenthandtering-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-dokumenthandtering-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-elin-stub"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-elin-stub-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-elin-stub-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-grunnlag"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-grunnlag-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-grunnlag-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-henvendelse"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-henvendelse-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-henvendelse-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-kodeverk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-kodeverk-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-kodeverk-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-maskinporten-client"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-maskinporten-client-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-maskinporten-client-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-oppgave"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-oppgave-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-oppgave-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-organisasjon"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-organisasjon-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-organisasjon-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-person"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-person-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-person-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-person-hendelse"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-person-hendelse-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-person-hendelse-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-regnskap"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-regnskap-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-regnskap-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-reisekostnad-api"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-reisekostnad-api-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-reisekostnad-api-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-reskontro"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-reskontro-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-reskontro-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-sak"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-sak-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-sak-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-samhandler"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-samhandler-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-samhandler-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-sjablon"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-sjablon-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-sjablon-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-statistikk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-statistikk-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-statistikk-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-tilgangskontroll"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-tilgangskontroll-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-tilgangskontroll-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-vedtak"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-bidrag-vedtak-dependencies:
+        patterns:
+          - "*"
+      maven-bidrag-vedtak-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "maven"

@@ -232,16 +232,8 @@ class BidragSakController(
         ],
     )
     fun post(
-        @Parameter(
-            name = "X-Enhet",
-            required = true,
-            description = "Saksbehandlers påloggede enhet",
-        )
-        @RequestHeader("X-Enhet")
-        enhet: String,
         @RequestBody nySakCommandDto: NySakCommandDto,
     ): ResponseEntity<NySakResponseDto> {
-        logger.info { "Oppretter ny sak. Saksbehandlers påloggede enhet: ${enhet.sanitizeForLog()}" }
         val nySakResponseDto = bidragSakService.nySak(nySakCommandDto)
         return ResponseEntity(nySakResponseDto, HttpStatus.CREATED)
     }

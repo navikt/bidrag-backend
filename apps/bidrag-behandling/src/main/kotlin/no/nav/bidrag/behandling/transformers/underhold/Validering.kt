@@ -231,7 +231,11 @@ fun Set<FaktiskTilsynsutgift>.validerePerioderFaktiskTilsynsutgift(): Underholds
     ),
 )
 
-fun Set<Underholdskostnad>.valider() = this.map { it.valider() }.filter { it.harFeil }.toSet()
+fun Set<Underholdskostnad>.valider() = this
+    .filter { it.rolle == null || it.gjelderAndreBarn || it.rolle!!.kreverGrunnlagForBeregning }
+    .map { it.valider() }
+    .filter { it.harFeil }
+    .toSet()
 
 fun Underholdskostnad.valider(): UnderholdskostnadValideringsfeil = UnderholdskostnadValideringsfeil(
     gjelderUnderholdskostnad = this,
