@@ -38,6 +38,23 @@
         <json-path.version>3.0.0</json-path.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
          mockk.version. Uten dette trekker springmockk inn en eldre
          mockk-dsl-jvm enn bidrag-backend-commons-test sin Stubs.kt er kompilert

@@ -2,11 +2,6 @@ name: Bidrag-dokument-arkiv
 on:
   workflow_call:
     inputs:
-      bibliotekartefakt:
-        description: Navn på artefaktet med ferdige biblioteker fra bygg-apper.
-        required: false
-        type: string
-        default: ''
       miljo:
         required: false
         type: string
@@ -49,7 +44,6 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
-      bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
       nais_cluster: fss
       nais_hovedfil_navn: bidrag-dokument-arkiv/nais.yaml
       nais_variabler_filnavn_q1: bidrag-dokument-arkiv/q1.yaml

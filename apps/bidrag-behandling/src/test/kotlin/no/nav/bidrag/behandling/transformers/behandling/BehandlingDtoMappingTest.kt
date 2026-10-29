@@ -4,11 +4,10 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.mockkClass
-import no.nav.bidrag.behandling.TestContainerRunner
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
+import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Notat
 import no.nav.bidrag.behandling.database.datamodell.Utgiftspost
@@ -50,15 +49,11 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnl
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-class BehandlingDtoMappingTest : TestContainerRunner() {
-    @Autowired
-    lateinit var tilgangskontrollService: TilgangskontrollService
-
+class BehandlingDtoMappingTest {
     lateinit var mapper: Dtomapper
     lateinit var bidragBeløpsistorikkConsumer: BidragBeløpshistorikkConsumer
     lateinit var validering: ValiderBeregning
@@ -71,17 +66,17 @@ class BehandlingDtoMappingTest : TestContainerRunner() {
 
     val behandlingService: BehandlingService = mockk()
 
-    @MockK
-    lateinit var personService: PersonService
-
     @BeforeEach
     fun initMocks() {
-        stubPersonConsumer()
         stubKodeverkProvider()
         stubSjablonProvider()
         stubSaksbehandlernavnProvider()
         validering = ValiderBeregning()
-        val personService = PersonService(stubPersonConsumer())
+        val personConsumer = stubPersonConsumer()
+        val personService = PersonService(personConsumer)
+        val tilgangskontrollConsumer = mockk<BidragTilgangskontrollConsumer>()
+        every { tilgangskontrollConsumer.sjekkTilgangPersonISak(any(), any()) } returns true
+        val tilgangskontrollService = TilgangskontrollService(tilgangskontrollConsumer, personConsumer)
         validerBehandling = mockkClass(ValiderBehandlingService::class)
         every { validerBehandling.kanBehandlesINyLøsning(any()) } returns null
         vedtakGrunnlagsmapper =
