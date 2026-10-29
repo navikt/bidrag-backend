@@ -60,7 +60,7 @@ def select_affected_apps(app_filters, event_name, branch, changed_paths):
     if event_name == "push" and branch != "main":
         return []
     # En endring i felles CI-oppsett må sjekkes mot alle apper i PR og merge-kø.
-    if event_name != "push" and any(path in SHARED_CI_FILES for path in changed_paths):
+    if event_name != "push" and any(path in SHARED_BUILD_FILES or path.startswith(".mvn/") for path in changed_paths):
         return list(app_filters)
     return [app for app, patterns in app_filters.items()
             if any(path_matches_filters(path, patterns) for path in changed_paths)
