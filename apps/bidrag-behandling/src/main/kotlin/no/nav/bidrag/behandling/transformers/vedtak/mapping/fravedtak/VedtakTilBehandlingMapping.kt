@@ -750,11 +750,12 @@ class VedtakTilBehandlingMapping(
             andreBarnTilBidragsmottakerGrunnlag
                 .filter { !faktiskPeriodeGjelderReferanser.contains(it.barn.gjelderPerson) }
                 .filter { hentPersonMedReferanse(it.barn.gjelderPerson)?.type != Grunnlagstype.PERSON_SØKNADSBARN }
-                .map {
+                .mapNotNull {
                     val personGrunnlag = hentPersonMedReferanse(it.barn.gjelderPerson)
                     val gjelderBarn = personGrunnlag!!.personObjekt
                     val bidragsmottakerIdent =
                         finnBidragsmottakerIdentAndreBarn(behandling, personGrunnlag, it.bidragsmottakerReferanse)
+                    if (behandling.alleBidragsmottakere.none { it.ident == bidragsmottakerIdent }) return@mapNotNull null
                     indexU += 1L
                     if (lesemodus) {
                         Underholdskostnad(
