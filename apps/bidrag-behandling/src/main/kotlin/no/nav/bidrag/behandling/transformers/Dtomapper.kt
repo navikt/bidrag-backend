@@ -1725,7 +1725,7 @@ class Dtomapper(
 
         return behandling.alleBidragsmottakere
             .map { bm ->
-                val boforholdForBM = boforholdBM.get(bm)
+                val boforholdForBM = boforholdBM[bm]
                 HusstandsmedlemGrunnlagBMDto(
                     gjelderBM = bm.tilDto(),
                     husstandsmedlem = boforholdForBM?.tilHusstandsmedlem() ?: emptySet(),

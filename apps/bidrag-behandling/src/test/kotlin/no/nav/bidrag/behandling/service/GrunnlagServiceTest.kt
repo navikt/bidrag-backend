@@ -20,6 +20,8 @@ import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
 import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
@@ -620,6 +622,83 @@ class GrunnlagServiceTest : TestContainerRunner() {
                         grunnlagBarn.filter { Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER == it.type }.size shouldBe 4
                     }
                 }
+            }
+
+            @Test
+            @Transactional
+            open fun `skal opprette manglende bearbeidet boforhold per bidragsmottaker`() {
+                val behandling = oppretteTestbehandling(false, false, false, behandlingstype = TypeBehandling.BIDRAG)
+                behandling.forholdsmessigFordeling = ForholdsmessigFordeling()
+
+                val bidragsmottaker1 = behandling.bidragsmottaker!!
+                val bidragsmottaker2 =
+                    Rolle(
+                        behandling = behandling,
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        ident = testdataHusstandsmedlem1.ident,
+                        fødselsdato = testdataHusstandsmedlem1.fødselsdato,
+                    )
+                behandling.roller.add(bidragsmottaker2)
+
+                fun Rolle.knyttTilBidragsmottaker(saksnummer: String, bidragsmottakerIdent: String) {
+                    forholdsmessigFordeling =
+                        ForholdsmessigFordelingRolle(
+                            tilhørerSak = saksnummer,
+                            behandlerenhet = behandling.behandlerEnhet,
+                            delAvOpprinneligBehandling = true,
+                            erRevurdering = false,
+                            bidragsmottaker = bidragsmottakerIdent,
+                        )
+                }
+
+                bidragsmottaker1.knyttTilBidragsmottaker(behandling.saksnummer, bidragsmottaker1.ident!!)
+                bidragsmottaker2.knyttTilBidragsmottaker("987654321", bidragsmottaker2.ident!!)
+                behandling.søknadsbarn[0].knyttTilBidragsmottaker(behandling.saksnummer, bidragsmottaker1.ident!!)
+                behandling.søknadsbarn[1].knyttTilBidragsmottaker("987654321", bidragsmottaker2.ident!!)
+
+                val rådataAktivert = LocalDateTime.now()
+                listOf(bidragsmottaker1, bidragsmottaker2).forEach { bidragsmottaker ->
+                    behandling.grunnlag.add(
+                        Grunnlag(
+                            behandling = behandling,
+                            type = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN,
+                            data = "[]",
+                            innhentet = rådataAktivert,
+                            aktiv = rådataAktivert,
+                            rolle = bidragsmottaker,
+                        ),
+                    )
+                }
+                // Gammel feil: boforhold for søknadsbarn til BM2 lagret på BM1
+                val feilLagretGrunnlag =
+                    Grunnlag(
+                        behandling = behandling,
+                        type = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN,
+                        erBearbeidet = true,
+                        data = "[]",
+                        innhentet = rådataAktivert,
+                        aktiv = rådataAktivert,
+                        rolle = bidragsmottaker1,
+                        gjelder = behandling.søknadsbarn[1].ident,
+                        gjelderBarnRolle = behandling.søknadsbarn[1],
+                    )
+                behandling.grunnlag.add(feilLagretGrunnlag)
+
+                grunnlagService.opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
+
+                behandling.grunnlag.contains(feilLagretGrunnlag) shouldBe false
+                val bearbeidetGrunnlag =
+                    behandling.grunnlag.filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet }
+                bearbeidetGrunnlag shouldHaveSize 2
+                bearbeidetGrunnlag.map { it.rolle.ident to it.gjelderBarnRolle?.ident }.toSet() shouldBe
+                    setOf(
+                        bidragsmottaker1.ident to behandling.søknadsbarn[0].ident,
+                        bidragsmottaker2.ident to behandling.søknadsbarn[1].ident,
+                    )
+                bearbeidetGrunnlag.all { it.aktiv != null } shouldBe true
+
+                grunnlagService.opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
+                behandling.grunnlag.filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet } shouldHaveSize 2
             }
 
             @Test
