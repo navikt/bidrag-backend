@@ -17,7 +17,7 @@ I tillegg eksponerer tjenesten et API for å starte, stoppe og overvåke batchjo
 
 ## Kom i gang
 
-**Forutsetninger:** Java 21, Maven, tilgang til FSS-nettverk (DB2)
+**Forutsetninger:** Java 25, Maven, tilgang til FSS-nettverk (DB2)
 
 ```bash
 # Bygg

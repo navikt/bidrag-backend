@@ -571,7 +571,7 @@ class NotatOpplysningerService(
             NotatInntekterDto(
                 notat =
                 behandling.tilNotatInntekt(
-                    saksnummer?.let { behandling.bidragsmottakerForSak(it) } ?: behandling.bidragsmottaker!!,
+                    behandling.bidragsmottakerForSak(saksnummer),
                 ),
                 notatPerRolle =
                 rollerForNotat

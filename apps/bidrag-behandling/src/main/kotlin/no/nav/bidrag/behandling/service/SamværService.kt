@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -251,6 +252,7 @@ class SamværService(
         behandling: Behandling,
         opphørSlettet: Boolean = false,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         behandling.samvær.forEach {
             val virkningstidspunkt = it.rolle.finnBeregnFra().toLocalDate()
@@ -266,8 +268,10 @@ class SamværService(
                         periode.fom = virkningstidspunkt
                     }
                 }
-            it.perioder.filter { it.fom == forrigeVirkningstidspunkt }.forEach { periode ->
-                periode.fom = virkningstidspunkt
+            if (søknadsbarnSomEndres == null || it.rolle in søknadsbarnSomEndres) {
+                it.perioder.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt }?.let { periode ->
+                    periode.fom = virkningstidspunkt
+                }
             }
             it.perioder
                 .filter { it.fom > beregnTil }

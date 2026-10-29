@@ -78,16 +78,16 @@ class BidragGrunnlagConsumer(
         ): List<GrunnlagRequestDto> = henteGrunnlag(
             personident,
             Grunnlagsobjektvelger.requestobjekter(behandling.tilType(), rolletype),
-            behandling.virkningstidspunktEllerSøktFomDato,
+            behandling.eldsteVirkningstidspunkt,
         )
 
         private fun henteGrunnlag(
             personident: Personident,
             grunnlagstyper: Set<GrunnlagRequestType>,
-            virkningstidspunktEllerSøktFra: LocalDate,
+            eldsteVirkningstidspunkt: LocalDate,
         ) = grunnlagstyper
             .map {
-                val fradato = finneFraDato(it, virkningstidspunktEllerSøktFra)
+                val fradato = finneFraDato(it, eldsteVirkningstidspunkt)
                 val tildato = LocalDate.now().plusDays(1)
 
                 GrunnlagRequestDto(
@@ -101,9 +101,9 @@ class BidragGrunnlagConsumer(
 
         private fun finneFraDato(
             type: GrunnlagRequestType,
-            virkningstidspunktEllerSøktFra: LocalDate,
+            eldsteVirkningstidspunkt: LocalDate,
         ): LocalDate {
-            val fradato = setOf(LocalDate.now(), virkningstidspunktEllerSøktFra).min()
+            val fradato = setOf(LocalDate.now(), eldsteVirkningstidspunkt).min()
 
             return when (type) {
                 GrunnlagRequestType.SKATTEGRUNNLAG -> {

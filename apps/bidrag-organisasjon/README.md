@@ -60,3 +60,21 @@ Denne er ikke, og skal heller ikke være tilgjengelig i prod.
 
 ### Tilgjengelige tjenester (endepunkter)
 Se Swagger
+
+### Latensmetrikker
+
+Prometheus-metrikker eksponeres på `/bidrag-organisasjon/actuator/prometheus`.
+Histogrammer er aktivert for `http.server.requests` og `http.client.requests`,
+slik at registrerte HTTP-timere eksporterer `_bucket`-serier i tillegg til `_count`
+og `_sum`. Klientmetrikker krever at HTTP-klienten er instrumentert med Micrometer.
+
+Eksempel på p95-responstid i sekunder per endepunkt, aggregert over replikaer:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum by (le, uri) (
+    rate(http_server_requests_seconds_bucket{app="bidrag-organisasjon", uri!~"/actuator.*"}[5m])
+  )
+)
+```

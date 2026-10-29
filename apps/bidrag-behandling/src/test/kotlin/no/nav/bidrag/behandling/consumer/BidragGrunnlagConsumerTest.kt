@@ -7,6 +7,7 @@ import io.mockk.clearAllMocks
 import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.behandling.TestContainerRunner
 import no.nav.bidrag.behandling.utils.testdata.TestdataManager
+import no.nav.bidrag.behandling.utils.testdata.synkSøknadsbarnVirkningstidspunkt
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.vedtak.Formål
 import org.junit.jupiter.api.BeforeEach
@@ -32,6 +33,7 @@ class BidragGrunnlagConsumerTest : TestContainerRunner() {
         // given
         val behandling = testdataManager.oppretteBehandling(false)
         val grunnlagRequestobjekter = BidragGrunnlagConsumer.henteGrunnlagRequestobjekterForBehandling(behandling)
+        behandling.synkSøknadsbarnVirkningstidspunkt()
 
         stubUtils.stubHenteGrunnlag()
 
@@ -51,6 +53,7 @@ class BidragGrunnlagConsumerTest : TestContainerRunner() {
     fun `skal angi riktig periode i requestobjekter for henting av grunnlag`() {
         // gitt
         val behandling = testdataManager.oppretteBehandling(false)
+        behandling.synkSøknadsbarnVirkningstidspunkt()
 
         // hvis
         val grunnlagRequest = BidragGrunnlagConsumer.henteGrunnlagRequestobjekterForBehandling(behandling)
@@ -83,6 +86,7 @@ class BidragGrunnlagConsumerTest : TestContainerRunner() {
         // gitt
         val behandling = testdataManager.oppretteBehandling(false)
         behandling.virkningstidspunkt = LocalDate.now().minusYears(6)
+        behandling.synkSøknadsbarnVirkningstidspunkt()
 
         // hvis
         val grunnlagRequest = BidragGrunnlagConsumer.henteGrunnlagRequestobjekterForBehandling(behandling)

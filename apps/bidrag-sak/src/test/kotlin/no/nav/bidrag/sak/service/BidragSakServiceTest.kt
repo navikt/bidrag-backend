@@ -1259,6 +1259,62 @@ internal class BidragSakServiceTest {
                 result.first().vedtakType shouldBe null
             }
         }
+
+        @Nested
+        inner class Behandlingstype {
+            private fun søknadMedSoknType(soknType: String?) = Søknad(
+                id = null,
+                søknadslinjer = mutableListOf(),
+                hendelser = mutableListOf(),
+                blankett =
+                no.nav.bidrag.sak.domain
+                    .Blankett(blankettId = 1, soknFraKode = null, soknType = soknType),
+            )
+
+            @Test
+            fun `skal mappe soknType til behandlingstype`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(
+                        Hendelse(
+                            saksnummer = saksnummer.verdi,
+                            type = HendelseType.BRUKERSTØTTE,
+                            enhet = "1701",
+                            søknad = søknadMedSoknType(no.nav.bidrag.domene.enums.behandling.Behandlingstype.FORHOLDSMESSIG_FORDELING.bisysKode),
+                        ),
+                    )
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe no.nav.bidrag.domene.enums.behandling.Behandlingstype.FORHOLDSMESSIG_FORDELING
+            }
+
+            @Test
+            fun `skal returnere null for behandlingstype når soknType er ukjent`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(
+                        Hendelse(
+                            saksnummer = saksnummer.verdi,
+                            type = HendelseType.BRUKERSTØTTE,
+                            enhet = "1701",
+                            søknad = søknadMedSoknType("XX"),
+                        ),
+                    )
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe null
+            }
+
+            @Test
+            fun `skal returnere null for behandlingstype når blankett mangler`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(Hendelse(saksnummer = saksnummer.verdi, type = HendelseType.BRUKERSTØTTE, enhet = "1701", søknad = null))
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe null
+            }
+        }
     }
 
     @Nested
