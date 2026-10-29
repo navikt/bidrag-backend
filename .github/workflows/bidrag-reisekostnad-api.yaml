@@ -2,11 +2,6 @@ name: Bidrag-reisekostnad-api
 on:
   workflow_call:
     inputs:
-      bibliotekartefakt:
-        description: Navn på artefaktet med ferdige biblioteker fra bygg-apper.
-        required: false
-        type: string
-        default: ''
       miljo:
         required: false
         type: string
@@ -48,9 +43,8 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
-      bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
       java-version: '25'
-      runner: ubuntu-latest-4-cores
+      runner: ubuntu-latest
       nais_hovedfil_navn: bidrag-reisekostnad-api/nais.yaml
       nais_variabler_filnavn_q1: bidrag-reisekostnad-api/preprod.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}

@@ -2,11 +2,6 @@ name: Bidrag-behandling
 on:
   workflow_call:
     inputs:
-      bibliotekartefakt:
-        description: Navn på artefaktet med ferdige biblioteker fra bygg-apper.
-        required: false
-        type: string
-        default: ''
       miljo:
         required: false
         type: string
@@ -50,8 +45,6 @@ jobs:
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
-      bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
-      bibliotekgrupper: felles,beregn
       runner: ubuntu-latest-8-cores
       nais_hovedfil_navn: bidrag-behandling/nais.yaml
       nais_variabler_filnavn_q1: bidrag-behandling/q1.yaml

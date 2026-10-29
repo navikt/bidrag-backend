@@ -42,7 +42,6 @@ jobs:
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-pdfgen-prod-${{ github.ref }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
