@@ -11,6 +11,7 @@ import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import io.mockk.verifyOrder
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
@@ -133,6 +134,26 @@ internal class BidragSakServiceTest {
             bidragSakService.opprettSak(opprettSakRequest)
 
             saveSakSlot.captured.land shouldBe "NOR"
+        }
+
+        @Test
+        fun `skal overføre til skjermet enhet ved behov før saken lagres`() {
+            val opprettSakRequest =
+                OpprettSakRequest(
+                    eierfogd = Enhetsnummer("1701"),
+                    roller =
+                    setOf(
+                        RolleDto(Personident(FnrGenerator.generer()), Rolletype.BIDRAGSMOTTAKER),
+                        RolleDto(Personident(FnrGenerator.generer()), Rolletype.BIDRAGSPLIKTIG),
+                    ),
+                )
+
+            bidragSakService.opprettSak(opprettSakRequest)
+
+            verifyOrder {
+                arbeidsfordelingService.utførArbeidsfordelingPåNySak(any())
+                bidragssakRepositoryMock.save(any())
+            }
         }
 
         @Test
@@ -270,6 +291,11 @@ internal class BidragSakServiceTest {
             verify(exactly = 1) { rolleService.oppdaterRoller(any(), req.roller) }
             // hendelse sendt
             verify(exactly = 1) { hendelseService.opprettKafkaHendelse(any(), any()) }
+            verifyOrder {
+                rolleService.oppdaterRoller(any(), req.roller)
+                arbeidsfordelingService.utførArbeidsfordeling(any())
+                bidragssakRepositoryMock.save(any())
+            }
         }
 
         @Test

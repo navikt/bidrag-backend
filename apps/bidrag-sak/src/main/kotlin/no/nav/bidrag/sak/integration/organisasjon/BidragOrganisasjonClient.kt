@@ -5,7 +5,9 @@ import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
@@ -22,5 +24,6 @@ class BidragOrganisasjonClient(
             .build()
             .toUri()
 
-    fun hentEnhetForArbeidsfordelingGeografiskTilknytning(hentEnhetRequest: HentEnhetRequest): EnhetDto = postForNonNullEntity(bidragOrganisasjonUri, hentEnhetRequest)
+    fun hentEnhetForArbeidsfordelingGeografiskTilknytning(hentEnhetRequest: HentEnhetRequest): EnhetDto = postForEntity(bidragOrganisasjonUri, hentEnhetRequest)
+        ?: throw HttpClientErrorException(HttpStatus.NOT_FOUND, "Arbeidsfordelingen i Norg ga ingen enhet for saken")
 }

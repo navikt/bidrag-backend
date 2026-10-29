@@ -234,6 +234,7 @@ class BidragSakService(
         val fødselsdatoer = hentFødselsdatoer(opprettSakRequest)
         val saksnummer = hentNyttSaksnummerFraDatabase()
         val bidragssak = opprettSakRequest.toBidragssak(saksnummer, fødselsdatoer)
+        arbeidsfordelingService.utførArbeidsfordelingPåNySak(bidragssak)
         val opprettetBidragssak = bidragssakRepository.save(bidragssak)
 
         val rollerFørOppdatering = opprettetBidragssak.roller.toRolleDto(true)
@@ -323,6 +324,7 @@ class BidragSakService(
             roller = rolleService.oppdaterRoller(sak, oppdaterSakRequest.roller).toMutableSet()
         }
 
+        arbeidsfordelingService.utførArbeidsfordeling(sak)
         bidragssakRepository.save(sak)
 
         val lagretSak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
