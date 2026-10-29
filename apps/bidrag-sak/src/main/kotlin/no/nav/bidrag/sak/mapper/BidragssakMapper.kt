@@ -9,6 +9,8 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.Forelderrolle
+import no.nav.bidrag.sak.domain.FØRSTE_OBJEKTNUMMER_BARN
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
@@ -55,14 +57,16 @@ object BidragssakMapper {
     fun Collection<RolleDto>.toRoller(
         fødselsdatoer: Map<Personident, LocalDate?>,
         bidragssak: Bidragssak,
-    ): Set<Rolle> = (this.mapBarnTilRoller(fødselsdatoer, bidragssak = bidragssak) + this.mapIkkeBarnTilRoller(fødselsdatoer)).toSet()
+    ): Set<Rolle> = (this.mapBarnTilRoller(fødselsdatoer, bidragssak = bidragssak) + this.mapForeldreTilRoller(fødselsdatoer)).toSet()
 
-    private fun Collection<RolleDto>.mapIkkeBarnTilRoller(fødselsdatoer: Map<Personident, LocalDate?>): List<Rolle> = setOf(Rolletype.BIDRAGSPLIKTIG, Rolletype.BIDRAGSMOTTAKER).map { rolletype ->
-        val rolleDto = this.firstOrNull { it.type == rolletype }
+    private fun Collection<RolleDto>.mapForeldreTilRoller(
+        fødselsdatoer: Map<Personident, LocalDate?>,
+    ): List<Rolle> = Forelderrolle.entries.map { forelderrolle ->
+        val rolleDto = this.firstOrNull { it.type == forelderrolle.rolletype }
         Rolle(
             fødselsnummer = rolleDto?.fødselsnummer?.verdi,
-            objektnummer = if (rolletype == Rolletype.BIDRAGSPLIKTIG) "01" else "02",
-            rolleType = rolletype,
+            objektnummer = forelderrolle.objektnummer,
+            rolleType = forelderrolle.rolletype,
             ukjentPart = if (rolleDto?.fødselsnummer?.verdi.isNullOrBlank()) UkjentPart.UK else null,
             mottagerErVerge = rolleDto?.mottagerErVerge ?: false,
             fødselsdato = fødselsdatoer[rolleDto?.fødselsnummer],
@@ -73,12 +77,12 @@ object BidragssakMapper {
         fødselsdatoer: Map<Personident, LocalDate?>,
         bidragssak: Bidragssak,
     ): List<Rolle> = this
-        .filter { it.type == Rolletype.BIDRAGSPLIKTIG || it.type == Rolletype.BIDRAGSMOTTAKER }
-        .map { dto ->
+        .mapNotNull { dto -> Forelderrolle.fra(dto.type)?.let { dto to it } }
+        .map { (dto, forelderrolle) ->
             Rolle(
                 fødselsnummer = dto.fødselsnummer?.verdi,
-                rolleType = dto.type,
-                objektnummer = if (dto.type == Rolletype.BIDRAGSPLIKTIG) "01" else "02",
+                rolleType = forelderrolle.rolletype,
+                objektnummer = forelderrolle.objektnummer,
                 ukjentPart = if (dto.fødselsnummer == null) UkjentPart.UK else null,
                 mottagerErVerge = dto.mottagerErVerge,
                 fødselsdato = fødselsdatoer[dto.fødselsnummer],
@@ -88,7 +92,7 @@ object BidragssakMapper {
 
     fun Collection<RolleDto>.mapBarnTilRoller(
         fødselsdatoer: Map<Personident, LocalDate?>,
-        førsteLedigeObjektnummer: Int = 3,
+        førsteLedigeObjektnummer: Int = FØRSTE_OBJEKTNUMMER_BARN,
         bidragssak: Bidragssak,
     ): List<Rolle> = this
         .filter { it.type == Rolletype.BARN }

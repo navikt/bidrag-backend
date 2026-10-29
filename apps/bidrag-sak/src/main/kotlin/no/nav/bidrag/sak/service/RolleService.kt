@@ -8,6 +8,7 @@ import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.FØRSTE_OBJEKTNUMMER_BARN
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
@@ -163,7 +164,10 @@ class RolleService(
         return roller.map { it.medFødselsdato(fødselsdatoer) }
     }
 
-    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>) = (eksisterendeRoller.maxOfOrNull { it.objektnummer?.toInt() ?: 2 } ?: 2) + 1
+    private fun finnFørsteLedigeObjektnummer(eksisterendeRoller: Collection<Rolle>): Int {
+        val høyesteBrukte = eksisterendeRoller.mapNotNull { it.objektnummer?.toInt() }.maxOrNull() ?: 0
+        return maxOf(høyesteBrukte + 1, FØRSTE_OBJEKTNUMMER_BARN)
+    }
 
     private fun oppdaterEksiterendeRoller(
         dtoRollerTilOppdatering: List<RolleMedFødselsdato>,

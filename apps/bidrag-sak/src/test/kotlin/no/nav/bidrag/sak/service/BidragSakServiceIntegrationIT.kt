@@ -192,6 +192,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         @Test
         fun `skal lagre ny reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(30))
 
             // BA3 er under 18 i setup, men nå legger vi til RM på BA3 -> OK
             bidragssakService.oppdaterSak(
@@ -249,6 +250,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         @Test
         fun `skal lagre endring av reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(30))
 
             // BA1 er myndig -> fortsatt RM (bytter RM)
             bidragssakService.oppdaterSak(
@@ -281,13 +283,18 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
 
         @Test
         fun `skal takle internt bytte av reell mottager`() {
+            val rmFnrBA1 = genererPersonident()
+            val rmFnrBA2 = genererPersonident()
+            stubPerson(rmFnrBA1, LocalDate.now().minusYears(30))
+            stubPerson(rmFnrBA2, LocalDate.now().minusYears(30))
+
             bidragssakService.oppdaterSak(
                 OppdaterSakRequest(
                     saksnummer = saksnummer,
                     roller =
                     setOf(
-                        rolleBarnMedRm(fnrBA1, rm = genererPersonident().verdi),
-                        rolleBarnMedRm(fnrBA2, rm = genererPersonident().verdi),
+                        rolleBarnMedRm(fnrBA1, rm = rmFnrBA1.verdi),
+                        rolleBarnMedRm(fnrBA2, rm = rmFnrBA2.verdi),
                     ),
                 ),
             )

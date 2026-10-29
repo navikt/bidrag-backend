@@ -78,6 +78,26 @@ internal class RolleServiceTest {
     }
 
     @Test
+    fun `nytt barn får ikke objektnummeret til BM når bare BP er lagret`() {
+        val fødselsnummerBm = genererFødselsnummer(LocalDate.now().minusYears(30))
+        bidragssak.roller =
+            mutableSetOf(
+                Rolle(fødselsnummer = fødselsnummerBp, rolleType = Rolletype.BIDRAGSPLIKTIG, objektnummer = "01", bidragssak = bidragssak),
+            )
+        val rolleDtoer =
+            setOf(
+                RolleDto(fødselsnummer = Personident(fødselsnummerBarn1), type = Rolletype.BARN),
+                RolleDto(fødselsnummer = Personident(fødselsnummerBm), type = Rolletype.BIDRAGSMOTTAKER),
+            )
+        val fødselsdatoer = mapOf(Personident(fødselsnummerBarn1) to null, Personident(fødselsnummerBm) to null)
+
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
+
+        result.single { it.rolleType == Rolletype.BIDRAGSMOTTAKER }.objektnummer shouldBe "02"
+        result.single { it.rolleType == Rolletype.BARN }.objektnummer shouldBe "03"
+    }
+
+    @Test
     fun `skal godta roller når alle personer har fødselsdato-oppslag`() {
         val roller =
             setOf(
