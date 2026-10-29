@@ -7,6 +7,7 @@ import { DataViewTableData } from "~/components/DataViewTable";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
+import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
 
 export const BPAndelUnderholdskostnad = () => {
   const {
@@ -44,8 +45,13 @@ export const BPAndelUnderholdskostnad = () => {
                     label: "Etter fratrekk delt bosted",
                     textRight: false,
                     value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(0.5)}`,
+                    // Sluttberegningen setter beløpet til minst 0. Ved avslag vises det negative beløpet som gir avslaget.
                     result: formatterBeløpForBeregning(
-                      sluttberegning.bpAndelAvUVedDeltBostedBeløp,
+                      erBeregnetAvslagUtenBeløp(sluttberegning!)
+                        ? bpsAndel!.andelBeløp -
+                            delberegningUnderholdskostnad!.underholdskostnad *
+                              0.5
+                        : sluttberegning.bpAndelAvUVedDeltBostedBeløp,
                     ),
                   }
                 : null,
