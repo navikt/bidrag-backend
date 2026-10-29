@@ -202,7 +202,7 @@ fun List<Grunnlag>.henteEndringerIBoforholdBMSøknadsbarnV2(
     aktiveGrunnlag: List<Grunnlag>,
     behandling: Behandling,
 ): Set<HusstandsmedlemGrunnlagBMDto> {
-    val virkniningstidspunkt = behandling.virkningstidspunktEllerSøktFomDato
+    val virkniningstidspunkt = behandling.eldsteVirkningstidspunkt
 
     val aktiveBoforholdsdata =
         aktiveGrunnlag.hentAlleBearbeidaBoforholdTilBMSøknadsbarn(virkniningstidspunkt).toSet()
