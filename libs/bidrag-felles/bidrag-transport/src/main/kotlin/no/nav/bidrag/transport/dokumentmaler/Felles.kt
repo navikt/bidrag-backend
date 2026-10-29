@@ -245,7 +245,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
 
             val deltBosted get() =
                 sluttberegning?.bidragJustertForDeltBosted == true ||
-                    sluttberegning?.resultat == Resultatkode.BIDRAG_JUSTERT_FOR_DELT_BOSTED
+                    sluttberegning?.resultat == Resultatkode.BIDRAG_JUSTERT_FOR_DELT_BOSTED ||
+                    sluttberegning?.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED
         }
     }
 }

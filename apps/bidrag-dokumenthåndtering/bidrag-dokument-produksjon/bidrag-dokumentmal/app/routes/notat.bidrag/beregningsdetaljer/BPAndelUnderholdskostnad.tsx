@@ -18,7 +18,7 @@ export const BPAndelUnderholdskostnad = () => {
     forskuddssats,
     bpsAndel,
   } = useBeregningDetaljer();
-  // Ved avslag for delt bosted beregnes ikke bidraget, så beløpet etter fratrekk regnes ut her
+  // Ved avslag for delt bosted setter sluttberegningen beløpet etter fratrekk til 0, så det negative beløpet regnes ut her
   const erAvslagDeltBosted =
     sluttberegning?.resultat === Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED;
   return (
@@ -43,7 +43,7 @@ export const BPAndelUnderholdskostnad = () => {
                 value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(bpsAndel.endeligAndelFaktor)}`,
                 result: formatterBeløpForBeregning(bpsAndel.andelBeløp),
               },
-              deltBosted || erAvslagDeltBosted
+              deltBosted
                 ? {
                     label: "Etter fratrekk delt bosted",
                     textRight: false,
