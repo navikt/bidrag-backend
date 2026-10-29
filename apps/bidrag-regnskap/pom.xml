@@ -25,7 +25,7 @@
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
         <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <okhttp.version>5.5.0</okhttp.version>
+        <okhttp.version>5.5.1</okhttp.version>
         <mockk.version>1.14.11</mockk.version>
         <unleash-client-java.version>12.3.1</unleash-client-java.version>
         <kotest.version>6.2.6</kotest.version>

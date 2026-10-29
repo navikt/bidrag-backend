@@ -79,7 +79,6 @@ jobs:
     name: "Build and deploy to prod"
     concurrency:
       group: deploy-kafka-manager-prod-${{ github.ref }}
-      cancel-in-progress: true
     runs-on: ubuntu-latest
     permissions:
       contents: "write"
