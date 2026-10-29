@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.diverse.Tema
 import no.nav.bidrag.domene.enums.person.Diskresjonskode
 import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.consumer.EntraAnsatt
@@ -20,6 +21,7 @@ import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchR
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterRequest
 import no.nav.bidrag.organisasjon.consumer.dto.SkjermingRequest
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
+import no.nav.bidrag.organisasjon.exception.ikkeFunnet
 import no.nav.bidrag.transport.organisasjon.BidragEnheterResponsDto
 import no.nav.bidrag.transport.organisasjon.EnhetBrukerDto
 import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
@@ -53,7 +55,7 @@ class OrganisasjonService(
         val enhetKontaktinfo = norg2Consumer.hentEnhetKontaktinfo(enhetNr.verdi)
         val språkEnum = try {
             spraak?.let { Språk.valueOf(spraak) } ?: Språk.NB
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Språk.NB
         }
 
@@ -179,8 +181,24 @@ class OrganisasjonService(
                 behandlingstema = request.behandlingstema ?: request.arbeidsfordeling?.behandlingstema,
                 behandlingstype = mapBehandlingstype(request) ?: if (utland) BEHANDLINGSTYPE_UTLAND else null,
             )
-        return norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
+
+        val besteMatch = norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
             ?.firstOrNull()?.let { EnhetDto(it.enhetNr, it.navn) }
+            ?: return null
+
+        val enhetErInhabil = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR
+        return if (enhetErInhabil) {
+            finnSettekontorForEnhet(besteMatch)
+        } else {
+            besteMatch
+        }
+    }
+
+    private fun finnSettekontorForEnhet(enhet: EnhetDto): EnhetDto {
+        val settekontor = norg2Consumer.hentEnhetKontaktinfo(enhet.nummer.verdi)?.settekontorEnhetId
+            ?: ikkeFunnet("Fant ikke settekontor for inhabil enhet ${enhet.nummer.verdi}")
+        val navn = norg2Consumer.hentEnhetKontaktinfo(settekontor)?.navn
+        return EnhetDto(Enhetsnummer(settekontor), navn)
     }
 
     private fun finnStrengesteDiskresjonskode(graderingsinfo: Graderingsinfo): Diskresjonskode? {
