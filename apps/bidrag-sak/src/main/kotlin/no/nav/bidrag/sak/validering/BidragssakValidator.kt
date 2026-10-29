@@ -67,12 +67,23 @@ class BidragssakValidator {
         require(rolle.type == Rolletype.BARN || !rolle.harRM()) {
             "Reell mottaker (RM) kan kun registreres på barn (BA)."
         }
+        validerSammeReellMottakerIBeggeFelt(rolle)
 
         val fnr = rolle.fødselsnummer ?: return
         require(grunnlag.finnes(fnr)) { "Person finnes ikke for rolle av type ${rolle.type}." }
 
         if (rolle.type == Rolletype.BARN) {
             validerAlderOgRm(rolle.harRM(), grunnlag.fødselsdato(fnr))
+        }
+    }
+
+    @Deprecated("Fjernes sammen med RolleDto.reellMottager.")
+    @Suppress("DEPRECATION")
+    private fun validerSammeReellMottakerIBeggeFelt(rolle: RolleDto) {
+        val reellMottaker = rolle.reellMottaker?.ident?.takeUnless { it.verdi.isBlank() }
+        val utgåttReellMottager = rolle.reellMottager?.takeUnless { it.verdi.isBlank() }
+        require(reellMottaker == null || utgåttReellMottager == null || reellMottaker == utgåttReellMottager) {
+            "RM er oppgitt med ulik verdi i reellMottaker og reellMottager."
         }
     }
 

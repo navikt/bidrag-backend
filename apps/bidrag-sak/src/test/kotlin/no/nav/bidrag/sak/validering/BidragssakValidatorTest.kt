@@ -335,6 +335,21 @@ class BidragssakValidatorTest {
     @Nested
     inner class ReellMottaker {
         @Test
+        fun `avviser ulik RM i reellMottaker og reellMottager`() {
+            val barn = genererPersonident()
+            val rolle = RolleDto(
+                type = Rolletype.BARN,
+                fødselsnummer = barn,
+                reellMottaker = ReellMottakerDto(ident = ReellMottaker("80060878901")),
+                reellMottager = ReellMottaker(genererPersonident().verdi),
+            )
+
+            shouldThrowMessage("RM er oppgitt med ulik verdi i reellMottaker og reellMottager.") {
+                validator.validerForespurteRoller(setOf(rolle), grunnlag(barn))
+            }
+        }
+
+        @Test
         fun `avviser RM som egen rolle ved opprettelse`() {
             val req =
                 OpprettSakRequest(

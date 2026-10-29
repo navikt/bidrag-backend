@@ -94,18 +94,19 @@ class RolleService(
     fun brukGjeldendeIdent(forespørsel: Set<RolleDto>): Set<RolleDto> {
         val roller = forespørsel.map { rolle ->
             val ident = rolle.fødselsnummer?.takeIf { rolle.type != Rolletype.FEILREGISTRERT }?.let { Personident(gjeldendeIdent(it.verdi)) }
-            val rmIdent = rolle.rmFødselsnummer()?.let { ReellMottaker(gjeldendeIdent(it.verdi)) }
             rolle.copy(
                 fødselsnummer = ident ?: rolle.fødselsnummer,
                 foedselsnummer = ident ?: rolle.foedselsnummer,
-                reellMottaker = rmIdent?.let { rolle.reellMottaker?.copy(ident = it) } ?: rolle.reellMottaker,
-                reellMottager = rmIdent?.takeIf { rolle.reellMottager != null } ?: rolle.reellMottager,
+                reellMottaker = rolle.reellMottaker?.let { it.copy(ident = gjeldendeReellMottakerIdent(it.ident)) },
+                reellMottager = rolle.reellMottager?.let { gjeldendeReellMottakerIdent(it) },
             )
         }
         val unikeRoller = roller.toSet()
         require(roller.size == unikeRoller.size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
         return unikeRoller
     }
+
+    private fun gjeldendeReellMottakerIdent(rm: ReellMottaker) = if (rm.erPersonIdent()) ReellMottaker(gjeldendeIdent(rm.verdi)) else rm
 
     private fun gjeldendeIdent(ident: String) = identConsumer.hentGjeldendeIdent(ident) ?: ident
 
