@@ -1667,10 +1667,6 @@ private fun GrunnlagDto.tilRolle(
     )
 }
 
-// Samme ident kan ha flere roller i behandlingen (f.eks. 18-årsbidrag og ordinært bidrag), så rollen må inngå i nøkkelen
-private val Inntekt.rolleNøkkel get() = rolle?.identifikator ?: gjelderIdent
-private val Inntekt.gjelderBarnNøkkel get() = gjelderBarnRolle?.identifikator ?: gjelderBarnIdent
-
 private fun Inntekt.copy(
     type: Inntektsrapportering? = null,
     kilde: Kilde? = null,
