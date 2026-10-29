@@ -810,7 +810,7 @@ internal fun List<GrunnlagDto>.mapInntekter(
     val erForskuddOmgjøring =
         behandling.soknadFra == SøktAvType.NAV_BIDRAG && behandling.vedtakstype == Vedtakstype.ENDRING
     if (!lesemodus && !erForskuddOmgjøring) {
-        inntekter.groupBy { it.gjelderIdent }.forEach { (_, inntekterRolle) ->
+        inntekter.groupBy { it.rolleNøkkel }.forEach { (_, inntekterRolle) ->
             inntekterRolle
                 .find {
                     it.type ==
@@ -843,7 +843,7 @@ internal fun List<GrunnlagDto>.mapInntekter(
         inntekter
             .filter { ainntekt12Og3MånederFraOpprinneligVedtakstidspunkt.contains(it.type) }
             .sortedByDescending { it.taMed }
-            .distinctBy { listOfNotNull(it.opprinneligFom, it.opprinneligTom, it.type, it.gjelderBarnIdent, it.gjelderIdent) }
+            .distinctBy { listOfNotNull(it.opprinneligFom, it.opprinneligTom, it.type, it.gjelderBarnNøkkel, it.rolleNøkkel) }
     val andreInntekter = inntekter.filter { !ainntekt12Og3MånederFraOpprinneligVedtakstidspunkt.contains(it.type) }
     return (andreInntekter + inntekterBeregnet).toMutableSet()
 }
@@ -869,24 +869,17 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
     lesemodus: Boolean,
 ) = listOfNotNull(
     hentInnhentetAndreBarnTilBidragsmottaker()
-        ?.filter {
-            val person = hentPersonMedReferanse(it.partPersonId) ?: return@filter false
-            behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-        }?.let {
-            if (it.isEmpty()) {
-                emptyList()
-            } else {
-                listOf(
-                    behandling.opprettGrunnlag(
-                        Grunnlagsdatatype.ANDRE_BARN,
-                        it,
-                        it.firstOrNull()?.partPersonId!!,
-                        innhentetTidspunkt(Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER),
-                        lesemodus,
-                        false,
-                    ),
-                )
-            }
+        .filterRollerIBehandling(behandling)
+        .map { (bidragsmottaker, grunnlag) ->
+            behandling.opprettGrunnlag(
+                Grunnlagsdatatype.ANDRE_BARN,
+                grunnlag,
+                bidragsmottaker.ident,
+                innhentetTidspunkt(Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER),
+                lesemodus,
+                false,
+                rolleStønadstype = bidragsmottaker.stønadstype,
+            )
         },
     filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.MANUELLE_VEDTAK)
         .groupBy { it.gjelderBarnReferanse }
@@ -964,18 +957,21 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
             )
         },
     if ((behandling.vedtakstype == Vedtakstype.KLAGE && !lesemodus) || lesemodus) {
-        behandling.stonadstype?.let {
+        behandling.stønadstyperForBeløpshistorikk().flatMap { stønadstype ->
             filtrerOgKonverterBasertPåEgenReferanse<BeløpshistorikkGrunnlag>(
-                grunnlagType = it.tilGrunnlagstypeBeløpshistorikk(),
+                grunnlagType = stønadstype.tilGrunnlagstypeBeløpshistorikk(),
             ).groupBy { it.gjelderBarnReferanse }
                 .filterBarnIBehandling(this, behandling)
                 .map { (gjelderBarnReferanse, grunnlagsliste) ->
                     val grunnlag = grunnlagsliste.firstOrNull()
                     val gjelderBarn = hentPersonMedReferanse(gjelderBarnReferanse)!!
                     val gjelder = grunnlag?.let { hentPersonMedReferanse(grunnlag.gjelderReferanse) }
-                    val rolleBarn = behandling.søknadsbarn.find { it.erSammeRolle(gjelderBarn.personIdent!!, gjelderBarn.stønadstype) }!!
+                    val rolleBarn =
+                        behandling.søknadsbarn.find {
+                            it.erSammeRolle(gjelderBarn.personIdent!!, gjelderBarn.stønadstype ?: stønadstype)
+                        }!!
                     behandling.opprettGrunnlag(
-                        it.tilGrunnlagsdatatypeBeløpshistorikk(),
+                        stønadstype.tilGrunnlagsdatatypeBeløpshistorikk(),
                         behandling.opprettStønadDto(rolleBarn, grunnlag?.innhold),
                         rolleIdent = rolleBarn.ident!!,
                         gjelder = gjelder?.personIdent,
@@ -984,7 +980,7 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
                             ?: grunnlag?.innhold?.tidspunktInnhentet
                             ?: LocalDateTime.now(),
                         lesemodus = lesemodus,
-                        rolleStønadstype = gjelder?.stønadstype,
+                        rolleStønadstype = rolleBarn.stønadstype,
                     )
                 }
         }
@@ -992,17 +988,15 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
         null
     },
     hentGrunnlagArbeidsforhold()
-        .groupBy { it.partPersonId }
-        .filter { (gjelderReferanse) ->
-            val person = hentPersonMedReferanse(gjelderReferanse) ?: return@filter false
-            behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-        }.map { (gjelderIdent, grunnlag) ->
+        .filterRollerIBehandling(behandling)
+        .map { (gjelder, grunnlag) ->
             behandling.opprettGrunnlag(
                 Grunnlagsdatatype.ARBEIDSFORHOLD,
                 grunnlag,
-                gjelderIdent,
+                gjelder.ident,
                 innhentetTidspunkt(Grunnlagstype.INNHENTET_ARBEIDSFORHOLD),
                 lesemodus,
+                rolleStønadstype = gjelder.stønadstype,
             )
         },
     hentInnhentetSivilstand()
@@ -1213,6 +1207,18 @@ private fun List<GrunnlagDto>.hentGrunnlagBarnetilsyn(
         listOf(ikkebearbeida) + bearbeida
     }.flatten()
 
+private fun <T> Map<GjelderPerson, T>.filterRollerIBehandling(behandling: Behandling) = filterKeys { gjelder ->
+    behandling.roller.any { it.erSammeRolle(gjelder.ident, gjelder.stønadstype) }
+}
+
+private val stønadstyperMedBeløpshistorikkPerBarn = setOf(Stønadstype.BIDRAG, Stønadstype.BIDRAG18AAR)
+
+// Samme behandling kan inneholde søknadsbarn med ulik stønadstype (f.eks. 18-årsbidrag og ordinært bidrag)
+private fun Behandling.stønadstyperForBeløpshistorikk(): List<Stønadstype> = (
+    listOfNotNull(stonadstype) +
+        søknadsbarn.mapNotNull { it.stønadstype }.filter { stønadstyperMedBeløpshistorikkPerBarn.contains(it) }
+    ).distinct()
+
 private fun List<GrunnlagDto>.hentGrunnlagInntekt(
     behandling: Behandling,
     lesemodus: Boolean,
@@ -1221,87 +1227,76 @@ private fun List<GrunnlagDto>.hentGrunnlagInntekt(
 } else {
     listOf(
         hentBeregnetInntekt()
-            .entries
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.BEREGNET_INNTEKT),
                     lesemodus,
                     erBearbeidet = true,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
         hentBarnetillegListe()
-            .groupBy { it.partPersonId }
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.BARNETILLEGG,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_BARNETILLEGG),
                     lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
         hentUtvidetbarnetrygdListe()
-            .groupBy { it.personId }
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.UTVIDET_BARNETRYGD,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_UTVIDETBARNETRYGD),
                     lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
         hentSmåbarnstilleggListe()
-            .groupBy { it.personId }
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.SMÅBARNSTILLEGG,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_SMÅBARNSTILLEGG),
                     lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
         hentKontantstøtteListe()
-            .groupBy { it.partPersonId }
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.KONTANTSTØTTE,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_KONTANTSTØTTE),
                     lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
         hentGrunnlagSkattepliktig()
-            .filter { (gjelderIdent) ->
-                val person = hentPersonMedIdent(gjelderIdent) ?: return@filter false
-                behandling.roller.any { it.erSammeRolle(person.personIdent!!, person.stønadstype) }
-            }.map { (gjelderIdent, grunnlag) ->
+            .filterRollerIBehandling(behandling)
+            .map { (gjelder, grunnlag) ->
                 behandling.opprettGrunnlag(
                     Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER,
                     grunnlag,
-                    gjelderIdent,
+                    gjelder.ident,
                     innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE),
                     lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 )
             },
     ).flatten()
@@ -1672,6 +1667,10 @@ private fun GrunnlagDto.tilRolle(
     )
 }
 
+// Samme ident kan ha flere roller i behandlingen (f.eks. 18-årsbidrag og ordinært bidrag), så rollen må inngå i nøkkelen
+private val Inntekt.rolleNøkkel get() = rolle?.identifikator ?: gjelderIdent
+private val Inntekt.gjelderBarnNøkkel get() = gjelderBarnRolle?.identifikator ?: gjelderBarnIdent
+
 private fun Inntekt.copy(
     type: Inntektsrapportering? = null,
     kilde: Kilde? = null,
@@ -1689,6 +1688,8 @@ private fun Inntekt.copy(
             behandling = behandling,
             opprinneligFom = opprinneligFom,
             opprinneligTom = opprinneligTom,
+            rolle = rolle,
+            gjelderBarnRolle = gjelderBarnRolle,
         )
     nyInntekt.inntektsposter =
         inntektsposter
