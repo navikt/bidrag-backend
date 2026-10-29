@@ -7,7 +7,7 @@ import { DataViewTableData } from "~/components/DataViewTable";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
-import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
+import { Resultatkode } from "~/types/Api";
 
 export const BPAndelUnderholdskostnad = () => {
   const {
@@ -18,6 +18,9 @@ export const BPAndelUnderholdskostnad = () => {
     forskuddssats,
     bpsAndel,
   } = useBeregningDetaljer();
+  // Ved avslag for delt bosted beregnes ikke bidraget, så beløpet etter fratrekk regnes ut her
+  const erAvslagDeltBosted =
+    sluttberegning?.resultat === Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED;
   return (
     <div style={{ width: "600px" }}>
       <h4>{`${tekster.begreper.bidragspliktiges} andel`}</h4>
@@ -40,14 +43,13 @@ export const BPAndelUnderholdskostnad = () => {
                 value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(bpsAndel.endeligAndelFaktor)}`,
                 result: formatterBeløpForBeregning(bpsAndel.andelBeløp),
               },
-              deltBosted
+              deltBosted || erAvslagDeltBosted
                 ? {
                     label: "Etter fratrekk delt bosted",
                     textRight: false,
                     value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(0.5)}`,
-                    // Sluttberegningen setter beløpet til minst 0. Ved avslag vises det negative beløpet som gir avslaget.
                     result: formatterBeløpForBeregning(
-                      erBeregnetAvslagUtenBeløp(sluttberegning!)
+                      erAvslagDeltBosted
                         ? bpsAndel!.andelBeløp -
                             delberegningUnderholdskostnad!.underholdskostnad *
                               0.5
