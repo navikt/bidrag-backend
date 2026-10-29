@@ -91,7 +91,6 @@ internal object EndeligBidragBeregningV2 {
             bruttoBidragEtterBarnetilleggBM = bidragTilFordeling.avrundetMedToDesimaler,
             erBidragJustertForNettoBarnetilleggBM = erBidragJustertForNettoBarnetilleggBM,
             erAvslag = barnetErSelvforsørget || søknadsbarnetBorHosBP || bidragIkkeBeregnetDeltBosted || forpleiningDekkerUnderholdskostnaden,
-            erDeltBosted = erDeltBosted,
             grunnlagsreferanseListe = listOfNotNull(
                 grunnlag.underholdskostnadBeregningGrunnlag.referanse,
                 grunnlag.bpAndelUnderholdskostnadBeregningGrunnlag.referanse,
@@ -149,17 +148,9 @@ internal object EndeligBidragBeregningV2 {
         // Mangler bidrag til fordeling, gir perioden avslag for barnet (se beregnBidragTilFordeling). Barnet deltar da ikke i
         // fordelingen, og skal ikke utløse forholdsmessig fordeling for de andre barna.
         val erAvslag = grunnlag.bidragTilFordelingBeregningGrunnlag == null
-        // Et barn med 0 i bidrag til fordeling regnes som at BP mangler evne når summen av bidrag til fordeling er over 0.
-        // Unntak: ved delt bosted er bidrag til fordeling 0 når BPs andel av U er nøyaktig 50 %, fordi BP bare betaler for andelen
-        // over 50 % (se beregnBidragspliktigesAndelDeltBosted). Da sier 0 ingenting om BPs evne. Uten unntaket fikk barnet
-        // resultatkoden MAKS_25_PROSENT_AV_INNTEKT, og beregningen kastet IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
-        // når BP hadde løpende bidrag, selv om evnen dekket alle bidragene.
-        val erDeltBosted = grunnlag.bidragTilFordelingBeregningGrunnlag?.erDeltBosted == true
-        val harBPFullEvne = erAvslag ||
-            (
-                (andelAvEvneBeløp >= bidragTilFordeling) &&
-                    (!(bidragTilFordeling.compareTo(BigDecimal.ZERO) == 0 && sumBidragTilFordeling > BigDecimal.ZERO && !erDeltBosted))
-                )
+        // BP har full evne når evnen dekker summen av bidrag til fordeling for alle barna. Et barn med 0 i bidrag til fordeling
+        // (f.eks. delt bosted med BPs andel av U på nøyaktig 50 %) sier ingenting om evnen, og vurderes derfor mot summen.
+        val harBPFullEvne = erAvslag || evneJustertForPrioriterteBidrag >= sumBidragTilFordelingJustertForPrioriterteBidrag
 
         val bruttoBidragJustertForEvneOg25Prosent = minOf(bidragTilFordeling, evneJustertForPrioriterteBidrag)
 

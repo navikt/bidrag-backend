@@ -1167,7 +1167,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                             nettoBidragEtterBarnetilleggBM = it.resultat.nettoBidragEtterBarnetilleggBM,
                             bruttoBidragEtterBarnetilleggBM = it.resultat.bruttoBidragEtterBarnetilleggBM,
                             erBidragJustertForNettoBarnetilleggBM = it.resultat.erBidragJustertForNettoBarnetilleggBM,
-                            erDeltBosted = it.resultat.erDeltBosted,
                         ),
                     ),
                     grunnlagsreferanseListe = it.resultat.grunnlagsreferanseListe.sorted(),
@@ -1413,7 +1412,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 BidragTilFordelingDelberegningBeregningGrunnlag(
                     referanse = it.referanse,
                     bidragTilFordeling = it.bidragTilFordelingPeriode.bidragTilFordeling,
-                    erDeltBosted = it.bidragTilFordelingPeriode.erDeltBosted,
                 )
             }
 
