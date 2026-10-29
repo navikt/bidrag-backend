@@ -32,7 +32,7 @@ class RestResponseExceptionResolver {
 
     @ResponseBody
     @ExceptionHandler(RestClientResponseException::class)
-    protected fun handleHttpClientErrorException(e: HttpStatusCodeException): ResponseEntity<*> = loggOgFeilmeld(e, HttpStatus.valueOf(e.statusCode.value()))
+    protected fun handleHttpClientErrorException(e: HttpStatusCodeException): ResponseEntity<*> = loggOgFeilmeld(e, HttpStatus.valueOf(e.statusCode.value()), e.responseHeaders?.getFirst(HttpHeaders.WARNING))
 
     @ResponseBody
     @ExceptionHandler(Exception::class)
@@ -46,9 +46,10 @@ class RestResponseExceptionResolver {
     private fun loggOgFeilmeld(
         e: Exception,
         httpStatus: HttpStatus,
+        feilmeldingFraTjeneste: String? = null,
     ): ResponseEntity<String> {
         logger.error(e) { "Feil [${e.javaClass.name}] inntraff med detaljer" }
-        val feilmelding = e.message ?: "Restkall feilet!"
+        val feilmelding = feilmeldingFraTjeneste ?: e.message ?: "Restkall feilet!"
         val headers = HttpHeaders().apply { add(HttpHeaders.WARNING, feilmelding) }
         return ResponseEntity(feilmelding, headers, httpStatus)
     }
