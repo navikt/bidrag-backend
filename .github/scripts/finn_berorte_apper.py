@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Finn hvilke apper og biblioteker som må bygges ut fra filene som er endret."""
+# Finn hvilke apper og biblioteker som må bygges ut fra filene som er endret.
 
 import json
 import os
@@ -13,10 +13,12 @@ import xml.etree.ElementTree as ET
 
 
 def path_matches_filters(path, patterns):
+    # Sjekk en filsti mot workflow-mønstrene, inkludert mønstre med !.
     selected = False
     for pattern in patterns:
         negative = pattern.startswith("!")
         pattern = pattern[1:] if negative else pattern
+        # Gjør om GitHub-mønsteret til et regulært uttrykk.
         expression = ""
         index = 0
         while index < len(pattern):
@@ -37,6 +39,7 @@ def path_matches_filters(path, patterns):
             else:
                 expression += re.escape(pattern[index])
                 index += 1
+        # Siste mønster som treffer, avgjør om filen er med.
         if re.fullmatch(expression, path, re.DOTALL):
             selected = not negative
     return selected
@@ -51,10 +54,12 @@ SHARED_CI_FILES = SHARED_BUILD_FILES - {"pom.xml", ".editorconfig"}
 
 
 def select_affected_apps(app_filters, event_name, branch, changed_paths):
+    # Velg apper ut fra endrede filer og typen GitHub-hendelse.
     if event_name not in SUPPORTED_EVENTS:
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     if event_name == "push" and branch != "main":
         return []
+    # En endring i felles CI-oppsett må sjekkes mot alle apper i PR og merge-kø.
     if event_name != "push" and any(path in SHARED_CI_FILES for path in changed_paths):
         return list(app_filters)
     return [app for app, patterns in app_filters.items()
@@ -63,10 +68,12 @@ def select_affected_apps(app_filters, event_name, branch, changed_paths):
 
 
 def find_changed_files(root, event_name, event):
+    # Finn filene mellom riktig base og hode for hendelsen.
     def git_output(*args):
         return subprocess.check_output(["git", "-C", str(root), *args])
 
     if event_name == "pull_request":
+        # En PR sammenlignes med punktet der branchen skilte lag med basen.
         pr = event["pull_request"]
         head = validate_sha(pr["head"]["sha"])
         base = git_output("merge-base", validate_sha(pr["base"]["sha"]), head).decode().strip()
@@ -75,6 +82,7 @@ def find_changed_files(root, event_name, event):
         head, base = validate_sha(group["head_sha"]), validate_sha(group["base_sha"])
     elif event_name == "push":
         head, base = validate_sha(event["after"]), validate_sha(event["before"])
+        # Null-SHA betyr at branchen ble slettet eller nettopp opprettet.
         if head == "0" * 40:
             return []
         if base == "0" * 40:
@@ -83,11 +91,12 @@ def find_changed_files(root, event_name, event):
             ).decode().strip()
     else:
         raise ValueError(f"Kan ikke finne endrede filer for hendelsen {event_name}")
-    # --no-renames gir både gammel og ny sti ved flytting mellom appmoduler.
     return diff_paths(root, base, head)
 
 
 def diff_paths(root, base, head):
+    # Returner endrede filstier mellom to Git-revisjoner.
+    # En flyttet fil tas med både på gammel og ny sti.
     return [path for path in
             subprocess.check_output(
                 ["git", "-C", str(root), "diff", "--name-only", "--no-renames", "-z", base, head, "--"]
@@ -95,14 +104,16 @@ def diff_paths(root, base, head):
 
 
 def load_workflow(path):
+    # Les en workflow uten at YAML tolker nøkkelen 'on' som en boolsk verdi.
     import yaml
 
     with open(path) as stream:
-        # BaseLoader beholder YAML-nøkkelen "on" som tekst.
         return yaml.load(stream, Loader=yaml.BaseLoader)
 
 
 def workflow_changed(root, workflow_ref, event_name, ref):
+    # Sjekk om en enkeltworkflow har reelle endringer på branchen.
+    # Main og manuelle kjøringer skal ikke stoppes av diff-filteret.
     if event_name != "push" or ref == "refs/heads/main":
         return True
     match = re.fullmatch(r"[^/]+/[^/]+/(\.github/workflows/[^/@]+\.ya?ml)@.+", workflow_ref)
@@ -113,12 +124,16 @@ def workflow_changed(root, workflow_ref, event_name, ref):
     paths = workflow.get("on", {}).get("push", {}).get("paths")
     if not isinstance(paths, list) or not paths or not all(isinstance(path, str) for path in paths):
         raise ValueError(f"Fant ingen gyldige on.push.paths i {workflow_file}")
+    # Sammenlign med merge-base, så en merge fra main ikke teller som en endring i appen.
     subprocess.check_call(["git", "-C", str(root), "fetch", "--no-tags", "--quiet", "origin", "main"])
     base = subprocess.check_output(["git", "-C", str(root), "merge-base", "HEAD", "origin/main"]).decode().strip()
     return any(path_matches_filters(path, paths) for path in diff_paths(root, base, "HEAD"))
 
 
 def main_workflow():
+    # Kjøres av utled-app-endringer og skriver changed=true/false til GITHUB_OUTPUT.
+    # Branch-push sjekkes mot workflowens paths siden merge-base med main.
+    # Push til main og andre hendelser gir alltid true.
     changed = workflow_changed(Path.cwd(), os.environ["GITHUB_WORKFLOW_REF"],
                                os.environ["GITHUB_EVENT_NAME"], os.environ["GITHUB_REF"])
     with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
@@ -128,6 +143,7 @@ def main_workflow():
 
 
 def load_app_filters(root):
+    # Les APP_PATHS fra app-workflowene, som angir når hver app berøres.
     app_filters = {}
     for path in sorted((root / ".github/workflows").glob("*.yaml")):
         workflow = load_workflow(path)
@@ -146,7 +162,7 @@ def load_app_filters(root):
 
 
 def build_config(root, app):
-    """Verdiene appen sender videre til bygg_og_deploy.yaml."""
+    # Les byggevalgene appen sender til bygg_og_deploy.yaml.
     workflow = load_workflow(root / f".github/workflows/{app}.yaml")
     build_jobs = [job for job in workflow["jobs"].values()
                   if job.get("uses") == "./.github/workflows/bygg_og_deploy.yaml"]
@@ -156,13 +172,8 @@ def build_config(root, app):
 
 
 def split_on_merged_module(root, apps):
-    """Del appene i dem som har en modul i treet, og dem som ennå ikke har det.
-
-    En ny app får workflowen sin merget før selve appmodulen, slik at resten av CI-oppsettet
-    er på plass når modulen kommer. Uten modulen har appjobben ingenting å bygge, og
-    `mvn -pl` feiler. Den feilen felte samlejobben og dermed bygget for alle de andre appene.
-    Vi hopper heller over appen til modulen er merget.
-    """
+    # Del apper etter om Maven-modulen er merget inn.
+    # Uten pom.xml feiler `mvn -pl` og dermed samlejobben.
     merged, unmerged = [], []
     for app in apps:
         options = shlex.split(build_config(root, app)["maven_options"])
@@ -174,12 +185,15 @@ def split_on_merged_module(root, apps):
 
 
 def changed_library_modules(root, changed_paths):
+    # Velg endrede biblioteker og dem som avhenger av dem.
+    ns = "{http://maven.apache.org/POM/4.0.0}"
     pom = ET.parse(root / "pom.xml")
     modules = [
         module.text for module in
-        pom.findall("./{http://maven.apache.org/POM/4.0.0}modules/{http://maven.apache.org/POM/4.0.0}module")
+        pom.findall(f"./{ns}modules/{ns}module")
         if module.text and module.text.startswith("libs/")
     ]
+    # Endringer i felles byggeoppsett kan påvirke alle biblioteker.
     if any(path in SHARED_BUILD_FILES or path.startswith(".mvn/")
            for path in changed_paths):
         return modules
@@ -191,12 +205,41 @@ def changed_library_modules(root, changed_paths):
         if module:
             changed.add(module)
         elif not path.endswith(".md"):
+            # Dokumentasjon uten registrert modul kan ignoreres, men ikke kodefiler.
             raise ValueError(f"Biblioteket som inneholder {path} mangler i rot-pom.xml")
+    if not changed:
+        return []
+
+    # Maven identifiserer hver modul med groupId og artifactId.
+    projects = {module: ET.parse(root / module / "pom.xml").getroot() for module in modules}
+    coordinates = {}
+    for module, project in projects.items():
+        group = project.findtext(f"{ns}groupId") or project.findtext(f"{ns}parent/{ns}groupId")
+        artifact = project.findtext(f"{ns}artifactId")
+        if not group or not artifact:
+            raise ValueError(f"{module}/pom.xml mangler groupId eller artifactId")
+        coordinates[(group, artifact)] = module
+
+    # Snu avhengighetene: fra en modul til bibliotekene som bruker den.
+    dependents = {module: set() for module in modules}
+    for module, project in projects.items():
+        for dependency in project.findall(f"{ns}dependencies/{ns}dependency"):
+            parent = coordinates.get((dependency.findtext(f"{ns}groupId"),
+                                      dependency.findtext(f"{ns}artifactId")))
+            if parent:
+                dependents[parent].add(module)
+
+    # Ta også med indirekte avhengige biblioteker, slik at testene deres kjøres.
+    pending = list(changed)
+    while pending:
+        for dependent in dependents[pending.pop()] - changed:
+            changed.add(dependent)
+            pending.append(dependent)
     return [module for module in modules if module in changed]
 
 
 def target_branch(event_name, event):
-    """Greina endringene havner på: PR-basen, køens base, eller greina som ble pushet."""
+    # Greina endringene havner på: PR-basen, køens base, eller greina som ble pushet.
     if event_name == "pull_request":
         reference = event["pull_request"]["base"]["ref"]
     elif event_name == "merge_group":
@@ -210,6 +253,7 @@ QUEUE_REF = re.compile(r"refs/heads/gh-readonly-queue/[^/]+/pr-([0-9]+)-[a-f0-9]
 
 
 def github_get(path):
+    # Hent JSON fra GitHub-API-et.
     request = urllib.request.Request(
         f"{os.environ.get('GITHUB_API_URL', 'https://api.github.com')}{path}",
         headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
@@ -219,12 +263,8 @@ def github_get(path):
 
 
 def tested_pr_head(root, event, workflow_file):
-    """PR-hodet som allerede er bygget grønt med nøyaktig samme tre som merge-køen skal teste.
-
-    Når PR-branchen var à jour med main, er køens commit bare PR-hodet lagt oppå main, med
-    identisk filtre. PR-kjøringen har da allerede bygget og testet akkurat dette treet, og det
-    er ingenting nytt å teste. Returnerer None ved minste tvil, slik at køen bygger som vanlig.
-    """
+    # Gjenbruk grønt PR-bygg bare når merge-køen tester samme Git-tre.
+    # Returner None ved tvil, så merge-køen bygger og tester selv.
     group = event["merge_group"]
     match = QUEUE_REF.fullmatch(group.get("head_ref", ""))
     if not match:
@@ -239,9 +279,10 @@ def tested_pr_head(root, event, workflow_file):
     if git("cat-file", "-e", f"{pr_head}^{{commit}}").returncode != 0 and \
             git("fetch", "--quiet", "--no-tags", "origin", f"refs/pull/{match.group(1)}/head").returncode != 0:
         return None
-    # base må være med i PR-hodet: da ga også PR-kjøringens merge med (en eldre) main det samme treet.
+    # PR-en må inneholde køens base; ellers er PR-bygget ikke sammenlignbart.
     if git("merge-base", "--is-ancestor", base, pr_head).returncode != 0:
         return None
+    # Like Git-trær betyr at PR-bygget testet nøyaktig samme kode.
     trees = [git("rev-parse", f"{sha}^{{tree}}").stdout.strip() for sha in (head, pr_head)]
     if not trees[0] or trees[0] != trees[1]:
         return None
@@ -251,12 +292,14 @@ def tested_pr_head(root, event, workflow_file):
 
 
 def validate_sha(value):
+    # Avvis verdier som ikke er en full commit-SHA.
     if not re.fullmatch(r"[a-f0-9]{40}", value):
         raise ValueError("Ugyldig commit-SHA i hendelsen")
     return value
 
 
 def main():
+    # Finn apper og biblioteker for den sentrale bygg-workflowen.
     root = Path.cwd()
     with open(os.environ["GITHUB_EVENT_PATH"]) as stream:
         event = json.load(stream)
@@ -265,6 +308,7 @@ def main():
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     app_filters = load_app_filters(root)
     branch = target_branch(event_name, event)
+    # Merge-køen kan hoppe over bygg hvis den samme koden allerede er testet i PR-en.
     if event_name == "merge_group" and os.environ.get("GITHUB_TOKEN"):
         try:
             pr_head = tested_pr_head(root, event, "bygg-apper.yaml")

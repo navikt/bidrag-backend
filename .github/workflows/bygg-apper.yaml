@@ -35,7 +35,7 @@ jobs:
         run: python3 .github/scripts/finn_berorte_apper.py
 
   biblioteker_tester:
-    name: Test endrede biblioteker
+    name: Test berørte biblioteker
     needs: detect_changes
     if: needs.detect_changes.outputs.biblioteker != '[]'
     runs-on: ubuntu-latest-4-cores
@@ -65,7 +65,7 @@ jobs:
               {"id": "github", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"},
               {"id": "github2", "username": "x-access-token", "password": "${{ secrets.READER_TOKEN }}"}
             ]
-      - name: Bygg avhengigheter og test endrede biblioteker
+      - name: Bygg avhengigheter og test berørte biblioteker
         env:
           BIBLIOTEKER: ${{ needs.detect_changes.outputs.biblioteker }}
         run: |
