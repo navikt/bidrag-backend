@@ -1,11 +1,13 @@
 package no.nav.bidrag.organisasjon.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.enums.diverse.Tema
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.consumer.EntraConsumer
@@ -16,11 +18,14 @@ import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchR
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchResponse
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterResponse
 import no.nav.bidrag.organisasjon.service.OrganisasjonService.Companion.BEHANDLINGSTYPE_UTLAND
+import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
+import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.person.GeografiskTilknytningDto
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 
 internal class OrganisasjonServiceTest {
     private val norg2ConsumerMock: Norg2Consumer = mockk(relaxed = true)
@@ -214,6 +219,53 @@ internal class OrganisasjonServiceTest {
             val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(HentEnhetRequest(IDENT))
 
             response shouldBe null
+        }
+
+        @Test
+        fun `Skal returnere settekontor når saken har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR),
+            )
+
+            response shouldBe EnhetDto(Enhetsnummer("4806"), "NAV Familie- og pensjonsytelser Drammen")
+        }
+
+        @Test
+        fun `Skal returnere Norg-enheten når saken ikke har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.EIERENHET),
+            )
+
+            response shouldBe EnhetDto(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen")
+        }
+
+        @Test
+        fun `Skal gi 404 når inhabil enhet mangler settekontor`() {
+            mockNorgTreffMedSettekontor()
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4812") } returns null
+
+            val feil = shouldThrow<HttpClientErrorException> {
+                organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                    HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR),
+                )
+            }
+
+            feil.statusCode shouldBe HttpStatus.NOT_FOUND
+        }
+
+        private fun mockNorgTreffMedSettekontor() {
+            every { personConsumerMock.hentPersonGeografiskTilknytning(IDENT) } returns
+                GeografiskTilknytningDto(ident = IDENT, geografiskTilknytning = "4601", erUtland = false)
+            every { norg2ConsumerMock.finnArbeidsfordelingEnheterBestMatch(any()) } returns
+                listOf(ArbeidsfordelingEnheterBestMatchResponse(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen"))
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4812") } returns
+                EnhetDetaljerDto(enhetId = "4812", navn = "NAV Familie- og pensjonsytelser Bergen", settekontorEnhetId = "4806")
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4806") } returns
+                EnhetDetaljerDto(enhetId = "4806", navn = "NAV Familie- og pensjonsytelser Drammen", settekontorEnhetId = null)
         }
     }
 
