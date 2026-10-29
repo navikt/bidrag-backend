@@ -972,7 +972,7 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
                         }!!
                     behandling.opprettGrunnlag(
                         stønadstype.tilGrunnlagsdatatypeBeløpshistorikk(),
-                        behandling.opprettStønadDto(rolleBarn, grunnlag?.innhold),
+                        behandling.opprettStønadDto(rolleBarn, grunnlag?.innhold).copy(type = stønadstype),
                         rolleIdent = rolleBarn.ident!!,
                         gjelder = gjelder?.personIdent,
                         innhentetTidspunkt =
