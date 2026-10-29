@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -54,8 +55,11 @@ def select_affected_apps(app_filters, event_name, branch, changed_paths):
         raise ValueError(f"Appvalg støtter bare push, pull_request og merge_group, ikke {event_name}")
     if event_name == "push" and branch != "main":
         return []
+    if event_name != "push" and any(path in SHARED_CI_FILES for path in changed_paths):
+        return list(app_filters)
     return [app for app, patterns in app_filters.items()
-            if any(path_matches_filters(path, patterns) for path in changed_paths)]
+            if any(path_matches_filters(path, patterns) for path in changed_paths)
+            or (event_name != "push" and f".github/workflows/{app}.yaml" in changed_paths)]
 
 
 def find_changed_files(root, event_name, event):
@@ -80,16 +84,47 @@ def find_changed_files(root, event_name, event):
     else:
         raise ValueError(f"Kan ikke finne endrede filer for hendelsen {event_name}")
     # --no-renames gir både gammel og ny sti ved flytting mellom appmoduler.
+    return diff_paths(root, base, head)
+
+
+def diff_paths(root, base, head):
     return [path for path in
-            git_output("diff", "--name-only", "--no-renames", "-z", base, head, "--").decode().split("\0")
-            if path]
+            subprocess.check_output(
+                ["git", "-C", str(root), "diff", "--name-only", "--no-renames", "-z", base, head, "--"]
+            ).decode().split("\0") if path]
 
 
 def load_workflow(path):
     import yaml
 
     with open(path) as stream:
-        return yaml.safe_load(stream)
+        # BaseLoader beholder YAML-nøkkelen "on" som tekst.
+        return yaml.load(stream, Loader=yaml.BaseLoader)
+
+
+def workflow_changed(root, workflow_ref, event_name, ref):
+    if event_name != "push" or ref == "refs/heads/main":
+        return True
+    match = re.fullmatch(r"[^/]+/[^/]+/(\.github/workflows/[^/@]+\.ya?ml)@.+", workflow_ref)
+    if not match:
+        raise ValueError(f"Ugyldig github.workflow_ref: {workflow_ref}")
+    workflow_file = match.group(1)
+    workflow = load_workflow(root / workflow_file)
+    paths = workflow.get("on", {}).get("push", {}).get("paths")
+    if not isinstance(paths, list) or not paths or not all(isinstance(path, str) for path in paths):
+        raise ValueError(f"Fant ingen gyldige on.push.paths i {workflow_file}")
+    subprocess.check_call(["git", "-C", str(root), "fetch", "--no-tags", "--quiet", "origin", "main"])
+    base = subprocess.check_output(["git", "-C", str(root), "merge-base", "HEAD", "origin/main"]).decode().strip()
+    return any(path_matches_filters(path, paths) for path in diff_paths(root, base, "HEAD"))
+
+
+def main_workflow():
+    changed = workflow_changed(Path.cwd(), os.environ["GITHUB_WORKFLOW_REF"],
+                               os.environ["GITHUB_EVENT_NAME"], os.environ["GITHUB_REF"])
+    with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
+        stream.write(f"changed={str(changed).lower()}\n")
+    if not changed:
+        print("::notice::Ingen endringer i appens paths siden merge-base mot main. Hopper over bygg og deploy.")
 
 
 def load_app_filters(root):
@@ -247,14 +282,6 @@ def main():
             return
     changed_paths = find_changed_files(root, event_name, event)
     selected_apps = select_affected_apps(app_filters, event_name, branch, changed_paths)
-    if event_name != "push":
-        if any(path in SHARED_CI_FILES for path in changed_paths):
-            selected_apps = list(app_filters)
-        else:
-            selected_apps = [
-                app for app in app_filters
-                if app in selected_apps or f".github/workflows/{app}.yaml" in changed_paths
-            ]
     apps, unmerged_apps = split_on_merged_module(
         root, selected_apps)
     libraries = changed_library_modules(root, changed_paths)
@@ -269,4 +296,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["--workflow"]:
+        main_workflow()
+    elif not sys.argv[1:]:
+        main()
+    else:
+        raise ValueError(f"Ukjente argumenter: {sys.argv[1:]}")
