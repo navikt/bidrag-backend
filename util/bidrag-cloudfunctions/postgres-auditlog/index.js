@@ -3,6 +3,7 @@ const functions = require('@google-cloud/functions-framework');
 
 const EXPECTED_TOKEN    = process.env.GCP_WEBHOOK_SECRET;
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;      // Incoming webhook
+const DB2_DATABASE_PATTERN = /^(BI464P|SJ461P|BI460P)$/;
 
 // Map NAV usernames → Slack user IDs
 const USERNAME_TO_SLACK_ID = {
@@ -61,11 +62,16 @@ functions.http('gcpAuditToSlack', async (req, res) => {
   const timeStart = new Date(ts.getTime() - 5 * 60 * 1000).toISOString();
   const timeEnd   = new Date(ts.getTime() + 5 * 60 * 1000).toISOString();
 
+  const isDb2 = DB2_DATABASE_PATTERN.test(database);
+  const databaseLogQuery = isDb2
+      ? `jsonPayload.requestType="dbAuditEntry"\n` +
+        `jsonPayload.dbName=~"${DB2_DATABASE_PATTERN.source}"\n`
+      : `protoPayload.methodName="cloudsql.instances.query"\n` +
+        `protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry"\n` +
+        `protoPayload.request.user=~"${user || ''}"\n` +
+        `protoPayload.request.database="${database || ''}"\n`;
   const logQuery = encodeURIComponent(
-      `protoPayload.methodName="cloudsql.instances.query"\n` +
-      `protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry"\n` +
-      `protoPayload.request.user=~"${user || ''}"\n` +
-      `protoPayload.request.database="${database || ''}"\n` +
+      databaseLogQuery +
       `insertId="${insertId || ''}"`
   );
 
@@ -76,7 +82,7 @@ functions.http('gcpAuditToSlack', async (req, res) => {
       `?project=${projectId}`;
 
   const slackText = [
-    `*Postgres auditlog*`,
+    `*${isDb2 ? 'DB2' : 'Postgres'} auditlog*`,
     ``,
     `Kommando: \`${command || '(ukjent)'}\``,
     `Database: \`${database || '(ukjent)'}\``,

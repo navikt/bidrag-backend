@@ -1,7 +1,7 @@
 # bidrag-backend
 
-Monorepo for team Bidrag sine backend-tjenester. Bygget med Spring Boot og Kotlin
-på Java 25, kjører på Nais.
+Monorepo for team Bidrags backend-tjenester. De bygges med Kotlin, Spring Boot
+og Java 25 og kjører på Nais.
 
 ## Lokal Texas-sidecar
 
@@ -21,34 +21,27 @@ trenger en ny nøkkel.
 
 Ved pull requests, i merge-køen og ved push til `main` starter
 [`bygg-apper.yaml`](.github/workflows/bygg-apper.yaml) bygg for appene som er
-berørt av endringene. Bibliotekene de trenger, klargjøres i én felles jobb.
-Deretter bygges og testes appene parallelt. Deploy følger miljøreglene i
-workflowen til hver app.
+berørt av endringene. For hver app bygger `bygg_test_og_image` bibliotekene
+appen trenger og kjører appens tester før Docker-bygget. Merge-køen hopper over
+Docker-bygget. Når imaget pushes, attesteres det før jobben fullfører. Deploy
+venter på appjobben og følger miljøreglene i appens workflow.
 
 Hvilke filer som utløser bygg av en app, står i `env.APP_PATHS` i appens
 workflow, med ett filmønster per linje. De samme filtrene brukes for push, PR
-og merge-kø. Endrer du et felles bibliotek, kan flere apper bli bygget, men de
-deler det samme bibliotekbygget. Endringer bare i denne README-en eller under
-`util/` starter ikke workflowen.
+og merge-kø. Endrer du et felles bibliotek, kan flere apper bli bygget. Hver
+app bygger da bibliotekavhengighetene sine separat. Endringer bare i denne
+README-en eller under `util/` utløser ikke appbygg eller bibliotektester.
 
 ### Merge-kø
 
-Statussjekken på en PR sier bare at greina var grønn mot main slik main så ut
-sist sjekken kjørte. Flytter main seg etterpå, kan en grønn hake være foreldet,
-og feilen oppdages først etter merge, med rød main og en app som ikke ble
-deployet.
+En grønn PR-sjekk kan bli foreldet hvis `main` endres etter at sjekken kjørte.
+Merge-køen sjekker PR-en mot gjeldende `main` før merge. Hvis PR-en allerede er
+bygget og testet med nøyaktig samme innhold, gjenbruker køen det grønne bygget.
+Ellers bygger og tester den på nytt. Slik slipper alle åpne PR-er å kjøre hele
+pipelinen på nytt for hver merge.
 
-Merge-køen løser dette: GitHub bygger kandidaten merget med main-tuppen, og
-merger bare hvis bygget er grønt. Alternativet, «Require branches to be up to
-date before merging», ville tvunget alle åpne PR-er til å rebase og kjøre hele
-pipelinen på nytt for hver eneste merge. I et monorepo med 34 apper, der de
-fleste endringer treffer ulike apper, koster det langt mer byggetid enn det
-gir.
-
-Køen bygger og tester, men deployer aldri. Alle `deploy_*`-flaggene krever
-enten `workflow_dispatch` eller push til `refs/heads/main`, og en
-merge_group-kjøring er ingen av delene. Deploy skjer først når køen har merget
-og push-kjøringen på `main` er grønn.
+Køen deployer aldri. Deploy skjer først etter merge, når push-kjøringen på
+`main` er grønn.
 
 Køen må slås på i repo-innstillingene (Settings → Rules → main → «Require merge
 queue»). Required status check skal være `Alle bygg fullført`, samlejobben i
@@ -60,79 +53,62 @@ queue»). Required status check skal være `Alle bygg fullført`, samlejobben i
 Åpne appens workflow i GitHub Actions, velg «Run workflow» og angi branch og
 miljø. Du kan velge blant q1, q2 og prod, avhengig av hvilke miljøer appen
 støtter. Ved manuell kjøring bygges appen uten å sjekke hvilke filer som er
-endret. Bibliotekene hentes fra cache eller bygges ved behov.
+endret. Maven bygger bibliotekene appen trenger fra samme checkout med `-am`.
 
 Du kan hoppe over tester ved deploy til q1/q2, men ikke til prod.
-«Deploy alle til q1/q2» starter én manuell kjøring per app. Disse bruker
-bibliotekcachen, men har ikke en felles bibliotekjobb.
+«Deploy alle til q1/q2» starter én manuell kjøring per app. Hver app bygger
+sine egne bibliotekavhengigheter.
 
 ### Docker-image
 
 Imaget lastes bare opp til registeret når kjøringen faktisk skal deploye,
 altså ved `workflow_dispatch` til q1, q2 eller prod, eller ved push til `main`.
-PR-kjøringer og merge-køen bygger imaget, men pusher det ikke. Dockerfilen og
-byggkonteksten blir altså fortsatt verifisert, uten at hver eneste PR-push
-legger igjen et image per app som ingen skal bruke.
+PR-kjøringer, bortsett fra Dependabot, bygger imaget etter at appens tester har
+bestått, men pusher det ikke. Merge-køen hopper over Docker-bygget. Slik
+verifiseres Dockerfilen og byggkonteksten på PR-er uten at hver push legger
+igjen et image.
 
-Attestering og signering (`salsa`-jobben) og eksport av Docker-lagcachen følger
-den samme regelen. Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`,
-må `push_image`, `cache_to` og `salsa`-jobben oppdateres med det nye flagget.
-En test i `test_finn_berorte_apper.py` feiler hvis du glemmer det.
+Når imaget pushes, genererer og attesterer `nais/docker-build-push` SBOM før
+jobben fullfører. Deploy venter dermed på både appens tester og attesteringen.
+Legger du til et nytt deploy-miljø i `bygg_og_deploy.yaml`, må `push_image`
+omfatte det nye flagget.
 
-### Slik deles bibliotekene
+### Bygg og test av biblioteker
 
-[`klargjor-biblioteker`](.github/actions/klargjor-biblioteker/action.yaml)
-henter eller bygger bibliotekene. De er samlet i tre grupper:
+Hver app bygger bibliotekene den trenger med `mvn -pl <app> -am` fra rot-POM-en.
+Maven velger avhengighetene og bygger dem i riktig rekkefølge. Appjobben
+installerer først appen og avhengighetene uten tester, kjører `verify` for
+bare appen og bygger deretter imaget. Dermed kjøres ikke tester i uendrede
+biblioteker for hvert appbygg. Med `skip_tester` bygger den appen og
+avhengighetene uten å kjøre tester eller ktlint.
 
-| Gruppe | Innhold |
-| --- | --- |
-| `felles` | Bibliotekene under `libs/bidrag-felles` |
-| `beregn` | Beregningsbibliotekene under `libs/bidrag-beregn-felles`. Trenger også `felles`. |
-| `oppgave` |  `bidrag-oppgave-dto` |
+Når en fil under `libs/` endres, finner CI den tilhørende modulen i rot-POM-en.
+En egen testjobb bygger modulens avhengigheter uten tester og kjører `verify`,
+inkludert ktlint, for de endrede bibliotekene. Endringer i `pom.xml`,
+`.mvn/`, `.editorconfig` eller den felles CI-bygglogikken utløser tester i
+alle bibliotekene. Jobben kjører også når ingen app er valgt, parallelt med
+appbyggene. Lib-testene inngår i samlet status og blokkerer merge hvis de
+feiler, men appbyggene venter ikke på dem. For PR-er brukes diffen fra
+merge-base, og ved push til `main` brukes filene som ble endret i pushen.
+Ved manuell deploy bygges bibliotekene med `-am`, men bare appens tester kjøres
+dersom tester ikke er hoppet over.
 
-Appene bruker `felles` som standard. Trenger en app andre grupper, angis de i
-`bibliotekgrupper` i kallet til `bygg_og_deploy.yaml`. Bruk tom verdi (`''`)
-for apper uten interne biblioteker.
+Appjobbene cacher eksterne Maven-avhengigheter, men ikke interne
+`no/nav/bidrag`-artefakter. Bibliotekene bygges fra samme checkout som appen,
+også når en enkelt appjobb kjøres på nytt.
 
-Hver gruppe har sin egen cache. Maven bygger bare gruppene som ikke finnes i
-cachen, og sørger for riktig byggerekkefølge. Hvis alle gruppene finnes der,
-installeres bare parent-POM-ene. En endring i ett bibliotek kan dermed føre
-til at hele gruppen bygges på nytt, men bare én gang per workflow-kjøring.
-
-Ved cache-miss bygges uendret `felles` uten å kompilere eller kjøre tester.
-Testene kjøres bare når diffen inneholder endringer under `libs/bidrag-felles/`.
-For PR-er brukes diffen fra merge-base, og ved push til `main` brukes filene
-som ble endret i pushen. Manuelle kjøringer sammenligner branchen med main;
-på main brukes siste commit. Appens egne tester og testene i `beregn` og
-`oppgave` påvirkes ikke.
-
-En cache med testede fellesbiblioteker brukes hvis den finnes. Ellers kan
-uendret felles bruke en egen cache fra bygg uten tester. Denne cachen brukes
-aldri i stedet for å teste en faktisk felles-endring. Treffer kjøringen en
-cache med allerede testet innhold, kjøres ikke de samme testene på nytt.
-
-Cachen fornyes når kildekode, ressurser, POM-filer, Maven-/Java-versjon eller
-byggoppsett endres. Beregningsbibliotekene bygges også på nytt når
-fellesbibliotekene endres. Bygg med og uten tester har separate cacher.
-`target` og genererte POM-filer påvirker ikke cache-nøkkelen.
-
-Bibliotekjobben lagrer resultatet som et GitHub Actions-artefakt med JAR-er,
-POM-er og Maven-metadata. Hver appjobb fjerner gamle interne artefakter fra
-sin Maven-cache og laster ned de ferdige bibliotekene fra samme kjøring.
-Deretter bygger den bare appen, uten `-am`. Maven-innstillinger og
-innloggingsopplysninger følger ikke med artefaktet.
+Når en PR endrer den felles bygg-workflowen eller skriptet for appvalg, bygger
+CI alle appene. Ved endring i én app-workflow bygges denne appen. Slike rene
+CI-endringer starter ikke automatisk prod-deploy ved merge til `main`.
 
 ### Når et bygg feiler
 
-Se jobbsammendraget i GitHub Actions for hvilke apper og bibliotekgrupper som
-ble valgt, og hvilke Maven-moduler som ble bygget. Feiler bibliotekjobben,
-starter ikke appjobbene. Feiler en app, kan bibliotekene som allerede er
-lagret i cache, fortsatt brukes.
-
-Kjører du en appjobb på nytt, bruker den bibliotekartefaktet fra den
-vellykkede bibliotekjobben. Artefaktet beholdes i 14 dager. Er det slettet
-eller utløpt, må du kjøre hele workflowen på nytt. Appbygget stopper hvis det
-ikke får lastet ned artefaktet, fremfor å bruke gamle SNAPSHOT-er.
+Se jobbsammendraget i GitHub Actions for hvilke apper og biblioteker som ble
+valgt. Feiler bibliotektestene, blir den samlede PR-statusen rød, mens
+appbyggene fortsetter. Ved push til `main` venter ikke automatisk deploy på
+lib-testene; appens egne tester må fortsatt bestå. Ved manuell deploy kjøres
+ikke egne lib-tester. Feiler et appbygg, kan du kjøre jobben på nytt; Maven
+bygger da avhengighetene på nytt fra samme commit.
 
 ### Legge til apper og biblioteker
 
@@ -140,18 +116,18 @@ For en ny Maven-app kan du ta utgangspunkt i en eksisterende app-workflow.
 Legg inn `APP_PATHS`, behold `workflow_call` og `workflow_dispatch`, og legg
 til en jobb som kaller appens workflow i `bygg-apper.yaml`. Ikke legg egne
 push- eller PR-triggere i appens workflow; da starter byggene utenom den
-felles bibliotekjobben.
+felles endringsdeteksjonen.
 
-Nye biblioteker legges i modullisten for riktig gruppe i
-`klargjor-biblioteker`. Pass også på at stiene for cache og opplasting av
-artefakter dekker bibliotekets Maven-koordinater. Maven håndterer
-avhengighetene og byggerekkefølgen.
+Legg nye biblioteker i rot-POM-en og deklarer dem som Maven-avhengigheter i
+appene som bruker dem. Oppdater `APP_PATHS` i disse appenes workflows slik at
+en endring i biblioteket også velger de berørte appene. Ingen egne
+bibliotekgrupper eller artefaktstier må vedlikeholdes.
 
 `bidrag-felles.yaml` publiserer fortsatt kalenderversjoner separat.
 
 Hvis du må gå tilbake til det gamle byggoppsettet, må du tilbakeføre
-`bygg-apper.yaml`, app-workflowene og endringene i `bygg_og_deploy.yaml`
-sammen. Ellers kan automatiske bygg utebli eller starte dobbelt. La pågående
+`bygg-apper.yaml`, app-workflowene, `bygg_og_deploy.yaml` og
+`finn_berorte_apper.py` sammen med bibliotek-actionen. La pågående
 deploy-jobber fullføre før du bytter oppsett.
 
 ## Automatisk PR-beskrivelse
@@ -174,21 +150,19 @@ blir derimot overskrevet ved neste kjøring, så ikke rediger den.
 
 ### Når kjører den
 
-| Hendelse | Modultabell | AI-sammendrag |
+| Hendelse | Modultabell | KI-sammendrag |
 | --- | --- | --- |
 | PR opprettet eller gjenåpnet | ✅ | ✅ |
-| Draft merket som klar for review | ✅ | ✅ |
+| Utkast merket som klart for review | ✅ | ✅ |
 | Ny push til PR-en | ✅ | ♻️ beholdes fra forrige kjøring |
 | Etiketten `oppdater-beskrivelse` settes på | ✅ | ✅ |
 
-Modultabellen er ren git-utregning og oppdateres derfor på hver push.
-AI-sammendraget koster å kjøre, så det
-genereres bare når PR åpnes. Trenger du et nytt
-sammendrag etter PR er opprettet, sett på etiketten `oppdater-beskrivelse` (fjern den
-etterpå for å kunne bruke den igjen).
+Modultabellen oppdateres ved hver push til PR-en. Et tidligere sammendrag
+beholdes. Vil du lage et nytt, sett på etiketten `oppdater-beskrivelse`. Fjern
+etiketten etterpå hvis du vil bruke den igjen.
 
-Draft-PR-er får tabellen, men ikke AI-sammendrag — det kommer først når PR-en
-merkes klar for review. PR-er fra forks hoppes helt over, siden de får et
+PR-utkast får tabellen, men ikke KI-sammendrag. Det lages når PR-en merkes klar
+for review. PR-er fra forks hoppes helt over, siden de får et
 read-only token og uansett ikke kan oppdatere beskrivelsen. Feiler
 Copilot-kallet, blokkerer det ikke PR-en: tabellen legges inn, forrige
 sammendrag beholdes, og årsaken logges som en advarsel i jobben.

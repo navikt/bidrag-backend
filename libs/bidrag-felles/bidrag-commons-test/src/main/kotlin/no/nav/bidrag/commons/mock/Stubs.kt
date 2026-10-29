@@ -75,7 +75,6 @@ fun stubSjablonService(): SjablonService {
 }
 
 fun stubSjablonProvider() {
-    stubSjablonService()
     mockkObject(SjablonProvider)
     every {
         SjablonProvider.hentSjablontall()
