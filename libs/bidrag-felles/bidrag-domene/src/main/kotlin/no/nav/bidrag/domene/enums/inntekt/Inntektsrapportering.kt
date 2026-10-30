@@ -306,6 +306,7 @@ enum class Inntektsrapportering(
             Inntektstype.BARNETILLEGG_KLP,
             Inntektstype.BARNETILLEGG_SPK,
             Inntektstype.BARNETILLEGG_TILTAKSPENGER,
+            Inntektstype.BARNETILLEGG_FORSVARET,
         ),
     ),
 
