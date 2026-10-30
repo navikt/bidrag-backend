@@ -9,7 +9,7 @@ For mer informasjon om hvordan alarmene fungerer, se:
 Du kan bruke `https://prometheus.nais.preprod.local/graph` som hjelp til å teste queries.
 
 ## Varsler slack
-Varsler fra apper i prod vil vises på slack kanalen #team-bidrag-varsel (varselkanal angitt i [bidrag-naiskonsoll](https://console.nav.cloud.nais.io/team/bidrag/settings))
+Varslene fra reglene i `bidrag-alerts-prod.yaml` sendes til Slack-kanalen #team-bidrag-monitorering via `AlertmanagerConfig`. Varsler uten denne rutingen sendes til #team-bidrag-varsel (standardkanalen i [Nais-konsollen](https://console.nav.cloud.nais.io/team/bidrag/settings)).
 
 Varsler fra apper i dev vil vises på slack kanalen #team-bidrag-varsel-dev (denne er lagt inn via egen alertmanagerkonfig i bidrag-alerts-dev.yaml).
 
