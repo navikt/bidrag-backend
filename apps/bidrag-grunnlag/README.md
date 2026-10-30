@@ -32,36 +32,44 @@ Miljøer:
 * DEV-GCP ([https://bidrag-grunnlag.intern.dev.nav.no/](https://bidrag-grunnlag.dev.intern.nav.no/))
 * PROD-GCP ([https://bidrag-grunnlag.intern.nav.no/](https://bidrag-grunnlag.intern.nav.no/))
 
+## Planlagt innhenting av valutakursgrunnlag
+
+Jobben kjører 1. januar og 1. juli kl. 05.00 i Oslo-tid. Etter lagring sendes en Slack-melding med dato, miljø, antall opprettede grunnlag og valutakodene som ikke ble innhentet. Hvis alle kurser ble hentet, står det «Ingen». Manglende enkeltkurser hindrer ikke at kjøringen fullføres.
+
+En daglig kontroll kl. 06.00 varsler på Slack hvis databasen mangler valutakursgrunnlag for siste halvårskjøring.
+
+ECB-kurser hentes samlet per observasjonsmåned med én felles NOK-serie. Norges Bank brukes bare for valutaer som mangler en gyldig ECB-kurs. Hvis hele ECB-kallet feiler eller NOK-serien er ugyldig, brukes Norges Bank for alle forespurte valutaer i måneden. Historisk innhenting bruker samme batching, med ett ECB-kall per halvår før eventuelle retries.
+
+Ved innhentings- eller lagringsfeil sendes et feilvarsel, og feilen kastes videre. Feilvarselet inneholder feiltype, ikke exception-meldingen. Detaljer finnes i applikasjonsloggene. Feil ved Slack-sending logges av den felles Slack-tjenesten.
+
+Nais-konfigurasjonen bruker secret `bidrag-bot-slack-oauth-token` og miljøvariabelen `SLACK_CHANNEL_ID`. Dev- og prod-kanalene er de samme som for `bidrag-regnskap`.
+
 ## Utstede gyldig token i dev-gcp
 For å kunne teste applikasjonen i `dev-gcp` trenger man et gyldig AzureAD JWT-token. 
 JWT-tokenet kan hentes ut manuelt eller ved hjelp at skriptet her: [hentJwtToken](https://github.com/navikt/bidrag-dev/blob/main/scripts/hentJwtToken.sh).
 
 For å utstede et slikt token trenger man miljøvariablene `AZURE_APP_CLIENT_ID` og `AZURE_APP_CLIENT_SECRET`. Disse ligger tilgjengelig i de kjørende pod'ene til applikasjonen.
 
-Koble seg til en kjørende pod (feature-branch):
-```
-kubectl -n bidrag exec -i -t bidrag-grunnlag-feature-<sha> -c bidrag-grunnlag-feature -- /bin/bash
-```
-
-Koble seg til en kjørende pod (main-branch):
-```
-kubectl -n bidrag exec -i -t bidrag-grunnlag-<sha> -c bidrag-grunnlag -- /bin/bash
+Miljøvariabler kan hentes ut fra en kjørende pod slik:
+```bash
+# Feature-branch:
+export $(kubectl --namespace bidrag --cluster dev-gcp exec --tty deployment/bidrag-grunnlag-feature -- printenv | grep -e AZURE_APP_CLIENT_ID -e AZURE_APP_CLIENT_SECRET | xargs -L 1)
 ```
 
-Når man er inne i pod'en kan man hente ut miljøvariablene på følgende måte:
-```
-echo "$( cat /var/run/secrets/nais.io/azure/AZURE_APP_CLIENT_ID )"
-echo "$( cat /var/run/secrets/nais.io/azure/AZURE_APP_CLIENT_SECRET )"
-```
-
-Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall (feature-branch): 
-```
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id=<AZURE_APP_CLIENT_ID>&scope=api://dev-gcp.bidrag.bidrag-grunnlag-feature/.default&client_secret=<AZURE_APP_CLIENT_SECRET>&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
+```bash
+# Main-branch:
+export $(kubectl --namespace bidrag --cluster dev-gcp exec --tty deployment/bidrag-grunnlag -- printenv | grep -e AZURE_APP_CLIENT_ID -e AZURE_APP_CLIENT_SECRET | xargs -L 1)
 ```
 
-Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall (main-branch):
+Deretter kan vi hente ned et gyldig Azure AD JWT-token med følgende kall:
+```bash
+# Feature-branch:
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id='"$AZURE_APP_CLIENT_ID"'&scope=api://dev-gcp.bidrag.bidrag-grunnlag-feature/.default&client_secret='"$AZURE_APP_CLIENT_SECRET"'&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
 ```
-curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id=<AZURE_APP_CLIENT_ID>&scope=api://dev-gcp.bidrag.bidrag-grunnlag/.default&client_secret=<AZURE_APP_CLIENT_SECRET>&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
+
+```bash
+# Main-branch:
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'client_id='"$AZURE_APP_CLIENT_ID"'&scope=api://dev-gcp.bidrag.bidrag-grunnlag/.default&client_secret='"$AZURE_APP_CLIENT_SECRET"'&grant_type=client_credentials' 'https://login.microsoftonline.com/966ac572-f5b7-4bbe-aa88-c76419c0f851/oauth2/v2.0/token'
 ```
 
 ## Kjøre applikasjon lokalt
@@ -73,6 +81,16 @@ Også når man kjører applikasjonen lokalt vil man trenge et gyldig JWT-token f
 
 Kan vurdere å sette opp wiremocks for de eksterne tjenestene for å kunne kjøre opp en mer fullstedig applikasjon i fremtiden.
 
+## Teste PostgreSQL-migrasjoner
+
+`ValutakursgrunnlagMigrationTest` starter PostgreSQL 15 med Testcontainers og kjører alle Flyway-migrasjonene fra `db/migration`. Testen kontrollerer oppdateringstriggeren, halvårsgrenser, unik valuta per halvår, tillatte statuser og kilder samt kurskolonnens presisjon. Testbrukeren heter `cloudsqliamuser` fordi de eksisterende migrasjonene gir denne rollen tilgang.
+
+Docker må være tilgjengelig. Kjør fra repoets rot:
+
+```bash
+mvn -pl apps/bidrag-grunnlag -am -Dtest=ValutakursgrunnlagMigrationTest -Dsurefire.failIfNoSpecifiedTests=false test
+```
+
 ## Testing i Swagger
 Applikasjonen testes enklest i Swagger (for generering av gyldig token, se over):
 ```
@@ -82,7 +100,7 @@ https://bidrag-grunnlag.intern.dev.nav.no/swagger-ui/index.html
 ### Kjøre lokalt mot nais med lokal database
 ##### Start opp database
 Start opp lokal postgres database med følgende kommando på rotmappen. 
-```
+```bash
 docker-compose up -d
 ```
 Dette vil starte en tom postgres database. 
@@ -95,6 +113,11 @@ Kjør ```initEnv.sh``` skriptet for å sette opp miljøvariabler for lokal kjør
 <br/>
 Dette vil hente Azure hemmeligheter og diverse miljøvariabler fra POD kjørende i dev
 
+Man må først være logget inn i nais. Logg inn med
+```bash
+nais auth login
+```
+
 Hvis du ikke får `permission denied` når du prøver å kjøre skriptet så må du gi deg selv tilgang til å kjøre shell skript med følgende kommand:
 ```bash
 Kjør chmod +x ./initEnv.sh
@@ -102,4 +125,4 @@ Kjør chmod +x ./initEnv.sh
 
 Du kan da starte opp applikasjonen ved å kjøre [BidragGrunnlagLokalNais.kt](src/test/kotlin/no/nav/bidrag/grunnlag/BidragGrunnlagLokalNais.kt)
 
-Gå til http://localhost:8086 for å åpne swagger-ui
+Gå til [http://localhost:8086/swagger-ui/index.html](http://localhost:8086/swagger-ui/index.html) for å åpne swagger-ui
