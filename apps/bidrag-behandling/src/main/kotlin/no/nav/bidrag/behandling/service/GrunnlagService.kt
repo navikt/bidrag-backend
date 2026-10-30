@@ -1662,6 +1662,7 @@ class GrunnlagService(
                 hentetTidspunkt = it.hentetTidspunkt,
                 aktiveringstidspunkt = null,
                 tekniskFeilVedInnhenting = tekniskFeilVedHentingAvInntekter,
+                feilVedInnhenting = feilVedHentingAvInntekter,
             )
         }
 
@@ -2340,6 +2341,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else if (Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER == type) {
                 lagreInntektsgrunnlagHvisEndret<SummerteInntekter<SummertMånedsinntekt>>(
@@ -2350,6 +2352,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else {
                 log.error {
@@ -2782,9 +2785,18 @@ class GrunnlagService(
         hentetTidspunkt: LocalDateTime,
         aktiveringstidspunkt: LocalDateTime? = null,
         tekniskFeilVedInnhenting: Boolean = false,
+        feilVedInnhenting: GrunnlagFeilDto? = null,
     ) {
         val sistInnhentedeGrunnlagAvType: T? = behandling.hentSisteInnhentaGrunnlag(grunnlagstype, rolle)
         val nyesteGrunnlag = behandling.henteNyesteGrunnlag(grunnlagstype, rolle)
+
+        if (false && erTomtResultatVedFeilEtterTidligereInntekter(innhentetGrunnlag, sistInnhentedeGrunnlagAvType, feilVedInnhenting)) {
+            log.warn {
+                "Innhenting av $grunnlagstype for rolle ${rolle.rolletype} i behandling ${behandling.id} feilet med " +
+                    "${feilVedInnhenting!!.feiltype} og ga tomt resultat. Beholder tidligere innhentede inntekter."
+            }
+            return
+        }
 
         val erFørstegangsinnhentingAvInntekter =
             sistInnhentedeGrunnlagAvType == null && inneholderInntekter(innhentetGrunnlag)
@@ -2850,6 +2862,15 @@ class GrunnlagService(
             log.debug { "Ingen endringer i grunnlag $grunnlagstype for behandling med id ${behandling.id!!}." }
         }
     }
+
+    fun <T> erTomtResultatVedFeilEtterTidligereInntekter(
+        innhentetGrunnlag: T,
+        sistInnhentedeGrunnlag: T?,
+        feilVedInnhenting: GrunnlagFeilDto?,
+    ): Boolean = feilVedInnhenting != null &&
+        !inneholderInntekter(innhentetGrunnlag) &&
+        sistInnhentedeGrunnlag != null &&
+        inneholderInntekter(sistInnhentedeGrunnlag)
 
     fun <T> inneholderInntekter(grunnlag: T): Boolean = when (grunnlag) {
         is SkattepliktigeInntekter -> grunnlag.ainntekter.isNotEmpty() || grunnlag.skattegrunnlag.isNotEmpty()

@@ -24,6 +24,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
+import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
 import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.database.repository.GrunnlagRepository
@@ -5093,6 +5094,117 @@ class GrunnlagServiceTest : TestContainerRunner() {
                         }?.shouldHaveSize(1)
                 }
             }
+        }
+
+        @Test
+        @Transactional
+        open fun `skal ikke overskrive skattepliktige inntekter med tomt resultat ved funksjonell feil dersom forrige innhenting hadde inntekter`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    true,
+                    inkludereBp = true,
+                    inkludereInntektsgrunnlag = true,
+                    setteDatabaseider = true,
+                )
+            val bmIdent = behandling.bidragsmottaker!!.ident!!
+            val rådataGrunnlagFørInnhenting =
+                behandling.grunnlag
+                    .filter { it.type == Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER && !it.erBearbeidet && it.rolle.ident == bmIdent }
+            val rådataFørInnhenting = rådataGrunnlagFørInnhenting.map { it.data }
+            val bearbeidetFørInnhenting =
+                behandling.grunnlag
+                    .filter { it.erBearbeidet && it.rolle.ident == bmIdent && it.type in setOf(Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER, Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER) }
+                    .map { it.type to it.data }
+            rådataFørInnhenting shouldHaveSize 1
+            rådataGrunnlagFørInnhenting.first().konvertereData<SkattepliktigeInntekter>()!!.let {
+                (it.ainntekter.isNotEmpty() || it.skattegrunnlag.isNotEmpty()) shouldBe true
+            }
+
+            val tomInnhentingMedFunksjonellFeil =
+                opprettHentGrunnlagDto().copy(
+                    feilrapporteringListe = oppretteFeilrapporteringerForPerson(bmIdent, HentGrunnlagFeiltype.FUNKSJONELL_FEIL),
+                )
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(
+                        match { it.any { request -> request.personId == bmIdent } },
+                        any(),
+                    )
+                }
+            } returns (HentetGrunnlag(tomInnhentingMedFunksjonellFeil))
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(
+                        match { it.none { request -> request.personId == bmIdent } },
+                        any(),
+                    )
+                }
+            } returns (HentetGrunnlag(opprettHentGrunnlagDto()))
+
+            // hvis
+            grunnlagServiceMock.oppdatereGrunnlagForBehandling(behandling)
+
+            // så
+            behandling.grunnlagsinnhentingFeilet shouldNotBe null
+            assertSoftly {
+                behandling.grunnlag
+                    .filter { it.type == Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER && !it.erBearbeidet && it.rolle.ident == bmIdent }
+                    .map { it.data } shouldBe rådataFørInnhenting
+                behandling.grunnlag
+                    .filter { it.erBearbeidet && it.rolle.ident == bmIdent && it.type in setOf(Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER, Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER) }
+                    .map { it.type to it.data } shouldBe bearbeidetFørInnhenting
+            }
+        }
+    }
+
+    @Nested
+    open inner class ErTomtResultatVedFeilEtterTidligereInntekter {
+        private val feil =
+            GrunnlagFeilDto(
+                grunnlagstype = GrunnlagRequestType.AINNTEKT,
+                personId = "123",
+                feiltype = HentGrunnlagFeiltype.FUNKSJONELL_FEIL,
+                feilmelding = "Ouups!",
+            )
+        private val tomt = SkattepliktigeInntekter(ainntekter = emptyList(), skattegrunnlag = emptyList())
+        private val medInntekter =
+            SkattepliktigeInntekter(
+                ainntekter =
+                listOf(
+                    AinntektGrunnlagDto(
+                        personId = "123",
+                        periodeFra = LocalDate.parse("2024-01-01"),
+                        periodeTil = LocalDate.parse("2024-02-01"),
+                        ainntektspostListe = emptyList(),
+                    ),
+                ),
+                skattegrunnlag = emptyList(),
+            )
+
+        @Test
+        fun `skal returnere true når tomt resultat med feil og forrige innhenting hadde inntekter`() {
+            grunnlagService.erTomtResultatVedFeilEtterTidligereInntekter(tomt, medInntekter, feil) shouldBe true
+        }
+
+        @Test
+        fun `skal returnere false når tomt resultat uten feil`() {
+            grunnlagService.erTomtResultatVedFeilEtterTidligereInntekter(tomt, medInntekter, null) shouldBe false
+        }
+
+        @Test
+        fun `skal returnere false når nytt resultat har inntekter selv om feil`() {
+            grunnlagService.erTomtResultatVedFeilEtterTidligereInntekter(medInntekter, tomt, feil) shouldBe false
+        }
+
+        @Test
+        fun `skal returnere false når forrige innhenting var tom`() {
+            grunnlagService.erTomtResultatVedFeilEtterTidligereInntekter(tomt, tomt, feil) shouldBe false
+        }
+
+        @Test
+        fun `skal returnere false når det ikke finnes forrige innhenting`() {
+            grunnlagService.erTomtResultatVedFeilEtterTidligereInntekter(tomt, null, feil) shouldBe false
         }
     }
 
