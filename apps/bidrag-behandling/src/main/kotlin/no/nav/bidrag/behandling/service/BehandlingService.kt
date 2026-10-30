@@ -797,6 +797,7 @@ class BehandlingService(
                     behandlingRepository.finnHovedbehandlingForBpVedFF(
                         it.bidragspliktig!!.ident!!,
                         it.omgjøringsdetaljer?.opprinneligVedtakId,
+                        it.omgjøringsdetaljer?.omgjørVedtakId,
                     )!!
                 } else {
                     it

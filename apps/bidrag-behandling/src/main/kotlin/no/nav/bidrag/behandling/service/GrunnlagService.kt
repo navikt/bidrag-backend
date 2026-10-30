@@ -191,6 +191,7 @@ class GrunnlagService(
     private val ffService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
     private val bestillAsyncJobService: BestillAsyncJobService? = null,
+    private val feilrettingService: FeilrettingService? = null,
 ) {
     @Value($$"${egenskaper.grunnlag.min-antall-minutter-siden-forrige-innhenting:60}")
     lateinit var grenseInnhenting: String
@@ -255,7 +256,10 @@ class GrunnlagService(
 
         try {
             if (foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong())) {
+                // Nye roller må få id før grunnlag innhentes, ellers matcher grunnlag på rolle.id == null på tvers av nye roller
+                behandlingRepository?.flush()
                 sjekkOgOppdaterIdenter(behandling)
+                feilrettingService?.slettSkattepliktigeInntekterHentetForAnnenPerson(behandling)
                 val feilrapporteringer = mutableMapOf<Grunnlagsdatatype, GrunnlagFeilDto?>()
 
                 fun Map<Grunnlagsdatatype, GrunnlagFeilDto>.lagreFeilrapportering(): Pair<PersonStønad, HentetGrunnlag>? {
@@ -298,11 +302,8 @@ class GrunnlagService(
                         }.filterNotNull()
 
                     grunnlagResponsObjekter.forEach {
-                        feilrapporteringer +=
-                            lagreGrunnlag(
-                                behandling,
-                                it,
-                            )
+                        // Feil for én rolle registreres som innhentingsfeil slik at grunnlaget hentes på nytt etter kortere tid
+                        feilrapporteringer += lagreGrunnlagForRolle(behandling, it) ?: Grunnlagsdatatype.gjeldende().associateWith { null }
                     }
                 } else {
                     runBlocking {
@@ -1625,6 +1626,19 @@ class GrunnlagService(
         }
     }
 
+    private fun lagreGrunnlagForRolle(
+        behandling: Behandling,
+        input: Pair<PersonStønad, HentetGrunnlag>,
+    ): Map<Grunnlagsdatatype, GrunnlagFeilDto?>? = try {
+        lagreGrunnlag(behandling, input)
+    } catch (e: RuntimeException) {
+        log.error(e) { "Lagring av innhentet grunnlag feilet for en rolle i behandling ${behandling.id}" }
+        secureLogger.error(e) {
+            "Lagring av innhentet grunnlag feilet for ${input.first.personident?.verdi} i behandling ${behandling.id}"
+        }
+        null
+    }
+
     private fun lagreGrunnlag(
         behandling: Behandling,
         input: Pair<PersonStønad, HentetGrunnlag>,
@@ -1660,6 +1674,7 @@ class GrunnlagService(
                 hentetTidspunkt = it.hentetTidspunkt,
                 aktiveringstidspunkt = null,
                 tekniskFeilVedInnhenting = tekniskFeilVedHentingAvInntekter,
+                feilVedInnhenting = feilVedHentingAvInntekter,
             )
         }
 
@@ -2338,6 +2353,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else if (Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER == type) {
                 lagreInntektsgrunnlagHvisEndret<SummerteInntekter<SummertMånedsinntekt>>(
@@ -2348,6 +2364,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else {
                 log.error {
@@ -2780,9 +2797,18 @@ class GrunnlagService(
         hentetTidspunkt: LocalDateTime,
         aktiveringstidspunkt: LocalDateTime? = null,
         tekniskFeilVedInnhenting: Boolean = false,
+        feilVedInnhenting: GrunnlagFeilDto? = null,
     ) {
         val sistInnhentedeGrunnlagAvType: T? = behandling.hentSisteInnhentaGrunnlag(grunnlagstype, rolle)
         val nyesteGrunnlag = behandling.henteNyesteGrunnlag(grunnlagstype, rolle)
+
+        if (erTomtResultatVedFeilEtterTidligereInntekter(innhentetGrunnlag, sistInnhentedeGrunnlagAvType, feilVedInnhenting)) {
+            log.warn {
+                "Innhenting av $grunnlagstype for rolle ${rolle.rolletype} i behandling ${behandling.id} feilet med " +
+                    "${feilVedInnhenting!!.feiltype} og ga tomt resultat. Beholder tidligere innhentede inntekter."
+            }
+            return
+        }
 
         val erFørstegangsinnhentingAvInntekter =
             sistInnhentedeGrunnlagAvType == null && inneholderInntekter(innhentetGrunnlag)
@@ -2848,6 +2874,15 @@ class GrunnlagService(
             log.debug { "Ingen endringer i grunnlag $grunnlagstype for behandling med id ${behandling.id!!}." }
         }
     }
+
+    fun <T> erTomtResultatVedFeilEtterTidligereInntekter(
+        innhentetGrunnlag: T,
+        sistInnhentedeGrunnlag: T?,
+        feilVedInnhenting: GrunnlagFeilDto?,
+    ): Boolean = feilVedInnhenting != null &&
+        !inneholderInntekter(innhentetGrunnlag) &&
+        sistInnhentedeGrunnlag != null &&
+        inneholderInntekter(sistInnhentedeGrunnlag)
 
     fun <T> inneholderInntekter(grunnlag: T): Boolean = when (grunnlag) {
         is SkattepliktigeInntekter -> grunnlag.ainntekter.isNotEmpty() || grunnlag.skattegrunnlag.isNotEmpty()
