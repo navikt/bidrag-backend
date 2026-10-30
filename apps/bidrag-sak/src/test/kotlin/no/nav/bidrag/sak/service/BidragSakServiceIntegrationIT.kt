@@ -84,6 +84,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
             stubPerson(fnrBA3, LocalDate.now().minusYears(10))
 
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
 
             // Sak 1: BA1/BA2 myndige -> har RM. BA3 umyndig -> kan være uten RM.
             saksnummer =
@@ -191,6 +192,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         @Test
         fun `skal lagre ny reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(30))
 
             // BA3 er under 18 i setup, men nå legger vi til RM på BA3 -> OK
             bidragssakService.oppdaterSak(
@@ -248,6 +250,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         @Test
         fun `skal lagre endring av reell mottager`() {
             val rmFnr = genererPersonident()
+            stubPerson(rmFnr, LocalDate.now().minusYears(30))
 
             // BA1 er myndig -> fortsatt RM (bytter RM)
             bidragssakService.oppdaterSak(
@@ -280,13 +283,18 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
 
         @Test
         fun `skal takle internt bytte av reell mottager`() {
+            val rmFnrBA1 = genererPersonident()
+            val rmFnrBA2 = genererPersonident()
+            stubPerson(rmFnrBA1, LocalDate.now().minusYears(30))
+            stubPerson(rmFnrBA2, LocalDate.now().minusYears(30))
+
             bidragssakService.oppdaterSak(
                 OppdaterSakRequest(
                     saksnummer = saksnummer,
                     roller =
                     setOf(
-                        rolleBarnMedRm(fnrBA1, rm = genererPersonident().verdi),
-                        rolleBarnMedRm(fnrBA2, rm = genererPersonident().verdi),
+                        rolleBarnMedRm(fnrBA1, rm = rmFnrBA1.verdi),
+                        rolleBarnMedRm(fnrBA2, rm = rmFnrBA2.verdi),
                     ),
                 ),
             )
@@ -396,6 +404,7 @@ internal class BidragSakServiceIntegrationIT : SpringTestRunner() {
         fun setUp() {
             clearMocks(identConsumer)
             every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+            every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         }
 
         @Test

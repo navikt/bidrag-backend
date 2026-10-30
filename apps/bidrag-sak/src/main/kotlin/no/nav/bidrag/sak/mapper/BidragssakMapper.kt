@@ -1,5 +1,7 @@
 package no.nav.bidrag.sak.mapper
 
+import no.nav.bidrag.commons.service.AppContext
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
 import no.nav.bidrag.domene.enums.sak.UkjentPart
@@ -7,10 +9,11 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.Forelderrolle
+import no.nav.bidrag.sak.domain.FØRSTE_OBJEKTNUMMER_BARN
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
-import no.nav.bidrag.sak.integration.person.hentNyesteIdent
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.transport.sak.BarnISak
@@ -54,23 +57,42 @@ object BidragssakMapper {
     fun Collection<RolleDto>.toRoller(
         fødselsdatoer: Map<Personident, LocalDate?>,
         bidragssak: Bidragssak,
-    ): Set<Rolle> = (this.mapBarnTilRoller(fødselsdatoer, bidragssak = bidragssak) + this.mapIkkeBarnTilRoller(fødselsdatoer)).toSet()
+    ): Set<Rolle> = (this.mapBarnTilRoller(fødselsdatoer, bidragssak = bidragssak) + this.mapForeldreTilRoller(fødselsdatoer)).toSet()
 
-    private fun Collection<RolleDto>.mapIkkeBarnTilRoller(fødselsdatoer: Map<Personident, LocalDate?>): List<Rolle> = setOf(Rolletype.BIDRAGSPLIKTIG, Rolletype.BIDRAGSMOTTAKER).map { rolletype ->
-        val rolleDto = this.firstOrNull { it.type == rolletype }
+    private fun Collection<RolleDto>.mapForeldreTilRoller(
+        fødselsdatoer: Map<Personident, LocalDate?>,
+    ): List<Rolle> = Forelderrolle.entries.map { forelderrolle ->
+        val rolleDto = this.firstOrNull { it.type == forelderrolle.rolletype }
         Rolle(
             fødselsnummer = rolleDto?.fødselsnummer?.verdi,
-            objektnummer = if (rolletype == Rolletype.BIDRAGSPLIKTIG) "01" else "02",
-            rolleType = rolletype,
+            objektnummer = forelderrolle.objektnummer,
+            rolleType = forelderrolle.rolletype,
             ukjentPart = if (rolleDto?.fødselsnummer?.verdi.isNullOrBlank()) UkjentPart.UK else null,
             mottagerErVerge = rolleDto?.mottagerErVerge ?: false,
             fødselsdato = fødselsdatoer[rolleDto?.fødselsnummer],
         )
     }
 
+    fun Collection<RolleDto>.mapBpBmTilRoller(
+        fødselsdatoer: Map<Personident, LocalDate?>,
+        bidragssak: Bidragssak,
+    ): List<Rolle> = this
+        .mapNotNull { dto -> Forelderrolle.fra(dto.type)?.let { dto to it } }
+        .map { (dto, forelderrolle) ->
+            Rolle(
+                fødselsnummer = dto.fødselsnummer?.verdi,
+                rolleType = forelderrolle.rolletype,
+                objektnummer = forelderrolle.objektnummer,
+                ukjentPart = if (dto.fødselsnummer == null) UkjentPart.UK else null,
+                mottagerErVerge = dto.mottagerErVerge,
+                fødselsdato = fødselsdatoer[dto.fødselsnummer],
+                bidragssak = bidragssak,
+            )
+        }
+
     fun Collection<RolleDto>.mapBarnTilRoller(
         fødselsdatoer: Map<Personident, LocalDate?>,
-        førsteLedigeObjektnummer: Int = 3,
+        førsteLedigeObjektnummer: Int = FØRSTE_OBJEKTNUMMER_BARN,
         bidragssak: Bidragssak,
     ): List<Rolle> = this
         .filter { it.type == Rolletype.BARN }
@@ -120,7 +142,7 @@ object RolleMapper {
             val rmSamhandler = reellMottaker?.samhandlerIdent
 
             RolleDto(
-                fødselsnummer = it.fødselsnummer?.let { fødelsnummer -> hentNyesteIdent(fødelsnummer) },
+                fødselsnummer = it.fødselsnummer?.let { fødelsnummer -> hentGjeldendeIdent(fødelsnummer) },
                 type = it.rolleType,
                 objektnummer = it.objektnummer,
                 reellMottager =
@@ -153,7 +175,7 @@ object RollehistorikkMapper {
                 ?.let { rMRolleid -> roller.firstOrNull { it.rolleId == rMRolleid }?.samhandlerIdent }
 
         RollehistorikkDto(
-            fødselsnummer = rollehistorikk.rolleFødselsnummer?.let { fødselsnummer -> hentNyesteIdent(fødselsnummer) },
+            fødselsnummer = rollehistorikk.rolleFødselsnummer?.let { fødselsnummer -> hentGjeldendeIdent(fødselsnummer) },
             type = rollehistorikk.type!!,
             reellMottaker =
             if (rollehistorikk.rmRolleId != null &&
@@ -187,9 +209,11 @@ fun Collection<Rolle>.toBarnISak() = this
                 ?.let { ident -> ReellMottaker(ident) }
 
         BarnISak(
-            ident = it.fødselsnummer?.let { fødselsnummer -> hentNyesteIdent(fødselsnummer) },
+            ident = it.fødselsnummer?.let { fødselsnummer -> hentGjeldendeIdent(fødselsnummer) },
             reellMottaker = personidentReellMottaker,
         )
     }
 
 fun RolleDto.medFødselsdato(fødselsdatoer: Map<Personident, LocalDate?>) = RolleMedFødselsdato(this, this.fødselsnummer?.let { fødselsdatoer[it] })
+
+private fun hentGjeldendeIdent(ident: String) = Personident(AppContext.getBean(IdentConsumer::class.java).hentGjeldendeIdent(ident) ?: ident)
