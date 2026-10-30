@@ -20,7 +20,7 @@
 
     <properties>
         <mockk.version>1.14.11</mockk.version>
-        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
         <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
         <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
