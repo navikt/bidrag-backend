@@ -243,7 +243,7 @@ class VedtakService(
             ) {
                 val bp = konvertertBehandlingLesemodus.roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
                 behandlingRepository!!
-                    .finnHovedbehandlingForBpVedFF(bp!!.ident!!, påklagetVedtak)
+                    .finnHovedbehandlingForBpVedFF(bp!!.ident!!, påklagetVedtak, refVedtaksid)
                     ?.let { behandling ->
 
                         forholdsmessigFordelingService!!.opprettSøknaderForKlageEllerOmgjøring(

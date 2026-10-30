@@ -538,10 +538,12 @@ class ForholdsmessigFordelingService(
         }
     }
 
-    private fun lagreOgOppdaterGrunnlag(
+    internal fun lagreOgOppdaterGrunnlag(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {
+        // Nye roller må få id før grunnlag innhentes, ellers matcher grunnlag på rolle.id == null på tvers av nye bidragsmottakere
+        behandlingRepository.flush()
         kravhaverService.opprettGrunnlagLøpendeBidrag(behandling, nyesteLøpendeBidragGrunnlag)
         // Tving ny grunnlagsinnhenting slik at nye roller (bidragsmottaker og barn) får hentet inn grunnlag selv om grunnlag ble nylig ble innhentet for behandlingen.
         behandling.grunnlagSistInnhentet = null

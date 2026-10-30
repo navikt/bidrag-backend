@@ -191,6 +191,7 @@ class GrunnlagService(
     private val ffService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
     private val bestillAsyncJobService: BestillAsyncJobService? = null,
+    private val feilrettingService: FeilrettingService? = null,
 ) {
     @Value($$"${egenskaper.grunnlag.min-antall-minutter-siden-forrige-innhenting:60}")
     lateinit var grenseInnhenting: String
@@ -256,6 +257,7 @@ class GrunnlagService(
         try {
             if (foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong())) {
                 sjekkOgOppdaterIdenter(behandling)
+                feilrettingService?.slettSkattepliktigeInntekterHentetForAnnenPerson(behandling)
                 val feilrapporteringer = mutableMapOf<Grunnlagsdatatype, GrunnlagFeilDto?>()
 
                 fun Map<Grunnlagsdatatype, GrunnlagFeilDto>.lagreFeilrapportering(): Pair<PersonStønad, HentetGrunnlag>? {
