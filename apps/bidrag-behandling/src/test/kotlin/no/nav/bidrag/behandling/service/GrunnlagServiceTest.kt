@@ -24,7 +24,6 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
-import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
 import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.database.repository.GrunnlagRepository
@@ -33,6 +32,7 @@ import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagRequestV2
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
+import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
 import no.nav.bidrag.behandling.service.GrunnlagServiceTest.Companion.tilAinntektspostDto
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonTilObjekt
@@ -5156,6 +5156,152 @@ class GrunnlagServiceTest : TestContainerRunner() {
                     .map { it.type to it.data } shouldBe bearbeidetFørInnhenting
             }
         }
+
+        @Test
+        @Transactional
+        open fun `skal lagre skattepliktige inntekter på riktig bidragsmottaker når flere nye bidragsmottakere ikke er lagret`() {
+            // gitt
+            val behandling = oppretteBehandlingMedNyeBidragsmottakere()
+            val nyeBidragsmottakere =
+                listOf(NY_BIDRAGSMOTTAKER_1_IDENT to BigDecimal(100000), NY_BIDRAGSMOTTAKER_2_IDENT to BigDecimal(200000))
+            behandling.roller.filter { it.ident in nyeBidragsmottakere.map { it.first } }.forEach { it.id shouldBe null }
+
+            every { runBlocking { bidragGrunnlagConsumerMock.henteGrunnlag(any(), any()) } } returns (HentetGrunnlag(opprettHentGrunnlagDto()))
+            nyeBidragsmottakere.forEach { (ident, beløp) ->
+                every {
+                    runBlocking {
+                        bidragGrunnlagConsumerMock.henteGrunnlag(
+                            match { it.any { request -> request.personId == ident } },
+                            any(),
+                        )
+                    }
+                } returns (HentetGrunnlag(opprettHentGrunnlagDto().copy(ainntektListe = listOf(opprettAinntekt(ident, beløp)))))
+            }
+
+            // hvis
+            grunnlagServiceMock.oppdatereGrunnlagForBehandling(behandling)
+
+            // så
+            val skattepliktigeInntekterPerRolle =
+                behandling.grunnlag
+                    .filter { it.type == Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER && !it.erBearbeidet }
+                    .filter { it.rolle.ident in nyeBidragsmottakere.map { it.first } }
+            assertSoftly {
+                skattepliktigeInntekterPerRolle shouldHaveSize nyeBidragsmottakere.size
+                skattepliktigeInntekterPerRolle.map { it.rolle.id }.toSet() shouldHaveSize nyeBidragsmottakere.size
+                nyeBidragsmottakere.forEach { (ident, beløp) ->
+                    val grunnlag = skattepliktigeInntekterPerRolle.find { it.rolle.ident == ident }
+                    grunnlag.shouldNotBeNull()
+                    grunnlag.rolle.id.shouldNotBeNull()
+                    val ainntekter = grunnlag.konvertereData<SkattepliktigeInntekter>()!!.ainntekter
+                    ainntekter.map { it.personId } shouldBe listOf(ident)
+                    ainntekter.flatMap { it.ainntektspostListe }.map { it.beløp } shouldBe listOf(beløp)
+                }
+            }
+        }
+
+        @Test
+        @Transactional
+        open fun `skal lagre grunnlag for øvrige bidragsmottakere og registrere innhentingsfeil når innhenting feiler teknisk for én bidragsmottaker`() {
+            // gitt
+            val behandling = oppretteBehandlingMedNyeBidragsmottakere()
+            behandling.grunnlagSistInnhentet shouldBe null
+            every { runBlocking { bidragGrunnlagConsumerMock.henteGrunnlag(any(), any()) } } returns (HentetGrunnlag(opprettHentGrunnlagDto()))
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(match { it.any { request -> request.personId == NY_BIDRAGSMOTTAKER_1_IDENT } }, any())
+                }
+            } returns (HentetGrunnlag(null, tekniskFeil = "Feil ved henting av grunnlag"))
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(match { it.any { request -> request.personId == NY_BIDRAGSMOTTAKER_2_IDENT } }, any())
+                }
+            } returns (HentetGrunnlag(opprettHentGrunnlagDto().copy(ainntektListe = listOf(opprettAinntekt(NY_BIDRAGSMOTTAKER_2_IDENT, BigDecimal(200000))))))
+
+            // hvis
+            grunnlagServiceMock.oppdatereGrunnlagForBehandling(behandling)
+
+            // så
+            assertSoftly {
+                behandling.grunnlagSistInnhentet shouldNotBe null
+                behandling.grunnlagsinnhentingFeilet shouldNotBe null
+                behandling.hentSkattepliktigeInntekterRådata(NY_BIDRAGSMOTTAKER_1_IDENT) shouldHaveSize 0
+                behandling.hentSkattepliktigeInntekterRådata(NY_BIDRAGSMOTTAKER_2_IDENT) shouldHaveSize 1
+            }
+        }
+
+        @Test
+        @Transactional
+        open fun `skal lagre grunnlag for øvrige bidragsmottakere og registrere innhentingsfeil når lagring feiler for én bidragsmottaker`() {
+            // gitt
+            val behandling = oppretteBehandlingMedNyeBidragsmottakere()
+            behandling.grunnlagSistInnhentet shouldBe null
+            val ugyldigAinntekt =
+                opprettAinntekt(NY_BIDRAGSMOTTAKER_1_IDENT, BigDecimal(100000)).let {
+                    it.copy(ainntektspostListe = it.ainntektspostListe.map { post -> post.copy(utbetalingsperiode = UGYLDIG_UTBETALINGSPERIODE) })
+                }
+            every { runBlocking { bidragGrunnlagConsumerMock.henteGrunnlag(any(), any()) } } returns (HentetGrunnlag(opprettHentGrunnlagDto()))
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(match { it.any { request -> request.personId == NY_BIDRAGSMOTTAKER_1_IDENT } }, any())
+                }
+            } returns (HentetGrunnlag(opprettHentGrunnlagDto().copy(ainntektListe = listOf(ugyldigAinntekt))))
+            every {
+                runBlocking {
+                    bidragGrunnlagConsumerMock.henteGrunnlag(match { it.any { request -> request.personId == NY_BIDRAGSMOTTAKER_2_IDENT } }, any())
+                }
+            } returns (HentetGrunnlag(opprettHentGrunnlagDto().copy(ainntektListe = listOf(opprettAinntekt(NY_BIDRAGSMOTTAKER_2_IDENT, BigDecimal(200000))))))
+
+            // hvis
+            grunnlagServiceMock.oppdatereGrunnlagForBehandling(behandling)
+
+            // så
+            assertSoftly {
+                behandling.grunnlagSistInnhentet shouldNotBe null
+                behandling.grunnlagsinnhentingFeilet shouldNotBe null
+                behandling.hentSkattepliktigeInntekterRådata(NY_BIDRAGSMOTTAKER_2_IDENT) shouldHaveSize 1
+            }
+        }
+
+        private fun oppretteBehandlingMedNyeBidragsmottakere(): Behandling {
+            val behandling =
+                testdataManager.oppretteBehandling(
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            listOf(NY_BIDRAGSMOTTAKER_1_IDENT, NY_BIDRAGSMOTTAKER_2_IDENT).forEach { ident ->
+                behandling.roller.add(
+                    Rolle(
+                        behandling = behandling,
+                        rolletype = Rolletype.BIDRAGSMOTTAKER,
+                        ident = ident,
+                        fødselsdato = LocalDate.parse("1985-01-01"),
+                    ),
+                )
+            }
+            return behandling
+        }
+
+        private fun Behandling.hentSkattepliktigeInntekterRådata(ident: String) = grunnlag
+            .filter { it.type == Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER && !it.erBearbeidet && it.rolle.ident == ident }
+
+        private fun opprettAinntekt(
+            ident: String,
+            beløp: BigDecimal,
+        ) = AinntektGrunnlagDto(
+            personId = ident,
+            periodeFra = YearMonth.now().minusMonths(2).atDay(1),
+            periodeTil = YearMonth.now().minusMonths(1).atDay(1),
+            ainntektspostListe =
+            listOf(
+                tilAinntektspostDto(
+                    beskrivelse = "fastloenn",
+                    beløp = beløp,
+                    inntektstype = "FASTLOENN",
+                    utbetalingsperiode = YearMonth.now().minusMonths(2).format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                ),
+            ),
+        )
     }
 
     @Nested
@@ -5209,6 +5355,10 @@ class GrunnlagServiceTest : TestContainerRunner() {
     }
 
     companion object {
+        private const val NY_BIDRAGSMOTTAKER_1_IDENT = "12345678901"
+        private const val NY_BIDRAGSMOTTAKER_2_IDENT = "10987654321"
+        private const val UGYLDIG_UTBETALINGSPERIODE = "ugyldig"
+
         fun tilHentGrunnlagDto(
             hentet: LocalDateTime = LocalDateTime.now(),
             ainntekter: List<AinntektGrunnlagDto> = emptyList(),
