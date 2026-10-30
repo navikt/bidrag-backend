@@ -33,6 +33,7 @@ private val resultatkoderSomIkkeErStøttetAvBrev =
         Resultatkode.PARTEN_BER_OM_OPPHØR,
         Resultatkode.BARNET_ANSES_Å_BO_SAMMEN_MED_BEGGE_FORELDRE,
         Resultatkode.PARTENE_BOR_SAMMEN,
+        Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED,
     )
 
 // "

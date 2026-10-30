@@ -10,7 +10,6 @@ import no.nav.bidrag.behandling.behandlingNotFoundException
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
-import no.nav.bidrag.behandling.dto.v2.underhold.BeregnetUnderholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
@@ -21,7 +20,6 @@ import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.underhold.Underholdselement
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.underhold.henteOgValidereUnderholdskostnad
@@ -78,7 +76,7 @@ class UnderholdController(
             val beregnet = dtomapper.run { behandling.tilBeregnetUnderholdskostnad() }
             OppdatereUnderholdResponse(
                 beregnetUnderholdskostnader = beregnet,
-                valideringsfeil = behandling.underholdskostnader.valider(beregnet.perioderForUnderhold()),
+                valideringsfeil = behandling.underholdskostnader.valider(),
                 underholdId = request.idUnderhold,
             )
         } else {
@@ -307,7 +305,7 @@ class UnderholdController(
         return OpprettUnderholdskostnadBarnResponse(
             underholdskostnad = dtomapper.tilUnderholdDto(underholdskostnad),
             beregnetUnderholdskostnader = beregnet,
-            valideringsfeil = behandling.underholdskostnader.valider(beregnet.perioderForUnderhold()),
+            valideringsfeil = behandling.underholdskostnader.valider(),
         )
     }
 
@@ -319,13 +317,8 @@ class UnderholdController(
             tilleggsstønad = tilleggsstønad.tilTilleggsstønadDtos(),
             forpleining = forpleining.tilForpleiningDtos(),
             beregnetUnderholdskostnader = beregnet,
-            valideringsfeil = behandling.underholdskostnader.valider(beregnet.perioderForUnderhold()),
+            valideringsfeil = behandling.underholdskostnader.valider(),
             underholdId = id!!,
         )
-    }
-
-    /** Knytter hvert barns beregnede perioder til riktig underholdskostnad, på ident og stønadstype. */
-    private fun Set<BeregnetUnderholdskostnad>.perioderForUnderhold(): (Underholdskostnad) -> Set<UnderholdskostnadDto> = { u ->
-        dtomapper.run { perioderForBarn(u.personIdent, u.rolle?.stønadstype) }
     }
 }

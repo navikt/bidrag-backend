@@ -35,7 +35,10 @@ Beregningen utføres i `EndeligBidragBeregningV2.beregnAndelAvBidragsevne`.
 - `andelAvEvneBeløp = evneJustertForPrioriterteBidrag * andelAvSumBidragTilFordelingFaktor`
 - `bidragEtterFordeling = min(bidragTilFordeling, andelAvEvneBeløp)`
 - `bruttoBidragJustertForEvneOg25Prosent = min(bidragTilFordeling, evneJustertForPrioriterteBidrag)`
-- `harBPFullEvne = andelAvEvneBeløp >= bidragTilFordeling`
+- `harBPFullEvne = erAvslag || evneJustertForPrioriterteBidrag >= sumBidragTilFordelingJustertForPrioriterteBidrag`
+  - `erAvslag`: perioden har ingen delberegning bidrag til fordeling (avslag). Barnet deltar da ikke i fordelingen.
+  - BP har full evne når evnen dekker summen av bidrag til fordeling for alle barna. Et barn med 0 i bidrag til
+    fordeling (f.eks. delt bosted med BPs andel av U på nøyaktig 50 %) vurderes mot summen, ikke mot sitt eget beløp.
 
 Avrunding:
 

@@ -26,6 +26,7 @@ import {
   useDokumentFelles,
   TypeInnhold,
 } from "~/components/vedtak_felles/FellesContext";
+import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
 
 export default function Vedtak({ vedleggNummer }: VedleggProps) {
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
@@ -219,8 +220,11 @@ function VedtakTable({
   const { erOpphør, erDirekteAvslagForBarn } = useNotatFelles();
   if (data.length == 0) return <div>Mangler resultat</div>;
 
-  function renderAvslag(_) {
-    return [{ content: "", colSpan: 5 }, { content: "Avslag" }];
+  function renderAvslag(erOpphørAvStønad: boolean) {
+    return [
+      { content: "", colSpan: 5 },
+      { content: erOpphørAvStønad ? "Opphør" : "Avslag" },
+    ];
   }
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
@@ -298,8 +302,8 @@ function VedtakTable({
     perioder: ResultatBarnebidragsberegningPeriodeDto[],
     gjelderBarn: DokumentmalPersonDto,
   ) {
+    const erOpphørAvStønad = erOpphør || gjelderBarn.harLøpendeBidrag == true;
     if (erDirektAvslag) {
-      const erOpphørAvStønad = erOpphør || gjelderBarn.harLøpendeBidrag == true;
       return {
         headers: headersAvslag(),
         rows: perioder.map((d) => ({
@@ -324,9 +328,11 @@ function VedtakTable({
                 d.periode!.fom,
                 deductDays(d.periode!.til, 1),
               ),
-              columns: d.beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet
-                ? renderAvslag(d)
-                : renderResult(d),
+              columns:
+                d.beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet ||
+                erBeregnetAvslagUtenBeløp(d.beregningsdetaljer?.sluttberegning)
+                  ? renderAvslag(erOpphørAvStønad)
+                  : renderResult(d),
             },
             {
               zebraStripe: false,

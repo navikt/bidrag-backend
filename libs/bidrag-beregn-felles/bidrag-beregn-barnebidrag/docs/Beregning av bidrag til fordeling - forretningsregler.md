@@ -36,11 +36,15 @@ Beregningen utføres i `EndeligBidragBeregningV2.beregnBidragTilFordeling`.
 - `bpAndelAvUMinusSamværsfradrag = bpAndelBeløp - samværsfradrag`
 - `bidragTilFordeling = min(uMinusNettoBarnetilleggBM, bpAndelAvUMinusSamværsfradrag) + samværsfradrag`
 - `nettoBidragEtterBarnetilleggBM = max(bidragTilFordeling - samværsfradrag, 0)`
-- `erBidragJustertForNettoBarnetilleggBM = (uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag)`
+- `erBidragJustertForNettoBarnetilleggBM = nettoBarnetilleggBM > 0 && (uMinusNettoBarnetilleggBM == bidragTilFordeling - samværsfradrag)`
+- `erDeltBosted = bidragspliktigesAndelDeltBosted finnes`
 
 ### Avslag
 
-`erAvslag = barnetErSelvforsørget || søknadsbarnetBorHosBp`
+`erAvslag = barnetErSelvforsørget || søknadsbarnetBorHosBp || bidragIkkeBeregnetDeltBosted || forpleiningDekkerUnderholdskostnaden`
+
+- `bidragIkkeBeregnetDeltBosted`: delt bosted, og BPs andel av U (`andelFaktor`) er under 0,5. Ved nøyaktig 0,5 blir bidrag til fordeling 0 uten avslag.
+- `forpleiningDekkerUnderholdskostnaden`: forpleining er større enn 0, og U etter fradrag for forpleining er 0.
 
 Serviceklassen filtrerer perioder med avslag ut av delberegningsobjektet i dette steget. Selve avslag håndteres videre i sluttberegningen.
 

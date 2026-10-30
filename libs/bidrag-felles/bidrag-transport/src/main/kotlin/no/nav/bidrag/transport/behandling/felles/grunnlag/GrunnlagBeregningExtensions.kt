@@ -194,7 +194,7 @@ fun List<GrunnlagDto>.byggSluttberegningBarnebidragDetaljer(
 
     val bidragJustertNedTil25ProsentAvInntekt = erBidragJustertNedTil25ProsentAvInntekt(grunnlagsreferanseListe)
     val sluttberegningInnhold = sluttberegning.innholdTilObjekt<SluttberegningBarnebidragV2>()
-    val bidragJustertForDeltBosted = andelDeltBosted != null
+    val bidragJustertForDeltBosted = andelDeltBosted != null && !sluttberegningInnhold.bidragIkkeBeregnetDeltBosted
     return DokumentmalSluttberegningBarnebidragDetaljer(
         bidragJustertNedTilEvne = erBidragJustertNedTilEvne(grunnlagsreferanseListe),
         nettoBidragEtterSamværsfradrag = beregnetBeløp ?: BigDecimal.ZERO,
@@ -212,8 +212,25 @@ fun List<GrunnlagDto>.byggSluttberegningBarnebidragDetaljer(
         resultatBeløp = resultatBeløp,
         nettoBidragEtterBarnetilleggBM = nettoBidragEtterBarnetilleggBM,
         bruttoBidragEtterBarnetilleggBM = bidragTilFordeling?.innhold?.bidragTilFordeling ?: BigDecimal.ZERO,
-        bidragJustertForNettoBarnetilleggBM = bidragTilFordeling?.innhold?.uMinusNettoBarnetilleggBM == nettoBidragEtterBarnetilleggBM,
+        bidragJustertForNettoBarnetilleggBM = erBidragJustertForNettoBarnetilleggBM(bidragTilFordeling, nettoBidragEtterBarnetilleggBM),
         resultat = resultatSluttberegning(grunnlagsreferanseListe),
         resultatVisningsnavn = tilResultatVisningsnavn(grunnlagsreferanseListe),
     )
+}
+
+/**
+ * Bidraget er bare justert for BMs netto barnetillegg når BM har et barnetillegg i perioden. Uten denne sjekken blir resultatet
+ * "justert for netto barnetillegg BM" når underholdskostnaden er 0 (f.eks. ved forpleining), fordi begge sidene da er 0.
+ */
+fun List<GrunnlagDto>.erBidragJustertForNettoBarnetilleggBM(
+    bidragTilFordeling: InnholdMedReferanse<DelberegningBidragTilFordeling>?,
+    nettoBidragEtterBarnetilleggBM: BigDecimal,
+): Boolean {
+    if (bidragTilFordeling == null || bidragTilFordeling.innhold.uMinusNettoBarnetilleggBM != nettoBidragEtterBarnetilleggBM) return false
+    val nettoBarnetilleggBM =
+        finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<DelberegningNettoBarnetillegg>(
+            Grunnlagstype.DELBEREGNING_NETTO_BARNETILLEGG,
+            bidragTilFordeling.grunnlag.grunnlagsreferanseListe,
+        ).firstOrNull()?.innhold?.summertNettoBarnetillegg ?: BigDecimal.ZERO
+    return nettoBarnetilleggBM > BigDecimal.ZERO
 }
