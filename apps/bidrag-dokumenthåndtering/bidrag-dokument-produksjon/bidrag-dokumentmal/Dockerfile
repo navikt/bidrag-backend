@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:22-alpine3.22 AS build
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-dev AS build
+USER root
 ENV NODE_ENV=production
-LABEL maintainer="Team Bidrag"
 WORKDIR /app
 
 COPY package*.json ./
@@ -21,26 +21,10 @@ COPY . .
 RUN npm run build
 RUN npm prune --omit=dev && npm cache clean --force
 
-FROM node:22-alpine3.22 AS runtime
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-slim AS runtime
 ENV NODE_ENV=production
 ENV PORT=8080
-
-# Patch OS packages from the base image. node:22-alpine3.22 currently ships
-# openssl 3.5.6-r0, which has known CVEs fixed in 3.5.7-r0. The base image is
-# only rebuilt periodically, so upgrade explicitly rather than waiting for it.
-RUN apk upgrade --no-cache
-
-# Drop the bundled npm/corepack CLIs from the runtime image. They are never used
-# here - the container starts react-router-serve directly - but their vendored
-# dependencies dominate the image's CVE report (npm bundles its own copies of
-# brace-expansion, picomatch, ip-address, tar and friends, which are flagged even
-# though no code path can reach them). Removing them eliminates that whole class
-# of findings instead of suppressing them one by one.
-RUN rm -rf /usr/local/lib/node_modules/npm \
-           /usr/local/lib/node_modules/corepack \
-           /usr/local/bin/npm /usr/local/bin/npx \
-           /usr/local/bin/corepack /opt/yarn* \
-           /usr/local/bin/yarn /usr/local/bin/yarnpkg
+LABEL maintainer="Team Bidrag"
 
 WORKDIR /app
 COPY --from=build --chown=node:node /app/package*.json ./
@@ -53,4 +37,5 @@ USER node
 
 EXPOSE 8080
 
+ENTRYPOINT ["node"]
 CMD ["./node_modules/.bin/react-router-serve", "./build/server/index.js"]
