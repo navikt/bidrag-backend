@@ -433,13 +433,13 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
         }
 
         assertSoftly(behandling.grunnlag) {
-            this shouldHaveSize 26
+            this shouldHaveSize 27
             filter { it.erBearbeidet && it.rolle.rolletype == Rolletype.BIDRAGSMOTTAKER }.shouldHaveSize(
                 16,
             )
             filter { it.erBearbeidet && it.rolle.rolletype == Rolletype.BARN }.shouldHaveSize(1)
             filter { !it.erBearbeidet && it.rolle.rolletype == Rolletype.BIDRAGSMOTTAKER }.shouldHaveSize(
-                8,
+                9,
             )
             filter { !it.erBearbeidet && it.rolle.rolletype == Rolletype.BARN }.shouldHaveSize(1)
         }
@@ -698,7 +698,7 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
 
     private fun Behandling.validerGrunnlag() {
         assertSoftly(grunnlagListe) {
-            size shouldBe 26
+            size shouldBe 27
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER,
                 testdataBarn2.ident,
@@ -730,7 +730,7 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.ARBEIDSFORHOLD,
                 testdataBM.ident,
-            ) shouldHaveSize 0
+            ) shouldHaveSize 1
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.SIVILSTAND,
                 testdataBM.ident,
