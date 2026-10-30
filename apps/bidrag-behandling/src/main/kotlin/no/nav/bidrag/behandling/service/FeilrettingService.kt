@@ -34,8 +34,20 @@ class FeilrettingService {
         if (behandling.erVedtakFattet) return emptyList()
 
         val nyesteIdentCache = mutableMapOf<String, String>()
-        val hentNyesteIdent: (String) -> String = { ident ->
-            nyesteIdentCache.getOrPut(ident) { hentNyesteIdentIgnorerForbidden(ident)?.verdi ?: ident }
+        val identerUtenOppslag = mutableSetOf<String>()
+        val hentNyesteIdent: (String) -> String? = { ident ->
+            when {
+                ident in nyesteIdentCache -> nyesteIdentCache[ident]
+                ident in identerUtenOppslag -> null
+                else ->
+                    hentPerson(ident)?.ident?.verdi.also {
+                        if (it == null) {
+                            identerUtenOppslag.add(ident)
+                        } else {
+                            nyesteIdentCache[ident] = it
+                        }
+                    }
+            }
         }
 
         val rollerMedFeilGrunnlag =
@@ -63,8 +75,9 @@ class FeilrettingService {
                 .toSet() - rolleIdent
         if (avvikendeIdenter.isEmpty()) return false
 
-        val nyesteRolleIdent = hentNyesteIdent(rolleIdent)
-        val identerForAnnenPerson = avvikendeIdenter.filter { hentNyesteIdent(it) != nyesteRolleIdent }
+        val nyesteRolleIdent = hentNyesteIdent(rolleIdent) ?: return false
+        val nyesteAvvikendeIdenter = avvikendeIdenter.map { hentNyesteIdent(it) ?: return false }
+        val identerForAnnenPerson = nyesteAvvikendeIdenter.filter { it != nyesteRolleIdent }
         if (identerForAnnenPerson.isNotEmpty()) {
             secureLogger.warn {
                 "Grunnlag $id (${rolle.rolletype} ${rolle.id}) i behandling ${behandling.id} inneholder skattepliktige inntekter " +

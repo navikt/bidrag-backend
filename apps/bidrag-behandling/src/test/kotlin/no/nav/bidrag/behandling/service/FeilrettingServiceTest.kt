@@ -23,6 +23,7 @@ import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.grunnlag.response.AinntektGrunnlagDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.SkattegrunnlagGrunnlagDto
+import no.nav.bidrag.transport.person.PersonDto
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,7 +46,7 @@ class FeilrettingServiceTest {
     @BeforeEach
     fun setup() {
         mockkStatic(OPPSLAG_SERVICE_KT)
-        every { hentNyesteIdentIgnorerForbidden(any()) } answers { Personident(firstArg()) }
+        every { hentPerson(any()) } answers { PersonDto(Personident(firstArg())) }
         behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
         behandling.grunnlag.clear()
         behandling.inntekter.clear()
@@ -118,7 +119,7 @@ class FeilrettingServiceTest {
     @Test
     fun `skal ikke slette når personId er historisk ident for bidragsmottaker`() {
         // Given
-        every { hentNyesteIdentIgnorerForbidden(HISTORISK_BM_IDENT) } returns Personident(bm.ident!!)
+        every { hentPerson(HISTORISK_BM_IDENT) } returns PersonDto(Personident(bm.ident!!))
         val rådata = behandling.leggTilSkattepliktigeInntekter(bm, HISTORISK_BM_IDENT)
 
         // When
@@ -127,6 +128,25 @@ class FeilrettingServiceTest {
         // Then
         rettedeRoller.shouldBeEmpty()
         behandling.grunnlag shouldContainExactly setOf(rådata)
+        behandling.grunnlagSistInnhentet shouldBe sistInnhentet
+    }
+
+    @Test
+    fun `skal ikke slette når oppslag av historisk ident gir 403 eller 404`() {
+        // Given
+        every { hentPerson(HISTORISK_BM_IDENT) } returns null
+        val rådata = behandling.leggTilSkattepliktigeInntekter(bm, HISTORISK_BM_IDENT)
+        val bearbeidet = behandling.leggTilGrunnlag(bm, Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER, erBearbeidet = true)
+        val ainntekt = behandling.leggTilInntekt(bm, Inntektsrapportering.AINNTEKT_BEREGNET_12MND, Kilde.OFFENTLIG)
+
+        // When
+        val rettedeRoller = feilrettingService.slettSkattepliktigeInntekterHentetForAnnenPerson(behandling)
+
+        // Then
+        rettedeRoller.shouldBeEmpty()
+        behandling.grunnlag shouldContainExactly setOf(rådata, bearbeidet)
+        behandling.inntekter shouldContainExactly setOf(ainntekt)
+        ainntekt.inntektsposter.size shouldBe 1
         behandling.grunnlagSistInnhentet shouldBe sistInnhentet
     }
 
