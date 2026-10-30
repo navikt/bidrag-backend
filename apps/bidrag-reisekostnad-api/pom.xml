@@ -16,7 +16,7 @@
 
   <properties>
     <java.version>25</java.version>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <shedlock.version>7.10.1</shedlock.version>
     <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
