@@ -18,7 +18,7 @@
 
   <properties>
     <mockk.version>1.14.11</mockk.version>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <jackson.version>2.22.4</jackson.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
