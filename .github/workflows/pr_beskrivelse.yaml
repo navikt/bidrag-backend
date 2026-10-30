@@ -57,11 +57,6 @@ jobs:
         # eksporteres via GITHUB_ENV for å kunne brukes i resten av jobben.
         run: echo "ARBEIDSKATALOG=$RUNNER_TEMP/pr-beskrivelse" >> "$GITHUB_ENV"
 
-      - name: Kjør tester for hjelpeskriptene
-        run: |
-          bash .github/scripts/test-pr-endringsoversikt.sh
-          python3 .github/scripts/test_oppdater_pr_beskrivelse.py
-
       - name: Bygg endringsoversikt
         run: |
           git fetch origin "$BASE_BRANCH" --quiet

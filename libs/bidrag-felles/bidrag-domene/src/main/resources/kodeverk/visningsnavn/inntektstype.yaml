@@ -51,5 +51,7 @@ BARNETILLEGG_SPK:
   intern: "SPK"
 BARNETILLEGG_TILTAKSPENGER:
   intern: "Tiltakspenger"
+BARNETILLEGG_FORSVARET:
+  intern: "Forsvaret"
 BARNETILLEGG_SUMMERT:
   intern: "Summert (fra Bisys)"

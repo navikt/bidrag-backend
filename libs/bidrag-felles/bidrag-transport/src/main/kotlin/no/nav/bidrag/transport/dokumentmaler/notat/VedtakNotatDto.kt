@@ -686,9 +686,10 @@ data class NotatInntektDto(
 ) {
     val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
 
+    @get:Schema(description = "Skattefaktor for barnetillegg. Null når skatteprosent ikke er relevant (skattefrie barnetillegg)")
     val skattefaktor get() =
         if (type == Inntektsrapportering.BARNETILLEGG) {
-            inntektsposter.firstOrNull()?.skattefaktor ?: BigDecimal.ZERO
+            inntektsposter.firstOrNull()?.skattefaktor
         } else {
             null
         }

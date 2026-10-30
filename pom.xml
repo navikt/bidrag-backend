@@ -110,13 +110,6 @@
             </snapshots>
         </repository>
         <repository>
-            <id>confluent</id>
-            <url>https://packages.confluent.io/maven/</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
             <id>github</id>
             <url>https://maven.pkg.github.com/navikt/token-support</url>
         </repository>

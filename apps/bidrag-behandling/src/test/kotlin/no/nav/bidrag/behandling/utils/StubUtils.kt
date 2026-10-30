@@ -227,6 +227,9 @@ fun stubPersonConsumer(bidragPersonConsumer: BidragPersonConsumer? = null): Bidr
             aktørId = firstArg<String>(),
         )
     }
+    every { personConsumerMock.hentPerson(any<Personident>()) }.answers {
+        personConsumerMock.hentPerson(firstArg<Personident>().verdi)
+    }
     every { personConsumerMock.hentFødselsdatoForPerson(any<Personident>()) }.answers {
         LocalDate.now().minusYears(11)
     }
