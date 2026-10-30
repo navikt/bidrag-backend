@@ -4,9 +4,17 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Forpleining
+import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.Inntektspost
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
+import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -53,5 +61,62 @@ class OpprettFFMapperTest {
         kopiertForpleining.beløp shouldBe BigDecimal(2500)
         // Kopien skal peke på den nye underholdskostnaden, ikke på den opprinnelige
         kopiertForpleining.underholdskostnad shouldBe kopiert
+    }
+
+    @ParameterizedTest
+    @CsvSource("BARNETILLEGG_PENSJON,0.25", "BARNETILLEGG_TILTAKSPENGER,")
+    fun `skal kopiere beløpstype, og skattefaktor bare for skattepliktige barnetillegg`(
+        inntektstype: Inntektstype,
+        forventetSkattefaktor: BigDecimal?,
+    ) {
+        // gitt
+        val kildebehandling =
+            oppretteTestbehandling(
+                setteDatabaseider = true,
+                inkludereBp = true,
+                behandlingstype = TypeBehandling.BIDRAG,
+            )
+        val hovedbehandling =
+            oppretteTestbehandling(
+                setteDatabaseider = true,
+                inkludereBp = true,
+                behandlingstype = TypeBehandling.BIDRAG,
+            )
+        val bp = kildebehandling.bidragspliktig!!
+        val inntekt =
+            Inntekt(
+                behandling = kildebehandling,
+                type = Inntektsrapportering.BARNETILLEGG,
+                belop = BigDecimal(30000),
+                datoFom = LocalDate.now().minusMonths(6).withDayOfMonth(1),
+                datoTom = null,
+                ident = bp.ident,
+                rolle = bp,
+                gjelderBarnRolle = kildebehandling.søknadsbarn.first(),
+                kilde = Kilde.MANUELL,
+                taMed = true,
+            )
+        inntekt.inntektsposter.add(
+            Inntektspost(
+                inntekt = inntekt,
+                kode = "",
+                inntektstype = inntektstype,
+                beløp = BigDecimal(2500),
+                beløpstype = InntektBeløpstype.MÅNEDSBELØP,
+                skattefaktor = BigDecimal("0.25"),
+            ),
+        )
+        val inntekterFør = hovedbehandling.inntekter.toSet()
+
+        // hvis
+        kopierInntekt(hovedbehandling, inntekt)
+
+        // så
+        val kopiert = (hovedbehandling.inntekter - inntekterFør).singleOrNull()
+        kopiert.shouldNotBeNull()
+        val kopiertPost = kopiert.inntektsposter.single()
+        kopiertPost.beløp shouldBe BigDecimal(2500)
+        kopiertPost.beløpstype shouldBe InntektBeløpstype.MÅNEDSBELØP
+        kopiertPost.skattefaktor shouldBe forventetSkattefaktor
     }
 }

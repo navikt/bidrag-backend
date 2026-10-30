@@ -10,6 +10,7 @@ import no.nav.bidrag.beregn.core.periode.Periodiserer
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.rolle.Rolle
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.enums.vedtak.Formål
@@ -472,20 +473,18 @@ object InntektUtil {
         return if (kapitalinntekt < BigDecimal.ZERO) BigDecimal.ZERO else kapitalinntekt
     }
 
-    // Barntillegg tiltakspenger skal ikke være med i inntektsgrunnlaget som skal summeres
-    fun justerForBarnetilleggTiltakspenger(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = inntektsrapporteringPeriode.beløp -
-        (
-            inntektsrapporteringPeriode.inntektspostListe
-                .filter { it.inntektstype == Inntektstype.BARNETILLEGG_TILTAKSPENGER }
-                .sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
-            )
+    // Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt etter barnebidragsforskriften § 4, og tas ikke med
+    // når inntekten summeres. Bare de andre postene i inntekten summeres.
+    fun beløpUtenSkattefrieBarnetillegg(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = inntektsrapporteringPeriode.inntektspostListe
+        .filterNot { it.inntektstype?.erSkattefrittBarnetillegg == true }
+        .sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
 
     // Sjekker om inntekten er kapitalinntekt
     fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) = inntektsrapportering in listOf(Inntektsrapportering.KAPITALINNTEKT, Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER)
 
-    // Sjekker om inntekten inneholder barnetillegg tiltakspenger
-    fun inneholderBarnetilleggTiltakspenger(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = (inntektsrapporteringPeriode.inntektsrapportering == Inntektsrapportering.BARNETILLEGG) &&
-        (inntektsrapporteringPeriode.inntektspostListe.any { it.inntektstype == Inntektstype.BARNETILLEGG_TILTAKSPENGER })
+    // Sjekker om inntekten inneholder skattefrie barnetillegg
+    fun inneholderSkattefrieBarnetillegg(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = (inntektsrapporteringPeriode.inntektsrapportering == Inntektsrapportering.BARNETILLEGG) &&
+        (inntektsrapporteringPeriode.inntektspostListe.any { it.inntektstype?.erSkattefrittBarnetillegg == true })
 
     fun BigDecimal.beløpTilÅrsbeløp(beløpstype: InntektBeløpstype? = null): BigDecimal = when (beløpstype) {
         InntektBeløpstype.MÅNEDSBELØP -> {
