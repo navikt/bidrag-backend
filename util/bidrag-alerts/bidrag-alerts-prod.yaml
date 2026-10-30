@@ -40,6 +40,8 @@ spec:
           labels:
             namespace: bidrag
             severity: warning
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
 
         - alert: Ventende databasekoblinger
           expr: max by (app, pod) (hikaricp_connections_pending{namespace="bidrag",app!=""}) >= 5
@@ -52,6 +54,8 @@ spec:
           labels:
             namespace: bidrag
             severity: warning
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
 
         - alert: Tidsavbrudd ved henting av databasekobling
           expr: sum by (app) (increase(hikaricp_connections_timeout_total{namespace="bidrag",app!=""}[10m])) > 0
@@ -64,6 +68,8 @@ spec:
           labels:
             namespace: bidrag
             severity: critical
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
 
         - alert: Gjentatte 5xx-responser på endepunkt
           expr: sum by (app, uri) (increase(http_server_requests_seconds_count{namespace="bidrag",app!="",uri!~"/actuator.*",status=~"5.."}[10m])) >= 5
@@ -76,6 +82,8 @@ spec:
           labels:
             namespace: bidrag
             severity: critical
+            bidrag_template_type: bidrag-template
+            bidrag_template_type_fss: bidrag-template-fss
 
 #    - name: Høy feilrate
 #      rules:
