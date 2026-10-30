@@ -666,7 +666,7 @@ class VedtakTilBehandlingMapping(
         return (underholdskostnadAndreBarn + underholdskostnadSøknadsbarn).toMutableSet()
     }
 
-    private fun List<GrunnlagDto>.hentAndreBarnUnderholdskostnadPerioder(
+    fun List<GrunnlagDto>.hentAndreBarnUnderholdskostnadPerioder(
         behandling: Behandling,
         lesemodus: Boolean,
         virkningstidspunkt: LocalDate,
