@@ -36,17 +36,18 @@ class FeilrettingService {
         val nyesteIdentCache = mutableMapOf<String, String>()
         val identerUtenOppslag = mutableSetOf<String>()
         val hentNyesteIdent: (String) -> String? = { ident ->
-            when {
-                ident in nyesteIdentCache -> nyesteIdentCache[ident]
-                ident in identerUtenOppslag -> null
-                else ->
-                    hentPerson(ident)?.ident?.verdi.also {
-                        if (it == null) {
-                            identerUtenOppslag.add(ident)
-                        } else {
-                            nyesteIdentCache[ident] = it
-                        }
+            when (ident) {
+                in nyesteIdentCache -> nyesteIdentCache[ident]
+
+                in identerUtenOppslag -> null
+
+                else -> hentPerson(ident)?.ident?.verdi.also {
+                    if (it == null) {
+                        identerUtenOppslag.add(ident)
+                    } else {
+                        nyesteIdentCache[ident] = it
                     }
+                }
             }
         }
 
@@ -67,7 +68,7 @@ class FeilrettingService {
         return rollerMedFeilGrunnlag.mapNotNull { it.id }
     }
 
-    private fun Grunnlag.inneholderInntekterForAnnenPerson(hentNyesteIdent: (String) -> String): Boolean {
+    private fun Grunnlag.inneholderInntekterForAnnenPerson(hentNyesteIdent: (String) -> String?): Boolean {
         val rolleIdent = rolle.ident ?: return false
         val skattepliktigeInntekter = konvertereData<SkattepliktigeInntekter>() ?: return false
         val avvikendeIdenter =
