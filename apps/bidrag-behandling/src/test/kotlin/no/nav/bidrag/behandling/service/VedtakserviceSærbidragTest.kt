@@ -1722,6 +1722,7 @@ class VedtakserviceSærbidragTest : VedtakserviceTest() {
         behandling.virkningstidspunkt = LocalDate.now().withDayOfMonth(1)
         behandling.avslag = Resultatkode.PRIVAT_AVTALE
         testdataManager.lagreBehandling(behandling)
+        entityManager.flush()
         behandling.kategori = Særbidragskategori.KONFIRMASJON.name
         behandling.utgift = null
         behandling.initGrunnlagRespons(

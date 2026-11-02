@@ -163,15 +163,7 @@ class VedtakHendelseListener(
                 )
         }
         if (type != Vedtakstype.OPPHØR && erVedtakInnkreving) {
-            if (behandling.søknadsbarn.none { it.erSammeRolle(stønadsendring.kravhaver.verdi, stønadsendring.type) }) {
-                // Henter og legger til barn som revurderingsbarn
-                behandling.privatAvtale.removeIf {
-                    it.rolle == null &&
-                        (it.rolle!!.erSammeRolle(stønadsendring.kravhaver.verdi, stønadsendring.type))
-                }
-                forholdsmessigFordelingService.opprettEllerOppdaterForholdsmessigFordeling(behandling.id!!)
-                forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling)
-            } else {
+            if (behandling.søknadsbarn.any { it.erSammeRolle(stønadsendring.kravhaver.verdi, stønadsendring.type) }) {
                 forholdsmessigFordelingService.oppdaterBarnEtterInnkrevingsvedtak(
                     behandling,
                     PersonStønad(stønadsendring.kravhaver, stønadsendring.type),

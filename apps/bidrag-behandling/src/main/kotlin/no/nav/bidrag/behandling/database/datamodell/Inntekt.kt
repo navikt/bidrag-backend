@@ -71,6 +71,10 @@ open class Inntekt(
     val gjelderIdent get() = (rolle?.ident ?: ident)!!
     val gjelderBarnIdent get() = gjelderBarnRolle?.ident ?: gjelderBarn
 
+    // Samme ident kan ha flere roller i behandlingen (f.eks. 18-årsbidrag og ordinært bidrag), så rollen må inngå i nøkkelen
+    val rolleNøkkel get() = rolle?.identifikator ?: gjelderIdent
+    val gjelderBarnNøkkel get() = gjelderBarnRolle?.identifikator ?: gjelderBarnIdent
+
     val virkningstidspunktGjelderEllerBarn get() =
         if (gjelderSøknadsbarn != null) {
             gjelderSøknadsbarn!!.finnBeregnFra()
