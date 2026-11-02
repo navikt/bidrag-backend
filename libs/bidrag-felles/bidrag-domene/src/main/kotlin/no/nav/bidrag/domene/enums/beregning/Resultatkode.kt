@@ -144,7 +144,7 @@ enum class Resultatkode(
     AVSLAG(
         listOf(
             BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
-            BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("AG", BisysResultatkodeType.AVSLAG),
         ),
         ResultatkodeType.AVSLAG,
     ),
