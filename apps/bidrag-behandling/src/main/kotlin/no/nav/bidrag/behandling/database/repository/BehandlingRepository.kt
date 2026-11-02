@@ -231,6 +231,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
           AND b.deleted = false
           AND b.vedtakstidspunkt IS NULL
           and (:opprinneligVedtakId is null or (b.klagedetaljer ->> 'opprinneligVedtakId') = (:opprinneligVedtakId)::text)
+          and (:omgjørVedtakId is null or (b.klagedetaljer ->> 'omgjørVedtakId') = (:omgjørVedtakId)::text)
           AND b.forholdsmessig_fordeling IS not NULL AND (b.forholdsmessig_fordeling->>'erHovedbehandling') = 'true'
        limit 1
     """,
@@ -238,7 +239,8 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun finnHovedbehandlingForBpVedFF(
         @Param("bpIdent") bpIdent: String,
-        @Param("opprinneligVedtakId") opprinneligVedtakId: Int? = null
+        @Param("opprinneligVedtakId") opprinneligVedtakId: Int? = null,
+        @Param("omgjørVedtakId") omgjørVedtakId: Int? = null,
     ): Behandling?
 
     @Query(
