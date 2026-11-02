@@ -25,7 +25,6 @@ import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
-import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.LøpendeBidragPeriodeRequest
@@ -284,7 +283,7 @@ class ForholdsmessigFordelingKravhaverService(
                 it.saksnummer == saksnummer &&
                 it.søknadFomDato == søktFomDato &&
                 it.behandlingstema.tilStønadstype() == stønadstype &&
-                (stønadstype != Stønadstype.BIDRAG18AAR || it.gjelderKunBarn(barnIdent))
+                (stønadstype != Stønadstype.BIDRAG18AAR || it.søknadGjelderKunBarn(barnIdent))
         }
 
     fun hentÅpneSøknaderRevurdering(bidragspliktigFnr: String): List<HentSøknad> = bbmConsumer
