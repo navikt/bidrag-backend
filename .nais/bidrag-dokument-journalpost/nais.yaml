@@ -50,13 +50,13 @@ spec:
   kafka:
     pool: {{ kafka.pool }}
   liveness:
-    path: /bidrag-dokument-journalpost/actuator/health
+    path: /bidrag-dokument-journalpost/actuator/health/liveness
     initialDelay: 60
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /bidrag-dokument-journalpost/actuator/health
+    path: /bidrag-dokument-journalpost/actuator/health/readiness
     initialDelay: 60
     timeout: 1
   prometheus:
