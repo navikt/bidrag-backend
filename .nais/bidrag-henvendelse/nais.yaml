@@ -39,11 +39,11 @@ spec:
           - application: logging
             namespace: nais-system
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 60
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 60
   prometheus:
     enabled: true
