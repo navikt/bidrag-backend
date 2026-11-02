@@ -141,7 +141,13 @@ enum class Resultatkode(
         ResultatkodeType.AVSLAG,
     ),
 
-    AVSLAG(listOf(BisysResultatkode("A", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
+    AVSLAG(
+        listOf(
+            BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
+        ),
+        ResultatkodeType.AVSLAG,
+    ),
     AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
 
     PARTEN_BER_OM_OPPHØR(
@@ -211,7 +217,11 @@ enum class Resultatkode(
         ResultatkodeType.FORSKUDD,
     ),
     MANGLENDE_DOKUMENTASJON(
-        listOf(BisysResultatkode("AMD", BisysResultatkodeType.AVSLAG), BisysResultatkode("OMD", BisysResultatkodeType.OPPHØR)),
+        listOf(
+            BisysResultatkode("AMD", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("AID", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("OMD", BisysResultatkodeType.OPPHØR),
+        ),
         ResultatkodeType.AVSLAG,
         ResultatkodeType.DIREKTE_AVSLAG,
         ResultatkodeType.SÆRBIDRAG,
@@ -367,6 +377,11 @@ enum class Resultatkode(
         listOf(BisysResultatkode("IREG")),
         ResultatkodeType.BARNEBIDRAG,
         ResultatkodeType.FORSKUDD,
+    ),
+    IKKE_UNDERHOLDSPLIKT(
+        listOf(BisysResultatkode("AIU", BisysResultatkodeType.AVSLAG)),
+        ResultatkodeType.AVSLAG,
+        ResultatkodeType.SÆRBIDRAG,
     ),
 
     // Bisys resultatkoder (ikke brukt i ny løsning)
