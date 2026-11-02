@@ -16,7 +16,7 @@
 
   <properties>
     <nav-token-support.version>7.0.1</nav-token-support.version>
-    <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
+    <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <nimbus-jose-jwt.version>10.10</nimbus-jose-jwt.version>
   </properties>
 
