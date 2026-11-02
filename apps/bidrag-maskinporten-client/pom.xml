@@ -15,7 +15,7 @@
   <description>Utsteder Maskinporten-tokens for test av endepunkter i Team Bidrag</description>
 
   <properties>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
     <nimbus-jose-jwt.version>10.10</nimbus-jose-jwt.version>
   </properties>
