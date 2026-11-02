@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.service
 
+import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -28,6 +29,7 @@ import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.behandling.utils.testdata.testdataHusstandsmedlem1
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.Bostatuskode
@@ -37,6 +39,9 @@ import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -77,6 +82,63 @@ class VedtakTilBehandlingForskuddTest : CommonVedtakTilBehandlingTest() {
             validerSivilstand()
             validerInntekter()
             validerGrunnlag()
+        }
+    }
+
+    @Test
+    fun `Skal knytte virkningstidspunkt-notat til riktig rolle per barn i lesemodus med flere barn`() {
+        val vedtakDto = filTilVedtakDto("vedtak_response")
+        val søknadsbarnPersoner = vedtakDto.grunnlagListe.filter { it.type == Grunnlagstype.PERSON_SØKNADSBARN }
+        søknadsbarnPersoner shouldHaveSize 2
+        val identTilReferanse = søknadsbarnPersoner.associate { it.innhold.get("ident").asText() to it.referanse }
+
+        // Fjern eksisterende (delte) virkningstidspunkt-notater og legg til ett distinkt notat per barn.
+        val grunnlagUtenVirkningsnotat =
+            vedtakDto.grunnlagListe.filterNot {
+                it.type == Grunnlagstype.NOTAT &&
+                    it.innholdTilObjekt<NotatGrunnlag>().type == Notattype.VIRKNINGSTIDSPUNKT
+            }
+        val virkningsnotatPerBarn =
+            søknadsbarnPersoner.map { barn ->
+                GrunnlagDto(
+                    referanse = "notat_VIRKNINGSTIDSPUNKT_${barn.referanse}",
+                    type = Grunnlagstype.NOTAT,
+                    gjelderReferanse = barn.referanse,
+                    innhold =
+                    POJONode(
+                        NotatGrunnlag(
+                            innhold = "Virkning ${barn.referanse}",
+                            erMedIVedtaksdokumentet = false,
+                            type = Notattype.VIRKNINGSTIDSPUNKT,
+                            fraOmgjortVedtak = false,
+                        ),
+                    ),
+                )
+            }
+        val modifisertVedtak = vedtakDto.copy(grunnlagListe = grunnlagUtenVirkningsnotat + virkningsnotatPerBarn)
+
+        every { vedtakConsumer.hentVedtak(any()) } returns modifisertVedtak
+        every { behandlingService.hentBehandlingById(1) } returns oppretteBehandling()
+        every { tilgangskontrollService.sjekkTilgangVedtak(any()) } returns Unit
+
+        val behandling = vedtakService.konverterVedtakTilBehandlingForLesemodus(1)!!
+
+        val søknadsbarn = behandling.søknadsbarn
+        søknadsbarn shouldHaveSize 2
+        assertSoftly(søknadsbarn.toList()) {
+            forEach { rolle ->
+                val forventetInnhold = "Virkning ${identTilReferanse[rolle.ident]}"
+                // Notatet skal ligge på rolle-entiteten (notat.rolle.notat), knyttet til riktig barn.
+                val virkningsnotater = rolle.notat.filter { it.type == Notattype.VIRKNINGSTIDSPUNKT }
+                virkningsnotater shouldHaveSize 1
+                virkningsnotater.first().innhold shouldBe forventetInnhold
+                virkningsnotater.first().rolle shouldBe rolle
+            }
+            // Kryssjekk: barnas notater skal ikke lekke over på hverandres rolle.
+            val barnA = get(0)
+            val barnB = get(1)
+            barnA.notat.none { it.innhold == "Virkning ${identTilReferanse[barnB.ident]}" } shouldBe true
+            barnB.notat.none { it.innhold == "Virkning ${identTilReferanse[barnA.ident]}" } shouldBe true
         }
     }
 

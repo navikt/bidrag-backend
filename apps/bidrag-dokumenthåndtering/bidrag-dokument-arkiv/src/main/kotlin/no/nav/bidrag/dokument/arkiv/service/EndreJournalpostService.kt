@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.service
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivConsumer
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivKnyttTilSakConsumer
 import no.nav.bidrag.dokument.arkiv.dto.EndreJournalpostCommandIntern
@@ -12,7 +13,6 @@ import no.nav.bidrag.dokument.arkiv.dto.KnyttTilSakRequest
 import no.nav.bidrag.dokument.arkiv.dto.LagreJournalfortAvIdentRequest
 import no.nav.bidrag.dokument.arkiv.dto.LagreJournalpostRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterDokumentdatoTilIdag
-import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostDistribusjonsInfoRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostRequest
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostResponse
 import no.nav.bidrag.dokument.arkiv.dto.OppdaterJournalpostTilleggsopplysninger
@@ -21,7 +21,6 @@ import no.nav.bidrag.dokument.arkiv.kafka.HendelserProducer
 import no.nav.bidrag.dokument.arkiv.model.JournalpostIkkeFunnetException
 import no.nav.bidrag.dokument.arkiv.model.LagreSaksbehandlerIdentForJournalfortJournalpostFeilet
 import no.nav.bidrag.dokument.arkiv.security.SaksbehandlerInfoManager
-import org.slf4j.LoggerFactory
 import java.util.Objects
 import java.util.function.Consumer
 import java.util.stream.Collectors
@@ -127,25 +126,16 @@ class EndreJournalpostService(
             journalpost.hentJournalpostIdLong(),
             knyttTilAnnenSakRequest,
         )
-        LOGGER.info(
-            "Tilknyttet journalpost {} til sak {} med ny journalpostId {} og tema {}",
-            journalpost.journalpostId,
-            saksnummer,
-            nyJournalpostId,
-            tema,
-        )
+        secureLogger.debug {
+            "Tilknyttet journalpost ${journalpost.journalpostId} til sak $saksnummer med ny journalpostId $nyJournalpostId og tema $tema"
+        }
         journalpost.leggTilTilknyttetSak(saksnummer)
     }
 
     private fun journalfoerJournalpost(journalpostId: Long?, enhet: String?, journalpost: Journalpost) {
         val journalforRequest = FerdigstillJournalpostRequest(journalpostId!!, enhet!!)
         dokarkivConsumer.ferdigstill(journalforRequest)
-        LOGGER.info("Journalpost med id $journalpostId er journalført")
         lagreSaksbehandlerIdentForJournalfortJournalpost(journalpost, null)
-    }
-
-    fun oppdaterJournalpostDistribusjonBestiltStatus(journalpostId: Long, journalpost: Journalpost) {
-        lagreJournalpost(OppdaterJournalpostDistribusjonsInfoRequest(journalpostId, journalpost))
     }
 
     fun oppdaterDokumentdatoTilIdag(journalpostId: Long, journalpost: Journalpost) {
@@ -156,11 +146,8 @@ class EndreJournalpostService(
         lagreJournalpost(OppdaterJournalpostTilleggsopplysninger(journalpostId, journalpost))
     }
 
-    private fun hentJournalpost(journalpostId: Long): Journalpost {
-        LOGGER.info("Henter jouranlpost $journalpostId")
-        return journalpostService.hentJournalpost(journalpostId)
-            ?: throw JournalpostIkkeFunnetException("Kunne ikke finne journalpost med id: $journalpostId")
-    }
+    private fun hentJournalpost(journalpostId: Long): Journalpost = journalpostService.hentJournalpost(journalpostId)
+        ?: throw JournalpostIkkeFunnetException("Kunne ikke finne journalpost med id: $journalpostId")
 
     fun oppdaterDistribusjonsInfo(journalpostId: Long?, settStatusEkspedert: Boolean, utsendingsKanal: JournalpostUtsendingKanal?) {
         dokarkivConsumer.oppdaterDistribusjonsInfo(
@@ -168,9 +155,5 @@ class EndreJournalpostService(
             settStatusEkspedert,
             utsendingsKanal,
         )
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(EndreJournalpostService::class.java)
     }
 }

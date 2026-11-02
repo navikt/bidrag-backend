@@ -2,11 +2,11 @@ package no.nav.bidrag.person.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.security.SikkerhetsKontekst
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.enums.person.Gradering
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.person.BidragPerson
 import no.nav.bidrag.person.bo.BarnBostedsadresserBo
 import no.nav.bidrag.person.consumer.KontoregisterConsumer
 import no.nav.bidrag.person.consumer.KrrConsumer
@@ -94,10 +94,10 @@ class PersonService(
     }
 
     fun hentHusstandsmedlemmer(personident: Personident, periodeFra: LocalDate?): HusstandsmedlemmerDto {
-        BidragPerson.SECURE_LOGGER.debug("Henter husstandsmedlemmer for person {} periodeFra {} - START", personident, periodeFra)
-        BidragPerson.SECURE_LOGGER.debug("hentPersonBostedsadresse for person {} - START", personident)
+        secureLogger.debug { "Henter husstandsmedlemmer for person ${personident.sanitizeForLog()} periodeFra $periodeFra - START" }
+        secureLogger.debug { "hentPersonBostedsadresse for person ${personident.sanitizeForLog()} - START" }
         val hentPersonBostedsadresse: HentPersonBostedsadresse = pdlConsumer.hentPersonBostedsadresse(personident).hentPerson
-        BidragPerson.SECURE_LOGGER.debug("hentPersonBostedsadresse for person {} - SLUTT", personident)
+        secureLogger.debug { "hentPersonBostedsadresse for person ${personident.sanitizeForLog()} - SLUTT" }
         // Sorterer liste med bosteder for personen som det skal hentes husstandsmedlemmer for.
         // Setter gyldigTilOgMed dato lik gyldigFraOgMed på neste forekomst for finne faktiske perioder personen har bodd i husstanden.
         // PDL setter kun gyldigTilDato hvis personen ikke lenger har adresse i Norge
@@ -108,12 +108,10 @@ class PersonService(
 
         val fradato = periodeFra ?: LocalDate.now().minusYears(1)
 
-        BidragPerson.SECURE_LOGGER.debug(
-            "sortertOgJustertBostedsadresseListe for person: {} periodeFra: {} {}",
-            personident,
-            periodeFra,
-            sortertOgJustertBostedsadresseListe,
-        )
+        secureLogger.debug {
+            "sortertOgJustertBostedsadresseListe for person: ${personident.sanitizeForLog()} periodeFra: $periodeFra " +
+                "$sortertOgJustertBostedsadresseListe"
+        }
 
         sortertOgJustertBostedsadresseListe
             .filterNot { it.vegadresse == null }
@@ -123,16 +121,16 @@ class PersonService(
                 // For å kunne vite når et husstandsmedlem har flyttet ut av aktuell husstand så må alle bosteder for personen hentes og sorteres, og
                 // gyldigTilOgMed settes lik gyldigFraOgMed til neste forekomst. GyldigTilOgMed har kun verdi i PDL hvis personen ikke lenger har
                 // en registrert adresse i Norge.
-                BidragPerson.SECURE_LOGGER.debug("Hentede husstandsmedlemmer for {}: {}", personident, husstandsmedlemmer)
+                secureLogger.debug { "Hentede husstandsmedlemmer for ${personident.sanitizeForLog()}: $husstandsmedlemmer" }
 
                 val husstandsmedlemListe = husstandsmedlemmer.flatMap { husstandsmedlem ->
                     val sortertOgJustertHusstandsmedlemBostedsadresseListe =
                         husstandsmedlemBostedsadresserCache.getOrPut(husstandsmedlem.personId) {
-                            BidragPerson.SECURE_LOGGER.debug("hentPersonBostedsadresse for husstandsmedlem {} - START", husstandsmedlem.personId)
+                            secureLogger.debug { "hentPersonBostedsadresse for husstandsmedlem ${husstandsmedlem.personId.sanitizeForLog()} - START" }
                             val husstandsmedlemBostedsadresseListe =
                                 pdlConsumer.hentPersonBostedsadresse(husstandsmedlem.personId).hentPerson.bostedsadresse
                                     .filter { it.vegadresse != null }
-                            BidragPerson.SECURE_LOGGER.debug("hentPersonBostedsadresse for husstandsmedlem {} - SLUTT", husstandsmedlem.personId)
+                            secureLogger.debug { "hentPersonBostedsadresse for husstandsmedlem ${husstandsmedlem.personId.sanitizeForLog()} - SLUTT" }
 
                             sorterOgJusterBostedsadresser(husstandsmedlemBostedsadresseListe)
                         }
@@ -173,17 +171,17 @@ class PersonService(
                     ),
                 )
             }
-        BidragPerson.SECURE_LOGGER.debug("Henter husstandsmedlemmer for person {} - SLUTT", personident)
+        secureLogger.debug { "Henter husstandsmedlemmer for person ${personident.sanitizeForLog()} - SLUTT" }
         return HusstandsmedlemmerDto(husstandListe)
     }
 
     fun hentHusstandsmedlemskapEgneBarn(personident: Personident, periodeFra: LocalDate?): HusstandsmedlemmerDto {
-        BidragPerson.SECURE_LOGGER.debug("Henter husstandsmedlemskap for den voksnes egne barn {} periodeFra {} - START", personident, periodeFra)
-        BidragPerson.SECURE_LOGGER.debug("HusstandsmedlemskapBarn - hentPersonBostedsadresse for voksen {} - START", personident)
+        secureLogger.debug { "Henter husstandsmedlemskap for den voksnes egne barn ${personident.sanitizeForLog()} periodeFra $periodeFra - START" }
+        secureLogger.debug { "HusstandsmedlemskapBarn - hentPersonBostedsadresse for voksen ${personident.sanitizeForLog()} - START" }
 
         val voksensBostedsadresseListe: HentPersonBostedsadresse = pdlConsumer.hentPersonBostedsadresse(personident).hentPerson
 
-        BidragPerson.SECURE_LOGGER.debug("HusstandsmedlemskapBarn -hentPersonBostedsadresse for voksen {} - SLUTT", personident)
+        secureLogger.debug { "HusstandsmedlemskapBarn -hentPersonBostedsadresse for voksen ${personident.sanitizeForLog()} - SLUTT" }
 
         val fradato = periodeFra ?: LocalDate.now().minusYears(1)
 
@@ -197,12 +195,10 @@ class PersonService(
 
         val husstandListe = mutableListOf<Husstand>()
 
-        BidragPerson.SECURE_LOGGER.debug(
-            "HusstandsmedlemskapEgneBarn -sortertOgJustertVoksensBostedsadresseListe for voksen: {} periodeFra: {} {}",
-            personident,
-            periodeFra,
-            sortertOgJustertVoksensBostedsadresseListe,
-        )
+        secureLogger.debug {
+            "HusstandsmedlemskapEgneBarn -sortertOgJustertVoksensBostedsadresseListe for voksen: ${personident.sanitizeForLog()} " +
+                "periodeFra: $periodeFra $sortertOgJustertVoksensBostedsadresseListe"
+        }
 
         // Henter alle barn for angitt person
         val barnListe = pdlConsumer.hentForelderBarnRelasjoner(personident)
@@ -289,7 +285,7 @@ class PersonService(
                     ),
                 )
             }
-        BidragPerson.SECURE_LOGGER.debug("Henter husstandsmedlemskapBarn for voksen {} - SLUTT", personident)
+        secureLogger.debug { "Henter husstandsmedlemskapBarn for voksen ${personident.sanitizeForLog()} - SLUTT" }
         return HusstandsmedlemmerDto(husstandListe)
     }
 
@@ -300,13 +296,13 @@ class PersonService(
     }
 
     fun hentPersonPostadresse(personident: Personident): PersonAdresseDto? {
-        BidragPerson.SECURE_LOGGER.debug("Henter person postadresse for person {}", personident)
+        secureLogger.debug { "Henter person postadresse for person ${personident.sanitizeForLog()}" }
         val personAdresse = pdlConsumer.hentPersonAdresse(personident)
         return personAdresse.hentPostadresse()
     }
 
     fun hentPersonAdresser(personident: Personident): List<PersonAdresseDto> {
-        BidragPerson.SECURE_LOGGER.debug("Henter person adresse for person {}", personident)
+        secureLogger.debug { "Henter person adresse for person ${personident.sanitizeForLog()}" }
         val personAdresse = pdlConsumer.hentPersonAdresse(personident)
         return personAdresse.hentAlleAdresser()
     }
@@ -314,7 +310,7 @@ class PersonService(
     fun hentPersonSpraak(personident: Personident): String? = krrConsumer.hentPersonSpraak(personident)
 
     fun hentMotpartBarnRelasjon(personident: Personident): MotpartBarnRelasjonDto {
-        BidragPerson.SECURE_LOGGER.debug("Henter motpart-barn relasjon for person {}", personident.verdi)
+        secureLogger.debug { "Henter motpart-barn relasjon for person ${personident.verdi.sanitizeForLog()}" }
         val person = hentPersonInfo(personident)
         val muligForelderBarnRelasjon = pdlConsumer.hentForelderBarnRelasjoner(personident)
 
@@ -397,7 +393,7 @@ class PersonService(
     private fun hentSpråk(ident: Personident): String? = try {
         krrConsumer.hentPersonSpraak(ident)
     } catch (e: Exception) {
-        BidragPerson.SECURE_LOGGER.error("Feil ved kall til KRR for ident: ${ident.verdi}! Feilmelding: ${e.message}")
+        secureLogger.error(e) { "Feil ved kall til KRR for ident: ${ident.verdi.sanitizeForLog()}! Feilmelding: ${e.message}" }
         null
     }
 

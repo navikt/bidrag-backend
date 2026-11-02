@@ -368,7 +368,12 @@ class ForholdsmessigFordelingSøknadService(
         medInnkreving: Boolean,
     ): ForholdsmessigFordelingSøknadBarn {
         val bidragspliktigFnr = behandling.bidragspliktig!!.ident!!
-
+        val behandlingstema =
+            if (stønadstype == Stønadstype.BIDRAG18AAR) {
+                Behandlingstema.BIDRAG_18_ÅR
+            } else {
+                Behandlingstema.BIDRAG
+            }
         val åpenFFSøknad =
             kravhaverService.hentÅpenSøknadFFForBP(
                 bidragspliktigFnr,
@@ -397,16 +402,10 @@ class ForholdsmessigFordelingSøknadService(
             return åpenFFSøknad.tilForholdsmessigFordelingSøknad().copy(
                 søktAvType = SøktAvType.NAV_BIDRAG,
                 behandlingstype = behandling.behandlingstypeForFF,
-                behandlingstema = Behandlingstema.BIDRAG,
+                behandlingstema = behandlingstema,
                 saksnummer = saksnummer,
             )
         } else {
-            val behandlingstema =
-                if (stønadstype == Stønadstype.BIDRAG18AAR) {
-                    Behandlingstema.BIDRAG_18_ÅR
-                } else {
-                    Behandlingstema.BIDRAG
-                }
             val søknad =
                 bbmConsumer.opprettSøknader(
                     OpprettSøknadRequest(
@@ -429,6 +428,7 @@ class ForholdsmessigFordelingSøknadService(
                 behandlingstema = behandlingstema,
                 mottattDato = LocalDate.now(),
                 søknadFomDato = søktFomDato,
+                status = Behandlingstatus.UNDER_BEHANDLING,
                 søknadsid = søknad.søknadsid,
                 enhet = behandling.behandlerEnhet,
                 saksnummer = saksnummer,

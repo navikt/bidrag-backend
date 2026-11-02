@@ -1,5 +1,10 @@
 package no.nav.bidrag.arbeidsflyt.hendelse
 
+import com.github.tomakehurst.wiremock.client.WireMock.patchRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
+import com.github.tomakehurst.wiremock.client.WireMock.verify
+import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_BEHANDLING_ID
+import no.nav.bidrag.arbeidsflyt.dto.METADATA_NØKKEL_SØKNAD_ID
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveStatus
 import no.nav.bidrag.arbeidsflyt.dto.Oppgavestatuskategori
@@ -91,6 +96,66 @@ class OppgaveHendelseTest : AbstractBehandleHendelseTest() {
         }
 
         verifyOppgaveNotOpprettet()
+    }
+
+    private fun søknadsoppgave(
+        id: Long,
+        tilordnetRessurs: String?,
+        endretAv: String? = "Z999999",
+    ) = createOppgaveData(id, journalpostId = null, tilordnetRessurs = tilordnetRessurs, oppgavetype = "BEH_SAK").copy(
+        endretAv = endretAv,
+        metadata = mapOf(METADATA_NØKKEL_BEHANDLING_ID to "1234", METADATA_NØKKEL_SØKNAD_ID to "4321"),
+    )
+
+    private fun lagreSøknadsoppgave(
+        id: Long,
+        tilordnetRessurs: String?,
+    ) {
+        testDataGenerator.opprettOppgave(
+            createOppgave(id, journalpostId = "", oppgaveType = "BEH_SAK").copy(søknadsoppgave = true, tilordnetRessurs = tilordnetRessurs),
+        )
+    }
+
+    @Test
+    fun `skal overføre alle søknadsoppgaver i behandlingen når saksbehandler endres`() {
+        val annenOppgaveId = 20002L
+        lagreSøknadsoppgave(20001L, tilordnetRessurs = "Z111111")
+        val oppgaveData = søknadsoppgave(20001L, tilordnetRessurs = "Z222222").copy(status = OppgaveStatus.UNDER_BEHANDLING)
+        stubHentOppgave(oppgaveData.id, oppgaveData)
+        stubHentOppgaveContaining(listOf(oppgaveData, søknadsoppgave(annenOppgaveId, tilordnetRessurs = "Z111111")), "metadataverdi" to "1234")
+
+        behandleOppgaveHendelseService.behandleOppgaveHendelse(oppgaveData.toHendelse())
+
+        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/${oppgaveData.id}")))
+        val request = getOppgaveEndretRequest(annenOppgaveId)
+        assertThat(request).isNotNull
+        assertThat(request!!.tilordnetRessurs).isEqualTo("Z222222")
+        assertThat(testDataGenerator.hentOppgave(20001L).get().tilordnetRessurs).isEqualTo("Z222222")
+    }
+
+    @Test
+    fun `skal ikke overføre søknadsoppgaver når saksbehandler ikke var satt fra før`() {
+        lagreSøknadsoppgave(20003L, tilordnetRessurs = null)
+        val oppgaveData = søknadsoppgave(20003L, tilordnetRessurs = "Z222222").copy(status = OppgaveStatus.UNDER_BEHANDLING)
+        stubHentOppgave(oppgaveData.id, oppgaveData)
+        stubHentOppgaveContaining(listOf(oppgaveData, søknadsoppgave(20004L, tilordnetRessurs = null)), "metadataverdi" to "1234")
+
+        behandleOppgaveHendelseService.behandleOppgaveHendelse(oppgaveData.toHendelse())
+
+        verify(0, patchRequestedFor(urlEqualTo("oppgave/api/v1/oppgaver/20004")))
+    }
+
+    @Test
+    fun `skal ikke overføre søknadsoppgaver når saksbehandler endret av arbeidsflyt`() {
+        lagreSøknadsoppgave(20005L, tilordnetRessurs = "Z111111")
+        val oppgaveData =
+            søknadsoppgave(20005L, tilordnetRessurs = "Z222222", endretAv = "bidrag-arbeidsflyt").copy(status = OppgaveStatus.UNDER_BEHANDLING)
+        stubHentOppgave(oppgaveData.id, oppgaveData)
+        stubHentOppgaveContaining(listOf(oppgaveData, søknadsoppgave(20006L, tilordnetRessurs = "Z111111")), "metadataverdi" to "1234")
+
+        behandleOppgaveHendelseService.behandleOppgaveHendelse(oppgaveData.toHendelse())
+
+        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/20006")))
     }
 
     @Test

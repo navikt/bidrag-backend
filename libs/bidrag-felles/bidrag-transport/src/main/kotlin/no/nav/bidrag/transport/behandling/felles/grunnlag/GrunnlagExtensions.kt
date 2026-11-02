@@ -271,10 +271,15 @@ val List<BaseGrunnlag>.utgiftMaksGodkjentBeløp get() =
         Grunnlagstype.UTGIFT_MAKS_GODKJENT_BELØP,
     ).firstOrNull()?.innholdTilObjekt<UtgiftMaksGodkjentBeløpGrunnlag>()
 
-val List<BaseGrunnlag>.utgiftsposter get() =
+val List<BaseGrunnlag>.utgiftsposter get() = try {
     filtrerBasertPåEgenReferanse(
         Grunnlagstype.UTGIFTSPOSTER,
     ).firstOrNull()?.innholdTilObjektListe<List<UtgiftspostGrunnlag>>() ?: emptyList()
+} catch (_: Exception) {
+    filtrerBasertPåEgenReferanse(
+        Grunnlagstype.UTGIFTSPOSTER,
+    ).firstOrNull()?.innholdTilObjekt<UtgiftspostGrunnlag>()?.let { listOfNotNull(it) } ?: emptyList()
+}
 
 val List<BaseGrunnlag>.delberegningSamværsklasse get() =
     find {

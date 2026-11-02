@@ -76,3 +76,6 @@ azure:
       - application: bidrag-frontend
         namespace: bidrag
         cluster: prod-gcp
+      - application: bidrag-henvendelse
+        namespace: bidrag
+        cluster: prod-gcp

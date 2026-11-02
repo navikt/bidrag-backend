@@ -2,6 +2,7 @@ package no.nav.bidrag.person.hendelse.database
 
 import jakarta.persistence.LockModeType
 import no.nav.bidrag.person.hendelse.domene.Livshendelse
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
@@ -43,11 +44,23 @@ interface HendelsemottakDao : JpaRepository<Hendelsemottak, Long> {
     fun idTilHendelserSomErKlarTilOverføring(statustidspunktFør: LocalDateTime): Set<Long>
 
     @Query(
-        "from Hendelsemottak hm " +
+        "select distinct hm.aktor.id from Hendelsemottak hm " +
             "where hm.status = no.nav.bidrag.person.hendelse.database.Status.OVERFØRT " +
-            "and (hm.aktor.publisert is null or hm.aktor.publisert < :publisertFør)",
+            "and (hm.aktor.publisert is null or hm.aktor.publisert < :publisertFør) " +
+            "order by hm.aktor.id",
     )
-    fun hentePubliseringsklareOverførteHendelser(publisertFør: LocalDateTime): Set<Hendelsemottak>
+    fun henteIdTilAktørerMedPubliseringsklareHendelser(
+        publisertFør: LocalDateTime,
+        pageable: Pageable,
+    ): List<Long>
+
+    @Query(
+        "select hm from Hendelsemottak hm " +
+            "join fetch hm.aktor " +
+            "where hm.status = no.nav.bidrag.person.hendelse.database.Status.OVERFØRT " +
+            "and hm.aktor.id in :aktørider",
+    )
+    fun hentePubliseringsklareOverførteHendelserForAktører(aktørider: Collection<Long>): Set<Hendelsemottak>
 
     @Query(
         "select hm.id from Hendelsemottak hm " +

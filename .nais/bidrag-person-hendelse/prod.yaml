@@ -16,6 +16,7 @@ kafka:
 
 env:
   SPRING_PROFILES_ACTIVE: prod, nais
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError
   BIDRAG_PERSON_HOST: bidrag-person.prod-fss-pub.nais.io
   MQ_HOST: mpls04.adeo.no
   MQ_PORT: 1414

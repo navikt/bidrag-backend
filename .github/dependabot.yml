@@ -16,6 +16,8 @@ updates:
       - "/util/bidrag-cli"
       - "/util/bidrag-cloudfunctions/postgres-auditlog"
       - "/apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon"
+      - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal"
+      - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-forsendelse/script"
     registries:
       - "npm-github"
     cooldown:
@@ -36,32 +38,13 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
-    # Rot-pom.xml i egen update-blokk, isolert fra apps/libs
+    # * matcher ett nivå. Appene under bidrag-dokumenthåndtering og bidrag-admin
+    # ligger ett hakk dypere enn /apps/* og må listes eksplisitt.
     directories:
       - "/"
-    cooldown:
-      default-days: 7
-    registries:
-      - "maven-github"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "04:00"
-      timezone: "Europe/Oslo"
-    groups:
-      maven-dependencies:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "maven"
-    commit-message:
-      prefix: "[dependency] "
-  - package-ecosystem: "maven"
-    # Alle app- og libs-modulene.
-    directories:
       - "/apps/*"
+      - "/apps/bidrag-dokumenthåndtering/*"
+      - "/apps/bidrag-admin/*"
       - "/libs/*"
       - "/libs/bidrag-felles/*"
       - "/libs/bidrag-beregn-felles/*"
@@ -76,8 +59,7 @@ updates:
       timezone: "Europe/Oslo"
     groups:
       maven-dependencies:
-        patterns:
-          - "*"
+        group-by: dependency-name
     open-pull-requests-limit: 20
     labels:
       - "dependencies"
@@ -88,6 +70,9 @@ updates:
     directories:
       - "/"
       - "/apps/*"
+      - "/apps/bidrag-dokumenthåndtering/*"
+      - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal"
+      - "/apps/bidrag-admin/*"
       - "/util/bidrag-cloudfunctions/postgres-auditlog"
     cooldown:
       default-days: 7
@@ -100,12 +85,34 @@ updates:
       docker-dependencies:
         patterns:
           - "*"
+    ignore:
+      - dependency-name: "cgr-nav/pull-through/nav.no/jre"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
       - "docker"
     commit-message:
       prefix: "[docker] "
+  - package-ecosystem: "pip"
+    directory: "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      pip-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "pip"
+    commit-message:
+      prefix: "[dependency] "
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

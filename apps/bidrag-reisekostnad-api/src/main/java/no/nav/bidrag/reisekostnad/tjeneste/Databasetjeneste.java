@@ -32,6 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig.FORESPØRSLER_SYNLIGE_I_ANTALL_DAGER_ETTER_SISTE_STATUSOPPDATERING;
 import static no.nav.bidrag.reisekostnad.konfigurasjon.Applikasjonskonfig.SIKKER_LOGG;
 
@@ -97,8 +98,7 @@ public class Databasetjeneste {
         for (String ident : identerBarn) {
             var barn = barnDao.henteBarnTilknyttetAktivForespørsel(ident);
             if (barn.isPresent()) {
-                log.warn("Validering feilet. Det finnes allerede en aktiv forespørsel for et av de oppgitte barna.");
-                SIKKER_LOGG.warn("Validering feilet. Barn med ident {} er allerede tilknyttet en aktiv forespørsel", ident);
+                SIKKER_LOGG.warn("Validering feilet. Barn med ident {} er allerede tilknyttet en aktiv forespørsel", sanitizeForLog(ident));
                 throw new Valideringsfeil(Feilkode.VALIDERING_NY_FOREPØRSEL_BARN_I_AKTIV_FORESPØRSEL);
             }
         }
@@ -312,8 +312,7 @@ public class Databasetjeneste {
             Validate.noNullElements(forespørsel.getBarn().toArray());
             forespørsel.getBarn().forEach(b -> Validate.notEmpty(b.getPersonident()));
         } catch (ValidationException ve) {
-            log.error("Validering av forespørsel med id {} feilet", forespørsel.getId());
-            SIKKER_LOGG.error("Validering av forespørsel med id {} feilet. Feilmelding: {}", forespørsel.getId(), ve.getMessage());
+            SIKKER_LOGG.error("Validering av forespørsel med id {} feilet. Feilmelding: {}", forespørsel.getId(), sanitizeForLog(ve.getMessage()));
             throw new InternFeil(Feilkode.DATAFEIL, ve);
         }
     }

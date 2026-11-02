@@ -3,10 +3,10 @@ package no.nav.bidrag.sak.service
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.unleash.DefaultUnleashContextProvider
 import no.nav.bidrag.commons.util.IdentConsumer
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
-import no.nav.bidrag.domene.enums.behandling.SøknadsknytningStatus
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
@@ -17,7 +17,6 @@ import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.config.UnleashFeatures
 import no.nav.bidrag.sak.domain.Bidragssak
-import no.nav.bidrag.sak.domain.Søknadsknytning
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.dto.FogdhistorikkDto
 import no.nav.bidrag.sak.dto.NySakCommandDto
@@ -134,7 +133,7 @@ class BidragSakService(
 
     fun finnFogdhistorikk(saksnummer: Saksnummer): List<FogdhistorikkDto> {
         if (begrensetTilgang(saksnummer)) {
-            logger.warn("Henter ikke sak fogdhistorikk for sak $saksnummer pga begrenset tilgang")
+            logger.warn("Henter ikke sak fogdhistorikk for sak ${saksnummer.sanitizeForLog()} pga begrenset tilgang")
             return emptyList()
         }
         val bidragssak = bidragssakRepository.findBySaksnummer(saksnummer.verdi)
@@ -264,12 +263,14 @@ class BidragSakService(
         val tilgang =
             sak.tilganger.finnMidlertidligTilgang(request.enhet, request.årsak) ?: run {
                 logger.info(
-                    "Fant ikke midlertidlig tilgang med årsak ${request.årsak} for enhet ${request.enhet} til sak ${sak.saksnummer}",
+                    "Fant ikke midlertidlig tilgang med årsak ${request.årsak.sanitizeForLog()} for enhet ${request.enhet.sanitizeForLog()} til sak ${sak.saksnummer.sanitizeForLog()}",
                 )
                 return
             }
         if (sak.eierfogd == tilgang.enhetsnummer) {
-            logger.info("Kan ikke fjerne midlertidlig tilgang for enhet ${request.enhet} som er eierfogd for sak ${sak.saksnummer}")
+            logger.info(
+                "Kan ikke fjerne midlertidlig tilgang for enhet ${request.enhet.sanitizeForLog()} som er eierfogd for sak ${sak.saksnummer.sanitizeForLog()}",
+            )
             return
         }
         tilgang.tilgangTomDato = LocalDate.now().minusDays(1)
@@ -280,7 +281,7 @@ class BidragSakService(
     fun opprettEllerUtvidMidlertidligTilgangSak(request: OpprettMidlertidligTilgangRequest) {
         val sak = bidragssakRepository.findByIdOrThrow(request.saksnummer)
         if (sak.eierfogd == request.enhet) {
-            logger.info("Enhet ${request.enhet} har allerede tilgang til sak ${sak.saksnummer}")
+            logger.info("Enhet ${request.enhet.sanitizeForLog()} har allerede tilgang til sak ${sak.saksnummer.sanitizeForLog()}")
             return
         }
         val eksisterendeTilgang =
@@ -288,7 +289,7 @@ class BidragSakService(
         if (eksisterendeTilgang != null &&
             (eksisterendeTilgang.tilgangTomDato == null || eksisterendeTilgang.tilgangTomDato!! >= LocalDate.now())
         ) {
-            logger.info("Enhet ${request.enhet} har allerede tilgang til sak ${sak.saksnummer}")
+            logger.info("Enhet ${request.enhet.sanitizeForLog()} har allerede tilgang til sak ${sak.saksnummer.sanitizeForLog()}")
             return
         }
         if (eksisterendeTilgang != null) {
@@ -394,7 +395,7 @@ class BidragSakService(
 
     fun finnHendelserForSak(saksnummer: Saksnummer): List<SakshendelseDto> {
         if (begrensetTilgang(saksnummer)) {
-            logger.warn("Henter ikke sakshistorikk for sak $saksnummer pga begrenset tilgang")
+            logger.warn("Henter ikke sakshistorikk for sak ${saksnummer.sanitizeForLog()} pga begrenset tilgang")
             return emptyList()
         }
 
@@ -410,7 +411,7 @@ class BidragSakService(
                 val hendelseType =
                     hendelse.type ?: run {
                         logger.warn(
-                            "Hendelse ${hendelse.hendelseId} for sak $saksnummer har ukjent HEND_TYPE — hopper over",
+                            "Hendelse ${hendelse.hendelseId} for sak ${saksnummer.sanitizeForLog()} har ukjent HEND_TYPE — hopper over",
                         )
                         return@mapNotNull null
                     }

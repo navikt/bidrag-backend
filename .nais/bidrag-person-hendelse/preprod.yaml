@@ -16,7 +16,7 @@ kafka:
 
 env:
   SPRING_PROFILES_ACTIVE: preprod, nais
-  JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
   BIDRAG_PERSON_HOST: bidrag-person-q2.dev-fss-pub.nais.io
   MQ_HOST: b27apvl222.preprod.local
   MQ_PORT: 1413

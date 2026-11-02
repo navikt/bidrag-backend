@@ -32,6 +32,8 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknader
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
@@ -962,6 +964,15 @@ class BisysService(
                 søktAvType = SøktAvType.fraKode(blankettRepository.finnSøknadFraKode(søknad.blankettid))!!,
             ),
         )
+    }
+
+    fun hentSøknaderForBehandling(request: HentSøknaderForBehandlingRequest): HentSøknaderForBehandlingResponse {
+        secureLogger.info { "Request mottatt for å hente søknader for behandling med id: ${request.behandlingsid} " }
+        val søknader =
+            søknadRepository
+                .finnSøknaderForBehandling(request.behandlingsid.toString())
+                .map { hentSøknad(HentSøknadRequest(it.søknadsid!!)).søknad }
+        return HentSøknaderForBehandlingResponse(søknader)
     }
 
     private fun erFFSøknad(søknadsid: Long): Boolean {

@@ -40,7 +40,7 @@ class BidragDokumentArkivKafkaConfig {
         kafkaTemplate: KafkaTemplate<String, String>,
         objectMapper: JsonMapper,
         saksbehandlerInfoManager: SaksbehandlerInfoManager,
-        @Value("\${TOPIC_JOURNALPOST}") topic: String,
+        @Value($$"${TOPIC_JOURNALPOST}") topic: String,
         journalpostServices: ResourceByDiscriminator<JournalpostService>,
     ): HendelserProducer = HendelserProducer(
         journalpostServices.get(Discriminator.SERVICE_USER),
@@ -51,15 +51,13 @@ class BidragDokumentArkivKafkaConfig {
     )
 
     @Bean
-    fun defaultErrorHandler(@Value("\${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
+    fun defaultErrorHandler(@Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
         // Max retry should not be set in production
         val backoffPolicy =
             if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
         backoffPolicy.multiplier = 2.0
         backoffPolicy.maxInterval = 1800000L // 30 mins
-        LOGGER.info(
-            "Initializing Kafka errorhandler with backoffpolicy $backoffPolicy, maxRetry=$maxRetry",
-        )
+        LOGGER.debug("Initializing Kafka errorhandler with backoffpolicy {}, maxRetry={}", backoffPolicy, maxRetry)
         val errorHandler = DefaultErrorHandler(
             { rec: ConsumerRecord<*, *>, e: Exception? ->
                 val key = rec.key()
@@ -95,10 +93,10 @@ class BidragDokumentArkivKafkaConfig {
 
     @Bean
     fun oppgaveConsumerFactory(
-        @Value("\${KAFKA_BROKERS}") boostrapServer: String,
-        @Value("\${KAFKA_KEYSTORE_PATH}") keystorePath: String,
-        @Value("\${KAFKA_TRUSTSTORE_PATH}") trustStorePath: String,
-        @Value("\${KAFKA_CREDSTORE_PASSWORD}") credstorePassword: String,
+        @Value($$"${KAFKA_BROKERS}") boostrapServer: String,
+        @Value($$"${KAFKA_KEYSTORE_PATH}") keystorePath: String,
+        @Value($$"${KAFKA_TRUSTSTORE_PATH}") trustStorePath: String,
+        @Value($$"${KAFKA_CREDSTORE_PASSWORD}") credstorePassword: String,
         environment: Environment,
     ): ConsumerFactory<Long, String> {
         val props = mutableMapOf<String, Any>()

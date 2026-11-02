@@ -1,11 +1,11 @@
 package no.nav.bidrag.behandling.transformers.behandling
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.mockkClass
 import no.nav.bidrag.behandling.TestContainerRunner
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
@@ -65,14 +65,11 @@ class BehandlingDtoMappingTest : TestContainerRunner() {
     lateinit var validerBehandling: ValiderBehandlingService
     lateinit var vedtakGrunnlagsmapper: VedtakGrunnlagMapper
 
-    @MockkBean
-    lateinit var barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting
+    val barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting = mockk()
 
-    @MockkBean
-    lateinit var evnevurderingService: BeregningEvnevurderingService
+    val evnevurderingService: BeregningEvnevurderingService = mockk()
 
-    @MockkBean
-    lateinit var behandlingService: BehandlingService
+    val behandlingService: BehandlingService = mockk()
 
     @MockK
     lateinit var personService: PersonService

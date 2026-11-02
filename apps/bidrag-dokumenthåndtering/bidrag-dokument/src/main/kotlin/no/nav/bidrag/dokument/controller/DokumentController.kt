@@ -52,6 +52,18 @@ class DokumentController(
         return dokumentService.hentDokumentMetadata(dokument)
     }
 
+    @GetMapping(
+        *["/dokument/metadata/{journalpostId}/{dokumentreferanse}", "/dokument/metadata/{journalpostId}"],
+    )
+    fun hentDokumentMetadataGet(
+        @PathVariable journalpostId: String,
+        @PathVariable(required = false) dokumentreferanse: String?,
+    ): List<DokumentMetadata> {
+        log.info { "Henter dokument metadata med journalpostId=$journalpostId og dokumentreferanse=$dokumentreferanse" }
+        val dokument = DokumentRef(journalpostId, dokumentreferanse, null)
+        return dokumentService.hentDokumentMetadata(dokument)
+    }
+
     @GetMapping(*["/dokument/{journalpostId}/{dokumentreferanse}", "/dokument/{journalpostId}", "/dokumentreferanse/{dokumentreferanse}"])
     fun hentDokument(
         @PathVariable journalpostId: String?,

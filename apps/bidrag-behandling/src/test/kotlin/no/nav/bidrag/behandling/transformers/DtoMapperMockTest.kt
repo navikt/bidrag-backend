@@ -511,7 +511,7 @@ class DtoMapperMockTest {
             it.inntekt.skattepliktigInntekt shouldBe BigDecimal(500000)
             it.inntekt.maksBarnetillegg shouldBe BigDecimal(2000)
             it.inntekt.totalInntekt shouldBe BigDecimal(502000)
-            it.beregnetIlagtGebyr shouldBe true
+            it.beregnetIlagtGebyr shouldBe false
         }
     }
 
@@ -550,7 +550,7 @@ class DtoMapperMockTest {
         )
         behandling.inntekter.add(
             Inntekt(
-                belop = BigDecimal(90000),
+                belop = BigDecimal(50000),
                 datoFom = behandling.virkningstidspunkt,
                 datoTom = null,
                 rolle = behandling.bidragsmottaker!!,
@@ -606,12 +606,12 @@ class DtoMapperMockTest {
                 .find { it.rolle.rolletype == Rolletype.BIDRAGSMOTTAKER }!!
                 .gebyrDetaljer,
         ) {
-            it.inntekt.skattepliktigInntekt shouldBe BigDecimal(90000)
-            it.inntekt.maksBarnetillegg shouldBe null
-            it.inntekt.totalInntekt shouldBe BigDecimal(90000)
+            it.inntekt.skattepliktigInntekt shouldBe BigDecimal(50000)
+            it.inntekt.maksBarnetillegg shouldBe BigDecimal(2000)
+            it.inntekt.totalInntekt shouldBe BigDecimal(52000)
             it.endeligIlagtGebyr shouldBe false
-            it.beregnetIlagtGebyr shouldBe false
-            it.erManueltOverstyrt shouldBe false
+            it.beregnetIlagtGebyr shouldBe true
+            it.erManueltOverstyrt shouldBe true
             it.begrunnelse shouldBe null
         }
         assertSoftly(
@@ -620,9 +620,9 @@ class DtoMapperMockTest {
                 .find { it.rolle.rolletype == Rolletype.BIDRAGSPLIKTIG }!!
                 .gebyrDetaljer,
         ) {
-            it.inntekt.skattepliktigInntekt shouldBe BigDecimal(0)
+            it.inntekt.skattepliktigInntekt shouldBe BigDecimal(500000)
             it.inntekt.maksBarnetillegg shouldBe null
-            it.inntekt.totalInntekt shouldBe BigDecimal(0)
+            it.inntekt.totalInntekt shouldBe BigDecimal(500000)
             it.beregnetIlagtGebyr shouldBe false
             it.endeligIlagtGebyr shouldBe true
             it.begrunnelse shouldBe null

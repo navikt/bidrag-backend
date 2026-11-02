@@ -1,5 +1,8 @@
 package no.nav.bidrag.oppgave.consumer.oppgaveapi
 
+import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveDto
+import no.nav.bidrag.oppgave.OppgaveTestData.oppgaveResponse
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.AktorId
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.EksternOppgaveId
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.Enhetsnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
@@ -8,7 +11,6 @@ import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.NavIdent
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OpprettOppgaveRequest
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.PatchOppgaveRequest
-import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.SokOppgaverResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.hamcrest.CoreMatchers.startsWith
@@ -26,7 +28,6 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestTemplate
 import tools.jackson.databind.json.JsonMapper
-import java.time.LocalDate
 
 class OppgaveClientTest {
 
@@ -40,16 +41,6 @@ class OppgaveClientTest {
     private val restClient = RestClient.builder(restTemplate).build()
     private val oppgaveClient = OppgaveClient(restClient)
 
-    private val oppgave = OppgaveDto(
-        id = EksternOppgaveId(123456789),
-        tildeltEnhetsnr = Enhetsnummer("4100"),
-        tema = "OPP",
-        oppgavetype = "JFR",
-        versjon = 1,
-        prioritet = OppgaveDto.Prioritet.NORM,
-        status = OppgaveDto.Status.OPPRETTET,
-        aktivDato = LocalDate.now(),
-    )
     // ==================== opprettOppgave tests ====================
 
     @Test
@@ -70,7 +61,7 @@ class OppgaveClientTest {
             .andRespond(
                 withStatus(HttpStatus.CREATED)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(oppgave)),
+                    .body(objectMapper.writeValueAsString(oppgaveDto)),
             )
 
         // Act
@@ -87,15 +78,8 @@ class OppgaveClientTest {
         // Arrange
         val oppgaveId = EksternOppgaveId(123456789)
 
-        val oppgave = OppgaveDto(
-            id = oppgaveId,
-            tildeltEnhetsnr = Enhetsnummer("4100"),
-            tema = "OPP",
-            oppgavetype = "JFR",
-            versjon = 1,
-            prioritet = OppgaveDto.Prioritet.NORM,
+        val hentetOppgave = oppgaveDto.copy(
             status = OppgaveDto.Status.AAPNET,
-            aktivDato = LocalDate.now(),
         )
 
         mockServer.expect(requestTo("/api/v1/oppgaver/$oppgaveId"))
@@ -103,7 +87,7 @@ class OppgaveClientTest {
             .andRespond(
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(oppgave)),
+                    .body(objectMapper.writeValueAsString(hentetOppgave)),
             )
 
         // Act
@@ -153,7 +137,7 @@ class OppgaveClientTest {
             .andRespond(
                 withStatus(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(objectMapper.writeValueAsString(oppgave)),
+                    .body(objectMapper.writeValueAsString(oppgaveDto)),
             )
 
         // Act
@@ -189,22 +173,16 @@ class OppgaveClientTest {
 
     @Test
     fun `finnOppgaver returnerer liste med oppgaver`() {
-        // Arrange
         val params = FinnOppgaverParams(
             statuskategori = "AAPEN",
             tema = listOf(FellesKodeverkTema.HEL),
             limit = 10,
         )
-
         val oppgaver = listOf(
-            oppgave.copy(id = EksternOppgaveId(1)),
-            oppgave.copy(id = EksternOppgaveId(2)),
+            oppgaveDto.copy(id = EksternOppgaveId(1)),
+            oppgaveDto.copy(id = EksternOppgaveId(2)),
         )
-
-        val response = SokOppgaverResponse(
-            antallTreffTotalt = 2,
-            oppgaver = oppgaver,
-        )
+        val response = oppgaveResponse(oppgaver)
 
         mockServer.expect(requestTo(startsWith("/api/v1/oppgaver?")))
             .andExpect(method(HttpMethod.GET))
@@ -217,10 +195,10 @@ class OppgaveClientTest {
                     .body(objectMapper.writeValueAsString(response)),
             )
 
-        // Act
-        oppgaveClient.finnOppgaver(params)
+        val resultat = oppgaveClient.finnOppgaver(params)
 
-        // Assert
+        assertThat(resultat.antallTreffTotalt).isEqualTo(2)
+        assertThat(resultat.oppgaver).containsExactlyElementsOf(oppgaver)
         mockServer.verify()
     }
 
@@ -233,16 +211,13 @@ class OppgaveClientTest {
             oppgavetype = listOf("JFR", "KONT"),
             tildeltEnhetsnr = Enhetsnummer("4100"),
             tilordnetRessurs = NavIdent("Z999999"),
+            aktoerId = listOf(AktorId("1234567890123")),
+            saksreferanse = listOf("SAK-123"),
             limit = 20,
             offset = 0,
         )
 
-        val response = SokOppgaverResponse(
-            antallTreffTotalt = 1,
-            oppgaver = listOf(
-                oppgave,
-            ),
-        )
+        val response = oppgaveResponse(listOf(oppgaveDto))
 
         mockServer.expect(requestTo(startsWith("/api/v1/oppgaver?")))
             .andExpect(method(HttpMethod.GET))
@@ -251,6 +226,8 @@ class OppgaveClientTest {
             .andExpect(queryParam("oppgavetype", "JFR", "KONT"))
             .andExpect(queryParam("tildeltEnhetsnr", "4100"))
             .andExpect(queryParam("tilordnetRessurs", "Z999999"))
+            .andExpect(queryParam("aktoerId", "1234567890123"))
+            .andExpect(queryParam("saksreferanse", "SAK-123"))
             .andExpect(queryParam("limit", "20"))
             .andExpect(queryParam("offset", "0"))
             .andRespond(
@@ -260,9 +237,11 @@ class OppgaveClientTest {
             )
 
         // Act
-        oppgaveClient.finnOppgaver(params)
+        val resultat = oppgaveClient.finnOppgaver(params)
 
         // Assert
+        assertThat(resultat.antallTreffTotalt).isEqualTo(1)
+        assertThat(resultat.oppgaver).containsExactly(oppgaveDto)
         mockServer.verify()
     }
 }

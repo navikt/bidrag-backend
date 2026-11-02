@@ -8,6 +8,8 @@ data class EnhetResponse(
 
 data class BrukerGrupperResponse(
     val value: List<Gruppe>?,
+    @param:JsonProperty("@odata.nextLink")
+    val nextLink: String? = null,
 )
 
 data class BrukerEnheterRespons(

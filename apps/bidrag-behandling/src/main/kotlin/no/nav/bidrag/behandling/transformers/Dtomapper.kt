@@ -832,13 +832,11 @@ class Dtomapper(
             )
         val rolleDtoCache = sorterteRoller.associate { it.id!! to it.tilDto() }
         val harGebyrsøknad = roller.any { it.harGebyrsøknad }
-        val gebyrBeregningCache: Map<Long, BeregnGebyrResultat> =
+        val gebyrBeregningCache: Map<String, BeregnGebyrResultat> =
             if (harGebyrsøknad) {
                 roller
                     .filter { it.gebyr != null }
-                    .parallelStream()
-                    .map { rolle -> rolle.id?.let { id -> id to vedtakGrunnlagMapper.beregnGebyr(this, rolle) } }
-                    .toList()
+                    .flatMap { rolle -> rolle.gebyrSøknader.map { gebyr -> (gebyr.referanse ?: rolle.id!!.toString()) to vedtakGrunnlagMapper.beregnGebyr(this, rolle, referanse = gebyr.referanse) } }
                     .toMap()
             } else {
                 emptyMap()
@@ -997,10 +995,14 @@ class Dtomapper(
                     rolle.id!! to this.hentBeregnetInntekterForRolle(rolle)
                 }.toList()
                 .associate { it.first to it.second }
-        val valideringsfeilForRolle =
+        val valideringsfeilForRolle = if (!erAvslagForAlle) {
             rollerForInntektsbilde.associate { rolle ->
                 rolle.id!! to this.hentInntekterValideringsfeilV2(rolle)
             }
+        } else {
+            emptyMap()
+        }
+
         val inntektsnotatForRolle =
             rollerForInntektsbilde.associate { rolle ->
                 rolle.id!! to NotatService.henteInntektsnotat(this, rolle.id!!)
@@ -1313,7 +1315,7 @@ class Dtomapper(
     }
 
     fun Behandling.mapGebyrV3(
-        gebyrBeregningCache: Map<Long, BeregnGebyrResultat> = emptyMap(),
+        gebyrBeregningCache: Map<String, BeregnGebyrResultat> = emptyMap(),
         rolleDtoCache: Map<Long, RolleDto> = emptyMap(),
     ) = if (roller.any { it.harGebyrsøknad }) {
         val gebyrSaker = roller.flatMap { it.gebyrSøknader }.map { it.saksnummer }.distinct()
@@ -1339,15 +1341,15 @@ class Dtomapper(
     private fun Behandling.mapGebyrForSak(
         sak: String,
         gjelder18ÅrSøknad: Boolean,
-        gebyrBeregningCache: Map<Long, BeregnGebyrResultat> = emptyMap(),
+        gebyrBeregningCache: Map<String, BeregnGebyrResultat> = emptyMap(),
         rolleDtoCache: Map<Long, RolleDto> = emptyMap(),
     ): List<GebyrRolleV2Dto> = roller
         .filter { it.gebyr != null }
         .flatMap { rolle ->
             val rolleDto = rolle.tilDtoCached(rolleDtoCache)
-            val beregnGebyr = gebyrBeregningCache[rolle.id!!] ?: vedtakGrunnlagMapper.beregnGebyr(this, rolle)
             val gebyr = rolle.gebyr!!.finnGebyrForSak(sak).filter { it.gjelder18ÅrSøknad == gjelder18ÅrSøknad }
             gebyr.map {
+                val beregnGebyr = gebyrBeregningCache[it.referanse ?: rolle.id!!.toString()] ?: vedtakGrunnlagMapper.beregnGebyr(this, rolle, referanse = it.referanse)
                 GebyrRolleV2Dto(
                     rolle = rolleDto,
                     gebyrDetaljer =
@@ -1368,7 +1370,7 @@ class Dtomapper(
         }
 
     fun Behandling.mapGebyrV2(
-        gebyrBeregningCache: Map<Long, BeregnGebyrResultat> = emptyMap(),
+        gebyrBeregningCache: Map<String, BeregnGebyrResultat> = emptyMap(),
         gebyrValideringsfeilCache: List<GebyrValideringsfeilDto>? = null,
         rolleDtoCache: Map<Long, RolleDto> = emptyMap(),
     ) = if (roller.any { it.harGebyrsøknad }) {
@@ -1377,12 +1379,12 @@ class Dtomapper(
             harFlereSøknader = roller.flatMap { it.gebyrSøknader.map { it.søknadsid } }.distinct().size > 1,
             gebyrRoller =
             roller.sortedBy { it.rolletype }.filter { it.harGebyrsøknad }.map { rolle ->
-                val beregnGebyr = gebyrBeregningCache[rolle.id!!] ?: vedtakGrunnlagMapper.beregnGebyr(this, rolle)
                 val rolleDto = rolle.tilDtoCached(rolleDtoCache)
                 GebyrRolleDto(
                     rolle = rolleDto,
                     gebyrDetaljer =
                     rolle.gebyrSøknader.map {
+                        val beregnGebyr = gebyrBeregningCache[it.referanse ?: rolle.id!!.toString()] ?: vedtakGrunnlagMapper.beregnGebyr(this, rolle, referanse = it.referanse)
                         beregnGebyr.tilDto(rolle, it.søknadsid)
                     },
                     valideringsfeil = valideringsfeil.filter { it.gjelder.ident == rolle.ident }.takeIf { it.isNotEmpty() },
@@ -1397,15 +1399,13 @@ class Dtomapper(
     }
 
     fun Behandling.mapGebyr(
-        gebyrBeregningCache: Map<Long, BeregnGebyrResultat> = emptyMap(),
         gebyrValideringsfeilCache: List<GebyrValideringsfeilDto>? = null,
-        rolleDtoCache: Map<Long, RolleDto> = emptyMap(),
     ) = if (roller.any { it.harGebyrsøknad }) {
         GebyrDto(
             gebyrRoller =
             roller.sortedBy { it.rolletype }.filter { it.harGebyrsøknad }.flatMap { rolle ->
-                val beregnGebyr = gebyrBeregningCache[rolle.id!!] ?: vedtakGrunnlagMapper.beregnGebyr(this, rolle)
                 rolle.gebyrSøknader.map {
+                    val beregnGebyr = vedtakGrunnlagMapper.beregnGebyr(this, rolle, referanse = it.referanse)
                     beregnGebyr.tilDto(rolle, it.søknadsid)
                 }
             },
@@ -1593,7 +1593,7 @@ class Dtomapper(
                         .run {
                             tilGrunnlagBostatus() + tilPersonobjekter()
                         }.toList(),
-                    periode = ÅrMånedsperiode(virkningstidspunkt!!, finnBeregnTilDatoBehandling()),
+                    periode = ÅrMånedsperiode(eldsteVirkningstidspunkt!!, finnBeregnTilDatoBehandling()),
                     opphørsdato = globalOpphørsdatoYearMonth,
                     søknadsbarnReferanse = "",
                 ),

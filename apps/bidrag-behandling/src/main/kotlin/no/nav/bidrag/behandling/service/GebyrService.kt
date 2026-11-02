@@ -28,7 +28,7 @@ class GebyrService(
             val beregnetGebyrErEndret = manueltOverstyrtGebyr.beregnetIlagtGebyr != beregning.ilagtGebyr
             // TODO: FF - Rekalkuler gebyr slik at det blir manuelt overstyrt slik at BP bare får gebyr for ett av søknadene
             if (beregnetGebyrErEndret) {
-                resettGebyr(rolle, behandling, beregning)
+                resetGebyr(rolle, behandling, beregning)
             }
             beregnetGebyrErEndret
         }.any { it }
@@ -39,11 +39,11 @@ class GebyrService(
             .roller
             .filter { it.harGebyrsøknad }
             .forEach { rolle ->
-                resettGebyr(rolle, behandling)
+                resetGebyr(rolle, behandling)
             }
     }
 
-    private fun resettGebyr(
+    private fun resetGebyr(
         rolle: Rolle,
         behandling: Behandling,
         beregningInput: BeregnGebyrResultat? = null,

@@ -6,14 +6,11 @@ import no.nav.bidrag.arbeidsflyt.model.ENHET_FAGPOST
 import no.nav.bidrag.arbeidsflyt.model.isBidJournalpostId
 import no.nav.bidrag.arbeidsflyt.model.journalpostMedBareBIDPrefix
 import no.nav.bidrag.arbeidsflyt.model.tilFagområdeBeskrivelse
+import no.nav.bidrag.arbeidsflyt.utils.lagSaksbehandlerInfo
 import no.nav.bidrag.commons.service.organisasjon.EnhetProvider
-import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.commons.util.VirkedagerProvider
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 import no.nav.bidrag.transport.dokument.Sporingsdata
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -431,6 +428,7 @@ open class PatchOppgaveRequest(
     open var tildeltEnhetsnr: String? = null,
     open var tilordnetRessurs: String? = null,
     open var beskrivelse: String? = null,
+    open var metadata: Map<String, String>? = null,
 ) {
     fun leggOppgaveIdPa(contextUrl: String) = "$contextUrl/$id".replace("//", "/")
 
@@ -499,9 +497,24 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
         return this
     }
 
+    fun oppdaterBehandlingsid(behandlingsid: Long?): OppdaterOppgave {
+        if (behandlingsid == null) return this
+        metadata =
+            (oppgaveDataForHendelse?.metadata ?: emptyMap()) +
+            mapOf(METADATA_NØKKEL_BEHANDLING_ID to behandlingsid.toString())
+        _hasChanged = true
+        return this
+    }
+
     fun endreOppgavetype(nyOppgavetype: OppgaveType): OppdaterOppgave {
         oppgavetype = nyOppgavetype.name
         tilordnetRessurs = ""
+        _hasChanged = true
+        return this
+    }
+
+    fun overforTilSaksbehandler(nyTilordnetRessurs: String?): OppdaterOppgave {
+        tilordnetRessurs = nyTilordnetRessurs ?: ""
         _hasChanged = true
         return this
     }
@@ -529,8 +542,15 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
             nyBeskrivelse += "\u00B7 Oppgave overført fra enhet $eksisterendeTildeltEnhet til $tildeltEnhetsnr\r\n"
         }
 
+        if (erTilordnetRessursEndret) {
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs)} til ${lagSaksbehandlerInfo(tilordnetRessurs)}\r\n"
+        }
+        if (erTilordnetRessursEndretFraIkkeValgtTilValgt) {
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ikke valgt til ${lagSaksbehandlerInfo(tilordnetRessurs)}\r\n"
+        }
+
         if (erTilordnetRessursEndretFraValgtTilIkkeValgt) {
-            nyBeskrivelse += "\u00B7 Saksbehandler endret fra $eksisterendeTilordnetRessurs til ikke valgt\r\n"
+            nyBeskrivelse += "\u00B7 Saksbehandler endret fra ${lagSaksbehandlerInfo(eksisterendeTilordnetRessurs)} til ikke valgt\r\n"
         }
 
         if (nyBeskrivelse.isNotEmpty()) {
@@ -546,7 +566,11 @@ class OppdaterOppgave() : PatchOppgaveRequest() {
     private val eksisterendeTildeltEnhet get() = oppgaveDataForHendelse?.tildeltEnhetsnr
     private val eksisterendeOppgavetype get() = oppgaveDataForHendelse?.oppgavetype
     private val erOppgavetypeEndret get() = oppgavetype != null && (eksisterendeOppgavetype) != oppgavetype
-    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = eksisterendeTilordnetRessurs?.isNotEmpty() == true && tilordnetRessurs?.isEmpty() == true
+    private val erTilordnetRessursEndretFraValgtTilIkkeValgt get() = tilordnetRessurs != null && !eksisterendeTilordnetRessurs.isNullOrEmpty() && tilordnetRessurs.isNullOrEmpty()
+    private val erTilordnetRessursEndretFraIkkeValgtTilValgt get() = tilordnetRessurs != null && eksisterendeTilordnetRessurs.isNullOrEmpty() && !tilordnetRessurs.isNullOrEmpty()
+    private val erTilordnetRessursEndret get() = tilordnetRessurs != null && !erTilordnetRessursEndretFraValgtTilIkkeValgt &&
+        !erTilordnetRessursEndretFraIkkeValgtTilValgt && (!tilordnetRessurs.isNullOrEmpty() && !eksisterendeTilordnetRessurs.isNullOrEmpty()) &&
+        eksisterendeTilordnetRessurs != tilordnetRessurs
     private val erEnhetEndret get() = tildeltEnhetsnr != null && (eksisterendeTildeltEnhet) != tildeltEnhetsnr
 }
 

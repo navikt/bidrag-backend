@@ -14,8 +14,10 @@ import io.mockk.verify
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
+import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.RolleManueltOverstyrtGebyr
 import no.nav.bidrag.behandling.database.datamodell.opprettUnikReferanse
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -95,6 +97,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholds
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ManueltOverstyrtGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
@@ -461,7 +464,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             gebyrMottaker.resultatkode shouldBe Resultatkode.GEBYR_FRITATT.name
             gebyrMottaker.sak shouldBe Saksnummer(SAKSNUMMER)
             gebyrMottaker.skyldner shouldBe Personident(testdataBM.ident)
-            gebyrMottaker.grunnlagReferanseListe shouldHaveSize 1
+            gebyrMottaker.grunnlagReferanseListe shouldHaveSize 2
             val sluttberegningGebyrBM = opprettVedtakRequest.grunnlagListe.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(Grunnlagstype.SLUTTBEREGNING_GEBYR, gebyrMottaker.grunnlagReferanseListe).firstOrNull()
             sluttberegningGebyrBM!!.gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
             sluttberegningGebyrBM.grunnlagsreferanseListe shouldHaveSize 2
@@ -865,10 +868,10 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             request.type shouldBe Vedtakstype.FASTSETTELSE
 
             it.innkrevingUtsattTilDato shouldBe LocalDate.now().plusDays(3)
-            request.grunnlagListe shouldHaveSize 14
+            request.grunnlagListe shouldHaveSize 23
             hentGrunnlagstyper(Grunnlagstype.MANUELT_OVERSTYRT_GEBYR) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.SLUTTBEREGNING_GEBYR) shouldHaveSize 2
-            hentGrunnlagstyper(Grunnlagstype.SJABLON_SJABLONTALL) shouldHaveSize 1
+            hentGrunnlagstyper(Grunnlagstype.SJABLON_SJABLONTALL) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.NOTAT) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_BIDRAGSMOTTAKER) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_SØKNADSBARN) shouldHaveSize 1
@@ -919,7 +922,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 resultatkode shouldBe Resultatkode.GEBYR_FRITATT.name
                 sak shouldBe Saksnummer(SAKSNUMMER)
                 skyldner shouldBe Personident(testdataBM.ident)
-                grunnlagReferanseListe shouldHaveSize 1
+                grunnlagReferanseListe shouldHaveSize 2
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe)
             }
             assertSoftly(it.find { it.type == Engangsbeløptype.GEBYR_SKYLDNER }!!) {
@@ -931,7 +934,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 resultatkode shouldBe Resultatkode.GEBYR_ILAGT.name
                 sak shouldBe Saksnummer(SAKSNUMMER)
                 skyldner shouldBe Personident(testdataBP.ident)
-                grunnlagReferanseListe shouldHaveSize 1
+                grunnlagReferanseListe shouldHaveSize 2
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe)
             }
         }
@@ -1956,7 +1959,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             gebyrMottaker.resultatkode shouldBe Resultatkode.GEBYR_FRITATT.name
             gebyrMottaker.sak shouldBe Saksnummer(SAKSNUMMER)
             gebyrMottaker.skyldner shouldBe Personident(testdataBM.ident)
-            gebyrMottaker.grunnlagReferanseListe shouldHaveSize 1
+            gebyrMottaker.grunnlagReferanseListe shouldHaveSize 2
             val sluttberegningGebyrBM = opprettVedtakRequest.grunnlagListe.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(Grunnlagstype.SLUTTBEREGNING_GEBYR, gebyrMottaker.grunnlagReferanseListe).firstOrNull()
             sluttberegningGebyrBM!!.gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
             sluttberegningGebyrBM.grunnlagsreferanseListe shouldHaveSize 3
@@ -2361,10 +2364,10 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             val request = opprettVedtakRequest
             request.type shouldBe Vedtakstype.FASTSETTELSE
 
-            request.grunnlagListe shouldHaveSize 13
+            request.grunnlagListe shouldHaveSize 22
             hentGrunnlagstyper(Grunnlagstype.MANUELT_OVERSTYRT_GEBYR) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.SLUTTBEREGNING_GEBYR) shouldHaveSize 2
-            hentGrunnlagstyper(Grunnlagstype.SJABLON_SJABLONTALL) shouldHaveSize 1
+            hentGrunnlagstyper(Grunnlagstype.SJABLON_SJABLONTALL) shouldHaveSize 2
             hentGrunnlagstyper(Grunnlagstype.NOTAT) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_BIDRAGSMOTTAKER) shouldHaveSize 1
             hentGrunnlagstyper(Grunnlagstype.PERSON_SØKNADSBARN) shouldHaveSize 1
@@ -2415,7 +2418,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 resultatkode shouldBe Resultatkode.GEBYR_FRITATT.name
                 sak shouldBe Saksnummer(SAKSNUMMER)
                 skyldner shouldBe Personident(testdataBM.ident)
-                grunnlagReferanseListe shouldHaveSize 1
+                grunnlagReferanseListe shouldHaveSize 2
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe)
             }
             assertSoftly(it.find { it.type == Engangsbeløptype.GEBYR_SKYLDNER }!!) {
@@ -2427,7 +2430,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 resultatkode shouldBe Resultatkode.GEBYR_ILAGT.name
                 sak shouldBe Saksnummer(SAKSNUMMER)
                 skyldner shouldBe Personident(testdataBP.ident)
-                grunnlagReferanseListe shouldHaveSize 1
+                grunnlagReferanseListe shouldHaveSize 2
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe)
             }
         }
@@ -2471,7 +2474,21 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
             ),
         )
         behandling.bidragspliktig!!.gebyr = GebyrRolle(true, true, "Begrunnelse")
-        behandling.bidragsmottaker!!.gebyr = GebyrRolle(true, false, "Begrunnelse")
+        behandling.bidragsmottaker!!.gebyr = GebyrRolle(
+            true,
+            false,
+            "Begrunnelse",
+//            gebyrSøknader = mutableSetOf(
+//                GebyrRolleSøknad(
+//                    "123213",
+//                    123,
+//                    false,
+//                    null,
+//                    null,
+//                    RolleManueltOverstyrtGebyr(true, true, "Begrunnelse"),
+//                ),
+//            ),
+        )
         behandling.leggTilNotat(
             "Virkningstidspunkt kun i notat",
             NotatType.VIRKNINGSTIDSPUNKT,
@@ -2519,8 +2536,8 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE, grunnlagReferanseListe)
                 val sluttberegningGebyrBM = opprettVedtakRequest.grunnlagListe.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe).firstOrNull()
                 sluttberegningGebyrBM!!.gjelderReferanse shouldBe behandling.bidragspliktig!!.tilGrunnlagsreferanse()
-                sluttberegningGebyrBM.grunnlagsreferanseListe shouldHaveSize 2
-                opprettVedtakRequest.grunnlagListe.filter { it.type == Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT }.shouldHaveSize(1)
+                sluttberegningGebyrBM.grunnlagsreferanseListe shouldHaveSize 3
+                opprettVedtakRequest.grunnlagListe.filter { it.type == Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT }.shouldHaveSize(2)
                 opprettVedtakRequest.grunnlagListe.filter { it.type == Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT && it.gjelderReferanse == behandling.bidragspliktig!!.tilGrunnlagsreferanse() }.shouldHaveSize(1)
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.MANUELT_OVERSTYRT_GEBYR, sluttberegningGebyrBM.grunnlagsreferanseListe)
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilSjablonIReferanser(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP, sluttberegningGebyrBM.grunnlagsreferanseListe)
@@ -2534,11 +2551,11 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 resultatkode shouldBe Resultatkode.GEBYR_FRITATT.name
                 sak shouldBe Saksnummer(SAKSNUMMER)
                 skyldner shouldBe Personident(testdataBM.ident)
-                grunnlagReferanseListe shouldHaveSize 1
+                grunnlagReferanseListe shouldHaveSize 2
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe)
                 val sluttberegningGebyrBP = opprettVedtakRequest.grunnlagListe.finnGrunnlagSomErReferertFraGrunnlagsreferanseListe(Grunnlagstype.SLUTTBEREGNING_GEBYR, grunnlagReferanseListe).firstOrNull()
                 sluttberegningGebyrBP!!.gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
-                sluttberegningGebyrBP.grunnlagsreferanseListe shouldHaveSize 2
+                sluttberegningGebyrBP.grunnlagsreferanseListe shouldHaveSize 3
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilGrunnlagIReferanser(Grunnlagstype.MANUELT_OVERSTYRT_GEBYR, sluttberegningGebyrBP.grunnlagsreferanseListe)
                 opprettVedtakRequest.grunnlagListe.validerHarReferanseTilSjablonIReferanser(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP, sluttberegningGebyrBP.grunnlagsreferanseListe)
             }

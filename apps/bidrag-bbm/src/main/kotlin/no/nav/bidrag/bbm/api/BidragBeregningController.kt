@@ -16,6 +16,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
@@ -208,6 +209,23 @@ class BidragBeregningController(
     fun hentSøknad(
         @Valid @RequestBody request: HentSøknadRequest,
     ) = bisysService.hentSøknad(request)
+
+    @PostMapping("/hentsoknaderforbehandling")
+    @Operation(
+        description = "Henter alle søknader for angitt behandlingsid",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Søknader hentet. Vil returnere tom liste hvis ingen søknader finnes for behandlingen",
+            ),
+        ],
+    )
+    fun hentSøknaderForBehandling(
+        @Valid @RequestBody request: HentSøknaderForBehandlingRequest,
+    ) = bisysService.hentSøknaderForBehandling(request)
 
     @PostMapping("/oppdaterreferansegebyr")
     @Operation(

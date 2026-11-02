@@ -1,9 +1,9 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.SivilstandBo
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
 import no.nav.bidrag.grunnlag.exception.RestResponse
@@ -32,7 +32,7 @@ class OppdaterSivilstand(
 
             var antallPerioderFunnet = 0
 
-            SECURE_LOGGER.info("Kaller bidrag-person og henter sivilstand for: ${tilJson(personIdOgPeriode.personId)}")
+            secureLogger.debug { "Kaller bidrag-person og henter sivilstand for: ${tilJson(personIdOgPeriode.personId)}" }
 
             try {
                 when (
@@ -41,7 +41,7 @@ class OppdaterSivilstand(
                 ) {
                     is RestResponse.Success -> {
                         val sivilstandResponse = restResponseSivilstand.body
-                        SECURE_LOGGER.info("Kall til bidrag-person for å hente sivilstand ga følgende respons: ${tilJson(sivilstandResponse)}")
+                        secureLogger.debug { "Kall til bidrag-person for å hente sivilstand ga følgende respons: ${tilJson(sivilstandResponse)}" }
 
                         if (sivilstandResponse.sivilstandPdlDto.isNotEmpty()) {
                             persistenceService.oppdaterEksisterendeSivilstandTilInaktiv(

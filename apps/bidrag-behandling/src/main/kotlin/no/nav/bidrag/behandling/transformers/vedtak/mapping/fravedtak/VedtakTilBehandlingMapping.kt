@@ -54,6 +54,7 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
+import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -185,7 +186,15 @@ class VedtakTilBehandlingMapping(
                 },
                 // TODO: Er dette riktig? Hva skjer hvis det finnes flere stønadsendringer/engangsbeløp? Fungerer for Forskudd men todo fram fremtiden
                 stonadstype = stønadsendringstype,
-                engangsbeloptype = if (stønadsendringstype == null) engangsbeløpListe.firstOrNull()?.type else null,
+                engangsbeloptype = if (stønadsendringstype == null) {
+                    val engangsbeløptype = engangsbeløpListe.firstOrNull()?.type
+                    when (engangsbeløptype) {
+                        Engangsbeløptype.SÆRBIDRAG, Engangsbeløptype.SAERTILSKUDD, Engangsbeløptype.SÆRTILSKUDD -> Engangsbeløptype.SÆRBIDRAG
+                        else -> engangsbeløptype
+                    }
+                } else {
+                    null
+                },
                 behandlerEnhet = enhet ?: enhetsnummer?.verdi!!,
                 opprettetAv = opprettetAv,
                 opprettetAvNavn = opprettetAvNavn,
@@ -319,14 +328,14 @@ class VedtakTilBehandlingMapping(
         behandling.roller.forEach { r ->
             if (lesemodus) {
                 notatMedType(NotatType.VIRKNINGSTIDSPUNKT, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = lesemodus),
-                    )
+                    val notat = behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(NotatType.VIRKNINGSTIDSPUNKT, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(NotatType.VIRKNINGSTIDSPUNKT, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
@@ -345,18 +354,18 @@ class VedtakTilBehandlingMapping(
                     false,
                     grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
                 )?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = lesemodus),
-                    )
+                    val notat = behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(
                     NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
                     true,
                     grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
                 )?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(
@@ -373,12 +382,14 @@ class VedtakTilBehandlingMapping(
 
             if (lesemodus) {
                 notatMedType(NotatType.INNTEKT, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = lesemodus))
+                    val notat = behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(NotatType.INNTEKT, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.INNTEKT, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(NotatType.INNTEKT, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
@@ -390,12 +401,14 @@ class VedtakTilBehandlingMapping(
 
             if (lesemodus) {
                 notatMedType(NotatType.SAMVÆR, false, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = lesemodus))
+                    val notat = behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(NotatType.SAMVÆR, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.SAMVÆR, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(NotatType.SAMVÆR, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
@@ -412,12 +425,14 @@ class VedtakTilBehandlingMapping(
                     false,
                     grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
                 )?.let {
-                    behandling.notater.add(behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = lesemodus))
+                    val notat = behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(NotatType.UNDERHOLDSKOSTNAD, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.UNDERHOLDSKOSTNAD, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(
@@ -436,12 +451,14 @@ class VedtakTilBehandlingMapping(
                     false,
                     grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse,
                 )?.let {
-                    behandling.notater.add(behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = lesemodus))
+                    val notat = behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = lesemodus)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
                 notatMedType(NotatType.PRIVAT_AVTALE, true, grunnlagListe.hentPerson(r.ident, r.stønadstype)?.referanse)?.let {
-                    behandling.notater.add(
-                        behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = false),
-                    )
+                    val notat = behandling.tilNotat(NotatType.PRIVAT_AVTALE, it, r, delAvBehandling = false)
+                    behandling.notater.add(notat)
+                    notat.rolle.notat.add(notat)
                 }
             } else {
                 notatMedTypeBegge(

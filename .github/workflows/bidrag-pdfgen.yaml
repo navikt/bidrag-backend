@@ -12,6 +12,8 @@ on:
   push:
     branches:
       - '**'
+      # Merge-queue branch
+      - '!gh-readonly-queue/**'
     paths:
       - '.nais/bidrag-pdfgen/**.yaml'
       - 'apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/**'
@@ -47,7 +49,7 @@ jobs:
       id-token: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
+      - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
         id: docker-push
         with:
           team: bidrag
@@ -58,7 +60,7 @@ jobs:
           docker_context: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen
           dockerfile: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/DockerfileWeasyprint
       - name: Deploy to prod-gcp
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: prod-gcp
           RESOURCE: .nais/bidrag-pdfgen/nais.yaml
@@ -78,7 +80,7 @@ jobs:
       id-token: "write"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: nais/docker-build-push@0e73849f69ff260ee27597553c0a7848ca4e9795 # v0
+      - uses: nais/docker-build-push@423a915c9b72edf2ba848b88171ccb0489e2a40a # v0
         id: docker-push
         with:
           team: bidrag
@@ -89,7 +91,7 @@ jobs:
           docker_context: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen
           dockerfile: ./apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen/DockerfileWeasyprint
       - name: Deploy to dev-gcp
-        uses: nais/deploy/actions/deploy@027a91857992525139798892f2804b0ca21f4af6 # v2
+        uses: nais/deploy/actions/deploy@9850be311389ca754d9a9f2280615419d738c891 # v3
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/bidrag-pdfgen/nais.yaml

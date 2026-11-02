@@ -291,6 +291,7 @@ class ForholdsmessigFordelingKlageService(
                         søktAvType = opprettetSøknad.søktAvType,
                         søknadFomDato = opprettetSøknad.søknadFomDato,
                         saksnummer = opprettetSøknad.saksnummer,
+                        status = opprettetSøknad.partISøknadListe.filterBarnUnderBehandling().firstOrNull()?.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
                         enhet = opprettetSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                     ),
                 )
@@ -492,6 +493,7 @@ class ForholdsmessigFordelingKlageService(
                 søknad.refSøknadsid == originalSøknad.søknadsid && søknad.behandlingstema == originalSøknad.behandlingstema
             }
 
+        val søktAvType = if (hovedsøknad?.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType
         val nySøknadId =
             åpenFFSøknad?.søknadsid ?: bbmConsumer
                 .opprettSøknader(
@@ -503,7 +505,7 @@ class ForholdsmessigFordelingKlageService(
                         behandlingstype = behandlingstype,
                         behandlerenhet = originalSøknad.behandlerenhet ?: behandling.behandlerEnhet,
                         hovedsøknadsid = hovedsøknadsid,
-                        søktAv = if (hovedsøknad?.søktAvType == SøktAvType.NAV_BIDRAG) SøktAvType.NAV_BIDRAG else originalSøknad.søktAvType,
+                        søktAv = søktAvType,
                         søknadMottattDato = behandling.mottattdato,
                         behandlingstema = originalSøknad.behandlingstema,
                         søknadFomDato = originalSøknad.søknadFomDato!!,
@@ -516,8 +518,8 @@ class ForholdsmessigFordelingKlageService(
                 søknadsid = nySøknadId,
                 mottattDato = behandling.mottattdato,
                 søknadFomDato = originalSøknad.søknadFomDato,
-                søktAvType = originalSøknad.søktAvType,
-                behandlingstype = originalSøknad.behandlingstype,
+                søktAvType = søktAvType,
+                behandlingstype = behandlingstype,
                 behandlingstema = originalSøknad.behandlingstema,
                 innkreving = originalSøknad.innkreving,
                 saksnummer = originalSøknad.saksnummer,

@@ -628,7 +628,7 @@ class TestUtil {
                     type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
                     innhold = POJONode(
                         InntektsrapporteringPeriode(
-                            periode = ÅrMånedsperiode(YearMonth.now(), YearMonth.now()),
+                            periode = ÅrMånedsperiode(YearMonth.of(2025, 1), null),
                             manueltRegistrert = true,
                             valgt = true,
                             inntektsrapportering = Inntektsrapportering.LØNN_MANUELT_BEREGNET,

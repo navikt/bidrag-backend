@@ -1,5 +1,20 @@
 name: Bidrag-elin-stub
 on:
+  workflow_call:
+    inputs:
+      bibliotekartefakt:
+        description: Navn på artefaktet med ferdige biblioteker fra bygg-apper.
+        required: false
+        type: string
+        default: ''
+      miljo:
+        required: false
+        type: string
+        default: ''
+      hopp_over_tester:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       miljo:
@@ -15,46 +30,24 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    branches:
-      - 'main'
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - '.nais/bidrag-elin-stub/**.yaml'
-      - 'apps/bidrag-elin-stub/**'
-  pull_request:
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - '.nais/bidrag-elin-stub/**.yaml'
-      - 'apps/bidrag-elin-stub/**'
+
+env:
+  APP_PATHS: |
+    pom.xml
+    libs/bidrag-felles/**
+    .nais/bidrag-elin-stub/**.yaml
+    apps/bidrag-elin-stub/**
 
 jobs:
-  detect_changes:
-    name: "Sjekk om appen faktisk er endret"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/utled-app-endringer
-        id: detect
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true'
     permissions:
       contents: "write"
       id-token: "write"
     uses: ./.github/workflows/bygg_og_deploy.yaml
     secrets: inherit
     with:
+      bibliotekartefakt: ${{ inputs.bibliotekartefakt }}
       nais_hovedfil_navn: bidrag-elin-stub/nais.yaml
       nais_variabler_filnavn_q2: bidrag-elin-stub/main.yaml
       deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}

@@ -714,6 +714,8 @@ class VedtakService(
                 vedtaksidHovedvedktak,
                 vedtak,
             )
+        // Ingen innkreving hvis det er ingen stønadsendringsliste. Hopper over
+        if (innkrevingRequest.stønadsendringListe.isEmpty()) return
         innkrevingRequest.validerGrunnlagsreferanser()
         val responseInnkreving = fatteVedtak(innkrevingRequest, simuler)
         vedtakRequestDtos.add(responseInnkreving.vedtaksid to innkrevingRequest)

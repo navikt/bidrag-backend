@@ -1,6 +1,7 @@
 package no.nav.bidrag.organisasjon.consumer.ldap
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import java.util.regex.Pattern
 import javax.naming.LimitExceededException
 import javax.naming.NamingException
@@ -16,7 +17,7 @@ class LdapBrukeroppslag(
 ) {
     fun hentBrukernavn(ident: String): String? {
         if (ident.isEmpty()) {
-            LOGGER.warn("Saksbehandler ident mangler")
+            LOGGER.warn { "Saksbehandler ident mangler" }
             return null
         }
         val context = ldapInnlogging.lagLdapContext(environment)
@@ -30,7 +31,7 @@ class LdapBrukeroppslag(
     private fun ldapSearch(ident: String, context: LdapContext): SearchResult? {
         val matcher = IDENT_PATTERN.matcher(ident)
         if (!matcher.matches()) {
-            LOGGER.warn("Navn på saksbehandler for ident $ident ikke funnet (1)")
+            LOGGER.warn { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (1)" }
             return null
         }
         val controls = SearchControls()
@@ -42,13 +43,13 @@ class LdapBrukeroppslag(
             if (result.hasMoreElements()) {
                 return result.nextElement()
             }
-            LOGGER.warn("Navn på saksbehandler for ident $ident ikke funnet (2)")
+            LOGGER.warn { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (2)" }
             null
-        } catch (lee: LimitExceededException) {
-            LOGGER.warn("Navn på saksbehandler for ident $ident ikke funnet (LimitExceededException)")
+        } catch (e: LimitExceededException) {
+            LOGGER.warn(e) { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (LimitExceededException)" }
             null
-        } catch (ne: NamingException) {
-            LOGGER.warn("Navn på saksbehandler for ident $ident ikke funnet (NamingException)")
+        } catch (e: NamingException) {
+            LOGGER.warn(e) { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (NamingException)" }
             null
         }
     }
@@ -58,7 +59,7 @@ class LdapBrukeroppslag(
         return try {
             displayName.get().toString()
         } catch (e: NamingException) {
-            LOGGER.warn("Navn på saksbehandler ikke funnet (NamingException)")
+            LOGGER.warn(e) { "Navn på saksbehandler ikke funnet (NamingException)" }
             null
         }
     }
@@ -67,14 +68,14 @@ class LdapBrukeroppslag(
         val attributeName = "displayName"
         val attribute = element.attributes[attributeName]
         if (attribute == null) {
-            LOGGER.warn("Navn på saksbehandler ikke funnet (attribute == null)")
+            LOGGER.warn { "Navn på saksbehandler ikke funnet (attribute == null)" }
             return null
         }
         return attribute
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(LdapBrukeroppslag::class.java)
+        private val LOGGER = KotlinLogging.logger {}
         private val IDENT_PATTERN = Pattern.compile("^\\p{LD}+$")
     }
 }

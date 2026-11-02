@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
@@ -242,9 +243,22 @@ class ForholdsmessigFordelingBarnService(
             }
             return
         }
-        BARN_LOGGER.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingsøknad" }
         barn.forholdsmessigFordeling!!.erRevurdering = true
+        if (UnleashFeatures.GJENOPPRETT_FF_SØKNAD.isEnabled) {
+            slettBarnEllerGjenopprettFFSøknad(barn, behandling)
+        } else {
+            feilregistrerBarnFraFFSøknad(barn)
+            behandlingService.slettRolleFraBehandling(behandling, barn)
+            behandling.roller.remove(barn)
+            secureLogger.info { "Slettet barn ${barn.ident} fra behandling ${behandling.id}" }
+        }
+    }
 
+    fun slettBarnEllerGjenopprettFFSøknad(
+        barn: Rolle,
+        behandling: Behandling,
+    ) {
+        BARN_LOGGER.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingsøknad" }
         if (!barn.harLøpendeBidragFørOpphørEllerLøpende()) {
             feilregistrerBarnFraFFSøknad(barn)
             behandlingService.slettRolleFraBehandling(behandling, barn)
@@ -278,7 +292,6 @@ class ForholdsmessigFordelingBarnService(
             )
         }
     }
-
     private fun opprettNyRolleForBarn(
         nyRolle: OpprettRolleDto,
         request: OppdaterBarnFraFFRequest,

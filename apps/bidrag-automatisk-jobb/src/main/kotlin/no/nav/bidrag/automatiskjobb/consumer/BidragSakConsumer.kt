@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.automatiskjobb.configuration.CacheConfiguration.Companion.SAKER_PERSON_CACHE
 import no.nav.bidrag.automatiskjobb.configuration.CacheConfiguration.Companion.SAK_CACHE
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.sak.BidragssakDto
@@ -19,7 +20,7 @@ import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
-private val LOGGER = KotlinLogging.logger {}
+private val LOGGER = KotlinLogging.logger { }
 
 @Service
 class BidragSakConsumer(
@@ -51,7 +52,7 @@ class BidragSakConsumer(
             return postForNonNullEntity(createUri("/person/sak"), personIdent)
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.NOT_FOUND) {
-                LOGGER.warn(e) { "Fant ingen saker for ${personIdent.verdi}" }
+                secureLogger.info(e) { "Fant ingen saker for ${personIdent.verdi}" }
                 return emptyList()
             }
             LOGGER.warn(e) { "Det skjedde en feil ved henting av saker for $personIdent" }

@@ -85,12 +85,21 @@ fun Engangsbeløp.toEngangsbeløpDto() = with(::EngangsbeløpDto) {
     callBy(
         parameters.associateWith { parameter ->
             when (parameter.name) {
-                EngangsbeløpDto::type.name -> Engangsbeløptype.valueOf(type)
+                EngangsbeløpDto::type.name -> when (type) {
+                    "SAERTILSKUDD", "SÆRTILSKUDD" -> Engangsbeløptype.SÆRBIDRAG
+                    else -> Engangsbeløptype.valueOf(type)
+                }
+
                 EngangsbeløpDto::sak.name -> Saksnummer(sak)
+
                 EngangsbeløpDto::skyldner.name -> Personident(skyldner)
+
                 EngangsbeløpDto::kravhaver.name -> Personident(kravhaver)
+
                 EngangsbeløpDto::mottaker.name -> Personident(mottaker)
+
                 EngangsbeløpDto::innkreving.name -> Innkrevingstype.valueOf(innkreving)
+
                 else -> propertiesByName[parameter.name]?.get(this@toEngangsbeløpDto)
             }
         },

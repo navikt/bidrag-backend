@@ -2,7 +2,9 @@ package no.nav.bidrag.behandling
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.utils.StubUtils
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.junit.jupiter.api.AfterEach
@@ -40,7 +42,17 @@ class SpringTestRunner {
 
     @BeforeEach
     fun mockkUnleash() {
+        // Nullstiller toggle-stubber som andre testklasser har lagt igjen på det globale objektet
+        unmockkObject(UnleashFeaturesProvider)
         mockkObject(UnleashFeaturesProvider)
+    }
+
+    @BeforeEach
+    fun pekAppContextTilGjeldendeKontekst() {
+        // AppContext er statisk og peker på sist startede Spring-kontekst. Når en cachet kontekst gjenbrukes
+        // må den pekes tilbake, ellers går oppslag via AppContext mot feil kontekst (og feil WireMock-server).
+        unmockkObject(AppContext)
+        AppContext().setApplicationContext(applicationContext)
     }
 
     @AfterEach

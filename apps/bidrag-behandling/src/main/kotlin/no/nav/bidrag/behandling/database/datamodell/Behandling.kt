@@ -33,6 +33,8 @@ import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.transformers.erBidrag
 import no.nav.bidrag.behandling.transformers.normalizeForComparison
 import no.nav.bidrag.behandling.transformers.vedtak.ifFalse
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTil
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
@@ -374,7 +376,7 @@ open class Behandling(
     val erVirkningstidspunktLiktForAlle get() = søknadsbarn.mapNotNull { it.virkningstidspunkt }.toSet().size == 1
     val erVirkningstidspunktLiktForAlleSaker get() = søknadsbarn.groupBy { it.saksnummer }
         .mapNotNull { it.key to (it.value.mapNotNull { sb -> sb.virkningstidspunkt }.toSet().size == 1) }
-        .map { ErLikForAlleBasertPåSak(it.first, it.second) }
+        .map { ErLikForAlleBasertPåSak(saksnummer = it.first, erLikForAlle = it.second, kanVurdereSamlet = it.second) }
     val globalOpphørsdato get() =
         if (søknadsbarn.any { it.opphørsdato == null }) {
             null
@@ -395,8 +397,11 @@ open class Behandling(
         .groupBy { it.saksnummer }
         .map { (saksnummer, søknadsbarnForSak) ->
             ErLikForAlleBasertPåSak(
-                saksnummer,
-                søknadsbarnForSak.all { sb1 ->
+                saksnummer = saksnummer,
+                erLikForAlle = søknadsbarnForSak.all { sb1 ->
+                    søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
+                },
+                kanVurdereSamlet = søknadsbarnForSak.all { sb1 ->
                     søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
                 },
             )
@@ -420,23 +425,17 @@ open class Behandling(
             sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
     }
 
-    val sammeSamværForAlle get() =
-        forholdsmessigFordeling == null &&
-            samvær.filter { it.rolle.kreverGrunnlagForBeregning }.all { sb1 ->
-                samvær.filter { it.rolle.kreverGrunnlagForBeregning }.filter { it.id != sb1.id }.all {
-                    sb1.erLik(it)
-                }
-            }
+    val sammeSamværForAlle get() = sammeSamværForAlleSaker.all { it.erLikForAlle }
     val sammeSamværForAlleSaker get() = samvær
         .filter { it.rolle.kreverGrunnlagForBeregning }
         .groupBy { it.rolle.saksnummer }
         .map { (saksnummer, samværForSak) ->
+            val erVirkningLik = erVirkningstidspunktLiktForAlleSaker.find { it.saksnummer == saksnummer } ?: erVirkningstidspunktLiktForAlleSaker.firstOrNull()
             ErLikForAlleBasertPåSak(
-                saksnummer,
-                samværForSak.all { sb1 ->
-                    samværForSak.filter { it.id != sb1.id }.all {
-                        sb1.erLik(it)
-                    }
+                saksnummer = saksnummer,
+                kanVurdereSamlet = (erVirkningLik == null || erVirkningLik.erLikForAlle) && søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }.distinctBy { it.søknadsid }.size <= 1,
+                erLikForAlle = samværForSak.all { sb1 ->
+                    samværForSak.filter { it.id != sb1.id }.all { sb2 -> sb1.erLik(sb2) }
                 },
             )
         }

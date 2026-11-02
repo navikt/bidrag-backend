@@ -1,13 +1,13 @@
 package no.nav.bidrag.arbeidsflyt.model
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
 import no.nav.bidrag.arbeidsflyt.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.arbeidsflyt.dto.OpprettJournalforingsOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.service.OppgaveService
 import no.nav.bidrag.arbeidsflyt.service.OrganisasjonService
 import no.nav.bidrag.arbeidsflyt.service.PersistenceService
 import no.nav.bidrag.arbeidsflyt.utils.enhetKonvertert
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.dokument.JournalpostHendelse
 
 private val LOGGER = KotlinLogging.logger {}
@@ -50,9 +50,7 @@ class BehandleJournalpostHendelse(
         val saksbehandlerIdent = journalpostHendelse.sporing?.brukerident
 
         val harTilgangTilTema = saksbehandlerIdent?.let { tIlgangskontrollConsumer.sjekkTilgangTema(fagområdeNy, saksbehandlerIdent) } ?: true
-        SECURE_LOGGER.info(
-            "Sjekket tilgang til tema $fagområdeNy for saksbehandlerIdent $saksbehandlerIdent. Saksbehandler har tilgang = $harTilgangTilTema",
-        )
+        secureLogger.debug { "Sjekket tilgang til tema $fagområdeNy for saksbehandlerIdent $saksbehandlerIdent. Saksbehandler har tilgang = $harTilgangTilTema" }
         val erEndringAvFagomrade = journalpost != null && journalpost.tema != fagområdeNy
 
         if (erEndringAvFagomrade || (!harTilgangTilTema && oppgaverForHendelse.erJournalforingsoppgaverTildeltSaksbehandler())) {

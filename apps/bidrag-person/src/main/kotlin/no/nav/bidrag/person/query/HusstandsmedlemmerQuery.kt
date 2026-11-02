@@ -3,7 +3,7 @@ package no.nav.bidrag.person.query
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import no.nav.bidrag.person.BidragPerson
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.person.Husstandsmedlem
 
 data class SoekPersonGraphsqlQuery(val query: String, val variables: SokPersonVariabler)
@@ -49,7 +49,7 @@ data class HusstandsmedlemmerResponse(
                         husstandsmedlem.person.navn.firstOrNull()?.etternavn,
                     ).joinToString(" ")
                 if (husstandsmedlem.person.folkeregisteridentifikator.isEmpty()) {
-                    BidragPerson.SECURE_LOGGER.debug("Folkeregisteridentifikator mangler for person: {}", husstandsmedlem)
+                    secureLogger.debug { "Folkeregisteridentifikator mangler for person: $husstandsmedlem" }
                 } else {
                     husstandsmedlemListe.add(
                         Husstandsmedlem(

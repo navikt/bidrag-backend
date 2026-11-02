@@ -1,8 +1,9 @@
 package no.nav.bidrag.person.hendelse.konfigurasjon
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.kafka.KafkaException
 import org.springframework.kafka.listener.CommonContainerStoppingErrorHandler
@@ -29,7 +30,7 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
         Thread.sleep(1000)
 
         if (records.isEmpty()) {
-            LOGGER.warn("Feil ved konsumering av melding. Ingen records. ${consumer.subscription()}", e)
+            LOGGER.warn(e) { "Feil ved konsumering av melding. Ingen records. ${consumer.subscription()}" }
             scheduleRestart(
                 e,
                 container,
@@ -37,11 +38,10 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
             )
         } else {
             records.first().run {
-                LOGGER.warn(
+                secureLogger.warn {
                     "Feil ved konsumering av melding fra ${this.topic()}. id ${this.key()}, " +
-                        "offset: ${this.offset()}, partition: ${this.partition()}",
-                )
-                SECURE_LOGGER.warn("${this.topic()} - Problemer med prosessering av $records", e)
+                        "offset: ${this.offset()}, partition: ${this.partition()}, records: $records"
+                }
                 scheduleRestart(
                     e,
                     container,
@@ -59,11 +59,11 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
         val now = System.currentTimeMillis()
         if (now - lastError.getAndSet(now) > COUNTER_RESET_TIME) { // Sjekker om perioden som det ventes er større enn counter_reset_time
             if (counter.get() > 0) {
-                LOGGER.error(
+                LOGGER.error {
                     "Feil ved prosessering av kafkamelding for $topic. Container har restartet ${counter.get()} ganger og " +
                         "man må se på hvorfor record ikke kan leses. " +
-                        "Hvis denne meldingen gjentar seg hver ${Duration.ofMillis(LONG_SLEEP)} så klarer ikke tjenesten å hente seg inn",
-                )
+                        "Hvis denne meldingen gjentar seg hver ${Duration.ofMillis(LONG_SLEEP)} så klarer ikke tjenesten å hente seg inn"
+                }
             }
             counter.set(0)
         }
@@ -73,10 +73,10 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
         executor.execute {
             try {
                 Thread.sleep(stopTime)
-                LOGGER.info("Starter kafka container for $topic")
+                LOGGER.info { "Starter kafka container for $topic" }
                 container.start()
             } catch (exception: Exception) {
-                LOGGER.error("Feil oppstod ved venting og oppstart av kafka container", exception)
+                LOGGER.error(exception) { "Feil oppstod ved venting og oppstart av kafka container" }
             }
         }
         stopContainer(container) // i stedet for stopContainer i handleRemaining i parent som kaster error
@@ -104,8 +104,7 @@ class KafkaOmstartFeilhåndterer : CommonContainerStoppingErrorHandler() {
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(KafkaOmstartFeilhåndterer::class.java)
-        private val SECURE_LOGGER = LoggerFactory.getLogger("secureLogger")
+        private val LOGGER = KotlinLogging.logger {}
 
         private val LONG_SLEEP = Duration.ofHours(3).toMillis()
         private val SHORT_SLEEP = Duration.ofSeconds(20).toMillis()

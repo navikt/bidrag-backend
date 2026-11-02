@@ -3,10 +3,10 @@ package no.nav.bidrag.grunnlag.service
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.vedtak.Formål
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
 import no.nav.bidrag.grunnlag.exception.RestResponse
 import no.nav.bidrag.grunnlag.util.GrunnlagUtil.Companion.tilJson
@@ -85,13 +85,13 @@ class GrunnlagspakkeService(
             if (!historiskeIdenterMap.values.any { grunnlagDto.personId in it }) {
                 val historiskeIdenterListe = hentIdenterFraConsumer(grunnlagDto.personId)
                 if (historiskeIdenterListe.size > 1) {
-                    SECURE_LOGGER.warn(
+                    secureLogger.warn {
                         "Hentet historiske identer for personId: ${grunnlagDto.personId} og fikk tilbake: ${
                             tilJson(
                                 historiskeIdenterListe,
                             )
-                        }",
-                    )
+                        }"
+                    }
                 }
 
                 val key = historiskeIdenterListe.find { !it.historisk }?.personId
@@ -108,11 +108,13 @@ class GrunnlagspakkeService(
     private fun hentIdenterFraConsumer(personId: String): List<HistoriskIdent> = when (val response = bidragPersonConsumer.hentPersonidenter(personident = Personident(personId), inkludereHistoriske = true)) {
         is RestResponse.Success -> {
             val personidenterResponse = response.body
-            SECURE_LOGGER.info(
-                "Kall til bidrag-person for å hente historiske identer for ident $personId ga følgende respons: ${tilJson(
-                    personidenterResponse,
-                )}",
-            )
+            secureLogger.info {
+                "Kall til bidrag-person for å hente historiske identer for ident $personId ga følgende respons: ${
+                    tilJson(
+                        personidenterResponse,
+                    )
+                }"
+            }
             if (personidenterResponse.isEmpty()) {
                 listOf(HistoriskIdent(personId, false))
             } else {
@@ -121,7 +123,7 @@ class GrunnlagspakkeService(
         }
 
         is RestResponse.Failure -> {
-            SECURE_LOGGER.warn("Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response")
+            secureLogger.warn { "Feil ved kall til bidrag-person for å hente historiske identer for ident $personId. Respons = $response" }
             listOf(HistoriskIdent(personId, false))
         }
     }
@@ -136,7 +138,7 @@ class GrunnlagspakkeService(
             // lik personId.
             val aktivIdent = historiskeIdenterMap.entries.find { grunnlagRequestDto.personId in it.value }?.key ?: grunnlagRequestDto.personId
             if (aktivIdent != grunnlagRequestDto.personId) {
-                SECURE_LOGGER.info("Hentet nyeste ident for personId: ${grunnlagRequestDto.personId} og fikk tilbake: $aktivIdent")
+                secureLogger.info { "Hentet nyeste ident for personId: ${grunnlagRequestDto.personId} og fikk tilbake: $aktivIdent" }
             }
             grunnlagRequestDto.copy(personId = aktivIdent)
         }

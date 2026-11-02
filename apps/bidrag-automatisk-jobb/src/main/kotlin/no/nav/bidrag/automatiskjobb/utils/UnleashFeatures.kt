@@ -8,6 +8,7 @@ enum class UnleashFeatures(
     defaultValue: Boolean,
 ) {
     OPPRETT_REVURDER_FORSKUDD_OPPGAVE("automatiskjobb.opprett-revurder-forskudd-oppgave", false),
+    FATTE_ENDRING_MOTTAKER_VEDTAK("automatiskjobb.fatte-endring-mottaker-vedtak", false),
     ;
 
     private var defaultValue = false

@@ -1,7 +1,6 @@
 package no.nav.bidrag.arbeidsflyt.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.arbeidsflyt.consumer.BehandlingDetaljerDtoV2
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBBMConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragBehandlingConsumer
 import no.nav.bidrag.arbeidsflyt.consumer.BidragSakConsumer
@@ -23,15 +22,19 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.tilBeskrivelse
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.util.visningsnavn
+import no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseBarn
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingHendelseType
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.dokument.Sporingsdata
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -75,23 +78,23 @@ class BehandleBehandlingHendelseService(
 
     @Transactional
     fun behandleHendelse(
-        hendelse: BehandlingHendelse,
+        mottattHendelse: BehandlingHendelse,
         sjekkOglukkÅpneOppgaver: Boolean = false,
     ) {
+        val behandlingDetaljer = mottattHendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) }
+        val hendelse = mottattHendelse.medSisteBehandlingsdata(behandlingDetaljer)
         val behandling = hentHendelse(hendelse)
-        if (behandling.endretTidspunkt > hendelse.endretTidspunkt) {
-            secureLogger.warn { "Endret tidspunkt på hendelsen er før endret tidspunkt på lagret behandling. Noe som ikke stemmer her" }
-        }
+
         if (behandling.id != 0L && behandling.status.erAvsluttet && !sjekkOglukkÅpneOppgaver) {
-            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Ignorerer hendelse $hendelse" }
+            secureLogger.info { "Behandling med id ${behandling.id} og behandlingsid ${behandling.behandlingsid} er allerede avsluttet med status ${behandling.status}. Avslutter relaterte oppgaver. $hendelse" }
+            ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse, behandling)
             return
         }
         if (hendelse.behandlingsid == null && behandling.behandlesAvFlereSøknader) {
-            secureLogger.info { "Søknad ${behandling.søknadsid} inneholder flere søknader Ignorer hendelse da den ikke inneholder informasjon om behandlingsid" }
+            secureLogger.info { "Søknad ${behandling.søknadsid} inneholder flere søknader. Ignorer hendelse da den ikke inneholder informasjon om behandlingsid" }
             return
         }
 
-        val behandlingDetaljer = hendelse.behandlingsid?.let { behandlingConsumer.hentBehandling(it) }
         val overførtTilEnhet = behandlingDetaljer?.forholdsmessigFordeling?.overførtTilEnhet
         hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
             val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
@@ -107,23 +110,82 @@ class BehandleBehandlingHendelseService(
                         behandlingId = hendelse.behandlingsid,
                         saksnr = saksnummer,
                         tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
-//                        oppgaveType = finnOppgavetypeForStønadstype(førsteBarn.behandlingstema),
                     ).dataForHendelse
-            secureLogger.info { "Fant ${åpneOppgaver.size} åpne søknadsoppgaver for sak $saksnummer og søknadsid $søknadsid og behandlingsid = ${hendelse.behandlingsid}" }
+            secureLogger.debug { "Fant ${åpneOppgaver.size} åpne søknadsoppgaver for sak $saksnummer og søknadsid $søknadsid og behandlingsid = ${hendelse.behandlingsid}" }
             oppdaterNormDatoOgMottattdato(hendelse, behandling, førsteBarn)
             if (kreverOppgave && åpneOppgaver.isEmpty() && !sjekkOglukkÅpneOppgaver) {
                 opprettOppgave(behandling, førsteBarn, hendelse, overførtTilEnhet)
             } else if (!kreverOppgave) {
-                ferdigstillOppgaver(åpneOppgaver, hendelse)
+                ferdigstillOppgaver(åpneOppgaver)
             } else {
                 oppdaterOppgaveDetaljer(behandling, åpneOppgaver)
             }
+            oppdaterOppgaverMedBehandlingId(åpneOppgaver, hendelse)
         }
+        // Behandlingsdetaljene inneholder ikke feilregistrerte søknader eller slettede barn, så oppgavene til disse må ferdigstilles separat
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
         overføreOppgaverTilSaksbehandlerSomOpprettetFF(hendelse, behandling, behandlingDetaljer)
         oppdaterOgLagreBehandling(hendelse, behandling)
         persistenceService.slettFeiledeMeldingerMedSøknadId(hendelse.søknadsid ?: hendelse.behandlingsid!!)
     }
 
+    private fun ferdigstillOppgaverEtterBehandlingErAvsluttet(hendelse: BehandlingHendelse, behandling: Behandling) {
+        hendelse.barn.groupBy { Pair(it.saksnummer, it.søknadsid) }.forEach { (saksnummerSøknadPair, barnliste) ->
+            val saksnummer = saksnummerSøknadPair.first
+            val søknadsid = saksnummerSøknadPair.second
+            val førsteBarn = barnliste.find { !it.status.lukketStatus } ?: barnliste.first()
+            val åpneOppgaver =
+                oppgaveService
+                    .finnOppgaverForSøknad(
+                        søknadId = søknadsid,
+                        behandlingId = hendelse.behandlingsid,
+                        saksnr = saksnummer,
+                        tema = finnFagområdeForSøknad(førsteBarn.stønadstype),
+                    ).dataForHendelse
+            ferdigstillOppgaver(åpneOppgaver)
+        }
+        ferdigstillSøknadsoppgaverForSøknadSomErSlettet(hendelse.behandlingsid)
+        oppdaterOgLagreBehandling(hendelse, behandling)
+    }
+
+    /** Bruker siste tilstand fra behandlingsdetaljene i stedet for innholdet i Kafka-hendelsen, som kan være utdatert. */
+    private fun BehandlingHendelse.medSisteBehandlingsdata(behandlingDetaljer: BehandlingDetaljerDtoV2?): BehandlingHendelse {
+        if (behandlingDetaljer == null || behandlingDetaljer.roller.isEmpty()) return this
+        return behandlingDetaljer.tilBehandlingHendelse(this)
+    }
+
+    fun ferdigstillSøknadsoppgaverForSøknadSomErSlettet(behandlingsid: Long?) {
+        if (behandlingsid == null) return
+
+        val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandlingsid)
+        oppgaverBehandling.forEach {
+            try {
+                if (!it.erSøknadsoppgave) return@forEach
+                if (it.søknadsid == null) return@forEach
+                val søknad = bbmConsumer.hentSøknad(HentSøknadRequest(it.søknadsid!!.toLong()))?.søknad ?: return@forEach
+                if (søknad.behandlingStatusType.erAvsluttet) {
+                    oppgaveService.oppdaterOppgave(
+                        OppdaterOppgave(it)
+                            .ferdigstill(),
+                    )
+                    secureLogger.info { "Ferdigstilte søknadsoppgave ${it.id} for sak ${it.saksreferanse} og søknadsid ${it.søknadsid} og behandlingsid ${it.behandlingsid}" }
+                }
+            } catch (e: Exception) {
+                LOGGER.error(e) { "Det skjedde en feil ved ferdigstillelse av søknadsoppgave ${it.id}" }
+            }
+        }
+    }
+    private fun oppdaterOppgaverMedBehandlingId(
+        åpneOppgaver: List<OppgaveData>,
+        hendelse: BehandlingHendelse,
+    ) {
+        if (hendelse.behandlingsid == null) return
+        åpneOppgaver.filter { it.behandlingsid == null || it.behandlingsid != hendelse.behandlingsid?.toString() }.forEach {
+            oppgaveService.oppdaterOppgave(
+                OppdaterOppgave(it).oppdaterBehandlingsid(hendelse.behandlingsid),
+            )
+        }
+    }
     private fun overføreOppgaverTilSaksbehandlerSomOpprettetFF(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -132,55 +194,65 @@ class BehandleBehandlingHendelseService(
         try {
             if (erBehandlingAvsluttet(hendelse)) return
             if (behandlingDetaljer == null) return
-            if (behandlingDetaljer.forholdsmessigFordeling != null && behandling.oppgaverOverførtEtterFFOpprettet == null) {
-                if (behandlingDetaljer.forholdsmessigFordeling.overførtTilEnhet != null) {
-                    val ff = behandlingDetaljer.forholdsmessigFordeling
-                    val søknader =
-                        hendelse.barn
-                            .filter { it.søknadsid != null }
-                            .filter { !erAvsluttet(it.søknadsid) }
-                    søknader.forEach { søknad ->
-                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
-                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
-                        oppgave.dataForHendelse
-                            .filter { !it.erStatusKategoriAvsluttet }
-                            .filter { it.tildeltEnhetsnr != ff.overførtTilEnhet }
-                            .forEach {
-                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til enhet ${ff.overførtTilEnhet} etter FF ble opprettet." }
-                                oppgaveService
-                                    .overforOppgave(it, null, ff.overførtTilEnhet)
-                            }
+            val ff = behandlingDetaljer.forholdsmessigFordeling ?: return
+
+            if (behandling.oppgaverOverførtEtterFFOpprettet == null) {
+                if (ff.overførtTilEnhet != null) {
+                    overførOppgaverEtterFF(hendelse, behandling, tilSaksbehandler = ff.opprettetAvSaksbehandler, tilEnhet = ff.overførtTilEnhet) {
+                        it.tildeltEnhetsnr != ff.overførtTilEnhet
                     }
                 } else {
-                    val ff = behandlingDetaljer.forholdsmessigFordeling
                     if (ff.opprettetAvSaksbehandler == null) {
                         secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
                         return
                     }
-                    val søknader =
-                        hendelse.barn
-                            .filter { it.søknadsid != null }
-                            .filter { !erAvsluttet(it.søknadsid) }
-                    søknader.forEach { søknad ->
-                        val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
-                        secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
-                        oppgave.dataForHendelse
-                            .filter { !it.erStatusKategoriAvsluttet }
-                            .filter { it.tilordnetRessurs != ff.opprettetAvSaksbehandler }
-                            .forEach {
-                                secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler ${ff.opprettetAvSaksbehandler} etter FF ble opprettet." }
-                                oppgaveService
-                                    .overforOppgave(it, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet)
-                            }
+                    overførOppgaverEtterFF(hendelse, behandling, ff.opprettetAvSaksbehandler, ff.opprettetAvEnhet) {
+                        it.tilordnetRessurs != ff.opprettetAvSaksbehandler
                     }
                 }
 
                 // Forsikre at oppgaver ikke overføres flere ganger hvis feks SB manuelt overfører til en annen
                 behandling.oppgaverOverførtEtterFFOpprettet = LocalDateTime.now()
+            } else {
+                if (ff.opprettetAvSaksbehandler == null) {
+                    secureLogger.warn { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid} mangler info om hvilken saksbehandler som det ble opprettet av." }
+                    return
+                }
+                val oppgaverBehandling = oppgaveService.finnOppgaverForBehandling(behandling.behandlingsid ?: hendelse.behandlingsid ?: return)
+                val oppgaveTilordnet = oppgaverBehandling.find { !it.tilordnetRessurs.isNullOrEmpty() } ?: return
+                val tilordnetEnhet = oppgaveTilordnet.tildeltEnhetsnr
+                val tilordnetRessurs = oppgaveTilordnet.tilordnetRessurs
+                overførOppgaverEtterFF(hendelse, behandling, tilordnetRessurs, tilordnetEnhet) {
+                    // Overfør nye oppgaver til saksbehandler
+                    it.tilordnetRessurs == null
+                }
             }
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved overføring av oppgaver etter FF er opprettet for behandling ${behandling.behandlingsid} og hendelse $hendelse" }
         }
+    }
+
+    private fun overførOppgaverEtterFF(
+        hendelse: BehandlingHendelse,
+        behandling: Behandling,
+        tilSaksbehandler: String?,
+        tilEnhet: String?,
+        skalOverføres: (OppgaveData) -> Boolean,
+    ) {
+        hendelse.barn
+            .filter { it.søknadsid != null }
+            .filter { !erAvsluttet(it.søknadsid) }
+            .forEach { søknad ->
+                val oppgave = oppgaveService.finnOppgaverForSøknad(søknad.søknadsid, saksnr = søknad.saksnummer)
+                secureLogger.info { "Forholdsmessig fordeling (FF) opprettet for behandling ${behandling.behandlingsid}. Overfører alle tilhørende oppgaver til SB som opprettet FF." }
+                oppgave.dataForHendelse
+                    .filter { !it.erStatusKategoriAvsluttet }
+                    .filter(skalOverføres)
+                    .forEach {
+                        secureLogger.info { "Overfør oppgave ${it.id} i sak ${it.saksreferanse} til saksbehandler $tilSaksbehandler / enhet $tilEnhet etter FF ble opprettet." }
+                        oppgaveService.overforOppgave(it, tilSaksbehandler, tilEnhet)
+                    }
+            }
     }
 
     private fun erBehandlingAvsluttet(hendelse: BehandlingHendelse): Boolean {
@@ -241,6 +313,9 @@ class BehandleBehandlingHendelseService(
         hendelse: BehandlingHendelse,
         overførtTilEnhet: String?,
     ): OppgaveData {
+        val eksisterendeOppgaverForBehandling = hendelse.behandlingsid?.let { oppgaveService.finnOppgaverForBehandling(it) }?.firstOrNull()
+        val tilhørerEnhet = eksisterendeOppgaverForBehandling?.tildeltEnhetsnr
+        val tilhørerSaksbehandler = eksisterendeOppgaverForBehandling?.tilordnetRessurs
         val oppgave =
             oppgaveService.opprettOppgave(
                 OpprettSøknadsoppgaveRequest(
@@ -248,13 +323,18 @@ class BehandleBehandlingHendelseService(
                     saksreferanse = barn.saksnummer,
                     innhold = opprettOppgaveBeskrivelse(barn),
                     frist = finnFristForSøknadsgruppe(behandling, barn),
-                    tildeltEnhetsnr = overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
+                    tildeltEnhetsnr = tilhørerEnhet ?: overførtTilEnhet ?: hentSøknadBehandlerEnhet(barn.søknadsid) ?: barn.behandlerEnhet,
                     tema = finnFagområdeForSøknad(barn.stønadstype),
                     oppgavetype = finnOppgavetypeForStønadstype(barn.behandlingstema),
                     søknadsid = barn.søknadsid,
                     behandlingsid = hendelse.behandlingsid,
-                    sporingsdata = hendelse.sporingsdata,
+                    sporingsdata = tilhørerSaksbehandler?.let {
+                        hendelse.sporingsdata.copy(
+                            brukerident = tilhørerSaksbehandler,
+                        )
+                    } ?: hendelse.sporingsdata,
                     overførtTilEnhet = overførtTilEnhet,
+
                 ),
             )
         val oppgaveDetaljer = behandling.oppgave ?: BehandlingOppgave(oppgaver = setOf())
@@ -275,10 +355,7 @@ class BehandleBehandlingHendelseService(
         return oppgave
     }
 
-    private fun ferdigstillOppgaver(
-        åpneOppgaver: List<OppgaveData>,
-        hendelse: BehandlingHendelse,
-    ) {
+    private fun ferdigstillOppgaver(åpneOppgaver: List<OppgaveData>) {
         åpneOppgaver.forEach { ferdigstillOppgave ->
             try {
                 oppgaveService.oppdaterOppgave(
@@ -298,18 +375,18 @@ class BehandleBehandlingHendelseService(
         barn: BehandlingHendelseBarn,
     ) {
         if (behandling.status == BehandlingStatusType.ÅPEN && hendelse.status == BehandlingStatusType.UNDER_BEHANDLING) {
-            secureLogger.info { "Oppdaterer norm dato på hendelse for søknad ${hendelse.søknadsid} og behandling ${hendelse.behandlingsid} fordi status gikk fra å være åpen til under behandling" }
+            secureLogger.debug { "Oppdaterer norm dato på hendelse for søknad ${hendelse.søknadsid} og behandling ${hendelse.behandlingsid} fordi status gikk fra å være åpen til under behandling" }
             behandling.normDato = LocalDate.now()
         }
         behandling.mottattDato = barn.mottattDato ?: hendelse.mottattDato
     }
 
     private fun hentHendelse(hendelse: BehandlingHendelse): Behandling = behandlingService.finnForBehandlingsidEllerSøknadsid(hendelse.behandlingsid, hendelse.søknadsid!!)?.let {
-        secureLogger.info { "Behandler hendelse $hendelse. Fant eksisterende behandling i databasen med id $it.id" }
+        secureLogger.info { "Behandler hendelse: Fant eksisterende behandling i databasen med id ${it.id}, hendelse: $hendelse" }
         it
     }
         ?: run {
-            secureLogger.info { "Behandler hendelse $hendelse. Fant ikke behandling i databsen. Oppretter ny behandling" }
+            secureLogger.info { "Behandler hendelse: Fant ikke behandling i databasen. Oppretter ny behandling for hendelse: $hendelse" }
             Behandling(
                 barn = BehandlingBarn(barn = hendelse.barn),
                 hendelse = hendelse,
@@ -327,6 +404,11 @@ class BehandleBehandlingHendelseService(
             )
         }
 
+    fun oppdaterBehandlingIDatabasen(behandling: Behandling?) {
+        val behandlingDetaljer = behandling?.behandlingsid?.let { behandlingConsumer.hentBehandling(it, inkluderSlettet = true) } ?: return
+        val hendelse = behandlingDetaljer.tilBehandlingHendelse(behandling.hendelse).medSisteBehandlingsdata(behandlingDetaljer)
+        oppdaterOgLagreBehandling(hendelse, behandling)
+    }
     private fun oppdaterOgLagreBehandling(
         hendelse: BehandlingHendelse,
         behandling: Behandling,
@@ -462,3 +544,67 @@ class BehandleBehandlingHendelseService(
         else -> Fagomrade.BIDRAG
     }
 }
+
+/**
+ * Lager hendelse fra behandlingsdetaljene. Verdier som ikke finnes i behandlingsdetaljene
+ * (sporingsdata, omgjørBehandlingsid og hendelsetype før vedtak er fattet) hentes fra [mottattHendelse] hvis den finnes.
+ */
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelse(mottattHendelse: BehandlingHendelse? = null): BehandlingHendelse {
+    val nå = LocalDateTime.now()
+    return BehandlingHendelse(
+        type =
+        when {
+            erVedtakFattet || slettet -> BehandlingHendelseType.AVSLUTTET
+            else -> mottattHendelse?.type ?: BehandlingHendelseType.ENDRET
+        },
+        status =
+        when {
+            slettet -> BehandlingStatusType.AVBRUTT
+            erVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
+            else -> BehandlingStatusType.UNDER_BEHANDLING
+        },
+        vedtakstype = vedtakstype,
+        opprettetTidspunkt = opprettetTidspunkt,
+        endretTidspunkt = mottattHendelse?.endretTidspunkt ?: nå,
+        mottattDato = mottattdato,
+        barn = tilBehandlingHendelseBarn(),
+        sporingsdata =
+        mottattHendelse?.sporingsdata
+            ?: Sporingsdata(brukerident = opprettetAv.ident, saksbehandlersNavn = opprettetAv.navn, enhetsnummer = behandlerenhet),
+        behandlingsid = id,
+        omgjørBehandlingsid = mottattHendelse?.omgjørBehandlingsid,
+        behandlerEnhet = behandlerenhet,
+        søknadsid = søknadsid,
+        omgjørSøknadsid = søknadRefId,
+    )
+}
+
+internal fun BehandlingDetaljerDtoV2.tilBehandlingHendelseBarn(): List<BehandlingHendelseBarn> = roller
+    .filter { it.rolletype == Rolletype.BARN && it.ident != null }
+    .flatMap { rolle ->
+        rolle.søknader.map { søknad ->
+            BehandlingHendelseBarn(
+                saksnummer = rolle.saksnummer,
+                ident = rolle.ident!!,
+                stønadstype = rolle.stønadstype,
+                engangsbeløptype = engangsbeløptype,
+                særbidragskategori = kategori?.kategori,
+                søknadsid = søknad.søknadsId,
+                omgjørSøknadsid = søknad.omgjørSøknadsid,
+                omgjørVedtaksid = søknad.omgjørVedtaksid,
+                søktAv = søknad.søknadFra,
+                behandlerEnhet = søknad.enhet,
+                behandlingstype = søknad.behandlingstype ?: Behandlingstype.SØKNAD,
+                behandlingstema = søknad.behandlingstema ?: Behandlingstema.BIDRAG,
+                medInnkreving = søknad.innkreving ?: (innkrevingstype != Innkrevingstype.UTEN_INNKREVING),
+                søktFraDato = søknad.søknadFomDato ?: søktFomDato,
+                mottattDato = søknad.mottattDato ?: mottattdato,
+                status =
+                when {
+                    slettet -> Behandlingstatus.FEILREGISTRERT
+                    erVedtakFattet -> Behandlingstatus.VEDTAK_FATTET
+                    else -> søknad.status ?: Behandlingstatus.UNDER_BEHANDLING
+                },
+            )
+        }
+    }

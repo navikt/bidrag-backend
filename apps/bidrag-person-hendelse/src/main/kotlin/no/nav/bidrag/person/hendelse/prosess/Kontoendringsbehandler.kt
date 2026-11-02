@@ -1,11 +1,11 @@
 package no.nav.bidrag.person.hendelse.prosess
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.integrasjon.bidrag.person.BidragPersonklient
 import no.nav.bidrag.person.hendelse.integrasjon.bidrag.topic.BidragKafkaMeldingsprodusent
 import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.hendelse.Endringsmelding
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -26,13 +26,11 @@ class Kontoendringsbehandler(
                 opplysningstype = Endringsmelding.Opplysningstype.KONTOENDRING,
             )
         } else {
-            log.warn("Aktørid null for kontoeier - kontoendring ble ikke publisert.")
-            slog.warn("Aktørid null for kontoeier $personidentKontoeier - kontoendring ble ikke publisert")
+            secureLogger.warn { "Aktørid null for kontoeier $personidentKontoeier - kontoendring ble ikke publisert" }
         }
     }
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
-        val slog: Logger = LoggerFactory.getLogger("secureLogger")
+        val log = KotlinLogging.logger {}
     }
 }

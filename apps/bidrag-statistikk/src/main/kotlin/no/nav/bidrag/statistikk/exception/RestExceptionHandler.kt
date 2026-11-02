@@ -1,7 +1,7 @@
 package no.nav.bidrag.statistikk.exception
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.ExceptionLogger
-import org.slf4j.LoggerFactory
 import org.springframework.core.convert.ConversionFailedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -21,14 +21,14 @@ import tools.jackson.databind.exc.MismatchedInputException
 @Component
 class RestExceptionHandler(private val exceptionLogger: ExceptionLogger) {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(RestExceptionHandler::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ResponseBody
     @ExceptionHandler(Exception::class)
     protected fun handleOtherExceptions(e: Exception): ResponseEntity<*> {
         val feilmelding = "Det skjedde en feil: ${e.message}"
-        LOGGER.error(feilmelding, e)
+        LOGGER.error(e) { feilmelding }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, feilmelding)
@@ -55,7 +55,7 @@ class RestExceptionHandler(private val exceptionLogger: ExceptionLogger) {
     fun handleInvalidValueExceptions(exception: Exception): ResponseEntity<*> {
         val cause = exception.cause
         val valideringsFeil = if (cause is MismatchedInputException) createMissingKotlinParameterViolation(cause) else null
-        LOGGER.error("Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}", exception)
+        LOGGER.error(exception) { "Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}" }
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

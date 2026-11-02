@@ -25,7 +25,31 @@
         <confluent.version>8.3.1</confluent.version>
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.4</kotest.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
     </properties>
+
+    <!-- com.ibm.mq.jakarta.client trekker inn Bouncy Castle 1.84, som er sårbar for
+         CVE-2026-8763 (Name Constraints-bypass, CVSS 9.1). Pinnes til 1.85 her siden
+         hverken root-pom eller spring-boot-parent styrer disse artefaktene. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Spring Boot -->

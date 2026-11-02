@@ -1,6 +1,8 @@
 package no.nav.bidrag.statistikk.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtakshendelse
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.Bostatuskode
@@ -10,7 +12,7 @@ import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
-import no.nav.bidrag.statistikk.SECURE_LOGGER
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.statistikk.consumer.BidragVedtakConsumer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BostatusPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBarnIHusstand
@@ -48,7 +50,6 @@ import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
 import no.nav.bidrag.transport.behandling.vedtak.response.erDelvedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.erOrkestrertVedtak
 import no.nav.bidrag.transport.behandling.vedtak.response.referertVedtaksid
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -64,15 +65,13 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     fun behandleVedtakshendelse(vedtakHendelse: VedtakHendelse) {
         val vedtakDto = hentVedtak(vedtakHendelse.id)
         if (vedtakDto == null) {
-            LOGGER.warn("Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse")
-            SECURE_LOGGER.warn(
-                "Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse",
-            )
+            secureLogger.warn {
+                "Vedtak med vedtaksid ${vedtakHendelse.id} ikke funnet ved hent av vedtak fra bidrag-vedtak, hopper over vedtakshendelse"
+            }
             return
         }
 
-        LOGGER.info("Henter komplett vedtak for vedtaksid: ${vedtakHendelse.id}")
-        SECURE_LOGGER.debug("Henter komplett vedtak for vedtaksid: {} vedtak: {}", vedtakHendelse.id, vedtakDto)
+        secureLogger.debug { "Henter komplett vedtak for vedtaksid: ${vedtakHendelse.id} vedtak: $vedtakDto" }
 
         behandleVedtakHendelseForskudd(vedtakHendelse, vedtakDto)
 
@@ -82,62 +81,65 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     }
 
     private fun behandleVedtakHendelseForskudd(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
-        vedtakDto.stønadsendringListe.filter { it.type == Stønadstype.FORSKUDD && it.beslutning == Beslutningstype.ENDRING }
-            .forEach { stønadsendring ->
-                val forskuddHendelse = ForskuddHendelse(
-                    vedtaksid = vedtakHendelse.id,
-                    vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
-                    type = vedtakHendelse.type.name,
-                    saksnr = stønadsendring.sak.verdi,
-                    kravhaver = stønadsendring.kravhaver.verdi,
-                    mottaker = stønadsendring.mottaker.verdi,
-                    historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
-                    forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
-                        val grunnlagsdata =
-                            finnGrunnlagsdataForskudd(vedtakDto.grunnlagListe, periode.grunnlagReferanseListe, stønadsendring.kravhaver.verdi)
-
-                        if ((
-                                grunnlagsdata?.barnetsAldersgruppe == null ||
-                                    grunnlagsdata.antallBarnIEgenHusstand == null ||
-                                    grunnlagsdata.sivilstand == null ||
-                                    grunnlagsdata.barnBorMedMottaker == null ||
-                                    grunnlagsdata.mottakerInntektListe?.isEmpty() == true
-                                ) &&
-                            !vedtakDto.kildeapplikasjon.contains(bisys)
-                        ) {
-                            SECURE_LOGGER.info(
-                                "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: {}, vedtakstype: {}, " +
-                                    "resultatkode: {}, beløp: {}",
-                                vedtakHendelse.id,
-                                vedtakDto.type,
-                                periode.resultatkode,
-                                periode.beløp,
-                            )
-                        }
-                        ForskuddPeriode(
-                            periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
-                            periodeTil = if (periode.periode.til == null) {
-                                null
-                            } else {
-                                LocalDate.of(
-                                    periode.periode.til!!.year,
-                                    periode.periode.til!!.month,
-                                    1,
+        if (vedtakHendelse.id > 5371749) {
+            vedtakDto.stønadsendringListe.filter { it.type == Stønadstype.FORSKUDD && it.beslutning == Beslutningstype.ENDRING }
+                .forEach { stønadsendring ->
+                    val forskuddHendelse = ForskuddHendelse(
+                        vedtaksid = vedtakHendelse.id,
+                        vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
+                        type = vedtakHendelse.type.name,
+                        saksnr = stønadsendring.sak.verdi,
+                        kravhaver = stønadsendring.kravhaver.verdi,
+                        mottaker = stønadsendring.mottaker.verdi,
+                        historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
+                        forskuddPeriodeListe = stønadsendring.periodeListe.map { periode ->
+                            val grunnlagsdata =
+                                finnGrunnlagsdataForskudd(
+                                    vedtakDto.grunnlagListe,
+                                    periode.grunnlagReferanseListe,
+                                    stønadsendring.kravhaver.verdi,
+                                    periode.periode,
                                 )
-                            },
-                            beløp = periode.beløp,
-                            resultat = periode.resultatkode,
-                            barnetsAldersgruppe = grunnlagsdata?.barnetsAldersgruppe,
-                            antallBarnIEgenHusstand = grunnlagsdata?.antallBarnIEgenHusstand,
-                            sivilstand = grunnlagsdata?.sivilstand,
-                            barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
-                            mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                            kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
-                        )
-                    },
-                )
-                hendelserService.opprettForskuddshendelse(forskuddHendelse)
-            }
+
+                            if ((
+                                    grunnlagsdata?.barnetsAldersgruppe == null ||
+                                        grunnlagsdata.antallBarnIEgenHusstand == null ||
+                                        grunnlagsdata.sivilstand == null ||
+                                        grunnlagsdata.barnBorMedMottaker == null ||
+                                        grunnlagsdata.mottakerInntektListe?.isEmpty() == true
+                                    ) &&
+                                !vedtakDto.kildeapplikasjon.contains(bisys)
+                            ) {
+                                secureLogger.info {
+                                    "Fullstendig grunnlag ikke funnet for forskuddsvedtak med vedtaksid: ${vedtakHendelse.id}, " +
+                                        "vedtakstype: ${vedtakDto.type}, resultatkode: ${periode.resultatkode}, beløp: ${periode.beløp}"
+                                }
+                            }
+                            ForskuddPeriode(
+                                periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
+                                periodeTil = if (periode.periode.til == null) {
+                                    null
+                                } else {
+                                    LocalDate.of(
+                                        periode.periode.til!!.year,
+                                        periode.periode.til!!.month,
+                                        1,
+                                    )
+                                },
+                                beløp = periode.beløp,
+                                resultat = periode.resultatkode,
+                                barnetsAldersgruppe = grunnlagsdata?.barnetsAldersgruppe,
+                                antallBarnIEgenHusstand = grunnlagsdata?.antallBarnIEgenHusstand,
+                                sivilstand = grunnlagsdata?.sivilstand,
+                                barnBorMedMottaker = grunnlagsdata?.barnBorMedMottaker,
+                                mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                                kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
+                            )
+                        },
+                    )
+                    hendelserService.opprettForskuddshendelse(forskuddHendelse)
+                }
+        }
     }
 
     private fun behandleVedtakHendelseBidrag(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
@@ -173,6 +175,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                                 vedtakDto.grunnlagListe,
                                 periode.grunnlagReferanseListe,
                                 stønadsendring.kravhaver.verdi,
+                                periode.periode,
                             )
 
                         // Sjekker på de grunnlagstypene som alltid skal være med og logger hvis noen av de mangler
@@ -187,13 +190,10 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                             !vedtakFraBisys &&
                             !vedtakErAldersjustering
                         ) {
-                            SECURE_LOGGER.info(
-                                "Fullstendig grunnlag ikke funnet for bidragsvedtak med vedtaksid: {}, vedtakstype: {}, resultatkode: {}, beløp: {}",
-                                vedtakHendelse.id,
-                                vedtakDto.type,
-                                periode.resultatkode,
-                                periode.beløp,
-                            )
+                            secureLogger.info {
+                                "Fullstendig grunnlag ikke funnet for bidragsvedtak med vedtaksid: ${vedtakHendelse.id}, " +
+                                    "vedtakstype: ${vedtakDto.type}, resultatkode: ${periode.resultatkode}, beløp: ${periode.beløp}"
+                            }
                         }
                         BidragPeriode(
                             periodeFra = LocalDate.of(periode.periode.fom.year, periode.periode.fom.month, 1),
@@ -231,42 +231,44 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
 
     private fun behandleVedtakHendelseSærbidrag(vedtakHendelse: VedtakHendelse, vedtakDto: VedtakDto) {
         val vedtakFraBisys = vedtakHendelse.kildeapplikasjon.contains(bisys)
-        vedtakDto.engangsbeløpListe.filter {
-            (it.type == Engangsbeløptype.SÆRBIDRAG || it.type == Engangsbeløptype.SAERTILSKUDD) && it.beslutning == Beslutningstype.ENDRING
-        }
-            .forEach { særbidrag ->
-                val grunnlagsdata =
-                    finnGrunnlagsdataSærbidrag(
-                        vedtakFraBisys = vedtakFraBisys,
-                        vedtakDto.grunnlagListe,
-                        særbidrag.grunnlagReferanseListe,
-                        særbidrag.kravhaver.verdi,
-                    )
-                val særbidragshendelse = SærbidragHendelse(
-                    vedtaksid = vedtakHendelse.id,
-                    vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
-                    type = vedtakHendelse.type.name,
-                    kategori = grunnlagsdata?.kategori,
-                    saksnr = særbidrag.sak.verdi,
-                    skyldner = særbidrag.skyldner.verdi,
-                    kravhaver = særbidrag.kravhaver.verdi,
-                    mottaker = særbidrag.mottaker.verdi,
-                    referanse = særbidrag.referanse,
-                    beløp = særbidrag.beløp,
-                    valutakode = særbidrag.valutakode,
-                    resultat = særbidrag.resultatkode,
-                    innkreving = særbidrag.innkreving == Innkrevingstype.MED_INNKREVING,
-                    omgjørVedtakId = særbidrag.omgjørVedtakId,
-                    historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
-                    kravbeløp = grunnlagsdata?.kravbeløp,
-                    godkjentBeløp = grunnlagsdata?.godkjentBeløp,
-                    betaltBeløp = særbidrag.betaltBeløp,
-                    skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
-                    mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
-                    kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
-                )
-                hendelserService.opprettSærbidragshendelse(særbidragshendelse)
+        if (vedtakHendelse.id > 5371749) {
+            vedtakDto.engangsbeløpListe.filter {
+                (it.type == Engangsbeløptype.SÆRBIDRAG || it.type == Engangsbeløptype.SAERTILSKUDD) && it.beslutning == Beslutningstype.ENDRING
             }
+                .forEach { særbidrag ->
+                    val grunnlagsdata =
+                        finnGrunnlagsdataSærbidrag(
+                            vedtakFraBisys = vedtakFraBisys,
+                            vedtakDto.grunnlagListe,
+                            særbidrag.grunnlagReferanseListe,
+                            særbidrag.kravhaver.verdi,
+                        )
+                    val særbidragshendelse = SærbidragHendelse(
+                        vedtaksid = vedtakHendelse.id,
+                        vedtakstidspunkt = vedtakHendelse.justerVedtakstidspunktVedtakshendelse().vedtakstidspunkt,
+                        type = vedtakHendelse.type.name,
+                        kategori = grunnlagsdata?.kategori,
+                        saksnr = særbidrag.sak.verdi,
+                        skyldner = særbidrag.skyldner.verdi,
+                        kravhaver = særbidrag.kravhaver.verdi,
+                        mottaker = særbidrag.mottaker.verdi,
+                        referanse = særbidrag.referanse,
+                        beløp = særbidrag.beløp,
+                        valutakode = særbidrag.valutakode,
+                        resultat = særbidrag.resultatkode,
+                        innkreving = særbidrag.innkreving == Innkrevingstype.MED_INNKREVING,
+                        omgjørVedtakId = særbidrag.omgjørVedtakId,
+                        historiskVedtak = vedtakDto.kildeapplikasjon.contains(bisys),
+                        kravbeløp = grunnlagsdata?.kravbeløp,
+                        godkjentBeløp = grunnlagsdata?.godkjentBeløp,
+                        betaltBeløp = særbidrag.betaltBeløp,
+                        skyldnerInntektListe = grunnlagsdata?.skyldnerInntektListe ?: emptyList(),
+                        mottakerInntektListe = grunnlagsdata?.mottakerInntektListe ?: emptyList(),
+                        kravhaverInntektListe = grunnlagsdata?.kravhaverInntektListe ?: emptyList(),
+                    )
+                    hendelserService.opprettSærbidragshendelse(særbidragshendelse)
+                }
+        }
     }
 
     fun hentVedtak(vedtaksid: Int): VedtakDto? {
@@ -291,6 +293,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         grunnlagListe: List<GrunnlagDto>,
         grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
         kravhaver: String,
+        periode: ÅrMånedsperiode,
     ): GrunnlagsdataForskudd? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
@@ -306,8 +309,8 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             antallBarnIEgenHusstand = grunnlagListe.finnAntallBarnIEgenHusstandForPeriode(grunnlagsreferanseListePeriode),
             sivilstand = grunnlagListe.finnSivilstandForPeriode(grunnlagsreferanseListePeriode),
             barnBorMedMottaker = grunnlagListe.finnOmbarnBorMedMottakerIPeriode(grunnlagsreferanseListePeriode),
-            mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
-            kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
+            mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe, periode),
+            kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe, periode),
         )
 
         return respons
@@ -319,6 +322,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         grunnlagListe: List<GrunnlagDto>,
         grunnlagsreferanseListePeriode: List<Grunnlagsreferanse>,
         kravhaver: String,
+        periode: ÅrMånedsperiode,
     ): GrunnlagsdataBidrag? {
         // Sjekker først om perioden har grunnlag, hvis ikke returneres null
         if (grunnlagListe.isEmpty()) {
@@ -362,9 +366,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 nettoBarnetilleggMottaker = grunnlagListe.finnNettoBarnetilleggForPeriode(grunnlagsreferanseListePeriode, referanseMottaker),
                 skyldnerBorMedAndreVoksne = grunnlagListe.finnSkyldnerBorMedAndreVoksneIPeriode(grunnlagsreferanseListePeriode),
                 samværsklasse = grunnlagListe.finnSamværsklasseIPeriode(vedtakErAldersjustering, vedtakFraBisys, grunnlagsreferanseListePeriode),
-                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe),
-                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
-                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe, periode),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe, periode),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe, periode),
             )
         }
 
@@ -401,9 +405,9 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
                 kategori = grunnlagListe.særbidragskategori?.kategori,
                 kravbeløp = grunnlagListe.utgiftsposter.sumOf { it.kravbeløp },
                 godkjentBeløp = grunnlagListe.utgiftsposter.sumOf { it.godkjentBeløp },
-                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe),
-                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe),
-                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe),
+                skyldnerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseSkyldner, grunnlagListe, null),
+                mottakerInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseMottaker, grunnlagListe, null),
+                kravhaverInntektListe = grunnlagListe.finnInntekterRolle(grunnlagsreferanseListePeriode, referanseKravhaver, grunnlagListe, null),
             )
         }
 
@@ -616,6 +620,7 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
         grunnlagsreferanseListe: List<Grunnlagsreferanse>,
         referanseTilRolle: String?,
         grunnlagListe: List<GrunnlagDto>,
+        periode: ÅrMånedsperiode?,
     ): List<Inntekt>? {
         val søknadsbarnReferanse = finnReferanseTilRolle(grunnlagListe, Grunnlagstype.PERSON_SØKNADSBARN)
 
@@ -625,13 +630,28 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
             sluttberegning,
         ).filter { it.innhold.valgt }
             .filter { it.gjelderReferanse == referanseTilRolle && (it.innhold.gjelderBarn == null || it.innhold.gjelderBarn == søknadsbarnReferanse) }
-        return inntekter.map { inntekt ->
-            Inntekt(
-                type = inntekt.innhold.inntektsrapportering.name,
-                beløp = inntekt.innhold.beløp,
-                inntektstype = inntekt.innhold.inntektspostListe.firstOrNull()?.inntektstype?.name,
-                gjelderKravhaver = finnIdentTilReferanse(grunnlagListe, inntekt.innhold.gjelderBarn),
-            )
+
+        if (periode == null) {
+            return inntekter.map { inntekt ->
+                Inntekt(
+                    type = inntekt.innhold.inntektsrapportering.name,
+                    beløp = inntekt.innhold.beløp,
+                    inntektstype = inntekt.innhold.inntektspostListe.firstOrNull()?.inntektstype?.name,
+                    gjelderKravhaver = finnIdentTilReferanse(grunnlagListe, inntekt.innhold.gjelderBarn),
+                )
+            }
+        } else {
+            // Filtrer vekk inntekter som er referert, men som er utenfor sluttberegningens periode. Skjer ved beregning av skatt på barnetillegg.
+            return inntekter
+                .filter { it.innhold.periode.inneholder(periode) }
+                .map { inntekt ->
+                    Inntekt(
+                        type = inntekt.innhold.inntektsrapportering.name,
+                        beløp = inntekt.innhold.beløp,
+                        inntektstype = inntekt.innhold.inntektspostListe.firstOrNull()?.inntektstype?.name,
+                        gjelderKravhaver = finnIdentTilReferanse(grunnlagListe, inntekt.innhold.gjelderBarn),
+                    )
+                }
         }
     }
 
@@ -641,10 +661,6 @@ class StatistikkService(val hendelserService: HendelserService, val bidragVedtak
     fun finnIdentTilReferanse(grunnlagListe: List<GrunnlagDto>, referanse: String?) = grunnlagListe.hentPersonMedReferanseKonvertert(referanse)?.ident?.verdi
 
     fun finnReferanseTilIdent(grunnlagListe: List<GrunnlagDto>, ident: String) = grunnlagListe.hentPersonMedIdent(ident)?.referanse
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(StatistikkService::class.java)
-    }
 }
 
 data class GrunnlagsdataForskudd(

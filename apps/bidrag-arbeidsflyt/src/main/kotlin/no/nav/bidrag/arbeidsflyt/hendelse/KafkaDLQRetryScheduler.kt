@@ -86,13 +86,13 @@ class KafkaDLQRetryScheduler(
     fun ferdigstillOppgaverSomIkkeLengerErÅpenBehandling() {
         val behandlinger =
             behandlingRepository.finnBehandlingerMedSøknadUnderBehandlingStatusSjekketEldreEnn(
-                LocalDateTime.now().minusHours(12),
+                LocalDateTime.now().minusHours(1),
             )
         LOGGER.info { "Fant ${behandlinger.size} behandlinger som fortsatt er åpen. Sjekker og oppdaterer status" }
 
         behandlinger.forEach {
             try {
-                behandlingSchedulerService.behandleOgOppdaterStatusSjekket(it.id)
+                behandlingSchedulerService.behandleOgOppdaterStatusSjekket(it.id, it.behandlingsid)
             } catch (e: Exception) {
                 LOGGER.error(e) { "Det skjedde feil ved prosessering av behandling med id=${it.id}" }
             }

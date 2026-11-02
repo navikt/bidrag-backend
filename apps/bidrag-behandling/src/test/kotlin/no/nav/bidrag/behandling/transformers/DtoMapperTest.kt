@@ -1,6 +1,5 @@
 package no.nav.bidrag.behandling.transformers
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.maps.shouldHaveSize
@@ -8,6 +7,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
+import io.mockk.mockk
 import no.nav.bidrag.behandling.TestContainerRunner
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Notat
@@ -65,23 +65,17 @@ class DtoMapperTest : TestContainerRunner() {
 
     lateinit var personService: PersonService
 
-    @MockkBean
-    lateinit var tilgangskontrollService: TilgangskontrollService
+    val tilgangskontrollService: TilgangskontrollService = mockk()
 
-    @MockkBean
-    lateinit var validering: ValiderBeregning
+    val validering: ValiderBeregning = mockk()
 
-    @MockkBean
-    lateinit var behandlingService: BehandlingService
+    val behandlingService: BehandlingService = mockk()
 
-    @MockkBean
-    lateinit var validerBehandlingService: ValiderBehandlingService
+    val validerBehandlingService: ValiderBehandlingService = mockk()
 
-    @MockkBean
-    lateinit var evnevurderingService: BeregningEvnevurderingService
+    val evnevurderingService: BeregningEvnevurderingService = mockk()
 
-    @MockkBean(relaxed = true)
-    lateinit var barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting
+    val barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting = mockk(relaxed = true)
 
     lateinit var grunnlagsmapper: BehandlingTilGrunnlagMappingV2
 

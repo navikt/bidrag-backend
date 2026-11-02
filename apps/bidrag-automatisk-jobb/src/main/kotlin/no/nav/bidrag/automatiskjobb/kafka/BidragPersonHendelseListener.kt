@@ -20,8 +20,8 @@ class BidragPersonHendelseListener(
     private val oppgaveService: OppgaveService,
 ) {
     @KafkaListener(
-        topics = ["\${KAFKA_PERSON_HENDELSE_TOPIC}"],
-        groupId = "\${PERSON_HENDELSE_KAFKA_GROUP_ID:bidrag-automatisk-jobb}",
+        topics = [$$"${KAFKA_PERSON_HENDELSE_TOPIC}"],
+        groupId = $$"${PERSON_HENDELSE_KAFKA_GROUP_ID:bidrag-automatisk-jobb}",
         properties = ["auto.offset.reset=latest"],
     )
     fun behandlePersonHendelse(
@@ -34,14 +34,14 @@ class BidragPersonHendelseListener(
         LOGGER.debug { "Leser hendelse fra topic: $topic, offset: $offset, partition: $partition, groupId: $groupId" }
         try {
             val personHendelse = commonObjectmapper.readValue(hendelse, Endringsmelding::class.java)
-            secureLogger.info { "Behandler personhendelse $personHendelse" }
+            secureLogger.debug { "Behandler personhendelse $personHendelse" }
             if (personHendelse.erIdentendring) {
                 personHendelseService.behandlePersonHendelse(personHendelse)
             }
 
             oppgaveService.sjekkOgOpprettRevurderForskuddOppgaveEtterBarnFlyttetFraBM(personHendelse)
         } catch (e: Exception) {
-            LOGGER.error(e) { "Det skjedde en feil ved behandling av personhendelse" }
+            secureLogger.error(e) { "Det skjedde en feil ved behandling av personhendelse: $hendelse" }
         }
     }
 }

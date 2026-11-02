@@ -770,11 +770,6 @@ fun Behandling.tilPersonobjekter(
         ).filterNotNull().toMutableSet()
 }
 
-fun List<BaseGrunnlag>.finnInntektSiste12Mnd(rolle: Rolle) = filter {
-    it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE && it.gjelderReferanse == rolle.tilGrunnlagsreferanse()
-}.find { it.innholdTilObjekt<InntektsrapporteringPeriode>().inntektsrapportering == Inntektsrapportering.AINNTEKT_BEREGNET_12MND }
-    ?.tilInnholdMedReferanse<InntektsrapporteringPeriode>()
-
 internal fun Inntekt.tilInntektsrapporteringPeriode(
     gjelder: GrunnlagDto,
     søknadsbarn: GrunnlagDto?,

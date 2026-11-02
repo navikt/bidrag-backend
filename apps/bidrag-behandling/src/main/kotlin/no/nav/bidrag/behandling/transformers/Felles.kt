@@ -45,7 +45,7 @@ import java.time.Period
 import java.time.Year
 import java.time.YearMonth
 
-val fødselsdatoSorteringJustering = 100L
+val fødselsdatoSorteringJustering = no.nav.bidrag.transport.behandling.behandling.FØDSELSDATO_SORTERING_JUSTERING_ÅR
 val grunnlagsreferanseSimulert = "simulert_grunnlag"
 val vedtakstyperIkkeBeregning =
     listOf(Vedtakstype.ALDERSJUSTERING, Vedtakstype.INDEKSREGULERING, Vedtakstype.OPPHØR, Vedtakstype.ALDERSOPPHØR)

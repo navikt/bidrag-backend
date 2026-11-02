@@ -61,42 +61,9 @@ import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-data class BehandlingDetaljerDtoV2(
-    val id: Long,
-    val type: TypeBehandling,
-    val innkrevingstype: Innkrevingstype = Innkrevingstype.MED_INNKREVING,
-    val vedtakstype: Vedtakstype,
-    val opprinneligVedtakstype: Vedtakstype? = null,
-    val stønadstype: Stønadstype? = null,
-    val engangsbeløptype: Engangsbeløptype? = null,
-    val erVedtakFattet: Boolean,
-    val erKlageEllerOmgjøring: Boolean,
-    val opprettetTidspunkt: LocalDateTime,
-    @get:Schema(type = "string", format = "date", example = "01.12.2025")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val søktFomDato: LocalDate,
-    @get:Schema(type = "string", format = "date", example = "01.12.2025")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val mottattdato: LocalDate,
-    val søktAv: SøktAvType,
-    val saksnummer: String,
-    val søknadsid: Long,
-    val søknadRefId: Long? = null,
-    val vedtakRefId: Int? = null,
-    val behandlerenhet: String,
-    val roller: Set<RolleDto>,
-    @get:Schema(type = "string", format = "date", example = "01.12.2025")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val virkningstidspunkt: LocalDate? = null,
-    @get:Schema(name = "årsak", enumAsRef = true)
-    @get:JsonProperty("årsak")
-    val årsak: VirkningstidspunktÅrsakstype? = null,
-    @get:Schema(enumAsRef = true)
-    val avslag: Resultatkode? = null,
-    val kategori: SærbidragKategoriDto? = null,
-    val opprettetAv: SaksbehandlerDto,
-    val forholdsmessigFordeling: ForholdmessigFordelingDetaljerDto? = null,
-)
+typealias BehandlingDetaljerDtoV2 = no.nav.bidrag.transport.behandling.behandling.BehandlingDetaljerDtoV2
+
+typealias SærbidragKategoriDto = no.nav.bidrag.transport.behandling.behandling.SærbidragKategoriDto
 
 data class LesemodusVedtak(
     val erAvvist: Boolean,
@@ -201,6 +168,7 @@ data class GebyrDto(
 data class SøknadDetaljerDto(
     val søknadsid: Long,
     val saksnummer: String,
+    val erHovedsøknad: Boolean,
     val barn: List<RolleDto>,
     val søktFomDato: LocalDate,
     val mottattDato: LocalDate,
@@ -300,11 +268,6 @@ data class TotalBeregningUtgifterDto(
                 utgiftstype
             }
 }
-
-data class SærbidragKategoriDto(
-    val kategori: Særbidragskategori,
-    val beskrivelse: String? = null,
-)
 
 data class UtgiftBeregningDto(
     @get:Schema(description = "Beløp som er direkte betalt av BP")

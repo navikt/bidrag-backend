@@ -5,7 +5,8 @@ import com.ibm.msg.client.jakarta.jms.JmsConstants
 import jakarta.jms.Destination
 import jakarta.jms.Session
 import jakarta.jms.TextMessage
-import no.nav.bidrag.dokument.bestilling.SIKKER_LOGG
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import org.springframework.jms.support.converter.MarshallingMessageConverter
 import org.springframework.jms.support.converter.MessageType
 import org.springframework.oxm.Marshaller
@@ -35,7 +36,7 @@ class LoggingMarshallingMessageConverter(
                 .replace("xsi:nil=\"true\"", "")
                 .replace("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"", "")
                 .replace("\\s{2,}".toRegex(), "")
-        SIKKER_LOGG.info("Sending message \n\n$cleanedMessageString\n\n")
+        secureLogger.info { "Sending message \n\n${cleanedMessageString.sanitizeForLog()}\n\n" }
         val message = session.createTextMessage(cleanedMessageString)
         message.setIntProperty(JmsConstants.JMS_IBM_CHARACTER_SET, 277)
         message.setIntProperty(JmsConstants.JMS_IBM_MSGTYPE, CMQC.MQMT_DATAGRAM)

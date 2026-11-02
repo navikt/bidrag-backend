@@ -127,7 +127,7 @@ class AdminController(
         behandling.vedtakDetaljer = null
         behandling.vedtaksid = null
         behandling.vedtakstidspunkt = null
-        behandling.opprettetTidspunkt = LocalDateTime.now().minusSeconds(900)
+        behandling.opprettetTidspunkt = behandling.opprettetTidspunkt.plusMinutes(1)
         behandlingRepository.save(behandling)
     }
 

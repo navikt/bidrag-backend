@@ -1,6 +1,5 @@
 package no.nav.bidrag.behandling.controller
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -9,8 +8,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
-import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -564,12 +561,9 @@ class BoforholdControllerTest : KontrollerTestRunner() {
 
     @Nested
     open inner class OppdatereBoforholdVerifisereTilgangskontroll {
-        @MockkBean
-        lateinit var bidragTilgangskontrollConsumer: BidragTilgangskontrollConsumer
-
         @BeforeEach
         fun setup() {
-            every { bidragTilgangskontrollConsumer.sjekkTilgangPersonISak(any(), any()) } returns false
+            stubUtils.stubTilgangskontrollPersonISak(false)
         }
 
         @Test

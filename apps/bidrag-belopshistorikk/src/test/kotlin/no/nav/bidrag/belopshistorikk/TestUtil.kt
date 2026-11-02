@@ -120,6 +120,44 @@ class TestUtil {
             opprettetAv = "TEST",
         )
 
+        fun byggEngangsbeløpRequest3() = OpprettEngangsbeløpRequestDto(
+            type = Engangsbeløptype.SAERTILSKUDD,
+            sak = Saksnummer("SAK-001"),
+            skyldner = Personident("Skyldner1"),
+            kravhaver = Personident("Kravhaver1"),
+            mottaker = Personident("Mottaker1"),
+            vedtaksid = 1,
+            gyldigFra = LocalDateTime.now(),
+            gyldigTil = null,
+            gjortUgyldigAvVedtaksid = null,
+            beløp = BigDecimal.valueOf(5000),
+            betaltBeløp = BigDecimal.ZERO,
+            valutakode = "NOK",
+            resultatkode = "SÆRBIDRAG_INNVILGET",
+            innkreving = Innkrevingstype.MED_INNKREVING,
+            referanse = "Referanse",
+            opprettetAv = "TEST",
+        )
+
+        fun byggEngangsbeløpRequest4() = OpprettEngangsbeløpRequestDto(
+            type = Engangsbeløptype.SÆRTILSKUDD,
+            sak = Saksnummer("SAK-001"),
+            skyldner = Personident("Skyldner1"),
+            kravhaver = Personident("Kravhaver1"),
+            mottaker = Personident("Mottaker1"),
+            vedtaksid = 2,
+            gyldigFra = LocalDateTime.now(),
+            gyldigTil = null,
+            gjortUgyldigAvVedtaksid = null,
+            beløp = BigDecimal.valueOf(6000),
+            betaltBeløp = BigDecimal.ZERO,
+            valutakode = "NOK",
+            resultatkode = "SÆRBIDRAG_INNVILGET",
+            innkreving = Innkrevingstype.MED_INNKREVING,
+            referanse = "Referanse",
+            opprettetAv = "TEST",
+        )
+
         fun byggEngangsbeløpResponseFlereEngangsbeløp() = listOf(
             Engangsbeløp(
                 engangsbeløpsid = 1,

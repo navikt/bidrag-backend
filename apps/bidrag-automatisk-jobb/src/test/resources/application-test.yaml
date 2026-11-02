@@ -30,6 +30,8 @@ OPPGAVE_URL: oppgave
 KODEVERK_URL: kodeverk
 KAFKA_BAKS_OPPHOER_BARNETRYGD_TOPIC: bidrag.baks.opphoer.barnetrygd-test
 BAKS_OPPHOER_BARNETRYGD_KAFKA_GROUP_ID: bidrag-automatisk-jobb-test
+KAFKA_SAK_HENDELSE_TOPIC: bidrag.sak-test
+SAK_HENDELSE_KAFKA_GROUP_ID: bidrag-automatisk-jobb-sak-test
 SFTP_HOST: localhost
 SFTP_SKAL_OVERFORE_FIL: false
 SFTP_PRIVATE_KEY: private_key

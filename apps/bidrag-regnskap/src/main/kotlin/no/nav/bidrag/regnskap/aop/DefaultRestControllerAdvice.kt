@@ -21,7 +21,7 @@ class DefaultRestControllerAdvice {
     }
 
     @ExceptionHandler(HttpStatusCodeException::class)
-    fun handleHttpClientErrorException(exception: HttpStatusCodeException): ProblemDetail {
+    fun handleHttpStatusCodeException(exception: HttpStatusCodeException): ProblemDetail {
         val errorMessage = getErrorMessage(exception)
         LOGGER.warn(exception) { errorMessage }
         return ProblemDetail.forStatusAndDetail(

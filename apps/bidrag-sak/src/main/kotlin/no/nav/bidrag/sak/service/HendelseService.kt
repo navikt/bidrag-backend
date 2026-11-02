@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.felles.Verdiobjekt
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -13,8 +14,6 @@ import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.SakHendelse
 import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -22,7 +21,7 @@ class HendelseService(
     private val hendelseRepository: HendelseRepository,
     private val kafkaProducer: KafkaProducer,
 ) {
-    private val logger: Logger = LoggerFactory.getLogger(javaClass)
+    private val logger = KotlinLogging.logger {}
 
     fun opprettHendelser(
         sak: Bidragssak,
@@ -63,7 +62,7 @@ class HendelseService(
         try {
             kafkaProducer.sendSakshendelse(sakshendelse)
         } catch (e: Exception) {
-            logger.warn("Sending av sak hendelse feilet", e)
+            logger.warn(e) { "Sending av sak hendelse feilet" }
         }
     }
 

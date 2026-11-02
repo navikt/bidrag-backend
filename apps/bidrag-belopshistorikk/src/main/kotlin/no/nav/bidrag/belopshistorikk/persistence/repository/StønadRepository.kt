@@ -13,11 +13,18 @@ interface StønadRepository : CrudRepository<Stønad, Int> {
     fun finnStønad(stønadstype: String, skyldnerIdentListe: List<String>, kravhaverIdentListe: List<String>, sak: String): List<Stønad>
 
     @Query(
-        "update Stønad st set st.endretAv = :opprettetAv, st.endretTidspunkt = CURRENT_TIMESTAMP, " +
-            "st.nesteIndeksreguleringsår = :nesteIndeksreguleringsår where st.stønadsid = :stønadsid",
+        "update Stønad st set st.skyldner = :skyldner, st.kravhaver = :kravhaver, st.mottaker = :mottaker, st.endretAv = :opprettetAv, " +
+            "st.endretTidspunkt = CURRENT_TIMESTAMP, st.nesteIndeksreguleringsår = :nesteIndeksreguleringsår where st.stønadsid = :stønadsid",
     )
     @Modifying
-    fun oppdaterStønad(stønadsid: Int, opprettetAv: String, nesteIndeksreguleringsår: Int?)
+    fun oppdaterStønad(
+        stønadsid: Int,
+        skyldner: String,
+        kravhaver: String,
+        mottaker: String,
+        opprettetAv: String,
+        nesteIndeksreguleringsår: Int?,
+    )
 
     @Query(
         "update Stønad st set st.mottaker = :mottaker, st.endretAv = :opprettetAv, st.endretTidspunkt = CURRENT_TIMESTAMP " +

@@ -1,11 +1,13 @@
 package no.nav.bidrag.dokument.bestilling.api
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.annotation.Timed
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.dokument.bestilling.SIKKER_LOGG
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentBestillingForespørsel
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentBestillingResponse
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentMalDetaljer
@@ -21,7 +23,6 @@ import no.nav.bidrag.dokument.bestilling.model.dokumentMalEksistererIkke
 import no.nav.bidrag.dokument.bestilling.tjenester.DokumentBestillingService
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -40,7 +41,7 @@ class DokumentBestillingKontroller(
     private val dokumentBestillingService: DokumentBestillingService,
 ) {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DokumentBestillingKontroller::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @PostMapping("/bestill/{dokumentMalKode}")
@@ -62,9 +63,9 @@ class DokumentBestillingKontroller(
     ): DokumentBestillingResponse {
         val dokumentMal =
             hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
-        SIKKER_LOGG.info("Bestiller dokument for dokumentmal $dokumentMal med data $${commonObjectmapper.writeValueAsString(bestillingRequest)} og enhet ${bestillingRequest.enhet}")
+        secureLogger.debug { "Bestiller dokument for dokumentmal ${dokumentMal.sanitizeForLog()} med data ${commonObjectmapper.writeValueAsString(bestillingRequest).sanitizeForLog()} og enhet ${bestillingRequest.enhet.sanitizeForLog()}" }
         val result = dokumentBestillingService.bestill(bestillingRequest, dokumentMal)
-        LOGGER.info("Bestilt dokument for brevkode $dokumentMal og enhet ${bestillingRequest.enhet} med respons $result")
+        secureLogger.info { "Bestilt dokument for brevkode ${dokumentMal.sanitizeForLog()} og enhet ${bestillingRequest.enhet.sanitizeForLog()} med respons ${result.sanitizeForLog()}" }
         return result
     }
 
@@ -85,13 +86,11 @@ class DokumentBestillingKontroller(
         @RequestBody(required = false) bestillingRequest: DokumentBestillingForespørsel?,
         @PathVariable dokumentMalKode: String,
     ): ResponseEntity<ByteArray> {
-        val dokumentMal =
-            hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
+        val dokumentMal = hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
 
-        LOGGER.info("Henter dokument for dokumentmal $dokumentMal og enhet ${bestillingRequest?.enhet}")
-        SIKKER_LOGG.info("Henter dokument for dokumentmal $dokumentMal med data $bestillingRequest og enhet ${bestillingRequest?.enhet}")
+        secureLogger.debug { "Henter dokument for dokumentmal ${dokumentMal.sanitizeForLog()} med data ${bestillingRequest.sanitizeForLog()} og enhet ${bestillingRequest?.enhet?.sanitizeForLog()}" }
         val result = dokumentBestillingService.hentDokument(bestillingRequest, dokumentMal)
-        LOGGER.info("Hentet dokument for dokumentmal $dokumentMal og enhet ${bestillingRequest?.enhet} med respons $result")
+        secureLogger.info { "Hentet dokument for dokumentmal ${dokumentMal.sanitizeForLog()} og enhet ${bestillingRequest?.enhet?.sanitizeForLog()} med respons ${result.sanitizeForLog()}" }
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_PDF)
@@ -116,13 +115,10 @@ class DokumentBestillingKontroller(
         @RequestBody(required = false) bestillingRequest: DokumentBestillingForespørsel,
         @PathVariable dokumentMalKode: String,
     ): ResponseEntity<ByteArray> {
-        val dokumentMal =
-            hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
-
-        LOGGER.info("Henter dokument for dokumentmal $dokumentMal og enhet ${bestillingRequest?.enhet}")
-        SIKKER_LOGG.info("Henter dokument for dokumentmal $dokumentMal med data $bestillingRequest og enhet ${bestillingRequest?.enhet}")
+        val dokumentMal = hentDokumentMal(dokumentMalKode) ?: dokumentMalEksistererIkke(dokumentMalKode)
+        secureLogger.debug { "Henter dokument for dokumentmal ${dokumentMal.sanitizeForLog()} med data ${bestillingRequest.sanitizeForLog()} og enhet ${bestillingRequest.enhet?.sanitizeForLog()}" }
         val result = dokumentBestillingService.bestillOgHent(bestillingRequest, dokumentMal)
-        LOGGER.info("Hentet dokument for dokumentmal $dokumentMal og enhet ${bestillingRequest?.enhet} med respons $result")
+        secureLogger.info { "Hentet dokument for dokumentmal ${dokumentMal.sanitizeForLog()} og enhet ${bestillingRequest.enhet?.sanitizeForLog()} med respons ${result.sanitizeForLog()}" }
         return ResponseEntity
             .ok()
             .contentType(MediaType.APPLICATION_PDF)
@@ -139,7 +135,7 @@ class DokumentBestillingKontroller(
         .filter { it.enabled && it !is DokumentMalBucket }
         .map { it.kode }
         .let {
-            LOGGER.info("Hentet støttede brevkoder $it")
+            LOGGER.info { "Hentet støttede brevkoder ${it.sanitizeForLog()}" }
             it
         }
 

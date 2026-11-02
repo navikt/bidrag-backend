@@ -23,7 +23,6 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.SkyldnerStøn
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadMedPeriodeBeløpResponse
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -63,7 +62,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: HentStønadRequest,
     ): ResponseEntity<StønadDto> {
         val stønadFunnet = beløpshistorikkService.hentStønad(request)
-        LOGGER.info("Følgende stønadsid ble hentet: ${stønadFunnet?.stønadsid}")
         secureLogger.debug { "Følgende stønad ble hentet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
@@ -93,7 +91,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: HentStønadHistoriskRequest,
     ): ResponseEntity<StønadDto> {
         val stønadFunnet = beløpshistorikkService.hentStønadHistorisk(request)
-        LOGGER.info("Følgende historiske stønadsid ble hentet: ${stønadFunnet?.stønadsid}")
         secureLogger.debug { "Følgende historiske stønad ble hentet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
@@ -123,8 +120,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         sak: String,
     ): ResponseEntity<List<StønadDto>> {
         val stønaderFunnet = beløpshistorikkService.hentStønaderForSak(sak)
-        LOGGER.info("Stønader ble hentet for sak: $sak")
-        secureLogger.debug { "Følgende stønader ble hentet for sak $sak: $stønaderFunnet" }
+        secureLogger.debug { "Følgende stønader ble hentet $stønaderFunnet" }
         return ResponseEntity(stønaderFunnet, HttpStatus.OK)
     }
 
@@ -157,7 +153,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: LøpendeBidragssakerRequest,
     ): ResponseEntity<LøpendeBidragssakerResponse> {
         val respons = beløpshistorikkService.finnLøpendeBidragssaker(request)
-        LOGGER.info("Følgende saker ble funnet: ${respons.bidragssakerListe.map { it.sak.toString() }}")
         secureLogger.debug { "Følgende saker ble funnet for skyldner ${request.skyldner}: ${respons.bidragssakerListe}" }
         return ResponseEntity(respons, HttpStatus.OK)
     }
@@ -177,7 +172,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: SkyldnerStønaderRequest,
     ): ResponseEntity<SkyldnerStønaderResponse> {
         val respons = beløpshistorikkService.finnAlleStønaderForSkyldner(request)
-        LOGGER.info("Følgende stønader ble funnet: ${respons.stønader.map { it.sak.toString() }}")
         secureLogger.debug { "Følgende stønader ble funnet for skyldner ${request.skyldner}: ${respons.stønader}" }
         return ResponseEntity(respons, HttpStatus.OK)
     }
@@ -207,7 +201,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: HentStønadRequest,
     ): ResponseEntity<StønadMedPeriodeBeløpResponse> {
         val stønadFunnet = beløpshistorikkService.hentStønadMedPeriodebeløp(request)
-        LOGGER.info("Stønad med periodebeløp ble hentet")
         secureLogger.debug { "Følgende stønad med periodebeløp ble funnet: $stønadFunnet" }
         return ResponseEntity(stønadFunnet, HttpStatus.OK)
     }
@@ -227,7 +220,6 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         request: LøpendeBidragPeriodeRequest,
     ): ResponseEntity<LøpendeBidragPeriodeResponse> {
         val respons = beløpshistorikkService.finnLøpendeBidragIPeriodeForSkyldner(request)
-        LOGGER.info("Følgende stønader ble funnet: ${respons.bidragListe.map { it.sak.toString() }}")
         secureLogger.debug {
             "Følgende stønader ble funnet for skyldner ${request.skyldner}: ${respons.bidragListe.joinToString { it.periodeListe.toString() }}"
         }
@@ -241,7 +233,7 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         sak: Saksnummer,
     ): ResponseEntity<List<EngangsbeløpDto>> {
         val engangsbeløpFunnet = beløpshistorikkService.finnEngangsbeløpforSak(sak = sak)
-        LOGGER.debug("Engangsbeløp ble hentet for sak: $sak")
+        secureLogger.debug { "Engangsbeløp ble hentet: $engangsbeløpFunnet" }
         return ResponseEntity.ok(engangsbeløpFunnet)
     }
 
@@ -253,6 +245,5 @@ class BeløpshistorikkController(private val beløpshistorikkService: Beløpshis
         const val HENT_ALLE_STØNADER_FOR_SKYLDNER = "/hent-alle-stonader-for-skyldner"
         const val HENT_STØNAD_PERIODEBELØP = "/hent-stonad-periodebeløp/"
         const val HENT_LØPENDE_STØNADER_I_PERIODE = "/hent-stonader-i-periode/"
-        private val LOGGER = LoggerFactory.getLogger(BeløpshistorikkController::class.java)
     }
 }

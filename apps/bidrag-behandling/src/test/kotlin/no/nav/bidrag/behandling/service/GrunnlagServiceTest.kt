@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -132,8 +133,12 @@ class GrunnlagServiceTest : TestContainerRunner() {
     @Autowired
     lateinit var grunnlagService: GrunnlagService
 
-    @MockkBean
+    // Samme mock-oppsett som BoforholdServiceTest, slik at de deler Spring-kontekst
+    @MockkBean(relaxed = true)
     lateinit var bidragPersonConsumer: BidragPersonConsumer
+
+    @MockkSpyBean
+    lateinit var bidragGrunnlagConsumerMock: BidragGrunnlagConsumer
 
     @Autowired
     lateinit var entityManager: EntityManager
@@ -4396,9 +4401,6 @@ class GrunnlagServiceTest : TestContainerRunner() {
     @Nested
     @DisplayName("Teste feilhåndtering")
     open inner class Feilhåndtering {
-        @MockkBean
-        lateinit var bidragGrunnlagConsumerMock: BidragGrunnlagConsumer
-
         @Autowired
         lateinit var grunnlagServiceMock: GrunnlagService
 

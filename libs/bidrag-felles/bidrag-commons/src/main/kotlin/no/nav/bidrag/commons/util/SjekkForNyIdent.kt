@@ -1,5 +1,6 @@
 package no.nav.bidrag.commons.util
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.CorrelationId
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Ident
@@ -13,12 +14,14 @@ import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.reflect.CodeSignature
 import org.aspectj.lang.reflect.MethodSignature
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestOperations
+import org.springframework.web.client.postForEntity
+
+private val LOGGER = KotlinLogging.logger {}
 
 @MustBeDocumented
 @Retention(AnnotationRetention.RUNTIME)
@@ -49,8 +52,7 @@ class SjekkForNyIdentAspect(
         val parametermap: Map<String, Any> = codeSignature.parameterNames.zip(parametere).toMap()
 
         for (parameterNavn in sjekkForNyIdent.parameterNavn) {
-            val ident = parametermap[parameterNavn]
-            when (ident) {
+            when (val ident = parametermap[parameterNavn]) {
                 is Personident -> {
                     if (ident.gyldig()) {
                         val parameterIndex = parametere.indexOf(ident)
@@ -88,8 +90,7 @@ class SjekkForNyIdentAspect(
         val methodSignature = joinPoint.signature as MethodSignature
 
         for (i in parametere.indices) {
-            val ident = parametere[i]
-            when (ident) {
+            when (val ident = parametere[i]) {
                 is Personident -> {
                     if (harSjekkForNyIdentAnnotation(methodSignature.method.parameterAnnotations[i]) &&
                         ident.gyldig()
@@ -123,34 +124,30 @@ class SjekkForNyIdentAspect(
 
 @Component
 class IdentConsumer(
-    @Value("\${PERSON_URL:\${BIDRAG_PERSON_URL}}") private val personUrl: String,
+    @Value($$"${PERSON_URL:${BIDRAG_PERSON_URL}}") private val personUrl: String,
     @Qualifier("azure") private val restTemplate: RestOperations,
-) : AbstractRestClient(restTemplate, "\${NAIS_APP_NAME}") {
+) : AbstractRestClient(restTemplate, $$"${NAIS_APP_NAME}") {
     companion object {
         const val PERSON_PATH = "/personidenter"
         const val INFORMASJON_PATH = "/informasjon"
-        private val LOGGER = LoggerFactory.getLogger(IdentConsumer::class.java)
     }
 
     @Cacheable(value = ["bidrag-commons_hentFødselsdato_cache"], key = "#ident")
     fun hentPersonInformasjon(ident: Personident): PersonDto? = try {
         restTemplate
-            .postForEntity(
+            .postForEntity<PersonDto>(
                 "$personUrl$INFORMASJON_PATH",
                 PersonDto(ident),
-                PersonDto::class.java,
             ).body
     } catch (e: NoSuchElementException) {
-        LOGGER.warn(
-            "Bidrag-person fant ingen person på kalt ident. " +
-                "\nFeilmelding: ${e.message} CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-        )
+        LOGGER.warn(e) {
+            "Bidrag-person fant ingen person på kalt ident. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+        }
         null
     } catch (e: Exception) {
-        LOGGER.error(
-            "Noe gikk galt i kall mot bidrag-person: ${e.message} " +
-                "CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-        )
+        LOGGER.error(e) {
+            "Noe gikk galt i kall mot bidrag-person. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+        }
         null
     }
 
@@ -159,23 +156,20 @@ class IdentConsumer(
         if (Ident(ident).erPersonIdent()) {
             return try {
                 restTemplate
-                    .postForEntity(
+                    .postForEntity<Array<PersonidentDto>>(
                         "$personUrl$PERSON_PATH",
                         HentePersonidenterRequest(ident, setOf(Identgruppe.FOLKEREGISTERIDENT, Identgruppe.NPID), true),
-                        Array<PersonidentDto>::class.java,
                     ).body
                     ?.map { it.ident } ?: listOf(ident)
             } catch (e: NoSuchElementException) {
-                LOGGER.warn(
-                    "Bidrag-person fant ingen person på kalt ident. " +
-                        "\nFeilmelding: ${e.message} CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-                )
+                LOGGER.warn(e) {
+                    "Bidrag-person fant ingen person på kalt ident. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+                }
                 listOf(ident)
             } catch (e: Exception) {
-                LOGGER.error(
-                    "Noe gikk galt i kall mot bidrag-person: ${e.message} " +
-                        "CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-                )
+                LOGGER.error(e) {
+                    "Noe gikk galt i kall mot bidrag-person. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+                }
                 listOf(ident)
             }
         }
@@ -187,24 +181,21 @@ class IdentConsumer(
         if (Ident(ident).erPersonIdent()) {
             return try {
                 restTemplate
-                    .postForEntity(
+                    .postForEntity<Array<PersonidentDto>>(
                         "$personUrl$PERSON_PATH",
                         HentePersonidenterRequest(ident, setOf(Identgruppe.FOLKEREGISTERIDENT), false),
-                        Array<PersonidentDto>::class.java,
                     ).body
                     ?.first()
                     ?.ident ?: ident
             } catch (e: NoSuchElementException) {
-                LOGGER.warn(
-                    "Bidrag-person fant ingen person på kalt ident. " +
-                        "\nFeilmelding: ${e.message} CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-                )
+                LOGGER.warn(e) {
+                    "Bidrag-person fant ingen person på kalt ident. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+                }
                 ident
             } catch (e: Exception) {
-                LOGGER.error(
-                    "Noe gikk galt i kall mot bidrag-person: ${e.message} " +
-                        "CallId: ${CorrelationId.fetchCorrelationIdForThread()}.\n$e",
-                )
+                LOGGER.error(e) {
+                    "Noe gikk galt i kall mot bidrag-person. CallId: ${CorrelationId.fetchCorrelationIdForThread().sanitizeForLog()}."
+                }
                 ident
             }
         }

@@ -479,6 +479,8 @@ class ForholdsmessigFordelingService(
     ): Boolean {
         if (!behandling.erIForholdsmessigFordeling) return false
         if (!ignorerSynkTimer && !foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())) return false
+        val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
+        if (erVedtakFattet) return false
 
         val løpendeBidraggsakerBP =
             kravhaverService.hentSisteLøpendeStønader(Personident(behandling.bidragspliktig!!.ident!!), behandling.finnBeregningsperiode())
