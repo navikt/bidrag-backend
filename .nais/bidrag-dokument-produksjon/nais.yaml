@@ -50,9 +50,9 @@ spec:
     min: 2
     cpuThresholdPercentage: 90
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
   prometheus:
     enabled: true
     path: /actuator/prometheus

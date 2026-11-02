@@ -27,4 +27,6 @@ enum class GrunnlagDatakilde {
     TILLEGGSSTØNAD_SAK,
 
     PDL,
+
+    TPS,
 }

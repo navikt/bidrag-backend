@@ -84,7 +84,7 @@ spring:
     hikari:
       idle-timeout: 10001
       max-lifetime: 30001
-      connectionTimeout: 1000
+      connectionTimeout: 5000
       maximum-pool-size: 10
       minimum-idle: 1
   flyway:
@@ -105,7 +105,7 @@ spring:
     hikari:
       idle-timeout: 10001
       max-lifetime: 30001
-      connectionTimeout: 1000
+      connectionTimeout: 5000
       maximum-pool-size: 10
       minimum-idle: 1
       data-source-properties:

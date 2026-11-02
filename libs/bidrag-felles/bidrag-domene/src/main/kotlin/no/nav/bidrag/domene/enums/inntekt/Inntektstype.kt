@@ -34,6 +34,7 @@ enum class Inntektstype {
     BARNETILLEGG_KLP,
     BARNETILLEGG_SPK,
     BARNETILLEGG_TILTAKSPENGER,
+    BARNETILLEGG_FORSVARET,
 
     // Barnetillegg hentet fra Bisys
     BARNETILLEGG_SUMMERT,
@@ -46,5 +47,11 @@ enum class Inntektstype {
          * @return Liste av type InntektRapportering
          */
         fun Inntektstype.inngårIInntektRapporteringer() = Inntektsrapportering.entries.filter { this in it.inneholderInntektstypeListe }
+
+        /**
+         * Barnetillegg som er skattefrie etter skatteloven § 5-15 første ledd bokstav b (tiltakspenger) og f (forsørgertillegg til
+         * tjenestepliktige i Forsvaret). Tillegget er ikke personinntekt etter barnebidragsforskriften § 4, og tas ikke med i inntekten.
+         */
+        val Inntektstype.erSkattefrittBarnetillegg get() = this == BARNETILLEGG_TILTAKSPENGER || this == BARNETILLEGG_FORSVARET
     }
 }

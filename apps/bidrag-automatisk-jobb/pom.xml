@@ -15,7 +15,7 @@
     <name>bidrag-automatisk-jobb</name>
 
     <properties>
-        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
         <slack-api.version>1.51.0</slack-api.version>
         <shedlock.version>7.9.0</shedlock.version>
         <jsch.version>2.28.7</jsch.version>

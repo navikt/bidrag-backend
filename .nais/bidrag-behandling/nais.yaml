@@ -50,13 +50,13 @@ spec:
       min: {{min_replicas}}
       max: 6
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 60
     timeout: 5
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 60
     timeout: 5
   prometheus:
