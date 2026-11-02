@@ -1632,7 +1632,7 @@ class GrunnlagService(
     ): Map<Grunnlagsdatatype, GrunnlagFeilDto?>? = try {
         lagreGrunnlag(behandling, input)
     } catch (e: RuntimeException) {
-        log.error(e) { "Lagring av innhentet grunnlag feilet for en rolle i behandling ${behandling.id}" }
+        log.error { "Lagring av innhentet grunnlag feilet for en rolle i behandling ${behandling.id}" }
         secureLogger.error(e) {
             "Lagring av innhentet grunnlag feilet for ${input.first.personident?.verdi} i behandling ${behandling.id}"
         }
