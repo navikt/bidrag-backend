@@ -98,11 +98,8 @@ class ForholdsmessigFordelingSøknadService(
                 omgjørVedtaksid = if (behandling.erKlageEllerOmgjøring) behandling.omgjøringsdetaljer?.omgjørVedtakId else null,
             )
 
-        // FF-søknader for 18 år skal alltid gjelde ett barn per søknad
-        fun List<SakKravhaver>.grupperPerSøknad(): List<List<SakKravhaver>> = if (stønadstype == Stønadstype.BIDRAG18AAR) map { listOf(it) } else listOf(this)
-
         val søknadsidUtenInnkreving =
-            barnUtenInnkreving.grupperPerSøknad().mapNotNull { barn ->
+            barnUtenInnkreving.grupperPerSøknad(stønadstype).mapNotNull { barn ->
                 opprettEllerOppdaterRevurderingssøknadForBarn(
                     behandling = behandling,
                     saksnummer = saksnummer,
@@ -118,7 +115,7 @@ class ForholdsmessigFordelingSøknadService(
             }
 
         val søknadsidInnkreving =
-            barnMedInnkreving.grupperPerSøknad().mapNotNull { barn ->
+            barnMedInnkreving.grupperPerSøknad(stønadstype).mapNotNull { barn ->
                 opprettEllerOppdaterRevurderingssøknadForBarn(
                     behandling = behandling,
                     saksnummer = saksnummer,
