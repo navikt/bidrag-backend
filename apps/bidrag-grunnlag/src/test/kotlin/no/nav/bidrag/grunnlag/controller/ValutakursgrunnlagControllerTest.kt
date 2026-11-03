@@ -1,6 +1,8 @@
 package no.nav.bidrag.grunnlag.controller
 
+import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.grunnlag.aop.DefaultExceptionHandler
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
@@ -12,8 +14,20 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.mock.env.MockEnvironment
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -22,6 +36,9 @@ class ValutakursgrunnlagControllerTest {
     private val service = Mockito.mock(ValutakursgrunnlagService::class.java)
     private val historiskeValutakurserService = Mockito.mock(HentHistoriskeValutakurserService::class.java)
     private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, MockEnvironment())
+    private val mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(DefaultExceptionHandler())
+        .build()
     private val dato = LocalDate.of(2026, 7, 1)
 
     @Test
@@ -117,5 +134,99 @@ class ValutakursgrunnlagControllerTest {
         Mockito.`when`(service.beregn(request.beløp, request.fraValuta, request.tilValuta, request.dato)).thenReturn(svar)
 
         assertSame(svar, controller.beregn(request))
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput ved ukjent valuta i JSON`() {
+        sjekkBindingsfeil<HttpMessageNotReadableException>(
+            post("/valutakursgrunnlag/innhentinger")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"valutakode":"UKJENT_VALUTA","gyldigFra":"2025-07-01"}"""),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 når påkrevde JSON-felt mangler eller er null`() {
+        listOf(
+            """{"gyldigFra":"2025-07-01"}""",
+            """{"valutakode":"USD"}""",
+            """{"valutakode":null,"gyldigFra":"2025-07-01"}""",
+            """{"valutakode":"USD","gyldigFra":null}""",
+        ).forEach { json ->
+            sjekkBindingsfeil<HttpMessageNotReadableException>(
+                post("/valutakursgrunnlag/innhentinger")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json),
+            )
+        }
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput ved ugyldig dato i JSON`() {
+        sjekkBindingsfeil<HttpMessageNotReadableException>(
+            post("/valutakursgrunnlag/innhentinger")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"valutakode":"USD","gyldigFra":"ugyldig-dato"}"""),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 ved ugyldig JSON eller manglende body`() {
+        listOf("""{"valutakode":""", "").forEach { json ->
+            sjekkBindingsfeil<HttpMessageNotReadableException>(
+                post("/valutakursgrunnlag/innhentinger")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json),
+            )
+        }
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput ved ukjent valuta i query`() {
+        sjekkBindingsfeil<MethodArgumentTypeMismatchException>(
+            get("/valutakursgrunnlag").param("valutakode", "UKJENT_VALUTA").param("dato", "2025-07-01"),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput ved ugyldig dato i query`() {
+        sjekkBindingsfeil<MethodArgumentTypeMismatchException>(
+            get("/valutakursgrunnlag").param("valutakode", "USD").param("dato", "ugyldig-dato"),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput ved ugyldig ID i path`() {
+        sjekkBindingsfeil<MethodArgumentTypeMismatchException>(
+            put("/valutakursgrunnlag/ugyldig-id/kurs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"kurs":10.5}"""),
+        )
+    }
+
+    @Test
+    fun `skal beholde 404 ved HTTP-oppslag av manglende kursgrunnlag`() {
+        mockMvc.perform(get("/valutakursgrunnlag").param("valutakode", "USD").param("dato", "2025-07-01"))
+            .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `skal beholde 403 for gyldig HTTP-forespørsel uten lokal skrivetilgang`() {
+        mockMvc.perform(
+            post("/valutakursgrunnlag/innhentinger")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"valutakode":"USD","gyldigFra":"2025-07-01"}"""),
+        ).andExpect(status().isForbidden)
+    }
+
+    private inline fun <reified T : Exception> sjekkBindingsfeil(request: MockHttpServletRequestBuilder) {
+        val resultat = mockMvc.perform(request)
+            .andExpect(status().isBadRequest)
+            .andExpect(content().string("Ugyldig forespørsel"))
+            .andExpect(header().string(HttpHeaders.WARNING, "Ugyldig forespørsel"))
+            .andReturn()
+
+        resultat.resolvedException.shouldBeInstanceOf<T>()
+        Mockito.verifyNoInteractions(service, historiskeValutakurserService)
     }
 }

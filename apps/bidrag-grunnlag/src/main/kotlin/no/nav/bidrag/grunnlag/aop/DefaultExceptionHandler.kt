@@ -9,11 +9,13 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.client.HttpStatusCodeException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.server.ResponseStatusException
 
 fun <T> Boolean?.ifTrue(block: (Boolean) -> T?): T? = if (this == true) block(this) else null
@@ -55,6 +57,16 @@ class DefaultExceptionHandler {
         val headers = HttpHeaders()
         headers.add(HttpHeaders.WARNING, feilmelding)
         return ResponseEntity.status(e.statusCode).body(ResponseEntity(e.message, headers, e.statusCode))
+    }
+
+    @ResponseBody
+    @ExceptionHandler(HttpMessageNotReadableException::class, MethodArgumentTypeMismatchException::class)
+    fun handleRequestBindingExceptions(): ResponseEntity<String> {
+        val feilmelding = "Ugyldig forespørsel"
+        LOGGER.warn { feilmelding }
+        return ResponseEntity.badRequest()
+            .header(HttpHeaders.WARNING, feilmelding)
+            .body(feilmelding)
     }
 
     @ResponseBody
