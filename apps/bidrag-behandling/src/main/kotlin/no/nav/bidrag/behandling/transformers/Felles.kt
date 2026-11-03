@@ -216,37 +216,38 @@ fun Stønadstype.tilGrunnlagstypeBeløpshistorikk() = when (this) {
 }
 
 fun Behandling.løperBidragEtterEldsteVirkning(rolle: Rolle): Boolean {
-    val fraPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).minByOrNull { it.fom }?.fom
-    val tilPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).maxByOrNull { it.fom }?.til
-    if (fraPeriodeLøperBidrag == null) return false
-    if (tilPeriodeLøperBidrag == null) return true
+    val periodeLøperBidrag = finnPeriodeLøperBidrag(rolle) ?: return false
+    val tilPeriodeLøperBidrag = periodeLøperBidrag.til ?: return true
     return tilPeriodeLøperBidrag > eldsteVirkningstidspunkt.toYearMonth()
 }
 
 fun Behandling.finnPeriodeLøperBidrag(rolle: Rolle): ÅrMånedsperiode? {
-    val fraPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).minByOrNull { it.fom }?.fom
-    val tilPeriodeLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle).maxByOrNull { it.fom }?.til
-    val fraPeriodePrivatAvtale =
-        privatAvtale
-            .find {
-                it.gjelderPerson(rolle.ident!!, rolle.stønadstype)
-            }?.perioderInnkreving
-            ?.minByOrNull { it.fom }
-            ?.fom
-            ?.toYearMonth()
-    val tilPeriodePrivatAvtale =
-        privatAvtale
-            .find {
-                it.gjelderPerson(rolle.ident!!, rolle.stønadstype)
-            }?.perioderInnkreving
-            ?.maxByOrNull { it.fom }
-            ?.tom
-            ?.plusMonths(1)
-            ?.withDayOfMonth(1)
-            ?.toYearMonth()
-    return minOfNullable(fraPeriodeLøperBidrag, fraPeriodePrivatAvtale)?.let {
-        ÅrMånedsperiode(it, maxOfNullable(tilPeriodeLøperBidrag, tilPeriodePrivatAvtale))
-    }
+    val perioderLøperBidrag = finnPerioderHvorDetLøperBidrag(rolle)
+    val periodeVedtak =
+        perioderLøperBidrag.takeIf { it.isNotEmpty() }?.let { perioder ->
+            ÅrMånedsperiode(perioder.minOf { it.fom }, perioder.maxBy { it.fom }.til)
+        }
+    val perioderPrivatAvtale =
+        rolle.ident
+            ?.let { ident -> privatAvtale.find { it.gjelderPerson(ident, rolle.stønadstype) } }
+            ?.perioderInnkreving
+            .orEmpty()
+    val periodePrivatAvtale =
+        perioderPrivatAvtale.takeIf { it.isNotEmpty() }?.let { perioder ->
+            ÅrMånedsperiode(
+                perioder.minOf { it.fom }.toYearMonth(),
+                perioder
+                    .maxBy { it.fom }
+                    .tom
+                    ?.plusMonths(1)
+                    ?.withDayOfMonth(1)
+                    ?.toYearMonth(),
+            )
+        }
+    val perioder = listOfNotNull(periodeVedtak, periodePrivatAvtale)
+    if (perioder.isEmpty()) return null
+    val til = if (perioder.any { it.til == null }) null else perioder.maxOf { it.til!! }
+    return ÅrMånedsperiode(perioder.minOf { it.fom }, til)
 }
 
 fun Behandling.finnPerioderHvorDetLøperBidrag(rolle: Rolle): List<ÅrMånedsperiode> {
