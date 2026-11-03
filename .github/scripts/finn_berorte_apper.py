@@ -127,7 +127,10 @@ def workflow_changed(root, workflow_ref, event_name, ref):
     # Sammenlign med merge-base, så en merge fra main ikke teller som en endring i appen.
     subprocess.check_call(["git", "-C", str(root), "fetch", "--no-tags", "--quiet", "origin", "main"])
     base = subprocess.check_output(["git", "-C", str(root), "merge-base", "HEAD", "origin/main"]).decode().strip()
-    return any(path_matches_filters(path, paths) for path in diff_paths(root, base, "HEAD"))
+    # En fil teller bare hvis den også er ulik main. Da teller heller ikke main-commits
+    # som er kopiert inn med rebase eller cherry-pick, der merge-basen blir stående.
+    changed = set(diff_paths(root, base, "HEAD")) & set(diff_paths(root, "origin/main", "HEAD"))
+    return any(path_matches_filters(path, paths) for path in changed)
 
 
 def main_workflow():
