@@ -66,13 +66,17 @@ class OppdragService(
         oppdatererVerdierPåOppdrag(hendelse, oppdrag)
         val oppdragId = persistenceService.lagreOppdrag(oppdrag)
 
-        if (mottakerErEndret && (!erEngangsbeløp || hendelse.vedtakType == Vedtakstype.ENDRING_MOTTAKER) && UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
-            endreMottakerService.opprettEndreMottaker(
-                vedtakId = hendelse.vedtakId,
-                sakId = hendelse.sakId,
-                barnIdent = checkNotNull(hendelse.kravhaverIdent) { "Mangler kravhaver på mottakerendring for vedtak ${hendelse.vedtakId}" },
-                nyMottakerIdent = hendelse.mottakerIdent,
-            )
+        if (mottakerErEndret && (!erEngangsbeløp || hendelse.vedtakType == Vedtakstype.ENDRING_MOTTAKER)) {
+            if (UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
+                endreMottakerService.opprettEndreMottaker(
+                    vedtakId = hendelse.vedtakId,
+                    sakId = hendelse.sakId,
+                    barnIdent = checkNotNull(hendelse.kravhaverIdent) { "Mangler kravhaver på mottakerendring for vedtak ${hendelse.vedtakId}" },
+                    nyMottakerIdent = hendelse.mottakerIdent,
+                )
+            } else {
+                LOGGER.warn { "Endring av mottaker er ikke slått på enda!" }
+            }
         }
 
         LOGGER.debug { "Oppdrag med ID: $oppdragId er ${if (erOppdatering) "oppdatert." else "opprettet."}" }
@@ -172,10 +176,6 @@ class OppdragService(
     }
 
     fun oppdatererVerdierPåOppdrag(hendelse: Hendelse, oppdrag: Oppdrag) {
-        if (hendelse.vedtakType == Vedtakstype.ENDRING_MOTTAKER && !UnleashFeatures.ENDRE_MOTTAKER.isEnabled) {
-            LOGGER.warn { "Endring av mottaker er ikke slått på enda!" }
-            return
-        }
         oppdrag.endretTidspunkt = LocalDateTime.now()
         // Utsatt til dato skal ikke kunne forkortes eller fjernes om først satt via vedtak
         if (oppdrag.utsattTilDato == null || hendelse.utsattTilDato?.isAfter(oppdrag.utsattTilDato) == true) {
