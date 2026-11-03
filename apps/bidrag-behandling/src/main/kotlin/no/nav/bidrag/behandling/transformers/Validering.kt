@@ -737,7 +737,8 @@ fun List<Inntekt>.harUgyldigSluttperiode(opphørsdato: LocalDate?): Boolean {
             .filter { !årsinntekterYtelser.contains(it.type) }
             .sortedBy { it.datoFom }
             .map { Datoperiode(it.datoFom!!, it.datoTom) }
-    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() })
+    // Inntekter til barn trenger ikke å bli definert for hele beregningsperioden
+    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() || it.rolle?.erBarn == true })
 }
 
 val Inntekt.inntektstypeListe
