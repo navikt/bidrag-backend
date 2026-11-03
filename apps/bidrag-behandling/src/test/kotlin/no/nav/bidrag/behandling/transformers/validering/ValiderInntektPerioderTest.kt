@@ -13,6 +13,7 @@ import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForYte
 import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForÅrsinntekter
 import no.nav.bidrag.behandling.transformers.finnHullIPerioder
 import no.nav.bidrag.behandling.transformers.finnOverlappendePerioderInntekt
+import no.nav.bidrag.behandling.transformers.harUgyldigSluttperiode
 import no.nav.bidrag.behandling.utils.testdata.opprettRolle
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBM
@@ -1310,6 +1311,27 @@ class ValiderInntektPerioderTest {
             hullIPerioder shouldHaveSize 0
             ugyldigSluttPeriode shouldBe true
             gjelderBarn shouldBe barn2Ident
+        }
+    }
+
+    @Nested
+    inner class UgyldigSluttperiode {
+        private val opphørsdato = LocalDate.parse("2024-06-01")
+
+        private fun inntektSomSlutterFørOpphør(rolletype: Rolletype) = opprettInntekt(
+            YearMonth.parse("2024-01"),
+            YearMonth.parse("2024-03"),
+            rolle = opprettRolle("12345", rolletype),
+        )
+
+        @Test
+        fun `skal ikke gi ugyldig sluttperiode når inntekt til barn slutter før opphørsdato`() {
+            listOf(inntektSomSlutterFørOpphør(Rolletype.BARN)).harUgyldigSluttperiode(opphørsdato) shouldBe false
+        }
+
+        @Test
+        fun `skal gi ugyldig sluttperiode når inntekt til BM slutter før opphørsdato`() {
+            listOf(inntektSomSlutterFørOpphør(Rolletype.BIDRAGSMOTTAKER)).harUgyldigSluttperiode(opphørsdato) shouldBe true
         }
     }
 }
