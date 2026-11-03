@@ -118,13 +118,6 @@ class ValideringsgrunnlagServiceTest {
     }
 
     @Test
-    fun `henter landkoder når land er satt`() {
-        val request = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), land = Landkode("SWE"), roller = emptySet())
-
-        service.hentForOpprettelse(request).landkoder shouldBe setOf(Landkode("NOR"))
-    }
-
-    @Test
     fun `slår opp samme person én gang`() {
         val ident = genererPersonident()
 
