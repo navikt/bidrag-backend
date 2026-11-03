@@ -1,32 +1,38 @@
 package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.spyk
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
-import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
-import no.nav.bidrag.domene.enums.behandling.Behandlingstema
-import no.nav.bidrag.domene.enums.behandling.Behandlingstype
-import no.nav.bidrag.domene.enums.rolle.Rolletype
-import no.nav.bidrag.domene.enums.rolle.SøktAvType
+import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
+import no.nav.bidrag.domene.enums.sak.Sakskategori
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
-import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
-import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
-import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
+import no.nav.bidrag.transport.sak.BidragssakDto
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDate
+import java.time.YearMonth
 
 class ForholdsmessigFordelingKravhaverServiceTest {
     @MockK
@@ -330,6 +336,106 @@ class ForholdsmessigFordelingKravhaverServiceTest {
         resultat.size shouldBe 1
     }
 
+    @Nested
+    inner class `Filtrering av løpende bidrag på opphørsdato` {
+        @BeforeEach
+        fun setUpLøpendeBidrag() {
+            mockkStatic(MODEL_KT)
+            every { finnBeregningsperiodeForKravhavere(any(), any()) } returns ÅrMånedsperiode(LØPER_FRA, null)
+            every { behandlingRepository.finnÅpneBidragsbehandlingerForBp(any(), any()) } returns emptyList()
+            every { service.hentÅpneSøknader(any(), any(), any(), any()) } returns emptyList()
+            every { sakConsumer.hentSak(SAKSNUMMER) } returns bidragssak()
+        }
+
+        @AfterEach
+        fun tearDown() {
+            unmockkStatic(MODEL_KT)
+        }
+
+        @Test
+        fun `skal ekskludere kravhaver når opphørsdato er før eldste søkt fom dato`() {
+            val resultat = hentLøpendeBidragMedOpphørsdato(ELDSTE_SØKT_FOM.minusMonths(1))
+
+            resultat.shouldBeEmpty()
+        }
+
+        @Test
+        fun `skal ekskludere kravhaver når opphørsdato er lik eldste søkt fom dato`() {
+            val resultat = hentLøpendeBidragMedOpphørsdato(ELDSTE_SØKT_FOM)
+
+            resultat.shouldBeEmpty()
+        }
+
+        @Test
+        fun `skal inkludere kravhaver når opphørsdato er etter eldste søkt fom dato`() {
+            val opphørsdato = ELDSTE_SØKT_FOM.plusMonths(1)
+
+            val resultat = hentLøpendeBidragMedOpphørsdato(opphørsdato)
+
+            resultat.map { it.kravhaver to it.opphørsdato } shouldBe listOf(KRAVHAVER to opphørsdato)
+        }
+
+        @Test
+        fun `skal inkludere kravhaver når opphørsdato mangler`() {
+            val resultat = hentLøpendeBidragMedOpphørsdato(null)
+
+            resultat.map { it.kravhaver to it.opphørsdato } shouldBe listOf(KRAVHAVER to null)
+        }
+
+        @Test
+        fun `skal ekskludere kravhaver når bidraget starter samme måned som det opphører etter eldste søkt fom dato`() {
+            val opphørsdato = ELDSTE_SØKT_FOM.plusMonths(3)
+
+            val resultat = hentLøpendeBidragMedOpphørsdato(opphørsdato, løperFra = opphørsdato)
+
+            resultat.shouldBeEmpty()
+        }
+
+        private fun hentLøpendeBidragMedOpphørsdato(
+            opphørsdato: YearMonth?,
+            løperFra: YearMonth = LØPER_FRA,
+        ): Set<SakKravhaver> {
+            val behandling = behandlingMedEldsteSøktFom()
+            every { behandling.finnOpphørsdato(Stønadstype.BIDRAG, KRAVHAVER) } returns opphørsdato
+            every { service.hentSisteLøpendeStønader(any(), any()) } returns
+                listOf(
+                    LøpendeBidragSakPeriode(
+                        sak = Saksnummer(SAKSNUMMER),
+                        type = Stønadstype.BIDRAG,
+                        kravhaver = Personident(KRAVHAVER),
+                        valutakode = Valutakode.NOK.name,
+                        periodeFra = løperFra,
+                        periodeTil = null,
+                    ),
+                )
+
+            return service.hentAlleÅpneEllerLøpendeBidraggsakerForBP(behandling)
+        }
+
+        private fun behandlingMedEldsteSøktFom(): Behandling {
+            val bidragspliktig = mockk<Rolle> { every { ident } returns BIDRAGSPLIKTIG }
+            return mockk<Behandling>(relaxed = true) {
+                every { id } returns BEHANDLING_ID
+                every { this@mockk.bidragspliktig } returns bidragspliktig
+                every { eldsteSøktFomDato } returns ELDSTE_SØKT_FOM.atDay(1)
+                every { omgjøringsdetaljer } returns null
+                every { erKlageEllerOmgjøring } returns false
+                every { privatAvtale } returns mutableSetOf()
+            }
+        }
+
+        private fun bidragssak() = BidragssakDto(
+            eierfogd = Enhetsnummer(ENHET),
+            saksnummer = Saksnummer(SAKSNUMMER),
+            saksstatus = Bidragssakstatus.IN,
+            kategori = Sakskategori.NASJONAL,
+            opprettetDato = ELDSTE_SØKT_FOM.atDay(1),
+            levdeAdskilt = false,
+            ukjentPart = false,
+            roller = emptyList(),
+        )
+    }
+
     private fun sakKravhaver(
         kravhaver: String,
         stønadstype: Stønadstype,
@@ -374,4 +480,15 @@ class ForholdsmessigFordelingKravhaverServiceTest {
         stønadstype = stønadstype,
         privatAvtale = privatAvtale,
     )
+
+    companion object {
+        private const val MODEL_KT = "no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingModelKt"
+        private const val BEHANDLING_ID = 1L
+        private const val BIDRAGSPLIKTIG = "bidragspliktig"
+        private const val KRAVHAVER = "kravhaver"
+        private const val SAKSNUMMER = "2400001"
+        private const val ENHET = "4806"
+        private val ELDSTE_SØKT_FOM = YearMonth.of(2025, 6)
+        private val LØPER_FRA = YearMonth.of(2024, 1)
+    }
 }

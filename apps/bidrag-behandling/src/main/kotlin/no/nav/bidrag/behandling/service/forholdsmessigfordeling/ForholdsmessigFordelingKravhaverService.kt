@@ -201,7 +201,11 @@ class ForholdsmessigFordelingKravhaverService(
                     val sak = sakConsumer.hentSak(it.sak.verdi)
                     val opphørsdato = behandling.finnOpphørsdato(it.type, it.kravhaver.verdi)
                     // Ikke ta med de som opphører og starter samme tidspunkt
-                    if (it.periodeFra == opphørsdato) return@mapNotNull null
+                    if (it.periodeFra == opphørsdato ||
+                        (opphørsdato != null && opphørsdato <= behandling.eldsteSøktFomDato.toYearMonth())
+                    ) {
+                        return@mapNotNull null
+                    }
                     SakKravhaver(
                         saksnummer = it.sak.verdi,
                         kravhaver = it.kravhaver.verdi,
