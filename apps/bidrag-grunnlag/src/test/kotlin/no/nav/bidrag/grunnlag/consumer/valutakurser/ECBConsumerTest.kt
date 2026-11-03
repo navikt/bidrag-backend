@@ -48,7 +48,7 @@ class ECBConsumerTest {
         val resultat = consumer.hentValutakurs(Frequency.Monthly, listOf("NOK"), dato)
 
         val kurs = when (resultat) {
-            is RestResponse.Success -> resultat.body.toExchangeRates().single()
+            is RestResponse.Success -> resultat.body.toExchangeRates(Frequency.Monthly).single()
             is RestResponse.Failure -> error("ECB returnerte ${resultat.statusCode}")
         }
         assertEquals("NOK", kurs.valuta)

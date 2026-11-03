@@ -1,12 +1,13 @@
 package no.nav.bidrag.grunnlag.consumer.valutakurser.api
 
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.Valutakurs
+import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
 import no.nav.bidrag.grunnlag.consumer.valutakurs.exception.ValutakursTransformationException
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
 
-fun SdmxData.toExchangeRates(): List<Valutakurs> {
+fun SdmxData.toExchangeRates(forventetFrekvens: Frequency): List<Valutakurs> {
     val dimensjoner = structure.dimensions
     val valutaposisjon = dimensjoner.series.indexOfFirst { it.id == "CURRENCY" }
     val frekvensposisjon = dimensjoner.series.indexOfFirst { it.id == "FREQ" }
@@ -26,6 +27,9 @@ fun SdmxData.toExchangeRates(): List<Valutakurs> {
 
                 val valuta = dimensjonsverdi(valutaposisjon)
                 val frekvens = dimensjonsverdi(frekvensposisjon)
+                if (frekvens != forventetFrekvens.toFrequencyParam()) {
+                    throw ValutakursTransformationException("ECB-svaret har en annen frekvens enn forespurt", null)
+                }
                 serie?.observations.orEmpty().mapNotNull { (periodeindeks, observasjon) ->
                     val periode = periodeindeks.toIntOrNull()?.let { perioder.getOrNull(it)?.id }
                         ?: throw ValutakursTransformationException("ECB-svaret har ugyldig observasjonsperiode", null)

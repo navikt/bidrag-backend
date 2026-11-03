@@ -38,7 +38,7 @@ class ECBService(
                 kursDato,
             )
             val valutakurser = when (respons) {
-                is RestResponse.Success -> respons.body.toExchangeRates()
+                is RestResponse.Success -> respons.body.toExchangeRates(Frequency.Monthly)
 
                 is RestResponse.Failure -> throw ECBServiceException(
                     "ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}",
@@ -72,7 +72,7 @@ class ECBService(
         LOGGER.info { "Henter ${valutaer.size} valutakurser fra ECB på $kursDato" }
         val valutakurser = try {
             when (val respons = ecbConsumer.hentValutakurs(Frequency.Monthly, forespurteValutaer, kursDato)) {
-                is RestResponse.Success -> respons.body.toExchangeRates()
+                is RestResponse.Success -> respons.body.toExchangeRates(Frequency.Monthly)
 
                 is RestResponse.Failure -> throw ECBServiceException(
                     "ECB-svaret feilet med status ${respons.statusCode.value()}: ${respons.message}",

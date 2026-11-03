@@ -1,8 +1,13 @@
 package no.nav.bidrag.grunnlag.consumer.ecb
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.ecb.Frequency
+import no.nav.bidrag.grunnlag.consumer.valutakurs.domene.norgesbank.Frekvens
 import no.nav.bidrag.grunnlag.consumer.valutakurser.ECBConsumer
+import no.nav.bidrag.grunnlag.consumer.valutakurser.NorgesBankConsumer
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxData
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxDataSet
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxDimension
@@ -11,7 +16,13 @@ import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxSeries
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxStructure
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.SdmxValue
 import no.nav.bidrag.grunnlag.consumer.valutakurser.api.toExchangeRates
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakurs
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentValutakursRequest
+import no.nav.bidrag.grunnlag.consumer.valutakurser.dto.HentetValutakursResultat
+import no.nav.bidrag.grunnlag.consumer.valutakurser.norgesBankSvar
 import no.nav.bidrag.grunnlag.exception.RestResponse
+import no.nav.bidrag.grunnlag.persistence.entity.ValutakursgrunnlagKilde
+import no.nav.bidrag.grunnlag.service.HentValutakursService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -23,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper
 import tools.jackson.module.kotlin.KotlinModule
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 
 class ECBServiceMaanedskursTest {
     private val klient = Mockito.mock(ECBConsumer::class.java)
@@ -49,7 +61,7 @@ class ECBServiceMaanedskursTest {
 
         val data = JsonMapper.builder().addModule(KotlinModule.Builder().build()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build()
             .readValue(json, SdmxData::class.java)
-        val kurser = data.toExchangeRates()
+        val kurser = data.toExchangeRates(Frequency.Monthly)
 
         assertEquals(listOf("NOK", "USD"), kurser.map { it.valuta })
         assertEquals(sisteJuni, kurser.first().kursDato)
@@ -72,6 +84,53 @@ class ECBServiceMaanedskursTest {
         Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK"), sisteJuni))
             .thenReturn(respons("NOK" to "11.5841"))
         assertEquals(BigDecimal("11.5841"), service.hentValutakurs("EUR", sisteJuni).kurs)
+    }
+
+    @Test
+    fun `skal avvise dagskurser ved innhenting av en månedskurs`() {
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
+            .thenReturn(respons("NOK" to "12", "USD" to "2", frekvens = Frequency.Daily))
+
+        assertThrows<ECBServiceException> { service.hentValutakurs("USD", sisteJuni) }
+    }
+
+    @Test
+    fun `skal lese dagskurser når forespurt frekvens er daglig`() {
+        val data = respons("NOK" to "12", frekvens = Frequency.Daily).body
+
+        val kurs = data.toExchangeRates(Frequency.Daily).single()
+
+        kurs.valuta shouldBe "NOK"
+        kurs.kurs shouldBe BigDecimal("12")
+        kurs.kursDato shouldBe sisteJuni
+    }
+
+    @Test
+    fun `skal avvise dagskurser ved innhenting av månedskurser i batch`() {
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
+            .thenReturn(respons("NOK" to "12", "USD" to "2", frekvens = Frequency.Daily))
+
+        assertThrows<ECBServiceException> { service.hentValutakurser(listOf("USD"), sisteJuni) }
+    }
+
+    @Test
+    fun `skal bruke Norges Bank når ECB returnerer dagskurser i et månedssvar`() {
+        val norgesBank = Mockito.mock(NorgesBankConsumer::class.java)
+        val hentValutakursService = HentValutakursService(service, norgesBank)
+        Mockito.`when`(klient.hentValutakurs(Frequency.Monthly, listOf("NOK", "USD"), sisteJuni))
+            .thenReturn(respons("NOK" to "12", "USD" to "2", frekvens = Frequency.Daily))
+        Mockito.`when`(norgesBank.hentValutakurs(Frekvens.MÅNEDLIG, "USD", sisteJuni))
+            .thenReturn(RestResponse.Success(norgesBankSvar(valuta = "USD", periode = "2025-06", kurs = "1075", multiplikator = "-2")))
+
+        val resultat = hentValutakursService.hentValutakurs(
+            HentValutakursRequest(listOf(HentValutakurs(LocalDate.of(2025, 7, 1), Valutakode.USD))),
+        ).hentetValutakursListe.single()
+
+        val kurs = resultat.shouldBeInstanceOf<HentetValutakursResultat.HentetValutakurs>()
+        kurs.kilde shouldBe ValutakursgrunnlagKilde.NORGES_BANK
+        kurs.valutakursSnitt shouldBe BigDecimal("10.75")
+        kurs.periode shouldBe ÅrMånedsperiode("2025-06", "2025-07")
+        Mockito.verify(norgesBank).hentValutakurs(Frekvens.MÅNEDLIG, "USD", sisteJuni)
     }
 
     @Test
@@ -193,7 +252,7 @@ class ECBServiceMaanedskursTest {
         }
     }
 
-    private fun respons(vararg kurser: Pair<String, String>): RestResponse.Success<SdmxData> = RestResponse.Success(
+    private fun respons(vararg kurser: Pair<String, String>, frekvens: Frequency = Frequency.Monthly): RestResponse.Success<SdmxData> = RestResponse.Success(
         SdmxData(
             listOf(
                 SdmxDataSet(
@@ -204,9 +263,14 @@ class ECBServiceMaanedskursTest {
                 SdmxDimensions(
                     series = listOf(
                         SdmxDimension("CURRENCY", kurser.map { SdmxValue(it.first) }),
-                        SdmxDimension("FREQ", listOf(SdmxValue("M"))),
+                        SdmxDimension("FREQ", listOf(SdmxValue(frekvens.toFrequencyParam()))),
                     ),
-                    observation = listOf(SdmxDimension("TIME_PERIOD", listOf(SdmxValue("2025-06")))),
+                    observation = listOf(
+                        SdmxDimension(
+                            "TIME_PERIOD",
+                            listOf(SdmxValue(if (frekvens == Frequency.Monthly) YearMonth.from(sisteJuni).toString() else sisteJuni.toString())),
+                        ),
+                    ),
                 ),
             ),
         ),
