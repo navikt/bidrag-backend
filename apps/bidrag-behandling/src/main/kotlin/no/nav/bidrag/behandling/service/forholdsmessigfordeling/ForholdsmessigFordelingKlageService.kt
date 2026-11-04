@@ -15,7 +15,6 @@ import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.service.GrunnlagService
 import no.nav.bidrag.behandling.service.UnderholdService
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
-import no.nav.bidrag.behandling.service.hentAlleStønaderForBidragspliktig
 import no.nav.bidrag.behandling.service.hentSak
 import no.nav.bidrag.behandling.transformers.behandling.oppdaterBehandlingEtterOppdatertRoller
 import no.nav.bidrag.behandling.transformers.erOverEllerLik18År
