@@ -1742,7 +1742,7 @@
     "tittel": "Varsel om opphør barnebidrag etter fylte 18 år",
     "beskrivelse": "Varsel om opphør barnebidrag etter fylte 18 år",
     "type": "UTGÅENDE",
-    "kanBestilles": false,
+    "kanBestilles": true,
     "kreverVedtak": false,
     "kreverBehandling": false,
     "redigerbar": false,
