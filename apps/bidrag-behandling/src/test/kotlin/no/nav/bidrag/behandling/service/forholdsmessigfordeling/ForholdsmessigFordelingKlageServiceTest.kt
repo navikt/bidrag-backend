@@ -1160,6 +1160,7 @@ class ForholdsmessigFordelingKlageServiceTest {
     @Test
     fun `skal legge til FF-detaljer med hovedsøknad for roller i hovedsøknaden som mangler FF-detaljer`() {
         behandling.søknadstype = Behandlingstype.KLAGE
+        behandling.forholdsmessigFordeling = null
         behandling.roller.forEach { it.forholdsmessigFordeling = null }
         every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns
             listOf(
