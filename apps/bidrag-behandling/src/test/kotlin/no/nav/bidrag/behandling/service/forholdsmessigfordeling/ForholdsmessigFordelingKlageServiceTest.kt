@@ -3,6 +3,8 @@ package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -29,6 +31,8 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
@@ -42,6 +46,7 @@ import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.YearMonth
 
 class ForholdsmessigFordelingKlageServiceTest {
     @MockK(relaxed = true)
@@ -1151,6 +1156,65 @@ class ForholdsmessigFordelingKlageServiceTest {
         søknad(SYSTEM_KLAGESØKNADSID, omgjørSøknadsid = PÅKLAGET_SØKNAD_2_SØKNADSID, opprettetAvSystem = true),
         *barn,
     )
+
+    @Test
+    fun `skal legge til FF-detaljer med hovedsøknad for roller i hovedsøknaden som mangler FF-detaljer`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        behandling.roller.forEach { it.forholdsmessigFordeling = null }
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns
+            listOf(
+                LøpendeBidragSakPeriode(
+                    sak = Saksnummer(behandling.saksnummer),
+                    type = Stønadstype.BIDRAG,
+                    kravhaver = Personident(barn1.ident!!),
+                    valutakode = "NOK",
+                    periodeFra = YearMonth.parse("2023-01"),
+                    periodeTil = null,
+                ),
+            )
+
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        assertSoftly(barn1.forholdsmessigFordeling!!) {
+            delAvOpprinneligBehandling shouldBe true
+            erRevurdering shouldBe false
+            tilhørerSak shouldBe behandling.saksnummer
+            bidragsmottaker shouldBe behandling.bidragsmottaker!!.ident
+            løperBidragFra shouldBe YearMonth.parse("2023-01")
+            løperBidragTil shouldBe null
+            harLøpendeBidrag shouldBe true
+            søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+            søknader.single().omgjørSøknadsid shouldBe PÅKLAGET_FF_SØKNADSID
+        }
+        assertSoftly(barn2.forholdsmessigFordeling!!) {
+            harLøpendeBidrag shouldBe false
+            løperBidragFra shouldBe null
+            søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+        }
+        behandling.bidragsmottaker!!.forholdsmessigFordeling!!.søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+        behandling.bidragspliktig!!.forholdsmessigFordeling shouldNotBe null
+    }
+
+    @Test
+    fun `skal ikke overskrive eksisterende FF-detaljer på roller`() {
+        barn1.forholdsmessigFordeling = null
+        val eksisterendeFFDetaljerBarn2 = barn2.forholdsmessigFordeling
+        val eksisterendeFFDetaljerBM = behandling.bidragsmottaker!!.forholdsmessigFordeling
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        barn1.forholdsmessigFordeling shouldNotBe null
+        barn2.forholdsmessigFordeling shouldBeSameInstanceAs eksisterendeFFDetaljerBarn2
+        behandling.bidragsmottaker!!.forholdsmessigFordeling shouldBeSameInstanceAs eksisterendeFFDetaljerBM
+    }
+
+    @Test
+    fun `skal ikke hente løpende bidrag når alle søknadsbarn har FF-detaljer`() {
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        verify(exactly = 0) { kravhaverService.hentSisteLøpendeStønader(any(), any()) }
+    }
 
     @Test
     fun `skal feilregistrere klagesøknad opprettet av systemet når saksbehandler oppretter søknad for samme barn`() {
