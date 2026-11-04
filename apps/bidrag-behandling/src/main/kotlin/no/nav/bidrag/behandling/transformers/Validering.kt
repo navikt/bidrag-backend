@@ -667,7 +667,7 @@ fun List<Datoperiode>.ugyldigSluttperiode(
     val sistePeriode = maxByOrNull { it.fom } ?: return false
     val sisteGyldigTilDato = opphørsdato.opphørSisteTilDato()
     val sisteTilDato = sistePeriode.til ?: LocalDate.MAX
-    return if (!kanHaHullIPerioder) sisteTilDato != sisteGyldigTilDato else sisteTilDato.isAfter(sisteGyldigTilDato) == true
+    return if (!kanHaHullIPerioder) sisteTilDato != sisteGyldigTilDato else any { (it.til ?: LocalDate.MAX).isAfter(sisteGyldigTilDato) }
 }
 
 fun List<Datoperiode>.finnHullIPerioder(
@@ -738,7 +738,7 @@ fun List<Inntekt>.harUgyldigSluttperiode(opphørsdato: LocalDate?): Boolean {
             .sortedBy { it.datoFom }
             .map { Datoperiode(it.datoFom!!, it.datoTom) }
     // Inntekter til barn trenger ikke å bli definert for hele beregningsperioden
-    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() || it.rolle?.erBarn == true })
+    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() || it.gjelderRolle?.erBarn == true })
 }
 
 val Inntekt.inntektstypeListe
