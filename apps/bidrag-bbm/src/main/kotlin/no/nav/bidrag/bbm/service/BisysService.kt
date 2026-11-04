@@ -211,7 +211,12 @@ class BisysService(
                 søknadslinjer
                     .mapNotNull { rollerFnrMap[it.rolleid] }
 
-            if (request.barnListe.any { barn -> personerMedSøknadslinjer.contains(barn.personident) } &&
+            // For 18 år FF-søknader skal kun inneholde ett barn (18 åringen), ordinære FF søknader kan inneholde flere barn
+            val kanGjenbrukeEksisterendeSøknad =
+                request.behandlingstema != Behandlingstema.BIDRAG_18_ÅR || request.barnListe.size == 1
+
+            if (kanGjenbrukeEksisterendeSøknad &&
+                request.barnListe.any { barn -> personerMedSøknadslinjer.contains(barn.personident) } &&
                 søknadslinjer.any { sl -> sl.gruppeKombinasjonskode == gruppeKombinasjonskodeRequest } &&
                 !eksisterendeSøknadErFeilregistrert
             ) {

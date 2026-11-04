@@ -3,6 +3,7 @@ package no.nav.bidrag.bbm.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.bidrag.bbm.CommonTestRunner
@@ -2378,6 +2379,49 @@ class BisysServiceTest(
         val søknad2 = bisysService.opprettSøknader(request2)
 
         søknad2.søknadsid shouldNotBe søknad1.søknadsid
+    }
+
+    @Test
+    fun `oppretter ny søknad for bidrag 18 år med flere barn når matchende søknad med flere barn er feilregistrert`() {
+        testdataManager.lagreKodeSøknadsstatus(
+            listOf(
+                opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0"),
+                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
+            ),
+        )
+
+        testdataManager.lagreRoller(
+            listOf(
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_2, rolletype = "BA"),
+            ),
+        )
+
+        val request =
+            OpprettSøknadRequest(
+                saksnummer = SAKSNUMMER_1,
+                behandlingsid = 1L,
+                behandlerenhet = "enhet1",
+                behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                søknadFomDato = LocalDate.now(),
+                innkreving = true,
+                barnListe =
+                listOf(
+                    Barn(personident = PERSONIDENT_BARN_1),
+                    Barn(personident = PERSONIDENT_BARN_2),
+                ),
+                behandlingstype = null,
+            )
+
+        val søknad1 = bisysService.opprettSøknader(request)
+        bisysService.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid = søknad1.søknadsid))
+        val søknad2 = bisysService.opprettSøknader(request)
+
+        søknad2.søknadsid shouldNotBe søknad1.søknadsid
+        testdataManager.hentSøknadslinjerForSøknadMedId(søknad2.søknadsid).shouldNotBeNull()
     }
 
     @Test
