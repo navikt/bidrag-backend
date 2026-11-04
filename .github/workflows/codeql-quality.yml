@@ -1,0 +1,76 @@
+name: "CodeQL Quality"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '55 22 * * *'
+
+jobs:
+  analyze:
+    name: Quality (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+          - language: python
+            build-mode: none
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up JDK
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
+        with:
+          java-version: 25
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Set up Maven settings for GitHub Packages
+        if: matrix.language == 'java-kotlin'
+        uses: s4u/maven-settings-action@4cfd36368400327fd45dcb28f190ae7b85533deb
+        with:
+          githubServer: false
+          servers: |
+            [
+              {
+                "id": "github",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              },
+              {
+                "id": "github2",
+                "username": "x-access-token",
+                "password": "${{ secrets.READER_TOKEN }}"
+              }
+            ]
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: code-quality
+          config: |
+            disable-default-queries: true
+
+      - name: Run manual build steps
+        if: matrix.build-mode == 'manual'
+        shell: bash
+        run: mvn -B -fae install -DskipTests -Dmaven.antrun.skip=true -Dparallel=all -DperCoreThreadCount=true -DthreadCount=10 -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
+        with:
+          category: "/quality/language:${{ matrix.language }}"
