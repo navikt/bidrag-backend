@@ -18,6 +18,7 @@ enum class GrunnlagRequestType {
     BARNETILSYN,
     ARBEIDSFORHOLD,
     TILLEGGSSTØNAD,
+    BARNETILLEGG_AAP,
 
     @Deprecated("OVERGANGSSTONAD skal utgå som egen type. Må koordineres med Bisys")
     OVERGANGSSTONAD,
