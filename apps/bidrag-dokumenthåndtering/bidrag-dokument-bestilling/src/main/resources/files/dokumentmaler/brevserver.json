@@ -923,6 +923,7 @@
     "kode": "BI01S09",
     "tittel": "Varsel om opphør barnebidrag etter fylte 18 år",
     "batchbrev": true,
+    "enabled": true,
     "type": "VARSEL",
     "støttetSpråk": [
       "NB"
