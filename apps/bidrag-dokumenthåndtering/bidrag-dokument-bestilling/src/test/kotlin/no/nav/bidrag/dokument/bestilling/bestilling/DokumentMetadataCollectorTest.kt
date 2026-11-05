@@ -816,11 +816,11 @@ internal class DokumentMetadataCollectorTest {
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {
-            bestilling.roller.barn[0].fornavn shouldBe "(CHILD BORN IN ${barn1Kode6.fødselsdato?.year})"
-            bestilling.roller.barn[0].navn shouldBe "(CHILD BORN IN ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].fornavn shouldBe "(Child born in ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].navn shouldBe "(Child born in ${barn1Kode6.fødselsdato?.year})"
 
-            bestilling.roller.barn[1].fornavn shouldBe "(CHILD)"
-            bestilling.roller.barn[1].navn shouldBe "(CHILD)"
+            bestilling.roller.barn[1].fornavn shouldBe "(Child)"
+            bestilling.roller.barn[1].navn shouldBe "(Child)"
         }
     }
 
