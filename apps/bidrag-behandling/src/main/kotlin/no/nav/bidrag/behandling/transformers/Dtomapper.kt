@@ -1206,7 +1206,8 @@ class Dtomapper(
                         it.grunnlagFraVedtak ?: it.grunnlagFraVedtakForInnkreving?.vedtak,
                         kanSkriveVurderingAvSkolegang = kanSkriveVurderingAvSkolegang(it),
                         begrunnelse =
-                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle) {
+                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle && !erIForholdsmessigFordeling) {
+                            // I FF så har barna aldri samme begrunnelse
                             BegrunnelseDto(
                                 henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT),
                             )
