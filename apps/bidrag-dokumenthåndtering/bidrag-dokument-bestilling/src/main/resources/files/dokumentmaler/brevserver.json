@@ -924,7 +924,7 @@
     "tittel": "Varsel om opphør barnebidrag etter fylte 18 år",
     "batchbrev": true,
     "enabled": true,
-    "type": "BI01S09",
+    "type": "VARSEL_STANDARD",
     "støttetSpråk": [
       "NB"
     ]
