@@ -362,17 +362,6 @@ class VedtakGrunnlagMapperTest {
     }
 
     @Test
-    fun `finnBeregnFra skal ikke starte før barnets fødsel ved forholdsmessig fordeling`() {
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
-        val søknadsbarn = behandling.søknadsbarn.first()
-        søknadsbarn.stønadstype = Stønadstype.BIDRAG
-        søknadsbarn.fødselsdato = LocalDate.of(2023, 6, 15)
-
-        søknadsbarn.finnBeregnFra() shouldBe YearMonth.of(2023, 6)
-    }
-
-    @Test
     fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)

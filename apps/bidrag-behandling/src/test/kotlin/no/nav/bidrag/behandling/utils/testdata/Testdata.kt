@@ -1327,9 +1327,10 @@ fun oppretteTestbehandling(
     setteDatabaseider: Boolean = false,
     inkludereArbeidsforhold: Boolean = false,
     inkludereInntektsgrunnlag: Boolean = false,
+    virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01"),
 ): Behandling {
     val behandlingsid = if (setteDatabaseider) 1L else null
-    val behandling = oppretteBehandling(behandlingsid)
+    val behandling = oppretteBehandling(behandlingsid, virkningstidspunkt = virkningstidspunkt)
 
     when (behandlingstype) {
         TypeBehandling.BIDRAG -> {

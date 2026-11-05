@@ -85,6 +85,7 @@ class TestdataManager(
         inkludereVoksneIBpsHusstand: Boolean = false,
         setteDatabaseider: Boolean = false,
         inkludereArbeidsforhold: Boolean = false,
+        virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01"),
     ): Behandling {
         val behandling =
             oppretteTestbehandling(
@@ -96,6 +97,7 @@ class TestdataManager(
                 inkludereVoksneIBpsHusstand,
                 setteDatabaseider,
                 inkludereArbeidsforhold,
+                virkningstidspunkt = virkningstidspunkt,
             )
 
         return behandlingRepository.save(behandling)
