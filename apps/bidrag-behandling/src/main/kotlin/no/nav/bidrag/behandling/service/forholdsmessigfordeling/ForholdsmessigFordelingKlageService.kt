@@ -7,6 +7,7 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
@@ -199,6 +200,7 @@ class ForholdsmessigFordelingKlageService(
             )
         opprettetSøknad = if (opprettetSøknad.søknadsid != opprettetEllerOppdaterSøknadsid) bbmConsumer.hentSøknad(hovedsøknadsid)!!.søknad else opprettetSøknad
 
+        oppdaterFFDetaljerPåRollerIKlage(behandling)
         oppdaterRollerMedSøknadDetaljer(behandling, opprettetSøknad, bmOgBidragspliktiIdenter, opprettetEllerOppdaterSøknadsid, søknadOpprettetAvSaksbehandler)
         feilregistrerSøknaderErstattetAvAnnenSøknad(behandling, opprettetSøknad)
         val rollerITilknyttedeSøknader = finnAlleBarnIOpprettetSøknader(behandling, hovedsøknadsid, åpneSøknaderForVedtaksid)
@@ -258,6 +260,42 @@ class ForholdsmessigFordelingKlageService(
 
         opprettVarselForsendelserForKlage(behandling, hovedsøknadsid)
         behandlingService.sendOppdatertHendelse(behandling.id!!, false)
+    }
+
+    /**
+     * Sørger for at alle roller i behandlingen har FF-detaljer.
+     * Roller fra hovedsøknaden mangler FF-detaljer hvis påklaget vedtak ikke var i forholdsmessig fordeling.
+     */
+    internal fun oppdaterFFDetaljerPåRollerIKlage(behandling: Behandling) {
+        val søknadsbarnUtenFFDetaljer = behandling.søknadsbarn.filter { it.forholdsmessigFordeling == null }
+        if (søknadsbarnUtenFFDetaljer.isNotEmpty()) {
+            val løpendeBidragssakerBP =
+                kravhaverService.hentSisteLøpendeStønader(Personident(behandling.bidragspliktig!!.ident!!), behandling.finnBeregningsperiode())
+            val beregnTilDato = behandling.finnBeregnTilDato().toYearMonth()
+            søknadsbarnUtenFFDetaljer.forEach { barn ->
+                val løpendeBidrag = løpendeBidragssakerBP.hentBidragSakForKravhaver(barn.ident!!, barn.stønadstype)
+                barn.forholdsmessigFordeling =
+                    ForholdsmessigFordelingRolle(
+                        delAvOpprinneligBehandling = true,
+                        tilhørerSak = behandling.saksnummer,
+                        behandlingsid = behandling.id,
+                        behandlerenhet = behandling.behandlerEnhet,
+                        bidragsmottaker = barn.bidragsmottaker?.ident,
+                        erRevurdering = false,
+                        søknader = mutableSetOf(behandling.tilFFBarnDetaljer()),
+                        løperBidragFra = løpendeBidrag?.periodeFra,
+                        løperBidragTil = løpendeBidrag?.periodeTil,
+                        harLøpendeBidrag = løpendeBidrag?.løperBidragEtterDato(beregnTilDato) == true,
+                    )
+            }
+        }
+
+        behandling.alleBidragsmottakere.filter { it.forholdsmessigFordeling == null }.forEach {
+            it.forholdsmessigFordeling = behandling.tilFFDetaljerBM()
+        }
+        behandling.bidragspliktig?.takeIf { it.forholdsmessigFordeling == null }?.let {
+            it.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
+        }
     }
 
     private fun finnBarnIOriginaleVedtak(behandling: Behandling): List<SakKravhaver> {

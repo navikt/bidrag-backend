@@ -132,11 +132,9 @@ deploy-jobber fullføre før du bytter oppsett.
 
 ## CodeQL-analyser
 
-[`codeql.yml`](.github/workflows/codeql.yml) kjører sikkerhetsanalysen.
-[`codeql-quality.yml`](.github/workflows/codeql-quality.yml) kjører
-`code-quality`-spørringene for Java/Kotlin, JavaScript/TypeScript og Python,
-uten standardspørringene for sikkerhet. Begge kjører daglig og kan startes
-manuelt i GitHub Actions.
+[`codeql.yml`](.github/workflows/codeql.yml) kjører `security-and-quality`
+for GitHub Actions, Java/Kotlin, JavaScript/TypeScript og Python. Workflowen
+kjører daglig og kan startes manuelt i GitHub Actions.
 
 ## Automatisk PR-beskrivelse
 
