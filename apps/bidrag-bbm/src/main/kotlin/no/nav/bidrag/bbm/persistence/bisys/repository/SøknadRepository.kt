@@ -20,6 +20,11 @@ interface SøknadRepository : CrudRepository<Søknad, String> {
     fun finnSøknaderForBehandling(behandlingsid: String): List<Søknad>
 
     @Query(
+        "select s from Søknad s where s.refVedtaksid = :vedtaksid and s.søknadsgruppekode in ('BI', 'OB', '18') order by s.søknadsid",
+    )
+    fun finnSøknaderForVedtak(vedtaksid: String): List<Søknad>
+
+    @Query(
         "select new no.nav.bidrag.bbm.bo.ÅpenSøknad(s.behandlerenhet, s.saksnummer, " +
             "s.søknadsid, s.refVedtaksid, s.referertSøknadsid, s.blankettid, s.søknadMottattDato, " +
             "s.søknadFomDato, s.søknadsgruppekode, " +

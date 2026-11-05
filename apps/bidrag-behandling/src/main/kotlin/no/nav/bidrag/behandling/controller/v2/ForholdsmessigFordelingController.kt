@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.controller.v2
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OppdaterRevurderingsdatoFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
@@ -28,6 +29,21 @@ class ForholdsmessigFordelingController(
         val saksbehandlerIdent = TokenUtils.hentSaksbehandlerIdent()
         SikkerhetsKontekst.medApplikasjonKontekst {
             forholdsmessigFordelingService.opprettEllerOppdaterForholdsmessigFordeling(behandlingsid, request = request, opprettetAvSaksbehandler = saksbehandlerIdent)
+        }
+    }
+
+    @PostMapping("/revurderingsdato/{behandlingsid}")
+    @Operation(
+        description =
+        "Oppdaterer revurderingsdato for revurderingsbarn i opprettet forholdsmessig fordeling. " +
+            "Søknaden oppdateres direkte hvis alle barn i søknaden får samme dato, ellers flyttes barna til ny FF-søknad.",
+    )
+    fun oppdaterRevurderingsdato(
+        @PathVariable behandlingsid: Long,
+        @RequestBody request: OppdaterRevurderingsdatoFFRequest,
+    ) {
+        SikkerhetsKontekst.medApplikasjonKontekst {
+            forholdsmessigFordelingService.oppdaterRevurderingsdato(behandlingsid, request)
         }
     }
 

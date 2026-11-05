@@ -1123,11 +1123,19 @@ private fun Behandling.tilNotatBoforhold(): NotatBegrunnelseDto = NotatBegrunnel
 private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )
@@ -1135,11 +1143,19 @@ private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = Nota
 private fun Behandling.tilNotatVirkningstidspunkt(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )

@@ -189,6 +189,15 @@ fun OpprettFFRequest?.finnManueltOverstyrtRevurderingsdato(kravhaver: SakKravhav
         )
     }?.manueltOverstyrtRevurderingFraDato
 
+fun Behandling.finnTidligsteRevurderingsdato(
+    kravhaver: String,
+    stønadstype: Stønadstype?,
+): LocalDate? = if (stønadstype == Stønadstype.BIDRAG18AAR) {
+    hentPerson(kravhaver)?.fødselsdato?.tilDato18årsBidrag()
+} else {
+    eldsteSøktFomDato
+}
+
 fun finnSøktFomDatoForKravhaver(
     alleKravhavere: Set<SakKravhaver>,
     kravhaverSak: SakKravhaver,
@@ -198,13 +207,7 @@ fun finnSøktFomDatoForKravhaver(
     val barn = behandling.roller.find { it.erSammeRolle(kravhaverSak.kravhaver, kravhaverSak.stønadstype) }
     val revurderingFraDatoDefault = alleKravhavere.finnSøktFomRevurderingSøknad(behandling)
 
-    val tidligstSøktFomDato =
-        if (kravhaverSak.stønadstype == Stønadstype.BIDRAG18AAR) {
-            val person = hentPerson(kravhaverSak.kravhaver)
-            person?.fødselsdato?.tilDato18årsBidrag()
-        } else {
-            behandling.eldsteSøktFomDato
-        }
+    val tidligstSøktFomDato = behandling.finnTidligsteRevurderingsdato(kravhaverSak.kravhaver, kravhaverSak.stønadstype)
     val manueltOverstyrtDato =
         request.finnManueltOverstyrtRevurderingsdato(kravhaverSak) ?: barn?.forholdsmessigFordeling?.revurderingsdatoVedOpprettelseAvFF
     return if (manueltOverstyrtDato != null) {
