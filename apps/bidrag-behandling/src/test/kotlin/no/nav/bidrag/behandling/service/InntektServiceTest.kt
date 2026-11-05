@@ -1505,6 +1505,7 @@ class InntektServiceTest : TestContainerRunner() {
                 )
 
             behandling.virkningstidspunkt = virkningstidspunkt
+            behandling.søknadsbarn.forEach { it.virkningstidspunkt = virkningstidspunkt }
             testdataManager.lagreBehandling(behandling)
             inntektService.rekalkulerPerioderInntekter(behandling.id!!)
 
