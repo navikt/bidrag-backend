@@ -38,6 +38,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
@@ -705,6 +706,29 @@ class BisysService(
             it.behandlerenhet = request.behandlerenhet
             søknadRepository.save(it)
         }
+    }
+
+    /**
+     * Oppdaterer søkt fom dato på søknad og tilhørende søknader under samme blankett (feks innkrevingssøknad) som har samme søkt fom dato.
+     */
+    @Transactional("bisysTransactionManager")
+    fun oppdaterSøknadFomDato(request: OppdaterSøknadFomDatoRequest) {
+        secureLogger.info { "Request mottatt for å oppdatere søkt fom dato på søknad: $request " }
+        val søknad =
+            søknadRepository.findById(request.søknadsid.toString()).orElseThrow {
+                val melding = "Fant ikke søknad med id: ${request.søknadsid}"
+                secureLogger.error { melding }
+                HttpClientErrorException(HttpStatus.BAD_REQUEST, melding)
+            }
+        val forrigeSøknadFomDato = søknad.søknadFomDato
+
+        søknadRepository
+            .finnAlleTilhørendeSøknader(søknad.blankettid)
+            .filter { it.søknadsid == søknad.søknadsid || it.søknadFomDato == forrigeSøknadFomDato }
+            .forEach {
+                it.søknadFomDato = request.søknadFomDato
+                søknadRepository.save(it)
+            }
     }
 
     fun feilregistrerSøknad(request: FeilregistrerSøknadRequest) {
