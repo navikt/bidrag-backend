@@ -522,7 +522,6 @@ class BisysServiceTest(
                         personident = PERSONIDENT_BARN_2,
                     ),
                 ),
-                behandlingstype = null,
             )
 
         val response = bisysService.opprettSøknader(request)
