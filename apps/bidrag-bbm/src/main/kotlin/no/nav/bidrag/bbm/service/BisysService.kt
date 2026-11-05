@@ -171,6 +171,16 @@ class BisysService(
             )
         }
 
+        if (request.behandlingstema == Behandlingstema.BIDRAG_18_ÅR &&
+            request.barnListe.size > 1 &&
+            (request.behandlingstype?.erForholdsmessigFordeling() ?: true)
+        ) {
+            throw HttpClientErrorException(
+                HttpStatus.BAD_REQUEST,
+                "Søknad om bidrag 18 år for forholdsmessig fordeling kan bare inneholde ett barn",
+            )
+        }
+
         val gruppeKombinasjonskodeRequest =
             SøknadGruppeKombinasjon
                 .fraBehandlingstemaOgInnkreving(
@@ -211,12 +221,7 @@ class BisysService(
                 søknadslinjer
                     .mapNotNull { rollerFnrMap[it.rolleid] }
 
-            // For 18 år FF-søknader skal kun inneholde ett barn (18 åringen), ordinære FF søknader kan inneholde flere barn
-            val kanGjenbrukeEksisterendeSøknad =
-                request.behandlingstema != Behandlingstema.BIDRAG_18_ÅR || request.barnListe.size == 1
-
-            if (kanGjenbrukeEksisterendeSøknad &&
-                request.barnListe.any { barn -> personerMedSøknadslinjer.contains(barn.personident) } &&
+            if (request.barnListe.any { barn -> personerMedSøknadslinjer.contains(barn.personident) } &&
                 søknadslinjer.any { sl -> sl.gruppeKombinasjonskode == gruppeKombinasjonskodeRequest } &&
                 !eksisterendeSøknadErFeilregistrert
             ) {

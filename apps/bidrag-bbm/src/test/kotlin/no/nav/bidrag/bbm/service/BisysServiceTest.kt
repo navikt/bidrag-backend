@@ -510,6 +510,7 @@ class BisysServiceTest(
                 behandlingsid = 1L,
                 behandlerenhet = "enhet1",
                 behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                behandlingstype = Behandlingstype.SØKNAD,
                 søknadFomDato = LocalDate.now(),
                 innkreving = true,
                 barnListe =
@@ -525,6 +526,7 @@ class BisysServiceTest(
             )
 
         val response = bisysService.opprettSøknader(request)
+        val retryResponse = bisysService.opprettSøknader(request)
 
         val opprettetSøknad = testdataManager.hentSøknadMedId(response.søknadsid)
 
@@ -533,6 +535,8 @@ class BisysServiceTest(
         val åpneSøknader = bisysService.hentÅpneSøknaderForPerson(PERSONIDENT_BP_1).åpneSøknader
 
         assertSoftly {
+            retryResponse.søknadsid shouldBe response.søknadsid
+
             opprettetSøknad!!.apply {
                 søknadsid shouldBe response.søknadsid
                 søknadMottattDato shouldBe LocalDate.now()
@@ -2382,24 +2386,7 @@ class BisysServiceTest(
     }
 
     @Test
-    fun `oppretter ny søknad for bidrag 18 år med flere barn når matchende søknad med flere barn er feilregistrert`() {
-        testdataManager.lagreKodeSøknadsstatus(
-            listOf(
-                opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0"),
-                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
-                opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
-            ),
-        )
-
-        testdataManager.lagreRoller(
-            listOf(
-                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
-                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
-                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
-                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_2, rolletype = "BA"),
-            ),
-        )
-
+    fun `avviser bidrag 18 år FF søknad med flere barn før opprettelse`() {
         val request =
             OpprettSøknadRequest(
                 saksnummer = SAKSNUMMER_1,
@@ -2413,15 +2400,48 @@ class BisysServiceTest(
                     Barn(personident = PERSONIDENT_BARN_1),
                     Barn(personident = PERSONIDENT_BARN_2),
                 ),
-                behandlingstype = null,
+                behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
             )
 
-        val søknad1 = bisysService.opprettSøknader(request)
-        bisysService.feilregistrerSøknad(FeilregistrerSøknadRequest(søknadsid = søknad1.søknadsid))
-        val søknad2 = bisysService.opprettSøknader(request)
+        val exception = shouldThrow<HttpClientErrorException> { bisysService.opprettSøknader(request) }
 
-        søknad2.søknadsid shouldNotBe søknad1.søknadsid
-        testdataManager.hentSøknadslinjerForSøknadMedId(søknad2.søknadsid).shouldNotBeNull()
+        exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+    }
+
+    @Test
+    fun `gjenbruker bidrag 18 år FF søknad ved identisk retry uten å lukke søknaden`() {
+        testdataManager.lagreKodeSøknadsstatus(
+            listOf(
+                opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0"),
+                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
+            ),
+        )
+
+        testdataManager.lagreRoller(
+            listOf(
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
+            ),
+        )
+
+        val request =
+            OpprettSøknadRequest(
+                saksnummer = SAKSNUMMER_1,
+                behandlingsid = 1L,
+                behandlerenhet = "enhet1",
+                behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                søknadFomDato = LocalDate.now(),
+                innkreving = true,
+                barnListe = listOf(Barn(personident = PERSONIDENT_BARN_1)),
+                behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+            )
+
+        val firstResponse = bisysService.opprettSøknader(request)
+        val retryResponse = bisysService.opprettSøknader(request)
+
+        retryResponse.søknadsid shouldBe firstResponse.søknadsid
     }
 
     @Test
