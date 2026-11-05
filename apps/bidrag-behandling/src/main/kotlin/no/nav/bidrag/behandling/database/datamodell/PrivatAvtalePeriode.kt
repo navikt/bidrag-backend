@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -43,6 +44,8 @@ open class PrivatAvtalePeriode(
     )
 
     fun tilDatoperiode() = Datoperiode(fom, tom)
+
+    fun tilÅrMånedsperiode() = ÅrMånedsperiode(fom, tom?.plusDays(1))
 
     override fun toString(): String = "PrivatAvtalePeriode(id=$id, privatAvtale=${privatAvtale.id}, fom=$fom, tom=$tom, beløp=$beløp)"
 }

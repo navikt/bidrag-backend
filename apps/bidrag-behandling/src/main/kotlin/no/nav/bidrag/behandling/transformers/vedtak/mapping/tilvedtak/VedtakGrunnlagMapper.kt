@@ -86,6 +86,7 @@ import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.collections.emptyList
 
 fun Behandling.finnSkalInnkrevesPeriode(søknadsbarnRolle: Rolle): List<ÅrMånedsperiode> = if (innkrevingstype == Innkrevingstype.UTEN_INNKREVING && !søknadsbarnRolle.erRevurderingsbarn) {
     val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
@@ -229,43 +230,47 @@ fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
     behandling.finnBeregnTilDato().toYearMonth()
 }
 
-fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
-    val tidligsteBeregnFra =
-        if (stønadstype == Stønadstype.BIDRAG18AAR) {
-            maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
-        } else if (avslag != null) {
-            virkningstidspunktRolle.toYearMonth()
-        } else {
-            // Virkning kan ikke vær før barnet er født
-            maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
+fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
+    Rolletype.BIDRAGSMOTTAKER -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
+        .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+        .minOfOrNull { it.finnBeregnFra() }
+        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    Rolletype.BIDRAGSPLIKTIG -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
+        .minOfOrNull { it.finnBeregnFra() }
+        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    Rolletype.BARN -> {
+        val beregnFra = virkningstidspunkt?.toYearMonth() ?: behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+        if (behandling.erIForholdsmessigFordeling) {
+            val forholdsmessigFordelingBeregningsperiode = ÅrMånedsperiode(fom = behandling.eldsteVirkningstidspunkt, til = null)
+
+            val bidragsperioder = behandling
+                .hentGrunnlagBeløpshistorikkForRolle(this, behandling.erKlageEllerOmgjøring)
+                ?.konverterTilStønadDto()
+                ?.periodeListe
+                ?.filter { it.beløp != null }
+                ?.map { it.periode }
+                ?: emptyList()
+
+            val privatAvtalePerioder = behandling.privatAvtale
+                .find { it.gjelderPerson(ident!!, stønadstype) }
+                ?.perioder
+                ?.map { it.tilÅrMånedsperiode() }
+                ?: emptyList()
+
+
+            (bidragsperioder + privatAvtalePerioder)
+                .filter { it.overlapper(forholdsmessigFordelingBeregningsperiode) }
+                .minOfOrNull { it.fom }
+                ?.takeIf { it.isBefore(beregnFra) }
+                ?.let { return it }
         }
-    if (behandling.erIForholdsmessigFordeling) {
-        if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-            behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
-                it.finnBeregnFra()
-            } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
-        } else if (erRevurderingsbarn) {
-            behandling
-                .finnPeriodeLøperBidrag(this)
-                ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
-                ?.fom
-                ?.let {
-                    maxOf(
-                        it,
-                        tidligsteBeregnFra,
-                    )
-                }
-                ?: run { tidligsteBeregnFra }
-        } else {
-            tidligsteBeregnFra
-        }
-    } else if (rolletype == Rolletype.BIDRAGSPLIKTIG) {
-        behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
-    } else {
-        virkningstidspunktRolle.toYearMonth()
+        return beregnFra
     }
-} else {
-    behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+
+    Rolletype.REELMOTTAKER -> throw IllegalArgumentException("Skal ikke beregne for Reel mottaker")
+    Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
 
 fun Behandling.finnBeregnTilDatoBehandling(
