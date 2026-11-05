@@ -3,7 +3,6 @@ package no.nav.bidrag.behandling.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import jakarta.persistence.EntityManager
@@ -860,9 +859,9 @@ class InntektServiceTest : TestContainerRunner() {
     @Nested
     @DisplayName("Teste manuell oppdatering av inntekter")
     @Transactional
-    open inner class OppdatereInntekterManuelt {
+    inner class OppdatereInntekterManuelt {
         @Test
-        open fun `skal oppdatere eksisterende inntekt`() {
+        fun `skal oppdatere eksisterende inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -981,7 +980,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på offentlige inntekter`() {
+        fun `skal oppdatere periode på offentlige inntekter`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1078,7 +1077,7 @@ class InntektServiceTest : TestContainerRunner() {
                     .first()
                     .datoTom shouldBe
                     forespørselOmOppdateringAvInntekter.oppdatereInntektsperiode
-                        .angittPeriode!!
+                        .angittPeriode
                         .til
                 oppdatertBehandling
                     .get()
@@ -1109,9 +1108,9 @@ class InntektServiceTest : TestContainerRunner() {
     @Nested
     @DisplayName("Teste maunuell oppdatering av inntekt")
     @Transactional
-    open inner class OppdatereInntektManuelt {
+    inner class OppdatereInntektManuelt {
         @Test
-        open fun `skal oppdatere eksisterende manuell inntekt`() {
+        fun `skal oppdatere eksisterende manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1198,7 +1197,7 @@ class InntektServiceTest : TestContainerRunner() {
         }
 
         @Test
-        open fun `skal slette manuell inntekt`() {
+        fun `skal slette manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1256,7 +1255,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal ta med offentlig inntekt som er ekplisitt ytelse og sette datoFom og datoTom automatisk`() {
+        fun `skal ta med offentlig inntekt som er ekplisitt ytelse og sette datoFom og datoTom automatisk`() {
             // gitt
             val behandling = oppretteTestbehandling(false, false, false)
             behandlingRepository.save(behandling)
@@ -1284,7 +1283,7 @@ class InntektServiceTest : TestContainerRunner() {
                     oppdatereInntektsperiode =
                     OppdaterePeriodeInntekt(
                         taMedIBeregning = true,
-                        id = utvidetBarnetrygd!!.id!!,
+                        id = utvidetBarnetrygd.id!!,
                     ),
                 )
 
@@ -1302,7 +1301,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal legge til ny manuell inntekt`() {
+        fun `skal legge til ny manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1344,7 +1343,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på offentlige inntekter`() {
+        fun `skal oppdatere periode på offentlige inntekter`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1466,7 +1465,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på inntekter etter endring i virkningstidspunkt`() {
+        fun `skal oppdatere periode på inntekter etter endring i virkningstidspunkt`() {
             val virkningstidspunkt = LocalDate.parse("2023-07-01")
             val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = virkningstidspunkt)
             behandling.inntekter =
@@ -1507,7 +1506,7 @@ class InntektServiceTest : TestContainerRunner() {
             testdataManager.lagreBehandling(behandling)
             inntektService.rekalkulerPerioderInntekter(behandling.id!!)
 
-            val inntekter = behandling!!.inntekter.toList()
+            val inntekter = behandling.inntekter.toList()
             inntekter.filter { it.taMed } shouldHaveSize 3
             inntekter.filter { it.datoFom != null && it.datoFom!! > virkningstidspunkt } shouldHaveSize 2
         }
