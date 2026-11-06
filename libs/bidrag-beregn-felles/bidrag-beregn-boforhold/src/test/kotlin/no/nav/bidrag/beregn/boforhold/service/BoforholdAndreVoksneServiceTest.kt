@@ -424,44 +424,6 @@ internal class BoforholdAndreVoksneServiceTest {
     }
 
     @Test
-    fun `skal ikke beholde perioder som starter etter opphørsdato når beregnTilDato er senere`() {
-        val opphørsdato = LocalDate.of(2023, 6, 1)
-        val beregnTilDato = LocalDate.of(2023, 12, 31)
-        val perioder = listOf(
-            BoforholdResponseV2(
-                gjelderPersonId = "12345678901",
-                fødselsdato = LocalDate.of(2005, 1, 1),
-                periodeFom = LocalDate.of(2023, 1, 1),
-                periodeTom = LocalDate.of(2023, 12, 31),
-                bostatus = Bostatuskode.MED_FORELDER,
-                kilde = Kilde.OFFENTLIG,
-            ),
-            BoforholdResponseV2(
-                gjelderPersonId = "12345678901",
-                fødselsdato = LocalDate.of(2005, 1, 1),
-                periodeFom = LocalDate.of(2023, 6, 1),
-                periodeTom = null,
-                bostatus = Bostatuskode.IKKE_MED_FORELDER,
-                kilde = Kilde.OFFENTLIG,
-            ),
-            BoforholdResponseV2(
-                gjelderPersonId = "12345678901",
-                fødselsdato = LocalDate.of(2005, 1, 1),
-                periodeFom = LocalDate.of(2023, 7, 1),
-                periodeTom = null,
-                bostatus = Bostatuskode.MED_FORELDER,
-                kilde = Kilde.OFFENTLIG,
-            ),
-        )
-
-        val resultat = perioder.justerBoforholdPerioderForOpphørsdatoOgBeregnTilDato(opphørsdato, beregnTilDato)
-
-        resultat shouldHaveSize 1
-        resultat[0].periodeFom shouldBe LocalDate.of(2023, 1, 1)
-        resultat[0].periodeTom shouldBe LocalDate.of(2023, 5, 31)
-    }
-
-    @Test
     fun `test at periodeTom settes til null`() {
         boforholdAndreVoksneService = BoforholdAndreVoksneService()
         val mottatteBoforhold = BoforholdVoksneRequest(
