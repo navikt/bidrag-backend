@@ -36,6 +36,17 @@ data class OpprettFFRequest(
     )
 }
 
+@Schema(description = "Oppdaterer revurderingsdato (søkt fra dato) for revurderingsbarn i en opprettet forholdsmessig fordeling")
+data class OppdaterRevurderingsdatoFFRequest(
+    val barn: List<OppdaterRevurderingsdatoBarn> = emptyList(),
+) {
+    data class OppdaterRevurderingsdatoBarn(
+        val ident: String,
+        val stønadstype: Stønadstype,
+        val revurderingFraDato: LocalDate,
+    )
+}
+
 data class SjekkForholdmessigFordelingResponse(
     val skalBehandlesAvEnhet: String,
     val kanOppretteForholdsmessigFordeling: Boolean = false,
