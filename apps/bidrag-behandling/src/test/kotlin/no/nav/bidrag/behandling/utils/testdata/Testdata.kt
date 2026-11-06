@@ -365,6 +365,7 @@ fun opprettRolle(
     behandling: Behandling,
     data: TestDataPerson,
     id: Long? = null,
+    virkningstidspunkt: LocalDate? = null,
 ): Rolle = Rolle(
     id = id,
     navn = data.navn,
@@ -373,6 +374,7 @@ fun opprettRolle(
     behandling = behandling,
     fødselsdato = data.fødselsdato,
     opprettet = LocalDateTime.now(),
+    virkningstidspunkt = virkningstidspunkt,
 )
 
 fun oppretteRequestForOppdateringAvManuellInntekt(idInntekt: Long? = null) = OppdatereManuellInntekt(
@@ -567,6 +569,7 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
     vedtakstype: Vedtakstype = Vedtakstype.FASTSETTELSE,
     typeBehandling: TypeBehandling = TypeBehandling.FORSKUDD,
     andreBarn: List<TestDataPerson> = emptyList(),
+    virkningstidspunkt: LocalDate? = null,
 ): Behandling {
     // given
     val behandling =
@@ -574,7 +577,7 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
             if (generateId) 1 else null,
             vedtakstype = vedtakstype,
             virkningstidspunkt =
-            when (typeBehandling) {
+            virkningstidspunkt ?: when (typeBehandling) {
                 TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> LocalDate.parse("2023-02-01")
                 TypeBehandling.SÆRBIDRAG -> LocalDate.now().withDayOfMonth(1)
             },
@@ -1323,10 +1326,10 @@ fun oppretteTestbehandling(
     setteDatabaseider: Boolean = false,
     inkludereArbeidsforhold: Boolean = false,
     inkludereInntektsgrunnlag: Boolean = false,
-    virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01"),
+    virkningstidspunkt: LocalDate? = null,
 ): Behandling {
     val behandlingsid = if (setteDatabaseider) 1L else null
-    val behandling = oppretteBehandling(behandlingsid, virkningstidspunkt = virkningstidspunkt)
+    val behandling = oppretteBehandling(behandlingsid)
 
     when (behandlingstype) {
         TypeBehandling.BIDRAG -> {
@@ -1347,6 +1350,10 @@ fun oppretteTestbehandling(
         else -> {
             throw IllegalStateException("Behandlingstype $behandlingstype er foreløpig ikke støttet")
         }
+    }
+
+    if (virkningstidspunkt != null) {
+        behandling.virkningstidspunkt = virkningstidspunkt
     }
 
     val parterIBehandlingen = hashMapOf(1 to testdataBM, 2 to testdataBarn1, 3 to testdataBarn2)

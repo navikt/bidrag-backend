@@ -12,7 +12,6 @@ import no.nav.bidrag.behandling.database.grunnlag.SkattepliktigeInntekter
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.database.repository.InntektRepository
 import no.nav.bidrag.behandling.database.repository.PersonRepository
-import no.nav.bidrag.behandling.database.repository.RolleRepository
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
 import no.nav.bidrag.behandling.dto.v2.behandling.getOrMigrate
@@ -31,7 +30,6 @@ class TestdataManager(
     private val personRepository: PersonRepository,
     private val entityManager: EntityManager,
     private val inntektRepository: InntektRepository,
-    private val rolleRepository: RolleRepository,
 ) {
     @Transactional
     fun lagreBehandling(behandling: Behandling): Behandling = behandlingRepository.save(behandling)
@@ -85,7 +83,7 @@ class TestdataManager(
         inkludereVoksneIBpsHusstand: Boolean = false,
         setteDatabaseider: Boolean = false,
         inkludereArbeidsforhold: Boolean = false,
-        virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01"),
+        virkningstidspunkt: LocalDate? = null,
     ): Behandling {
         val behandling =
             oppretteTestbehandling(

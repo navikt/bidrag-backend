@@ -42,8 +42,7 @@ class BoforholdControllerTest : KontrollerTestRunner() {
     lateinit var behandlingRepository: BehandlingRepository
 
     private fun opprettBehandling(): Behandling {
-        val behandling = oppretteTestbehandling()
-        behandling.oppdaterVirkningstidspunktForAlle(LocalDate.parse("2023-01-01"))
+        val behandling = oppretteTestbehandling(virkningstidspunkt = LocalDate.parse("2023-01-01"))
         behandling.husstandsmedlem.clear()
         behandling.husstandsmedlem.addAll(
             setOf(
@@ -236,7 +235,7 @@ class BoforholdControllerTest : KontrollerTestRunner() {
                 OppdatereBoforholdRequestV2(
                     oppdatereHusstandsmedlem =
                     OppdatereHusstandsmedlem(
-                        slettPeriode = eksisterendeHusstandsmedlem!!.perioder.first { Kilde.MANUELL == it.kilde }.id,
+                        slettPeriode = eksisterendeHusstandsmedlem.perioder.first { Kilde.MANUELL == it.kilde }.id,
                     ),
                 )
 
@@ -316,7 +315,7 @@ class BoforholdControllerTest : KontrollerTestRunner() {
                         .personident!!
                         .verdi
                 oppdatertHusstandsmedlem.navn shouldBe
-                    request.oppdatereHusstandsmedlem.opprettHusstandsmedlem!!.navn
+                    request.oppdatereHusstandsmedlem.opprettHusstandsmedlem.navn
                 oppdatertHusstandsmedlem.perioder.shouldHaveSize(1)
                 oppdatertHusstandsmedlem.perioder.first().kilde shouldBe Kilde.MANUELL
                 oppdatertHusstandsmedlem.perioder.first().datoFom shouldBe behandling.virkningstidspunktEllerSøktFomDato

@@ -1447,7 +1447,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
         @Test
         fun `skal oppdatere opphørsdato og virkningstidspunkt når begge er fram i tid`() {
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            val virkningstidspunkt = LocalDate.now().plusMonths(6).withDayOfMonth(1)
+            val behandling =
+                opprettGyldigBehandlingForBeregningOgVedtak(
+                    typeBehandling = TypeBehandling.BIDRAG,
+                    generateId = true,
+                    virkningstidspunkt = virkningstidspunkt,
+                )
             val søknadsbarn2 =
                 Rolle(
                     ident = testdataBarn2.ident,
@@ -1455,11 +1461,11 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     behandling = behandling,
                     fødselsdato = testdataBarn2.fødselsdato,
                     id = 5,
-                    opphørsdato = LocalDate.parse("2024-01-01"),
+                    virkningstidspunkt = virkningstidspunkt,
+                    opphørsdato = LocalDate.now().plusMonths(10).withDayOfMonth(1),
                 )
             val søknadsbarn = behandling.søknadsbarn.first()
             behandling.roller.add(søknadsbarn2)
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.now().plusMonths(6).withDayOfMonth(1))
 
             søknadsbarn.opphørsdato = LocalDate.now().plusMonths(9).withDayOfMonth(1)
             val opphørsdato = LocalDate.now().plusMonths(8).withDayOfMonth(1)
@@ -1839,14 +1845,14 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                         underholdskostnad = underholdskostnadBarn1,
                         fom = behandling.virkningstidspunkt!!,
                         tom = YearMonth.now().minusMonths(7).atEndOfMonth(),
-                        `beløp` = BigDecimal(1000),
+                        beløp = BigDecimal(1000),
                     ),
                     Tilleggsstønad(
                         id = 2,
                         underholdskostnad = underholdskostnadBarn1,
                         fom = YearMonth.now().minusMonths(6).atDay(1),
                         tom = YearMonth.now().minusMonths(2).atEndOfMonth(),
-                        `beløp` = BigDecimal(1000),
+                        beløp = BigDecimal(1000),
                     ),
                 )
             val opphørsdato = LocalDate.now().minusMonths(3)
@@ -1946,14 +1952,14 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                         underholdskostnad = underholdskostnadBarn1,
                         fom = behandling.virkningstidspunkt!!,
                         tom = YearMonth.now().minusMonths(7).atEndOfMonth(),
-                        `beløp` = BigDecimal(1000),
+                        beløp = BigDecimal(1000),
                     ),
                     Tilleggsstønad(
                         id = 2,
                         underholdskostnad = underholdskostnadBarn1,
                         fom = YearMonth.now().minusMonths(6).atDay(1),
                         tom = YearMonth.now().minusMonths(2).atEndOfMonth(),
-                        `beløp` = BigDecimal(1000),
+                        beløp = BigDecimal(1000),
                     ),
                 )
             val opphørsdato = LocalDate.now().plusMonths(3)
@@ -1981,7 +1987,13 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
         @Test
         fun `skal oppdatere opphørsdato og virkningstidspunkt underholdskostnad framover i tid`() {
-            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            val virkningstidspunkt = YearMonth.now().plusMonths(8).atDay(1)
+            val behandling =
+                opprettGyldigBehandlingForBeregningOgVedtak(
+                    typeBehandling = TypeBehandling.BIDRAG,
+                    generateId = true,
+                    virkningstidspunkt = virkningstidspunkt,
+                )
             val søknadsbarn2 =
                 Rolle(
                     ident = testdataBarn2.ident,
@@ -1989,11 +2001,11 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     behandling = behandling,
                     fødselsdato = testdataBarn2.fødselsdato,
                     id = 5,
-                    opphørsdato = LocalDate.now().plusMonths(10),
+                    virkningstidspunkt = virkningstidspunkt,
+                    opphørsdato = LocalDate.now().plusMonths(10).withDayOfMonth(1),
                 )
             val søknadsbarn = behandling.søknadsbarn.first()
             behandling.roller.add(søknadsbarn2)
-            behandling.oppdaterVirkningstidspunktForAlle(YearMonth.now().plusMonths(8).atDay(1))
 
             val underholdskostnadBarn1 =
                 Underholdskostnad(
@@ -2037,7 +2049,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                         underholdskostnad = underholdskostnadBarn1,
                         fom = behandling.virkningstidspunkt!!,
                         tom = null,
-                        `beløp` = BigDecimal(1000),
+                        beløp = BigDecimal(1000),
                     ),
                 )
             val opphørsdato = LocalDate.now().plusMonths(10)

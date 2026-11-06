@@ -81,6 +81,9 @@ class InntektServiceTest : TestContainerRunner() {
     lateinit var inntektApi: InntektApi
 
     @Autowired
+    lateinit var virkningstidspunktService: VirkningstidspunktService
+
+    @Autowired
     lateinit var entityManager: EntityManager
 
     @BeforeEach
@@ -1466,8 +1469,10 @@ class InntektServiceTest : TestContainerRunner() {
         @Test
         @Transactional
         fun `skal oppdatere periode på inntekter etter endring i virkningstidspunkt`() {
-            val virkningstidspunkt = LocalDate.parse("2023-07-01")
-            val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = virkningstidspunkt)
+            val forrigeVirkningstidspunkt = LocalDate.parse("2023-02-01")
+            val nyttVirkningstidspunkt = LocalDate.parse("2023-07-01")
+            val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = forrigeVirkningstidspunkt)
+
             behandling.inntekter =
                 mutableSetOf(
                     opprettInntekt(
@@ -1504,11 +1509,51 @@ class InntektServiceTest : TestContainerRunner() {
                 )
 
             testdataManager.lagreBehandling(behandling)
-            inntektService.rekalkulerPerioderInntekter(behandling.id!!)
+            virkningstidspunktService.oppdaterVirkningstidspunkt(null, nyttVirkningstidspunkt, behandling)
 
-            val inntekter = behandling.inntekter.toList()
-            inntekter.filter { it.taMed } shouldHaveSize 3
-            inntekter.filter { it.datoFom != null && it.datoFom!! > virkningstidspunkt } shouldHaveSize 2
+            behandling.inntekter.sortedBy { it.datoFom }.map { Triple(it.datoFom, it.datoTom, it.taMed) } shouldBe
+                listOf(
+                    Triple(nyttVirkningstidspunkt, LocalDate.parse("2024-07-31"), true),
+                    Triple(LocalDate.parse("2023-08-01"), LocalDate.parse("2024-07-31"), true),
+                    Triple(LocalDate.parse("2024-01-01"), null, true),
+                )
+        }
+
+        @Test
+        @Transactional
+        fun `skal flytte inntekt som starter på forrige virkningstidspunkt når virkningstidspunkt flyttes bakover`() {
+            val forrigeVirkningstidspunkt = LocalDate.parse("2023-02-01")
+            val nyttVirkningstidspunkt = LocalDate.parse("2022-08-01")
+            val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = forrigeVirkningstidspunkt)
+
+            behandling.inntekter =
+                mutableSetOf(
+                    opprettInntekt(
+                        behandling = behandling,
+                        datoFom = YearMonth.from(forrigeVirkningstidspunkt),
+                        datoTom = YearMonth.parse("2023-12"),
+                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                        kilde = Kilde.MANUELL,
+                        medId = false,
+                    ),
+                    opprettInntekt(
+                        behandling = behandling,
+                        datoFom = YearMonth.parse("2024-01"),
+                        datoTom = null,
+                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                        kilde = Kilde.MANUELL,
+                        medId = false,
+                    ),
+                )
+
+            testdataManager.lagreBehandling(behandling)
+            virkningstidspunktService.oppdaterVirkningstidspunkt(null, nyttVirkningstidspunkt, behandling)
+
+            behandling.inntekter.sortedBy { it.datoFom }.map { Triple(it.datoFom, it.datoTom, it.taMed) } shouldBe
+                listOf(
+                    Triple(nyttVirkningstidspunkt, LocalDate.parse("2023-12-31"), true),
+                    Triple(LocalDate.parse("2024-01-01"), null, true),
+                )
         }
     }
 }
