@@ -3,7 +3,6 @@ package no.nav.bidrag.behandling.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
-import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import jakarta.persistence.EntityManager
@@ -80,6 +79,9 @@ class InntektServiceTest : TestContainerRunner() {
 
     @Autowired
     lateinit var inntektApi: InntektApi
+
+    @Autowired
+    lateinit var virkningstidspunktService: VirkningstidspunktService
 
     @Autowired
     lateinit var entityManager: EntityManager
@@ -860,9 +862,9 @@ class InntektServiceTest : TestContainerRunner() {
     @Nested
     @DisplayName("Teste manuell oppdatering av inntekter")
     @Transactional
-    open inner class OppdatereInntekterManuelt {
+    inner class OppdatereInntekterManuelt {
         @Test
-        open fun `skal oppdatere eksisterende inntekt`() {
+        fun `skal oppdatere eksisterende inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -981,7 +983,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på offentlige inntekter`() {
+        fun `skal oppdatere periode på offentlige inntekter`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1078,7 +1080,7 @@ class InntektServiceTest : TestContainerRunner() {
                     .first()
                     .datoTom shouldBe
                     forespørselOmOppdateringAvInntekter.oppdatereInntektsperiode
-                        .angittPeriode!!
+                        .angittPeriode
                         .til
                 oppdatertBehandling
                     .get()
@@ -1109,9 +1111,9 @@ class InntektServiceTest : TestContainerRunner() {
     @Nested
     @DisplayName("Teste maunuell oppdatering av inntekt")
     @Transactional
-    open inner class OppdatereInntektManuelt {
+    inner class OppdatereInntektManuelt {
         @Test
-        open fun `skal oppdatere eksisterende manuell inntekt`() {
+        fun `skal oppdatere eksisterende manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1198,7 +1200,7 @@ class InntektServiceTest : TestContainerRunner() {
         }
 
         @Test
-        open fun `skal slette manuell inntekt`() {
+        fun `skal slette manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1256,7 +1258,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal ta med offentlig inntekt som er ekplisitt ytelse og sette datoFom og datoTom automatisk`() {
+        fun `skal ta med offentlig inntekt som er ekplisitt ytelse og sette datoFom og datoTom automatisk`() {
             // gitt
             val behandling = oppretteTestbehandling(false, false, false)
             behandlingRepository.save(behandling)
@@ -1284,7 +1286,7 @@ class InntektServiceTest : TestContainerRunner() {
                     oppdatereInntektsperiode =
                     OppdaterePeriodeInntekt(
                         taMedIBeregning = true,
-                        id = utvidetBarnetrygd!!.id!!,
+                        id = utvidetBarnetrygd.id!!,
                     ),
                 )
 
@@ -1302,7 +1304,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal legge til ny manuell inntekt`() {
+        fun `skal legge til ny manuell inntekt`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1344,7 +1346,7 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på offentlige inntekter`() {
+        fun `skal oppdatere periode på offentlige inntekter`() {
             // gitt
             val behandling = testdataManager.oppretteBehandling(false, false, false)
 
@@ -1466,9 +1468,11 @@ class InntektServiceTest : TestContainerRunner() {
 
         @Test
         @Transactional
-        open fun `skal oppdatere periode på inntekter etter endring i virkningstidspunkt`() {
-            val behandling = testdataManager.oppretteBehandling(false, false, false)
-            val virkningstidspunkt = LocalDate.parse("2023-07-01")
+        fun `skal oppdatere periode på inntekter etter endring i virkningstidspunkt`() {
+            val forrigeVirkningstidspunkt = LocalDate.parse("2023-02-01")
+            val nyttVirkningstidspunkt = LocalDate.parse("2023-07-01")
+            val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = forrigeVirkningstidspunkt)
+
             behandling.inntekter =
                 mutableSetOf(
                     opprettInntekt(
@@ -1504,13 +1508,52 @@ class InntektServiceTest : TestContainerRunner() {
                     ),
                 )
 
-            behandling.virkningstidspunkt = virkningstidspunkt
             testdataManager.lagreBehandling(behandling)
-            inntektService.rekalkulerPerioderInntekter(behandling.id!!)
+            virkningstidspunktService.oppdaterVirkningstidspunkt(null, nyttVirkningstidspunkt, behandling)
 
-            val inntekter = behandling!!.inntekter.toList()
-            inntekter.filter { it.taMed } shouldHaveSize 3
-            inntekter.filter { it.datoFom != null && it.datoFom!! > virkningstidspunkt } shouldHaveSize 2
+            behandling.inntekter.sortedBy { it.datoFom }.map { Triple(it.datoFom, it.datoTom, it.taMed) } shouldBe
+                listOf(
+                    Triple(nyttVirkningstidspunkt, LocalDate.parse("2024-07-31"), true),
+                    Triple(LocalDate.parse("2023-08-01"), LocalDate.parse("2024-07-31"), true),
+                    Triple(LocalDate.parse("2024-01-01"), null, true),
+                )
+        }
+
+        @Test
+        @Transactional
+        fun `skal flytte inntekt som starter på forrige virkningstidspunkt når virkningstidspunkt flyttes bakover`() {
+            val forrigeVirkningstidspunkt = LocalDate.parse("2023-02-01")
+            val nyttVirkningstidspunkt = LocalDate.parse("2022-08-01")
+            val behandling = testdataManager.oppretteBehandling(false, false, false, virkningstidspunkt = forrigeVirkningstidspunkt)
+
+            behandling.inntekter =
+                mutableSetOf(
+                    opprettInntekt(
+                        behandling = behandling,
+                        datoFom = YearMonth.from(forrigeVirkningstidspunkt),
+                        datoTom = YearMonth.parse("2023-12"),
+                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                        kilde = Kilde.MANUELL,
+                        medId = false,
+                    ),
+                    opprettInntekt(
+                        behandling = behandling,
+                        datoFom = YearMonth.parse("2024-01"),
+                        datoTom = null,
+                        type = Inntektsrapportering.LØNN_MANUELT_BEREGNET,
+                        kilde = Kilde.MANUELL,
+                        medId = false,
+                    ),
+                )
+
+            testdataManager.lagreBehandling(behandling)
+            virkningstidspunktService.oppdaterVirkningstidspunkt(null, nyttVirkningstidspunkt, behandling)
+
+            behandling.inntekter.sortedBy { it.datoFom }.map { Triple(it.datoFom, it.datoTom, it.taMed) } shouldBe
+                listOf(
+                    Triple(nyttVirkningstidspunkt, LocalDate.parse("2023-12-31"), true),
+                    Triple(LocalDate.parse("2024-01-01"), null, true),
+                )
         }
     }
 }
