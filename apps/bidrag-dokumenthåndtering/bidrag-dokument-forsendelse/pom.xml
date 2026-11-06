@@ -26,13 +26,13 @@
     <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
     <okhttp.version>5.5.1</okhttp.version>
-    <unleash-client-java.version>12.3.1</unleash-client-java.version>
+    <unleash-client-java.version>12.3.2</unleash-client-java.version>
     <hypersistence-utils-hibernate.version>3.16.0</hypersistence-utils-hibernate.version>
     <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.6</kotest.version>
     <swagger-annotations.version>2.2.55</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.90.0</google-cloud-libraries-bom.version>
+    <google-cloud-libraries-bom.version>26.91.0</google-cloud-libraries-bom.version>
     <google-tink-gcpkms.version>1.12.0</google-tink-gcpkms.version>
     <google-tink.version>1.24.0</google-tink.version>
     <pdfbox.version>3.0.8</pdfbox.version>
