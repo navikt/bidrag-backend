@@ -18,7 +18,7 @@
   <properties>
     <nav-token-support.version>7.0.1</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <slack-api.version>1.52.0</slack-api.version>
+    <slack-api.version>1.53.0</slack-api.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
