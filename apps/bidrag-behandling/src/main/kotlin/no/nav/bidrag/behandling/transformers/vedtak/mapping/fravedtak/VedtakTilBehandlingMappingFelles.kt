@@ -1131,7 +1131,7 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
                                     BoforholdApi.beregnBoforholdBarnV3(
                                         rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                                         rolle.finnOpphørsdatoBoforhold(),
-                                        behandling.finnBeregnTilDatoBehandling(rolle),
+                                        behandling.finnBeregnTilDatoBehandling(),
                                         behandling.tilTypeBoforhold(),
                                         grunnlag.tilBoforholdBarnRequest(behandling, true),
                                     )

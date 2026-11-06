@@ -711,7 +711,7 @@ class BoforholdService(
                             eksisterendeHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             eksisterendeHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(eksisterendeHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(eksisterendeHusstandsmedlem.rolle?.stønadstype),
                             listOf(
                                 eksisterendeHusstandsmedlem
@@ -776,7 +776,7 @@ class BoforholdService(
                             offisieltHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             offisieltHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(offisieltHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(offisieltHusstandsmedlem.rolle?.stønadstype),
                             listOf(request),
                         )
@@ -785,7 +785,7 @@ class BoforholdService(
                             offisieltHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             offisieltHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(offisieltHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(offisieltHusstandsmedlem.rolle?.stønadstype),
                             listOf(
                                 request.copy(
