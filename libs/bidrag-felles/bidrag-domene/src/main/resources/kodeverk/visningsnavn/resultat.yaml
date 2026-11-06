@@ -18,6 +18,10 @@ BARNET_ER_SELVFORSØRGET:
   intern: "Barnet er selvforsørget"
   bruker:
     NB: "Barnet er selvforsørget"
+BIDRAG_IKKE_BEREGNET_DELT_BOSTED:
+  intern: "BPs andel av U under 50 % ved delt bosted"
+  bruker:
+    NB: "Bidragspliktiges andel av underholdskostnaden er under 50 % ved delt bosted"
 SÆRTILSKUDD_INNVILGET:
   intern: "Særtilskudd innvilget"
   bruker:
