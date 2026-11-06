@@ -130,6 +130,12 @@ Hvis du må gå tilbake til det gamle byggoppsettet, må du tilbakeføre
 `finn_berorte_apper.py` sammen med bibliotek-actionen. La pågående
 deploy-jobber fullføre før du bytter oppsett.
 
+## CodeQL-analyser
+
+[`codeql.yml`](.github/workflows/codeql.yml) kjører `security-and-quality`
+for GitHub Actions, Java/Kotlin, JavaScript/TypeScript og Python. Workflowen
+kjører daglig og kan startes manuelt i GitHub Actions.
+
 ## Automatisk PR-beskrivelse
 
 Når du oppretter en pull request, legger workflowen

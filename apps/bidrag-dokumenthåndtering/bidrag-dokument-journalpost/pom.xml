@@ -19,9 +19,9 @@
     <description>Backend NAIS for bidrag-dokument-journalpost, henter metadata fra midlertidig brevlager (bisys)</description>
 
     <properties>
-        <nav-token-support.version>6.0.12</nav-token-support.version>
-        <springdoc-openapi-ui.version>3.1.1</springdoc-openapi-ui.version>
-        <okhttp.version>5.5.0</okhttp.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
+        <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
+        <okhttp.version>5.5.1</okhttp.version>
         <jakarta.xml.ws-api.version>4.0.3</jakarta.xml.ws-api.version>
         <jaxws.version>4.0.5</jaxws.version>
         <db2.db2jcc4.version>10.5fp6</db2.db2jcc4.version>

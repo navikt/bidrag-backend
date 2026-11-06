@@ -213,3 +213,5 @@ BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS:
   intern: "Bidrag justert manuelt til forskuddssats"
 BIDRAG_JUSTERT_FOR_DELT_BOSTED:
   intern: "Bidrag justert for delt bosted"
+IKKE_UNDERHOLDSPLIKT:
+  intern: "Bidragspliktig har ikke underholdsplikt"

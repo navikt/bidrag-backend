@@ -3,6 +3,8 @@ package no.nav.bidrag.behandling.service.forholdsmessigfordeling
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -29,6 +31,8 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
@@ -42,6 +46,7 @@ import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadResponse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.time.YearMonth
 
 class ForholdsmessigFordelingKlageServiceTest {
     @MockK(relaxed = true)
@@ -163,11 +168,12 @@ class ForholdsmessigFordelingKlageServiceTest {
         behandlingstype: Behandlingstype = Behandlingstype.KLAGE,
         refSøknadsid: Long? = null,
         status: BehandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
+        behandlingstema: Behandlingstema = Behandlingstema.BIDRAG,
     ) = HentSøknad(
         søknadsid = søknadsid,
         søknadMottattDato = LocalDate.parse("2024-01-10"),
         søknadFomDato = LocalDate.parse("2024-01-01"),
-        behandlingstema = Behandlingstema.BIDRAG,
+        behandlingstema = behandlingstema,
         behandlingstype = behandlingstype,
         saksnummer = behandling.saksnummer,
         innkreving = true,
@@ -1118,6 +1124,86 @@ class ForholdsmessigFordelingKlageServiceTest {
     }
 
     @Test
+    fun `opprettKlageSøknad skal opprette én søknad per barn for 18 år FF-søknad med flere barn og knytte alle til hovedsøknaden`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        barn1.stønadstype = Stønadstype.BIDRAG18AAR
+        barn2.stønadstype = Stønadstype.BIDRAG18AAR
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val requests = mutableListOf<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(requests)) } returnsMany
+            listOf(OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID), OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID + 1))
+
+        val søknadsider =
+            service.opprettKlageSøknad(
+                hentSøknad(
+                    PÅKLAGET_FF_SØKNADSID,
+                    listOf(barn1.ident!!, barn2.ident!!),
+                    behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+                    behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                ),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+            )
+
+        søknadsider shouldBe listOf(GJENOPPRETTET_FF_KLAGESØKNADSID, GJENOPPRETTET_FF_KLAGESØKNADSID + 1)
+        requests shouldHaveSize 2
+        requests.map { it.barnListe.single().personident } shouldBe listOf(barn1.ident, barn2.ident)
+        requests.forEach {
+            it.behandlingstype shouldBe Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE
+            it.behandlingstema shouldBe Behandlingstema.BIDRAG_18_ÅR
+            it.hovedsøknadsid shouldBe HOVEDSØKNADSID
+            it.refSøknadsid shouldBe PÅKLAGET_FF_SØKNADSID
+        }
+        barn1.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID) shouldNotBe null
+        barn2.finnSøknad(GJENOPPRETTET_FF_KLAGESØKNADSID + 1) shouldNotBe null
+    }
+
+    @Test
+    fun `opprettKlageSøknad skal opprette én søknad med alle barn når FF-søknad med flere barn ikke gjelder 18 år`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val request = slot<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(request)) } returns OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID)
+
+        val søknadsider =
+            service.opprettKlageSøknad(
+                hentSøknad(
+                    PÅKLAGET_FF_SØKNADSID,
+                    listOf(barn1.ident!!, barn2.ident!!),
+                    behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+                ),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+            )
+
+        søknadsider shouldBe listOf(GJENOPPRETTET_FF_KLAGESØKNADSID)
+        verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
+        request.captured.barnListe.map { it.personident } shouldBe listOf(barn1.ident, barn2.ident)
+    }
+
+    @Test
+    fun `opprettKlageSøknad skal opprette én søknad når originalen kun har ett barn`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+        val request = slot<OpprettSøknadRequest>()
+        every { bbmConsumer.opprettSøknader(capture(request)) } returns OpprettSøknadResponse(GJENOPPRETTET_FF_KLAGESØKNADSID)
+
+        val søknadsider =
+            service.opprettKlageSøknad(
+                hentSøknad(PÅKLAGET_FF_SØKNADSID, listOf(barn1.ident!!)),
+                behandling,
+                emptyList(),
+                HOVEDSØKNADSID,
+            )
+
+        søknadsider shouldBe listOf(GJENOPPRETTET_FF_KLAGESØKNADSID)
+        request.captured.barnListe shouldHaveSize 1
+        verify(exactly = 1) { bbmConsumer.opprettSøknader(any()) }
+    }
+
+    @Test
     fun `opprettKlageSøknad skal gjenbruke søknad opprettet av saksbehandler uten å lagre den som FF-søknad`() {
         barn1.leggTilSøknad(søknad(OPPRETTET_SØKNADSID, opprettetAvSaksbehandler = true))
         every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
@@ -1135,7 +1221,7 @@ class ForholdsmessigFordelingKlageServiceTest {
                 HOVEDSØKNADSID,
             )
 
-        søknadsid shouldBe OPPRETTET_SØKNADSID
+        søknadsid shouldBe listOf(OPPRETTET_SØKNADSID)
         verify(exactly = 0) { bbmConsumer.opprettSøknader(any()) }
         assertSoftly(behandling.bidragspliktig!!.finnSøknad(OPPRETTET_SØKNADSID)!!) {
             behandlingstype shouldBe Behandlingstype.KLAGE
@@ -1151,6 +1237,66 @@ class ForholdsmessigFordelingKlageServiceTest {
         søknad(SYSTEM_KLAGESØKNADSID, omgjørSøknadsid = PÅKLAGET_SØKNAD_2_SØKNADSID, opprettetAvSystem = true),
         *barn,
     )
+
+    @Test
+    fun `skal legge til FF-detaljer med hovedsøknad for roller i hovedsøknaden som mangler FF-detaljer`() {
+        behandling.søknadstype = Behandlingstype.KLAGE
+        behandling.forholdsmessigFordeling = null
+        behandling.roller.forEach { it.forholdsmessigFordeling = null }
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns
+            listOf(
+                LøpendeBidragSakPeriode(
+                    sak = Saksnummer(behandling.saksnummer),
+                    type = Stønadstype.BIDRAG,
+                    kravhaver = Personident(barn1.ident!!),
+                    valutakode = "NOK",
+                    periodeFra = YearMonth.parse("2023-01"),
+                    periodeTil = null,
+                ),
+            )
+
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        assertSoftly(barn1.forholdsmessigFordeling!!) {
+            delAvOpprinneligBehandling shouldBe true
+            erRevurdering shouldBe false
+            tilhørerSak shouldBe behandling.saksnummer
+            bidragsmottaker shouldBe behandling.bidragsmottaker!!.ident
+            løperBidragFra shouldBe YearMonth.parse("2023-01")
+            løperBidragTil shouldBe null
+            harLøpendeBidrag shouldBe true
+            søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+            søknader.single().omgjørSøknadsid shouldBe PÅKLAGET_FF_SØKNADSID
+        }
+        assertSoftly(barn2.forholdsmessigFordeling!!) {
+            harLøpendeBidrag shouldBe false
+            løperBidragFra shouldBe null
+            søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+        }
+        behandling.bidragsmottaker!!.forholdsmessigFordeling!!.søknader.single().søknadsid shouldBe HOVEDSØKNADSID
+        behandling.bidragspliktig!!.forholdsmessigFordeling shouldNotBe null
+    }
+
+    @Test
+    fun `skal ikke overskrive eksisterende FF-detaljer på roller`() {
+        barn1.forholdsmessigFordeling = null
+        val eksisterendeFFDetaljerBarn2 = barn2.forholdsmessigFordeling
+        val eksisterendeFFDetaljerBM = behandling.bidragsmottaker!!.forholdsmessigFordeling
+        every { kravhaverService.hentSisteLøpendeStønader(any(), any()) } returns emptyList()
+
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        barn1.forholdsmessigFordeling shouldNotBe null
+        barn2.forholdsmessigFordeling shouldBeSameInstanceAs eksisterendeFFDetaljerBarn2
+        behandling.bidragsmottaker!!.forholdsmessigFordeling shouldBeSameInstanceAs eksisterendeFFDetaljerBM
+    }
+
+    @Test
+    fun `skal ikke hente løpende bidrag når alle søknadsbarn har FF-detaljer`() {
+        service.oppdaterFFDetaljerPåRollerIKlage(behandling)
+
+        verify(exactly = 0) { kravhaverService.hentSisteLøpendeStønader(any(), any()) }
+    }
 
     @Test
     fun `skal feilregistrere klagesøknad opprettet av systemet når saksbehandler oppretter søknad for samme barn`() {

@@ -193,6 +193,7 @@ class ForholdsmessigFordelingService(
                     behandling.soknadsid!!,
                     request,
                     nyesteLøpendeBidragGrunnlag,
+                    true,
                 )
                 return
             }
@@ -538,7 +539,7 @@ class ForholdsmessigFordelingService(
         }
     }
 
-    private fun lagreOgOppdaterGrunnlag(
+    internal fun lagreOgOppdaterGrunnlag(
         behandling: Behandling,
         nyesteLøpendeBidragGrunnlag: List<LøpendeBidragGrunnlagForholdsmessigFordeling>,
     ) {

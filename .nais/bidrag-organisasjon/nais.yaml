@@ -40,13 +40,13 @@ spec:
          namespace: nais-system
   webproxy: true
   liveness:
-    path: /bidrag-organisasjon/actuator/health
+    path: /bidrag-organisasjon/actuator/health/liveness
     initialDelay: 20
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /bidrag-organisasjon/actuator/health
+    path: /bidrag-organisasjon/actuator/health/readiness
     initialDelay: 20
     timeout: 1
   prometheus:

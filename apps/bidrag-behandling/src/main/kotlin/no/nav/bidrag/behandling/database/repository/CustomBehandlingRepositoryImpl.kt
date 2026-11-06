@@ -13,6 +13,10 @@ class CustomBehandlingRepositoryImpl : CustomBehandlingRepository {
     @PersistenceContext
     private lateinit var entityManager: EntityManager
 
+    override fun flush() {
+        entityManager.flush()
+    }
+
     override fun tømPersistenceContext() {
         entityManager.flush()
         entityManager.clear()
