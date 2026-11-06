@@ -1049,7 +1049,7 @@ class Dtomapper(
     ): PrivatAvtaleDtoV3 {
         val søknadsbarnPA =
             søknadsbarn
-                .filter { !it.erDirekteAvslag }
+                .filter { it.kreverGrunnlagForBeregning || (it.erRevurderingsbarn && it.innkrevingstype == Innkrevingstype.UTEN_INNKREVING) }
                 .parallelStream()
                 .map { barn ->
                     val privatAvtale = privatAvtale.find { it.rolle?.erSammeRolle(barn) == true }
