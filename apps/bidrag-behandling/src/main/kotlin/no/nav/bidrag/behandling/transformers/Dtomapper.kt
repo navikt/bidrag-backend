@@ -334,7 +334,7 @@ class Dtomapper(
             } else {
                 null
             },
-            valideringsfeil = this.valider().takeIf { it.harFeil },
+            valideringsfeil = this.valider(beregnetUnderholdskostnad).takeIf { it.harFeil },
         )
     }
 
@@ -1049,7 +1049,7 @@ class Dtomapper(
     ): PrivatAvtaleDtoV3 {
         val søknadsbarnPA =
             søknadsbarn
-                .filter { it.kreverGrunnlagForBeregning }
+                .filter { !it.erDirekteAvslag }
                 .parallelStream()
                 .map { barn ->
                     val privatAvtale = privatAvtale.find { it.rolle?.erSammeRolle(barn) == true }
