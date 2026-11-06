@@ -3,6 +3,7 @@ package no.nav.bidrag.beregn.boforhold.utils
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
+import no.nav.bidrag.beregn.core.util.sluttenAvForrigeMåned
 import java.time.LocalDate
 
 fun List<BoforholdResponseV2>.justerBoforholdPerioderForOpphørsdatoOgBeregnTilDato(
@@ -10,8 +11,13 @@ fun List<BoforholdResponseV2>.justerBoforholdPerioderForOpphørsdatoOgBeregnTilD
     beregnTilDato: LocalDate?,
 ): List<BoforholdResponseV2> {
     if (opphørsdato == null && beregnTilDato == null) return this
-    // Antar at opphørsdato er måneden perioden skal opphøre
-    val filtrertePerioder = filter { beregnTilDato == null || it.periodeFom.isBefore(beregnTilDato) }
+    // Antar at opphørsdato er måneden perioden skal opphøre. Perioder som starter etter siste dag før opphør fjernes,
+    // slik at periodeTom aldri settes før periodeFom (f.eks. for barn med både ordinær bidrag og 18-årsbidrag).
+    val sisteDagFørOpphør = opphørsdato?.sluttenAvForrigeMåned
+    val filtrertePerioder = filter {
+        (beregnTilDato == null || it.periodeFom.isBefore(beregnTilDato)) &&
+            (sisteDagFørOpphør == null || !it.periodeFom.isAfter(sisteDagFørOpphør))
+    }
     val sistePeriode = filtrertePerioder.maxByOrNull { it.periodeFom }
     return filtrertePerioder
         .map { periode ->
