@@ -51,6 +51,7 @@ class SpringTestRunner {
     @BeforeEach
     fun mockSetup() {
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+        every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         every { identConsumer.hentPersonInformasjon(any()) }.answers { null }
         mockkObject(AppContext)
         every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer

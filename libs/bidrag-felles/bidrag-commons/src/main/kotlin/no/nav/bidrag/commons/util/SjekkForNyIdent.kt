@@ -190,4 +190,20 @@ class IdentConsumer(
         }
         return ident
     }
+
+    /**
+     * Henter gjeldende ident for en person fra bidrag-person. Folkeregisterident foretrekkes foran NPID.
+     * Returnerer null når bidrag-person ikke finner personen. Andre feil kastes videre.
+     * Bare vellykkede oppslag caches.
+     */
+    @Cacheable(value = ["bidrag-commons_hentGjeldendeIdent_cache"], key = "#ident", unless = "#result == null")
+    fun hentGjeldendeIdent(ident: String): String? {
+        if (Ident(ident).erPersonIdent()) {
+            return bidragPersonOppslagClient
+                .hentPersonidenter(ident, setOf(Identgruppe.FOLKEREGISTERIDENT, Identgruppe.NPID), false)
+                ?.minByOrNull { if (it.gruppe == Identgruppe.FOLKEREGISTERIDENT) 0 else 1 }
+                ?.ident
+        }
+        return ident
+    }
 }
