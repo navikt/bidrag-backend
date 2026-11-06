@@ -87,7 +87,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal oppdatere søkt fra dato i søknaden når alle barn i søknaden får samme nye dato`() {
+    fun `skal oppdatere søkt fra dato i søknaden når alle barn i søknaden får samme revurderingsdato`() {
         // Given
         val nyDato = opprinneligDato.plusMonths(2)
 
@@ -109,7 +109,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal flytte barnet til ny søknad når bare ett av flere barn i søknaden endres`() {
+    fun `skal flytte barnet til ny søknad når bare ett av barna i søknaden endres når søknaden har flere barn`() {
         // Given
         val nyDato = opprinneligDato.plusMonths(3)
 
@@ -144,7 +144,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal oppdatere søknaden for ett barn og flytte det andre når alle barn får ulike datoer`() {
+    fun `skal oppdatere søknaden for ett barn og flytte de andre til ny søknad når alle barn får ulike datoer`() {
         // Given
         val nyDatoBarn1 = opprinneligDato.plusMonths(1)
         val nyDatoBarn2 = opprinneligDato.plusMonths(4)
@@ -162,7 +162,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal ikke gjøre noe når revurderingsdatoen ikke er endret`() {
+    fun `skal ikke gjøre noe endringer når revurderingsdatoen ikke er endret`() {
         // When
         service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusDays(14)))
 
@@ -173,7 +173,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal sette revurderingsdato til tidligste tillatte dato når valgt dato er tidligere`() {
+    fun `skal sette revurderingsdato til tidligste tillatte dato når ny revurderingsdato settes til tidligere tidspunkt`() {
         // When
         service.oppdaterRevurderingsdato(behandling, request(barn1 to tidligsteDato.minusYears(1), barn2 to tidligsteDato.minusMonths(1)))
 
@@ -183,7 +183,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal feile når behandlingen er klage`() {
+    fun `skal feile ikke kunne endre revurderingdsato for klage`() {
         behandling.vedtakstype = Vedtakstype.KLAGE
 
         shouldThrow<HttpClientErrorException> {
@@ -193,7 +193,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal feile når vedtak er fattet`() {
+    fun `skal ikke kunne endre revurderingsdato hvis vedtak er fattet`() {
         behandling.vedtaksid = 1
 
         shouldThrow<HttpClientErrorException> {
@@ -202,7 +202,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal feile når barnet ikke er revurderingsbarn`() {
+    fun `skal ikke kunne endre revurderingdsato for søknadsbarn`() {
         barn1.forholdsmessigFordeling!!.erRevurdering = false
 
         shouldThrow<HttpClientErrorException> {
@@ -211,7 +211,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal feile når barnet ikke har systemopprettet FF-søknad`() {
+    fun `skal feile når barnet ikke har FF-søknad`() {
         barn1.forholdsmessigFordeling!!.søknader.single().søktAvType = SøktAvType.BIDRAGSMOTTAKER
 
         shouldThrow<HttpClientErrorException> {
