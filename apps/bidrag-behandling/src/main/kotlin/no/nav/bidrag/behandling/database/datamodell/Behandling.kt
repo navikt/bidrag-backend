@@ -66,116 +66,144 @@ import java.time.YearMonth
 @Entity(name = "behandling")
 @SQLDelete(sql = "UPDATE behandling SET deleted = true, slettet_tidspunkt = now() WHERE id=?")
 @SQLRestriction(value = "deleted=false")
-class Behandling(
-    @Enumerated(EnumType.STRING) var vedtakstype: Vedtakstype,
-    @Column(name = "dato_fom") var søktFomDato: LocalDate,
-    var mottattdato: LocalDate,
-    var saksnummer: String,
-    var soknadsid: Long?,
-    var behandlerEnhet: String,
-    var opprettetAv: String,
-    val opprettetAvNavn: String? = null,
-    val kildeapplikasjon: String,
-    @Enumerated(EnumType.STRING) val soknadFra: SøktAvType,
-    @Enumerated(EnumType.STRING) var stonadstype: Stønadstype?,
-    @Enumerated(EnumType.STRING) var engangsbeloptype: Engangsbeløptype?,
-    var vedtaksid: Int? = null,
-    var notatJournalpostId: String? = null,
-    @Column(name = "virkningsdato") var virkningstidspunkt: LocalDate? = null,
-    var vedtakstidspunkt: LocalDateTime? = null,
-    var slettetTidspunkt: LocalDateTime? = null,
-    var opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
-    var vedtakFattetAv: String? = null,
-    var kategori: String? = null,
-    var kategoriBeskrivelse: String? = null,
-    @Enumerated(EnumType.STRING) var innkrevingstype: Innkrevingstype? = null,
+open class Behandling(
+    @Enumerated(EnumType.STRING)
+    open var vedtakstype: Vedtakstype,
+    @Column(name = "dato_fom")
+    open var søktFomDato: LocalDate,
+    open var mottattdato: LocalDate,
+    open var saksnummer: String,
+    open var soknadsid: Long?,
+    open var behandlerEnhet: String,
+    open var opprettetAv: String,
+    open val opprettetAvNavn: String? = null,
+    open val kildeapplikasjon: String,
+    @Enumerated(EnumType.STRING)
+    open val soknadFra: SøktAvType,
+    @Enumerated(EnumType.STRING)
+    open var stonadstype: Stønadstype?,
+    @Enumerated(EnumType.STRING)
+    open var engangsbeloptype: Engangsbeløptype?,
+    open var vedtaksid: Int? = null,
+    open var notatJournalpostId: String? = null,
+    @Column(name = "virkningsdato")
+    open var virkningstidspunkt: LocalDate? = null,
+    open var vedtakstidspunkt: LocalDateTime? = null,
+    open var slettetTidspunkt: LocalDateTime? = null,
+    open var opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
+    open var vedtakFattetAv: String? = null,
+    open var kategori: String? = null,
+    open var kategoriBeskrivelse: String? = null,
+    @Enumerated(EnumType.STRING)
+    open var innkrevingstype: Innkrevingstype? = null,
     @Column(name = "aarsak")
-    @Convert(converter = ÅrsakConverter::class) var årsak: VirkningstidspunktÅrsakstype? = null,
+    @Convert(converter = ÅrsakConverter::class)
+    open var årsak: VirkningstidspunktÅrsakstype? = null,
     @Column(name = "avslag")
-    @Enumerated(EnumType.STRING) var avslag: Resultatkode? = null,
+    @Enumerated(EnumType.STRING)
+    open var avslag: Resultatkode? = null,
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    open var id: Long? = null,
     @Column(name = "grunnlagsinnhenting_feilet", columnDefinition = "jsonb")
-    @ColumnTransformer(write = "?::jsonb") var grunnlagsinnhentingFeilet: String? = null,
+    @ColumnTransformer(write = "?::jsonb")
+    open var grunnlagsinnhentingFeilet: String? = null,
     @Column(name = "forsendelse_bestillinger", columnDefinition = "jsonb")
     @Convert(converter = ForsendelseBestillingerConverter::class)
-    @ColumnTransformer(write = "?::jsonb") var forsendelseBestillinger: ForsendelseBestillinger = ForsendelseBestillinger(),
+    @ColumnTransformer(write = "?::jsonb")
+    open var forsendelseBestillinger: ForsendelseBestillinger = ForsendelseBestillinger(),
     @Column(name = "klagedetaljer", columnDefinition = "jsonb")
     @Convert(converter = KlageDetaljerConverter::class)
-    @ColumnTransformer(write = "?::jsonb") var omgjøringsdetaljer: Omgjøringsdetaljer? = null,
+    @ColumnTransformer(write = "?::jsonb")
+    open var omgjøringsdetaljer: Omgjøringsdetaljer? = null,
     @Column(name = "vedtak_detaljer", columnDefinition = "jsonb")
     @Convert(converter = VedtakDetaljerConverter::class)
-    @ColumnTransformer(write = "?::jsonb") var vedtakDetaljer: VedtakDetaljer? = null,
-    var grunnlagSistInnhentet: LocalDateTime? = null,
+    @ColumnTransformer(write = "?::jsonb")
+    open var vedtakDetaljer: VedtakDetaljer? = null,
+    open var grunnlagSistInnhentet: LocalDateTime? = null,
     @Column(name = "forholdsmessig_fordeling", columnDefinition = "jsonb")
     @Convert(converter = ForholdsmessigFordelingConverter::class)
-    @ColumnTransformer(write = "?::jsonb") var forholdsmessigFordeling: ForholdsmessigFordeling? = null,
+    @ColumnTransformer(write = "?::jsonb")
+    open var forholdsmessigFordeling: ForholdsmessigFordeling? = null,
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
-    ) var grunnlag: MutableSet<Grunnlag> = mutableSetOf(),
+    )
+    open var grunnlag: MutableSet<Grunnlag> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
-    ) var notater: MutableSet<Notat> = mutableSetOf(),
+    )
+    open var notater: MutableSet<Notat> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.ALL],
         orphanRemoval = true,
-    ) var roller: MutableSet<Rolle> = mutableSetOf(),
+    )
+    open var roller: MutableSet<Rolle> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST],
         orphanRemoval = true,
-    ) var husstandsmedlem: MutableSet<Husstandsmedlem> = mutableSetOf(),
+    )
+    open var husstandsmedlem: MutableSet<Husstandsmedlem> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST],
         orphanRemoval = true,
-    ) var inntekter: MutableSet<Inntekt> = mutableSetOf(),
+    )
+    open var inntekter: MutableSet<Inntekt> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST],
         orphanRemoval = true,
-    ) var sivilstand: MutableSet<Sivilstand> = mutableSetOf(),
+    )
+    open var sivilstand: MutableSet<Sivilstand> = mutableSetOf(),
     @OneToOne(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST],
         orphanRemoval = true,
-    ) var utgift: Utgift? = null,
+    )
+    open var utgift: Utgift? = null,
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE],
         orphanRemoval = true,
-    ) var samvær: MutableSet<Samvær> = mutableSetOf(),
+    )
+    open var samvær: MutableSet<Samvær> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST],
         orphanRemoval = true,
-    ) var privatAvtale: MutableSet<PrivatAvtale> = mutableSetOf(),
+    )
+    open var privatAvtale: MutableSet<PrivatAvtale> = mutableSetOf(),
     @OneToMany(
         fetch = FetchType.EAGER,
         mappedBy = "behandling",
         cascade = [CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE],
         orphanRemoval = true,
-    ) var underholdskostnader: MutableSet<Underholdskostnad> = mutableSetOf(),
-    var deleted: Boolean = false,
-    var vedtakFattetAvEnhet: String? = null,
+    )
+    open var underholdskostnader: MutableSet<Underholdskostnad> = mutableSetOf(),
+    open var deleted: Boolean = false,
+    open var vedtakFattetAvEnhet: String? = null,
     @Type(BehandlingMetadataDoConverter::class)
-    @Column(columnDefinition = "hstore", name = "metadata") var metadata: BehandlingMetadataDo? = null,
-    @Enumerated(EnumType.STRING) var søknadstype: Behandlingstype? = null,
-    @Enumerated(EnumType.STRING) var behandlingstema: Behandlingstema? = null,
+    @Column(columnDefinition = "hstore", name = "metadata")
+    open var metadata: BehandlingMetadataDo? = null,
+    @Enumerated(EnumType.STRING)
+    open var søknadstype: Behandlingstype? = null,
+    @Enumerated(EnumType.STRING)
+    open var behandlingstema: Behandlingstema? = null,
     @Transient
     var erBisysVedtak: Boolean = false,
     @Transient
