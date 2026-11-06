@@ -19,6 +19,7 @@
     "gen_api": "swagger-typescript-api generate -p http://localhost:8183/v3/api-docs --no-client -n Api.ts -o app/types"
   },
   "dependencies": {
+    "minimatch": ">=11.0.1",
     "@navikt/aksel-icons": "^8.20.0",
     "@navikt/ds-css": "^8.20.0",
     "@navikt/ds-react": "^8.20.0",
