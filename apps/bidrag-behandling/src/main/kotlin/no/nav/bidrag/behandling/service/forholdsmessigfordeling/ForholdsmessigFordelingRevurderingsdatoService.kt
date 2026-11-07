@@ -86,7 +86,7 @@ class ForholdsmessigFordelingRevurderingsdatoService(
         } ?: ugyldigForespørsel("Fant ikke barn som det forsøkes å endres for med stønadstype ${barnRequest.stønadstype} i behandling ${behandling.id}")
 
         val barnetsFFSøknad = finnRolleFFSøknad(rolle)
-        val nyRevurderingsdato = barnRequest.nyRevurderingsdato
+        val nyRevurderingsdato = barnRequest.nyRevurderingsdato.withDayOfMonth(1)
         val tidligsteRevurderingsdato = behandling.finnTidligsteRevurderingsdato(rolle.ident!!, rolle.stønadstype)
         if (nyRevurderingsdato.isBefore(tidligsteRevurderingsdato)) {
             ugyldigForespørsel("Ny revurderingsdato $nyRevurderingsdato kan ikke være tidligere enn tidligste tillatte revurderingsdato $tidligsteRevurderingsdato for rolle ${rolle.id} i behandling ${behandling.id}")

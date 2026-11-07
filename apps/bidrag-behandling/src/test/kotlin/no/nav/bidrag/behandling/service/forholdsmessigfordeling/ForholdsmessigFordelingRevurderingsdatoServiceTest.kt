@@ -15,8 +15,10 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OppdaterRevurderingsdatoFFRequest
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
+import no.nav.bidrag.behandling.utils.testdata.TestDataPerson
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
+import no.nav.bidrag.behandling.utils.testdata.testdataBarnBm
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
@@ -27,6 +29,7 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -55,36 +58,44 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     companion object {
         private const val FF_SØKNADSID = 100L
         private const val NY_SØKNADSID = 200L
+        private const val EKSISTERENDE_SØKNADSID = 300L
     }
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
         service = ForholdsmessigFordelingRevurderingsdatoService(bbmConsumer, søknadService, virkningstidspunktService)
+        settOppBehandling(testdataBarn2)
+        every { søknadService.feilregistrerBarnFraSøknad(any(), any()) } returns FF_SØKNADSID
+        every {
+            søknadService.opprettSøknad(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+        } answers { ffSøknad(NY_SØKNADSID, arg(6)) }
+    }
+
+    /** Alle søknadsbarn, BP og BM er i samme FF-søknad med [opprinneligDato] */
+    private fun settOppBehandling(vararg andreBarn: TestDataPerson) {
         behandling =
             opprettGyldigBehandlingForBeregningOgVedtak(
                 generateId = true,
                 typeBehandling = TypeBehandling.BIDRAG,
-                andreBarn = listOf(testdataBarn2),
+                andreBarn = andreBarn.toList(),
             )
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
         tidligsteDato = behandling.søktFomDato.withDayOfMonth(1)
         opprinneligDato = tidligsteDato.plusMonths(6)
         barn1 = behandling.søknadsbarn[0]
         barn2 = behandling.søknadsbarn[1]
-        listOf(barn1, barn2).forEach {
+        behandling.søknadsbarn.forEach {
             it.stønadstype = Stønadstype.BIDRAG
             it.forholdsmessigFordeling = opprettFFRolle(ffSøknad(FF_SØKNADSID, opprinneligDato))
         }
         behandling.bidragspliktig!!.forholdsmessigFordeling = opprettFFRolle(ffSøknad(FF_SØKNADSID, opprinneligDato))
         behandling.bidragsmottaker!!.forholdsmessigFordeling = opprettFFRolle(ffSøknad(FF_SØKNADSID, opprinneligDato))
 
-        every { bbmConsumer.hentSøknad(FF_SØKNADSID) } returns HentSøknadResponse(hentSøknad(listOf(barn1, barn2)))
-        every { søknadService.feilregistrerBarnFraSøknad(any(), any()) } returns FF_SØKNADSID
-        every {
-            søknadService.opprettSøknad(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
-        } answers { ffSøknad(NY_SØKNADSID, arg(6)) }
+        every { bbmConsumer.hentSøknad(FF_SØKNADSID) } returns HentSøknadResponse(hentSøknad(behandling.søknadsbarn))
     }
+
+    private fun Rolle.ffSøknadsider() = forholdsmessigFordeling!!.søknader.mapNotNull { it.søknadsid }
 
     @Test
     fun `skal oppdatere søkt fra dato i søknaden når alle barn i søknaden får samme revurderingsdato`() {
@@ -144,6 +155,27 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
+    fun `skal flytte barnet til eksisterende FF søknad med samme søkt fra dato i stedet for å opprette ny søknad`() {
+        // Given
+        val nyDato = opprinneligDato.plusMonths(3)
+        val eksisterendeSøknad = ffSøknad(EKSISTERENDE_SØKNADSID, nyDato)
+        listOf(barn2, behandling.bidragspliktig!!, behandling.bidragsmottaker!!).forEach {
+            it.forholdsmessigFordeling!!.søknader.add(eksisterendeSøknad.copy())
+        }
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn1 to nyDato))
+
+        // Then
+        verify(exactly = 0) { søknadService.opprettSøknad(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 1) { bbmConsumer.leggTilBarnISøknad(LeggTilBarnIFFSøknadRequest(EKSISTERENDE_SØKNADSID, barn1.ident!!)) }
+        verify(exactly = 1) { søknadService.feilregistrerBarnFraSøknad(barn1, FF_SØKNADSID) }
+        barn1.forholdsmessigFordeling!!.søknader.mapNotNull { it.søknadsid } shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, EKSISTERENDE_SØKNADSID)
+        behandling.bidragspliktig!!.forholdsmessigFordeling!!.søknader.mapNotNull { it.søknadsid } shouldContainExactlyInAnyOrder
+            listOf(FF_SØKNADSID, EKSISTERENDE_SØKNADSID)
+    }
+
+    @Test
     fun `skal oppdatere søknaden for ett barn og flytte de andre til ny søknad når alle barn får ulike datoer`() {
         // Given
         val nyDatoBarn1 = opprinneligDato.plusMonths(1)
@@ -162,6 +194,88 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
+    fun `skal flytte to barn til samme nye søknad når to av tre barn får samme revurderingsdato`() {
+        // Given
+        settOppBehandling(testdataBarn2, testdataBarnBm)
+        val barn3 = behandling.søknadsbarn[2]
+        val nyDato = opprinneligDato.plusMonths(3)
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn1 to nyDato, barn2 to nyDato))
+
+        // Then
+        verify(exactly = 0) { bbmConsumer.oppdaterSøknadFomDato(any()) }
+        verify(exactly = 1) {
+            søknadService.opprettSøknad(
+                any(),
+                match { kravhavere -> kravhavere.map { it.kravhaver }.toSet() == setOf(barn1.ident, barn2.ident) },
+                any(),
+                any(),
+                any(),
+                any(),
+                nyDato,
+                any(),
+                any(),
+                any(),
+            )
+        }
+        verify(exactly = 1) { søknadService.feilregistrerBarnFraSøknad(barn1, FF_SØKNADSID) }
+        verify(exactly = 1) { søknadService.feilregistrerBarnFraSøknad(barn2, FF_SØKNADSID) }
+        verify(exactly = 0) { søknadService.feilregistrerBarnFraSøknad(barn3, any()) }
+        barn1.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, NY_SØKNADSID)
+        barn2.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, NY_SØKNADSID)
+        barn3.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID)
+        barn3.forholdsmessigFordeling!!.søknader.single().søknadFomDato shouldBe opprinneligDato
+        verify(exactly = 0) { virkningstidspunktService.oppdaterVirkningstidspunkt(barn3.id, any(), any(), any()) }
+    }
+
+    @Test
+    fun `skal flytte to barn til eksisterende søknad med samme dato når to av tre barn får samme revurderingsdato`() {
+        // Given
+        settOppBehandling(testdataBarn2, testdataBarnBm)
+        val barn3 = behandling.søknadsbarn[2]
+        val nyDato = opprinneligDato.plusMonths(3)
+        val eksisterendeSøknad = ffSøknad(EKSISTERENDE_SØKNADSID, nyDato)
+        listOf(behandling.bidragspliktig!!, behandling.bidragsmottaker!!).forEach {
+            it.forholdsmessigFordeling!!.søknader.add(eksisterendeSøknad.copy())
+        }
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn1 to nyDato, barn2 to nyDato))
+
+        // Then
+        verify(exactly = 0) { søknadService.opprettSøknad(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()) }
+        verify(exactly = 1) { bbmConsumer.leggTilBarnISøknad(LeggTilBarnIFFSøknadRequest(EKSISTERENDE_SØKNADSID, barn1.ident!!)) }
+        verify(exactly = 1) { bbmConsumer.leggTilBarnISøknad(LeggTilBarnIFFSøknadRequest(EKSISTERENDE_SØKNADSID, barn2.ident!!)) }
+        barn1.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, EKSISTERENDE_SØKNADSID)
+        barn2.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, EKSISTERENDE_SØKNADSID)
+        barn3.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID)
+    }
+
+    @Test
+    fun `skal oppdatere søknaden og flytte ett barn når alle tre barn endres og to får samme revurderingsdato`() {
+        // Given
+        settOppBehandling(testdataBarn2, testdataBarnBm)
+        val barn3 = behandling.søknadsbarn[2]
+        val datoFlestBarn = opprinneligDato.plusMonths(2)
+        val datoBarn3 = opprinneligDato.plusMonths(5)
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn1 to datoFlestBarn, barn2 to datoFlestBarn, barn3 to datoBarn3))
+
+        // Then
+        verify(exactly = 1) { bbmConsumer.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(FF_SØKNADSID, datoFlestBarn)) }
+        verify(exactly = 1) {
+            søknadService.opprettSøknad(any(), match { it.single().kravhaver == barn3.ident }, any(), any(), any(), any(), datoBarn3, any(), any(), any())
+        }
+        verify(exactly = 1) { søknadService.feilregistrerBarnFraSøknad(barn3, FF_SØKNADSID) }
+        verify(exactly = 0) { søknadService.feilregistrerBarnFraSøknad(barn1, any()) }
+        verify(exactly = 0) { søknadService.feilregistrerBarnFraSøknad(barn2, any()) }
+        barn1.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID)
+        barn2.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID)
+    }
+
+    @Test
     fun `skal ikke gjøre noe endringer når revurderingsdatoen ikke er endret`() {
         // When
         service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusDays(14)))
@@ -173,13 +287,11 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal sette revurderingsdato til tidligste tillatte dato når ny revurderingsdato settes til tidligere tidspunkt`() {
+    fun `skal feile hvis når ny revurderingsdato settes til tidligere tidspunkt enn tidligste tillatte revurderingsdato`() {
         // When
-        service.oppdaterRevurderingsdato(behandling, request(barn1 to tidligsteDato.minusYears(1), barn2 to tidligsteDato.minusMonths(1)))
-
-        // Then
-        verify(exactly = 1) { bbmConsumer.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(FF_SØKNADSID, tidligsteDato)) }
-        barn1.forholdsmessigFordeling!!.revurderingsdatoVedOpprettelseAvFF shouldBe tidligsteDato
+        shouldThrow<HttpClientErrorException> {
+            service.oppdaterRevurderingsdato(behandling, request(barn1 to tidligsteDato.minusYears(1), barn2 to tidligsteDato.minusMonths(1)))
+        }
     }
 
     @Test
@@ -212,8 +324,7 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
 
     @Test
     fun `skal feile når barnet ikke har FF-søknad`() {
-        barn1.forholdsmessigFordeling!!.søknader.single().søktAvType = SøktAvType.BIDRAGSMOTTAKER
-
+        barn1.forholdsmessigFordeling!!.søknader.single().behandlingstype = Behandlingstype.ENDRING
         shouldThrow<HttpClientErrorException> {
             service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusMonths(1)))
         }
