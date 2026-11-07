@@ -59,6 +59,9 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
         private const val FF_SØKNADSID = 100L
         private const val NY_SØKNADSID = 200L
         private const val EKSISTERENDE_SØKNADSID = 300L
+        private const val ANNEN_SAK_SØKNADSID = 400L
+        private const val ANNEN_SAK = "2400000"
+        private const val BM2_IDENT = "01018012345"
     }
 
     @BeforeEach
@@ -93,6 +96,32 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
         behandling.bidragsmottaker!!.forholdsmessigFordeling = opprettFFRolle(ffSøknad(FF_SØKNADSID, opprinneligDato))
 
         every { bbmConsumer.hentSøknad(FF_SØKNADSID) } returns HentSøknadResponse(hentSøknad(behandling.søknadsbarn))
+    }
+
+    /**
+     * Barn 1 og barn 2 er i søknad [FF_SØKNADSID] i behandlingens sak med BM 1.
+     * Barn 3 er i søknad [ANNEN_SAK_SØKNADSID] i [ANNEN_SAK] med BM 2.
+     */
+    private fun settOppBehandlingMedToSaker(): Pair<Rolle, Rolle> {
+        settOppBehandling(testdataBarn2, testdataBarnBm)
+        val barn3 = behandling.søknadsbarn[2]
+        barn3.forholdsmessigFordeling = opprettFFRolle(ffSøknad(ANNEN_SAK_SØKNADSID, opprinneligDato, ANNEN_SAK), ANNEN_SAK, BM2_IDENT)
+        val bm2 =
+            Rolle(
+                behandling = behandling,
+                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                ident = BM2_IDENT,
+                fødselsdato = LocalDate.parse("1980-01-01"),
+                id = 999,
+                forholdsmessigFordeling = opprettFFRolle(ffSøknad(ANNEN_SAK_SØKNADSID, opprinneligDato, ANNEN_SAK), ANNEN_SAK, null),
+            )
+        behandling.roller = (behandling.roller + bm2).toMutableSet()
+        behandling.bidragspliktig!!.forholdsmessigFordeling!!.søknader.add(ffSøknad(ANNEN_SAK_SØKNADSID, opprinneligDato, ANNEN_SAK))
+
+        every { bbmConsumer.hentSøknad(FF_SØKNADSID) } returns HentSøknadResponse(hentSøknad(listOf(barn1, barn2)))
+        every { bbmConsumer.hentSøknad(ANNEN_SAK_SØKNADSID) } returns
+            HentSøknadResponse(hentSøknad(listOf(barn3), ANNEN_SAK_SØKNADSID, ANNEN_SAK, BM2_IDENT))
+        return barn3 to bm2
     }
 
     private fun Rolle.ffSøknadsider() = forholdsmessigFordeling!!.søknader.mapNotNull { it.søknadsid }
@@ -276,6 +305,85 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
+    fun `skal ikke flytte barnet til søknad med samme dato i en annen sak`() {
+        // Given
+        val (_, bm2) = settOppBehandlingMedToSaker()
+        val nyDato = opprinneligDato.plusMonths(3)
+        val søknadIAnnenSak = ffSøknad(EKSISTERENDE_SØKNADSID, nyDato, ANNEN_SAK)
+        listOf(behandling.bidragspliktig!!, bm2).forEach { it.forholdsmessigFordeling!!.søknader.add(søknadIAnnenSak.copy()) }
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn1 to nyDato))
+
+        // Then
+        verify(exactly = 0) { bbmConsumer.leggTilBarnISøknad(any()) }
+        verify(exactly = 1) {
+            søknadService.opprettSøknad(
+                any(),
+                match { kravhavere -> kravhavere.single().let { it.kravhaver == barn1.ident && it.saksnummer == behandling.saksnummer } },
+                behandling.saksnummer,
+                any(),
+                any(),
+                any(),
+                nyDato,
+                any(),
+                behandling.bidragsmottaker!!.ident!!,
+                any(),
+            )
+        }
+        behandling.bidragsmottaker!!.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, NY_SØKNADSID)
+        bm2.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(ANNEN_SAK_SØKNADSID, EKSISTERENDE_SØKNADSID)
+    }
+
+    @Test
+    fun `skal behandle søknaden i hver sak for seg når barn i ulike saker får samme revurderingsdato`() {
+        // Given
+        val (barn3, bm2) = settOppBehandlingMedToSaker()
+        val nyDato = opprinneligDato.plusMonths(3)
+
+        // When
+        service.oppdaterRevurderingsdato(behandling, request(barn3 to nyDato, barn1 to nyDato))
+
+        // Then
+        verify(exactly = 1) { bbmConsumer.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(ANNEN_SAK_SØKNADSID, nyDato)) }
+        verify(exactly = 0) { bbmConsumer.oppdaterSøknadFomDato(match { it.søknadsid == FF_SØKNADSID }) }
+        verify(exactly = 0) { bbmConsumer.leggTilBarnISøknad(any()) }
+        verify(exactly = 1) {
+            søknadService.opprettSøknad(
+                any(),
+                match { it.single().kravhaver == barn1.ident },
+                behandling.saksnummer,
+                any(),
+                any(),
+                any(),
+                nyDato,
+                any(),
+                behandling.bidragsmottaker!!.ident!!,
+                any(),
+            )
+        }
+        verify(exactly = 1) { søknadService.feilregistrerBarnFraSøknad(barn1, FF_SØKNADSID) }
+        verify(exactly = 0) { søknadService.feilregistrerBarnFraSøknad(barn3, any()) }
+        barn3.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(ANNEN_SAK_SØKNADSID)
+        bm2.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(ANNEN_SAK_SØKNADSID)
+        bm2.forholdsmessigFordeling!!.søknader.single().søknadFomDato shouldBe nyDato
+        behandling.bidragsmottaker!!.ffSøknadsider() shouldContainExactlyInAnyOrder listOf(FF_SØKNADSID, NY_SØKNADSID)
+    }
+
+    @Test
+    fun `skal feile når barnets FF-søknad tilhører en annen sak enn barnet`() {
+        // Given
+        barn1.forholdsmessigFordeling!!.søknader.single().let { barn1.forholdsmessigFordeling!!.søknader.remove(it) }
+        barn1.forholdsmessigFordeling!!.søknader.add(ffSøknad(ANNEN_SAK_SØKNADSID, opprinneligDato, ANNEN_SAK))
+
+        // When / Then
+        shouldThrow<HttpClientErrorException> {
+            service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusMonths(1)))
+        }
+        verify(exactly = 0) { bbmConsumer.hentSøknad(any()) }
+    }
+
+    @Test
     fun `skal ikke gjøre noe endringer når revurderingsdatoen ikke er endret`() {
         // When
         service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusDays(14)))
@@ -334,18 +442,23 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
         barn.map { (rolle, dato) -> OppdaterRevurderingsdatoFFRequest.OppdaterRevurderingsdatoBarn(rolle.ident!!, rolle.stønadstype!!, dato) },
     )
 
-    private fun opprettFFRolle(søknad: ForholdsmessigFordelingSøknadBarn) = ForholdsmessigFordelingRolle(
-        tilhørerSak = behandling.saksnummer,
+    private fun opprettFFRolle(
+        søknad: ForholdsmessigFordelingSøknadBarn,
+        tilhørerSak: String = behandling.saksnummer,
+        bidragsmottaker: String? = behandling.bidragsmottaker!!.ident,
+    ) = ForholdsmessigFordelingRolle(
+        tilhørerSak = tilhørerSak,
         behandlerenhet = behandling.behandlerEnhet,
         delAvOpprinneligBehandling = false,
         erRevurdering = true,
-        bidragsmottaker = behandling.bidragsmottaker!!.ident,
+        bidragsmottaker = bidragsmottaker,
         søknader = mutableSetOf(søknad),
     )
 
     private fun ffSøknad(
         søknadsid: Long,
         søknadFomDato: LocalDate,
+        saksnummer: String = behandling.saksnummer,
     ) = ForholdsmessigFordelingSøknadBarn(
         mottattDato = LocalDate.parse("2024-01-01"),
         søknadFomDato = søknadFomDato,
@@ -353,22 +466,27 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
         søknadsid = søknadsid,
         behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
         behandlingstema = Behandlingstema.BIDRAG,
-        saksnummer = behandling.saksnummer,
+        saksnummer = saksnummer,
         status = Behandlingstatus.UNDER_BEHANDLING,
     )
 
-    private fun hentSøknad(barn: List<Rolle>) = HentSøknad(
-        søknadsid = FF_SØKNADSID,
+    private fun hentSøknad(
+        barn: List<Rolle>,
+        søknadsid: Long = FF_SØKNADSID,
+        saksnummer: String = behandling.saksnummer,
+        bmIdent: String? = behandling.bidragsmottaker!!.ident,
+    ) = HentSøknad(
+        søknadsid = søknadsid,
         søknadMottattDato = LocalDate.parse("2024-01-01"),
         søknadFomDato = opprinneligDato,
         behandlingstema = Behandlingstema.BIDRAG,
         behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
-        saksnummer = behandling.saksnummer,
+        saksnummer = saksnummer,
         innkreving = true,
         søktAvType = SøktAvType.AUTOMATISK,
         behandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
         partISøknadListe =
         barn.map { PartISøknad(personident = it.ident, rolletype = Rolletype.BARN, behandlingstatus = Behandlingstatus.UNDER_BEHANDLING) } +
-            PartISøknad(personident = behandling.bidragsmottaker!!.ident, rolletype = Rolletype.BIDRAGSMOTTAKER),
+            PartISøknad(personident = bmIdent, rolletype = Rolletype.BIDRAGSMOTTAKER),
     )
 }

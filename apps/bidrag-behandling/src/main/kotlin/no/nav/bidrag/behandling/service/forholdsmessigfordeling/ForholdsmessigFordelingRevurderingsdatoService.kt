@@ -95,10 +95,14 @@ class ForholdsmessigFordelingRevurderingsdatoService(
         return if (barnetsFFSøknad.søknadFomDato == nyRevurderingsdato) null else EndringRevurderingsdato(rolle, barnetsFFSøknad, nyRevurderingsdato)
     }
 
-    private fun finnRolleFFSøknad(rolle: Rolle): ForholdsmessigFordelingSøknadBarn = rolle.forholdsmessigFordeling!!
-        .søknaderUnderBehandling
-        .singleOrNull { it.behandlingstype?.erForholdsmessigFordeling == true }
-        ?: ugyldigForespørsel("Fant ikke én FF-søknad under behandling for rolle ${rolle.id}")
+    /** Barnet tilhører alltid én sak, og FF-søknaden må derfor være i samme sak som barnet */
+    private fun finnRolleFFSøknad(rolle: Rolle): ForholdsmessigFordelingSøknadBarn {
+        val ffRolle = rolle.forholdsmessigFordeling!!
+        return ffRolle.søknaderUnderBehandling
+            .filter { it.saksnummer == null || it.saksnummer == ffRolle.tilhørerSak }
+            .singleOrNull { it.behandlingstype?.erForholdsmessigFordeling == true }
+            ?: ugyldigForespørsel("Fant ikke én FF-søknad under behandling i sak ${ffRolle.tilhørerSak} for rolle ${rolle.id}")
+    }
 
     private fun oppdaterEllerOpprettFFSøknad(
         behandling: Behandling,
