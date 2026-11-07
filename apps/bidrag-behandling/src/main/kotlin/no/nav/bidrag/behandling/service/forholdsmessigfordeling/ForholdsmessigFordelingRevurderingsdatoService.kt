@@ -7,13 +7,12 @@ import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OppdaterRevurderingsdatoFFRequest
 import no.nav.bidrag.behandling.service.VirkningstidspunktService
-import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
-import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import java.time.LocalDate
 
@@ -23,10 +22,10 @@ private val LOGGER = KotlinLogging.logger {}
  * Oppdaterer revurderingsdato (søkt fra dato) for revurderingsbarn etter at forholdsmessig fordeling er opprettet.
  *
  * Flyten for hver FF-søknad som berøres:
- * 1. Får alle barn i søknaden ny dato, oppdateres søkt fra dato direkte i søknaden.
- *    Får barna ulike datoer, beholder søknaden datoen flest barn har fått.
- * 2. Øvrige barn flyttes til en ny FF-søknad med ny dato og feilregistreres i den opprinnelige søknaden.
- * 3. Til slutt oppdateres virkningstidspunktet for hvert barn som har fått ny dato.
+ * 1. Hvis alle barn i søknaden får ny revurderingsdato, oppdateres søkt fra dato på FF søknaden.
+ *    HVis barna får ulike revurderingsdatoer, beholder eller oppdateres FF søknaden til søkt fra datoen flest R-barn får.
+ * 2. Øvrige barn flyttes til en ny FF-søknad med ny dato og feilregistreres i den opprinnelige FF-søknaden.
+ * 3. Til slutt oppdateres virkningstidspunktet for hvert barn som har fått ny revurderingsdato.
  */
 class ForholdsmessigFordelingRevurderingsdatoService(
     private val bbmConsumer: BidragBBMConsumer,
@@ -47,26 +46,25 @@ class ForholdsmessigFordelingRevurderingsdatoService(
     ) {
         validerKanOppdatereRevurderingsdato(behandling)
 
-        val endringer = request.barn.mapNotNull { finnEndring(behandling, it) }
-        if (endringer.isEmpty()) {
+        val endringerRevurderingsdato = request.barn.mapNotNull { finnEndring(behandling, it) }
+        if (endringerRevurderingsdato.isEmpty()) {
             LOGGER.info { "Ingen endring i revurderingsdato for behandling ${behandling.id}" }
             return
         }
 
-        endringer
+        endringerRevurderingsdato
             .groupBy { it.søknadsid }
-            .forEach { (søknadsid, endringerISøknad) -> oppdaterSøknad(behandling, søknadsid, endringerISøknad) }
-        endringer.forEach { oppdaterVirkningstidspunkt(behandling, it) }
+            .forEach { (søknadsid, endringerISøknad) -> oppdaterEllerOpprettFFSøknad(behandling, søknadsid, endringerISøknad) }
+        endringerRevurderingsdato.forEach { oppdaterVirkningstidspunkt(behandling, it) }
         søknadService.knyttSammenManglendeSøknadsknytningerIBehandling(behandling)
     }
-
-    // region Validering og utledning av endringer
 
     private fun validerKanOppdatereRevurderingsdato(behandling: Behandling) {
         if (!behandling.erIForholdsmessigFordeling) {
             ugyldigForespørsel("Behandling ${behandling.id} er ikke i forholdsmessig fordeling")
         }
         if (behandling.erKlageEllerOmgjøring) {
+            // TODO: Vurder støtte for klage, gir det mening å endre revurderingsdato der?
             ugyldigForespørsel("Revurderingsdato kan bare endres for ordinær forholdsmessig fordeling")
         }
         if (behandling.erVedtakFattet || behandling.vedtakDetaljer != null) {
@@ -79,66 +77,47 @@ class ForholdsmessigFordelingRevurderingsdatoService(
         behandling: Behandling,
         barnRequest: OppdaterRevurderingsdatoFFRequest.OppdaterRevurderingsdatoBarn,
     ): EndringRevurderingsdato? {
-        val rolle = finnRevurderingsbarn(behandling, barnRequest)
-        val søknad = finnFFSøknad(rolle)
-        val nyRevurderingsdato = beregnNyRevurderingsdato(behandling, rolle, barnRequest.revurderingFraDato)
+        val rolle = behandling.søknadsbarn.find { it.erSammeRolle(barnRequest.ident, barnRequest.stønadstype) }?.let {
+            if (!it.erRevurderingsbarn) {
+                ugyldigForespørsel("Revurderingsdato kan bare endres for revurderingsbarn og ikke for søknadsbarn med id ${it.id} i behandling ${behandling.id}")
+            } else {
+                it
+            }
+        } ?: ugyldigForespørsel("Fant ikke barn som det forsøkes å endres for med stønadstype ${barnRequest.stønadstype} i behandling ${behandling.id}")
 
-        return if (søknad.søknadFomDato == nyRevurderingsdato) null else EndringRevurderingsdato(rolle, søknad, nyRevurderingsdato)
-    }
-
-    private fun finnRevurderingsbarn(
-        behandling: Behandling,
-        barnRequest: OppdaterRevurderingsdatoFFRequest.OppdaterRevurderingsdatoBarn,
-    ): Rolle {
-        val rolle =
-            behandling.søknadsbarn.find { it.erSammeRolle(barnRequest.ident, barnRequest.stønadstype) }
-                ?: ugyldigForespørsel("Fant ikke barn med stønadstype ${barnRequest.stønadstype} i behandling ${behandling.id}")
-        if (!rolle.erRevurderingsbarn) {
-            ugyldigForespørsel("Revurderingsdato kan bare endres for revurderingsbarn og ikke for søknadsbarn med id ${rolle.id} i behandling ${behandling.id}")
+        val barnetsFFSøknad = finnRolleFFSøknad(rolle)
+        val nyRevurderingsdato = barnRequest.nyRevurderingsdato
+        val tidligsteRevurderingsdato = behandling.finnTidligsteRevurderingsdato(rolle.ident!!, rolle.stønadstype)
+        if (nyRevurderingsdato.isBefore(tidligsteRevurderingsdato)) {
+            ugyldigForespørsel("Ny revurderingsdato $nyRevurderingsdato kan ikke være tidligere enn tidligste tillatte revurderingsdato $tidligsteRevurderingsdato for rolle ${rolle.id} i behandling ${behandling.id}")
         }
-        return rolle
+
+        return if (barnetsFFSøknad.søknadFomDato == nyRevurderingsdato) null else EndringRevurderingsdato(rolle, barnetsFFSøknad, nyRevurderingsdato)
     }
 
-    private fun finnFFSøknad(rolle: Rolle): ForholdsmessigFordelingSøknadBarn = rolle.forholdsmessigFordeling!!
+    private fun finnRolleFFSøknad(rolle: Rolle): ForholdsmessigFordelingSøknadBarn = rolle.forholdsmessigFordeling!!
         .søknaderUnderBehandling
         .singleOrNull { it.behandlingstype?.erForholdsmessigFordeling == true }
         ?: ugyldigForespørsel("Fant ikke én FF-søknad under behandling for rolle ${rolle.id}")
 
-    /** Valgt dato settes til første dag i måneden og kan ikke være tidligere enn tidligste tillatte revurderingsdato */
-    private fun beregnNyRevurderingsdato(
-        behandling: Behandling,
-        rolle: Rolle,
-        valgtDato: LocalDate,
-    ): LocalDate {
-        // Revurderingsbarnets egne søknader skal ikke begrense hvor tidlig revurderingsdatoen kan settes
-        val tidligsteRevurderingsdato =
-            if (rolle.stønadstype == Stønadstype.BIDRAG18AAR) {
-                behandling.finnTidligsteRevurderingsdato(rolle.ident!!, rolle.stønadstype)
-            } else {
-                behandling.eldsteSøktFomDatoSøknadsbarn
-            }
-        return maxOfNullable(tidligsteRevurderingsdato, valgtDato.withDayOfMonth(1))!!
-    }
-
-    // endregion
-    // region Oppdatering av søknader
-
-    private fun oppdaterSøknad(
+    private fun oppdaterEllerOpprettFFSøknad(
         behandling: Behandling,
         søknadsid: Long,
         endringer: List<EndringRevurderingsdato>,
     ) {
         val søknad = bbmConsumer.hentSøknad(søknadsid)?.søknad ?: ugyldigForespørsel("Fant ikke søknad $søknadsid")
-        val nySøktFraDatoISøknaden = finnNySøktFraDatoISøknaden(søknad, endringer)
-        val barnSomFlyttesTilNySøknad = endringer.filter { it.nyRevurderingsdato != nySøktFraDatoISøknaden }
+        val nySøktFraDatoISøknaden = finnNySøktFraDatoIFFSøknaden(søknad, endringer)
+        val barnSomSkalFlyttesTilNySøknad = endringer.filter { it.nyRevurderingsdato != nySøktFraDatoISøknaden }
 
-        barnSomFlyttesTilNySøknad
+        barnSomSkalFlyttesTilNySøknad
             .groupBy { it.nyRevurderingsdato }
             .forEach { (nyRevurderingsdato, barnMedSammeDato) ->
-                flyttBarnTilNySøknad(behandling, søknad, barnMedSammeDato, nyRevurderingsdato)
+                flyttTilEllerOpprettNyFFSøknad(behandling, søknad, barnMedSammeDato, nyRevurderingsdato)
             }
 
-        nySøktFraDatoISøknaden?.let { oppdaterSøktFraDatoISøknad(behandling, søknadsid, it) }
+        if (nySøktFraDatoISøknaden != null) {
+            oppdaterSøktFraDatoISøknad(behandling, søknadsid, nySøktFraDatoISøknaden)
+        }
     }
 
     /**
@@ -148,13 +127,13 @@ class ForholdsmessigFordelingRevurderingsdatoService(
      * Da får søknaden datoen flest barn har valgt, og de andre barna flyttes til nye søknader.
      * Hvis bare noen av barna endres, beholder søknaden datoen sin, og alle barna som endres flyttes.
      */
-    private fun finnNySøktFraDatoISøknaden(
+    private fun finnNySøktFraDatoIFFSøknaden(
         søknad: HentSøknad,
         identerBarnSomEndres: List<EndringRevurderingsdato>,
     ): LocalDate? {
         val endredeBarn = identerBarnSomEndres.mapNotNull { it.rolle.ident }.toSet()
-        val barnISøknadenSomEndres = søknad.parterUnderBehandling.all { it.personident in endredeBarn }
-        if (!barnISøknadenSomEndres) return null
+        val alleBarnISøknadenSomEndres = søknad.parterUnderBehandling.all { it.personident in endredeBarn }
+        if (!alleBarnISøknadenSomEndres) return null
 
         return identerBarnSomEndres
             .groupingBy { it.nyRevurderingsdato }
@@ -176,23 +155,30 @@ class ForholdsmessigFordelingRevurderingsdatoService(
             .forEach { it.søknadFomDato = nyRevurderingsdato }
     }
 
-    private fun flyttBarnTilNySøknad(
+    private fun flyttTilEllerOpprettNyFFSøknad(
         behandling: Behandling,
         gammelSøknad: HentSøknad,
         endringer: List<EndringRevurderingsdato>,
         nyRevurderingsdato: LocalDate,
     ) {
         val bmIdent = finnBidragsmottaker(gammelSøknad, endringer)
-        val nySøknad = opprettNySøknad(behandling, gammelSøknad, endringer, nyRevurderingsdato, bmIdent)
+        val eksisterendeSøknadMedSammeSøktFraDato = finnSøknadMedSammeSøktFraDato(behandling, gammelSøknad, nyRevurderingsdato)
+        val nyEllerOpprettSøknad = if (eksisterendeSøknadMedSammeSøktFraDato != null) {
+            leggTilBarnIEksisterendeSøknad(eksisterendeSøknadMedSammeSøktFraDato, endringer)
+            eksisterendeSøknadMedSammeSøktFraDato
+        } else {
+            opprettNySøknad(behandling, gammelSøknad, endringer, nyRevurderingsdato, bmIdent)
+        }
+
         LOGGER.info {
-            "Flytter ${endringer.size} barn fra søknad ${gammelSøknad.søknadsid} til søknad ${nySøknad.søknadsid} " +
+            "Flytter ${endringer.size} barn fra søknad ${gammelSøknad.søknadsid} til søknad ${nyEllerOpprettSøknad.søknadsid} " +
                 "med søkt fra dato $nyRevurderingsdato i behandling ${behandling.id}"
         }
 
         endringer.forEach { feilregistrerBarnFraSøknad(it.rolle, gammelSøknad.søknadsid) }
 
-        val berørteRoller = endringer.map { it.rolle } + listOfNotNull(behandling.bidragspliktig, behandling.roller.find { it.ident == bmIdent })
-        leggTilSøknadForRoller(berørteRoller, nySøknad)
+        val rollerEndringGjelder = endringer.map { it.rolle } + listOfNotNull(behandling.bidragspliktig, behandling.roller.find { it.ident == bmIdent })
+        leggTilSøknadForRoller(rollerEndringGjelder, nyEllerOpprettSøknad)
     }
 
     private fun finnBidragsmottaker(
@@ -201,6 +187,35 @@ class ForholdsmessigFordelingRevurderingsdatoService(
     ): String = søknad.partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }?.personident
         ?: endringer.firstNotNullOfOrNull { it.rolle.forholdsmessigFordeling?.bidragsmottaker }
         ?: ugyldigForespørsel("Fant ikke bidragsmottaker for søknad ${søknad.søknadsid}")
+
+    /**
+     * Finner en FF-søknad under behandling i samme sak, med samme stønadstype, innkreving og søkt fra dato.
+     * Barna flyttes til denne søknaden i stedet for å opprette en ny, slik at det ikke blir duplikate søknader.
+     */
+    private fun finnSøknadMedSammeSøktFraDato(
+        behandling: Behandling,
+        gammelSøknad: HentSøknad,
+        nyRevurderingsdato: LocalDate,
+    ): ForholdsmessigFordelingSøknadBarn? = behandling.roller
+        .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
+        .firstOrNull {
+            it.søknadsid != gammelSøknad.søknadsid &&
+                it.behandlingstype?.erForholdsmessigFordeling == true &&
+                it.saksnummer == gammelSøknad.saksnummer &&
+                it.søknadFomDato == nyRevurderingsdato &&
+                it.innkreving == gammelSøknad.innkreving &&
+                it.behandlingstema?.tilStønadstype() == gammelSøknad.behandlingstema.tilStønadstype()
+        }?.copy()
+
+    private fun leggTilBarnIEksisterendeSøknad(
+        søknad: ForholdsmessigFordelingSøknadBarn,
+        endringer: List<EndringRevurderingsdato>,
+    ) {
+        endringer
+            .map { it.rolle }
+            .filter { rolle -> rolle.forholdsmessigFordeling?.søknader.orEmpty().none { it.søknadsid == søknad.søknadsid } }
+            .forEach { bbmConsumer.leggTilBarnISøknad(LeggTilBarnIFFSøknadRequest(søknad.søknadsid!!, it.ident!!)) }
+    }
 
     private fun opprettNySøknad(
         behandling: Behandling,
