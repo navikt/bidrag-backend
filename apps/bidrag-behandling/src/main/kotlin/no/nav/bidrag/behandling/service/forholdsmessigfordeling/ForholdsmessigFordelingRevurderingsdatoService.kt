@@ -150,7 +150,7 @@ class ForholdsmessigFordelingRevurderingsdatoService(
         LOGGER.info { "Oppdaterer søkt fra dato i søknad $søknadsid til $nyRevurderingsdato for behandling ${behandling.id}" }
         bbmConsumer.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(søknadsid, nyRevurderingsdato))
         behandling.roller
-            .flatMap { it.forholdsmessigFordeling?.søknader.orEmpty() }
+            .flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty() }
             .filter { it.søknadsid == søknadsid }
             .forEach { it.søknadFomDato = nyRevurderingsdato }
     }
@@ -213,7 +213,7 @@ class ForholdsmessigFordelingRevurderingsdatoService(
     ) {
         endringer
             .map { it.rolle }
-            .filter { rolle -> rolle.forholdsmessigFordeling?.søknader.orEmpty().none { it.søknadsid == søknad.søknadsid } }
+            .filter { rolle -> rolle.forholdsmessigFordeling?.søknaderUnderBehandling.orEmpty().none { it.søknadsid == søknad.søknadsid } }
             .forEach { bbmConsumer.leggTilBarnISøknad(LeggTilBarnIFFSøknadRequest(søknad.søknadsid!!, it.ident!!)) }
     }
 
@@ -253,7 +253,7 @@ class ForholdsmessigFordelingRevurderingsdatoService(
     ) {
         roller
             .mapNotNull { it.forholdsmessigFordeling }
-            .filter { ff -> ff.søknader.none { it.søknadsid == søknad.søknadsid } }
+            .filter { ff -> ff.søknaderUnderBehandling.none { it.søknadsid == søknad.søknadsid } }
             .forEach { it.søknader.add(søknad.copy()) }
     }
 
