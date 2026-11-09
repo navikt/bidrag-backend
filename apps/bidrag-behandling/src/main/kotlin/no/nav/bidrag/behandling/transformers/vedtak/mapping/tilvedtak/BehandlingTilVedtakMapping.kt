@@ -782,6 +782,11 @@ class BehandlingTilVedtakMapping(
         byggForRoller: List<Rolle> = behandling.søknadsbarn,
     ): OpprettVedtakRequestDto {
         mapper.run {
+            val grunnlagSomTilhørerStønadsendring = listOf(
+                Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
+                Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                Grunnlagstype.ALDERSJUSTERING_DETALJER,
+            )
             val byggForSøknadsbarn = byggForRoller.filter { it.rolletype == Rolletype.BARN }
             val stønadsendringGrunnlag = stønadsendringPerioder.flatMap(StønadsendringPeriode::grunnlag)
 
@@ -803,6 +808,11 @@ class BehandlingTilVedtakMapping(
             }
             val stønadsendringGrunnlagListe = mutableSetOf<GrunnlagDto>()
 
+            stønadsendringGrunnlagListe.addAll(
+                stønadsendringGrunnlag.filter {
+                    grunnlagSomTilhørerStønadsendring.contains(it.type)
+                },
+            )
             grunnlagsliste.addAll(stønadsendringGrunnlag)
             stønadsendringGrunnlagListe.addAll(
                 behandling.byggGrunnlagBehandlingDetaljer(request?.fatteVedtakRevurderingsbarn, bleFFTrukket),
