@@ -52,4 +52,3 @@ azure_access_inbound:
 unleash:
   env: production
   secret_name: bidrag-tilgangskontroll-unleash-api-token
-cache_valkey_instance: tilgangskontroll

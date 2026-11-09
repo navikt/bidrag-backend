@@ -64,4 +64,3 @@ azure_access_inbound:
 unleash:
   env: development
   secret_name: bidrag-tilgangskontroll-unleash-api-token
-cache_valkey_instance: tilgangskontrollq1
