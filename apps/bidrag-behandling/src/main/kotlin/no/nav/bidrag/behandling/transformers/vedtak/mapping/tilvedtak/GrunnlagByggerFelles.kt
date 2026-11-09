@@ -321,12 +321,14 @@ fun byggGrunnlagVirkningstidspunktResultatvedtak(
             resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
                 .minOfOrNull { it.periode.fom }
                 ?.atDay(1) ?: søknadsbarn.virkningstidspunktRolle,
-            opphørsdato =
-            resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
-                .maxByOrNull { it.periode.fom }
-                ?.periode
-                ?.til
-                ?.atDay(1) ?: søknadsbarn.opphørsdato,
+            opphørsdato = if (resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isEmpty()) {
+                resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
+                    .maxBy { it.periode.fom }
+                    .periode
+                    .til?.atDay(1)
+            } else {
+                søknadsbarn.opphørsdato
+            },
             årsak = VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING,
             avslag = null,
         ),
