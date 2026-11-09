@@ -653,13 +653,18 @@ class BehandlingTilVedtakMapping(
         beregningBarn: ResultatBidragsberegningBarn,
         klagevedtakErEnesteVedtak: Boolean,
     ): List<Pair<ResultatRolle, ResultatDelvedtak>> {
+        // For R-barn som har avvist revurdering så finnes det bare en endelig vedtak. Da vil det ikke bli fattet vedtak hvis klagevedtakErEnesteVedtak.
+        // Drar også dem inn i filtrer pga det
+        val harBareEndeligVedtak = beregningBarn
+            .resultatVedtak!!
+            .resultatVedtakListe.all { it.endeligVedtak }
         return beregningBarn
             .resultatVedtak!!
             .resultatVedtakListe
-            .filter { !it.endeligVedtak }
+            .filter { !it.endeligVedtak || (klagevedtakErEnesteVedtak && harBareEndeligVedtak) }
             .map { resultatVedtak ->
-                // Ikke fatte vedtak for gjenopprettet beløpshistorikk
-                if (!resultatVedtak.beregnet) {
+                // Ikke fatte vedtak for gjenopprettet beløpshistorikk. Hvis beregnetBarnebidragPeriodeListe er tom så er det avvist revurdering
+                if (!resultatVedtak.beregnet && resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isNotEmpty()) {
                     val resultatFraVedtakGrunnlag =
                         resultatVedtak.resultat.grunnlagListe.finnResultatFraAnnenVedtak(
                             finnFørsteTreff = true,
@@ -693,10 +698,12 @@ class BehandlingTilVedtakMapping(
                     } else {
                         Innkrevingstype.UTEN_INNKREVING
                     }
+                // Hvis det er avvist revurderings skal det dras inn i endelig vedtak som om det var omgjøringsvedtak
+                val erOmgjøringsvedtak = resultatVedtak.omgjøringsvedtak || (beregningBarn.skalBehandlesSomAvvistRevurderingsbarnIKlage(request) && klagevedtakErEnesteVedtak)
                 beregningBarn.barn to
                     ResultatDelvedtak(
                         vedtaksid = null,
-                        omgjøringsvedtak = resultatVedtak.omgjøringsvedtak,
+                        omgjøringsvedtak = erOmgjøringsvedtak,
                         beregnet = true,
                         type = resultatVedtak.vedtakstype,
                         request =
