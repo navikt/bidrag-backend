@@ -321,7 +321,7 @@ fun byggGrunnlagVirkningstidspunktResultatvedtak(
             resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
                 .minOfOrNull { it.periode.fom }
                 ?.atDay(1) ?: søknadsbarn.virkningstidspunktRolle,
-            opphørsdato = if (resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isEmpty()) {
+            opphørsdato = if (resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isNotEmpty()) {
                 resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
                     .maxBy { it.periode.fom }
                     .periode
