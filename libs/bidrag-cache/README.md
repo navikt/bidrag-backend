@@ -80,7 +80,7 @@ Begge lag følger samme utløpsregel. Ved treff i Valkey fylles Caffeine med gje
 
 ## Nøkler og serialisering
 
-Nøkler utledes av brukeridentitet, metode og parametere med HMAC-SHA256 og Valkey-passordet. Identer står dermed ikke i klartekst i Valkey-nøkler. Manglende eller blank brukeridentitet avvises før cache eller kilde aksesseres. Appen må skille validerte applikasjonskall eksplisitt fra saksbehandlere; biblioteket tolker ikke token eller velger systembrukere. Igjen, se oppsett i [bidrag-tilgangskontoll](../../apps/bidrag-tilgangskontroll/src/main/kotlin/no/nav/bidrag/tilgangskontroll/konfigurasjon/CacheKonfigurasjon.kt) om du er usikker.
+Nøkler utledes av brukeridentitet, metode, deklarerte parametertyper og parameterverdier med HMAC-SHA256 og Valkey-passordet. Identer står dermed ikke i klartekst i Valkey-nøkler. Manglende eller blank brukeridentitet avvises før cache eller kilde aksesseres. Appen må skille validerte applikasjonskall eksplisitt fra saksbehandlere; biblioteket tolker ikke token eller velger systembrukere. Igjen, se oppsett i [bidrag-tilgangskontoll](../../apps/bidrag-tilgangskontroll/src/main/kotlin/no/nav/bidrag/tilgangskontroll/konfigurasjon/CacheKonfigurasjon.kt) om du er usikker.
 
 Strenger, tall, boolske verdier, enum, `null` og lister støttes som nøkkelparametere. For egne domenetyper angir appen `nøkkelprefix` i samme `CacheSettings`. Det er slik så bidrag-cache ikke har noe forhold til andre biblioteker.
 

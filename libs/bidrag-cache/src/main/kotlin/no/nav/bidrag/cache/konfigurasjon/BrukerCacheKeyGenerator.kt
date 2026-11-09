@@ -25,7 +25,8 @@ class BrukerCacheKeyGenerator(
             checkNotNull(brukerId()?.takeIf { it.isNotBlank() }) {
                 "Mangler brukeridentitet for brukerbasert cache"
             }
-        val keyParts = listOf(method.declaringClass.name, method.name, bruker, *params.map(::leggTilTypePrefix).toTypedArray())
+        val parameterTyper = method.parameterTypes.joinToString(separator = ",", prefix = "(", postfix = ")") { it.name }
+        val keyParts = listOf(method.declaringClass.name, method.name, parameterTyper, bruker, *params.map(::leggTilTypePrefix).toTypedArray())
         // Mac er ikke trådsikker og må derfor opprettes per kall.
         val hmac = Mac.getInstance("HmacSHA256")
         hmac.init(SecretKeySpec(valkeyPassord.toByteArray(StandardCharsets.UTF_8), "HmacSHA256"))
@@ -39,9 +40,13 @@ class BrukerCacheKeyGenerator(
         null -> "null"
 
         is String -> "string:$verdi"
+
         is Number, is Boolean -> "${verdi.javaClass.name}:$verdi"
+
         is Enum<*> -> "enum:${verdi.declaringJavaClass.name}:${verdi.name}"
+
         is List<*> -> "list:${verdi.joinToString("") { element -> leggTilTypePrefix(element).let { "${it.length}:$it" } }}"
+
         else -> nøkkelprefix(verdi)
             ?: throw IllegalArgumentException("Ukjent type for cache-nøkkel: ${verdi.javaClass.name}")
     }

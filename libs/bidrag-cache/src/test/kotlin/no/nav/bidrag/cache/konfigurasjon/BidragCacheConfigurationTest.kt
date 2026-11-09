@@ -11,6 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.AutoConfigurations
 import org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
@@ -31,7 +32,6 @@ import java.time.ZoneId
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import org.springframework.beans.factory.getBean
 
 class BidragCacheConfigurationTest {
     private val klokke = Clock.fixed(Instant.parse("2026-01-02T05:30:00Z"), ZoneId.of("UTC"))
@@ -156,6 +156,17 @@ class BidragCacheConfigurationTest {
     }
 
     @Test
+    fun `skal skille overlastede metoder med samme runtime-verdi`() {
+        val generator = BrukerCacheKeyGenerator("testhemmelighet", settings.brukerId)
+        val kilde = TestKilde()
+        val stringMetode = TestKilde::class.java.getMethod("hent", String::class.java)
+        val objektMetode = TestKilde::class.java.getMethod("hent", Any::class.java)
+
+        generator.generate(kilde, stringMetode, null) shouldNotBe generator.generate(kilde, objektMetode, null)
+        generator.generate(kilde, stringMetode, "verdi") shouldNotBe generator.generate(kilde, objektMetode, "verdi")
+    }
+
+    @Test
     fun `skal lese brukerident ved hvert oppslag og avvise manglende identitet før cacheoppslag`() {
         var ident: String? = null
         kontekst.withBean(CacheSettings::class.java, { settings.copy(brukerId = { ident }) }).run { app ->
@@ -194,6 +205,8 @@ class BidragCacheConfigurationTest {
 
     class TestKilde {
         fun hent(verdi: Any?): Any? = verdi
+
+        fun hent(verdi: String?): String? = verdi
     }
 
     enum class TestVerdi { FØRSTE }
