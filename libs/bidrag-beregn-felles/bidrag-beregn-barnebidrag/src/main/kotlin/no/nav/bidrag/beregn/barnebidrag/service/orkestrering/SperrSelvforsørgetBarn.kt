@@ -15,7 +15,7 @@ internal const val FEILMELDING_SELVFORSØRGET_BARN =
  * Avslag for full forpleining (§ 11 c) og delt bosted (§ 8) berøres ikke. Sperren styres av Unleash-bryteren
  * [BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN].
  */
-internal fun sperrBeregningNårBarnetErSelvforsørget(beregningResultatListe: List<BeregnetBarnebidragResultatV2>) {
+internal fun sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(beregningResultatListe: List<BeregnetBarnebidragResultatV2>) {
     if (!BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN.isEnabled) return
 
     val barnetErSelvforsørget = beregningResultatListe.any { resultat ->

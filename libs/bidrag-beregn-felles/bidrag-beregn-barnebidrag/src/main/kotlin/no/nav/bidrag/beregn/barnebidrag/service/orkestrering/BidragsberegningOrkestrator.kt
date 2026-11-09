@@ -646,7 +646,7 @@ class BidragsberegningOrkestrator(
 
             secureLogger.debug { "Resultat av bidragsberegning: $beregningResultatListe" }
 
-            sperrBeregningNårBarnetErSelvforsørget(beregningResultatListe)
+            sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(beregningResultatListe)
 
             val alleSøknadsbarnHarAvslag = request.alleSøknadsbarnHarAvslag()
             beregningResultatListe.map { resultat ->

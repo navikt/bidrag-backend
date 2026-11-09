@@ -21,7 +21,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.FEILMELDING_SELVFOR
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
-import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.sperrBeregningNårBarnetErSelvforsørget
+import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn
 import no.nav.bidrag.beregn.barnebidrag.unleash.BarnebidragUnleashFeatures
 import no.nav.bidrag.beregn.barnebidrag.unleash.disableUnleashFeature
 import no.nav.bidrag.beregn.barnebidrag.unleash.enableUnleashFeature
@@ -86,7 +86,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
         val resultat = beregn("selvforsorget")
         sluttberegninger(resultat, søknadsbarn2).map { it.barnetErSelvforsørget } shouldContain true
 
-        val feil = assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørget(resultat) }
+        val feil = assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat) }
 
         feil.message shouldBe FEILMELDING_SELVFORSØRGET_BARN
     }
@@ -94,7 +94,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
     @Test
     fun `sperren skal være på som standard når Unleash ikke kjenner bryteren`() {
         BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN.isEnabled shouldBe true
-        assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørget(beregn("selvforsorget")) }
+        assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(beregn("selvforsorget")) }
     }
 
     @Test
@@ -102,7 +102,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
         disableUnleashFeature(BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN)
         val resultat = beregn("selvforsorget")
 
-        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørget(resultat) }
+        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat) }
         resultatkoder(resultat, søknadsbarn2) shouldContain Resultatkode.BARNET_ER_SELVFORSØRGET
     }
 
@@ -111,7 +111,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
         enableUnleashFeature(BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN)
         val resultat = beregn("forpleining")
 
-        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørget(resultat) }
+        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat) }
         resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG }
     }
 
@@ -120,7 +120,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
         enableUnleashFeature(BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN)
         val resultat = beregn("delt_bosted")
 
-        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørget(resultat) }
+        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat) }
         resultatkoder(resultat, søknadsbarn2).forEach { it shouldBe Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED }
     }
 
