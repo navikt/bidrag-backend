@@ -3,6 +3,7 @@ min_replicas: 1
 ingresses:
   - https://bidrag-tilgangskontroll-feature.intern.dev.nav.no
 env:
+  CACHE_VALKEY_INSTANCE: tilgangskontroll-q1
   BIDRAG_SAK_URL: https://bidrag-sak-q1.dev-fss-pub.nais.io
   BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q1
   TILGANGSMASKIN_URL: https://tilgangsmaskin.intern.dev.nav.no
@@ -63,3 +64,4 @@ azure_access_inbound:
 unleash:
   env: development
   secret_name: bidrag-tilgangskontroll-unleash-api-token
+cache_valkey_instance: tilgangskontrollq1

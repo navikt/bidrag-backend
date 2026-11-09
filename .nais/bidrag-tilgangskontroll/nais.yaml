@@ -22,6 +22,9 @@ spec:
         extra:
           - "NAVident"
           - "azp_name"
+  valkey:
+    - instance: {{cache_valkey_instance}}
+      access: readwrite
   accessPolicy:
     inbound:
       rules:

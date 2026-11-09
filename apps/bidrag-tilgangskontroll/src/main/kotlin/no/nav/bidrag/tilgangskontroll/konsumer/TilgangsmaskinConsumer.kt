@@ -1,6 +1,5 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
-import no.nav.bidrag.commons.cache.BrukerCacheable
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
@@ -10,6 +9,7 @@ import no.nav.bidrag.tilgangskontroll.model.tilgangsmaskin.TilgangsmaskinBulkRes
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.ResponseEntity
 import org.springframework.retry.annotation.Backoff
 import org.springframework.retry.annotation.Retryable
@@ -31,7 +31,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER)
+    @Cacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER)
     fun evaluerKomplettRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("komplett").build().toUri(),
         personIdent.verdi,
@@ -42,7 +42,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KJERNEREGLER)
+    @Cacheable(Cache.TILGANGSMASKIN_KJERNEREGLER)
     fun evaluerKjerneRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("kjerne").build().toUri(),
         personIdent.verdi,
@@ -53,7 +53,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KJERNEREGLER_BULK)
+    @Cacheable(Cache.TILGANGSMASKIN_KJERNEREGLER_BULK)
     fun evaluerKjerneRegelsettForFlereBrukere(personIdent: List<String>): TilgangsmaskinBulkResponse {
         val response =
             postForEntity<TilgangsmaskinBulkResponse>(
@@ -71,7 +71,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER_BULK)
+    @Cacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER_BULK)
     fun evaluerKomplettRegelsettForFlereBrukere(personIdent: List<String>): TilgangsmaskinBulkResponse {
         try {
             val response =

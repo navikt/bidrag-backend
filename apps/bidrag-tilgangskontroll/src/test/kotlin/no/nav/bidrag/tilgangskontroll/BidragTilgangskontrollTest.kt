@@ -8,7 +8,7 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
 import org.springframework.cache.CacheManager
-import org.springframework.cache.caffeine.CaffeineCacheManager
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.EnableAspectJAutoProxy
@@ -35,7 +35,7 @@ fun main(args: Array<String>) {
 
 @Configuration
 class TestConfiguration {
-    // This configuration class can be used to set up any test-specific beans or configurations
+    // Testoppsettet bruker minnecache uten å kreve en Valkey-server.
     @Bean
-    fun cacheManager(): CacheManager = CaffeineCacheManager()
+    fun cacheManager(): CacheManager = ConcurrentMapCacheManager()
 }

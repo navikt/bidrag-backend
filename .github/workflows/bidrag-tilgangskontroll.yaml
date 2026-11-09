@@ -32,6 +32,7 @@ env:
   APP_PATHS: |
     pom.xml
     libs/bidrag-felles/**
+    libs/bidrag-cache/**
     .nais/bidrag-tilgangskontroll/**.yaml
     apps/bidrag-tilgangskontroll/**
 

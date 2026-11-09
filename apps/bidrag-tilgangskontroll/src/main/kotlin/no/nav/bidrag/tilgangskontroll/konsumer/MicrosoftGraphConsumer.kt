@@ -1,7 +1,6 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.commons.cache.BrukerCacheable
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.tilgangskontroll.konfigurasjon.Cache
@@ -12,6 +11,7 @@ import no.nav.bidrag.tilgangskontroll.model.graph.CheckMemberGroupsResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.EnhetResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Gruppe
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestOperations
@@ -28,7 +28,7 @@ class MicrosoftGraphConsumer(
         private val GRAPH_URL = URI("https://graph.microsoft.com/v1.0/")
     }
 
-    @BrukerCacheable(Cache.BRUKERINFO)
+    @Cacheable(Cache.BRUKERINFO)
     fun hentBrukerinformasjon(navident: String): BrukerinformasjonResponse? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
@@ -43,7 +43,7 @@ class MicrosoftGraphConsumer(
         return response
     }
 
-    @BrukerCacheable(Cache.BRUKERGRUPPER)
+    @Cacheable(Cache.BRUKERGRUPPER)
     fun hentGrupperForBruker(navident: String?): BrukerGrupperResponse? {
         if (TokenUtils.erApplikasjonsbruker()) {
             if (navident.isNullOrBlank()) {
@@ -81,7 +81,7 @@ class MicrosoftGraphConsumer(
         return BrukerGrupperResponse(value = grupper)
     }
 
-    @BrukerCacheable(Cache.BRUKERE_FOR_ENHET)
+    @Cacheable(Cache.BRUKERE_FOR_ENHET)
     fun hentBrukereForEnhet(enhet: String): BrukerinformasjonResponse? {
         val enhetId = hentEnhetId(enhet) ?: return null
         val temaBidId = hentTemaBidId() ?: return null
@@ -138,7 +138,7 @@ class MicrosoftGraphConsumer(
         false
     }
 
-    @BrukerCacheable(Cache.GRUPPE_DETALJER)
+    @Cacheable(Cache.GRUPPE_DETALJER)
     fun hentEnhetId(enhet: String): String? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
@@ -154,7 +154,7 @@ class MicrosoftGraphConsumer(
         return response?.value?.firstOrNull()?.id
     }
 
-    @BrukerCacheable(Cache.GRUPPE_DETALJER_TEMA)
+    @Cacheable(Cache.GRUPPE_DETALJER_TEMA)
     fun hentTemaBidId(): String? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
@@ -169,7 +169,7 @@ class MicrosoftGraphConsumer(
         return response?.value?.firstOrNull()?.id
     }
 
-    @BrukerCacheable(Cache.BRUKERENHETER)
+    @Cacheable(Cache.BRUKERENHETER)
     fun hentEnheterForBruker(navident: String): BrukerEnheterRespons {
         val grupper = hentGrupperForBruker(navident)
         val enheter =
