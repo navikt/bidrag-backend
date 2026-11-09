@@ -17,10 +17,10 @@ import no.nav.bidrag.beregn.barnebidrag.service.beregning.BeregnBarnebidragServi
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrkestrator
-import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.FEILMELDING_SELVFORSØRGET_BARN
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
+import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.feilmeldingSelvforsørgetBarn
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn
 import no.nav.bidrag.beregn.barnebidrag.unleash.BarnebidragUnleashFeatures
 import no.nav.bidrag.beregn.barnebidrag.unleash.disableUnleashFeature
@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import java.math.BigDecimal
 import java.time.YearMonth
 
 /**
@@ -88,7 +89,8 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
 
         val feil = assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat) }
 
-        feil.message shouldBe FEILMELDING_SELVFORSØRGET_BARN
+        feil.message shouldBe feilmeldingSelvforsørgetBarn(BigDecimal.valueOf(100))
+        feil.message!! shouldContain "minst 100 ganger forskuddssatsen"
     }
 
     @Test
@@ -138,7 +140,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
             resultat.forEach {
                 it.beregningsfeil shouldNotBe null
                 it.beregningsfeil!!.message!! shouldContain "teknisk feil"
-                it.beregningsfeil!!.message!! shouldContain FEILMELDING_SELVFORSØRGET_BARN
+                it.beregningsfeil!!.message!! shouldContain feilmeldingSelvforsørgetBarn(BigDecimal.valueOf(100))
             }
         }
     }
