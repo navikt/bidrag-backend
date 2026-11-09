@@ -31,7 +31,7 @@
     <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.6</kotest.version>
-    <swagger-annotations.version>2.2.55</swagger-annotations.version>
+    <swagger-annotations.version>3.0.0</swagger-annotations.version>
     <google-cloud-libraries-bom.version>26.91.0</google-cloud-libraries-bom.version>
     <google-tink-gcpkms.version>1.12.0</google-tink-gcpkms.version>
     <google-tink.version>1.24.0</google-tink.version>
