@@ -46,9 +46,9 @@
           "fom": "2024-08",
           "til": null
         },
-        "endeligAndelFaktor": 0,
+        "endeligAndelFaktor": 0.6,
         "andelBeløp": 0,
-        "beregnetAndelFaktor": 0,
+        "beregnetAndelFaktor": 0.6,
         "barnEndeligInntekt": 0,
         "barnetErSelvforsørget": false
       },

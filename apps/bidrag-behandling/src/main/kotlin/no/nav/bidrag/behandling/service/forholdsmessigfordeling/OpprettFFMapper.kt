@@ -87,6 +87,9 @@ data class OppdaterBarnFraFFRequest(
 val HentSøknad.parterUnderBehandling get() = partISøknadListe.filterBarnUnderBehandling()
 val HentSøknad.parterVedtakFattet get() = partISøknadListe.filterBarnVedtakFattet()
 
+// FF-søknader for 18 år skal alltid gjelde ett barn per søknad
+fun List<SakKravhaver>.grupperPerSøknad(stønadstype: Stønadstype?): List<List<SakKravhaver>> = if (stønadstype == Stønadstype.BIDRAG18AAR) map { listOf(it) } else listOf(this)
+
 fun List<PartISøknad>.filterBarnUnderBehandling() = filter {
     it.rolletype == Rolletype.BARN &&
         it.behandlingstatus == Behandlingstatus.UNDER_BEHANDLING

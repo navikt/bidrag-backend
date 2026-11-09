@@ -217,7 +217,7 @@ jobs:
             ~/.m2/repository
             !~/.m2/repository/no/nav/bidrag
           key: ${{ steps.maven-cache.outputs.cache-primary-key }}
-      - uses: nais/docker-build-push@dd7421d5068057a020ca46ead966c26190c516b1 # v0
+      - uses: nais/docker-build-push@d3a1f7e259ecc381a50435e1d4add9059429ebd7 # v0
         if: github.actor != 'dependabot[bot]' && github.event_name != 'merge_group'
         id: docker-push
         env:

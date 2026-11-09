@@ -334,7 +334,7 @@ class Dtomapper(
             } else {
                 null
             },
-            valideringsfeil = this.valider(beregnetUnderholdskostnad).takeIf { it.harFeil },
+            valideringsfeil = this.valider().takeIf { it.harFeil },
         )
     }
 
@@ -1049,7 +1049,7 @@ class Dtomapper(
     ): PrivatAvtaleDtoV3 {
         val søknadsbarnPA =
             søknadsbarn
-                .filter { it.kreverGrunnlagForBeregning }
+                .filter { it.kreverGrunnlagForBeregning || (it.erRevurderingsbarn && it.innkrevingstype == Innkrevingstype.UTEN_INNKREVING) }
                 .parallelStream()
                 .map { barn ->
                     val privatAvtale = privatAvtale.find { it.rolle?.erSammeRolle(barn) == true }
@@ -1206,7 +1206,8 @@ class Dtomapper(
                         it.grunnlagFraVedtak ?: it.grunnlagFraVedtakForInnkreving?.vedtak,
                         kanSkriveVurderingAvSkolegang = kanSkriveVurderingAvSkolegang(it),
                         begrunnelse =
-                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle) {
+                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle && !erIForholdsmessigFordeling) {
+                            // I FF så har barna aldri samme begrunnelse
                             BegrunnelseDto(
                                 henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT),
                             )

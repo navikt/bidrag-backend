@@ -18,6 +18,7 @@
     "lint:fix": "eslint 'src/**/*.{ts,js}' --fix"
   },
   "dependencies": {
+    "minimatch": ">=11.0.1",
     "chalk": "^6.0.1",
     "clipboardy": "^5.3.2",
     "commander": "^15.0.0",

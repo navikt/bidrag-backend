@@ -52,6 +52,10 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # bidrag-dokumentmal bruker Tailwind 3. Tailwind 4 krever ny CLI og ny konfigurasjon.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
