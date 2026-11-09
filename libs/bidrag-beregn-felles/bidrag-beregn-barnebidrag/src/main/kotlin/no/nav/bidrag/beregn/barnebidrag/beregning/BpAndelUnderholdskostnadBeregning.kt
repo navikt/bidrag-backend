@@ -11,8 +11,6 @@ import java.math.RoundingMode
 
 internal object BpAndelUnderholdskostnadBeregning {
 
-    private val bigDecimal100 = BigDecimal.valueOf(100)
-    private val bigDecimal30 = BigDecimal.valueOf(30)
     private val bigDecimalFemSjettedeler = BigDecimal.valueOf(0.833333333333)
 
     fun beregn(grunnlag: BpAndelUnderholdskostnadBeregningGrunnlag): BpAndelUnderholdskostnadBeregningResultat {
@@ -29,12 +27,14 @@ internal object BpAndelUnderholdskostnadBeregning {
         val inntektSB = grunnlag.inntektSBBeregningGrunnlag.sumInntekt
         var barnEndeligInntekt = inntektSB
 
-        // Tester om barnets inntekt er høyere enn 100 ganger sats for forhøyet forskudd. I så fall skal ikke BPs andel regnes ut.
-        val barnetErSelvforsørget = (inntektSB >= (sjablonverdier.forskuddssatsBeløp * bigDecimal100))
+        // Tester om barnets inntekt er minst maksInntektBBMultiplikator (sjablon 0012) ganger sats for forhøyet forskudd. I så fall skal ikke
+        // BPs andel regnes ut.
+        val barnetErSelvforsørget = (inntektSB >= (sjablonverdier.forskuddssatsBeløp * sjablonverdier.maksInntektBBMultiplikator))
 
         if (!barnetErSelvforsørget) {
-            // Barnets inntekt reduseres med 30 ganger sats for forhøyet forskudd
-            barnEndeligInntekt = (inntektSB - sjablonverdier.forskuddssatsBeløp * bigDecimal30).coerceAtLeast(BigDecimal.ZERO)
+            // Barnets inntekt reduseres med inntektBBMultiplikator (sjablon 0010) ganger sats for forhøyet forskudd
+            barnEndeligInntekt =
+                (inntektSB - sjablonverdier.forskuddssatsBeløp * sjablonverdier.inntektBBMultiplikator).coerceAtLeast(BigDecimal.ZERO)
 
             val sumInntekt = inntektBP + inntektBM + barnEndeligInntekt
             beregnetAndelFaktor = if (sumInntekt.avrundetMedNullDesimaler != BigDecimal.ZERO) {
@@ -66,16 +66,23 @@ internal object BpAndelUnderholdskostnadBeregning {
     }
 
     private fun hentSjablonverdier(grunnlag: BpAndelUnderholdskostnadBeregningGrunnlag): Sjablonverdier {
-        val forskuddssatsBeløp = (
-            grunnlag.sjablonSjablontallBeregningGrunnlagListe
-                .filter { it.type == SjablonTallNavn.FORSKUDDSSATS_BELØP.navn }
-                .map { it.verdi }
-                .firstOrNull() ?: 0.0
-            )
-            .toBigDecimal()
+        fun finnVerdi(sjablon: SjablonTallNavn) = grunnlag.sjablonSjablontallBeregningGrunnlagListe
+            .firstOrNull { it.type == sjablon.navn }
+            ?.verdi
+            ?.toBigDecimal()
 
-        return Sjablonverdier(forskuddssatsBeløp = forskuddssatsBeløp)
+        return Sjablonverdier(
+            forskuddssatsBeløp = finnVerdi(SjablonTallNavn.FORSKUDDSSATS_BELØP) ?: BigDecimal.ZERO,
+            inntektBBMultiplikator = finnVerdi(SjablonTallNavn.INNTEKT_BB_MULTIPLIKATOR)
+                ?: error("Mangler sjablon ${SjablonTallNavn.INNTEKT_BB_MULTIPLIKATOR.navn} i grunnlaget"),
+            maksInntektBBMultiplikator = finnVerdi(SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR)
+                ?: error("Mangler sjablon ${SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR.navn} i grunnlaget"),
+        )
     }
 
-    private data class Sjablonverdier(val forskuddssatsBeløp: BigDecimal)
+    private data class Sjablonverdier(
+        val forskuddssatsBeløp: BigDecimal,
+        val inntektBBMultiplikator: BigDecimal,
+        val maksInntektBBMultiplikator: BigDecimal,
+    )
 }

@@ -899,6 +899,8 @@ private fun no.nav.bidrag.behandling.dto.v1.beregning.ResultatBarnebidragsberegn
             bpHarEvne = it.bpHarEvne,
             antallBarnIHusstanden = it.antallBarnIHusstanden,
             forskuddssats = it.forskuddssats,
+            inntektBBMultiplikator = it.inntektBBMultiplikator,
+            maksInntektBBMultiplikator = it.maksInntektBBMultiplikator,
             barnetilleggBM = it.barnetilleggBM.tilNotatDto(),
             indeksreguleringDetaljer =
             it.indeksreguleringDetaljer?.let {

@@ -66,6 +66,7 @@ enum class SjablonTallNavn(
     INNTEKT_BB_MULTIPLIKATOR(
         navn = "InntektBBMultiplikator",
         id = "0010",
+        bpAndelUnderholdskostnad = true,
     ),
     MAKS_BIDRAG_MULTIPLIKATOR(
         navn = "MaksBidragMultiplikator",
@@ -74,6 +75,7 @@ enum class SjablonTallNavn(
     MAKS_INNTEKT_BB_MULTIPLIKATOR(
         navn = "MaksInntektBBMultiplikator",
         id = "0012",
+        bpAndelUnderholdskostnad = true,
     ),
     MAKS_INNTEKT_FORSKUDD_MOTTAKER_MULTIPLIKATOR(
         navn = "MaksInntektForskuddMottakerMultiplikator",

@@ -10,8 +10,10 @@ import { NotatResultatBeregningInntekterDto } from "~/types/Api";
 export default function BPsAndelInntekterTable({
   inntekter,
   forskuddssats,
+  inntektBBMultiplikator,
 }: {
   forskuddssats?: number;
+  inntektBBMultiplikator: number;
   inntekter: NotatResultatBeregningInntekterDto;
 }) {
   return (
@@ -68,7 +70,10 @@ export default function BPsAndelInntekterTable({
                   inntekter.inntektBarn! > 0 ? (
                     <div>
                       <MathValue value={inntekter.inntektBarn!} /> -{" "}
-                      <MathMultiplication left="30" right={forskuddssats!} />
+                      <MathMultiplication
+                        left={String(inntektBBMultiplikator)}
+                        right={forskuddssats!}
+                      />
                     </div>
                   ) : undefined,
               },

@@ -16,6 +16,7 @@ export const BPAndelUnderholdskostnad = () => {
     inntekter,
     delberegningUnderholdskostnad,
     forskuddssats,
+    inntektBBMultiplikator,
     bpsAndel,
   } = useBeregningDetaljer();
   // Ved avslag for delt bosted setter sluttberegningen beløpet etter fratrekk til 0, så det negative beløpet regnes ut her
@@ -28,6 +29,7 @@ export const BPAndelUnderholdskostnad = () => {
         <BPsAndelInntekterTable
           inntekter={inntekter!}
           forskuddssats={forskuddssats}
+          inntektBBMultiplikator={inntektBBMultiplikator}
         />
         <DataViewTableV2
           gap={"5px"}
