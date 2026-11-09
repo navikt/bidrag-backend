@@ -172,9 +172,6 @@ class ForholdsmessigFordelingService(
         behandlingId: Long,
         request: OppdaterRevurderingsdatoFFRequest,
     ) {
-        if (TokenUtils.hentBruker() != null && !UnleashFeatures.TILGANG_OPPRETTE_FF.isEnabled) {
-            ugyldigForespørsel("Oppdatering av forholdsmessig fordeling er deaktivert")
-        }
         behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
         revurderingsdatoService.oppdaterRevurderingsdato(behandling, request)
@@ -627,9 +624,9 @@ class ForholdsmessigFordelingService(
         ignorerSynkTimer: Boolean = false,
     ): Boolean {
         if (!behandling.erIForholdsmessigFordeling) return false
-        if (!ignorerSynkTimer && !foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())) return false
-        val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
-        if (erVedtakFattet) return false
+//        if (!ignorerSynkTimer && !foretaNySynkroniseringAvFF(behandling, grenseSynkroniserFF.toLong())) return false
+//        val erVedtakFattet = behandling.erVedtakFattet || behandling.vedtakDetaljer != null
+//        if (erVedtakFattet) return false
 
         val løpendeBidraggsakerBP =
             kravhaverService.hentSisteLøpendeStønader(Personident(behandling.bidragspliktig!!.ident!!), behandling.finnBeregningsperiode())
