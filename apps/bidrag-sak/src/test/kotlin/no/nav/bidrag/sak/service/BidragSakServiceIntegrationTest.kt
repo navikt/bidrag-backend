@@ -921,7 +921,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             val fogdhistorikk = bidragssakService.finnFogdhistorikk(opprettetSak.saksnummer)
 
             fogdhistorikk shouldHaveSize 1
-            fogdhistorikk[0].enhetsnummer shouldBe "1701"
+            fogdhistorikk[0].enhetsnummer shouldBe BidragOrganisasjonTestConfig.EIERFOGD_UTLAND
             fogdhistorikk[0].tilgangFomDato shouldBe LocalDate.now()
             fogdhistorikk[0].tilgangTomDato shouldBe null
             fogdhistorikk[0].arsak shouldBe Fogdårsak.EIER
@@ -966,7 +966,7 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
             val fogdhistorikk = bidragssakService.finnFogdhistorikk(opprettetSak.saksnummer)
 
             fogdhistorikk shouldHaveSize 2
-            fogdhistorikk shouldExist { it.enhetsnummer == "1701" && it.arsak == Fogdårsak.EIER && it.type == Tilgangstype.EIER }
+            fogdhistorikk shouldExist { it.enhetsnummer == BidragOrganisasjonTestConfig.EIERFOGD_UTLAND && it.arsak == Fogdårsak.EIER && it.type == Tilgangstype.EIER }
             fogdhistorikk shouldExist {
                 it.enhetsnummer == "4806" &&
                     it.arsak == Fogdårsak.MAKO &&

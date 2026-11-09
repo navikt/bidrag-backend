@@ -73,12 +73,14 @@ open class Bidragssak(
 ) {
     fun erAvsluttet() = avsluttetTidspunkt != null && avsluttetTidspunkt!! <= LocalDate.now()
 
-    val primærrolle
-        get() =
-            this.roller.firstOrNull { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
-                ?: this.roller.firstOrNull { it.rolleType == Rolletype.BARN }
-                ?: this.roller.firstOrNull { it.rolleType == Rolletype.BIDRAGSPLIKTIG }
-                ?: error("Sak med saksnummer $saksnummer har ingen roller.")
+    // Geografien i arbeidsfordelingen følger BM, ellers yngste barn (eldre barn kan ha flyttet), ellers BP
+    val primærrolle: Rolle?
+        get() {
+            val kjenteParter = roller.filter { it.fødselsnummer != null }
+            return kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
+                ?: kjenteParter.filter { it.rolleType == Rolletype.BARN }.maxWithOrNull(compareBy(nullsFirst()) { it.fødselsdato })
+                ?: kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSPLIKTIG }
+        }
 
     fun tilBidragSakDto(
         begrensetTilgang: Boolean,
