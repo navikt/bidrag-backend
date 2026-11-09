@@ -38,7 +38,6 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -61,11 +60,9 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
-import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettInnhentetHusstandsmedlemGrunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
-import no.nav.bidrag.transport.behandling.felles.grunnlag.tilInnholdMedReferanse
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettBehandlingsreferanseRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettGrunnlagRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettPeriodeRequestDto
@@ -312,6 +309,7 @@ fun Behandling.byggGrunnlagManuelleVedtak(grunnlagFraBeregning: List<GrunnlagDto
 fun byggGrunnlagVirkningstidspunktResultatvedtak(
     resultatVedtak: ResultatVedtak,
     søknadsbarnreferanse: String,
+    søknadsbarn: Rolle,
 ): GrunnlagDto = GrunnlagDto(
     referanse = opprettGrunnlagsreferanseVirkningstidspunkt(null, søknadsbarnreferanse),
     type = Grunnlagstype.VIRKNINGSTIDSPUNKT,
@@ -321,13 +319,14 @@ fun byggGrunnlagVirkningstidspunktResultatvedtak(
         VirkningstidspunktGrunnlag(
             virkningstidspunkt =
             resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
-                .minOf { it.periode.fom }
-                .atDay(1),
+                .minOfOrNull { it.periode.fom }
+                ?.atDay(1) ?: søknadsbarn.virkningstidspunktRolle,
             opphørsdato =
             resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
-                .maxBy { it.periode.fom }
-                .periode.til
-                ?.atDay(1),
+                .maxByOrNull { it.periode.fom }
+                ?.periode
+                ?.til
+                ?.atDay(1) ?: søknadsbarn.opphørsdato,
             årsak = VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING,
             avslag = null,
         ),
