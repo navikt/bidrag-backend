@@ -11,6 +11,7 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.transport.sak.ReellMottakerDto
+import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -58,6 +59,7 @@ class RolleMapperTest {
             // Ny DTO
             assertThat(barnDto.reellMottaker).isNotNull
             assertThat(barnDto.reellMottaker!!.ident).isEqualTo(ReellMottaker("85000000083"))
+            assertThat(barnDto.reellMottaker!!.type).isEqualTo(ReellMottakerType.SAMHANDLER)
         }
 
         @Test
@@ -86,6 +88,7 @@ class RolleMapperTest {
             assertThat(barnDto.reellMottaker).isNotNull
             assertThat(barnDto.reellMottaker!!.ident).isEqualTo(ReellMottaker("02451550643"))
             assertThat(barnDto.reellMottaker!!.verge).isTrue()
+            assertThat(barnDto.reellMottaker!!.type).isEqualTo(ReellMottakerType.PERSON)
         }
 
         @Test

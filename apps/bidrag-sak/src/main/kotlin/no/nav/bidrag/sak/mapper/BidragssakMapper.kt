@@ -20,6 +20,7 @@ import no.nav.bidrag.transport.sak.BarnISak
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.ReellMottakerDto
+import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.RollehistorikkDto
 import java.time.LocalDate
@@ -153,8 +154,12 @@ object RolleMapper {
                 },
                 reellMottaker =
                 when {
-                    !rmFnr.isNullOrBlank() -> ReellMottakerDto(ReellMottaker(rmFnr), reellMottaker.mottagerErVerge)
-                    !rmSamhandler.isNullOrBlank() -> ReellMottakerDto(ReellMottaker(rmSamhandler), reellMottaker.mottagerErVerge)
+                    !rmFnr.isNullOrBlank() ->
+                        ReellMottakerDto(ReellMottaker(rmFnr), reellMottaker.mottagerErVerge, ReellMottakerType.PERSON)
+
+                    !rmSamhandler.isNullOrBlank() ->
+                        ReellMottakerDto(ReellMottaker(rmSamhandler), reellMottaker.mottagerErVerge, ReellMottakerType.SAMHANDLER)
+
                     else -> null
                 },
                 rollehistorikk = if (visRollehistorikk) it.rollehistorikk.toRollehistorikkDto(this as Set<Rolle>) else emptyList(),
@@ -165,33 +170,27 @@ object RolleMapper {
 
 object RollehistorikkMapper {
     fun Collection<Rollehistorikk>.toRollehistorikkDto(roller: Set<Rolle>) = this.map { rollehistorikk ->
-        val reellMottakerErVerge =
-            rollehistorikk.rmRolleId
-                ?.let { rMRolleid -> roller.find { it.rolleId == rMRolleid }?.mottagerErVerge }
-                ?: false
-
-        val reellMottakerSamhandlerident =
-            rollehistorikk.rmRolleId
-                ?.let { rMRolleid -> roller.firstOrNull { it.rolleId == rMRolleid }?.samhandlerIdent }
-
         RollehistorikkDto(
             fødselsnummer = rollehistorikk.rolleFødselsnummer?.let { fødselsnummer -> hentGjeldendeIdent(fødselsnummer) },
             type = rollehistorikk.type!!,
-            reellMottaker =
-            if (rollehistorikk.rmRolleId != null &&
-                (rollehistorikk.rmRolleFødselsnummer != null || reellMottakerSamhandlerident != null)
-            ) {
-                ReellMottakerDto(
-                    ident = ReellMottaker(rollehistorikk.rmRolleFødselsnummer ?: reellMottakerSamhandlerident!!),
-                    verge = reellMottakerErVerge,
-                )
-            } else {
-                null
-            },
+            reellMottaker = rollehistorikk.tilReellMottakerDto(roller),
             typeEndring = rollehistorikk.typeEndring,
             opprettetAv = rollehistorikk.opprettetAv,
             opprettetTidspunkt = rollehistorikk.opprettetTidspunkt,
         )
+    }
+
+    private fun Rollehistorikk.tilReellMottakerDto(roller: Set<Rolle>): ReellMottakerDto? {
+        val rmRolleId = rmRolleId ?: return null
+        val rmRolle = roller.find { it.rolleId == rmRolleId }
+        val verge = rmRolle?.mottagerErVerge ?: false
+        val fødselsnummer = rmRolleFødselsnummer
+        val samhandlerIdent = rmRolle?.samhandlerIdent
+        return when {
+            fødselsnummer != null -> ReellMottakerDto(ReellMottaker(fødselsnummer), verge, ReellMottakerType.PERSON)
+            samhandlerIdent != null -> ReellMottakerDto(ReellMottaker(samhandlerIdent), verge, ReellMottakerType.SAMHANDLER)
+            else -> null
+        }
     }
 }
 
