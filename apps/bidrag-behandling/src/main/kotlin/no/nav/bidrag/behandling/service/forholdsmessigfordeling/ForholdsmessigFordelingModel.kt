@@ -8,7 +8,6 @@ import no.nav.bidrag.behandling.transformers.tilDato18årsBidrag
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregningsperiode
-import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -97,7 +96,8 @@ val behandlingstyperSomIkkeSkalInkluderesIFF =
 // ═══════════════════════════════════════════════════════════════════
 // region Extension functions — HentSøknad
 // ═══════════════════════════════════════════════════════════════════
-
+// FF-søknader for 18 år skal alltid gjelde ett barn, så en åpen søknad kan bare gjenbrukes hvis den kun gjelder samme barn
+fun HentSøknad.søknadGjelderKunBarn(barnIdent: String?) = barnIdent != null && barn.isNotEmpty() && barn.all { it.personident == barnIdent }
 val HentSøknad.bidragsmottaker get() = partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSMOTTAKER }
 val HentSøknad.bidragspliktig get() = partISøknadListe.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 val HentSøknad.barn get() =

@@ -37,7 +37,7 @@ import java.math.BigDecimal
 import java.time.YearMonth
 
 @ExtendWith(MockitoExtension::class)
-internal class BeregnEndeligBidragTestV2 : FellesTest() {
+internal class BeregnEndeligBidragV2Test : FellesTest() {
     private lateinit var filnavn: String
     private lateinit var filnavnLøpendeBidrag: String
     private val filnavnValutakurs: String = "src/test/resources/testfiler/barnebidrag/barnebidragV2_valutakurs.json"
@@ -1031,8 +1031,8 @@ internal class BeregnEndeligBidragTestV2 : FellesTest() {
     @Test
     @DisplayName("Endelig bidrag - eksempel 1 - kaller alle delberegninger som inngår i endelig bidrag")
     fun testEndeligBidrag_Eksempel1() {
-        filnavn = "src/test/resources/testfiler/endeligbidrag/endeligbidragv2_søknadsbarn_eksempel1.json"
-        filnavnLøpendeBidrag = "src/test/resources/testfiler/endeligbidrag/endeligbidragv2_løpendebidrag_eksempel1.json"
+        filnavn = "src/test/resources/testfiler/endeligbidrag/endeligbidragV2_søknadsbarn_eksempel1.json"
+        filnavnLøpendeBidrag = "src/test/resources/testfiler/endeligbidrag/endeligbidragV2_løpendebidrag_eksempel1.json"
         enableUnleashFeature(BarnebidragUnleashFeatures.BIDRAG_REDUKSJON_UNDERHOLDSKOSTNAD)
         utførBeregningerOgEvaluerResultatEndeligBidrag()
     }

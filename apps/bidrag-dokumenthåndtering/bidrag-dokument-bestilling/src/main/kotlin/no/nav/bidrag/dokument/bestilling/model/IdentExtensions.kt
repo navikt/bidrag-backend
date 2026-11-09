@@ -29,8 +29,8 @@ fun PersonDto.hentKode6NavnBarn(
 ): String {
     val fodtaar = fødselsdato?.year
     return when (språk) {
-        SpråkKoder.BOKMAL -> if (fodtaar == null) "(BARN)" else "(BARN FØDT I $fodtaar)"
-        SpråkKoder.NYNORSK -> if (fodtaar == null) "(BARN)" else "(BARN FØDD I $fodtaar)"
-        else -> if (fodtaar == null) "(CHILD)" else "(CHILD BORN IN $fodtaar)"
+        SpråkKoder.BOKMAL -> if (fodtaar == null) "(Barn)" else "(Barn født i $fodtaar)"
+        SpråkKoder.NYNORSK -> if (fodtaar == null) "(Barn)" else "(Barn fødd i $fodtaar)"
+        else -> if (fodtaar == null) "(Child)" else "(Child born in $fodtaar)"
     }
 }

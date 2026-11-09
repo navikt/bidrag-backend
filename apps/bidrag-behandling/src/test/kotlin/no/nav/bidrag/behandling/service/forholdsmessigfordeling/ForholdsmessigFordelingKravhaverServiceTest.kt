@@ -18,6 +18,11 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
+import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
+import no.nav.bidrag.domene.enums.behandling.Behandlingstema
+import no.nav.bidrag.domene.enums.behandling.Behandlingstype
+import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
 import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
@@ -26,12 +31,16 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
+import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.transport.sak.BidragssakDto
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import java.time.YearMonth
 
 class ForholdsmessigFordelingKravhaverServiceTest {
@@ -61,6 +70,71 @@ class ForholdsmessigFordelingKravhaverServiceTest {
                     bbmConsumer = bbmConsumer,
                 ),
             )
+    }
+
+    private val søktFomDato = LocalDate.of(2025, 1, 1)
+
+    private fun åpenFFSøknad(
+        søknadsid: Long,
+        barn: List<String>,
+        behandlingstema: Behandlingstema,
+    ) = HentSøknad(
+        søknadsid = søknadsid,
+        søknadMottattDato = søktFomDato,
+        søknadFomDato = søktFomDato,
+        behandlingstema = behandlingstema,
+        behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+        saksnummer = "123",
+        innkreving = true,
+        søktAvType = SøktAvType.AUTOMATISK,
+        behandlingStatusType = BehandlingStatusType.UNDER_BEHANDLING,
+        partISøknadListe = barn.map {
+            PartISøknad(
+                personident = it,
+                rolletype = Rolletype.BARN,
+                behandlingstatus = Behandlingstatus.UNDER_BEHANDLING,
+            )
+        },
+    )
+
+    private fun hentÅpenSøknad(
+        stønadstype: Stønadstype,
+        barnIdent: String?,
+    ) = service.hentÅpenSøknadFFForBP(
+        bidragspliktigFnr = "bp",
+        behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+        medInnkreving = true,
+        saksnummer = "123",
+        søktFomDato = søktFomDato,
+        stønadstype = stønadstype,
+        omgjøringsdetaljer = null,
+        barnIdent = barnIdent,
+    )
+
+    @Test
+    fun `hentÅpenSøknadFFForBP skal ikke gjenbruke 18 års søknad som gjelder et annet barn`() {
+        every { bbmConsumer.hentÅpneSøknaderForBp(any()) } returns
+            HentBPsÅpneSøknaderResponse(listOf(åpenFFSøknad(1, listOf("barn1"), Behandlingstema.BIDRAG_18_ÅR)))
+
+        hentÅpenSøknad(Stønadstype.BIDRAG18AAR, "barn2") shouldBe null
+        hentÅpenSøknad(Stønadstype.BIDRAG18AAR, null) shouldBe null
+        hentÅpenSøknad(Stønadstype.BIDRAG18AAR, "barn1")?.søknadsid shouldBe 1
+    }
+
+    @Test
+    fun `hentÅpenSøknadFFForBP skal ikke gjenbruke 18 års søknad med flere barn`() {
+        every { bbmConsumer.hentÅpneSøknaderForBp(any()) } returns
+            HentBPsÅpneSøknaderResponse(listOf(åpenFFSøknad(1, listOf("barn1", "barn2"), Behandlingstema.BIDRAG_18_ÅR)))
+
+        hentÅpenSøknad(Stønadstype.BIDRAG18AAR, "barn1") shouldBe null
+    }
+
+    @Test
+    fun `hentÅpenSøknadFFForBP skal gjenbruke bidragssøknad uavhengig av barn`() {
+        every { bbmConsumer.hentÅpneSøknaderForBp(any()) } returns
+            HentBPsÅpneSøknaderResponse(listOf(åpenFFSøknad(1, listOf("barn1"), Behandlingstema.BIDRAG)))
+
+        hentÅpenSøknad(Stønadstype.BIDRAG, "barn2")?.søknadsid shouldBe 1
     }
 
     @Test

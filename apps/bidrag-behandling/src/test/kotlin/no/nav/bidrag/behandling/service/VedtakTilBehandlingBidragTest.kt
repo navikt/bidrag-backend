@@ -41,12 +41,16 @@ import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
 
 class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
@@ -264,6 +268,50 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
         assertSoftly(behandling) {
             validerSamvær()
             validerUnderhold()
+        }
+    }
+
+    @Test
+    fun `Skal opprette behandling fra vedtak med forpleining`() {
+        val vedtak = lagVedtaksdata("fattetvedtak/bidrag-innvilget")
+        val søknadsbarnReferanse = "person_PERSON_SØKNADSBARN_20130615_285"
+        val forpleiningGrunnlag =
+            GrunnlagDto(
+                referanse = "FORPLEINING_PERIODE_${søknadsbarnReferanse}_20240501_20240731",
+                type = Grunnlagstype.FORPLEINING_PERIODE,
+                innhold =
+                POJONode(
+                    ForpleiningPeriode(
+                        periode = ÅrMånedsperiode(YearMonth.parse("2024-05"), YearMonth.parse("2024-08")),
+                        beløp = BigDecimal(5000),
+                        manueltRegistrert = true,
+                    ),
+                ),
+                gjelderReferanse = "person_PERSON_BIDRAGSMOTTAKER_19790718_284",
+                gjelderBarnReferanse = søknadsbarnReferanse,
+            )
+        every { vedtakConsumer.hentVedtak(eq(12333)) } returns vedtak.copy(grunnlagListe = vedtak.grunnlagListe + forpleiningGrunnlag)
+
+        val behandling =
+            vedtakService.konverterVedtakTilBehandling(
+                OpprettBehandlingFraVedtakRequest(
+                    vedtakstype = Vedtakstype.KLAGE,
+                    søknadsid = 100,
+                    søknadsreferanseid = 222,
+                    søknadFra = SøktAvType.BIDRAGSPLIKTIG,
+                    saksnummer = "123213213",
+                    mottattdato = LocalDate.parse("2024-01-01"),
+                    søktFomDato = LocalDate.parse("2021-01-01"),
+                    behandlerenhet = "9999",
+                ),
+                12333,
+            )!!
+
+        assertSoftly(behandling.underholdskostnader.find { !it.gjelderAndreBarn }!!.forpleining) {
+            shouldHaveSize(1)
+            first().fom shouldBe LocalDate.parse("2024-05-01")
+            first().tom shouldBe LocalDate.parse("2024-07-31")
+            first().beløp shouldBe BigDecimal(5000)
         }
     }
 
