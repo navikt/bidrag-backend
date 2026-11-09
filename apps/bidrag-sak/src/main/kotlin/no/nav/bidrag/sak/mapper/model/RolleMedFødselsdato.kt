@@ -13,12 +13,6 @@ val RolleMedFødselsdato.fødselsnummer get() = rolle.fødselsnummer
 val RolleMedFødselsdato.rmSamhandlerId get() = rolle.rmSamhandlerId()
 val RolleMedFødselsdato.rmFødselsnummer get() = rolle.rmFødselsnummer()
 val RolleMedFødselsdato.harRM get() = rolle.harRM()
-val RolleMedFødselsdato.reellMottaker get() =
-    when {
-        !rolle.rmFødselsnummer()?.verdi.isNullOrBlank() -> rolle.rmFødselsnummer()
-        !rolle.rmSamhandlerId()?.verdi.isNullOrBlank() -> rolle.rmSamhandlerId()
-        else -> null
-    }
 
 fun List<RolleMedFødselsdato>.tilFødselsdatoMap(): Map<Personident, LocalDate?> = this
     .mapNotNull { rolle ->

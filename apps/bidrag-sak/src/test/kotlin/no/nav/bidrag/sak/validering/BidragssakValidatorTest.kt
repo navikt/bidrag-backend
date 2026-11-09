@@ -432,21 +432,6 @@ class BidragssakValidatorTest {
         }
 
         @Test
-        fun `skal regne RM med tomt fødselsnummer som ikke satt`() {
-            val barn = genererPersonident()
-            val rolle = RolleDto(
-                type = Rolletype.BARN,
-                fødselsnummer = barn,
-                reellMottaker = ReellMottakerDto(ident = ReellMottaker(""), verge = false),
-            )
-            val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolle))
-
-            shouldThrowMessage("Hvis barnet er myndig, må reell mottaker (RM) være satt.") {
-                validator.valider(req, grunnlagFor(req).medFødselsdato(barn, LocalDate.now().minusYears(19)))
-            }
-        }
-
-        @Test
         fun `skal godta når RM har gyldig nummer`() {
             val barn = genererPersonident()
             val req = OpprettSakRequest(eierfogd = Enhetsnummer("1701"), roller = setOf(rolleBm(), rolleBarnMedRm(barn)))

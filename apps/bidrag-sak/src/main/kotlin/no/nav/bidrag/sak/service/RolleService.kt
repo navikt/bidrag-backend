@@ -73,8 +73,8 @@ class RolleService(
     fun oppdaterTilGjeldendeIdent(roller: Collection<Rolle>) {
         roller.filter { it.rolleType != Rolletype.FEILREGISTRERT }.forEach { rolle ->
             val gammelIdent = rolle.fødselsnummer ?: return@forEach
-            val nyIdent = gjeldendeIdent(gammelIdent)
-            if (nyIdent == gammelIdent) return@forEach
+            val nyIdent = identConsumer.hentGjeldendeIdent(gammelIdent)
+            if (nyIdent == null || nyIdent == gammelIdent) return@forEach
             rolle.fødselsnummer = nyIdent
             rolle.rollehistorikk.add(
                 Rollehistorikk(
@@ -92,23 +92,28 @@ class RolleService(
     }
 
     fun brukGjeldendeIdent(forespørsel: Set<RolleDto>): Set<RolleDto> {
-        val roller = forespørsel.map { rolle ->
-            val ident = rolle.fødselsnummer?.takeIf { rolle.type != Rolletype.FEILREGISTRERT }?.let { Personident(gjeldendeIdent(it.verdi)) }
-            rolle.copy(
-                fødselsnummer = ident ?: rolle.fødselsnummer,
-                foedselsnummer = ident ?: rolle.foedselsnummer,
-                reellMottaker = rolle.reellMottaker?.let { it.copy(ident = gjeldendeReellMottakerIdent(it.ident)) },
-                reellMottager = rolle.reellMottager?.let { gjeldendeReellMottakerIdent(it) },
-            )
-        }
+        val roller = forespørsel.map { if (it.type == Rolletype.FEILREGISTRERT) it else it.medGjeldendeIdent() }
         val unikeRoller = roller.toSet()
         require(roller.size == unikeRoller.size) { "En person kan bare ha én rolle i saken, unntatt RM og FR." }
         return unikeRoller
     }
 
-    private fun gjeldendeReellMottakerIdent(rm: ReellMottaker) = if (rm.erPersonIdent()) ReellMottaker(gjeldendeIdent(rm.verdi)) else rm
+    private fun RolleDto.medGjeldendeIdent(): RolleDto {
+        val ident = fødselsnummer?.let { Personident(gjeldendeIdent(it.verdi, type)) }
+        return copy(
+            fødselsnummer = ident,
+            foedselsnummer = ident,
+            reellMottaker = gjeldendeReellMottaker(),
+        )
+    }
 
-    private fun gjeldendeIdent(ident: String) = identConsumer.hentGjeldendeIdent(ident) ?: ident
+    private fun RolleDto.gjeldendeReellMottaker() = rmFødselsnummer()
+        ?.let { reellMottaker?.copy(ident = ReellMottaker(gjeldendeIdent(it.verdi, Rolletype.REELMOTTAKER))) }
+        ?: reellMottaker
+
+    private fun gjeldendeIdent(ident: String, rolletype: Rolletype) = requireNotNull(identConsumer.hentGjeldendeIdent(ident)) {
+        "Person finnes ikke for rolle av type $rolletype."
+    }
 
     fun oppdaterRoller(
         eksisterendeBidragssak: Bidragssak,

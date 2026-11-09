@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -152,7 +153,7 @@ internal class RolleServiceTest {
                 RolleDto(
                     fødselsnummer = Personident(fødselsnummerBarn1),
                     type = Rolletype.REELMOTTAKER,
-                    reellMottager = ReellMottaker(fødselsnummerBarn1),
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerBarn1)),
                 ),
             )
 
@@ -197,7 +198,7 @@ internal class RolleServiceTest {
                     fødselsnummer = Personident(fødselsnummerBarn1),
                     type = Rolletype.BARN,
                     mottagerErVerge = true,
-                    reellMottager = ReellMottaker(fødselsnummerRm), // samme RM som allerede er koblet
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm)), // samme RM som allerede er koblet
                 ),
             )
 
@@ -243,7 +244,7 @@ internal class RolleServiceTest {
                 RolleDto(
                     fødselsnummer = Personident(fødselsnummerBarn1),
                     type = Rolletype.BARN,
-                    reellMottager = ReellMottaker(fødselsnummerRm), // RM finnes allerede i saken
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm)), // RM finnes allerede i saken
                 ),
             )
 
@@ -286,7 +287,7 @@ internal class RolleServiceTest {
                 RolleDto(
                     fødselsnummer = Personident(fødselsnummerBarn1),
                     type = Rolletype.BARN,
-                    reellMottager = ReellMottaker(fødselsnummerRm),
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm)),
                 ),
             )
 
@@ -362,5 +363,19 @@ internal class RolleServiceTest {
 
         resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
         resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
+    }
+
+    @Test
+    fun `kaster feil når RM i forespørsel ikke finnes som person`() {
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerRm) } returns null
+        val forespørsel = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = Personident(fødselsnummerBarn1),
+            reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm)),
+        )
+
+        shouldThrow<IllegalArgumentException> { rolleService.brukGjeldendeIdent(setOf(forespørsel)) }
+            .message shouldBe "Person finnes ikke for rolle av type REELMOTTAKER."
     }
 }

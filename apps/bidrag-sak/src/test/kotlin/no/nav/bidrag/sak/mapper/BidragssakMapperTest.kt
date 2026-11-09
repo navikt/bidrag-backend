@@ -58,34 +58,6 @@ class BidragssakMapperTest {
         }
 
         @Test
-        fun `barn med reellMottager=FNR (deprecated streng) - oppretter REELMOTTAKER person`() {
-            val roller =
-                listOf(
-                    RolleDto(
-                        fødselsnummer = FNR_BARN,
-                        type = Rolletype.BARN,
-                        reellMottager = ReellMottaker(FNR_RM.verdi),
-                    ),
-                )
-
-            val result =
-                with(BidragssakMapper) {
-                    roller.mapBarnTilRoller(
-                        fødselsdatoer = fødselsdatoer(FNR_BARN, FNR_RM),
-                        bidragssak = tomSak(),
-                    )
-                }
-
-            assertThat(result).hasSize(2)
-            val barn = result.first { it.rolleType == Rolletype.BARN }
-            val rm = result.first { it.rolleType == Rolletype.REELMOTTAKER }
-
-            assertThat(barn.fødselsnummer).isEqualTo(FNR_BARN.verdi)
-            assertThat(rm.fødselsnummer).isEqualTo(FNR_RM.verdi)
-            assertThat(rm.samhandlerIdent).isNull()
-        }
-
-        @Test
         fun `barn med reellMottaker DTO (ident=FNR) - oppretter REELMOTTAKER person`() {
             val roller =
                 listOf(
@@ -135,31 +107,6 @@ class BidragssakMapperTest {
 
             assertThat(barn.fødselsnummer).isEqualTo(FNR_BARN.verdi)
             assertThat(rm.fødselsnummer).isNull() // Samhandler, ikke person
-            assertThat(rm.samhandlerIdent).isEqualTo(SAM_RM.verdi)
-        }
-
-        @Test
-        fun `barn med reellMottager=SamhandlerId (deprecated streng) - oppretter REELMOTTAKER samhandler`() {
-            val roller =
-                listOf(
-                    RolleDto(
-                        fødselsnummer = FNR_BARN,
-                        type = Rolletype.BARN,
-                        reellMottager = ReellMottaker(SAM_RM.verdi),
-                    ),
-                )
-
-            val result =
-                with(BidragssakMapper) {
-                    roller.mapBarnTilRoller(
-                        fødselsdatoer = fødselsdatoer(FNR_BARN),
-                        bidragssak = tomSak(),
-                    )
-                }
-
-            assertThat(result).hasSize(2)
-            val rm = result.first { it.rolleType == Rolletype.REELMOTTAKER }
-            assertThat(rm.fødselsnummer).isNull()
             assertThat(rm.samhandlerIdent).isEqualTo(SAM_RM.verdi)
         }
     }

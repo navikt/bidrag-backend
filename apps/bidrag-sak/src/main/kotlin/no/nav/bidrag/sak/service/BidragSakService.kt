@@ -29,6 +29,7 @@ import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
+import no.nav.bidrag.sak.mapper.normaliserReellMottaker
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
@@ -191,7 +192,8 @@ class BidragSakService(
     fun begrensetTilgang(saksnummer: Saksnummer) = !tilgangClient.harTilgangSaksnummer(saksnummer)
 
     @Transactional
-    fun opprettSak(opprettSakRequest: OpprettSakRequest): OpprettSakResponse {
+    fun opprettSak(forespørsel: OpprettSakRequest): OpprettSakResponse {
+        val opprettSakRequest = forespørsel.normaliserReellMottaker()
         val grunnlag = valideringsgrunnlagService.hentForOpprettelse(opprettSakRequest)
         bidragssakValidator.valider(opprettSakRequest, grunnlag)
 
@@ -317,7 +319,7 @@ class BidragSakService(
         rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller.normaliserReellMottaker())
         val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, land = null)
         bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
         sak.apply {
@@ -333,7 +335,7 @@ class BidragSakService(
         rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
-        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller)
+        val rollerTilOppdatering = rolleService.brukGjeldendeIdent(oppdaterSakRequest.roller.normaliserReellMottaker())
         val grunnlag = valideringsgrunnlagService.hentForEndring(sak.roller, rollerTilOppdatering, oppdaterSakRequest.landkode)
         bidragssakValidator.validerSaksopplysninger(oppdaterSakRequest, grunnlag)
         bidragssakValidator.validerForespurteRoller(rollerTilOppdatering, grunnlag)
