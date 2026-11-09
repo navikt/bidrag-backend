@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -139,6 +140,17 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 forsendelseService,
                 virkningstidspunktService,
             )
+    }
+
+    private fun OpprettVedtakRequestDto.skalHaGyldigeGrunnlagsreferanser() {
+        val grunnlagsreferanser = grunnlagListe.map { it.referanse }.toSet()
+        val brukteReferanser =
+            stønadsendringListe
+                .flatMap { it.grunnlagReferanseListe + it.periodeListe.flatMap { periode -> periode.grunnlagReferanseListe } }
+                .toSet()
+
+        brukteReferanser.shouldNotBeEmpty()
+        brukteReferanser.filterNot { it in grunnlagsreferanser } shouldBe emptyList()
     }
 
     private fun byggGrunnlagForBeregning(
@@ -1050,6 +1062,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = null))
 
         opprettVedtakSlot shouldHaveSize 3
+        opprettVedtakSlot.forEach { it.skalHaGyldigeGrunnlagsreferanser() }
         assertSoftly(opprettVedtakSlot.first()) {
             it.type shouldBe Vedtakstype.KLAGE
 
