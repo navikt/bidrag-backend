@@ -653,6 +653,8 @@ class BehandlingTilVedtakMapping(
         beregningBarn: ResultatBidragsberegningBarn,
         klagevedtakErEnesteVedtak: Boolean,
     ): List<Pair<ResultatRolle, ResultatDelvedtak>> {
+        // For R-barn som har avvist revurdering så finnes det bare en endelig vedtak. Da vil det ikke bli fattet vedtak hvis klagevedtakErEnesteVedtak.
+        // Drar også dem inn i filtrer pga det
         val harBareEndeligVedtak = beregningBarn
             .resultatVedtak!!
             .resultatVedtakListe.all { it.endeligVedtak }
@@ -661,7 +663,7 @@ class BehandlingTilVedtakMapping(
             .resultatVedtakListe
             .filter { !it.endeligVedtak || (klagevedtakErEnesteVedtak && harBareEndeligVedtak) }
             .map { resultatVedtak ->
-                // Ikke fatte vedtak for gjenopprettet beløpshistorikk
+                // Ikke fatte vedtak for gjenopprettet beløpshistorikk. Hvis beregnetBarnebidragPeriodeListe er tom så er det avvist revurdering
                 if (!resultatVedtak.beregnet && resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isNotEmpty()) {
                     val resultatFraVedtakGrunnlag =
                         resultatVedtak.resultat.grunnlagListe.finnResultatFraAnnenVedtak(
