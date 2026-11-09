@@ -140,7 +140,7 @@ class BidragCacheConfigurationTest {
             (it === cache) shouldBe true
             it.get("key").shouldNotBeNull().get() shouldBe "value"
         }
-        registry.get("cache.gets").tag("cache", "LONG-local").tag("result", "hit").functionCounter().count() shouldBe antallTråder.toLong()
+        registry.get("cache.gets").tag("cache", "LONG-caffeine").tag("result", "hit").functionCounter().count() shouldBe antallTråder.toLong()
         verify(exactly = 0) { writer.get(any(), any()) }
     }
 
