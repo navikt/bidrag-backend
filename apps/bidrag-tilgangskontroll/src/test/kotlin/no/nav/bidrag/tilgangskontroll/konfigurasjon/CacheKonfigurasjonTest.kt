@@ -6,13 +6,13 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import no.nav.bidrag.cache.konfigurasjon.BidragCacheConfiguration
 import no.nav.bidrag.cache.konfigurasjon.CacheSettings
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.AutoConfigurations
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.cache.CacheManager
 import java.time.Duration
 import java.time.LocalTime
-import org.springframework.beans.factory.getBean
 
 class CacheKonfigurasjonTest {
 

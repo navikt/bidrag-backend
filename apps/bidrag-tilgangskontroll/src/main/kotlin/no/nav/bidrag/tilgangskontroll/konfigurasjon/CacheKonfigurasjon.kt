@@ -31,6 +31,6 @@ class CacheKonfigurasjon {
                 is Personident -> "personident:${verdi.verdi}"
                 else -> null
             }
-        }
+        },
     )
 }

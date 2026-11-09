@@ -16,6 +16,9 @@ import no.nav.bidrag.cache.konfigurasjon.TwoLevelCacheManager
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
+import no.nav.bidrag.generer.testdata.person.genererPersonident
+import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerEnheterRespons
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Brukerinformasjon
@@ -43,9 +46,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
-import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
-import no.nav.bidrag.generer.testdata.person.genererPersonident
-import no.nav.bidrag.generer.testdata.sak.genererSaksnummer
 
 class ValkeyCacheTest {
     private val verdier = mutableMapOf<String, ByteArray>()
