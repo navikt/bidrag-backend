@@ -804,7 +804,6 @@ class BehandlingTilVedtakMapping(
             val stønadsendringGrunnlagListe = mutableSetOf<GrunnlagDto>()
 
             grunnlagsliste.addAll(stønadsendringGrunnlag)
-            stønadsendringGrunnlagListe.addAll(stønadsendringGrunnlag)
             stønadsendringGrunnlagListe.addAll(
                 behandling.byggGrunnlagBehandlingDetaljer(request?.fatteVedtakRevurderingsbarn, bleFFTrukket),
             )
