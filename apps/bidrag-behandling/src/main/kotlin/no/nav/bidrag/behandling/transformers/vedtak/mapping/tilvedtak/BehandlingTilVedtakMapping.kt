@@ -57,7 +57,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
-import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
@@ -840,7 +839,7 @@ class BehandlingTilVedtakMapping(
             } else if (resultatVedtak.delvedtak) {
                 // Fjern eksisterende virkningstpunkt grunnlag før det legges på ny
                 stønadsendringGrunnlagListe.removeIf { it.type == Grunnlagstype.VIRKNINGSTIDSPUNKT }
-                stønadsendringGrunnlagListe.add(byggGrunnlagVirkningstidspunktResultatvedtak(resultatVedtak, søknadsbarnReferanse))
+                stønadsendringGrunnlagListe.add(byggGrunnlagVirkningstidspunktResultatvedtak(resultatVedtak, søknadsbarnReferanse, søknadsbarn))
             } else if (resultatVedtak.endeligVedtak) {
                 grunnlagsliste.addAll(behandling.tilPersonobjekter())
             }
@@ -854,6 +853,9 @@ class BehandlingTilVedtakMapping(
                 virkningstidspunktGrunnlag.find { it.gjelderBarnReferanse == søknadsbarnReferanse }?.let {
                     stønadsendringGrunnlagListe.add(it)
                 }
+                stønadsendringGrunnlagListe.add(søknadsbarn.tilGrunnlagPerson())
+                søknadsbarn.bidragsmottaker?.tilGrunnlagPerson()?.let { stønadsendringGrunnlagListe.add(it) }
+                behandling.bidragspliktig?.tilGrunnlagPerson()?.let { stønadsendringGrunnlagListe.add(it) }
                 stønadsendringGrunnlagListe.addAll(behandling.byggGrunnlagSøknad(listOfNotNull(søknadsbarn)))
 
                 val grunnlagManuelleVedtak =

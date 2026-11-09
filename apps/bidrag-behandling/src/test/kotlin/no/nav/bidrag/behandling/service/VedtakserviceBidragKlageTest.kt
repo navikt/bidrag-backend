@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -142,15 +141,26 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
             )
     }
 
-    private fun OpprettVedtakRequestDto.skalHaGyldigeGrunnlagsreferanser() {
-        val grunnlagsreferanser = grunnlagListe.map { it.referanse }.toSet()
-        val brukteReferanser =
+    private fun OpprettVedtakRequestDto.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() {
+        val typerPåStønadsendring =
             stønadsendringListe
-                .flatMap { it.grunnlagReferanseListe + it.periodeListe.flatMap { periode -> periode.grunnlagReferanseListe } }
+                .flatMap { it.grunnlagReferanseListe }
                 .toSet()
+                .let { referanser -> grunnlagListe.filter { it.referanse in referanser }.map { it.type } }
+                .toSet()
+        // Cherrypick noen grunnlag for å bekrefte
+        val typerSomIkkeSkalPåStønadsendring =
+            setOf(
+                Grunnlagstype.BOSTATUS_PERIODE,
+                Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+                Grunnlagstype.SAMVÆRSPERIODE,
+                Grunnlagstype.SJABLON_SAMVARSFRADRAG,
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING,
+                Grunnlagstype.DELBEREGNING_BIDRAGSEVNE,
+                Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+            )
 
-        brukteReferanser.shouldNotBeEmpty()
-        brukteReferanser.filterNot { it in grunnlagsreferanser } shouldBe emptyList()
+        typerPåStønadsendring.intersect(typerSomIkkeSkalPåStønadsendring) shouldBe emptySet()
     }
 
     private fun byggGrunnlagForBeregning(
@@ -1062,7 +1072,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = null))
 
         opprettVedtakSlot shouldHaveSize 3
-        opprettVedtakSlot.forEach { it.skalHaGyldigeGrunnlagsreferanser() }
+        opprettVedtakSlot.forEach { it.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() }
         assertSoftly(opprettVedtakSlot.first()) {
             it.type shouldBe Vedtakstype.KLAGE
 
