@@ -63,10 +63,7 @@ class ForholdsmessigFordelingRevurderingsdatoService(
         if (!behandling.erIForholdsmessigFordeling) {
             ugyldigForespørsel("Behandling ${behandling.id} er ikke i forholdsmessig fordeling")
         }
-        if (behandling.erKlageEllerOmgjøring) {
-            // TODO: Vurder støtte for klage, gir det mening å endre revurderingsdato der?
-            ugyldigForespørsel("Revurderingsdato kan bare endres for ordinær forholdsmessig fordeling")
-        }
+
         if (behandling.erVedtakFattet || behandling.vedtakDetaljer != null) {
             ugyldigForespørsel("Kan ikke endre revurderingsdato når vedtak er fattet for behandling ${behandling.id}")
         }
