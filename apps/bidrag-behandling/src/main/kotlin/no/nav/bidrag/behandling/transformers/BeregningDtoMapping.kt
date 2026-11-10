@@ -835,8 +835,9 @@ fun BeregnetSærbidragResultat.tilDto(behandling: Behandling): ResultatSærbidra
 fun List<GrunnlagDto>.byggResultatInntekter(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
     bidragsmottakerReferanse: Grunnlagsreferanse? = null,
+    søknadsbarnReferanse: Grunnlagsreferanse? = null,
 ) = ResultatBeregningInntekterDto(
-    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN),
+    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN, søknadsbarnReferanse),
     barnEndeligInntekt = finnDelberegningBidragspliktigesAndel(grunnlagsreferanseListe)?.barnEndeligInntekt,
     inntektBP =
     finnTotalInntektForRolle(
@@ -1125,7 +1126,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                 bpsAndel = bpsAndel,
                 sluttberegning = sluttberegning,
                 antallBarnIHusstanden = finnAntallBarnIHusstanden(grunnlagsreferanseListe),
-                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse),
+                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse, personobjekt?.referanse),
                 voksenIHusstanden = finnBorMedAndreVoksne(grunnlagsreferanseListe),
                 enesteVoksenIHusstandenErEgetBarn =
                 finnEnesteVoksenIHusstandenErEgetBarn(
