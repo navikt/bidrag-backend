@@ -34,7 +34,8 @@ import java.time.Duration
 class CacheConfig {
 
     private companion object {
-        val TILLATTE_PAKKER = listOf("no.nav.bidrag.", "java.util.", "java.lang.", "java.time.", "java.math.", "kotlin.collections.")
+        // "[" er JVM-prefikset for arrayer, feks `[B` for ByteArray.
+        val TILLATTE_PAKKER = listOf("no.nav.", "java.util.", "java.lang.", "java.time.", "java.math.", "kotlin.", "[")
         val KORT_CACHE_LEVETID: Duration = Duration.ofSeconds(10)
         const val MAKS_STØRRELSE = 10_000L
     }
@@ -104,6 +105,8 @@ class CacheConfig {
         return GenericJacksonJsonRedisSerializer
             .builder()
             .enableDefaultTyping(tillatteTyper.build())
+            // Skriver som Object slik at også final types som Long, LocalDate og enum får typeinformasjon.
+            .writer { mapper, verdi -> mapper.writerFor(Any::class.java).writeValueAsBytes(verdi) }
             .customize { it.addModule(KotlinModule.Builder().build()) }
             .build()
     }

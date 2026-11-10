@@ -1,9 +1,42 @@
 # Bidrag-cache
 
-Brukerbasert Spring-cache med Caffeine lokalt og Valkey som delt cache mellom podder og lar cache overleve applikasjonsrestart.
+Egenkomponert cacheløsing med Caffeine og Valkey. Løsning benytter caffeine som en lokal cache i applikasjonspodden og valkey som en delt cache mellom podder. På denne måten overlever cache applikasjonsrestart.
 
-Biblioteket er uavhengig og har ingen avhengigheter til `bidrag-felles`, tokenbiblioteker eller domenetyper.
-Appen leverer brukeridentitet fra sin validerte innloggingskontekst.
+Løsningen inneholder to forskjellige annotasjonsbaserte caches. Disse er `@KortCache` og `@LangCache`.
+
+`@KortCache` er kun caffeine, ment for å brukes der hvor cachen kun trengs en liten stund.
+
+`@LangCache` benytter både caffeine og valkey og lagrer til begge. Dette fører til at applikasjonsrestart fremdeles har en valkey-cache som den kan treffe. Dette er lurt å benytte i tilfeller hvor vi ikke forventer at responsen endres fortløpene
+
+## Støttede typer
+
+### `@KortCache`
+
+Alle typer støttes. Verdien ligger bare i Caffeine og blir aldri gjort om til JSON.
+
+### `@LangCache`
+
+Verdien lagres som JSON i Valkey, med typeinformasjon, slik at den leses tilbake som samme type. Vi snakker her om *returtypen* metoden som er cachet har. 
+
+| Støttet | Ikke støttet |
+|---|---|
+| `String`, `Int`, `Long`, `Double`, `Boolean` og `BigDecimal` | Klasser utenfor de tillatte pakkene, for eksempel `HttpStatus` |
+| `LocalDate`, `LocalDateTime`, `YearMonth` og andre typer i `java.time` | `ResponseEntity` da Jackson kan ikke lage den. Cache bodyen i stedet. |
+| Enum | `mapOf` med ett element (`SingletonMap`). Bruk `hashMapOf` eller `listOf` i stedet. |
+| Data classes, sealed classes, `data object` og vanlige klasser i `no.nav.*` | Value classes som felt.|
+| `List`, `Set` og `Map`, også tomme, og med elementer av typene over | |
+| `Array`, `ByteArray` og andre primitive arrayer | |
+| `Optional` som returtype. Spring pakker den ut før lagring og inn igjen ved retur. | |
+| `Pair`, `Triple` og `Unit` | |
+| Felt av typen `Any`, når verdien er av en støttet type | |
+| `null` | |
+
+Tillatte pakker er `no.nav.`, `java.util.`, `java.lang.`, `java.time.`, `java.math.` og `kotlin.`. I tillegg er alle arrayer tillatt (`[`).
+
+**Tommelfingerregel:** La metoden returnere en data class fra `no.nav.*`, eller en `List` eller `Set` av slike.
+
+> [!WARNING]
+> Feil med typene oppdages først når verdien leses fra Valkey, altså på en annen pod eller etter en omstart. Frem til da svarer Caffeine med det opprinnelige objektet.
 
 ## Ta biblioteket i bruk
 
@@ -94,7 +127,7 @@ nøkkelprefix = { verdi ->
 }
 ```
 
-Jackson serialiserer verdiene og støtter `ResponseEntity` med status, headere og body. Tillatte pakker er fast begrenset til `no.nav.bidrag.`, `java.util.`, `java.lang.` og `kotlin.collections.`. Nullverdier caches ikke.
+Jackson serialiserer verdiene. Se [Støttede typer](#støttede-typer) for tillatte pakker og typer. Nullverdier caches; bruk `unless` for å unngå det.
 
 Cache-nøkler erstatter ikke autentisering eller tilgangskontroll. Appen må fortsatt validere token og kontrollere tilgang til person- og saksdata.
 
