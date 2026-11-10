@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.Mockito
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -27,6 +29,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.web.bind.UnsatisfiedServletRequestParameterException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
@@ -192,6 +195,33 @@ class ValutakursgrunnlagControllerTest {
     fun `skal returnere 400 uten brukerinput ved ugyldig dato i query`() {
         sjekkBindingsfeil<MethodArgumentTypeMismatchException>(
             get("/valutakursgrunnlag").param("valutakode", "USD").param("dato", "ugyldig-dato"),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput når dato mangler i query`() {
+        sjekkBindingsfeil<UnsatisfiedServletRequestParameterException>(
+            get("/valutakursgrunnlag").param("valutakode", "USD"),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 uten brukerinput når valutakode mangler i query`() {
+        sjekkBindingsfeil<UnsatisfiedServletRequestParameterException>(
+            get("/valutakursgrunnlag").param("dato", "2025-07-01"),
+        )
+    }
+
+    @Test
+    fun `skal returnere 400 når alle queryparametere mangler`() {
+        sjekkBindingsfeil<UnsatisfiedServletRequestParameterException>(get("/valutakursgrunnlag"))
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["HENTET", "OVERSTYRT", "UKJENT_STATUS"])
+    fun `skal returnere 400 uten brukerinput ved status som ikke støttes`(status: String) {
+        sjekkBindingsfeil<UnsatisfiedServletRequestParameterException>(
+            get("/valutakursgrunnlag").param("status", status),
         )
     }
 
