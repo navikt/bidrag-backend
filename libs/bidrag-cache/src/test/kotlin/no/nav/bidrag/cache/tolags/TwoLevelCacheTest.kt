@@ -90,4 +90,14 @@ class TwoLevelCacheTest {
 
         shouldThrow<IllegalStateException> { cache.get("key") }.message shouldBe "Ugyldig cacheformat"
     }
+
+    @Test
+    fun `skal avvise feil cacheformat ved putIfAbsent`() {
+        deltCache.put("key", "ugyldig format")
+        val cache = opprettCache()
+
+        shouldThrow<IllegalStateException> { cache.putIfAbsent("key", "ny") }
+            .message shouldBe "Ugyldig cacheformat"
+        deltCache.get("key").shouldNotBeNull().get() shouldBe "ugyldig format"
+    }
 }

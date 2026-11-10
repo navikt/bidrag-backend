@@ -53,7 +53,13 @@ internal class TwoLevelCache(
         localCache.evict(key)
         val entry = newEntry(value)
         val existing = sharedCache.putIfAbsent(key, entry)
-        val stored = if (existing == null) entry else existing.get() as CachetVerdi
+        val stored = if (existing == null) {
+            entry
+        } else {
+            val stored = existing.get()
+            check(stored is CachetVerdi) { "Ugyldig cacheformat" }
+            stored
+        }
         if (!stored.gjennværendeTtl(clock).isPositive) return null
         localCache.put(key, stored)
         return if (existing == null) null else toValueWrapper(stored.verdi)
