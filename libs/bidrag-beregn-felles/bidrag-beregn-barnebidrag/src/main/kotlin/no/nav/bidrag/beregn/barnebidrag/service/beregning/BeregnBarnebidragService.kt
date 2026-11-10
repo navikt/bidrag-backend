@@ -286,8 +286,16 @@ class BeregnBarnebidragService : BeregnService() {
                 (beregningBarn.periode.fom == beregningBarn.periode.til)
         }
 
-        val utvidetGrunnlagSøknadsbarnListe = grunnlagSøknadsbarnListe
+        val grunnlagSøknadsbarnUtenDirekteAvslagListe = grunnlagSøknadsbarnListe
             .filterNot { it.søknadsbarnReferanse in søknadsbarnMedDirekteAvslagFørstePeriodeListe.map(BeregnGrunnlag::søknadsbarnReferanse) }
+        if (grunnlagSøknadsbarnUtenDirekteAvslagListe.isEmpty() &&
+            grunnlagLøpendeBidragListe.isEmpty() &&
+            grunnlagPrivatAvtaleListe.isEmpty()
+        ) {
+            return søknadsbarnMedDirekteAvslagFørstePeriodeListe.map { mapAvslag(it) }
+        }
+
+        val utvidetGrunnlagSøknadsbarnListe = grunnlagSøknadsbarnUtenDirekteAvslagListe
             .map { beregningBarn ->
 
                 val virkningstidspunkt = beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
