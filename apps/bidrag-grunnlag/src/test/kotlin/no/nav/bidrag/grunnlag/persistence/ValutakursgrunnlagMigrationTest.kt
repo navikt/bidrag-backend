@@ -1,5 +1,6 @@
 package no.nav.bidrag.grunnlag.persistence
 
+import io.kotest.matchers.shouldBe
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -56,28 +57,66 @@ class ValutakursgrunnlagMigrationTest {
         "2025-01-01T00:00:00, 2025-07-01T00:00:00",
         "2025-07-01T00:00:00, 2026-01-01T00:00:00",
     )
-    fun `hele halvår kan lagres med generert id og tidsstempler`(fra: LocalDateTime, til: LocalDateTime) {
+    fun `hele halvår kan lagres med generert id og eksplisitte tidsstempler`(fra: LocalDateTime, til: LocalDateTime) {
         lagre(fra, til)
 
         assertEquals(1, jdbc.queryForObject("SELECT valutakursgrunnlag_id FROM valutakursgrunnlag", Int::class.java))
         assertEquals(
             1,
             jdbc.queryForObject(
-                "SELECT COUNT(*) FROM valutakursgrunnlag WHERE hentet_tidspunkt IS NOT NULL AND oppdatert_tidspunkt IS NOT NULL",
+                "SELECT COUNT(*) FROM valutakursgrunnlag WHERE hentet_tidspunkt = ? AND oppdatert_tidspunkt = ?",
                 Int::class.java,
+                LocalDateTime.of(2025, 1, 1, 12, 0),
+                LocalDateTime.of(2025, 1, 1, 12, 0),
             ),
         )
     }
 
     @Test
-    fun `oppdateringstrigger erstatter oppdatert tidspunkt uten å endre hentet tidspunkt`() {
+    fun `skal bruke false når feilet henting utelates ved innsetting`() {
+        val fra = LocalDateTime.of(2025, 1, 1, 0, 0)
+
+        val feiletHenting = jdbc.queryForObject(
+            """
+            INSERT INTO valutakursgrunnlag (bruk_fra, bruk_til, basisvaluta, kvoteringsvaluta, status)
+            VALUES (?, ?, 'USD', 'NOK', 'HENTET')
+            RETURNING feilet_henting
+            """.trimIndent(),
+            Boolean::class.java,
+            fra,
+            fra.plusMonths(6),
+        )
+
+        feiletHenting shouldBe false
+    }
+
+    @Test
+    fun `skal bruke databasens tidspunkt når tidsstempler utelates ved innsetting`() {
+        val fra = LocalDateTime.of(2025, 1, 1, 0, 0)
+
+        val brukerStandardtidspunkt = jdbc.queryForObject(
+            """
+            INSERT INTO valutakursgrunnlag (bruk_fra, bruk_til, basisvaluta, kvoteringsvaluta, feilet_henting, status)
+            VALUES (?, ?, 'USD', 'NOK', true, 'FEILET')
+            RETURNING hentet_tidspunkt = LOCALTIMESTAMP AND oppdatert_tidspunkt = LOCALTIMESTAMP AND feilet_henting
+            """.trimIndent(),
+            Boolean::class.java,
+            fra,
+            fra.plusMonths(6),
+        )
+
+        brukerStandardtidspunkt shouldBe true
+    }
+
+    @Test
+    fun `databasen endrer ikke tidsstempler ved oppdatering`() {
         lagre()
         val opprinnelig = LocalDateTime.of(2000, 1, 1, 0, 0)
         jdbc.update("UPDATE valutakursgrunnlag SET hentet_tidspunkt = ?, oppdatert_tidspunkt = ?, kurs = ?", opprinnelig, opprinnelig, BigDecimal("11"))
 
         val oppdatert = jdbc.queryForObject("SELECT oppdatert_tidspunkt FROM valutakursgrunnlag", java.sql.Timestamp::class.java)!!.toLocalDateTime()
         val hentet = jdbc.queryForObject("SELECT hentet_tidspunkt FROM valutakursgrunnlag", java.sql.Timestamp::class.java)!!.toLocalDateTime()
-        assertTrue(oppdatert.isAfter(opprinnelig))
+        assertEquals(opprinnelig, oppdatert)
         assertEquals(opprinnelig, hentet)
         assertEquals(BigDecimal("11.0000000000000000"), jdbc.queryForObject("SELECT kurs FROM valutakursgrunnlag", BigDecimal::class.java))
     }
@@ -90,9 +129,9 @@ class ValutakursgrunnlagMigrationTest {
         "2025-01-01T00:00:00, 2025-06-01T00:00:00",
         "2025-07-01T00:00:00, 2025-01-01T00:00:00",
     )
-    fun `halvårsconstraint avviser ugyldige perioder`(fra: LocalDateTime, til: LocalDateTime) {
-        assertThrows<DataIntegrityViolationException> { lagre(fra, til) }
-        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM valutakursgrunnlag", Int::class.java))
+    fun `databasen overlater halvårsvalidering til applikasjonen`(fra: LocalDateTime, til: LocalDateTime) {
+        lagre(fra, til)
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM valutakursgrunnlag", Int::class.java))
     }
 
     @Test
@@ -119,8 +158,10 @@ class ValutakursgrunnlagMigrationTest {
 
     @ParameterizedTest
     @CsvSource("UKJENT, ECB", "HENTET, UKJENT")
-    fun `ukjent status eller kilde avvises`(status: String, kilde: String) {
-        assertThrows<DataIntegrityViolationException> { lagre(status = status, kilde = kilde) }
+    fun `databasen overlater status og kilde til applikasjonens enumtyper`(status: String, kilde: String) {
+        lagre(status = status, kilde = kilde)
+        assertEquals(status, jdbc.queryForObject("SELECT status FROM valutakursgrunnlag", String::class.java))
+        assertEquals(kilde, jdbc.queryForObject("SELECT kilde FROM valutakursgrunnlag", String::class.java))
     }
 
     @Test
@@ -142,8 +183,8 @@ class ValutakursgrunnlagMigrationTest {
     ) {
         jdbc.update(
             """
-            INSERT INTO valutakursgrunnlag (bruk_fra, bruk_til, basisvaluta, kvoteringsvaluta, status, kilde, kurs, multiplikator, feilet_henting)
-            VALUES (?, ?, ?, 'NOK', ?, ?, ?, ?, ?)
+            INSERT INTO valutakursgrunnlag (bruk_fra, bruk_til, basisvaluta, kvoteringsvaluta, status, kilde, kurs, multiplikator, feilet_henting, hentet_tidspunkt, oppdatert_tidspunkt)
+            VALUES (?, ?, ?, 'NOK', ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent(),
             fra,
             til,
@@ -153,6 +194,8 @@ class ValutakursgrunnlagMigrationTest {
             kurs,
             if (kurs == null) null else 0,
             status == "FEILET",
+            LocalDateTime.of(2025, 1, 1, 12, 0),
+            LocalDateTime.of(2025, 1, 1, 12, 0),
         )
     }
 }

@@ -83,7 +83,9 @@ Kan vurdere å sette opp wiremocks for de eksterne tjenestene for å kunne kjør
 
 ## Teste PostgreSQL-migrasjoner
 
-`ValutakursgrunnlagMigrationTest` starter PostgreSQL 15 med Testcontainers og kjører alle Flyway-migrasjonene fra `db/migration`. Testen kontrollerer oppdateringstriggeren, halvårsgrenser, unik valuta per halvår, tillatte statuser og kilder samt kurskolonnens presisjon. Testbrukeren heter `cloudsqliamuser` fordi de eksisterende migrasjonene gir denne rollen tilgang.
+`ValutakursgrunnlagMigrationTest` starter PostgreSQL 15 med Testcontainers og kjører alle Flyway-migrasjonene fra `db/migration`. Testen kontrollerer unik valuta per halvår og kurskolonnens presisjon. Den kontrollerer også standardverdier for tidsstempler og `feilet_henting` ved innsetting, og at databasen overlater halvårsvalidering, status, kilde og oppdatering av tidsstempler til applikasjonen. Testbrukeren heter `cloudsqliamuser` fordi de eksisterende migrasjonene gir denne rollen tilgang.
+
+`ValutakursgrunnlagJpaTest` kontrollerer at JPA avviser ugyldige halvår ved innsetting og oppdatering, og oppdaterer `oppdatertTidspunkt` uten å endre `hentetTidspunkt`. Status og kilde bruker enum-typer. Kotlin setter tidsstempler og standardverdien for `feiletHenting`. Databasen beholder `DEFAULT now()` for tidsstempler og `DEFAULT false` for `feilet_henting` når feltene utelates ved direkte SQL-innsetting. Direkte SQL-skriving omgår applikasjonsreglene.
 
 Docker må være tilgjengelig. Kjør fra repoets rot:
 

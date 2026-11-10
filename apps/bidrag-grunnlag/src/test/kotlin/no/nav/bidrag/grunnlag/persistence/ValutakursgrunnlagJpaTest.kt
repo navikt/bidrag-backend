@@ -21,6 +21,9 @@ import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest
@@ -29,6 +32,7 @@ import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.TestPropertySource
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @DataJpaTest
 @Import(PersistenceService::class)
@@ -39,6 +43,55 @@ class ValutakursgrunnlagJpaTest(
     @Autowired private val entityManager: EntityManager,
     @Autowired private val persistenceService: PersistenceService,
 ) {
+    @ParameterizedTest
+    @CsvSource(
+        "2025-02-01T00:00:00, 2025-08-01T00:00:00",
+        "2025-01-02T00:00:00, 2025-07-02T00:00:00",
+        "2025-01-01T00:00:01, 2025-07-01T00:00:01",
+        "2025-01-01T00:00:00.000000001, 2025-07-01T00:00:00.000000001",
+        "2025-01-01T00:00:00, 2025-06-01T00:00:00",
+        "2025-07-01T00:00:00, 2025-01-01T00:00:00",
+    )
+    fun `skal avvise ugyldige halvår før innsetting`(fra: LocalDateTime, til: LocalDateTime) {
+        val grunnlag = Valutakursgrunnlag(brukFra = fra, brukTil = til, basisvaluta = Valutakode.USD)
+
+        assertThrows<IllegalArgumentException> { entityManager.persist(grunnlag) }.message shouldBe
+            "Valutakursgrunnlag må gjelde et helt kalenderhalvår"
+    }
+
+    @Test
+    fun `skal avvise ugyldig halvår ved oppdatering`() {
+        val fra = LocalDate.of(2025, 1, 1).atStartOfDay()
+        val lagret = repository.saveAndFlush(Valutakursgrunnlag(brukFra = fra, basisvaluta = Valutakode.USD))
+        entityManager.clear()
+        entityManager.merge(lagret.copy(brukTil = fra.plusMonths(5)))
+
+        assertThrows<IllegalArgumentException> { entityManager.flush() }.message shouldBe
+            "Valutakursgrunnlag må gjelde et helt kalenderhalvår"
+    }
+
+    @Test
+    fun `skal oppdatere endringstidspunkt uten å endre hentet tidspunkt`() {
+        val fra = LocalDate.of(2025, 1, 1).atStartOfDay()
+        val opprinnelig = LocalDate.of(2000, 1, 1).atStartOfDay()
+        val lagret = repository.saveAndFlush(
+            Valutakursgrunnlag(brukFra = fra, hentetTidspunkt = opprinnelig, basisvaluta = Valutakode.USD).apply {
+                oppdatertTidspunkt = opprinnelig
+            },
+        )
+        entityManager.clear()
+        val grunnlag = repository.findById(lagret.valutakursgrunnlagId).orElseThrow()
+        grunnlag.status = ValutakursgrunnlagStatus.OVERSTYRT
+
+        repository.flush()
+        entityManager.clear()
+
+        val oppdatert = repository.findById(lagret.valutakursgrunnlagId).orElseThrow()
+        oppdatert.oppdatertTidspunkt.isAfter(opprinnelig) shouldBe true
+        oppdatert.hentetTidspunkt shouldBe opprinnelig
+        oppdatert.status shouldBe ValutakursgrunnlagStatus.OVERSTYRT
+    }
+
     @Test
     fun `batchoppslag returnerer kun grunnlag aktivt på datoen`() {
         val januar = LocalDate.of(2024, 1, 1)

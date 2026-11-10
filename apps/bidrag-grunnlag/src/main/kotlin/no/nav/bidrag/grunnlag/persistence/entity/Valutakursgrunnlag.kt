@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.PrePersist
 import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
 import jakarta.persistence.Transient
@@ -15,6 +16,8 @@ import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.Month
 import kotlin.reflect.full.memberProperties
 
 @Entity
@@ -72,8 +75,19 @@ data class Valutakursgrunnlag(
     @Column(name = "oppdatert_tidspunkt", nullable = false)
     var oppdatertTidspunkt: LocalDateTime = LocalDateTime.now()
 
+    @PrePersist
+    fun validerPeriode() {
+        require(
+            (brukFra.month == Month.JANUARY || brukFra.month == Month.JULY) &&
+                brukFra.dayOfMonth == 1 &&
+                brukFra.toLocalTime() == LocalTime.MIDNIGHT &&
+                brukTil == brukFra.plusMonths(6),
+        ) { "Valutakursgrunnlag må gjelde et helt kalenderhalvår" }
+    }
+
     @PreUpdate
     fun oppdaterTidspunkt() {
+        validerPeriode()
         oppdatertTidspunkt = LocalDateTime.now()
     }
 }

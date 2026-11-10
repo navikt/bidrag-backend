@@ -14,27 +14,6 @@ CREATE TABLE IF NOT EXISTS valutakursgrunnlag
     kilde varchar(20),
     observasjonsdato date,
     CONSTRAINT valutakursgrunnlag_pkey PRIMARY KEY (valutakursgrunnlag_id),
-    CONSTRAINT valutakursgrunnlag_periode_unique UNIQUE (basisvaluta, bruk_fra),
-    CONSTRAINT valutakursgrunnlag_status_check CHECK (status IN ('FEILET', 'HENTET', 'OVERSTYRT')),
-    CONSTRAINT valutakursgrunnlag_kilde_check CHECK (kilde IN ('ECB', 'NORGES_BANK', 'MANUELL')),
-    CONSTRAINT valutakursgrunnlag_halvar_check CHECK (
-        EXTRACT(MONTH FROM bruk_fra) IN (1, 7)
-        AND EXTRACT(DAY FROM bruk_fra) = 1
-        AND bruk_fra = date_trunc('day', bruk_fra)
-        AND bruk_til = bruk_fra + INTERVAL '6 months'
-    )
+    CONSTRAINT valutakursgrunnlag_periode_unique UNIQUE (basisvaluta, bruk_fra)
 )
     TABLESPACE pg_default;
-
-CREATE OR REPLACE FUNCTION oppdater_valutakursgrunnlag_tidspunkt()
-RETURNS trigger AS $$
-BEGIN
-    NEW.oppdatert_tidspunkt = now();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER valutakursgrunnlag_oppdatert_tidspunkt
-    BEFORE UPDATE ON valutakursgrunnlag
-    FOR EACH ROW
-    EXECUTE FUNCTION oppdater_valutakursgrunnlag_tidspunkt();
