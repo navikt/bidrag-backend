@@ -2,6 +2,7 @@ package no.nav.bidrag.beregn.barnebidrag.api
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
@@ -19,12 +20,14 @@ import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningAndelAvBidragsevne
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumBidragTilFordeling
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
+import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.resultatSluttberegning
+import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 import java.time.YearMonth
 
 /**
@@ -102,6 +105,74 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
         andelerAvEvne(resultat).forEach { it.harBPFullEvne shouldBe true }
     }
 
+    @Test
+    fun `søknadsbarn med direkte avslag i første periode skal ikke beregnes og få resultat uten beløp`() {
+        val periodeDirekteAvslag = ÅrMånedsperiode(beregningsperiode.fom, beregningsperiode.fom)
+        val request = medVirkningstidspunktAvslag(søknadsbarn2, periodeDirekteAvslag)
+        val grunnlagSøknadsbarn2 = request.single { it.søknadsbarnReferanse == søknadsbarn2 }.grunnlagListe
+
+        val resultat = beregn(request)
+
+        assertSoftly {
+            resultat.map { it.søknadsbarnreferanse } shouldContainExactlyInAnyOrder listOf(søknadsbarn1, søknadsbarn2)
+
+            val resultatAvslag = resultat.single { it.søknadsbarnreferanse == søknadsbarn2 }.beregnetBarnebidragResultat
+            resultatAvslag.beregnetBarnebidragPeriodeListe shouldHaveSize 1
+            with(resultatAvslag.beregnetBarnebidragPeriodeListe.single()) {
+                periode shouldBe periodeDirekteAvslag
+                this.resultat.beløp shouldBe null
+                grunnlagsreferanseListe shouldBe grunnlagSøknadsbarn2.map { it.referanse }
+            }
+            resultatAvslag.grunnlagListe shouldBe grunnlagSøknadsbarn2
+
+            skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat)
+        }
+    }
+
+    @Test
+    fun `søknadsbarn med avslag men flere perioder skal fortsatt gå gjennom ordinær beregning`() {
+        val request = medVirkningstidspunktAvslag(søknadsbarn2, beregningsperiode)
+
+        val resultat = beregn(request)
+
+        assertSoftly {
+            resultat.map { it.søknadsbarnreferanse } shouldContainExactlyInAnyOrder listOf(søknadsbarn1, søknadsbarn2)
+            sluttberegninger(resultat, søknadsbarn2).forEach { it.resultatBeløp shouldNotBe null }
+        }
+    }
+
+    private fun medVirkningstidspunktAvslag(søknadsbarn: String, periode: ÅrMånedsperiode): List<BeregnGrunnlag> {
+        val virkningstidspunkt = GrunnlagDto(
+            referanse = "Virkningstidspunkt_$søknadsbarn",
+            type = Grunnlagstype.VIRKNINGSTIDSPUNKT,
+            innhold = commonObjectmapper.valueToTree(
+                VirkningstidspunktGrunnlag(
+                    virkningstidspunkt = beregningsperiode.fom.atDay(1),
+                    avslag = Resultatkode.AVSLAG,
+                ),
+            ),
+            gjelderBarnReferanse = søknadsbarn,
+        )
+        return lesRequest("kontroll").map {
+            if (it.søknadsbarnReferanse == søknadsbarn) {
+                it.copy(periode = periode, grunnlagListe = it.grunnlagListe + virkningstidspunkt)
+            } else {
+                it
+            }
+        }
+    }
+
+    private fun lesRequest(scenario: String): List<BeregnGrunnlag> =
+        lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_avslag_flere_barn_$scenario.json")
+
+    private fun beregn(request: List<BeregnGrunnlag>) = api.beregnBarnebidragV2(
+        beregningsperiode = beregningsperiode,
+        grunnlagSøknadsbarnListe = request,
+        grunnlagLøpendeBidragListe = emptyList(),
+        grunnlagPrivatAvtaleListe = emptyList(),
+        grunnlagValutakursListe = emptyList(),
+    )
+
     private fun skalBeregneSøknadsbarn1UtenForholdsmessigFordeling(resultat: List<BeregnetBarnebidragResultatV2>) {
         val bidragTilFordelingSøknadsbarn1 = grunnlag(resultat)
             .filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordeling>(Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING)
@@ -131,17 +202,7 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
         }
     }
 
-    private fun beregn(scenario: String): List<BeregnetBarnebidragResultatV2> {
-        val request: List<BeregnGrunnlag> =
-            lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_avslag_flere_barn_$scenario.json")
-        return api.beregnBarnebidragV2(
-            beregningsperiode = beregningsperiode,
-            grunnlagSøknadsbarnListe = request,
-            grunnlagLøpendeBidragListe = emptyList(),
-            grunnlagPrivatAvtaleListe = emptyList(),
-            grunnlagValutakursListe = emptyList(),
-        )
-    }
+    private fun beregn(scenario: String): List<BeregnetBarnebidragResultatV2> = beregn(lesRequest(scenario))
 
     private fun grunnlag(resultat: List<BeregnetBarnebidragResultatV2>) = resultat.flatMap { it.beregnetBarnebidragResultat.grunnlagListe }.distinctBy { it.referanse }
 
