@@ -79,7 +79,7 @@ export default function BPsAndelInntekterTable({
               },
               {
                 content: formatterBeløpForBeregning(
-                  inntekter.inntektBarn,
+                  inntekter.barnEndeligInntekt,
                   true,
                 ),
               },
