@@ -405,7 +405,7 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
                                 periode =
                                 stønadsendring.periodeListe
                                     .find { st ->
-                                        it.periode.inneholder(st.periode)
+                                        it.periode.inneholder(st.periode) || it.periode.fom == st.periode.fom
                                     }!!
                                     .periode,
                             )
