@@ -64,6 +64,7 @@ class CacheConfig {
     @Bean
     fun valkeyConnectionFactory(
         @Value($$"${CACHE_VALKEY_INSTANCE}") instans: String,
+        @Value($$"${bidrag.cache.valkey.tidsavbrudd:500ms}") tidsavbrudd: Duration,
         environment: Environment,
     ): LettuceConnectionFactory {
         // Nais eksponerer instansen med store bokstaver og bindestrek erstattet med understrek.
@@ -76,7 +77,13 @@ class CacheConfig {
                 username = environment.getRequiredProperty("VALKEY_USERNAME_$suffiks")
                 setPassword(environment.getRequiredProperty("VALKEY_PASSWORD_$suffiks"))
             }
-        val klientKonfigurasjon = LettuceClientConfiguration.builder().useSsl().build()
+        val klientKonfigurasjon =
+            LettuceClientConfiguration
+                .builder()
+                .useSsl()
+                .and()
+                .commandTimeout(tidsavbrudd)
+                .build()
 
         return LettuceConnectionFactory(serverKonfigurasjon, klientKonfigurasjon)
     }
