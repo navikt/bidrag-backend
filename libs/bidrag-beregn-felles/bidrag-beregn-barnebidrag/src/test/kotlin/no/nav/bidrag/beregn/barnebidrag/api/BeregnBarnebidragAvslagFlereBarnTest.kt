@@ -119,7 +119,8 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
             val resultatAvslag = resultat.single { it.søknadsbarnreferanse == søknadsbarn2 }.beregnetBarnebidragResultat
             resultatAvslag.beregnetBarnebidragPeriodeListe shouldHaveSize 1
             with(resultatAvslag.beregnetBarnebidragPeriodeListe.single()) {
-                periode shouldBe periodeDirekteAvslag
+                periode.fom shouldBe periodeDirekteAvslag.fom
+                periode.til shouldBe null
                 this.resultat.beløp shouldBe null
                 grunnlagsreferanseListe shouldBe grunnlagSøknadsbarn2.map { it.referanse }
             }

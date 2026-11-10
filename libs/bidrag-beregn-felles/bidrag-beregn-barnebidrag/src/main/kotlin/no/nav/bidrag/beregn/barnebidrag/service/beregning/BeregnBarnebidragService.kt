@@ -482,7 +482,7 @@ class BeregnBarnebidragService : BeregnService() {
             listOf(
                 ResultatPeriode(
                     grunnlagsreferanseListe = barn.grunnlagListe.map { it.referanse },
-                    periode = barn.periode,
+                    periode = ÅrMånedsperiode(barn.periode.fom, null),
                     resultat =
                     ResultatBeregning(
                         beløp = null,
