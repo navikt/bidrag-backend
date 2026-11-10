@@ -3,11 +3,10 @@ package no.nav.bidrag.cache.konfigurasjon
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.util.concurrent.Callable
 import org.springframework.cache.Cache
-import org.springframework.cache.support.SimpleValueWrapper
 
 /**
  * Leser fra caffeine cache først, deretter valkey cache. Treff i valkey legges i caffeine.
- * Null-verdier caches ikke. Feil ved lesing og lagring i valkey stopper ikke kallet.
+ * Null-verdier caches. Feil ved lesing og lagring i valkey stopper ikke kallet.
  * Feil ved sletting kastes videre, slik at utdaterte verdier ikke blir liggende uten at noen merker det.
  */
 class ToNivåCache(
@@ -18,11 +17,12 @@ class ToNivåCache(
 
     override fun getNativeCache(): Any = this
 
+    // Treff gir en ValueWrapper, også når verdien er null. Bom gir null.
     override fun get(key: Any): Cache.ValueWrapper? {
         caffeine.get(key)?.let { return it }
-        val verdiFraValkey = hentFraValkey(key) ?: return null
-        caffeine.put(key, verdiFraValkey)
-        return SimpleValueWrapper(verdiFraValkey)
+        val treffIValkey = hentFraValkey(key) ?: return null
+        caffeine.put(key, treffIValkey.get())
+        return treffIValkey
     }
 
     override fun <T : Any> get(
@@ -41,7 +41,12 @@ class ToNivåCache(
     ): T? {
         @Suppress("UNCHECKED_CAST")
         get(key)?.let { return it.get() as T? }
-        val verdi = valueLoader.call()
+        val verdi =
+            try {
+                valueLoader.call()
+            } catch (e: Exception) {
+                throw Cache.ValueRetrievalException(key, valueLoader, e)
+            }
         put(key, verdi)
         return verdi
     }
@@ -50,7 +55,6 @@ class ToNivåCache(
         key: Any,
         value: Any?,
     ) {
-        if (value == null) return
         lagreIValkey(key, value)
         caffeine.put(key, value)
     }
@@ -66,9 +70,9 @@ class ToNivåCache(
     }
 
     // Feil mot valkey feks ved nedetid eller tidsavbrudd behandles som cache-bom.
-    private fun hentFraValkey(key: Any): Any? =
+    private fun hentFraValkey(key: Any): Cache.ValueWrapper? =
         try {
-            valkey.get(key)?.get()
+            valkey.get(key)
         } catch (e: RuntimeException) {
             LOGGER.warn { "Klarte ikke lese fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
             secureLogger.warn { "Klarte ikke lese $key fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
@@ -77,7 +81,7 @@ class ToNivåCache(
 
     private fun lagreIValkey(
         key: Any,
-        value: Any,
+        value: Any?,
     ) {
         try {
             valkey.put(key, value)

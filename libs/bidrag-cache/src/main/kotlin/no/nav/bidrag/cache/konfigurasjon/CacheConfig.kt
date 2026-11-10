@@ -35,7 +35,6 @@ import tools.jackson.module.kotlin.KotlinModule
 class CacheConfig {
 
     private companion object {
-        private val LOGGER = KotlinLogging.logger { }
         val TILLATTE_PAKKER = listOf("no.nav.bidrag.", "java.util.", "java.lang.", "java.time.", "java.math.", "kotlin.collections.")
         val KORT_CACHE_LEVETID: Duration = Duration.ofSeconds(10)
         const val MAKS_STØRRELSE = 10_000L
@@ -102,7 +101,6 @@ class CacheConfig {
     fun redisCacheConfig(): RedisCacheConfiguration {
         return RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl { _, _ -> tidTilStartenAvNesteArbeidsdag() }
-            .disableCachingNullValues()
             .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
     }
 

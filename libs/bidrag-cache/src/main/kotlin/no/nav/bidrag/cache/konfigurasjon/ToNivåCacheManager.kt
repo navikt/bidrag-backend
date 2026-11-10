@@ -26,7 +26,6 @@ class ToNivåCacheManager(
                     .expireAfter(InvaliderCacheFørStartenAvArbeidsdag())
                     .maximumSize(maksStørrelse)
                     .build(),
-                false,
             )
         val delt = requireNotNull(deltCacheManager.getCache(name)) { "Fant ikke delt cache $name" }
         return ToNivåCache(lokal, delt)
