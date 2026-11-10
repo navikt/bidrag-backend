@@ -65,15 +65,15 @@ class BeregnBarnebidragService : BeregnService() {
 
     fun opprettAvslagResultat(mottattGrunnlag: BeregnGrunnlag): BeregnetBarnebidragResultat = BeregnetBarnebidragResultat(
         beregnetBarnebidragPeriodeListe =
-            listOf(
-                ResultatPeriode(
-                    grunnlagsreferanseListe = mottattGrunnlag.grunnlagListe.map { it.referanse },
-                    periode = mottattGrunnlag.periode,
-                    resultat = ResultatBeregning(
-                        beløp = null,
-                    ),
+        listOf(
+            ResultatPeriode(
+                grunnlagsreferanseListe = mottattGrunnlag.grunnlagListe.map { it.referanse },
+                periode = mottattGrunnlag.periode,
+                resultat = ResultatBeregning(
+                    beløp = null,
                 ),
             ),
+        ),
         grunnlagListe = mottattGrunnlag.grunnlagListe,
     )
 
@@ -118,16 +118,16 @@ class BeregnBarnebidragService : BeregnService() {
         if (virkningstidspunkt != null && virkningstidspunkt.innhold.avslag != null) {
             return BeregnetBarnebidragResultat(
                 beregnetBarnebidragPeriodeListe =
-                    listOf(
-                        ResultatPeriode(
-                            grunnlagsreferanseListe = listOf(virkningstidspunkt.referanse),
-                            periode = ÅrMånedsperiode(mottattGrunnlag.periode.fom, null),
-                            resultat =
-                                ResultatBeregning(
-                                    beløp = null,
-                                ),
+                listOf(
+                    ResultatPeriode(
+                        grunnlagsreferanseListe = listOf(virkningstidspunkt.referanse),
+                        periode = ÅrMånedsperiode(mottattGrunnlag.periode.fom, null),
+                        resultat =
+                        ResultatBeregning(
+                            beløp = null,
                         ),
                     ),
+                ),
                 grunnlagListe = listOf(virkningstidspunkt.grunnlag as GrunnlagDto),
             )
         }
@@ -278,9 +278,11 @@ class BeregnBarnebidragService : BeregnService() {
         }
 
         val søknadsbarnMedDirekteAvslagFørstePeriodeListe = grunnlagSøknadsbarnListe.filter { beregningBarn ->
-            (beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
-                Grunnlagstype.VIRKNINGSTIDSPUNKT,
-            ).firstOrNull()?.innhold?.avslag != null) &&
+            (
+                beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
+                    Grunnlagstype.VIRKNINGSTIDSPUNKT,
+                ).firstOrNull()?.innhold?.avslag != null
+                ) &&
                 (beregningBarn.periode.fom == beregningBarn.periode.til)
         }
 
@@ -416,11 +418,11 @@ class BeregnBarnebidragService : BeregnService() {
                 beregningBarn.beregnGrunnlag.søknadsbarnReferanse,
                 BeregnetBarnebidragResultat(
                     beregnetBarnebidragPeriodeListe =
-                        if (!(fatteVedtakResultat.erRevurderingsbarn && fatteVedtakResultat.ingenOverlappendePerioderMedSøknadsbarn)) {
-                            beregnetBarnebidragPeriodeListe
-                        } else {
-                            emptyList()
-                        },
+                    if (!(fatteVedtakResultat.erRevurderingsbarn && fatteVedtakResultat.ingenOverlappendePerioderMedSøknadsbarn)) {
+                        beregnetBarnebidragPeriodeListe
+                    } else {
+                        emptyList()
+                    },
                     grunnlagListe = beregnetBarnebidragResultat.grunnlagListe,
                 ),
                 fatteVedtakAnbefalt = fatteVedtakResultat.skalFatteVedtak,
@@ -465,24 +467,23 @@ class BeregnBarnebidragService : BeregnService() {
         return beregnetBarnebidragResultatListe + søknadsbarnMedDirekteAvslagFørstePeriodeListe.map { mapAvslag(it) }
     }
 
-    private fun mapAvslag(barn: BeregnGrunnlag) =
-        BeregnetBarnebidragResultatV2(
-            søknadsbarnreferanse = barn.søknadsbarnReferanse,
-            beregnetBarnebidragResultat = BeregnetBarnebidragResultat(
-                beregnetBarnebidragPeriodeListe =
-                    listOf(
-                        ResultatPeriode(
-                            grunnlagsreferanseListe = barn.grunnlagListe.map { it.referanse },
-                            periode = barn.periode,
-                            resultat =
-                                ResultatBeregning(
-                                    beløp = null,
-                                ),
-                        ),
+    private fun mapAvslag(barn: BeregnGrunnlag) = BeregnetBarnebidragResultatV2(
+        søknadsbarnreferanse = barn.søknadsbarnReferanse,
+        beregnetBarnebidragResultat = BeregnetBarnebidragResultat(
+            beregnetBarnebidragPeriodeListe =
+            listOf(
+                ResultatPeriode(
+                    grunnlagsreferanseListe = barn.grunnlagListe.map { it.referanse },
+                    periode = barn.periode,
+                    resultat =
+                    ResultatBeregning(
+                        beløp = null,
                     ),
-                grunnlagListe = barn.grunnlagListe,
+                ),
             ),
-        )
+            grunnlagListe = barn.grunnlagListe,
+        ),
+    )
 
     private fun List<BeregnGrunnlagJustert>.harPerioderMedEvnesprekk(): Boolean = this
         .flatMap { it.beregnGrunnlag.grunnlagListe }
@@ -914,7 +915,7 @@ class BeregnBarnebidragService : BeregnService() {
         // Kaller delberegning for å sjekke om endring i bidrag er over grense (pr periode)
         var grunnlagTilEndringSjekkGrense = utvidetGrunnlagJustert.beregnGrunnlag.copy(
             grunnlagListe =
-                delberegningIndeksreguleringPrivatAvtalePeriodeResultat + beløpshistorikkGrunnlag + delberegningEndeligBidragResultat.grunnlagListe,
+            delberegningIndeksreguleringPrivatAvtalePeriodeResultat + beløpshistorikkGrunnlag + delberegningEndeligBidragResultat.grunnlagListe,
         )
         val delberegningEndringSjekkGrensePeriodeResultat =
             BeregnEndringSjekkGrensePeriodeService.delberegningEndringSjekkGrensePeriode(
@@ -1014,17 +1015,16 @@ class BeregnBarnebidragService : BeregnService() {
     // Gjør ikke 12%-sjekk hvis det finnes perioder hvor det ikke er full evne og ufullstendige grunnlag.
     private fun BeregnGrunnlagJustert.minimumsgrenseForEndring(
         ikkeFullBidragsevneOgUfullstendigeGrunnlag: Boolean,
-    ): SjekkMotMinimumsgrenseForEndringResultat =
-        if (beregnGrunnlag.skalSjekkeMotMinimumsgrenseForEndring() && !ikkeFullBidragsevneOgUfullstendigeGrunnlag) {
-            sjekkMotMinimumsgrenseForEndringV2()
-        } else {
-            SjekkMotMinimumsgrenseForEndringResultat(
-                resultatPeriodeListe = lagResultatPerioderV2(beregnGrunnlag.grunnlagListe),
-                delberegningEndringSjekkGrensePeriodeResultat = emptyList(),
-                delberegningEndringSjekkGrenseResultat = emptyList(),
-                delberegningIndeksreguleringPrivatAvtaleResultat = emptyList(),
-            )
-        }
+    ): SjekkMotMinimumsgrenseForEndringResultat = if (beregnGrunnlag.skalSjekkeMotMinimumsgrenseForEndring() && !ikkeFullBidragsevneOgUfullstendigeGrunnlag) {
+        sjekkMotMinimumsgrenseForEndringV2()
+    } else {
+        SjekkMotMinimumsgrenseForEndringResultat(
+            resultatPeriodeListe = lagResultatPerioderV2(beregnGrunnlag.grunnlagListe),
+            delberegningEndringSjekkGrensePeriodeResultat = emptyList(),
+            delberegningEndringSjekkGrenseResultat = emptyList(),
+            delberegningIndeksreguleringPrivatAvtaleResultat = emptyList(),
+        )
+    }
 
     private fun BeregnGrunnlag.filtrerBeløpshistorikkGrunnlag(er18ÅrsBidrag: Boolean): List<GrunnlagDto> {
         val grunnlagstype = if (er18ÅrsBidrag) Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR else Grunnlagstype.BELØPSHISTORIKK_BIDRAG
@@ -1037,24 +1037,21 @@ class BeregnBarnebidragService : BeregnService() {
                 it.gjelderBarnReferanse == søknadsbarnReferanse
         }
 
-    private fun filtrerBeløpshistorikkGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> =
-        beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG }
+    private fun filtrerBeløpshistorikkGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG }
 
-    private fun filtrerBeløpshistorikk18ÅrGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> =
-        beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR }
+    private fun filtrerBeløpshistorikk18ÅrGrunnlag(beregnGrunnlag: BeregnGrunnlag): List<GrunnlagDto> = beregnGrunnlag.grunnlagListe.filter { it.type == Grunnlagstype.BELØPSHISTORIKK_BIDRAG_18_ÅR }
 
-    private fun utførDelberegningPrivatAvtalePeriode(beregnGrunnlag: BeregnGrunnlag, beregningsperiode: ÅrMånedsperiode): List<GrunnlagDto> =
-        if (beregnGrunnlag.grunnlagListe
-                .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
-                .none { it.gjelderBarnReferanse == beregnGrunnlag.søknadsbarnReferanse }
-        ) {
-            emptyList()
-        } else {
-            BeregnIndeksreguleringPrivatAvtaleService.delberegningIndeksreguleringPrivatAvtale(
-                grunnlag = beregnGrunnlag,
-                beregningsperiode = beregningsperiode,
-            )
-        }
+    private fun utførDelberegningPrivatAvtalePeriode(beregnGrunnlag: BeregnGrunnlag, beregningsperiode: ÅrMånedsperiode): List<GrunnlagDto> = if (beregnGrunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<PrivatAvtaleGrunnlagV2>(Grunnlagstype.PRIVAT_AVTALE_GRUNNLAG)
+            .none { it.gjelderBarnReferanse == beregnGrunnlag.søknadsbarnReferanse }
+    ) {
+        emptyList()
+    } else {
+        BeregnIndeksreguleringPrivatAvtaleService.delberegningIndeksreguleringPrivatAvtale(
+            grunnlag = beregnGrunnlag,
+            beregningsperiode = beregningsperiode,
+        )
+    }
 
     // Standardlogikk for å lage resultatperioder
     private fun lagResultatPerioder(delberegningEndeligBidragResultat: List<GrunnlagDto>): List<ResultatPeriode> = delberegningEndeligBidragResultat
@@ -1245,11 +1242,9 @@ class BeregnBarnebidragService : BeregnService() {
         )
     }
 
-    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgift: BigDecimal, kostpenger: BigDecimal = BigDecimal.ZERO): BigDecimal =
-        NettoTilsynsutgiftMapper.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger).avrundetMedToDesimaler
+    fun beregnMånedsbeløpFaktiskUtgift(faktiskUtgift: BigDecimal, kostpenger: BigDecimal = BigDecimal.ZERO): BigDecimal = NettoTilsynsutgiftMapper.beregnMånedsbeløpFaktiskUtgift(faktiskUtgift, kostpenger).avrundetMedToDesimaler
 
-    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal =
-        NettoTilsynsutgiftMapper.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype).avrundetMedToDesimaler
+    fun beregnMånedsbeløpTilleggsstønad(tilleggsstønad: BigDecimal, beløpstype: InntektBeløpstype): BigDecimal = NettoTilsynsutgiftMapper.beregnMånedsbeløpTilleggsstønad(tilleggsstønad, beløpstype).avrundetMedToDesimaler
 
     // Sjekker om søknadsbarnet er del av opprinnelig behandling eller om det er del av en revurderingssøknad som er utløst pga. FF og innhenting
     // av nye grunnlag for løpende bidrag.
@@ -1531,7 +1526,7 @@ class BeregnBarnebidragService : BeregnService() {
                             periode = it.endringSjekkGrensePeriodePeriode.periode,
                             beløpshistorikkPeriodeGrunnlag = beløpshistorikkPeriodeGrunnlag,
                             delberegningIndeksreguleringPrivatAvtalePeriodeGrunnlagListe =
-                                delberegningIndeksreguleringPrivatAvtalePeriodeGrunnlagListe,
+                            delberegningIndeksreguleringPrivatAvtalePeriodeGrunnlagListe,
                         ),
                     )
                 }

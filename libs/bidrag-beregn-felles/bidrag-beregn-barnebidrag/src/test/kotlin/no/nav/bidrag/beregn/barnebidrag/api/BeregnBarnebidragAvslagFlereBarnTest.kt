@@ -162,8 +162,7 @@ internal class BeregnBarnebidragAvslagFlereBarnTest : FellesTest() {
         }
     }
 
-    private fun lesRequest(scenario: String): List<BeregnGrunnlag> =
-        lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_avslag_flere_barn_$scenario.json")
+    private fun lesRequest(scenario: String): List<BeregnGrunnlag> = lesFilOgByggRequestGenerisk("src/test/resources/testfiler/barnebidrag/barnebidragV2_avslag_flere_barn_$scenario.json")
 
     private fun beregn(request: List<BeregnGrunnlag>) = api.beregnBarnebidragV2(
         beregningsperiode = beregningsperiode,
