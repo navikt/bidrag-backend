@@ -777,14 +777,14 @@ fun SakKravhaver.mapSakKravhaverTilForholdsmessigFordelingDto(
 
     val rolle = behandling.finnRolle(barnFødselsnummer, stønadstype)
     val åpneBehandlinger = åpneBehandlinger.map { it.tilFFBarnDto() } + åpneSøknader.map { it.tilFFBarnDto(sak, enhet) }
-    val erRevurderingsbarn = rolle?.erRevurderingsbarn ?: åpneBehandlinger.isEmpty()
+    val erSøknadsbarn = åpneBehandlinger.isNotEmpty() || rolle != null
     return ForholdsmessigFordelingBarnDto(
         ident = barnFødselsnummer,
         navn = hentPersonVisningsnavn(barnFødselsnummer) ?: "Ukjent",
         fødselsdato = hentPersonFødselsdato(barnFødselsnummer),
         saksnr = saksnummer,
         sammeSakSomBehandling = behandling.saksnummer == saksnummer,
-        erRevurdering = !erRevurderingsbarn,
+        erRevurdering = !erSøknadsbarn,
         harOpprettetForholdsmessigFordeling = rolle?.forholdsmessigFordeling != null,
         enhet = sak?.eierfogd?.verdi ?: eierfogd ?: "Ukjent",
         harLøpendeBidrag = løpendeBidrag,
@@ -815,7 +815,7 @@ fun SakKravhaver.mapSakKravhaverTilForholdsmessigFordelingDto(
             navn = hentPersonVisningsnavn(bmFødselsnummer) ?: "Ukjent",
             fødselsdato = hentPersonFødselsdato(bmFødselsnummer),
             delAvOpprinneligBehandling = false,
-            erRevurdering = !erRevurderingsbarn,
+            erRevurdering = !erSøknadsbarn,
             stønadstype = null,
             saksnummer = saksnummer ?: "",
         ),
