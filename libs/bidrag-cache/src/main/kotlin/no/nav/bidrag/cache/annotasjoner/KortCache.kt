@@ -8,7 +8,8 @@ import org.springframework.core.annotation.AliasFor
 /**
  * Cacher kun lokalt i Caffeine med kort levetid. Brukes når to-nivå-cache med Valkey ikke gir mening.
  *
- * Sett [perBruker] til `true` for å skille verdiene per bruker. Krever en bean av typen
+ * [perBruker] må alltid oppgis. Bruk `true` når svaret avhenger av hvem som er innlogget, for eksempel
+ * tilgangssjekker. Det krever en bean av typen
  * [no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator].
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
@@ -18,5 +19,5 @@ import org.springframework.core.annotation.AliasFor
 annotation class KortCache(
     @get:AliasFor(annotation = Cacheable::class, attribute = "cacheNames")
     vararg val value: String,
-    val perBruker: Boolean = false,
+    val perBruker: Boolean,
 )

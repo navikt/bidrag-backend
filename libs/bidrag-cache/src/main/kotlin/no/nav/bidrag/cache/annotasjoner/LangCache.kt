@@ -9,7 +9,8 @@ import org.springframework.core.annotation.AliasFor
  * Cacher i Caffeine og Valkey fram til starten av neste arbeidsdag.
  * Ved bom i Caffeine slås verdien opp i Valkey før metoden kalles.
  *
- * Sett [perBruker] til `true` for å skille verdiene per bruker. Krever en bean av typen
+ * [perBruker] må alltid oppgis. Bruk `true` når svaret avhenger av hvem som er innlogget, for eksempel
+ * tilgangssjekker. Det krever en bean av typen
  * [no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator].
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
@@ -19,5 +20,5 @@ import org.springframework.core.annotation.AliasFor
 annotation class LangCache(
     @get:AliasFor(annotation = Cacheable::class, attribute = "cacheNames")
     vararg val value: String,
-    val perBruker: Boolean = false,
+    val perBruker: Boolean,
 )
