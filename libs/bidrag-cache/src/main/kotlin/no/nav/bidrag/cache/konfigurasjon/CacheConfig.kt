@@ -2,9 +2,8 @@ package no.nav.bidrag.cache.konfigurasjon
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.Duration
-import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheNøkkelGenerator
 import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator
+import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheNøkkelGenerator
 import no.nav.bidrag.cache.util.KORT
 import no.nav.bidrag.cache.util.LANG
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
@@ -28,7 +27,7 @@ import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializ
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import tools.jackson.module.kotlin.KotlinModule
-
+import java.time.Duration
 
 @Configuration
 @EnableCaching
@@ -41,24 +40,21 @@ class CacheConfig {
     }
 
     @Bean(NØKKELGENERATOR)
-    fun bidragCacheKeyGenerator(brukerIdentifikator: ObjectProvider<CacheBrukerIdentifikator>): CacheNøkkelGenerator =
-        CacheNøkkelGenerator(brukerIdentifikator)
+    fun bidragCacheKeyGenerator(brukerIdentifikator: ObjectProvider<CacheBrukerIdentifikator>): CacheNøkkelGenerator = CacheNøkkelGenerator(brukerIdentifikator)
 
     @Bean(KORT)
     @Primary
-    fun kortCacheManager(): CaffeineCacheManager =
-        CaffeineCacheManager().apply {
-            setCaffeine(
-                Caffeine
-                    .newBuilder()
-                    .expireAfterWrite(KORT_CACHE_LEVETID)
-                    .maximumSize(MAKS_STØRRELSE),
-            )
-        }
+    fun kortCacheManager(): CaffeineCacheManager = CaffeineCacheManager().apply {
+        setCaffeine(
+            Caffeine
+                .newBuilder()
+                .expireAfterWrite(KORT_CACHE_LEVETID)
+                .maximumSize(MAKS_STØRRELSE),
+        )
+    }
 
     @Bean(LANG)
-    fun langCacheManager(valkeyCacheManager: RedisCacheManager): ToNivåCacheManager =
-        ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE)
+    fun langCacheManager(valkeyCacheManager: RedisCacheManager): ToNivåCacheManager = ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE)
 
     @Bean
     fun valkeyConnectionFactory(
@@ -91,18 +87,15 @@ class CacheConfig {
     fun valkeyCacheManager(
         valkeyConnectionFactory: RedisConnectionFactory,
         redisCacheConfig: RedisCacheConfiguration,
-    ): RedisCacheManager =
-        RedisCacheManager
-            .builder(valkeyConnectionFactory)
-            .cacheDefaults(redisCacheConfig)
-            .build()
+    ): RedisCacheManager = RedisCacheManager
+        .builder(valkeyConnectionFactory)
+        .cacheDefaults(redisCacheConfig)
+        .build()
 
     @Bean
-    fun redisCacheConfig(): RedisCacheConfiguration {
-        return RedisCacheConfiguration.defaultCacheConfig()
-            .entryTtl { _, _ -> tidTilStartenAvNesteArbeidsdag() }
-            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
-    }
+    fun redisCacheConfig(): RedisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+        .entryTtl { _, _ -> tidTilStartenAvNesteArbeidsdag() }
+        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
 
     private fun redisValueSerializer(): GenericJacksonJsonRedisSerializer {
         val tillatteTyper = BasicPolymorphicTypeValidator.builder()

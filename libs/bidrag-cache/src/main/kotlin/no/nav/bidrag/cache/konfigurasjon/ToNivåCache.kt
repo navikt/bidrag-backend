@@ -1,8 +1,8 @@
 package no.nav.bidrag.cache.konfigurasjon
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.util.concurrent.Callable
 import org.springframework.cache.Cache
+import java.util.concurrent.Callable
 
 /**
  * Leser fra caffeine cache først, deretter valkey cache. Treff i valkey legges i caffeine.
@@ -70,14 +70,13 @@ class ToNivåCache(
     }
 
     // Feil mot valkey feks ved nedetid eller tidsavbrudd behandles som cache-bom.
-    private fun hentFraValkey(key: Any): Cache.ValueWrapper? =
-        try {
-            valkey.get(key)
-        } catch (e: RuntimeException) {
-            LOGGER.warn { "Klarte ikke lese fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
-            secureLogger.warn { "Klarte ikke lese $key fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
-            null
-        }
+    private fun hentFraValkey(key: Any): Cache.ValueWrapper? = try {
+        valkey.get(key)
+    } catch (e: RuntimeException) {
+        LOGGER.warn { "Klarte ikke lese fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
+        secureLogger.warn { "Klarte ikke lese $key fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
+        null
+    }
 
     private fun lagreIValkey(
         key: Any,

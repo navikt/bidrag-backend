@@ -17,6 +17,5 @@ data class CacheNøkkel(
 ) {
     override fun toString(): String = "$metode::${sha256(listOfNotNull(brukerIdent, parametere).joinToString("::"))}"
 
-    private fun sha256(verdi: String): String =
-        HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(verdi.toByteArray()))
+    private fun sha256(verdi: String): String = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(verdi.toByteArray()))
 }

@@ -1,13 +1,13 @@
 package no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering
 
-import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
 import no.nav.bidrag.cache.annotasjoner.KortCache
 import no.nav.bidrag.cache.annotasjoner.LangCache
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.cache.interceptor.KeyGenerator
 import org.springframework.cache.interceptor.SimpleKeyGenerator
 import org.springframework.core.annotation.AnnotatedElementUtils
+import java.lang.reflect.Method
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Lager nøkkel av metodenavn, parametere og eventuelt brukerident.
