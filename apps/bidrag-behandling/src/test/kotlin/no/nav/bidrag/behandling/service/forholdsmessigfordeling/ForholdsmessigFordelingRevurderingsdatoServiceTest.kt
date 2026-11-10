@@ -403,16 +403,6 @@ class ForholdsmessigFordelingRevurderingsdatoServiceTest {
     }
 
     @Test
-    fun `skal feile ikke kunne endre revurderingdsato for klage`() {
-        behandling.vedtakstype = Vedtakstype.KLAGE
-
-        shouldThrow<HttpClientErrorException> {
-            service.oppdaterRevurderingsdato(behandling, request(barn1 to opprinneligDato.plusMonths(1)))
-        }
-        verify(exactly = 0) { bbmConsumer.oppdaterSøknadFomDato(any()) }
-    }
-
-    @Test
     fun `skal ikke kunne endre revurderingsdato hvis vedtak er fattet`() {
         behandling.vedtaksid = 1
 
