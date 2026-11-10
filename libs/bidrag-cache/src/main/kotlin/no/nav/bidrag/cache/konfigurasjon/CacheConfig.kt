@@ -1,11 +1,10 @@
 package no.nav.bidrag.cache.konfigurasjon
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator
 import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheNøkkelGenerator
-import no.nav.bidrag.cache.util.KORT
-import no.nav.bidrag.cache.util.LANG
+import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
+import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
@@ -36,25 +35,25 @@ class CacheConfig {
     private companion object {
         // "[" er JVM-prefikset for arrayer, feks `[B` for ByteArray.
         val TILLATTE_PAKKER = listOf("no.nav.", "java.util.", "java.lang.", "java.time.", "java.math.", "kotlin.", "[")
-        val KORT_CACHE_LEVETID: Duration = Duration.ofSeconds(10)
+        val KORT_CACHE_LEVETID: Duration = Duration.ofMinutes(10)
         const val MAKS_STØRRELSE = 10_000L
     }
 
     @Bean(NØKKELGENERATOR)
     fun bidragCacheKeyGenerator(brukerIdentifikator: ObjectProvider<CacheBrukerIdentifikator>): CacheNøkkelGenerator = CacheNøkkelGenerator(brukerIdentifikator)
 
-    @Bean(KORT)
+    @Bean(KORT_CACHE_MANAGER)
     @Primary
     fun kortCacheManager(): CaffeineCacheManager = CaffeineCacheManager().apply {
         setCaffeine(
             Caffeine
                 .newBuilder()
-                .expireAfterWrite(KORT_CACHE_LEVETID)
+                .expireAfter(Levetid { KORT_CACHE_LEVETID })
                 .maximumSize(MAKS_STØRRELSE),
         )
     }
 
-    @Bean(LANG)
+    @Bean(LANG_CACHE_MANAGER)
     fun langCacheManager(valkeyCacheManager: RedisCacheManager): ToNivåCacheManager = ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE)
 
     @Bean
@@ -95,7 +94,7 @@ class CacheConfig {
 
     @Bean
     fun redisCacheConfig(): RedisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-        .entryTtl { _, _ -> tidTilStartenAvNesteArbeidsdag() }
+        .entryTtl { nøkkel, _ -> finnLevetid(nøkkel, ::tidTilStartenAvNesteArbeidsdag) }
         .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
 
     private fun redisValueSerializer(): GenericJacksonJsonRedisSerializer {

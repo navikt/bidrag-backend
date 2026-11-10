@@ -1,6 +1,6 @@
 package no.nav.bidrag.cache.annotasjoner
 
-import no.nav.bidrag.cache.util.KORT
+import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.core.annotation.AliasFor
@@ -13,15 +13,18 @@ import org.springframework.core.annotation.AliasFor
  * [perBruker] må alltid oppgis. Bruk `true` når svaret avhenger av hvem som er innlogget, for eksempel
  * tilgangssjekker. Det krever en bean av typen
  * [no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator].
+ *
+ * [levetid] overstyrer standard levetid på 10 minutter, for eksempel `"30s"`, `"5m"`, `"2h"` eller `"PT1H"`.
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-@Cacheable(cacheManager = KORT, keyGenerator = NØKKELGENERATOR)
+@Cacheable(cacheManager = KORT_CACHE_MANAGER, keyGenerator = NØKKELGENERATOR)
 annotation class KortCache(
     @get:AliasFor(annotation = Cacheable::class, attribute = "cacheNames")
     vararg val value: String,
     val perBruker: Boolean,
     @get:AliasFor(annotation = Cacheable::class, attribute = "unless")
     val unless: String = "",
+    val levetid: String = "",
 )

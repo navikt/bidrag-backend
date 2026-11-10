@@ -1,7 +1,7 @@
 package no.nav.bidrag.cache.konfigurasjon
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import no.nav.bidrag.cache.util.InvaliderCacheFørStartenAvArbeidsdag
+import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.caffeine.CaffeineCache
@@ -23,7 +23,7 @@ class ToNivåCacheManager(
                 name,
                 Caffeine
                     .newBuilder()
-                    .expireAfter(InvaliderCacheFørStartenAvArbeidsdag())
+                    .expireAfter(Levetid(::tidTilStartenAvNesteArbeidsdag))
                     .maximumSize(maksStørrelse)
                     .build(),
             )

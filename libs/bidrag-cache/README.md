@@ -8,6 +8,25 @@ Løsningen inneholder to forskjellige annotasjonsbaserte caches. Disse er `@Kort
 
 `@LangCache` benytter både caffeine og valkey og lagrer til begge. Dette fører til at applikasjonsrestart fremdeles har en valkey-cache som den kan treffe. Dette er lurt å benytte i tilfeller hvor vi ikke forventer at responsen endres fortløpene
 
+## Levetid
+
+| Annotasjon | Standard levetid |
+|---|---|
+| `@KortCache` | 10 minutter |
+| `@LangCache` | Fram til kl. 06:00 neste dag, både i Caffeine og Valkey |
+
+Standarden kan overstyres per metode med `levetid`. Verdien kan skrives som `"30s"`, `"5m"`, `"2h"`, `"1d"` eller ISO-8601 (`"PT1H"`):
+
+```kotlin
+@KortCache("TILGANG", perBruker = true, levetid = "1m")
+fun harTilgang(saksnummer: String): Boolean = ...
+
+@LangCache("KODEVERK", perBruker = false, levetid = "2h")
+fun hentKodeverk(navn: String): Kodeverk = ...
+```
+
+Ugyldig eller negativ `levetid` gir feil første gang metoden kalles. Lesing forlenger ikke levetiden. Ved treff i Valkey legges verdien i Caffeine med full levetid.
+
 ## Støttede typer
 
 ### `@KortCache`
