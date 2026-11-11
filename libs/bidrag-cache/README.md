@@ -1,6 +1,6 @@
 # Bidrag-cache
 
-Egenkomponert cacheløsing med Caffeine og Valkey. Løsning benytter caffeine som en lokal cache i applikasjonspodden og valkey som en delt cache mellom podder. På denne måten overlever cache applikasjonsrestart.
+Cacheløsing med Caffeine og Valkey. Løsning benytter caffeine som en lokal cache i applikasjonspodden og valkey som en delt cache mellom podder. På denne måten overlever cache applikasjonsrestart.
 
 Løsningen inneholder to forskjellige annotasjonsbaserte caches. Disse er `@KortCache` og `@LangCache`.
 
@@ -56,6 +56,84 @@ Tillatte pakker er `no.nav.`, `java.util.`, `java.lang.`, `java.time.`, `java.ma
 
 > [!WARNING]
 > Feil med typene oppdages først når verdien leses fra Valkey, altså på en annen pod eller etter en omstart. Frem til da svarer Caffeine med det opprinnelige objektet.
+
+## Faste standarder
+
+| Standard | Verdi |
+|---|---|
+| Størrelse på cache | Maks 10 000 oppføringer per cache og pod |
+| Tidsavbrudd mot Valkey | 500 ms. Kan endres med `bidrag.cache.valkey.tidsavbrudd`. |
+| Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone |
+
+## Nøkler
+
+Nøkkelen består av cachenavn, klasse og metode, parametere og eventuelt brukerident. I Valkey ser den slik ut:
+
+```
+bidrag-cache::<cachenavn>::<Klasse.metode>::<sha256 av brukerident og parametere som JSON>
+```
+
+Brukerident og parametere gjøres om til JSON med Jackson og hashes, så fødselsnumre og andre personopplysninger står ikke i klartekst i Valkey. JSON brukes i stedet for `toString()`, som kan være maskert. For eksempel viser `Personident.toString()` bare annenhver siffer.
+
+Parametere må kunne serialiseres med Jackson, for eksempel `String`, tall, enum, data classes og typer med `@JsonValue` som `Personident`. Felt og map-nøkler sorteres, så rekkefølgen påvirker ikke nøkkelen. Kan en parameter ikke serialiseres, behandles det som en feil mot Valkey, og verdien caches bare i Caffeine.
+
+## Feil
+
+Oppslagsrekkefølgen for `@LangCache` er Caffeine, så Valkey, så kilden.
+
+- Feil ved lesing fra Valkey behandles som bom, og kilden kalles.
+- Feil ved lagring i Valkey gir bare lagring i Caffeine.
+- Feil fra kilden caches ikke.
+- Feil logges uten nøkkel og verdi i vanlig logg. Nøkkelen logges bare til `secureLogger`.
+
+### Helsesjekk
+
+Biblioteket slår av Spring Boots helsesjekk for Redis som standard. Den inngår ellers i `/actuator/health`, som mange apper bruker som startprobe i Nais. Er Valkey nede, ville nye podder gått i startup-loop til Valkey var oppe igjen.
+
+Vil appen likevel ha helsesjekken, kan du slå den på i `application.yaml`:
+
+```yaml
+management:
+  health:
+    redis:
+      enabled: true
+```
+
+## Metrikker
+
+Metrikkene registreres første gang en cache tas i bruk. De havner i appens `MeterRegistry`, og hvis appen ikke har actuator, i `Metrics.globalRegistry`.
+
+| Metrikk | Tags | Innhold |
+|---|---|---|
+| `cache.gets` | `cache`, `cache.manager`, `result` (`hit`/`miss`) | Treff og bom i Caffeine |
+| `cache.size`, `cache.evictions`, `cache.puts` m.fl. | `cache`, `cache.manager` | Micrometers standardmålinger for Caffeine |
+| `bidrag.cache.valkey.gets` | `cache`, `result` (`hit`/`miss`) | Treff og bom i Valkey etter bom i Caffeine. Gjelder bare `@LangCache`. |
+| `bidrag.cache.error` | `cache`, `operasjon` (`get`/`put`) | Feil mot Valkey som ble behandlet som bom eller ikke ble lagret |
+
+`cache.manager` er `kortCacheManager` for `@KortCache` og `langCacheManager` for `@LangCache`.
+
+## Tømme cache
+
+Biblioteket lager disse endepunktene automatisk i appen:
+
+| Endepunkt | Virkning |
+|---|---|
+| `DELETE /bidrag-cache` | Tømmer alle cacher |
+| `DELETE /bidrag-cache/{navn}` | Tømmer cachen med navnet `navn` |
+
+Begge svarer `204 No Content`. Cachenavn kan bare inneholde bokstaver, tall, `_`, `.` og `-`.
+
+Endepunktene er beskyttet med `@Protected`, så alle gyldige tokens fra appens konfigurerte utstedere slipper gjennom. Det krever at appen har `@EnableJwtTokenValidation`. Uten den er endepunktene åpne.
+
+Slik tømmes cachen:
+
+1. Valkey tømmes direkte. Alle nøkler starter med `bidrag-cache::<navn>::`, så andre data i instansen berøres ikke.
+2. Podden som får kallet tømmer sin egen Caffeine.
+3. De andre poddene får beskjed via Valkey pub/sub på kanalen `bidrag-cache:tøm` og tømmer sin Caffeine.
+
+Pub/sub leverer ikke beskjeden på nytt. En pod som ikke er koblet til Valkey når beskjeden sendes, beholder sine lokale verdier til de utløper.
+
+Apper uten Valkey tømmer bare Caffeine i podden som får kallet. Andre podder beholder sine verdier til de utløper.
 
 ## Ta biblioteket i bruk
 
@@ -140,81 +218,3 @@ fun cacheBrukerIdentifikator() = CacheBrukerIdentifikator { hentInnloggetBrukerF
 Bruk `perBruker = true` når svaret avhenger av hvem som spør, for eksempel tilgangssjekker.
 
 Annotasjonene virker bare når kallet går gjennom Spring-proxyen. Kall fra en metode i samme klasse caches ikke.
-
-## Faste standarder
-
-| Standard | Verdi |
-|---|---|
-| Størrelse på cache | Maks 10 000 oppføringer per cache og pod |
-| Tidsavbrudd mot Valkey | 500 ms. Kan endres med `bidrag.cache.valkey.tidsavbrudd`. |
-| Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone |
-
-## Tømme cache
-
-Biblioteket lager disse endepunktene automatisk i appen:
-
-| Endepunkt | Virkning |
-|---|---|
-| `DELETE /bidrag-cache` | Tømmer alle cacher |
-| `DELETE /bidrag-cache/{navn}` | Tømmer cachen med navnet `navn` |
-
-Begge svarer `204 No Content`. Cachenavn kan bare inneholde bokstaver, tall, `_`, `.` og `-`.
-
-Endepunktene er beskyttet med `@Protected`, så alle gyldige tokens fra appens konfigurerte utstedere slipper gjennom. Det krever at appen har `@EnableJwtTokenValidation`. Uten den er endepunktene åpne.
-
-Slik tømmes cachen:
-
-1. Valkey tømmes direkte. Alle nøkler starter med `bidrag-cache::<navn>::`, så andre data i instansen berøres ikke.
-2. Podden som får kallet tømmer sin egen Caffeine.
-3. De andre poddene får beskjed via Valkey pub/sub på kanalen `bidrag-cache:tøm` og tømmer sin Caffeine.
-
-Pub/sub leverer ikke beskjeden på nytt. En pod som ikke er koblet til Valkey når beskjeden sendes, beholder sine lokale verdier til de utløper.
-
-Apper uten Valkey tømmer bare Caffeine i podden som får kallet. Andre podder beholder sine verdier til de utløper.
-
-## Nøkler
-
-Nøkkelen består av cachenavn, klasse og metode, parametere og eventuelt brukerident. I Valkey ser den slik ut:
-
-```
-bidrag-cache::<cachenavn>::<Klasse.metode>::<sha256 av brukerident og parametere som JSON>
-```
-
-Brukerident og parametere gjøres om til JSON med Jackson og hashes, så fødselsnumre og andre personopplysninger står ikke i klartekst i Valkey. JSON brukes i stedet for `toString()`, som kan være maskert. For eksempel viser `Personident.toString()` bare annenhver siffer.
-
-Parametere må kunne serialiseres med Jackson, for eksempel `String`, tall, enum, data classes og typer med `@JsonValue` som `Personident`. Felt og map-nøkler sorteres, så rekkefølgen påvirker ikke nøkkelen. Kan en parameter ikke serialiseres, behandles det som en feil mot Valkey, og verdien caches bare i Caffeine.
-
-## Feil
-
-Oppslagsrekkefølgen for `@LangCache` er Caffeine, så Valkey, så kilden.
-
-- Feil ved lesing fra Valkey behandles som bom, og kilden kalles.
-- Feil ved lagring i Valkey gir bare lagring i Caffeine.
-- Feil fra kilden caches ikke.
-- Feil logges uten nøkkel og verdi i vanlig logg. Nøkkelen logges bare til `secureLogger`.
-
-### Helsesjekk
-
-Biblioteket slår av Spring Boots helsesjekk for Redis som standard. Den inngår ellers i `/actuator/health`, som mange apper bruker som startprobe i Nais. Er Valkey nede, ville nye podder gått i startup-loop til Valkey var oppe igjen.
-
-Vil appen likevel ha helsesjekken, kan du slå den på i `application.yaml`:
-
-```yaml
-management:
-  health:
-    redis:
-      enabled: true
-```
-
-## Metrikker
-
-Metrikkene registreres første gang en cache tas i bruk. De havner i appens `MeterRegistry`, og hvis appen ikke har actuator, i `Metrics.globalRegistry`.
-
-| Metrikk | Tags | Innhold |
-|---|---|---|
-| `cache.gets` | `cache`, `cache.manager`, `result` (`hit`/`miss`) | Treff og bom i Caffeine |
-| `cache.size`, `cache.evictions`, `cache.puts` m.fl. | `cache`, `cache.manager` | Micrometers standardmålinger for Caffeine |
-| `bidrag.cache.valkey.gets` | `cache`, `result` (`hit`/`miss`) | Treff og bom i Valkey etter bom i Caffeine. Gjelder bare `@LangCache`. |
-| `bidrag.cache.error` | `cache`, `operasjon` (`get`/`put`) | Feil mot Valkey som ble behandlet som bom eller ikke ble lagret |
-
-`cache.manager` er `kortCacheManager` for `@KortCache` og `langCacheManager` for `@LangCache`.
