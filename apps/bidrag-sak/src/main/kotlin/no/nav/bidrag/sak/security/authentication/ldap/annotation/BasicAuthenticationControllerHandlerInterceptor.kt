@@ -35,7 +35,7 @@ class BasicAuthenticationControllerHandlerInterceptor(
                     authHeader.contains(AuthenticationMethod.Basic.toString()) &&
                     handleProtectedWithBasicAnnotation(authHeader, protectedWithBasic.groups)
                 ) {
-                    logger.debug { "Basic authentication succeeded!" }
+                    logger.info { "Basic authentication succeeded!" }
                     true
                 } else {
                     throw BasicNotAuthenticatedException(
