@@ -1,7 +1,7 @@
 package no.nav.bidrag.sak
 
 import no.nav.bidrag.sak.config.DbContainerInitializer
-import no.nav.bidrag.sak.security.authentication.ldap.annotation.EnableBasicAndOidcAuthentication
+import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration
@@ -19,7 +19,7 @@ import org.springframework.context.annotation.FilterType
         ServletWebSecurityAutoConfiguration::class,
     ],
 )
-@EnableBasicAndOidcAuthentication(ignore = ["org.springdoc", "org.springframework"])
+@EnableJwtTokenValidation(ignore = ["org.springdoc", "org.springframework"])
 class BidragSakLocal
 
 fun main(args: Array<String>) {

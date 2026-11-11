@@ -1,7 +1,6 @@
 package no.nav.bidrag.sak.aop
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.sak.security.exception.BasicNotAuthenticatedException
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -18,14 +17,11 @@ class RestResponseExceptionResolver {
     private val logger = KotlinLogging.logger {}
 
     @ResponseBody
-    @ExceptionHandler(JwtTokenUnauthorizedException::class, BasicNotAuthenticatedException::class)
-    protected fun handleUgyldigAutentisering(e: Exception): ResponseEntity<String> {
-        val challenge = if (e is BasicNotAuthenticatedException) "Basic realm=\"bidrag-sak\"" else "Bearer"
-        return ResponseEntity
-            .status(HttpStatus.UNAUTHORIZED)
-            .header(HttpHeaders.WWW_AUTHENTICATE, challenge)
-            .body("Gyldig autentisering kreves.")
-    }
+    @ExceptionHandler(JwtTokenUnauthorizedException::class)
+    protected fun handleUgyldigAutentisering(): ResponseEntity<String> = ResponseEntity
+        .status(HttpStatus.UNAUTHORIZED)
+        .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+        .body("Gyldig autentisering kreves.")
 
     @ResponseBody
     @ExceptionHandler(NoResourceFoundException::class)
