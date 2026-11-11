@@ -6,6 +6,7 @@ import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheNøkkelGenerator
 import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
 import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
+import no.nav.bidrag.cache.util.NØKKELPREFIKS
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -16,8 +17,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
 import org.springframework.core.env.getRequiredProperty
+import org.springframework.data.redis.cache.BatchStrategies
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
+import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration
@@ -37,6 +40,7 @@ class CacheConfig {
         val TILLATTE_PAKKER = listOf("no.nav.", "java.util.", "java.lang.", "java.time.", "java.math.", "kotlin.", "[")
         val KORT_CACHE_LEVETID: Duration = Duration.ofMinutes(10)
         const val MAKS_STØRRELSE = 10_000L
+        const val SCAN_BATCHSTØRRELSE = 1_000
     }
 
     @Bean(NØKKELGENERATOR)
@@ -84,16 +88,20 @@ class CacheConfig {
     }
 
     @Bean
+    fun valkeyCacheWriter(valkeyConnectionFactory: RedisConnectionFactory): RedisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(valkeyConnectionFactory, BatchStrategies.scan(SCAN_BATCHSTØRRELSE))
+
+    @Bean
     fun valkeyCacheManager(
-        valkeyConnectionFactory: RedisConnectionFactory,
+        valkeyCacheWriter: RedisCacheWriter,
         redisCacheConfig: RedisCacheConfiguration,
     ): RedisCacheManager = RedisCacheManager
-        .builder(valkeyConnectionFactory)
+        .builder(valkeyCacheWriter)
         .cacheDefaults(redisCacheConfig)
         .build()
 
     @Bean
     fun redisCacheConfig(): RedisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+        .prefixCacheNameWith(NØKKELPREFIKS)
         .entryTtl { nøkkel, _ -> finnLevetid(nøkkel, ::tidTilStartenAvNesteArbeidsdag) }
         .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
 

@@ -17,6 +17,11 @@ class ToNivåCacheManager(
 
     override fun getCacheNames(): Collection<String> = cacher.keys.toSet()
 
+    /** Tømmer bare Caffeine i denne podden. Valkey tømmes av [no.nav.bidrag.cache.tømming.CacheTømmer]. */
+    fun tømLokalt(navn: String?) {
+        cacher.filterKeys { navn == null || it == navn }.values.forEach { (it as ToNivåCache).tømLokalt() }
+    }
+
     private fun opprettCache(name: String): Cache {
         val lokal =
             CaffeineCache(

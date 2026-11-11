@@ -19,6 +19,7 @@
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.6</kotest.version>
         <kotlin-logging.version>8.0.4</kotlin-logging.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
     </properties>
 
     <!-- Infrastruktur ligger her, mens appen leverer brukeridentitet og eventuelle domenetilpasninger. -->
@@ -43,6 +44,12 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- Beskytter endepunktet for tømming av cache. -->
+        <dependency>
+            <groupId>no.nav.security</groupId>
+            <artifactId>token-validation-spring</artifactId>
+            <version>${nav-token-support.version}</version>
         </dependency>
         <!-- Kotlin-DTO-er må kunne gjenopprettes fra den delte cachen. -->
         <dependency>

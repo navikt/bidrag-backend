@@ -130,6 +130,27 @@ Ved overgang fra gammelt oppsett: fjern egne `CacheManager`-/`CachingConfigurer`
 
 Begge lag følger samme utløpsregel. Ved treff i Valkey fylles Caffeine med gjenværende levetid. Treff forlenger ikke fristen og skriver ikke verdien tilbake til Valkey. Utløpte verdier avvises selv om de fortsatt ligger fysisk i et av lagene.
 
+## Tømme cache
+
+Biblioteket lager disse endepunktene automatisk i appen:
+
+| Endepunkt | Virkning |
+|---|---|
+| `DELETE /bidrag-cache` | Tømmer alle cacher |
+| `DELETE /bidrag-cache/{navn}` | Tømmer cachen med navnet `navn` |
+
+Begge svarer `204 No Content`. Cachenavn kan bare inneholde bokstaver, tall, `_`, `.` og `-`.
+
+Endepunktene er beskyttet med `@Protected`, så alle gyldige tokens fra appens konfigurerte utstedere slipper gjennom. Det krever at appen har `@EnableJwtTokenValidation`. Uten den er endepunktene åpne.
+
+Slik tømmes cachen:
+
+1. Valkey tømmes direkte. Alle nøkler starter med `bidrag-cache::<navn>::`, så andre data i instansen berøres ikke.
+2. Podden som får kallet tømmer sin egen Caffeine.
+3. De andre poddene får beskjed via Valkey pub/sub på kanalen `bidrag-cache:tøm` og tømmer sin Caffeine.
+
+Pub/sub leverer ikke beskjeden på nytt. En pod som ikke er koblet til Valkey når beskjeden sendes, beholder sine lokale verdier til de utløper.
+
 ## Nøkler og serialisering
 
 Nøkler utledes av brukeridentitet, metode, deklarerte parametertyper og parameterverdier med HMAC-SHA256 og Valkey-passordet. Identer står dermed ikke i klartekst i Valkey-nøkler. Manglende eller blank brukeridentitet avvises før cache eller kilde aksesseres. Appen må skille validerte applikasjonskall eksplisitt fra saksbehandlere; biblioteket tolker ikke token eller velger systembrukere. Igjen, se oppsett i [bidrag-tilgangskontoll](../../apps/bidrag-tilgangskontroll/src/main/kotlin/no/nav/bidrag/tilgangskontroll/konfigurasjon/CacheKonfigurasjon.kt) om du er usikker.

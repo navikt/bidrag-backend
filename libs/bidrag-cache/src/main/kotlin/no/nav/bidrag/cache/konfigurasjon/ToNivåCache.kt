@@ -69,6 +69,8 @@ class ToNivåCache(
         caffeine.clear()
     }
 
+    fun tømLokalt() = caffeine.clear()
+
     // Feil mot valkey feks ved nedetid eller tidsavbrudd behandles som cache-bom.
     private fun hentFraValkey(key: Any): Cache.ValueWrapper? = try {
         valkey.get(key)
