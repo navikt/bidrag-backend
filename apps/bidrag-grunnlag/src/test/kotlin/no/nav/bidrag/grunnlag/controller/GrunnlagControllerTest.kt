@@ -8,6 +8,7 @@ import no.nav.bidrag.domene.enums.vedtak.Formål
 import no.nav.bidrag.grunnlag.BidragGrunnlagTest
 import no.nav.bidrag.grunnlag.BidragGrunnlagTest.Companion.TEST_PROFILE
 import no.nav.bidrag.grunnlag.TestUtil
+import no.nav.bidrag.grunnlag.consumer.aap.AapConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.ArbeidsforholdConsumer
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
 import no.nav.bidrag.grunnlag.consumer.familiebasak.FamilieBaSakConsumer
@@ -101,6 +102,9 @@ class GrunnlagControllerTest {
 
     @MockitoBean
     private lateinit var sigrunConsumer: SigrunConsumer
+
+    @MockitoBean
+    private lateinit var aapConsumer: AapConsumer
 
     @LocalServerPort
     private val port = 0

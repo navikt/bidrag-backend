@@ -9,6 +9,7 @@ import no.nav.bidrag.commons.util.SecurityCoroutineContext
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.grunnlag.consumer.aap.AapConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.ArbeidsforholdConsumer
 import no.nav.bidrag.grunnlag.consumer.arbeidsforhold.EnhetsregisterConsumer
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
@@ -52,6 +53,7 @@ class HentGrunnlagService(
     private val arbeidsforholdConsumer: ArbeidsforholdConsumer,
     private val enhetsregisterConsumer: EnhetsregisterConsumer,
     private val tilleggsstønadConsumer: TilleggsstønadConsumer,
+    private val aapConsumer: AapConsumer,
 ) {
 
     suspend fun hentGrunnlag(hentGrunnlagRequestDto: HentGrunnlagRequestDto): HentGrunnlagDto {
@@ -179,6 +181,33 @@ class HentGrunnlagService(
                 )
             }
 
+            val barnetilleggAapListe = scope.async {
+                HentBarnetilleggAAPService(
+                    aapConsumer = aapConsumer,
+                ).hentBarnetillegg(
+                    request = hentRequestListeFor(
+                        type = GrunnlagRequestType.BARNETILLEGG_AAP,
+                        hentGrunnlagRequestDto = requestMedNyesteIdenter,
+                    ),
+                )
+            }
+
+            val barnetilleggPensjon = barnetilleggPensjonListe.await().grunnlagListe
+                .sortedWith(
+                    compareBy<BarnetilleggGrunnlagDto> { it.partPersonId }
+                        .thenBy { it.barnPersonId }
+                        .thenBy { it.barnetilleggType }
+                        .thenBy { it.periodeFra },
+                )
+
+            val barnetilleggAap = barnetilleggAapListe.await().grunnlagListe
+                .sortedWith(
+                    compareBy<BarnetilleggGrunnlagDto> { it.partPersonId }
+                        .thenBy { it.barnPersonId }
+                        .thenBy { it.barnetilleggType }
+                        .thenBy { it.periodeFra },
+                )
+
             HentGrunnlagDto(
                 ainntektListe = ainntektListe.await().grunnlagListe
                     .sortedWith(
@@ -220,13 +249,7 @@ class HentGrunnlagService(
                         compareBy<SmåbarnstilleggGrunnlagDto> { it.personId }
                             .thenBy { it.periodeFra },
                     ),
-                barnetilleggListe = barnetilleggPensjonListe.await().grunnlagListe
-                    .sortedWith(
-                        compareBy<BarnetilleggGrunnlagDto> { it.partPersonId }
-                            .thenBy { it.barnPersonId }
-                            .thenBy { it.barnetilleggType }
-                            .thenBy { it.periodeFra },
-                    ),
+                barnetilleggListe = barnetilleggPensjon + barnetilleggAap,
                 kontantstøtteListe = kontantstøtteListe.await().grunnlagListe
                     .sortedWith(
                         compareBy<KontantstøtteGrunnlagDto> { it.partPersonId }
@@ -269,7 +292,8 @@ class HentGrunnlagService(
                     sivilstandListe.await().feilrapporteringListe +
                     barnetilsynListe.await().feilrapporteringListe +
                     arbeidsforholdListe.await().feilrapporteringListe +
-                    tilleggsstønadListe.await().feilrapporteringListe,
+                    tilleggsstønadListe.await().feilrapporteringListe +
+                    barnetilleggAapListe.await().feilrapporteringListe,
                 hentetTidspunkt = hentetTidspunkt,
             )
         }
