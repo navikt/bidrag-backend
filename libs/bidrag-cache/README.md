@@ -193,10 +193,17 @@ Oppslagsrekkefølgen for `@LangCache` er Caffeine, så Valkey, så kilden.
 - Feil fra kilden caches ikke.
 - Feil logges uten nøkkel og verdi i vanlig logg. Nøkkelen logges bare til `secureLogger`.
 
-Med Valkey er Spring Boots helsesjekk for Redis aktiv. Skal ikke nedetid i Valkey gjøre appen usunn, kan den slås av:
+### Helsesjekk
+
+Biblioteket slår av Spring Boots helsesjekk for Redis som standard. Den inngår ellers i `/actuator/health`, som mange apper bruker som startprobe i Nais. Er Valkey nede, ville nye podder gått i startup-loop til Valkey var oppe igjen.
+
+Vil appen likevel ha helsesjekken, kan du slå den på i `application.yaml`:
 
 ```yaml
-management.health.redis.enabled: false
+management:
+  health:
+    redis:
+      enabled: true
 ```
 
 ## Metrikker

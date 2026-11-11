@@ -19,6 +19,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 
 class CacheConfigTest {
+    private companion object {
+        const val REDIS_HELSESJEKK_BEAN = "redisHealthContributor"
+    }
+
     open class Tjeneste {
         open var kall = 0
 
@@ -49,6 +53,25 @@ class CacheConfigTest {
         .web(WebApplicationType.NONE)
         .properties("spring.application.name=test", *egenskaper)
         .run()
+
+    @Test
+    fun `skal slå av helsesjekk for redis som standard`() {
+        start(*valkeyEgenskaper).use { kontekst ->
+            kontekst.containsBean(REDIS_HELSESJEKK_BEAN) shouldBe false
+        }
+    }
+
+    @Test
+    fun `skal la appen slå på helsesjekk for redis`() {
+        SpringApplicationBuilder(App::class.java)
+            .web(WebApplicationType.NONE)
+            .properties("spring.application.name=test", *valkeyEgenskaper)
+            // Som i application.yaml må overstyringen ligge foran defaultProperties, som Spring Boot legger bakerst.
+            .run("--management.health.redis.enabled=true")
+            .use { kontekst ->
+                kontekst.containsBean(REDIS_HELSESJEKK_BEAN) shouldBe true
+            }
+    }
 
     @Test
     fun `skal cache med KortCache uten valkey`() {
