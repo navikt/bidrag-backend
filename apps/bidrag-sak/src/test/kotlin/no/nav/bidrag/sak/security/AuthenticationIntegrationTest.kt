@@ -87,7 +87,8 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
     fun `Azure-PIP avviser token uten påkrevd rolle`() {
         val response = hent(claimsPath, HttpHeaders().apply { setBearerAuth(lokalTestToken()) })
 
-        response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        response.statusCode shouldBe HttpStatus.FORBIDDEN
+        response.headers.getFirst(HttpHeaders.WWW_AUTHENTICATE) shouldBe null
         verify(exactly = 0) { bidragSakService.finnPipFor(any()) }
     }
 

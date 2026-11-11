@@ -1,6 +1,7 @@
 package no.nav.bidrag.sak.aop
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.security.token.support.core.exceptions.JwtTokenInvalidClaimException
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -18,10 +19,14 @@ class RestResponseExceptionResolver {
 
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
-    protected fun handleUgyldigAutentisering(): ResponseEntity<String> = ResponseEntity
-        .status(HttpStatus.UNAUTHORIZED)
-        .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
-        .body("Gyldig autentisering kreves.")
+    protected fun handleUgyldigAutentisering(e: JwtTokenUnauthorizedException): ResponseEntity<String> = if (e.cause is JwtTokenInvalidClaimException) {
+        ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mangler påkrevd rolle.")
+    } else {
+        ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .body("Gyldig autentisering kreves.")
+    }
 
     @ResponseBody
     @ExceptionHandler(NoResourceFoundException::class)
