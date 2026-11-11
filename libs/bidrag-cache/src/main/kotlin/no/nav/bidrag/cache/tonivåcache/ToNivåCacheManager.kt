@@ -1,7 +1,10 @@
 package no.nav.bidrag.cache.tonivåcache
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.MeterRegistry
+import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
 import no.nav.bidrag.cache.util.Levetid
+import no.nav.bidrag.cache.util.overvåkCaffeine
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
@@ -11,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ToNivåCacheManager(
     private val deltCacheManager: CacheManager,
     private val maksStørrelse: Long,
+    private val metrikker: MeterRegistry,
 ) : CacheManager {
     private val cacher = ConcurrentHashMap<String, Cache>()
 
@@ -24,16 +28,15 @@ class ToNivåCacheManager(
     }
 
     private fun opprettCache(name: String): Cache {
-        val lokal =
-            CaffeineCache(
-                name,
-                Caffeine
-                    .newBuilder()
-                    .expireAfter(Levetid(::tidTilStartenAvNesteArbeidsdag))
-                    .maximumSize(maksStørrelse)
-                    .build(),
-            )
+        val caffeine =
+            Caffeine
+                .newBuilder()
+                .expireAfter(Levetid(::tidTilStartenAvNesteArbeidsdag))
+                .maximumSize(maksStørrelse)
+                .recordStats()
+                .build<Any, Any>()
+        metrikker.overvåkCaffeine(caffeine, name, LANG_CACHE_MANAGER)
         val delt = requireNotNull(deltCacheManager.getCache(name)) { "Fant ikke delt cache $name" }
-        return ToNivåCache(lokal, delt)
+        return ToNivåCache(CaffeineCache(name, caffeine), delt, metrikker)
     }
 }

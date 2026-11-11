@@ -126,7 +126,7 @@ Ved overgang fra gammelt oppsett: fjern egne `CacheManager`-/`CachingConfigurer`
 | Valkey-timeout | 500 ms for tilkobling og kommandoer. |
 | Applikasjonsnavn | `spring.application.name`, som må være satt. |
 | Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone. |
-| Feilmetrikker| `bidrag.cache.error`, med operasjonen `get` eller `put`. |
+| Metrikker | Se [Metrikker](#metrikker). |
 
 Begge lag følger samme utløpsregel. Ved treff i Valkey fylles Caffeine med gjenværende levetid. Treff forlenger ikke fristen og skriver ikke verdien tilbake til Valkey. Utløpte verdier avvises selv om de fortsatt ligger fysisk i et av lagene.
 
@@ -171,7 +171,7 @@ Jackson serialiserer verdiene. Se [Støttede typer](#støttede-typer) for tillat
 
 Cache-nøkler erstatter ikke autentisering eller tilgangskontroll. Appen må fortsatt validere token og kontrollere tilgang til person- og saksdata.
 
-## Feil, restart og målinger
+## Feil og restart
 
 Oppslagsrekkefølgen er Caffeine -> Valkey -> kilde. Ved treff i Valkey fylles Caffeine. Ved bom i begge fylles begge etter et vellykket kildekall og en vellykket Valkey-skriving.
 
@@ -183,4 +183,15 @@ Biblioteket endrer ikke appens health-oppsett. Hvis Valkey bare er en cache og i
 management.health.redis.enabled: false
 ```
 
-Lokale treff, bom og størrelse finnes i Micrometers cachemålinger med cache-navn `<navn>-caffeine`. Målingene registreres når cachen tas i bruk. Feiltelleren heter `bidrag.cache.error`.
+## Metrikker
+
+Metrikkene registreres første gang en cache tas i bruk. De havner i appens `MeterRegistry`, og hvis appen ikke har actuator, i `Metrics.globalRegistry`.
+
+| Metrikk | Tags | Innhold |
+|---|---|---|
+| `cache.gets` | `cache`, `cache.manager`, `result` (`hit`/`miss`) | Treff og bom i Caffeine |
+| `cache.size`, `cache.evictions`, `cache.puts` m.fl. | `cache`, `cache.manager` | Micrometers standardmålinger for Caffeine |
+| `bidrag.cache.valkey.gets` | `cache`, `result` (`hit`/`miss`) | Treff og bom i Valkey etter bom i Caffeine. Gjelder bare `@LangCache`. |
+| `bidrag.cache.error` | `cache`, `operasjon` (`get`/`put`) | Feil mot Valkey som ble behandlet som bom eller ikke ble lagret |
+
+`cache.manager` er `kortCacheManager` for `@KortCache` og `langCacheManager` for `@LangCache`.

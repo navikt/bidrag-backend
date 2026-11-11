@@ -1,6 +1,10 @@
 package no.nav.bidrag.cache.tonivåcache
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import no.nav.bidrag.cache.util.FEIL_METRIKK
+import no.nav.bidrag.cache.util.VALKEY_OPPSLAG_METRIKK
 import org.springframework.cache.Cache
 import java.util.concurrent.Callable
 
@@ -12,7 +16,13 @@ import java.util.concurrent.Callable
 class ToNivåCache(
     private val caffeine: Cache,
     private val valkey: Cache,
+    metrikker: MeterRegistry,
 ) : Cache {
+    private val valkeyTreff = metrikker.valkeyOppslag("hit")
+    private val valkeyBom = metrikker.valkeyOppslag("miss")
+    private val lesefeil = metrikker.feil("get")
+    private val lagrefeil = metrikker.feil("put")
+
     override fun getName(): String = caffeine.name
 
     override fun getNativeCache(): Any = this
@@ -73,8 +83,9 @@ class ToNivåCache(
 
     // Feil mot valkey feks ved nedetid eller tidsavbrudd behandles som cache-bom.
     private fun hentFraValkey(key: Any): Cache.ValueWrapper? = try {
-        valkey.get(key)
+        valkey.get(key).also { (if (it == null) valkeyBom else valkeyTreff).increment() }
     } catch (e: RuntimeException) {
+        lesefeil.increment()
         LOGGER.warn { "Klarte ikke lese fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
         secureLogger.warn { "Klarte ikke lese $key fra valkey $name (${e.javaClass.simpleName}). Behandles som cache-bom." }
         null
@@ -87,10 +98,15 @@ class ToNivåCache(
         try {
             valkey.put(key, value)
         } catch (e: RuntimeException) {
+            lagrefeil.increment()
             LOGGER.warn { "Klarte ikke lagre i valkey $name (${e.javaClass.simpleName}). Lagres kun i caffeine." }
             secureLogger.warn { "Klarte ikke lagre $key i valkey $name (${e.javaClass.simpleName}). Lagres kun i caffeine." }
         }
     }
+
+    private fun MeterRegistry.valkeyOppslag(resultat: String): Counter = counter(VALKEY_OPPSLAG_METRIKK, "cache", name, "result", resultat)
+
+    private fun MeterRegistry.feil(operasjon: String): Counter = counter(FEIL_METRIKK, "cache", name, "operasjon", operasjon)
 
     private companion object {
         private val LOGGER = KotlinLogging.logger { }

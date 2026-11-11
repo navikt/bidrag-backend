@@ -1,6 +1,8 @@
 package no.nav.bidrag.cache.konfigurasjon
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Metrics
 import no.nav.bidrag.cache.nøkkelgenerering.CacheBrukerIdentifikator
 import no.nav.bidrag.cache.nøkkelgenerering.CacheNøkkelGenerator
 import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
@@ -10,9 +12,11 @@ import no.nav.bidrag.cache.util.Levetid
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
 import no.nav.bidrag.cache.util.NØKKELPREFIKS
 import no.nav.bidrag.cache.util.finnLevetid
+import no.nav.bidrag.cache.util.overvåkCaffeine
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.Cache
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
 import org.springframework.context.annotation.Bean
@@ -51,17 +55,35 @@ class CacheConfig {
 
     @Bean(KORT_CACHE_MANAGER)
     @Primary
-    fun kortCacheManager(): CaffeineCacheManager = CaffeineCacheManager().apply {
-        setCaffeine(
-            Caffeine
-                .newBuilder()
-                .expireAfter(Levetid { KORT_CACHE_LEVETID })
-                .maximumSize(MAKS_STØRRELSE),
-        )
+    fun kortCacheManager(meterRegistry: ObjectProvider<MeterRegistry>): CaffeineCacheManager {
+        val metrikker = meterRegistry.metrikker()
+        return object : CaffeineCacheManager() {
+            override fun adaptCaffeineCache(
+                name: String,
+                cache: com.github.benmanes.caffeine.cache.Cache<Any, Any>,
+            ): Cache {
+                metrikker.overvåkCaffeine(cache, name, KORT_CACHE_MANAGER)
+                return super.adaptCaffeineCache(name, cache)
+            }
+        }.apply {
+            setCaffeine(
+                Caffeine
+                    .newBuilder()
+                    .expireAfter(Levetid { KORT_CACHE_LEVETID })
+                    .maximumSize(MAKS_STØRRELSE)
+                    .recordStats(),
+            )
+        }
     }
 
     @Bean(LANG_CACHE_MANAGER)
-    fun langCacheManager(valkeyCacheManager: RedisCacheManager): ToNivåCacheManager = ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE)
+    fun langCacheManager(
+        valkeyCacheManager: RedisCacheManager,
+        meterRegistry: ObjectProvider<MeterRegistry>,
+    ): ToNivåCacheManager = ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE, meterRegistry.metrikker())
+
+    // Apper uten actuator har ingen MeterRegistry-bean.
+    private fun ObjectProvider<MeterRegistry>.metrikker(): MeterRegistry = getIfAvailable { Metrics.globalRegistry }
 
     @Bean
     fun valkeyConnectionFactory(
