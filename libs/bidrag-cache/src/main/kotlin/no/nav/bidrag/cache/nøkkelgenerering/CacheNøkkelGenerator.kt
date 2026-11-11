@@ -1,4 +1,4 @@
-package no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering
+package no.nav.bidrag.cache.nøkkelgenerering
 
 import no.nav.bidrag.cache.annotasjoner.KortCache
 import no.nav.bidrag.cache.annotasjoner.LangCache

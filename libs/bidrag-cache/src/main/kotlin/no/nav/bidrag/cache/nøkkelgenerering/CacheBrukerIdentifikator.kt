@@ -1,4 +1,4 @@
-package no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering
+package no.nav.bidrag.cache.nøkkelgenerering
 
 /**
  * Implementeres av applikasjonen for å skille cacheverdier per bruker når `perBruker = true`.

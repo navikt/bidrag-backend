@@ -1,7 +1,9 @@
-package no.nav.bidrag.cache.tømming
+package no.nav.bidrag.cache.konfigurasjon
 
-import no.nav.bidrag.cache.konfigurasjon.CacheConfig
-import no.nav.bidrag.cache.konfigurasjon.ToNivåCacheManager
+import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
+import no.nav.bidrag.cache.tømming.CacheController
+import no.nav.bidrag.cache.tømming.CacheTømmer
+import no.nav.bidrag.cache.tømming.CacheTømmingLytter
 import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
 import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
 import org.springframework.beans.factory.annotation.Qualifier
@@ -22,7 +24,8 @@ class CacheTømmingConfig {
         @Qualifier(LANG_CACHE_MANAGER) langCacheManager: ToNivåCacheManager,
         valkeyCacheWriter: RedisCacheWriter,
         valkeyConnectionFactory: RedisConnectionFactory,
-    ): CacheTømmer = CacheTømmer(kortCacheManager, langCacheManager, valkeyCacheWriter, StringRedisTemplate(valkeyConnectionFactory))
+    ): CacheTømmer =
+        CacheTømmer(kortCacheManager, langCacheManager, valkeyCacheWriter, StringRedisTemplate(valkeyConnectionFactory))
 
     @Bean
     fun cacheTømmingLytter(

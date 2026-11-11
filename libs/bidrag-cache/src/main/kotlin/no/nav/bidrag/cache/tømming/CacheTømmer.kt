@@ -1,7 +1,7 @@
 package no.nav.bidrag.cache.tømming
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.cache.konfigurasjon.ToNivåCacheManager
+import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
 import no.nav.bidrag.cache.util.NØKKELPREFIKS
 import org.springframework.cache.CacheManager
 import org.springframework.data.redis.cache.RedisCacheWriter

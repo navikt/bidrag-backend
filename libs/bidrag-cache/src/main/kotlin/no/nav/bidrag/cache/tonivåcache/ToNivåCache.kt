@@ -1,4 +1,4 @@
-package no.nav.bidrag.cache.konfigurasjon
+package no.nav.bidrag.cache.tonivåcache
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cache.Cache

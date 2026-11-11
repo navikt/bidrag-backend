@@ -13,7 +13,7 @@ import org.springframework.core.annotation.AliasFor
  *
  * [perBruker] må alltid oppgis. Bruk `true` når svaret avhenger av hvem som er innlogget, for eksempel
  * tilgangssjekker. Det krever en bean av typen
- * [no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheBrukerIdentifikator].
+ * [no.nav.bidrag.cache.nøkkelgenerering.CacheBrukerIdentifikator].
  *
  * [levetid] overstyrer standard levetid fram til kl. 06:00 neste dag, både i Caffeine og Valkey.
  * Eksempler: `"30s"`, `"5m"`, `"2h"` eller `"PT1H"`.

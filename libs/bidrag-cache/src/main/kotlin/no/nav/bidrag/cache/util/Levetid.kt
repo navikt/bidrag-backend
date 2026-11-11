@@ -1,7 +1,7 @@
-package no.nav.bidrag.cache.konfigurasjon
+package no.nav.bidrag.cache.util
 
 import com.github.benmanes.caffeine.cache.Expiry
-import no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering.CacheNøkkel
+import no.nav.bidrag.cache.nøkkelgenerering.CacheNøkkel
 import java.time.Duration
 
 /** Levetiden fra annotasjonen når den er satt, ellers [defaultLevetid]. */

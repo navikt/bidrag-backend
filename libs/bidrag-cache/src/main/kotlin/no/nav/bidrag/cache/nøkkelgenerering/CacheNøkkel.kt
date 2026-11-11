@@ -1,4 +1,4 @@
-package no.nav.bidrag.cache.konfigurasjon.nøkkelgenerering
+package no.nav.bidrag.cache.nøkkelgenerering
 
 import java.security.MessageDigest
 import java.time.Duration
