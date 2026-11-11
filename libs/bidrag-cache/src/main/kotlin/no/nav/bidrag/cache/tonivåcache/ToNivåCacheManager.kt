@@ -1,12 +1,12 @@
 package no.nav.bidrag.cache.tonivåcache
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import no.nav.bidrag.cache.util.Levetid
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.cache.Cache
 import org.springframework.cache.CacheManager
 import org.springframework.cache.caffeine.CaffeineCache
 import java.util.concurrent.ConcurrentHashMap
-import no.nav.bidrag.cache.util.Levetid
 
 class ToNivåCacheManager(
     private val deltCacheManager: CacheManager,

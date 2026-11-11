@@ -1,10 +1,13 @@
 package no.nav.bidrag.cache.util
 
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
+private val NORSK_TIDSSONE = ZoneId.of("Europe/Oslo")
 
 fun tidTilStartenAvNesteArbeidsdag(): Duration {
-    val nå = LocalDateTime.now()
+    val nå = ZonedDateTime.now(NORSK_TIDSSONE)
     val utløpPåTidspunkt =
         nå
             .plusDays(1)

@@ -125,7 +125,7 @@ Ved overgang fra gammelt oppsett: fjern egne `CacheManager`-/`CachingConfigurer`
 | Størrelse | Maksimalt 10 000 oppføringer per cache og pod. |
 | Valkey-timeout | 500 ms for tilkobling og kommandoer. |
 | Applikasjonsnavn | `spring.application.name`, som må være satt. |
-| Tidssone | JVM-ens tidssone. |
+| Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone. |
 | Feilmetrikker| `bidrag.cache.error`, med operasjonen `get` eller `put`. |
 
 Begge lag følger samme utløpsregel. Ved treff i Valkey fylles Caffeine med gjenværende levetid. Treff forlenger ikke fristen og skriver ikke verdien tilbake til Valkey. Utløpte verdier avvises selv om de fortsatt ligger fysisk i et av lagene.

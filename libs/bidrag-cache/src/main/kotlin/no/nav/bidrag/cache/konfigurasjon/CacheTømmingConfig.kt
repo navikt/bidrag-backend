@@ -24,8 +24,7 @@ class CacheTømmingConfig {
         @Qualifier(LANG_CACHE_MANAGER) langCacheManager: ToNivåCacheManager,
         valkeyCacheWriter: RedisCacheWriter,
         valkeyConnectionFactory: RedisConnectionFactory,
-    ): CacheTømmer =
-        CacheTømmer(kortCacheManager, langCacheManager, valkeyCacheWriter, StringRedisTemplate(valkeyConnectionFactory))
+    ): CacheTømmer = CacheTømmer(kortCacheManager, langCacheManager, valkeyCacheWriter, StringRedisTemplate(valkeyConnectionFactory))
 
     @Bean
     fun cacheTømmingLytter(

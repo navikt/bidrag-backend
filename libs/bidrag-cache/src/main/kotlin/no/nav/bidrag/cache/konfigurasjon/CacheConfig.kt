@@ -3,10 +3,13 @@ package no.nav.bidrag.cache.konfigurasjon
 import com.github.benmanes.caffeine.cache.Caffeine
 import no.nav.bidrag.cache.nøkkelgenerering.CacheBrukerIdentifikator
 import no.nav.bidrag.cache.nøkkelgenerering.CacheNøkkelGenerator
+import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
 import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
 import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
+import no.nav.bidrag.cache.util.Levetid
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
 import no.nav.bidrag.cache.util.NØKKELPREFIKS
+import no.nav.bidrag.cache.util.finnLevetid
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -30,9 +33,6 @@ import org.springframework.data.redis.serializer.RedisSerializationContext
 import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import tools.jackson.module.kotlin.KotlinModule
 import java.time.Duration
-import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
-import no.nav.bidrag.cache.util.Levetid
-import no.nav.bidrag.cache.util.finnLevetid
 
 @Configuration
 @EnableCaching
