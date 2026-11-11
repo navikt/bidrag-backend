@@ -32,7 +32,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @KortCache(Cache.TILGANGSMASKIN_KOMPLETTEREGLER, perBruker = true) //Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
+    @KortCache(Cache.TILGANGSMASKIN_KOMPLETTEREGLER, perBruker = true) // Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
     fun evaluerKomplettRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("komplett").build().toUri(),
         personIdent.verdi,
@@ -43,7 +43,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @KortCache(Cache.TILGANGSMASKIN_KJERNEREGLER, perBruker = true) //Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
+    @KortCache(Cache.TILGANGSMASKIN_KJERNEREGLER, perBruker = true) // Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
     fun evaluerKjerneRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("kjerne").build().toUri(),
         personIdent.verdi,
