@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 COPY . .
 RUN npm run build
-RUN npm prune --omit=dev && npm cache clean --force
+RUN npm prune --omit=dev --legacy-peer-deps && npm cache clean --force
 
 FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:26-slim AS runtime
 ENV NODE_ENV=production

@@ -193,6 +193,7 @@ class ForholdsmessigFordelingService(
                     behandling.soknadsid!!,
                     request,
                     nyesteLøpendeBidragGrunnlag,
+                    true,
                 )
                 return
             }

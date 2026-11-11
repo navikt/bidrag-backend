@@ -57,7 +57,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentAllePersoner
-import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
 import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
@@ -653,13 +652,18 @@ class BehandlingTilVedtakMapping(
         beregningBarn: ResultatBidragsberegningBarn,
         klagevedtakErEnesteVedtak: Boolean,
     ): List<Pair<ResultatRolle, ResultatDelvedtak>> {
+        // For R-barn som har avvist revurdering så finnes det bare en endelig vedtak. Da vil det ikke bli fattet vedtak hvis klagevedtakErEnesteVedtak.
+        // Drar også dem inn i filtrer pga det
+        val harBareEndeligVedtak = beregningBarn
+            .resultatVedtak!!
+            .resultatVedtakListe.all { it.endeligVedtak }
         return beregningBarn
             .resultatVedtak!!
             .resultatVedtakListe
-            .filter { !it.endeligVedtak }
+            .filter { !it.endeligVedtak || (klagevedtakErEnesteVedtak && harBareEndeligVedtak) }
             .map { resultatVedtak ->
-                // Ikke fatte vedtak for gjenopprettet beløpshistorikk
-                if (!resultatVedtak.beregnet) {
+                // Ikke fatte vedtak for gjenopprettet beløpshistorikk. Hvis beregnetBarnebidragPeriodeListe er tom så er det avvist revurdering
+                if (!resultatVedtak.beregnet && resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isNotEmpty()) {
                     val resultatFraVedtakGrunnlag =
                         resultatVedtak.resultat.grunnlagListe.finnResultatFraAnnenVedtak(
                             finnFørsteTreff = true,
@@ -693,10 +697,12 @@ class BehandlingTilVedtakMapping(
                     } else {
                         Innkrevingstype.UTEN_INNKREVING
                     }
+                // Hvis det er avvist revurderings skal det dras inn i endelig vedtak som om det var omgjøringsvedtak
+                val erOmgjøringsvedtak = resultatVedtak.omgjøringsvedtak || (beregningBarn.skalBehandlesSomAvvistRevurderingsbarnIKlage(request) && klagevedtakErEnesteVedtak)
                 beregningBarn.barn to
                     ResultatDelvedtak(
                         vedtaksid = null,
-                        omgjøringsvedtak = resultatVedtak.omgjøringsvedtak,
+                        omgjøringsvedtak = erOmgjøringsvedtak,
                         beregnet = true,
                         type = resultatVedtak.vedtakstype,
                         request =
@@ -782,6 +788,11 @@ class BehandlingTilVedtakMapping(
         byggForRoller: List<Rolle> = behandling.søknadsbarn,
     ): OpprettVedtakRequestDto {
         mapper.run {
+            val grunnlagSomTilhørerStønadsendring = listOf(
+                Grunnlagstype.VEDTAK_ORKESTRERING_DETALJER,
+                Grunnlagstype.RESULTAT_FRA_VEDTAK,
+                Grunnlagstype.ALDERSJUSTERING_DETALJER,
+            )
             val byggForSøknadsbarn = byggForRoller.filter { it.rolletype == Rolletype.BARN }
             val stønadsendringGrunnlag = stønadsendringPerioder.flatMap(StønadsendringPeriode::grunnlag)
 
@@ -803,8 +814,12 @@ class BehandlingTilVedtakMapping(
             }
             val stønadsendringGrunnlagListe = mutableSetOf<GrunnlagDto>()
 
+            stønadsendringGrunnlagListe.addAll(
+                stønadsendringGrunnlag.filter {
+                    grunnlagSomTilhørerStønadsendring.contains(it.type)
+                },
+            )
             grunnlagsliste.addAll(stønadsendringGrunnlag)
-            stønadsendringGrunnlagListe.addAll(stønadsendringGrunnlag)
             stønadsendringGrunnlagListe.addAll(
                 behandling.byggGrunnlagBehandlingDetaljer(request?.fatteVedtakRevurderingsbarn, bleFFTrukket),
             )
@@ -824,7 +839,7 @@ class BehandlingTilVedtakMapping(
             } else if (resultatVedtak.delvedtak) {
                 // Fjern eksisterende virkningstpunkt grunnlag før det legges på ny
                 stønadsendringGrunnlagListe.removeIf { it.type == Grunnlagstype.VIRKNINGSTIDSPUNKT }
-                stønadsendringGrunnlagListe.add(byggGrunnlagVirkningstidspunktResultatvedtak(resultatVedtak, søknadsbarnReferanse))
+                stønadsendringGrunnlagListe.add(byggGrunnlagVirkningstidspunktResultatvedtak(resultatVedtak, søknadsbarnReferanse, søknadsbarn))
             } else if (resultatVedtak.endeligVedtak) {
                 grunnlagsliste.addAll(behandling.tilPersonobjekter())
             }
@@ -838,6 +853,9 @@ class BehandlingTilVedtakMapping(
                 virkningstidspunktGrunnlag.find { it.gjelderBarnReferanse == søknadsbarnReferanse }?.let {
                     stønadsendringGrunnlagListe.add(it)
                 }
+                stønadsendringGrunnlagListe.add(søknadsbarn.tilGrunnlagPerson())
+                søknadsbarn.bidragsmottaker?.tilGrunnlagPerson()?.let { stønadsendringGrunnlagListe.add(it) }
+                behandling.bidragspliktig?.tilGrunnlagPerson()?.let { stønadsendringGrunnlagListe.add(it) }
                 stønadsendringGrunnlagListe.addAll(behandling.byggGrunnlagSøknad(listOfNotNull(søknadsbarn)))
 
                 val grunnlagManuelleVedtak =

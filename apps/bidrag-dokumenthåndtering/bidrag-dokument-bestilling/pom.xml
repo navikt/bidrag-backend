@@ -19,7 +19,7 @@
 
   <properties>
     <mockk.version>1.14.11</mockk.version>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <spring-retry.version>2.0.13</spring-retry.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
@@ -29,7 +29,7 @@
     <springmockk.version>5.0.1</springmockk.version>
     <kotest.version>6.2.6</kotest.version>
     <swagger-annotations.version>2.2.55</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.90.0</google-cloud-libraries-bom.version>
+    <google-cloud-libraries-bom.version>26.91.0</google-cloud-libraries-bom.version>
     <artemis.version>2.57.0</artemis.version>
     <mq-jms-spring-boot-starter.version>4.1.2</mq-jms-spring-boot-starter.version>
     <bouncycastle.version>1.86</bouncycastle.version>

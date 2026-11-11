@@ -4,7 +4,6 @@ import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -17,7 +16,6 @@ import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
-import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
 import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
@@ -743,142 +741,6 @@ class ValideringTest {
     }
 
     @Nested
-    open inner class ForpleiningMotUnderholdskostnad {
-        private fun underholdskostnad(
-            fom: LocalDate,
-            tom: LocalDate?,
-            forbruk: Int,
-            forpleining: Int? = null,
-        ) = UnderholdskostnadDto(
-            periode = DatoperiodeDto(fom, tom),
-            forbruk = BigDecimal.valueOf(forbruk.toLong()),
-            forpleining = forpleining?.let { BigDecimal.valueOf(it.toLong()) },
-            total = BigDecimal.valueOf((forbruk - (forpleining ?: 0)).coerceAtLeast(0).toLong()),
-        )
-
-        private fun request(
-            fom: LocalDate,
-            tom: LocalDate?,
-            beløp: Int,
-        ) = OppdatereForpleiningRequest(
-            periode = DatoperiodeDto(fom, tom),
-            beløp = BigDecimal.valueOf(beløp.toLong()),
-        )
-
-        @Test
-        fun `skal godta beløp som er lavere enn underholdskostnaden`() {
-            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, forbruk = 8000))
-
-            request(LocalDate.of(2024, 3, 1), null, beløp = 5000)
-                .validereMotUnderholdskostnad(perioder)
-        }
-
-        @Test
-        fun `skal godta beløp som er likt underholdskostnaden`() {
-            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, forbruk = 8000))
-
-            request(LocalDate.of(2024, 3, 1), null, beløp = 8000)
-                .validereMotUnderholdskostnad(perioder)
-        }
-
-        @Test
-        fun `skal avvise beløp som overstiger underholdskostnaden`() {
-            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, forbruk = 8000))
-
-            val feil =
-                shouldThrow<HttpClientErrorException> {
-                    request(LocalDate.of(2024, 3, 1), null, beløp = 8001)
-                        .validereMotUnderholdskostnad(perioder)
-                }
-
-            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
-        }
-
-        @Test
-        fun `skal kontrollere mot den laveste underholdskostnaden i perioden`() {
-            val perioder =
-                setOf(
-                    underholdskostnad(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), forbruk = 8000),
-                    underholdskostnad(LocalDate.of(2024, 7, 1), null, forbruk = 6000),
-                )
-
-            shouldThrow<HttpClientErrorException> {
-                request(LocalDate.of(2024, 1, 1), null, beløp = 7000)
-                    .validereMotUnderholdskostnad(perioder)
-            }
-
-            request(LocalDate.of(2024, 1, 1), null, beløp = 6000)
-                .validereMotUnderholdskostnad(perioder)
-        }
-
-        @Test
-        fun `skal ikke kontrollere mot tilstøtende underholdskostnadsperiode`() {
-            val perioder =
-                setOf(
-                    underholdskostnad(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), forbruk = 8000),
-                    underholdskostnad(LocalDate.of(2024, 7, 1), null, forbruk = 6000),
-                )
-
-            request(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), beløp = 7000)
-                .validereMotUnderholdskostnad(perioder)
-
-            request(LocalDate.of(2024, 7, 1), null, beløp = 6000)
-                .validereMotUnderholdskostnad(perioder)
-
-            shouldThrow<HttpClientErrorException> {
-                request(LocalDate.of(2024, 7, 1), null, beløp = 6001)
-                    .validereMotUnderholdskostnad(perioder)
-            }
-        }
-
-        @Test
-        fun `skal kontrollere mot underholdskostnaden før forpleining er trukket fra`() {
-            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), null, forbruk = 8000, forpleining = 6000))
-
-            request(LocalDate.of(2024, 1, 1), null, beløp = 8000)
-                .validereMotUnderholdskostnad(perioder)
-
-            shouldThrow<HttpClientErrorException> {
-                request(LocalDate.of(2024, 1, 1), null, beløp = 8001)
-                    .validereMotUnderholdskostnad(perioder)
-            }
-        }
-
-        @Test
-        fun `skal kontrollere mot summen av komponentene når total er satt til null`() {
-            val perioder =
-                setOf(
-                    UnderholdskostnadDto(
-                        periode = DatoperiodeDto(LocalDate.of(2024, 1, 1), null),
-                        forbruk = BigDecimal.valueOf(6000),
-                        boutgifter = BigDecimal.valueOf(3000),
-                        stønadTilBarnetilsyn = BigDecimal.valueOf(500),
-                        tilsynsutgifter = BigDecimal.valueOf(1000),
-                        barnetrygd = BigDecimal.valueOf(2500),
-                        forpleining = BigDecimal.valueOf(20000),
-                        total = BigDecimal.ZERO,
-                    ),
-                )
-
-            request(LocalDate.of(2024, 1, 1), null, beløp = 8000)
-                .validereMotUnderholdskostnad(perioder)
-
-            shouldThrow<HttpClientErrorException> {
-                request(LocalDate.of(2024, 1, 1), null, beløp = 8001)
-                    .validereMotUnderholdskostnad(perioder)
-            }
-        }
-
-        @Test
-        fun `skal ikke kontrollere når ingen underholdskostnadsperioder overlapper`() {
-            val perioder = setOf(underholdskostnad(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 30), forbruk = 8000))
-
-            request(LocalDate.of(2025, 1, 1), null, beløp = 99999)
-                .validereMotUnderholdskostnad(perioder)
-        }
-    }
-
-    @Nested
     open inner class ForpleiningsperiodeErGyldig {
         private fun underholdskostnad(): Underholdskostnad {
             val behandling =
@@ -891,16 +753,21 @@ class ValideringTest {
         }
 
         @Test
-        fun `skal avvise en periode der til og med er for fra og med`() {
-            val feil =
-                shouldThrow<HttpClientErrorException> {
-                    OppdatereForpleiningRequest(
-                        periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
-                        beløp = BigDecimal.valueOf(2000),
-                    ).validere(underholdskostnad())
-                }
+        fun `skal avvise ugyldig periode`() {
+            listOf(
+                // Til og med før fra og med
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
+                // Uten varighet: beregningen bruker hele måneder
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 29)),
+            ).forEach { periode ->
+                val feil =
+                    shouldThrow<HttpClientErrorException> {
+                        OppdatereForpleiningRequest(periode = periode, beløp = BigDecimal.valueOf(2000)).validere(underholdskostnad())
+                    }
 
-            feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+                feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+            }
         }
 
         @Test
@@ -915,9 +782,18 @@ class ValideringTest {
         }
 
         @Test
-        fun `skal godta en periode der til og med er lik fra og med`() {
+        fun `skal godta et beløp som er høyere enn underholdskostnaden`() {
+            // Forpleining som er lik eller høyere enn U gir avslag/opphør i beregningen, og skal ikke stoppes ved lagring
             OppdatereForpleiningRequest(
-                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), null),
+                beløp = BigDecimal.valueOf(50000),
+            ).validere(underholdskostnad())
+        }
+
+        @Test
+        fun `skal godta en periode på én måned`() {
+            OppdatereForpleiningRequest(
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30)),
                 beløp = BigDecimal.valueOf(2000),
             ).validere(underholdskostnad())
         }
@@ -960,60 +836,6 @@ class ValideringTest {
             )
 
             underholdskostnad.manglerBegrunnelse().shouldBeFalse()
-        }
-    }
-
-    @Nested
-    open inner class ForpleiningEtterAtUnderholdskostnadenHarGattNed {
-        private fun underholdskostnadMedForpleining(beløp: Int): Underholdskostnad {
-            val behandling =
-                oppretteTestbehandling(
-                    setteDatabaseider = true,
-                    inkludereBp = true,
-                    behandlingstype = TypeBehandling.BIDRAG,
-                )
-            val underholdskostnad = behandling.underholdskostnader.first()
-            underholdskostnad.forpleining.add(
-                Forpleining(
-                    underholdskostnad = underholdskostnad,
-                    fom = LocalDate.of(2024, 1, 1),
-                    tom = null,
-                    beløp = BigDecimal(beløp),
-                ),
-            )
-            return underholdskostnad
-        }
-
-        private fun beregnet(forbruk: Int) = setOf(
-            UnderholdskostnadDto(
-                periode = DatoperiodeDto(LocalDate.of(2024, 1, 1), null),
-                forbruk = BigDecimal(forbruk),
-                total = BigDecimal.ZERO,
-            ),
-        )
-
-        @Test
-        fun `skal gi valideringsfeil når underholdskostnaden har gått ned under forpleiningen`() {
-            val underholdskostnad = underholdskostnadMedForpleining(beløp = 10000)
-
-            val feil = underholdskostnad.valider(beregnet(forbruk = 8000))
-
-            feil.forpleiningOverstigerUnderholdskostnad shouldHaveSize 1
-            feil.harFeil shouldBe true
-        }
-
-        @Test
-        fun `skal ikke gi valideringsfeil når forpleiningen fortsatt er innenfor`() {
-            val underholdskostnad = underholdskostnadMedForpleining(beløp = 5000)
-
-            underholdskostnad.valider(beregnet(forbruk = 8000)).forpleiningOverstigerUnderholdskostnad.shouldBeEmpty()
-        }
-
-        @Test
-        fun `skal ikke kontrollere uten beregnede perioder`() {
-            val underholdskostnad = underholdskostnadMedForpleining(beløp = 10000)
-
-            underholdskostnad.valider().forpleiningOverstigerUnderholdskostnad.shouldBeEmpty()
         }
     }
 }

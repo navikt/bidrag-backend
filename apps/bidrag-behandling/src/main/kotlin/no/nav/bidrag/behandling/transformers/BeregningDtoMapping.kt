@@ -147,6 +147,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrun
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottakerReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.byggSluttberegningBarnebidragDetaljer
+import no.nav.bidrag.transport.behandling.felles.grunnlag.erBeregnetAvslagBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erResultatEndringUnderGrenseForPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erSluttberegningGammelStruktur
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -1079,7 +1080,10 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
         erEndringUnderGrense = erResultatEndringUnderGrense,
         erBeregnetAvslag =
         sluttberegning != null &&
-            (sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet),
+            (
+                sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet ||
+                    sluttberegning.resultat.erBeregnetAvslagBarnebidrag()
+                ),
         beregningsdetaljer =
         if (vedtakstype == Vedtakstype.INNKREVING) {
             null

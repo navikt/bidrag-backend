@@ -20,7 +20,6 @@
     <mockk.version>1.14.11</mockk.version>
     <mockito-kotlin.version>6.3.0</mockito-kotlin.version>
     <kotest.version>6.2.4</kotest.version>
-    <guava.version>33.7.1-jre</guava.version>
   </properties>
 
   <dependencies>
@@ -67,7 +66,6 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
