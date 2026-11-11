@@ -6,7 +6,7 @@ Løsningen inneholder to forskjellige annotasjonsbaserte caches. Disse er `@Kort
 
 `@KortCache` er kun caffeine, ment for å brukes der hvor cachen kun trengs en liten stund. Apper som bare bruker `@KortCache`, trenger ikke Valkey. Hopp da over steg 2 og 3 under [Ta biblioteket i bruk](#ta-biblioteket-i-bruk).
 
-`@LangCache` benytter både caffeine og valkey og lagrer til begge. Dette fører til at applikasjonsrestart fremdeles har en valkey-cache som den kan treffe. Dette er lurt å benytte i tilfeller hvor vi ikke forventer at responsen endres fortløpene
+`@LangCache` benytter både caffeine og valkey og lagrer til begge. Dette fører til at applikasjonsrestart fremdeles har en valkey-cache som den kan treffe. Dette er lurt å benytte i tilfeller hvor vi ikke forventer at responsen endres fortløpende.
 
 ## Levetid
 
@@ -113,35 +113,41 @@ Uten `CACHE_VALKEY_INSTANCE` kjører biblioteket uten Valkey. `@LangCache` cache
 
 Biblioteket bruker TLS og leser `VALKEY_HOST_<INSTANS>`, `VALKEY_PORT_<INSTANS>`, `VALKEY_USERNAME_<INSTANS>` og `VALKEY_PASSWORD_<INSTANS>` fra miljøet. 
 
-### 4. Registrer CacheSettings-bean
-Se [hvordan det gjøres i bidrag-tilgangskontroll](../../apps/bidrag-tilgangskontroll/src/main/kotlin/no/nav/bidrag/tilgangskontroll/konfigurasjon/CacheKonfigurasjon.kt)
-
-### 5. Bruk vanlig Cacheable
+### 4. Bruk annotasjonene
 
 ```kotlin
-import org.springframework.cache.annotation.Cacheable
+@KortCache("TILGANG", perBruker = true)
+fun harTilgang(saksnummer: String): Boolean = ...
 
-@Cacheable("PERSON")
-fun hentPerson(personIdent: String): PersonDto = personClient.hentPerson(personIdent)
+@LangCache("KODEVERK", perBruker = false, unless = "#result == null")
+fun hentKodeverk(navn: String): Kodeverk? = ...
 ```
 
-Biblioteket aktiverer `@EnableCaching` og setter standardnøkkelgeneratoren for `@Cacheable`. En egen cacheannotasjon er ikke nødvendig. Ikke angi en egen `key`, `keyGenerator` eller `cacheManager`; det ville omgå bibliotekets oppsett.
+| Parameter | Betydning |
+|---|---|
+| `value` | Cachenavn. Påkrevd. |
+| `perBruker` | `true` gir egen verdi per innlogget bruker. Påkrevd. |
+| `unless` | SpEL-uttrykk. Når det er sant, caches ikke resultatet. |
+| `levetid` | Overstyrer standard levetid. Se [Levetid](#levetid). |
 
-Spring-proxyen må håndtere kallet. Cacheannotasjoner virker ikke ved selvkall i samme objekt. Flyten gjelder vanlige, synkrone metodekall; ikke bruk `sync = true` eller asynkrone cachemetoder.
+`perBruker = true` krever en bean som forteller hvem brukeren er:
 
-Ved overgang fra gammelt oppsett: fjern egne `CacheManager`-/`CachingConfigurer`-beans og eventuell `@EnableUserCache`.
+```kotlin
+@Bean
+fun cacheBrukerIdentifikator() = CacheBrukerIdentifikator { hentInnloggetBrukerFraToken() }
+```
 
-## Faste standarder og utløp
+Bruk `perBruker = true` når svaret avhenger av hvem som spør, for eksempel tilgangssjekker.
+
+Annotasjonene virker bare når kallet går gjennom Spring-proxyen. Kall fra en metode i samme klasse caches ikke.
+
+## Faste standarder
 
 | Standard | Verdi |
 |---|---|
-| Størrelse | Maksimalt 10 000 oppføringer per cache og pod. |
-| Valkey-timeout | 500 ms for tilkobling og kommandoer. |
-| Applikasjonsnavn | `spring.application.name`, som må være satt. |
-| Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone. |
-| Metrikker | Se [Metrikker](#metrikker). |
-
-Begge lag følger samme utløpsregel. Ved treff i Valkey fylles Caffeine med gjenværende levetid. Treff forlenger ikke fristen og skriver ikke verdien tilbake til Valkey. Utløpte verdier avvises selv om de fortsatt ligger fysisk i et av lagene.
+| Størrelse på cache | Maks 10 000 oppføringer per cache og pod |
+| Tidsavbrudd mot Valkey | 500 ms. Kan endres med `bidrag.cache.valkey.tidsavbrudd`. |
+| Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone |
 
 ## Tømme cache
 
@@ -166,33 +172,28 @@ Pub/sub leverer ikke beskjeden på nytt. En pod som ikke er koblet til Valkey n�
 
 Apper uten Valkey tømmer bare Caffeine i podden som får kallet. Andre podder beholder sine verdier til de utløper.
 
-## Nøkler og serialisering
+## Nøkler
 
-Nøkler utledes av brukeridentitet, metode, deklarerte parametertyper og parameterverdier med HMAC-SHA256 og Valkey-passordet. Identer står dermed ikke i klartekst i Valkey-nøkler. Manglende eller blank brukeridentitet avvises før cache eller kilde aksesseres. Appen må skille validerte applikasjonskall eksplisitt fra saksbehandlere; biblioteket tolker ikke token eller velger systembrukere. Igjen, se oppsett i [bidrag-tilgangskontoll](../../apps/bidrag-tilgangskontroll/src/main/kotlin/no/nav/bidrag/tilgangskontroll/konfigurasjon/CacheKonfigurasjon.kt) om du er usikker.
+Nøkkelen består av cachenavn, klasse og metode, parametere og eventuelt brukerident. I Valkey ser den slik ut:
 
-Strenger, tall, boolske verdier, enum, `null` og lister støttes som nøkkelparametere. For egne domenetyper angir appen `nøkkelprefix` i samme `CacheSettings`. Det er slik så bidrag-cache ikke har noe forhold til andre biblioteker.
-
-```kotlin
-nøkkelprefix = { verdi ->
-    when (verdi) {
-        is Saksnummer -> "saksnummer:${verdi.verdi}"
-        is Personident -> "personident:${verdi.verdi}"
-        else -> null
-    }
-}
+```
+bidrag-cache::<cachenavn>::<Klasse.metode>::<sha256 av brukerident og parametere>
 ```
 
-Jackson serialiserer verdiene. Se [Støttede typer](#støttede-typer) for tillatte pakker og typer. Nullverdier caches; bruk `unless` for å unngå det.
+Brukerident og parametere hashes, så fødselsnumre og andre personopplysninger står ikke i klartekst i Valkey.
 
-Cache-nøkler erstatter ikke autentisering eller tilgangskontroll. Appen må fortsatt validere token og kontrollere tilgang til person- og saksdata.
+Parametere må ha en stabil `toString()`, for eksempel `String`, tall, enum og data classes. Andre klasser gir en ny nøkkel for hvert objekt og dermed ingen treff i Valkey.
 
-## Feil og restart
+## Feil
 
-Oppslagsrekkefølgen er Caffeine -> Valkey -> kilde. Ved treff i Valkey fylles Caffeine. Ved bom i begge fylles begge etter et vellykket kildekall og en vellykket Valkey-skriving.
+Oppslagsrekkefølgen for `@LangCache` er Caffeine, så Valkey, så kilden.
 
-Ved feil i Valkey går oppslaget til kilden. Utløpte lokale verdier brukes aldri som reserve, og kildefeil caches ikke. Cachefeil logges uten nøkkel, verdi eller exception-melding.
+- Feil ved lesing fra Valkey behandles som bom, og kilden kalles.
+- Feil ved lagring i Valkey gir bare lagring i Caffeine.
+- Feil fra kilden caches ikke.
+- Feil logges uten nøkkel og verdi i vanlig logg. Nøkkelen logges bare til `secureLogger`.
 
-Biblioteket endrer ikke appens health-oppsett. Hvis Valkey bare er en cache og ikke skal gjøre appen usunn ved nedetid, kan Redis-healthchecken slås av i den aktuelle profilen:
+Med Valkey er Spring Boots helsesjekk for Redis aktiv. Skal ikke nedetid i Valkey gjøre appen usunn, kan den slås av:
 
 ```yaml
 management.health.redis.enabled: false
