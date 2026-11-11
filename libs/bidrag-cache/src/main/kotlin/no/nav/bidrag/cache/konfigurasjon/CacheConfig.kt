@@ -6,21 +6,26 @@ import io.micrometer.core.instrument.Metrics
 import no.nav.bidrag.cache.nøkkelgenerering.CacheBrukerIdentifikator
 import no.nav.bidrag.cache.nøkkelgenerering.CacheNøkkelGenerator
 import no.nav.bidrag.cache.tonivåcache.ToNivåCacheManager
+import no.nav.bidrag.cache.util.AdvarselOmLangCacheUtenValkey
 import no.nav.bidrag.cache.util.KORT_CACHE_MANAGER
 import no.nav.bidrag.cache.util.LANG_CACHE_MANAGER
 import no.nav.bidrag.cache.util.Levetid
 import no.nav.bidrag.cache.util.NØKKELGENERATOR
 import no.nav.bidrag.cache.util.NØKKELPREFIKS
+import no.nav.bidrag.cache.util.VALKEY_INSTANS
 import no.nav.bidrag.cache.util.finnLevetid
 import no.nav.bidrag.cache.util.overvåkCaffeine
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.Cache
+import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
 import org.springframework.core.env.getRequiredProperty
@@ -40,6 +45,7 @@ import java.time.Duration
 
 @Configuration
 @EnableCaching
+@Import(AdvarselOmLangCacheUtenValkey::class)
 class CacheConfig {
 
     private companion object {
@@ -55,91 +61,104 @@ class CacheConfig {
 
     @Bean(KORT_CACHE_MANAGER)
     @Primary
-    fun kortCacheManager(meterRegistry: ObjectProvider<MeterRegistry>): CaffeineCacheManager {
-        val metrikker = meterRegistry.metrikker()
-        return object : CaffeineCacheManager() {
-            override fun adaptCaffeineCache(
-                name: String,
-                cache: com.github.benmanes.caffeine.cache.Cache<Any, Any>,
-            ): Cache {
-                metrikker.overvåkCaffeine(cache, name, KORT_CACHE_MANAGER)
-                return super.adaptCaffeineCache(name, cache)
-            }
-        }.apply {
-            setCaffeine(
-                Caffeine
-                    .newBuilder()
-                    .expireAfter(Levetid { KORT_CACHE_LEVETID })
-                    .maximumSize(MAKS_STØRRELSE)
-                    .recordStats(),
-            )
-        }
-    }
+    fun kortCacheManager(meterRegistry: ObjectProvider<MeterRegistry>): CaffeineCacheManager = caffeineCacheManager(KORT_CACHE_MANAGER, Levetid { KORT_CACHE_LEVETID }, meterRegistry.metrikker())
 
+    // Uten Valkey caches @LangCache bare i Caffeine, med samme levetid som ellers.
     @Bean(LANG_CACHE_MANAGER)
     fun langCacheManager(
-        valkeyCacheManager: RedisCacheManager,
+        valkeyCacheManager: ObjectProvider<RedisCacheManager>,
         meterRegistry: ObjectProvider<MeterRegistry>,
-    ): ToNivåCacheManager = ToNivåCacheManager(valkeyCacheManager, MAKS_STØRRELSE, meterRegistry.metrikker())
-
-    // Apper uten actuator har ingen MeterRegistry-bean.
-    private fun ObjectProvider<MeterRegistry>.metrikker(): MeterRegistry = getIfAvailable { Metrics.globalRegistry }
-
-    @Bean
-    fun valkeyConnectionFactory(
-        @Value($$"${CACHE_VALKEY_INSTANCE}") instans: String,
-        @Value($$"${bidrag.cache.valkey.tidsavbrudd:500ms}") tidsavbrudd: Duration,
-        environment: Environment,
-    ): LettuceConnectionFactory {
-        // Nais eksponerer instansen med store bokstaver og bindestrek erstattet med understrek.
-        val suffiks = instans.uppercase().replace('-', '_')
-        val serverKonfigurasjon =
-            RedisStandaloneConfiguration(
-                environment.getRequiredProperty("VALKEY_HOST_$suffiks"),
-                environment.getRequiredProperty<Int>("VALKEY_PORT_$suffiks"),
-            ).apply {
-                username = environment.getRequiredProperty("VALKEY_USERNAME_$suffiks")
-                setPassword(environment.getRequiredProperty("VALKEY_PASSWORD_$suffiks"))
-            }
-        val klientKonfigurasjon =
-            LettuceClientConfiguration
-                .builder()
-                .useSsl()
-                .and()
-                .commandTimeout(tidsavbrudd)
-                .build()
-
-        return LettuceConnectionFactory(serverKonfigurasjon, klientKonfigurasjon)
+    ): CacheManager {
+        val metrikker = meterRegistry.metrikker()
+        val valkey = valkeyCacheManager.ifAvailable ?: return caffeineCacheManager(LANG_CACHE_MANAGER, Levetid(::tidTilStartenAvNesteArbeidsdag), metrikker)
+        return ToNivåCacheManager(valkey, MAKS_STØRRELSE, metrikker)
     }
 
-    @Bean
-    fun valkeyCacheWriter(valkeyConnectionFactory: RedisConnectionFactory): RedisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(valkeyConnectionFactory, BatchStrategies.scan(SCAN_BATCHSTØRRELSE))
+    private fun caffeineCacheManager(
+        navn: String,
+        levetid: Levetid,
+        metrikker: MeterRegistry,
+    ): CaffeineCacheManager = object : CaffeineCacheManager() {
+        override fun adaptCaffeineCache(
+            name: String,
+            cache: com.github.benmanes.caffeine.cache.Cache<Any, Any>,
+        ): Cache {
+            metrikker.overvåkCaffeine(cache, name, navn)
+            return super.adaptCaffeineCache(name, cache)
+        }
+    }.apply {
+        setCaffeine(
+            Caffeine
+                .newBuilder()
+                .expireAfter(levetid)
+                .maximumSize(MAKS_STØRRELSE)
+                .recordStats(),
+        )
+    }
 
-    @Bean
-    fun valkeyCacheManager(
-        valkeyCacheWriter: RedisCacheWriter,
-        redisCacheConfig: RedisCacheConfiguration,
-    ): RedisCacheManager = RedisCacheManager
-        .builder(valkeyCacheWriter)
-        .cacheDefaults(redisCacheConfig)
-        .build()
+    /** Valkey for `@LangCache`. Lages bare når appen har en Valkey-instans. */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnProperty(VALKEY_INSTANS)
+    class Valkey {
+        @Bean
+        fun valkeyConnectionFactory(
+            @Value($$"${$$VALKEY_INSTANS}") instans: String,
+            @Value($$"${bidrag.cache.valkey.tidsavbrudd:500ms}") tidsavbrudd: Duration,
+            environment: Environment,
+        ): LettuceConnectionFactory {
+            // Nais eksponerer instansen med store bokstaver og bindestrek erstattet med understrek.
+            val suffiks = instans.uppercase().replace('-', '_')
+            val serverKonfigurasjon =
+                RedisStandaloneConfiguration(
+                    environment.getRequiredProperty("VALKEY_HOST_$suffiks"),
+                    environment.getRequiredProperty<Int>("VALKEY_PORT_$suffiks"),
+                ).apply {
+                    username = environment.getRequiredProperty("VALKEY_USERNAME_$suffiks")
+                    setPassword(environment.getRequiredProperty("VALKEY_PASSWORD_$suffiks"))
+                }
+            val klientKonfigurasjon =
+                LettuceClientConfiguration
+                    .builder()
+                    .useSsl()
+                    .and()
+                    .commandTimeout(tidsavbrudd)
+                    .build()
 
-    @Bean
-    fun redisCacheConfig(): RedisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-        .prefixCacheNameWith(NØKKELPREFIKS)
-        .entryTtl { nøkkel, _ -> finnLevetid(nøkkel, ::tidTilStartenAvNesteArbeidsdag) }
-        .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
+            return LettuceConnectionFactory(serverKonfigurasjon, klientKonfigurasjon)
+        }
 
-    private fun redisValueSerializer(): GenericJacksonJsonRedisSerializer {
-        val tillatteTyper = BasicPolymorphicTypeValidator.builder()
-        TILLATTE_PAKKER.forEach { tillatteTyper.allowIfSubType(it) }
+        @Bean
+        fun valkeyCacheWriter(valkeyConnectionFactory: RedisConnectionFactory): RedisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(valkeyConnectionFactory, BatchStrategies.scan(SCAN_BATCHSTØRRELSE))
 
-        return GenericJacksonJsonRedisSerializer
-            .builder()
-            .enableDefaultTyping(tillatteTyper.build())
-            // Skriver som Object slik at også final types som Long, LocalDate og enum får typeinformasjon.
-            .writer { mapper, verdi -> mapper.writerFor(Any::class.java).writeValueAsBytes(verdi) }
-            .customize { it.addModule(KotlinModule.Builder().build()) }
+        @Bean
+        fun valkeyCacheManager(
+            valkeyCacheWriter: RedisCacheWriter,
+            redisCacheConfig: RedisCacheConfiguration,
+        ): RedisCacheManager = RedisCacheManager
+            .builder(valkeyCacheWriter)
+            .cacheDefaults(redisCacheConfig)
             .build()
+
+        @Bean
+        fun redisCacheConfig(): RedisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+            .prefixCacheNameWith(NØKKELPREFIKS)
+            .entryTtl { nøkkel, _ -> finnLevetid(nøkkel, ::tidTilStartenAvNesteArbeidsdag) }
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisValueSerializer()))
+
+        private fun redisValueSerializer(): GenericJacksonJsonRedisSerializer {
+            val tillatteTyper = BasicPolymorphicTypeValidator.builder()
+            TILLATTE_PAKKER.forEach { tillatteTyper.allowIfSubType(it) }
+
+            return GenericJacksonJsonRedisSerializer
+                .builder()
+                .enableDefaultTyping(tillatteTyper.build())
+                // Skriver som Object slik at også final types som Long, LocalDate og enum får typeinformasjon.
+                .writer { mapper, verdi -> mapper.writerFor(Any::class.java).writeValueAsBytes(verdi) }
+                .customize { it.addModule(KotlinModule.Builder().build()) }
+                .build()
+        }
     }
 }
+
+// Apper uten actuator har ingen MeterRegistry-bean.
+private fun ObjectProvider<MeterRegistry>.metrikker(): MeterRegistry = getIfAvailable { Metrics.globalRegistry }

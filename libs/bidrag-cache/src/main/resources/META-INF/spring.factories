@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
+no.nav.bidrag.cache.konfigurasjon.ValkeyAutoConfigFilter

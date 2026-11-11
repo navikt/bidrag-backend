@@ -4,7 +4,7 @@ Egenkomponert cacheløsing med Caffeine og Valkey. Løsning benytter caffeine so
 
 Løsningen inneholder to forskjellige annotasjonsbaserte caches. Disse er `@KortCache` og `@LangCache`.
 
-`@KortCache` er kun caffeine, ment for å brukes der hvor cachen kun trengs en liten stund.
+`@KortCache` er kun caffeine, ment for å brukes der hvor cachen kun trengs en liten stund. Apper som bare bruker `@KortCache`, trenger ikke Valkey. Hopp da over steg 2 og 3 under [Ta biblioteket i bruk](#ta-biblioteket-i-bruk).
 
 `@LangCache` benytter både caffeine og valkey og lagrer til begge. Dette fører til at applikasjonsrestart fremdeles har en valkey-cache som den kan treffe. Dette er lurt å benytte i tilfeller hvor vi ikke forventer at responsen endres fortløpene
 
@@ -75,6 +75,8 @@ Biblioteket bruker Java 25, Kotlin og Spring Boot 4, og inkluderer nødvendige S
 
 ### 2. Opprett Valkey i Nais Console
 
+Steg 2 og 3 trengs bare for `@LangCache`.
+
 Opprett instansen i [Nais Console](https://console.nav.cloud.nais.io/) etter [Nais-veiledningen](https://docs.nais.io/persistence/valkey/how-to/create/):
 
 1. Velg team og miljø, og åpne **Valkey**.
@@ -97,6 +99,17 @@ spec:
 ```
 
 Dette gir tilgang og lar Nais injisere tilkoblingsinformasjon. Se [Nais-veiledningen for bruk i en app](https://docs.nais.io/persistence/valkey/how-to/use-in-workload/).
+
+Sett i tillegg miljøvariabelen `CACHE_VALKEY_INSTANCE` til instansnavnet:
+
+```yaml
+spec:
+    env:
+    - name: CACHE_VALKEY_INSTANCE
+      value: {{cache_valkey_instance}}
+```
+
+Uten `CACHE_VALKEY_INSTANCE` kjører biblioteket uten Valkey. `@LangCache` caches da bare i Caffeine i hver pod, med samme levetid, og overlever ikke restart. Appen logger en advarsel ved oppstart for hver bean som bruker `@LangCache`. Spring Boots egen Redis-autokonfigurasjon slås også av, slik at helsesjekken ikke prøver å nå Redis på localhost. Dette gjelder ikke apper som selv setter `spring.data.redis.host` eller `spring.data.redis.url`.
 
 Biblioteket bruker TLS og leser `VALKEY_HOST_<INSTANS>`, `VALKEY_PORT_<INSTANS>`, `VALKEY_USERNAME_<INSTANS>` og `VALKEY_PASSWORD_<INSTANS>` fra miljøet. 
 
@@ -150,6 +163,8 @@ Slik tømmes cachen:
 3. De andre poddene får beskjed via Valkey pub/sub på kanalen `bidrag-cache:tøm` og tømmer sin Caffeine.
 
 Pub/sub leverer ikke beskjeden på nytt. En pod som ikke er koblet til Valkey når beskjeden sendes, beholder sine lokale verdier til de utløper.
+
+Apper uten Valkey tømmer bare Caffeine i podden som får kallet. Andre podder beholder sine verdier til de utløper.
 
 ## Nøkler og serialisering
 
