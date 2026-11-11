@@ -44,7 +44,7 @@ mvn test -Dtest=BeregnBidragsevneTest#testBidragsevne_Eksempel01
 mvn verify
 ```
 
-Kode og tester er skrevet i **Kotlin 2.x** med **Java 21**. Kilder ligger i `src/main/kotlin` og `src/test/kotlin`.
+Kode og tester er skrevet i **Kotlin 2.x** med **Java 25**. Kilder ligger i `src/main/kotlin` og `src/test/kotlin`.
 
 ---
 

@@ -168,6 +168,7 @@ data class NotatUnderholdBarnDto(
     val stønadTilBarnetilsyn: List<NotatStønadTilBarnetilsynDto> = emptyList(),
     val faktiskTilsynsutgift: List<NotatFaktiskTilsynsutgiftDto>,
     val tilleggsstønad: List<NotatTilleggsstønadDto> = emptyList(),
+    val forpleining: List<NotatForpleiningDto> = emptyList(),
     val underholdskostnad: List<NotatUnderholdskostnadBeregningDto>,
     val begrunnelse: NotatBegrunnelseDto? = null,
 ) {
@@ -233,6 +234,11 @@ data class NotatUnderholdBarnDto(
         val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
     }
 
+    data class NotatForpleiningDto(
+        val periode: DatoperiodeDto,
+        val beløp: BigDecimal,
+    )
+
     data class NotatUnderholdskostnadBeregningDto(
         val periode: DatoperiodeDto,
         val forbruk: BigDecimal = BigDecimal.ZERO,
@@ -240,6 +246,7 @@ data class NotatUnderholdBarnDto(
         val stønadTilBarnetilsyn: BigDecimal = BigDecimal.ZERO,
         val tilsynsutgifter: BigDecimal = BigDecimal.ZERO,
         val barnetrygd: BigDecimal = BigDecimal.ZERO,
+        val forpleining: BigDecimal? = null,
         val total: BigDecimal,
         val beregningsdetaljer: NotatUnderholdskostnadPeriodeBeregningsdetaljer? = null,
     )
@@ -679,9 +686,10 @@ data class NotatInntektDto(
 ) {
     val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
 
+    @get:Schema(description = "Skattefaktor for barnetillegg. Null når skatteprosent ikke er relevant (skattefrie barnetillegg)")
     val skattefaktor get() =
         if (type == Inntektsrapportering.BARNETILLEGG) {
-            inntektsposter.firstOrNull()?.skattefaktor ?: BigDecimal.ZERO
+            inntektsposter.firstOrNull()?.skattefaktor
         } else {
             null
         }

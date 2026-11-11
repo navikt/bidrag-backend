@@ -11,8 +11,11 @@ import no.nav.bidrag.transport.person.Identgruppe
 import no.nav.bidrag.transport.person.PersonidentDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.times
@@ -20,8 +23,9 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.eq
-import org.springframework.http.HttpStatusCode
+import org.springframework.http.HttpStatus
 import org.springframework.web.client.RestClientException
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 @ExtendWith(MockitoExtension::class)
@@ -191,14 +195,15 @@ class HentOgByttUtIdenterTest {
         )
     }
 
-    @Test
-    fun `skal returnere innsendt ident som aktiv hvis consumer-kall til bidrag-person feiler`() {
+    @ParameterizedTest
+    @EnumSource(HttpStatus::class, names = ["NOT_FOUND", "NO_CONTENT"])
+    fun `skal returnere innsendt ident som aktiv hvis bidrag-person ikke finner personen`(status: HttpStatus) {
         val request = TestUtil.byggOppdaterGrunnlagspakkeRequestKontantstotte()
         val innsendtIdent = request.grunnlagRequestDtoListe[0].personId
         val forventetAktivIdent = request.grunnlagRequestDtoListe[0].personId
 
         `when`(bidragPersonConsumer.hentPersonidenter(eq(Personident(innsendtIdent)), eq(true))).thenReturn(
-            RestResponse.Failure("Kall til tjenesten feilet", HttpStatusCode.valueOf(500), RestClientException("Kall til tjenesten feilet")),
+            RestResponse.Failure("Person ikke funnet", status, RestClientException("Person ikke funnet")),
         )
 
         // Kaller metoden som skal testes (privat metode vha reflection)
@@ -214,6 +219,24 @@ class HentOgByttUtIdenterTest {
             { assertThat(historiskeIdenterMap.size).isEqualTo(1) },
             { assertThat(historiskeIdenterMap[forventetAktivIdent]).isEqualTo(listOf(innsendtIdent).sorted()) },
         )
+    }
+
+    @ParameterizedTest
+    @EnumSource(HttpStatus::class, names = ["BAD_REQUEST", "UNAUTHORIZED", "FORBIDDEN", "INTERNAL_SERVER_ERROR", "SERVICE_UNAVAILABLE"])
+    fun `skal kaste feil når bidrag-person feiler med annen status enn 404 eller 204`(status: HttpStatus) {
+        val request = TestUtil.byggOppdaterGrunnlagspakkeRequestKontantstotte()
+        val innsendtIdent = request.grunnlagRequestDtoListe[0].personId
+        val feil = RestClientException("Kall til tjenesten feilet")
+
+        `when`(bidragPersonConsumer.hentPersonidenter(eq(Personident(innsendtIdent)), eq(true))).thenReturn(
+            RestResponse.Failure("Kall til tjenesten feilet", status, feil),
+        )
+
+        val exception = assertThrows(InvocationTargetException::class.java) {
+            invokePrivateMethod(grunnlagspakkeService, "hentHistoriskeOgAktiveIdenter", request)
+        }
+
+        assertThat(exception.cause).isSameAs(feil)
     }
 
     @Test

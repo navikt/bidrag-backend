@@ -1,6 +1,3 @@
-#logging.level.org.hibernate.sql=debug
-#logging.level.org.hibernate.type=trace
-#logging.level.no.nav.security.spring.oidc.validation.interceptor.OIDCTokenControllerHandlerInterceptor=trace
 NAIS_APP_NAME: bjp
 TOPIC_JOURNALPOST: na.in.unit.tests
 TOPIC_DOKUMENT: na.in.unit.tests

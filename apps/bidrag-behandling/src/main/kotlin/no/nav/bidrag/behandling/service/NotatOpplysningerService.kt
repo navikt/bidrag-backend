@@ -81,6 +81,7 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.TilleggsstønadGrunn
 import no.nav.bidrag.transport.dokument.JournalpostType
 import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
+import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBarnetilleggDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragsevneDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto
@@ -204,8 +205,7 @@ class NotatOpplysningerService(
                     ),
                 ),
             )
-        val response =
-            bidragDokumentConsumer.opprettJournalpost(forespørsel)
+        val response = opprettJournalpostEllerHentEksisterende(forespørsel)
         lagreJournalpostId(behandling, response.journalpostId)
         secureLogger.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
@@ -216,6 +216,24 @@ class NotatOpplysningerService(
                 "med journalpostId ${response.journalpostId}"
         }
         return response.journalpostId ?: ""
+    }
+
+    // Journalposten kan være opprettet i Joark selv om kallet feilet (f.eks. timeout). Sjekker derfor om den finnes via referanseId.
+    private fun opprettJournalpostEllerHentEksisterende(forespørsel: OpprettJournalpostRequest): OpprettJournalpostResponse = try {
+        bidragDokumentConsumer.opprettJournalpost(forespørsel)
+    } catch (e: Exception) {
+        val referanseId = forespørsel.referanseId ?: throw e
+        val eksisterendeJournalpostId =
+            bidragDokumentConsumer
+                .hentJournalpostForEksternReferanseId(referanseId)
+                ?.journalpost
+                ?.journalpostId
+                ?.substringAfter("-")
+                ?: throw e
+        log.warn(e) {
+            "Opprettelse av notat feilet, men fant eksisterende journalpost $eksisterendeJournalpostId med referanseId $referanseId. Bruker denne"
+        }
+        OpprettJournalpostResponse(journalpostId = eksisterendeJournalpostId)
     }
 
     private fun lagreJournalpostId(
@@ -366,6 +384,13 @@ class NotatOpplysningerService(
                                     total = it.total,
                                 )
                             },
+                            forpleining =
+                            it.forpleining.map {
+                                NotatUnderholdBarnDto.NotatForpleiningDto(
+                                    periode = DatoperiodeDto(it.periode.fom, it.periode.tom),
+                                    beløp = it.beløp,
+                                )
+                            },
                             underholdskostnad =
                             it.underholdskostnad.map {
                                 NotatUnderholdBarnDto.NotatUnderholdskostnadBeregningDto(
@@ -375,6 +400,7 @@ class NotatOpplysningerService(
                                     stønadTilBarnetilsyn = it.stønadTilBarnetilsyn,
                                     tilsynsutgifter = it.tilsynsutgifter,
                                     barnetrygd = it.barnetrygd,
+                                    forpleining = it.forpleining,
                                     total = it.total,
                                     beregningsdetaljer =
                                     it.beregningsdetaljer?.let {
@@ -545,7 +571,7 @@ class NotatOpplysningerService(
             NotatInntekterDto(
                 notat =
                 behandling.tilNotatInntekt(
-                    saksnummer?.let { behandling.bidragsmottakerForSak(it) } ?: behandling.bidragsmottaker!!,
+                    behandling.bidragsmottakerForSak(saksnummer),
                 ),
                 notatPerRolle =
                 rollerForNotat
@@ -1097,11 +1123,19 @@ private fun Behandling.tilNotatBoforhold(): NotatBegrunnelseDto = NotatBegrunnel
 private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )
@@ -1109,11 +1143,19 @@ private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = Nota
 private fun Behandling.tilNotatVirkningstidspunkt(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )

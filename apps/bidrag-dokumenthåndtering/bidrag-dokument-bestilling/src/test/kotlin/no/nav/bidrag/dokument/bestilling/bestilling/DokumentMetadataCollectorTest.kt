@@ -783,13 +783,13 @@ internal class DokumentMetadataCollectorTest {
             bestilling.roller.barn shouldHaveSize 2
             bestilling.roller.barn[0].fodselsnummer shouldBe barn1Kode6.ident.verdi
             bestilling.roller.barn[0].fodselsdato shouldBe null
-            bestilling.roller.barn[0].fornavn shouldBe "(BARN FØDT I ${barn1Kode6.fødselsdato?.year})"
-            bestilling.roller.barn[0].navn shouldBe "(BARN FØDT I ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].fornavn shouldBe "(Barn født i ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].navn shouldBe "(Barn født i ${barn1Kode6.fødselsdato?.year})"
 
             bestilling.roller.barn[1].fodselsnummer shouldBe barn2Kode6.ident.verdi
             bestilling.roller.barn[1].fodselsdato shouldBe null
-            bestilling.roller.barn[1].fornavn shouldBe "(BARN)"
-            bestilling.roller.barn[1].navn shouldBe "(BARN)"
+            bestilling.roller.barn[1].fornavn shouldBe "(Barn)"
+            bestilling.roller.barn[1].navn shouldBe "(Barn)"
         }
     }
 
@@ -816,11 +816,11 @@ internal class DokumentMetadataCollectorTest {
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {
-            bestilling.roller.barn[0].fornavn shouldBe "(CHILD BORN IN ${barn1Kode6.fødselsdato?.year})"
-            bestilling.roller.barn[0].navn shouldBe "(CHILD BORN IN ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].fornavn shouldBe "(Child born in ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].navn shouldBe "(Child born in ${barn1Kode6.fødselsdato?.year})"
 
-            bestilling.roller.barn[1].fornavn shouldBe "(CHILD)"
-            bestilling.roller.barn[1].navn shouldBe "(CHILD)"
+            bestilling.roller.barn[1].fornavn shouldBe "(Child)"
+            bestilling.roller.barn[1].navn shouldBe "(Child)"
         }
     }
 
@@ -847,11 +847,11 @@ internal class DokumentMetadataCollectorTest {
             )
         val bestilling = mapToBestillingsdata(request)
         assertSoftly {
-            bestilling.roller.barn[0].fornavn shouldBe "(BARN FØDD I ${barn1Kode6.fødselsdato?.year})"
-            bestilling.roller.barn[0].navn shouldBe "(BARN FØDD I ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].fornavn shouldBe "(Barn fødd i ${barn1Kode6.fødselsdato?.year})"
+            bestilling.roller.barn[0].navn shouldBe "(Barn fødd i ${barn1Kode6.fødselsdato?.year})"
 
-            bestilling.roller.barn[1].fornavn shouldBe "(BARN)"
-            bestilling.roller.barn[1].navn shouldBe "(BARN)"
+            bestilling.roller.barn[1].fornavn shouldBe "(Barn)"
+            bestilling.roller.barn[1].navn shouldBe "(Barn)"
         }
     }
 
@@ -1117,6 +1117,38 @@ internal class DokumentMetadataCollectorTest {
             val bestilling = mapToBestillingsdata(request)
             bestilling.roller.bidragspliktig shouldBe null
             bestilling.roller.bidragsmottaker shouldNotBe null
+            bestilling.roller.barn shouldHaveSize 1
+            bestilling.roller.barn[0].fodselsnummer shouldBe BARN1.ident.verdi
+        }
+
+        @Test
+        fun `skal bruke barnIBehandling hvis behandling ikke finnes`() {
+            mockDefaultValues()
+            val saksnummer = "22222"
+            val sak =
+                createSakResponse().copy(
+                    roller =
+                    listOf(
+                        RolleDto(fødselsnummer = BM1.ident, type = Rolletype.BIDRAGSMOTTAKER),
+                        RolleDto(fødselsnummer = BARN1.ident, type = Rolletype.BARN),
+                        RolleDto(fødselsnummer = BARN2.ident, type = Rolletype.BARN),
+                    ),
+                )
+            every { sakService.hentSak(saksnummer) } returns sak
+            every { behandlingService.hentIdentSøknadsbarn(123, null) } returns null
+
+            val request =
+                DokumentBestillingForespørsel(
+                    mottakerId = BM1.ident.verdi,
+                    saksnummer = saksnummer,
+                    tittel = DEFAULT_TITLE_DOKUMENT,
+                    enhet = "4806",
+                    spraak = "NB",
+                    samhandlerInformasjon = null,
+                    behandlingId = 123,
+                    barnIBehandling = listOf(BARN1.ident.verdi),
+                )
+            val bestilling = mapToBestillingsdata(request)
             bestilling.roller.barn shouldHaveSize 1
             bestilling.roller.barn[0].fodselsnummer shouldBe BARN1.ident.verdi
         }

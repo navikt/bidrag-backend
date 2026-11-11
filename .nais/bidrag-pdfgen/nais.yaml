@@ -9,10 +9,6 @@ metadata:
     nais.io/read-only-file-system: "false"
     nais.io/run-as-user: "1001"
     nais.io/run-as-group: "1001"
-    nginx.ingress.kubernetes.io/proxy-body-size: "20M"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
 spec:
   observability:
     autoInstrumentation:
@@ -71,7 +67,3 @@ spec:
       # and a 50m request means the pod is throttled hard on a busy node.
       cpu: 500m
       memory: 512Mi
-  ingresses:
-  {{#each ingresses as |url|}}
-     - {{url}}
-  {{/each}}

@@ -204,7 +204,8 @@ class VedtakserviceTest : TestContainerRunner() {
         every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
         val personService = PersonService(bidragPersonConsumer)
         val validerBeregning = ValiderBeregning()
-        val behandlingTilGrunnlagMappingV2 = BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(stubSjablonService()))
+        val sjablonService = stubSjablonService()
+        val behandlingTilGrunnlagMappingV2 = BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(sjablonService))
         val vedtakGrunnlagMapper =
             VedtakGrunnlagMapper(
                 behandlingTilGrunnlagMappingV2,
@@ -212,7 +213,7 @@ class VedtakserviceTest : TestContainerRunner() {
                 evnevurderingService,
                 barnebidragGrunnlagInnhenting,
                 personService,
-                BeregnGebyrApi(stubSjablonService()),
+                BeregnGebyrApi(sjablonService),
             )
         val dtomapper =
             Dtomapper(
@@ -233,7 +234,7 @@ class VedtakserviceTest : TestContainerRunner() {
                 notatService,
                 personService,
             )
-        val samværService = SamværService(samværRepository, behandlingRepository, notatService, BeregnSamværsklasseApi(stubSjablonService()))
+        val samværService = SamværService(samværRepository, behandlingRepository, notatService, BeregnSamværsklasseApi(sjablonService))
         virkningstidspunktService =
             VirkningstidspunktService(
                 behandlingRepository,

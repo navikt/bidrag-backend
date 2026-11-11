@@ -1,6 +1,6 @@
 package no.nav.bidrag.sak.security.authentication.ldap.annotation
 
-import no.nav.security.token.support.core.api.Protected
+import no.nav.security.token.support.core.api.Unprotected
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(
@@ -10,7 +10,7 @@ import no.nav.security.token.support.core.api.Protected
     AnnotationTarget.PROPERTY_GETTER,
     AnnotationTarget.PROPERTY_SETTER,
 )
-@Protected
+@Unprotected
 annotation class ProtectedWithBasic(
     val groups: Array<String>,
 )

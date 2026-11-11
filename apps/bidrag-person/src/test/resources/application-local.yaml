@@ -8,7 +8,6 @@ KONTOREGISTER_URL: http://localhost:${wiremock.server.port}/kontoregister
 PDL_URL: http://localhost:${wiremock.server.port}/pdl
 KODEVERK_URL: http://localhost:${wiremock.server.port}/kodeverk
 SKJERMING_URL: http://localhost:${wiremock.server.port}/skjerming
-logging.level.org.springframework.web.client.RestTemplate: DEBUG
 
 no.nav.security.jwt:
   client:

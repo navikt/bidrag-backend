@@ -6,6 +6,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Person
@@ -53,9 +54,6 @@ import no.nav.bidrag.behandling.dto.v2.boforhold.BoforholdDtoV2
 import no.nav.bidrag.behandling.dto.v2.boforhold.HusstandsmedlemDtoV2
 import no.nav.bidrag.behandling.dto.v2.boforhold.OppdatereBoforholdResponse
 import no.nav.bidrag.behandling.dto.v2.boforhold.egetBarnErEnesteVoksenIHusstanden
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdmessigFordelingDetaljerDto
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdsmessigFordelingBarnDto
-import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.ForholdsmessigFordelingÅpenBehandlingDto
 import no.nav.bidrag.behandling.dto.v2.gebyr.GebyrValideringsfeilDto
 import no.nav.bidrag.behandling.dto.v2.gebyr.validerGebyr
 import no.nav.bidrag.behandling.dto.v2.inntekt.BeregnetInntekterDto
@@ -74,6 +72,7 @@ import no.nav.bidrag.behandling.dto.v2.samvær.SamværDtoV2
 import no.nav.bidrag.behandling.dto.v2.underhold.BeregnetUnderholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.FaktiskTilsynsutgiftDto
+import no.nav.bidrag.behandling.dto.v2.underhold.ForpleiningDto
 import no.nav.bidrag.behandling.dto.v2.underhold.TilleggsstønadDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftResponse
@@ -174,8 +173,6 @@ import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.collections.filter
-import kotlin.collections.sortedBy
 
 private val log = KotlinLogging.logger {}
 
@@ -318,6 +315,7 @@ class Dtomapper(
             faktiskTilsynsutgift = this.faktiskeTilsynsutgifter.tilFaktiskeTilsynsutgiftDtos(),
             stønadTilBarnetilsyn = this.barnetilsyn.tilStønadTilBarnetilsynDtos(),
             tilleggsstønad = this.tilleggsstønad.tilTilleggsstønadDtos(),
+            forpleining = this.forpleining.tilForpleiningDtos(),
             underholdskostnad = beregnetUnderholdskostnad,
             beregnetUnderholdskostnad = beregnetUnderholdskostnad,
             begrunnelse =
@@ -525,17 +523,22 @@ class Dtomapper(
         saksnummer: Saksnummer,
         skjuleIdentitietHvisBeskyttet: Boolean = false,
     ): Personinfo {
+        val maskertPersoninfo =
+            Personinfo(
+                null,
+                personinfo.fødselsdato?.let { "Person skjermet, født ${it.year}" } ?: "Person skjermet, fødselsdato mangler",
+                null,
+                erBeskyttet = true,
+            )
+
+        if (personinfo.ident != null && !tilgangskontrollService.harTilgang(personinfo.ident, saksnummer)) {
+            return maskertPersoninfo
+        }
+
         val erBeskytta = personinfo.ident?.let { tilgangskontrollService.harBeskyttelse(it) } ?: false
 
-        personinfo.ident?.let {
-            if (!tilgangskontrollService.harTilgang(it, saksnummer) || (skjuleIdentitietHvisBeskyttet && erBeskytta)) {
-                return Personinfo(
-                    null,
-                    "Person skjermet, født ${personinfo.fødselsdato?.year}",
-                    null,
-                    erBeskyttet = true,
-                )
-            }
+        if (skjuleIdentitietHvisBeskyttet && erBeskytta) {
+            return maskertPersoninfo
         }
 
         return Personinfo(
@@ -556,6 +559,14 @@ class Dtomapper(
     )
 
     fun Set<Tilleggsstønad>.tilTilleggsstønadDtos() = this.sortedBy { it.fom }.map { it.tilDto() }.toSet()
+
+    fun Forpleining.tilDto() = ForpleiningDto(
+        id = this.id!!,
+        periode = DatoperiodeDto(this.fom, this.tom),
+        beløp = this.beløp,
+    )
+
+    fun Set<Forpleining>.tilForpleiningDtos() = this.sortedBy { it.fom }.map { it.tilDto() }.toSet()
 
     fun FaktiskTilsynsutgift.tilDto() = FaktiskTilsynsutgiftDto(
         id = this.id!!,
@@ -985,8 +996,7 @@ class Dtomapper(
                 .filter {
                     // Skal alltid vise inntekter for BM/BP (ikke barn).
                     // Men hvis barn ikke krever grunnlag pga avslag og ikke løpende bidrag så skal det ikke vises i innteksbilde
-                    it.rolletype != Rolletype.BARN ||
-                        it.kreverGrunnlagForBeregning
+                    !erIForholdsmessigFordeling || it.kreverGrunnlagForBeregning || it.kreverGrunnlagForGebyrBeregning
                 }
         val beregnetInntekterForRolle =
             rollerForInntektsbilde
@@ -1039,7 +1049,7 @@ class Dtomapper(
     ): PrivatAvtaleDtoV3 {
         val søknadsbarnPA =
             søknadsbarn
-                .filter { it.kreverGrunnlagForBeregning }
+                .filter { it.kreverGrunnlagForBeregning || (it.erRevurderingsbarn && it.innkrevingstype == Innkrevingstype.UTEN_INNKREVING) }
                 .parallelStream()
                 .map { barn ->
                     val privatAvtale = privatAvtale.find { it.rolle?.erSammeRolle(barn) == true }
@@ -1196,7 +1206,8 @@ class Dtomapper(
                         it.grunnlagFraVedtak ?: it.grunnlagFraVedtakForInnkreving?.vedtak,
                         kanSkriveVurderingAvSkolegang = kanSkriveVurderingAvSkolegang(it),
                         begrunnelse =
-                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle) {
+                        if (notat.isEmpty() && erVirkningstidspunktLiktForAlle && !erIForholdsmessigFordeling) {
+                            // I FF så har barna aldri samme begrunnelse
                             BegrunnelseDto(
                                 henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT),
                             )
@@ -1715,7 +1726,7 @@ class Dtomapper(
 
         return behandling.alleBidragsmottakere
             .map { bm ->
-                val boforholdForBM = boforholdBM.get(bm)
+                val boforholdForBM = boforholdBM[bm]
                 HusstandsmedlemGrunnlagBMDto(
                     gjelderBM = bm.tilDto(),
                     husstandsmedlem = boforholdForBM?.tilHusstandsmedlem() ?: emptySet(),

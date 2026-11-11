@@ -8,4 +8,5 @@ data class OppdaterOpphørsdatoRequestDto(
     val idRolle: Long?,
     val opphørsdato: LocalDate? = null,
     val simulerEndring: Boolean = false,
+    val saksnummer: String? = null,
 )

@@ -32,7 +32,7 @@ class VedtakService(
         stønadsendringerFraVedtak?.forEach { (kravhaverSak, stønadsendringer) ->
             val (sak, kravhaver) = kravhaverSak
             val kravhaverNyesteIdent = identUtils.hentNyesteIdent(kravhaver)
-            val kravhaverAlleIdenter = identUtils.hentAlleIdenter(kravhaver)
+            val kravhaverAlleIdenter = identUtils.hentAlleIdenter(kravhaver) ?: listOf(kravhaver.verdi)
             val lagretBarn =
                 barnRepository.finnBarnForKravhaverIdenterOgSaksnummer(
                     kravhaverAlleIdenter,

@@ -281,58 +281,9 @@ class AdminController(
         @PathVariable behandlingId: Long,
     ) {
         val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
-        behandling.grunnlag.forEach {
+        behandling.grunnlag.filter { it.aktiv == null }.forEach {
             it.aktiv = it.innhentet
         }
-    }
-
-    @PostMapping("/admin/grunnlag/oppdater/boforhold/{behandlingId}")
-    @Operation(
-        description =
-        "Oppdater husstandsmedlemmer etter nyeste grunnlagsdata",
-        security = [SecurityRequirement(name = "bearer-key")],
-    )
-    @Transactional
-    fun revaliderGrunnlag(
-        @PathVariable behandlingId: Long,
-    ) {
-        val behandling = behandlingRepository.findBehandlingById(behandlingId).getOrNull() ?: return
-
-        grunnlagService.reperiodiserOgLagreBoforhold(behandling)
-    }
-
-    @PostMapping("/admin/feilfiks/sivilstand/perioder/{behandlingId}")
-    @Operation(
-        description =
-        "Fiks feil i perioder hvor fom starter før til",
-        security = [SecurityRequirement(name = "bearer-key")],
-    )
-    @Transactional
-    fun fiksPerioderFomSomKommerFørTil(
-        @PathVariable behandlingId: Long,
-    ) {
-        val behandling = behandlingRepository.findBehandlingById(behandlingId).getOrNull() ?: return
-
-        behandling.sivilstand.forEach { sivilstand ->
-            val ugyldigPeriode = sivilstand.datoTom != null && sivilstand.datoFom.isAfter(sivilstand.datoTom)
-            if (ugyldigPeriode) {
-                val annenPeriodeMedSammeFom = behandling.sivilstand.any { it.id != sivilstand.id && it.datoFom == sivilstand.datoFom }
-                if (annenPeriodeMedSammeFom) {
-                    log.info {
-                        "Sletter sivilstand med id=${sivilstand.id} da det finnes en annen periode med samme fom=${sivilstand.datoFom} for behandlingId=$behandlingId"
-                    }
-                    behandling.sivilstand.remove(sivilstand)
-                } else {
-                    log.info {
-                        "Retter sivilstand med id=${sivilstand.id} " +
-                            "ved å sette datoTom=null (var ${sivilstand.datoTom}) for behandlingId=$behandlingId"
-                    }
-                    sivilstand.datoTom = null
-                }
-            }
-        }
-        behandling.tilbakestilleTilOffentligSivilstandshistorikkBasertPåGrunnlag()
-        grunnlagService.oppdatereAktivSivilstandEtterEndretVirkningstidspunkt(behandling)
     }
 
     @PostMapping("/admin/feilfiks/oppdaterInntekter/{behandlingId}")
@@ -561,6 +512,18 @@ class AdminController(
 
         log.info { "Fikser inntekt og grunnlag der rolle peker til annen behandling for behandling $behandlingId" }
         return inntektService.fiksInntektOgGrunnlagRollePekereForBehandling(behandling)
+    }
+
+    @PostMapping("/admin/feilfiks/feilregistrerffsoknader/{behandlingId}")
+    @Operation(
+        description = "Feilregistrer alle FF-søknader for behandling",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @Transactional
+    fun feilregistrerFFSøknader(
+        @PathVariable behandlingId: Long,
+    ) {
+        forholsmessigFordelingService.feilregistrerNyeFFSøknader(behandlingId)
     }
 
     fun getAge(birthDate: LocalDate): Int = Period.between(birthDate.withMonth(1).withDayOfMonth(1), LocalDate.now()).years

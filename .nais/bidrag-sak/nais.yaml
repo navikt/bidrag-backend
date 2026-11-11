@@ -31,10 +31,12 @@ spec:
              {{#each permissions.roles}}
                  - {{this}}
              {{/each}}
+{{#if permissions.scopes}}
              scopes:
               {{#each permissions.scopes}}
                   - {{this}}
               {{/each}}
+{{/if}}
              {{/if}}
       {{/each}}
   azure:
@@ -49,13 +51,13 @@ spec:
     pool: {{ kafka.pool }}
   image: {{ image }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 30
     timeout: 1
     periodSeconds: 10
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 30
     periodSeconds: 10
     timeout: 1

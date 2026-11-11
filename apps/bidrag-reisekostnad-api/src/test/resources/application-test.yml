@@ -1,3 +1,5 @@
+logging.config: classpath:logback-test.xml
+
 AZURE_APP_TENANT_ID: tokenx
 TOKEN_X_CLIENT_ID: tokenx
 AZURE_OPENID_CONFIG_TOKEN_ENDPOINT: http://localhost:${mock-oauth2-server.port}/aad/token

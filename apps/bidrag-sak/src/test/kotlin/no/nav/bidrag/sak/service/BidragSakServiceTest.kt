@@ -5,11 +5,14 @@ import io.kotest.matchers.shouldBe
 import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import no.nav.bidrag.commons.security.utils.TokenUtils
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
@@ -31,13 +34,12 @@ import no.nav.bidrag.sak.domain.Søknadslinje
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
-import no.nav.bidrag.sak.integration.kodeverk.CachedKodeverkService
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.RolleRepository
 import no.nav.bidrag.sak.repository.VedtakOverføringRepository
 import no.nav.bidrag.sak.util.FnrGenerator
-import no.nav.bidrag.sak.validering.OpprettSakValidator
+import no.nav.bidrag.sak.validering.BidragssakValidator
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
@@ -46,6 +48,7 @@ import no.nav.bidrag.transport.sak.RolleDto
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -61,7 +64,7 @@ internal class BidragSakServiceTest {
 
     private val tilgangClientMock: Tilgangskontroll = mockk(relaxed = true)
 
-    private val cachedKodeverkService: CachedKodeverkService = mockk()
+    private val valideringsgrunnlagService: ValideringsgrunnlagService = mockk(relaxed = true)
 
     private val rolleService: RolleService = mockk(relaxed = true)
     private val bbmConsumerMock: BidragBBMConsumer = mockk(relaxed = true)
@@ -72,7 +75,7 @@ internal class BidragSakServiceTest {
 
     private val hendelseService: HendelseService = mockk(relaxed = true)
     private val identConsumer: IdentConsumer = mockk(relaxed = false)
-    private val opprettSakValidator: OpprettSakValidator = mockk(relaxed = true)
+    private val bidragssakValidator: BidragssakValidator = mockk(relaxed = true)
 
     private lateinit var bidragSakService: BidragSakService
 
@@ -82,8 +85,12 @@ internal class BidragSakServiceTest {
     fun initKlasseMedMockedRepo() {
         saveSakSlot = slot()
         every { bidragssakRepositoryMock.save(capture(saveSakSlot)) }.answers { saveSakSlot.captured }
-        every { cachedKodeverkService.hentLandkoder() } returns mapOf(Landkode("NOR") to "Norge")
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+        every { rolleService.brukGjeldendeIdent(any()) } answers { firstArg() }
+        every { identConsumer.hentPersonInformasjon(any()) } returns null
+        every { identConsumer.hentGjeldendeIdent(any()) } answers { firstArg() }
+        mockkObject(AppContext)
+        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
 
         bidragSakService =
             BidragSakService(
@@ -92,15 +99,20 @@ internal class BidragSakServiceTest {
                 rolleRepository = rolleRepositoryMock,
                 vedtakOverføringRepository = vedtakOverføringRepositoryMock,
                 tilgangClient = tilgangClientMock,
-                cachedKodeverkService = cachedKodeverkService,
+                valideringsgrunnlagService = valideringsgrunnlagService,
                 arbeidsfordelingService = arbeidsfordelingService,
                 rolleService = rolleService,
                 rollehistorikkService = rollehistorikkService,
                 hendelseService = hendelseService,
                 identConsumer = identConsumer,
-                opprettSakValidator = opprettSakValidator,
+                bidragssakValidator = bidragssakValidator,
                 bbmConsumer = bbmConsumerMock,
             )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(AppContext)
     }
 
     @Nested
@@ -240,7 +252,7 @@ internal class BidragSakServiceTest {
                     ),
                 )
 
-            every { rolleService.oppdaterRoller(any(), req.roller) } answers {
+            every { rolleService.oppdaterRoller(any(), req.roller, any()) } answers {
                 // returnér eksisterende + noen "oppdaterte" roller
                 val sakArg = firstArg<Bidragssak>()
                 sakArg.roller + setOf()
@@ -255,14 +267,14 @@ internal class BidragSakServiceTest {
             // repository saves: en gang rett etter apply + en gang etter oppdatering av RM
             verify(exactly = 2) { bidragssakRepositoryMock.save(any()) }
             // oppdaterRoller kalt med sak + roller fra request
-            verify(exactly = 1) { rolleService.oppdaterRoller(any(), req.roller) }
+            verify(exactly = 1) { rolleService.oppdaterRoller(any(), req.roller, any()) }
             // hendelse sendt
             verify(exactly = 1) { hendelseService.opprettKafkaHendelse(any(), any()) }
         }
 
         @Test
         fun `skal kaste feil hvis validering feiler for rolle (RM kun tillatt på BA)`() {
-            every { opprettSakValidator.validerRolle(any()) } throws
+            every { bidragssakValidator.validerForespurteRoller(any(), any()) } throws
                 IllegalArgumentException("Reell mottaker (RM) kan kun registreres på barn (BA).")
 
             // RM på BP -> skal trigge require i RolleDto.valider()
@@ -301,7 +313,7 @@ internal class BidragSakServiceTest {
                     ),
                 )
 
-            every { rolleService.oppdaterRoller(any(), req.roller) } answers {
+            every { rolleService.oppdaterRoller(any(), req.roller, any()) } answers {
                 val sakArg = firstArg<Bidragssak>()
                 sakArg.roller
             }
@@ -325,7 +337,7 @@ internal class BidragSakServiceTest {
                     roller = emptySet(),
                 )
 
-            every { rolleService.oppdaterRoller(any(), req.roller) } answers {
+            every { rolleService.oppdaterRoller(any(), req.roller, any()) } answers {
                 val sakArg = firstArg<Bidragssak>()
                 sakArg.roller // ingen endring
             }
@@ -1245,6 +1257,62 @@ internal class BidragSakServiceTest {
                 val result = bidragSakService.finnHendelserForSak(saksnummer)
 
                 result.first().vedtakType shouldBe null
+            }
+        }
+
+        @Nested
+        inner class Behandlingstype {
+            private fun søknadMedSoknType(soknType: String?) = Søknad(
+                id = null,
+                søknadslinjer = mutableListOf(),
+                hendelser = mutableListOf(),
+                blankett =
+                no.nav.bidrag.sak.domain
+                    .Blankett(blankettId = 1, soknFraKode = null, soknType = soknType),
+            )
+
+            @Test
+            fun `skal mappe soknType til behandlingstype`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(
+                        Hendelse(
+                            saksnummer = saksnummer.verdi,
+                            type = HendelseType.BRUKERSTØTTE,
+                            enhet = "1701",
+                            søknad = søknadMedSoknType(no.nav.bidrag.domene.enums.behandling.Behandlingstype.FORHOLDSMESSIG_FORDELING.bisysKode),
+                        ),
+                    )
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe no.nav.bidrag.domene.enums.behandling.Behandlingstype.FORHOLDSMESSIG_FORDELING
+            }
+
+            @Test
+            fun `skal returnere null for behandlingstype når soknType er ukjent`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(
+                        Hendelse(
+                            saksnummer = saksnummer.verdi,
+                            type = HendelseType.BRUKERSTØTTE,
+                            enhet = "1701",
+                            søknad = søknadMedSoknType("XX"),
+                        ),
+                    )
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe null
+            }
+
+            @Test
+            fun `skal returnere null for behandlingstype når blankett mangler`() {
+                every { hendelseRepositoryMock.findBySaksnummer(saksnummer.verdi) } returns
+                    listOf(Hendelse(saksnummer = saksnummer.verdi, type = HendelseType.BRUKERSTØTTE, enhet = "1701", søknad = null))
+
+                val result = bidragSakService.finnHendelserForSak(saksnummer)
+
+                result.first().behandlingstype shouldBe null
             }
         }
     }

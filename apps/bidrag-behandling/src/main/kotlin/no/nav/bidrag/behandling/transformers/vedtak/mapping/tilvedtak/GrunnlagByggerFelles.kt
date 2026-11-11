@@ -38,7 +38,6 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
-import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -61,10 +60,9 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPerson
-import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettInnhentetHusstandsmedlemGrunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.personIdent
-import no.nav.bidrag.transport.behandling.felles.grunnlag.tilInnholdMedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.stønadstype
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettBehandlingsreferanseRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettGrunnlagRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettPeriodeRequestDto
@@ -181,7 +179,7 @@ fun Behandling.byggGrunnlagManueltOverstyrtGebyr() = roller
 
 fun Behandling.byggGrunnlagSøknad(søknadsbarn: List<Rolle> = this.søknadsbarn) = if (erIForholdsmessigFordeling) {
     søknadsbarn.flatMap {
-        it.forholdsmessigFordeling!!.søknaderUnderBehandling.map { søknad ->
+        it.forholdsmessigFordeling!!.søknaderUnderBehandling.distinctBy { it.søknadsid }.map { søknad ->
             GrunnlagDto(
                 referanse = "søknad_${it.tilGrunnlagsreferanse()}_${søknad.søknadsid}",
                 type = Grunnlagstype.SØKNAD,
@@ -311,6 +309,7 @@ fun Behandling.byggGrunnlagManuelleVedtak(grunnlagFraBeregning: List<GrunnlagDto
 fun byggGrunnlagVirkningstidspunktResultatvedtak(
     resultatVedtak: ResultatVedtak,
     søknadsbarnreferanse: String,
+    søknadsbarn: Rolle,
 ): GrunnlagDto = GrunnlagDto(
     referanse = opprettGrunnlagsreferanseVirkningstidspunkt(null, søknadsbarnreferanse),
     type = Grunnlagstype.VIRKNINGSTIDSPUNKT,
@@ -320,13 +319,16 @@ fun byggGrunnlagVirkningstidspunktResultatvedtak(
         VirkningstidspunktGrunnlag(
             virkningstidspunkt =
             resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
-                .minOf { it.periode.fom }
-                .atDay(1),
-            opphørsdato =
-            resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
-                .maxBy { it.periode.fom }
-                .periode.til
-                ?.atDay(1),
+                .minOfOrNull { it.periode.fom }
+                ?.atDay(1) ?: søknadsbarn.virkningstidspunktRolle,
+            opphørsdato = if (resultatVedtak.resultat.beregnetBarnebidragPeriodeListe.isNotEmpty()) {
+                resultatVedtak.resultat.beregnetBarnebidragPeriodeListe
+                    .maxBy { it.periode.fom }
+                    .periode
+                    .til?.atDay(1)
+            } else {
+                søknadsbarn.opphørsdato
+            },
             årsak = VirkningstidspunktÅrsakstype.AUTOMATISK_JUSTERING,
             avslag = null,
         ),
@@ -377,11 +379,15 @@ fun Behandling.byggGrunnlagVirkningsttidspunkt(
 }
 
 fun Behandling.byggGrunnlagNotaterDirekteAvslag(): Set<GrunnlagDto> = byggGrunnlagBegrunnelseVirkningstidspunkt() +
-    setOf(
-        henteNotatinnhold(this, Notattype.UTGIFTER).takeIfNotNullOrEmpty {
-            opprettGrunnlagNotat(Notattype.UTGIFTER, false, it)
-        },
-    ).filterNotNull().toSet()
+    byggGrunnlagNotatVurderingAvSkolegang() +
+    byggGrunnlagInntekter() +
+    byggGrunnlagUtgifter()
+
+fun Behandling.byggGrunnlagUtgifter(): Set<GrunnlagDto> = setOf(
+    henteNotatinnhold(this, Notattype.UTGIFTER).takeIfNotNullOrEmpty {
+        opprettGrunnlagNotat(Notattype.UTGIFTER, false, it)
+    },
+).filterNotNull().toSet()
 
 fun Behandling.byggGrunnlagBegrunnelseVirkningstidspunkt(søknadsbarn: List<Rolle> = this.søknadsbarn) = if (erBidrag()) {
     søknadsbarn
@@ -605,38 +611,39 @@ fun Behandling.byggGrunnlagNotater(søknadsbarn: List<Rolle> = this.søknadsbarn
                 )
             }.filterNotNull()
 
-    val notatGrunnlagInntekter =
-        roller
-            .filter {
-                it.rolletype != Rolletype.BARN ||
-                    søknadsbarn.any { sb -> sb.erSammeRolle(it) }
-            }.flatMap { rolle ->
-                listOf(
-                    henteInntektsnotat(this, rolle.id!!)?.takeIfNotNullOrEmpty {
-                        opprettGrunnlagNotat(
-                            Notattype.INNTEKT,
-                            false,
-                            it,
-                            gjelderReferanse = rolle.tilGrunnlagsreferanse(),
-                        )
-                    },
-                    henteInntektsnotat(this, rolle.id!!, begrunnelseDelAvBehandlingen = false)?.takeIfNotNullOrEmpty {
-                        opprettGrunnlagNotat(
-                            Notattype.INNTEKT,
-                            false,
-                            it,
-                            gjelderReferanse = rolle.tilGrunnlagsreferanse(),
-                            fraOmgjortVedtak = true,
-                        )
-                    },
-                )
-            }.filterNotNull()
+    val notatGrunnlagInntekter = byggGrunnlagInntekter(søknadsbarn)
 
     return (
         virkningstidspunktGrunnlag + notatGrunnlag + notatGrunnlagInntekter + notatSamvær + notatUnderhold + notatVurderingAvSkolegang +
             notatPrivatAvtale
         ).toSet()
 }
+
+fun Behandling.byggGrunnlagInntekter(søknadsbarn: List<Rolle> = this.søknadsbarn): List<GrunnlagDto> = roller
+    .filter {
+        it.rolletype != Rolletype.BARN ||
+            søknadsbarn.any { sb -> sb.erSammeRolle(it) }
+    }.flatMap { rolle ->
+        listOf(
+            henteInntektsnotat(this, rolle.id!!)?.takeIfNotNullOrEmpty {
+                opprettGrunnlagNotat(
+                    Notattype.INNTEKT,
+                    false,
+                    it,
+                    gjelderReferanse = rolle.tilGrunnlagsreferanse(),
+                )
+            },
+            henteInntektsnotat(this, rolle.id!!, begrunnelseDelAvBehandlingen = false)?.takeIfNotNullOrEmpty {
+                opprettGrunnlagNotat(
+                    Notattype.INNTEKT,
+                    false,
+                    it,
+                    gjelderReferanse = rolle.tilGrunnlagsreferanse(),
+                    fraOmgjortVedtak = true,
+                )
+            },
+        )
+    }.filterNotNull()
 
 fun Behandling.tilSkyldner() = when (stonadstype) {
     Stønadstype.FORSKUDD -> {
@@ -783,6 +790,7 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
     grunnlagsreferanseListe =
     grunnlagListe.toSet().hentGrunnlagsreferanserForInntekt(
         gjelder.personIdent!!,
+        gjelder.stønadstype,
         this,
     ),
     gjelderReferanse = gjelder.referanse,

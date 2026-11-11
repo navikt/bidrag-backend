@@ -127,7 +127,7 @@ Andre svar fra kilden legges til som stub i `stubHenvendelser` og `stubPerson`.
 
 ### Mot dev
 
-Krever JDK 21 og naisdevice (tjenestene ligger på `*.intern.dev.nav.no`).
+Krever JDK 25 og naisdevice (tjenestene ligger på `*.intern.dev.nav.no`).
 
 Start `BidragHenvendelseLocal` i `src/test/kotlin`; main-metoden setter profilene `local`,
 `lokal-nais`, `nais` og `lokal-nais-secrets`. Appen svarer på `http://localhost:8080`.

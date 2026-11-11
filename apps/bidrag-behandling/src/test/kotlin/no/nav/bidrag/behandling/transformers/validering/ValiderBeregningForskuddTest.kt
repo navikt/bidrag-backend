@@ -6,10 +6,13 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.dto.v2.validering.BeregningValideringsfeil
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
@@ -18,6 +21,7 @@ import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.transport.felles.commonObjectmapper
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -31,7 +35,13 @@ class ValiderBeregningForskuddTest {
 
     @BeforeEach
     fun initMocks() {
+        stubPersonConsumer()
         validering = ValiderBeregning()
+    }
+
+    @AfterEach
+    fun unmockAppContext() {
+        unmockkObject(AppContext)
     }
 
     @Test
@@ -169,7 +179,7 @@ class ValiderBeregningForskuddTest {
             inntekter shouldBe null
             sivilstand shouldBe null
             husstandsmedlem!! shouldHaveSize 1
-            assertSoftly(husstandsmedlem!![0]) {
+            assertSoftly(husstandsmedlem[0]) {
                 harFeil shouldBe true
 
                 hullIPerioder shouldHaveSize 1
@@ -265,7 +275,7 @@ class ValiderBeregningForskuddTest {
                 kontantstøtte shouldBe null
                 årsinntekter!! shouldHaveSize 1
                 barnetillegg!! shouldHaveSize 1
-                assertSoftly(barnetillegg!!.toList()[0]) {
+                assertSoftly(barnetillegg.toList()[0]) {
                     overlappendePerioder shouldHaveSize 1
                     fremtidigPeriode shouldBe false
                     hullIPerioder shouldHaveSize 0
@@ -274,7 +284,7 @@ class ValiderBeregningForskuddTest {
                     ident shouldBe bmIdent
                     gjelderBarn shouldBe barn2Ident
                 }
-                assertSoftly(årsinntekter!!.toList()[0]) {
+                assertSoftly(årsinntekter.toList()[0]) {
                     overlappendePerioder shouldHaveSize 1
                     fremtidigPeriode shouldBe true
                     hullIPerioder shouldHaveSize 0
@@ -309,7 +319,7 @@ class ValiderBeregningForskuddTest {
                 kontantstøtte shouldBe null
                 årsinntekter!! shouldHaveSize 1
                 barnetillegg shouldBe null
-                assertSoftly(årsinntekter!!.toList()[0]) {
+                assertSoftly(årsinntekter.toList()[0]) {
                     overlappendePerioder shouldHaveSize 0
                     fremtidigPeriode shouldBe false
                     hullIPerioder shouldHaveSize 0

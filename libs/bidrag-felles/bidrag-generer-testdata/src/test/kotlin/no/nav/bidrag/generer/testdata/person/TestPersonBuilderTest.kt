@@ -19,7 +19,6 @@ class TestPersonBuilderTest {
         person shouldNotBe null
         person.personIdent shouldNotBe null
         person.personIdent?.length shouldBe 11
-        println(person)
     }
 
     @Test
@@ -34,7 +33,6 @@ class TestPersonBuilderTest {
         val person = genererPerson().alder(10).opprett()
         person.fodselsdato shouldBeAfter LocalDate.now().minusYears(11)
         person.fodselsdato shouldBeLessThanOrEqualTo LocalDate.now().minusYears(10)
-        println(person)
     }
 
     @Test
@@ -75,7 +73,6 @@ class TestPersonBuilderTest {
         far?.fornavn shouldBe "Per"
         far?.etternavn shouldBe "Nordmann"
         far?.barn(0) shouldBe person
-        println(person)
     }
 
     @Test
@@ -99,7 +96,6 @@ class TestPersonBuilderTest {
         barn.mor shouldNotBe null
         barn.mor?.fornavn shouldBe "Kari"
         barn.mor?.etternavn shouldBe "Nordmann"
-        println(person)
     }
 
     @Test
@@ -114,7 +110,6 @@ class TestPersonBuilderTest {
         adressehistorikk shouldHaveSize 2 // Person mellom 18 og 23 kan ha flyttet ut.
         // Barn 24 og eldre har alltid flyttet ut og har derfor 2 innslag i adressehistorikken.
         adressehistorikk[1]?.adresse shouldBe person.boadresse // Aktiv bostedsadresse er siste innslag i historikken
-        println(person)
     }
 
     @Test
@@ -124,8 +119,5 @@ class TestPersonBuilderTest {
 
         aktørid shouldNotBe null
         aktørid2 shouldNotBe null
-
-        println(aktørid)
-        println(aktørid2)
     }
 }

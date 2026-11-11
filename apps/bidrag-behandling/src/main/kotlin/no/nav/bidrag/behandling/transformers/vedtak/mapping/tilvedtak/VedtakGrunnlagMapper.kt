@@ -23,6 +23,7 @@ import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
+import no.nav.bidrag.behandling.transformers.grunnlag.tilInnhentetGrunnlagInntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
@@ -50,6 +51,7 @@ import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.LøpendeBidragssak
@@ -59,7 +61,6 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.Omgjøringorkest
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
-import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
@@ -67,7 +68,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
-import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.finnGrunnlagSomErReferertAv
@@ -233,6 +233,8 @@ fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
     val tidligsteBeregnFra =
         if (stønadstype == Stønadstype.BIDRAG18AAR) {
             maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
+        } else if (avslag != null) {
+            virkningstidspunktRolle.toYearMonth()
         } else {
             // Virkning kan ikke vær før barnet er født
             maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
@@ -311,7 +313,12 @@ fun Behandling.finnBeregnTilDatoBehandling(
 
                 else -> {
                     val virkningstidspunkt = søknadsbarnRolle?.virkningstidspunkt ?: this.virkningstidspunkt!!
-                    if (virkningstidspunkt >= opprinneligVedtakstidspunktBeregnTil) {
+                    val avslag = søknadsbarnRolle?.avslag
+                    val erDirekteAvslag = avslag != null && !avslag.erAvvisning() && avslag.erDirekteAvslag()
+                    // Ordinære barn skal alltid ha minst én måned å beregne. Direkte avslag beregnes til virkningstidspunktet
+                    if (virkningstidspunkt > opprinneligVedtakstidspunktBeregnTil ||
+                        (virkningstidspunkt == opprinneligVedtakstidspunktBeregnTil && !erDirekteAvslag)
+                    ) {
                         // Revurderingsbarn så kan opphørsdato være før virkningstidspunkt. Feks hvis bidraget har opphørt før virkning men
                         // har løpende bidrag fra eldste virkningstidspunkt
                         minOfNullable(opphørsdato?.toLocalDate(), virkningstidspunkt.plusMonths(1).withDayOfMonth(1))!!
@@ -368,7 +375,7 @@ private fun utledBeregnTilDato(
         // Avvisning kan bare velges hvis det allerede er et vedtak med opphør på rollen. Derfor hentes opphørsdato fra eksisterende vedtak
         val eksisterendeOpphør = søknadsbarnRolle.finnEksisterendeVedtakMedOpphørForRolle()
         // Default til beregnTilUtenAvslag. Grunnen til det er at hvis avvisning ble valgt ved opprettelse av behandling
-        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: beregnTilUtenAvslag
+        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra()?.toLocalDate() ?: beregnTilUtenAvslag
     } else if (opphørsdato == null || opphørsdato.isAfter(YearMonth.now().plusMonths(1))) {
         beregnTilUtenAvslag
     } else if (opprinneligVedtakstidspunkt != null) {
@@ -392,16 +399,16 @@ class VedtakGrunnlagMapper(
     fun Behandling.tilPersonobjekter(søknadsbarnRolle: Rolle? = null) = mapper.run { tilPersonobjekter(søknadsbarnRolle) }
 
     fun List<BidragssakDto>.hentRolleMedFnr(fnr: String): RolleDto = flatMap { it.roller }.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-            personService.hentNyesteIdent(fnr)
+        nyesteIdentEllerSøkt(it.fødselsnummer?.verdi) == nyesteIdentEllerSøkt(fnr)
     }
-        ?: fantIkkeRolleISak(joinToString { it.saksnummer?.verdi ?: "" }, fnr)
+        ?: fantIkkeRolleISak(joinToString { it.saksnummer.verdi }, fnr)
 
     fun BidragssakDto.hentRolleMedFnr(fnr: String): RolleDto = roller.filter { it.type != Rolletype.REELMOTTAKER }.firstOrNull {
-        personService.hentNyesteIdent(it.fødselsnummer?.verdi) ==
-            personService.hentNyesteIdent(fnr)
+        nyesteIdentEllerSøkt(it.fødselsnummer?.verdi) == nyesteIdentEllerSøkt(fnr)
     }
         ?: fantIkkeRolleISak(saksnummer.verdi, fnr)
+
+    private fun nyesteIdentEllerSøkt(ident: String?) = ident?.let { personService.hentNyesteIdent(it) ?: Personident(it) }
 
     fun Behandling.byggGrunnlagForAvslagUgyldigUtgifter() = mapper.run {
         listOf(
@@ -448,6 +455,12 @@ class VedtakGrunnlagMapper(
                     .mapAinntekt(behandling.tilPersonobjekter())
                     .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
             )
+            grunnlagGebyr.addAll(
+                behandling.grunnlag
+                    .toList()
+                    .tilInnhentetGrunnlagInntekt(behandling.tilPersonobjekter())
+                    .filter { it.gjelderReferanse == rolle.tilGrunnlagsreferanse() },
+            )
         }
         val gebyrBeregning = beregnGebyrApi.beregnGebyr(grunnlagGebyr, rolle.tilGrunnlagsreferanse(), referanse)
         val delberegningSumInntekt = gebyrBeregning.gebyrDelberegningSumInntekt
@@ -485,7 +498,7 @@ class VedtakGrunnlagMapper(
                 .flatMap { beregningBarn ->
                     beregningBarn.summertInntektListe.map {
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
                             innhold = POJONode(it),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),
@@ -584,7 +597,7 @@ class VedtakGrunnlagMapper(
                 val beregningTilDato = finnBeregnTilDatoBehandling(søknadsbarnRolle)
                 val opphørsdato =
                     if (søknadsbarnRolle.avslag != null && søknadsbarnRolle.avslag!!.erAvvisning()) {
-                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato
+                        finnEksisterendeVedtakMedOpphør(søknadsbarnRolle)?.opphørsdato ?: søknadsbarnRolle.virkningstidspunkt ?: søknadsbarnRolle.opphørsdato ?: beregnFraDato
                     } else if (søknadsbarnRolle.avslag != null) {
                         beregningTilDato
                     } else {

@@ -10,15 +10,9 @@ azureAccessInbound:
   - application: bidrag-behandling-q2
     namespace: bidrag
     cluster: dev-gcp
-  - application: bisys
-    namespace: bidrag
-    cluster: dev-fss
   - application: bidrag-automatisk-jobb-q2
     namespace: bidrag
     cluster: dev-gcp
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: dev-fss
   - application: azure-token-generator
     namespace: nais
     cluster: dev-gcp

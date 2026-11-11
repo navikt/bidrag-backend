@@ -3,6 +3,7 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
@@ -64,7 +65,9 @@ import no.nav.bidrag.transport.behandling.beregning.samvær.SamværskalkulatorDe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.Grunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InnhentetAndreBarnTilBidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
@@ -294,6 +297,8 @@ class VedtakTilBehandlingMapping(
             if (type == Vedtakstype.INDEKSREGULERING) mutableSetOf() else grunnlagListe.mapGrunnlag(behandling, lesemodus)
 
         mapBegrunnelser(behandling, lesemodus)
+        // Brukes i blant annet FF ved førstegangsopprettelse av behandling
+        behandling.erNyBehandlingIkkeOpprettet = true
         return behandling
     }
 
@@ -662,7 +667,7 @@ class VedtakTilBehandlingMapping(
         return (underholdskostnadAndreBarn + underholdskostnadSøknadsbarn).toMutableSet()
     }
 
-    private fun List<GrunnlagDto>.hentAndreBarnUnderholdskostnadPerioder(
+    internal fun List<GrunnlagDto>.hentAndreBarnUnderholdskostnadPerioder(
         behandling: Behandling,
         lesemodus: Boolean,
         virkningstidspunkt: LocalDate,
@@ -670,8 +675,10 @@ class VedtakTilBehandlingMapping(
         val andreBarnTilBidragsmottakerGrunnlag = hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt)
         val andreBarnTilBidragsmottakerIdenter =
             andreBarnTilBidragsmottakerGrunnlag.mapNotNull {
-                hentPersonMedReferanse(it.gjelderPerson)!!.personIdent
+                hentPersonMedReferanse(it.barn.gjelderPerson)!!.personIdent
             }
+        val bidragsmottakerReferanseAndreBarn =
+            andreBarnTilBidragsmottakerGrunnlag.associate { it.barn.gjelderPerson to it.bidragsmottakerReferanse }
 
         var indexU = 100L
         val underholdskostnadAndreBarn =
@@ -685,10 +692,12 @@ class VedtakTilBehandlingMapping(
                     val personGrunnlag = hentPersonMedReferanse(gjelderBarnReferanse)
                     val gjelderBarn = personGrunnlag!!.personObjekt
 
-                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
                     val bidragsmottakerIdent =
-                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
-                            ?: behandling.bidragsmottaker!!.ident
+                        finnBidragsmottakerIdentAndreBarn(
+                            behandling,
+                            personGrunnlag,
+                            bidragsmottakerReferanseAndreBarn[gjelderBarnReferanse] ?: grunnlag.first().gjelderReferanse,
+                        )
                     val kilde =
                         if (andreBarnTilBidragsmottakerIdenter.contains(gjelderBarn.ident?.verdi)) {
                             Kilde.OFFENTLIG
@@ -718,6 +727,7 @@ class VedtakTilBehandlingMapping(
                                     personident = gjelderBarn.ident,
                                     navn = if (gjelderBarn.ident == null) gjelderBarn.navn else null,
                                     fødselsdato = gjelderBarn.fødselsdato,
+                                    bidragsmottaker = Personident(bidragsmottakerIdent),
                                 ),
                                 kilde = kilde,
                             )
@@ -738,15 +748,14 @@ class VedtakTilBehandlingMapping(
 
         val underholdskostnadAndreBarnBMUtenTilsynsutgifer =
             andreBarnTilBidragsmottakerGrunnlag
-                .filter { !faktiskPeriodeGjelderReferanser.contains(it.gjelderPerson) }
-                .filter { hentPersonMedReferanse(it.gjelderPerson)?.type != Grunnlagstype.PERSON_SØKNADSBARN }
-                .map {
-                    val personGrunnlag = hentPersonMedReferanse(it.gjelderPerson)
+                .filter { !faktiskPeriodeGjelderReferanser.contains(it.barn.gjelderPerson) }
+                .filter { hentPersonMedReferanse(it.barn.gjelderPerson)?.type != Grunnlagstype.PERSON_SØKNADSBARN }
+                .mapNotNull {
+                    val personGrunnlag = hentPersonMedReferanse(it.barn.gjelderPerson)
                     val gjelderBarn = personGrunnlag!!.personObjekt
-                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
                     val bidragsmottakerIdent =
-                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
-                            ?: behandling.bidragsmottaker!!.ident
+                        finnBidragsmottakerIdentAndreBarn(behandling, personGrunnlag, it.bidragsmottakerReferanse)
+                    if (behandling.alleBidragsmottakere.none { it.ident == bidragsmottakerIdent }) return@mapNotNull null
                     indexU += 1L
                     if (lesemodus) {
                         Underholdskostnad(
@@ -768,6 +777,7 @@ class VedtakTilBehandlingMapping(
                                 personident = gjelderBarn.ident,
                                 navn = if (gjelderBarn.ident != null) null else gjelderBarn.navn,
                                 fødselsdato = gjelderBarn.fødselsdato,
+                                bidragsmottaker = Personident(bidragsmottakerIdent),
                             ),
                         )
                     }
@@ -786,10 +796,7 @@ class VedtakTilBehandlingMapping(
                 }.map {
                     val personGrunnlag = hentPersonMedReferanse(it.referanse)
                     val gjelderBarn = personGrunnlag!!.personObjekt
-                    val bmReferanse = gjelderBarn.bidragsmottaker ?: personGrunnlag.gjelderReferanse
-                    val bidragsmottakerIdent =
-                        bmReferanse?.let { hentPersonMedReferanse(gjelderBarn.bidragsmottaker) }?.personIdent
-                            ?: behandling.bidragsmottaker!!.ident
+                    val bidragsmottakerIdent = finnBidragsmottakerIdentAndreBarn(behandling, personGrunnlag)
                     indexU += 1L
                     if (lesemodus) {
                         Underholdskostnad(
@@ -811,6 +818,7 @@ class VedtakTilBehandlingMapping(
                                 personident = gjelderBarn.ident,
                                 navn = if (gjelderBarn.ident != null) null else gjelderBarn.navn,
                                 fødselsdato = gjelderBarn.fødselsdato,
+                                bidragsmottaker = Personident(bidragsmottakerIdent),
                             ),
                             kilde = Kilde.MANUELL,
                         )
@@ -854,19 +862,47 @@ class VedtakTilBehandlingMapping(
                 .mapBarnetilsyn(underholdskostnad, lesemodus)
                 .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
         )
+        underholdskostnad.forpleining.addAll(
+            filtrerBasertPåEgenReferanse(Grunnlagstype.FORPLEINING_PERIODE)
+                .filter {
+                    val personGrunnlag = hentPersonMedReferanse(it.gjelderBarnReferanse)!!
+                    rolle.erSammeRolle(personGrunnlag.personIdent!!, personGrunnlag.stønadstype)
+                }.map { it.innholdTilObjekt<ForpleiningPeriode>() }
+                .mapForpleining(underholdskostnad, lesemodus)
+                .filter { filtrerEtterPeriode == null || ÅrMånedsperiode(it.fom, it.tom).overlapper(filtrerEtterPeriode) },
+        )
+
         underholdskostnad.harTilsynsordning =
             underholdskostnad.barnetilsyn.isNotEmpty() ||
             underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
-            underholdskostnad.tilleggsstønad.isNotEmpty()
+            underholdskostnad.tilleggsstønad.isNotEmpty() ||
+            underholdskostnad.forpleining.isNotEmpty()
     }
 
+    private data class AndreBarnTilBidragsmottaker(
+        val bidragsmottakerReferanse: Grunnlagsreferanse,
+        val barn: InnhentetAndreBarnTilBidragsmottaker.AndreBarnTilBidragsmottakerPDL,
+    )
+
+    // Det kan være flere bidragsmottakere i samme vedtak, og hver har sitt eget innhentede grunnlag for andre barn
     private fun List<GrunnlagDto>.hentAndreBarnTilBidragsmottakerGrunnlagUnder12År(virkningstidspunkt: LocalDate) = filtrerBasertPåEgenReferanse(
         Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER,
-    ).firstOrNull()
-        ?.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
-        ?.grunnlag
-        ?.filter { it.fødselsdato.erUnder12År(virkningstidspunkt) }
-        ?: emptyList()
+    ).flatMap { grunnlag ->
+        grunnlag
+            .innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
+            .grunnlag
+            .filter { it.fødselsdato.erUnder12År(virkningstidspunkt) }
+            .map { AndreBarnTilBidragsmottaker(grunnlag.gjelderReferanse!!, it) }
+    }
+
+    private fun List<GrunnlagDto>.finnBidragsmottakerIdentAndreBarn(
+        behandling: Behandling,
+        personGrunnlagBarn: BaseGrunnlag,
+        bidragsmottakerReferanse: Grunnlagsreferanse? = null,
+    ): String {
+        val referanse = personGrunnlagBarn.personObjekt.bidragsmottaker ?: bidragsmottakerReferanse ?: personGrunnlagBarn.gjelderReferanse
+        return referanse?.let { hentPersonMedReferanse(it) }?.personIdent ?: behandling.bidragsmottaker!!.ident!!
+    }
 
     private fun List<TilleggsstønadPeriode>.mapTillegsstønad(
         underholdskostnad: Underholdskostnad,
@@ -882,6 +918,22 @@ class VedtakTilBehandlingMapping(
                 ?.atEndOfMonth(),
             beløp = it.beløp,
             beløpstype = it.beløpstype,
+        )
+    }
+
+    private fun List<ForpleiningPeriode>.mapForpleining(
+        underholdskostnad: Underholdskostnad,
+        lesemodus: Boolean,
+    ): List<Forpleining> = mapIndexed { index, it ->
+        Forpleining(
+            id = if (lesemodus) index.toLong() else null,
+            underholdskostnad = underholdskostnad,
+            fom = it.periode.fom.atDay(1),
+            tom =
+            it.periode.til
+                ?.minusMonths(1)
+                ?.atEndOfMonth(),
+            beløp = it.beløp,
         )
     }
 

@@ -1,7 +1,7 @@
 apiVersion: unleash.nais.io/v1
 kind: ApiToken
 metadata:
-  name: bidrag-tilgangskontroll
+  name: bidrag-sak
   namespace: bidrag
   labels:
     team: bidrag

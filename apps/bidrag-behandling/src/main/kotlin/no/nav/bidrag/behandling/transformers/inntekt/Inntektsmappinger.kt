@@ -16,8 +16,8 @@ import no.nav.bidrag.behandling.transformers.eksplisitteYtelser
 import no.nav.bidrag.behandling.transformers.erHistorisk
 import no.nav.bidrag.behandling.transformers.minOfNullable
 import no.nav.bidrag.behandling.transformers.nærmesteHeltall
+import no.nav.bidrag.behandling.transformers.skattefaktorFraSkatteprosent
 import no.nav.bidrag.behandling.transformers.skattefaktorTilProsent
-import no.nav.bidrag.behandling.transformers.skatteprosentTilFaktor
 import no.nav.bidrag.behandling.transformers.validerPerioder
 import no.nav.bidrag.beregn.core.util.InntektUtil.beløpTilÅrsbeløp
 import no.nav.bidrag.beregn.core.util.avrundetTilToDesimaler
@@ -192,7 +192,7 @@ fun OppdatereManuellInntekt.oppdatereEksisterendeInntekt(inntekt: Inntekt): Innt
                 kode = this.type.toString(),
                 skattefaktor =
                 if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
-                    this.skatteprosent.skatteprosentTilFaktor
+                    this.inntektstype.skattefaktorFraSkatteprosent(this.skatteprosent)
                 } else {
                     null
                 },
@@ -323,7 +323,7 @@ fun OppdatereManuellInntekt.lagreSomNyInntekt(behandling: Behandling): Inntekt {
                     kode = this.type.toString(),
                     skattefaktor =
                     if (inntekt.type === Inntektsrapportering.BARNETILLEGG) {
-                        this.skatteprosent.skatteprosentTilFaktor
+                        this.inntektstype.skattefaktorFraSkatteprosent(this.skatteprosent)
                     } else {
                         null
                     },

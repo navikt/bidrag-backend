@@ -42,8 +42,6 @@ internal class BeregnApiTest {
         // Kall rest-API for beregning og periodisering av inntekt
         val inntektResultat = beregnInntektService.beregn(request)
 
-        println(commonObjectmapper.writeValueAsString(inntektResultat))
-
         assertAll(
             { assertThat(inntektResultat).isNotNull },
             { assertThat(inntektResultat.inntektPerBarnListe.size).isEqualTo(3) },

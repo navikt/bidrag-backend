@@ -72,7 +72,6 @@ import no.nav.bidrag.behandling.transformers.behandling.hentEndringerInntekter
 import no.nav.bidrag.behandling.transformers.behandling.hentEndringerSivilstand
 import no.nav.bidrag.behandling.transformers.behandling.henteAktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforhold
-import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarn
 import no.nav.bidrag.behandling.transformers.behandling.henteEndringerIBoforholdBMSøknadsbarnV2
 import no.nav.bidrag.behandling.transformers.behandling.henteUaktiverteGrunnlag
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
@@ -192,6 +191,7 @@ class GrunnlagService(
     private val ffService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
     private val bestillAsyncJobService: BestillAsyncJobService? = null,
+    private val feilrettingService: FeilrettingService? = null,
 ) {
     @Value($$"${egenskaper.grunnlag.min-antall-minutter-siden-forrige-innhenting:60}")
     lateinit var grenseInnhenting: String
@@ -215,6 +215,13 @@ class GrunnlagService(
         return gjelder to hentetGrunnlag
     }
 
+    // Asynkron innhenting tar egen lås i jobben, så da trenger ikke kallet å låse behandlingen.
+    fun skalOppdatereGrunnlagSynkront(behandling: Behandling): Boolean = !UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled &&
+        (
+            foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong()) ||
+                foretaNyGrunnlagsinnhenting(behandling, grenseInnhentingBeløpshistorikk.toLong())
+            )
+
     @Transactional
     fun oppdaterGrunnlagForBehandlingAsync(behandling: Behandling) {
         if (!UnleashFeatures.HENT_GRUNNLAG_ASYNC.isEnabled) {
@@ -232,6 +239,7 @@ class GrunnlagService(
 
     @Transactional
     fun oppdatereGrunnlagForBehandling(behandlingId: Long) {
+        behandlingRepository!!.låsBehandlingForOppdatering(behandlingId)
         val behandling = behandlingRepository?.findBehandlingById(behandlingId)!!.get()
         if (behandling.metadata?.lasterGrunnlagDetaljer()?.erBestilt() == false) {
             log.info { "Grunnlag for behandling $behandlingId lastes allerede, hopper over ny innhenting" }
@@ -248,7 +256,10 @@ class GrunnlagService(
 
         try {
             if (foretaNyGrunnlagsinnhenting(behandling, grenseInnhenting.toLong())) {
+                // Nye roller må få id før grunnlag innhentes, ellers matcher grunnlag på rolle.id == null på tvers av nye roller
+                behandlingRepository?.flush()
                 sjekkOgOppdaterIdenter(behandling)
+                feilrettingService?.slettSkattepliktigeInntekterHentetForAnnenPerson(behandling)
                 val feilrapporteringer = mutableMapOf<Grunnlagsdatatype, GrunnlagFeilDto?>()
 
                 fun Map<Grunnlagsdatatype, GrunnlagFeilDto>.lagreFeilrapportering(): Pair<PersonStønad, HentetGrunnlag>? {
@@ -291,11 +302,8 @@ class GrunnlagService(
                         }.filterNotNull()
 
                     grunnlagResponsObjekter.forEach {
-                        feilrapporteringer +=
-                            lagreGrunnlag(
-                                behandling,
-                                it,
-                            )
+                        // Feil for én rolle registreres som innhentingsfeil slik at grunnlaget hentes på nytt etter kortere tid
+                        feilrapporteringer += lagreGrunnlagForRolle(behandling, it) ?: Grunnlagsdatatype.gjeldende().associateWith { null }
                     }
                 } else {
                     runBlocking {
@@ -326,6 +334,9 @@ class GrunnlagService(
                         scope.async {
                             lagreBpsBarnUtenBidragsak(behandling)
                         },
+                        scope.async {
+                            lagreManuelleVedtakGrunnlag(behandling)
+                        },
                     ).awaitAll()
                 }
             } else {
@@ -340,12 +351,7 @@ class GrunnlagService(
                 secureLogger.info {
                     "Aktiverer grunnlag automatisk hvis det ikke er noe endringer siden forrige grunnlagsinnhenting for behandling ${behandling.id} og saksnummer ${behandling.saksnummer}."
                 }
-                aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
-                aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
-                aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
-                behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
-                aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+                aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling)
                 oppdaterVirkningstidspunktOgÅrsakForBarn(behandling)
                 inntektService.oppdaterInntektRolleOgGjelderBarnRolle(behandling)
             }
@@ -356,6 +362,14 @@ class GrunnlagService(
         }
     }
 
+    fun aktiverGrunnlagHvisIngenEndringerMåAksepteres(behandling: Behandling) {
+        aktivereGrunnlagForBoforholdAndreVoksneIHusstandenHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdHvisIngenEndringerMåAksepteres(behandling)
+        aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling)
+        aktivereSivilstandHvisEndringIkkeKreverGodkjenning(behandling)
+        behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
+        aktiverGrunnlagForInntekterHvisIngenEndringMåAksepteresForAlleRoller(behandling)
+    }
     suspend fun lagreManuelleVedtakGrunnlag(behandling: Behandling): Map<Grunnlagsdatatype, GrunnlagFeilDto> {
         // Klage er pga at det skal være mulig å velge vedtak for aldersjustering hvis klagebehandling endrer resultat for aldersjusteringen
 
@@ -905,7 +919,7 @@ class GrunnlagService(
         objekt: String? = null,
     ): String? {
         if (ident == null) return null
-        val nyIdent = hentNyesteIdent(ident)?.verdi
+        val nyIdent = hentNyesteIdentIgnorerForbidden(ident)?.verdi
         if (nyIdent != ident) {
             secureLogger.info { "Oppdaterer ident fra $ident til $nyIdent i behandling $behandlingId - $objekt" }
         }
@@ -1054,16 +1068,14 @@ class GrunnlagService(
     @Transactional
     fun oppdaterIkkeAktiveBoforholdBMEtterEndretVirkningstidspunkt(behandling: Behandling) {
         val grunnlagsdatatype = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN
-        val innhentesForRolle = grunnlagsdatatype.innhentesForRolle(behandling) ?: return
-        val sisteIkkeAktiveGrunnlag =
-            behandling.henteNyesteIkkeAktiveGrunnlag(
-                Grunnlagstype(grunnlagsdatatype, false),
-                innhentesForRolle,
-            ) ?: run {
-                log.debug { "Fant ingen ikke-aktive boforholdsgrunnlag. Gjør ingen endringer" }
-                return
-            }
-        sisteIkkeAktiveGrunnlag.rekalkulerOgOppdaterBoforholdBMBearbeidetGrunnlag(false)
+        behandling.alleBidragsmottakere.forEach { bidragsmottaker ->
+            val sisteIkkeAktiveGrunnlag =
+                behandling.henteNyesteIkkeAktiveGrunnlag(
+                    Grunnlagstype(grunnlagsdatatype, false),
+                    bidragsmottaker,
+                ) ?: return@forEach
+            sisteIkkeAktiveGrunnlag.rekalkulerOgOppdaterBoforholdBMBearbeidetGrunnlag(false)
+        }
     }
 
     @Transactional
@@ -1079,16 +1091,14 @@ class GrunnlagService(
 
     @Transactional
     fun oppdaterAktiveBoforholdBMEtterEndretVirkningstidspunkt(behandling: Behandling) {
-        val innhentesForRolle = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN.innhentesForRolle(behandling) ?: return
-        val sisteAktiveGrunnlag =
-            behandling.henteNyesteAktiveGrunnlag(
-                Grunnlagstype(Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN, false),
-                innhentesForRolle,
-            ) ?: run {
-                log.warn { "Fant ingen aktive boforholdsgrunnlag. Oppdaterer ikke boforhold beregnet etter virkningstidspunkt ble endret" }
-                return
-            }
-        sisteAktiveGrunnlag.rekalkulerOgOppdaterBoforholdBMBearbeidetGrunnlag()
+        behandling.alleBidragsmottakere.forEach { bidragsmottaker ->
+            val sisteAktiveGrunnlag =
+                behandling.henteNyesteAktiveGrunnlag(
+                    Grunnlagstype(Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN, false),
+                    bidragsmottaker,
+                ) ?: return@forEach
+            sisteAktiveGrunnlag.rekalkulerOgOppdaterBoforholdBMBearbeidetGrunnlag()
+        }
     }
 
     @Transactional
@@ -1247,7 +1257,7 @@ class GrunnlagService(
             .filter { it.gjelderPersonId != null }
             .groupBy { it.gjelderPersonId }
             .forEach { (gjelder, perioder) ->
-                overskrivBearbeidetBoforholdBMGrunnlag(behandling, gjelder, perioder, rekalkulerOgOverskriveAktiverte)
+                overskrivBearbeidetBoforholdBMGrunnlag(behandling, rolle, gjelder, perioder, rekalkulerOgOverskriveAktiverte)
             }
     }
 
@@ -1258,7 +1268,7 @@ class GrunnlagService(
             BoforholdApi.beregnBoforholdBarnV3(
                 rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                 rolle.finnOpphørsdatoBoforhold(),
-                behandling.finnBeregnTilDatoBehandling(gjelderRolle),
+                behandling.finnBeregnTilDatoBehandling(),
                 behandling.tilTypeBoforhold(),
                 boforhold.tilBoforholdBarnRequest(behandling, true),
             )
@@ -1319,6 +1329,7 @@ class GrunnlagService(
 
     private fun overskrivBearbeidetBoforholdBMGrunnlag(
         behandling: Behandling,
+        innhentetForRolle: Rolle,
         gjelder: String?,
         perioder: List<BoforholdResponseV2>,
         rekalkulerOgOverskriveAktiverte: Boolean = true,
@@ -1329,12 +1340,12 @@ class GrunnlagService(
             if (rekalkulerOgOverskriveAktiverte) {
                 behandling.henteAktiverteGrunnlag(
                     Grunnlagstype(grunnlagsdatatype, true),
-                    grunnlagsdatatype.innhentesForRolle(behandling)!!,
+                    innhentetForRolle,
                 )
             } else {
                 behandling.henteUaktiverteGrunnlag(
                     Grunnlagstype(grunnlagsdatatype, true),
-                    grunnlagsdatatype.innhentesForRolle(behandling)!!,
+                    innhentetForRolle,
                 )
             }
         val grunnlagSomSkalOVerskriverGjelder = grunnlagSomSkalOverskrives.find { it.gjelder == gjelder }
@@ -1615,6 +1626,19 @@ class GrunnlagService(
         }
     }
 
+    private fun lagreGrunnlagForRolle(
+        behandling: Behandling,
+        input: Pair<PersonStønad, HentetGrunnlag>,
+    ): Map<Grunnlagsdatatype, GrunnlagFeilDto?>? = try {
+        lagreGrunnlag(behandling, input)
+    } catch (e: RuntimeException) {
+        log.error { "Lagring av innhentet grunnlag feilet for en rolle i behandling ${behandling.id}" }
+        secureLogger.error(e) {
+            "Lagring av innhentet grunnlag feilet for ${input.first.personident?.verdi} i behandling ${behandling.id}"
+        }
+        null
+    }
+
     private fun lagreGrunnlag(
         behandling: Behandling,
         input: Pair<PersonStønad, HentetGrunnlag>,
@@ -1650,6 +1674,7 @@ class GrunnlagService(
                 hentetTidspunkt = it.hentetTidspunkt,
                 aktiveringstidspunkt = null,
                 tekniskFeilVedInnhenting = tekniskFeilVedHentingAvInntekter,
+                feilVedInnhenting = feilVedHentingAvInntekter,
             )
         }
 
@@ -1712,29 +1737,27 @@ class GrunnlagService(
 
             val grunnlagstypeBoforholdBM = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN
             val bmBoforholdFeil = feilrapporteringer[Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN]
-            val grunnlagBoforholdTilBMInnhentesForRolle = grunnlagstypeBoforholdBM.innhentesForRolle(behandling)
             val nyesteGrunnlagBM =
-                grunnlagBoforholdTilBMInnhentesForRolle.takeIfNotNullOrEmpty {
-                    behandling.henteNyesteGrunnlag(
-                        Grunnlagstype(grunnlagstypeBoforholdBM, false),
-                        it,
-                        null,
-                        null,
-                    )
-                }
+                behandling.henteNyesteGrunnlag(
+                    Grunnlagstype(grunnlagstypeBoforholdBM, false),
+                    rolleInnhentetFor,
+                )
             val innhentingBmBoforholdUtenFeil =
                 bmBoforholdFeil == null || nyesteGrunnlagBM == null ||
                     (
                         HentGrunnlagFeiltype.FUNKSJONELL_FEIL == bmBoforholdFeil.feiltype &&
                             !UnleashFeatures.GRUNNLAGSINNHENTING_FUNKSJONELL_FEIL_TEKNISK.isEnabled
                         )
-            if (behandling.søknadsbarn.isNotEmpty() && innhentingBmBoforholdUtenFeil &&
-                grunnlagBoforholdTilBMInnhentesForRolle?.ident == gjelder.personident?.verdi
+            if (grunnlagstypeBoforholdBM.behandlingstypeMotRolletyper[behandling.tilType()]
+                    ?.contains(rolleInnhentetFor.rolletype) == true &&
+                behandling.søknadsbarnForBidragsmottaker(rolleInnhentetFor).isNotEmpty() &&
+                innhentingBmBoforholdUtenFeil
             ) {
                 periodisereOgLagreBoforhold(
                     behandling,
-                    it.husstandsmedlemmerOgEgneBarnListe.filtrerSøknadsbarn(behandling).toSet(),
+                    it.husstandsmedlemmerOgEgneBarnListe.filtrerSøknadsbarn(behandling, rolleInnhentetFor).toSet(),
                     Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN,
+                    rolleInnhentetFor,
                 )
             }
             if (Grunnlagsdatatype.ANDRE_BARN.innhentesForRolle(behandling)?.ident == gjelder.personident?.verdi) {
@@ -1955,7 +1978,16 @@ class GrunnlagService(
         behandling: Behandling,
         husstandsmedlemmerOgEgneBarn: Set<RelatertPersonGrunnlagDto>,
         grunnlagsdatatype: Grunnlagsdatatype = Grunnlagsdatatype.BOFORHOLD,
+        innhentetForRolle: Rolle = grunnlagsdatatype.innhentesForRolle(behandling)!!,
     ) {
+        val leggeTilManglendeSøknadsbarn = grunnlagsdatatype != Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN
+        val rollerForBoforhold =
+            if (grunnlagsdatatype == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN) {
+                behandling.søknadsbarnForBidragsmottaker(innhentetForRolle)
+            } else {
+                behandling.roller
+            }
+
         fun periodiserOgLagGrunnlagForRolle(gjelderBarnIdent: String): List<BoforholdResponseV2> {
             val boforholdPeriodisert =
                 BoforholdApi.beregnBoforholdBarnV3(
@@ -1963,12 +1995,12 @@ class GrunnlagService(
                     null,
                     behandling.finnBeregnTilDatoBehandling(),
                     behandling.tilTypeBoforhold(),
-                    husstandsmedlemmerOgEgneBarn.tilBoforholdBarnRequest(behandling, true),
+                    husstandsmedlemmerOgEgneBarn.tilBoforholdBarnRequest(behandling, leggeTilManglendeSøknadsbarn),
                 )
             val resultatPerson = boforholdPeriodisert.filter { it.gjelderPersonId == gjelderBarnIdent }.distinct()
             lagreGrunnlagHvisEndret<BoforholdResponseV2>(
                 behandling = behandling,
-                innhentetForRolle = grunnlagsdatatype.innhentesForRolle(behandling)!!,
+                innhentetForRolle = innhentetForRolle,
                 grunnlagstype = Grunnlagstype(grunnlagsdatatype, true),
                 innhentetGrunnlag = resultatPerson.toSet(),
                 gjelderPerson = Personident(gjelderBarnIdent),
@@ -1979,7 +2011,7 @@ class GrunnlagService(
         val boforholdPeriodisert =
             husstandsmedlemmerOgEgneBarn
                 .flatMap { hm ->
-                    val roller = behandling.roller.filter { it.ident == hm.gjelderPersonId }
+                    val roller = rollerForBoforhold.filter { it.ident == hm.gjelderPersonId }
                     // Tilfeller hvor det er 18 år og under 18 bidrag for samme barn i samme behandling så kan det være flere roller med samme ident
                     if (roller.isNotEmpty()) {
                         roller.map { rolle ->
@@ -1987,14 +2019,14 @@ class GrunnlagService(
                                 BoforholdApi.beregnBoforholdBarnV3(
                                     rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                                     rolle.finnOpphørsdatoBoforhold(),
-                                    behandling.finnBeregnTilDatoBehandling(rolle),
+                                    behandling.finnBeregnTilDatoBehandling(),
                                     behandling.tilTypeBoforhold(),
-                                    husstandsmedlemmerOgEgneBarn.tilBoforholdBarnRequest(behandling, true),
+                                    husstandsmedlemmerOgEgneBarn.tilBoforholdBarnRequest(behandling, leggeTilManglendeSøknadsbarn),
                                 )
                             val resultatPerson = resultat.filter { it.gjelderPersonId == rolle.ident }.distinct()
                             lagreGrunnlagHvisEndret<BoforholdResponseV2>(
                                 behandling = behandling,
-                                innhentetForRolle = grunnlagsdatatype.innhentesForRolle(behandling)!!,
+                                innhentetForRolle = innhentetForRolle,
                                 grunnlagstype = Grunnlagstype(grunnlagsdatatype, true),
                                 innhentetGrunnlag = resultatPerson.toSet(),
                                 gjelderPerson = Personident(hm.gjelderPersonId!!),
@@ -2008,7 +2040,7 @@ class GrunnlagService(
                 }.flatten()
 
         val boforholdPeriodisertBarnIBehandlingSomIKkeFinnesIGrunnlag =
-            behandling.roller
+            rollerForBoforhold
                 .filter { rolle ->
                     boforholdPeriodisert.none { rolle.ident == it.gjelderPersonId }
                 }.flatMap { rolle ->
@@ -2051,6 +2083,7 @@ class GrunnlagService(
     }
 
     fun aktiverGrunnlagForBoforholdTilBMSøknadsbarnHvisIngenEndringerMåAksepteres(behandling: Behandling) {
+        opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling)
         val ikkeAktiveGrunnlag = behandling.grunnlag.hentAlleIkkeAktiv()
         val aktiveGrunnlag = behandling.grunnlag.hentSisteAktiv()
 
@@ -2074,7 +2107,8 @@ class GrunnlagService(
                     ikkeAktiveGrunnlag.hentGrunnlagForType(
                         Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN,
                         endringerSomMåBekreftes.gjelderBM.ident!!,
-                    )
+                    ).groupBy { Triple(it.erBearbeidet, it.gjelderBarnRolle?.id, it.gjelder) }
+                        .mapNotNull { (_, grunnlag) -> grunnlag.maxByOrNull { it.innhentet } }
 
                 ikkeAktiverteGrunnlag.forEach {
                     val type =
@@ -2091,6 +2125,92 @@ class GrunnlagService(
                     it.aktiv = LocalDateTime.now()
                 }
             }
+        }
+    }
+
+    /**
+     * Feilhåndtering hvor den oppretter bearbeidet boforhold for BM hvis det mangler.
+     */
+    @Transactional
+    fun opprettManglendeBearbeidetBoforholdBMSøknadsbarn(behandling: Behandling) {
+        if (!behandling.erBidrag()) return
+
+        val grunnlagsdatatype = Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN
+        val grunnlagstypeRådata = Grunnlagstype(grunnlagsdatatype, false)
+        val grunnlagstypeBearbeidet = Grunnlagstype(grunnlagsdatatype, true)
+        slettBearbeidetBoforholdBMSøknadsbarnLagretPåFeilBidragsmottaker(behandling)
+        behandling.alleBidragsmottakere.forEach { bidragsmottaker ->
+            val rådata = behandling.henteNyesteAktiveGrunnlag(grunnlagstypeRådata, bidragsmottaker) ?: return@forEach
+            val husstandsmedlemmer = rådata.konvertereData<List<RelatertPersonGrunnlagDto>>() ?: return@forEach
+            val husstandsmedlemmerForBM = husstandsmedlemmer.filtrerSøknadsbarn(behandling, bidragsmottaker)
+            val boforholdRequest = husstandsmedlemmerForBM.toSet().tilBoforholdBarnRequest(behandling)
+
+            // Opprett bearbeidet boforhold til BM hvis det ikke finnes for søknadsbarn til BM
+            behandling.søknadsbarnForBidragsmottaker(bidragsmottaker).forEach { søknadsbarn ->
+                val gjelderBarnIdent = søknadsbarn.ident ?: return@forEach
+                val bearbeidetGrunnlagFinnes =
+                    behandling.grunnlag.any { grunnlag ->
+                        grunnlag.type == grunnlagsdatatype && grunnlag.erBearbeidet &&
+                            grunnlag.rolle.erSammeRolle(bidragsmottaker) &&
+                            (grunnlag.gjelderBarnRolle?.erSammeRolle(søknadsbarn) ?: (grunnlag.gjelder == gjelderBarnIdent))
+                    }
+                if (bearbeidetGrunnlagFinnes) return@forEach
+
+                val perioder =
+                    BoforholdApi.beregnBoforholdBarnV3(
+                        søknadsbarn.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
+                        søknadsbarn.finnOpphørsdatoBoforhold(),
+                        behandling.finnBeregnTilDatoBehandling(),
+                        behandling.tilTypeBoforhold(),
+                        boforholdRequest,
+                    ).filter { it.gjelderPersonId == gjelderBarnIdent }
+                        .distinct()
+
+                behandling.grunnlag.add(
+                    Grunnlag(
+                        behandling = behandling,
+                        type = grunnlagsdatatype,
+                        erBearbeidet = grunnlagstypeBearbeidet.erBearbeidet,
+                        data = tilJson(perioder),
+                        innhentet = LocalDateTime.now(),
+                        aktiv = LocalDateTime.now(),
+                        rolle = bidragsmottaker,
+                        gjelder = gjelderBarnIdent,
+                        gjelderBarnRolle = søknadsbarn,
+                    ),
+                )
+            }
+        }
+    }
+
+    /**
+     * Feilhåndtering hvor bearbeidet boforhold for BM er lagret på feil bidragsmottaker
+     * (tidligere ble boforhold for alle søknadsbarn lagret på samme BM).
+     */
+    private fun slettBearbeidetBoforholdBMSøknadsbarnLagretPåFeilBidragsmottaker(behandling: Behandling) {
+        val bmBoforholdsSomInneholderSøknadsbarnSomTilhørerAnnenBM =
+            behandling.grunnlag
+                .filter { it.type == Grunnlagsdatatype.BOFORHOLD_BM_SØKNADSBARN && it.erBearbeidet }
+                .filter { grunnlag ->
+                    val søknadsbarn =
+                        grunnlag.gjelderBarnRolle
+                            ?.takeIf { it.rolletype == Rolletype.BARN }
+                            ?.let { listOf(it) }
+                            ?: behandling.søknadsbarn.filter { it.ident != null && it.ident == grunnlag.gjelder }
+                    val grunnlagTilhørerIkkeBMTilSøknadsbarn = søknadsbarn.isNotEmpty() &&
+                        søknadsbarn.none { barn ->
+                            (barn.bidragsmottaker ?: behandling.bidragsmottaker)?.erSammeRolle(grunnlag.rolle) == true
+                        }
+                    grunnlagTilhørerIkkeBMTilSøknadsbarn
+                }
+        bmBoforholdsSomInneholderSøknadsbarnSomTilhørerAnnenBM.forEach { grunnlag ->
+            secureLogger.info {
+                "Sletter bearbeidet boforhold ${grunnlag.id} for BM ${grunnlag.rolle.ident} i behandling ${behandling.id} " +
+                    "fordi barnet ${grunnlag.gjelder} tilhører en annen bidragsmottaker"
+            }
+            behandling.grunnlag.remove(grunnlag)
+            grunnlag.rolle.grunnlag.remove(grunnlag)
+            grunnlag.gjelderBarnRolle?.grunnlagGjelderBarn?.remove(grunnlag)
         }
     }
 
@@ -2233,6 +2353,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else if (Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER == type) {
                 lagreInntektsgrunnlagHvisEndret<SummerteInntekter<SummertMånedsinntekt>>(
@@ -2243,6 +2364,7 @@ class GrunnlagService(
                     innhentetTidspunkt,
                     null,
                     tekniskFeilsjekk,
+                    feilrapportering,
                 )
             } else {
                 log.error {
@@ -2615,7 +2737,7 @@ class GrunnlagService(
         val sisteInnhentedeIkkeBearbeidaGrunnlag =
             behandling.grunnlag
                 .filter { grunnlagsdatatype == it.type && !it.erBearbeidet }
-                .filter { innhentetForRolle == it.rolle }
+                .filter { it.rolle.erSammeRolle(innhentetForRolle) }
                 .maxByOrNull { it.innhentet }
 
         sisteInnhentedeIkkeBearbeidaGrunnlag?.let {
@@ -2675,9 +2797,18 @@ class GrunnlagService(
         hentetTidspunkt: LocalDateTime,
         aktiveringstidspunkt: LocalDateTime? = null,
         tekniskFeilVedInnhenting: Boolean = false,
+        feilVedInnhenting: GrunnlagFeilDto? = null,
     ) {
         val sistInnhentedeGrunnlagAvType: T? = behandling.hentSisteInnhentaGrunnlag(grunnlagstype, rolle)
         val nyesteGrunnlag = behandling.henteNyesteGrunnlag(grunnlagstype, rolle)
+
+        if (erTomtResultatVedFeilEtterTidligereInntekter(innhentetGrunnlag, sistInnhentedeGrunnlagAvType, feilVedInnhenting)) {
+            log.warn {
+                "Innhenting av $grunnlagstype for rolle ${rolle.rolletype} i behandling ${behandling.id} feilet med " +
+                    "${feilVedInnhenting!!.feiltype} og ga tomt resultat. Beholder tidligere innhentede inntekter."
+            }
+            return
+        }
 
         val erFørstegangsinnhentingAvInntekter =
             sistInnhentedeGrunnlagAvType == null && inneholderInntekter(innhentetGrunnlag)
@@ -2736,10 +2867,22 @@ class GrunnlagService(
                     grunnlagRepository.deleteById(it.id!!)
                 }
             }
+            if (grunnlagstype.erBearbeidet && grunnlagSomSkalOppdateres?.aktiv != null) {
+                aktivereSisteInnhentedeRådata(grunnlagstype.type, rolle, behandling)
+            }
         } else {
             log.debug { "Ingen endringer i grunnlag $grunnlagstype for behandling med id ${behandling.id!!}." }
         }
     }
+
+    fun <T> erTomtResultatVedFeilEtterTidligereInntekter(
+        innhentetGrunnlag: T,
+        sistInnhentedeGrunnlag: T?,
+        feilVedInnhenting: GrunnlagFeilDto?,
+    ): Boolean = feilVedInnhenting != null &&
+        !inneholderInntekter(innhentetGrunnlag) &&
+        sistInnhentedeGrunnlag != null &&
+        inneholderInntekter(sistInnhentedeGrunnlag)
 
     fun <T> inneholderInntekter(grunnlag: T): Boolean = when (grunnlag) {
         is SkattepliktigeInntekter -> grunnlag.ainntekter.isNotEmpty() || grunnlag.skattegrunnlag.isNotEmpty()
@@ -2969,7 +3112,9 @@ class GrunnlagService(
                     behandling,
                     rolleInhentetFor,
                     Grunnlagstype(grunnlagsdatatype, false),
-                    innhentetGrunnlag.husstandsmedlemmerOgEgneBarnListe.filtrerSøknadsbarn(behandling).toSet(),
+                    innhentetGrunnlag.husstandsmedlemmerOgEgneBarnListe
+                        .filtrerSøknadsbarn(behandling, rolleInhentetFor)
+                        .toSet(),
                 )
             }
 
@@ -3050,12 +3195,19 @@ class GrunnlagService(
 
 fun Behandling.skalLagreBoforhold(rolleInhentetFor: Rolletype) = tilType() != TypeBehandling.FORSKUDD && rolleInhentetFor == Rolletype.BIDRAGSPLIKTIG
 
-fun List<RelatertPersonGrunnlagDto>.filtrerSøknadsbarn(behandling: Behandling) = behandling.søknadsbarn.map {
-    this.find { rolle -> rolle.gjelderPersonId == it.ident } ?: RelatertPersonGrunnlagDto(
-        gjelderPersonId = it.ident,
-        partPersonId = behandling.bidragsmottaker!!.ident,
-        navn = it.hentNavn(),
-        fødselsdato = it.fødselsdato,
+fun Behandling.søknadsbarnForBidragsmottaker(bidragsmottaker: Rolle) = søknadsbarn.filter {
+    (it.bidragsmottaker ?: this.bidragsmottaker)?.erSammeRolle(bidragsmottaker) == true
+}
+
+fun List<RelatertPersonGrunnlagDto>.filtrerSøknadsbarn(
+    behandling: Behandling,
+    bidragsmottaker: Rolle = behandling.bidragsmottaker!!,
+) = behandling.søknadsbarnForBidragsmottaker(bidragsmottaker).map { søknadsbarn ->
+    this.find { rolle -> rolle.gjelderPersonId == søknadsbarn.ident } ?: RelatertPersonGrunnlagDto(
+        gjelderPersonId = søknadsbarn.ident,
+        partPersonId = bidragsmottaker.ident,
+        navn = søknadsbarn.hentNavn(),
+        fødselsdato = søknadsbarn.fødselsdato,
         relasjon = Familierelasjon.BARN,
         borISammeHusstandDtoListe = emptyList(),
     )

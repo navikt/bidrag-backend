@@ -222,6 +222,7 @@ export enum Resultatkode {
   GEBYR_FRITATT = "GEBYR_FRITATT",
   GEBYR_ILAGT = "GEBYR_ILAGT",
   BARNETERSELVFORSORGET = "BARNET_ER_SELVFORSØRGET",
+  BIDRAG_IKKE_BEREGNET_DELT_BOSTED = "BIDRAG_IKKE_BEREGNET_DELT_BOSTED",
   DIREKTEOPPGJOR = "DIREKTE_OPPGJØR",
   IKKE_DOKUMENTERT_SKOLEGANG = "IKKE_DOKUMENTERT_SKOLEGANG",
   AVSLUTTET_SKOLEGANG = "AVSLUTTET_SKOLEGANG",
@@ -334,6 +335,7 @@ export enum Inntektstype {
   BARNETILLEGG_KLP = "BARNETILLEGG_KLP",
   BARNETILLEGG_SPK = "BARNETILLEGG_SPK",
   BARNETILLEGG_TILTAKSPENGER = "BARNETILLEGG_TILTAKSPENGER",
+  BARNETILLEGG_FORSVARET = "BARNETILLEGG_FORSVARET",
   BARNETILLEGG_SUMMERT = "BARNETILLEGG_SUMMERT",
 }
 
@@ -1239,6 +1241,7 @@ export interface NotatUnderholdBarnDto {
   stønadTilBarnetilsyn: NotatStonadTilBarnetilsynDto[];
   faktiskTilsynsutgift: NotatFaktiskTilsynsutgiftDto[];
   tilleggsstønad: NotatTilleggsstonadDto[];
+  forpleining: NotatForpleiningDto[];
   underholdskostnad: NotatUnderholdskostnadBeregningDto[];
   begrunnelse?: NotatBegrunnelseDto | null;
 }
@@ -1249,6 +1252,11 @@ export interface NotatUnderholdDto {
   offentligeOpplysningerV2: NotatOffentligeOpplysningerUnderhold;
 }
 
+export interface NotatForpleiningDto {
+  periode: DatoperiodeDto;
+  beløp: number;
+}
+
 export interface NotatUnderholdskostnadBeregningDto {
   periode: DatoperiodeDto;
   forbruk: number;
@@ -1256,6 +1264,7 @@ export interface NotatUnderholdskostnadBeregningDto {
   stønadTilBarnetilsyn: number;
   tilsynsutgifter: number;
   barnetrygd: number;
+  forpleining?: number | null;
   total: number;
   beregningsdetaljer?: NotatUnderholdskostnadPeriodeBeregningsdetaljer | null;
 }

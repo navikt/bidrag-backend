@@ -28,9 +28,34 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      npm-dependencies:
+      npm-major:
         patterns:
           - "*"
+        update-types:
+          - "major"
+      npm-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      npm-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      npm-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # bidrag-dokumentmal bruker Tailwind 3. Tailwind 4 krever ny CLI og ny konfigurasjon.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -38,16 +63,11 @@ updates:
     commit-message:
       prefix: "[dependency] "
   - package-ecosystem: "maven"
-    # * matcher ett nivå. Appene under bidrag-dokumenthåndtering og bidrag-admin
-    # ligger ett hakk dypere enn /apps/* og må listes eksplisitt.
-    directories:
-      - "/"
-      - "/apps/*"
-      - "/apps/bidrag-dokumenthåndtering/*"
-      - "/apps/bidrag-admin/*"
-      - "/libs/*"
-      - "/libs/bidrag-felles/*"
-      - "/libs/bidrag-beregn-felles/*"
+    # Avgrens rotjobben til rot-POM; appene og bibliotekene har egne jobber.
+    directory: "/"
+    exclude-paths:
+      - "apps/**"
+      - "libs/**"
     cooldown:
       default-days: 7
     registries:
@@ -58,9 +78,459 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      maven-dependencies:
-        group-by: dependency-name
+      maven-root-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-root-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-root-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-root-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     open-pull-requests-limit: 20
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  # Samle alle bibliotek-POM-er i én jobb. Oppdater ignore-listen ved nye rotavhengigheter.
+  - package-ecosystem: "maven"
+    directories:
+      - "/libs/**/*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-libs-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-libs-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-libs-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-libs-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  # Parent-POM-ene dekker undermodulene i admin.
+  - package-ecosystem: "maven"
+    directories:
+      - "/apps/bidrag-admin"
+      - "/apps/bidrag-elin-stub"
+      - "/apps/bidrag-maskinporten-client"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-admin-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-admin-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-admin-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-admin-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/apps/bidrag-aktoerregister"
+      - "/apps/bidrag-regnskap"
+      - "/apps/bidrag-reskontro"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-skatteetaten-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-skatteetaten-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-skatteetaten-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-skatteetaten-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/apps/bidrag-automatisk-jobb"
+      - "/apps/bidrag-arbeidsflyt"
+      - "/apps/bidrag-behandling"
+      - "/apps/bidrag-henvendelse"
+      - "/apps/bidrag-oppgave"
+      - "/apps/bidrag-statistikk"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-saksflyt-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-saksflyt-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-saksflyt-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-saksflyt-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/apps/bidrag-bbm"
+      - "/apps/bidrag-belopshistorikk"
+      - "/apps/bidrag-grunnlag"
+      - "/apps/bidrag-kodeverk"
+      - "/apps/bidrag-organisasjon"
+      - "/apps/bidrag-person"
+      - "/apps/bidrag-person-hendelse"
+      - "/apps/bidrag-sak"
+      - "/apps/bidrag-samhandler"
+      - "/apps/bidrag-sjablon"
+      - "/apps/bidrag-vedtak"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-grunndata-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-grunndata-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-grunndata-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-grunndata-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directories:
+      - "/apps/bidrag-bidragskalkulator"
+      - "/apps/bidrag-reisekostnad-api"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-innbyggerflater-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-innbyggerflater-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-innbyggerflater-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-innbyggerflater-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-dokumenthåndtering"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-dokumenthandtering-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-dokumenthandtering-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-dokumenthandtering-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-dokumenthandtering-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "maven"
+    commit-message:
+      prefix: "[dependency] "
+  - package-ecosystem: "maven"
+    directory: "/apps/bidrag-tilgangskontroll"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+      - dependency-name: "org.jetbrains.kotlin:*"
+      - dependency-name: "org.apache.maven.plugins:maven-failsafe-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-surefire-plugin"
+      - dependency-name: "org.springframework.boot:spring-boot-maven-plugin"
+      - dependency-name: "org.apache.maven.plugins:maven-antrun-plugin"
+      - dependency-name: "com.pinterest.ktlint:ktlint-cli"
+      - dependency-name: "org.codehaus.mojo:versions-maven-plugin"
+    registries:
+      - "maven-github"
+    cooldown:
+      default-days: 7
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Oslo"
+    groups:
+      maven-tilgangskontroll-major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-tilgangskontroll-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-tilgangskontroll-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      maven-tilgangskontroll-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "maven"
@@ -82,9 +552,17 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      docker-dependencies:
+      docker-major:
         patterns:
           - "*"
+        update-types:
+          - "major"
+      docker-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
       - dependency-name: "cgr-nav/pull-through/nav.no/jre"
         update-types: ["version-update:semver-major"]
@@ -104,9 +582,30 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      pip-dependencies:
+      pip-major:
         patterns:
           - "*"
+        update-types:
+          - "major"
+      pip-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      pip-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      pip-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
@@ -121,9 +620,30 @@ updates:
       time: "04:00"
       timezone: "Europe/Oslo"
     groups:
-      github-actions-dependencies:
+      github-actions-major:
         patterns:
           - "*"
+        update-types:
+          - "major"
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      github-actions-security-major:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+      github-actions-security-minor-patch:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "github-actions"

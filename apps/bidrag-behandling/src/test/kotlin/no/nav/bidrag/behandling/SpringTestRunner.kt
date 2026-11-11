@@ -1,6 +1,8 @@
 package no.nav.bidrag.behandling
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import io.mockk.clearMocks
+import io.mockk.isMockKMock
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.utils.StubUtils
@@ -42,9 +44,11 @@ class SpringTestRunner {
 
     @BeforeEach
     fun mockkUnleash() {
-        // Nullstiller toggle-stubber som andre testklasser har lagt igjen på det globale objektet
-        unmockkObject(UnleashFeaturesProvider)
-        mockkObject(UnleashFeaturesProvider)
+        if (isMockKMock(UnleashFeaturesProvider, objectMock = true)) {
+            clearMocks(UnleashFeaturesProvider)
+        } else {
+            mockkObject(UnleashFeaturesProvider)
+        }
     }
 
     @BeforeEach

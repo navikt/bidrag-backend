@@ -5,6 +5,11 @@ Ved nye vedtak for en stønad vil alltid periodene i det nye vedtaket erstatte e
 Ved overlapp vil eksisterende perioder merkes som ugyldiggjorte og nye perioder med identiske verdier opprettes
 for periodene som eventuelt ikke dekkes av det nye vedtaket. Tilsvarende gjelder for engangsbeløp.
 
+## Oppslag uten treff
+
+Endepunkter som henter én stønad eller ett engangsbeløp, svarer med 404 og et ProblemDetail-objekt når ressursen ikke finnes.
+Endepunkter som henter lister, svarer med 200 og en tom liste (eller et responsobjekt med tom liste) når de ikke finner noe.
+
 ## Håndtering av identer
 
 Identer som er lagret på en stønad eller et engangsbeløp kan bli utdaterte, for eksempel når en person får nytt

@@ -20,13 +20,13 @@ spec:
           - "azp_name"
   image: {{ image }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 30
     timeout: 5
     periodSeconds: 5
     failureThreshold: 20
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 30
     timeout: 5
     failureThreshold: 20
@@ -35,7 +35,9 @@ spec:
     path: /actuator/prometheus
   resources:
     limits:
+      {{#if limits.cpu}}
       cpu: {{limits.cpu}}
+      {{/if}}
       memory: {{limits.memory}}
     requests:
       cpu: {{requests.cpu}}
@@ -59,6 +61,7 @@ spec:
   envFrom:
     - secret: bidrag-regnskap-sftp-private-key
     - secret: bidrag-bot-slack-oauth-token
+    - secret: {{unleash.secret_name}}
   env:
   {{#each env}}
     - name: {{@key}}
@@ -92,6 +95,7 @@ spec:
         - host: {{ env.BIDRAG_VEDTAK_HOST }}
         - host: {{ env.SKATT_HOST }}
         - host: {{ env.BIDRAG_RESKONTRO_HOST }}
+        - host: bidrag-unleash-api.nav.cloud.nais.io
         - host: {{ env.SFTP_HOST }}
           ports:
             - port: 22

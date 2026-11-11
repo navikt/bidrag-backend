@@ -305,6 +305,7 @@ object OppgaveEnhet {
 }
 
 enum class Prioritet {
+    KRITISK,
     HOY,
     NORM,
     LAV,

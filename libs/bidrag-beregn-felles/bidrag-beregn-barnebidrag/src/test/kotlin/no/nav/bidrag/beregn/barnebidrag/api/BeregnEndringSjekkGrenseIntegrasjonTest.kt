@@ -16,7 +16,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEndringSje
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEndringSjekkGrensePeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -448,7 +447,6 @@ internal class BeregnEndringSjekkGrenseIntegrasjonTest : FellesTest() {
             grunnlagSøknadsbarnListe = requestSøknadsbarn,
         )
 
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
         return barnebidragResultat
     }
 }

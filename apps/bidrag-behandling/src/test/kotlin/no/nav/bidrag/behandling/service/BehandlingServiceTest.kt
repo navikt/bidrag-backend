@@ -353,8 +353,8 @@ class BehandlingServiceTest : TestContainerRunner() {
 
             val nyVirkningsdato = LocalDate.now().withDayOfMonth(1)
 
+            // henteBehandling tømmer persistence context før låst henting, så `behandling` er detached her
             entityManager.flush()
-            entityManager.refresh(behandling)
             val oppdaterBehandling = testdataManager.hentBehandling(behandling.id!!)
             assertSoftly(oppdaterBehandling!!.husstandsmedlem) { s ->
                 val andreVoksneIHusstanden = s.voksneIHusstanden

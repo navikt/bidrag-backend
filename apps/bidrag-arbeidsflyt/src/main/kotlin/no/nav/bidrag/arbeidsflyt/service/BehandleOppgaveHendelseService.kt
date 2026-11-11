@@ -8,6 +8,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OpprettJournalforingsOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.hendelse.dto.OppgaveKafkaHendelse
 import no.nav.bidrag.arbeidsflyt.model.OppdaterOppgaveFraHendelse
 import no.nav.bidrag.arbeidsflyt.model.erAvsluttet
+import no.nav.bidrag.arbeidsflyt.model.kreverSøknadsoppgave
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -146,6 +147,9 @@ class BehandleOppgaveHendelseService(
                 if (søknad.søknad.erAvsluttet) {
                     if (behandling != null) {
                         behandling.status = søknad.søknad.behandlingStatusType
+                    }
+                    if (søknad.søknad.kreverSøknadsoppgave) {
+                        behandlingHendelseService.gjennopprettOppgaveHvisBehandlingIkkeFinnes(oppgave, søknad.søknad)
                     }
                     return
                 }

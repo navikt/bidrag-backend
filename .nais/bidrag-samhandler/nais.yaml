@@ -29,19 +29,19 @@ spec:
       {{#each azure_access_inbound}}
          - application: {{this.application}}
            namespace: {{this.namespace}}
-           cluster: {{this.cluster}}
+           {{#if this.cluster}}cluster: {{this.cluster}}{{/if}}
       {{/each}}
   image: {{ image }}
   kafka:
     pool: {{ kafka.pool }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 30
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 20
     timeout: 1
   prometheus:
@@ -49,7 +49,6 @@ spec:
     path: /actuator/prometheus
   resources:
     limits:
-      cpu: {{limits.cpu}}
       memory: {{limits.memory}}
     requests:
       cpu: {{requests.cpu}}

@@ -21,7 +21,7 @@ Applikasjonen fungerer som backend for [bidrag-bidragskalkulator-ui](https://git
 
 For å kjøre applikasjonen lokalt, må følgende være installert:
 
-- Java 21
+- Java 25
 - Maven
 - (Ved kjøring mot sky) `gcloud` og `kubectl` (Se [cammand line access](https://doc.nais.io/operate/how-to/command-line-access/))
 

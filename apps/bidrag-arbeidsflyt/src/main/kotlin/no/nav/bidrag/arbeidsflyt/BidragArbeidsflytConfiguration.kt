@@ -4,7 +4,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import net.javacrumbs.shedlock.core.LockProvider
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock
-import no.nav.bidrag.arbeidsflyt.hendelse.KafkaRetryListener
 import no.nav.bidrag.arbeidsflyt.model.EndreOppgaveFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.HentPersonFeiletFunksjoneltException
 import no.nav.bidrag.arbeidsflyt.model.OpprettOppgaveFeiletFunksjoneltException
@@ -15,6 +14,7 @@ import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvide
 import no.nav.bidrag.commons.unleash.EnableUnleashFeatures
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.config.RestOperationsAzure
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -67,8 +67,8 @@ class HendelseConfiguration {
             } else {
                 run {
                     val strategy = ExponentialBackOffWithMaxRetries(maxRetries)
-                    strategy.multiplier = 2.0
-                    strategy.maxInterval = 1200000L // 20 minutes
+                    strategy.multiplier = 1.2
+                    strategy.maxInterval = 60_000L // 1 min
                     strategy
                 }
             }
