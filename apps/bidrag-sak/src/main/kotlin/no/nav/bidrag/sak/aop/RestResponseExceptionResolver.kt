@@ -19,9 +19,12 @@ class RestResponseExceptionResolver {
 
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class, BasicNotAuthenticatedException::class)
-    protected fun handleUgyldigAutentisering(): ResponseEntity<String> {
-        logger.warn { "Avviser kall uten gyldig autentisering." }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Gyldig autentisering kreves.")
+    protected fun handleUgyldigAutentisering(e: Exception): ResponseEntity<String> {
+        val challenge = if (e is BasicNotAuthenticatedException) "Basic realm=\"bidrag-sak\"" else "Bearer"
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.WWW_AUTHENTICATE, challenge)
+            .body("Gyldig autentisering kreves.")
     }
 
     @ResponseBody

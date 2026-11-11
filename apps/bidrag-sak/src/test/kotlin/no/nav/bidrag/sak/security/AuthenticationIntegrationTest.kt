@@ -15,6 +15,12 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import java.net.Authenticator
+import java.net.PasswordAuthentication
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.util.UUID
 
 class AuthenticationIntegrationTest : SpringH2TestRunner() {
@@ -47,6 +53,7 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
         val response = hent(jwtPath)
 
         response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        response.headers.getFirst(HttpHeaders.WWW_AUTHENTICATE) shouldBe "Bearer"
         verify(exactly = 0) { bidragSakService.finnFogdhistorikk(any()) }
     }
 
@@ -55,6 +62,7 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
         val response = hent(jwtPath, HttpHeaders().apply { setBearerAuth("ugyldig") })
 
         response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        response.headers.getFirst(HttpHeaders.WWW_AUTHENTICATE) shouldBe "Bearer"
         verify(exactly = 0) { bidragSakService.finnFogdhistorikk(any()) }
     }
 
@@ -115,6 +123,25 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
     }
 
     @Test
+    fun `Basic-klient logger inn automatisk etter challenge`() {
+        val passord = UUID.randomUUID().toString()
+        every { ldapUserService.authenticate("testbruker", passord, any()) } returns true
+        val authenticator = object : Authenticator() {
+            override fun getPasswordAuthentication(): PasswordAuthentication = PasswordAuthentication("testbruker", passord.toCharArray())
+        }
+
+        HttpClient.newBuilder().authenticator(authenticator).build().use { client ->
+            val request = HttpRequest.newBuilder(URI.create("http://localhost:$port/$basicPath")).GET().build()
+
+            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+
+            response.statusCode() shouldBe HttpStatus.OK.value()
+        }
+        verify(exactly = 1) { ldapUserService.authenticate("testbruker", passord, any()) }
+        verify(exactly = 1) { bidragSakService.finnPipFor(saksnummer) }
+    }
+
+    @Test
     fun `Basic-PIP avviser feil passord`() {
         val passord = UUID.randomUUID().toString()
         every { ldapUserService.authenticate("testbruker", passord, any()) } returns false
@@ -122,6 +149,7 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
         val response = hent(basicPath, HttpHeaders().apply { setBasicAuth("testbruker", passord) })
 
         response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        response.headers.getFirst(HttpHeaders.WWW_AUTHENTICATE) shouldBe "Basic realm=\"bidrag-sak\""
         verify(exactly = 0) { bidragSakService.finnPipFor(any()) }
     }
 
@@ -130,6 +158,7 @@ class AuthenticationIntegrationTest : SpringH2TestRunner() {
         val response = hent(basicPath)
 
         response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        response.headers.getFirst(HttpHeaders.WWW_AUTHENTICATE) shouldBe "Basic realm=\"bidrag-sak\""
         verify(exactly = 0) { bidragSakService.finnPipFor(any()) }
     }
 
