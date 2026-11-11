@@ -65,6 +65,12 @@ Tillatte pakker er `no.nav.`, `java.util.`, `java.lang.`, `java.time.`, `java.ma
 | Tidsavbrudd mot Valkey | 500 ms. Kan endres med `bidrag.cache.valkey.tidsavbrudd`. |
 | Tidssone | `Europe/Oslo`, uavhengig av JVM-ens tidssone |
 
+## Vanlig `@Cacheable` i appen
+
+Bibliotekets managere brukes bare av `@KortCache` og `@LangCache`. Vanlig `@Cacheable` uten `cacheManager` bruker appens egen `CacheManager`. Har appen ingen, lager Spring Boot en.
+
+Biblioteket setter `spring.cache.type: caffeine` som standard, slik at Spring Boot ikke velger Valkey for vanlig `@Cacheable`. Boots Caffeine-cache har verken levetid eller maks størrelse. Det kan du sette med `spring.cache.caffeine.spec`, eller du kan bruke `@KortCache`. Appen kan velge en annen type med `spring.cache.type` i `application.yaml`.
+
 ## Nøkler
 
 Nøkkelen består av cachenavn, klasse og metode, parametere og eventuelt brukerident. I Valkey ser den slik ut:

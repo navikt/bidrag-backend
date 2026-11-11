@@ -17,6 +17,7 @@ import no.nav.bidrag.cache.util.finnLevetid
 import no.nav.bidrag.cache.util.overvåkCaffeine
 import no.nav.bidrag.cache.util.tidTilStartenAvNesteArbeidsdag
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.Cache
@@ -26,7 +27,6 @@ import org.springframework.cache.caffeine.CaffeineCacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
-import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
 import org.springframework.core.env.getRequiredProperty
 import org.springframework.data.redis.cache.BatchStrategies
@@ -54,19 +54,19 @@ class CacheConfig {
         val KORT_CACHE_LEVETID: Duration = Duration.ofMinutes(10)
         const val MAKS_STØRRELSE = 10_000L
         const val SCAN_BATCHSTØRRELSE = 1_000
+        const val VALKEY_CACHE_MANAGER = "valkeyCacheManager"
     }
 
     @Bean(NØKKELGENERATOR)
     fun bidragCacheKeyGenerator(brukerIdentifikator: ObjectProvider<CacheBrukerIdentifikator>): CacheNøkkelGenerator = CacheNøkkelGenerator(brukerIdentifikator)
 
-    @Bean(KORT_CACHE_MANAGER)
-    @Primary
+    @Bean(KORT_CACHE_MANAGER, defaultCandidate = false)
     fun kortCacheManager(meterRegistry: ObjectProvider<MeterRegistry>): CaffeineCacheManager = caffeineCacheManager(KORT_CACHE_MANAGER, Levetid { KORT_CACHE_LEVETID }, meterRegistry.metrikker())
 
     // Uten Valkey caches @LangCache bare i Caffeine, med samme levetid som ellers.
-    @Bean(LANG_CACHE_MANAGER)
+    @Bean(LANG_CACHE_MANAGER, defaultCandidate = false)
     fun langCacheManager(
-        valkeyCacheManager: ObjectProvider<RedisCacheManager>,
+        @Qualifier(VALKEY_CACHE_MANAGER) valkeyCacheManager: ObjectProvider<RedisCacheManager>,
         meterRegistry: ObjectProvider<MeterRegistry>,
     ): CacheManager {
         val metrikker = meterRegistry.metrikker()
@@ -130,7 +130,7 @@ class CacheConfig {
         @Bean
         fun valkeyCacheWriter(valkeyConnectionFactory: RedisConnectionFactory): RedisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(valkeyConnectionFactory, BatchStrategies.scan(SCAN_BATCHSTØRRELSE))
 
-        @Bean
+        @Bean(VALKEY_CACHE_MANAGER, defaultCandidate = false)
         fun valkeyCacheManager(
             valkeyCacheWriter: RedisCacheWriter,
             redisCacheConfig: RedisCacheConfiguration,

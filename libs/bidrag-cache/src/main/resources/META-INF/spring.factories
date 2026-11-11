@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
 no.nav.bidrag.cache.konfigurasjon.ValkeyAutoConfigFilter
 org.springframework.boot.EnvironmentPostProcessor=\
-no.nav.bidrag.cache.konfigurasjon.ValkeyHelsesjekk
+no.nav.bidrag.cache.konfigurasjon.CacheProperties
