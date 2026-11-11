@@ -5,7 +5,6 @@ import no.nav.bidrag.cache.annotasjoner.LangCache
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.convert.DurationStyle
 import org.springframework.cache.interceptor.KeyGenerator
-import org.springframework.cache.interceptor.SimpleKeyGenerator
 import org.springframework.core.annotation.AnnotatedElementUtils
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Method
@@ -35,7 +34,7 @@ class CacheNøkkelGenerator(
     ): Any {
         val info = metodeInfo.computeIfAbsent(target.javaClass to method) { lagMetodeInfo(target.javaClass, method) }
         val brukerIdent = if (info.perBruker) hentBrukerIdent() else null
-        return CacheNøkkel(info.navn, brukerIdent, SimpleKeyGenerator.generateKey(*params), info.levetid)
+        return CacheNøkkel(info.navn, brukerIdent, params.toList(), info.levetid)
     }
 
     private fun hentBrukerIdent(): String {

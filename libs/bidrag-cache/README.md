@@ -177,12 +177,12 @@ Apper uten Valkey tømmer bare Caffeine i podden som får kallet. Andre podder b
 Nøkkelen består av cachenavn, klasse og metode, parametere og eventuelt brukerident. I Valkey ser den slik ut:
 
 ```
-bidrag-cache::<cachenavn>::<Klasse.metode>::<sha256 av brukerident og parametere>
+bidrag-cache::<cachenavn>::<Klasse.metode>::<sha256 av brukerident og parametere som JSON>
 ```
 
-Brukerident og parametere hashes, så fødselsnumre og andre personopplysninger står ikke i klartekst i Valkey.
+Brukerident og parametere gjøres om til JSON med Jackson og hashes, så fødselsnumre og andre personopplysninger står ikke i klartekst i Valkey. JSON brukes i stedet for `toString()`, som kan være maskert. For eksempel viser `Personident.toString()` bare annenhver siffer.
 
-Parametere må ha en stabil `toString()`, for eksempel `String`, tall, enum og data classes. Andre klasser gir en ny nøkkel for hvert objekt og dermed ingen treff i Valkey.
+Parametere må kunne serialiseres med Jackson, for eksempel `String`, tall, enum, data classes og typer med `@JsonValue` som `Personident`. Felt og map-nøkler sorteres, så rekkefølgen påvirker ikke nøkkelen. Kan en parameter ikke serialiseres, behandles det som en feil mot Valkey, og verdien caches bare i Caffeine.
 
 ## Feil
 

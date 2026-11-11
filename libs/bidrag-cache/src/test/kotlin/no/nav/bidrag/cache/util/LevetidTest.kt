@@ -11,14 +11,14 @@ class LevetidTest {
 
     @Test
     fun `skal bruke levetid fra nøkkelen når den er satt`() {
-        val nøkkel = CacheNøkkel("A.b", null, "x", Duration.ofMinutes(5))
+        val nøkkel = CacheNøkkel("A.b", null, listOf("x"), Duration.ofMinutes(5))
 
         levetid.expireAfterCreate(nøkkel, "verdi", 0) shouldBe Duration.ofMinutes(5).toNanos()
     }
 
     @Test
     fun `skal bruke standard levetid når nøkkelen ikke har levetid`() {
-        levetid.expireAfterCreate(CacheNøkkel("A.b", null, "x"), "verdi", 0) shouldBe standard.toNanos()
+        levetid.expireAfterCreate(CacheNøkkel("A.b", null, listOf("x")), "verdi", 0) shouldBe standard.toNanos()
     }
 
     @Test
