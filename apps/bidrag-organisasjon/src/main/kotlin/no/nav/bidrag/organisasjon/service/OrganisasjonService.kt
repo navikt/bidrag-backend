@@ -175,14 +175,17 @@ class OrganisasjonService(
         brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR,
     )?.enhet
 
-    fun hentArbeidsfordelingForSak(request: ArbeidsfordelingSakRequest): ArbeidsfordelingSakResponse? = finnArbeidsfordeling(
-        ident = request.hovedident,
-        alleIdenter = request.parter,
-        tema = Tema.TEMA_BIDRAG.verdi,
-        behandlingstema = request.arbeidsfordeling.behandlingstema,
-        behandlingstype = request.sakskategori.finnBehandlingstypekode(request.behandlingstype),
-        brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR,
-    )
+    fun hentArbeidsfordelingForSak(request: ArbeidsfordelingSakRequest): ArbeidsfordelingSakResponse? {
+        require(request.hovedident in request.parter) { "parter må inneholde hovedident" }
+        return finnArbeidsfordeling(
+            ident = request.hovedident,
+            alleIdenter = request.parter,
+            tema = Tema.TEMA_BIDRAG.verdi,
+            behandlingstema = request.arbeidsfordeling.behandlingstema,
+            behandlingstype = request.sakskategori.finnBehandlingstypekode(request.behandlingstype),
+            brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR,
+        )
+    }
 
     private fun finnArbeidsfordeling(
         ident: Personident,

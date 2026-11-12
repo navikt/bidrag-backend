@@ -1,5 +1,6 @@
 package no.nav.bidrag.organisasjon.service
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -346,6 +347,15 @@ internal class OrganisasjonServiceTest {
             val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR))
 
             response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+        }
+
+        @Test
+        fun `Skal avvise request når parter mangler hovedident`() {
+            val request = arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR).copy(parter = setOf(ANNEN_PART))
+
+            shouldThrow<IllegalArgumentException> {
+                organisasjonService.hentArbeidsfordelingForSak(request)
+            }
         }
 
         private fun mockGraderingsinfo(skjermetAnnenPart: Boolean) {
