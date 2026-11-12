@@ -138,9 +138,6 @@
     }
   },
   "erOrkestrertVedtak" : false,
-  "gebyrV2" : {
-    "gebyrRoller" : [ ]
-  },
   "gebyrV3" : {
     "saker" : [ ]
   },

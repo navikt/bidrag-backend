@@ -1,3 +1,4 @@
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
 import { TableHeader } from "~/components/CommonTable";
 import { Styling } from "~/components/notat_felles/ThemeContext";
@@ -23,21 +24,21 @@ export const getInntektTableHeaders = (
       : undefined,
     erBarnetillegg && erBidrag
       ? [
-          { name: tekster.tabell.felles.type, width: "160px" },
-          { name: tekster.tabell.inntekt.beløp, width: "80px" },
+          { name: ord.type, width: "160px" },
+          { name: ord.beløp, width: "80px" },
           { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
           { name: tekster.tabell.inntekt.skattesats, width: "80px" },
           { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
         ]
       : erBarnetillegg
         ? [
-            { name: tekster.tabell.felles.type, width: "160px" },
-            { name: tekster.tabell.inntekt.beløp, width: "80px" },
+            { name: ord.type, width: "160px" },
+            { name: ord.beløp, width: "80px" },
             { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
             { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
           ]
         : {
-            name: tekster.tabell.inntekt.beløp,
+            name: ord.beløp,
             width: erBarnetillegg ? "140px" : undefined,
           },
   ]

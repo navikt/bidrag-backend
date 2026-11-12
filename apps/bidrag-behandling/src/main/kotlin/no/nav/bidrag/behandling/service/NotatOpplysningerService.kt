@@ -115,9 +115,7 @@ import no.nav.bidrag.transport.dokumentmaler.notat.NotatBoforholdTilBMMedSøknad
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatErLikForAlleBasertPåSak
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto.NotatGebyrInntektDto
-import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrRolleV2Dto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrSakDto
-import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrV2Dto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrV3Dto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatInntektDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatInntekterDto
@@ -296,7 +294,6 @@ class NotatOpplysningerService(
             ),
             underholdskostnader = behandling.byggUnderholdskostnader(utvalg),
             gebyrV3 = behandling.byggGebyrV3(utvalg),
-            gebyrV2 = behandling.byggGebyrV2(utvalg),
             boforhold = behandling.byggBoforhold(utvalg, sisteAktiveGrunnlag),
             personer = utvalg.roller.sortedBy { it.fødselsdato }.map(Rolle::tilNotatRolle),
             inntekter = behandling.byggInntekter(utvalg, sisteAktiveGrunnlag),
@@ -344,21 +341,6 @@ class NotatOpplysningerService(
                     saksnummer = sak.saksnummer,
                     gebyrRoller = sak.gebyrRoller.map { it.tilNotatGebyrDetaljer() },
                     gebyr18År = sak.gebyr18År.map { it.tilNotatGebyrDetaljer() },
-                )
-            },
-    )
-
-    private fun Behandling.byggGebyrV2(utvalg: NotatUtvalg) = NotatGebyrV2Dto(
-        gebyrRoller =
-        mapper
-            .run { mapGebyrV2() }
-            .gebyrRoller
-            .sortedBy { it.rolle.fødselsdato }
-            .filter { utvalg.gjelderSak(it.rolle.saksnummer) }
-            .map { gebyrRolle ->
-                NotatGebyrRolleV2Dto(
-                    rolle = gebyrRolle.rolle.tilNotatRolle(),
-                    gebyrDetaljer = gebyrRolle.gebyrDetaljer.map { it.tilNotatGebyrDetaljer(gebyrRolle.rolle) },
                 )
             },
     )

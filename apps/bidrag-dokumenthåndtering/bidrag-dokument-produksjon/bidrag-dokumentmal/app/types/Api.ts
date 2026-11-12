@@ -969,7 +969,6 @@ export interface NotatGebyrDetaljerDto {
   endeligIlagtGebyr: boolean;
   begrunnelse?: string | null;
   beløpGebyrsats: number;
-  /** @deprecated */
   rolle: DokumentmalPersonDto;
   gebyrResultatVisningsnavn: string;
   erManueltOverstyrt: boolean;
@@ -979,11 +978,6 @@ export interface NotatGebyrInntektDto {
   skattepliktigInntekt: number;
   maksBarnetillegg?: number | null;
   totalInntekt: number;
-}
-
-export interface NotatGebyrRolleV2Dto {
-  gebyrDetaljer: NotatGebyrDetaljerDto[];
-  rolle: DokumentmalPersonDto;
 }
 
 export interface NotatGebyrSakDto {
@@ -1006,10 +1000,6 @@ export interface NotatGebyrSoknadDetaljerDto {
   behandlingstypeVisningsnavn?: string | null;
   søktAvTypeVisningsnavn?: string | null;
   behandlingstemaVisningsnavn?: string | null;
-}
-
-export interface NotatGebyrV2Dto {
-  gebyrRoller: NotatGebyrRolleV2Dto[];
 }
 
 export interface NotatGebyrV3Dto {
@@ -1538,7 +1528,6 @@ export interface VedtakNotatDto {
   utgift?: NotatSaerbidragUtgifterDto | null;
   boforhold: NotatBoforholdDto;
   samværV2?: NotatSamvaerDto | null;
-  gebyrV2?: NotatGebyrV2Dto | null;
   gebyrV3?: NotatGebyrV3Dto | null;
   underholdskostnader?: NotatUnderholdDto | null;
   personer: DokumentmalPersonDto[];

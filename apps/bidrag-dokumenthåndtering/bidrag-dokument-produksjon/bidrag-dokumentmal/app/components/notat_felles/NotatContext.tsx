@@ -14,6 +14,14 @@ export enum RenderPDFVersion {
   V1 = "V1",
   V2 = "V2",
 }
+/** Vedleggene i notatet. Nummeret til et vedlegg er plassen det har i listen som gis til `NotatProvider`. */
+export type Vedlegg =
+  | "underholdskostnader"
+  | "boforhold"
+  | "inntekter"
+  | "samvær"
+  | "beregningsdetaljer";
+
 export enum RenderMode {
   PDF,
   HTML,
@@ -34,16 +42,21 @@ interface INotatContext {
   type: NotatMalType;
   renderMode: RenderMode;
   renderPDFVersion: RenderPDFVersion;
+  vedlegg: Vedlegg[];
 }
 export const NotatContext = createContext<INotatContext | null>(null);
 export function useNotatFelles(): INotatContext {
   return useContext(NotatContext) as INotatContext;
+}
+export function useVedleggNummer(vedlegg: Vedlegg): number {
+  return useNotatFelles().vedlegg.indexOf(vedlegg) + 1;
 }
 export type NotatDataProps = {
   styling: Styling;
   data: VedtakNotatDto;
   renderMode: RenderMode;
   renderPDFVersion: RenderPDFVersion;
+  vedlegg?: Vedlegg[];
 };
 
 export function NotatProvider({
@@ -52,6 +65,7 @@ export function NotatProvider({
   data,
   renderMode,
   renderPDFVersion,
+  vedlegg = [],
 }: PropsWithChildren<NotatDataProps>) {
   const dataCorrected = {
     ...data,
@@ -75,6 +89,7 @@ export function NotatProvider({
             renderMode,
             erDirekteAvslagForBarn,
             renderPDFVersion,
+            vedlegg,
             data: dataCorrected,
             type: dataCorrected.type,
             gjelderFlereSaker:

@@ -1,3 +1,4 @@
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
 import { CommonTable, RowContent } from "~/components/CommonTable";
 
@@ -24,7 +25,7 @@ export default function CalculationTable({
         data={{
           headers: [
             {
-              name: tekster.tabell.felles.beskrivelse,
+              name: ord.beskrivelse,
               width: "250px",
             },
             hasCalulcation
@@ -34,7 +35,7 @@ export default function CalculationTable({
                 }
               : undefined,
             {
-              name: tekster.tabell.felles.beløp,
+              name: ord.beløp,
               width: "50px",
             },
           ].filter((d) => d != undefined),
