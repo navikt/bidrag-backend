@@ -3,6 +3,10 @@ import { formatPeriode } from "~/utils/date-utils";
 import { formatterBeløp } from "~/utils/visningsnavn";
 import { NotatInntektDto, TypeArManedsperiode } from "~/types/Api";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
+import ord from "~/tekster/ord.json";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+
+const t = notatTekster.inntekter;
 
 type InntektsposterProps = {
   periode?: TypeArManedsperiode;
@@ -22,7 +26,7 @@ export default function Inntektsposter({
       }}
     >
       <Inntektspost
-        label={"Periode"}
+        label={ord.periode}
         value={formatPeriode(periode!.fom, periode!.til)}
       />
       {data.inntektsposter.map((d, i) => (

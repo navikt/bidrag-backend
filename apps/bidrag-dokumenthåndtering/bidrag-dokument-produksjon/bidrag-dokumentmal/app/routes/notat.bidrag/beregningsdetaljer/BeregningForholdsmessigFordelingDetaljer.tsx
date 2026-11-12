@@ -13,6 +13,10 @@ import {
 import Person from "~/components/Person";
 import { BeregningBarn } from "~/types/commonTypes";
 import { BeregnetBidragBarnDto } from "~/types/Api";
+import ord from "~/tekster/ord.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.forholdsmessigFordeling;
 
 export const BeregningForholdsmessigFordeling = () => {
   const {
@@ -48,8 +52,8 @@ export const BeregningForholdsmessigFordeling = () => {
             <h3>
               {forholdsmessigFordeling.beregningFordelingAvBidrag
                 .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn
-                ? "Vurdering av revurderingsbarn og andre barn mot beløpshistorikk"
-                : "Vurdering av revurderingsbarn mot beløpshistorikk"}
+                ? t.overskrifter.vurderingRevurderingsbarnOgAndreBarn
+                : t.overskrifter.vurderingRevurderingsbarn}
             </h3>
             <BeregningForholdsmessigFordelingRevurdering />
           </div>
@@ -58,7 +62,7 @@ export const BeregningForholdsmessigFordeling = () => {
         {kanFatteVedtakForRevurderingsbarn && (
           <div className="border border-gray-200  rounded">
             <div className="flex flex-col gap-1">
-              <h3>Beregning for søknadsbarn og revurderingsbarn</h3>
+              <h3>{t.overskrifter.beregningSøknadsbarnOgRevurderingsbarn}</h3>
               <BeregningForholdsmessigFordelingSøknadsbarn />
             </div>
           </div>
@@ -89,9 +93,9 @@ export const BeregningForholdsmessigFordelingRevurdering = () => {
 
   function renderResult() {
     if (sluttberegning.bidragJustertNedTil25ProsentAvInntekt) {
-      return ` (redusert ned til 25% av inntekt)`;
+      return t.forholdsmessigFordeling.redusertNedTil25ProsentAvInntekt;
     } else if (sluttberegning.bidragJustertNedTilEvne) {
-      return ` (redusert ned til evne)`;
+      return t.forholdsmessigFordeling.redusertNedTilEvne;
     }
     return "";
   }
@@ -141,18 +145,18 @@ export const BeregningForholdsmessigFordelingRevurdering = () => {
             .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn && (
             <DataViewTable
               className="pb-2"
-              title="Forholdsmessig fordeling"
+              title={t.forholdsmessigFordeling.tittel}
               data={
                 [
                   forholdsmessigFordeling.beregningFordelingAvBidrag
                     .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn && {
-                    label: "BPs totale underholdskostnad",
+                    label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
                     labelBold: false,
                     value: `${formatterBeløpForBeregning(sumAndreBarn)} + ${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordelingSøknadsbarn)}`,
                     result: `${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling)}`,
                   },
                   finnesPriorierteBidrag && {
-                    label: "BPs evne som kan fordeles",
+                    label: t.forholdsmessigFordeling.bpsEvneSomKanFordeles,
                     labelBold: false,
                     value: `${formatterBeløpForBeregning(delberegningBidragsevne.bidragsevne)} - ${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumPrioriterteBidragTilFordeling)}`,
                     result: `${formatterBeløpForBeregning(forholdsmessigFordeling.evneJustertForPrioriterteBidrag)}`,
@@ -162,12 +166,14 @@ export const BeregningForholdsmessigFordelingRevurdering = () => {
             />
           )}
           <p className="mt-2">
-            Evnen på {formatterBeløpForBeregning(evne)} er tilstrekkelig for å
-            dekke total andel av U på{" "}
-            {formatterBeløpForBeregning(
-              beregningFordelingAvBidrag.sumBidragTilFordeling,
-            )}
-            . Det vil derfor ikke fattes vedtak for revurderingsbarn.
+            {t.evnevurdering.tilstrekkeligIngenVedtakForRevurderingsbarn
+              .replace("{evne}", formatterBeløpForBeregning(evne))
+              .replace(
+                "{totalAndel}",
+                formatterBeløpForBeregning(
+                  beregningFordelingAvBidrag.sumBidragTilFordeling,
+                ),
+              )}
           </p>
         </>
       );
@@ -175,16 +181,16 @@ export const BeregningForholdsmessigFordelingRevurdering = () => {
     return (
       <div>
         <DataViewTable
-          title="Forholdsmessig fordeling"
+          title={t.forholdsmessigFordeling.tittel}
           data={
             [
               !forholdsmessigFordeling && {
-                label: "BPs totale underholdskostnad",
+                label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
                 labelBold: false,
                 value: `${formatterBeløpForBeregning(bpsSumAndelAvU)}`,
               },
               {
-                label: "BPs totale underholdskostnad",
+                label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
                 labelBold: false,
                 value: `${formatterBeløpForBeregning(sumAndreBarn)} + ${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordelingSøknadsbarn)}`,
                 result: `${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling)}`,
@@ -194,8 +200,8 @@ export const BeregningForholdsmessigFordelingRevurdering = () => {
         />
         <p className="mt-2">
           {!erNokEvne
-            ? `Evnen på ${formatterBeløpForBeregning(evne)} er ikke tilstrekkelig for å dekke total andel av U på ${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling)}.${erSistePeriode ? " Det anbefales derfor å fatte vedtak for revurderingsbarn." : ""}`
-            : `Evnen på ${formatterBeløpForBeregning(evne)} er tilstrekkelig for å dekke total andel av U på ${formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling)}.${erSistePeriode ? " Det anbefales derfor å ikke fatte vedtak for revurderingsbarn." : ""}`}
+            ? `${t.evnevurdering.ikkeTilstrekkelig.replace("{evne}", formatterBeløpForBeregning(evne)).replace("{totalAndel}", formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling))}${erSistePeriode ? t.evnevurdering.anbefalingFatteVedtak : ""}`
+            : `${t.evnevurdering.tilstrekkelig.replace("{evne}", formatterBeløpForBeregning(evne)).replace("{totalAndel}", formatterBeløpForBeregning(beregningFordelingAvBidrag.sumBidragTilFordeling))}${erSistePeriode ? t.evnevurdering.anbefalingIkkeFatteVedtak : ""}`}
         </p>
       </div>
     );
@@ -241,15 +247,15 @@ export const ForholdsmessigFordelingSøknadsbarn = ({
     >
       <h4>
         {finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn
-          ? "BPs totale underholdskostnad for søknadsbarn"
-          : "BPs totale underholdskostnad"}
+          ? t.søknadsbarn.tittelNårAndreBarnHarLøpendeBidrag
+          : t.søknadsbarn.tittel}
       </h4>
       <CommonTable
         layoutAuto
         data={{
           headers: [
-            { name: "Barn", width: "500px" },
-            { name: "Andel U", width: "50px" },
+            { name: ord.barn, width: "500px" },
+            { name: t.søknadsbarn.kolonner.andelU, width: "50px" },
           ] as TableHeader[],
           rows: søknadsbarn
             .map((b) => ({
@@ -276,7 +282,7 @@ export const ForholdsmessigFordelingSøknadsbarn = ({
               {
                 columns: [
                   {
-                    content: "Sum" as string,
+                    content: ord.sum,
                     labelBold: true,
                   },
                   {
@@ -309,9 +315,9 @@ export const BeregningForholdsmessigFordelingSøknadsbarn = () => {
 
   function renderResult() {
     if (sluttberegning.bidragJustertNedTil25ProsentAvInntekt) {
-      return ` (redusert ned til 25% av inntekt)`;
+      return t.forholdsmessigFordeling.redusertNedTil25ProsentAvInntekt;
     } else if (sluttberegning.bidragJustertNedTilEvne) {
-      return ` (redusert ned til evne)`;
+      return t.forholdsmessigFordeling.redusertNedTilEvne;
     }
     return "";
   }
@@ -357,18 +363,18 @@ export const BeregningForholdsmessigFordelingSøknadsbarn = () => {
           {forholdsmessigFordeling.beregningFordelingAvBidrag
             .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn && (
             <DataViewTable
-              title="Forholdsmessig fordeling"
+              title={t.forholdsmessigFordeling.tittel}
               data={
                 [
                   forholdsmessigFordeling.beregningFordelingAvBidrag
                     .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn && {
-                    label: "BPs totale underholdskostnad",
+                    label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
                     labelBold: false,
                     value: `${formatterBeløpForBeregning(sumAndreBarn)} + ${formatterBeløpForBeregning(sumFordeling.sumBidragTilFordelingSøknadsbarn)}`,
                     result: `${formatterBeløpForBeregning(sumFordeling.sumBidragTilFordeling)}`,
                   },
                   finnesPriorierteBidrag && {
-                    label: "BPs evne som kan fordeles",
+                    label: t.forholdsmessigFordeling.bpsEvneSomKanFordeles,
                     labelBold: false,
                     value: `${formatterBeløpForBeregning(delberegningBidragsevne.bidragsevne)} - ${formatterBeløpForBeregning(sumFordeling.sumPrioriterteBidragTilFordeling)}`,
                     result: `${formatterBeløpForBeregning(forholdsmessigFordeling.evneJustertForPrioriterteBidrag)}`,
@@ -378,9 +384,12 @@ export const BeregningForholdsmessigFordelingSøknadsbarn = () => {
             />
           )}
           <p className="mt-2">
-            Evnen på {formatterBeløpForBeregning(evne)} er tilstrekkelig for å
-            dekke total andel av U på{" "}
-            {formatterBeløpForBeregning(sumFordeling.sumBidragTilFordeling)}
+            {t.evnevurdering.tilstrekkeligSøknadsbarn
+              .replace("{evne}", formatterBeløpForBeregning(evne))
+              .replace(
+                "{totalAndel}",
+                formatterBeløpForBeregning(sumFordeling.sumBidragTilFordeling),
+              )}
           </p>
         </>
       );
@@ -388,41 +397,43 @@ export const BeregningForholdsmessigFordelingSøknadsbarn = () => {
 
     return (
       <DataViewTable
-        title="Forholdsmessig fordeling"
+        title={t.forholdsmessigFordeling.tittel}
         data={
           [
             !forholdsmessigFordeling && {
-              label: "BPs totale underholdskostnad",
+              label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
               labelBold: false,
               value: `${formatterBeløpForBeregning(bpsSumAndelAvU)}`,
             },
             forholdsmessigFordeling.beregningFordelingAvBidrag
               .finnesBarnMedLøpendeBidragSomIkkeErSøknadsbarn && {
-              label: "BPs totale underholdskostnad",
+              label: t.forholdsmessigFordeling.bpsTotaleUnderholdskostnad,
               labelBold: false,
               value: `${formatterBeløpForBeregning(sumAndreBarn)} + ${formatterBeløpForBeregning(sumFordeling.sumBidragTilFordelingSøknadsbarn)}`,
               result: `${formatterBeløpForBeregning(sumFordeling.sumBidragTilFordeling)}`,
             },
             {
-              label: "Barnets andel av underholdskostnad",
+              label: t.forholdsmessigFordeling.barnetsAndelAvUnderholdskostnad,
               labelBold: false,
               value: `${formatterBeløpForBeregning(andelFordeltTilBarnet)} / ${formatterBeløpForBeregning(bidragTilFordelingMinusUtlandsbidrag)}`,
               result: `${formatterProsent(bpAndelAvUVedForholdsmessigFordelingFaktor)}`,
             },
             finnesPriorierteBidrag && {
-              label: "BPs evne som kan fordeles",
+              label: t.forholdsmessigFordeling.bpsEvneSomKanFordeles,
               labelBold: false,
               value: `${formatterBeløpForBeregning(delberegningBidragsevne.bidragsevne)} - ${formatterBeløpForBeregning(sumFordeling.sumPrioriterteBidragTilFordeling)}`,
               result: `${formatterBeløpForBeregning(forholdsmessigFordeling.evneJustertForPrioriterteBidrag)}`,
             },
             {
-              label: "Barnets andel etter forholdsmessig fordeling",
+              label:
+                t.forholdsmessigFordeling
+                  .barnetsAndelEtterForholdsmessigFordeling,
               labelBold: false,
               value: `${formatterProsent(bpAndelAvUVedForholdsmessigFordelingFaktor)} x ${formatterBeløpForBeregning(forholdsmessigFordeling.evneJustertForPrioriterteBidrag)}`,
               result: `${formatterBeløpForBeregning(bpEvneVedForholdsmessigFordeling)}`,
             },
             {
-              label: "Foreløpig bidrag",
+              label: t.forholdsmessigFordeling.foreløpigBidrag,
               labelBold: false,
               value: ` ${formatterBeløpForBeregning(foreløpigBidrag)}${renderResult()}`,
             },
@@ -485,7 +496,7 @@ const ForholdsmessigFordelingBeregningAndreBarn = ({
         bidragspliktigesBeregnedeTotalbidrag={
           sumFordeling.sumBidragTilFordelingIkkeSøknadsbarn
         }
-        title={"BP's beregnede totalbidrag for andre barn"}
+        title={t.beregnedeTotalbidrag.tittelAndreBarn}
       />
 
       <BpsPrivatAvtalerTabell
@@ -499,7 +510,7 @@ const ForholdsmessigFordelingBeregningAndreBarn = ({
 export const BpsBeregnedeTotalbidragTabell = ({
   beregning,
   bidragspliktigesBeregnedeTotalbidrag,
-  title = "BP's beregnede totalbidrag",
+  title = t.beregnedeTotalbidrag.tittel,
 }: {
   beregning: BeregningBarn[];
   bidragspliktigesBeregnedeTotalbidrag: number;
@@ -515,8 +526,11 @@ export const BpsBeregnedeTotalbidragTabell = ({
         layoutAuto
         data={{
           headers: [
-            { name: "Barn", width: "500px" },
-            { name: "Beregnet bidrag", width: "50px" },
+            { name: ord.barn, width: "500px" },
+            {
+              name: t.beregnedeTotalbidrag.kolonner.beregnetBidrag,
+              width: "50px",
+            },
           ] as TableHeader[],
           rows: beregning
             .filter((b) => !b.privatAvtale)
@@ -544,7 +558,7 @@ export const BpsBeregnedeTotalbidragTabell = ({
               {
                 columns: [
                   {
-                    content: "Sum" as string,
+                    content: ord.sum,
                     labelBold: true,
                   },
                   {
@@ -573,13 +587,13 @@ export const BpsPrivatAvtalerTabell = ({
 
   return (
     <div className="mb-2">
-      <h4>{"BP's private avtaler"}</h4>
+      <h4>{t.privatAvtaler.tittel}</h4>
       <CommonTable
         layoutAuto
         data={{
           headers: [
-            { name: "Barn", width: "500px" },
-            { name: "Beløp", width: "50px" },
+            { name: ord.barn, width: "500px" },
+            { name: ord.beløp, width: "50px" },
           ] as TableHeader[],
           rows: privatAvtaleBarn
             .map((b) => ({
@@ -606,7 +620,7 @@ export const BpsPrivatAvtalerTabell = ({
               {
                 columns: [
                   {
-                    content: "Sum" as string,
+                    content: ord.sum,
                     labelBold: true,
                   },
                   {
@@ -653,31 +667,31 @@ export const BpsPrivatAvtalerTabellIkkeTilFordeling = ({
         data={{
           headers: [
             {
-              name: "Barn",
+              name: ord.barn,
               width: "500px",
             },
             finnesIndeksregulering && {
-              name: "Indeks",
+              name: t.bidragSomIkkeKanFordeles.kolonner.indeks,
               width: "50px",
             },
             inneholderUtenlandsk && {
-              name: "Avtalebeløp",
+              name: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløp,
               width: "50px",
             },
             inneholderUtenlandsk && {
-              name: "Valutakurs",
+              name: t.bidragSomIkkeKanFordeles.kolonner.valutakurs,
               width: "50px",
             },
             inneholderUtenlandsk && {
-              name: "Avtalebeløp (NOK)",
+              name: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløpNok,
               width: "50px",
             },
             inneholderUtenlandsk && {
-              name: "Samvær",
+              name: t.bidragSomIkkeKanFordeles.kolonner.samvær,
               width: "50px",
             },
             {
-              name: "Beløp",
+              name: ord.beløp,
               width: "50px",
             },
           ].filter((h) => h != null) as TableHeader[],
@@ -721,7 +735,7 @@ export const BpsPrivatAvtalerTabellIkkeTilFordeling = ({
               {
                 columns: [
                   {
-                    content: "Sum" as string,
+                    content: ord.sum,
                     labelBold: true,
                     colSpanNegative: 1,
                   },
@@ -740,7 +754,7 @@ export const BpsPrivatAvtalerTabellIkkeTilFordeling = ({
     <div className={"mb-2"}>
       <div>
         <h4 className="inline-block align-middle">
-          {"BP's bidrag som ikke kan fordeles"}
+          {t.bidragSomIkkeKanFordeles.tittel}
         </h4>
 
         {renderTablePrivatAvtale()}

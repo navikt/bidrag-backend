@@ -1,0 +1,11 @@
+{
+  "tittel": "Forskudd, saksbehandlingsnotat",
+  "vedtak": {
+    "tittel": "Vedtak",
+    "tabellInnvilget": {
+      "sivilstand": "Sivilstand",
+      "antallBarnIHusstand": "Antall barn i husstand",
+      "forskudd": "Forskudd"
+    }
+  }
+}

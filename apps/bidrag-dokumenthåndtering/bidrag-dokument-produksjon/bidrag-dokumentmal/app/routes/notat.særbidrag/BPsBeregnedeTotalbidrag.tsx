@@ -1,8 +1,13 @@
+import ord from "~/tekster/ord.json";
 import { NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import tekster from "~/tekster";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
 import { CommonTable, TableColumn, TableRow } from "~/components/CommonTable";
 import { CalculationTable } from "~/components/vedtak/CalculationTable";
+
+const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
+
+const t = tekst.bpsBeregnedeTotalbidrag;
 
 export const BPsBeregnedeTotalbidrag = ({
   delberegning,
@@ -11,27 +16,27 @@ export const BPsBeregnedeTotalbidrag = ({
 }) => {
   return (
     <div>
-      <h4>{`${tekster.begreper.bidragspliktiges} beregnede totalbidrag`}</h4>
+      <h4>{t.tittel}</h4>
       <CommonTable
         data={{
           headers: [
             {
-              name: "Barn",
+              name: ord.barn,
             },
             {
-              name: "Saksnummer",
+              name: ord.saksnummer,
             },
             {
-              name: "Løpende bidrag",
+              name: t.kolonner.løpendeBidrag,
             },
             {
-              name: "Samvær",
+              name: t.kolonner.samvær,
             },
             {
-              name: "Reduksjon av BPs andel av U",
+              name: t.kolonner.reduksjonAvBpsAndelAvU,
             },
             {
-              name: "Sum",
+              name: ord.sum,
             },
           ],
           rows: delberegning.beregnetBidragPerBarnListe
@@ -50,13 +55,14 @@ export const BPsBeregnedeTotalbidrag = ({
                             width={"200px"}
                             simpleStyling
                             className={"ml-2"}
-                            title={`Reduksjon av BPs andel av U`}
+                            title={t.reduksjonAvBpsAndelAvU.tittel}
                             data={[
                               {
-                                label: `BPs andel av U${
+                                label: `${t.reduksjonAvBpsAndelAvU.bpsAndelAvU}${
                                   !erVedtakFraBBM &&
                                   row.bidragJustertForNettoBarnetilleggBP
-                                    ? " (justert opp til BPs netto barnetillegg)"
+                                    ? t.reduksjonAvBpsAndelAvU
+                                        .justertOppTilBpsNettoBarnetillegg
                                     : ""
                                 }`,
 
@@ -68,7 +74,7 @@ export const BPsBeregnedeTotalbidrag = ({
                                 ),
                               },
                               {
-                                label: `Faktisk bidrag`,
+                                label: t.reduksjonAvBpsAndelAvU.faktiskBidrag,
                                 value: (
                                   <div>
                                     -{" "}
@@ -83,7 +89,7 @@ export const BPsBeregnedeTotalbidrag = ({
                               },
                             ]}
                             result={{
-                              label: "Resultat",
+                              label: ord.resultat,
                               value: formatterBeløpForBeregning(
                                 row.reduksjonUnderholdskostnad,
                                 true,
@@ -134,7 +140,7 @@ export const BPsBeregnedeTotalbidrag = ({
                     colSpan: 4,
                   } as TableColumn,
                   {
-                    content: "Beregnet totalbidrag: ",
+                    content: t.beregnetTotalbidrag,
                     labelBold: true,
                     textAlign: "right",
                     colSpan: 1,
@@ -154,7 +160,7 @@ export const BPsBeregnedeTotalbidrag = ({
                 skipBorderBottom: true,
                 columns: [
                   {
-                    content: "U = Underholdskostnad, BP = Bidragspliktig",
+                    content: t.forklaring,
                     colSpan: 7,
                   },
                 ] as TableColumn[],

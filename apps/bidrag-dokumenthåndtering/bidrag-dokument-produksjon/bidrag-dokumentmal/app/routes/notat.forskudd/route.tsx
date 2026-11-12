@@ -1,10 +1,11 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
 import Vedtak from "~/routes/notat.forskudd/Vedtak";
-import tekster from "~/tekster";
+import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.json";
 import {
   NotatProvider,
   RenderMode,
+  Vedlegg,
 } from "~/components/notat_felles/NotatContext";
 import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer";
 import Boforhold from "~/components/notat_felles/components/Boforhold";
@@ -22,12 +23,15 @@ export async function action(args: ActionFunctionArgs) {
 
 export function meta() {
   return [
-    { title: tekster.titler.forskudd },
-    { name: "description", content: tekster.titler.forskudd },
+    { title: forskuddTekster.tittel },
+    { name: "description", content: forskuddTekster.tittel },
     { property: "author", content: "bidrag-dokument-produksjon" },
-    { property: "subject", content: tekster.titler.forskudd },
+    { property: "subject", content: forskuddTekster.tittel },
   ];
 }
+
+// Vedleggene står i den rekkefølgen de kommer i notatet. Nummeret til hvert vedlegg følger av rekkefølgen.
+const vedlegg: Vedlegg[] = ["boforhold", "inntekter"];
 
 export default function NotatForskudd() {
   const response = useActionData<NotatRequest>();
@@ -43,6 +47,7 @@ export default function NotatForskudd() {
         styling={"V2"}
         renderPDFVersion={response.renderPDFVersion}
         renderMode={response.renderForPdf ? RenderMode.PDF : RenderMode.HTML}
+        vedlegg={vedlegg}
       >
         <HeaderFooter
           saksnummer={response.data.saksnummer}
@@ -50,15 +55,32 @@ export default function NotatForskudd() {
         />
         <div className={"container page"}>
           <Soknaddetaljer gjelderFlereSaker={false} />
-          <NotatTittel title={tekster.titler.forskudd} />
+          <NotatTittel title={forskuddTekster.tittel} />
           <Virkningstidspunkt />
-          <Boforhold vedleggNummer={1} />
-          <Inntekter vedleggNummer={2} />
-          <Vedtak />
-          <VedleggBoforhold vedleggNummer={1} />
-          <VedleggInntekter vedleggNummer={2} />
+          <NotatSaksbehandlerForskudd />
+          <NotatOpplysningerForskudd />
         </div>
       </NotatProvider>
     </div>
+  );
+}
+
+function NotatSaksbehandlerForskudd() {
+  return (
+    <>
+      <Boforhold />
+      <Inntekter />
+      <Vedtak />
+    </>
+  );
+}
+
+// Opplysningene (vedleggene) holdes samlet slik at de senere kan flyttes til en egen route.
+function NotatOpplysningerForskudd() {
+  return (
+    <>
+      <VedleggBoforhold />
+      <VedleggInntekter />
+    </>
   );
 }

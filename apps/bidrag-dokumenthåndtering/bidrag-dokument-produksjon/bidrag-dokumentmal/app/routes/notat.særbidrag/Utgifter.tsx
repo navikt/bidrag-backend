@@ -11,16 +11,20 @@ import {
   TableHeader,
   TableColumn,
 } from "~/components/CommonTable";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
+import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.json";
 import { DataViewTableData } from "~/components/DataViewTable";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
+
+const t = særbidragTekster.utgifter;
 
 export default function Utgifter() {
   const { data } = useNotatFelles();
   const utgifter = data.utgift;
   return (
     <>
-      <h2>Utgift</h2>
+      <h2>{t.tittel}</h2>
       <>
         <SøknadsDetaljer />
         <Utgiftsposter />
@@ -37,7 +41,7 @@ function Utgiftsposter() {
   const beregnetUtgifter = data.utgift?.totalBeregning ?? [];
   return (
     <>
-      <h3>Oversikt over utgifter</h3>
+      <h3>{t.oversiktOverUtgifter.tittel}</h3>
       <CommonTable
         layoutAuto
         width={"630px"}
@@ -46,14 +50,14 @@ function Utgiftsposter() {
             { name: tekster.tabell.utgifter.betaltAvBp, width: "100px" },
             { name: tekster.tabell.utgifter.dato, width: "70px" },
             { name: tekster.tabell.utgifter.utgift, width: "120px" },
-            { name: tekster.tabell.utgifter.kravbeløp, width: "80px" },
-            { name: tekster.tabell.utgifter.godkjentBeløp, width: "110px" },
-            { name: tekster.tabell.utgifter.begrunnelse, width: "180px" },
+            { name: ord.kravbeløp, width: "80px" },
+            { name: ord.godkjentBeløp, width: "110px" },
+            { name: ord.begrunnelse, width: "180px" },
           ].filter((d) => typeof d != "boolean") as TableHeader[],
           rows: utgifter.map((d) => {
             return {
               columns: [
-                { content: d.betaltAvBp ? "Ja" : "Nei" },
+                { content: d.betaltAvBp ? ord.ja : ord.nei },
                 { content: dateToDDMMYYYY(d.dato) },
                 { content: d.utgiftstypeVisningsnavn },
                 { content: formatterBeløp(d.kravbeløp) },
@@ -67,7 +71,7 @@ function Utgiftsposter() {
 
       {beregnetUtgifter.length > 0 && (
         <div className={"mt-medium mb-medium"}>
-          <h3>Beregnet totalt</h3>
+          <h3>{t.beregnetTotalt.tittel}</h3>
           <CommonTable
             layoutAuto
             width={"450px"}
@@ -78,13 +82,13 @@ function Utgiftsposter() {
                   name: tekster.tabell.utgifter.utgiftskategori,
                   width: "220px",
                 },
-                { name: tekster.tabell.utgifter.kravbeløp, width: "80px" },
-                { name: tekster.tabell.utgifter.godkjentBeløp, width: "110px" },
+                { name: ord.kravbeløp, width: "80px" },
+                { name: ord.godkjentBeløp, width: "110px" },
               ].filter((d) => typeof d != "boolean") as TableHeader[],
               rows: beregnetUtgifter.map((d) => {
                 return {
                   columns: [
-                    { content: d.betaltAvBp ? "Ja" : "Nei" },
+                    { content: d.betaltAvBp ? ord.ja : ord.nei },
                     { content: d.utgiftstypeVisningsnavn },
                     { content: d.totalKravbeløp },
                     { content: d.totalGodkjentBeløp },
@@ -95,7 +99,7 @@ function Utgiftsposter() {
           />
         </div>
       )}
-      <h3>Totalt</h3>
+      <h3>{ord.totalt}</h3>
       <div style={{ marginTop: "8px", width: "280px" }}>
         <DataViewTableV2
           className={"two_column_view_v2"}
@@ -103,17 +107,17 @@ function Utgiftsposter() {
           data={
             [
               {
-                label: "Kravbeløp",
+                label: ord.kravbeløp,
                 value: formatterBeløp(data.utgift?.beregning?.totalKravbeløp),
               },
               {
-                label: "Godkjent beløp",
+                label: ord.godkjentBeløp,
                 value: formatterBeløp(
                   data.utgift?.beregning?.totalGodkjentBeløp,
                 ),
               },
               {
-                label: "Direkte betalt av Bidragspliktig",
+                label: t.totalt.direkteBetaltAvBidragspliktig,
                 value: formatterBeløp(
                   data.utgift?.beregning?.beløpDirekteBetaltAvBp,
                 ),
@@ -130,11 +134,11 @@ function Utgiftsposter() {
             data={
               [
                 {
-                  label: "Maks godkjent beløp",
+                  label: t.maksGodkjentBeløp.maksGodkjentBeløp,
                   value: formatterBeløp(data.utgift?.maksGodkjentBeløp?.beløp),
                 },
                 {
-                  label: "Begrunnelse for maks godkjent beløp",
+                  label: t.maksGodkjentBeløp.begrunnelse,
                   value: data.utgift?.maksGodkjentBeløp?.begrunnelse,
                 },
               ].filter((d) => d != null) as DataViewTableData[]
@@ -158,20 +162,20 @@ function SøknadsDetaljer() {
           labelColWidth={"80px"}
           data={[
             {
-              label: "Søknadstype",
+              label: ord.søknadstype,
               value: capitalizeFirstLetter(behandling.søknadstype),
             },
             {
-              label: "Kategori",
+              label: t.søknadsdetaljer.kategori,
               value: behandling.kategoriVisningsnavn,
             },
             {
-              label: "Søkt fra",
+              label: t.søknadsdetaljer.søktFra,
               value: søktAvTilVisningsnavn(behandling.søktAv),
             },
             {
-              label: "Innkreving",
-              value: behandling.innkreving ? "Ja" : "Nei",
+              label: t.søknadsdetaljer.innkreving,
+              value: behandling.innkreving ? ord.ja : ord.nei,
             },
           ]}
         />
@@ -182,15 +186,15 @@ function SøknadsDetaljer() {
           data={
             [
               {
-                label: "Mottatt dato",
+                label: ord.mottattDato,
                 value: dateToDDMMYYYY(behandling.mottattDato as string),
               },
               behandling.klageMottattDato && {
-                label: "Klage mottatt dato",
+                label: t.søknadsdetaljer.klageMottattDato,
                 value: dateToDDMMYYYY(behandling.klageMottattDato as string),
               },
               behandling.avslag && {
-                label: "Avslag",
+                label: ord.avslag,
                 value: `${behandling.avslagVisningsnavnUtenPrefiks}`,
               },
             ].filter((d) => d != null) as DataViewTableData[]

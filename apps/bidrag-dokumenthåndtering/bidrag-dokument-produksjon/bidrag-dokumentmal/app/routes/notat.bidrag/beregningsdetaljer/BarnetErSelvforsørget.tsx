@@ -1,17 +1,20 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.barnetErSelvforsørget;
 
 export const BarnetErSelvforsørget = () => {
   const { inntekter, forskuddssats } = useBeregningDetaljer();
   return (
     <div style={{ width: "600px" }}>
       <DataViewTableV2
-        title={"Barnet er selvforsørget"}
+        title={t.tittel}
         gap={"5px"}
         data={[
           {
-            label: "BAs inntekt",
+            label: t.basInntekt,
             labelBold: true,
             result: formatterBeløpForBeregning(
               inntekter!.inntektBarn ?? 0,
@@ -19,7 +22,7 @@ export const BarnetErSelvforsørget = () => {
             ),
           },
           {
-            label: "Grense for selvforsørget",
+            label: t.grenseForSelvforsørget,
             labelBold: true,
             value: `100 x ${formatterBeløpForBeregning(forskuddssats)}`,
             result: formatterBeløpForBeregning(forskuddssats * 100, true),

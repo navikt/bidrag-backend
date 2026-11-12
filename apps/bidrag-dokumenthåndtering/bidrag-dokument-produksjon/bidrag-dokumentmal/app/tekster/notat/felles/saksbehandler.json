@@ -1,0 +1,49 @@
+{
+  "søknaddetaljer": {
+    "søknadsbarn": "Søknadsbarn"
+  },
+  "virkningstidspunkt": {
+    "tittel": "Virkningstidspunkt",
+    "innkreving": "Innkreving",
+    "virkningstidspunkt": "Virkningstidspunkt",
+    "opphørsdato": "Opphørsdato",
+    "vurderingAvSkolegang": "Vurdering av skolegang"
+  },
+  "boforhold": {
+    "tittel": "Boforhold",
+    "søknadsbarn": "Søknadsbarn",
+    "revurderingsbarn": "Revurderingsbarn",
+    "egetBarnIHusstanden": "Eget barn i husstanden",
+    "sivilstand": {
+      "tittel": "Sivilstand"
+    },
+    "beregnetBoforhold": {
+      "tittel": "Beregnet boforhold",
+      "kolonner": {
+        "antallBarnIHusstanden": "Antall barn i husstanden",
+        "borMedAndreVoksne": "Bor med andre voksne"
+      }
+    },
+    "andreVoksneIHusstanden": {
+      "tittel": "Andre voksne i husstanden"
+    }
+  },
+  "inntekter": {
+    "tittel": "Inntekter",
+    "ingenInntekter": "Ingen inntekter",
+    "tabeller": {
+      "skattepliktigeOgPensjonsgivende": "Skattepliktige og pensjonsgivende inntekt",
+      "barnetillegg": "Barnetillegg",
+      "utvidetBarnetrygd": "Utvidet barnetrygd",
+      "småbarnstillegg": "Småbarnstillegg",
+      "kontantstøtte": "Kontantstøtte",
+      "beregnetTotalt": "Beregnet totalt"
+    },
+    "historisk": " (historisk)"
+  },
+  "vedtakFattetDetaljer": {
+    "tittel": "Ferdigstilt",
+    "saksbehandler": "Saksbehandler",
+    "dato": "Dato"
+  }
+}

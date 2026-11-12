@@ -1,9 +1,10 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import tekster from "~/tekster";
+import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.json";
 import {
   NotatProvider,
   RenderMode,
+  Vedlegg,
 } from "~/components/notat_felles/NotatContext";
 import Boforhold from "~/components/notat_felles/components/Boforhold";
 import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer";
@@ -23,12 +24,15 @@ export async function action(args: ActionFunctionArgs) {
 
 export function meta() {
   return [
-    { title: tekster.titler.særbidrag },
-    { name: "description", content: tekster.titler.særbidrag },
+    { title: særbidragTekster.tittel },
+    { name: "description", content: særbidragTekster.tittel },
     { property: "author", content: "bidrag-dokument-produksjon" },
-    { property: "subject", content: tekster.titler.særbidrag },
+    { property: "subject", content: særbidragTekster.tittel },
   ];
 }
+
+// Vedleggene står i den rekkefølgen de kommer i notatet. Nummeret til hvert vedlegg følger av rekkefølgen.
+const vedlegg: Vedlegg[] = ["inntekter", "boforhold", "beregningsdetaljer"];
 
 export default function NotatSærbidrag() {
   const response = useActionData<NotatRequest>();
@@ -44,6 +48,7 @@ export default function NotatSærbidrag() {
         styling={"V2"}
         renderPDFVersion={response.renderPDFVersion}
         renderMode={response.renderForPdf ? RenderMode.PDF : RenderMode.HTML}
+        vedlegg={vedlegg}
       >
         <HeaderFooter
           saksnummer={response.data.saksnummer}
@@ -51,16 +56,33 @@ export default function NotatSærbidrag() {
         />
         <div className={"container page"}>
           <Soknaddetaljer gjelderFlereSaker={false} />
-          <NotatTittel title={tekster.titler.særbidrag} />
-          <Utgifter />
-          <Inntekter vedleggNummer={1} />
-          <Boforhold vedleggNummer={2} />
-          <Vedtak vedleggNummer={3} />
-          <VedleggInntekter vedleggNummer={1} />
-          <VedleggBoforhold vedleggNummer={2} />
-          <VedleggBeregningsDetaljer vedleggNummer={3} />
+          <NotatTittel title={særbidragTekster.tittel} />
+          <NotatSaksbehandlerSærbidrag />
+          <NotatOpplysningerSærbidrag />
         </div>
       </NotatProvider>
     </div>
+  );
+}
+
+function NotatSaksbehandlerSærbidrag() {
+  return (
+    <>
+      <Utgifter />
+      <Inntekter />
+      <Boforhold />
+      <Vedtak />
+    </>
+  );
+}
+
+// Opplysningene (vedleggene) holdes samlet slik at de senere kan flyttes til en egen route.
+function NotatOpplysningerSærbidrag() {
+  return (
+    <>
+      <VedleggInntekter />
+      <VedleggBoforhold />
+      <VedleggBeregningsDetaljer />
+    </>
   );
 }

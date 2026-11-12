@@ -1,4 +1,5 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
 import {
   DokumentmalDelberegningBidragsevneDto,
@@ -26,7 +27,7 @@ export const BPsEvneTable = ({
         data={{
           headers: [
             {
-              name: tekster.tabell.felles.beskrivelse,
+              name: ord.beskrivelse,
               width: "250px",
             },
             {
@@ -34,7 +35,7 @@ export const BPsEvneTable = ({
               width: "250px",
             },
             {
-              name: tekster.tabell.felles.beløp,
+              name: ord.beløp,
               width: "50px",
             },
           ],

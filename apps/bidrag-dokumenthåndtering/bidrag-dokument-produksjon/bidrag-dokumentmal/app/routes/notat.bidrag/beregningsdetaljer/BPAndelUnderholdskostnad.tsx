@@ -2,12 +2,14 @@ import {
   formatterBeløpForBeregning,
   formatterProsent,
 } from "~/utils/visningsnavn";
-import tekster from "~/tekster";
 import { DataViewTableData } from "~/components/DataViewTable";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 import { Resultatkode } from "~/types/Api";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.bpAndelUnderholdskostnad;
 
 export const BPAndelUnderholdskostnad = () => {
   const {
@@ -23,7 +25,7 @@ export const BPAndelUnderholdskostnad = () => {
     sluttberegning?.resultat === Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED;
   return (
     <div style={{ width: "600px" }}>
-      <h4>{`${tekster.begreper.bidragspliktiges} andel`}</h4>
+      <h4>{t.tittel}</h4>
       <div>
         <BPsAndelInntekterTable
           inntekter={inntekter!}
@@ -34,18 +36,18 @@ export const BPAndelUnderholdskostnad = () => {
           data={
             [
               {
-                label: "BP's andel av underholdskostnad (i prosent)",
+                label: t.bpsAndelAvUnderholdskostnad,
                 value: `${formatterBeløpForBeregning(inntekter.inntektBP)} / ${formatterBeløpForBeregning(inntekter.totalEndeligInntekt)}`,
                 result: formatterProsent(bpsAndel.beregnetAndelFaktor),
               },
               {
-                label: "Andel underholdskostnad",
+                label: t.andelUnderholdskostnad,
                 value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(bpsAndel.endeligAndelFaktor)}`,
                 result: formatterBeløpForBeregning(bpsAndel.andelBeløp),
               },
               deltBosted
                 ? {
-                    label: "Etter fratrekk delt bosted",
+                    label: t.etterFratrekkDeltBosted,
                     textRight: false,
                     value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(0.5)}`,
                     result: formatterBeløpForBeregning(
@@ -63,7 +65,8 @@ export const BPAndelUnderholdskostnad = () => {
       </div>
       {bpsAndel.endeligAndelFaktor !== bpsAndel.beregnetAndelFaktor && (
         <div className="text-red-500" style={{ width: "200px" }}>
-          Andel begrenset til {formatterProsent(bpsAndel.endeligAndelFaktor)}
+          {t.andelBegrensetTil}
+          {formatterProsent(bpsAndel.endeligAndelFaktor)}
         </div>
       )}
     </div>

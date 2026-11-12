@@ -65,9 +65,7 @@ data class VedtakNotatDto(
     val virkningstidspunkt: NotatVirkningstidspunktDto,
     val utgift: NotatSærbidragUtgifterDto?,
     val boforhold: NotatBoforholdDto,
-    val samvær: List<NotatSamværBarnDto> = emptyList(),
     val samværV2: NotatSamværDto? = null,
-    val gebyr: List<NotatGebyrDetaljerDto>? = null,
     val gebyrV2: NotatGebyrV2Dto? = null,
     val gebyrV3: NotatGebyrV3Dto? = null,
     var underholdskostnader: NotatUnderholdDto? = null,
@@ -812,6 +810,12 @@ data class NotatResultatSærbidragsberegningDto(
                 BigDecimal.ZERO,
             )
 
+    @get:Schema(description = "Om beregningen ga et annet resultat enn innvilget særbidrag")
+    val erBeregningAvslag get() = resultatKode != Resultatkode.SÆRBIDRAG_INNVILGET
+
+    @get:Schema(description = "Om avslaget skal vises sammen med utgiftene som er lagt til grunn")
+    val erAvslagSomInneholderUtgifter get() = resultatKode in avslagSomInneholderUtgifter
+
     data class UtgiftBeregningDto(
         @Schema(description = "Beløp som er direkte betalt av BP")
         val beløpDirekteBetaltAvBp: BigDecimal = BigDecimal.ZERO,
@@ -824,12 +828,21 @@ data class NotatResultatSærbidragsberegningDto(
         @Schema(description = "Summen av godkjent beløp for utgifter BP har betalt plus beløp som er direkte betalt av BP")
         val totalBeløpBetaltAvBp: BigDecimal = (totalGodkjentBeløpBp ?: BigDecimal.ZERO) + beløpDirekteBetaltAvBp,
     )
+
+    private companion object {
+        val avslagSomInneholderUtgifter =
+            setOf(Resultatkode.GODKJENT_BELØP_ER_LAVERE_ENN_FORSKUDDSSATS, Resultatkode.ALLE_UTGIFTER_ER_FORELDET)
+    }
 }
 
 data class NotatResultatForskuddBeregningBarnDto(
     val barn: DokumentmalPersonDto,
     val perioder: List<NotatResultatPeriodeDto>,
 ) : VedtakResultatInnhold(NotatMalType.FORSKUDD) {
+    @get:Schema(description = "Om avslaget gjelder opphør av en løpende stønad. Brukes for å vise Opphør i stedet for Avslag")
+    val erOpphørAvStønad
+        get() = barn.harLøpendeForskudd == true || perioder.any { it.vedtakstype == Vedtakstype.OPPHØR }
+
     data class NotatResultatPeriodeDto(
         val periode: ÅrMånedsperiode,
         val beløp: BigDecimal,

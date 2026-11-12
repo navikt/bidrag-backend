@@ -4,18 +4,24 @@ import {
   Resultatkode,
   NotatResultatSaerbidragsberegningDto,
 } from "~/types/Api";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import { erResutlatMedBeregning } from "~/routes/notat.særbidrag/SærbidragHelpers";
-import tekster from "~/tekster";
+import ord from "~/tekster/ord.json";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
 import { BPsEvneTable } from "~/components/vedtak/BPsEvneTable";
 import { CommonTable, TableHeader } from "~/components/CommonTable";
 import { BPsAndel } from "~/routes/notat.særbidrag/BPAndelTable";
 import { BPsBeregnedeTotalbidrag } from "~/routes/notat.særbidrag/BPsBeregnedeTotalbidrag";
-import { VedleggProps } from "~/types/commonTypes";
 
-export default function VedleggBeregningsDetaljer({
-  vedleggNummer = 2,
-}: VedleggProps) {
+const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
+
+const t = tekst.vedleggBeregningsdetaljer;
+
+export default function VedleggBeregningsDetaljer() {
+  const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { data } = useNotatFelles();
   if (
     !erResutlatMedBeregning(
@@ -26,7 +32,7 @@ export default function VedleggBeregningsDetaljer({
   return (
     <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
       <h2 id={elementIds.vedleggBeregningsdetaljer} className={"pb-2"}>
-        Vedlegg nr. {vedleggNummer}: Beregningsdetaljer
+        {t.tittel.replace("{}", vedleggNummer.toString())}
       </h2>
       <VedleggBeregningsDetaljerInnhold />
     </div>
@@ -36,7 +42,7 @@ export default function VedleggBeregningsDetaljer({
 function VedleggBeregningsDetaljerInnhold() {
   const { data } = useNotatFelles();
   const resultatPerioder = data.vedtak?.resultat;
-  if (resultatPerioder.length == 0) return <div>Mangler resultat</div>;
+  if (resultatPerioder.length == 0) return <div>{ord.manglerResultat}</div>;
 
   const resultat = data.vedtak
     .resultat[0]! as NotatResultatSaerbidragsberegningDto;
@@ -67,7 +73,7 @@ function VedleggBeregningsDetaljerInnhold() {
         data={{
           headers: [
             {
-              name: tekster.tabell.felles.beskrivelse,
+              name: ord.beskrivelse,
             },
             {
               name: "",
@@ -78,25 +84,25 @@ function VedleggBeregningsDetaljerInnhold() {
             {
               columns: [
                 {
-                  content: "BP har evne",
+                  content: t.resultat.bpHarEvne,
                 },
                 {
                   textAlign: "right",
                   content: !resultat.bpHarEvne
-                    ? "Nei, bidragsevnen er lavere enn beregnet totalbidrag"
-                    : "Ja, bidragsevnen er høyere enn beregnet totalbidrag",
+                    ? t.resultat.bpHarIkkeEvneVerdi
+                    : t.resultat.bpHarEvneVerdi,
                 },
               ],
             },
             {
               columns: [
                 {
-                  content: "Resultat",
+                  content: ord.resultat,
                 },
                 {
                   textAlign: "right",
                   content: erBeregningeAvslag
-                    ? "Avslag"
+                    ? ord.avslag
                     : formatterBeløp(resultat.resultat, true),
                 },
               ],
@@ -104,7 +110,7 @@ function VedleggBeregningsDetaljerInnhold() {
             {
               columns: [
                 {
-                  content: `Betalt av ${tekster.begreper.bidragspliktig}`,
+                  content: t.resultat.betaltAvBidragspliktig,
                 },
                 {
                   textAlign: "right",
@@ -119,13 +125,13 @@ function VedleggBeregningsDetaljerInnhold() {
               columns: [
                 {
                   content: data.medInnkreving
-                    ? "Beløp som innkreves"
-                    : "Fastsatt beløp å betale",
+                    ? t.resultat.beløpSomInnkreves
+                    : t.resultat.beløpSomInnkrevesUtenInnkreving,
                 },
                 {
                   textAlign: "right",
                   content: erBeregningeAvslag
-                    ? "Avslag"
+                    ? ord.avslag
                     : formatterBeløp(resultat.beløpSomInnkreves, true),
                 },
               ],

@@ -22,9 +22,14 @@ import {
   TableColumn,
   TableHeader,
 } from "~/components/CommonTable";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
 import { getInntektTableHeaders } from "~/constants/tableHeaders";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import Inntektsposter from "~/components/notat_felles/components/Inntektsposter";
 import {
   BehandlingRolletype,
@@ -39,19 +44,20 @@ import InntektTableTitle from "~/components/inntekt/InntektTableTitle";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
 import GjelderPerson from "~/components/GjelderPerson";
-import { VedleggProps } from "~/types/commonTypes";
 
-export default function Inntekter({ vedleggNummer = 2 }: VedleggProps) {
+const t = notatTekster.inntekter;
+
+export default function Inntekter() {
+  const vedleggNummer = useVedleggNummer("inntekter");
   const { erAvslag, bidragsmottakere, bidragspliktig, søknadsbarn, type } =
     useNotatFelles();
   if (erAvslag && type != NotatMalType.BIDRAG) return null;
   return (
     <>
       <div className={"elements_inline section-title"}>
-        <h2>Inntekter</h2>
+        <h2>{t.tittel}</h2>
         <a href={`#${elementIds.vedleggInntekter}`}>
-          se vedlegg nr. {vedleggNummer} for opplysninger fra offentlige
-          registre
+          {ord.seVedleggForOffentligeRegistre.replace("{}", `${vedleggNummer}`)}
         </a>
       </div>
       {bidragsmottakere.map((bidragsmottaker) => (
@@ -95,31 +101,31 @@ function InntekterForRolle({
   );
   if (inntekter == null) return null;
   function renderInntekter() {
-    if (!isHarInntekter(inntekter!)) return <p>Ingen inntekter</p>;
+    if (!isHarInntekter(inntekter!)) return <p>{t.ingenInntekter}</p>;
     return (
       <>
         <InntektTable
           data={inntekter!.årsinntekter}
-          title={"Skattepliktige og pensjonsgivende inntekt"}
+          title={t.tabeller.skattepliktigeOgPensjonsgivende}
           subsection={false}
         />
         <InntektPerBarnTable
           data={inntekter!.barnetillegg}
-          title={"Barnetillegg"}
+          title={t.tabeller.barnetillegg}
         />
         <InntektTable
           data={inntekter!.utvidetBarnetrygd}
-          title={"Utvidet barnetrygd"}
+          title={t.tabeller.utvidetBarnetrygd}
           inkluderBeskrivelse={false}
         />
         <InntektTable
           data={inntekter!.småbarnstillegg}
-          title={"Småbarnstillegg"}
+          title={t.tabeller.småbarnstillegg}
           inkluderBeskrivelse={false}
         />
         <InntektPerBarnTable
           data={inntekter!.kontantstøtte}
-          title={"Kontantstøtte"}
+          title={t.tabeller.kontantstøtte}
         />
         <BeregnetInntektTable
           data={inntekter!.beregnetInntekter}
@@ -168,14 +174,14 @@ function InntektTable({
           headers: [
             { name: tekster.tabell.felles.fraTilOgMed, width: "170px" },
             inkluderBeskrivelse && {
-              name: tekster.tabell.felles.beskrivelse,
+              name: ord.beskrivelse,
               width: "230px",
             },
             {
               name: tekster.tabell.felles.kilde,
               width: inkluderBeskrivelse ? "80px" : "230px",
             },
-            { name: tekster.tabell.inntekt.beløp },
+            { name: ord.beløp },
           ].filter((d) => typeof d != "boolean") as TableHeader[],
           rows: inntekter
             .sort((a, b) =>
@@ -189,7 +195,7 @@ function InntektTable({
                 columns: [
                   { content: formatPeriode(periode!.fom, periode!.til) },
                   inkluderBeskrivelse && {
-                    content: `${d.visningsnavn}${d.historisk ? " (historisk)" : ""}`,
+                    content: `${d.visningsnavn}${d.historisk ? t.historisk : ""}`,
                   },
                   { content: <KildeIcon kilde={d.kilde} /> },
                   { content: formatterBeløp(d.beløp) },
@@ -290,7 +296,7 @@ function InntektPerBarnTable({
                                 {
                                   content:
                                     d.skattefaktor == null
-                                      ? "Ikke relevant"
+                                      ? ord.ikkeRelevant
                                       : formatterProsent(d.skattefaktor),
                                 },
                                 { content: formatterBeløp(d.beløp) },
@@ -445,7 +451,7 @@ function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
   if (!harInntekter) return;
   return (
     <>
-      <InntektTableTitle title={"Beregnet totalt"} witMarginTop />
+      <InntektTableTitle title={t.tabeller.beregnetTotalt} witMarginTop />
       {rolle.rolle === Rolletype.BA
         ? renderTable(
             data.find((d) => d.gjelderBarn.ident == rolle.ident)

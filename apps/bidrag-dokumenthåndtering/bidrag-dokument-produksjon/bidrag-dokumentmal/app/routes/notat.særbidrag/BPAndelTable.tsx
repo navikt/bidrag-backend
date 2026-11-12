@@ -4,7 +4,7 @@ import {
   formatterBeløpForBeregning,
   formatterProsent,
 } from "~/utils/visningsnavn";
-import tekster from "~/tekster";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
 import { DataViewTableData } from "~/components/DataViewTable";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 import {
@@ -12,6 +12,10 @@ import {
   MathMultiplication,
   CalculationTable,
 } from "~/components/vedtak/CalculationTable";
+
+const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
+
+const t = tekst.bpsAndel;
 
 export const BPsAndel = () => {
   const { data } = useNotatFelles();
@@ -23,21 +27,21 @@ export const BPsAndel = () => {
   const utgifter = beregnetSærbidrag.delberegningUtgift!;
   return (
     <div style={{ width: "600px" }}>
-      <h4>{`${tekster.begreper.bidragspliktiges} andel`}</h4>
+      <h4>{t.tittel}</h4>
       <CalculationTable
         width={"55%"}
         className={"pb-2 "}
         data={[
           {
-            label: `${tekster.begreper.bidragspliktiges} inntekt`,
+            label: t.bidragspliktigesInntekt,
             value: formatterBeløpForBeregning(inntekter.inntektBP, true),
           },
           {
-            label: `${tekster.begreper.bidragsmottakerens} inntekt`,
+            label: t.bidragsmottakerensInntekt,
             value: formatterBeløpForBeregning(inntekter.inntektBM, true),
           },
           {
-            label: `${tekster.begreper.barnets} inntekt`,
+            label: t.barnetsInntekt,
             calculation:
               inntekter.inntektBarn! > 0 ? (
                 <div>
@@ -55,7 +59,7 @@ export const BPsAndel = () => {
           },
         ]}
         result={{
-          label: "Total inntekt",
+          label: t.totalInntekt,
           value: formatterBeløpForBeregning(
             inntekter.totalEndeligInntekt,
             true,
@@ -69,12 +73,12 @@ export const BPsAndel = () => {
         data={
           [
             {
-              label: "BP's andel av utgifter (i prosent)",
+              label: t.bpsAndelAvUtgifter,
               value: `${formatterBeløpForBeregning(inntekter.inntektBP, true)} X ${formatterBeløpForBeregning(inntekter.totalEndeligInntekt)}`,
               result: `${formatterProsent(delberegningBpsAndel.beregnetAndelFaktor)}`,
             },
             {
-              label: "Andel utgifter",
+              label: t.andelUtgifter,
               value: `${formatterBeløpForBeregning(utgifter.sumGodkjent, true)} X ${formatterProsent(delberegningBpsAndel.endeligAndelFaktor)}`,
               result: `${formatterBeløpForBeregning(delberegningBpsAndel.andelBeløp, true)}`,
             },
@@ -85,7 +89,7 @@ export const BPsAndel = () => {
         {delberegningBpsAndel.endeligAndelFaktor !==
           delberegningBpsAndel.beregnetAndelFaktor && (
           <div className="text-red-500" style={{ width: "200px" }}>
-            Andel begrenset til{" "}
+            {t.andelBegrensetTil}{" "}
             {formatterProsent(delberegningBpsAndel.endeligAndelFaktor)}
           </div>
         )}

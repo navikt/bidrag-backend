@@ -7,7 +7,10 @@ import {
   Rolletype,
   Vedtakstype,
 } from "~/types/Api";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import { DataViewTable } from "~/components/DataViewTable";
 import { deductDays, formatPeriode } from "~/utils/date-utils";
 import HorizontalLine from "~/components/HorizontalLine";
@@ -19,7 +22,6 @@ import { createContext, useContext } from "react";
 import { EndeligBidragTable } from "~/routes/notat.bidrag/beregningsdetaljer/EndeligBidrag";
 import { BPsEvneTable } from "~/components/vedtak/BPsEvneTable";
 import { BarnetilleggSkattesats } from "~/routes/notat.bidrag/beregningsdetaljer/BarnetilleggSkattesats";
-import { VedleggProps } from "~/types/commonTypes";
 import { BeregningBegrensetRevurdering } from "~/routes/notat.bidrag/beregningsdetaljer/BeregningBegrensetRevurdering";
 import { EndringUnderGrense } from "~/routes/notat.bidrag/beregningsdetaljer/EndringUnderGrense";
 import { AldersjusteringDetaljer } from "~/routes/notat.bidrag/beregningsdetaljer/AldersjusteringDetaljer";
@@ -29,23 +31,26 @@ import { BarnetErSelvforsørget } from "~/routes/notat.bidrag/beregningsdetaljer
 import { BeregningForholdsmessigFordeling } from "~/routes/notat.bidrag/beregningsdetaljer/BeregningForholdsmessigFordelingDetaljer";
 import { PersonV2 } from "~/components/Person";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
+import ord from "~/tekster/ord.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
 
-export default function VedleggBeregningsDetaljer({
-  vedleggNummer,
-}: VedleggProps) {
+const t = bidragOpplysningerTekster.beregningsdetaljer;
+
+export default function VedleggBeregningsDetaljer() {
+  const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
   if (erAvslag || erInnkrevingsgrunnlag) return null;
   return (
     <>
       <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
         <h2 id={elementIds.vedleggBeregningsdetaljer}>
-          Vedlegg nr. {vedleggNummer}: Beregningsdetaljer
+          {t.tittel.replace("{}", `${vedleggNummer}`)}
         </h2>
         <VedleggBeregningsDetaljerInnhold />
         {data.erOrkestrertVedtak && (
           <div>
             <h2 id={elementIds.vedleggBeregningsdetaljer}>
-              Beregningsdetaljer endelig vedtak
+              {t.tittelEndeligVedtak}
             </h2>
             <VedleggBeregningsDetaljerEndeligVedtakInnhold />
           </div>
@@ -85,7 +90,7 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
   if (
     perioder.every((p) => p?.filter((pd) => !pd.erDirekteAvslag)?.length === 0)
   ) {
-    return <div>Ingen beregningsdetaljer å vise</div>;
+    return <div>{t.ingenBeregningsdetaljer}</div>;
   }
 
   return (
@@ -106,7 +111,7 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
                 ]}
               />
               {resultat.orkestrertVedtak?.perioder.length === 0 ? (
-                <div>Ingen beregningsdetaljer å vise</div>
+                <div>{t.ingenBeregningsdetaljer}</div>
               ) : (
                 resultat.orkestrertVedtak?.perioder
                   .filter(
@@ -150,7 +155,7 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
                                 className={"mb-2"}
                                 data={[
                                   {
-                                    label: "Periode",
+                                    label: ord.periode,
                                     labelBold: true,
                                     value: formatPeriode(
                                       periode.periode.fom,
@@ -179,7 +184,7 @@ function VedleggBeregningsDetaljerInnhold() {
   const { data } = useNotatFelles();
   const resultatPerioder = data.vedtak
     ?.resultat as DokumentmalResultatBidragsberegningBarnDto[];
-  if (resultatPerioder.length == 0) return <div>Mangler resultat</div>;
+  if (resultatPerioder.length == 0) return <div>{ord.manglerResultat}</div>;
 
   const erForholdsmessigFordelt = resultatPerioder.some(
     (b) => b.minstEnPeriodeHarSlåttUtTilFF,
@@ -202,11 +207,11 @@ function VedleggBeregningsDetaljerInnhold() {
     <>
       {erForholdsmessigFordelt && (
         <div className={"pb-2"}>
-          <h4>Forholdsmessig fordeling</h4>
+          <h4>{t.forholdsmessigFordelingVarsel.tittel}</h4>
           {enPeriodeHarSlåttUtTilFFPga25Prosent &&
-            "BPs totale andel av U overstiger 25% av inntekten. Bidraget er derfor forholdsmessig fordelt i minst en av periodene"}
+            t.forholdsmessigFordelingVarsel.pga25Prosent}
           {enPeriodeHarSlåttUtTilFFPgaRedusertEvne &&
-            "BP har ikke full bidragsevne. Bidraget er derfor forholdsmessig fordelt i minst en av periodene"}
+            t.forholdsmessigFordelingVarsel.pgaRedusertEvne}
         </div>
       )}
       {resultatPerioder?.map(
@@ -226,7 +231,7 @@ function VedleggBeregningsDetaljerInnhold() {
                 ]}
               />
               {perioderUtenAvslag.length === 0 ? (
-                <div>Ingen beregningsdetaljer å vise</div>
+                <div>{t.ingenBeregningsdetaljer}</div>
               ) : (
                 perioderUtenAvslag
                   .filter(
@@ -256,7 +261,7 @@ function VedleggBeregningsDetaljerInnhold() {
                                 className={"mb-2"}
                                 data={[
                                   {
-                                    label: "Periode",
+                                    label: ord.periode,
                                     labelBold: true,
                                     value: formatPeriode(
                                       periode.periode.fom,
@@ -286,7 +291,7 @@ function VedleggBeregningsDetaljerInnhold() {
                                 className={"mb-2"}
                                 data={[
                                   {
-                                    label: "Periode",
+                                    label: ord.periode,
                                     labelBold: true,
                                     value: formatPeriode(
                                       periode.periode.fom,

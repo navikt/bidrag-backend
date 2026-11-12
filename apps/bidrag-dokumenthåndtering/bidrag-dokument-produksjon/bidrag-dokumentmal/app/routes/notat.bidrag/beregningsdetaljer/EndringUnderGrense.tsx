@@ -4,6 +4,9 @@ import {
   formatterProsent,
 } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.endringUnderGrense;
 
 export const EndringUnderGrense = () => {
   const {
@@ -17,18 +20,18 @@ export const EndringUnderGrense = () => {
 
   return (
     <div className={"pt-2"}>
-      <h4>{`Endring under grense`}</h4>
+      <h4>{t.tittel}</h4>
       <DataViewTable
         gap={"5px"}
         data={
           [
             {
-              label: "Løpende bidragsbeløp",
+              label: t.løpendeBidragsbeløp,
               textRight: false,
               value: `${formatterBeløpForBeregning(endeligBeløp)}`,
             },
             {
-              label: "Endring i prosent",
+              label: t.endringIProsent,
               textRight: false,
               value: `(${formatterBeløpForBeregning(endeligBeløp)} - ${formatterBeløpForBeregning(sluttberegning.beregnetBeløp)}) / ${formatterBeløpForBeregning(endeligBeløp)} = ${formatterProsent(endringUnderGrense.faktiskEndringFaktor)}`,
             },

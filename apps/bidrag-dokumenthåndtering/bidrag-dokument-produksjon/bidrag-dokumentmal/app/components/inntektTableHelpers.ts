@@ -1,4 +1,5 @@
 import { Rolletype, NotatMalType, InntekterPerRolle } from "~/types/Api";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
 
 export enum InntektTableType {
@@ -87,18 +88,18 @@ export const beregnetInntekterColumnWidth: {
       [tekster.tabell.beregnet.utvidetBarnetrygd]: "70px",
       [tekster.tabell.beregnet.småbarnstillegg]: "70px",
       [tekster.tabell.beregnet.kontantstøtte]: "80px",
-      [tekster.tabell.beregnet.total]: "60px",
+      [ord.totalt]: "60px",
     },
     [Rolletype.BP]: {
       [tekster.tabell.felles.fraTilOgMed]: "120px",
       [tekster.tabell.beregnet.skattepliktigInntekt]: "125px",
       [tekster.tabell.beregnet.barnetillegg]: "75px",
-      [tekster.tabell.beregnet.total]: "150px",
+      [ord.totalt]: "150px",
     },
     [Rolletype.BA]: {
       [tekster.tabell.felles.fraTilOgMed]: "152px",
       [tekster.tabell.beregnet.skattepliktigInntekt]: "155px",
-      [tekster.tabell.beregnet.total]: "300px",
+      [ord.totalt]: "300px",
     },
   },
   [NotatMalType.FORSKUDD]: {
@@ -109,7 +110,7 @@ export const beregnetInntekterColumnWidth: {
       [tekster.tabell.beregnet.utvidetBarnetrygd]: "70px",
       [tekster.tabell.beregnet.småbarnstillegg]: "70px",
       [tekster.tabell.beregnet.kontantstøtte]: "80px",
-      [tekster.tabell.beregnet.total]: "60px",
+      [ord.totalt]: "60px",
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},
@@ -133,18 +134,18 @@ export const beregnetInntekterColumnNames: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstilleggSplittet,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
       [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BA]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
   },
   [NotatMalType.SAeRBIDRAG]: {
@@ -158,18 +159,18 @@ export const beregnetInntekterColumnNames: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstilleggSplittet,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
       [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BA]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
   },
   [NotatMalType.FORSKUDD]: {
@@ -183,7 +184,7 @@ export const beregnetInntekterColumnNames: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstilleggSplittet,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},
@@ -206,18 +207,18 @@ export const beregnetInntekterColumnNamesV2: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstillegg,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
       [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BA]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
   },
   [NotatMalType.SAeRBIDRAG]: {
@@ -231,18 +232,18 @@ export const beregnetInntekterColumnNamesV2: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstillegg,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
       [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BA]: {
       [InntektTableType.SKATTEPLIKTIG]:
         tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
   },
   [NotatMalType.FORSKUDD]: {
@@ -256,7 +257,7 @@ export const beregnetInntekterColumnNamesV2: {
       [InntektTableType.SMÅBARNSTILLEGG]:
         tekster.tabell.beregnet.småbarnstillegg,
       [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.TOTAL_INNTEKTER]: ord.totalt,
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},

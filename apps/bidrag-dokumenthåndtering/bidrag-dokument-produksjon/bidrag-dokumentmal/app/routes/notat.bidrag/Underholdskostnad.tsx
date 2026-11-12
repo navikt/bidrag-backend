@@ -1,10 +1,15 @@
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import { NotatUnderholdBarnDto } from "~/types/Api";
 import { DataViewTable } from "~/components/DataViewTable";
 import { CommonTable } from "~/components/CommonTable";
 import { formatPeriode, dateToDDMMYYYY, sortByAge } from "~/utils/date-utils";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
 import {
   formatterBeløpForBeregning,
   rolleTilVisningsnavnV2,
@@ -12,9 +17,11 @@ import {
 } from "~/utils/visningsnavn";
 import KildeIcon from "~/components/KildeIcon";
 import elementIds from "~/utils/elementIds";
-import { VedleggProps } from "~/types/commonTypes";
 
-export default function Underholdskostnad({ vedleggNummer }: VedleggProps) {
+const t = bidragTekster.underholdskostnad;
+
+export default function Underholdskostnad() {
+  const vedleggNummer = useVedleggNummer("underholdskostnader");
   const { data, erAvslag } = useNotatFelles();
   if (erAvslag) return null;
 
@@ -23,9 +30,9 @@ export default function Underholdskostnad({ vedleggNummer }: VedleggProps) {
   return (
     <>
       <div className={"section-title elements_inline"}>
-        <h2>Underholdskostnad</h2>
+        <h2>{t.tittel}</h2>
         <a href={`#${elementIds.vedleggUnderholdskostnader}`}>
-          se vedlegg nr. {vedleggNummer} for underholdskostnad
+          {t.lenkeTilVedlegg.replace("{}", `${vedleggNummer}`)}
         </a>
       </div>
       <>
@@ -62,7 +69,7 @@ function UnderholdskostnaderAndreBarn({
             className={"pt-2 pb-0 mb-2 mt-2"}
             data={[
               {
-                label: "Andre barn til bidragsmottaker",
+                label: t.andreBarnTilBidragsmottaker,
                 labelBold: true,
                 value: `${barn.gjelderBarn.navn} / ${dateToDDMMYYYY(barn.gjelderBarn.fødselsdato)}`,
               },
@@ -95,8 +102,8 @@ function UnderholdskostnaderSøknadsbarn({
       <DataViewTable
         data={[
           {
-            label: "Barn har tilsynsutgift/forpleining",
-            value: data.harTilsynsordning ? "Ja" : "Nei",
+            label: t.harTilsynsutgift,
+            value: data.harTilsynsordning ? ord.ja : ord.nei,
           },
         ]}
       />
@@ -118,7 +125,7 @@ function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
 
   return (
     <div className={"mb-4 mt-4"}>
-      <h4>Tilleggsstønad</h4>
+      <h4>{t.tilleggsstønad}</h4>
       <CommonTable
         layoutAuto
         width={"320px"}
@@ -128,7 +135,7 @@ function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
               name: tekster.tabell.felles.fraTilOgMed,
             },
             {
-              name: tekster.tabell.underholdskostnader.tilleggsstønad.beløp,
+              name: ord.beløp,
             },
             {
               name: tekster.tabell.underholdskostnader.tilleggsstønad
@@ -160,7 +167,7 @@ function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
 
   return (
     <div className={"mb-4 mt-4"}>
-      <h4>Forpleining</h4>
+      <h4>{t.forpleining}</h4>
       <CommonTable
         layoutAuto
         width={"320px"}
@@ -170,7 +177,7 @@ function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
               name: tekster.tabell.felles.fraTilOgMed,
             },
             {
-              name: tekster.tabell.underholdskostnader.forpleining.beløp,
+              name: ord.beløp,
             },
           ],
           rows: data.forpleining.map((d) => ({
@@ -193,7 +200,7 @@ function FaktiskeTilsynsutgifterTabell({
   if (data.faktiskTilsynsutgift.length == 0) return null;
   return (
     <div className={"mb-4"}>
-      <h4>Faktiske tilsynsutgifter</h4>
+      <h4>{t.faktiskeTilsynsutgifter}</h4>
       <CommonTable
         data={{
           headers: [
@@ -237,7 +244,7 @@ function StønadTilBarnetilsynTabell({ data }: { data: NotatUnderholdBarnDto }) 
   if (data.stønadTilBarnetilsyn.length == 0) return null;
   return (
     <div className={"mb-4 mt-4"}>
-      <h4>Stønad til barnetilsyn</h4>
+      <h4>{t.stønadTilBarnetilsyn}</h4>
       <CommonTable
         layoutAuto
         width={"400px"}
@@ -278,7 +285,7 @@ function UnderholdskostnaderTabell({ data }: { data: NotatUnderholdBarnDto }) {
 
   return (
     <div className={"mb-4 mt-4"}>
-      <h4>Underholdskostnader</h4>
+      <h4>{t.underholdskostnader}</h4>
       <CommonTable
         data={{
           headers: [

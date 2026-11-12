@@ -1,121 +1,124 @@
-import { groupBy } from "~/utils/array-utils";
-import { deductDays, formatPeriode } from "~/utils/date-utils";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
-import { formatterBeløp } from "~/utils/visningsnavn";
-import { CommonTable, TableData } from "~/components/CommonTable";
+import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { VedtakFattetDetaljer } from "~/components/notat_felles/components/VedtakFattetDetaljer";
 import { NotatResultatForskuddBeregningBarnDto } from "~/types/Api";
+import ord from "~/tekster/ord.json";
+import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.json";
+
+const t = forskuddTekster.vedtak;
+
+const tabellAvslag: Tabelloppsett = {
+  bredde: "500px",
+  kolonner: [
+    {
+      felt: "periode",
+      tittel: ord.periode,
+      bredde: "170px",
+      format: "periodeTilOgMedTilMåned",
+    },
+    { felt: "resultat", tittel: ord.resultat, bredde: "150px" },
+    {
+      felt: "resultatKodeVisningsnavn",
+      tittel: ord.årsak,
+      bredde: "250px",
+    },
+  ],
+};
+
+const tabellInnvilget: Tabelloppsett = {
+  bredde: "550px",
+  periodelinje: { felt: "periode", format: "periode" },
+  kolonner: [
+    {
+      felt: "inntekt",
+      tittel: ord.inntekt,
+      bredde: "80px",
+      format: "beløp",
+    },
+    {
+      felt: "sivilstandVisningsnavn",
+      tittel: t.tabellInnvilget.sivilstand,
+      bredde: "100px",
+    },
+    {
+      felt: "antallBarnIHusstanden",
+      tittel: t.tabellInnvilget.antallBarnIHusstand,
+      bredde: "80px",
+    },
+    {
+      felt: "beløp",
+      tittel: t.tabellInnvilget.forskudd,
+      bredde: "70px",
+      format: "beløp",
+    },
+    {
+      felt: "resultatKodeVisningsnavn",
+      tittel: ord.resultat,
+      bredde: "160px",
+    },
+  ],
+};
 
 export default function Vedtak() {
   const { erAvslag, data } = useNotatFelles();
+  const resultat = data.vedtak
+    .resultat as NotatResultatForskuddBeregningBarnDto[];
   return (
     <div style={{ pageBreakBefore: erAvslag ? "auto" : "always" }}>
-      <h2>Vedtak</h2>
-      {erAvslag ? (
-        <VedtakTableAvslag
-          data={data.vedtak.resultat as NotatResultatForskuddBeregningBarnDto[]}
-        />
+      <h2>{t.tittel}</h2>
+      {resultat.length == 0 ? (
+        <div>{ord.manglerResultat}</div>
+      ) : erAvslag ? (
+        <div style={{ paddingTop: "0px" }}>
+          {resultat.map((barn) => (
+            <VedtakAvslagForBarn key={barn.barn.ident} barn={barn} />
+          ))}
+        </div>
       ) : (
-        <VedtakTable
-          data={data.vedtak.resultat as NotatResultatForskuddBeregningBarnDto[]}
-        />
+        resultat.map((barn) => (
+          <VedtakForBarn key={barn.barn.ident} barn={barn} />
+        ))
       )}
       <VedtakFattetDetaljer data={data.vedtak} />
     </div>
   );
 }
 
-function VedtakTableAvslag({
-  data,
+function VedtakAvslagForBarn({
+  barn,
 }: {
-  data: NotatResultatForskuddBeregningBarnDto[];
+  barn: NotatResultatForskuddBeregningBarnDto;
 }) {
   const { erOpphør } = useNotatFelles();
-
-  if (data.length == 0) return <div>Mangler resultat</div>;
+  const resultat = erOpphør || barn.erOpphørAvStønad ? ord.opphør : ord.avslag;
   return (
-    <div style={{ paddingTop: "0px" }}>
-      {groupBy(data, (d) => d.barn?.ident!).map(([key, value]) => {
-        const gjelderBarn = value[0].barn!;
-        const perioder = value[0].perioder;
-        const erOpphørAvStønad =
-          erOpphør || gjelderBarn.harLøpendeForskudd == true;
-        const tableData: TableData = {
-          headers: [
-            { name: "Periode", width: "170px" },
-            { name: "Resultat", width: "150px" },
-            { name: "Årsak", width: "250px" },
-          ],
-          rows: perioder.map((d) => ({
-            columns: [
-              { content: formatPeriode(d.periode!.fom, d.periode!.til) },
-              { content: erOpphørAvStønad ? "Opphør" : "Avslag" },
-              { content: d.resultatKodeVisningsnavn },
-            ],
-          })),
-        };
-        return (
-          <div key={key} className="table_container">
-            <TableGjelderBarn gjelderBarn={gjelderBarn} />
-            <CommonTable width={"500px"} data={tableData} />
-            <div
-              className="horizontal-line"
-              style={{
-                pageBreakAfter: "avoid",
-                marginBottom: "24px",
-              }}
-            ></div>
-          </div>
-        );
-      })}
+    <div className="table_container">
+      <TableGjelderBarn gjelderBarn={barn.barn} />
+      <KolonneTabell
+        oppsett={tabellAvslag}
+        rader={barn.perioder}
+        celler={{
+          resultat: () => resultat,
+        }}
+      />
+      <div
+        className="horizontal-line"
+        style={{ pageBreakAfter: "avoid", marginBottom: "24px" }}
+      ></div>
     </div>
   );
 }
 
-function VedtakTable({
-  data,
+function VedtakForBarn({
+  barn,
 }: {
-  data: NotatResultatForskuddBeregningBarnDto[];
+  barn: NotatResultatForskuddBeregningBarnDto;
 }) {
-  if (data.length == 0) return <div>Mangler resultat</div>;
   return (
-    <>
-      {groupBy(data, (d) => d.barn?.ident!).map(([key, value]) => {
-        const gjelderBarn = value[0].barn!;
-        const perioder = value[0].perioder;
-        const tableData: TableData = {
-          headers: [
-            { name: "Inntekt", width: "80px" },
-            { name: "Sivilstand", width: "100px" },
-            { name: "Antall barn i husstand", width: "80px" },
-            { name: "Forskudd", width: "70px" },
-            { name: "Resultat", width: "160px" },
-          ],
-          rows: perioder.map((d) => ({
-            periodColumn: formatPeriode(
-              d.periode!.fom,
-              deductDays(d.periode!.til, 1),
-            ),
-            columns: [
-              { content: formatterBeløp(d.inntekt) },
-              { content: d.sivilstandVisningsnavn },
-              { content: d.antallBarnIHusstanden },
-              { content: formatterBeløp(d.beløp) },
-              { content: d.resultatKodeVisningsnavn },
-            ],
-          })),
-        };
-        return (
-          <div
-            key={key + gjelderBarn.ident}
-            className="table_container mb-medium"
-          >
-            <TableGjelderBarn gjelderBarn={gjelderBarn} />
-            <CommonTable data={tableData} width={"550px"} />
-          </div>
-        );
-      })}
-    </>
+    <div className="table_container mb-medium">
+      <TableGjelderBarn gjelderBarn={barn.barn} />
+      <KolonneTabell oppsett={tabellInnvilget} rader={barn.perioder} />
+    </div>
   );
 }

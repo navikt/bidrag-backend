@@ -1,0 +1,1258 @@
+{
+  "behandling" : {
+    "avslag" : "AVSLAG",
+    "innkreving" : true,
+    "kategori" : {
+      "beskrivelse" : null,
+      "kategori" : "ANNET"
+    },
+    "klageMottattDato" : null,
+    "mottattDato" : "2023-03-15",
+    "opprinneligVedtakstype" : null,
+    "søknadstype" : "FASTSETTELSE",
+    "søktAv" : "BIDRAGSMOTTAKER",
+    "søktFraDato" : "2022-02",
+    "vedtakstype" : "FASTSETTELSE",
+    "virkningstidspunkt" : "2023-02-01",
+    "avslagVisningsnavn" : "Avslag, avslag",
+    "avslagVisningsnavnUtenPrefiks" : "Avslag",
+    "erAvvisning" : false,
+    "kategoriVisningsnavn" : "Annet: null",
+    "vedtakstypeVisningsnavn" : "Fastsettelse"
+  },
+  "boforhold" : {
+    "andreVoksneIHusstanden" : {
+      "opplysningerBruktTilBeregning" : [ ],
+      "opplysningerFraFolkeregisteret" : [ ]
+    },
+    "barn" : [ {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : null,
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kilde" : "OFFENTLIG",
+      "medIBehandling" : true,
+      "opplysningerBruktTilBeregning" : [ {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2023-02",
+          "til" : "2023-10"
+        },
+        "status" : "MED_FORELDER",
+        "statusVisningsnavn" : "Registrert på adresse"
+      }, {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2023-11",
+          "til" : null
+        },
+        "status" : "IKKE_MED_FORELDER",
+        "statusVisningsnavn" : "Ikke registrert på adresse"
+      } ],
+      "opplysningerFraFolkeregisteret" : [ ]
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : null,
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kilde" : "OFFENTLIG",
+      "medIBehandling" : true,
+      "opplysningerBruktTilBeregning" : [ {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2023-02",
+          "til" : "2023-07"
+        },
+        "status" : "MED_FORELDER",
+        "statusVisningsnavn" : "Registrert på adresse"
+      }, {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2023-08",
+          "til" : null
+        },
+        "status" : "IKKE_MED_FORELDER",
+        "statusVisningsnavn" : "Ikke registrert på adresse"
+      } ],
+      "opplysningerFraFolkeregisteret" : [ ]
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : null,
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-01-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "<HUSSTANDSMEDLEM1_IDENT>",
+        "innbetaltBeløp" : null,
+        "navn" : "Huststand Gapp",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : null,
+        "saksnummer" : null,
+        "virkningstidspunkt" : null
+      },
+      "kilde" : "OFFENTLIG",
+      "medIBehandling" : false,
+      "opplysningerBruktTilBeregning" : [ {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2023-02",
+          "til" : "2023-12"
+        },
+        "status" : "MED_FORELDER",
+        "statusVisningsnavn" : "Registrert på adresse"
+      }, {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2024-01",
+          "til" : null
+        },
+        "status" : "IKKE_MED_FORELDER",
+        "statusVisningsnavn" : "Ikke registrert på adresse"
+      } ],
+      "opplysningerFraFolkeregisteret" : [ ]
+    } ],
+    "begrunnelse" : {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    },
+    "beregnetBoforhold" : [ ],
+    "boforholdBMSøknadsbarn" : [ ],
+    "notat" : {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    },
+    "sivilstand" : {
+      "opplysningerBruktTilBeregning" : [ {
+        "kilde" : "OFFENTLIG",
+        "periode" : {
+          "fom" : "2022-02",
+          "til" : null
+        },
+        "status" : "BOR_ALENE_MED_BARN",
+        "statusVisningsnavn" : "Bor alene med barn"
+      } ],
+      "opplysningerFraFolkeregisteret" : [ {
+        "detaljer" : null,
+        "periode" : {
+          "fom" : "2022-12",
+          "til" : null
+        },
+        "status" : "SKILT",
+        "statusVisningsnavn" : "Skilt"
+      } ]
+    }
+  },
+  "erOrkestrertVedtak" : false,
+  "gebyrV2" : {
+    "gebyrRoller" : [ ]
+  },
+  "gebyrV3" : {
+    "saker" : [ ]
+  },
+  "inntekter" : {
+    "begrunnelsePerRolle" : [ {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "Inntektsbegrunnelse kun i notat",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : "Inntektsbegrunnelse kun i notat"
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    } ],
+    "inntekterPerRolle" : [ {
+      "arbeidsforhold" : [ {
+        "arbeidsgiver" : "SAUEFABRIKK",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2002-11",
+          "til" : null
+        },
+        "stillingProsent" : null
+      }, {
+        "arbeidsgiver" : "SJOKKERENDE ELEKTRIKER",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2003-12",
+          "til" : null
+        },
+        "stillingProsent" : "75.0"
+      }, {
+        "arbeidsgiver" : "SAUEFABRIKK",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2022-12",
+          "til" : null
+        },
+        "stillingProsent" : null
+      } ],
+      "barnetillegg" : [ {
+        "beløp" : 60000,
+        "gjelderBarn" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "2020-03-01",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "1344124",
+          "innbetaltBeløp" : null,
+          "navn" : "Kran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BA",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "historisk" : false,
+        "inntektsposter" : [ {
+          "beløp" : 60000,
+          "beløpstype" : "ÅRSBELØP",
+          "inntektstype" : "BARNETILLEGG_DNB",
+          "kode" : "",
+          "skattefaktor" : 0.05,
+          "visningsnavn" : "DNB"
+        } ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-01",
+          "til" : "2023-12"
+        },
+        "periode" : {
+          "fom" : "2022-01",
+          "til" : null
+        },
+        "type" : "BARNETILLEGG",
+        "beløpMånedDagsats" : 5000,
+        "beløpstype" : "MÅNEDSBELØP",
+        "beløpstypeVisningsnavn" : "Måned",
+        "dagsats" : null,
+        "månedsbeløp" : 5000,
+        "skattefaktor" : 0.05,
+        "visningsnavn" : "Barnetillegg"
+      } ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ {
+        "beløp" : 50000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ ],
+        "kilde" : "MANUELL",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : null,
+        "periode" : {
+          "fom" : "2022-01",
+          "til" : "2022-06"
+        },
+        "type" : "PERSONINNTEKT_EGNE_OPPLYSNINGER",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "Personinntekt egne opplysninger"
+      }, {
+        "beløp" : 60000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ ],
+        "kilde" : "MANUELL",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : null,
+        "periode" : {
+          "fom" : "2022-07",
+          "til" : "2022-09"
+        },
+        "type" : "SAKSBEHANDLER_BEREGNET_INNTEKT",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "Saksbehandlers beregnede inntekt"
+      }, {
+        "beløp" : 60000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ {
+          "beløp" : 400000,
+          "beløpstype" : "ÅRSBELØP",
+          "inntektstype" : "NÆRINGSINNTEKT",
+          "kode" : "lønnFraFluefiske",
+          "skattefaktor" : null,
+          "visningsnavn" : "Næringsinntekt"
+        } ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-02",
+          "til" : "2024-01"
+        },
+        "periode" : {
+          "fom" : "2022-10",
+          "til" : null
+        },
+        "type" : "AINNTEKT_BEREGNET_12MND",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "A-inntekt siste 12 måneder"
+      } ],
+      "harInntekter" : true
+    }, {
+      "arbeidsforhold" : [ ],
+      "barnetillegg" : [ ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ ],
+      "harInntekter" : false
+    }, {
+      "arbeidsforhold" : [ ],
+      "barnetillegg" : [ ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ {
+        "beløp" : 60000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-02",
+          "til" : "2024-01"
+        },
+        "periode" : {
+          "fom" : "2022-01",
+          "til" : null
+        },
+        "type" : "AINNTEKT_BEREGNET_12MND",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "A-inntekt siste 12 måneder"
+      } ],
+      "harInntekter" : true
+    } ],
+    "notat" : {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "Inntektsbegrunnelse kun i notat",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : "Inntektsbegrunnelse kun i notat"
+    },
+    "notatPerRolle" : [ {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "Inntektsbegrunnelse kun i notat",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : "Inntektsbegrunnelse kun i notat"
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    }, {
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "innhold" : "",
+      "innholdFraOmgjortVedtak" : "",
+      "intern" : ""
+    } ],
+    "offentligeInntekterPerRolle" : [ {
+      "arbeidsforhold" : [ {
+        "arbeidsgiver" : "SAUEFABRIKK",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2002-11",
+          "til" : null
+        },
+        "stillingProsent" : null
+      }, {
+        "arbeidsgiver" : "SJOKKERENDE ELEKTRIKER",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2003-12",
+          "til" : null
+        },
+        "stillingProsent" : "75.0"
+      }, {
+        "arbeidsgiver" : "SAUEFABRIKK",
+        "lønnsendringDato" : null,
+        "periode" : {
+          "fom" : "2022-12",
+          "til" : null
+        },
+        "stillingProsent" : null
+      } ],
+      "barnetillegg" : [ {
+        "beløp" : 60000,
+        "gjelderBarn" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "2020-03-01",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "1344124",
+          "innbetaltBeløp" : null,
+          "navn" : "Kran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BA",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "historisk" : false,
+        "inntektsposter" : [ {
+          "beløp" : 60000,
+          "beløpstype" : "ÅRSBELØP",
+          "inntektstype" : "BARNETILLEGG_DNB",
+          "kode" : "",
+          "skattefaktor" : 0.05,
+          "visningsnavn" : "DNB"
+        } ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-01",
+          "til" : "2023-12"
+        },
+        "periode" : {
+          "fom" : "2022-01",
+          "til" : null
+        },
+        "type" : "BARNETILLEGG",
+        "beløpMånedDagsats" : 5000,
+        "beløpstype" : "MÅNEDSBELØP",
+        "beløpstypeVisningsnavn" : "Måned",
+        "dagsats" : null,
+        "månedsbeløp" : 5000,
+        "skattefaktor" : 0.05,
+        "visningsnavn" : "Barnetillegg"
+      } ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ {
+        "beløp" : 60000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ {
+          "beløp" : 400000,
+          "beløpstype" : "ÅRSBELØP",
+          "inntektstype" : "NÆRINGSINNTEKT",
+          "kode" : "lønnFraFluefiske",
+          "skattefaktor" : null,
+          "visningsnavn" : "Næringsinntekt"
+        } ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-02",
+          "til" : "2024-01"
+        },
+        "periode" : {
+          "fom" : "2022-10",
+          "til" : null
+        },
+        "type" : "AINNTEKT_BEREGNET_12MND",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "A-inntekt siste 12 måneder"
+      } ],
+      "harInntekter" : true
+    }, {
+      "arbeidsforhold" : [ ],
+      "barnetillegg" : [ ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ ],
+      "harInntekter" : false
+    }, {
+      "arbeidsforhold" : [ ],
+      "barnetillegg" : [ ],
+      "beregnetInntekter" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "kontantstøtte" : [ ],
+      "småbarnstillegg" : [ ],
+      "utvidetBarnetrygd" : [ ],
+      "årsinntekter" : [ {
+        "beløp" : 60000,
+        "gjelderBarn" : null,
+        "historisk" : false,
+        "inntektsposter" : [ ],
+        "kilde" : "OFFENTLIG",
+        "medIBeregning" : true,
+        "opprinneligPeriode" : {
+          "fom" : "2023-02",
+          "til" : "2024-01"
+        },
+        "periode" : {
+          "fom" : "2022-01",
+          "til" : null
+        },
+        "type" : "AINNTEKT_BEREGNET_12MND",
+        "beløpMånedDagsats" : null,
+        "beløpstype" : "ÅRSBELØP",
+        "beløpstypeVisningsnavn" : "Dagsats",
+        "dagsats" : null,
+        "månedsbeløp" : null,
+        "skattefaktor" : null,
+        "visningsnavn" : "A-inntekt siste 12 måneder"
+      } ],
+      "harInntekter" : true
+    } ]
+  },
+  "medInnkreving" : true,
+  "personer" : [ {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "1978-08-25",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "313213213",
+    "innbetaltBeløp" : null,
+    "navn" : "Oran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BM",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  }, {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "2018-05-09",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "54545454545",
+    "innbetaltBeløp" : null,
+    "navn" : "Gran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BA",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  }, {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "2020-03-01",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "1344124",
+    "innbetaltBeløp" : null,
+    "navn" : "Kran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BA",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  } ],
+  "privatavtale" : [ ],
+  "roller" : [ {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "1978-08-25",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "313213213",
+    "innbetaltBeløp" : null,
+    "navn" : "Oran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BM",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  }, {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "2018-05-09",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "54545454545",
+    "innbetaltBeløp" : null,
+    "navn" : "Gran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BA",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  }, {
+    "bidragsmottakerIdent" : "313213213",
+    "erBeskyttet" : false,
+    "fødselsdato" : "2020-03-01",
+    "harLøpendeBidrag" : false,
+    "harLøpendeForskudd" : false,
+    "ident" : "1344124",
+    "innbetaltBeløp" : null,
+    "navn" : "Kran Mappe",
+    "opphørsdato" : null,
+    "revurdering" : false,
+    "rolle" : "BA",
+    "saksnummer" : "1233333",
+    "virkningstidspunkt" : null
+  } ],
+  "saksbehandlerNavn" : null,
+  "saksnummer" : "1233333",
+  "samværV2" : {
+    "barn" : [ ],
+    "erSammeForAlle" : true,
+    "sammeSamværForAlleSaker" : [ ]
+  },
+  "stønadstype" : "FORSKUDD",
+  "type" : "FORSKUDD",
+  "underholdskostnader" : {
+    "offentligeOpplysninger" : [ {
+      "barnetilsyn" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "gjelderBarn" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "harTilleggsstønad" : false
+    }, {
+      "barnetilsyn" : [ ],
+      "gjelder" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "1978-08-25",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "313213213",
+        "innbetaltBeløp" : null,
+        "navn" : "Oran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BM",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "gjelderBarn" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "harTilleggsstønad" : false
+    } ],
+    "offentligeOpplysningerV2" : {
+      "andreBarnTilBidragsmottaker" : [ ],
+      "bidragsmottakerHarInnvilgetTilleggsstønad" : false,
+      "offentligeOpplysningerBarn" : [ {
+        "barnetilsyn" : [ ],
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "gjelderBarn" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "2020-03-01",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "1344124",
+          "innbetaltBeløp" : null,
+          "navn" : "Kran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BA",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "harTilleggsstønad" : false
+      }, {
+        "barnetilsyn" : [ ],
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "gjelderBarn" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "2018-05-09",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "54545454545",
+          "innbetaltBeløp" : null,
+          "navn" : "Gran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BA",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "harTilleggsstønad" : false
+      } ]
+    },
+    "underholdskostnaderBarn" : [ ]
+  },
+  "utgift" : null,
+  "vedtak" : {
+    "erFattet" : false,
+    "fattetAvSaksbehandler" : null,
+    "fattetTidspunkt" : null,
+    "kanFatteVedtakForRevurderingsbarn" : false,
+    "manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse" : null,
+    "resultat" : [ {
+      "type" : "FORSKUDD",
+      "barn" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "perioder" : [ {
+        "antallBarnIHusstanden" : 0,
+        "beløp" : 0,
+        "inntekt" : 0,
+        "periode" : {
+          "fom" : "2023-02",
+          "til" : null
+        },
+        "regel" : "",
+        "resultatKode" : "AVSLAG",
+        "sivilstand" : null,
+        "vedtakstype" : "FASTSETTELSE",
+        "resultatKodeVisningsnavn" : "Avslag, avslag",
+        "sivilstandVisningsnavn" : null
+      } ],
+      "erOpphørAvStønad" : false,
+      "type" : "FORSKUDD"
+    }, {
+      "type" : "FORSKUDD",
+      "barn" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "perioder" : [ {
+        "antallBarnIHusstanden" : 0,
+        "beløp" : 0,
+        "inntekt" : 0,
+        "periode" : {
+          "fom" : "2023-02",
+          "til" : null
+        },
+        "regel" : "",
+        "resultatKode" : "AVSLAG",
+        "sivilstand" : null,
+        "vedtakstype" : "FASTSETTELSE",
+        "resultatKodeVisningsnavn" : "Avslag, avslag",
+        "sivilstandVisningsnavn" : null
+      } ],
+      "erOpphørAvStønad" : false,
+      "type" : "FORSKUDD"
+    } ],
+    "skalFatteVedtakForRevurderingsbarn" : false
+  },
+  "virkningstidspunkt" : {
+    "barn" : [ {
+      "avslag" : "AVSLAG",
+      "begrunnelse" : {
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "innhold" : "Virkningstidspunkt kun i notat",
+        "innholdFraOmgjortVedtak" : "",
+        "intern" : "Virkningstidspunkt kun i notat"
+      },
+      "begrunnelseVurderingAvSkolegang" : null,
+      "behandlingstype" : null,
+      "beregnTil" : null,
+      "beregnTilDato" : "2025-06",
+      "etterfølgendeVedtakVirkningstidspunkt" : null,
+      "innkreving" : true,
+      "mottattDato" : "2023-03-15",
+      "notat" : {
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "innhold" : "Virkningstidspunkt kun i notat",
+        "innholdFraOmgjortVedtak" : "",
+        "intern" : "Virkningstidspunkt kun i notat"
+      },
+      "opphørsdato" : null,
+      "rolle" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2018-05-09",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "54545454545",
+        "innbetaltBeløp" : null,
+        "navn" : "Gran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "stønadstype" : "FORSKUDD",
+      "søknadstype" : null,
+      "søktAv" : "BIDRAGSMOTTAKER",
+      "søktFraDato" : "2022-02",
+      "vedtakstype" : "FASTSETTELSE",
+      "virkningstidspunkt" : "2023-02-01",
+      "årsak" : "FRA_SØKNADSTIDSPUNKT",
+      "avslagVisningsnavn" : "Avslag, avslag",
+      "avslagVisningsnavnUtenPrefiks" : "Avslag",
+      "behandlingstypeVisningsnavn" : null,
+      "erAvvisning" : false,
+      "årsakVisningsnavn" : "Fra søknadstidspunkt"
+    }, {
+      "avslag" : "AVSLAG",
+      "begrunnelse" : {
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "innhold" : "Virkningstidspunkt kun i notat",
+        "innholdFraOmgjortVedtak" : "",
+        "intern" : "Virkningstidspunkt kun i notat"
+      },
+      "begrunnelseVurderingAvSkolegang" : null,
+      "behandlingstype" : null,
+      "beregnTil" : null,
+      "beregnTilDato" : "2025-06",
+      "etterfølgendeVedtakVirkningstidspunkt" : null,
+      "innkreving" : true,
+      "mottattDato" : "2023-03-15",
+      "notat" : {
+        "gjelder" : {
+          "bidragsmottakerIdent" : "313213213",
+          "erBeskyttet" : false,
+          "fødselsdato" : "1978-08-25",
+          "harLøpendeBidrag" : false,
+          "harLøpendeForskudd" : false,
+          "ident" : "313213213",
+          "innbetaltBeløp" : null,
+          "navn" : "Oran Mappe",
+          "opphørsdato" : null,
+          "revurdering" : false,
+          "rolle" : "BM",
+          "saksnummer" : "1233333",
+          "virkningstidspunkt" : null
+        },
+        "innhold" : "Virkningstidspunkt kun i notat",
+        "innholdFraOmgjortVedtak" : "",
+        "intern" : "Virkningstidspunkt kun i notat"
+      },
+      "opphørsdato" : null,
+      "rolle" : {
+        "bidragsmottakerIdent" : "313213213",
+        "erBeskyttet" : false,
+        "fødselsdato" : "2020-03-01",
+        "harLøpendeBidrag" : false,
+        "harLøpendeForskudd" : false,
+        "ident" : "1344124",
+        "innbetaltBeløp" : null,
+        "navn" : "Kran Mappe",
+        "opphørsdato" : null,
+        "revurdering" : false,
+        "rolle" : "BA",
+        "saksnummer" : "1233333",
+        "virkningstidspunkt" : null
+      },
+      "stønadstype" : "FORSKUDD",
+      "søknadstype" : null,
+      "søktAv" : "BIDRAGSMOTTAKER",
+      "søktFraDato" : "2022-02",
+      "vedtakstype" : "FASTSETTELSE",
+      "virkningstidspunkt" : "2023-02-01",
+      "årsak" : "FRA_SØKNADSTIDSPUNKT",
+      "avslagVisningsnavn" : "Avslag, avslag",
+      "avslagVisningsnavnUtenPrefiks" : "Avslag",
+      "behandlingstypeVisningsnavn" : null,
+      "erAvvisning" : false,
+      "årsakVisningsnavn" : "Fra søknadstidspunkt"
+    } ],
+    "eldsteVirkningstidspunkt" : "2023-02",
+    "erAvslagForAlle" : true,
+    "erLikForAlle" : true,
+    "erLikForAlleBasertPåSak" : [ {
+      "erLikForAlle" : true,
+      "saksnummer" : "1233333"
+    } ],
+    "erVirkningstidspunktLikForAlle" : true,
+    "erVirkningstidspunktLiktForAlleSaker" : [ {
+      "erLikForAlle" : true,
+      "saksnummer" : "1233333"
+    } ]
+  }
+}

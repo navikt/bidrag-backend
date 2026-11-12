@@ -1,0 +1,41 @@
+{
+  "beregningsdetaljer": {
+    "vedleggBeregningsdetaljer": {
+      "tittel": "Vedlegg nr. {}: Beregningsdetaljer",
+      "resultat": {
+        "bpHarEvne": "BP har evne",
+        "bpHarIkkeEvneVerdi": "Nei, bidragsevnen er lavere enn beregnet totalbidrag",
+        "bpHarEvneVerdi": "Ja, bidragsevnen er høyere enn beregnet totalbidrag",
+        "betaltAvBidragspliktig": "Betalt av Bidragspliktig",
+        "beløpSomInnkreves": "Beløp som innkreves",
+        "beløpSomInnkrevesUtenInnkreving": "Fastsatt beløp å betale"
+      }
+    },
+    "bpsAndel": {
+      "tittel": "Bidragspliktiges andel",
+      "bidragspliktigesInntekt": "Bidragspliktiges inntekt",
+      "bidragsmottakerensInntekt": "Bidragsmottakerens inntekt",
+      "barnetsInntekt": "Barnets inntekt",
+      "totalInntekt": "Total inntekt",
+      "bpsAndelAvUtgifter": "BP's andel av utgifter (i prosent)",
+      "andelUtgifter": "Andel utgifter",
+      "andelBegrensetTil": "Andel begrenset til"
+    },
+    "bpsBeregnedeTotalbidrag": {
+      "tittel": "Bidragspliktiges beregnede totalbidrag",
+      "kolonner": {
+        "løpendeBidrag": "Løpende bidrag",
+        "samvær": "Samvær",
+        "reduksjonAvBpsAndelAvU": "Reduksjon av BPs andel av U"
+      },
+      "reduksjonAvBpsAndelAvU": {
+        "tittel": "Reduksjon av BPs andel av U",
+        "bpsAndelAvU": "BPs andel av U",
+        "justertOppTilBpsNettoBarnetillegg": " (justert opp til BPs netto barnetillegg)",
+        "faktiskBidrag": "Faktisk bidrag"
+      },
+      "beregnetTotalbidrag": "Beregnet totalbidrag: ",
+      "forklaring": "U = Underholdskostnad, BP = Bidragspliktig"
+    }
+  }
+}

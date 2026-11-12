@@ -7,6 +7,10 @@ import { Rolletype } from "~/types/Api";
 import { PersonV2 } from "~/components/Person";
 import HorizontalLine from "~/components/HorizontalLine";
 import { dateToDDMMYYYY } from "~/utils/date-utils";
+import ord from "~/tekster/ord.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+
+const t = bidragTekster.gebyr;
 
 export default function GebyrV2() {
   const { data, erAvslag } = useNotatFelles();
@@ -15,7 +19,7 @@ export default function GebyrV2() {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>Gebyr</h2>
+        <h2>{t.tittel}</h2>
       </div>
       <>
         {gebyr.gebyrRoller
@@ -63,7 +67,7 @@ export default function GebyrV2() {
                         data={
                           [
                             {
-                              label: "Sak",
+                              label: t.søknad.sak,
                               textRight: false,
                               value: `${gebyrDetaljerListe[0].søknad.saksnummer}`,
                             },
@@ -76,10 +80,10 @@ export default function GebyrV2() {
                     data={{
                       headers: [
                         {
-                          name: "Beskrivelse",
+                          name: ord.beskrivelse,
                         },
                         {
-                          name: "Beløp",
+                          name: ord.beløp,
                         },
                       ],
                       rows: [
@@ -87,8 +91,8 @@ export default function GebyrV2() {
                           columns: [
                             {
                               content: erAvslag
-                                ? "Inntekt siste 12 måneder"
-                                : "Skattepliktig inntekt",
+                                ? t.inntekt.inntektSiste12Måneder
+                                : t.inntekt.skattepliktigInntekt,
                             },
                             {
                               content:
@@ -100,7 +104,7 @@ export default function GebyrV2() {
                         !erAvslag && {
                           columns: [
                             {
-                              content: "Høyeste barnetillegg",
+                              content: t.inntekt.høyesteBarnetillegg,
                             },
                             {
                               content:
@@ -113,7 +117,7 @@ export default function GebyrV2() {
                           columns: [
                             {
                               labelBold: true,
-                              content: "Total",
+                              content: ord.total,
                             },
                             {
                               content:
@@ -134,26 +138,26 @@ export default function GebyrV2() {
                           data={
                             [
                               {
-                                label: "Søkt fra dato",
+                                label: ord.søktFraDato,
                                 textRight: false,
                                 value: `${dateToDDMMYYYY(gebyrDetaljer.søknad.søknadFomDato)}`,
                               },
                               {
-                                label: "Mottatt dato",
+                                label: ord.mottattDato,
                                 textRight: false,
                                 value: `${dateToDDMMYYYY(gebyrDetaljer.søknad.mottattDato)}`,
                               },
                               {
-                                label: "Søknad fra",
+                                label: ord.søknadFra,
                                 textRight: false,
                                 value: `${gebyrDetaljer.søknad.søktAvTypeVisningsnavn}`,
                               },
                               {
-                                label: "Gebyr",
+                                label: t.resultat.gebyr,
                                 value: gebyrDetaljer.gebyrResultatVisningsnavn,
                               },
                               gebyrDetaljer.erManueltOverstyrt && {
-                                label: "Begrunnelse",
+                                label: ord.begrunnelse,
                                 value: gebyrDetaljer.begrunnelse,
                               },
                             ].filter((d) => d != null) as DataViewTableData[]
@@ -165,11 +169,11 @@ export default function GebyrV2() {
                           data={
                             [
                               {
-                                label: "Gebyr",
+                                label: t.resultat.gebyr,
                                 value: gebyrDetaljer.gebyrResultatVisningsnavn,
                               },
                               gebyrDetaljer.erManueltOverstyrt && {
-                                label: "Begrunnelse",
+                                label: ord.begrunnelse,
                                 value: gebyrDetaljer.begrunnelse,
                               },
                             ].filter((d) => d) as DataViewTableData[]

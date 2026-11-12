@@ -8,7 +8,9 @@ import {
   Vedtakstype,
 } from "~/types/Api";
 import { CommonTable } from "~/components/CommonTable";
+import ord from "~/tekster/ord.json";
 import tekster from "~/tekster";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
 import { dateToDDMMYYYY, formatPeriode } from "~/utils/date-utils";
 import { DataViewTable } from "~/components/DataViewTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
@@ -18,6 +20,8 @@ import {
   rolleTilVisningsnavnV2,
 } from "~/utils/visningsnavn";
 
+const t = bidragTekster.privatAvtale;
+
 export default function PrivatAvtale() {
   const { data, erAvslag } = useNotatFelles();
   const privatAvtale = data.privatavtale;
@@ -25,7 +29,7 @@ export default function PrivatAvtale() {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>Privat avtale</h2>
+        <h2>{t.tittel}</h2>
       </div>
       <>
         {privatAvtale.map((barn, i) => (
@@ -67,12 +71,12 @@ function PrivatAvtaleBarn({
         className={"mt-2"}
         data={[
           {
-            label: "Avtalemåned",
+            label: t.avtale.avtalemåned,
             labelBold: false,
             value: dateToDDMMYYYY(data.avtaleDato),
           },
           {
-            label: "Avtaletype",
+            label: t.avtale.avtaletype,
             labelBold: false,
             value: data.avtaleTypeVisningsnavn,
           },
@@ -99,31 +103,31 @@ function PrivatAvtaleManuelleVedtakTabell({
 }) {
   return (
     <div className={"pt-2"}>
-      <h4>Vedtak fra Nav</h4>
+      <h4>{t.vedtakFraNav.tittel}</h4>
       <CommonTable
         layoutAuto
         width={"350px"}
         data={{
           headers: [
             {
-              name: "Valgt",
+              name: t.vedtakFraNav.kolonner.valgt,
             },
             {
-              name: "Virkningsdato",
+              name: t.vedtakFraNav.kolonner.virkningsdato,
             },
             {
-              name: "Vedtaksdato",
+              name: t.vedtakFraNav.kolonner.vedtaksdato,
             },
             {
-              name: "Søknadstype",
+              name: ord.søknadstype,
             },
             {
-              name: "Resultat siste periode",
+              name: t.vedtakFraNav.kolonner.resultatSistePeriode,
             },
           ],
           rows: data.map((d) => ({
             columns: [
-              { content: d.valgt ? "Ja" : "Nei" },
+              { content: d.valgt ? ord.ja : ord.nei },
               { content: dateToDDMMYYYY(d.virkningsDato) },
               { content: dateToDDMMYYYY(d.fattetTidspunkt) },
               { content: d.søknadstype },
@@ -147,7 +151,7 @@ function PrivatAvtaleTabell({ data }: { data: NotatPrivatAvtalePeriodeDto[] }) {
             name: tekster.tabell.felles.fraTilOgMed,
           },
           {
-            name: tekster.tabell.felles.beløp,
+            name: ord.beløp,
           },
         ],
         rows: data.map((d) => ({
@@ -170,7 +174,7 @@ function PrivatAvtaleBeregnetTabell({
   const perioder = data;
   return (
     <div>
-      <h4 className={"mb-1 mt-4"}>Beregnet privat avtale</h4>
+      <h4 className={"mb-1 mt-4"}>{t.beregnetPrivatAvtale.tittel}</h4>
       <CommonTable
         layoutAuto
         width={"350px"}
@@ -180,10 +184,10 @@ function PrivatAvtaleBeregnetTabell({
               name: tekster.tabell.felles.fraTilOgMed,
             },
             {
-              name: "Indeksprosent",
+              name: t.beregnetPrivatAvtale.indeksprosent,
             },
             {
-              name: tekster.tabell.felles.beløp,
+              name: ord.beløp,
             },
           ],
           rows: perioder.map((d) => ({

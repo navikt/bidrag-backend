@@ -1,89 +1,145 @@
+import { ReactNode } from "react";
 import {
   DokumentmalResultatBidragsberegningBarnDto,
-  Samvaersklasse,
   ResultatBarnebidragsberegningPeriodeDto,
-  DokumentmalPersonDto,
+  Samvaersklasse,
 } from "~/types/Api";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import { VedtakFattetDetaljer } from "~/components/notat_felles/components/VedtakFattetDetaljer";
-import { deductDays, formatPeriode, sortByAge } from "~/utils/date-utils";
+import { sortByAge } from "~/utils/date-utils";
 import elementIds from "~/utils/elementIds";
 import { groupBy } from "~/utils/array-utils";
-import {
-  CommonTable,
-  TableData,
-  TableHeader,
-  TableRow,
-} from "~/components/CommonTable";
+import { CommonTable, TableHeader, TableRow } from "~/components/CommonTable";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
-import {
-  formatterBeløpForBeregning,
-  formatterProsent,
-} from "~/utils/visningsnavn";
-import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
-import { VedleggProps } from "~/types/commonTypes";
+import { DataViewTable } from "~/components/DataViewTable";
 import {
   useDokumentFelles,
   TypeInnhold,
 } from "~/components/vedtak_felles/FellesContext";
-import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
+import {
+  KolonneTabell,
+  kolonneceller,
+  kolonneoverskrifter,
+  periodelinje,
+  Tabelloppsett,
+} from "~/components/KolonneTabell";
+import { formater } from "~/utils/visning";
+import ord from "~/tekster/ord.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
 
-export default function Vedtak({ vedleggNummer }: VedleggProps) {
+const t = bidragTekster.vedtak;
+const tr = bidragTekster.revurderingsbarn;
+
+const te = t.tabellEndelig;
+const tb = t.tabellBeregning;
+
+const tabellInnkreving: Tabelloppsett = {
+  kolonner: [
+    {
+      felt: "periode",
+      tittel: ord.periode,
+      bredde: "170px",
+      format: "periodeTilOgMedTilMåned",
+    },
+    {
+      felt: "faktiskBidrag",
+      tittel: ord.beløp,
+      bredde: "150px",
+      format: "beløpAvrundet",
+    },
+    {
+      felt: "resultatkodeVisningsnavn",
+      tittel: ord.resultat,
+      bredde: "250px",
+    },
+  ],
+};
+
+const tabellAvslag: Tabelloppsett = {
+  kolonner: [
+    {
+      felt: "periode",
+      tittel: ord.periode,
+      bredde: "170px",
+      format: "periodeTilOgMedTilMåned",
+    },
+    { felt: "resultat", tittel: ord.resultat, bredde: "150px" },
+    {
+      felt: "resultatkodeVisningsnavn",
+      tittel: ord.årsak,
+      bredde: "250px",
+    },
+  ],
+};
+
+// bpsAndel, samvær og evne viser to verdier i samme celle, se `beregningsceller`
+const tabellBeregning: Tabelloppsett = {
+  periodelinje: { felt: "periode", format: "periode" },
+  kolonner: [
+    {
+      felt: "underholdskostnad",
+      tittel: tb.underholdskostnad,
+      bredde: "50px",
+      format: "beløpAvrundet",
+    },
+    { felt: "bpsAndel", tittel: tb.bpsAndel, bredde: "120px" },
+    { felt: "samvær", tittel: tb.samvær, bredde: "100px" },
+    { felt: "evne", tittel: tb.evne, bredde: "100px" },
+    {
+      felt: "beregnetBidrag",
+      tittel: tb.beregnetBidrag,
+      bredde: "80px",
+      format: "beløpAvrundet",
+    },
+    {
+      felt: "faktiskBidrag",
+      tittel: tb.endeligBidrag,
+      bredde: "80px",
+      format: "beløpAvrundet",
+    },
+  ],
+};
+
+type Resultat = DokumentmalResultatBidragsberegningBarnDto;
+type Periode = ResultatBarnebidragsberegningPeriodeDto;
+
+export default function Vedtak() {
+  const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
-  function renderTable() {
-    if (erInnkrevingsgrunnlag) {
-      return (
-        <VedtakTableInnkreving
-          data={
-            data.vedtak.resultat as DokumentmalResultatBidragsberegningBarnDto[]
-          }
-        />
-      );
-    }
-    if (erAvslag) {
-      return (
-        <VedtakTableAvslag
-          data={
-            data.vedtak.resultat as DokumentmalResultatBidragsberegningBarnDto[]
-          }
-        />
-      );
-    }
+  const resultat = data.vedtak.resultat as Resultat[];
 
-    return (
-      <>
-        <VedtakTable
-          data={
-            data.vedtak.resultat as DokumentmalResultatBidragsberegningBarnDto[]
-          }
-        />
-      </>
-    );
+  function renderTabell() {
+    if (resultat.length == 0) return <div>{ord.manglerResultat}</div>;
+    if (erInnkrevingsgrunnlag) return <VedtakInnkreving resultat={resultat} />;
+    if (erAvslag) return <VedtakAvslag resultat={resultat} />;
+    return <VedtakBeregning resultat={resultat} />;
   }
+
   return (
     <>
       <div className={"elements_inline section-title break-before-page"}>
         <h2 className={"section-title"}>
-          {data.erOrkestrertVedtak ? "Klagevedtak" : "Vedtak"}
+          {data.erOrkestrertVedtak ? t.tittelKlagevedtak : t.tittel}
         </h2>
         {!erAvslag && !erInnkrevingsgrunnlag && (
           <a href={`#${elementIds.vedleggBeregningsdetaljer}`}>
-            se vedlegg nr. {vedleggNummer} for beregningsdetaljer
+            {ord.seVedleggForBeregningsdetaljer.replace(
+              "{}",
+              `${vedleggNummer}`,
+            )}
           </a>
         )}
       </div>
-      {renderTable()}
+      {renderTabell()}
       {data.erOrkestrertVedtak && (
         <>
           <div className={"elements_inline section-title break-before-page"}>
-            <h2 className={"section-title"}>Endelig vedtak</h2>
+            <h2 className={"section-title"}>{t.tittelEndeligVedtak}</h2>
           </div>
-          <VedtakEndeligTable
-            data={
-              data.vedtak
-                .resultat as DokumentmalResultatBidragsberegningBarnDto[]
-            }
-          />
+          <VedtakEndeligTable data={resultat} />
         </>
       )}
       <OverstyrFatteVedtakRevurderingsbarnInformasjon />
@@ -92,498 +148,366 @@ export default function Vedtak({ vedleggNummer }: VedleggProps) {
   );
 }
 
-function VedtakTableInnkreving({
-  data,
-}: {
-  data: DokumentmalResultatBidragsberegningBarnDto[];
-}) {
-  if (data.length == 0) return <div>Mangler resultat</div>;
-  return (
-    <div style={{ paddingTop: "0px" }}>
-      {groupBy(data, (d) => d.barn?.ident!).map(([key, value]) => {
-        const gjelderBarn = value[0].barn!;
-        const perioder = value[0].perioder;
-        const tableData: TableData = {
-          headers: [
-            { name: "Periode", width: "170px" },
-            { name: "Beløp", width: "150px" },
-            { name: "Resultat", width: "250px" },
-          ],
-          rows: perioder.map((d) => ({
-            columns: [
-              { content: formatPeriode(d.periode!.fom, d.periode!.til) },
-              { content: formatterBeløpForBeregning(d.faktiskBidrag) },
-              { content: d.resultatkodeVisningsnavn },
-            ],
-          })),
-        };
-        return (
-          <div key={key} className="table_container">
-            <TableGjelderBarn gjelderBarn={gjelderBarn} />
-            <CommonTable data={tableData} />
-          </div>
-        );
-      })}
-    </div>
-  );
+/** Ett resultat per barn. Barna sorteres etter alder når `sorter` er satt. */
+function resultatPerBarn(data: Resultat[], sorter = false): Resultat[] {
+  const perBarn = groupBy(data, (d) => d.barn?.ident!).map(([, v]) => v[0]);
+  return sorter ? perBarn.sort((a, b) => sortByAge(a.barn, b.barn)) : perBarn;
 }
 
-function VedtakTableAvslag({
-  data,
-}: {
-  data: DokumentmalResultatBidragsberegningBarnDto[];
-}) {
+function useAvslagstekst() {
   const { erOpphør } = useNotatFelles();
+  return (resultat: Resultat) =>
+    erOpphør || resultat.barn.harLøpendeBidrag == true
+      ? ord.opphør
+      : ord.avslag;
+}
 
-  if (data.length == 0) return <div>Mangler resultat</div>;
+function VedtakInnkreving({ resultat }: { resultat: Resultat[] }) {
   return (
     <div style={{ paddingTop: "0px" }}>
-      {groupBy(data, (d) => d.barn?.ident!).map(([key, value]) => {
-        const gjelderBarn = value[0].barn!;
-        const perioder = value[0].perioder;
-
-        const erOpphørAvStønad =
-          erOpphør || gjelderBarn.harLøpendeBidrag == true;
-        const tableData: TableData = {
-          headers: headersAvslag(),
-          rows: perioder.map((d) => ({
-            columns: contentAvslag(d, erOpphørAvStønad),
-          })),
-        };
-        return (
-          <div key={key} className="table_container">
-            <TableGjelderBarn gjelderBarn={gjelderBarn} />
-            <ResultatTable resultat={value[0]} tableData={tableData} />
-          </div>
-        );
-      })}
+      {resultatPerBarn(resultat).map((r) => (
+        <div key={r.barn.ident} className="table_container">
+          <TableGjelderBarn gjelderBarn={r.barn} />
+          <KolonneTabell oppsett={tabellInnkreving} rader={r.perioder} />
+        </div>
+      ))}
     </div>
   );
 }
 
-function ResultatTable({
-  tableData,
+function VedtakAvslag({ resultat }: { resultat: Resultat[] }) {
+  const avslagstekst = useAvslagstekst();
+  return (
+    <div style={{ paddingTop: "0px" }}>
+      {resultatPerBarn(resultat).map((r) => (
+        <div key={r.barn.ident} className="table_container">
+          <TableGjelderBarn gjelderBarn={r.barn} />
+          <ResultatEllerTabell resultat={r}>
+            <TabellAvslag resultat={r} avslagstekst={avslagstekst(r)} />
+          </ResultatEllerTabell>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TabellAvslag({
   resultat,
+  avslagstekst,
 }: {
-  resultat: DokumentmalResultatBidragsberegningBarnDto;
-  tableData: {
-    headers: TableHeader[];
-    rows: TableRow[];
-  };
+  resultat: Resultat;
+  avslagstekst: string;
+}) {
+  return (
+    <KolonneTabell
+      oppsett={tabellAvslag}
+      rader={resultat.perioder}
+      celler={{ resultat: () => avslagstekst }}
+    />
+  );
+}
+
+function ResultatEllerTabell({
+  resultat,
+  children,
+}: {
+  resultat: Resultat;
+  children: ReactNode;
 }) {
   if (resultat.erAvvistRevurdering) {
-    return (
-      <div>
-        Ingen perioder har slått ut til FF. Det vil derfor ikke fattes noe
-        vedtak for revurderingsbarnet.
-      </div>
-    );
+    return <div>{t.ingenPerioderSlåttUtTilFF}</div>;
   }
   if (resultat.erAvvisning) {
-    return renderResultatAvvisning();
+    return <div>{t.avvisning}</div>;
   }
-  return <CommonTable data={tableData} />;
+  return <>{children}</>;
 }
 
-function renderResultatAvvisning() {
-  return <div>Vedtak er avslag på behandling og har derfor ingen perioder</div>;
-}
 function OverstyrFatteVedtakRevurderingsbarnInformasjon() {
   const { data } = useNotatFelles();
-  if (!data.vedtak.kanFatteVedtakForRevurderingsbarn) return null;
+  const { vedtak } = data;
+  if (!vedtak.kanFatteVedtakForRevurderingsbarn) return null;
   return (
     <div>
-      <h2 className={"section-title"}>{"Vedtak for revurderingsbarn"}</h2>
-      {data.vedtak.skalFatteVedtakForRevurderingsbarn
-        ? "Basert på informasjonen som ble lagt inn foreslo beregningen å fatte vedtak for revurderingsbarn."
-        : "Basert på informasjonen som ble lagt inn foreslo beregningen å ikke fatte vedtak for revurderingsbarn."}
+      <h2 className={"section-title"}>{tr.tittel}</h2>
+      {vedtak.skalFatteVedtakForRevurderingsbarn
+        ? tr.foreslåttFatteVedtak
+        : tr.foreslåttIkkeFatteVedtak}
 
-      {!!data.vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse && (
+      {!!vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse && (
         <div className={"mt-2"}>
-          {data.vedtak.skalFatteVedtakForRevurderingsbarn
-            ? "Det ble manuelt overstyrt til å ikke fatte vedtak for revurderingsbarn"
-            : "Det ble manuelt overstyrt til å fatte vedtak for revurderingsbarn"}
+          {vedtak.skalFatteVedtakForRevurderingsbarn
+            ? tr.overstyrtTilIkkeFatteVedtak
+            : tr.overstyrtTilFatteVedtak}
           <div>
-            <h5 style={{ margin: 0 }}>Begrunnelse:</h5>
-            {`${data.vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse}`}
+            <h5 style={{ margin: 0 }}>{tr.begrunnelse}</h5>
+            {`${vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse}`}
           </div>
         </div>
       )}
     </div>
   );
 }
-function VedtakTable({
-  data,
+
+/** Viser to verdier i samme celle, f.eks. `45 % / 1 234`. */
+function ToVerdier({
+  venstre,
+  høyre,
+  venstreBredde = "w-[25px]",
 }: {
-  data: DokumentmalResultatBidragsberegningBarnDto[];
+  venstre: ReactNode;
+  høyre: ReactNode;
+  venstreBredde?: string;
 }) {
-  const { erOpphør, erDirekteAvslagForBarn } = useNotatFelles();
-  if (data.length == 0) return <div>Mangler resultat</div>;
+  return (
+    <table>
+      <tbody>
+        <tr>
+          <td className={venstreBredde} align="right">
+            {venstre}
+          </td>
+          <td className="w-[5px]">/</td>
+          <td>{høyre}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
-  function renderAvslag(erOpphørAvStønad: boolean) {
-    return [
-      { content: "", colSpan: 5 },
-      { content: erOpphørAvStønad ? "Opphør" : "Avslag" },
-    ];
-  }
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  function renderResult(d) {
-    return [
-      { content: formatterBeløpForBeregning(d.underholdskostnad) },
-      {
-        content: (
-          <table>
-            <tbody>
-              <tr>
-                <td className={"w-[25px]"} align={"right"}>
-                  {formatterProsent(d.bpsAndelU)}
-                </td>
-                <td className="w-[5px]">/</td>
-                <td>{formatterBeløpForBeregning(d.bpsAndelBeløp)}</td>
-              </tr>
-            </tbody>
-          </table>
-        ),
-      },
-      {
-        content: (
-          <table>
-            <tbody>
-              <tr>
-                <td className={"w-[25px]"} align="right">
-                  {formatterBeløpForBeregning(d.samværsfradrag)}
-                </td>
-                <td className="w-[5px]">/</td>
-                <td>
-                  {d.beregningsdetaljer != undefined
-                    ? d.beregningsdetaljer!.samværsfradrag?.samværsklasse ===
-                      Samvaersklasse.DELT_BOSTED
-                      ? "D"
-                      : d.beregningsdetaljer!.samværsfradrag
-                          ?.samværsklasseVisningsnavn
-                    : 0}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ),
-      },
-      {
-        content: (
-          <table>
-            <tbody>
-              <tr>
-                <td className={"w-[35px]"} align="right">
-                  {formatterBeløpForBeregning(
-                    d.beregningsdetaljer?.delberegningBidragsevne
-                      ?.bidragsevne ?? 0,
-                  )}
-                </td>
-                <td className="w-[5px]">/</td>
-                <td>
-                  {formatterBeløpForBeregning(
-                    d.beregningsdetaljer?.delberegningBidragsevne
-                      ?.sumInntekt25Prosent ?? 0,
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ),
-      },
-      { content: formatterBeløpForBeregning(d.beregnetBidrag) },
-      { content: formatterBeløpForBeregning(d.faktiskBidrag) },
-    ];
-  }
+// Samvær vises som 0 når perioden mangler beregningsdetaljer
+const SAMVÆRSKLASSE_UTEN_BEREGNING = "0";
 
-  function opprettTabelldata(
-    erDirektAvslag: boolean,
-    perioder: ResultatBarnebidragsberegningPeriodeDto[],
-    gjelderBarn: DokumentmalPersonDto,
-  ) {
-    const erOpphørAvStønad = erOpphør || gjelderBarn.harLøpendeBidrag == true;
-    if (erDirektAvslag) {
-      return {
-        headers: headersAvslag(),
-        rows: perioder.map((d) => ({
-          columns: contentAvslag(d, erOpphørAvStønad),
-        })),
-      };
-    } else {
-      return {
-        headers: [
-          { name: "U", width: "50px" },
-          { name: "BPs andel U", width: "120px" },
-          { name: "Samvær", width: "100px" },
-          { name: "Evne / 25%", width: "100px" },
-          { name: "Beregnet bidrag", width: "80px" },
-          { name: "Endelig bidrag", width: "80px" },
+function samværsklasse(p: Periode) {
+  const samværsfradrag = p.beregningsdetaljer?.samværsfradrag;
+  if (p.beregningsdetaljer == undefined) return SAMVÆRSKLASSE_UTEN_BEREGNING;
+  return samværsfradrag?.samværsklasse === Samvaersklasse.DELT_BOSTED
+    ? tb.samværsklasseDeltBosted
+    : samværsfradrag?.samværsklasseVisningsnavn;
+}
+
+const beregningsceller = {
+  bpsAndel: (p: Periode) => (
+    <ToVerdier
+      venstre={formater(p.bpsAndelU, "prosent")}
+      høyre={formater(p.bpsAndelBeløp, "beløpAvrundet")}
+    />
+  ),
+  samvær: (p: Periode) => (
+    <ToVerdier
+      venstre={formater(p.samværsfradrag, "beløpAvrundet")}
+      høyre={samværsklasse(p)}
+    />
+  ),
+  evne: (p: Periode) => {
+    const evne = p.beregningsdetaljer?.delberegningBidragsevne;
+    return (
+      <ToVerdier
+        venstre={formater(evne?.bidragsevne, "beløpAvrundet")}
+        høyre={formater(evne?.sumInntekt25Prosent, "beløpAvrundet")}
+        venstreBredde="w-[35px]"
+      />
+    );
+  },
+};
+
+function radForklaring(): TableRow {
+  return {
+    skipBorderBottom: true,
+    zebraStripe: false,
+    skipPadding: true,
+    className: "pt-2",
+    columns: [{ fullSpan: true, content: tb.forklaringForkortelser }],
+  };
+}
+
+function raderBeregning(perioder: Periode[], avslagstekst: string): TableRow[] {
+  const antallKolonnerFørResultat = tabellBeregning.kolonner.length - 1;
+  return perioder
+    .flatMap((p): TableRow[] => [
+      {
+        skipBorderBottom: true,
+        periodColumn: periodelinje(tabellBeregning, p),
+        columns: p.erAvslagUtenBeløp
+          ? [
+              { content: "", colSpan: antallKolonnerFørResultat },
+              { content: avslagstekst },
+            ]
+          : kolonneceller(tabellBeregning, p, beregningsceller),
+      },
+      {
+        zebraStripe: false,
+        skipPadding: true,
+        columns: [
+          {
+            colSpan: 8,
+            content: (
+              <DataViewTable
+                className={"pl-0 ml-0"}
+                data={[
+                  {
+                    label: ord.resultat,
+                    labelBold: true,
+                    value: p.resultatkodeVisningsnavn,
+                  },
+                ]}
+              />
+            ),
+          },
         ],
-        rows: perioder
-          .flatMap((d) => [
-            {
-              skipBorderBottom: true,
-              periodColumn: formatPeriode(
-                d.periode!.fom,
-                deductDays(d.periode!.til, 1),
-              ),
-              columns:
-                d.beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet ||
-                erBeregnetAvslagUtenBeløp(d.beregningsdetaljer?.sluttberegning)
-                  ? renderAvslag(erOpphørAvStønad)
-                  : renderResult(d),
-            },
-            {
-              zebraStripe: false,
-              skipPadding: true,
-              columns: [
-                {
-                  colSpan: 8,
-                  content: (
-                    <DataViewTable
-                      className={"pl-0 ml-0"}
-                      data={[
-                        {
-                          label: "Resultat",
-                          labelBold: true,
-                          value: d.resultatkodeVisningsnavn,
-                        },
-                      ]}
-                    />
-                  ),
-                },
-              ],
-            },
-          ])
-          .concat([
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-ignore
-            {
-              skipBorderBottom: true,
-              zebraStripe: false,
-              skipPadding: true,
-              className: "pt-2",
-              columns: [
-                {
-                  fullSpan: true,
-                  content:
-                    "U = Underholdskostnad, BP = Bidragspliktig, BM = Bidragsmottaker",
-                },
-              ],
-            } as TableRow,
-          ]) as TableRow[],
-      };
-    }
-  }
+      },
+    ])
+    .concat(radForklaring());
+}
 
+function BarnOgIndeksår({
+  resultat,
+  visIndeksår,
+}: {
+  resultat: Resultat;
+  visIndeksår: boolean;
+}) {
+  const gjelderBarn = resultat.barn;
   return (
     <>
-      {groupBy(data, (d) => d.barn?.ident!)
-        .sort(([d, a], [d2, b]) => sortByAge(a[0].barn, b[0].barn))
-        .map(([_, value]) => {
-          const gjelderBarn = value[0].barn!;
-          const erDirektAvslag = erDirekteAvslagForBarn(gjelderBarn.ident!);
-          const perioder = value[0].perioder;
-          const ingenFFSlåttUtForRevurderingsbarn =
-            value[0].erAvvistRevurdering;
-          const erAvvisning = value[0].erAvvisning;
-          const tableData = opprettTabelldata(
-            erDirektAvslag,
-            perioder,
-            gjelderBarn,
-          );
-
-          return (
-            <>
-              <TableGjelderBarn gjelderBarn={gjelderBarn} />
-              {value[0].indeksår && (
-                <DataViewTable
-                  className={"mb-1 mt-2"}
-                  data={
-                    [
-                      !ingenFFSlåttUtForRevurderingsbarn &&
-                        !erAvvisning && {
-                          label: "Neste indeksår",
-                          value: value[0].indeksår,
-                        },
-                    ].filter((d) => d != null) as DataViewTableData[]
-                  }
-                />
-              )}
-              {gjelderBarn.innbetaltBeløp && (
-                <DataViewTable
-                  className="mt-2 mb-2"
-                  data={[
-                    {
-                      label: "Innbetalt beløp",
-                      labelBold: true,
-                      value: gjelderBarn.innbetaltBeløp,
-                    },
-                  ]}
-                />
-              )}
-              <ResultatTable resultat={value[0]} tableData={tableData} />
-            </>
-          );
-        })}
+      <TableGjelderBarn gjelderBarn={gjelderBarn} />
+      {resultat.indeksår && (
+        <DataViewTable
+          className={"mb-1 mt-2"}
+          data={[
+            visIndeksår
+              ? { label: t.nesteIndeksår, value: resultat.indeksår }
+              : {},
+          ]}
+        />
+      )}
+      {gjelderBarn.innbetaltBeløp && (
+        <DataViewTable
+          className="mt-2 mb-2"
+          data={[
+            {
+              label: t.innbetaltBeløp,
+              labelBold: true,
+              value: gjelderBarn.innbetaltBeløp,
+            },
+          ]}
+        />
+      )}
     </>
   );
 }
 
-export function VedtakEndeligTable({
-  data,
-}: {
-  data: DokumentmalResultatBidragsberegningBarnDto[];
-}) {
+function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
+  const { erDirekteAvslagForBarn } = useNotatFelles();
+  const avslagstekst = useAvslagstekst();
+  return (
+    <>
+      {resultatPerBarn(resultat, true).map((r) => (
+        <>
+          <BarnOgIndeksår
+            resultat={r}
+            visIndeksår={!r.erAvvistRevurdering && !r.erAvvisning}
+          />
+          <ResultatEllerTabell resultat={r}>
+            {erDirekteAvslagForBarn(r.barn.ident!) ? (
+              <TabellAvslag resultat={r} avslagstekst={avslagstekst(r)} />
+            ) : (
+              <CommonTable
+                data={{
+                  headers: kolonneoverskrifter(tabellBeregning),
+                  rows: raderBeregning(r.perioder, avslagstekst(r)),
+                }}
+              />
+            )}
+          </ResultatEllerTabell>
+        </>
+      ))}
+    </>
+  );
+}
+
+// Brevet har en tom siste kolonne der notatet viser resultat. Beholdes for å ikke endre utseendet på brevet
+const TOM_KOLONNE = { name: "", content: "" };
+
+function overskrifterEndelig(
+  vurderUgyldighet: boolean,
+  visningForSaksbehandler: boolean,
+): TableHeader[] {
+  const bredde = (saksbehandler: string, brev: string) =>
+    visningForSaksbehandler ? saksbehandler : brev;
+  return [
+    ...(vurderUgyldighet ? [{ name: te.vurderUgyldighet, width: "20px" }] : []),
+    { name: ord.periode, width: bredde("120px", "30%") },
+    {
+      name: visningForSaksbehandler ? ord.type : ord.årsak,
+      width: bredde("100px", "40%"),
+    },
+    { name: ord.beløp, width: bredde("120px", "30%") },
+    visningForSaksbehandler
+      ? { name: ord.resultat, width: "130px" }
+      : { name: TOM_KOLONNE.name },
+  ];
+}
+
+export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
   const { typeInnhold } = useDokumentFelles();
   if (data.length == 0) return null;
   if (data.every((e) => e.orkestrertVedtak === null)) return null;
+  const visningForSaksbehandler = typeInnhold == TypeInnhold.NOTAT;
 
   return (
     <>
-      {groupBy(data, (d) => d.barn?.ident!)
-        .sort(([d, a], [d2, b]) => sortByAge(a[0].barn, b[0].barn))
-        .map(([key, value]) => {
-          const gjelderBarn = value[0].barn!;
-          const perioder = value[0].orkestrertVedtak?.perioder ?? [];
-          const vurderUgyldighet = perioder.some(
-            (e) => e.klageOmgjøringDetaljer?.kanOpprette35c === true,
-          );
-          const visningForSaksbehandler = typeInnhold == TypeInnhold.NOTAT;
-          const tableData: TableData = {
-            headers: (vurderUgyldighet
+      {resultatPerBarn(data, true).map((r) => {
+        const perioder = r.orkestrertVedtak?.perioder ?? [];
+        const vurderUgyldighet = perioder.some(
+          (e) => e.klageOmgjøringDetaljer?.kanOpprette35c === true,
+        );
+        const rader: TableRow[] = perioder.map((p) => ({
+          skipBorderBottom: true,
+          columns: [
+            ...(vurderUgyldighet
               ? [
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                  //@ts-ignore
-                  { name: "Vurder ugyldighet", width: "20px" } as TableHeader,
+                  {
+                    content: p.klageOmgjøringDetaljer?.kanOpprette35c
+                      ? p.klageOmgjøringDetaljer?.skalOpprette35c
+                        ? ord.ja
+                        : ord.nei
+                      : "",
+                  },
                 ]
-              : []
-            ).concat([
-              {
-                name: "Periode",
-                width: visningForSaksbehandler ? "120px" : "30%",
-              },
-              {
-                name: visningForSaksbehandler ? "Type" : "Årsak",
-                width: visningForSaksbehandler ? "100px" : "40%",
-              },
-              {
-                name: "Beløp",
-                width: visningForSaksbehandler ? "120px" : "30%",
-              },
-              visningForSaksbehandler && { name: "Resultat", width: "130px" },
-            ]),
-            rows: perioder
-              .flatMap((d) => [
-                {
-                  skipBorderBottom: true,
-                  columns: [
-                    vurderUgyldighet
-                      ? {
-                          content: d.klageOmgjøringDetaljer?.kanOpprette35c
-                            ? d.klageOmgjøringDetaljer?.skalOpprette35c
-                              ? "Ja"
-                              : "Nei"
-                            : "",
-                        }
-                      : null,
-                    {
-                      content: formatPeriode(
-                        d.periode!.fom,
-                        deductDays(d.periode!.til, 1),
-                      ),
-                    },
-                    {
-                      content: d.delvedtakstypeVisningsnavn,
-                    },
-                    {
-                      content: d.erOpphør
-                        ? visningForSaksbehandler
-                          ? "-"
-                          : "Opphør"
-                        : formatterBeløpForBeregning(d.faktiskBidrag),
-                    },
-                    visningForSaksbehandler && {
-                      content: d.resultatkodeVisningsnavn,
-                    },
-                  ].filter((d) => d != null),
-                },
-              ])
-              .concat(
-                (visningForSaksbehandler
-                  ? [
-                      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                      //@ts-ignore
-
-                      {
-                        skipBorderBottom: true,
-                        zebraStripe: false,
-                        skipPadding: true,
-                        className: "pt-2",
-                        columns: [
-                          {
-                            fullSpan: true,
-                            content:
-                              "U = Underholdskostnad, BP = Bidragspliktig, BM = Bidragsmottaker",
-                          },
-                        ],
-                      },
-                    ]
-                  : []) as unknown as TableRow[],
-              )
-              .filter((d) => d != null) as TableRow[],
-          };
-          return (
-            <>
-              <TableGjelderBarn gjelderBarn={gjelderBarn} />
-              {value[0].indeksår && (
-                <DataViewTable
-                  className={"mb-1 mt-2"}
-                  data={
-                    [
-                      {
-                        label: "Neste indeksår",
-                        value: value[0].indeksår,
-                      },
-                    ].filter((d) => d != null) as DataViewTableData[]
-                  }
-                />
-              )}
-              {gjelderBarn.innbetaltBeløp && (
-                <DataViewTable
-                  className="mt-2 mb-2"
-                  data={[
-                    {
-                      label: "Innbetalt beløp",
-                      labelBold: true,
-                      value: gjelderBarn.innbetaltBeløp,
-                    },
-                  ]}
-                />
-              )}
-              <CommonTable data={tableData} />
-            </>
-          );
-        })}
+              : []),
+            { content: formater(p.periode, "periode") },
+            { content: p.delvedtakstypeVisningsnavn },
+            {
+              content: p.erOpphør
+                ? visningForSaksbehandler
+                  ? te.opphørForSaksbehandler
+                  : ord.opphør
+                : formater(p.faktiskBidrag, "beløpAvrundet"),
+            },
+            {
+              content: visningForSaksbehandler
+                ? p.resultatkodeVisningsnavn
+                : TOM_KOLONNE.content,
+            },
+          ],
+        }));
+        return (
+          <>
+            <BarnOgIndeksår resultat={r} visIndeksår />
+            <CommonTable
+              data={{
+                headers: overskrifterEndelig(
+                  vurderUgyldighet,
+                  visningForSaksbehandler,
+                ),
+                rows: visningForSaksbehandler
+                  ? rader.concat(radForklaring())
+                  : rader,
+              }}
+            />
+          </>
+        );
+      })}
     </>
   );
-}
-
-function contentAvslag(
-  d: ResultatBarnebidragsberegningPeriodeDto,
-  erOpphør: boolean,
-) {
-  return [
-    { content: formatPeriode(d.periode!.fom, d.periode!.til) },
-    { content: erOpphør ? "Opphør" : "Avslag" },
-    { content: d.resultatkodeVisningsnavn },
-  ];
-}
-function headersAvslag() {
-  return [
-    { name: "Periode", width: "170px" },
-    { name: "Resultat", width: "150px" },
-    { name: "Årsak", width: "250px" },
-  ];
 }
