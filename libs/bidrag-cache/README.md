@@ -131,6 +131,13 @@ Begge svarer `204 No Content`. Cachenavn kan bare inneholde bokstaver, tall, `_`
 
 Endepunktene er beskyttet med `@Protected`, så alle gyldige tokens fra appens konfigurerte utstedere slipper gjennom. Det krever at appen har `@EnableJwtTokenValidation`. Uten den er endepunktene åpne.
 
+Bruker appen `springdoc.packages-to-scan`, vises endepunktene ikke i Swagger før `no.nav.bidrag.cache` er lagt til:
+
+```yaml
+springdoc:
+  packages-to-scan: no.nav.bidrag.<app>.controller,no.nav.bidrag.cache
+```
+
 Slik tømmes cachen:
 
 1. Valkey tømmes direkte. Alle nøkler starter med `bidrag-cache::<navn>::`, så andre data i instansen berøres ikke.
