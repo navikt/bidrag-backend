@@ -1,6 +1,7 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
-import no.nav.bidrag.commons.cache.BrukerCacheable
+import no.nav.bidrag.cache.annotasjoner.KortCache
+import no.nav.bidrag.cache.annotasjoner.LangCache
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
@@ -31,7 +32,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER)
+    @KortCache(Cache.TILGANGSMASKIN_KOMPLETTEREGLER, perBruker = true) // Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
     fun evaluerKomplettRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("komplett").build().toUri(),
         personIdent.verdi,
@@ -42,7 +43,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KJERNEREGLER)
+    @KortCache(Cache.TILGANGSMASKIN_KJERNEREGLER, perBruker = true) // Bruker @KortCache fordi ResponseEntity ikke kan lagres i Valkey.
     fun evaluerKjerneRegelsettForBruker(personIdent: Personident): Any? = postForEntity<ResponseEntity<Any>>(
         tilgangsmaskinUrl.pathSegment("kjerne").build().toUri(),
         personIdent.verdi,
@@ -53,7 +54,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KJERNEREGLER_BULK)
+    @LangCache(Cache.TILGANGSMASKIN_KJERNEREGLER_BULK, perBruker = true)
     fun evaluerKjerneRegelsettForFlereBrukere(personIdent: List<String>): TilgangsmaskinBulkResponse {
         val response =
             postForEntity<TilgangsmaskinBulkResponse>(
@@ -71,7 +72,7 @@ class TilgangsmaskinConsumer(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @BrukerCacheable(Cache.TILGANGSMASKIN_KOMPLETTEREGLER_BULK)
+    @LangCache(Cache.TILGANGSMASKIN_KOMPLETTEREGLER_BULK, perBruker = true)
     fun evaluerKomplettRegelsettForFlereBrukere(personIdent: List<String>): TilgangsmaskinBulkResponse {
         try {
             val response =
