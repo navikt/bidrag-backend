@@ -171,6 +171,16 @@ class BisysService(
             )
         }
 
+        if (request.behandlingstema == Behandlingstema.BIDRAG_18_ÅR &&
+            request.barnListe.size > 1 &&
+            (request.behandlingstype?.erForholdsmessigFordeling() ?: true)
+        ) {
+            throw HttpClientErrorException(
+                HttpStatus.BAD_REQUEST,
+                "Søknad om bidrag 18 år for forholdsmessig fordeling kan bare inneholde ett barn",
+            )
+        }
+
         val gruppeKombinasjonskodeRequest =
             SøknadGruppeKombinasjon
                 .fraBehandlingstemaOgInnkreving(

@@ -24,6 +24,7 @@
         <module>libs/bidrag-felles/bidrag-domene</module>
         <module>libs/bidrag-felles/bidrag-transport</module>
         <module>libs/bidrag-felles/bidrag-commons</module>
+        <module>libs/bidrag-cache</module>
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
         <module>libs/bidrag-felles/bidrag-backend-sikkerhet</module>
@@ -78,10 +79,23 @@
              siden alle moduler arver tomcat transitivt via spring-boot-starter-web/-tomcat/-validation. -->
         <tomcat.version>11.0.25</tomcat.version>
 
+        <!-- Felles bibliotekversjoner for alle moduler (styres via dependencyManagement under) -->
+        <guava.version>33.8.0-jre</guava.version>
+
         <!-- Plugin-versjoner -->
         <ktlint.version>1.8.0</ktlint.version>
         <versions-maven-plugin.version>2.23.0</versions-maven-plugin.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!-- Kotlin-stdlib må være inkludert for maven-plugin -->
     <dependencies>
@@ -280,4 +294,3 @@
     </build>
 
 </project>
-

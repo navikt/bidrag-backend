@@ -38,6 +38,22 @@ Hvis `barnetErSelvforsørget = true`:
 - `beregnetBeløp = null`
 - `resultatBeløp = null`
 
+### Avslag 3: Forpleining dekker underholdskostnaden
+
+Hvis forpleining er større enn 0 og U etter fradrag for forpleining er 0:
+
+- `forpleiningDekkerUnderholdskostnaden = true`
+- `beregnetBeløp = null`
+- `resultatBeløp = null`
+
+### Avslag 4: BPs andel av U er under 50 % ved delt bosted
+
+Hvis delt bosted og BPs andel av U (`andelFaktor`) er under 0,5:
+
+- `bidragIkkeBeregnetDeltBosted = true`
+- `beregnetBeløp = null`
+- `resultatBeløp = null`
+
 ### Ordinær beregning
 
 - `erDeltBosted = bidragspliktigesAndelDeltBosted finnes`
