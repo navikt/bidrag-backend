@@ -2,7 +2,10 @@ package no.nav.bidrag.transport.organisasjon
 
 import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
 import no.nav.bidrag.domene.enums.diverse.Språk
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.enums.sak.Sakskategori
+import no.nav.bidrag.domene.enums.vedtak.Behandlingstype
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 
 data class EnhetBrukerDto(
@@ -18,6 +21,28 @@ data class EnhetDto(
     @Deprecated("bruk navn", ReplaceWith("navn"))
     val enhetNavn: String? = navn,
     val status: Enhetsstatus = Enhetsstatus.AKTIV,
+)
+
+/**
+ * Forespørsel om enheten arbeidsfordelingen i Norg gir for en sak.
+ * [hovedident] gir geografisk tilknytning. [parter] er alle nåværende og tidligere parter i saken, også hovedidenten.
+ * [arbeidsfordeling] INH gir settekontoret til enheten, med mindre en av partene er skjermet eller har adressebeskyttelse.
+ */
+data class ArbeidsfordelingSakRequest(
+    val hovedident: Personident,
+    val parter: Set<Personident>,
+    val arbeidsfordeling: Arbeidsfordeling,
+    val sakskategori: Sakskategori,
+    val behandlingstype: Behandlingstype,
+)
+
+/**
+ * Enheten arbeidsfordelingen i Norg gir for en sak.
+ * [skjermet] er sann når minst én av partene er skjermet som egen ansatt.
+ */
+data class ArbeidsfordelingSakResponse(
+    val enhet: EnhetDto,
+    val skjermet: Boolean,
 )
 
 data class EnhetKontaktinfoDto(

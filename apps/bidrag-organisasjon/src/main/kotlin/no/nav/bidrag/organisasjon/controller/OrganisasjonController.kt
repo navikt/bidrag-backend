@@ -13,6 +13,8 @@ import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
 import no.nav.bidrag.organisasjon.service.OrganisasjonService
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.BidragEnheterResponsDto
 import no.nav.bidrag.transport.organisasjon.EnhetBrukerDto
 import no.nav.bidrag.transport.organisasjon.EnhetDto
@@ -40,6 +42,16 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
     fun hentArbeidsfordelingGeografiskTilknytningEnhet(@RequestBody hentEnhetRequest: HentEnhetRequest): EnhetDto? {
         LOGGER.debug { "request: bidrag-organisasjon/arbeidsfordeling/enhet/geografisktilknytning" }
         return organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(hentEnhetRequest)
+    }
+
+    @PostMapping("/arbeidsfordeling/sak")
+    @Operation(
+        description = "Hent enheten arbeidsfordelingen gir for en sak, og om noen av partene er skjermet som egen ansatt",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    fun hentArbeidsfordelingForSak(@RequestBody request: ArbeidsfordelingSakRequest): ArbeidsfordelingSakResponse? {
+        LOGGER.debug { "request: bidrag-organisasjon/arbeidsfordeling/sak" }
+        return organisasjonService.hentArbeidsfordelingForSak(request)
     }
 
     @GetMapping(path = ["$ENDPOINT_ARBEIDSFORDELING_GT/{ident}"])

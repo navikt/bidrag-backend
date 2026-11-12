@@ -6,8 +6,12 @@ import io.mockk.mockk
 import io.mockk.slot
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.enums.diverse.Tema
-import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
+import no.nav.bidrag.domene.enums.sak.Sakskategori
+import no.nav.bidrag.domene.enums.vedtak.Behandlingstype
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.organisasjon.consumer.EntraConsumer
 import no.nav.bidrag.organisasjon.consumer.Norg2Consumer
 import no.nav.bidrag.organisasjon.consumer.PersonConsumer
@@ -16,8 +20,12 @@ import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchR
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchResponse
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterResponse
 import no.nav.bidrag.organisasjon.service.OrganisasjonService.Companion.BEHANDLINGSTYPE_UTLAND
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
+import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
+import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.person.GeografiskTilknytningDto
+import no.nav.bidrag.transport.person.Graderingsinfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -215,12 +223,161 @@ internal class OrganisasjonServiceTest {
 
             response shouldBe null
         }
+
+        @Test
+        fun `Skal returnere settekontor når saken har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR),
+            )
+
+            response shouldBe EnhetDto(Enhetsnummer("4806"), "NAV Familie- og pensjonsytelser Drammen")
+        }
+
+        @Test
+        fun `Skal returnere Norg-enheten når saken ikke har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.EIERENHET),
+            )
+
+            response shouldBe EnhetDto(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen")
+        }
+
+        @Test
+        fun `Skal beholde enheten fra Norg når settekontor ikke er konfigurert`() {
+            mockNorgTreffMedSettekontor()
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4812") } returns
+                EnhetDetaljerDto(enhetId = "4812", navn = "NAV Familie- og pensjonsytelser Bergen", settekontorEnhetId = null)
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR),
+            )
+
+            response shouldBe EnhetDto(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen")
+        }
+
+        @Test
+        fun `Skal gi skjermet når en av partene er skjermet`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = true)
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.FARSKAP))
+
+            response?.skjermet shouldBe true
+        }
+
+        @Test
+        fun `Skal gi ikke skjermet når ingen av partene er skjermet`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = false)
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.FARSKAP))
+
+            response?.skjermet shouldBe false
+        }
+
+        @Test
+        fun `Skal beholde behandlingstema og Norg-enheten for farskap`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = false)
+            val norgRequest = slot<ArbeidsfordelingEnheterBestMatchRequest>()
+            every { norg2ConsumerMock.finnArbeidsfordelingEnheterBestMatch(capture(norgRequest)) } returns
+                listOf(ArbeidsfordelingEnheterBestMatchResponse(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen"))
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.FARSKAP))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+            norgRequest.captured.behandlingstema shouldBe Arbeidsfordeling.FARSKAP.behandlingstema
+        }
+
+        @Test
+        fun `Skal gi settekontor for INH uten skjerming`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = false)
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4806")
+        }
+
+        @Test
+        fun `Skal beholde Norg-enheten for EEN`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = false)
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.EIERENHET))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+        }
+
+        @Test
+        fun `Skal beholde Norg-enheten når INH mangler kontaktinformasjon`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = false)
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4812") } returns null
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+        }
+
+        @Test
+        fun `Skal beholde enheten fra Norg når inhabil sak har skjermet part`() {
+            mockNorgTreffMedSettekontor()
+            mockGraderingsinfo(skjermetAnnenPart = true)
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+        }
+
+        @Test
+        fun `Skal beholde enheten fra Norg når inhabil sak har part med adressebeskyttelse`() {
+            mockNorgTreffMedSettekontor()
+            every { personConsumerMock.hentGraderingsinfo(setOf(ANNEN_PART, IDENT)) } returns
+                Graderingsinfo(
+                    identerTilGradering = mapOf(IDENT to null, ANNEN_PART to Gradering.FORTROLIG),
+                    identerTilSkjerming = mapOf(IDENT to false, ANNEN_PART to false),
+                )
+
+            val response = organisasjonService.hentArbeidsfordelingForSak(arbeidsfordelingSakRequest(Arbeidsfordeling.SETTEKONTOR))
+
+            response?.enhet?.nummer shouldBe Enhetsnummer("4812")
+        }
+
+        private fun mockGraderingsinfo(skjermetAnnenPart: Boolean) {
+            every { personConsumerMock.hentGraderingsinfo(setOf(ANNEN_PART, IDENT)) } returns
+                Graderingsinfo(identerTilGradering = emptyMap(), identerTilSkjerming = mapOf(IDENT to false, ANNEN_PART to skjermetAnnenPart))
+        }
+
+        private fun arbeidsfordelingSakRequest(arbeidsfordeling: Arbeidsfordeling) = ArbeidsfordelingSakRequest(
+            hovedident = IDENT,
+            parter = setOf(IDENT, ANNEN_PART),
+            arbeidsfordeling = arbeidsfordeling,
+            sakskategori = Sakskategori.NASJONAL,
+            behandlingstype = Behandlingstype.SØKNAD,
+        )
+
+        private fun mockNorgTreffMedSettekontor() {
+            every { personConsumerMock.hentPersonGeografiskTilknytning(IDENT) } returns
+                GeografiskTilknytningDto(ident = IDENT, geografiskTilknytning = "4601", erUtland = false)
+            every { norg2ConsumerMock.finnArbeidsfordelingEnheterBestMatch(any()) } returns
+                listOf(ArbeidsfordelingEnheterBestMatchResponse(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen"))
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4812") } returns
+                EnhetDetaljerDto(enhetId = "4812", navn = "NAV Familie- og pensjonsytelser Bergen", settekontorEnhetId = "4806")
+            every { norg2ConsumerMock.hentEnhetKontaktinfo("4806") } returns
+                EnhetDetaljerDto(enhetId = "4806", navn = "NAV Familie- og pensjonsytelser Drammen", settekontorEnhetId = null)
+        }
     }
 
     companion object {
         private val SB_IDENT = "X123456"
         private val SB_NAVN = "Sylfest Strutle"
-        private val IDENT = Personident("12345678900")
+        private val IDENT = genererPersonident()
+        private val ANNEN_PART = genererPersonident()
         private const val FORVALTNING = "FPY"
         private const val KLAGE = "KLAGE"
     }

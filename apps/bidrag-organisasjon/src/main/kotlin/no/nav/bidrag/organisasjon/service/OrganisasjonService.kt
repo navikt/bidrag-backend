@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.diverse.Tema
 import no.nav.bidrag.domene.enums.person.Diskresjonskode
 import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.consumer.EntraAnsatt
@@ -20,6 +21,8 @@ import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchR
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterRequest
 import no.nav.bidrag.organisasjon.consumer.dto.SkjermingRequest
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.BidragEnheterResponsDto
 import no.nav.bidrag.transport.organisasjon.EnhetBrukerDto
 import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
@@ -53,7 +56,7 @@ class OrganisasjonService(
         val enhetKontaktinfo = norg2Consumer.hentEnhetKontaktinfo(enhetNr.verdi)
         val språkEnum = try {
             spraak?.let { Språk.valueOf(spraak) } ?: Språk.NB
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Språk.NB
         }
 
@@ -163,24 +166,65 @@ class OrganisasjonService(
         return arbeidsfordelingResponse?.firstOrNull()?.let { EnhetDto(it.enhetNr, it.navn) }
     }
 
-    fun hentArbeidsfordelingGeografiskTilknytningEnhet(request: HentEnhetRequest): EnhetDto? {
-        val (_, _, _, geografiskTilknytning, utland, _) = personConsumer.hentPersonGeografiskTilknytning(request.ident)
+    fun hentArbeidsfordelingGeografiskTilknytningEnhet(request: HentEnhetRequest): EnhetDto? = finnArbeidsfordeling(
+        ident = request.ident,
+        alleIdenter = request.alleIdenter,
+        tema = request.tema,
+        behandlingstema = request.behandlingstema ?: request.arbeidsfordeling?.behandlingstema,
+        behandlingstype = request.behandlingstype?.let { request.sakskategori?.finnBehandlingstypekode(it) },
+        brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR,
+    )?.enhet
 
-        val graderingsinfo = personConsumer.hentGraderingsinfo(request.alleIdenter)
+    fun hentArbeidsfordelingForSak(request: ArbeidsfordelingSakRequest): ArbeidsfordelingSakResponse? = finnArbeidsfordeling(
+        ident = request.hovedident,
+        alleIdenter = request.parter,
+        tema = Tema.TEMA_BIDRAG.verdi,
+        behandlingstema = request.arbeidsfordeling.behandlingstema,
+        behandlingstype = request.sakskategori.finnBehandlingstypekode(request.behandlingstype),
+        brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR,
+    )
+
+    private fun finnArbeidsfordeling(
+        ident: Personident,
+        alleIdenter: Set<Personident>,
+        tema: String,
+        behandlingstema: String?,
+        behandlingstype: String?,
+        brukSettekontor: Boolean,
+    ): ArbeidsfordelingSakResponse? {
+        val (_, _, _, geografiskTilknytning, utland, _) = personConsumer.hentPersonGeografiskTilknytning(ident)
+
+        val graderingsinfo = personConsumer.hentGraderingsinfo(alleIdenter)
         val skjermet = graderingsinfo.identerTilSkjerming.values.contains(true)
         val diskresjonskode = finnStrengesteDiskresjonskode(graderingsinfo)
 
         val arbeidsfordelingParam =
             ArbeidsfordelingEnheterBestMatchRequest(
                 diskresjonskode = diskresjonskode,
-                tema = request.tema,
+                tema = tema,
                 geografiskOmraade = geografiskTilknytning,
                 skjermet = skjermet,
-                behandlingstema = request.behandlingstema ?: request.arbeidsfordeling?.behandlingstema,
-                behandlingstype = mapBehandlingstype(request) ?: if (utland) BEHANDLINGSTYPE_UTLAND else null,
+                behandlingstema = behandlingstema,
+                behandlingstype = behandlingstype ?: if (utland) BEHANDLINGSTYPE_UTLAND else null,
             )
-        return norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
+
+        val besteMatch = norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
             ?.firstOrNull()?.let { EnhetDto(it.enhetNr, it.navn) }
+            ?: return null
+
+        val kanBrukeSettekontor = !skjermet && diskresjonskode == null
+        val enhet = if (brukSettekontor && kanBrukeSettekontor) finnSettekontorForEnhet(besteMatch) else besteMatch
+        return ArbeidsfordelingSakResponse(enhet, skjermet)
+    }
+
+    private fun finnSettekontorForEnhet(enhet: EnhetDto): EnhetDto {
+        val settekontor = norg2Consumer.hentEnhetKontaktinfo(enhet.nummer.verdi)?.settekontorEnhetId
+        if (settekontor == null) {
+            LOGGER.warn { "Fant ikke settekontor. Beholder enheten fra Norg." }
+            return enhet
+        }
+        val navn = norg2Consumer.hentEnhetKontaktinfo(settekontor)?.navn
+        return EnhetDto(Enhetsnummer(settekontor), navn)
     }
 
     private fun finnStrengesteDiskresjonskode(graderingsinfo: Graderingsinfo): Diskresjonskode? {
@@ -208,13 +252,6 @@ class OrganisasjonService(
                 else -> enhetType!!
             }
         return enhetstypeverdi
-    }
-
-    private fun mapBehandlingstype(request: HentEnhetRequest): String? {
-        if (request.behandlingstype == null) {
-            return null
-        }
-        return request.sakskategori?.finnBehandlingstypekode(request.behandlingstype!!)
     }
 
     fun hentAlleEnheterGrupper(): BidragEnheterResponsDto = BidragEnheterResponsDto(EnhetYamlConverter.hentAlleEnheterGrupper())

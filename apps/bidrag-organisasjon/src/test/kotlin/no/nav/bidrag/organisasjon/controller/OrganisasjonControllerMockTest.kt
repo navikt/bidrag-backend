@@ -9,14 +9,19 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.verify
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
-import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
+import no.nav.bidrag.domene.enums.sak.Sakskategori
+import no.nav.bidrag.domene.enums.vedtak.Behandlingstype
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.organisasjon.BidragOrganisasjonTest
 import no.nav.bidrag.organisasjon.TEST
 import no.nav.bidrag.organisasjon.TestRestTemplateConfiguration
 import no.nav.bidrag.organisasjon.WEB_ENV_TEST
 import no.nav.bidrag.organisasjon.dto.SaksbehandlerDto
 import no.nav.bidrag.organisasjon.service.OrganisasjonService
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.JournalførendeEnhetDto
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
@@ -187,9 +192,42 @@ internal class OrganisasjonControllerMockTest {
         }
     }
 
+    @Test
+    fun `skal hente arbeidsfordeling for sak`() {
+        val request =
+            ArbeidsfordelingSakRequest(
+                hovedident = IDENT,
+                parter = setOf(IDENT, BARN_IDENT),
+                arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR,
+                sakskategori = Sakskategori.NASJONAL,
+                behandlingstype = Behandlingstype.SØKNAD,
+            )
+        every { organisasjonServiceMock.hentArbeidsfordelingForSak(any()) } returns
+            ArbeidsfordelingSakResponse(
+                enhet = EnhetDto(nummer = Enhetsnummer("4806"), navn = "Nav familie- og pensjonsytelser Drammen"),
+                skjermet = true,
+            )
+
+        val response =
+            testRestTemplate.exchange<ArbeidsfordelingSakResponse>(
+                "http://localhost:$port/bidrag-organisasjon/arbeidsfordeling/sak",
+                HttpMethod.POST,
+                testRestTemplateConfiguration.initHttpEntity(request),
+            )
+
+        assertSoftly {
+            response.statusCode shouldBe HttpStatus.OK
+            response.body?.enhet?.nummer?.verdi shouldBe "4806"
+            response.body?.enhet?.navn shouldBe "Nav familie- og pensjonsytelser Drammen"
+            response.body?.skjermet shouldBe true
+            verify { organisasjonServiceMock.hentArbeidsfordelingForSak(request) }
+        }
+    }
+
     companion object {
+        private val BARN_IDENT = genererPersonident()
         private val SB_IDENT = "X123456"
         private val SB_NAVN = "Sylfest Strutle"
-        private val IDENT = Personident("12345678900")
+        private val IDENT = genererPersonident()
     }
 }
