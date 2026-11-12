@@ -35,12 +35,6 @@ spring:
   main:
     banner-mode: off
 
-no.nav.security.jwt.sts:
-  properties:
-    url: https://sts.adeo.no/SecurityTokenServiceProvider/
-    username: ${STS_USERNAME}
-    password: ${STS_PASSWORD}
-
 no.nav.security.jwt:
   issuers: aad
   issuer.aad:
