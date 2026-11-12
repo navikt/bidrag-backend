@@ -18,6 +18,8 @@ class ValideringsgrunnlagService(
 ) {
     fun hentForOpprettelse(opprettSakRequest: OpprettSakRequest): Valideringsgrunnlag = hent(opprettSakRequest.roller, emptyList(), opprettSakRequest.land)
 
+    fun hentForOpprettelse(roller: Set<RolleDto>, land: Landkode?): Valideringsgrunnlag = hent(roller, emptyList(), land)
+
     fun hentForEndring(lagredeRoller: Collection<Rolle>, forespurteRoller: Collection<RolleDto>, land: Landkode?): Valideringsgrunnlag = hent(forespurteRoller, lagredeRoller.mapNotNull { it.fødselsnummer }, land)
 
     private fun hent(forespurteRoller: Collection<RolleDto>, lagredeIdenter: List<String>, land: Landkode?): Valideringsgrunnlag {

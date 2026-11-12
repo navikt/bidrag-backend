@@ -7,6 +7,7 @@ import no.nav.bidrag.domene.enums.sak.Fogdårsak
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Forelderrolle
@@ -17,23 +18,26 @@ import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.transport.sak.BarnISak
+import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.RollehistorikkDto
+import no.nav.bidrag.transport.sak.SaksrolleRequest
 import java.time.LocalDate
 
 object BidragssakMapper {
     fun OpprettSakRequest.toBidragssak(
         saksnummer: Saksnummer,
         fødselsdatoer: Map<Personident, LocalDate?>,
+        eierfogd: Enhetsnummer = this.eierfogd,
     ): Bidragssak {
         val sak =
             Bidragssak(
                 saksnummer = saksnummer.verdi,
-                eierfogd = this.eierfogd.verdi,
+                eierfogd = eierfogd.verdi,
                 kategori = this.kategori,
                 ansatt = this.ansatt,
                 inhabilitet = this.inhabilitet,
@@ -51,7 +55,7 @@ object BidragssakMapper {
                 it
             },
         )
-        sak.tilganger.addAll(mutableSetOf(Tilgang(enhetsnummer = this.eierfogd.verdi, årsak = Fogdårsak.EIER, bidragssak = sak)))
+        sak.tilganger.addAll(mutableSetOf(Tilgang(enhetsnummer = eierfogd.verdi, årsak = Fogdårsak.EIER, bidragssak = sak)))
         return sak
     }
 
@@ -107,7 +111,7 @@ object BidragssakMapper {
                     fødselsnummer = dto.fødselsnummer?.verdi,
                     objektnummer = objektnummer,
                     rolleType = dto.type,
-                    mottagerErVerge = dto.mottagerErVerge,
+                    mottagerErVerge = dto.reellMottaker?.verge ?: dto.mottagerErVerge,
                     fødselsdato = fødselsdatoer[dto.fødselsnummer],
                     bidragssak = bidragssak,
                 )
@@ -127,7 +131,30 @@ object BidragssakMapper {
             }
         }
 
-    fun Bidragssak.toOpprettSakResponse() = OpprettSakResponse(saksnummer = Saksnummer(this.saksnummer))
+    fun SaksrolleRequest.tilRolleDto(): RolleDto {
+        val mottaker = reellMottaker
+        require(mottaker == null || mottaker.ident.verdi.isNotBlank()) { "Reell mottaker må ha en ident." }
+        return RolleDto(
+            fødselsnummer = fødselsnummer,
+            type = type,
+            reellMottaker = reellMottaker?.let { ReellMottakerDto(ident = it.ident, type = it.type, verge = it.verge) },
+            mottagerErVerge = reellMottaker?.verge ?: false,
+        )
+    }
+
+    fun OpprettSakMedRollerRequest.tilOpprettSakRequest(enhet: Enhetsnummer, roller: Set<RolleDto>) = OpprettSakRequest(
+        eierfogd = enhet,
+        kategori = kategori,
+        arbeidsfordeling = arbeidsfordeling,
+        roller = roller,
+        levdeAdskilt = levdeAdskilt ?: false,
+        konvensjon = konvensjon,
+        konvensjonsdato = konvensjonsdato,
+        ffuReferansenr = ffuReferansenr,
+        land = land,
+    )
+
+    fun Bidragssak.toOpprettSakResponse() = OpprettSakResponse(saksnummer = Saksnummer(saksnummer), eierfogd = Enhetsnummer(eierfogd))
 }
 
 object RolleMapper {
@@ -155,10 +182,10 @@ object RolleMapper {
                 reellMottaker =
                 when {
                     !rmFnr.isNullOrBlank() ->
-                        ReellMottakerDto(ReellMottaker(rmFnr), reellMottaker.mottagerErVerge, ReellMottakerType.PERSON)
+                        ReellMottakerDto(ReellMottaker(rmFnr), it.mottagerErVerge, ReellMottakerType.PERSON)
 
                     !rmSamhandler.isNullOrBlank() ->
-                        ReellMottakerDto(ReellMottaker(rmSamhandler), reellMottaker.mottagerErVerge, ReellMottakerType.SAMHANDLER)
+                        ReellMottakerDto(ReellMottaker(rmSamhandler), it.mottagerErVerge, ReellMottakerType.SAMHANDLER)
 
                     else -> null
                 },
@@ -183,7 +210,7 @@ object RollehistorikkMapper {
     private fun Rollehistorikk.tilReellMottakerDto(roller: Set<Rolle>): ReellMottakerDto? {
         val rmRolleId = rmRolleId ?: return null
         val rmRolle = roller.find { it.rolleId == rmRolleId }
-        val verge = rmRolle?.mottagerErVerge ?: false
+        val verge = rolle?.mottagerErVerge ?: false
         val fødselsnummer = rmRolleFødselsnummer
         val samhandlerIdent = rmRolle?.samhandlerIdent
         return when {

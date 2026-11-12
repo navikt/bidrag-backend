@@ -25,6 +25,13 @@ import no.nav.bidrag.transport.sak.OppdaterSakResponse
 import java.time.LocalDate
 import java.util.Objects
 
+fun Collection<Rolle>.finnPrimærrolle(): Rolle? {
+    val kjenteParter = filter { it.fødselsnummer != null }
+    return kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
+        ?: kjenteParter.filter { it.rolleType == Rolletype.BARN }.maxWithOrNull(compareBy(nullsFirst()) { it.fødselsdato })
+        ?: kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSPLIKTIG }
+}
+
 @Entity(name = "T_BIDRAG_SAK")
 open class Bidragssak(
     @Id
@@ -75,12 +82,7 @@ open class Bidragssak(
 
     // Geografien i arbeidsfordelingen følger BM, ellers yngste barn (eldre barn kan ha flyttet), ellers BP
     val primærrolle: Rolle?
-        get() {
-            val kjenteParter = roller.filter { it.fødselsnummer != null }
-            return kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSMOTTAKER }
-                ?: kjenteParter.filter { it.rolleType == Rolletype.BARN }.maxWithOrNull(compareBy(nullsFirst()) { it.fødselsdato })
-                ?: kjenteParter.firstOrNull { it.rolleType == Rolletype.BIDRAGSPLIKTIG }
-        }
+        get() = roller.finnPrimærrolle()
 
     fun tilBidragSakDto(
         begrensetTilgang: Boolean,

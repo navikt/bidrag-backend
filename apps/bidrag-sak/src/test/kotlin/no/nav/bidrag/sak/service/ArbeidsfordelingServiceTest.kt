@@ -9,8 +9,11 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
+import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.sak.UkjentPart
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Bidragssak
@@ -18,8 +21,12 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.EnhetDto
-import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
+import no.nav.bidrag.transport.sak.ReellMottakerDto
+import no.nav.bidrag.transport.sak.ReellMottakerType
+import no.nav.bidrag.transport.sak.RolleDto
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
@@ -43,8 +50,8 @@ internal class ArbeidsfordelingServiceTest {
     ) = Rolle(fødselsnummer = ident?.verdi, rolleType = type, ukjentPart = ukjentPart, fødselsdato = fødselsdato)
 
     private fun organisasjonGirEnhet(enhet: String) {
-        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(any()) } returns
-            EnhetDto(nummer = Enhetsnummer(enhet))
+        every { organisasjonClient.hentArbeidsfordelingForSak(any()) } returns
+            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer(enhet)), false)
     }
 
     @Test
@@ -82,9 +89,9 @@ internal class ArbeidsfordelingServiceTest {
 
     @Test
     fun `bruker yngste barn som hovedident når bidragsmottaker er ukjent`() {
-        val request = slot<HentEnhetRequest>()
-        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
-            EnhetDto(nummer = Enhetsnummer("4806"))
+        val request = slot<ArbeidsfordelingSakRequest>()
+        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
+            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("4806")), false)
         val eldreBarn = genererPersonident()
         val sak =
             sakHosEnhet(
@@ -96,17 +103,17 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.ident shouldBe barn
-        request.captured.biidenter.shouldContainExactlyInAnyOrder(barn, eldreBarn)
+        request.captured.hovedident shouldBe barn
+        request.captured.parter.shouldContainExactlyInAnyOrder(barn, eldreBarn)
     }
 
     @Test
     fun `tar med reell mottaker og feilregistrerte roller i oppslaget`() {
         val reellMottaker = genererPersonident()
         val feilregistrert = genererPersonident()
-        val request = slot<HentEnhetRequest>()
-        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
-            EnhetDto(nummer = Enhetsnummer("2103"))
+        val request = slot<ArbeidsfordelingSakRequest>()
+        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
+            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("2103")), true)
         val sak =
             sakHosEnhet(
                 "1701",
@@ -118,17 +125,19 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.ident shouldBe bm
-        request.captured.biidenter.shouldContainExactlyInAnyOrder(bm, barn, reellMottaker, feilregistrert)
+        request.captured.hovedident shouldBe bm
+        request.captured.parter.shouldContainExactlyInAnyOrder(bm, barn, reellMottaker, feilregistrert)
         sak.eierfogd shouldBe "2103"
+        sak.ansatt shouldBe false
+        sak.inhabilitet shouldBe false
     }
 
     @Test
     fun `tar med tidligere parter fra rollehistorikken i oppslaget`() {
         val tidligereRm = genererPersonident()
-        val request = slot<HentEnhetRequest>()
-        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
-            EnhetDto(nummer = Enhetsnummer("2103"))
+        val request = slot<ArbeidsfordelingSakRequest>()
+        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
+            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("2103")), true)
         val barnerolle = rolle(Rolletype.BARN, barn)
         val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm), barnerolle)
         barnerolle.rollehistorikk.add(
@@ -143,7 +152,7 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.biidenter.shouldContainExactlyInAnyOrder(bm, barn, tidligereRm)
+        request.captured.parter.shouldContainExactlyInAnyOrder(bm, barn, tidligereRm)
     }
 
     @Test
@@ -152,19 +161,35 @@ internal class ArbeidsfordelingServiceTest {
 
         shouldThrow<IllegalStateException> { arbeidsfordelingService.utførArbeidsfordeling(sak) }
 
-        verify(exactly = 0) { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(any()) }
+        verify(exactly = 0) { organisasjonClient.hentArbeidsfordelingForSak(any()) }
         sak.eierfogd shouldBe "1701"
     }
 
     @Test
-    fun `erstatter eiertilgangen på ny sak i stedet for å avslutte den`() {
-        organisasjonGirEnhet("2103")
-        val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm), rolle(Rolletype.BARN, barn))
+    fun `bestemmer enhet for ny sak med reell mottaker før saken bygges`() {
+        val request = slot<ArbeidsfordelingSakRequest>()
+        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
+            ArbeidsfordelingSakResponse(EnhetDto(Enhetsnummer("2103")), true)
+        val mottaker = genererPersonident()
+        val roller = setOf(
+            RolleDto(type = Rolletype.BIDRAGSMOTTAKER),
+            RolleDto(
+                fødselsnummer = barn,
+                type = Rolletype.BARN,
+                reellMottaker = ReellMottakerDto(ReellMottaker(mottaker.verdi), true, ReellMottakerType.PERSON),
+            ),
+        )
 
-        arbeidsfordelingService.utførArbeidsfordelingPåNySak(sak)
+        val enhet = arbeidsfordelingService.hentEnhetForNySak(
+            roller,
+            mapOf(barn to LocalDate.of(2016, 1, 1)),
+            Arbeidsfordeling.SETTEKONTOR,
+            Sakskategori.NASJONAL,
+        )
 
-        sak.eierfogd shouldBe "2103"
-        sak.tilganger.single().enhetsnummer shouldBe "2103"
-        sak.tilganger.single().tilgangTomDato shouldBe null
+        enhet.nummer shouldBe Enhetsnummer("2103")
+        request.captured.hovedident shouldBe barn
+        request.captured.parter.shouldContainExactlyInAnyOrder(barn, mottaker)
+        request.captured.arbeidsfordeling shouldBe Arbeidsfordeling.SETTEKONTOR
     }
 }

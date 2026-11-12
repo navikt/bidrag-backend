@@ -1,14 +1,19 @@
 package no.nav.bidrag.sak.service
 
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
+import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.sak.Tilgangstype
 import no.nav.bidrag.domene.enums.vedtak.Behandlingstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Tilgang
+import no.nav.bidrag.sak.domain.finnPrimærrolle
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
+import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
 import no.nav.bidrag.transport.organisasjon.EnhetDto
-import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
+import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -23,18 +28,6 @@ class ArbeidsfordelingService(
      */
     fun utførArbeidsfordeling(sak: Bidragssak) {
         oppdaterAktivEierfogd(sak, hentEnhet(sak))
-    }
-
-    /**
-     * Som [utførArbeidsfordeling], men for en sak som ikke er lagret ennå.
-     * Erstatter eiertilgangen i stedet for å avslutte den.
-     */
-    fun utførArbeidsfordelingPåNySak(sak: Bidragssak) {
-        val enhet = hentEnhet(sak).nummer.verdi
-        sak.eierfogd = enhet
-        val eiertilganger = sak.tilganger.filter { it.type == Tilgangstype.EIER }
-        sak.tilganger.removeAll(eiertilganger.toSet())
-        sak.tilganger.addAll(eiertilganger.onEach { it.enhetsnummer = enhet })
     }
 
     private fun oppdaterAktivEierfogd(
@@ -64,15 +57,37 @@ class ArbeidsfordelingService(
     private fun hentEnhet(sak: Bidragssak): EnhetDto {
         val hovedident = sak.primærrolle?.fødselsnummer?.let(::Personident)
             ?: error("Sak ${sak.saksnummer} har ingen kjent part, og enheten kan ikke bestemmes.")
-        return bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(
-            HentEnhetRequest(
-                ident = hovedident,
-                biidenter = sak.personidenter(),
+        return bidragOrganisasjonClient.hentArbeidsfordelingForSak(
+            ArbeidsfordelingSakRequest(
+                hovedident = hovedident,
+                parter = sak.personidenter(),
                 arbeidsfordeling = sak.arbeidsfordeling,
                 sakskategori = sak.kategori,
                 behandlingstype = Behandlingstype.SØKNAD,
             ),
-        )
+        ).enhet
+    }
+
+    fun hentEnhetForNySak(
+        roller: Set<RolleDto>,
+        fødselsdatoer: Map<Personident, LocalDate?>,
+        arbeidsfordeling: Arbeidsfordeling,
+        sakskategori: Sakskategori,
+    ): EnhetDto {
+        val hovedident = roller.map {
+            Rolle(fødselsnummer = it.fødselsnummer?.verdi, rolleType = it.type, fødselsdato = fødselsdatoer[it.fødselsnummer])
+        }.finnPrimærrolle()?.fødselsnummer?.let(::Personident)
+            ?: error("Saken har ingen kjent part, og enheten kan ikke bestemmes.")
+        val parter = (roller.mapNotNull { it.fødselsnummer } + roller.mapNotNull { it.rmFødselsnummer() }).toSet()
+        return bidragOrganisasjonClient.hentArbeidsfordelingForSak(
+            ArbeidsfordelingSakRequest(
+                hovedident = hovedident,
+                parter = parter,
+                arbeidsfordeling = arbeidsfordeling,
+                sakskategori = sakskategori,
+                behandlingstype = Behandlingstype.SØKNAD,
+            ),
+        ).enhet
     }
 
     private fun Bidragssak.personidenter(): Set<Personident> {

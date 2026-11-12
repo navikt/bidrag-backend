@@ -26,6 +26,8 @@ import no.nav.bidrag.sak.dto.SakshendelseDto
 import no.nav.bidrag.sak.dto.tilFogdhistorikkDto
 import no.nav.bidrag.sak.integration.BidragBBMConsumer
 import no.nav.bidrag.sak.integration.FinnSammenknytningerHovedsøknadResponse
+import no.nav.bidrag.sak.mapper.BidragssakMapper.tilOpprettSakRequest
+import no.nav.bidrag.sak.mapper.BidragssakMapper.tilRolleDto
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toBidragssak
 import no.nav.bidrag.sak.mapper.BidragssakMapper.toOpprettSakResponse
 import no.nav.bidrag.sak.mapper.RolleMapper.toRolleDto
@@ -43,20 +45,25 @@ import no.nav.bidrag.sak.util.tilStønadstype
 import no.nav.bidrag.sak.util.tilVedtakstype
 import no.nav.bidrag.sak.validering.BidragssakValidator
 import no.nav.bidrag.sak.validering.BidragssakValidator.Saksrolle
+import no.nav.bidrag.sak.validering.Valideringsgrunnlag
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.BidragssakPipDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
+import no.nav.bidrag.transport.sak.OppdaterSaksrollerRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.RolleDto
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDate
 
 fun Set<Tilgang>.finnMidlertidligTilgang(
@@ -194,46 +201,52 @@ class BidragSakService(
     fun opprettSak(opprettSakRequest: OpprettSakRequest): OpprettSakResponse {
         val grunnlag = valideringsgrunnlagService.hentForOpprettelse(opprettSakRequest)
         bidragssakValidator.valider(opprettSakRequest, grunnlag)
-
-        val bPFnr =
-            opprettSakRequest.roller
-                .firstOrNull { it.type == Rolletype.BIDRAGSPLIKTIG }
-                ?.fødselsnummer
-                ?.verdi
-
-        val bMFnr =
-            opprettSakRequest.roller
-                .firstOrNull { it.type == Rolletype.BIDRAGSMOTTAKER }
-                ?.fødselsnummer
-                ?.verdi
-
-        // Henter alle BPs bidragssaker. Sjekk mot arbeidsfordeling utelater oppfostringsbidrag.
-        // Sjekk at det ikke finnes eksisterende sak med BP og BM fra request. Hvis det finnes så returneres denne sakens saksnummer.
-        if (!bMFnr.isNullOrEmpty()) {
-            val eksisterendeSaker =
-                bPFnr?.let { eksisterendeSak ->
-                    bidragssakRepository
-                        .findByRoller(listOf(eksisterendeSak))
-                        .filter { it.arbeidsfordeling == Arbeidsfordeling.EIERENHET }
-                        .filter { sak ->
-                            sak.roller.any {
-                                it.rolleType == Rolletype.BIDRAGSMOTTAKER && it.fødselsnummer == bMFnr
-                            }
-                        }
-                } ?: emptyList()
-
-            if (eksisterendeSaker.isNotEmpty()) {
-                secureLogger.info {
-                    "Opprett sak. Det finnes allerede minst én eksisterende sak for BP: $bPFnr request: $opprettSakRequest}"
-                }
-                return OpprettSakResponse(Saksnummer(eksisterendeSaker.first().saksnummer))
-            }
-        }
-
         rolleService.validerRoller(opprettSakRequest.roller, grunnlag.fødselsdatoer)
+        finnEksisterendeSak(opprettSakRequest.roller)?.let { return it.toOpprettSakResponse() }
+        val enhet = arbeidsfordelingService.hentEnhetForNySak(
+            opprettSakRequest.roller,
+            grunnlag.fødselsdatoer,
+            opprettSakRequest.arbeidsfordeling,
+            opprettSakRequest.kategori,
+        )
+        return opprettValidertSak(opprettSakRequest, grunnlag, enhet.nummer)
+    }
+
+    @Transactional
+    fun opprettSak(request: OpprettSakMedRollerRequest): OpprettSakResponse {
+        val roller = rolleService.brukGjeldendeIdent(request.roller.map { it.tilRolleDto() }.toSet())
+        val grunnlag = valideringsgrunnlagService.hentForOpprettelse(roller, request.land)
+        bidragssakValidator.valider(roller, request.land, request.arbeidsfordeling, grunnlag)
+        rolleService.validerRoller(roller, grunnlag.fødselsdatoer)
+        finnEksisterendeSak(roller)?.let { return it.toOpprettSakResponse() }
+        val enhet = arbeidsfordelingService.hentEnhetForNySak(roller, grunnlag.fødselsdatoer, request.arbeidsfordeling, request.kategori)
+        return opprettValidertSak(request.tilOpprettSakRequest(enhet.nummer, roller), grunnlag, enhet.nummer)
+    }
+
+    private fun finnEksisterendeSak(roller: Set<RolleDto>): Bidragssak? {
+        val bidragspliktig = roller.firstOrNull { it.type == Rolletype.BIDRAGSPLIKTIG }?.fødselsnummer?.verdi ?: return null
+        val bidragsmottaker = roller.firstOrNull { it.type == Rolletype.BIDRAGSMOTTAKER }?.fødselsnummer?.verdi ?: return null
+        if (bidragsmottaker.isEmpty()) return null
+        return bidragssakRepository
+            .findByRoller(listOf(bidragspliktig))
+            .firstOrNull { sak ->
+                sak.arbeidsfordeling == Arbeidsfordeling.EIERENHET &&
+                    sak.roller.any { it.rolleType == Rolletype.BIDRAGSMOTTAKER && it.fødselsnummer == bidragsmottaker }
+            }?.also {
+                krevSakstilgang(Saksnummer(it.saksnummer))
+                logger.info("Returnerer eksisterende sak for partene.")
+            }
+    }
+
+    private fun krevSakstilgang(saksnummer: Saksnummer) {
+        if (!tilgangClient.harTilgangSaksnummer(saksnummer)) {
+            throw HttpClientErrorException(HttpStatus.FORBIDDEN, "Bruker har ikke tilgang til saken.")
+        }
+    }
+
+    private fun opprettValidertSak(opprettSakRequest: OpprettSakRequest, grunnlag: Valideringsgrunnlag, eierfogd: Enhetsnummer): OpprettSakResponse {
         val saksnummer = hentNyttSaksnummerFraDatabase()
-        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, grunnlag.fødselsdatoer)
-        arbeidsfordelingService.utførArbeidsfordelingPåNySak(bidragssak)
+        val bidragssak = opprettSakRequest.toBidragssak(saksnummer, grunnlag.fødselsdatoer, eierfogd)
         val opprettetBidragssak = bidragssakRepository.save(bidragssak)
 
         val rollerFørOppdatering = opprettetBidragssak.roller.toRolleDto(true)
@@ -310,6 +323,14 @@ class BidragSakService(
             ),
         )
         bidragssakRepository.save(sak)
+    }
+
+    @Transactional
+    fun oppdaterSaksroller(saksnummer: Saksnummer, request: OppdaterSaksrollerRequest): OppdaterSakResponse {
+        krevSakstilgang(saksnummer)
+        return oppdaterRollerISak(
+            OppdaterRollerISakRequest(saksnummer = saksnummer, roller = request.roller.map { it.tilRolleDto() }.toSet()),
+        )
     }
 
     @Transactional

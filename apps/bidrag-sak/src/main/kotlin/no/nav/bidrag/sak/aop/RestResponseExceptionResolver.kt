@@ -6,6 +6,8 @@ import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnaut
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -25,6 +27,13 @@ class RestResponseExceptionResolver {
             .status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WWW_AUTHENTICATE, challenge)
             .body("Gyldig autentisering kreves.")
+    }
+
+    @ResponseBody
+    @ExceptionHandler(HttpMessageNotReadableException::class, MethodArgumentNotValidException::class)
+    protected fun handleUgyldigForespørsel(): ResponseEntity<String> {
+        logger.warn { "Avviser forespørsel med ugyldig eller manglende innhold." }
+        return ResponseEntity.badRequest().body("Forespørselen har ugyldige eller manglende felt.")
     }
 
     @ResponseBody

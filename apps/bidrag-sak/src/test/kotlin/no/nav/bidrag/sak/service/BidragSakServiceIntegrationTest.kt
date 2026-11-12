@@ -1,5 +1,6 @@
 package no.nav.bidrag.sak.service
 
+import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.assertions.throwables.shouldThrowMessage
 import io.kotest.matchers.collections.shouldExist
@@ -8,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.clearMocks
 import io.mockk.every
+import no.nav.bidrag.commons.tilgang.TilgangClient
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.enums.behandling.SøknadGruppeKombinasjon
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -32,14 +34,22 @@ import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.repository.BidragssakRepository
 import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.sak.repository.findByIdOrThrow
+import no.nav.bidrag.sak.security.authentication.ldap.LdapUserService
 import no.nav.bidrag.sak.util.TransactionHelper
 import no.nav.bidrag.transport.person.PersonDto
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
+import no.nav.bidrag.transport.sak.OppdaterSakResponse
+import no.nav.bidrag.transport.sak.OppdaterSaksrollerRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
+import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.ReellMottakerDto
+import no.nav.bidrag.transport.sak.ReellMottakerRequest
+import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
+import no.nav.bidrag.transport.sak.SaksrolleRequest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -47,8 +57,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
@@ -65,7 +80,294 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
     private lateinit var tilgangClientMock: Tilgangskontroll
 
     @Autowired
+    private lateinit var tilgangClient: TilgangClient
+
+    @Autowired
     private lateinit var th: TransactionHelper
+
+    @MockkBean
+    private lateinit var ldapUserService: LdapUserService
+
+    @Nested
+    inner class NyeSaksendepunkter {
+        private val forelder = genererPersonident(LocalDate.of(1980, 1, 1))
+        private val barn = genererPersonident(LocalDate.of(2016, 1, 1))
+        private val mottaker = genererPersonident(LocalDate.of(1985, 1, 1))
+
+        @BeforeEach
+        fun personer() {
+            stubPerson(forelder, LocalDate.of(1980, 1, 1))
+            stubPerson(barn, LocalDate.of(2016, 1, 1))
+            stubPerson(mottaker, LocalDate.of(1985, 1, 1))
+            every { tilgangClient.harTilgangSaksnummer(any()) } returns true
+        }
+
+        private fun forespørsel(arbeidsfordeling: Arbeidsfordeling) = OpprettSakMedRollerRequest(
+            kategori = Sakskategori.NASJONAL,
+            arbeidsfordeling = arbeidsfordeling,
+            roller = setOf(SaksrolleRequest(forelder, Rolletype.BIDRAGSMOTTAKER, null)),
+            levdeAdskilt = null,
+            konvensjon = null,
+            konvensjonsdato = null,
+            ffuReferansenr = null,
+            land = null,
+        )
+
+        private fun <T : Any> medToken(body: T): HttpEntity<T> = HttpEntity(
+            body,
+            HttpHeaders().apply { setBearerAuth(lokalTestToken()) },
+        )
+
+        private fun url(path: String) = "http://localhost:$port/$path"
+
+        private fun medReellMottaker(reellMottaker: Map<String, Any?>) = mapOf(
+            "kategori" to "N",
+            "arbeidsfordeling" to "EEN",
+            "roller" to listOf(
+                mapOf("fodselsnummer" to barn.verdi, "type" to "BA", "reellMottaker" to reellMottaker),
+            ),
+        )
+
+        @Test
+        fun `oppretter EEN uten barn med enheten fra Norg og uten saksflagg`() {
+            val response = testRestTemplate.postForEntity(
+                url("sak/opprett"),
+                medToken(forespørsel(Arbeidsfordeling.EIERENHET)),
+                OpprettSakResponse::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.OK
+            val svar = requireNotNull(response.body)
+            svar.eierfogd shouldBe Enhetsnummer(BidragOrganisasjonTestConfig.EIERFOGD_UTLAND)
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(svar.saksnummer.verdi)
+                sak.eierfogd shouldBe svar.eierfogd.verdi
+                sak.tilganger.single().enhetsnummer shouldBe svar.eierfogd.verdi
+                sak.ansatt shouldBe false
+                sak.inhabilitet shouldBe false
+            }
+        }
+
+        @Test
+        fun `oppretter INH med bare felles rolleregler`() {
+            val svar = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.SETTEKONTOR))
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(svar.saksnummer.verdi)
+                sak.arbeidsfordeling shouldBe Arbeidsfordeling.SETTEKONTOR
+                sak.roller.single { it.rolleType == Rolletype.BIDRAGSMOTTAKER }.fødselsnummer shouldBe forelder.verdi
+                sak.inhabilitet shouldBe false
+            }
+        }
+
+        @Test
+        fun `PATCH lagrer verge på barnet og beholder roller som ikke sendes inn`() {
+            val opprettet = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.EIERENHET))
+            val request = OppdaterSaksrollerRequest(
+                roller = setOf(
+                    SaksrolleRequest(
+                        barn,
+                        Rolletype.BARN,
+                        ReellMottakerRequest(ReellMottaker(mottaker.verdi), ReellMottakerType.PERSON, true),
+                    ),
+                ),
+            )
+
+            val response = testRestTemplate.exchange(
+                url("sak/${opprettet.saksnummer.verdi}/roller"),
+                HttpMethod.PATCH,
+                medToken(request),
+                OppdaterSakResponse::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.OK
+            val svar = requireNotNull(response.body)
+            svar.roller.single { it.type == Rolletype.BIDRAGSMOTTAKER }.fødselsnummer shouldBe forelder
+            svar.roller.single { it.type == Rolletype.BARN }.reellMottaker?.verge shouldBe true
+            svar.roller.single { it.type == Rolletype.BARN }.rollehistorikk.single().reellMottaker?.verge shouldBe true
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(opprettet.saksnummer.verdi)
+                sak.roller.single { it.rolleType == Rolletype.BARN }.mottagerErVerge shouldBe true
+                sak.roller.single { it.rolleType == Rolletype.REELMOTTAKER }.mottagerErVerge shouldBe false
+            }
+        }
+
+        @Test
+        fun `kan fjerne verge uten å bytte reell mottaker`() {
+            val opprettet = bidragssakService.opprettSak(
+                forespørsel(Arbeidsfordeling.EIERENHET).copy(
+                    roller = setOf(
+                        SaksrolleRequest(forelder, Rolletype.BIDRAGSMOTTAKER, null),
+                        SaksrolleRequest(barn, Rolletype.BARN, ReellMottakerRequest(ReellMottaker(mottaker.verdi), ReellMottakerType.PERSON, true)),
+                    ),
+                ),
+            )
+
+            val svar = bidragssakService.oppdaterSaksroller(
+                opprettet.saksnummer,
+                OppdaterSaksrollerRequest(
+                    setOf(SaksrolleRequest(barn, Rolletype.BARN, ReellMottakerRequest(ReellMottaker(mottaker.verdi), ReellMottakerType.PERSON, false))),
+                ),
+            )
+
+            svar.roller.single { it.type == Rolletype.BARN }.reellMottaker?.verge shouldBe false
+        }
+
+        @Test
+        fun `opprett lagrer verge på barnet og leser den tilbake`() {
+            val request = forespørsel(Arbeidsfordeling.FARSKAP).copy(
+                roller = setOf(
+                    SaksrolleRequest(forelder, Rolletype.BIDRAGSMOTTAKER, null),
+                    SaksrolleRequest(barn, Rolletype.BARN, ReellMottakerRequest(ReellMottaker(mottaker.verdi), ReellMottakerType.PERSON, true)),
+                ),
+            )
+
+            val svar = bidragssakService.opprettSak(request)
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(svar.saksnummer.verdi)
+                sak.roller.single { it.rolleType == Rolletype.BARN }.mottagerErVerge shouldBe true
+                sak.tilBidragSakDto(false).roller.single { it.type == Rolletype.BARN }.reellMottaker?.verge shouldBe true
+            }
+        }
+
+        @Test
+        fun `PATCH avviser manglende sakstilgang uten å endre roller`() {
+            val opprettet = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.EIERENHET))
+            every { tilgangClient.harTilgangSaksnummer(opprettet.saksnummer) } returns false
+
+            val response = testRestTemplate.exchange(
+                url("sak/${opprettet.saksnummer.verdi}/roller"),
+                HttpMethod.PATCH,
+                medToken(OppdaterSaksrollerRequest(setOf(SaksrolleRequest(barn, Rolletype.BARN, null)))),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.FORBIDDEN
+            th.transactional {
+                bidragssakRepository.findByIdOrThrow(opprettet.saksnummer.verdi).roller.none { it.rolleType == Rolletype.BARN } shouldBe true
+            }
+        }
+
+        @Test
+        fun `opprett avviser reell mottaker uten type`() {
+            val body = medReellMottaker(mapOf("ident" to mottaker.verdi, "verge" to true))
+
+            val response = testRestTemplate.postForEntity(url("sak/opprett"), medToken(body), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `opprett avviser reell mottaker uten vergevalg`() {
+            val body = medReellMottaker(mapOf("ident" to mottaker.verdi, "type" to "PERSON"))
+
+            val response = testRestTemplate.postForEntity(url("sak/opprett"), medToken(body), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `opprett avviser null som vergevalg`() {
+            val body = medReellMottaker(mapOf("ident" to mottaker.verdi, "type" to "PERSON", "verge" to null))
+
+            val response = testRestTemplate.postForEntity(url("sak/opprett"), medToken(body), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `INH avviser myndig barn uten reell mottaker`() {
+            val request = forespørsel(Arbeidsfordeling.SETTEKONTOR).copy(
+                roller = setOf(SaksrolleRequest(forelder, Rolletype.BARN, null)),
+            )
+
+            val response = testRestTemplate.postForEntity(url("sak/opprett"), medToken(request), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `EEN avviser tomt rollesett`() {
+            val request = forespørsel(Arbeidsfordeling.EIERENHET).copy(roller = emptySet())
+
+            val response = testRestTemplate.postForEntity(url("sak/opprett"), medToken(request), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.BAD_REQUEST
+        }
+
+        @Test
+        fun `opprett krever autentisering`() {
+            val response = testRestTemplate.postForEntity(
+                url("sak/opprett"),
+                forespørsel(Arbeidsfordeling.EIERENHET),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        }
+
+        @Test
+        fun `opprett avviser ugyldig token`() {
+            val response = testRestTemplate.postForEntity(
+                url("sak/opprett"),
+                HttpEntity(forespørsel(Arbeidsfordeling.EIERENHET), HttpHeaders().apply { setBearerAuth("ugyldig") }),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        }
+
+        @Test
+        fun `PATCH krever autentisering`() {
+            val response = testRestTemplate.exchange(
+                url("sak/2600000/roller"),
+                HttpMethod.PATCH,
+                HttpEntity(OppdaterSaksrollerRequest(setOf(SaksrolleRequest(barn, Rolletype.BARN, null)))),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        }
+
+        @Test
+        fun `Basic-beskyttet PIP kan fortsatt brukes uten JWT`() {
+            val saksnummer = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.EIERENHET)).saksnummer
+            val passord = UUID.randomUUID().toString()
+            every { ldapUserService.authenticate("testbruker", passord, any()) } returns true
+
+            val response = testRestTemplate.exchange(
+                url("bidrag-sak/pip/sak/${saksnummer.verdi}"),
+                HttpMethod.GET,
+                HttpEntity<Void>(HttpHeaders().apply { setBasicAuth("testbruker", passord) }),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.OK
+        }
+
+        @Test
+        fun `Basic-beskyttet PIP avviser feil passord`() {
+            val passord = UUID.randomUUID().toString()
+            every { ldapUserService.authenticate("testbruker", passord, any()) } returns false
+
+            val response = testRestTemplate.exchange(
+                url("bidrag-sak/pip/sak/2600000"),
+                HttpMethod.GET,
+                HttpEntity<Void>(HttpHeaders().apply { setBasicAuth("testbruker", passord) }),
+                String::class.java,
+            )
+
+            response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        }
+
+        @Test
+        fun `Basic-beskyttet PIP avviser kall uten autentisering`() {
+            val response = testRestTemplate.getForEntity(url("bidrag-sak/pip/sak/2600000"), String::class.java)
+
+            response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+        }
+    }
 
     @Nested
     inner class OppdaterSak {

@@ -67,13 +67,14 @@ class RolleMapperTest {
             val barn =
                 Rolle(rolleType = Rolletype.BARN).apply {
                     rolleId = 10
+                    mottagerErVerge = true
                     fødselsnummer = "06510985255"
                 }
             val rm =
                 Rolle(rolleType = Rolletype.REELMOTTAKER).apply {
                     rolleId = 99
                     fødselsnummer = "02451550643"
-                    mottagerErVerge = true
+                    mottagerErVerge = false
                 }
             barn.rmRolleId = rm.rolleId
 
