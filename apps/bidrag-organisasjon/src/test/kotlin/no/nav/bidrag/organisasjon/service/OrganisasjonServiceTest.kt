@@ -4,10 +4,14 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.enums.diverse.Tema
-import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.enums.person.Diskresjonskode
+import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
+import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.organisasjon.consumer.EntraConsumer
 import no.nav.bidrag.organisasjon.consumer.Norg2Consumer
 import no.nav.bidrag.organisasjon.consumer.PersonConsumer
@@ -16,10 +20,15 @@ import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchR
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterBestMatchResponse
 import no.nav.bidrag.organisasjon.consumer.dto.ArbeidsfordelingEnheterResponse
 import no.nav.bidrag.organisasjon.service.OrganisasjonService.Companion.BEHANDLINGSTYPE_UTLAND
+import no.nav.bidrag.transport.organisasjon.EnhetDetaljerDto
+import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.person.GeografiskTilknytningDto
+import no.nav.bidrag.transport.person.Graderingsinfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.http.HttpStatus
 
 internal class OrganisasjonServiceTest {
@@ -215,12 +224,88 @@ internal class OrganisasjonServiceTest {
 
             response shouldBe null
         }
+
+        @Test
+        fun `Skal returnere settekontor når saken har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(inhabilRequest())
+
+            response shouldBe SETTEKONTOR
+        }
+
+        @Test
+        fun `Skal returnere Norg-enheten når saken ikke har arbeidsfordeling settekontor`() {
+            mockNorgTreffMedSettekontor()
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(
+                HentEnhetRequest(IDENT, biidenter = setOf(ANNEN_PART), arbeidsfordeling = Arbeidsfordeling.EIERENHET),
+            )
+
+            response shouldBe NORG_ENHET
+        }
+
+        @Test
+        fun `Skal beholde enheten fra Norg når settekontor ikke er konfigurert`() {
+            mockNorgTreffMedSettekontor()
+            every { norg2ConsumerMock.hentEnhetKontaktinfo(NORG_ENHET.nummer.verdi) } returns
+                EnhetDetaljerDto(enhetId = NORG_ENHET.nummer.verdi, navn = NORG_ENHET.navn, settekontorEnhetId = null)
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(inhabilRequest())
+
+            response shouldBe NORG_ENHET
+        }
+
+        @Test
+        fun `Skal beholde enheten fra Norg når inhabil sak har skjermet part`() {
+            mockNorgTreffMedSettekontor()
+            every { personConsumerMock.hentGraderingsinfo(setOf(ANNEN_PART, IDENT)) } returns
+                Graderingsinfo(identerTilGradering = emptyMap(), identerTilSkjerming = mapOf(IDENT to false, ANNEN_PART to true))
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(inhabilRequest())
+
+            response shouldBe NORG_ENHET
+        }
+
+        @ParameterizedTest
+        @CsvSource("STRENGT_FORTROLIG, SPSF", "STRENGT_FORTROLIG_UTLAND, SPSF", "FORTROLIG, SPFO")
+        fun `Skal sende diskresjonskode til Norg uten settekontor når inhabil sak har part med adressebeskyttelse`(
+            gradering: Gradering,
+            diskresjonskode: Diskresjonskode,
+        ) {
+            mockNorgTreffMedSettekontor()
+            every { personConsumerMock.hentGraderingsinfo(setOf(ANNEN_PART, IDENT)) } returns
+                Graderingsinfo(
+                    identerTilGradering = mapOf(IDENT to null, ANNEN_PART to gradering),
+                    identerTilSkjerming = mapOf(IDENT to false, ANNEN_PART to false),
+                )
+
+            val response = organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(inhabilRequest())
+
+            response shouldBe NORG_ENHET
+            verify { norg2ConsumerMock.finnArbeidsfordelingEnheterBestMatch(match { it.diskresjonskode == diskresjonskode }) }
+            verify(exactly = 0) { norg2ConsumerMock.hentEnhetKontaktinfo(any()) }
+        }
+
+        private fun inhabilRequest() = HentEnhetRequest(IDENT, biidenter = setOf(ANNEN_PART), arbeidsfordeling = Arbeidsfordeling.SETTEKONTOR)
+
+        private fun mockNorgTreffMedSettekontor() {
+            every { personConsumerMock.hentPersonGeografiskTilknytning(IDENT) } returns
+                GeografiskTilknytningDto(ident = IDENT, geografiskTilknytning = "4601", erUtland = false)
+            every { norg2ConsumerMock.finnArbeidsfordelingEnheterBestMatch(any()) } returns
+                listOf(ArbeidsfordelingEnheterBestMatchResponse(NORG_ENHET.nummer, NORG_ENHET.navn))
+            every { norg2ConsumerMock.hentEnhetKontaktinfo(NORG_ENHET.nummer.verdi) } returns
+                EnhetDetaljerDto(enhetId = NORG_ENHET.nummer.verdi, navn = NORG_ENHET.navn, settekontorEnhetId = SETTEKONTOR.nummer.verdi)
+            every { norg2ConsumerMock.hentEnhetKontaktinfo(SETTEKONTOR.nummer.verdi) } returns
+                EnhetDetaljerDto(enhetId = SETTEKONTOR.nummer.verdi, navn = SETTEKONTOR.navn, settekontorEnhetId = null)
+        }
     }
 
     companion object {
-        private val SB_IDENT = "X123456"
-        private val SB_NAVN = "Sylfest Strutle"
-        private val IDENT = Personident("12345678900")
+        private val IDENT = genererPersonident()
+        private val ANNEN_PART = genererPersonident()
+        private val NORG_ENHET = EnhetDto(Enhetsnummer("4812"), "NAV Familie- og pensjonsytelser Bergen")
+        private val SETTEKONTOR = EnhetDto(Enhetsnummer("4806"), "NAV Familie- og pensjonsytelser Drammen")
         private const val FORVALTNING = "FPY"
         private const val KLAGE = "KLAGE"
     }
