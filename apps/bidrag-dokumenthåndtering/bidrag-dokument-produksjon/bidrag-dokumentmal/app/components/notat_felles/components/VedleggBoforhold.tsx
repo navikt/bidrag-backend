@@ -15,9 +15,9 @@ import { groupBy } from "~/utils/array-utils";
 import DataDescription from "~/components/DataDescription";
 import Person from "~/components/Person";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import opplysningerTekster from "~/tekster/notat/felles/opplysninger.json";
+import opplysningerTekster from "~/tekster/notat/felles/opplysninger.yaml";
 import { CommonTable } from "~/components/CommonTable";
 import {
   useNotatFelles,

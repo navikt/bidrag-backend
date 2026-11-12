@@ -1,6 +1,6 @@
 import { RowContent } from "~/components/CommonTable";
 import { formater, Visningsformat } from "~/utils/visning";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 
 /**
  * Henter verdien som skal vises for et felt i input-JSON.

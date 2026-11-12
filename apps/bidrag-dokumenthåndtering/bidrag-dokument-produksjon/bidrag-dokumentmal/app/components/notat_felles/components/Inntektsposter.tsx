@@ -3,8 +3,8 @@ import { formatPeriode } from "~/utils/date-utils";
 import { formatterBeløp } from "~/utils/visningsnavn";
 import { NotatInntektDto, TypeArManedsperiode } from "~/types/Api";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
-import ord from "~/tekster/ord.json";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 
 const t = notatTekster.inntekter;
 

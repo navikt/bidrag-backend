@@ -14,7 +14,7 @@ import {
 import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
 import GjelderPerson from "~/components/GjelderPerson";
 import { CommonTable } from "~/components/CommonTable";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import { formatPeriode } from "~/utils/date-utils";
 import {
@@ -23,7 +23,7 @@ import {
 } from "~/utils/visningsnavn";
 import CalculationTable from "~/components/notat_felles/CalculationTable";
 import { erRolle } from "~/utils/converter-utils";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const t = bidragOpplysningerTekster.underholdskostnader;
 

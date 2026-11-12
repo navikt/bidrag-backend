@@ -1,7 +1,7 @@
 import { dateToDDMMYYYY } from "~/utils/date-utils";
 import { DataViewTable } from "~/components/DataViewTable";
 import { NotatVedtakDetaljerDto } from "~/types/Api";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 
 const t = notatTekster.vedtakFattetDetaljer;
 

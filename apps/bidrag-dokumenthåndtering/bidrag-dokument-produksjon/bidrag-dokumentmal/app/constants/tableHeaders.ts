@@ -1,4 +1,4 @@
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import { TableHeader } from "~/components/CommonTable";
 import { Styling } from "~/components/notat_felles/ThemeContext";

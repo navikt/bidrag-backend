@@ -8,8 +8,8 @@ import {
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 import { isNullOrEmpty } from "~/utils/string-utils";
-import ord from "~/tekster/ord.json";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 
 const t = notatTekster.søknaddetaljer;
 

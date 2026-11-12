@@ -1,5 +1,5 @@
 import { SimpleTable } from "~/components/SimpleTable";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 import { NotatMalType } from "~/types/Api";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 

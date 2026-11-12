@@ -1,5 +1,5 @@
 import React, { ReactElement, CSSProperties } from "react";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import {
   CommonTable,

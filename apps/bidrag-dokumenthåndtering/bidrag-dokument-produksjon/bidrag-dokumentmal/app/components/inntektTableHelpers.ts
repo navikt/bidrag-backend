@@ -1,5 +1,5 @@
 import { Rolletype, NotatMalType, InntekterPerRolle } from "~/types/Api";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 
 export enum InntektTableType {

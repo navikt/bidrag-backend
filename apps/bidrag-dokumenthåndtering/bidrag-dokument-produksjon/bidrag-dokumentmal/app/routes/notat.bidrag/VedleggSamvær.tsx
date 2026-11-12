@@ -8,8 +8,8 @@ import { NotatSamvaerBarnDto, NotatSamvaersperiodeDto } from "~/types/Api";
 import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
 import { formatPeriode } from "~/utils/date-utils";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.json";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const t = bidragOpplysningerTekster.samvær;
 

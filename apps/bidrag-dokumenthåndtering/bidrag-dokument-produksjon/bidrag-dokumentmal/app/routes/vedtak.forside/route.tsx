@@ -1,6 +1,6 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import HeaderFooter from "~/components/notat_felles/HeaderFooter";
 import { parseRequestAction, VedtakRequest } from "~/routes/common";
 import BrevAdresseKontaktinfo from "~/components/notat_felles/components/BrevAdresseKontaktinfo";

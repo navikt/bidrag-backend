@@ -1,7 +1,7 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
 import Vedtak from "~/routes/notat.forskudd/Vedtak";
-import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.json";
+import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.yaml";
 import {
   NotatProvider,
   RenderMode,

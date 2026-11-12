@@ -4,9 +4,9 @@ import {
 } from "~/components/notat_felles/NotatContext";
 import { NotatSamvaersperiodeDto, NotatSamvaerBarnDto } from "~/types/Api";
 import { CommonTable } from "~/components/CommonTable";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { DataViewTable } from "~/components/DataViewTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";

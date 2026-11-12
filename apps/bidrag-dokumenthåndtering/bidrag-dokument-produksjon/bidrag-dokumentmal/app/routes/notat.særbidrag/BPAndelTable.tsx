@@ -4,7 +4,7 @@ import {
   formatterBeløpForBeregning,
   formatterProsent,
 } from "~/utils/visningsnavn";
-import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.yaml";
 import { DataViewTableData } from "~/components/DataViewTable";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 import {

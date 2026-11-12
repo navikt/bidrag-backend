@@ -11,9 +11,9 @@ import {
   TableHeader,
   TableColumn,
 } from "~/components/CommonTable";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.json";
+import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.yaml";
 import { DataViewTableData } from "~/components/DataViewTable";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 

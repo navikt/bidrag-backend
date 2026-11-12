@@ -6,7 +6,7 @@ import {
   NotatMalType,
   NotatVirkningstidspunktBarnDto,
 } from "~/types/Api";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const tekst = bidragOpplysningerTekster.beregningsdetaljer;
 

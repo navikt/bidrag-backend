@@ -1,7 +1,7 @@
 import { Rolletype } from "~/types/Api";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
-import ord from "~/tekster/ord.json";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import {
   formatterBeløpForBeregning,
   formatterProsent,

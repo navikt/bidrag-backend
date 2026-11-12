@@ -1,6 +1,6 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import {
   NotatProvider,
   RenderMode,
@@ -23,7 +23,7 @@ import VedleggSamvær from "~/routes/notat.bidrag/VedleggSamvær";
 import VedleggUnderholdskostnader from "~/routes/notat.bidrag/VedleggUnderholdskostnader";
 import PrivatAvtale from "~/routes/notat.bidrag/PrivatAvtale";
 import { Vedtakstype } from "~/types/Api";
-import GebyrV2 from "~/routes/notat.bidrag/GebyrV2";
+import Gebyr from "~/routes/notat.bidrag/Gebyr";
 
 export async function action(args: ActionFunctionArgs) {
   return await parseRequestAction(args);
@@ -105,7 +105,7 @@ function NotatSaksbehandlerBidrag() {
       <PrivatAvtale />
       <Underholdskostnad />
       <Inntekter />
-      <GebyrV2 />
+      <Gebyr />
       <Boforhold />
       <Samvær />
       <Vedtak />

@@ -4,7 +4,7 @@ import {
   formatterProsent,
 } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const t = bidragOpplysningerTekster.beregningsdetaljer.endringUnderGrense;
 

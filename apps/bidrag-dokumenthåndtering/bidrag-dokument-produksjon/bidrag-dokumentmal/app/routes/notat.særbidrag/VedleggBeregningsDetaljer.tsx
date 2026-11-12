@@ -9,8 +9,8 @@ import {
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
 import { erResutlatMedBeregning } from "~/routes/notat.særbidrag/SærbidragHelpers";
-import ord from "~/tekster/ord.json";
-import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.yaml";
 import { BPsEvneTable } from "~/components/vedtak/BPsEvneTable";
 import { CommonTable, TableHeader } from "~/components/CommonTable";
 import { BPsAndel } from "~/routes/notat.særbidrag/BPAndelTable";

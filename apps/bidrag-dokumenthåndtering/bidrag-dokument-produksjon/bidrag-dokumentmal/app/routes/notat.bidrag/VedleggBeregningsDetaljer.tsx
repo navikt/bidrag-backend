@@ -31,8 +31,8 @@ import { BarnetErSelvforsørget } from "~/routes/notat.bidrag/beregningsdetaljer
 import { BeregningForholdsmessigFordeling } from "~/routes/notat.bidrag/beregningsdetaljer/BeregningForholdsmessigFordelingDetaljer";
 import { PersonV2 } from "~/components/Person";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.json";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const t = bidragOpplysningerTekster.beregningsdetaljer;
 

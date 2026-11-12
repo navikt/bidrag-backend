@@ -1,6 +1,6 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.json";
+import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.yaml";
 import {
   NotatProvider,
   RenderMode,

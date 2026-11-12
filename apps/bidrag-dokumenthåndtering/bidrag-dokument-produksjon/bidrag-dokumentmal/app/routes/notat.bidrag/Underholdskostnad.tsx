@@ -7,9 +7,9 @@ import { NotatUnderholdBarnDto } from "~/types/Api";
 import { DataViewTable } from "~/components/DataViewTable";
 import { CommonTable } from "~/components/CommonTable";
 import { formatPeriode, dateToDDMMYYYY, sortByAge } from "~/utils/date-utils";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import {
   formatterBeløpForBeregning,
   rolleTilVisningsnavnV2,

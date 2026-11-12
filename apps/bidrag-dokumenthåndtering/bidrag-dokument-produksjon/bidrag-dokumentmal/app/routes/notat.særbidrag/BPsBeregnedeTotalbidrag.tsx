@@ -1,7 +1,7 @@
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import { NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.json";
+import særbidragOpplysningerTekster from "~/tekster/notat/særbidrag/opplysninger.yaml";
 import { CommonTable, TableColumn, TableRow } from "~/components/CommonTable";
 import { CalculationTable } from "~/components/vedtak/CalculationTable";
 

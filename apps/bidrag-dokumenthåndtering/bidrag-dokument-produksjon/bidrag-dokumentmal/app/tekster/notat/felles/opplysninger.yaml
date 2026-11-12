@@ -1,0 +1,25 @@
+# Vedleggene med opplysninger som er like i alle notatene.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+boforhold:
+  tittel: "Vedlegg nr. {nummer}: Boforhold - {kilde}"
+  søknadsbarn: Søknadsbarn
+  egetBarnIHusstanden: Eget barn i husstanden
+  andreVoksneIHusstanden: Andre voksne i husstanden
+  boforholdBidragsmottaker: Boforhold bidragsmottaker
+  sivilstand: Sivilstand
+  hvemBorPåAdresse: Hvem bor på adresse?
+  relasjonTilBidragspliktig: " (Relasjon til Bidragspliktig)"
+
+inntekter:
+  tittel: "Vedlegg nr. {}: Inntekt - "
+  ingenOffentligeInntekter: Ingen offentlige inntekter
+  tabeller:
+    arbeidsforhold: "{}.1 Arbeidsforhold"
+    skattepliktigeOgPensjonsgivende: "{}.2 Skattepliktige og pensjonsgivende inntekter"
+    barnetillegg: "{}.3 Barnetillegg"
+    utvidetBarnetrygd: "{}.4 Utvidet barnetrygd"
+    småbarnstillegg: "{}.5 Småbarnstillegg"
+    kontantstøtte: "{}.6 Kontantstøtte"
+  historisk: " (historisk)"

@@ -13,8 +13,8 @@ import {
 import Person from "~/components/Person";
 import { BeregningBarn } from "~/types/commonTypes";
 import { BeregnetBidragBarnDto } from "~/types/Api";
-import ord from "~/tekster/ord.json";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 
 const t = bidragOpplysningerTekster.beregningsdetaljer.forholdsmessigFordeling;
 

@@ -7,9 +7,9 @@ import Person from "~/components/Person";
 import { SimpleTable } from "~/components/SimpleTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 import {
   useNotatFelles,
   useVedleggNummer,

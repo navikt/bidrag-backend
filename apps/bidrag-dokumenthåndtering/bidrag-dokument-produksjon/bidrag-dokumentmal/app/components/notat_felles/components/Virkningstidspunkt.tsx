@@ -7,8 +7,8 @@ import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { DataViewTable } from "~/components/DataViewTable";
 import { NotatVirkningstidspunktBarnDto, Stonadstype } from "~/types/Api";
-import ord from "~/tekster/ord.json";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 import Beregningsperiode from "~/routes/notat.bidrag/Beregningsperiode";
 import {
   TypeInnhold,

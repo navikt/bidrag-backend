@@ -1,6 +1,6 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 
 const t = bidragOpplysningerTekster.beregningsdetaljer.barnetErSelvforsørget;

@@ -10,9 +10,9 @@ import {
 import { formatterBeløp, sammenlignRoller } from "~/utils/visningsnavn";
 import { groupBy } from "~/utils/array-utils";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import opplysningerTekster from "~/tekster/notat/felles/opplysninger.json";
+import opplysningerTekster from "~/tekster/notat/felles/opplysninger.yaml";
 import {
   CommonTable,
   TableColumn,

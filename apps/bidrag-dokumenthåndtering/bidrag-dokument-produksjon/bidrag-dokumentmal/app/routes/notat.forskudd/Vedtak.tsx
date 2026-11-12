@@ -3,8 +3,8 @@ import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { VedtakFattetDetaljer } from "~/components/notat_felles/components/VedtakFattetDetaljer";
 import { NotatResultatForskuddBeregningBarnDto } from "~/types/Api";
-import ord from "~/tekster/ord.json";
-import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import forskuddTekster from "~/tekster/notat/forskudd/saksbehandler.yaml";
 
 const t = forskuddTekster.vedtak;
 

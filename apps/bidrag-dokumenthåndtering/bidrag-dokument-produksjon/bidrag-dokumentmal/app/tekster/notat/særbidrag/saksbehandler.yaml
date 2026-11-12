@@ -1,0 +1,54 @@
+# Saksbehandlerdelen av særbidragsnotatet, i samme rekkefølge som i notatet.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+tittel: Særbidrag, saksbehandlingsnotat
+
+utgifter:
+  tittel: Utgift
+  søknadsdetaljer:
+    kategori: Kategori
+    søktFra: Søkt fra
+    innkreving: Innkreving
+    klageMottattDato: Klage mottatt dato
+  oversiktOverUtgifter:
+    tittel: Oversikt over utgifter
+  beregnetTotalt:
+    tittel: Beregnet totalt
+  totalt:
+    direkteBetaltAvBidragspliktig: Direkte betalt av Bidragspliktig
+  maksGodkjentBeløp:
+    maksGodkjentBeløp: Maks godkjent beløp
+    begrunnelse: Begrunnelse for maks godkjent beløp
+
+vedtak:
+  tittel: Vedtak
+  avslagMedÅrsak: "Avslag: {}"
+  innvilget: Særbidrag innvilget
+  årsak: "Årsak: "
+  avslagMedUtgifter:
+    forskuddssats: Forskuddssaats
+  inntekter:
+    tittel: Inntekter
+    inntektBidragsmottaker: Inntekt Bidragsmottaker
+    inntektBidragspliktig: Inntekt Bidragspliktig
+    inntektBarn: Inntekt Barn
+  boforhold:
+    tittel: Boforhold
+    antallBarnIHusstanden: Antall barn i husstanden
+    voksneIHusstanden: Voksne i husstanden
+    svarVoksneIHusstanden:
+      jaEgetBarn: Ja (barn over 18 år)
+  beregning:
+    tittel: Beregning
+    maksGodkjentBeløp: Maks godkjent beløp
+    bidragspliktigesAndel: Bidragspliktiges andel
+    bidragspliktigHarEvne: Bidragspliktig har evne
+    betaltAvBidragspliktig: Betalt av Bidragspliktig
+    beløpSomInnkreves: Beløp som innkreves
+    beløpSomInnkrevesUtenInnkreving: Fastsatt beløp å betale
+  utgifter:
+    tittel: Utgiftene lagt til grunn
+    betaltAvBidragspliktig: Betalt av Bidragspliktig
+    forfallsdato: Forfallsdato
+    utgift: Utgift

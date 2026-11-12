@@ -16,8 +16,8 @@ import {
   TableColumn,
 } from "~/components/CommonTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
-import ord from "~/tekster/ord.json";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import { barnetilleggTiltakspengerVisningsnavn } from "~/constants/beregning";
 
 const t = bidragOpplysningerTekster.beregningsdetaljer.nettoBarnetillegg;

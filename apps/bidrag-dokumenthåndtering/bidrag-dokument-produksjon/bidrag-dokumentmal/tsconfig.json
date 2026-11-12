@@ -6,19 +6,12 @@
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
     "**/.client/**/*.tsx",
-    ".react-router/types/**/*"
+    ".react-router/types/**/*",
+    ".tekster-typer/**/*"
   ],
   "compilerOptions": {
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2022"
-    ],
-    "types": [
-      "node",
-      "@react-router/node",
-      "vite/client"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["node", "@react-router/node", "vite/client"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -32,14 +25,10 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./app/*"
-      ]
+      "~/*": ["./app/*", "./.tekster-typer/app/*"]
     },
     "noEmit": true,
-    "rootDirs": [
-      ".",
-      "./.react-router/types"
-    ]
+    "rootDirs": [".", "./.react-router/types"],
+    "allowArbitraryExtensions": true
   }
 }

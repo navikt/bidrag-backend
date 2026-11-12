@@ -22,9 +22,9 @@ import {
   TableColumn,
   TableHeader,
 } from "~/components/CommonTable";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.json";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 import { getInntektTableHeaders } from "~/constants/tableHeaders";
 import {
   useNotatFelles,

@@ -1,5 +1,5 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.json";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import {
   DokumentmalDelberegningBidragsevneDto,

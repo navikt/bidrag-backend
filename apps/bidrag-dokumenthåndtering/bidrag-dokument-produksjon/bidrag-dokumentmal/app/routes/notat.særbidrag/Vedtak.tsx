@@ -13,8 +13,8 @@ import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { Feltliste, Feltlisteoppsett } from "~/components/Feltliste";
 import { RowContent } from "~/components/CommonTable";
 import { formater } from "~/utils/visning";
-import ord from "~/tekster/ord.json";
-import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import særbidragTekster from "~/tekster/notat/særbidrag/saksbehandler.yaml";
 
 const t = særbidragTekster.vedtak;
 

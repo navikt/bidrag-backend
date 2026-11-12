@@ -27,8 +27,8 @@ import {
   Tabelloppsett,
 } from "~/components/KolonneTabell";
 import { formater } from "~/utils/visning";
-import ord from "~/tekster/ord.json";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.json";
+import ord from "~/tekster/ord.yaml";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 
 const t = bidragTekster.vedtak;
 const tr = bidragTekster.revurderingsbarn;

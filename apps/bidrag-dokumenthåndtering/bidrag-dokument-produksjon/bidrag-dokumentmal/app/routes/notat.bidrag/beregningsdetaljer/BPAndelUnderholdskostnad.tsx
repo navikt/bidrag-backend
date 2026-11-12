@@ -5,7 +5,7 @@ import {
 import { DataViewTableData } from "~/components/DataViewTable";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.json";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 import { Resultatkode } from "~/types/Api";
 

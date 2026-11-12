@@ -66,7 +66,6 @@ data class VedtakNotatDto(
     val utgift: NotatSærbidragUtgifterDto?,
     val boforhold: NotatBoforholdDto,
     val samværV2: NotatSamværDto? = null,
-    val gebyrV2: NotatGebyrV2Dto? = null,
     val gebyrV3: NotatGebyrV3Dto? = null,
     var underholdskostnader: NotatUnderholdDto? = null,
     val personer: List<DokumentmalPersonDto>,
@@ -461,20 +460,6 @@ data class NotatGebyrSakDto(
     val gebyr18År: List<NotatGebyrDetaljerDto>,
 )
 
-data class NotatGebyrV2Dto(
-    val gebyrRoller: List<NotatGebyrRolleV2Dto>,
-)
-
-data class NotatGebyrRolleV3Dto(
-    val gebyrDetaljer: NotatGebyrDetaljerDto,
-    val rolle: DokumentmalPersonDto,
-)
-
-data class NotatGebyrRolleV2Dto(
-    val gebyrDetaljer: List<NotatGebyrDetaljerDto>,
-    val rolle: DokumentmalPersonDto,
-)
-
 data class NotatGebyrDetaljerDto(
     val søknad: NotatGebyrSøknadDetaljerDto? = null,
     val inntekt: NotatGebyrInntektDto,
@@ -483,7 +468,6 @@ data class NotatGebyrDetaljerDto(
     val endeligIlagtGebyr: Boolean,
     val begrunnelse: String? = null,
     val beløpGebyrsats: BigDecimal,
-    @Schema(deprecated = true)
     val rolle: DokumentmalPersonDto,
 ) {
     val erManueltOverstyrt get() = beregnetIlagtGebyr != endeligIlagtGebyr
