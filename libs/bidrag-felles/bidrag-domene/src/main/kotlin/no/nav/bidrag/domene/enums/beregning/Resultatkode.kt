@@ -126,9 +126,10 @@ enum class Resultatkode(
     FORHØYET_FORSKUDD_11_ÅR_125_PROSENT(listOf(BisysResultatkode("125")), ResultatkodeType.FORSKUDD),
 
     // Resultat av beregning av særbidrag
+    SÆRBIDRAG_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
+
     @Deprecated("SÆRTILSKUDD er erstattet med SÆRBIDRAG", ReplaceWith("SÆRBIDRAG_INNVILGET"))
     SÆRTILSKUDD_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
-    SÆRBIDRAG_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
 
     // Resultat av beregning av særbidrag
     @Deprecated("SÆRTILSKUDD er erstattet med SÆRBIDRAG", ReplaceWith("SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE"))
