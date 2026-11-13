@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.diverse.Tema
 import no.nav.bidrag.domene.enums.person.Diskresjonskode
 import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.consumer.EntraAnsatt
@@ -179,8 +180,12 @@ class OrganisasjonService(
                 behandlingstema = request.behandlingstema ?: request.arbeidsfordeling?.behandlingstema,
                 behandlingstype = mapBehandlingstype(request) ?: if (utland) BEHANDLINGSTYPE_UTLAND else null,
             )
-        return norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
+        val enhet = norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
             ?.firstOrNull()?.let { EnhetDto(it.enhetNr, it.navn) }
+            ?: return null
+
+        val brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR && !skjermet && diskresjonskode == null
+        return if (brukSettekontor) finnSettekontorForEnhet(enhet) else enhet
     }
 
     private fun finnStrengesteDiskresjonskode(graderingsinfo: Graderingsinfo): Diskresjonskode? {
@@ -215,6 +220,16 @@ class OrganisasjonService(
             return null
         }
         return request.sakskategori?.finnBehandlingstypekode(request.behandlingstype!!)
+    }
+
+    private fun finnSettekontorForEnhet(enhet: EnhetDto): EnhetDto {
+        val settekontor = norg2Consumer.hentEnhetKontaktinfo(enhet.nummer.verdi)?.settekontorEnhetId
+        if (settekontor == null) {
+            LOGGER.warn { "Fant ikke settekontor. Beholder enheten fra Norg." }
+            return enhet
+        }
+        val navn = norg2Consumer.hentEnhetKontaktinfo(settekontor)?.navn
+        return EnhetDto(Enhetsnummer(settekontor), navn)
     }
 
     fun hentAlleEnheterGrupper(): BidragEnheterResponsDto = BidragEnheterResponsDto(EnhetYamlConverter.hentAlleEnheterGrupper())
