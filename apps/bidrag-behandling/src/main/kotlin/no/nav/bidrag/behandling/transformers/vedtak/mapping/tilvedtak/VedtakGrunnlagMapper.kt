@@ -19,7 +19,6 @@ import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunk
 import no.nav.bidrag.behandling.transformers.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode
 import no.nav.bidrag.behandling.transformers.finnEksisterendeVedtakMedOpphør
 import no.nav.bidrag.behandling.transformers.finnEksisterendeVedtakMedOpphørForRolle
-import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
@@ -28,7 +27,6 @@ import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
 import no.nav.bidrag.behandling.transformers.konverterTilStønadDto
-import no.nav.bidrag.behandling.transformers.løperPeriodeEtterSøktFomDato
 import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.minOfNullable
 import no.nav.bidrag.behandling.transformers.tilInntektberegningDto
@@ -259,7 +257,6 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
                 ?.map { it.tilÅrMånedsperiode() }
                 ?: emptyList()
 
-
             (bidragsperioder + privatAvtalePerioder)
                 .filter { it.overlapper(forholdsmessigFordelingBeregningsperiode) }
                 .minOfOrNull { it.fom }
@@ -270,6 +267,7 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
     }
 
     Rolletype.REELMOTTAKER -> throw IllegalArgumentException("Skal ikke beregne for Reel mottaker")
+
     Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
 
@@ -382,7 +380,7 @@ private fun utledBeregnTilDato(
         // Avvisning kan bare velges hvis det allerede er et vedtak med opphør på rollen. Derfor hentes opphørsdato fra eksisterende vedtak
         val eksisterendeOpphør = søknadsbarnRolle.finnEksisterendeVedtakMedOpphørForRolle()
         // Default til beregnTilUtenAvslag. Grunnen til det er at hvis avvisning ble valgt ved opprettelse av behandling
-        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra()?.toLocalDate() ?: beregnTilUtenAvslag
+        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra().toLocalDate()
     } else if (opphørsdato == null || opphørsdato.isAfter(YearMonth.now().plusMonths(1))) {
         beregnTilUtenAvslag
     } else if (opprinneligVedtakstidspunkt != null) {
@@ -599,7 +597,7 @@ class VedtakGrunnlagMapper(
                         søknadsbarnRolle.finnBeregnFra().toLocalDate()
                     } else {
                         behandling.eldsteVirkningstidspunkt
-                    } ?: vedtakmappingFeilet("Virkningstidspunkt må settes for beregning")
+                    }
 
                 val beregningTilDato = finnBeregnTilDatoBehandling(søknadsbarnRolle)
                 val opphørsdato =
