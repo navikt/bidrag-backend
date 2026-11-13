@@ -112,6 +112,13 @@ class GrunnlagConsumer {
         return HttpEntity(body, httpHeaders)
     }
 
+    fun <T : Any> initHttpEntityEcb(body: T): HttpEntity<T> {
+        val httpHeaders = HttpHeaders()
+        httpHeaders.contentType = MediaType.APPLICATION_JSON
+        httpHeaders.accept = listOf(MediaType.parseMediaType("application/vnd.sdmx.data+json"))
+        return HttpEntity(body, httpHeaders)
+    }
+
     private fun inntektsårIkkeStøttet(message: String?) = message?.contains(INNTEKTSAAR_IKKE_STØTTET) ?: false
 
     private fun fantIkkeSkattegrunnlag(message: String?): Boolean = message?.contains(FANT_IKKE_SKATTEGRUNNLAG_PROD) == true || message?.contains(FANT_IKKE_SKATTEGRUNNLAG_TEST) == true
