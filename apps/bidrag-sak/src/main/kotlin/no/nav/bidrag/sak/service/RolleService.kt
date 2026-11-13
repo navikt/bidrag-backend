@@ -97,7 +97,9 @@ class RolleService(
             rolle.copy(
                 fødselsnummer = ident ?: rolle.fødselsnummer,
                 foedselsnummer = ident ?: rolle.foedselsnummer,
-                reellMottaker = rolle.reellMottaker?.let { it.copy(ident = gjeldendeReellMottakerIdent(it.ident)) },
+                reellMottaker = rolle.reellMottaker?.let {
+                    it.copy(ident = rolle.rmFødselsnummer()?.let { ident -> ReellMottaker(gjeldendeIdent(ident.verdi)) } ?: it.ident)
+                },
                 reellMottager = rolle.reellMottager?.let { gjeldendeReellMottakerIdent(it) },
             )
         }
@@ -233,7 +235,7 @@ class RolleService(
         // Hvis RM i request er lik nåværende RM -> ikke lag ny RM-rolle, ikke nullstill kobling
         if (dtoTilOppdatering.harRM && rmIdentMatch) {
             eksisterendeRolle.apply {
-                mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
+                mottagerErVerge = dtoTilOppdatering.rolle.reellMottaker?.verge ?: dtoTilOppdatering.rolle.mottagerErVerge
             }
             return listOf(eksisterendeRolle)
         }
@@ -253,7 +255,7 @@ class RolleService(
             }
 
         eksisterendeRolle.apply {
-            mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
+            mottagerErVerge = dtoTilOppdatering.rolle.reellMottaker?.verge ?: dtoTilOppdatering.rolle.mottagerErVerge
             rmRolleId = null
         }
 

@@ -6,6 +6,8 @@ import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnaut
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -28,6 +30,13 @@ class RestResponseExceptionResolver {
     }
 
     @ResponseBody
+    @ExceptionHandler(HttpMessageNotReadableException::class, MethodArgumentNotValidException::class)
+    protected fun handleUgyldigForespørsel(): ResponseEntity<String> {
+        logger.warn { "Avviser forespørsel med ugyldig eller manglende innhold." }
+        return ResponseEntity.badRequest().body("Forespørselen har ugyldige eller manglende felt.")
+    }
+
+    @ResponseBody
     @ExceptionHandler(NoResourceFoundException::class)
     protected fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<*> {
         logger.info { "Ukjent ressurs forespurt: ${e.resourcePath}" }
@@ -44,7 +53,7 @@ class RestResponseExceptionResolver {
 
     @ResponseBody
     @ExceptionHandler(RestClientResponseException::class)
-    protected fun handleHttpClientErrorException(e: HttpStatusCodeException): ResponseEntity<*> = loggOgFeilmeld(e, HttpStatus.valueOf(e.statusCode.value()))
+    protected fun handleHttpClientErrorException(e: HttpStatusCodeException): ResponseEntity<*> = loggOgFeilmeld(e, HttpStatus.valueOf(e.statusCode.value()), e.responseHeaders?.getFirst(HttpHeaders.WARNING))
 
     @ResponseBody
     @ExceptionHandler(Exception::class)
@@ -58,9 +67,10 @@ class RestResponseExceptionResolver {
     private fun loggOgFeilmeld(
         e: Exception,
         httpStatus: HttpStatus,
+        feilmeldingFraTjeneste: String? = null,
     ): ResponseEntity<String> {
         logger.error(e) { "Feil [${e.javaClass.name}] inntraff med detaljer" }
-        val feilmelding = e.message ?: "Restkall feilet!"
+        val feilmelding = feilmeldingFraTjeneste ?: e.message ?: "Restkall feilet!"
         val headers = HttpHeaders().apply { add(HttpHeaders.WARNING, feilmelding) }
         return ResponseEntity(feilmelding, headers, httpStatus)
     }

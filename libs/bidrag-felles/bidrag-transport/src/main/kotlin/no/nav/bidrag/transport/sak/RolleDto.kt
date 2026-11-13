@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
+import no.nav.bidrag.domene.ident.SamhandlerId
 
 data class RolleDto(
     @field:Schema(
@@ -62,13 +63,23 @@ data class RolleDto(
     @field:Schema(description = "Rollehistorikk for sak. Returneres kun hvis det er angitt i requestparameter")
     val rollehistorikk: List<RollehistorikkDto> = emptyList(),
 ) {
-    fun rmErSamhandlerId() = reellMottaker?.ident?.erSamhandlerId() ?: reellMottager?.erSamhandlerId() ?: false
+    fun rmSamhandlerId(): SamhandlerId? {
+        val rm = reellMottaker ?: return reellMottager?.samhandlerId()
+        return when (rm.type) {
+            ReellMottakerType.SAMHANDLER -> SamhandlerId(rm.ident.verdi)
+            ReellMottakerType.PERSON -> null
+            null -> rm.ident.samhandlerId()
+        }
+    }
 
-    fun rmErVerge() = reellMottaker?.verge ?: false
-
-    fun rmSamhandlerId() = reellMottaker?.ident?.samhandlerId() ?: reellMottager?.samhandlerId()
-
-    fun rmFødselsnummer() = reellMottaker?.ident?.personIdent() ?: reellMottager?.personIdent()
+    fun rmFødselsnummer(): Personident? {
+        val rm = reellMottaker ?: return reellMottager?.personIdent()
+        return when (rm.type) {
+            ReellMottakerType.PERSON -> Personident(rm.ident.verdi)
+            ReellMottakerType.SAMHANDLER -> null
+            null -> rm.ident.personIdent()
+        }
+    }
 
     fun harRM(): Boolean = listOf(
         rmFødselsnummer()?.verdi,
@@ -76,7 +87,16 @@ data class RolleDto(
     ).any { !it.isNullOrBlank() }
 }
 
+enum class ReellMottakerType {
+    PERSON,
+    SAMHANDLER,
+}
+
 data class ReellMottakerDto(
     val ident: ReellMottaker,
     val verge: Boolean = false,
+    @field:Schema(
+        description = "Om reell mottaker er en person eller en samhandler. Settes alltid i respons. Hvis den mangler i request, tolkes identen.",
+    )
+    val type: ReellMottakerType? = null,
 )
