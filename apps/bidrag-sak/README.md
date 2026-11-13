@@ -43,8 +43,7 @@ Reglene gjelder både ved opprettelse og endring av sak, hvis ikke annet står.
 fra [token-support](https://github.com/navikt/token-support). Det betyr at gyldig OIDC-id-token må være inkludert som Bearer-token i Authorization header for alle
 spørringer mot disse endepunktene. Tokenets audience (AUD) må være bidrag-ui, bidrag-dokument-ui, eller bisys, dvs at tokenet må hentes fra NAV AM av en av disse applikasjonene. 
 
-<b>Bidrag sak pip</b> er sikret med basic authentication for systembrukere. Bruker må være innmeldt i AD-gruppe <i>0000-GA-PIP_BIDRAGSAK</i>.
-Authorization-header i kall mot bidrag sak pip skal innholde: Basic <base64-koded pwd:systembruker>. 
+<b>Bidrag sak PIP</b> bruker `GET /v2/pip/sak/{saksnummer}` med JWT fra Entra ID og rollen `sak-pip`.
 
 ###### Eksterne konsumenter
 Tjenester utenfor bidragsdomenet kan benytte seg av bidrag-sak-apiet til å hente informasjon om bidragsaker gitt følgende:
@@ -57,7 +56,7 @@ Tjenester utenfor bidragsdomenet kan benytte seg av bidrag-sak-apiet til å hent
 
 ### Profiler
 - <b>live</b> profilen brukes for kjøring på NAIS i både prod og dev (preprod). 
-- <b>integration-test</b> profilen brukes for å kjøre integrasjonstest mot sentral LDAP og ABAC fra lokalt utviklingsmiljø
+- <b>integration-test</b> profilen brukes for å kjøre integrasjonstester mot eksterne tjenester fra lokalt utviklingsmiljø
 - <b>test</b> profilen brukes ved kjøring av enhetstester
 - <b>h2</b> profilen brukes for å kjøre integrasjonstester med H2 in-memory database uten å kreve Docker eller testcontainers
 
@@ -71,8 +70,6 @@ URL for H2-konsoll: http://localhost:8090/bidrag-sak/h2-console
 Legges inn som miljøvariabler ved lokal kjøring. F.eks må følgende miljøvariabler må settes for å kjøre profilen integration-test:
 * `BIDRAG_DB_PASSWORD` (integration-db2, [Fasit - BidragDataSource](https://fasit.adeo.no/resources/528952)
 * `ABAC_PASSWORD` (integration-test, [Vault - srvbdsak-dev](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvbdsak))
-* `PIP_PASSWORD` (integration-test, [Vault - srvbdsak-dev](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvbdsak)) 
-* `LDAP_PASSWORD` (integration-test, [Vault - srvssolinux-dev](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvssolinux))
 
 ### test-token
 Profilene test og integration db2 benytter [token-validation-test-support](https://github.com/navikt/token-support/tree/master/token-validation-test-support)
@@ -120,22 +117,13 @@ Etter applikasjon er startet kan den nåes med browser på
  - Åpne Swagger (http://localhost:8080/bidrag-sak/swagger-ui.html)
  - Trykk Authorize, og oppdater value-feltet med: Bearer <testtoken-streng> fra steg 2.     
 
-##### Swagger authorize for basic auth (gjelder PIP)
-Det er mulig å angi påloggingsinformasjon vha Authorize-knappen i Swagger. For å oppdatere Authorization-header med basic auth-info gjøres følgende:
-
-* Trykk på den grønne Authorize-knappen øverst i Swagger-ui
-* I value-feltet, legg inn strengen: Basic <brukernavn:passord>, hvor <brukernavn:passord> er en Bas64-koded streng av gyldig Bidrag brukernavn og passord. 
-* Trykk authorize
-
 #### Testskript for integrasjontesting mot ABAC
 Demonstrerer at saksbehandler med paragraf 19-tilgang kan lese metadata til paragraf 19 sak, mens saksbehandler uten denne tilgangen vil ikke kunne hente opplysninger om 
 samme sak (se [ABAC klartekstpolicies for Bidrag](https://confluence.adeo.no/pages/viewpage.action?pageId=309322099)). 
 
 - Klargjør to testbrukere fra IDA. Én med og en uten rolle 0000-GA-Bisys-FFU_Utvidet.
-- Hent passord til LDAP-bruker (dev), srvSsoLinux, fra [vault](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvssolinux) (serviceuser < dev < srvssolinux
 - Hent passord til ABAC-bruker, srv, fra [vault](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvbdsak) (serviceuser < dev < srvbdsak)
-- Hent passord til PIP-bruker (dev ref LDAP), srvSsoLinux, fra [vault](https://vault.adeo.no/ui/vault/secrets/serviceuser/show/dev/srvbdsak) (serviceuser < dev < srvbdsak)
-- Legg passordene over inn som miljøvariabler i din IDE.
+- Legg passordet over inn som miljøvariabel i din IDE.
 - Identifiser én testperson knyttet til paragraf 19-sak
     - Sjekk insert i test > java > resource > testdata > testdataLocal.sql, eller
     - Logg på [H2-konsollet](http://localhost:8090/bidrag-sak/h2-console), og hent person fra T_ROLLE 

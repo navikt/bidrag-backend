@@ -85,7 +85,6 @@ spec:
   {{/each}}
   envFrom:
     - secret: {{database.secret_name}}
-    - secret: bidrag-sak-serviceuser
     - secret: {{unleash.secret_name}}
   filesFrom:
     - secret: db2license

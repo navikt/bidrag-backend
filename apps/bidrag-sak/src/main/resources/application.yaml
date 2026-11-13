@@ -35,12 +35,6 @@ spring:
   main:
     banner-mode: off
 
-no.nav.security.jwt.sts:
-  properties:
-    url: https://sts.adeo.no/SecurityTokenServiceProvider/
-    username: ${STS_USERNAME}
-    password: ${STS_PASSWORD}
-
 no.nav.security.jwt:
   issuers: aad
   issuer.aad:
@@ -133,11 +127,6 @@ server.port: 8090
 # OIDC
 AAD_ISSUER_URL: https://login.microsoftonline.com/nav.no/v2.0/.well-known/openid-configuration
 
-# LDAP -Properties collected from Fasit resource: LDAP - ldap
-LDAP_URL: ldaps://ldapgw.adeo.no
-LDAP_SERVICEUSER_BASEDN: OU=ServiceAccounts,DC=adeo,DC=no
-LDAP_USERNAME: srvSSOLinux
-
 ---
 
 ####################################################################
@@ -160,15 +149,6 @@ spring.config.activate.on-profile: live, integration-test
 ####################################################################
 spring:
   config.activate.on-profile: test, integration-db2
-  ldap:
-    embedded:
-      base-dn: dc=test,dc=local
-      credential:
-        username: userPrincipalName=srvtjhorse@test.local
-        password: secret
-      ldif: classpath:test-schema.ldif
-      validation:
-        enabled: false
 
 no.nav.security.jwt:
   issuers: aad
@@ -190,4 +170,3 @@ BIDRAG_DB_PORT: 5025
 BIDRAG_DB_NAME: QDB2
 BIDRAG_DB_SCHEMA: BI464Q0
 BIDRAG_DB_USERNAME: BI464Q0S
-

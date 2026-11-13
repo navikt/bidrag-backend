@@ -1,7 +1,7 @@
 package no.nav.bidrag.sak
 
 import no.nav.bidrag.commons.security.service.ClientConfigurationWellknownProperties
-import no.nav.bidrag.sak.security.authentication.ldap.annotation.EnableBasicAndOidcAuthentication
+import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.annotation.ComponentScan
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.FilterType
 import org.springframework.context.annotation.Import
 
 @SpringBootApplication
-@EnableBasicAndOidcAuthentication(
+@EnableJwtTokenValidation(
     ignore = ["springfox.documentation.swagger.web.ApiResourceController", "org.springframework"],
 )
 @ComponentScan(
