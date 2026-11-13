@@ -33,8 +33,6 @@ import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.transformers.erBidrag
 import no.nav.bidrag.behandling.transformers.normalizeForComparison
 import no.nav.bidrag.behandling.transformers.vedtak.ifFalse
-import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
-import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTil
 import no.nav.bidrag.beregn.core.util.justerPeriodeTomOpphørsdato
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
@@ -230,13 +228,6 @@ open class Behandling(
         val bidrag = roller.any { it.ident == ident && it.stønadstype == Stønadstype.BIDRAG }
         val bidrag18År = roller.any { it.ident == ident && it.stønadstype == Stønadstype.BIDRAG18AAR }
         return bidrag && bidrag18År
-    }
-
-    fun oppdaterVirkningstidspunktForAlle(nyVirkningstidspunkt: LocalDate) {
-        virkningstidspunkt = nyVirkningstidspunkt
-        søknadsbarn.forEach {
-            it.virkningstidspunkt = nyVirkningstidspunkt
-        }
     }
 
     fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
@@ -469,7 +460,7 @@ val Behandling.særbidragKategori
         kategori.isNullOrEmpty().ifFalse {
             try {
                 Særbidragskategori.valueOf(kategori!!)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Særbidragskategori.ANNET
             }
         } ?: Særbidragskategori.ANNET
@@ -506,12 +497,5 @@ val Set<Husstandsmedlem>.barn get() =
     }
 
 val Set<Husstandsmedlem>.voksneIHusstanden get() = find { it.rolle?.rolletype == Rolletype.BIDRAGSPLIKTIG }
-
-fun Behandling.hentMaksTilOgMedDato() = if (globalOpphørsdato != null) globalOpphørsdato!!.withDayOfMonth(1).minusDays(1) else null
-
-fun Behandling.hentBeløpshistorikkForStønadstype(
-    stønadstype: Stønadstype,
-    søknadsbarn: Rolle,
-) = historiskeStønader.find { it.type == stønadstype && it.kravhaver.verdi == søknadsbarn.ident }
 
 fun Behandling.opprettUnikReferanse(postfix: String? = null) = "behandling_${id}_${opprettetTidspunkt.toCompactString()}${postfix?.let { "_$it" } ?: ""}"

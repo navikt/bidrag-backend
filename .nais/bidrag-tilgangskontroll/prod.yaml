@@ -3,6 +3,7 @@ min_replicas: 2
 ingresses:
   - https://bidrag-tilgangskontroll.intern.nav.no
 env:
+  CACHE_VALKEY_INSTANCE: tilgangskontroll
   BIDRAG_SAK_URL: https://bidrag-sak.prod-fss-pub.nais.io
   BIDRAG_SAK_SCOPE: prod-fss.bidrag.bidrag-sak
   TILGANGSMASKIN_URL: https://tilgangsmaskin.intern.nav.no

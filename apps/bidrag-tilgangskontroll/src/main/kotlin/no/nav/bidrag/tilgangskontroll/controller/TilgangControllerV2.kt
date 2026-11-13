@@ -9,13 +9,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nav.bidrag.commons.security.utils.TokenUtils
-import no.nav.bidrag.tilgangskontroll.konfigurasjon.Cache
 import no.nav.bidrag.tilgangskontroll.konsumer.MicrosoftGraphConsumer
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerEnheterRespons
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerinformasjonResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.Søknadsgruppe
-import no.nav.bidrag.tilgangskontroll.tjeneste.CacheService
 import no.nav.bidrag.tilgangskontroll.tjeneste.TilgangskontrollService
 import no.nav.bidrag.transport.tilgang.Brukertilganger
 import no.nav.bidrag.transport.tilgang.TilgangTilPersonRequest
@@ -41,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController
 class TilgangControllerV2(
     private val tilgangskontrollService: TilgangskontrollService,
     private val microsoftGraphConsumer: MicrosoftGraphConsumer,
-    private val cacheService: CacheService,
 ) {
     @PostMapping("/sak")
     @Operation(
@@ -248,27 +245,6 @@ class TilgangControllerV2(
         @Parameter(description = "NAV-ident til saksbehandleren", example = "Z999999")
         @RequestParam navident: String,
     ): ResponseEntity<BrukerinformasjonResponse> = ResponseEntity.ok(microsoftGraphConsumer.hentBrukerinformasjon(navident))
-
-    @GetMapping("/cache/clear")
-    @Operation(
-        summary = "Tøm cache",
-        description = "Tømmer spesifisert cache-type. Brukes ved feilsøking eller når tilgangsdata må oppdateres umiddelbart.",
-        security = [SecurityRequirement(name = "bearer-key")],
-    )
-    @ApiResponses(
-        value = [
-            ApiResponse(responseCode = "200", description = "Cache tømt", content = [Content()]),
-            ApiResponse(responseCode = "401", description = "Manglende eller ugyldig token", content = [Content()]),
-            ApiResponse(responseCode = "500", description = "Intern serverfeil", content = [Content()]),
-        ],
-    )
-    fun tømCache(
-        @Parameter(description = "Type cache som skal tømmes")
-        @RequestParam cacheType: Cache.CacheType,
-    ): ResponseEntity<Any> {
-        cacheService.tømCache(cacheType.name)
-        return ResponseEntity.ok().build()
-    }
 
     @PostMapping("/soknadsgrupper")
     @Operation(
