@@ -43,6 +43,7 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import org.junit.jupiter.api.Nested
@@ -1684,6 +1685,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
             rettetVirkningstidspunkt: LocalDate,
         ) {
             val behandling = opprettGyldigBehandlingForBeregningOgVedtak(typeBehandling = TypeBehandling.BIDRAG, generateId = true)
+            behandling.vedtakstype = Vedtakstype.KLAGE
             behandling.søktFomDato = minOf(feilVirkningstidspunkt, rettetVirkningstidspunkt)
             behandling.virkningstidspunkt = feilVirkningstidspunkt
             behandling.søknadsbarn.forEach { it.virkningstidspunkt = feilVirkningstidspunkt }
