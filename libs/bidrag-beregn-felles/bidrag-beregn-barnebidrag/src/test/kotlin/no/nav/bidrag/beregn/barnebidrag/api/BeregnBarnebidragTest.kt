@@ -105,7 +105,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
     private var forventetExceptionBegrensetRevurderingLøpendeForskuddMangler = false
 
     // Sjabloner
-    private var forventetAntallSjablonSjablontall: Int = 11
+    private var forventetAntallSjablonSjablontall: Int = 13
 
     // Grunnlag
     private var forventetAntallInntektrapporteringBP: Int = 1
@@ -679,7 +679,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetBpAndelAvUVedDeltBostedBeløp = BigDecimal.ZERO.setScale(2)
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -990,7 +990,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetBpAndelAvUVedDeltBostedBeløp = BigDecimal.ZERO.setScale(2)
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -1050,7 +1050,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetEndringErOverGrense = true
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -1110,7 +1110,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetEndringErOverGrense = false
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0

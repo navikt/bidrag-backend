@@ -214,6 +214,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
             val bpHarEvne: Boolean,
             val antallBarnIHusstanden: Double? = null,
             val forskuddssats: BigDecimal = BigDecimal.ZERO,
+            val inntektBBMultiplikator: BigDecimal = BigDecimal.ZERO,
+            val maksInntektBBMultiplikator: BigDecimal = BigDecimal.ZERO,
             val barnetilleggBM: DokumentmalDelberegningBarnetilleggDto? = null,
             val barnetilleggBP: DokumentmalDelberegningBarnetilleggDto? = null,
             val voksenIHusstanden: Boolean? = null,

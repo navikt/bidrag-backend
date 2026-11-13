@@ -3,7 +3,8 @@ import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDet
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
 
 export const BarnetErSelvforsørget = () => {
-  const { inntekter, forskuddssats } = useBeregningDetaljer();
+  const { inntekter, forskuddssats, maksInntektBBMultiplikator } =
+    useBeregningDetaljer();
   return (
     <div style={{ width: "600px" }}>
       <DataViewTableV2
@@ -21,8 +22,11 @@ export const BarnetErSelvforsørget = () => {
           {
             label: "Grense for selvforsørget",
             labelBold: true,
-            value: `100 x ${formatterBeløpForBeregning(forskuddssats)}`,
-            result: formatterBeløpForBeregning(forskuddssats * 100, true),
+            value: `${maksInntektBBMultiplikator} x ${formatterBeløpForBeregning(forskuddssats)}`,
+            result: formatterBeløpForBeregning(
+              forskuddssats * maksInntektBBMultiplikator,
+              true,
+            ),
           },
         ]}
       />

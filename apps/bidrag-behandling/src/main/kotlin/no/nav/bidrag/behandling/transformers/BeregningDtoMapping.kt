@@ -835,8 +835,9 @@ fun BeregnetSærbidragResultat.tilDto(behandling: Behandling): ResultatSærbidra
 fun List<GrunnlagDto>.byggResultatInntekter(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
     bidragsmottakerReferanse: Grunnlagsreferanse? = null,
+    søknadsbarnReferanse: Grunnlagsreferanse? = null,
 ) = ResultatBeregningInntekterDto(
-    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN),
+    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN, søknadsbarnReferanse),
     barnEndeligInntekt = finnDelberegningBidragspliktigesAndel(grunnlagsreferanseListe)?.barnEndeligInntekt,
     inntektBP =
     finnTotalInntektForRolle(
@@ -1090,6 +1091,8 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
         } else if (resultatkode?.erAvslag() == true) {
             BidragPeriodeBeregningsdetaljer(
                 forskuddssats = finnForskuddssats(grunnlagsreferanseListe),
+                inntektBBMultiplikator = finnInntektBBMultiplikator(grunnlagsreferanseListe),
+                maksInntektBBMultiplikator = finnMaksInntektBBMultiplikator(grunnlagsreferanseListe),
                 barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER, personobjekt?.bidragsmottakerReferanse),
                 barnetilleggBP = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG),
                 sluttberegning = sluttberegning,
@@ -1114,6 +1117,8 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                 ),
                 delberegningUnderholdskostnad = delberegningUnderholdskostnad,
                 forskuddssats = finnForskuddssats(grunnlagsreferanseListe),
+                inntektBBMultiplikator = finnInntektBBMultiplikator(grunnlagsreferanseListe),
+                maksInntektBBMultiplikator = finnMaksInntektBBMultiplikator(grunnlagsreferanseListe),
                 delberegningBidragspliktigesBeregnedeTotalBidrag =
                 finnDelberegningBPsBeregnedeTotalbidrag(
                     grunnlagsreferanseListe,
@@ -1121,7 +1126,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                 bpsAndel = bpsAndel,
                 sluttberegning = sluttberegning,
                 antallBarnIHusstanden = finnAntallBarnIHusstanden(grunnlagsreferanseListe),
-                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse),
+                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse, personobjekt?.referanse),
                 voksenIHusstanden = finnBorMedAndreVoksne(grunnlagsreferanseListe),
                 enesteVoksenIHusstandenErEgetBarn =
                 finnEnesteVoksenIHusstandenErEgetBarn(
@@ -2326,14 +2331,23 @@ fun List<GrunnlagDto>.finnDelberegningBidragsevne(grunnlagsreferanseListe: List<
     )
 }
 
-fun List<GrunnlagDto>.finnForskuddssats(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal {
-    val sluttberegning =
-        finnSluttberegningIReferanser(grunnlagsreferanseListe)
-            ?: return BigDecimal.ZERO
+fun List<GrunnlagDto>.finnForskuddssats(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.FORSKUDDSSATS_BELØP) ?: BigDecimal.ZERO
+
+// Vedtak fattet før sjablon 0010 ble lagt i grunnlaget til BPs andel er beregnet med 30
+fun List<GrunnlagDto>.finnInntektBBMultiplikator(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.INNTEKT_BB_MULTIPLIKATOR) ?: BigDecimal.valueOf(30)
+
+// Vedtak fattet før sjablon 0012 ble lagt i grunnlaget til BPs andel er beregnet med 100
+fun List<GrunnlagDto>.finnMaksInntektBBMultiplikator(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR) ?: BigDecimal.valueOf(100)
+
+private fun List<GrunnlagDto>.finnSjablontall(
+    grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+    sjablon: SjablonTallNavn,
+): BigDecimal? {
+    val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
     return finnGrunnlagSomErReferertAv(Grunnlagstype.SJABLON_SJABLONTALL, sluttberegning)
-        .find { it.innholdTilObjekt<SjablonSjablontallPeriode>().sjablon == SjablonTallNavn.FORSKUDDSSATS_BELØP }
-        ?.innholdTilObjekt<SjablonSjablontallPeriode>()
-        ?.verdi ?: BigDecimal.ZERO
+        .map { it.innholdTilObjekt<SjablonSjablontallPeriode>() }
+        .find { it.sjablon == sjablon }
+        ?.verdi
 }
 
 fun List<GrunnlagDto>.finnTotalInntektForRolle(
