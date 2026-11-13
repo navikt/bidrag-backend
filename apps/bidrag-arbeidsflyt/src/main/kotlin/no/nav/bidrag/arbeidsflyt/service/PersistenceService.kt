@@ -48,6 +48,10 @@ class PersistenceService(
         }
     }
 
+    // TODO: Advarsel, må ses på. Feil ved lagring kastes nå videre for alle topics, ikke bare sak.
+    //  Før ble feilen logget og meldingen kvittert, slik at den gikk tapt.
+    //  Nå stopper partisjonen til databasen svarer igjen. Sjekk at dette er ønsket for journalpost- og oppgavehendelser.
+    //  Vurder å fikse dette i en egen PR før denne merges, eventuelt med unntak bare for sak.
     @Transactional
     fun lagreDLQKafka(
         topic: String,
@@ -55,18 +59,14 @@ class PersistenceService(
         payload: String,
         retry: Boolean = true,
     ) {
-        try {
-            dlqKafkaRepository.save(
-                DLQKafka(
-                    messageKey = key ?: "UKJENT",
-                    topicName = topic,
-                    payload = payload,
-                    retry = retry,
-                ),
-            )
-        } catch (e: Exception) {
-            LOGGER.error(e) { "Det skjedde en feil ved lagring av feilet kafka melding" }
-        }
+        dlqKafkaRepository.save(
+            DLQKafka(
+                messageKey = key ?: "UKJENT",
+                topicName = topic,
+                payload = payload,
+                retry = retry,
+            ),
+        )
     }
 
     @Transactional

@@ -32,7 +32,11 @@ class BidragSakConsumer(
 
     @Cacheable(CacheConfig.SAK_CACHE, unless = "#result==null")
     @Retryable(maxAttempts = 3, backoff = Backoff(delay = 500, maxDelay = 1500, multiplier = 2.0), exceptionExpression = "@bidragSakConsumer.shouldRetry")
-    fun hentSak(saksnr: String): BidragssakDto {
+    fun hentSak(saksnr: String): BidragssakDto = lesSak(saksnr)
+
+    fun hentSakUtenCache(saksnr: String): BidragssakDto = lesSak(saksnr)
+
+    private fun lesSak(saksnr: String): BidragssakDto {
         try {
             return getForNonNullEntity(createUri("/sak/$saksnr"))
         } catch (e: HttpStatusCodeException) {

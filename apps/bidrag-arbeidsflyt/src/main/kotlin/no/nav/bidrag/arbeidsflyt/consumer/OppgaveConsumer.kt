@@ -3,6 +3,7 @@ package no.nav.bidrag.arbeidsflyt.consumer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.dto.DefaultOpprettOppgaveRequest
 import no.nav.bidrag.arbeidsflyt.dto.MappeDto
+import no.nav.bidrag.arbeidsflyt.dto.MapperResponse
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokRequest
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokResponse
@@ -53,12 +54,47 @@ class OppgaveConsumer(
         throw e
     }
 
+    fun hentÅpneOppgaverForSak(saksnummer: String): List<OppgaveData> {
+        val request = OppgaveSokRequest().leggTilSaksreferanse(saksnummer).utenFagomrade()
+        val oppgaver = mutableListOf<OppgaveData>()
+        do {
+            val response = getForNonNullEntity<OppgaveSokResponse>(baseUri.queryParams(request.medOffset(oppgaver.size).tilMultiValueMap()).build().toUri())
+            check(response.oppgaver.isNotEmpty() || oppgaver.size >= response.antallTreffTotalt) {
+                "Oppgavesøket returnerte en tom side før alle oppgavene var hentet"
+            }
+            oppgaver.addAll(response.oppgaver)
+        } while (oppgaver.size < response.antallTreffTotalt)
+        return oppgaver
+    }
+
+    fun hentMappe(mappeId: String): MappeDto = getForNonNullEntity(
+        UriComponentsBuilder.fromUri(url).path("/api/v1/mapper/").pathSegment(mappeId).build().toUri(),
+    )
+
+    fun hentMapper(enhet: String, tema: String): List<MappeDto> {
+        val mapper = mutableListOf<MappeDto>()
+        do {
+            val response = getForNonNullEntity<MapperResponse>(
+                UriComponentsBuilder.fromUri(url)
+                    .path("/api/v1/mapper")
+                    .queryParam("enhetsnr", enhet)
+                    .queryParam("tema", tema)
+                    .queryParam("limit", 100)
+                    .queryParam("offset", mapper.size)
+                    .build().toUri(),
+            )
+            check(response.mapper.isNotEmpty() || mapper.size >= response.antallTreffTotalt) {
+                "Mappesøket returnerte en tom side før alle mappene var hentet"
+            }
+            mapper.addAll(response.mapper)
+        } while (mapper.size < response.antallTreffTotalt)
+        return mapper
+    }
+
     fun hentMappeNavn(mappeId: String?): String? {
         if (mappeId.isNullOrEmpty()) return null
         return try {
-            getForEntity<MappeDto>(
-                UriComponentsBuilder.fromUri(url).path("/api/v1/mapper/").pathSegment(mappeId).build().toUri(),
-            )?.navn ?: mappeId
+            hentMappe(mappeId).navn ?: mappeId
         } catch (e: Exception) {
             LOGGER.warn(e) { "Kunne ikke hente mappe med id $mappeId" }
             mappeId
