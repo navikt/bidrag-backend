@@ -156,17 +156,17 @@ internal fun List<ÅrMånedsperiode>.inneholderPerioderUtenInnkreving(
                 periode.til == null || periode.til!! > fraOgMed
             }
 
-    for (periode in relevantePerioder) {
-        if (periode.fom > nesteMånedSomMåDekkes) {
+    for ((fom, til) in relevantePerioder) {
+        if (fom > nesteMånedSomMåDekkes) {
             return true
         }
 
-        if (periode.til == null) {
+        if (til == null) {
             return false
         }
 
-        if (periode.til!! > nesteMånedSomMåDekkes) {
-            nesteMånedSomMåDekkes = periode.til!!
+        if (til > nesteMånedSomMåDekkes) {
+            nesteMånedSomMåDekkes = til
         }
 
         if (nesteMånedSomMåDekkes > tilOgMed) {
@@ -218,14 +218,20 @@ fun Behandling.finnBeregnTilDato() = if (erBidrag()) {
     finnBeregnTilDatoBehandling()
 }
 
-fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
-    behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
-} else if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-    behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.maxOfOrNull {
-        behandling.finnBeregnTilDatoBehandling(it).toYearMonth()
-    } ?: behandling.finnBeregnTilDato().toYearMonth()
-} else {
-    behandling.finnBeregnTilDato().toYearMonth()
+fun Rolle.finnBeregnTil(): YearMonth = when (rolletype) {
+    Rolletype.BARN -> behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
+
+    Rolletype.BIDRAGSMOTTAKER ->
+        behandling.søknadsbarn
+            .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+            .maxOfOrNull { behandling.finnBeregnTilDatoBehandling(it).toYearMonth() }
+            ?: behandling.finnBeregnTilDato().toYearMonth()
+
+    Rolletype.BIDRAGSPLIKTIG -> behandling.finnBeregnTilDato().toYearMonth()
+
+    Rolletype.REELMOTTAKER -> throw IllegalArgumentException("Skal ikke beregne for Reel mottaker")
+
+    Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
 
 fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
@@ -501,11 +507,11 @@ class VedtakGrunnlagMapper(
                 .beregnInntekt(inntektGrunnlag)
                 .inntektPerBarnListe
                 .flatMap { beregningBarn ->
-                    beregningBarn.summertInntektListe.map {
+                    beregningBarn.summertInntektListe.map { sumInntekt ->
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${sumInntekt.periode.fom.toLocalDate()}${sumInntekt.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                            innhold = POJONode(it),
+                            innhold = POJONode(sumInntekt),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),
                             gjelderBarnReferanse = beregningBarn.inntektGjelderBarn?.ident,
                             grunnlagsreferanseListe = inntektsperioder.map { it.referanse }.distinct(),
