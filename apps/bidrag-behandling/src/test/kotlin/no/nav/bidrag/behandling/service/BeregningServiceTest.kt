@@ -12,14 +12,20 @@ import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkConstructor
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import io.mockk.verify
+import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.consumer.BidragSakConsumer
+import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Utgiftspost
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
+import no.nav.bidrag.behandling.transformers.beregning.FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.BehandlingTilGrunnlagMappingV2
@@ -27,6 +33,8 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.VedtakGrun
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.utils.createPersonServiceMock
+import no.nav.bidrag.behandling.utils.disableUnleashFeature
+import no.nav.bidrag.behandling.utils.enableUnleashFeature
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
@@ -50,6 +58,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrat
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
+import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonService
@@ -57,8 +66,10 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
+import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.grunnlag.HentGrunnlagFeiltype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -83,6 +94,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
@@ -641,5 +653,123 @@ class BeregningServiceTest {
             BeregnSærbidragApi().beregn(any(), any())
         }
         exception.message shouldContain "Feil ved validering av behandling for beregning av særbidrag"
+    }
+
+    @Test
+    fun `skal feile beregning av særbidrag når barnet er selvforsørget`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            enableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.message shouldContain FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal feile beregning av særbidrag når barnet er selvforsørget og BP ikke har full evne`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            enableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000), bpHarLøpendeBidrag = true)
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.message shouldContain FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
+
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val resultat =
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    .beregneSærbidrag(1)
+            resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal sperre særbidrag når barnet er selvforsørget når bryteren ikke finnes i Unleash`() {
+        UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG.isEnabled shouldBe true
+    }
+
+    @Test
+    fun `skal beregne særbidrag når barnet er selvforsørget og bryteren er av`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val resultat =
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    .beregneSærbidrag(1)
+
+            resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.BARNET_ER_SELVFORSØRGET
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal beregne særbidrag som før når barnet ikke er selvforsørget`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            enableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(10000))
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val resultat =
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    .beregneSærbidrag(1)
+
+            resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_INNVILGET
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    private fun opprettSærbidragBehandlingMedInntektBarn(
+        inntektBarn: BigDecimal,
+        bpHarLøpendeBidrag: Boolean = false,
+    ): Behandling {
+        if (!bpHarLøpendeBidrag) {
+            every { evnevurderingService.hentLøpendeBidragForBehandling(any()) } returns opprettEvnevurderingResultat(emptyList())
+        }
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.SÆRBIDRAG)
+        behandling.utgift = oppretteUtgift(behandling, Utgiftstype.KLÆR.name)
+        behandling.vedtakstype = Vedtakstype.FASTSETTELSE
+        behandling.virkningstidspunkt = LocalDate.now().withDayOfMonth(1)
+        behandling.grunnlag =
+            opprettAlleAktiveGrunnlagFraFil(
+                behandling,
+                "grunnlagresponse.json",
+            ).toMutableSet()
+        behandling.inntekter.add(
+            Inntekt(
+                belop = inntektBarn,
+                datoFom = behandling.virkningstidspunkt,
+                datoTom = null,
+                rolle = behandling.søknadsbarn.first(),
+                taMed = true,
+                kilde = Kilde.MANUELL,
+                behandling = behandling,
+                type = Inntektsrapportering.PERSONINNTEKT_EGNE_OPPLYSNINGER,
+                id = 3,
+            ),
+        )
+        return behandling
     }
 }
