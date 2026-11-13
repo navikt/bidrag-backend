@@ -19,7 +19,6 @@ import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunk
 import no.nav.bidrag.behandling.transformers.filtrerUtPrivatAvtalerSomIkkeErInnenforBeregningsperiode
 import no.nav.bidrag.behandling.transformers.finnEksisterendeVedtakMedOpphør
 import no.nav.bidrag.behandling.transformers.finnEksisterendeVedtakMedOpphørForRolle
-import no.nav.bidrag.behandling.transformers.finnPeriodeLøperBidrag
 import no.nav.bidrag.behandling.transformers.grunnlag.manglerRolleIGrunnlag
 import no.nav.bidrag.behandling.transformers.grunnlag.mapAinntekt
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
@@ -28,7 +27,6 @@ import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
 import no.nav.bidrag.behandling.transformers.konverterTilStønadDto
-import no.nav.bidrag.behandling.transformers.løperPeriodeEtterSøktFomDato
 import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.minOfNullable
 import no.nav.bidrag.behandling.transformers.tilInntektberegningDto
@@ -86,6 +84,7 @@ import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.collections.emptyList
 
 fun Behandling.finnSkalInnkrevesPeriode(søknadsbarnRolle: Rolle): List<ÅrMånedsperiode> = if (innkrevingstype == Innkrevingstype.UTEN_INNKREVING && !søknadsbarnRolle.erRevurderingsbarn) {
     val beløpshistorikk = hentGrunnlagBeløpshistorikkForRolle(søknadsbarnRolle, false).konverterTilStønadDto() ?: return emptyList()
@@ -157,17 +156,17 @@ internal fun List<ÅrMånedsperiode>.inneholderPerioderUtenInnkreving(
                 periode.til == null || periode.til!! > fraOgMed
             }
 
-    for (periode in relevantePerioder) {
-        if (periode.fom > nesteMånedSomMåDekkes) {
+    for ((fom, til) in relevantePerioder) {
+        if (fom > nesteMånedSomMåDekkes) {
             return true
         }
 
-        if (periode.til == null) {
+        if (til == null) {
             return false
         }
 
-        if (periode.til!! > nesteMånedSomMåDekkes) {
-            nesteMånedSomMåDekkes = periode.til!!
+        if (til > nesteMånedSomMåDekkes) {
+            nesteMånedSomMåDekkes = til
         }
 
         if (nesteMånedSomMåDekkes > tilOgMed) {
@@ -219,51 +218,63 @@ fun Behandling.finnBeregnTilDato() = if (erBidrag()) {
     finnBeregnTilDatoBehandling()
 }
 
-fun Rolle.finnBeregnTil(): YearMonth = if (rolletype == Rolletype.BARN) {
-    behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
-} else if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-    behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.maxOfOrNull {
-        behandling.finnBeregnTilDatoBehandling(it).toYearMonth()
-    } ?: behandling.finnBeregnTilDato().toYearMonth()
-} else {
-    behandling.finnBeregnTilDato().toYearMonth()
+fun Rolle.finnBeregnTil(): YearMonth = when (rolletype) {
+    Rolletype.BARN -> behandling.finnBeregnTilDatoBehandling(this).toYearMonth()
+
+    Rolletype.BIDRAGSMOTTAKER ->
+        behandling.søknadsbarn
+            .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+            .maxOfOrNull { behandling.finnBeregnTilDatoBehandling(it).toYearMonth() }
+            ?: behandling.finnBeregnTilDato().toYearMonth()
+
+    Rolletype.BIDRAGSPLIKTIG -> behandling.finnBeregnTilDato().toYearMonth()
+
+    Rolletype.REELMOTTAKER -> throw IllegalArgumentException("Skal ikke beregne for Reel mottaker")
+
+    Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
 
-fun Rolle.finnBeregnFra(): YearMonth = if (behandling.erBidrag()) {
-    val tidligsteBeregnFra =
-        if (stønadstype == Stønadstype.BIDRAG18AAR) {
-            maxOf(fødselsdato.dato18ÅrsBidrag.toYearMonth(), behandling.eldsteVirkningstidspunkt.toYearMonth())
-        } else if (avslag != null) {
-            virkningstidspunktRolle.toYearMonth()
-        } else {
-            // Virkning kan ikke vær før barnet er født
-            maxOf(behandling.eldsteVirkningstidspunkt.toYearMonth(), fødselsdato.withDayOfMonth(1).toYearMonth())
+fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
+    Rolletype.BIDRAGSMOTTAKER -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
+        .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+        .minOfOrNull { it.finnBeregnFra() }
+        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    Rolletype.BIDRAGSPLIKTIG -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
+        .minOfOrNull { it.finnBeregnFra() }
+        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+
+    Rolletype.BARN -> {
+        val beregnFra = virkningstidspunkt?.toYearMonth() ?: behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+        if (behandling.erIForholdsmessigFordeling) {
+            val forholdsmessigFordelingBeregningsperiode = ÅrMånedsperiode(fom = behandling.eldsteVirkningstidspunkt, til = null)
+
+            val bidragsperioder = behandling
+                .hentGrunnlagBeløpshistorikkForRolle(this, behandling.erKlageEllerOmgjøring)
+                ?.konverterTilStønadDto()
+                ?.periodeListe
+                ?.filter { it.beløp != null }
+                ?.map { it.periode }
+                ?: emptyList()
+
+            val privatAvtalePerioder = behandling.privatAvtale
+                .find { it.gjelderPerson(ident!!, stønadstype) }
+                ?.perioder
+                ?.map { it.tilÅrMånedsperiode() }
+                ?: emptyList()
+
+            (bidragsperioder + privatAvtalePerioder)
+                .filter { it.overlapper(forholdsmessigFordelingBeregningsperiode) }
+                .minOfOrNull { it.fom }
+                ?.takeIf { it.isBefore(beregnFra) }
+                ?.let { return it }
         }
-    if (behandling.erIForholdsmessigFordeling) {
-        if (rolletype == Rolletype.BIDRAGSMOTTAKER) {
-            behandling.søknadsbarn.filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }.minOfOrNull {
-                it.finnBeregnFra()
-            } ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
-        } else if (erRevurderingsbarn) {
-            behandling
-                .finnPeriodeLøperBidrag(this)
-                ?.takeIf { behandling.løperPeriodeEtterSøktFomDato(it) }
-                ?.fom
-                ?.let {
-                    maxOf(
-                        it,
-                        tidligsteBeregnFra,
-                    )
-                }
-                ?: run { tidligsteBeregnFra }
-        } else {
-            tidligsteBeregnFra
-        }
-    } else {
-        virkningstidspunktRolle.toYearMonth()
+        return beregnFra
     }
-} else {
-    behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
+
+    Rolletype.REELMOTTAKER -> throw IllegalArgumentException("Skal ikke beregne for Reel mottaker")
+
+    Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
 
 fun Behandling.finnBeregnTilDatoBehandling(
@@ -375,7 +386,7 @@ private fun utledBeregnTilDato(
         // Avvisning kan bare velges hvis det allerede er et vedtak med opphør på rollen. Derfor hentes opphørsdato fra eksisterende vedtak
         val eksisterendeOpphør = søknadsbarnRolle.finnEksisterendeVedtakMedOpphørForRolle()
         // Default til beregnTilUtenAvslag. Grunnen til det er at hvis avvisning ble valgt ved opprettelse av behandling
-        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra()?.toLocalDate() ?: beregnTilUtenAvslag
+        eksisterendeOpphør?.opphørsdato ?: opphørsdato?.atDay(1) ?: søknadsbarnRolle.finnBeregnFra().toLocalDate()
     } else if (opphørsdato == null || opphørsdato.isAfter(YearMonth.now().plusMonths(1))) {
         beregnTilUtenAvslag
     } else if (opprinneligVedtakstidspunkt != null) {
@@ -496,11 +507,11 @@ class VedtakGrunnlagMapper(
                 .beregnInntekt(inntektGrunnlag)
                 .inntektPerBarnListe
                 .flatMap { beregningBarn ->
-                    beregningBarn.summertInntektListe.map {
+                    beregningBarn.summertInntektListe.map { sumInntekt ->
                         GrunnlagDto(
-                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${it.periode.fom.toLocalDate()}${it.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
+                            referanse = "${Grunnlagstype.DELBEREGNING_SUM_INNTEKT}_${rolle.tilGrunnlagsreferanse()}_${sumInntekt.periode.fom.toLocalDate()}${sumInntekt.periode.til?.toCompactString()?.let { "_$it" } ?: ""}",
                             type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
-                            innhold = POJONode(it),
+                            innhold = POJONode(sumInntekt),
                             gjelderReferanse = rolle.tilGrunnlagsreferanse(),
                             gjelderBarnReferanse = beregningBarn.inntektGjelderBarn?.ident,
                             grunnlagsreferanseListe = inntektsperioder.map { it.referanse }.distinct(),
@@ -592,7 +603,7 @@ class VedtakGrunnlagMapper(
                         søknadsbarnRolle.finnBeregnFra().toLocalDate()
                     } else {
                         behandling.eldsteVirkningstidspunkt
-                    } ?: vedtakmappingFeilet("Virkningstidspunkt må settes for beregning")
+                    }
 
                 val beregningTilDato = finnBeregnTilDatoBehandling(søknadsbarnRolle)
                 val opphørsdato =
