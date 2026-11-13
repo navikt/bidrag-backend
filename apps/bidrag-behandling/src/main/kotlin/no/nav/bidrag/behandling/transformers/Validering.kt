@@ -337,7 +337,8 @@ fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
     val gjelderBarn = behandling.søknadsbarn.find { it.id == rolleId }
     val feilliste =
         listOfNotNull(
-            validerRolle(behandling),
+            validerRolle(gjelderBarn),
+            validerVirkningstidspunktForBarn(behandling, gjelderBarn),
             validerSkolegang(behandling),
             if (gjelderBarn == null) validerGlobaltOpphør(behandling) else validerOpphørForBarn(behandling, gjelderBarn),
             validerOpprinneligVirkningstidspunkt(behandling, gjelderBarn),
@@ -352,11 +353,23 @@ fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
     }
 }
 
-private fun OppdatereVirkningstidspunkt.validerRolle(behandling: Behandling): String? {
-    if (rolleId != null && behandling.roller.none { it.id == rolleId }) {
-        return "Barn med id $rolleId finnes ikke i behandling ${behandling.id}"
+private fun OppdatereVirkningstidspunkt.validerRolle(gjelderBarn: Rolle?): String? = if (rolleId != null && gjelderBarn == null) "Barnet finnes ikke i behandlingen" else null
+
+private fun OppdatereVirkningstidspunkt.validerVirkningstidspunktForBarn(
+    behandling: Behandling,
+    gjelderBarn: Rolle?,
+): String? {
+    val nyVirkningstidspunkt = virkningstidspunkt ?: return null
+    val barnSomOppdateres = gjelderBarn?.let { listOf(it) } ?: behandling.finnSøknadsbarnForSak(saksnummer)
+
+    return when {
+        barnSomOppdateres.isEmpty() -> "Oppdateringen gjelder ingen søknadsbarn"
+
+        barnSomOppdateres.any { nyVirkningstidspunkt.isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
+            "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
+
+        else -> null
     }
-    return null
 }
 
 private fun OppdatereVirkningstidspunkt.validerSkolegang(behandling: Behandling): String? {

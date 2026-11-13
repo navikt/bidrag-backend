@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -189,6 +190,52 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         behandling.virkningstidspunkt shouldBe LocalDate.parse("2025-10-01")
         barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-10-01")
         barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-10-01")
+    }
+
+    @Test
+    fun `skal avvise virkningstidspunkt før fødselsmåned for ett av flere barn`() {
+        val behandling =
+            opprettGyldigBehandlingForBeregningOgVedtak(
+                generateId = true,
+                typeBehandling = TypeBehandling.BIDRAG,
+                andreBarn = listOf(testdataBarn2),
+            )
+        val (barn1, barn2) = behandling.søknadsbarn
+        barn1.fødselsdato = LocalDate.parse("2025-05-15")
+        barn2.fødselsdato = LocalDate.parse("2025-06-15")
+        behandling.virkningstidspunkt = LocalDate.parse("2025-07-01")
+        barn1.virkningstidspunkt = LocalDate.parse("2025-07-01")
+        barn2.virkningstidspunkt = LocalDate.parse("2025-07-01")
+        every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+
+        val exception =
+            shouldThrow<HttpClientErrorException> {
+                virkningstidspunktService.oppdatereVirkningstidspunkt(
+                    behandling.id!!,
+                    OppdatereVirkningstidspunkt(virkningstidspunkt = LocalDate.parse("2025-05-01")),
+                )
+            }
+
+        exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+        exception.statusText shouldContain "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
+    }
+
+    @Test
+    fun `skal tillate virkningstidspunkt første dag i barnets fødselsmåned når barnet er født den femtende`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
+        val barn = behandling.søknadsbarn.single()
+        barn.fødselsdato = LocalDate.parse("2025-05-15")
+        behandling.virkningstidspunkt = LocalDate.parse("2025-06-01")
+        barn.virkningstidspunkt = LocalDate.parse("2025-06-01")
+        every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+
+        virkningstidspunktService.oppdatereVirkningstidspunkt(
+            behandling.id!!,
+            OppdatereVirkningstidspunkt(virkningstidspunkt = LocalDate.parse("2025-05-01")),
+        )
+
+        behandling.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
+        barn.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
     }
 
     @Test
@@ -337,6 +384,62 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
             barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
             barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
             behandling.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
+        }
+
+        @Test
+        fun `skal validere virkningstidspunkt bare mot fødselsmåned for barn i angitt rolle`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.fødselsdato = LocalDate.parse("2025-05-15")
+            barn2.fødselsdato = LocalDate.parse("2025-06-15")
+            behandling.virkningstidspunkt = LocalDate.parse("2025-06-01")
+            barn1.virkningstidspunkt = LocalDate.parse("2025-06-01")
+            barn2.virkningstidspunkt = LocalDate.parse("2025-07-01")
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(rolleId = barn1.id, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+            )
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-07-01")
+        }
+
+        @Test
+        fun `skal avvise rolleId som ikke er søknadsbarn`() {
+            val (behandling) = opprettBehandlingMedBarnIToSaker()
+
+            val exception =
+                shouldThrow<HttpClientErrorException> {
+                    virkningstidspunktService.oppdatereVirkningstidspunkt(
+                        behandling.id!!,
+                        OppdatereVirkningstidspunkt(
+                            rolleId = behandling.bidragspliktig!!.id,
+                            virkningstidspunkt = LocalDate.parse("2025-05-01"),
+                        ),
+                    )
+                }
+
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.statusText shouldContain "Barnet finnes ikke i behandlingen"
+        }
+
+        @Test
+        fun `skal avvise ukjent saksnummer`() {
+            val (behandling) = opprettBehandlingMedBarnIToSaker()
+
+            val exception =
+                shouldThrow<HttpClientErrorException> {
+                    virkningstidspunktService.oppdatereVirkningstidspunkt(
+                        behandling.id!!,
+                        OppdatereVirkningstidspunkt(
+                            saksnummer = "99999999",
+                            virkningstidspunkt = LocalDate.parse("2025-05-01"),
+                        ),
+                    )
+                }
+
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.statusText shouldContain "Oppdateringen gjelder ingen søknadsbarn"
         }
 
         @Test
@@ -626,6 +729,24 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
                     )
                 }
             exception.message shouldContain "Opphørsdato kan ikke settes til før virkningstidspunkt"
+        }
+
+        @Test
+        fun `skal validere virkningstidspunkt bare mot fødselsmåned for barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn1.fødselsdato = LocalDate.parse("2025-06-15")
+            barn2.fødselsdato = LocalDate.parse("2025-05-15")
+            behandling.virkningstidspunkt = LocalDate.parse("2025-06-01")
+            barn1.virkningstidspunkt = LocalDate.parse("2025-07-01")
+            barn2.virkningstidspunkt = LocalDate.parse("2025-06-01")
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, virkningstidspunkt = LocalDate.parse("2025-05-01")),
+            )
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-07-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
         }
 
         @Test
