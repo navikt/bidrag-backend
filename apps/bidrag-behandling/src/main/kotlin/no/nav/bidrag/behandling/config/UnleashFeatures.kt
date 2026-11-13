@@ -33,7 +33,7 @@ enum class UnleashFeatures(
 
     GJENOPPRETT_FF_SØKNAD("behandling.gjenopprett_ff_soknad", false),
 
-    // Midlertidig sperre for særbidrag når barnet er selvforsørget (§ 5). Er på når togglen ikke finnes i Unleash.
+    // Midlertidig sperre for særbidrag når barnet er selvforsørget (§ 5). Er på når toggle ikke finnes i Unleash.
     SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG("behandling.saerbidrag_sperr_selvforsorget_barn", true),
     ;
 

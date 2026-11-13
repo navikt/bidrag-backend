@@ -701,12 +701,12 @@ class BeregningServiceTest {
     }
 
     @Test
-    fun `skal sperre særbidrag når barnet er selvforsørget når togglen ikke finnes i Unleash`() {
+    fun `skal sperre særbidrag når barnet er selvforsørget når toggle ikke finnes i Unleash`() {
         UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG.isEnabled shouldBe true
     }
 
     @Test
-    fun `skal beregne særbidrag når barnet er selvforsørget og togglen er av`() {
+    fun `skal beregne særbidrag når barnet er selvforsørget og toggle er av`() {
         mockkObject(UnleashFeaturesProvider)
         try {
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
