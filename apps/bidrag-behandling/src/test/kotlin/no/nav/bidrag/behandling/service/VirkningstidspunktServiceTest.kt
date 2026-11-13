@@ -18,6 +18,7 @@ import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterBeregnTilDatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdatereVirkningstidspunkt
@@ -39,6 +40,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
@@ -402,6 +404,30 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
             barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
             barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-07-01")
+        }
+
+        @Test
+        fun `skal validere fødselsmåned mot barnets egen søknadsdato når den er senere enn virkningstidspunktet`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            barn2.fødselsdato = LocalDate.parse("2025-05-15")
+            barn2.forholdsmessigFordeling!!.søknader.add(
+                ForholdsmessigFordelingSøknadBarn(
+                    mottattDato = LocalDate.parse("2025-06-01"),
+                    søknadFomDato = LocalDate.parse("2025-06-01"),
+                    søktAvType = SøktAvType.BIDRAGSMOTTAKER,
+                    behandlingstype = null,
+                    behandlingstema = null,
+                    saksnummer = sak2,
+                ),
+            )
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(virkningstidspunkt = LocalDate.parse("2024-11-01")),
+            )
+
+            barn1.virkningstidspunkt shouldBe LocalDate.parse("2024-11-01")
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-06-01")
         }
 
         @Test
