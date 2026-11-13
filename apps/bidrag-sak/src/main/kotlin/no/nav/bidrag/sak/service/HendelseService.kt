@@ -1,12 +1,11 @@
 package no.nav.bidrag.sak.service
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.domene.enums.behandling.HendelseType
 import no.nav.bidrag.domene.felles.Verdiobjekt
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Hendelse
-import no.nav.bidrag.sak.integration.kafka.KafkaProducer
 import no.nav.bidrag.sak.mapper.personidentBidragsmottaker
 import no.nav.bidrag.sak.mapper.personidentBidragspliktig
 import no.nav.bidrag.sak.mapper.toBarnISak
@@ -14,15 +13,16 @@ import no.nav.bidrag.sak.repository.HendelseRepository
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.SakHendelse
 import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class HendelseService(
     private val hendelseRepository: HendelseRepository,
-    private val kafkaProducer: KafkaProducer,
+    private val applicationEventPublisher: ApplicationEventPublisher,
 ) {
-    private val logger = KotlinLogging.logger {}
-
     fun opprettHendelser(
         sak: Bidragssak,
         oppdaterSakRequest: OppdaterSakRequest,
@@ -47,9 +47,11 @@ class HendelseService(
         )
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
     fun opprettKafkaHendelse(
         sak: Bidragssak?,
         oppdatertSak: Bidragssak,
+        forrigeEierfogd: String? = null,
     ) {
         val sakshendelse =
             SakHendelse(
@@ -58,12 +60,9 @@ class HendelseService(
                 bidragspliktig = oppdatertSak.roller.personidentBidragspliktig(),
                 bidragsmottaker = oppdatertSak.roller.personidentBidragsmottaker(),
                 barn = oppdatertSak.roller.toBarnISak(),
+                forrigeEierfogd = forrigeEierfogd?.let(::Enhetsnummer),
             )
-        try {
-            kafkaProducer.sendSakshendelse(sakshendelse)
-        } catch (e: Exception) {
-            logger.warn(e) { "Sending av sak hendelse feilet" }
-        }
+        applicationEventPublisher.publishEvent(SakHendelsePubliseringEvent(sakshendelse))
     }
 
     private fun opprettHendelse(

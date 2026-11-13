@@ -330,6 +330,7 @@ class BidragSakService(
     @Transactional
     fun oppdaterSak(oppdaterSakRequest: OppdaterSakRequest): OppdaterSakResponse {
         val sak = bidragssakRepository.findByIdOrThrow(oppdaterSakRequest.saksnummer.verdi)
+        val forrigeEierfogd = sak.eierfogd
         rolleService.oppdaterTilGjeldendeIdent(sak.roller)
         val rollerFørOppdatering = sak.roller.toRolleDto(true)
         val saksrollerFør = sak.roller.map { Saksrolle(it) }
@@ -343,7 +344,7 @@ class BidragSakService(
         }
         bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
         arbeidsfordelingService.utførArbeidsfordeling(sak)
-        return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
+        return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering, forrigeEierfogd)
     }
 
     private fun oppdaterSaksopplysninger(sak: Bidragssak, oppdaterSakRequest: OppdaterSakRequest) {
@@ -366,6 +367,7 @@ class BidragSakService(
         sak: Bidragssak,
         rollerFørOppdatering: List<RolleDto>,
         rollerTilOppdatering: Set<RolleDto>,
+        forrigeEierfogd: String? = null,
     ): OppdaterSakResponse {
         bidragssakRepository.save(sak)
 
@@ -378,7 +380,7 @@ class BidragSakService(
                 oppdatertBidragssak,
             )
 
-        hendelseService.opprettKafkaHendelse(sak, oppdatertBidragssak)
+        hendelseService.opprettKafkaHendelse(sak, oppdatertBidragssak, forrigeEierfogd)
         return oppdatertBidragssak.tilOppdaterSakResponse()
     }
 

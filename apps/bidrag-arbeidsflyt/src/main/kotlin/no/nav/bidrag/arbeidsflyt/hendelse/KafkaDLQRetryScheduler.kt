@@ -10,9 +10,12 @@ import no.nav.bidrag.arbeidsflyt.persistence.repository.OppgaveRepository
 import no.nav.bidrag.arbeidsflyt.service.BehandleBehandlingHendelseService
 import no.nav.bidrag.arbeidsflyt.service.BehandleHendelseService
 import no.nav.bidrag.arbeidsflyt.service.BehandleOppgaveHendelseService
+import no.nav.bidrag.arbeidsflyt.service.BehandleSakHendelseService
 import no.nav.bidrag.arbeidsflyt.service.BehandlingSchedulerService
 import no.nav.bidrag.arbeidsflyt.service.JsonMapperService
 import no.nav.bidrag.arbeidsflyt.service.OppgaveService
+import no.nav.bidrag.transport.felles.commonObjectmapper
+import no.nav.bidrag.transport.sak.SakHendelse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -46,6 +49,7 @@ class KafkaDLQRetryScheduler(
     private val behandlingSchedulerService: BehandlingSchedulerService,
     private val oppgaveService: OppgaveService,
     private val oppgaveSlettingService: OppgaveSlettingService,
+    private val behandleSakHendelseService: BehandleSakHendelseService,
 ) {
     @Value($$"${SCHEDULER_MAX_RETRY:10}")
     lateinit var maxRetry: Number
@@ -58,6 +62,9 @@ class KafkaDLQRetryScheduler(
 
     @Value($$"${TOPIC_BEHANDLING_HENDELSE}")
     lateinit var topicBehandling: String
+
+    @Value($$"${TOPIC_SAK}")
+    lateinit var topicSak: String
 
     @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES, initialDelay = 10)
     @SchedulerLock(name = "slettOppgaverSomIkkeLengerErÅpen", lockAtLeastFor = "10m")
@@ -144,6 +151,10 @@ class KafkaDLQRetryScheduler(
             topicBehandling -> {
                 val journalpostHendelse = jsonMapperService.mapBehandlingHendelse(message.payload)
                 behandleBehandlingHendelseService.behandleHendelse(journalpostHendelse)
+            }
+
+            topicSak -> {
+                behandleSakHendelseService.behandleHendelse(commonObjectmapper.readValue(message.payload, SakHendelse::class.java))
             }
 
             else -> {

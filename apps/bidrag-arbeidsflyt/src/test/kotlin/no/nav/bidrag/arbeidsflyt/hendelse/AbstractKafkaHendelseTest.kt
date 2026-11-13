@@ -22,7 +22,7 @@ import java.util.Collections
 @DisplayName("OppgaveEndretHendelseListenerTest")
 @EmbeddedKafka(
     partitions = 1,
-    topics = ["topic_journalpost", "oppgave-hendelse"],
+    topics = ["topic_journalpost", "oppgave-hendelse", "topic_sak"],
     brokerProperties = [
         "listeners=EXTERNAL://localhost:0,CONTROLLER://localhost:0",
         "listener.security.protocol.map=EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT",
