@@ -4,7 +4,6 @@ import io.mockk.every
 import io.mockk.mockk
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.EnhetDto
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -18,8 +17,8 @@ class BidragOrganisasjonTestConfig {
         val bidragOrganisasjonClient: BidragOrganisasjonClient = mockk()
 
         every {
-            bidragOrganisasjonClient.hentArbeidsfordelingForSak(any())
-        } returns ArbeidsfordelingSakResponse(EnhetDto(Enhetsnummer(EIERFOGD_UTLAND), "Utland"), false)
+            bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(any())
+        } returns EnhetDto(Enhetsnummer(EIERFOGD_UTLAND), "Utland")
 
         return bidragOrganisasjonClient
     }

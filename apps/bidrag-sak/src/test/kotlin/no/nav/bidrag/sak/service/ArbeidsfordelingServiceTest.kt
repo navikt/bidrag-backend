@@ -21,9 +21,8 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Rollehistorikk
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
 import no.nav.bidrag.transport.organisasjon.EnhetDto
+import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
@@ -50,8 +49,8 @@ internal class ArbeidsfordelingServiceTest {
     ) = Rolle(fødselsnummer = ident?.verdi, rolleType = type, ukjentPart = ukjentPart, fødselsdato = fødselsdato)
 
     private fun organisasjonGirEnhet(enhet: String) {
-        every { organisasjonClient.hentArbeidsfordelingForSak(any()) } returns
-            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer(enhet)), false)
+        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(any()) } returns
+            EnhetDto(nummer = Enhetsnummer(enhet))
     }
 
     @Test
@@ -89,9 +88,9 @@ internal class ArbeidsfordelingServiceTest {
 
     @Test
     fun `bruker yngste barn som hovedident når bidragsmottaker er ukjent`() {
-        val request = slot<ArbeidsfordelingSakRequest>()
-        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
-            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("4806")), false)
+        val request = slot<HentEnhetRequest>()
+        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
+            EnhetDto(nummer = Enhetsnummer("4806"))
         val eldreBarn = genererPersonident()
         val sak =
             sakHosEnhet(
@@ -103,17 +102,17 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.hovedident shouldBe barn
-        request.captured.parter.shouldContainExactlyInAnyOrder(barn, eldreBarn)
+        request.captured.ident shouldBe barn
+        request.captured.alleIdenter.shouldContainExactlyInAnyOrder(barn, eldreBarn)
     }
 
     @Test
     fun `tar med reell mottaker og feilregistrerte roller i oppslaget`() {
         val reellMottaker = genererPersonident()
         val feilregistrert = genererPersonident()
-        val request = slot<ArbeidsfordelingSakRequest>()
-        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
-            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("2103")), true)
+        val request = slot<HentEnhetRequest>()
+        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
+            EnhetDto(nummer = Enhetsnummer("2103"))
         val sak =
             sakHosEnhet(
                 "1701",
@@ -125,8 +124,8 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.hovedident shouldBe bm
-        request.captured.parter.shouldContainExactlyInAnyOrder(bm, barn, reellMottaker, feilregistrert)
+        request.captured.ident shouldBe bm
+        request.captured.alleIdenter.shouldContainExactlyInAnyOrder(bm, barn, reellMottaker, feilregistrert)
         sak.eierfogd shouldBe "2103"
         sak.ansatt shouldBe false
         sak.inhabilitet shouldBe false
@@ -135,9 +134,9 @@ internal class ArbeidsfordelingServiceTest {
     @Test
     fun `tar med tidligere parter fra rollehistorikken i oppslaget`() {
         val tidligereRm = genererPersonident()
-        val request = slot<ArbeidsfordelingSakRequest>()
-        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
-            ArbeidsfordelingSakResponse(EnhetDto(nummer = Enhetsnummer("2103")), true)
+        val request = slot<HentEnhetRequest>()
+        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
+            EnhetDto(nummer = Enhetsnummer("2103"))
         val barnerolle = rolle(Rolletype.BARN, barn)
         val sak = sakHosEnhet("1701", rolle(Rolletype.BIDRAGSMOTTAKER, bm), barnerolle)
         barnerolle.rollehistorikk.add(
@@ -152,7 +151,7 @@ internal class ArbeidsfordelingServiceTest {
 
         arbeidsfordelingService.utførArbeidsfordeling(sak)
 
-        request.captured.parter.shouldContainExactlyInAnyOrder(bm, barn, tidligereRm)
+        request.captured.alleIdenter.shouldContainExactlyInAnyOrder(bm, barn, tidligereRm)
     }
 
     @Test
@@ -161,15 +160,15 @@ internal class ArbeidsfordelingServiceTest {
 
         shouldThrow<IllegalStateException> { arbeidsfordelingService.utførArbeidsfordeling(sak) }
 
-        verify(exactly = 0) { organisasjonClient.hentArbeidsfordelingForSak(any()) }
+        verify(exactly = 0) { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(any()) }
         sak.eierfogd shouldBe "1701"
     }
 
     @Test
     fun `bestemmer enhet for ny sak med reell mottaker før saken bygges`() {
-        val request = slot<ArbeidsfordelingSakRequest>()
-        every { organisasjonClient.hentArbeidsfordelingForSak(capture(request)) } returns
-            ArbeidsfordelingSakResponse(EnhetDto(Enhetsnummer("2103")), true)
+        val request = slot<HentEnhetRequest>()
+        every { organisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(capture(request)) } returns
+            EnhetDto(Enhetsnummer("2103"))
         val mottaker = genererPersonident()
         val roller = setOf(
             RolleDto(type = Rolletype.BIDRAGSMOTTAKER),
@@ -188,8 +187,8 @@ internal class ArbeidsfordelingServiceTest {
         )
 
         enhet.nummer shouldBe Enhetsnummer("2103")
-        request.captured.hovedident shouldBe barn
-        request.captured.parter.shouldContainExactlyInAnyOrder(barn, mottaker)
+        request.captured.ident shouldBe barn
+        request.captured.alleIdenter.shouldContainExactlyInAnyOrder(barn, mottaker)
         request.captured.arbeidsfordeling shouldBe Arbeidsfordeling.SETTEKONTOR
     }
 }

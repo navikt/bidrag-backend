@@ -11,8 +11,8 @@ import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.domain.finnPrimærrolle
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
 import no.nav.bidrag.transport.organisasjon.EnhetDto
+import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -57,15 +57,15 @@ class ArbeidsfordelingService(
     private fun hentEnhet(sak: Bidragssak): EnhetDto {
         val hovedident = sak.primærrolle?.fødselsnummer?.let(::Personident)
             ?: error("Sak ${sak.saksnummer} har ingen kjent part, og enheten kan ikke bestemmes.")
-        return bidragOrganisasjonClient.hentArbeidsfordelingForSak(
-            ArbeidsfordelingSakRequest(
-                hovedident = hovedident,
-                parter = sak.personidenter(),
+        return bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(
+            HentEnhetRequest(
+                ident = hovedident,
+                biidenter = sak.personidenter() - hovedident,
                 arbeidsfordeling = sak.arbeidsfordeling,
                 sakskategori = sak.kategori,
                 behandlingstype = Behandlingstype.SØKNAD,
             ),
-        ).enhet
+        )
     }
 
     fun hentEnhetForNySak(
@@ -79,15 +79,15 @@ class ArbeidsfordelingService(
         }.finnPrimærrolle()?.fødselsnummer?.let(::Personident)
             ?: error("Saken har ingen kjent part, og enheten kan ikke bestemmes.")
         val parter = (roller.mapNotNull { it.fødselsnummer } + roller.mapNotNull { it.rmFødselsnummer() }).toSet()
-        return bidragOrganisasjonClient.hentArbeidsfordelingForSak(
-            ArbeidsfordelingSakRequest(
-                hovedident = hovedident,
-                parter = parter,
+        return bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(
+            HentEnhetRequest(
+                ident = hovedident,
+                biidenter = parter - hovedident,
                 arbeidsfordeling = arbeidsfordeling,
                 sakskategori = sakskategori,
                 behandlingstype = Behandlingstype.SØKNAD,
             ),
-        ).enhet
+        )
     }
 
     private fun Bidragssak.personidenter(): Set<Personident> {

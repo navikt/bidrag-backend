@@ -1,8 +1,8 @@
 package no.nav.bidrag.sak.integration.organisasjon
 
 import no.nav.bidrag.commons.web.client.AbstractRestClient
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakRequest
-import no.nav.bidrag.transport.organisasjon.ArbeidsfordelingSakResponse
+import no.nav.bidrag.transport.organisasjon.EnhetDto
+import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -20,10 +20,10 @@ class BidragOrganisasjonClient(
     private val bidragOrganisasjonUri =
         UriComponentsBuilder
             .fromUri(bidragOrganisasjonBaseUrl)
-            .pathSegment("arbeidsfordeling", "sak")
+            .pathSegment("arbeidsfordeling", "enhet", "geografisktilknytning")
             .build()
             .toUri()
 
-    fun hentArbeidsfordelingForSak(request: ArbeidsfordelingSakRequest): ArbeidsfordelingSakResponse = postForEntity(bidragOrganisasjonUri, request)
+    fun hentEnhetForArbeidsfordelingGeografiskTilknytning(request: HentEnhetRequest): EnhetDto = postForEntity(bidragOrganisasjonUri, request)
         ?: throw HttpClientErrorException(HttpStatus.NOT_FOUND, "Arbeidsfordelingen i Norg ga ingen enhet for saken")
 }
