@@ -92,9 +92,9 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
     }
 
     @Test
-    fun `sperren skal være av som standard når Unleash ikke kjenner bryteren`() {
-        BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN.isEnabled shouldBe false
-        assertDoesNotThrow { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(beregn("selvforsorget")) }
+    fun `sperren skal være på som standard når Unleash ikke kjenner bryteren`() {
+        BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN.isEnabled shouldBe true
+        assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(beregn("selvforsorget")) }
     }
 
     @Test
