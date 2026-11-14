@@ -105,7 +105,6 @@ data class ResultatVedtak(
 }
 
 data class BidragsberegningOrkestratorRequestV2(
-    @Deprecated("Bruk beregningsperiode per barn i stedet")
     val beregningsperiode: ÅrMånedsperiode,
     val beregningBarn: List<BeregningGrunnlagV2>,
     val grunnlagsliste: List<GrunnlagDto>,

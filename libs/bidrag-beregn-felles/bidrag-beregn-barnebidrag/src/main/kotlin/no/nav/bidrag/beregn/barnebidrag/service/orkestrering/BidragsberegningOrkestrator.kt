@@ -9,7 +9,6 @@ import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidr
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidragException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
-import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Beregningstype
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
@@ -53,7 +52,6 @@ import no.nav.bidrag.transport.person.PersonStønad
 import org.springframework.context.annotation.Import
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClientResponseException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -107,17 +105,17 @@ class BidragsberegningOrkestrator(
                 BidragsberegningOrkestratorResponseV2(
                     grunnlagListe = resultat.grunnlagsliste,
                     resultat =
-                    resultat.resultatListe.map { bergningResultat ->
+                    resultat.resultatListe.map { beregningResultat ->
                         BidragsberegningResultatBarnV2(
-                            søknadsbarnreferanse = bergningResultat.søknadsbarnreferanse,
-                            fatteVedtakAnbefalt = bergningResultat.fatteVedtakAnbefalt,
-                            avvistRevurderingsbarn = bergningResultat.avvistRevurderingsbarn,
-                            beregningsfeil = bergningResultat.beregningsfeil,
+                            søknadsbarnreferanse = beregningResultat.søknadsbarnreferanse,
+                            fatteVedtakAnbefalt = beregningResultat.fatteVedtakAnbefalt,
+                            avvistRevurderingsbarn = beregningResultat.avvistRevurderingsbarn,
+                            beregningsfeil = beregningResultat.beregningsfeil,
                             // Når alle søknadsbarn har avslag skal avvist revurderingsbarn ikke ha vedtaksperioder da det kan føre til opphør av løpende bidrag
-                            resultatVedtakListe = if (alleSøknadsbarnHarAvslag && bergningResultat.avvistRevurderingsbarn) {
+                            resultatVedtakListe = if (alleSøknadsbarnHarAvslag && beregningResultat.avvistRevurderingsbarn) {
                                 emptyList()
                             } else {
-                                bergningResultat.beregnetBarnebidragResultat?.let {
+                                beregningResultat.beregnetBarnebidragResultat?.let {
                                     listOf(
                                         ResultatVedtakV2(
                                             periodeListe = it.beregnetBarnebidragPeriodeListe,
@@ -260,7 +258,11 @@ class BidragsberegningOrkestrator(
             }
 
             BidragsberegningOrkestratorResponseV2(
-                grunnlagListe = (grunnlagslisteJustert + grunnlagslisteFraRunde2A + referertGrunnlagslisteFraRunde2A).distinctBy { it.referanse },
+                grunnlagListe = buildList {
+                    addAll(grunnlagslisteJustert)
+                    addAll(grunnlagslisteFraRunde2A)
+                    addAll(referertGrunnlagslisteFraRunde2A)
+                }.distinctBy { it.referanse },
                 resultat = respons.map { it.first },
             )
         }
@@ -627,7 +629,7 @@ class BidragsberegningOrkestrator(
                 løpendeBidragOgBeregningerGrunnlag = hentGrunnlagForLøpendeBidrag(request)
             }
             val grunnlagSøknadsbarnListe = request.tilListeBeregnGrunnlagV1()
-            val totalBeregningsperiode = finnTotalBeregningsperiode(request)
+            val totalBeregningsperiode = request.beregningsperiode
             val privatAvtaleGrunnlag = finnPrivatAvtaleGrunnlag(
                 grunnlagSøknadsbarnListe = grunnlagSøknadsbarnListe,
                 request = request,
@@ -871,12 +873,6 @@ class BidragsberegningOrkestrator(
         ?.innhold?.bidragsmottaker
         ?: throw IllegalArgumentException("Fant ikke bidragsmottaker for barn med referanse $søknadsbarnreferanse")
 
-    private fun finnTotalBeregningsperiode(request: BidragsberegningOrkestratorRequestV2): ÅrMånedsperiode {
-        val fom = request.beregningBarn.minOf { it.beregningsperiode.fom }
-        val til = request.beregningBarn.maxOf { it.beregningsperiode.til ?: throw IllegalArgumentException("beregningsperiode.til mangler") }
-        return ÅrMånedsperiode(fom, til)
-    }
-
     // Filtrerer ut grunnlag som er relevante for privat avtale og legger disse i en egen liste
     internal fun finnPrivatAvtaleGrunnlag(
         grunnlagSøknadsbarnListe: List<BeregnGrunnlag>,
@@ -1072,11 +1068,7 @@ class BidragsberegningOrkestrator(
     private fun hentGrunnlagForLøpendeBidrag(request: BidragsberegningOrkestratorRequestV2): List<BeregnGrunnlag> {
         val søknadsbarnListe = hentAlleSøknadsbarn(request.beregningBarn, request.grunnlagsliste)
         val bidragspliktig = request.grunnlagsliste.bidragspliktig!!
-
-        val beregningsperiode = ÅrMånedsperiode(
-            fom = request.beregningBarn.minOf { it.beregningsperiode.fom },
-            til = request.beregningBarn.mapNotNull { it.beregningsperiode.til }.maxOrNull(),
-        )
+        val beregningsperiode = request.beregningsperiode
 
         // Henter grunnlag for løpende bidrag
         val løpendeBidragOgBeregninger = hentLøpendeBidragService.hentLøpendeBidragForBehandling(

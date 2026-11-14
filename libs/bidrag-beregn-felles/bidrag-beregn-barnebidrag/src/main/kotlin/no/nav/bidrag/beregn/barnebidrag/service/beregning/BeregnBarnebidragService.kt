@@ -277,46 +277,44 @@ class BeregnBarnebidragService : BeregnService() {
                 "GrunnlagOpprinneligBeregningListe: ${commonObjectmapper.writeValueAsString(grunnlagOpprinneligBeregningListe)}."
         }
 
-        val utvidetGrunnlagSøknadsbarnListe = grunnlagSøknadsbarnListe.map { beregningBarn ->
-            val virkningstidspunkt = beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
-                Grunnlagstype.VIRKNINGSTIDSPUNKT,
-            ).firstOrNull()
-
-            // Brukes ifbm opphør / direkte avslag?
-            // TODO Sjekke om denne koden er i bruk eller kan fjernes
-            if (virkningstidspunkt != null && virkningstidspunkt.innhold.avslag != null) {
-                BeregnetBarnebidragResultatV2(
-                    søknadsbarnreferanse = beregningBarn.søknadsbarnReferanse,
-                    beregnetBarnebidragResultat = BeregnetBarnebidragResultat(
-                        beregnetBarnebidragPeriodeListe =
-                        listOf(
-                            ResultatPeriode(
-                                grunnlagsreferanseListe = listOf(virkningstidspunkt.referanse),
-                                periode = ÅrMånedsperiode(beregningBarn.periode.fom, null),
-                                resultat =
-                                ResultatBeregning(
-                                    beløp = null,
-                                ),
-                            ),
-                        ),
-                        grunnlagListe = listOf(virkningstidspunkt.grunnlag as GrunnlagDto),
-                    ),
-                )
-            }
-
-            // Kontroll av inputdata
-            beregningBarn.valider()
-
-            // Sjekker om søknadsbarnet fyller 18 år i beregningsperioden
-            val utvidetGrunnlag = justerTilPeriodeHvisBarnetBlir18ÅrIBeregningsperioden(beregningBarn)
-                // Sjekker om barnet er del av opprinnelig behandling (eller er del av en revurderingssøknad)
-                .sjekkOmBarnetErDelAvOpprinneligBehandling()
-                // Legger til virkning-fra-periode. Vil bli en egen bruddperiode hvis den avviker fra beregningsperiode fra.
-                .leggTilVirkningFraPeriode(virkningstidspunkt)
-
-            // Kaller alle standard delberegninger for søknadsbarn
-            utvidetGrunnlag.utførAlleStandardDelberegningerForSøknadsbarn()
+        val søknadsbarnMedDirekteAvslagFørstePeriodeListe = grunnlagSøknadsbarnListe.filter { beregningBarn ->
+            (
+                beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
+                    Grunnlagstype.VIRKNINGSTIDSPUNKT,
+                ).firstOrNull()?.innhold?.avslag != null
+                ) &&
+                (beregningBarn.periode.fom == beregningBarn.periode.til)
         }
+
+        val grunnlagSøknadsbarnUtenDirekteAvslagListe = grunnlagSøknadsbarnListe
+            .filterNot { it.søknadsbarnReferanse in søknadsbarnMedDirekteAvslagFørstePeriodeListe.map(BeregnGrunnlag::søknadsbarnReferanse) }
+        if (grunnlagSøknadsbarnUtenDirekteAvslagListe.isEmpty() &&
+            grunnlagLøpendeBidragListe.isEmpty() &&
+            grunnlagPrivatAvtaleListe.isEmpty()
+        ) {
+            return søknadsbarnMedDirekteAvslagFørstePeriodeListe.map { mapAvslag(it) }
+        }
+
+        val utvidetGrunnlagSøknadsbarnListe = grunnlagSøknadsbarnUtenDirekteAvslagListe
+            .map { beregningBarn ->
+
+                val virkningstidspunkt = beregningBarn.grunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<VirkningstidspunktGrunnlag>(
+                    Grunnlagstype.VIRKNINGSTIDSPUNKT,
+                ).firstOrNull()
+
+                // Kontroll av inputdata
+                beregningBarn.valider()
+
+                // Sjekker om søknadsbarnet fyller 18 år i beregningsperioden
+                val utvidetGrunnlag = justerTilPeriodeHvisBarnetBlir18ÅrIBeregningsperioden(beregningBarn)
+                    // Sjekker om barnet er del av opprinnelig behandling (eller er del av en revurderingssøknad)
+                    .sjekkOmBarnetErDelAvOpprinneligBehandling()
+                    // Legger til virkning-fra-periode. Vil bli en egen bruddperiode hvis den avviker fra beregningsperiode fra.
+                    .leggTilVirkningFraPeriode(virkningstidspunkt)
+
+                // Kaller alle standard delberegninger for søknadsbarn
+                utvidetGrunnlag.utførAlleStandardDelberegningerForSøknadsbarn()
+            }
 
         // Beregner nytt samværsfradrag for løpende bidrag
         val utvidetGrunnlagLøpendeBidragListe = grunnlagLøpendeBidragListe.map { utvidGrunnlagLøpendeBidrag(it) }
@@ -474,8 +472,26 @@ class BeregnBarnebidragService : BeregnService() {
                 )
             }"
         }
-        return beregnetBarnebidragResultatListe
+        return beregnetBarnebidragResultatListe + søknadsbarnMedDirekteAvslagFørstePeriodeListe.map { mapAvslag(it) }
     }
+
+    private fun mapAvslag(barn: BeregnGrunnlag) = BeregnetBarnebidragResultatV2(
+        søknadsbarnreferanse = barn.søknadsbarnReferanse,
+        beregnetBarnebidragResultat = BeregnetBarnebidragResultat(
+            beregnetBarnebidragPeriodeListe =
+            listOf(
+                ResultatPeriode(
+                    grunnlagsreferanseListe = barn.grunnlagListe.map { it.referanse },
+                    periode = ÅrMånedsperiode(barn.periode.fom, null),
+                    resultat =
+                    ResultatBeregning(
+                        beløp = null,
+                    ),
+                ),
+            ),
+            grunnlagListe = barn.grunnlagListe,
+        ),
+    )
 
     private fun List<BeregnGrunnlagJustert>.harPerioderMedEvnesprekk(): Boolean = this
         .flatMap { it.beregnGrunnlag.grunnlagListe }
