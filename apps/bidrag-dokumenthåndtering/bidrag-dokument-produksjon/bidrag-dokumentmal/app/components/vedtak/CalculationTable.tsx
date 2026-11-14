@@ -1,4 +1,5 @@
 import React, { ReactElement, CSSProperties } from "react";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import {
   CommonTable,
@@ -45,7 +46,7 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
       data={{
         headers: [
           {
-            name: tekster.tabell.felles.beskrivelse,
+            name: ord.beskrivelse,
             width: "250px",
           },
           harBeregning && {
@@ -53,7 +54,7 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
             width: "250px",
           },
           {
-            name: tekster.tabell.felles.beløp,
+            name: ord.beløp,
             width: "100px",
             textAlign: "right",
           },

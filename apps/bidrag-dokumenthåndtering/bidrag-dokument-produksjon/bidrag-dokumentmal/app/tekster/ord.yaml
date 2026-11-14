@@ -1,0 +1,34 @@
+# Ord og korte setninger som brukes flere steder. En endring her slår ut overalt.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+ja: Ja
+nei: Nei
+årsak: Årsak
+periode: Periode
+resultat: Resultat
+beløp: Beløp
+avslag: Avslag
+opphør: Opphør
+sum: Sum
+total: Total
+totalt: Totalt
+barn: Barn
+type: Type
+beskrivelse: Beskrivelse
+begrunnelse: Begrunnelse
+inntekt: Inntekt
+saksnummer: Saksnummer
+søknadstype: Søknadstype
+mottattDato: Mottatt dato
+søktFraDato: Søkt fra dato
+søknadFra: Søknad fra
+kravbeløp: Kravbeløp
+godkjentBeløp: Godkjent beløp
+manglerResultat: Mangler resultat
+ikkeRelevant: Ikke relevant
+bidragspliktig: Bidragspliktig
+bidragsmottaker: Bidragsmottaker
+saksnummerMedHenvisning: "{} (Oppgi saksnummeret ved henvendelse til oss.)"
+seVedleggForBeregningsdetaljer: se vedlegg nr. {} for beregningsdetaljer
+seVedleggForOffentligeRegistre: se vedlegg nr. {} for opplysninger fra offentlige registre

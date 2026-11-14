@@ -7,18 +7,22 @@ import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { DataViewTable } from "~/components/DataViewTable";
 import { NotatVirkningstidspunktBarnDto, Stonadstype } from "~/types/Api";
+import ord from "~/tekster/ord.yaml";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
 import Beregningsperiode from "~/routes/notat.bidrag/Beregningsperiode";
 import {
   TypeInnhold,
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 
+const t = notatTekster.virkningstidspunkt;
+
 export default function Virkningstidspunkt() {
   const { data, gjelderFlereSaker } = useNotatFelles();
   const virkningstidspunkt = data.virkningstidspunkt;
   return (
     <div className={"virkningstidspunkt"}>
-      <h2>Virkningstidspunkt</h2>
+      <h2>{t.tittel}</h2>
       {gjelderFlereSaker ? (
         <VirkningstidspunktPerSak />
       ) : virkningstidspunkt.erLikForAlle ? (
@@ -54,12 +58,15 @@ function VirkningstidspunktPerSak() {
               labelColWidth={"70px"}
               data={[
                 {
-                  label: "Saksnummer",
+                  label: ord.saksnummer,
                   labelBold: true,
                   value:
                     typeInnhold == TypeInnhold.NOTAT
                       ? saksnummer
-                      : `${saksnummer} (Oppgi saksnummeret ved henvendelse til oss.)`,
+                      : ord.saksnummerMedHenvisning.replace(
+                          "{}",
+                          `${saksnummer}`,
+                        ),
                 },
               ]}
             />
@@ -102,25 +109,25 @@ function VirkningstidspunktPerBarn({
                   labelColWidth={"70px"}
                   data={[
                     {
-                      label: "Søknadstype",
+                      label: ord.søknadstype,
                       value: barn.behandlingstypeVisningsnavn,
                     },
                     {
-                      label: "Søknad fra",
+                      label: ord.søknadFra,
                       value: søktAvTilVisningsnavn(barn.søktAv),
                     },
                     {
-                      label: "Innkreving",
-                      value: barn.innkreving ? "Ja" : "Nei",
+                      label: t.innkreving,
+                      value: barn.innkreving ? ord.ja : ord.nei,
                     },
                     ...[
                       barn.avslag
                         ? {
-                            label: "Avslag",
+                            label: ord.avslag,
                             value: barn.avslagVisningsnavn,
                           }
                         : {
-                            label: "Årsak",
+                            label: ord.årsak,
                             value: barn.årsakVisningsnavn,
                           },
                     ],
@@ -131,11 +138,11 @@ function VirkningstidspunktPerBarn({
                   className={"mb-2"}
                   data={[
                     {
-                      label: "Mottatt dato",
+                      label: ord.mottattDato,
                       value: dateToDDMMYYYY(barn.mottattDato as string),
                     },
                     {
-                      label: "Søkt fra dato",
+                      label: ord.søktFraDato,
                       value: dateToDDMMYYYY(barn.søktFraDato as string),
                     },
                   ]}
@@ -146,7 +153,7 @@ function VirkningstidspunktPerBarn({
                   labelColWidth={"100px"}
                   data={[
                     {
-                      label: "Virkningstidspunkt",
+                      label: t.virkningstidspunkt,
                       value: dateToDDMMYYYY(barn.virkningstidspunkt),
                     },
                   ]}
@@ -157,7 +164,7 @@ function VirkningstidspunktPerBarn({
                     labelColWidth={"100px"}
                     data={[
                       {
-                        label: "Opphørsdato",
+                        label: t.opphørsdato,
                         value: dateToDDMMYYYY(barn.opphørsdato as string),
                       },
                     ]}
@@ -167,7 +174,7 @@ function VirkningstidspunktPerBarn({
                 <NotatBegrunnelse data={barn.begrunnelse} />
                 {data.stønadstype == Stonadstype.BIDRAG18AAR && (
                   <NotatBegrunnelse
-                    label={"Vurdering av skolegang"}
+                    label={t.vurderingAvSkolegang}
                     data={barn.begrunnelseVurderingAvSkolegang}
                   />
                 )}
@@ -194,25 +201,25 @@ function VirkningstidspunktFelles({
           labelColWidth={"70px"}
           data={[
             {
-              label: "Søknadstype",
+              label: ord.søknadstype,
               value: virkningstidspunktBarn.behandlingstypeVisningsnavn,
             },
             {
-              label: "Innkreving",
-              value: virkningstidspunktBarn.innkreving ? "Ja" : "Nei",
+              label: t.innkreving,
+              value: virkningstidspunktBarn.innkreving ? ord.ja : ord.nei,
             },
             {
-              label: "Søknad fra",
+              label: ord.søknadFra,
               value: søktAvTilVisningsnavn(virkningstidspunktBarn.søktAv),
             },
             ...[
               virkningstidspunkt.erAvslagForAlle
                 ? {
-                    label: "Avslag",
+                    label: ord.avslag,
                     value: virkningstidspunktBarn.avslagVisningsnavn,
                   }
                 : {
-                    label: "Årsak",
+                    label: ord.årsak,
                     value: virkningstidspunktBarn.årsakVisningsnavn,
                   },
             ],
@@ -222,13 +229,13 @@ function VirkningstidspunktFelles({
           labelColWidth={"100px"}
           data={[
             {
-              label: "Mottatt dato",
+              label: ord.mottattDato,
               value: dateToDDMMYYYY(
                 virkningstidspunktBarn.mottattDato as string,
               ),
             },
             {
-              label: "Søkt fra dato",
+              label: ord.søktFraDato,
               value: dateToDDMMYYYY(
                 virkningstidspunktBarn.søktFraDato as string,
               ),
@@ -241,7 +248,7 @@ function VirkningstidspunktFelles({
         className={"mt-4"}
         data={[
           {
-            label: "Virkningstidspunkt",
+            label: t.virkningstidspunkt,
             value: dateToDDMMYYYY(virkningstidspunktBarn.virkningstidspunkt),
           },
         ]}
@@ -251,7 +258,7 @@ function VirkningstidspunktFelles({
           labelColWidth={"100px"}
           data={[
             {
-              label: "Opphørsdato",
+              label: t.opphørsdato,
               value: dateToDDMMYYYY(
                 virkningstidspunktBarn.opphørsdato as string,
               ),
@@ -263,7 +270,7 @@ function VirkningstidspunktFelles({
       <NotatBegrunnelse data={virkningstidspunktBarn.begrunnelse} />
       {data.stønadstype == Stonadstype.BIDRAG18AAR && (
         <NotatBegrunnelse
-          label={"Vurdering av skolegang"}
+          label={t.vurderingAvSkolegang}
           data={virkningstidspunktBarn.begrunnelseVurderingAvSkolegang}
         />
       )}

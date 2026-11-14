@@ -1,0 +1,71 @@
+# Kolonnenavn og begreper som brukes på tvers av malene, også i vedtaksforsiden.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+fraOffentligeRegistre: Hentet fra offentlige registre
+
+begreper:
+  bidragspliktiges: Bidragspliktiges
+  bidragsmottakerens: Bidragsmottakerens
+  barnets: Barnets
+
+tabell:
+  bpsAndel:
+    bpsInntekt: Bidragspliktiges inntekt
+    bmsInntekt: Bidragsmottakerens inntekt
+    barnsInntekt: Barnets inntekt
+  felles:
+    fraDato: Fra dato
+    tilDato: Til dato
+    fraTilOgMed: Fra og med - Til og med
+    kilde: Kilde
+    status: Status
+    beregning: Beregning
+  samvær:
+    samværsklasse: Samværsklasse
+  underholdskostnader:
+    beregning:
+      forbruk: Forbruk
+      boutgifter: Boutgifter
+      stønadTilBarnetilsyn: Stønad til barnetilsyn
+      beregnetTilsyn: Beregnet tilsynsutgift
+      barnetrygd: Barnetrygd
+      forpleining: Forpleining
+      underholdskostnad: Underholdskostnad
+    stønadTilBarnetilsyn:
+      stønadTilBarnetilsyn: Stønad til barnetilsyn
+      omfang: Omfang
+    faktiskeTilsynsutgifter:
+      totalTilsynsutgift: Total tilsynsutgift
+      kostpenger: Kostpenger
+      fratrekk: Fratrekk
+      totalt: Totalt (12 mnd)
+      kommentar: Kommentar
+    tilleggsstønad:
+      dagsats: Dagsats
+      beløpstype: Beløpstype
+      totalt: Totalt (12 mnd)
+  utgifter:
+    betaltAvBp: Betalt av Bidragspliktig
+    dato: Forfallsdato
+    utgift: Utgift
+    utgiftskategori: Utgiftskategori
+  inntekt:
+    beløpMnd: Beløp (mnd)
+    beløpstype: Beløpstype
+    skattesats: Skattesats
+    beløp12Mnd: Beløp (12mnd)
+  arbeidsforhold:
+    lønnsendring: Lønnsendring
+    stilling: Stilling
+    arbeidsgiver: Arbeidsgiver
+  beregnet:
+    skattepliktigInntektSplittet: Skattepliktige- inntekter
+    skattepliktigInntekt: Skattepliktige inntekter
+    barnetilleggSplittet: Barnetillegg
+    barnetillegg: Barnetillegg
+    utvidetBarnetrygdSplittet: Utvidet- barnetrygd
+    utvidetBarnetrygd: Utvidet barnetrygd
+    småbarnstilleggSplittet: Småbarns- tillegg
+    småbarnstillegg: Småbarnstillegg
+    kontantstøtte: Kontantstøtte

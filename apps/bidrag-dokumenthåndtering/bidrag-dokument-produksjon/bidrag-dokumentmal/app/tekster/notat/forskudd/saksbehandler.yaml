@@ -1,0 +1,12 @@
+# Saksbehandlerdelen av forskuddsnotatet, i samme rekkefølge som i notatet.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+tittel: Forskudd, saksbehandlingsnotat
+
+vedtak:
+  tittel: Vedtak
+  tabellInnvilget:
+    sivilstand: Sivilstand
+    antallBarnIHusstand: Antall barn i husstand
+    forskudd: Forskudd

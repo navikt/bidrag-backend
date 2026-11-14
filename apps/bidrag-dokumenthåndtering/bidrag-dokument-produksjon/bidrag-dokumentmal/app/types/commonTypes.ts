@@ -1,9 +1,5 @@
 import { DokumentmalPersonDto, BeregnetBidragBarnDto } from "~/types/Api";
 
-export interface VedleggProps {
-  vedleggNummer?: number;
-}
-
 export interface BeregningBarn {
   beregnetBidragPerBarn: BeregnetBidragBarnDto;
   barn: DokumentmalPersonDto;

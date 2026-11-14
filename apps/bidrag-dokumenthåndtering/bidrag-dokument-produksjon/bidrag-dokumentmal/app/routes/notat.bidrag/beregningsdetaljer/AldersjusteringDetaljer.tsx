@@ -4,7 +4,10 @@ import {
 } from "~/utils/visningsnavn";
 import { DataViewTableData } from "~/components/DataViewTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.aldersjustering;
 
 export const AldersjusteringDetaljer = () => {
   const {
@@ -17,32 +20,32 @@ export const AldersjusteringDetaljer = () => {
   } = useBeregningDetaljer();
   return (
     <div style={{ width: "600px" }}>
-      <h4>{`Aldersjustering`}</h4>
+      <h4>{t.tittel}</h4>
       <div>
         <div className={"flex flex-row gap-5 mb-4"}>
           <DataViewTableV2
             gap={"5px"}
-            title={"Underholdskostnad"}
+            title={t.underholdskostnad.tittel}
             data={
               [
                 {
-                  label: "Forbruksutgift",
+                  label: t.underholdskostnad.forbruksutgift,
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.forbruksutgift, true)}`,
                 },
                 {
-                  label: "Boutgift",
+                  label: t.underholdskostnad.boutgift,
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.boutgift, true)}`,
                 },
                 {
-                  label: "Netto tilsynsutgift",
+                  label: t.underholdskostnad.nettoTilsynsutgift,
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.nettoTilsynsutgift, true)}`,
                 },
                 {
-                  label: "Barnetrygd",
+                  label: t.underholdskostnad.barnetrygd,
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.barnetrygd, true)}`,
                 },
                 {
-                  label: "Barnetilsyn med stønad",
+                  label: t.underholdskostnad.barnetilsynMedStønad,
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.barnetilsynMedStønad, true)}`,
                 },
               ].filter((d) => d != null) as DataViewTableData[]
@@ -50,15 +53,15 @@ export const AldersjusteringDetaljer = () => {
           />
           <DataViewTableV2
             gap={"5px"}
-            title={"Samværsfradrag"}
+            title={t.samværsfradrag.tittel}
             data={
               [
                 {
-                  label: "Samværsklasse",
+                  label: t.samværsfradrag.samværsklasse,
                   value: `${samværsfradrag.samværsklasseVisningsnavn}`,
                 },
                 {
-                  label: "Samværsfradrag",
+                  label: t.samværsfradrag.samværsfradrag,
                   value: `${formatterBeløpForBeregning(samværsfradrag?.samværsfradrag, true)}`,
                 },
               ].filter((d) => d != null) as DataViewTableData[]
@@ -70,16 +73,16 @@ export const AldersjusteringDetaljer = () => {
           data={
             [
               {
-                label: "Underholdskostnad",
+                label: t.underholdskostnadLedetekst,
                 value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)}`,
               },
               {
-                label: "Andel underholdskostnad",
+                label: t.andelUnderholdskostnad,
                 value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)} x ${formatterProsent(periode.bpsAndelU)}`,
                 result: formatterBeløpForBeregning(periode.bpsAndelBeløp),
               },
               deltBosted && {
-                label: "Etter fratrekk delt bosted",
+                label: t.etterFratrekkDeltBosted,
                 value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)} x ${formatterProsent(0.5)}`,
                 result: formatterBeløpForBeregning(
                   sluttberegning.bpAndelAvUVedDeltBostedBeløp,
@@ -93,7 +96,8 @@ export const AldersjusteringDetaljer = () => {
 
       {bpsAndel.endeligAndelFaktor !== bpsAndel.beregnetAndelFaktor && (
         <div className="text-red-500" style={{ width: "200px" }}>
-          Andel begrenset til {formatterProsent(bpsAndel.endeligAndelFaktor)}
+          {t.andelBegrensetTil}
+          {formatterProsent(bpsAndel.endeligAndelFaktor)}
         </div>
       )}
     </div>

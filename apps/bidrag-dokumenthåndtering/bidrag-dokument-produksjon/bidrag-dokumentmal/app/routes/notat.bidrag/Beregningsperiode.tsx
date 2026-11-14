@@ -6,6 +6,11 @@ import {
   NotatMalType,
   NotatVirkningstidspunktBarnDto,
 } from "~/types/Api";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
+
+const tekst = bidragOpplysningerTekster.beregningsdetaljer;
+
+const t = tekst.beregningsperiode;
 
 export default function Beregningsperiode({
   virkningstidspunkt,
@@ -19,11 +24,14 @@ export default function Beregningsperiode({
   function beregningsperiodeVisningsnavn() {
     switch (virkningstidspunkt.beregnTil) {
       case BeregnTil.ETTERFOLGENDEMANUELLVEDTAK:
-        return `Til etterfølgende vedtak med virkningstidspunkt ${dateToDDMMYYYY(virkningstidspunkt.etterfølgendeVedtakVirkningstidspunkt as string)}`;
+        return t.beregnTil.etterfølgendeManueltVedtak.replace(
+          "{}",
+          `${dateToDDMMYYYY(virkningstidspunkt.etterfølgendeVedtakVirkningstidspunkt as string)}`,
+        );
       case BeregnTil.INNEVAeRENDEMANED:
-        return "Ut inneværende måned";
+        return t.beregnTil.inneværendeMåned;
       case BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT:
-        return `Ut måneden opprinnelig vedtak ble fattet`;
+        return t.beregnTil.opprinneligVedtakstidspunkt;
     }
   }
   return (
@@ -34,11 +42,11 @@ export default function Beregningsperiode({
             labelColWidth={"140px"}
             data={[
               {
-                label: "Periode vedtaket vurderes",
+                label: t.periodeVedtaketVurderes,
                 value: beregningsperiodeVisningsnavn(),
               },
               {
-                label: "Beregningsperiode",
+                label: t.beregningsperiode,
                 value: `${dateToDDMMYYYY(virkningstidspunkt.virkningstidspunkt as string)} - ${dateToDDMMYYYY(deductDays(virkningstidspunkt.beregnTilDato as string, 1))}`,
               },
             ]}

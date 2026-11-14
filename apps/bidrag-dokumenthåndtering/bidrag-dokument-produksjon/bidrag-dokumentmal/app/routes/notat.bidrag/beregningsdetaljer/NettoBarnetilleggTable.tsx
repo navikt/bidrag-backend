@@ -16,7 +16,11 @@ import {
   TableColumn,
 } from "~/components/CommonTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import ord from "~/tekster/ord.yaml";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
 import { barnetilleggTiltakspengerVisningsnavn } from "~/constants/beregning";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.nettoBarnetillegg;
 
 export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
   const {
@@ -32,26 +36,26 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
   );
   return (
     <div style={{ width: "600px" }}>
-      <h4>{`Netto barnetillegg (${rolleTilVisningsnavn(rolle)})`}</h4>
+      <h4>{t.tittel.replace("{rolle}", rolleTilVisningsnavn(rolle))}</h4>
 
       <CommonTable
         layoutAuto
         data={{
           headers: [
             {
-              name: "Type barnetillegg",
+              name: t.tabell.typeBarnetillegg,
               width: "100px",
             },
             !harBareTiltakspenger && {
-              name: "Brutto",
+              name: t.tabell.brutto,
               width: "50px",
             },
             {
-              name: "Skattesats",
+              name: t.tabell.skattesats,
               width: "50px",
             },
             {
-              name: "Netto",
+              name: t.tabell.netto,
               width: "50px",
             },
           ].filter((h) => h != null) as TableHeader[],
@@ -65,7 +69,7 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
                 !harBareTiltakspenger && {
                   content:
                     bt.visningsnavn === barnetilleggTiltakspengerVisningsnavn
-                      ? "Ikke relevant"
+                      ? ord.ikkeRelevant
                       : formatterBeløpForBeregning(bt.bruttoBeløp, true),
                 },
                 {
@@ -80,7 +84,7 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
               {
                 columns: [
                   {
-                    content: "Resultat" as string,
+                    content: ord.resultat,
                   },
                   !harBareTiltakspenger && {
                     content: formatterBeløpForBeregning(
@@ -95,7 +99,6 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
                       barnetillegg!.sumNettoBeløp,
                     ),
                   },
-
                 ] as TableColumn[],
               },
             ]),
@@ -120,7 +123,7 @@ export const BeregningJusterBPsBarnetillegg = ({
 }) => {
   function renderResult() {
     if (sluttberegning.bidragJustertForNettoBarnetilleggBP) {
-      return ` (justert opp til BPs netto barnetillegg)`;
+      return t.justerBPsBarnetillegg.justertOppTilBPsNettoBarnetillegg;
     }
     return "";
   }
@@ -139,7 +142,7 @@ export const BeregningJusterBPsBarnetillegg = ({
       data={
         [
           {
-            label: "Foreløpig bidrag",
+            label: t.justerBPsBarnetillegg.foreløpigBidrag,
             value: `${hentForeløpigBidrag()}${renderResult()}`,
           },
         ].filter((d) => d != null) as DataViewTableData[]
@@ -158,7 +161,7 @@ export const BeregningJusterBMsBarnetillegg = ({
 }) => {
   function renderResult() {
     if (sluttberegning.bidragJustertForNettoBarnetilleggBM) {
-      return ` (justert til U - BMs netto barnetillegg + samværsfradrag)`;
+      return t.justerBMsBarnetillegg.justertTilUMinusBMsNettoBarnetillegg;
     }
     return "";
   }
@@ -169,11 +172,11 @@ export const BeregningJusterBMsBarnetillegg = ({
       data={
         [
           {
-            label: "U - BMs netto barnetillegg",
+            label: t.justerBMsBarnetillegg.uMinusBMsNettoBarnetillegg,
             value: `${formatterBeløpForBeregning(underholdskostnad.underholdskostnad)} - ${formatterBeløpForBeregning(barnetilleggBM.sumNettoBeløp)} = ${formatterBeløpForBeregning(sluttberegning.uminusNettoBarnetilleggBM)}`,
           },
           {
-            label: "Foreløpig bidrag",
+            label: t.justerBMsBarnetillegg.foreløpigBidrag,
             textRight: false,
             value: `${formatterBeløpForBeregning(sluttberegning.bruttoBidragEtterBarnetilleggBM)}${renderResult()}`,
           },

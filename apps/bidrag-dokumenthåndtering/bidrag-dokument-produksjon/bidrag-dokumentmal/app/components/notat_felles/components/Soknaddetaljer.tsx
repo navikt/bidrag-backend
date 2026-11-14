@@ -8,6 +8,10 @@ import {
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 import { isNullOrEmpty } from "~/utils/string-utils";
+import ord from "~/tekster/ord.yaml";
+import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
+
+const t = notatTekster.søknaddetaljer;
 
 export default function Soknaddetaljer({
   gjelderFlereSaker,
@@ -39,11 +43,11 @@ export default function Soknaddetaljer({
           labelColWidth={"98px"}
           data={[
             (!gjelderFlereSaker && {
-              label: "Saksnummer",
+              label: ord.saksnummer,
               value:
                 typeInnhold == TypeInnhold.NOTAT
                   ? saksnummer
-                  : `${saksnummer} (Oppgi saksnummeret ved henvendelse til oss.)`,
+                  : ord.saksnummerMedHenvisning.replace("{}", `${saksnummer}`),
             }) as unknown as DataViewTableData,
 
             ...rollerIkkeBarn
@@ -61,7 +65,7 @@ export default function Soknaddetaljer({
                 value: `${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`,
               })),
             {
-              label: "Søknadsbarn",
+              label: t.søknadsbarn,
               value: (
                 <div style={{ display: "inline-table" }}>
                   {rollerBarn.sort(sortByAge).map((rolle) => (

@@ -1,0 +1,77 @@
+# Saksbehandlerdelen av bidragsnotatet, i samme rekkefølge som i notatet.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} og ord i {klammer} fylles ut med verdier og må stå.
+
+tittel: Bidrag, saksbehandlingsnotat
+
+privatAvtale:
+  tittel: Privat avtale
+  avtale:
+    avtalemåned: Avtalemåned
+    avtaletype: Avtaletype
+  vedtakFraNav:
+    tittel: Vedtak fra Nav
+    kolonner:
+      valgt: Valgt
+      virkningsdato: Virkningsdato
+      vedtaksdato: Vedtaksdato
+      resultatSistePeriode: Resultat siste periode
+  beregnetPrivatAvtale:
+    tittel: Beregnet privat avtale
+    indeksprosent: Indeksprosent
+
+underholdskostnad:
+  tittel: Underholdskostnad
+  lenkeTilVedlegg: se vedlegg nr. {} for underholdskostnad
+  andreBarnTilBidragsmottaker: Andre barn til bidragsmottaker
+  harTilsynsutgift: Barn har tilsynsutgift/forpleining
+  tilleggsstønad: Tilleggsstønad
+  forpleining: Forpleining
+  faktiskeTilsynsutgifter: Faktiske tilsynsutgifter
+  stønadTilBarnetilsyn: Stønad til barnetilsyn
+  underholdskostnader: Underholdskostnader
+
+gebyr:
+  tittel: Gebyr
+  inntekt:
+    inntektSiste12Måneder: Inntekt siste 12 måneder
+    skattepliktigInntekt: Skattepliktig inntekt
+    høyesteBarnetillegg: Høyeste barnetillegg
+  søknad:
+    sak: Sak
+  resultat:
+    gebyr: Gebyr
+  søknadOver18År: Søknad om bidrag etter fylte 18 år
+
+samvær:
+  tittel: Samvær
+  sammeForAlleSøknadsbarn: Samme for alle søknadsbarn
+
+vedtak:
+  tittel: Vedtak
+  tittelKlagevedtak: Klagevedtak
+  tittelEndeligVedtak: Endelig vedtak
+  ingenPerioderSlåttUtTilFF: Ingen perioder har slått ut til FF. Det vil derfor ikke fattes noe vedtak for revurderingsbarnet.
+  avvisning: Vedtak er avslag på behandling og har derfor ingen perioder
+  nesteIndeksår: Neste indeksår
+  innbetaltBeløp: Innbetalt beløp
+  tabellBeregning:
+    underholdskostnad: U
+    bpsAndel: BPs andel U
+    samvær: Samvær
+    evne: Evne / 25%
+    beregnetBidrag: Beregnet bidrag
+    endeligBidrag: Endelig bidrag
+    samværsklasseDeltBosted: D
+    forklaringForkortelser: U = Underholdskostnad, BP = Bidragspliktig, BM = Bidragsmottaker
+  tabellEndelig:
+    vurderUgyldighet: Vurder ugyldighet
+    opphørForSaksbehandler: "-"
+
+revurderingsbarn:
+  tittel: Vedtak for revurderingsbarn
+  foreslåttFatteVedtak: Basert på informasjonen som ble lagt inn foreslo beregningen å fatte vedtak for revurderingsbarn.
+  foreslåttIkkeFatteVedtak: Basert på informasjonen som ble lagt inn foreslo beregningen å ikke fatte vedtak for revurderingsbarn.
+  overstyrtTilIkkeFatteVedtak: Det ble manuelt overstyrt til å ikke fatte vedtak for revurderingsbarn
+  overstyrtTilFatteVedtak: Det ble manuelt overstyrt til å fatte vedtak for revurderingsbarn
+  begrunnelse: "Begrunnelse:"

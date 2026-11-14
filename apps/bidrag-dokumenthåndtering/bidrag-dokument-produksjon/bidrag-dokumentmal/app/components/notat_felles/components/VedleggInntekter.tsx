@@ -10,23 +10,30 @@ import {
 import { formatterBeløp, sammenlignRoller } from "~/utils/visningsnavn";
 import { groupBy } from "~/utils/array-utils";
 import elementIds from "~/utils/elementIds";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
+import opplysningerTekster from "~/tekster/notat/felles/opplysninger.yaml";
 import {
   CommonTable,
   TableColumn,
   TableHeader,
 } from "~/components/CommonTable";
 import { getInntektTableHeaders } from "~/constants/tableHeaders";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import Inntektsposter from "~/components/notat_felles/components/Inntektsposter";
 import { isHarInntekter } from "~/components/inntektTableHelpers";
 import InntektTableTitle from "~/components/inntekt/InntektTableTitle";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
 import GjelderPerson from "~/components/GjelderPerson";
-import { VedleggProps } from "~/types/commonTypes";
 
-export default function VedleggInntekter({ vedleggNummer = 2 }: VedleggProps) {
+const t = opplysningerTekster.inntekter;
+
+export default function VedleggInntekter() {
+  const vedleggNummer = useVedleggNummer("inntekter");
   const { erAvslag, bidragsmottaker, bidragspliktig, søknadsbarn, type } =
     useNotatFelles();
   if (erAvslag && type != NotatMalType.BIDRAG) return null;
@@ -37,25 +44,22 @@ export default function VedleggInntekter({ vedleggNummer = 2 }: VedleggProps) {
         id={elementIds.vedleggInntekter}
         className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}
       >
-        Vedlegg nr. {vedleggNummer}: Inntekt - {tekster.fraOffentligeRegistre}
+        {t.tittel.replace("{}", `${vedleggNummer}`)}
+        {tekster.fraOffentligeRegistre}
       </h2>
       <OpplysningerForRolle
         rolle={bidragsmottaker}
         showRole={type !== NotatMalType.FORSKUDD}
-        vedleggNummer={vedleggNummer}
       />
       {type !== NotatMalType.FORSKUDD && bidragspliktig && (
         <div className={"mt-medium"}>
-          <OpplysningerForRolle
-            rolle={bidragspliktig}
-            vedleggNummer={vedleggNummer}
-          />
+          <OpplysningerForRolle rolle={bidragspliktig} />
         </div>
       )}
       {type !== NotatMalType.FORSKUDD &&
         søknadsbarn.map((barn) => (
           <div key={barn.ident} className={"mt-medium"}>
-            <OpplysningerForRolle rolle={barn} vedleggNummer={vedleggNummer} />
+            <OpplysningerForRolle rolle={barn} />
           </div>
         ))}
     </div>
@@ -65,12 +69,11 @@ export default function VedleggInntekter({ vedleggNummer = 2 }: VedleggProps) {
 function OpplysningerForRolle({
   rolle,
   showRole = true,
-  vedleggNummer,
 }: {
   rolle: DokumentmalPersonDto;
   showRole?: boolean;
-  vedleggNummer?: number;
 }) {
+  const vedleggNummer = useVedleggNummer("inntekter");
   const { data } = useNotatFelles();
 
   const inntekter = data.inntekter.offentligeInntekterPerRolle.find(
@@ -85,35 +88,44 @@ function OpplysningerForRolle({
       {showRole && <GjelderPerson rolle={rolle} />}
       {inntekter.arbeidsforhold && inntekter.arbeidsforhold.length > 0 && (
         <div>
-          <h4>{vedleggNummer}.1 Arbeidsforhold</h4>
+          <h4>{t.tabeller.arbeidsforhold.replace("{}", `${vedleggNummer}`)}</h4>
           <ArbeidsforholdTable data={inntekter.arbeidsforhold} />
         </div>
       )}
       {!isHarInntekter(inntekter) ? (
-        <p>Ingen offentlige inntekter</p>
+        <p>{t.ingenOffentligeInntekter}</p>
       ) : (
         <>
           <OffentligeInntekter
             data={inntekter.årsinntekter}
-            tittel={`${vedleggNummer}.2 Skattepliktige og pensjonsgivende inntekter`}
+            tittel={t.tabeller.skattepliktigeOgPensjonsgivende.replace(
+              "{}",
+              `${vedleggNummer}`,
+            )}
             medInntektsposter
           />
           <OffentligeInntekter
             data={inntekter.barnetillegg}
-            tittel={`${vedleggNummer}.3 Barnetillegg`}
+            tittel={t.tabeller.barnetillegg.replace("{}", `${vedleggNummer}`)}
             medBarn
           />
           <OffentligeInntekter
             data={inntekter.utvidetBarnetrygd}
-            tittel={`${vedleggNummer}.4 Utvidet barnetrygd`}
+            tittel={t.tabeller.utvidetBarnetrygd.replace(
+              "{}",
+              `${vedleggNummer}`,
+            )}
           />
           <OffentligeInntekter
             data={inntekter.småbarnstillegg}
-            tittel={`${vedleggNummer}.5 Småbarnstillegg`}
+            tittel={t.tabeller.småbarnstillegg.replace(
+              "{}",
+              `${vedleggNummer}`,
+            )}
           />
           <OffentligeInntekter
             data={inntekter.kontantstøtte}
-            tittel={`${vedleggNummer}.6 Kontantstøtte`}
+            tittel={t.tabeller.kontantstøtte.replace("{}", `${vedleggNummer}`)}
             medBarn
           />
         </>
@@ -168,10 +180,10 @@ function InntektTable({
           headers: [
             { name: tekster.tabell.felles.fraTilOgMed, width: "170px" },
             inkluderBeskrivelse && {
-              name: tekster.tabell.felles.beskrivelse,
+              name: ord.beskrivelse,
               width: "175px",
             },
-            { name: tekster.tabell.inntekt.beløp },
+            { name: ord.beløp },
           ].filter((d) => typeof d != "boolean") as TableHeader[],
           rows: data.map((d, i) => {
             const periode = d.opprinneligPeriode;
@@ -179,7 +191,7 @@ function InntektTable({
               columns: [
                 { content: formatPeriode(periode!.fom, periode!.til) },
                 inkluderBeskrivelse && {
-                  content: `${d.visningsnavn}${d.historisk ? " (historisk)" : ""}`,
+                  content: `${d.visningsnavn}${d.historisk ? t.historisk : ""}`,
                 },
                 { content: formatterBeløp(d.beløp) },
               ].filter((d) => typeof d != "boolean") as TableColumn[],
@@ -213,7 +225,7 @@ function ArbeidsforholdTable({ data }: { data: Arbeidsforhold[] }) {
       width={"450px"}
       data={{
         headers: [
-          { name: tekster.tabell.felles.periode, width: "100px" },
+          { name: ord.periode, width: "100px" },
           { name: tekster.tabell.arbeidsforhold.arbeidsgiver, width: "140px" },
           { name: tekster.tabell.arbeidsforhold.stilling, width: "40px" },
           { name: tekster.tabell.arbeidsforhold.lønnsendring, width: "80px" },

@@ -15,18 +15,27 @@ import { groupBy } from "~/utils/array-utils";
 import DataDescription from "~/components/DataDescription";
 import Person from "~/components/Person";
 import elementIds from "~/utils/elementIds";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
+import opplysningerTekster from "~/tekster/notat/felles/opplysninger.yaml";
 import { CommonTable } from "~/components/CommonTable";
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
-import { VedleggProps } from "~/types/commonTypes";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 
-export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
+const t = opplysningerTekster.boforhold;
+
+export default function VedleggBoforhold() {
+  const vedleggNummer = useVedleggNummer("boforhold");
   const { erAvslag, data, type } = useNotatFelles();
   if (erAvslag) return null;
   return (
     <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
       <h2 id={elementIds.vedleggBoforhold}>
-        Vedlegg nr. {vedleggNummer}: Boforhold - {tekster.fraOffentligeRegistre}
+        {t.tittel
+          .replace("{nummer}", vedleggNummer.toString())
+          .replace("{kilde}", tekster.fraOffentligeRegistre)}
       </h2>
       {groupBy(
         data.boforhold.barn
@@ -41,7 +50,7 @@ export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
             <DataDescription
               style={{ marginBottom: "0px" }}
               label={
-                barn.medIBehandling ? "Søknadsbarn" : "Eget barn i husstanden"
+                barn.medIBehandling ? t.søknadsbarn : t.egetBarnIHusstanden
               }
               value={
                 <Person
@@ -59,7 +68,7 @@ export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
         data.boforhold.andreVoksneIHusstanden
           ?.opplysningerFraFolkeregisteret && (
           <div>
-            <h3>Andre voksne i husstanden</h3>
+            <h3>{t.andreVoksneIHusstanden}</h3>
             <div className="table_container">
               <BoforholdTable
                 data={
@@ -74,7 +83,7 @@ export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
         data.boforhold.boforholdBMSøknadsbarn &&
         data.boforhold.boforholdBMSøknadsbarn.length > 0 && (
           <div>
-            <h3>Boforhold bidragsmottaker</h3>
+            <h3>{t.boforholdBidragsmottaker}</h3>
             {groupBy(
               data.boforhold.boforholdBMSøknadsbarn.sort((a, b) =>
                 a.gjelderBarn.ident!.localeCompare(b.gjelderBarn.ident!),
@@ -87,7 +96,7 @@ export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
                 <div key={key} className="table_container mb-medium">
                   <DataDescription
                     style={{ marginBottom: "0px" }}
-                    label={"Søknadsbarn"}
+                    label={t.søknadsbarn}
                     value={
                       <Person
                         fødselsdato={gjelderBarn.fødselsdato!}
@@ -104,7 +113,7 @@ export default function VedleggBoforhold({ vedleggNummer = 1 }: VedleggProps) {
         )}
       {type == NotatMalType.FORSKUDD && (
         <div>
-          <h3>Sivilstand</h3>
+          <h3>{t.sivilstand}</h3>
           <div className="table_container">
             <BoforholdTable
               data={data.boforhold.sivilstand.opplysningerFraFolkeregisteret}
@@ -133,9 +142,7 @@ export function BoforholdTable({
       data={{
         headers: [
           {
-            name: erSivilstand
-              ? tekster.tabell.felles.fraDato
-              : tekster.tabell.felles.periode,
+            name: erSivilstand ? tekster.tabell.felles.fraDato : ord.periode,
             width: "140px",
           },
           { name: tekster.tabell.felles.status },
@@ -177,7 +184,7 @@ function AndreVoksneiHusstandenDetaljer({
 }) {
   return (
     <>
-      <h4 style={{ width: "200px" }}>Hvem bor på adresse?</h4>
+      <h4 style={{ width: "200px" }}>{t.hvemBorPåAdresse}</h4>
       <ul
         style={{
           listStyleType: "decimal",
@@ -196,7 +203,7 @@ function AndreVoksneiHusstandenDetaljer({
                       dateOrNull(husstandsmedlem.fødselsdato)!,
                     )}
                 {husstandsmedlem.harRelasjonTilBp &&
-                  " (Relasjon til Bidragspliktig)"}
+                  t.relasjonTilBidragspliktig}
               </li>
             );
           },

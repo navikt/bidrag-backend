@@ -1,6 +1,6 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import tekster from "~/tekster";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import HeaderFooter from "~/components/notat_felles/HeaderFooter";
 import { parseRequestAction, VedtakRequest } from "~/routes/common";
 import BrevAdresseKontaktinfo from "~/components/notat_felles/components/BrevAdresseKontaktinfo";
@@ -16,10 +16,10 @@ export async function action(args: ActionFunctionArgs) {
 
 export function meta() {
   return [
-    { title: tekster.titler.bidrag },
-    { name: "description", content: tekster.titler.bidrag },
+    { title: bidragTekster.tittel },
+    { name: "description", content: bidragTekster.tittel },
     { property: "author", content: "bidrag-dokument-produksjon" },
-    { property: "subject", content: tekster.titler.bidrag },
+    { property: "subject", content: bidragTekster.tittel },
   ];
 }
 

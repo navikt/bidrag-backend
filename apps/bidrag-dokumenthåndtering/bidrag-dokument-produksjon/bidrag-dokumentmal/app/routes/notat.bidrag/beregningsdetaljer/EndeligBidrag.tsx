@@ -1,6 +1,9 @@
 import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.endeligBidrag;
 
 export const EndeligBidragTable = () => {
   const {
@@ -12,20 +15,20 @@ export const EndeligBidragTable = () => {
 
   return (
     <div style={{ width: "600px" }}>
-      <h4>{`Endelig bidrag`}</h4>
+      <h4>{t.tittel}</h4>
       <DataViewTable
         gap={"5px"}
         data={
           [
             !deltBosted
               ? {
-                  label: "Etter samværsfradraget",
+                  label: t.etterSamværsfradraget,
                   textRight: false,
                   value: `${formatterBeløpForBeregning(sluttberegningAldersjustering?.bpAndelBeløp ?? sluttberegning?.bruttoBidragEtterBarnetilleggBP)} - ${formatterBeløpForBeregning(beregning.samværsfradrag)} = ${formatterBeløpForBeregning(sluttberegningAldersjustering?.beregnetBeløp ?? sluttberegning?.beregnetBeløp)}`,
                 }
               : null,
             {
-              label: "Avrundet beløp",
+              label: t.avrundetBeløp,
               textRight: false,
               value: `${formatterBeløpForBeregning(sluttberegningAldersjustering?.resultatBeløp ?? sluttberegning?.resultatBeløp)}`,
             },

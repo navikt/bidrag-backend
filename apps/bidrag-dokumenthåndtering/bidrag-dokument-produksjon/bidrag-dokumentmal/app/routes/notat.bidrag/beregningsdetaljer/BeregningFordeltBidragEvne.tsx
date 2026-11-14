@@ -1,6 +1,9 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
+import bidragOpplysningerTekster from "~/tekster/notat/bidrag/opplysninger.yaml";
+
+const t = bidragOpplysningerTekster.beregningsdetaljer.fordeltBidragEvne;
 
 export const BeregningFordeltBidragEvne = () => {
   const {
@@ -10,9 +13,9 @@ export const BeregningFordeltBidragEvne = () => {
   } = useBeregningDetaljer();
   function renderResult() {
     if (sluttberegning.bidragJustertNedTilEvne) {
-      return ` (redusert ned til evne)`;
+      return t.redusertNedTilEvne;
     } else if (sluttberegning.bidragJustertNedTil25ProsentAvInntekt) {
-      return ` (redusert ned til 25% av inntekt)`;
+      return t.redusertNedTil25ProsentAvInntekt;
     }
     return "";
   }
@@ -26,12 +29,12 @@ export const BeregningFordeltBidragEvne = () => {
       data={
         [
           {
-            label: "25% av inntekt",
+            label: t.tjuefemProsentAvInntekt,
             textRight: false,
             value: formatterBeløpForBeregning(evne.sumInntekt25Prosent),
           },
           !erForholdsmessigFordelt && {
-            label: "Foreløpig bidrag",
+            label: t.foreløpigBidrag,
             textRight: false,
             value: `${formatterBeløpForBeregning(sluttberegning.bruttoBidragJustertForEvneOg25Prosent)}${renderResult()}`,
           },

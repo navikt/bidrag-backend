@@ -1,19 +1,26 @@
-import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import {
+  useNotatFelles,
+  useVedleggNummer,
+} from "~/components/notat_felles/NotatContext";
 import { NotatSamvaersperiodeDto, NotatSamvaerBarnDto } from "~/types/Api";
 import { CommonTable } from "~/components/CommonTable";
+import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
+import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
 import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { DataViewTable } from "~/components/DataViewTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import elementIds from "~/utils/elementIds";
-import { VedleggProps } from "~/types/commonTypes";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
 import {
   TypeInnhold,
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 
-export default function Samvær({ vedleggNummer }: VedleggProps) {
+const t = bidragTekster.samvær;
+
+export default function Samvær() {
+  const vedleggNummer = useVedleggNummer("samvær");
   const { data, erAvslag, gjelderFlereSaker } = useNotatFelles();
   if (erAvslag) return null;
   const samvær = data.samværV2;
@@ -21,9 +28,9 @@ export default function Samvær({ vedleggNummer }: VedleggProps) {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>Samvær</h2>
+        <h2>{t.tittel}</h2>
         <a href={`#${elementIds.vedleggSamvær}`}>
-          se vedlegg nr. {vedleggNummer} for beregningsdetaljer
+          {ord.seVedleggForBeregningsdetaljer.replace("{}", `${vedleggNummer}`)}
         </a>
       </div>
       {gjelderFlereSaker ? (
@@ -61,12 +68,15 @@ function SamværPerSak({ data }: { data: NotatSamvaerBarnDto[] }) {
               gap={"5px"}
               data={[
                 {
-                  label: "Saksnummer",
+                  label: ord.saksnummer,
                   labelBold: true,
                   value:
                     typeInnhold == TypeInnhold.NOTAT
                       ? saksnummer
-                      : `${saksnummer} (Oppgi saksnummeret ved henvendelse til oss.)`,
+                      : ord.saksnummerMedHenvisning.replace(
+                          "{}",
+                          `${saksnummer}`,
+                        ),
                 },
               ]}
             />
@@ -97,7 +107,7 @@ function SamværBarnFelles({ data }: { data: NotatSamvaerBarnDto[] }) {
           ]}
         />
       ) : (
-        <div>Samme for alle søknadsbarn</div>
+        <div>{t.sammeForAlleSøknadsbarn}</div>
       )}
       <SamværTabell data={førsteSamvær.perioder} />
       <NotatBegrunnelse data={førsteSamvær?.begrunnelse} />

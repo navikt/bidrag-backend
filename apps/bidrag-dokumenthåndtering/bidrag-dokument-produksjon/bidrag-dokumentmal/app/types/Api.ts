@@ -969,7 +969,6 @@ export interface NotatGebyrDetaljerDto {
   endeligIlagtGebyr: boolean;
   begrunnelse?: string | null;
   beløpGebyrsats: number;
-  /** @deprecated */
   rolle: DokumentmalPersonDto;
   gebyrResultatVisningsnavn: string;
   erManueltOverstyrt: boolean;
@@ -979,11 +978,6 @@ export interface NotatGebyrInntektDto {
   skattepliktigInntekt: number;
   maksBarnetillegg?: number | null;
   totalInntekt: number;
-}
-
-export interface NotatGebyrRolleV2Dto {
-  gebyrDetaljer: NotatGebyrDetaljerDto[];
-  rolle: DokumentmalPersonDto;
 }
 
 export interface NotatGebyrSakDto {
@@ -1006,10 +1000,6 @@ export interface NotatGebyrSoknadDetaljerDto {
   behandlingstypeVisningsnavn?: string | null;
   søktAvTypeVisningsnavn?: string | null;
   behandlingstemaVisningsnavn?: string | null;
-}
-
-export interface NotatGebyrV2Dto {
-  gebyrRoller: NotatGebyrRolleV2Dto[];
 }
 
 export interface NotatGebyrV3Dto {
@@ -1110,6 +1100,8 @@ export type NotatResultatForskuddBeregningBarnDto = UtilRequiredKeys<
 > & {
   barn: DokumentmalPersonDto;
   perioder: NotatResultatPeriodeDto[];
+  /** Om avslaget gjelder opphør av en løpende stønad. Brukes for å vise Opphør i stedet for Avslag */
+  erOpphørAvStønad?: boolean;
 };
 
 export interface NotatResultatPeriodeDto {
@@ -1149,6 +1141,10 @@ export type NotatResultatSaerbidragsberegningDto = UtilRequiredKeys<
   bpHarEvne: boolean;
   resultatVisningsnavn: string;
   beløpSomInnkreves: number;
+  /** Om beregningen ga et annet resultat enn innvilget særbidrag */
+  erBeregningAvslag: boolean;
+  /** Om avslaget skal vises sammen med utgiftene som er lagt til grunn */
+  erAvslagSomInneholderUtgifter: boolean;
 };
 
 export interface NotatSamvaerBarnDto {
@@ -1464,6 +1460,8 @@ export interface ResultatBarnebidragsberegningPeriodeDto {
   delvedtakstypeVisningsnavn: string;
   resultatkodeVisningsnavn: string;
   resultatFraVedtak?: ResultatFraVedtakGrunnlag | null;
+  /** Om perioden er avslag/opphør uten beløp, f.eks. fordi barnet er selvforsørget eller BP ikke har omsorg */
+  erAvslagUtenBeløp: boolean;
 }
 
 export interface ResultatFraVedtakGrunnlag {
@@ -1529,10 +1527,7 @@ export interface VedtakNotatDto {
   virkningstidspunkt: NotatVirkningstidspunktDto;
   utgift?: NotatSaerbidragUtgifterDto | null;
   boforhold: NotatBoforholdDto;
-  samvær: NotatSamvaerBarnDto[];
   samværV2?: NotatSamvaerDto | null;
-  gebyr?: NotatGebyrDetaljerDto[] | null;
-  gebyrV2?: NotatGebyrV2Dto | null;
   gebyrV3?: NotatGebyrV3Dto | null;
   underholdskostnader?: NotatUnderholdDto | null;
   personer: DokumentmalPersonDto[];
