@@ -235,7 +235,7 @@ class RolleService(
         // Hvis RM i request er lik nåværende RM -> ikke lag ny RM-rolle, ikke nullstill kobling
         if (dtoTilOppdatering.harRM && rmIdentMatch) {
             eksisterendeRolle.apply {
-                mottagerErVerge = dtoTilOppdatering.rolle.reellMottaker?.verge ?: dtoTilOppdatering.rolle.mottagerErVerge
+                mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
             }
             return listOf(eksisterendeRolle)
         }
@@ -255,7 +255,7 @@ class RolleService(
             }
 
         eksisterendeRolle.apply {
-            mottagerErVerge = dtoTilOppdatering.rolle.reellMottaker?.verge ?: dtoTilOppdatering.rolle.mottagerErVerge
+            mottagerErVerge = dtoTilOppdatering.rolle.mottagerErVerge
             rmRolleId = null
         }
 

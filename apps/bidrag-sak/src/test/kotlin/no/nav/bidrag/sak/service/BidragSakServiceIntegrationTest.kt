@@ -232,6 +232,24 @@ internal class BidragSakServiceIntegrationTest : SpringH2TestRunner() {
         }
 
         @Test
+        fun `gammelt endepunkt bruker mottagerErVerge og ikke verge på reell mottaker`() {
+            val opprettet = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.EIERENHET))
+            val barnMedVerge = RolleDto(
+                fødselsnummer = barn,
+                type = Rolletype.BARN,
+                reellMottaker = ReellMottakerDto(ReellMottaker(mottaker.verdi), false, ReellMottakerType.PERSON),
+                mottagerErVerge = true,
+            )
+
+            bidragssakService.oppdaterRollerISak(OppdaterRollerISakRequest(opprettet.saksnummer, setOf(barnMedVerge)))
+
+            th.transactional {
+                val sak = bidragssakRepository.findByIdOrThrow(opprettet.saksnummer.verdi)
+                sak.roller.single { it.rolleType == Rolletype.BARN }.mottagerErVerge shouldBe true
+            }
+        }
+
+        @Test
         fun `PATCH avviser manglende sakstilgang uten å endre roller`() {
             val opprettet = bidragssakService.opprettSak(forespørsel(Arbeidsfordeling.EIERENHET))
             every { tilgangClient.harTilgangSaksnummer(opprettet.saksnummer) } returns false

@@ -111,7 +111,7 @@ object BidragssakMapper {
                     fødselsnummer = dto.fødselsnummer?.verdi,
                     objektnummer = objektnummer,
                     rolleType = dto.type,
-                    mottagerErVerge = dto.reellMottaker?.verge ?: dto.mottagerErVerge,
+                    mottagerErVerge = dto.mottagerErVerge,
                     fødselsdato = fødselsdatoer[dto.fødselsnummer],
                     bidragssak = bidragssak,
                 )
