@@ -22,6 +22,7 @@ import no.nav.bidrag.sak.mapper.model.rmFødselsnummer
 import no.nav.bidrag.sak.mapper.model.rmSamhandlerId
 import no.nav.bidrag.sak.mapper.model.tilFødselsdatoMap
 import no.nav.bidrag.sak.mapper.model.type
+import no.nav.bidrag.transport.sak.ReellMottakerType
 import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -98,7 +99,13 @@ class RolleService(
                 fødselsnummer = ident ?: rolle.fødselsnummer,
                 foedselsnummer = ident ?: rolle.foedselsnummer,
                 reellMottaker = rolle.reellMottaker?.let {
-                    it.copy(ident = rolle.rmFødselsnummer()?.let { ident -> ReellMottaker(gjeldendeIdent(ident.verdi)) } ?: it.ident)
+                    it.copy(
+                        ident = when (it.type) {
+                            ReellMottakerType.PERSON -> ReellMottaker(gjeldendeIdent(it.ident.verdi))
+                            ReellMottakerType.SAMHANDLER -> it.ident
+                            null -> gjeldendeReellMottakerIdent(it.ident)
+                        },
+                    )
                 },
                 reellMottager = rolle.reellMottager?.let { gjeldendeReellMottakerIdent(it) },
             )
