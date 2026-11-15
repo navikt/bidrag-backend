@@ -347,6 +347,7 @@ class BidragSakService(
         }
         bidragssakValidator.validerRolleendring(saksrollerFør, sak.roller, grunnlag)
         arbeidsfordelingService.utførArbeidsfordeling(sak)
+        // TODO: Send forrigeEierfogd til lagreOgPubliser etter rebase på #501, slik at arbeidsflyt flytter oppgavene ved enhetsbytte.
         return lagreOgPubliser(sak, rollerFørOppdatering, rollerTilOppdatering)
     }
 

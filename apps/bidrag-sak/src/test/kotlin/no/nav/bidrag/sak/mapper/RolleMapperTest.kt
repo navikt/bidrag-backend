@@ -9,6 +9,7 @@ import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
+import no.nav.bidrag.generer.testdata.person.genererPersonident
 import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.ReellMottakerType
@@ -181,6 +182,33 @@ class RolleMapperTest {
                     reellMottager = ReellMottaker(""),
                 )
             assertThat(dtoDep.harRM()).isFalse()
+        }
+
+        @Test
+        fun `utypet reellMottaker uten gyldig ident faller tilbake til samhandler i reellMottager`() {
+            val dto =
+                RolleDto(
+                    fødselsnummer = genererPersonident(),
+                    type = Rolletype.BARN,
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(""), verge = false),
+                    reellMottager = ReellMottaker("85000000083"),
+                )
+
+            assertThat(dto.rmSamhandlerId()?.verdi).isEqualTo("85000000083")
+        }
+
+        @Test
+        fun `utypet reellMottaker uten gyldig ident faller tilbake til person i reellMottager`() {
+            val mottaker = genererPersonident()
+            val dto =
+                RolleDto(
+                    fødselsnummer = genererPersonident(),
+                    type = Rolletype.BARN,
+                    reellMottaker = ReellMottakerDto(ident = ReellMottaker(""), verge = false),
+                    reellMottager = ReellMottaker(mottaker.verdi),
+                )
+
+            assertThat(dto.rmFødselsnummer()).isEqualTo(mottaker)
         }
 
         @Test

@@ -68,7 +68,7 @@ data class RolleDto(
         return when (rm.type) {
             ReellMottakerType.SAMHANDLER -> SamhandlerId(rm.ident.verdi)
             ReellMottakerType.PERSON -> null
-            null -> rm.ident.samhandlerId()
+            null -> rm.ident.samhandlerId() ?: reellMottager?.samhandlerId()
         }
     }
 
@@ -77,7 +77,7 @@ data class RolleDto(
         return when (rm.type) {
             ReellMottakerType.PERSON -> Personident(rm.ident.verdi)
             ReellMottakerType.SAMHANDLER -> null
-            null -> rm.ident.personIdent()
+            null -> rm.ident.personIdent() ?: reellMottager?.personIdent()
         }
     }
 
