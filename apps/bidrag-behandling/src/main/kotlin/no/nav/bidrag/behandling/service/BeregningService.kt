@@ -14,6 +14,7 @@ import no.nav.bidrag.behandling.dto.v1.beregning.`ResultatUtførBidragsberegning
 import no.nav.bidrag.behandling.dto.v1.beregning.UgyldigBeregningDto
 import no.nav.bidrag.behandling.dto.v1.beregning.opprettBegrunnelse
 import no.nav.bidrag.behandling.dto.v1.beregning.tilBeregningFeilmelding
+import no.nav.bidrag.behandling.transformers.beregning.sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn
 import no.nav.bidrag.behandling.transformers.beregning.validerForSærbidrag
 import no.nav.bidrag.behandling.transformers.erDirekteAvslag
 import no.nav.bidrag.behandling.transformers.finnDelberegningBPsBeregnedeTotalbidrag
@@ -180,6 +181,7 @@ class BeregningService(
                         behandling.omgjøringsdetaljer?.opprinneligVedtakstype ?: behandling.vedtakstype,
                     ).let { resultat ->
                         resultat.validerForSærbidrag()
+                        sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat)
                         resultat
                     }
             } catch (e: Exception) {
