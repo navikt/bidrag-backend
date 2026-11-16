@@ -17,10 +17,10 @@
   <packaging>jar</packaging>
 
   <properties>
-    <mockk.version>1.14.11</mockk.version>
+    <mockk.version>1.14.12</mockk.version>
     <nav-token-support.version>7.0.1</nav-token-support.version>
-    <jackson.version>2.22.4</jackson.version>
-    <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
+    <jackson.version>2.23.0</jackson.version>
+    <kotlin-logging-jvm.version>8.0.6</kotlin-logging-jvm.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
