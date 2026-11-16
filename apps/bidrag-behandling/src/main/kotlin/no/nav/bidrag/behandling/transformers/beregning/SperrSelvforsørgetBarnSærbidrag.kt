@@ -7,7 +7,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspli
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 
 const val FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG =
-    "Beregning av særbidrag når barnet er selvforsørget (barnets inntekt er høyere enn 100 ganger forskuddssatsen) støttes ikke ennå."
+    "Beregning av særbidrag når barnet er selvforsørget (barnets inntekt er lik eller høyere enn 100 ganger forskuddssatsen) støttes ikke ennå."
 
 /**
  * Midlertidig sperre: Løsningen for særbidrag når barnet er selvforsørget (§ 5) er ikke i henhold til lovverket. Inntil det er
