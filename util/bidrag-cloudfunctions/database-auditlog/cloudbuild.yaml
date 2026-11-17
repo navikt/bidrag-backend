@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    dir: util/bidrag-cloudfunctions/postgres-auditlog
+    dir: util/bidrag-cloudfunctions/database-auditlog
     args:
       - 'build'
       - '-t'

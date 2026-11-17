@@ -124,3 +124,35 @@ test('normalize Postgres-loggpost fra Cloud SQL data_access', () => {
   assert.match(query, /insertId="2#000000000000#test-instans#audit#1700000000000000000#0000000000000001-0@a1"/);
   assert.match(a.buildSlackText(e), /^\*Postgres auditlog\*/);
 });
+
+test('missingSlackIdWarning gir veiledning for bruker uten Slack-ID', () => {
+  const warning = a.missingSlackIdWarning('Ola.Nordmann');
+  assert.match(warning, /Fant ingen Slack-ID for `Ola\.Nordmann`/);
+  assert.match(warning, /USERNAME_TO_SLACK_ID/);
+  assert.match(warning, /util\/bidrag-cloudfunctions\/database-auditlog\/auditlog\.js/);
+  assert.match(warning, /Copy member ID/);
+  assert.match(warning, /"ola\.nordmann": "<member ID>",/);
+});
+
+test('missingSlackIdWarning er tom for kjent eller ukjent bruker', () => {
+  const [kjentBruker] = Object.keys(a.USERNAME_TO_SLACK_ID);
+  assert.equal(a.missingSlackIdWarning(kjentBruker), '');
+  assert.equal(a.missingSlackIdWarning('(ukjent)'), '');
+  assert.equal(a.missingSlackIdWarning(undefined), '');
+});
+
+test('buildSlackText sender melding med advarsel når Slack-ID mangler', () => {
+  const text = a.buildSlackText(a.normalize(toPubSub(pgEntry)));
+  assert.match(text, /^\*Postgres auditlog\*/);
+  assert.match(text, /`ola\.nordmann` husk å dokumentere endringen/);
+  assert.match(text, /:warning: Fant ingen Slack-ID for `ola\.nordmann`/);
+});
+
+test('buildSlackText har ingen advarsel når Slack-ID finnes', () => {
+  const [kjentBruker, slackId] = Object.entries(a.USERNAME_TO_SLACK_ID)[0];
+  const entry = structuredClone(pgEntry);
+  entry.protoPayload.request.user = `${kjentBruker}@nav.no`;
+  const text = a.buildSlackText(a.normalize(toPubSub(entry)));
+  assert.match(text, new RegExp(`<@${slackId}> husk å dokumentere`));
+  assert.doesNotMatch(text, /:warning:/);
+});

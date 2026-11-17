@@ -7,7 +7,7 @@ For databasene `BI464P`, `SJ461P` og `BI460P` får varselet tittelen «DB2 audit
 Når en utvikler kjører en database-spørring sendes det en melding til Slack med lenke til auditloggen.
 Slack-webhook-URL konfigureres via Cloud Build substitution `_SLACK_WEBHOOK_SECRET`, som brukes til å sette runtime-variabelen `SLACK_WEBHOOK_URL`.
 
-Kjør testene med `npm test` i `postgres-auditlog/`.
+Kjør testene med `npm test` i `database-auditlog/`.
 
 ## Oppsett i Google Cloud Console
 
@@ -62,7 +62,7 @@ Pub/Sub bruker denne kontoen til å signere et OIDC-token på hver melding. Tjen
 2. Fyll inn:
    - **Service account name:** `database-auditlog-slack`
    - **Service account ID:** `database-auditlog-slack` (fylles ut automatisk)
-   - **Description:** `Pub/Sub push til postgres-auditlog`
+   - **Description:** `Pub/Sub push til database-auditlog`
    - Trykk **Create and continue**.
 3. **Grant this service account access to project:** hopp over, kontoen trenger ingen prosjektroller. Trykk **Continue** og **Done**.
 4. Åpne kontoen, gå til fanen **Principals with access** (eller **Permissions**) og trykk **Grant access**.

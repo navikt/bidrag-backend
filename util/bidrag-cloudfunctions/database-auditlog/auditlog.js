@@ -5,6 +5,7 @@ const UNKNOWN = '(ukjent)';
 const MISSING = '(mangler)';
 const LOGS_EXPLORER_URL = 'https://console.cloud.google.com/logs/query';
 const GAAL_URL = 'https://audit-approval.iap.nav.cloud.nais.io/?';
+const SLACK_ID_MAPPING_FILE = 'util/bidrag-cloudfunctions/database-auditlog/auditlog.js';
 
 const PAYLOAD_TYPE = Object.freeze({ PUBSUB: 'pubsub', INCIDENT: 'incident' });
 
@@ -103,14 +104,30 @@ function buildLogUrl({ database, user, insertId, timestamp, projectId }) {
   return `${LOGS_EXPLORER_URL};query=${query};timeRange=${timeStart}--${timeEnd};cursorTimestamp=${cursor}?project=${projectId}`;
 }
 
+function findSlackId(username) {
+  if (!username || username === UNKNOWN) return undefined;
+  return USERNAME_TO_SLACK_ID[username.toLowerCase()];
+}
+
 function slackMention(username) {
   if (!username || username === UNKNOWN) return '';
-  const slackId = USERNAME_TO_SLACK_ID[username.toLowerCase()];
+  const slackId = findSlackId(username);
   return slackId ? `<@${slackId}>` : `\`${username}\``;
 }
 
-function buildSlackText(event) {
+function missingSlackIdWarning(username) {
+  if (!username || username === UNKNOWN || findSlackId(username)) return '';
   return [
+    `:warning: Fant ingen Slack-ID for \`${username}\`, så ingen ble pinget.`,
+    `Legg til brukeren i \`USERNAME_TO_SLACK_ID\` i \`${SLACK_ID_MAPPING_FILE}\`:`,
+    `1. Finn Slack-ID: åpne profilen i Slack → ⋮ (More) → *Copy member ID* (starter med \`U\`).`,
+    `2. Legg til linjen \`"${username.toLowerCase()}": "<member ID>",\` (nøkkelen er e-posten før @, med små bokstaver).`,
+    `3. Commit og push. Cloud Build deployer tjenesten på nytt.`,
+  ].join('\n');
+}
+
+function buildSlackText(event) {
+  const lines = [
     `*${isDb2(event.database) ? 'DB2' : 'Postgres'} auditlog*`,
     ``,
     `Kommando: \`${event.command}\``,
@@ -122,7 +139,10 @@ function buildSlackText(event) {
     `<${buildLogUrl(event)}|Lenke til auditlog (med tidsvindu ±5 min)>`,
     ``,
     `${slackMention(event.username)} husk å dokumentere endringen i <${GAAL_URL}|GAAL>`,
-  ].join('\n');
+  ];
+  const warning = missingSlackIdWarning(event.username);
+  if (warning) lines.push('', warning);
+  return lines.join('\n');
 }
 
 module.exports = {
@@ -135,5 +155,6 @@ module.exports = {
   normalize,
   buildLogUrl,
   slackMention,
+  missingSlackIdWarning,
   buildSlackText,
 };
