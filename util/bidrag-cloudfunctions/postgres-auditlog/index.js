@@ -1,114 +1,66 @@
-// index.js
 const functions = require('@google-cloud/functions-framework');
+const { OAuth2Client } = require('google-auth-library');
+const { PAYLOAD_TYPE, detectPayloadType, normalize, buildSlackText } = require('./auditlog');
 
-const EXPECTED_TOKEN    = process.env.GCP_WEBHOOK_SECRET;
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;      // Incoming webhook
-const DB2_DATABASE_PATTERN = /^(BI464P|SJ461P|BI460P)$/;
+const EXPECTED_TOKEN = process.env.GCP_WEBHOOK_SECRET;
+const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
+const PUBSUB_AUDIENCE = process.env.PUBSUB_AUDIENCE;
+const PUBSUB_SERVICE_ACCOUNT = process.env.PUBSUB_SERVICE_ACCOUNT;
 
-// Map NAV usernames → Slack user IDs
-const USERNAME_TO_SLACK_ID = {
-  "ugur.alpay.cenar": "U7577GCKW",
-  "simen.naper.hoston": "U03RYJH2URZ",
-  "lars.otto.haugen": "UC07E0JAD",
-  "morten.hermansen": "UAQQKJL9L",
-  "magnus.rinnan": "UC8R961EW",
-  "tatjana.andersen": "UA4DANW3H",
-  "cristiano.sadun": "U0BT124NGCU",
-  "sigbjorn.myhre":"UBB6YAXJB"
-};
+const oidcClient = new OAuth2Client();
+
+function bearerToken(req) {
+  return req.header('Authorization')?.replace(/^(Basic|Bearer) /, '');
+}
+
+function isValidSharedSecret(req) {
+  const token = req.header('X-GCP-Secret-Token') || bearerToken(req);
+  return Boolean(token) && token === EXPECTED_TOKEN;
+}
+
+async function isValidPubSubToken(req) {
+  const token = bearerToken(req);
+  if (!token || !PUBSUB_AUDIENCE || !PUBSUB_SERVICE_ACCOUNT) return false;
+  try {
+    const ticket = await oidcClient.verifyIdToken({ idToken: token, audience: PUBSUB_AUDIENCE });
+    const claims = ticket.getPayload();
+    return claims.email === PUBSUB_SERVICE_ACCOUNT && claims.email_verified === true;
+  } catch (err) {
+    console.warn('Invalid Pub/Sub OIDC token', err.message);
+    return false;
+  }
+}
 
 functions.http('gcpAuditToSlack', async (req, res) => {
+  const type = detectPayloadType(req.body);
+  if (!type) return res.status(400).send('Unknown payload');
 
-  const token = req.header('X-GCP-Secret-Token') || req.header('Authorization')?.replace("Basic ", "")?.replace("Bearer ", "");
-  if (!token || token !== EXPECTED_TOKEN) {
-    return res.status(403).send('Forbidden');
+  const authorized = type === PAYLOAD_TYPE.PUBSUB ? await isValidPubSubToken(req) : isValidSharedSecret(req);
+  if (!authorized) return res.status(403).send('Forbidden');
+
+  let event;
+  try {
+    event = normalize(req.body);
+  } catch (err) {
+    console.error('Could not parse payload', { type, error: err.message });
+    return res.status(400).send('Invalid payload');
   }
 
-  const payload = req.body;
-  if (!payload?.incident) return res.status(400).send('No incident');
-
-  const summary = payload.incident.summary || '';
-  const labelsFromSummary = {};
-  const labelsBlock = summary.match(/labels \{([^}]+)\}/);
-  if (labelsBlock) {
-    labelsBlock[1].split(',').forEach(pair => {
-      const [key, ...valueParts] = pair.split('=');
-      labelsFromSummary[key.trim()] = valueParts.join('=').trim();
-    });
-  }
-
-  const projectId = payload.incident.resource?.labels?.project_id || 'bidrag-dev-45a9';
-  const {
-    command     = '(ukjent)',
-    database    = '(ukjent)',
-    user        = '(ukjent)',
-    insertId    = '(mangler)',
-    username    = user.split('@')[0] || '(ukjent)'   // fallback: use part before @nav.no
-  } = labelsFromSummary;
-
-
-  console.debug('Received auditlog incident', { insertId: labelsFromSummary.insertId });
-  // ── 3. Resolve Slack mention
-  let mention = '';
-  const slackId = USERNAME_TO_SLACK_ID[username.toLowerCase()];
-  if (username && slackId) {
-    mention = `<@${slackId}>`;
-  } else if (username) {
-    mention = `\`${username}\``; // show name but no ping
-  }
-
-  const timestamp = payload.incident.started_at ? payload.incident.started_at * 1000 : new Date().toISOString();
-  const ts = new Date(timestamp);
-  const timeStart = new Date(ts.getTime() - 5 * 60 * 1000).toISOString();
-  const timeEnd   = new Date(ts.getTime() + 5 * 60 * 1000).toISOString();
-
-  const isDb2 = DB2_DATABASE_PATTERN.test(database);
-  const databaseLogQuery = isDb2
-      ? `jsonPayload.requestType="dbAuditEntry"\n` +
-        `jsonPayload.dbName=~"${DB2_DATABASE_PATTERN.source}"\n`
-      : `protoPayload.methodName="cloudsql.instances.query"\n` +
-        `protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry"\n` +
-        `protoPayload.request.user=~"${user || ''}"\n` +
-        `protoPayload.request.database="${database || ''}"\n`;
-  const logQuery = encodeURIComponent(
-      databaseLogQuery +
-      `insertId="${insertId || ''}"`
-  );
-
-  const logUrl = `https://console.cloud.google.com/logs/query;` +
-      `query=${logQuery}` +
-      `;timeRange=${timeStart}--${timeEnd}` +
-      `;cursorTimestamp=${timestamp}` +
-      `?project=${projectId}`;
-
-  const slackText = [
-    `*${isDb2 ? 'DB2' : 'Postgres'} auditlog*`,
-    ``,
-    `Kommando: \`${command || '(ukjent)'}\``,
-    `Database: \`${database || '(ukjent)'}\``,
-    `Utført av: \`${user || '(ukjent)'}\``,
-    ``,
-    `Unik referanse (insertId): \`${insertId || '(mangler)'}\``,
-    ``,
-    `<${logUrl}|Lenke til auditlog (med tidsvindu ±5 min)>`,
-    ``,
-    `${mention} husk å dokumentere endringen i <https://audit-approval.iap.nav.cloud.nais.io/?|GAAL>`,
-  ].join('\n');
+  console.debug('Received auditlog event', { type, insertId: event.insertId });
 
   try {
     const response = await fetch(SLACK_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: slackText, mrkdwn: true })
+      body: JSON.stringify({ text: buildSlackText(event), mrkdwn: true })
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Slack responded with error', { status: response.status, body: errorText });
+      console.error('Slack responded with error', { status: response.status, body: await response.text() });
       return res.status(500).send('Slack error');
     }
 
-    console.log('Slack message sent successfully', { insertId, user });
+    console.log('Slack message sent successfully', { type, insertId: event.insertId });
     return res.status(200).send('OK');
   } catch (err) {
     console.error('Failed to send to Slack', err);
