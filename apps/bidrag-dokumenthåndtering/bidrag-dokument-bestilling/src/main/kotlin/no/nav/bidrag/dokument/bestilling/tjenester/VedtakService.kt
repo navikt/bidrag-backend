@@ -212,7 +212,7 @@ class VedtakService(
                 vedtakBarnInfo
                     .distinctBy { it.personIdent }
                     .sortedBy { it.personObjekt.fødselsdato }
-                    .map {
+                    .mapNotNull {
                         mapVedtakResultatBarn(
                             it,
                             vedtakDto,
@@ -264,13 +264,13 @@ class VedtakService(
         vedtak: VedtakDto,
         hentRiktigSpråkkode: String,
         erMalRettetMotBruker: Boolean,
-    ): VedtakResultatInnhold {
+    ): VedtakResultatInnhold? {
         val barnIdent = soknadBarn.personIdent!!
         val personInfo = personService.hentPerson(barnIdent)
         val stønadsendring =
             vedtak.stønadsendringListe
                 .filter { it.type.erBidrag }
-                .find { it.kravhaver.verdi == soknadBarn.personIdent }!!
+                .find { it.kravhaver.verdi == soknadBarn.personIdent } ?: return null
         val delvedtak = vedtak.hentDelvedtak(stønadsendring, erMalRettetMotBruker)
         val endeligVedtak = delvedtak.find { it.endeligVedtak }
         return DokumentmalResultatBidragsberegningBarnDto(
