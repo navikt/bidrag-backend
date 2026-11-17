@@ -1,5 +1,6 @@
 package no.nav.bidrag.beregn.barnebidrag.service
 
+import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -29,10 +30,15 @@ import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultatV2
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.resultatSluttberegning
@@ -91,6 +97,50 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
 
         feil.message shouldBe feilmeldingSelvforsørgetBarn(BigDecimal.valueOf(100))
         feil.message!! shouldContain "minst 100 ganger forskuddssatsen"
+    }
+
+    @Test
+    fun `feilmeldingen skal bruke multiplikatoren fra perioden der barnet er selvforsørget`() {
+        enableUnleashFeature(BarnebidragUnleashFeatures.SPERR_SELVFORSØRGET_BARN)
+        val ekteResultat = beregn("selvforsorget").single { it.søknadsbarnreferanse == søknadsbarn2 }
+        val sluttberegning = sluttberegninger(listOf(ekteResultat), søknadsbarn2).first()
+        val resultatBeregning = ekteResultat.beregnetBarnebidragResultat.beregnetBarnebidragPeriodeListe.first().resultat
+        val periode1 = ÅrMånedsperiode(YearMonth.parse("2024-05"), YearMonth.parse("2024-07"))
+        val periode2 = ÅrMånedsperiode(YearMonth.parse("2024-07"), YearMonth.parse("2025-01"))
+
+        fun sjablon(referanse: String, periode: ÅrMånedsperiode, verdi: Int) = GrunnlagDto(
+            referanse = referanse,
+            type = Grunnlagstype.SJABLON_SJABLONTALL,
+            innhold = POJONode(SjablonSjablontallPeriode(periode, sjablon = SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR, verdi = BigDecimal(verdi))),
+        )
+
+        fun sluttberegning(referanse: String, periode: ÅrMånedsperiode, selvforsørget: Boolean, sjablonReferanse: String) = GrunnlagDto(
+            referanse = referanse,
+            type = Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+            innhold = POJONode(sluttberegning.copy(periode = periode, barnetErSelvforsørget = selvforsørget)),
+            grunnlagsreferanseListe = listOf(sjablonReferanse),
+            gjelderBarnReferanse = søknadsbarn2,
+        )
+
+        val resultat = BeregnetBarnebidragResultatV2(
+            søknadsbarnreferanse = søknadsbarn2,
+            beregnetBarnebidragResultat = BeregnetBarnebidragResultat(
+                beregnetBarnebidragPeriodeListe = listOf(
+                    ResultatPeriode(periode1, resultatBeregning, listOf("sluttberegning_1")),
+                    ResultatPeriode(periode2, resultatBeregning, listOf("sluttberegning_2")),
+                ),
+                grunnlagListe = listOf(
+                    sluttberegning("sluttberegning_1", periode1, selvforsørget = false, sjablonReferanse = "sjablon_100"),
+                    sluttberegning("sluttberegning_2", periode2, selvforsørget = true, sjablonReferanse = "sjablon_50"),
+                    sjablon("sjablon_100", periode1, 100),
+                    sjablon("sjablon_50", periode2, 50),
+                ),
+            ),
+        )
+
+        val feil = assertThrows<IllegalArgumentException> { sperrBeregningNårBarnetErSelvforsørgetIfUnleashToggleIsOn(listOf(resultat)) }
+
+        feil.message shouldBe feilmeldingSelvforsørgetBarn(BigDecimal.valueOf(50))
     }
 
     @Test
