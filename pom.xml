@@ -24,6 +24,7 @@
         <module>libs/bidrag-felles/bidrag-domene</module>
         <module>libs/bidrag-felles/bidrag-transport</module>
         <module>libs/bidrag-felles/bidrag-commons</module>
+        <module>libs/bidrag-cache</module>
         <module>libs/bidrag-felles/bidrag-commons-test</module>
         <module>libs/bidrag-felles/bidrag-generer-testdata</module>
         <module>libs/bidrag-felles/bidrag-backend-sikkerhet</module>
@@ -293,4 +294,3 @@
     </build>
 
 </project>
-

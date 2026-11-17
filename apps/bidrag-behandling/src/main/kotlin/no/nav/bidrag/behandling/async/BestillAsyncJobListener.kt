@@ -8,6 +8,7 @@ import no.nav.bidrag.behandling.async.dto.OpprettForsendelseBestilling
 import no.nav.bidrag.behandling.async.dto.SøknadSlettetBestilling
 import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.service.GrunnlagService
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -25,14 +26,14 @@ class BestillAsyncJobListener(
     @Async
     fun bestillInnhentingAvGrunnlag(bestilling: GrunnlagInnhentingBestilling) {
         if (bestilling.waitForCommit) return
-        log.info { "Async: Henter grunnlag for behandling ${bestilling.behandlingId}" }
+        secureLogger.info { "Async: Henter grunnlag for behandling ${bestilling.behandlingId}" }
         grunnlagService.oppdatereGrunnlagForBehandling(bestilling.behandlingId)
     }
 
     @EventListener
     @Async
     fun behandleBestillingAvOppdateringAvRoller(bestilling: BehandlingOppdateringBestilling) {
-        log.info { "Async: Oppdaterer roller for behandling ${bestilling.behandlingId} og request ${tilJsonString(bestilling.request)}" }
+        secureLogger.info { "Async: Oppdaterer roller for behandling ${bestilling.behandlingId} og request ${tilJsonString(bestilling.request)}" }
         behandlingService.oppdaterRoller(bestilling.behandlingId, bestilling.request)
     }
 
@@ -40,14 +41,14 @@ class BestillAsyncJobListener(
     @Async
     fun behandleBestillingAvForsendelse(bestilling: OpprettForsendelseBestilling) {
         if (bestilling.waitForCommit) return
-        log.info { "Async: Oppretter forsendelse for behandling ${bestilling.behandlingId}" }
+        secureLogger.info { "Async: Oppretter forsendelse for behandling ${bestilling.behandlingId}" }
         behandlingService.opprettForsendelseForBehandling(bestilling.behandlingId)
     }
 
     @EventListener
     @Async
     fun behandleBestillingEtterSøknadSlettet(bestilling: SøknadSlettetBestilling) {
-        log.info { "Async: Behandler etter søknad slettet for søknadsid ${bestilling.søknadsid}" }
+        secureLogger.info { "Async: Behandler etter søknad slettet for søknadsid ${bestilling.søknadsid}" }
         behandlingService.behandleEtterSøknadSlettet(bestilling.søknadsid, bestilling.behandlingsid)
     }
 }

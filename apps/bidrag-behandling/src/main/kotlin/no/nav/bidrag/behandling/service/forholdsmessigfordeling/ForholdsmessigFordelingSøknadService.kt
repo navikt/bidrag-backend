@@ -145,7 +145,7 @@ class ForholdsmessigFordelingSøknadService(
                 søknader = alleSøknader,
             )
 
-        if (bmFødselsnummer != null && behandling.roller.none { it.ident == bmFødselsnummer }) {
+        if (bmFødselsnummer != null && behandling.roller.none { hentNyesteIdentIgnorerForbidden(it.ident)?.verdi == bmFødselsnummer }) {
             opprettEllerOppdaterRolle(
                 behandling,
                 Rolletype.BIDRAGSMOTTAKER,

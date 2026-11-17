@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
-import io.swagger.v3.oas.annotations.security.SecuritySchemes
 import no.nav.bidrag.commons.ExceptionLogger
 import no.nav.bidrag.commons.logging.audit.AuditAdvice
 import no.nav.bidrag.commons.security.service.ClientConfigurationWellknownProperties
@@ -41,10 +40,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @Configuration
-@SecuritySchemes(
-    SecurityScheme(bearerFormat = "JWT", name = "bearer-key", scheme = "bearer", type = SecuritySchemeType.HTTP),
-    SecurityScheme(name = "basic-auth", scheme = "basic", type = SecuritySchemeType.HTTP),
-)
+@SecurityScheme(bearerFormat = "JWT", name = "bearer-key", scheme = "bearer", type = SecuritySchemeType.HTTP)
 @OpenAPIDefinition(info = Info(title = "bidrag-sak", version = "v1"), security = [SecurityRequirement(name = "bearer-key")])
 @EnableOAuth2Client(cacheEnabled = true)
 @ConfigurationPropertiesScan

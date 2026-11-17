@@ -267,15 +267,15 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal ikke oppdatere virkningstidspunkt på særbidrag hvis klage`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
                     false,
                     inkludereBp = true,
                     behandlingstype = TypeBehandling.SÆRBIDRAG,
+                    virkningstidspunkt = LocalDate.now().minusMonths(1).withDayOfMonth(1),
                 )
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.now().minusMonths(1).withDayOfMonth(1))
             behandling.omgjøringsdetaljer =
                 Omgjøringsdetaljer(
                     omgjørVedtakId = 2,
@@ -330,8 +330,8 @@ class BehandlingServiceTest : TestContainerRunner() {
                     false,
                     inkludereBp = true,
                     behandlingstype = TypeBehandling.SÆRBIDRAG,
+                    virkningstidspunkt = LocalDate.now().minusMonths(1).withDayOfMonth(1),
                 )
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.now().minusMonths(1).withDayOfMonth(1))
             stubUtils.stubbeGrunnlagsinnhentingForBehandling(behandling)
             stubPersonConsumer()
             grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -1313,7 +1313,6 @@ class BehandlingServiceTest : TestContainerRunner() {
                 kjøreStubber(b)
                 val barnetilsynInnhentesForRolle = Grunnlagsdatatype.BARNETILSYN.innhentesForRolle(b)!!
                 barnetilsynInnhentesForRolle shouldBe b.bidragsmottaker!!
-                val innhentet = LocalDateTime.now()
 
                 // gjeldende barnetilsyn
                 b.leggeTilGjeldendeBarnetilsyn()
@@ -1768,7 +1767,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere perioder på andre voksne i husstand boforhold og inntekter når virkningstidspunkt på særbidrag endres`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
@@ -1819,7 +1818,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere aktivert og ikke aktivert andre voksne i husstand ved endring av virkningstidspunkt for særbidrag`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
@@ -1912,7 +1911,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere aktivert og ikke aktivert andre voksne i husstand ved endring av virkningstidspunkt for særbidrag og automatisk aktivere`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,

@@ -15,16 +15,13 @@ import io.mockk.verifyOrder
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
-import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
-import no.nav.bidrag.behandling.database.datamodell.RolleManueltOverstyrtGebyr
 import no.nav.bidrag.behandling.database.datamodell.opprettUnikReferanse
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterOpphørsdatoRequestDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.vedtak.FatteVedtakRequestDto
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
-import no.nav.bidrag.behandling.transformers.validering.virkningstidspunkt
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.opprettGrunnlagsreferanseVirkningstidspunkt
 import no.nav.bidrag.behandling.utils.harReferanseTilGrunnlag
 import no.nav.bidrag.behandling.utils.hentGrunnlagstype
@@ -98,7 +95,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholds
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
-import no.nav.bidrag.transport.behandling.felles.grunnlag.ManueltOverstyrtGebyr
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
@@ -280,7 +276,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
         behandling.bidragsmottaker!!.leggTilGebyrSøknad(behandling.soknadsid!!, "REFERANSE_BM_GEBYR")
         behandling.bidragspliktig!!.leggTilGebyrSøknad(behandling.soknadsid!!, "REFERANSE_BP_GEBYR")
-        behandling.søknadsbarn.first()!!.leggTilGebyrSøknad(behandling.soknadsid!!, "REFERANSE_BA_GEBYR")
+        behandling.søknadsbarn.first().leggTilGebyrSøknad(behandling.soknadsid!!, "REFERANSE_BA_GEBYR")
         behandling.leggTilSamvær(ÅrMånedsperiode(behandling.virkningstidspunkt!!, behandling.virkningstidspunkt!!.plusMonths(1)), samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1, medId = true)
         behandling.leggTilSamvær(ÅrMånedsperiode(behandling.virkningstidspunkt!!.plusMonths(1), null), medId = true)
         behandling.leggTilTillegsstønad(ÅrMånedsperiode(behandling.virkningstidspunkt!!.plusMonths(4), null), medId = true)
@@ -524,7 +520,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                     tilsynstype shouldBe Tilsynstype.HELTID
                 }
             }
-            validerNotater(behandling)
+            validerNotater()
             hentGrunnlagstyper(Grunnlagstype.DELBEREGNING_INNTEKTSBASERT_GEBYR) shouldHaveSize 3
             hentGrunnlagstyper(Grunnlagstype.SLUTTBEREGNING_GEBYR) shouldHaveSize 3
             hentGrunnlagstyper(Grunnlagstype.NOTAT) shouldHaveSize 15
@@ -702,7 +698,6 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
                 it.beløp shouldBe null
                 it.valutakode shouldBe null
             }
-            val resultatPerioder = stønadsendring.periodeListe.filter { it.resultatkode == Resultatkode.BEREGNET_BIDRAG.name }
         }
 
         verify(exactly = 1) {
@@ -1282,9 +1277,12 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
     fun `Skal fatte vedtak for bidrag med privat avtale og beløpshistorikk hvor resultat er ingen endring under grense`() {
         stubPersonConsumer()
 
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        behandling.virkningstidspunkt = LocalDate.parse("2024-01-01")
-        behandling.oppdaterVirkningstidspunktForAlle(LocalDate.parse("2024-01-01"))
+        val behandling =
+            opprettGyldigBehandlingForBeregningOgVedtak(
+                true,
+                typeBehandling = TypeBehandling.BIDRAG,
+                virkningstidspunkt = LocalDate.parse("2024-01-01"),
+            )
         behandling.leggTilSamvær(ÅrMånedsperiode(behandling.virkningstidspunkt!!, null), samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1, medId = true)
 
         behandling.leggTilNotat(
@@ -1875,7 +1873,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         assertSoftly(opprettVedtakRequest) {
             val request = opprettVedtakRequest
             request.type shouldBe Vedtakstype.FASTSETTELSE
-            validerNotater(behandling)
+            validerNotater()
         }
     }
 
@@ -2678,9 +2676,8 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
     }
 }
 
-private fun OpprettVedtakRequestDto.validerNotater(behandling: Behandling) {
+private fun OpprettVedtakRequestDto.validerNotater() {
     val bmGrunnlag = grunnlagListe.hentPerson(testdataBM.ident)!!
-    val bpGrunnlag = grunnlagListe.hentPerson(testdataBP.ident)!!
     val søknadsbarnGrunnlag = grunnlagListe.hentPerson(testdataBarn1.ident)!!
     assertSoftly(hentGrunnlagstyper(Grunnlagstype.NOTAT)) {
         shouldHaveSize(15)
