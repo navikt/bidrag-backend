@@ -15,6 +15,7 @@ data class BeregnBPsAndelSærbidragGrunnlag(
     val inntektBMPeriodeListe: List<InntektPeriode>,
     val inntektSBPeriodeListe: List<InntektPeriode>,
     val sjablonPeriodeListe: List<SjablonPeriode>,
+    val rimeligÅInnvilgeReferanse: String? = null,
 )
 
 // Resultatperiode
@@ -30,6 +31,7 @@ data class ResultatBeregning(
     val barnEndeligInntekt: BigDecimal,
     val barnetErSelvforsørget: Boolean,
     val sjablonListe: List<SjablonPeriodeNavnVerdi>,
+    val rimeligÅInnvilgeErBrukt: Boolean = false,
 )
 
 // Grunnlag beregning
@@ -39,6 +41,7 @@ data class GrunnlagBeregning(
     val inntektBM: Inntekt?,
     val inntektSB: Inntekt?,
     val sjablonListe: List<SjablonPeriode>,
+    val rimeligÅInnvilgeReferanse: String? = null,
 )
 
 data class Utgift(val referanse: String, val beløp: BigDecimal)
@@ -53,5 +56,6 @@ data class BeregnBPsAndelSærbidragListeGrunnlag(
     var inntektBMPeriodeListe: List<InntektPeriode> = listOf(),
     var inntektSBPeriodeListe: List<InntektPeriode> = listOf(),
     var sjablonPeriodeListe: List<SjablonPeriode> = listOf(),
+    var rimeligÅInnvilgeReferanse: String? = null,
     var bruddPeriodeListe: MutableList<Periode> = mutableListOf(),
 )

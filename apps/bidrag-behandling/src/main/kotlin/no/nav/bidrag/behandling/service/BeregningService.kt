@@ -15,6 +15,7 @@ import no.nav.bidrag.behandling.dto.v1.beregning.UgyldigBeregningDto
 import no.nav.bidrag.behandling.dto.v1.beregning.opprettBegrunnelse
 import no.nav.bidrag.behandling.dto.v1.beregning.tilBeregningFeilmelding
 import no.nav.bidrag.behandling.transformers.beregning.sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn
+import no.nav.bidrag.behandling.transformers.beregning.validerBegrunnelseRimeligÅInnvilge
 import no.nav.bidrag.behandling.transformers.beregning.validerForSærbidrag
 import no.nav.bidrag.behandling.transformers.erDirekteAvslag
 import no.nav.bidrag.behandling.transformers.finnDelberegningBPsBeregnedeTotalbidrag
@@ -172,23 +173,49 @@ class BeregningService(
         return if (mapper.validering.run { behandling.erDirekteAvslagUtenBeregning() }) {
             behandling.tilResultatAvslagSærbidrag()
         } else {
-            try {
-                val beregningRequest =
-                    mapper.byggGrunnlagForBeregning(behandling, søknasdbarn)
-                beregnSærbidragApi
-                    .beregn(
-                        beregningRequest.beregnGrunnlag!!,
-                        behandling.omgjøringsdetaljer?.opprinneligVedtakstype ?: behandling.vedtakstype,
-                    ).let { resultat ->
-                        resultat.validerForSærbidrag()
-                        sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat)
-                        resultat
-                    }
-            } catch (e: Exception) {
-                LOGGER.warn(e) { "Det skjedde en feil ved beregning av særbidrag: ${e.message}" }
-                throw HttpClientErrorException(HttpStatus.BAD_REQUEST, e.message!!)
-            }
+            val resultat =
+                try {
+                    val beregningRequest =
+                        mapper.byggGrunnlagForBeregning(behandling, søknasdbarn)
+                    beregnSærbidragApi
+                        .beregn(
+                            beregningRequest.beregnGrunnlag!!,
+                            behandling.omgjøringsdetaljer?.opprinneligVedtakstype ?: behandling.vedtakstype,
+                        ).let { resultat ->
+                            resultat.validerForSærbidrag()
+                            sperrSærbidragNårBarnetErSelvforsørgetIfUnleashToggleIsOn(resultat)
+                            resultat
+                        }
+                } catch (e: Exception) {
+                    LOGGER.warn(e) { "Det skjedde en feil ved beregning av særbidrag: ${e.message}" }
+                    throw HttpClientErrorException(HttpStatus.BAD_REQUEST, e.message!!)
+                }
+            behandling.validerBegrunnelseRimeligÅInnvilge(resultat)
+            resultat
         }
+    }
+
+    /**
+     * Beregner BPs andel uten saksbehandlers vurdering av om det er rimelig å innvilge særbidrag, for å finne ut om barnets inntekt er
+     * lik eller høyere enn 100 ganger forskuddssats. Henter ikke løpende bidrag. Gir false hvis beregningen ikke kan gjøres, for
+     * eksempel fordi grunnlaget ikke er komplett.
+     */
+    fun barnetsInntektErOverGrensenForSelvforsørget(behandling: Behandling): Boolean = try {
+        if (mapper.validering.run { behandling.erDirekteAvslagUtenBeregning() }) {
+            false
+        } else {
+            val beregnGrunnlag =
+                mapper
+                    .byggGrunnlagForBeregning(behandling, behandling.søknadsbarn.first(), inkluderLøpendeBidrag = false)
+                    .beregnGrunnlag!!
+            beregnSærbidragApi.barnetsInntektErOverGrensenForSelvforsørget(
+                beregnGrunnlag,
+                behandling.omgjøringsdetaljer?.opprinneligVedtakstype ?: behandling.vedtakstype,
+            )
+        }
+    } catch (e: Exception) {
+        LOGGER.debug(e) { "Kunne ikke beregne om barnets inntekt er over grensen for selvforsørget: ${e.message}" }
+        false
     }
 
     fun beregneBidrag(

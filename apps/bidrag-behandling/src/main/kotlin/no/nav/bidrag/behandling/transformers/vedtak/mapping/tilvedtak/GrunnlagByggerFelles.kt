@@ -80,6 +80,7 @@ val grunnlagsreferanse_delberegning_utgift = "delberegning_utgift"
 val grunnlagsreferanse_utgiftsposter = "utgiftsposter"
 val grunnlagsreferanse_utgift_direkte_betalt = "utgift_direkte_betalt"
 val grunnlagsreferanse_utgift_maks_godkjent_beløp = "utgift_maks_godkjent_beløp"
+val grunnlagsreferanse_særbidrag_rimelig_å_innvilge = "særbidrag_rimelig_å_innvilge"
 val grunnlagsreferanse_løpende_bidrag = "løpende_bidrag_bidragspliktig"
 
 fun opprettGrunnlagsreferanseVirkningstidspunkt(

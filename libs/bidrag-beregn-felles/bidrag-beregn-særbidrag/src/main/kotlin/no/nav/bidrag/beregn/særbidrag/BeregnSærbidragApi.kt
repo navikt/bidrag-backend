@@ -30,4 +30,10 @@ class BeregnSærbidragApi {
     private val service = BeregnSærbidragService()
 
     fun beregn(beregnSærbidragGrunnlag: BeregnGrunnlag, vedtakstype: Vedtakstype): BeregnetSærbidragResultat = service.beregn(beregnSærbidragGrunnlag, vedtakstype)
+
+    /**
+     * Gir true hvis barnets inntekt er lik eller høyere enn 100 ganger forskuddssats, slik at barnet er selvforsørget hvis ikke
+     * saksbehandler vurderer at det er rimelig å innvilge særbidrag. Beregner bare BPs andel, så løpende bidrag trengs ikke i grunnlaget.
+     */
+    fun barnetsInntektErOverGrensenForSelvforsørget(beregnSærbidragGrunnlag: BeregnGrunnlag, vedtakstype: Vedtakstype): Boolean = service.barnetsInntektErOverGrensenForSelvforsørget(beregnSærbidragGrunnlag, vedtakstype)
 }

@@ -81,6 +81,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.BostatusPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragRimeligÅInnvilgeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -691,6 +692,7 @@ class BeregningServiceTest {
             exception.message shouldContain FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
 
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Ikke rimelig å innvilge"
             val resultat =
                 BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
                     .beregneSærbidrag(1)
@@ -711,6 +713,7 @@ class BeregningServiceTest {
         try {
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
             val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Ikke rimelig å innvilge"
             every { behandlingService.hentBehandlingById(any()) } returns behandling
 
             val resultat =
@@ -718,6 +721,7 @@ class BeregningServiceTest {
                     .beregneSærbidrag(1)
 
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.BARNET_ER_SELVFORSØRGET
+            resultat.grunnlagListe.filter { it.type == Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE } shouldHaveSize 0
         } finally {
             unmockkObject(UnleashFeaturesProvider)
         }
@@ -739,6 +743,65 @@ class BeregningServiceTest {
         } finally {
             unmockkObject(UnleashFeaturesProvider)
         }
+    }
+
+    @Test
+    fun `skal feile beregning av særbidrag når barnet er selvforsørget og begrunnelse for rimelig å innvilge mangler`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.responseBodyAsString shouldContain "\"særbidragRimeligÅInnvilge\":{\"manglerBegrunnelse\":true}"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal beregne BPs andel når barnet er selvforsørget og saksbehandler har vurdert at det er rimelig å innvilge`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            enableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilge = true
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "Særlige forhold gjør det rimelig å innvilge"
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val resultat =
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    .beregneSærbidrag(1)
+
+            resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_INNVILGET
+            val grunnlagRimeligÅInnvilge = resultat.grunnlagListe.filter { it.type == Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE }
+            grunnlagRimeligÅInnvilge shouldHaveSize 1
+            grunnlagRimeligÅInnvilge.first().innholdTilObjekt<SærbidragRimeligÅInnvilgeGrunnlag>().begrunnelse shouldBe
+                "Særlige forhold gjør det rimelig å innvilge"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
+    fun `skal finne ut om barnets inntekt er over grensen for selvforsørget uten å hente løpende bidrag`() {
+        val beregningService =
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+
+        val behandlingOverGrensen = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+        behandlingOverGrensen.utgift!!.rimeligÅInnvilge = true
+        behandlingOverGrensen.utgift!!.rimeligÅInnvilgeBegrunnelse = "Rimelig"
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(behandlingOverGrensen) shouldBe true
+
+        beregningService.barnetsInntektErOverGrensenForSelvforsørget(opprettSærbidragBehandlingMedInntektBarn(BigDecimal(10000))) shouldBe false
+
+        verify(exactly = 0) { evnevurderingService.hentLøpendeBidragForBehandling(any()) }
     }
 
     private fun opprettSærbidragBehandlingMedInntektBarn(

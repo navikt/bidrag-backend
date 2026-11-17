@@ -279,6 +279,8 @@ data class NotatSamværBarnDto(
 data class NotatSærbidragUtgifterDto(
     val beregning: NotatUtgiftBeregningDto? = null,
     val maksGodkjentBeløp: NotatMaksGodkjentBeløpDto? = null,
+    @Schema(description = "Saksbehandlers vurdering når barnets inntekt er lik eller høyere enn 100 ganger forskuddssats")
+    val rimeligÅInnvilge: NotatSærbidragRimeligÅInnvilgeDto? = null,
     val begrunnelse: NotatBegrunnelseDto,
     @Deprecated("Bruk begrunnelse", replaceWith = ReplaceWith("begrunnelse"))
     val notat: NotatBegrunnelseDto = begrunnelse,
@@ -301,6 +303,11 @@ data class NotatTotalBeregningUtgifterDto(
                 utgiftstype
             }
 }
+
+data class NotatSærbidragRimeligÅInnvilgeDto(
+    val rimeligÅInnvilge: Boolean,
+    val begrunnelse: String? = null,
+)
 
 data class NotatMaksGodkjentBeløpDto(
     val taMed: Boolean = true,

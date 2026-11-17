@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragRimeligÅInnvilgeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import java.math.BigDecimal
 
@@ -70,6 +71,19 @@ internal object BPAndelSærbidragCoreMapper : CoreMapper() {
             inntektBMPeriodeListe = inntektBMPeriodeCoreListe,
             inntektSBPeriodeListe = inntektSBPeriodeCoreListe,
             sjablonPeriodeListe = sjablonPeriodeCoreListe,
+            rimeligÅInnvilgeReferanse = mapRimeligÅInnvilge(beregnGrunnlag),
+        )
+    }
+
+    // Returnerer referansen til grunnlaget bare hvis saksbehandler har vurdert at det er rimelig å innvilge særbidrag
+    private fun mapRimeligÅInnvilge(beregnSærbidragGrunnlag: BeregnGrunnlag): String? = try {
+        beregnSærbidragGrunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<SærbidragRimeligÅInnvilgeGrunnlag>(Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE)
+            .firstOrNull { it.innhold.rimeligÅInnvilge }
+            ?.referanse
+    } catch (e: Exception) {
+        throw IllegalArgumentException(
+            "Ugyldig input ved beregning av særbidrag. Innhold i Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE er ikke gyldig: " + e.message,
         )
     }
 
