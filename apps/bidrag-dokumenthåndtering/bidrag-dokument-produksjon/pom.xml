@@ -27,7 +27,7 @@
          for å holde denne Maven-appen i samme mappe som søsken-appene bidrag-dokumentmal og
          bidrag-pdfgen, slik de lå i det opprinnelige repoet. -->
     <properties>
-        <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
+        <kotlin-logging-jvm.version>8.0.6</kotlin-logging-jvm.version>
         <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
