@@ -95,3 +95,31 @@ test('buildSlackText merker DB2 og Postgres', () => {
   assert.match(a.buildSlackText(a.normalize(toPubSub(db2Entry))), /^\*DB2 auditlog\*/);
   assert.match(a.buildSlackText(a.normalize(toPubSub(pgEntry))), /^\*Postgres auditlog\*/);
 });
+
+test('normalize ekte Postgres-loggpost fra Cloud SQL data_access', () => {
+  const entry = {
+    insertId: '2#887401732910#bidrag-regnskap-prod#audit#1793779875369000000#0000000000000141-0@a1',
+    logName: 'projects/bidrag-prod-8f72/logs/cloudaudit.googleapis.com%2Fdata_access',
+    protoPayload: {
+      '@type': 'type.googleapis.com/google.cloud.audit.AuditLog',
+      methodName: 'cloudsql.instances.query',
+      request: {
+        '@type': 'type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry',
+        auditClass: 'WRITE', command: 'INSERT', database: 'bidrag-regnskap-db',
+        statement: 'INSERT INTO palop ...', user: 'simen.naper.hoston@nav.no',
+      },
+    },
+    timestamp: '2026-11-04T08:11:15.369Z',
+  };
+  const e = a.normalize(toPubSub(entry));
+  assert.equal(e.command, 'INSERT');
+  assert.equal(e.database, 'bidrag-regnskap-db');
+  assert.equal(e.projectId, 'bidrag-prod-8f72');
+  assert.equal(a.slackMention(e.username), '<@U03RYJH2URZ>');
+
+  const url = a.buildLogUrl(e);
+  assert.match(url, /;cursorTimestamp=2026-11-04T08:11:15\.369Z\?project=bidrag-prod-8f72$/);
+  const query = decodeURIComponent(url.match(/;query=([^;]+);/)[1]);
+  assert.match(query, /insertId="2#887401732910#bidrag-regnskap-prod#audit#1793779875369000000#0000000000000141-0@a1"/);
+  assert.match(a.buildSlackText(e), /^\*Postgres auditlog\*/);
+});

@@ -40,7 +40,7 @@ Sett opp alt i prosjektet der auditloggene havner. Hvis DB2-loggene ligger i et 
 4. Lim inn filteret under «Build inclusion filter»:
 
    ```text
-   (protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry")
+   (protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry" AND protoPayload.request.user=~"nav.no")
    OR (jsonPayload.requestType="dbAuditEntry" AND jsonPayload.dbName=~"^(BI464P|SJ461P|BI460P)$")
    ```
 
@@ -78,7 +78,7 @@ gcloud pubsub topics create $NAME-dlq --project=$PROJECT_ID
 # 2. Sink. Filteret bør være det samme som i de loggbaserte varslene.
 gcloud logging sinks create $NAME pubsub.googleapis.com/projects/$PROJECT_ID/topics/$NAME \
   --project=$PROJECT_ID \
-  --log-filter='(protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry") OR (jsonPayload.requestType="dbAuditEntry" AND jsonPayload.dbName=~"^(BI464P|SJ461P|BI460P)$")'
+  --log-filter='(protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry" AND protoPayload.request.user=~"nav.no") OR (jsonPayload.requestType="dbAuditEntry" AND jsonPayload.dbName=~"^(BI464P|SJ461P|BI460P)$")'
 
 WRITER=$(gcloud logging sinks describe $NAME --project=$PROJECT_ID --format='value(writerIdentity)')
 gcloud pubsub topics add-iam-policy-binding $NAME --project=$PROJECT_ID \
