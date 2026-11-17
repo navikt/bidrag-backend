@@ -1054,14 +1054,17 @@ class BehandlingTilVedtakMapping(
                 val stønadsendringGrunnlag = stønadsendringPerioder.flatMap(StønadsendringPeriode::grunnlag)
                 val personobjekter = grunnlagslisteForSak.hentAllePersoner().toMutableSet() as MutableSet<GrunnlagDto>
 
-                val manglendeRollerMedInntekterFraBeregning = grunnlagslisteForSak.mapNotNull { i ->
-                    val inntektGjelderPerson = personobjekter.find { i.gjelderReferanse == it.referanse } ?: return@mapNotNull null
-                    roller.find { it.erSammeRolle(inntektGjelderPerson.personIdent!!, inntektGjelderPerson.stønadstype) }
-                }.distinctBy { it.id }.filter { inntektGjelderPerson -> byggGrunnlagForRoller.none { it.erSammeRolle(inntektGjelderPerson.ident!!, inntektGjelderPerson.stønadstype) } }
+                val manglendeSøknadsbarnMedInntekterFraBeregning = grunnlagslisteForSak.filter { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }
+                    .mapNotNull { i ->
+                        val inntektGjelderPerson = personobjekter
+                            .filter { it.type == Grunnlagstype.PERSON_SØKNADSBARN }
+                            .find { i.gjelderReferanse == it.referanse } ?: return@mapNotNull null
+                        roller.find { it.tilGrunnlagsreferanse() == inntektGjelderPerson.referanse }
+                    }.distinctBy { it.id }.filter { inntektGjelderPerson -> byggGrunnlagForRoller.none { it.erSammeRolle(inntektGjelderPerson.ident!!, inntektGjelderPerson.stønadstype) } }
 
                 // Beregningen bruker inntekter fra alle barn i beregningen ved vurdering av FF. Da må alle inntekter bli med for å kunne vise hele vurderingen selv om vedtak splittes
                 // Da må også innhentet grunnlag for inntekene tas med (feks for 12 mnd 3 mnd bergningene osv)
-                val grunnlagslisteInnhentetInntekterAndreBarn = mapper.run { byggInnhentetGrunnlag(personobjekter, manglendeRollerMedInntekterFraBeregning, byggBareInntekt = true) }
+                val grunnlagslisteInnhentetInntekterAndreBarn = mapper.run { byggInnhentetGrunnlag(personobjekter, manglendeSøknadsbarnMedInntekterFraBeregning, byggBareInntekt = true) }
 
                 val grunnlagListeVedtak =
                     byggGrunnlagForVedtak(
