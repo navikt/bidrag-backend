@@ -109,7 +109,7 @@ Pub/Sub bruker denne kontoen til å signere et OIDC-token på hver melding. Tjen
 
 ### 7. Test med en egen loggpost
 
-Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor **Cloud Shell** (ikonet `>_` øverst til høyre i konsollen). Postgres-loggene (`protoPayload`) kan bare skrives av Cloud SQL, så testen bruker DB2-formatet. Den går gjennom hele kjeden: sink → topic → abonnement → Cloud Run → Slack.
+Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor **Cloud Shell** (ikonet `>_` øverst til høyre i konsollen). Testen går gjennom hele kjeden: sink → topic → abonnement → Cloud Run → Slack.
 
 1. Åpne Cloud Shell og velg prosjektet:
 
@@ -117,7 +117,11 @@ Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor 
    gcloud config set project bidrag-prod-8f72
    ```
 
-2. Skriv en testpost. Bytt ut e-posten med din egen, så blir du pinget i Slack:
+2. Skriv en testpost. Bytt ut e-posten med din egen, så blir du pinget i Slack.
+
+   `gcloud logging write` kan bare skrive `jsonPayload` eller tekst. DB2-poster ligger i `jsonPayload`, så de kan skrives med `gcloud logging write`. Postgres-poster ligger i `protoPayload`, så de må skrives med `curl` mot Logging-API-et (`entries:write`). API-et godtar `protoPayload` av typen `AuditLog`.
+
+   **DB2:**
 
    ```bash
    gcloud logging write database-auditlog-test \
@@ -125,12 +129,61 @@ Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor 
      --payload-type=json --severity=INFO
    ```
 
+   **Postgres:**
+
+   ```bash
+   curl -s -X POST "https://logging.googleapis.com/v2/entries:write" \
+     -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "entries": [{
+         "logName": "projects/bidrag-prod-8f72/logs/database-auditlog-test",
+         "resource": {"type": "global", "labels": {"project_id": "bidrag-prod-8f72"}},
+         "severity": "INFO",
+         "protoPayload": {
+           "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+           "methodName": "cloudsql.instances.query",
+           "serviceName": "cloudsql.googleapis.com",
+           "resourceName": "instances/test-instans",
+           "request": {
+             "@type": "type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry",
+             "auditClass": "WRITE",
+             "auditType": "SESSION",
+             "command": "UPDATE",
+             "database": "test-db",
+             "object": "public.test_tabell",
+             "objectType": "TABLE",
+             "statement": "TEST - ignorer",
+             "user": "fornavn.etternavn@nav.no"
+           }
+         }
+       }]
+     }'
+   ```
+
+   Et vellykket kall svarer med `{}`.
+
 3. Åpne **Logging → Logs Explorer** og søk etter `logName="projects/bidrag-prod-8f72/logs/database-auditlog-test"`. Posten skal vises.
-4. Sjekk at det kommer en «DB2 auditlog»-melding i Slack innen noen sekunder, og at lenken åpner testposten.
+4. Sjekk at det kommer en «DB2 auditlog»- eller «Postgres auditlog»-melding i Slack innen noen sekunder, og at lenken åpner testposten.
 5. Hvis meldingen ikke kommer, sjekk i denne rekkefølgen:
    - **Pub/Sub → Topics → database-auditlog-slack → Metrics:** har topicen fått en melding? Hvis ikke, stemmer ikke sinkfilteret, eller writer identity mangler **Pub/Sub Publisher**.
    - **Pub/Sub → Subscriptions → database-auditlog-slack → Metrics:** blir meldingen levert eller forsøkt på nytt?
    - **Cloud Run → postgres-auditlog → Logs:** feilmeldinger fra tjenesten.
+
+**Test Postgres gjennom hele kjeden (Cloud SQL Studio)**
+
+Du kan også lage en ekte Postgres-post i konsollen:
+
+1. Åpne **SQL → velg instansen → Cloud SQL Studio**.
+2. Logg inn med **IAM database authentication** og din egen `@nav.no`-bruker. Velg en testdatabase.
+3. Kjør en ufarlig skrivespørring, for eksempel:
+
+   ```sql
+   CREATE TEMP TABLE auditlog_test (id int);
+   INSERT INTO auditlog_test VALUES (1);
+   ```
+
+4. Sjekk at det kommer en «Postgres auditlog»-melding i Slack. Det forutsetter at pgaudit og Data Access-logging er slått på for instansen.
 
 **Test bare abonnementet og Cloud Run (uten sinken)**
 
@@ -139,6 +192,12 @@ Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor 
 
    ```json
    {"logName":"projects/bidrag-prod-8f72/logs/database-auditlog-test","insertId":"test-1","timestamp":"2026-11-17T08:00:00Z","jsonPayload":{"requestType":"dbAuditEntry","dbName":"BI464P","epost":"fornavn.etternavn@nav.no","pgCommand":"SELECT"}}
+   ```
+
+   For å teste Postgres-formatet, lim inn denne i stedet. Den gir en «Postgres auditlog»-melding:
+
+   ```json
+   {"logName":"projects/bidrag-prod-8f72/logs/cloudaudit.googleapis.com%2Fdata_access","insertId":"test-pg-1","timestamp":"2026-11-17T08:00:00Z","resource":{"type":"cloudsql_database","labels":{"project_id":"bidrag-prod-8f72","database_id":"bidrag-prod-8f72:test-instans"}},"protoPayload":{"@type":"type.googleapis.com/google.cloud.audit.AuditLog","methodName":"cloudsql.instances.query","resourceName":"instances/test-instans","serviceName":"cloudsql.googleapis.com","request":{"@type":"type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry","auditClass":"WRITE","auditType":"SESSION","command":"UPDATE","database":"test-db","object":"public.test_tabell","objectType":"TABLE","statement":"UPDATE test_tabell SET verdi = 1 WHERE id = 1","user":"fornavn.etternavn@nav.no"}}}
    ```
 
 3. Trykk **Publish** og sjekk Slack. Lenken i meldingen finner ingen auditlog, siden dette er en loggmelding som er opprettet manuelt uten en faktisk auditlog innslag.

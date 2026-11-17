@@ -156,3 +156,22 @@ test('buildSlackText har ingen advarsel når Slack-ID finnes', () => {
   assert.match(text, new RegExp(`<@${slackId}> husk å dokumentere`));
   assert.doesNotMatch(text, /:warning:/);
 });
+
+const SENSITIV_VERDI = 'SENSITIV-12345678901';
+
+test('buildSlackText tar ikke med SQL-statement fra Postgres-loggpost', () => {
+  const entry = structuredClone(pgEntry);
+  entry.protoPayload.request.statement = `UPDATE person SET fnr='${SENSITIV_VERDI}'`;
+  entry.protoPayload.request.parameter = SENSITIV_VERDI;
+  const text = a.buildSlackText(a.normalize(toPubSub(entry)));
+  assert.doesNotMatch(text, new RegExp(SENSITIV_VERDI), `Slack-meldingen inneholder sensitiv verdi:\n${text}`);
+});
+
+test('buildSlackText tar ikke med sqlStatement eller originalMessage fra DB2-loggpost', () => {
+  const entry = structuredClone(db2Entry);
+  entry.jsonPayload.sqlStatement = `DELETE FROM BI464P.t_rolle WHERE saksnr='${SENSITIV_VERDI}'`;
+  entry.jsonPayload.originalMessage = JSON.stringify({ sqlQuery: entry.jsonPayload.sqlStatement });
+  entry.jsonPayload.sqlParameters = SENSITIV_VERDI;
+  const text = a.buildSlackText(a.normalize(toPubSub(entry)));
+  assert.doesNotMatch(text, new RegExp(SENSITIV_VERDI), `Slack-meldingen inneholder sensitiv verdi:\n${text}`);
+});
