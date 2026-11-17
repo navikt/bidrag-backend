@@ -400,6 +400,8 @@ enum class Resultatkode(
     BIDRAG_JUSTERT_TIL_FORSKUDDSSATS(listOf(BisysResultatkode("RFO"))),
     BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS(listOf(BisysResultatkode("RFO"))),
     STADSFESTELSE(listOf(BisysResultatkode("SF"))),
+    UTENLANDSK_AVGJORELSE(listOf(BisysResultatkode("UA"))),
+    VEDTAK_INNKREVING_AV_SÆRBIDRAG(listOf(BisysResultatkode("VS1"))),
     AVVIST(
         listOf(BisysResultatkode("AV")),
         ResultatkodeType.DIREKTE_AVSLAG,

@@ -219,3 +219,7 @@ STADSFESTELSE:
   intern: "Stadsfestelse"
 AVVIST:
   intern: "Avvist"
+UTENLANDSK_AVGJORELSE:
+  intern: "Utenlandsk avgjørelse"
+VEDTAK_INNKREVING_AV_SÆRBIDRAG:
+  intern: "Vedtak innkreving av særbidrag"
