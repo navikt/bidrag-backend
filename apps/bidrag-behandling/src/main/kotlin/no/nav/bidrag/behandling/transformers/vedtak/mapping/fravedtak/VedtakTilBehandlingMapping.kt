@@ -102,6 +102,7 @@ import no.nav.bidrag.transport.behandling.vedtak.response.virkningstidspunkt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.ifTrue
 import org.springframework.stereotype.Component
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
@@ -506,7 +507,7 @@ class VedtakTilBehandlingMapping(
         val utgift =
             Utgift(
                 behandling,
-                beløpDirekteBetaltAvBp = utgiftDirekteBetalt!!.beløpDirekteBetalt,
+                beløpDirekteBetaltAvBp = utgiftDirekteBetalt?.beløpDirekteBetalt ?: BigDecimal.ZERO,
                 maksGodkjentBeløpTaMed = utgiftMaksGodkjentBeløp != null,
                 maksGodkjentBeløp = utgiftMaksGodkjentBeløp?.beløp,
                 maksGodkjentBeløpBegrunnelse = utgiftMaksGodkjentBeløp?.begrunnelse,

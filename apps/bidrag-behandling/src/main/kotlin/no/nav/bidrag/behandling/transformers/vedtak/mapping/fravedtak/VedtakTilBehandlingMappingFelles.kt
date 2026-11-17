@@ -65,6 +65,7 @@ import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.behandling.tilBehandlingstema
 import no.nav.bidrag.domene.enums.behandling.tilStønadstype
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erDirekteAvslag
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
@@ -75,6 +76,8 @@ import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import no.nav.bidrag.domene.enums.vedtak.konverterFraDeprekerteVerdier
 import no.nav.bidrag.transport.behandling.felles.grunnlag.AldersjusteringDetaljerGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BehandlingDetaljerGrunnlag
@@ -1354,7 +1357,9 @@ internal fun VedtakDto.avslagskode(): Resultatkode? {
                 .first()
                 .resultatkode,
         )
-    } else if (virkningstidspunkt?.avslag != null) {
+    } else if ((virkningstidspunkt == null || virkningstidspunkt.årsak == VirkningstidspunktÅrsakstype.ANNET) && engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }) {
+        Resultatkode.fraKode(engangsbeløpListe.first().resultatkode)?.takeIf { it.erDirekteAvslag() }
+    } else if (virkningstidspunkt?.avslag != null && virkningstidspunkt.avslag != Resultatkode.INNVILGET_VEDTAK) {
         virkningstidspunkt.avslag
     } else {
         null
