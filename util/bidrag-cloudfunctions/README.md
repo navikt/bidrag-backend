@@ -7,115 +7,138 @@ For databasene `BI464P`, `SJ461P` og `BI460P` får varselet tittelen «DB2 audit
 Når en utvikler kjører en database-spørring sendes det en melding til Slack med lenke til auditloggen.
 Slack-webhook-URL konfigureres via Cloud Build substitution `_SLACK_WEBHOOK_SECRET`, som brukes til å sette runtime-variabelen `SLACK_WEBHOOK_URL`.
 
-## To typer innkommende meldinger
-
-Tjenesten tar imot to typer meldinger på samme endepunkt:
-
-| Kilde | Kjennetegn | Autentisering |
-|---|---|---|
-| Logging-sink → Pub/Sub push (`database-auditlog-slack`) | `message.data` (base64-kodet LogEntry) | OIDC-token fra tjenestekontoen `database-auditlog-slack@<prosjekt>.iam.gserviceaccount.com`. Audience er `PUBSUB_AUDIENCE`. |
-| Loggbasert varsel i Cloud Monitoring (webhook) | `incident` | Delt hemmelighet `GCP_WEBHOOK_SECRET` (Basic/Bearer eller `X-GCP-Secret-Token`) |
-
-Loggbaserte varsler kan sende varsel høyst hvert femte minutt. Derfor sender sinken én melding per loggpost. Varslene kan beholdes mens sinken verifiseres, men da blir det dobbelt opp med meldinger i Slack.
-
 Kjør testene med `npm test` i `postgres-auditlog/`.
 
-## Oppsett av sinken `database-auditlog-slack`
+## Oppsett i Google Cloud Console
 
-Sett opp alt i prosjektet der auditloggene havner. Hvis DB2-loggene ligger i et annet prosjekt, trenger det prosjektet en egen sink til samme topic.
+Alt settes opp i prosjektet `bidrag-prod-8f72`. Begge auditloggene (Postgres og DB2) havner der, så én sink dekker begge.
 
-### Via Cloud Console
+Rekkefølgen er viktig: topic → sink → tjenestekonto → abonnement.
 
-**Topic**
+### 1. Opprett topicene
 
-1. Gå til **Pub/Sub → Topics → Create topic**.
-2. Topic ID: `database-auditlog-slack`. Fjern haken for «Add a default subscription». Trykk **Create**.
-3. Gjenta for dead letter-topicen `database-auditlog-slack-dlq`.
+1. Åpne **Pub/Sub → Topics** og trykk **Create topic**.
+2. Fyll inn:
+   - **Topic ID:** `database-auditlog-slack`
+   - **Add a default subscription:** fjern haken
+   - **Use a schema**, **Set message retention duration** og **Use a customer-managed encryption key**: la stå av
+3. Trykk **Create**.
+4. Gjenta stegene for dead letter-topicen med **Topic ID** `database-auditlog-slack-dlq`. Her kan **Add a default subscription** stå på, slik at meldinger som feiler kan leses senere.
 
-**Sink**
+### 2. Opprett sinken
 
-1. Gå til **Logging → Log Router → Create sink**.
-2. Sink name: `database-auditlog-slack`. Trykk **Next**.
-3. Sink service: **Cloud Pub/Sub topic**. Velg `projects/<prosjekt>/topics/database-auditlog-slack`. Trykk **Next**.
-4. Lim inn filteret under «Build inclusion filter»:
+1. Åpne **Logging → Log Router** og trykk **Create sink**.
+2. **Sink details**
+   - **Sink name:** `database-auditlog-slack`
+   - **Sink description:** `Postgres- og DB2-auditlogg til Slack`
+   - Trykk **Next**.
+3. **Sink destination**
+   - **Select sink service:** **Cloud Pub/Sub topic**
+   - **Select a Cloud Pub/Sub topic:** `projects/bidrag-prod-8f72/topics/database-auditlog-slack`
+   - Trykk **Next**.
+4. **Choose logs to include in sink:** lim inn filteret under **Build inclusion filter**:
 
    ```text
    (protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry" AND protoPayload.request.user=~"nav.no")
    OR (jsonPayload.requestType="dbAuditEntry" AND jsonPayload.dbName=~"^(BI464P|SJ461P|BI460P)$")
    ```
 
-5. Trykk **Preview logs** og sjekk at filteret treffer auditloggene. Trykk **Create sink**.
-6. Konsollen gir vanligvis sinkens writer identity tilgang til topicen. Sjekk det under **Pub/Sub → Topics → database-auditlog-slack → Permissions**: writer identity (`service-<nr>@gcp-sa-logging.iam.gserviceaccount.com`) skal ha **Pub/Sub Publisher**. Hvis den mangler, legg den til.
+   - Første del treffer Postgres-spørringer fra personer (`@nav.no`). Tjenestekontoer og applikasjonsbrukere blir ikke med.
+   - Andre del treffer DB2-spørringer mot `BI464P`, `SJ461P` og `BI460P`.
+5. Trykk **Preview logs**. Logs Explorer åpner seg med filteret. Sjekk at du ser auditlogger fra begge databasetypene, og gå tilbake.
+6. **Choose logs to filter out of sink:** la stå tomt. Trykk **Create sink**.
+7. Sjekk tilgangen til writer identity:
+   - Åpne sinken under **Log Router** og kopier **Writer identity** (`serviceAccount:service-<nr>@gcp-sa-logging.iam.gserviceaccount.com`).
+   - Åpne **Pub/Sub → Topics → database-auditlog-slack → Permissions** (panelet til høyre, trykk **Show info panel** hvis det er skjult).
+   - Writer identity skal ha rollen **Pub/Sub Publisher**. Hvis den mangler: trykk **Add principal**, lim inn identiteten uten `serviceAccount:`, velg rollen **Pub/Sub Publisher** og trykk **Save**.
 
-**Tjenestekonto og push-abonnement**
+Postgres-loggene er Data Access-auditlogger. De krever at Cloud SQL-instansen har flaggene `cloudsql.enable_pgaudit=on` og `pgaudit.log`, og at Data Access-logging er slått på for Cloud SQL under **IAM → Audit Logs**.
 
-1. Gå til **IAM → Service accounts → Create service account**. Navn: `database-auditlog-slack`. Konto trenger ingen prosjektroller.
-2. Åpne kontoen og gå til **Permissions → Grant access**. Gi `service-<prosjektnummer>@gcp-sa-pubsub.iam.gserviceaccount.com` rollen **Service Account Token Creator**.
-3. Gå til **Pub/Sub → Subscriptions → Create subscription**:
-   - Subscription ID: `database-auditlog-slack`
-   - Topic: `database-auditlog-slack`
-   - Delivery type: **Push**, endpoint `https://postgres-auditlog-961465283338.europe-north1.run.app`
-   - Huk av **Enable authentication**. Service account: `database-auditlog-slack`. Audience: samme URL som endpoint.
-   - Acknowledgement deadline: 30 sekunder
-   - Retry policy: **Retry after exponential backoff delay**, 10–600 sekunder
-   - Huk av **Enable dead lettering**. Topic: `database-auditlog-slack-dlq`. Maks antall leveringsforsøk: 10. Trykk **Grant** på tilgangene konsollen foreslår.
-4. Trykk **Create**.
+### 3. Opprett tjenestekontoen
 
-### Via gcloud
+Pub/Sub bruker denne kontoen til å signere et OIDC-token på hver melding. Tjenesten godtar bare tokens fra denne kontoen.
 
-Kjør kommandoene i prosjektet der auditloggene havner.
+1. Åpne **IAM & Admin → Service accounts** og trykk **Create service account**.
+2. Fyll inn:
+   - **Service account name:** `database-auditlog-slack`
+   - **Service account ID:** `database-auditlog-slack` (fylles ut automatisk)
+   - **Description:** `Pub/Sub push til postgres-auditlog`
+   - Trykk **Create and continue**.
+3. **Grant this service account access to project:** hopp over, kontoen trenger ingen prosjektroller. Trykk **Continue** og **Done**.
+4. Åpne kontoen, gå til fanen **Principals with access** (eller **Permissions**) og trykk **Grant access**.
+   - **New principals:** `service-961465283338@gcp-sa-pubsub.iam.gserviceaccount.com` (Pub/Subs egen tjenesteagent)
+   - **Role:** **Service Account Token Creator**
+   - Trykk **Save**.
 
-```bash
-PROJECT_ID=<prosjekt>
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-NAME=database-auditlog-slack
-RUN_URL=https://postgres-auditlog-961465283338.europe-north1.run.app
+### 4. Opprett push-abonnementet
 
-# 1. Topic og dead letter-topic
-gcloud pubsub topics create $NAME --project=$PROJECT_ID
-gcloud pubsub topics create $NAME-dlq --project=$PROJECT_ID
+1. Åpne **Pub/Sub → Subscriptions** og trykk **Create subscription**.
+2. Fyll inn:
+   - **Subscription ID:** `database-auditlog-slack`
+   - **Select a Cloud Pub/Sub topic:** `projects/bidrag-prod-8f72/topics/database-auditlog-slack`
+   - **Delivery type:** **Push**
+   - **Endpoint URL:** `https://postgres-auditlog-961465283338.europe-north1.run.app`
+   - **Enable authentication:** huk av
+     - **Service account:** `database-auditlog-slack@bidrag-prod-8f72.iam.gserviceaccount.com`
+     - **Audience:** `https://postgres-auditlog-961465283338.europe-north1.run.app`
+   - **Enable payload unwrapping:** av
+   - **Message retention duration:** 7 dager (standard)
+   - **Expiration period:** **Never expire**
+   - **Acknowledgement deadline:** 30 sekunder
+   - **Subscription filter:** tomt
+   - **Exactly once delivery** og **Message ordering:** av
+   - **Dead lettering:** huk av **Enable dead lettering**
+     - **Dead letter topic:** `projects/bidrag-prod-8f72/topics/database-auditlog-slack-dlq`
+     - **Maximum delivery attempts:** 10
+     - Konsollen viser at Pub/Sub-tjenesteagenten mangler tilganger. Trykk **Grant** på begge forslagene (publisher på dead letter-topicen og subscriber på abonnementet).
+   - **Retry policy:** **Retry after exponential backoff delay**, **Minimum backoff** 10 sekunder, **Maximum backoff** 600 sekunder
+3. Trykk **Create**.
 
-# 2. Sink. Filteret bør være det samme som i de loggbaserte varslene.
-gcloud logging sinks create $NAME pubsub.googleapis.com/projects/$PROJECT_ID/topics/$NAME \
-  --project=$PROJECT_ID \
-  --log-filter='(protoPayload.methodName="cloudsql.instances.query" AND protoPayload.request.@type="type.googleapis.com/google.cloud.sql.audit.v1.PgAuditEntry" AND protoPayload.request.user=~"nav.no") OR (jsonPayload.requestType="dbAuditEntry" AND jsonPayload.dbName=~"^(BI464P|SJ461P|BI460P)$")'
+### 5. Cloud Run
 
-WRITER=$(gcloud logging sinks describe $NAME --project=$PROJECT_ID --format='value(writerIdentity)')
-gcloud pubsub topics add-iam-policy-binding $NAME --project=$PROJECT_ID \
-  --member="$WRITER" --role=roles/pubsub.publisher
+- Tjenesten `postgres-auditlog` må være åpen for kall (**Security → Authentication: Allow unauthenticated invocations**). Autentiseringen skjer i koden.
+- Cloud Build setter miljøvariablene `PUBSUB_AUDIENCE` og `PUBSUB_SERVICE_ACCOUNT` (se `cloudbuild.yaml`). De må stemme med **Audience** og **Service account** i abonnementet.
 
-# 3. Tjenestekonto for push. OIDC-tokenet blir verifisert i koden.
-gcloud iam service-accounts create $NAME --project=$PROJECT_ID
-gcloud iam service-accounts add-iam-policy-binding $NAME@$PROJECT_ID.iam.gserviceaccount.com \
-  --project=$PROJECT_ID \
-  --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \
-  --role=roles/iam.serviceAccountTokenCreator
+### 6. Verifisering
 
-# 4. Push-abonnement med retry og dead letter
-gcloud pubsub subscriptions create $NAME --project=$PROJECT_ID \
-  --topic=$NAME \
-  --push-endpoint=$RUN_URL \
-  --push-auth-service-account=$NAME@$PROJECT_ID.iam.gserviceaccount.com \
-  --push-auth-token-audience=$RUN_URL \
-  --ack-deadline=30 \
-  --min-retry-delay=10s --max-retry-delay=600s \
-  --dead-letter-topic=$NAME-dlq --max-delivery-attempts=10
-
-gcloud pubsub topics add-iam-policy-binding $NAME-dlq --project=$PROJECT_ID \
-  --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \
-  --role=roles/pubsub.publisher
-gcloud pubsub subscriptions add-iam-policy-binding $NAME --project=$PROJECT_ID \
-  --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \
-  --role=roles/pubsub.subscriber
-```
-
-Cloud Run-tjenesten må fortsatt være åpen (`--allow-unauthenticated`), siden webhooken fra Monitoring ikke kan sende OIDC. Tjenesten krever likevel enten gyldig OIDC-token eller den delte hemmeligheten.
-
-Cloud Build setter `PUBSUB_AUDIENCE` og `PUBSUB_SERVICE_ACCOUNT` (se `cloudbuild.yaml`). Hvis tjenestekontoen ligger i et annet prosjekt enn Cloud Build, må `PUBSUB_SERVICE_ACCOUNT` endres.
-
-### Verifisering
-
-1. Kjør en spørring mot en database med auditlog, eller publiser en kopi av en ekte loggpost til topicen.
+1. Kjør en spørring mot en database med auditlog.
 2. Sjekk at meldingen kommer i Slack, og at lenken åpner riktig loggpost.
-3. Sjekk at `database-auditlog-slack-dlq` er tom.
-4. Deaktiver de loggbaserte varslene når sinken fungerer.
+3. Åpne **Pub/Sub → Subscriptions → database-auditlog-slack → Metrics**. **Unacked messages** skal være 0.
+4. Sjekk at det ikke ligger meldinger på `database-auditlog-slack-dlq`.
+5. Ved feil: se loggene under **Cloud Run → postgres-auditlog → Logs**. `401` betyr at service account eller audience ikke stemmer med miljøvariablene.
+
+### 7. Test med en egen loggpost
+
+Det finnes ikke et skjema for å skrive loggposter i Cloud Console. Bruk derfor **Cloud Shell** (ikonet `>_` øverst til høyre i konsollen). Postgres-loggene (`protoPayload`) kan bare skrives av Cloud SQL, så testen bruker DB2-formatet. Den går gjennom hele kjeden: sink → topic → abonnement → Cloud Run → Slack.
+
+1. Åpne Cloud Shell og velg prosjektet:
+
+   ```bash
+   gcloud config set project bidrag-prod-8f72
+   ```
+
+2. Skriv en testpost. Bytt ut e-posten med din egen, så blir du pinget i Slack:
+
+   ```bash
+   gcloud logging write database-auditlog-test \
+     '{"requestType":"dbAuditEntry","dbName":"BI464P","epost":"fornavn.etternavn@nav.no","tIdent":"TEST123","pgCommand":"SELECT","sqlStatement":"TEST - ignorer"}' \
+     --payload-type=json --severity=INFO
+   ```
+
+3. Åpne **Logging → Logs Explorer** og søk etter `logName="projects/bidrag-prod-8f72/logs/database-auditlog-test"`. Posten skal vises.
+4. Sjekk at det kommer en «DB2 auditlog»-melding i Slack innen noen sekunder, og at lenken åpner testposten.
+5. Hvis meldingen ikke kommer, sjekk i denne rekkefølgen:
+   - **Pub/Sub → Topics → database-auditlog-slack → Metrics:** har topicen fått en melding? Hvis ikke, stemmer ikke sinkfilteret, eller writer identity mangler **Pub/Sub Publisher**.
+   - **Pub/Sub → Subscriptions → database-auditlog-slack → Metrics:** blir meldingen levert eller forsøkt på nytt?
+   - **Cloud Run → postgres-auditlog → Logs:** feilmeldinger fra tjenesten.
+
+**Test bare abonnementet og Cloud Run (uten sinken)**
+
+1. Åpne **Pub/Sub → Topics → database-auditlog-slack → Messages** og trykk **Publish message**.
+2. Lim inn i **Message body**:
+
+   ```json
+   {"logName":"projects/bidrag-prod-8f72/logs/database-auditlog-test","insertId":"test-1","timestamp":"2026-11-17T08:00:00Z","jsonPayload":{"requestType":"dbAuditEntry","dbName":"BI464P","epost":"fornavn.etternavn@nav.no","pgCommand":"SELECT"}}
+   ```
+
+3. Trykk **Publish** og sjekk Slack. Lenken i meldingen finner ingen auditlog, siden dette er en loggmelding som er opprettet manuelt uten en faktisk auditlog innslag.
