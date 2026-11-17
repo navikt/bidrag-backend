@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    dir: util/bidrag-cloudfunctions/postgres-auditlog
+    dir: util/bidrag-cloudfunctions/database-auditlog
     args:
       - 'build'
       - '-t'
@@ -28,6 +28,7 @@ steps:
           --ingress=all \
           --set-secrets=GCP_WEBHOOK_SECRET=slack-webhook-basicauth:latest \
           --set-secrets=SLACK_WEBHOOK_URL=${_SLACK_WEBHOOK_SECRET}:latest \
+          --update-env-vars=PUBSUB_AUDIENCE=https://postgres-auditlog-961465283338.europe-north1.run.app,PUBSUB_SERVICE_ACCOUNT=database-auditlog-slack@$PROJECT_ID.iam.gserviceaccount.com \
           --quiet
 
 options:
