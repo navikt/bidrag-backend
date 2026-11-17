@@ -28,6 +28,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehan
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -142,6 +143,16 @@ class BidragBBMConsumer(
     )
     fun feilregistrerSøknad(request: FeilregistrerSøknadRequest) = postForEntity<Unit>(
         bidragBBMUri.pathSegment("feilregistrersoknad").build().toUri(),
+        request,
+    )
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    fun oppdaterSøknadFomDato(request: OppdaterSøknadFomDatoRequest) = postForEntity<Unit>(
+        bidragBBMUri.pathSegment("oppdatersoknadfomdato").build().toUri(),
         request,
     )
 
