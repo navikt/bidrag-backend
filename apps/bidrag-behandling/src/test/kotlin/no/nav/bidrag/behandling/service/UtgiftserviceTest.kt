@@ -13,6 +13,7 @@ import no.nav.bidrag.behandling.dto.v2.behandling.OppdatereBegrunnelse
 import no.nav.bidrag.behandling.dto.v2.utgift.MaksGodkjentBeløpDto
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgift
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftRequest
+import no.nav.bidrag.behandling.dto.v2.utgift.RimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.utils.testdata.TestdataManager
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
@@ -564,6 +565,30 @@ class UtgiftserviceTest : TestContainerRunner() {
         behandlingEtter!!.utgift!!.maksGodkjentBeløp shouldBe null
         behandlingEtter!!.utgift!!.maksGodkjentBeløpBegrunnelse shouldBe null
         behandlingEtter!!.utgift!!.maksGodkjentBeløpTaMed shouldBe true
+    }
+
+    @Test
+    @Transactional
+    fun `skal lagre vurdering av om det er rimelig å innvilge særbidrag`() {
+        val behandling = oppretteBehandlingForSærbidrag()
+        behandling.utgift = Utgift(behandling = behandling)
+        testdataManager.lagreBehandlingNewTransaction(behandling)
+
+        val response =
+            utgiftService.oppdatereUtgift(
+                behandling.id!!,
+                OppdatereUtgiftRequest(
+                    rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+                ),
+            )
+
+        assertSoftly(response.rimeligÅInnvilge!!) {
+            rimeligÅInnvilge shouldBe true
+            begrunnelse shouldBe "Særlige forhold"
+        }
+        val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)
+        behandlingEtter!!.utgift!!.rimeligÅInnvilge shouldBe true
+        behandlingEtter.utgift!!.rimeligÅInnvilgeBegrunnelse shouldBe "Særlige forhold"
     }
 
     @Test
