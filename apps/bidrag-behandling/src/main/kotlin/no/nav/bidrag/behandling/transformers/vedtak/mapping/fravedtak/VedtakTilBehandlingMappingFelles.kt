@@ -1347,6 +1347,12 @@ internal fun VedtakDto.notatMedType(
     .find { it.type == type && it.fraOmgjortVedtak == fraOmgjortVedtak }
     ?.innhold
 
+internal fun VedtakDto.resultatkodeSærbidrag(): Resultatkode? = if (engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }) {
+    Resultatkode.fraKode(engangsbeløpListe.first().resultatkode)
+} else {
+    null
+}
+
 internal fun VedtakDto.avslagskode(): Resultatkode? {
     val virkningstidspunkt = hentVirkningstidspunkt()
     return if (virkningstidspunkt == null && stønadsendringListe.all { it.periodeListe.size == 1 }) {

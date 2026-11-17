@@ -41,6 +41,7 @@ import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
 import no.nav.bidrag.behandling.transformers.utgift.tilDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
+import no.nav.bidrag.behandling.transformers.vedtak.resultatkoderSomErManuellVedtak
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
@@ -266,6 +267,7 @@ class VedtakTilBehandlingMapping(
 
         if (lesemodus) {
             val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
+            val resultatkode = resultatkodeSærbidrag()
             behandling.lesemodusVedtak =
                 LesemodusVedtak(
                     erAvvist = stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST } ||
@@ -273,6 +275,8 @@ class VedtakTilBehandlingMapping(
                     opprettetAvBatch = kilde == Vedtakskilde.AUTOMATISK,
                     erOrkestrertVedtak = erOrkestrertVedtak,
                     inneholderBareRevurderingsbarn = inneholderBareRevurderingsbarn,
+                    erManuellVedtak = resultatkode != null && resultatkode in resultatkoderSomErManuellVedtak,
+                    resultatkodeSærbidrag = resultatkode,
                     fattetTidspunkt = this.vedtakstidspunkt ?: LocalDateTime.now(),
                 )
             behandling.grunnlagslisteFraVedtak = grunnlagListe
