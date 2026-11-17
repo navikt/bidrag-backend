@@ -126,6 +126,7 @@ function buildSlackText(event) {
 }
 
 module.exports = {
+  USERNAME_TO_SLACK_ID,
   PAYLOAD_TYPE,
   detectPayloadType,
   parseSummaryLabels,
