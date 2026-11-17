@@ -348,7 +348,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
                 periode =
                 if (it.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(it.type)) {
                     val datoFom = maxOf(it.opprinneligFom!!, virkningstidspunktEllerSøktFomDato)
-                    val datoTil = it.bestemDatoTomForOffentligInntekt()?.plusDays(1)
+                    val datoTil = it.datoTom ?: it.bestemDatoTomForOffentligInntekt()?.plusDays(1)
                     ÅrMånedsperiode(
                         if (datoTil != null && datoFom > datoTil) it.opprinneligFom!! else datoFom,
                         datoTil,

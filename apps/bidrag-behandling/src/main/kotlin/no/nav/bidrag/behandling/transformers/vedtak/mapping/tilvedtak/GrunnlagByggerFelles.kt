@@ -804,7 +804,9 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
             if (periode != null) {
                 periode
             } else if (kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type)) {
-                ÅrMånedsperiode(opprinneligFom!!, bestemDatoTomForOffentligInntekt()?.plusDays(1))
+                // Hvis SB har lagt til inntekt manuelt så legges det på datoTom på offentlig slik at offentlig inntekt avsluttes før nye begynner
+                // Hvis ikke datoTom tas med her så vil begge inntektene bli tatt med i beregningen som løpende (både manuelle og offentlig)
+                ÅrMånedsperiode(opprinneligFom!!, datoTom ?: bestemDatoTomForOffentligInntekt()?.plusDays(1))
             } else {
                 ÅrMånedsperiode(datoFomEllerOpprinneligFom!!, datoTom?.plusDays(1))
             },
