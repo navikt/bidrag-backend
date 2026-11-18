@@ -1,78 +1,24 @@
 name: 'Utled app-endringer'
 description: >-
-  Avgjør om denne workflowen faktisk skal bygge/deploye, basert på diff mot main
-  (merge-base), i stedet for GitHub sitt innebygde push before/after-diff.
-  Dette må gjøres siden `on.push.paths` trigger workflowen basert på alle filer som inngår i pushen. 
-  Når man merger main inn i en feature-/q1-/q2-branch, drar man samtidig inn
-  commits som potensielt endrer andre apper. GitHub sitt paths-filter ser da ut som om "denne pushen" endret
-  de appene også, selv om branchen ikke har noen reell diff mot main for de. Denne actionen
-  beregner i stedet den faktiske diffen siden branchen sist var i sync med main, slik at
-  bygg/deploy kun kjører når appen selv er endret.
-  Push til `main` og andre trigger-typer (workflow_dispatch, schedule) er ikke berørt av dette og
-  behandles derfor alltid som "endret".
-  Pathsene som sjekkes leses automatisk fra `on.push.paths` i workflow-filen som kaller denne
-  actionen.
+  Sjekker om en branch har endringer i workflowens on.push.paths sammenlignet
+  med main (merge-base). Slik unngår vi bygg etter merge fra main når appen
+  ikke er endret på branchen. Push til main og andre hendelser regnes alltid
+  som endret. Filtreringen gjøres av finn_berorte_apper.py.
 outputs:
   changed:
-    description: "'true' hvis appens paths er reelt endret siden main, ellers 'false'"
+    description: "'true' ved endring i appens paths, push til main eller andre hendelser; ellers 'false'"
     value: ${{ steps.detect.outputs.changed }}
 runs:
   using: composite
   steps:
-    - name: Beregn om paths er reelt endret siden main
+    - name: Finn endringer i workflowens paths
       id: detect
       shell: bash
       env:
-        EVENT_NAME: ${{ github.event_name }}
-        REF: ${{ github.ref }}
-        WORKFLOW_REF: ${{ github.workflow_ref }}
+        GITHUB_WORKFLOW_REF: ${{ github.workflow_ref }}
       run: |
         set -euo pipefail
-
-        if [ "$EVENT_NAME" != "push" ] || [ "$REF" = "refs/heads/main" ]; then
-          # workflow_dispatch/schedule og push til main kjører alltid i disse tilfellene.
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-          echo "::notice::Hopper over merge-base-sjekk (event=${EVENT_NAME}, ref=${REF})."
-          exit 0
+        if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+          python3 -m pip install --quiet --disable-pip-version-check PyYAML==6.0.3
         fi
-
-        # github.workflow_ref har formen "owner/repo/.github/workflows/<fil>@<ref>".
-        # Vi trenger kun selve filnavnet for å finne igjen paths-blokken workflowen selv trigges av
-        WORKFLOW_FILE=".github/workflows/$(echo "$WORKFLOW_REF" | sed -E 's#.*/\.github/workflows/([^@]+)@.*#\1#')"
-
-        if [ ! -f "$WORKFLOW_FILE" ]; then
-          echo "::error::Fant ikke workflow-filen '$WORKFLOW_FILE' (utledet fra github.workflow_ref='$WORKFLOW_REF')." >&2
-          exit 1
-        fi
-
-        # Hent ut on.push.paths-blokken fra workflow-filen.
-        # Vi må skope oss til selve `push:`-triggeren (ikke bare første "paths:" i filen,
-        # som gjerne tilhører `pull_request:`), og stoppe innsamlingen så snart listen med
-        # path-elementer tar slutt. Ellers plukker vi feilaktig opp `on.push.branches`
-        # (f.eks. '**' og '!dependabot/**') som om de var paths, siden de har samme
-        # YAML-liste-syntaks og innrykk - noe som gjør at git diff alltid finner "endringer".
-        mapfile -t PATHSPECS < <(
-          awk '
-            /^  push:$/ { in_push=1; in_paths=0; next }
-            in_push && /^  [A-Za-z]/ { in_push=0; in_paths=0 }
-            in_push && /^    paths:$/ { in_paths=1; next }
-            in_paths && /^      - .*$/ { print; next }
-            in_paths { exit }
-          ' "$WORKFLOW_FILE" \
-            | sed -E "s/^      - '(.*)'\$/\1/"
-        )
-
-        if [ "${#PATHSPECS[@]}" -eq 0 ]; then
-          echo "::error::Fant ingen on.push.paths i $WORKFLOW_FILE - kan ikke avgjøre om appen er endret." >&2
-          exit 1
-        fi
-
-        git fetch --no-tags --quiet origin main
-        BASE_SHA="$(git merge-base HEAD origin/main)"
-
-        if git diff --quiet "$BASE_SHA" HEAD -- "${PATHSPECS[@]}"; then
-          echo "changed=false" >> "$GITHUB_OUTPUT"
-          echo "::notice::Ingen reelle endringer i angitte paths siden main (merge-base ${BASE_SHA}) - hopper over bygg/deploy."
-        else
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-        fi
+        python3 .github/scripts/finn_berorte_apper.py --workflow

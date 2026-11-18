@@ -1,6 +1,5 @@
 package no.nav.bidrag.behandling.controller
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.date.shouldHaveSameDayAs
@@ -29,7 +28,6 @@ import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregni
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBM
-import no.nav.bidrag.commons.service.sjablon.SjablonService
 import no.nav.bidrag.commons.web.mock.sjablonSamværsfradragResponse
 import no.nav.bidrag.commons.web.mock.sjablonTallResponse
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
@@ -63,9 +61,6 @@ class VedtakControllerTest : KontrollerTestRunner() {
 
     @Autowired
     lateinit var entityManager: EntityManager
-
-    @MockkBean
-    lateinit var sjablonService: SjablonService
 
     @BeforeEach
     fun oppsett() {

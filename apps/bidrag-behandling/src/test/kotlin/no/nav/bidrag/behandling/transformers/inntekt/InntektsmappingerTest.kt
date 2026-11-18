@@ -3,20 +3,31 @@ package no.nav.bidrag.behandling.transformers.inntekt
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.transformers.skattefaktorFraSkatteprosent
 import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
 class InntektsmappingerTest {
+    @ParameterizedTest
+    @CsvSource("BARNETILLEGG_TILTAKSPENGER,", "BARNETILLEGG_FORSVARET,", "BARNETILLEGG_PENSJON,0.25")
+    fun `skal ikke lagre skatteprosent for skattefrie barnetillegg`(inntektstype: Inntektstype, forventetSkattefaktor: BigDecimal?) {
+        inntektstype.skattefaktorFraSkatteprosent(BigDecimal(25))?.stripTrailingZeros() shouldBe forventetSkattefaktor?.stripTrailingZeros()
+    }
+
     @Test
     fun `skal bestemme datoFom for offentlig utvidet barnetrygd`() {
         val behandling = oppretteBehandling()

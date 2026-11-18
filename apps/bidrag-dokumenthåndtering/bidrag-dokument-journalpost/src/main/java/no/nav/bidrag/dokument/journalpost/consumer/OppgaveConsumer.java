@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.journalpost.consumer;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
+
 import java.util.Optional;
 import no.nav.bidrag.commons.web.HttpHeaderRestTemplate;
 import no.nav.bidrag.commons.web.HttpResponse;
@@ -26,7 +28,7 @@ public class OppgaveConsumer {
 
     var responseEntity = restTemplate.postForEntity("/", new HttpEntity<>(oppgave), OpprettOppgaveResponse.class);
     Optional.ofNullable(responseEntity.getBody())
-        .ifPresentOrElse(opprettetOppgave->LOGGER.info("Oppgave opprettet {}", opprettetOppgave), () -> LOGGER.error("Det skjedde en feil opprettelse av oppgave {}", oppgave));
+        .ifPresentOrElse(opprettetOppgave -> LOGGER.info("Oppgave opprettet {}", sanitizeForLog(opprettetOppgave)), () -> LOGGER.error("Det skjedde en feil opprettelse av oppgave {}", sanitizeForLog(oppgave)));
 
     return new HttpResponse<>(responseEntity);
   }

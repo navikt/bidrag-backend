@@ -7,6 +7,7 @@ import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
 import no.nav.bidrag.behandling.database.datamodell.minified.RolleSimple
+import no.nav.bidrag.behandling.behandlingNotFoundException
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
@@ -16,6 +17,9 @@ import java.util.Optional
 
 
 interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandlingRepository {
+
+    @Query("select b.deleted from behandling b where b.id = :behandlingsid", nativeQuery = true)
+    fun erBehandlingSlettet(behandlingsid: Long): Boolean?
 
     @Modifying(flushAutomatically = true)
     @Query(
@@ -59,7 +63,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     WHERE b.id = :id
 """
     )
-    fun findBehandlingSimpleData(id: Long): BehandlingSimple
+    fun findBehandlingSimpleData(id: Long): BehandlingSimple?
 
     @Query(
         """
@@ -77,7 +81,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
 
     fun findBehandlingSimple(id: Long): BehandlingSimple {
-        val behandling = findBehandlingSimpleData(id)
+        val behandling = findBehandlingSimpleData(id) ?: behandlingNotFoundException(id)
         val roller = findRolleSimpleData(id)
         val privatAvtaleAndreBarn = findPrivatAvtaleAndreBarn(id)
         val harPrivatAvtaleAndreBarn = privatAvtaleAndreBarn.isNotEmpty()
@@ -86,6 +90,22 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     }
 
     fun findBehandlingById(id: Long): Optional<Behandling>
+
+    // Låser behandlingen og eventuell FF-hovedbehandling ut transaksjonen slik at samtidige oppdateringer kjøres etter hverandre.
+    // Må kalles før behandlingen lastes for at transaksjonen skal se siste committede tilstand.
+    @Query(
+        value = """
+        WITH hoved AS (
+            SELECT (bb.forholdsmessig_fordeling->>'behandlesAvBehandling')::bigint AS id FROM behandling bb WHERE bb.id = :behandlingId and bb.deleted is false
+        )
+        SELECT b.id FROM behandling b
+        WHERE b.id = :behandlingId OR b.id = (SELECT id FROM hoved) and b.deleted is false
+        ORDER BY CASE WHEN b.id = (SELECT id FROM hoved) THEN 0 ELSE 1 END, b.id
+        FOR UPDATE
+    """,
+        nativeQuery = true,
+    )
+    fun låsBehandlingForOppdatering(@Param("behandlingId") behandlingId: Long): List<Long>
 
     @Query("select b.saksnummer from behandling b where b.id = :behandlingId")
     fun hentSaksnummer(@Param("behandlingId") behandlingId: Long): String?
@@ -107,10 +127,15 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     @Query("select r.* from rolle r where r.behandling_id = :behandlingsid", nativeQuery = true)
     fun hentRollerInkludertSlettet(behandlingsid: Long): List<Rolle>
 
+    // FF-behandlinger som ikke er hovedbehandling ignoreres fordi notatet lagres på hovedbehandlingen
     @Query(
-        "select b from behandling b where b.vedtaksid is not null and b.notatJournalpostId is null and b.vedtakstidspunkt >= :afterDate and b.vedtakstype != 'ALDERSJUSTERING'",
+        "select b.* from behandling b where b.deleted = false and b.vedtaksid is not null and b.notat_journalpost_id is null " +
+                "and b.vedtakstidspunkt >= :afterDate and b.vedtakstype != 'ALDERSJUSTERING' " +
+                "and (b.forholdsmessig_fordeling is null or b.forholdsmessig_fordeling ->> 'erHovedbehandling' = 'true')",
+        nativeQuery = true,
     )
     fun hentBehandlingerSomManglerNotater(afterDate: LocalDateTime): List<Behandling>
+
 
     @Query(
         "select * from behandling b " +
@@ -182,6 +207,22 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
     @Query(
         value = """
+        SELECT DISTINCT b.id FROM behandling b
+        JOIN rolle br ON br.behandling_id = b.id
+        WHERE br.rolletype = 'BIDRAGSPLIKTIG'
+          AND br.ident = :bpIdent
+          AND b.deleted = false
+          AND b.vedtak_detaljer IS NULL
+          AND b.forholdsmessig_fordeling IS not NULL AND (b.forholdsmessig_fordeling->>'erHovedbehandling') = 'true'
+    """,
+        nativeQuery = true,
+    )
+    fun finnIdÅpneBidragsbehandlingerForBpMedFF(
+        @Param("bpIdent") bpIdent: String,
+    ): List<Long>
+
+    @Query(
+        value = """
         SELECT b.* FROM behandling b
         JOIN rolle br ON br.behandling_id = b.id
         WHERE br.rolletype = 'BIDRAGSPLIKTIG'
@@ -190,6 +231,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
           AND b.deleted = false
           AND b.vedtakstidspunkt IS NULL
           and (:opprinneligVedtakId is null or (b.klagedetaljer ->> 'opprinneligVedtakId') = (:opprinneligVedtakId)::text)
+          and (:omgjørVedtakId is null or (b.klagedetaljer ->> 'omgjørVedtakId') = (:omgjørVedtakId)::text)
           AND b.forholdsmessig_fordeling IS not NULL AND (b.forholdsmessig_fordeling->>'erHovedbehandling') = 'true'
        limit 1
     """,
@@ -197,7 +239,8 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun finnHovedbehandlingForBpVedFF(
         @Param("bpIdent") bpIdent: String,
-        @Param("opprinneligVedtakId") opprinneligVedtakId: Int? = null
+        @Param("opprinneligVedtakId") opprinneligVedtakId: Int? = null,
+        @Param("omgjørVedtakId") omgjørVedtakId: Int? = null,
     ): Behandling?
 
     @Query(
@@ -228,6 +271,19 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
         nativeQuery = true
     )
     fun markerOpprettelseAvFFFeilet(behandling_id: Long)
+
+    @Query(
+        "select b.id from behandling b where b.deleted = true and b.metadata -> 'opprettelseEllerOppdateringAvFFFeilet' = 'true'",
+        nativeQuery = true
+    )
+    fun hentIdSlettedeBehandlingerHvorOpprettelseAvFFFeilet(): List<Long>
+
+    @Modifying
+    @Query(
+        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseEllerOppdateringAvFFFeilet', 'false') where b.id = :behandling_id",
+        nativeQuery = true
+    )
+    fun resetOpprettelseAvFFFeilet(behandling_id: Long)
 
     @Modifying
     @Query(

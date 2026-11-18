@@ -1,11 +1,13 @@
 package no.nav.bidrag.organisasjon.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
@@ -18,7 +20,6 @@ import no.nav.bidrag.transport.organisasjon.EnhetKontaktinfoDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.organisasjon.JournalførendeEnhetDto
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,15 +32,13 @@ import org.springframework.web.bind.annotation.RestController
 @Protected
 @RestController
 class OrganisasjonController(private val organisasjonService: OrganisasjonService) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     @PostMapping("/arbeidsfordeling/enhet/geografisktilknytning")
     @Operation(
         description = "Hent enheter fra arbeidsfordeling basert på geografisk tilknytning for en person",
         security = [SecurityRequirement(name = "bearer-key")],
     )
     fun hentArbeidsfordelingGeografiskTilknytningEnhet(@RequestBody hentEnhetRequest: HentEnhetRequest): EnhetDto? {
-        logger.info("request: bidrag-organisasjon/arbeidsfordeling/enhet/geografisktilknytning")
+        LOGGER.debug { "request: bidrag-organisasjon/arbeidsfordeling/enhet/geografisktilknytning" }
         return organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnhet(hentEnhetRequest)
     }
 
@@ -61,7 +60,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         @RequestParam(required = false) behandlingstema: String?,
         @RequestParam(required = false) arbeidsfordeling: Arbeidsfordeling?,
     ): ResponseEntity<EnhetDto> {
-        logger.info("request: bidrag-organisasjon$ENDPOINT_ARBEIDSFORDELING_GT/ident")
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ARBEIDSFORDELING_GT/ident" }
         val response =
             organisasjonService.hentArbeidsfordelingGeografiskTilknytningEnheter(
                 Personident(ident!!),
@@ -91,7 +90,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentEnhetInfo(@PathVariable enhetNr: Enhetsnummer): ResponseEntity<EnhetDto> {
-        LOGGER.info("request: bidrag-organisasjon{}/{}", ENDPOINT_ENHET_INFO, enhetNr)
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_INFO/${enhetNr.toString().sanitizeForLog()}" }
         val enhetInfo = organisasjonService.hentEnhetInfo(enhetNr)
         return ResponseEntity(enhetInfo, HttpStatus.OK)
     }
@@ -140,7 +139,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentSaksbehandlerInfo(@PathVariable saksbehandlerIdent: String): ResponseEntity<SaksbehandlerDto> {
-        LOGGER.info("request: bidrag-organisasjon{}/{}", ENDPOINT_SAKSBEHANDLERINFO, saksbehandlerIdent)
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERINFO/${saksbehandlerIdent.sanitizeForLog()}" }
         val saksbehandlerDto = organisasjonService.hentSaksbehandlerInfo(saksbehandlerIdent)
         return ResponseEntity(saksbehandlerDto, if (saksbehandlerDto == null) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -169,7 +168,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentSaksbehandlerEnheter(@PathVariable saksbehandlerIdent: String): ResponseEntity<List<EnhetDto>> {
-        LOGGER.info("request: bidrag-organisasjon{}/{}", ENDPOINT_SAKSBEHANDLERENHETER, saksbehandlerIdent)
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERENHETER/${saksbehandlerIdent.sanitizeForLog()}" }
         val enhetDtoer = organisasjonService.hentSaksbehandlerEnheter(saksbehandlerIdent)
         return ResponseEntity(enhetDtoer, if (enhetDtoer.isEmpty()) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -194,7 +193,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentArbeidsfordelingJournalforendeEnheter(): ResponseEntity<List<JournalførendeEnhetDto>> {
-        LOGGER.info("request: bidrag-organisasjon{}", ENDPOINT_ARBEIDSFORDELING_JF)
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ARBEIDSFORDELING_JF" }
         val enhetDtoResponse = organisasjonService.hentArbeidsfordelingJournalforendeEnheter()
         return ResponseEntity(enhetDtoResponse.responseEntity.body, enhetDtoResponse.responseEntity.statusCode)
     }
@@ -212,7 +211,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentBidragEnhetBrukere(@PathVariable enhetsnummer: String): ResponseEntity<List<EnhetBrukerDto>> {
-        LOGGER.info("request: bidrag-organisasjon{}/{}", ENDPOINT_ENHET_BRUKERE, enhetsnummer)
+        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_BRUKERE/${enhetsnummer.sanitizeForLog()}" }
         val brukere = organisasjonService.hentPersonerEnhet(enhetsnummer)
         return ResponseEntity(brukere, if (brukere.isEmpty()) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -232,6 +231,6 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         const val ENDPOINT_ENHET_BRUKERE = "/brukere/enhet"
         const val ENDPOINT_ARBEIDSFORDELING_JF = "/arbeidsfordeling/enhetsliste/journalforende"
         const val ENDPOINT_ARBEIDSFORDELING_GT = "/arbeidsfordeling/enhetsliste/geografisktilknytning"
-        private val LOGGER = LoggerFactory.getLogger(OrganisasjonController::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

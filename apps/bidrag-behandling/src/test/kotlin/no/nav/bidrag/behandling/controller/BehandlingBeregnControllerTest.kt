@@ -1,11 +1,9 @@
 package no.nav.bidrag.behandling.controller
 
-import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.every
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -21,7 +19,6 @@ import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandlingRoller
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
-import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -30,7 +27,6 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
-import no.nav.bidrag.transport.behandling.beregning.forskudd.BeregnetForskuddResultat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -51,9 +47,6 @@ class BehandlingBeregnControllerTest : KontrollerTestRunner() {
     @Autowired
     lateinit var grunnlagRepository: GrunnlagRepository
 
-    @MockkBean
-    lateinit var forskuddBeregning: BeregnForskuddApi
-
     val responseType = object : ParameterizedTypeReference<List<ResultatBeregningBarnDto>>() {}
 
     @BeforeEach
@@ -65,7 +58,6 @@ class BehandlingBeregnControllerTest : KontrollerTestRunner() {
             // Ignorer feil ved sletting
         }
 
-        every { forskuddBeregning.beregn(any()) } returns BeregnetForskuddResultat()
         stubSjablonProvider()
         stubKodeverkProvider()
         stubPersonConsumer()

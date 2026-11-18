@@ -1,6 +1,6 @@
 package no.nav.bidrag.grunnlag.comparator
 
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.grunnlag.util.toJsonString
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -17,11 +17,11 @@ abstract class AbstractPeriodComparator<T : PeriodComparable<*, *>> {
         val equalEntities = mutableListOf<T>()
 
         val existingEntitiesWithinRequestedPeriod = filterEntitiesByPeriod(existingEntities, newEntities, requestedPeriod, expiredEntities)
-        SECURE_LOGGER.debug(
+        secureLogger.debug {
             "${existingEntitiesWithinRequestedPeriod.size} eksisterende entiteter innenfor forespurt periode (${requestedPeriod.periodeFra} - " +
-                "${requestedPeriod.periodeTil}).",
-        )
-        SECURE_LOGGER.debug("${expiredEntities.size} utløpte entiteter før sammenligning.")
+                "${requestedPeriod.periodeTil})."
+        }
+        secureLogger.debug { "${expiredEntities.size} utløpte entiteter før sammenligning." }
 
         newEntities.forEach { newEntity ->
             val existingEntityWithEqualPeriod = findEntityWithEqualPeriod(newEntity, existingEntitiesWithinRequestedPeriod)
@@ -29,19 +29,19 @@ abstract class AbstractPeriodComparator<T : PeriodComparable<*, *>> {
                 if (isEntitiesEqual(newEntity, existingEntityWithEqualPeriod)) {
                     equalEntities.add(existingEntityWithEqualPeriod)
                 } else {
-                    SECURE_LOGGER.debug(
+                    secureLogger.debug {
                         "Ny og eksisterende entitet er ulike. Ny: ${
                             toJsonString(newEntity)
-                        }, Eksisterende: ${toJsonString(existingEntityWithEqualPeriod)}.",
-                    )
+                        }, Eksisterende: ${toJsonString(existingEntityWithEqualPeriod)}."
+                    }
                     expiredEntities.add(existingEntityWithEqualPeriod)
                     updatedEntities.add(newEntity)
                 }
             } else {
-                SECURE_LOGGER.debug(
+                secureLogger.debug {
                     "Kunne ikke finne eksisterede entitet for perioden (${newEntity.periodEntity.periodeFra} - " +
-                        "${newEntity.periodEntity.periodeTil}).",
-                )
+                        "${newEntity.periodEntity.periodeTil})."
+                }
                 updatedEntities.add(newEntity)
             }
         }

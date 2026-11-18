@@ -2,11 +2,13 @@ package no.nav.bidrag.behandling.controller.v2
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import no.nav.bidrag.behandling.Ressurstype
+import no.nav.bidrag.behandling.behandlingNotFoundException
 import no.nav.bidrag.behandling.database.datamodell.extensions.LasterGrunnlagDetaljer.Companion.lasterGrunnlag
 import no.nav.bidrag.behandling.database.datamodell.hentSisteAktiv
 import no.nav.bidrag.behandling.database.datamodell.tilPersonident
@@ -401,6 +403,22 @@ class BehandlingControllerV2(
     }
 
     @Suppress("unused")
+    @GetMapping("/behandling/{behandlingsid}/slettet")
+    @Operation(
+        description = "Sjekker om behandling er slettet. Returnerer true hvis behandlingen er slettet og false ellers",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Fant behandling"),
+            ApiResponse(responseCode = "404", description = "Fant ikke behandling"),
+        ],
+    )
+    fun erBehandlingSlettet(
+        @PathVariable behandlingsid: Long,
+    ): Boolean = behandlingRepository.erBehandlingSlettet(behandlingsid) ?: behandlingNotFoundException(behandlingsid)
+
+    @Suppress("unused")
     @GetMapping("/behandling/detaljer/soknad/{søknadsid}")
     @Operation(
         description = "Hente behandling detaljer for søknadsid bruk i Bisys",
@@ -430,7 +448,10 @@ class BehandlingControllerV2(
     )
     fun henteBehandlingDetaljer(
         @PathVariable behandlingsid: Long,
-    ): BehandlingDetaljerDtoV2 = behandlingService.henteBehandlingDetaljer(behandlingsid)
+        @Parameter(description = "Returner også behandlingen hvis den er slettet")
+        @RequestParam(required = false, defaultValue = "false")
+        inkluderSlettet: Boolean = false,
+    ): BehandlingDetaljerDtoV2 = behandlingService.henteBehandlingDetaljer(behandlingsid, inkluderSlettet)
 
     @Suppress("unused")
     @GetMapping("/behandling/{behandlingsid}")

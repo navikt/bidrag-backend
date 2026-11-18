@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import no.nav.bidrag.commons.service.organisasjon.EnableSaksbehandlernavnProvider
+import no.nav.bidrag.commons.service.slack.SlackService
 import no.nav.bidrag.commons.unleash.EnableUnleashFeatures
 import no.nav.bidrag.commons.web.DefaultCorsFilter
 import no.nav.bidrag.commons.web.MdcFilter
@@ -29,7 +30,7 @@ import org.springframework.http.client.observation.DefaultClientRequestObservati
 @EnableJwtTokenValidation
 @EnableOAuth2Client(cacheEnabled = true)
 @EnableSaksbehandlernavnProvider
-@Import(DefaultCorsFilter::class, MdcFilter::class, UserMdcFilter::class)
+@Import(DefaultCorsFilter::class, MdcFilter::class, UserMdcFilter::class, SlackService::class)
 class BidragAutomatiskJobbConfiguration {
     @Bean
     fun clientRequestObservationConvention() = DefaultClientRequestObservationConvention()

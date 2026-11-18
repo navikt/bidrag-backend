@@ -88,8 +88,9 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
     if (rolle != null && rolle.rolletype != Rolletype.BARN) {
         feilliste.add("Opphørsdato kan kun settes for barn")
     }
+    val søknadsbarnISak = behandling.søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }
     if (rolle == null) {
-        behandling.søknadsbarn.forEach { søknadsbarn ->
+        søknadsbarnISak.forEach { søknadsbarn ->
             val stønadstype = søknadsbarn.stønadstype ?: behandling.stonadstype
             if (stønadstype == Stønadstype.BIDRAG &&
                 søknadsbarn.rolletype == Rolletype.BARN &&
@@ -108,7 +109,10 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
         }
     }
 
-    val virkningstidspunkt = rolle?.virkningstidspunktRolle ?: behandling.eldsteVirkningstidspunkt
+    val virkningstidspunkt =
+        rolle?.virkningstidspunktRolle
+            ?: saksnummer?.let { søknadsbarnISak.minOfOrNull { it.virkningstidspunktRolle } }
+            ?: behandling.eldsteVirkningstidspunkt
 
     if (opphørsdato == virkningstidspunkt) {
         feilliste.add("Opphørsdato kan ikke settes lik virkningstidspunkt")
@@ -663,7 +667,7 @@ fun List<Datoperiode>.ugyldigSluttperiode(
     val sistePeriode = maxByOrNull { it.fom } ?: return false
     val sisteGyldigTilDato = opphørsdato.opphørSisteTilDato()
     val sisteTilDato = sistePeriode.til ?: LocalDate.MAX
-    return if (!kanHaHullIPerioder) sisteTilDato != sisteGyldigTilDato else sisteTilDato.isAfter(sisteGyldigTilDato) == true
+    return if (!kanHaHullIPerioder) sisteTilDato != sisteGyldigTilDato else any { (it.til ?: LocalDate.MAX).isAfter(sisteGyldigTilDato) }
 }
 
 fun List<Datoperiode>.finnHullIPerioder(
@@ -733,7 +737,8 @@ fun List<Inntekt>.harUgyldigSluttperiode(opphørsdato: LocalDate?): Boolean {
             .filter { !årsinntekterYtelser.contains(it.type) }
             .sortedBy { it.datoFom }
             .map { Datoperiode(it.datoFom!!, it.datoTom) }
-    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() })
+    // Inntekter til barn trenger ikke å bli definert for hele beregningsperioden
+    return perioderSomSkalSjekkes.ugyldigSluttperiode(opphørsdato, all { it.kanHaHullIPerioder() || it.gjelderRolle?.erBarn == true })
 }
 
 val Inntekt.inntektstypeListe

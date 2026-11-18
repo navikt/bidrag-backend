@@ -4,6 +4,9 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.nimbusds.jose.JOSEObjectType
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.sak.config.DbContainerInitializer
 import no.nav.security.mock.oauth2.MockOAuth2Server
@@ -48,11 +51,15 @@ class SpringTestRunner {
     @BeforeEach
     fun mockSetup() {
         every { identConsumer.hentAlleIdenter(any()) }.answers { listOf(firstArg()) }
+        every { identConsumer.hentGjeldendeIdent(any()) }.answers { firstArg() }
         every { identConsumer.hentPersonInformasjon(any()) }.answers { null }
+        mockkObject(AppContext)
+        every { AppContext.getBean(IdentConsumer::class.java) } returns identConsumer
     }
 
     @AfterEach
     fun reset() {
+        unmockkObject(AppContext)
         resetWiremockServers()
     }
 
@@ -67,7 +74,7 @@ class SpringTestRunner {
 
     protected fun localhost(uri: String): String = UriComponentsBuilder.fromUriString(LOCALHOST + getPort()).pathSegment(uri).toUriString()
 
-    protected fun lokalTestToken(): String {
+    protected fun lokalTestToken(roller: List<String> = emptyList()): String {
         val iss = mockOAuth2Server.issuerUrl("aad")
         val newIssuer = iss.newBuilder().host("localhost").build()
         return mockOAuth2Server
@@ -79,7 +86,7 @@ class SpringTestRunner {
                     subject = "aud-localhost",
                     typeHeader = JOSEObjectType.JWT.type,
                     audience = listOf("aud-localhost"),
-                    claims = mapOf("iss" to newIssuer.toString(), "NAVident" to "AB12345"),
+                    claims = mapOf("iss" to newIssuer.toString(), "NAVident" to "AB12345", "roles" to roller),
                     3600,
                 ),
             ).serialize()

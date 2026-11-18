@@ -1,6 +1,8 @@
 package no.nav.bidrag.sak.aop
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.security.token.support.core.exceptions.JwtTokenInvalidClaimException
+import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -9,10 +11,29 @@ import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.client.HttpStatusCodeException
 import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class RestResponseExceptionResolver {
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = KotlinLogging.logger {}
+
+    @ResponseBody
+    @ExceptionHandler(JwtTokenUnauthorizedException::class)
+    protected fun handleUgyldigAutentisering(e: JwtTokenUnauthorizedException): ResponseEntity<String> = if (e.cause is JwtTokenInvalidClaimException) {
+        ResponseEntity.status(HttpStatus.FORBIDDEN).body("Mangler påkrevd rolle.")
+    } else {
+        ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
+            .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+            .body("Gyldig autentisering kreves.")
+    }
+
+    @ResponseBody
+    @ExceptionHandler(NoResourceFoundException::class)
+    protected fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<*> {
+        logger.info { "Ukjent ressurs forespurt: ${e.resourcePath}" }
+        return ResponseEntity<Any>(HttpStatus.NOT_FOUND)
+    }
 
     @ResponseBody
     @ExceptionHandler(IllegalArgumentException::class)
@@ -29,7 +50,7 @@ class RestResponseExceptionResolver {
     @ResponseBody
     @ExceptionHandler(Exception::class)
     protected fun handleException(e: Exception): ResponseEntity<*> {
-        logger.error("Feil [${e.javaClass.name}] inntraff med detaljer", e)
+        logger.error(e) { "Feil [${e.javaClass.name}] inntraff med detaljer" }
         val feilmelding = e.message ?: "Restkall feilet!"
         val headers = HttpHeaders().apply { add(HttpHeaders.WARNING, feilmelding) }
         return ResponseEntity(feilmelding, headers, HttpStatus.INTERNAL_SERVER_ERROR)
@@ -39,7 +60,7 @@ class RestResponseExceptionResolver {
         e: Exception,
         httpStatus: HttpStatus,
     ): ResponseEntity<String> {
-        logger.error("Feil [${e.javaClass.name}] inntraff med detaljer", e)
+        logger.error(e) { "Feil [${e.javaClass.name}] inntraff med detaljer" }
         val feilmelding = e.message ?: "Restkall feilet!"
         val headers = HttpHeaders().apply { add(HttpHeaders.WARNING, feilmelding) }
         return ResponseEntity(feilmelding, headers, httpStatus)

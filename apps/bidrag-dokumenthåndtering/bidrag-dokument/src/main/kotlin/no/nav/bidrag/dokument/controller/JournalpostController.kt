@@ -72,7 +72,7 @@ class JournalpostController(
         @RequestParam fagomrade: List<String> = emptyList(),
         @RequestParam(required = false, defaultValue = "false") bareFarskapUtelukket: Boolean,
     ): ResponseEntity<List<JournalpostDto>> {
-        log.info {
+        log.debug {
             "Henter journal for sak $saksnummer og fagomrader ${fagomrade.joinToString(",")} bareFarskapUtelukket = $bareFarskapUtelukket"
         }
         if (saksnummer.matches(NON_DIGITS.toRegex())) {
@@ -98,6 +98,25 @@ class JournalpostController(
                 }
 
         return ResponseEntity.ok(journalposter)
+    }
+
+    @GetMapping("/journal/eksternreferanse/{eksternReferanseId}")
+    @Operation(
+        security = [SecurityRequirement(name = "bearer-key")],
+        description = "Hent journalpost i Joark basert på eksternReferanseId (referanseId brukt ved opprettelse)",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Journalpost er hentet"),
+            ApiResponse(responseCode = "404", description = "Fant ikke journalpost med gitt eksternReferanseId"),
+        ],
+    )
+    @GlobalApiReponses
+    fun hentJournalpostForEksternReferanseId(
+        @PathVariable eksternReferanseId: String,
+    ): ResponseEntity<JournalpostResponse> {
+        log.debug { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
+        return journalpostService.hentJournalpostForEksternReferanseId(eksternReferanseId)
     }
 
     @GetMapping("/journal/{journalpostIdForKildesystem}")
@@ -152,7 +171,7 @@ class JournalpostController(
                 HttpStatus.BAD_REQUEST,
             )
         }
-        log.info { "Henter journalpost $journalpostId for saksnummer $saksnummer" }
+        log.debug { "Henter journalpost $journalpostId for saksnummer $saksnummer" }
         return journalpostService.hentJournalpost(saksnummer, kildesystemIdenfikator)
     }
 
@@ -185,7 +204,7 @@ class JournalpostController(
         @RequestParam(required = false)
         saksnummer: String?,
     ): ResponseEntity<List<AvvikType>> {
-        log.info { "Henter avvik for journalpost $journalpostIdForKildesystem" }
+        log.debug { "Henter avvik for journalpost $journalpostIdForKildesystem" }
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostIdForKildesystem)
         return if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             ResponseEntity(
@@ -242,8 +261,7 @@ class JournalpostController(
         @PathVariable journalpostIdForKildesystem: String,
         @RequestBody avvikshendelse: Avvikshendelse,
     ): ResponseEntity<BehandleAvvikshendelseResponse> {
-        log.info { "Behandler avvik for journalpost $journalpostIdForKildesystem" }
-        sikkerLogg.info { "Behandler avvik for journalpost $journalpostIdForKildesystem med avvikshendelse $avvikshendelse" }
+        sikkerLogg.debug { "Behandler avvik for journalpost $journalpostIdForKildesystem med avvikshendelse $avvikshendelse" }
         try {
             AvvikType.valueOf(avvikshendelse.avvikType)
         } catch (e: Exception) {
@@ -311,7 +329,6 @@ class JournalpostController(
         @PathVariable journalpostIdForKildesystem: String,
         @RequestHeader(EnhetFilter.X_ENHET_HEADER) enhet: String,
     ): ResponseEntity<Void> {
-        log.info { "Endrer journalpost $journalpostIdForKildesystem" }
         sikkerLogg.info { "Endrer journalpost $journalpostIdForKildesystem med endringer $endreJournalpostCommand" }
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostIdForKildesystem)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
@@ -420,7 +437,7 @@ class JournalpostController(
     fun kanDistribuerJournalpost(
         @PathVariable journalpostId: String,
     ): ResponseEntity<Void> {
-        log.info { "Sjekker om journalpost $journalpostId kan distribueres" }
+        log.debug { "Sjekker om journalpost $journalpostId kan distribueres" }
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostId)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             val msgBadRequest = "Id har ikke riktig prefix: $journalpostId"
@@ -439,7 +456,7 @@ class JournalpostController(
     fun hentDistribusjonsInfo(
         @PathVariable journalpostId: String,
     ): ResponseEntity<DistribusjonInfoDto> {
-        log.info { "Henter distribusjonsinfo for journalpost $journalpostId" }
+        log.debug { "Henter distribusjonsinfo for journalpost $journalpostId" }
         val kildesystemIdenfikator = JournalpostId(journalpostId)
         if (!kildesystemIdenfikator.erSystemJoark) {
             val msgBadRequest = String.format("Id har ikke riktig prefix: %s", journalpostId)

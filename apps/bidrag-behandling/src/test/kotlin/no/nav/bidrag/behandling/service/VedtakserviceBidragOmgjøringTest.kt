@@ -2,18 +2,24 @@ package no.nav.bidrag.behandling.service
 
 import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.verify
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Grunnlag
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.FatteVedtakDetaljerFraOmgjortVedtakForRevurderingsbarn
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
+import no.nav.bidrag.behandling.database.grunnlag.SummerteInntekter
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.vedtak.FatteVedtakRequestDto
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
@@ -37,6 +43,7 @@ import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
@@ -50,19 +57,29 @@ import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatVedtakV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningAndelAvBidragsevne
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FatteVedtakRevurderingsbarn
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ResultatFraVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.response.OpprettVedtakResponseDto
+import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.YearMonth
 import java.util.Optional
 
 @ExtendWith(SpringExtension::class)
+private const val INNTEKT_VERSJON = "testversjon"
+private const val INNTEKT_BELØP = 500000
+private const val SØKNADSID_BARN1 = 101L
+private const val SØKNADSID_BARN2 = 102L
+private const val SAKSNUMMER_ANNEN_SAK = "2400001"
+
 class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
     @BeforeEach
     fun initMocksOmgjøring() {
@@ -189,6 +206,46 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
     }
 
     @Test
+    fun `skal ta med beregnet inntekt for søknadsbarn i annen sak i splittet vedtak når beregningen har brukt inntektene som grunnlag`() {
+        stubPersonConsumer()
+        val behandling = opprettFFBehandlingMedSøknadsbarnIUlikeSaker()
+        val opprettVedtakSlot = mockVedtakFatteVedtak()
+        mockBidragsberegning(
+            behandling,
+            ordinærtVedtak = true,
+            ekstraGrunnlag = behandling.søknadsbarn.map { inntektRapporteringPeriodeGrunnlag(it.tilGrunnlagsreferanse()) },
+        )
+
+        vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto())
+
+        val (barn1, barn2) = behandling.søknadsbarn
+        assertSoftly {
+            opprettVedtakSlot shouldHaveSize 2
+            opprettVedtakSlot.vedtakForKravhaver(barn1).beregnetInntektGjelderReferanser() shouldContainAll
+                setOf(barn1.tilGrunnlagsreferanse(), barn2.tilGrunnlagsreferanse())
+            opprettVedtakSlot.vedtakForKravhaver(barn2).beregnetInntektGjelderReferanser() shouldContainAll
+                setOf(barn1.tilGrunnlagsreferanse(), barn2.tilGrunnlagsreferanse())
+        }
+    }
+
+    @Test
+    fun `skal ikke ta med beregnet inntekt for søknadsbarn i annen sak i splittet vedtak når beregningen ikke har brukt inntektene for søknadsbarnet`() {
+        stubPersonConsumer()
+        val behandling = opprettFFBehandlingMedSøknadsbarnIUlikeSaker()
+        val opprettVedtakSlot = mockVedtakFatteVedtak()
+        mockBidragsberegning(behandling, ordinærtVedtak = true)
+
+        vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto())
+
+        val (barn1, barn2) = behandling.søknadsbarn
+        assertSoftly {
+            opprettVedtakSlot shouldHaveSize 2
+            opprettVedtakSlot.vedtakForKravhaver(barn1).beregnetInntektGjelderReferanser() shouldNotContain barn2.tilGrunnlagsreferanse()
+            opprettVedtakSlot.vedtakForKravhaver(barn2).beregnetInntektGjelderReferanser() shouldNotContain barn1.tilGrunnlagsreferanse()
+        }
+    }
+
+    @Test
     fun `fatter ett endelig vedtak når FF men BP ikke har full evne i alle perioder`() {
         stubPersonConsumer()
         val behandling = opprettOmgjøringsbehandling(toBarn = true, forholdsmessigFordeling = true)
@@ -223,7 +280,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                 omgjørVedtakId = 2,
                 opprinneligVedtakId = 3,
                 opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
-                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-02-01").atStartOfDay()),
             )
         behandling.forholdsmessigFordeling = if (forholdsmessigFordeling) ForholdsmessigFordeling(erHovedbehandling = true) else null
 
@@ -263,6 +320,55 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
         return behandling
     }
 
+    private fun opprettFFBehandlingMedSøknadsbarnIUlikeSaker(): Behandling {
+        val behandling = opprettOmgjøringsbehandling(toBarn = true, forholdsmessigFordeling = true)
+        behandling.vedtakstype = Vedtakstype.ENDRING
+        behandling.omgjøringsdetaljer = null
+        val (barn1, barn2) = behandling.søknadsbarn
+        barn1.forholdsmessigFordeling = opprettForholdsmessigFordelingRolle(behandling, SØKNADSID_BARN1)
+        barn2.forholdsmessigFordeling =
+            opprettForholdsmessigFordelingRolle(behandling, SØKNADSID_BARN2).copy(tilhørerSak = SAKSNUMMER_ANNEN_SAK)
+        behandling.søknadsbarn.forEach { behandling.leggTilSummerteInntekter(it) }
+        return behandling
+    }
+
+    private fun List<OpprettVedtakRequestDto>.vedtakForKravhaver(barn: Rolle): OpprettVedtakRequestDto = single { vedtak -> vedtak.stønadsendringListe.any { it.kravhaver.verdi == barn.ident } }
+
+    private fun OpprettVedtakRequestDto.beregnetInntektGjelderReferanser(): Set<String> = grunnlagListe
+        .filter { it.type == Grunnlagstype.BEREGNET_INNTEKT }
+        .mapNotNull { it.gjelderReferanse }
+        .toSet()
+
+    private fun Behandling.leggTilSummerteInntekter(rolle: Rolle) {
+        grunnlag.add(
+            Grunnlag(
+                behandling = this,
+                type = Grunnlagsdatatype.SUMMERTE_MÅNEDSINNTEKTER,
+                erBearbeidet = true,
+                aktiv = LocalDateTime.now(),
+                innhentet = LocalDateTime.now(),
+                rolle = rolle,
+                data = commonObjectmapper.writeValueAsString(SummerteInntekter(versjon = INNTEKT_VERSJON, inntekter = emptyList<Any>())),
+            ),
+        )
+    }
+
+    private fun inntektRapporteringPeriodeGrunnlag(gjelderReferanse: String) = GrunnlagDto(
+        referanse = "inntekt_$gjelderReferanse",
+        type = Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+        gjelderReferanse = gjelderReferanse,
+        innhold =
+        POJONode(
+            InntektsrapporteringPeriode(
+                periode = ÅrMånedsperiode(YearMonth.of(2025, 1), null),
+                manueltRegistrert = false,
+                inntektsrapportering = Inntektsrapportering.AINNTEKT_BEREGNET_12MND,
+                beløp = BigDecimal(INNTEKT_BELØP),
+                valgt = true,
+            ),
+        ),
+    )
+
     private fun mockVedtakFatteVedtak(): MutableList<OpprettVedtakRequestDto> {
         val opprettVedtakSlot = mutableListOf<OpprettVedtakRequestDto>()
         every { vedtakConsumer.fatteVedtak(capture(opprettVedtakSlot)) } answers {
@@ -276,10 +382,12 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
         bpHarIkkeFullEvneIAllePerioder: Boolean = false,
         revurderingsbarnHarTommePerioder: Boolean = false,
         klagevedtakEnesteVedtak: Boolean = false,
+        ekstraGrunnlag: List<GrunnlagDto> = emptyList(),
+        ordinærtVedtak: Boolean = false,
     ) {
         val vedtakidsEtterfølgende = 99
         val grunnlagListe =
-            behandling.søknadsbarn.map { it.tilGrunnlagPerson() } +
+            behandling.søknadsbarn.map { it.tilGrunnlagPerson() } + ekstraGrunnlag +
                 if (bpHarIkkeFullEvneIAllePerioder) {
                     behandling.søknadsbarn.mapIndexed { index, søknadsbarn ->
                         GrunnlagDto(
@@ -395,7 +503,28 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
                             søknadsbarn.tilGrunnlagsreferanse(),
                             avvistRevurderingsbarn = revurderingsbarnHarTommePerioder,
                             resultatVedtakListe =
-                            if (klagevedtakEnesteVedtak) {
+                            if (ordinærtVedtak) {
+                                listOf(
+                                    ResultatVedtakV2(
+                                        vedtakstype = behandling.vedtakstype,
+                                        omgjøringsvedtak = false,
+                                        beregnet = true,
+                                        delvedtak = false,
+                                        periodeListe =
+                                        listOf(
+                                            ResultatPeriode(
+                                                periode =
+                                                ÅrMånedsperiode(
+                                                    behandling.virkningstidspunkt!!,
+                                                    behandling.finnBeregnTilDatoBehandling(søknadsbarn),
+                                                ),
+                                                resultat = ResultatBeregning(BigDecimal.ZERO),
+                                                grunnlagsreferanseListe = emptyList(),
+                                            ),
+                                        ),
+                                    ),
+                                )
+                            } else if (klagevedtakEnesteVedtak) {
                                 listOf(
                                     ResultatVedtakV2(
                                         vedtakstype = Vedtakstype.KLAGE,

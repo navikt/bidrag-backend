@@ -36,10 +36,12 @@ spec:
           cluster: {{this.cluster}}
       {{/each}}
     outbound:
+      {{#if outbound-access-hosts}}
       external:
       {{#each outbound-access-hosts}}
         - host: {{this}}
       {{/each}}
+      {{/if}}
       rules:
       {{#each outbound-access-apps}}
           - application: {{this}}
@@ -48,13 +50,13 @@ spec:
             namespace: nais-system
   image: {{ image }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 60
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 60
     timeout: 1
     periodSeconds: 5

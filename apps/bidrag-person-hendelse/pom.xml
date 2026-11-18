@@ -19,13 +19,54 @@
         <nav-token-support.version>6.0.12</nav-token-support.version>
         <shedlock.version>7.9.0</shedlock.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <unleash-client-java.version>12.2.3</unleash-client-java.version>
+        <unleash-client-java.version>12.3.0</unleash-client-java.version>
         <ibm-mq-jakarta-client.version>10.0.0.0</ibm-mq-jakarta-client.version>
         <apache-avro.version>1.12.2</apache-avro.version>
         <confluent.version>8.3.1</confluent.version>
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.4</kotest.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <!-- com.ibm.mq.jakarta.client trekker inn Bouncy Castle 1.84, som er sårbar for
+         CVE-2026-8763 (Name Constraints-bypass, CVSS 9.1). Pinnes til 1.85 her siden
+         hverken root-pom eller spring-boot-parent styrer disse artefaktene. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Spring Boot -->
@@ -120,6 +161,11 @@
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-backend-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>no.nav.bidrag</groupId>
+            <artifactId>bidrag-backend-feilhandtering</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

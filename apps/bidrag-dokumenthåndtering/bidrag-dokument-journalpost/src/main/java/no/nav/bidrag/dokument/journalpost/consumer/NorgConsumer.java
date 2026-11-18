@@ -1,7 +1,8 @@
 package no.nav.bidrag.dokument.journalpost.consumer;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
+
 import java.util.Optional;
-import no.nav.bidrag.dokument.journalpost.UrlsForApplication;
 import no.nav.bidrag.dokument.journalpost.model.Enhet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,18 +20,18 @@ public class NorgConsumer {
   }
 
   public Optional<Enhet> hentEnhetsinformasjon(String enhetsnummer) {
-    LOGGER.info("Henter enhetsinformasjon med enhetsnummer: {}", enhetsnummer);
+    LOGGER.debug("Henter enhetsinformasjon med enhetsnummer: {}", sanitizeForLog(enhetsnummer));
 
     try {
       var enhetResponse = restTemplate.exchange("/enhet/" + enhetsnummer, HttpMethod.GET, null, Enhet.class);
 
       if (enhetResponse.getBody() == null) {
-        LOGGER.warn("Fant ingen enhetsinformasjon for {}, httpStatus {}", enhetsnummer, enhetResponse.getStatusCode());
+        LOGGER.warn("Fant ingen enhetsinformasjon for {}, httpStatus {}", sanitizeForLog(enhetsnummer), enhetResponse.getStatusCode());
       }
 
       return Optional.ofNullable(enhetResponse.getBody());
     } catch (Exception e) {
-      LOGGER.error("Feilet ved henting av enhetsinformasjon for enhetsnummer {}", enhetsnummer, e);
+      LOGGER.error("Feilet ved henting av enhetsinformasjon for enhetsnummer {}", sanitizeForLog(enhetsnummer), e);
 
       return Optional.empty();
     }

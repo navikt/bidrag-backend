@@ -10,7 +10,7 @@
     "start3": "ts-node prefiks_kt_generator.ts"
   },
   "devDependencies": {
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.2"
   },
   "snyk": true
 }

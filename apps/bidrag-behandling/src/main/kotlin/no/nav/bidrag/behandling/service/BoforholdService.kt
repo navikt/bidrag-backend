@@ -46,7 +46,6 @@ import no.nav.bidrag.behandling.transformers.boforhold.filtrerUtUrelevantePeriod
 import no.nav.bidrag.behandling.transformers.boforhold.henteNyesteSivilstandGrunnlagsdata
 import no.nav.bidrag.behandling.transformers.boforhold.oppdaterePerioder
 import no.nav.bidrag.behandling.transformers.boforhold.oppdaterePerioderVoksne
-import no.nav.bidrag.behandling.transformers.boforhold.opprettDefaultPeriodeForOffentligHusstandsmedlem
 import no.nav.bidrag.behandling.transformers.boforhold.overskriveAndreVoksneIHusstandMedBearbeidaPerioder
 import no.nav.bidrag.behandling.transformers.boforhold.overskriveMedBearbeidaBostatusperioder
 import no.nav.bidrag.behandling.transformers.boforhold.overskriveMedBearbeidaPerioder
@@ -60,7 +59,6 @@ import no.nav.bidrag.behandling.transformers.boforhold.tilHusstandsmedlemmer
 import no.nav.bidrag.behandling.transformers.boforhold.tilOppdatereBoforholdResponse
 import no.nav.bidrag.behandling.transformers.boforhold.tilPerioder
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstand
-import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandBeregnV2Dto
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandDto
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandRequest
 import no.nav.bidrag.behandling.transformers.boforhold.tilSvilstandRequest
@@ -73,7 +71,6 @@ import no.nav.bidrag.beregn.boforhold.BoforholdApi
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdBarnRequestV3
 import no.nav.bidrag.beregn.boforhold.dto.BoforholdResponseV2
 import no.nav.bidrag.beregn.boforhold.dto.Bostatus
-import no.nav.bidrag.beregn.boforhold.dto.EndreBostatus
 import no.nav.bidrag.beregn.sivilstand.SivilstandApi
 import no.nav.bidrag.beregn.sivilstand.dto.SivilstandRequest
 import no.nav.bidrag.commons.util.secureLogger
@@ -698,7 +695,7 @@ class BoforholdService(
                 .toSet()
 
         val eksisterendeHusstandsmedlem =
-            husstandsmedlemSomSkalOppdateres.find { hentNyesteIdent(it.ident)?.verdi == nyttHusstandsmedlem.ident }
+            husstandsmedlemSomSkalOppdateres.find { hentNyesteIdentIgnorerForbidden(it.ident)?.verdi == nyttHusstandsmedlem.ident }
 
         // Oppdaterer eksisterende husstandsmedlem. Sletter manuelle perioder. Kjører ny periodisering av offentlige perioder.
         if (eksisterendeHusstandsmedlem != null) {
@@ -714,7 +711,7 @@ class BoforholdService(
                             eksisterendeHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             eksisterendeHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(eksisterendeHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(eksisterendeHusstandsmedlem.rolle?.stønadstype),
                             listOf(
                                 eksisterendeHusstandsmedlem
@@ -779,7 +776,7 @@ class BoforholdService(
                             offisieltHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             offisieltHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(offisieltHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(offisieltHusstandsmedlem.rolle?.stønadstype),
                             listOf(request),
                         )
@@ -788,7 +785,7 @@ class BoforholdService(
                             offisieltHusstandsmedlem.rolle?.finnVirkningstidspunktBeregningBoforhold()
                                 ?: behandling.eldsteVirkningstidspunkt,
                             offisieltHusstandsmedlem.rolle?.finnOpphørsdatoBoforhold(),
-                            behandling.finnBeregnTilDatoBehandling(offisieltHusstandsmedlem.rolle),
+                            behandling.finnBeregnTilDatoBehandling(),
                             behandling.tilTypeBoforhold(offisieltHusstandsmedlem.rolle?.stønadstype),
                             listOf(
                                 request.copy(

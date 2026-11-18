@@ -32,10 +32,13 @@ import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknader
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadResponse
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadResponse
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
@@ -51,6 +54,11 @@ import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 val søknadstyperFF = listOf(Behandlingstype.FORHOLDSMESSIG_FORDELING, Behandlingstype.FORHOLDSMESSIG_FORDELING_KLAGE)
+val søknadsstatusFattet = listOf(
+    Behandlingstatus.VEDTAK_FATTET,
+    Behandlingstatus.MIDLERTIDLIG_VEDTAK,
+    Behandlingstatus.VEDTAK_FATTET_ETTER_MIDLERTIDLIG_VEDTAK,
+)
 val søknadstyperFFKoder = søknadstyperFF.map { it.bisysKode }
 
 @Service
@@ -164,6 +172,16 @@ class BisysService(
             )
         }
 
+        if (request.behandlingstema == Behandlingstema.BIDRAG_18_ÅR &&
+            request.barnListe.size > 1 &&
+            (request.behandlingstype?.erForholdsmessigFordeling() ?: true)
+        ) {
+            throw HttpClientErrorException(
+                HttpStatus.BAD_REQUEST,
+                "Søknad om bidrag 18 år for forholdsmessig fordeling kan bare inneholde ett barn",
+            )
+        }
+
         val gruppeKombinasjonskodeRequest =
             SøknadGruppeKombinasjon
                 .fraBehandlingstemaOgInnkreving(
@@ -218,7 +236,7 @@ class BisysService(
                 val opprettBlankett =
                     Blankett(
                         saksnummer = request.saksnummer,
-                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.NAV_BIDRAG.kode,
+                        søknadFraKode = request.søktAv?.kode ?: SøktAvType.AUTOMATISK.kode,
                         søknadstype = request.behandlingstype?.bisysKode ?: "FF",
                         // TODO(Her bør det kastes feil om behandlingstype er null)
                     )
@@ -653,7 +671,7 @@ class BisysService(
     }
 
     private fun bestemHendelseType(opprettSøknad: OpprettSøknadRequest): String {
-        val søktAv = opprettSøknad.søktAv ?: SøktAvType.NAV_BIDRAG
+        val søktAv = opprettSøknad.søktAv ?: SøktAvType.AUTOMATISK
         val behandlingstype = opprettSøknad.behandlingstype ?: Behandlingstype.FORHOLDSMESSIG_FORDELING
         return "${behandlingstype.bisysKode}${søktAv.kode}"
     }
@@ -678,7 +696,7 @@ class BisysService(
         // Oppdaterer alle søknader under blankett
         val søknader = søknadRepository.finnAlleTilhørendeSøknader(søknad.blankettid)
         søknader.forEach {
-            it.behandlingsid = request.nyBehandlingsid.toString()
+            it.behandlingsid = request.nyBehandlingsid?.toString()
             søknadRepository.save(it)
         }
     }
@@ -698,6 +716,29 @@ class BisysService(
             it.behandlerenhet = request.behandlerenhet
             søknadRepository.save(it)
         }
+    }
+
+    /**
+     * Oppdaterer søkt fom dato på søknad og tilhørende søknader under samme blankett (feks innkrevingssøknad) som har samme søkt fom dato.
+     */
+    @Transactional("bisysTransactionManager")
+    fun oppdaterSøknadFomDato(request: OppdaterSøknadFomDatoRequest) {
+        secureLogger.info { "Request mottatt for å oppdatere søkt fom dato på søknad: $request " }
+        val søknad =
+            søknadRepository.findById(request.søknadsid.toString()).orElseThrow {
+                val melding = "Fant ikke søknad med id: ${request.søknadsid}"
+                secureLogger.error { melding }
+                HttpClientErrorException(HttpStatus.BAD_REQUEST, melding)
+            }
+        val forrigeSøknadFomDato = søknad.søknadFomDato
+
+        søknadRepository
+            .finnAlleTilhørendeSøknader(søknad.blankettid)
+            .filter { it.søknadsid == søknad.søknadsid || it.søknadFomDato == forrigeSøknadFomDato }
+            .forEach {
+                it.søknadFomDato = request.søknadFomDato
+                søknadRepository.save(it)
+            }
     }
 
     fun feilregistrerSøknad(request: FeilregistrerSøknadRequest) {
@@ -964,6 +1005,15 @@ class BisysService(
         )
     }
 
+    fun hentSøknaderForBehandling(request: HentSøknaderForBehandlingRequest): HentSøknaderForBehandlingResponse {
+        secureLogger.info { "Request mottatt for å hente søknader for behandling med id: ${request.behandlingsid} " }
+        val søknader =
+            søknadRepository
+                .finnSøknaderForBehandling(request.behandlingsid.toString())
+                .map { hentSøknad(HentSøknadRequest(it.søknadsid!!)).søknad }
+        return HentSøknaderForBehandlingResponse(søknader)
+    }
+
     private fun erFFSøknad(søknadsid: Long): Boolean {
         val søknad =
             søknadRepository.findById(søknadsid.toString()).getOrNull() ?: return false
@@ -1018,12 +1068,11 @@ class BisysService(
         val alleBehandlingsstatuser = søknadslinjeListe.map { Behandlingstatus.fraKode(it.søknadStatuskode) }
 
         val alleLukket = alleBehandlingsstatuser.all { it?.lukketStatus == true }
-        val harVedtakFattet = alleBehandlingsstatuser.any { it?.bisysKode == "VF" }
-        val harFeilregistretSøknad = alleBehandlingsstatuser.any { it?.bisysKode == "FR" }
+        val harVedtakFattet = alleBehandlingsstatuser.any { søknadsstatusFattet.contains(it) }
 
         return when {
             alleLukket && harVedtakFattet -> BehandlingStatusType.VEDTAK_FATTET
-            alleLukket && harFeilregistretSøknad -> BehandlingStatusType.AVBRUTT
+            alleLukket && alleBehandlingsstatuser.isNotEmpty() -> BehandlingStatusType.AVBRUTT
             else -> BehandlingStatusType.UNDER_BEHANDLING
         }
     }
@@ -1108,7 +1157,7 @@ class BisysService(
             }
 
         if (søknadsknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
             return
         }
     }
@@ -1124,7 +1173,7 @@ class BisysService(
                 )
 
         if (eksisterendeSammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.referertSøknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.referertSøknadsid} " }
             return null
         }
 
@@ -1134,7 +1183,7 @@ class BisysService(
         if (eksisterendeSammenknytningNyHovedsøknad != null) {
             val melding =
                 "Søknader med id: ${request.hovedsøknadsid} og ${request.referertSøknadsid} er allerede sammenknyttet"
-            secureLogger.warn { melding }
+            secureLogger.debug { melding }
             return eksisterendeSammenknytningNyHovedsøknad
         }
 
@@ -1170,7 +1219,7 @@ class BisysService(
                 }
 
         if (eksisterendeSammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.eksisterendeHovedsøknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.eksisterendeHovedsøknadsid} " }
             return
         }
 
@@ -1215,7 +1264,7 @@ class BisysService(
 
         val hoveddsøknad = sammenknytninger.firstOrNull()?.hovedsøknadsid ?: request.søknadsid
         if (sammenknytninger.isEmpty()) {
-            secureLogger.warn { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
+            secureLogger.debug { "Ingen sammenknytninger funnet for søknad med med id: ${request.søknadsid} " }
             return FinnSammenknytningerHovedsøknadResponse(hoveddsøknad, emptyList())
         }
 

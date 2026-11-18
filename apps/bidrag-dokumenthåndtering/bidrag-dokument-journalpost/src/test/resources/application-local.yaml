@@ -49,9 +49,6 @@ spring:
   flyway:
     enabled: true
     locations: classpath:/flyway
-logging:
-  level:
-    root: info
 ---
 spring.config.activate.on-profile: q1
 MQ_CHANNEL: Q1_BISYS

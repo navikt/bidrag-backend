@@ -49,5 +49,7 @@
   </logger>
 
   <logger name="org.hibernate.orm.connections.pooling" level="warn"/>
+  <logger name="org.apache.pdfbox.pdmodel.font.PDType1Font" level="error"/>
+  <logger name="org.apache.pdfbox.multipdf.PDFMergerUtility" level="error"/>
 
 </configuration>

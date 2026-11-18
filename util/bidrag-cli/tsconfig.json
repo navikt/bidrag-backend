@@ -1,9 +1,9 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
-  "buildOptions": {
-  },
+  "buildOptions": {},
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "esModuleInterop": true,

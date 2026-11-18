@@ -20,3 +20,10 @@ data class BarnetilsynMedStønadPeriode(
     val skolealder: Skolealder,
     override val manueltRegistrert: Boolean,
 ) : GrunnlagPeriodeInnhold
+
+@Schema(description = "Forpleining for person")
+data class ForpleiningPeriode(
+    override val periode: ÅrMånedsperiode,
+    val beløp: BigDecimal,
+    override val manueltRegistrert: Boolean,
+) : GrunnlagPeriodeInnhold

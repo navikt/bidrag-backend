@@ -6,11 +6,14 @@ import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagEtterfølgendeVedt
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettPeriode
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvvisning
+import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erDirekteAvslag
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import kotlin.test.Test
 
 class BeregnTilTest {
     @Test
@@ -177,6 +180,47 @@ class BeregnTilTest {
             )
 
         behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2025-05-01")
+    }
+
+    @Test
+    fun `Skal lage beregn til dato for OPPRINNELIG_VEDTAKSTIDSPUNKT til en måned etter virkning hvis virkning er lik opprinnelig`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        søknadsbarn.virkningstidspunkt = LocalDate.parse("2025-02-01")
+        søknadsbarn.beregnTil = BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+        behandling.virkningstidspunkt = søknadsbarn.virkningstidspunkt
+        søknadsbarn.opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01")
+        behandling.omgjøringsdetaljer =
+            Omgjøringsdetaljer(
+                klageMottattdato = LocalDate.parse("2025-01-10"),
+                opprinneligVedtakId = 2,
+                opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+            )
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2025-03-01")
+    }
+
+    @Test
+    fun `Skal lage beregn til dato for OPPRINNELIG_VEDTAKSTIDSPUNKT til virkning ved direkte avslag hvis virkning er lik opprinnelig`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        behandling.vedtakstype = Vedtakstype.KLAGE
+        søknadsbarn.virkningstidspunkt = LocalDate.parse("2025-02-01")
+        søknadsbarn.beregnTil = BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT
+        søknadsbarn.avslag = Resultatkode.entries.first { it.erDirekteAvslag() && !it.erAvvisning() }
+        behandling.virkningstidspunkt = søknadsbarn.virkningstidspunkt
+        søknadsbarn.opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01")
+        behandling.omgjøringsdetaljer =
+            Omgjøringsdetaljer(
+                klageMottattdato = LocalDate.parse("2025-01-10"),
+                opprinneligVedtakId = 2,
+                opprinneligVirkningstidspunkt = LocalDate.parse("2025-01-01"),
+                omgjortVedtakstidspunktListe = mutableSetOf(LocalDate.parse("2025-01-01").atStartOfDay()),
+            )
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2025-02-01")
     }
 
     @Test

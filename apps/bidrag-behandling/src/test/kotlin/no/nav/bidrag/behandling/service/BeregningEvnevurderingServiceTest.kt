@@ -179,25 +179,22 @@ class BeregningEvnevurderingServiceTest {
         verify(exactly = 3) { bidragVedtakConsumer.hentVedtakForStønad(any()) }
         verify(exactly = 1) {
             bidragVedtakConsumer.hentVedtakForStønad(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.kravhaver shouldBe Personident(testdataBarn1.ident)
+                match {
+                    it.type == Stønadstype.BIDRAG && it.kravhaver == Personident(testdataBarn1.ident)
                 },
             )
         }
         verify(exactly = 1) {
             bidragVedtakConsumer.hentVedtakForStønad(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG
-                    it.kravhaver shouldBe Personident(testdataBarn2.ident)
+                match {
+                    it.type == Stønadstype.BIDRAG && it.kravhaver == Personident(testdataBarn2.ident)
                 },
             )
         }
         verify(exactly = 1) {
             bidragVedtakConsumer.hentVedtakForStønad(
-                withArg {
-                    it.type shouldBe Stønadstype.BIDRAG18AAR
-                    it.kravhaver shouldBe Personident(testdataHusstandsmedlem1.ident)
+                match {
+                    it.type == Stønadstype.BIDRAG18AAR && it.kravhaver == Personident(testdataHusstandsmedlem1.ident)
                 },
             )
         }

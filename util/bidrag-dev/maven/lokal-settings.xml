@@ -1,0 +1,18 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      http://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <!--
+      Autentiseringsinformasjon leses fra miljøvariabler.
+      GITHUB_USERNAME - Utviklerens GitHub-brukernavn
+      GITHUB_TOKEN    - PAT personal access token med read:packages, SSO-godkjent for navikt
+      Ikke legg inn PAT i denne filen.
+  -->
+  <servers>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_USERNAME}</username>
+      <password>${env.GITHUB_TOKEN}</password>
+    </server>
+  </servers>
+</settings>

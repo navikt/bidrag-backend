@@ -47,7 +47,7 @@ from flask import Flask, Response, jsonify, request
 from weasyprint import CSS, HTML, __version__ as weasyprint_version
 from weasyprint.pdf import VARIANTS
 from weasyprint.text.fonts import FontConfiguration
-from weasyprint.urls import URLFetchingError
+from weasyprint.urls import URLFetcher, URLFetchingError
 
 # PDF/A-3b was what the Gotenberg deployment produced, so keep it as the default
 # for `pdfa=true`. "b" = basic conformance (visual fidelity, no tagging).
@@ -114,17 +114,17 @@ _font_config = FontConfiguration()
 _compat_css = CSS(string=COMPAT_CSS_SOURCE, font_config=_font_config)
 
 
-def _restricted_url_fetcher(url: str, timeout: int = 10, ssl_context: Any = None):
-    """Allow only `data:` URIs unless remote resources are explicitly enabled."""
-    if url.startswith("data:"):
-        from weasyprint.urls import default_url_fetcher
+# `file:` (and ftp) is never allowed, so markup cannot read local files.
+# URLFetcher re-checks the protocol on redirects, since they go through fetch().
+_ALLOWED_PROTOCOLS = frozenset({"data", "http", "https"} if ALLOW_REMOTE_RESOURCES else {"data"})
 
-        return default_url_fetcher(url, timeout=timeout, ssl_context=ssl_context)
-    if ALLOW_REMOTE_RESOURCES:
-        from weasyprint.urls import default_url_fetcher
 
-        return default_url_fetcher(url, timeout=timeout, ssl_context=ssl_context)
-    raise URLFetchingError(f"Blocked non-data URL: {url[:120]}")
+def _restricted_url_fetcher() -> URLFetcher:
+    """Return a fetcher that allows only `data:` URIs unless remote resources are enabled.
+
+    URLFetcher keeps per-request state, so create a new one per conversion.
+    """
+    return URLFetcher(timeout=10, allowed_protocols=_ALLOWED_PROTOCOLS)
 
 
 def _parse_bool(value: str | None, default: bool = False) -> bool:
@@ -353,7 +353,7 @@ def convert() -> Response:
         html = HTML(
             string=html_source,
             base_url=request.args.get("baseUrl") or None,
-            url_fetcher=_restricted_url_fetcher,
+            url_fetcher=_restricted_url_fetcher(),
             # WeasyPrint already defaults to the print media type, which is what
             # Gotenberg's emulatedMediaType=print gave us. Be explicit anyway.
             media_type="print",

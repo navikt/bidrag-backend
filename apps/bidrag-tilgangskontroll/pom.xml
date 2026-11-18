@@ -14,17 +14,18 @@
   <name>bidrag-tilgangskontroll</name>
 
   <properties>
+    <jackson-bom.version>3.1.8</jackson-bom.version>
     <mockk.version>1.14.11</mockk.version>
-    <nav-token-support.version>6.0.12</nav-token-support.version>
+    <nav-token-support.version>7.0.1</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-    <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+    <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
-    <okhttp.version>5.5.0</okhttp.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
-    <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+    <okhttp.version>5.5.1</okhttp.version>
+    <unleash-client-java.version>12.3.2</unleash-client-java.version>
+    <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
-    <kotest.version>6.2.4</kotest.version>
+    <kotest.version>6.2.6</kotest.version>
   </properties>
 
   <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
@@ -99,10 +100,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-cache</artifactId>
-    </dependency>
 
     <!-- swagger -->
     <dependency>
@@ -119,6 +116,12 @@
     </dependency>
 
     <!--NAV-->
+    <!-- Samler Caffeine, Valkey og Spring-cacheoppsettet i det interne biblioteket. -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-cache</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-backend-commons</artifactId>
@@ -139,10 +142,6 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-reflect</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
       <groupId>tools.jackson.dataformat</groupId>

@@ -7,7 +7,7 @@ import io.mockk.unmockkAll
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
@@ -73,7 +73,7 @@ class StønadsendringBidragsmottakerTest {
 
         val roller = setOf(bidragsmottaker)
 
-        every { hentNyesteIdent(bidragsmottakerIdent) } returns nyesteIdent
+        every { hentNyesteIdentIgnorerForbidden(bidragsmottakerIdent) } returns nyesteIdent
 
         val result = roller.reelMottakerEllerBidragsmottaker(rolleDto)
 
@@ -102,7 +102,7 @@ class StønadsendringBidragsmottakerTest {
 
         val roller = setOf(bidragsmottaker)
 
-        every { hentNyesteIdent(gammelIdent) } returns nyIdent
+        every { hentNyesteIdentIgnorerForbidden(gammelIdent) } returns nyIdent
 
         val result = roller.reelMottakerEllerBidragsmottaker(rolleDto)
 
@@ -177,7 +177,7 @@ class StønadsendringBidragsmottakerTest {
 
         val roller = setOf(bidragsmottaker, bidragspliktig, barn)
 
-        every { hentNyesteIdent(bidragsmottakerIdent) } returns nyesteIdent
+        every { hentNyesteIdentIgnorerForbidden(bidragsmottakerIdent) } returns nyesteIdent
 
         val result = roller.reelMottakerEllerBidragsmottaker(rolleDto)
 
@@ -246,8 +246,8 @@ class StønadsendringBidragsmottakerTest {
         val roller = setOf(bidragsmottaker, bidragspliktig, barn, bidragsmottaker2, barn2)
         behandling.roller = roller.toMutableSet()
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
-        every { hentNyesteIdent(bidragsmottakerIdent) } returns Personident(bidragsmottakerIdent)
-        every { hentNyesteIdent(bidragsmottakerIdent2) } returns Personident(bidragsmottakerIdent2)
+        every { hentNyesteIdentIgnorerForbidden(bidragsmottakerIdent) } returns Personident(bidragsmottakerIdent)
+        every { hentNyesteIdentIgnorerForbidden(bidragsmottakerIdent2) } returns Personident(bidragsmottakerIdent2)
         val rolleDto =
             RolleDto(
                 fødselsnummer = Personident("20202020202"),

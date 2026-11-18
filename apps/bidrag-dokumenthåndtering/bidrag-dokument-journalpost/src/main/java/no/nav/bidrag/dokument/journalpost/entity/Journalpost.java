@@ -2,6 +2,7 @@ package no.nav.bidrag.dokument.journalpost.entity;
 
 import static java.util.function.Predicate.not;
 import static no.nav.bidrag.commons.util.KildesystemIdenfikator.PREFIX_BIDRAG_COMPLETE;
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.dokument.journalpost.model.AvvikDetaljer.ENHETSNUMMER;
 import static no.nav.bidrag.dokument.journalpost.model.Avvikstype.BESTILL_ORIGINAL;
 import static no.nav.bidrag.dokument.journalpost.model.Avvikstype.BESTILL_RESKANNING;
@@ -461,7 +462,7 @@ public class Journalpost {
       var reelleSaksnummer =
           journalsaker.stream().map(Journalsak::getSaksnummer).collect(Collectors.joining(", "));
       LOGGER.warn(
-          String.format(SAKSNUMMER_UKJENT_SAMT_REELLE_SAKSNUMMER, saksnummer, reelleSaksnummer));
+          String.format(SAKSNUMMER_UKJENT_SAMT_REELLE_SAKSNUMMER, sanitizeForLog(saksnummer), reelleSaksnummer));
 
       return Collections.emptyList();
     }

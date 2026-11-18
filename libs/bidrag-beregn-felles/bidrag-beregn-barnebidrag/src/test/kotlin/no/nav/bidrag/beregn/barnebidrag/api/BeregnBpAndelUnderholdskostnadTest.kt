@@ -1,13 +1,16 @@
 package no.nav.bidrag.beregn.barnebidrag.api
 
+import io.mockk.every
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
+import no.nav.bidrag.commons.service.sjablon.SjablonProvider
+import no.nav.bidrag.commons.web.mock.sjablonTallResponse
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspliktigesAndel
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -35,7 +38,7 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
     private var forventetAntallDelberegningSumInntektPeriodeBM: Int = 1
     private var forventetAntallDelberegningSumInntektPeriodeSB: Int = 1
     private var forventetAntallUnderholdskostnad: Int = 1
-    private var forventetAntallSjablon: Int = 2
+    private var forventetAntallSjablon: Int = 4
 
     @Mock
     private lateinit var api: BeregnBarnebidragApi
@@ -148,6 +151,38 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
     }
 
     @Test
+    @DisplayName("BP Andel underholdskostnad - barnets inntekt reduseres med InntektBBMultiplikator fra sjablon")
+    fun testBpAndelUnderholdskostnad_InntektBBMultiplikatorFraSjablon() {
+        endreSjablontall(SjablonTallNavn.INNTEKT_BB_MULTIPLIKATOR, BigDecimal.valueOf(20))
+        filnavn = "src/test/resources/testfiler/bpandelunderholdskostnad/bpandel_eksempel3.json"
+        forventetEndeligAndelFaktor = BigDecimal.valueOf(0.7568876779).setScale(10)
+        forventetAndelBeløp = BigDecimal.valueOf(6811.99).setScale(2)
+        forventetBeregnetAndelFaktor = BigDecimal.valueOf(0.7568876779).setScale(10)
+        forventetBarnEndeligInntekt = BigDecimal.valueOf(60600.00).setScale(2)
+        forventetBarnetErSelvforsørget = false
+        utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnad()
+    }
+
+    @Test
+    @DisplayName("BP Andel underholdskostnad - grensen for selvforsørget kommer fra MaksInntektBBMultiplikator i sjablon")
+    fun testBpAndelUnderholdskostnad_MaksInntektBBMultiplikatorFraSjablon() {
+        endreSjablontall(SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR, BigDecimal.valueOf(50))
+        filnavn = "src/test/resources/testfiler/bpandelunderholdskostnad/bpandel_eksempel3.json"
+        forventetEndeligAndelFaktor = BigDecimal.ZERO.setScale(10)
+        forventetAndelBeløp = BigDecimal.ZERO.setScale(2)
+        forventetBeregnetAndelFaktor = BigDecimal.ZERO.setScale(10)
+        forventetBarnEndeligInntekt = BigDecimal.valueOf(100000.00).setScale(2)
+        forventetBarnetErSelvforsørget = true
+        utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnad()
+    }
+
+    private fun endreSjablontall(sjablon: SjablonTallNavn, verdi: BigDecimal) {
+        every { SjablonProvider.hentSjablontall() } returns sjablonTallResponse().map {
+            if (it.typeSjablon == sjablon.id) it.copy(verdi = verdi) else it
+        }
+    }
+
+    @Test
     @DisplayName("BP andel underholdskostnad - eksempel med flere perioder")
     fun testBpAndelUnderholdskostnad_Eksempel_Flere_Perioder() {
         filnavn = "src/test/resources/testfiler/bpandelunderholdskostnad/bpandel_eksempel_flere_perioder.json"
@@ -158,14 +193,13 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
         forventetAntallDelberegningSumInntektPeriodeBM = 2
         forventetAntallDelberegningSumInntektPeriodeSB = 4
         forventetAntallUnderholdskostnad = 2
-        forventetAntallSjablon = 3
+        forventetAntallSjablon = 5
         utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnadFlerePerioder()
     }
 
     private fun utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnad() {
         val request = lesFilOgByggRequest(filnavn)
         val bpAndelUnderholdskostnadResultat = api.beregnBpAndelUnderholdskostnad(request)
-        println(commonObjectmapper.writeValueAsString(bpAndelUnderholdskostnadResultat))
 
         val alleReferanser = hentAlleReferanser(bpAndelUnderholdskostnadResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(bpAndelUnderholdskostnadResultat)
@@ -264,7 +298,6 @@ internal class BeregnBpAndelUnderholdskostnadTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatBpAndelUnderholdskostnadFlerePerioder() {
         val request = lesFilOgByggRequest(filnavn)
         val bpAndelUnderholdskostnadResultat = api.beregnBpAndelUnderholdskostnad(request)
-        println(commonObjectmapper.writeValueAsString(bpAndelUnderholdskostnadResultat))
 
         val alleReferanser = hentAlleReferanser(bpAndelUnderholdskostnadResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(bpAndelUnderholdskostnadResultat)

@@ -10,30 +10,6 @@ Reference: [sikkerhet.nav.no/docs/sikker-utvikling](https://sikkerhet.nav.no/doc
 
 ## Etablert mønster i dette repoet
 
-`bidrag-backend`-apper bygges med Maven **utenfor** Docker (i CI, før `docker build`), og Dockerfilen kopierer kun den ferdige jar-filen inn. Standardmønsteret er `gcr.io/distroless/java21` med en egen `ubuntu`-locale-stage for norsk locale (`nb_NO.UTF-8`):
+`bidrag-backend`-apper bygges med Maven **utenfor** Docker (i CI, før `docker build`), og Dockerfilen kopierer kun den ferdige jar-filen inn. Bruk [Dockerfile i roten](../../Dockerfile) som mønster for nye apper: Den bruker Chainguard/Wolfi med Java 25 og henter norsk locale, shell og `printenv` fra en egen dev-stage.
 
-```dockerfile
-FROM ubuntu:26.04 AS locales
-RUN apt-get update && apt-get install -y locales
-RUN locale-gen nb_NO.UTF-8 && \
-    update-locale LANG=nb_NO.UTF-8 LANGUAGE="nb_NO:nb" LC_ALL=nb_NO.UTF-8
-
-FROM gcr.io/distroless/java21
-LABEL maintainer="Team Bidrag" \
-      email="bidrag@nav.no"
-
-COPY --from=busybox:1.35.0-glibc /bin/sh /bin/sh
-COPY --from=busybox:1.35.0-glibc /bin/printenv /bin/printenv
-COPY --from=locales /usr/lib/locale/ /usr/lib/locale/
-
-WORKDIR /app
-COPY ./target/app.jar app.jar
-
-EXPOSE 8080
-ENV LANG=nb_NO.UTF-8 LANGUAGE='nb_NO:nb' LC_ALL=nb_NO.UTF-8 TZ="Europe/Oslo"
-ENV SPRING_PROFILES_ACTIVE=nais
-
-CMD ["app.jar"]
-```
-
-**Følg dette mønsteret for nye apper i `apps/`** med mindre det finnes en dokumentert, god grunn til å avvike (f.eks. `bidrag-sak` sin egen `ENTRYPOINT` for å legge til en DB2-lisensfil for Bisys-tilkobling — avviket er kommentert direkte i Dockerfilen).
+Behold dokumenterte avvik for apper som trenger dem, for eksempel `bidrag-sak` sin `ENTRYPOINT` for DB2-lisensfilen og `bidrag-admin-fss` sine Java-proxyinnstillinger.

@@ -11,6 +11,7 @@ import no.nav.bidrag.behandling.utils.harReferanseTilGrunnlag
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.leggTilBarnetilsyn
 import no.nav.bidrag.behandling.utils.testdata.leggTilFaktiskTilsynsutgift
+import no.nav.bidrag.behandling.utils.testdata.leggTilForpleining
 import no.nav.bidrag.behandling.utils.testdata.leggTilSamvær
 import no.nav.bidrag.behandling.utils.testdata.leggTilTillegsstønad
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
@@ -31,6 +32,7 @@ import no.nav.bidrag.transport.behandling.beregning.samvær.SamværskalkulatorDe
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BarnetilsynMedStønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSamværsklasse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FaktiskUtgiftPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SamværsperiodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.TilleggsstønadPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -161,6 +163,39 @@ class GrunnlagByggerBidragTest {
                 innhold.periode.fom shouldBe YearMonth.from(behandling.virkningstidspunkt)
                 innhold.periode.til shouldBe YearMonth.from(behandling.virkningstidspunkt!!.plusMonths(5))
                 grunnlagsreferanseListe shouldHaveSize 0
+            }
+        }
+    }
+
+    @Test
+    fun `skal mappe forpleining til grunnlag`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.leggTilForpleining(
+            ÅrMånedsperiode(behandling.virkningstidspunkt!!, behandling.virkningstidspunkt!!.plusMonths(5)),
+            medId = true,
+        )
+        behandling.leggTilForpleining(ÅrMånedsperiode(behandling.virkningstidspunkt!!.plusMonths(5), null), medId = true)
+
+        val grunnlag = behandling.tilGrunnlagForpleining()
+        assertSoftly(grunnlag) {
+            shouldHaveSize(3)
+            it.filtrerBasertPåEgenReferanse(Grunnlagstype.PERSON_SØKNADSBARN) shouldHaveSize 1
+            it.filtrerBasertPåEgenReferanse(Grunnlagstype.FORPLEINING_PERIODE) shouldHaveSize 2
+            val perioder = it.filtrerBasertPåEgenReferanse(Grunnlagstype.FORPLEINING_PERIODE)
+            assertSoftly(perioder[0]) {
+                gjelderBarnReferanse shouldBe behandling.søknadsbarn.first().tilGrunnlagsreferanse()
+                gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
+                val innhold = it.innholdTilObjekt<ForpleiningPeriode>()
+                innhold.beløp shouldBe BigDecimal(2500)
+                innhold.manueltRegistrert shouldBe true
+                innhold.periode.fom shouldBe YearMonth.from(behandling.virkningstidspunkt)
+                innhold.periode.til shouldBe YearMonth.from(behandling.virkningstidspunkt!!.plusMonths(5))
+                grunnlagsreferanseListe shouldHaveSize 0
+            }
+            assertSoftly(perioder[1]) {
+                val innhold = it.innholdTilObjekt<ForpleiningPeriode>()
+                innhold.periode.fom shouldBe YearMonth.from(behandling.virkningstidspunkt!!.plusMonths(5))
+                innhold.periode.til shouldBe null
             }
         }
     }

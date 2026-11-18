@@ -2075,6 +2075,7 @@
         "SOKNAD"
       ],
       "soknadFra": [
+        "AUTOMATISK",
         "KLAGE_ANKE",
         "NAV_BIDRAG",
         "NORSKE_MYNDIGHET",
@@ -2203,6 +2204,7 @@
         "SOKNAD"
       ],
       "soknadFra": [
+        "AUTOMATISK",
         "KLAGE_ANKE",
         "NAV_BIDRAG",
         "NORSKE_MYNDIGHET",
@@ -6652,6 +6654,7 @@
         "SOKNAD"
       ],
       "soknadFra": [
+        "AUTOMATISK",
         "NAV_BIDRAG"
       ],
       "erVedtakIkkeTilbakekreving": false,

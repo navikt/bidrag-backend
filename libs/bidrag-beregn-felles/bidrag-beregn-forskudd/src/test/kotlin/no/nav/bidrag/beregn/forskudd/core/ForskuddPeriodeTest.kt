@@ -1,6 +1,5 @@
 package no.nav.bidrag.beregn.forskudd.core
 
-import no.nav.bidrag.beregn.core.bo.Avvik
 import no.nav.bidrag.beregn.core.bo.Periode
 import no.nav.bidrag.beregn.forskudd.TestUtil.byggForskuddGrunnlag
 import no.nav.bidrag.beregn.forskudd.TestUtil.byggForskuddGrunnlagMedAvvik
@@ -9,7 +8,6 @@ import no.nav.bidrag.beregn.forskudd.TestUtil.byggForskuddGrunnlagUtenAndreBarn
 import no.nav.bidrag.beregn.forskudd.TestUtil.byggForskuddGrunnlagUtenSivilstand
 import no.nav.bidrag.beregn.forskudd.TestUtil.byggSjablonPeriodeListe
 import no.nav.bidrag.beregn.forskudd.TestUtil.byggSjablonPeriodeNavnVerdiListe
-import no.nav.bidrag.beregn.forskudd.core.bo.BeregnForskuddResultat
 import no.nav.bidrag.beregn.forskudd.core.bo.InntektPeriode
 import no.nav.bidrag.beregn.forskudd.core.periode.ForskuddPeriode
 import no.nav.bidrag.domene.enums.beregning.Avvikstype
@@ -165,8 +163,6 @@ internal class ForskuddPeriodeTest {
             },
             { assertThat(resultat.beregnetForskuddPeriodeListe[8].resultat.regel).isEqualTo("REGEL 9") },
         )
-
-        printGrunnlagResultat(resultat)
     }
 
     @Test
@@ -190,8 +186,6 @@ internal class ForskuddPeriodeTest {
             },
             { assertThat(avvikListe[2].avvikType).isEqualTo(Avvikstype.DATO_FOM_ETTER_DATO_TIL) },
         )
-
-        printAvvikListe(avvikListe)
     }
 
     @Test
@@ -219,8 +213,6 @@ internal class ForskuddPeriodeTest {
             },
             { assertThat(avvikListe[2].avvikType).isEqualTo(Avvikstype.PERIODE_MANGLER_DATA) },
         )
-
-        printAvvikListe(avvikListe)
     }
 
     @Test
@@ -451,21 +443,6 @@ internal class ForskuddPeriodeTest {
         val avvikListe = forskuddPeriode.validerInput(grunnlag)
 
         assertThat(avvikListe).isEmpty()
-    }
-
-    private fun printGrunnlagResultat(resultat: BeregnForskuddResultat) {
-        resultat.beregnetForskuddPeriodeListe
-            .sortedBy { it.periode.datoFom }
-            .forEach {
-                println(
-                    "Dato fom: ${it.periode.datoFom}; Dato til: ${it.periode.datoTil}; Beløp: ${it.resultat.beløp.toInt()}; " +
-                        "Resultatkode: ${it.resultat.kode}; Regel: ${it.resultat.regel}",
-                )
-            }
-    }
-
-    private fun printAvvikListe(avvikListe: List<Avvik>) {
-        avvikListe.forEach { println("Avvik tekst: ${it.avvikTekst}; Avvik type: ${it.avvikType}") }
     }
 
     companion object {

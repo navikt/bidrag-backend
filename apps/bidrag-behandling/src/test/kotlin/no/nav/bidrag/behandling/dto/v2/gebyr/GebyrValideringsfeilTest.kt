@@ -2,13 +2,28 @@ package no.nav.bidrag.behandling.dto.v2.gebyr
 
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class GebyrValideringsfeilTest {
+    @BeforeEach
+    fun setUp() {
+        stubPersonConsumer()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkObject(AppContext)
+    }
+
     @Test
     fun `skal feile validering hvis ingen begrunnelse for overstyrt gebyr`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)

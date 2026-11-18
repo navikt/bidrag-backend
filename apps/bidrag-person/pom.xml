@@ -23,7 +23,7 @@
         <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
         <mockk.version>1.14.11</mockk.version>
         <kotest.version>6.2.4</kotest.version>
-        <swagger-annotations.version>2.2.54</swagger-annotations.version>
+        <swagger-annotations.version>2.2.55</swagger-annotations.version>
     </properties>
 
     <dependencies>

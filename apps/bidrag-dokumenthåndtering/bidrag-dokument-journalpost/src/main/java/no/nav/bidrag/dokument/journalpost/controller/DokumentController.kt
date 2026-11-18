@@ -1,13 +1,14 @@
 package no.nav.bidrag.dokument.journalpost.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.commons.util.KildesystemIdenfikator
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.journalpost.service.DokumentService
 import no.nav.bidrag.transport.dokument.DokumentMetadata
 import no.nav.bidrag.transport.dokument.DokumentTilgangResponse
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -29,7 +30,7 @@ class DokumentController(
         @PathVariable dokumentreferanse: String,
     ): ResponseEntity<DokumentTilgangResponse> {
         val dokumentTilgangResponse = dokumentService.lagTilgangUrl(dokumentreferanse).lagResponseDto()
-        LOGGER.info("Opprettet tilgang til dokument: $dokumentTilgangResponse")
+        LOGGER.info { "Opprettet tilgang til dokument: ${dokumentTilgangResponse.sanitizeForLog()}" }
         return ResponseEntity(dokumentTilgangResponse, HttpStatus.OK)
     }
 
@@ -42,7 +43,7 @@ class DokumentController(
         @PathVariable(required = false) dokumentreferanse: String?,
         @RequestParam("rtf", required = false) rtfFile: Boolean = false,
     ): ResponseEntity<ByteArray> {
-        LOGGER.info("Henter dokument for journalpost {} og dokumentId {}, rtf {}", journalpostId, dokumentreferanse, rtfFile)
+        LOGGER.debug { "Henter dokument for journalpost ${journalpostId.sanitizeForLog()} og dokumentId ${dokumentreferanse.sanitizeForLog()}, rtf $rtfFile" }
         if (journalpostId.isNullOrEmpty() && dokumentreferanse.isNullOrEmpty()) {
             return ResponseEntity
                 .badRequest()
@@ -72,7 +73,7 @@ class DokumentController(
     fun erFerdigstilt(
         @PathVariable dokumentreferanse: String,
     ): Boolean {
-        LOGGER.debug("Sjekker om $dokumentreferanse er ferdigstilt")
+        LOGGER.debug { "Sjekker om ${dokumentreferanse.sanitizeForLog()} er ferdigstilt" }
         return dokumentService.erFerdigstilt(dokumentreferanse)
     }
 
@@ -85,7 +86,7 @@ class DokumentController(
         @PathVariable(required = false) journalpostId: String?,
         @PathVariable(required = false) dokumentreferanse: String?,
     ): ResponseEntity<List<DokumentMetadata>> {
-        LOGGER.info("Henter dokument for journalpost {} og dokumentId {}", journalpostId, dokumentreferanse)
+        LOGGER.debug { "Henter dokument for journalpost ${journalpostId.sanitizeForLog()} og dokumentId ${dokumentreferanse.sanitizeForLog()}" }
         if (journalpostId.isNullOrEmpty() && dokumentreferanse.isNullOrEmpty()) {
             return ResponseEntity
                 .badRequest()
@@ -107,7 +108,7 @@ class DokumentController(
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DokumentController::class.java)
+        private val LOGGER = KotlinLogging.logger {}
         const val ROOT_TILGANG = "/tilgang"
     }
 }

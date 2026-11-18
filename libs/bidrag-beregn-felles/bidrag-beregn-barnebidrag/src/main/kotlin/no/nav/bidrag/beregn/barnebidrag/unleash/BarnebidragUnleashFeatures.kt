@@ -23,7 +23,7 @@ enum class BarnebidragUnleashFeatures(val featureName: String, defaultValue: Boo
     }
 
     val isEnabled: Boolean
-        get() = UnleashFeaturesProvider.isEnabled(featureName, defaultValue)
+        get() = UnleashFeaturesProvider.isEnabled(feature = featureName, defaultValue = defaultValue)
 
     val variant: Variant?
         get() = UnleashFeaturesProvider.getVariant(featureName)

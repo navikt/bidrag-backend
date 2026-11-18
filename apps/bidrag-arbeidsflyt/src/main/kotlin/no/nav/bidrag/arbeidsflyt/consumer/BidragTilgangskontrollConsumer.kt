@@ -36,7 +36,7 @@ class BidragTilgangskontrollConsumer(
                 .path("/v2/api/tilgang/tema")
                 .build()
         return try {
-            postForNonNullEntity<TilgangskontrollResponse>(url.toUri(), TilgangTilTemaRequest(tema, saksbehandlerIdent)).harTilgang ?: false
+            postForNonNullEntity<TilgangskontrollResponse>(url.toUri(), TilgangTilTemaRequest(tema, saksbehandlerIdent)).harTilgang
         } catch (e: HttpStatusCodeException) {
             if (e.statusCode == HttpStatus.FORBIDDEN) return false
             throw e

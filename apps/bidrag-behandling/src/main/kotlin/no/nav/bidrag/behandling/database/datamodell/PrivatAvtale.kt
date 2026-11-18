@@ -50,7 +50,10 @@ open class PrivatAvtale(
     )
     @JoinColumn(name = "person_id", nullable = false)
     open var person: Person? = null,
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(
+        fetch = FetchType.EAGER,
+        cascade = [CascadeType.MERGE, CascadeType.PERSIST],
+    )
     @JoinColumn(name = "rolle_id", nullable = true)
     open var rolle: Rolle? = null,
     @OneToMany(

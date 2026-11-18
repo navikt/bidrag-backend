@@ -3,6 +3,7 @@ package no.nav.bidrag.bbm.service
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import no.nav.bidrag.bbm.CommonTestRunner
@@ -37,10 +38,12 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -364,7 +367,7 @@ class BisysServiceTest(
             hendelse!!.first().apply {
                 saksnummer shouldBe request.saksnummer
                 søknadsid shouldBe response.søknadsid
-                hendelsestype shouldBe "FFET"
+                hendelsestype shouldBe "FFAU"
                 enhet shouldBe request.behandlerenhet
                 søknadstype shouldBe "FF"
                 gruppeKombinasjonskode shouldBe "BI"
@@ -508,6 +511,7 @@ class BisysServiceTest(
                 behandlingsid = 1L,
                 behandlerenhet = "enhet1",
                 behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                behandlingstype = Behandlingstype.SØKNAD,
                 søknadFomDato = LocalDate.now(),
                 innkreving = true,
                 barnListe =
@@ -519,10 +523,10 @@ class BisysServiceTest(
                         personident = PERSONIDENT_BARN_2,
                     ),
                 ),
-                behandlingstype = null,
             )
 
         val response = bisysService.opprettSøknader(request)
+        val retryResponse = bisysService.opprettSøknader(request)
 
         val opprettetSøknad = testdataManager.hentSøknadMedId(response.søknadsid)
 
@@ -531,6 +535,8 @@ class BisysServiceTest(
         val åpneSøknader = bisysService.hentÅpneSøknaderForPerson(PERSONIDENT_BP_1).åpneSøknader
 
         assertSoftly {
+            retryResponse.søknadsid shouldBe response.søknadsid
+
             opprettetSøknad!!.apply {
                 søknadsid shouldBe response.søknadsid
                 søknadMottattDato shouldBe LocalDate.now()
@@ -681,6 +687,54 @@ class BisysServiceTest(
 
         val oppdatertSøknad = testdataManager.hentSøknadMedId(søknad.søknadsid!!)
         oppdatertSøknad!!.behandlerenhet shouldBe "1234"
+    }
+
+    @Test
+    fun `skal oppdatere søkt fom dato på søknad og tilhørende søknader med samme søkt fom dato`() {
+        val forrigeFomDato = LocalDate.parse("2024-01-01")
+        val nyFomDato = LocalDate.parse("2024-05-01")
+        val blankett =
+            testdataManager
+                .lagreBlankettListe(
+                    listOf(
+                        opprettBlankett(saksnummer = SAKSNUMMER_1, søknadFraKode = "ET", søknadstype = "RF"),
+                    ),
+                ).first()
+
+        val (søknad, innkrevingssøknad, gebyrsøknad) =
+            testdataManager.lagreSøknadListe(
+                listOf(
+                    opprettSøknad(saksnummer = SAKSNUMMER_1, blankettid = blankett.blankettid!!, søknadFomDato = forrigeFomDato),
+                    opprettSøknad(
+                        saksnummer = SAKSNUMMER_1,
+                        blankettid = blankett.blankettid!!,
+                        søknadFomDato = forrigeFomDato,
+                        søknadsgruppekode = "IK",
+                    ),
+                    opprettSøknad(
+                        saksnummer = SAKSNUMMER_1,
+                        blankettid = blankett.blankettid!!,
+                        søknadFomDato = LocalDate.parse("2023-01-01"),
+                        søknadsgruppekode = "GB",
+                    ),
+                ),
+            )
+
+        bisysService.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(søknadsid = søknad.søknadsid!!, søknadFomDato = nyFomDato))
+
+        testdataManager.hentSøknadMedId(søknad.søknadsid!!)!!.søknadFomDato shouldBe nyFomDato
+        testdataManager.hentSøknadMedId(innkrevingssøknad.søknadsid!!)!!.søknadFomDato shouldBe nyFomDato
+        testdataManager.hentSøknadMedId(gebyrsøknad.søknadsid!!)!!.søknadFomDato shouldBe LocalDate.parse("2023-01-01")
+    }
+
+    @Test
+    fun `skal kaste HttpClientErrorException ved oppdatering av søkt fom dato når søknad ikke eksisterer`() {
+        val exception =
+            shouldThrow<HttpClientErrorException> {
+                bisysService.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(søknadsid = 999L, søknadFomDato = LocalDate.parse("2024-05-01")))
+            }
+
+        exception.statusCode shouldBe HttpStatus.BAD_REQUEST
     }
 
     @Test
@@ -1213,10 +1267,10 @@ class BisysServiceTest(
     }
 
     @Test
-    fun `hent søknad - skal returnere VEDTAK_FATTET når alle søknadslinjer har lukketStatus = true og minst én har status VF`() {
+    fun `hent søknad - skal returnere VEDTAK_FATTET når alle søknadslinjer har lukketStatus = true og minst én har status MV`() {
         testdataManager.lagreKodeSøknadsstatus(
             listOf(
-                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "MV", lukketStatus = "1"),
                 opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
             ),
         )
@@ -1256,7 +1310,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[2].rolleid!!,
-                    søknadsstatuskode = "VF",
+                    søknadsstatuskode = "MV",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",
@@ -1278,10 +1332,10 @@ class BisysServiceTest(
     }
 
     @Test
-    fun `hent søknad - skal returnere AVBRUTT når alle søknadslinjer har lukketStatus = true og minst én har status FR`() {
+    fun `hent søknad - skal returnere AVBRUTT når alle søknadslinjer har lukketStatus = true og ingen har vedtaksstatus`() {
         testdataManager.lagreKodeSøknadsstatus(
             listOf(
-                opprettKodeSøknadStatus(kode = "FR", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "AV", lukketStatus = "1"),
                 opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
             ),
         )
@@ -1321,7 +1375,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[2].rolleid!!,
-                    søknadsstatuskode = "FR",
+                    søknadsstatuskode = "AV",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",
@@ -1410,6 +1464,47 @@ class BisysServiceTest(
     }
 
     @Test
+    fun `skal hente alle søknader for angitt behandlingsid`() {
+        testdataManager.lagreKodeSøknadsstatus(listOf(opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0")))
+        val roller =
+            testdataManager.lagreRoller(
+                listOf(
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
+                    opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
+                ),
+            )
+        val blankett =
+            testdataManager
+                .lagreBlankettListe(listOf(opprettBlankett(saksnummer = SAKSNUMMER_1, søknadstype = "FA", søknadFraKode = "MO")))
+                .first()
+        val søknader =
+            testdataManager.lagreSøknadListe(
+                listOf("100", "100", "200").map {
+                    opprettSøknad(blankettid = blankett.blankettid!!, søknadsgruppekode = "BI", saksnummer = SAKSNUMMER_1, behandlingsid = it)
+                },
+            )
+        testdataManager.lagreSøknadslinjeListe(
+            søknader.map {
+                opprettSøknadslinje(
+                    søknadsid = it.søknadsid!!,
+                    rolleid = roller[2].rolleid!!,
+                    søknadsstatuskode = "UB",
+                    saksnummer = SAKSNUMMER_1,
+                    innbetaltBeløp = null,
+                    gruppeKombinasjonskode = "BI",
+                )
+            },
+        )
+
+        val response = bisysService.hentSøknaderForBehandling(HentSøknaderForBehandlingRequest(behandlingsid = 100))
+
+        response.søknader.map { it.søknadsid } shouldBe listOf(søknader[0].søknadsid, søknader[1].søknadsid)
+        response.søknader.forEach { it.behandlingsid shouldBe 100 }
+        bisysService.hentSøknaderForBehandling(HentSøknaderForBehandlingRequest(behandlingsid = 999)).søknader shouldHaveSize 0
+    }
+
+    @Test
     fun `hent søknad - skal returnere UNDER_BEHANDLING når alle søknadslinjer har lukketStatus = true og ingen har VF eller FR-status`() {
         testdataManager.lagreKodeSøknadsstatus(
             listOf(
@@ -1464,7 +1559,7 @@ class BisysServiceTest(
                 opprettSøknadslinje(
                     søknadsid = søknad.søknadsid!!,
                     rolleid = roller[3].rolleid!!,
-                    søknadsstatuskode = "ER",
+                    søknadsstatuskode = "UB",
                     saksnummer = SAKSNUMMER_1,
                     innbetaltBeløp = null,
                     gruppeKombinasjonskode = "BI",
@@ -2336,6 +2431,65 @@ class BisysServiceTest(
         val søknad2 = bisysService.opprettSøknader(request2)
 
         søknad2.søknadsid shouldNotBe søknad1.søknadsid
+    }
+
+    @Test
+    fun `avviser bidrag 18 år FF søknad med flere barn før opprettelse`() {
+        val request =
+            OpprettSøknadRequest(
+                saksnummer = SAKSNUMMER_1,
+                behandlingsid = 1L,
+                behandlerenhet = "enhet1",
+                behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                søknadFomDato = LocalDate.now(),
+                innkreving = true,
+                barnListe =
+                listOf(
+                    Barn(personident = PERSONIDENT_BARN_1),
+                    Barn(personident = PERSONIDENT_BARN_2),
+                ),
+                behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+            )
+
+        val exception = shouldThrow<HttpClientErrorException> { bisysService.opprettSøknader(request) }
+
+        exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+    }
+
+    @Test
+    fun `gjenbruker bidrag 18 år FF søknad ved identisk retry uten å lukke søknaden`() {
+        testdataManager.lagreKodeSøknadsstatus(
+            listOf(
+                opprettKodeSøknadStatus(kode = "UB", lukketStatus = "0"),
+                opprettKodeSøknadStatus(kode = "VF", lukketStatus = "1"),
+                opprettKodeSøknadStatus(kode = "TR", lukketStatus = "1"),
+            ),
+        )
+
+        testdataManager.lagreRoller(
+            listOf(
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BP_1, rolletype = "BP"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BM_1, rolletype = "BM"),
+                opprettRolle(saksnummer = SAKSNUMMER_1, fnr = PERSONIDENT_BARN_1, rolletype = "BA"),
+            ),
+        )
+
+        val request =
+            OpprettSøknadRequest(
+                saksnummer = SAKSNUMMER_1,
+                behandlingsid = 1L,
+                behandlerenhet = "enhet1",
+                behandlingstema = Behandlingstema.BIDRAG_18_ÅR,
+                søknadFomDato = LocalDate.now(),
+                innkreving = true,
+                barnListe = listOf(Barn(personident = PERSONIDENT_BARN_1)),
+                behandlingstype = Behandlingstype.FORHOLDSMESSIG_FORDELING,
+            )
+
+        val firstResponse = bisysService.opprettSøknader(request)
+        val retryResponse = bisysService.opprettSøknader(request)
+
+        retryResponse.søknadsid shouldBe firstResponse.søknadsid
     }
 
     @Test

@@ -293,6 +293,33 @@ enum class Kanal {
 
     @Schema(description = "Innlogget samtale")
     NAV_NO_CHAT,
+
+    @Schema(description = "Altinn. Forsendelsen er sendt inn via et Altinn-skjema eller distribuert via Altinn meldingsboks")
+    ALTINN,
+
+    @Schema(description = "Altinn Innboks. Forsendelsen er mottatt i en av Navs meldingsbokser i Altinn")
+    ALTINN_INNBOKS,
+
+    @Schema(description = "HR-system med integrasjon mot Nav. Forsendelsen er sendt fra et LPS- eller HRM-system som integrerer mot et API på nav.no")
+    HR_SYSTEM_API,
+
+    @Schema(description = "E-post. Forsendelsen er mottatt på e-post")
+    E_POST,
+
+    @Schema(description = "EESSI. Forsendelsen er mottatt/distribuert via applikasjoner som EU har levert for utveksling av trygdeinformasjon med andre EU-land")
+    EESSI,
+
+    @Schema(description = "EIA. Forsendelsen er arkivert/distribuert av applikasjonen EIA")
+    EIA,
+
+    @Schema(description = "Eksternt oppslag. Dokumentene i journalposten er hentet fra en ekstern kilde, for eksempel informasjon om oppholdstillatelse fra Utlendingsdirektoratet")
+    EKST_OPPS,
+
+    @Schema(description = "Helsenettet. Forsendelsen er mottatt/distribuert via Norsk Helsenett, helsesektorens løsning for elektronisk meldingsutveksling")
+    HELSENETTET,
+
+    @Schema(description = "Trygderetten. Forsendelsen er distribuert via integrasjonspunkt for eFormidling til Trygderetten")
+    TRYGDERETTEN,
 }
 
 @Schema(description = "Metadata for kode vs dekode i et kodeobjekt")

@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.arkiv.consumer;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
+
 import no.nav.bidrag.commons.web.HttpResponse;
 import no.nav.bidrag.dokument.arkiv.dto.FerdigstillJournalpostRequest;
 import no.nav.bidrag.dokument.arkiv.dto.JournalpostUtsendingKanal;
@@ -33,12 +35,11 @@ public class DokarkivConsumer extends AbstractConsumer {
     super(restTemplate);
     this.objectMapper = objectMapper;
   }
-  @Retryable(value = OppdaterJournalpostFeiletTekniskException.class, maxAttempts = 5, backoff = @Backoff(delay = 1000, maxDelay = 5000, multiplier = 2.0))
+  @Retryable(retryFor = OppdaterJournalpostFeiletTekniskException.class, maxAttempts = 5, backoff = @Backoff(delay = 1000, maxDelay = 5000, multiplier = 2.0))
   public OppdaterJournalpostResponse endre(OppdaterJournalpostRequest oppdaterJournalpostRequest) {
     var oppdaterJoarnalpostApiUrl = URL_JOURNALPOSTAPI_V1 + '/' + oppdaterJournalpostRequest.hentJournalpostId();
     try {
       var response = restTemplate.exchange(oppdaterJoarnalpostApiUrl, HttpMethod.PUT, new HttpEntity<>(oppdaterJournalpostRequest), OppdaterJournalpostResponse.class);
-      LOGGER.info("Endret journalpost {} med respons {}", oppdaterJournalpostRequest.hentJournalpostId(), response.getStatusCode());
       return response.getBody();
     } catch (HttpStatusCodeException e){
       var status = e.getStatusCode();
@@ -53,12 +54,10 @@ public class DokarkivConsumer extends AbstractConsumer {
   public JoarkOpprettJournalpostResponse opprett(JoarkOpprettJournalpostRequest joarkOpprettJournalpostRequest, boolean ferdigstill){
     try {
       var response = restTemplate.exchange(URL_JOURNALPOSTAPI_V1+ String.format("?forsoekFerdigstill=%s", ferdigstill ? "true" : "false"), HttpMethod.POST, new HttpEntity<>(joarkOpprettJournalpostRequest), JoarkOpprettJournalpostResponse.class);
-      var responseBody = response.getBody();
-      LOGGER.info("Opprettet journalpost {} med status {}", responseBody.getJournalpostId(), responseBody.getJournalstatus());
       return response.getBody();
     } catch (HttpClientErrorException clientErrorException){
       if (clientErrorException.getStatusCode() == HttpStatus.CONFLICT){
-        LOGGER.info("Journalpost med eksternReferanseId {} er allerede arkivert i Joark", joarkOpprettJournalpostRequest.getEksternReferanseId());
+        LOGGER.info("Journalpost med eksternReferanseId {} er allerede arkivert i Joark", sanitizeForLog(joarkOpprettJournalpostRequest.getEksternReferanseId()));
         return handleConflictResponse(clientErrorException);
       }
       throw clientErrorException;
@@ -76,7 +75,6 @@ public class DokarkivConsumer extends AbstractConsumer {
     try {
       var oppdaterJoarnalpostApiUrl = String.format(URL_JOURNALPOSTAPI_V1_FEILREGISTRER + "/feilregistrerSakstilknytning", journalpostId);
       var response = restTemplate.exchange(oppdaterJoarnalpostApiUrl, HttpMethod.PATCH, null, Void.class);
-      LOGGER.info("Sakstilknytning til journalpost {} ble feilregistrert", journalpostId);
       return new HttpResponse<>(response);
     } catch (HttpStatusCodeException e){
       var erSakstilknytningAlleredeFeilregistrert = e.getStatusCode().equals(HttpStatus.BAD_REQUEST);

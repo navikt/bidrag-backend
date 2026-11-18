@@ -20,23 +20,40 @@
 
     <properties>
         <mockk.version>1.14.11</mockk.version>
-        <nav-token-support.version>6.0.12</nav-token-support.version>
+        <nav-token-support.version>7.0.1</nav-token-support.version>
         <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
         <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
-        <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
+        <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
-        <okhttp.version>5.5.0</okhttp.version>
+        <okhttp.version>5.5.1</okhttp.version>
         <apache-avro.version>1.12.2</apache-avro.version>
-        <confluent.version>8.3.1</confluent.version>
-        <wiremock-spring-boot.version>4.2.2</wiremock-spring-boot.version>
+        <confluent.version>8.4.0</confluent.version>
+        <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
         <springmockk.version>5.0.1</springmockk.version>
-        <kotest.version>6.2.4</kotest.version>
-        <swagger-annotations.version>2.2.54</swagger-annotations.version>
+        <kotest.version>6.2.6</kotest.version>
+        <swagger-annotations.version>2.2.55</swagger-annotations.version>
         <commons-compress.version>1.28.0</commons-compress.version>
-        <graphq-dgs-client.version>12.0.1</graphq-dgs-client.version>
+        <graphq-dgs-client.version>12.1.0</graphq-dgs-client.version>
         <joark-hendelse.version>67a9be4476b63b7247cfacfaf821ab656bd2a952</joark-hendelse.version>
         <json-path.version>3.0.0</json-path.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
          mockk.version. Uten dette trekker springmockk inn en eldre
@@ -80,6 +97,16 @@
                 <version>${graphq-dgs-client.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <version>${log4j2.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -147,6 +174,11 @@
         <dependency>
             <groupId>no.nav.bidrag</groupId>
             <artifactId>bidrag-backend-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>no.nav.bidrag</groupId>
+            <artifactId>bidrag-backend-feilhandtering</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -341,10 +373,15 @@
             <artifactId>spring-boot-resttestclient</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Kun brukt i src/test (se Stubs.kt/AbstractControllerTest.kt). Manglet scope=test,
+             som gjorde at wiremock (og dens handlebars-avhengighet, sårbar for
+             CVE-2026-55760 - path traversal via FileTemplateLoader) havnet i produksjons-jaren.
+             Alle andre moduler som bruker wiremock-spring-boot har scope=test. -->
         <dependency>
             <groupId>org.wiremock.integrations</groupId>
             <artifactId>wiremock-spring-boot</artifactId>
             <version>${wiremock-spring-boot.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -360,10 +397,26 @@
                     <execution>
                         <id>compile</id>
                         <phase>process-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                     </execution>
                     <execution>
                         <id>test-compile</id>
                         <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                    <!-- extensions=true i root-pom legger til default-compile/default-test-compile i tillegg.
+                         Slås av så Kotlin bare kompileres én gang (i process-sources over). -->
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-test-compile</id>
+                        <phase>none</phase>
                     </execution>
                 </executions>
             </plugin>

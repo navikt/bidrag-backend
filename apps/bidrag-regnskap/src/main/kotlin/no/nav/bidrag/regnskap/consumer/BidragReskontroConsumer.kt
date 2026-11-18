@@ -2,7 +2,9 @@ package no.nav.bidrag.regnskap.consumer
 
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
+import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.transport.reskontro.request.EndreRmForSakRequest
 import no.nav.bidrag.transport.reskontro.request.SaksnummerRequest
 import no.nav.bidrag.transport.reskontro.response.transaksjoner.TransaksjonerDto
 import org.springframework.beans.factory.annotation.Qualifier
@@ -34,5 +36,19 @@ class BidragReskontroConsumer(
         val problem = runCatching { e.getResponseBodyAs(ProblemDetail::class.java) }.getOrNull()
         secureLogger.error(e) { "${problem?.title ?: "Ukjent feil"}: ${problem?.status ?: e.statusCode.value()} - ${problem?.detail ?: e.responseBodyAsString}" }
         throw e
+    }
+
+    fun endreRmForSak(saksnummer: Saksnummer, barn: Personident, nyMottaker: Personident) {
+        patchForEntity<String>(
+            bidragReskontroUri
+                .pathSegment("endreRmForSak")
+                .build()
+                .toUri(),
+            EndreRmForSakRequest(
+                saksnummer = saksnummer,
+                barn = barn,
+                nyttFødselsnummer = nyMottaker,
+            ),
+        )
     }
 }

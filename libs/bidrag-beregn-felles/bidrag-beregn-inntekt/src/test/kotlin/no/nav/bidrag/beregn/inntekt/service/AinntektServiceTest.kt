@@ -8,7 +8,6 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.beregn.inntekt.TestUtil
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -36,8 +35,6 @@ class AinntektServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ainntektService.beregnAarsinntekt(ainntektListeInn = inntektRequest.ainntektsposter, ainntektHentetDato = ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 assertNotNull(transformerteInntekter)
@@ -77,8 +74,6 @@ class AinntektServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ainntektService.beregnAarsinntekt(ainntektListeInn = inntektRequest.ainntektsposter, ainntektHentetDato = ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 transformerteInntekter.shouldNotBeNull()
@@ -128,8 +123,6 @@ class AinntektServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ainntektService.beregnAarsinntekt(ainntektListeInn = inntektRequest.ainntektsposter, ainntektHentetDato = ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 transformerteInntekter.shouldNotBeNull()
@@ -182,8 +175,6 @@ class AinntektServiceTest : AbstractServiceTest() {
                     ainntektHentetDato = ainntektHentetDato,
                     vedtakstidspunktOpprinneligeVedtak = vedtakstidspunktOpprinneligeVedtak,
                 )
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 transformerteInntekter.shouldNotBeNull()
@@ -309,8 +300,6 @@ class AinntektServiceTest : AbstractServiceTest() {
                 ainntektHentetDato = ainntektHentetDato,
                 vedtakstidspunktOpprinneligeVedtak = vedtakstidspunktOpprinneligeVedtak,
             )
-
-        println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
         assertSoftly {
             transformerteInntekter.shouldNotBeNull()
@@ -473,8 +462,6 @@ class AinntektServiceTest : AbstractServiceTest() {
                 vedtakstidspunktOpprinneligeVedtak = vedtakstidspunktOpprinneligeVedtak,
             )
 
-        println(commonObjectmapper.writeValueAsString(transformerteInntekter))
-
         assertSoftly {
             transformerteInntekter.shouldNotBeNull()
             transformerteInntekter.shouldNotBeEmpty()
@@ -591,8 +578,6 @@ class AinntektServiceTest : AbstractServiceTest() {
 
             val transformerteInntekter =
                 ainntektService.beregnMånedsinntekt(ainntektListeInn = inntektRequest.ainntektsposter, ainntektHentetDato = ainntektHentetDato)
-
-            println(commonObjectmapper.writeValueAsString(transformerteInntekter))
 
             assertSoftly {
                 transformerteInntekter.shouldNotBeNull()

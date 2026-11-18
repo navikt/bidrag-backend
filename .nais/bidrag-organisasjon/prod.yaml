@@ -1,6 +1,5 @@
 name: bidrag-organisasjon
 ingresses:
-  - https://bidrag-organisasjon.nais.adeo.no
   - https://bidrag-organisasjon.intern.nav.no
   - https://bidrag-organisasjon.prod-fss-pub.nais.io
 env:

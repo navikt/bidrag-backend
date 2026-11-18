@@ -17,10 +17,6 @@ server:
   servlet:
     context-path: /bidrag-aktoerregister
 
-logging:
-  level:
-    root: INFO
-
 springdoc:
   swagger-ui:
     path: /

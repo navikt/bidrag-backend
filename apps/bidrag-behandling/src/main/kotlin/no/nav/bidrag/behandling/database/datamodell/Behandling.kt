@@ -25,7 +25,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.KlageDetaljerConverter
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljer
 import no.nav.bidrag.behandling.database.datamodell.json.VedtakDetaljerConverter
-import no.nav.bidrag.behandling.dto.v1.behandling.ErSamværVirkningLikForAlleForSak
+import no.nav.bidrag.behandling.dto.v1.behandling.ErLikForAlleBasertPåSak
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.LesemodusVedtak
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
@@ -72,7 +72,7 @@ open class Behandling(
     @Column(name = "dato_fom")
     open var søktFomDato: LocalDate,
     open var mottattdato: LocalDate,
-    open val saksnummer: String,
+    open var saksnummer: String,
     open var soknadsid: Long?,
     open var behandlerEnhet: String,
     open var opprettetAv: String,
@@ -211,6 +211,8 @@ open class Behandling(
     @Transient
     var erVedtakUtenBeregning: Boolean = false,
     @Transient
+    var erNyBehandlingIkkeOpprettet: Boolean = false,
+    @Transient
     var grunnlagslisteFraVedtak: List<GrunnlagDto>? = emptyList(),
     @Transient
     var historiskeStønader: MutableSet<StønadDto> = mutableSetOf(),
@@ -228,15 +230,8 @@ open class Behandling(
         return bidrag && bidrag18År
     }
 
-    fun oppdaterVirkningstidspunktForAlle(nyVirkningstidspunkt: LocalDate) {
-        virkningstidspunkt = nyVirkningstidspunkt
-        søknadsbarn.forEach {
-            it.virkningstidspunkt = nyVirkningstidspunkt
-        }
-    }
-
     fun hentSøknad(finnSøknadsid: Long) = if (erIForholdsmessigFordeling) {
-        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling!!.søknaderUnderBehandling.find { it.søknadsid == finnSøknadsid } }
+        søknadsbarn.firstNotNullOfOrNull { it.forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == finnSøknadsid } }
     } else if (soknadsid == finnSøknadsid) {
         ForholdsmessigFordelingSøknadBarn(
             mottattDato = mottattdato,
@@ -305,6 +300,9 @@ open class Behandling(
     val erIForholdsmessigFordeling get() = forholdsmessigFordeling != null
     val grunnlagListe: List<Grunnlag> get() = grunnlag.toList()
     val søknadsbarn get() = roller.filter { it.rolletype == Rolletype.BARN }
+
+    // søknadsbarn.saksnummer: saksnummer til barnet hvis FF eller så fallbacker den til behandling saksnummer. Så den er aldri null
+    fun finnSøknadsbarnForSak(saksnummer: String?) = søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }
     val revurderingdsbarn get() = roller.filter { it.erRevurderingsbarn }
     val bidragsmottaker get() =
         roller.find {
@@ -322,7 +320,9 @@ open class Behandling(
         }
     }
 
-    fun bidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { it.forholdsmessigFordeling?.tilhørerSak == saksnummer }
+    fun finnBidragsmottakerForSak(saksnummer: String) = alleBidragsmottakere.find { bm -> bm.saksnummer == saksnummer }
+
+    fun bidragsmottakerForSak(saksnummer: String?) = saksnummer?.let { finnBidragsmottakerForSak(it) } ?: bidragsmottaker!!
 
     val bidragspliktig get() = roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
 
@@ -374,7 +374,7 @@ open class Behandling(
     val erVirkningstidspunktLiktForAlle get() = søknadsbarn.mapNotNull { it.virkningstidspunkt }.toSet().size == 1
     val erVirkningstidspunktLiktForAlleSaker get() = søknadsbarn.groupBy { it.saksnummer }
         .mapNotNull { it.key to (it.value.mapNotNull { sb -> sb.virkningstidspunkt }.toSet().size == 1) }
-        .map { ErSamværVirkningLikForAlleForSak(it.first, it.second) }
+        .map { ErLikForAlleBasertPåSak(saksnummer = it.first, erLikForAlle = it.second, kanVurdereSamlet = it.second) }
     val globalOpphørsdato get() =
         if (søknadsbarn.any { it.opphørsdato == null }) {
             null
@@ -394,57 +394,46 @@ open class Behandling(
     val sammeVirkningstidspunktForAlleSaker get() = søknadsbarn
         .groupBy { it.saksnummer }
         .map { (saksnummer, søknadsbarnForSak) ->
-            ErSamværVirkningLikForAlleForSak(
-                saksnummer,
-                søknadsbarnForSak.all { sb1 ->
+            ErLikForAlleBasertPåSak(
+                saksnummer = saksnummer,
+                erLikForAlle = søknadsbarnForSak.all { sb1 ->
+                    søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
+                },
+                kanVurdereSamlet = søknadsbarnForSak.all { sb1 ->
                     søknadsbarnForSak.all { erVirkningstidspunktLikt(sb1, it) }
                 },
             )
         }
 
-    private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle) = sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
-        sb1.opphørsdato == sb2.opphørsdato &&
-        sb1.beregnTil == sb2.beregnTil &&
-        sb1.avslag == sb2.avslag &&
-        sb1.årsak == sb2.årsak &&
-        sb1.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } ==
-        sb2.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } &&
-        sb1.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
-            ?.innhold
-            ?.normalizeForComparison()
-            ?.takeIf { it.isNotEmpty() } ==
-        sb2.notat
-            .find { it.type == NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG && it.erDelAvBehandlingen }
+    private fun erVirkningstidspunktLikt(sb1: Rolle, sb2: Rolle): Boolean {
+        fun Rolle.normalisertNotat(type: NotatGrunnlag.NotatType) = notat
+            .find { it.type == type && it.erDelAvBehandlingen }
             ?.innhold
             ?.normalizeForComparison()
             ?.takeIf { it.isNotEmpty() }
 
-    val sammeSamværForAlle get() =
-        forholdsmessigFordeling == null &&
-            samvær.filter { it.rolle.kreverGrunnlagForBeregning }.all { sb1 ->
-                samvær.filter { it.rolle.kreverGrunnlagForBeregning }.filter { it.id != sb1.id }.all {
-                    sb1.erLik(it)
-                }
-            }
+        return sb1.virkningstidspunkt == sb2.virkningstidspunkt &&
+            sb1.opphørsdato == sb2.opphørsdato &&
+            sb1.beregnTil == sb2.beregnTil &&
+            sb1.avslag == sb2.avslag &&
+            sb1.årsak == sb2.årsak &&
+            sb1.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT) ==
+            sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT) &&
+            sb1.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG) ==
+            sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+    }
+
+    val sammeSamværForAlle get() = sammeSamværForAlleSaker.all { it.erLikForAlle }
     val sammeSamværForAlleSaker get() = samvær
         .filter { it.rolle.kreverGrunnlagForBeregning }
         .groupBy { it.rolle.saksnummer }
         .map { (saksnummer, samværForSak) ->
-            ErSamværVirkningLikForAlleForSak(
-                saksnummer,
-                samværForSak.all { sb1 ->
-                    samværForSak.filter { it.id != sb1.id }.all {
-                        sb1.erLik(it)
-                    }
+            val erVirkningLik = erVirkningstidspunktLiktForAlleSaker.find { it.saksnummer == saksnummer } ?: erVirkningstidspunktLiktForAlleSaker.firstOrNull()
+            ErLikForAlleBasertPåSak(
+                saksnummer = saksnummer,
+                kanVurdereSamlet = (erVirkningLik == null || erVirkningLik.erLikForAlle) && søknadsbarn.flatMap { it.forholdsmessigFordeling?.søknaderUnderBehandling ?: emptyList() }.distinctBy { it.søknadsid }.size <= 1,
+                erLikForAlle = samværForSak.all { sb1 ->
+                    samværForSak.filter { it.id != sb1.id }.all { sb2 -> sb1.erLik(sb2) }
                 },
             )
         }
@@ -471,7 +460,7 @@ val Behandling.særbidragKategori
         kategori.isNullOrEmpty().ifFalse {
             try {
                 Særbidragskategori.valueOf(kategori!!)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 Særbidragskategori.ANNET
             }
         } ?: Særbidragskategori.ANNET
@@ -508,12 +497,5 @@ val Set<Husstandsmedlem>.barn get() =
     }
 
 val Set<Husstandsmedlem>.voksneIHusstanden get() = find { it.rolle?.rolletype == Rolletype.BIDRAGSPLIKTIG }
-
-fun Behandling.hentMaksTilOgMedDato() = if (globalOpphørsdato != null) globalOpphørsdato!!.withDayOfMonth(1).minusDays(1) else null
-
-fun Behandling.hentBeløpshistorikkForStønadstype(
-    stønadstype: Stønadstype,
-    søknadsbarn: Rolle,
-) = historiskeStønader.find { it.type == stønadstype && it.kravhaver.verdi == søknadsbarn.ident }
 
 fun Behandling.opprettUnikReferanse(postfix: String? = null) = "behandling_${id}_${opprettetTidspunkt.toCompactString()}${postfix?.let { "_$it" } ?: ""}"

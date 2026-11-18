@@ -63,11 +63,21 @@ data class OppdaterBehandlerenhetRequest(
     val søknadsid: Long,
     val behandlerenhet: String,
 )
+data class OppdaterSøknadFomDatoRequest(
+    val søknadsid: Long,
+    val søknadFomDato: LocalDate,
+)
 
+data class HentSøknaderForBehandlingRequest(
+    val behandlingsid: Long,
+)
+data class HentSøknaderForBehandlingResponse(
+    val søknader: List<HentSøknad>,
+)
 data class OppdaterBehandlingsidRequest(
     val søknadsid: Long,
     val eksisterendeBehandlingsid: Long? = null,
-    val nyBehandlingsid: Long,
+    val nyBehandlingsid: Long?,
 )
 
 data class OpprettSøknadRequest(

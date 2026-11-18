@@ -4,25 +4,28 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import no.nav.bidrag.commons.util.IdentConsumer
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.rolle.TypeEndring
 import no.nav.bidrag.domene.enums.sak.Bidragssakstatus
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.ident.ReellMottaker
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.sak.domain.Bidragssak
 import no.nav.bidrag.sak.domain.Rolle
-import no.nav.bidrag.sak.integration.person.BidragPersonClient
 import no.nav.bidrag.sak.integration.samhandler.BidragSamhandlerClient
+import no.nav.bidrag.transport.sak.ReellMottakerDto
 import no.nav.bidrag.transport.sak.RolleDto
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDate
 
 internal class RolleServiceTest {
-    val bidragPersonClient = mockk<BidragPersonClient>()
+    val identConsumer = mockk<IdentConsumer>()
     val samhandlerClient = mockk<BidragSamhandlerClient>()
-    val rolleService = RolleService(bidragPersonClient, samhandlerClient)
+    val rolleService = RolleService(identConsumer, samhandlerClient)
 
     val fødselsnummerBarn1 = genererFødselsnummer(LocalDate.now().minusYears(1))
     val fødselsnummerBarn2 = genererFødselsnummer(LocalDate.now().minusYears(2))
@@ -60,13 +63,13 @@ internal class RolleServiceTest {
                 RolleDto(fødselsnummer = Personident(fødselsnummerBarn2), type = Rolletype.BARN),
             )
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
+        val fødselsdatoer =
             mapOf(
                 Personident(fødselsnummerBarn1) to null,
                 Personident(fødselsnummerBarn2) to null,
             )
 
-        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer)
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
         result shouldHaveSize 3
         result.first { it.fødselsnummer == fødselsnummerBarn1 }.mottagerErVerge shouldBe true
         result.first { it.fødselsnummer == fødselsnummerBarn1 }.rolleType shouldBe Rolletype.BARN
@@ -75,22 +78,35 @@ internal class RolleServiceTest {
     }
 
     @Test
-    fun `skal validere rollene og hente fødselsdato`() {
+    fun `nytt barn får ikke objektnummeret til BM når bare BP er lagret`() {
+        val fødselsnummerBm = genererFødselsnummer(LocalDate.now().minusYears(30))
+        bidragssak.roller =
+            mutableSetOf(
+                Rolle(fødselsnummer = fødselsnummerBp, rolleType = Rolletype.BIDRAGSPLIKTIG, objektnummer = "01", bidragssak = bidragssak),
+            )
+        val rolleDtoer =
+            setOf(
+                RolleDto(fødselsnummer = Personident(fødselsnummerBarn1), type = Rolletype.BARN),
+                RolleDto(fødselsnummer = Personident(fødselsnummerBm), type = Rolletype.BIDRAGSMOTTAKER),
+            )
+        val fødselsdatoer = mapOf(Personident(fødselsnummerBarn1) to null, Personident(fødselsnummerBm) to null)
+
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
+
+        result.single { it.rolleType == Rolletype.BIDRAGSMOTTAKER }.objektnummer shouldBe "02"
+        result.single { it.rolleType == Rolletype.BARN }.objektnummer shouldBe "03"
+    }
+
+    @Test
+    fun `skal godta roller når alle personer har fødselsdato-oppslag`() {
         val roller =
             setOf(
                 RolleDto(fødselsnummer = Personident(fødselsnummerBarn1), type = Rolletype.BARN),
                 RolleDto(fødselsnummer = Personident(fødselsnummerBp), type = Rolletype.BIDRAGSPLIKTIG),
             )
+        val fødselsdatoer = mapOf(Personident(fødselsnummerBarn1) to null, Personident(fødselsnummerBp) to null)
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
-            mapOf(
-                Personident(fødselsnummerBarn1) to null,
-                Personident(fødselsnummerBp) to null,
-            )
-
-        val result = rolleService.validerRollerOgHentFødselsdatoer(roller)
-
-        result shouldBe mapOf(Personident(fødselsnummerBarn1) to null, Personident(fødselsnummerBp) to null)
+        assertDoesNotThrow { rolleService.validerRoller(roller, fødselsdatoer) }
     }
 
     @Test
@@ -99,9 +115,7 @@ internal class RolleServiceTest {
         bidragssak.roller = lagredeRoller
         val rolleDtoer = emptySet<RolleDto>()
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns emptyMap()
-
-        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer)
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, emptyMap())
 
         result shouldBe setOf(Rolle(fødselsnummer = fødselsnummerBarn1, rolleType = Rolletype.BARN, bidragssak = bidragssak))
     }
@@ -115,17 +129,14 @@ internal class RolleServiceTest {
 
         bidragssak.roller = lagredeRoller
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
-            mapOf(
-                Personident(fødselsnummerBarn1) to null,
-            )
+        val fødselsdatoer = mapOf(Personident(fødselsnummerBarn1) to null)
 
         val rolleDtoer =
             setOf(
                 RolleDto(fødselsnummer = Personident(fødselsnummerBp), type = Rolletype.BIDRAGSPLIKTIG),
             )
 
-        assertThrows<IllegalArgumentException> { rolleService.oppdaterRoller(bidragssak, rolleDtoer) }
+        assertThrows<IllegalArgumentException> { rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer) }
     }
 
     @Test
@@ -143,12 +154,6 @@ internal class RolleServiceTest {
                     type = Rolletype.REELMOTTAKER,
                     reellMottager = ReellMottaker(fødselsnummerBarn1),
                 ),
-            )
-
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
-            mapOf(
-                Personident(fødselsnummerBarn1) to null,
-                Personident(fødselsnummerRm) to null,
             )
 
         val result = rolleService.oppdaterRollerMedReelleMottager(lagredeRoller, rolleDtoer)
@@ -196,13 +201,13 @@ internal class RolleServiceTest {
                 ),
             )
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
+        val fødselsdatoer =
             mapOf(
                 Personident(fødselsnummerBarn1) to null,
                 Personident(fødselsnummerRm) to null,
             )
 
-        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer)
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
 
         result shouldHaveSize 2 // Barn + eksisterende RM (ingen ny RM-rolle)
         result.count { it.rolleType == Rolletype.REELMOTTAKER && it.fødselsnummer == fødselsnummerRm } shouldBe 1
@@ -242,13 +247,13 @@ internal class RolleServiceTest {
                 ),
             )
 
-        every { bidragPersonClient.hentFødselsdatoer(any()) } returns
+        val fødselsdatoer =
             mapOf(
                 Personident(fødselsnummerBarn1) to null,
                 Personident(fødselsnummerRm) to null,
             )
 
-        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer)
+        val result = rolleService.oppdaterRoller(bidragssak, rolleDtoer, fødselsdatoer)
 
         result shouldHaveSize 2 // Barn + eksisterende RM (ingen ny RM-rolle)
         result.count { it.rolleType == Rolletype.REELMOTTAKER && it.fødselsnummer == fødselsnummerRm } shouldBe 1
@@ -306,5 +311,56 @@ internal class RolleServiceTest {
         val result = rolleService.oppdaterRollerMedReelleMottager(lagredeRoller, emptyList())
 
         result shouldBe lagredeRoller
+    }
+
+    @Test
+    fun `oppdaterer lagret barn og RM til gjeldende ident med ENDRE_FNR-historikk`() {
+        val gammelBarnIdent = fødselsnummerBarn1
+        val nyBarnIdent = fødselsnummerBarn2
+        val gammelRmIdent = fødselsnummerRm
+        val nyRmIdent = fødselsnummerBp
+        every { identConsumer.hentGjeldendeIdent(gammelBarnIdent) } returns nyBarnIdent
+        every { identConsumer.hentGjeldendeIdent(gammelRmIdent) } returns nyRmIdent
+        val barn = Rolle(rolleId = 3, fødselsnummer = gammelBarnIdent, rolleType = Rolletype.BARN, bidragssak = bidragssak)
+        val rm = Rolle(rolleId = 4, fødselsnummer = gammelRmIdent, rolleType = Rolletype.REELMOTTAKER, bidragssak = bidragssak)
+
+        rolleService.oppdaterTilGjeldendeIdent(listOf(barn, rm))
+
+        barn.fødselsnummer shouldBe nyBarnIdent
+        rm.fødselsnummer shouldBe nyRmIdent
+        listOf(barn to gammelBarnIdent, rm to gammelRmIdent).forEach { (rolle, gammelIdent) ->
+            val historikk = rolle.rollehistorikk.single()
+            historikk.typeEndring shouldBe TypeEndring.ENDRE_FNR
+            historikk.type shouldBe rolle.rolleType
+            historikk.rolleFødselsnummer shouldBe gammelIdent
+            historikk.rmRolleFødselsnummer shouldBe rolle.fødselsnummer
+        }
+    }
+
+    @Test
+    fun `endrer ikke rolle som allerede har gjeldende ident`() {
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
+        val barn = Rolle(rolleId = 3, fødselsnummer = fødselsnummerBarn1, rolleType = Rolletype.BARN, bidragssak = bidragssak)
+
+        rolleService.oppdaterTilGjeldendeIdent(listOf(barn))
+
+        barn.fødselsnummer shouldBe fødselsnummerBarn1
+        barn.rollehistorikk shouldHaveSize 0
+    }
+
+    @Test
+    fun `bruker gjeldende ident for barn og RM i forespørsel`() {
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn2
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerRm) } returns fødselsnummerBp
+        val forespørsel = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = Personident(fødselsnummerBarn1),
+            reellMottaker = ReellMottakerDto(ident = ReellMottaker(fødselsnummerRm), verge = false),
+        )
+
+        val resultat = rolleService.brukGjeldendeIdent(setOf(forespørsel)).single()
+
+        resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
+        resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
     }
 }

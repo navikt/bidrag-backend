@@ -20,7 +20,7 @@ Scaffold en ny Spring Boot **app-modul** inne i `bidrag-backend`-Maven-monorepoe
 2. Legg modulen til i root-`pom.xml` sin `<modules>`-seksjon
 3. Opprett `Application.kt` og `application.yml`
 4. Sett opp Nais-manifest (`.nais/nais.yaml` eller tilsvarende under appen)
-5. Skriv `Dockerfile` etter repoets distroless + locale-mønster (se `$docker`-instruksjonene)
+5. Skriv `Dockerfile` etter repoets Chainguard/Wolfi-mønster med Java 25 (se `$docker`-instruksjonene)
 6. Legg til controller-, service- og repository-lag
 7. Skriv integrasjonstester med MockOAuth2Server + Testcontainers (Kotest + MockK, se `$testing-kotlin`-instruksjonene)
 8. Legg til en GitHub Actions-workflow etter det etablerte `detect_changes` → `bygg_og_test` → `deploy_*`-mønsteret (se `$code-review`-skillen)
@@ -244,31 +244,7 @@ spec:
 
 ## Dockerfile
 
-Følg det etablerte mønsteret i repoet — bygg med Maven i CI, kopier kun jar-filen inn (se `$docker`-instruksjonene for full begrunnelse):
-
-```dockerfile
-FROM ubuntu:26.04 AS locales
-RUN apt-get update && apt-get install -y locales
-RUN locale-gen nb_NO.UTF-8 && \
-    update-locale LANG=nb_NO.UTF-8 LANGUAGE="nb_NO:nb" LC_ALL=nb_NO.UTF-8
-
-FROM gcr.io/distroless/java21
-LABEL maintainer="Team Bidrag" \
-      email="bidrag@nav.no"
-
-COPY --from=busybox:1.35.0-glibc /bin/sh /bin/sh
-COPY --from=busybox:1.35.0-glibc /bin/printenv /bin/printenv
-COPY --from=locales /usr/lib/locale/ /usr/lib/locale/
-
-WORKDIR /app
-COPY ./target/app.jar app.jar
-
-EXPOSE 8080
-ENV LANG=nb_NO.UTF-8 LANGUAGE='nb_NO:nb' LC_ALL=nb_NO.UTF-8 TZ="Europe/Oslo"
-ENV SPRING_PROFILES_ACTIVE=nais
-
-CMD ["app.jar"]
-```
+Bygg med Maven i CI og kopier bare jar-filen inn. Bruk [Dockerfile i roten](../../../Dockerfile) som mal for Java 25-imaget og norsk locale; se `$docker`-instruksjonene for avvikene.
 
 ## Controller
 

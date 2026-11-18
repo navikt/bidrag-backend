@@ -9,13 +9,11 @@ class GenererSaksnummerTest {
     fun skalGenerereSaksnummer() {
         val saksnummer = genererSaksnummer()
         saksnummer shouldNotBe null
-        println(saksnummer)
     }
 
     @Test
     fun skalGenerereSaksnummerSomMåPaddes() {
         val saksnummer = genererSaksnummer(Year.of(2000))
         saksnummer shouldNotBe null
-        println(saksnummer)
     }
 }

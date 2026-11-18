@@ -1,6 +1,5 @@
 name: bidrag-dokument-arkivering
 ingresses:
-  - https://bidrag-dokument-arkivering.nais.adeo.no
   - https://bidrag-dokument-arkivering.intern.nav.no
 env:
   BIDRAG_DOKUMENT_URL: https://bidrag-dokument.intern.nav.no/bidrag-dokument

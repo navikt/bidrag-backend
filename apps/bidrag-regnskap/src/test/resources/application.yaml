@@ -48,6 +48,10 @@ scheduler:
     cron: "0 */10 * * * *" #Hvert 10. minutt
   resendkrav:
     cron: "0 0 6 * * *" #Hver dag kl 06:00
+  endremottaker:
+    cron: "0 */10 * * * *" #Hvert 10. minutt
+  endremottakervarsling:
+    cron: "0 0 8 * * *" #Hver dag kl 08:00
 
 management:
   endpoints:

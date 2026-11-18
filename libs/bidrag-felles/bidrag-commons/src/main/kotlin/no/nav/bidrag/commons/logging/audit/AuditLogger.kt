@@ -1,11 +1,13 @@
 package no.nav.bidrag.commons.logging.audit
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletRequest
 import no.nav.bidrag.commons.security.ContextService
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.CorrelationIdFilter
 import no.nav.bidrag.commons.web.MdcConstants
 import no.nav.bidrag.transport.tilgang.Sporingsdata
-import org.slf4j.LoggerFactory
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatusCode
@@ -18,8 +20,7 @@ import org.springframework.web.context.request.ServletRequestAttributes
 class AuditLogger(
     @Value("\${NAIS_APP_NAME}") private val applicationName: String,
 ) {
-    private val logger = LoggerFactory.getLogger(javaClass)
-    private val audit = LoggerFactory.getLogger("secureLogger")
+    private val logger = KotlinLogging.logger {}
 
     fun log(
         event: AuditLoggerEvent,
@@ -28,9 +29,9 @@ class AuditLogger(
         val request = getRequest() ?: throw IllegalArgumentException("Ikke brukt i context av en HTTP request")
 
         if (ContextService.erMaskinTilMaskinToken()) {
-            logger.debug("Maskin til maskin token i request")
+            logger.debug { "Maskin til maskin token i request" }
         } else {
-            audit.info(createAuditLogString(event, data, request))
+            secureLogger.info { createAuditLogString(event, data, request) }
             if (!data.tilgang) {
                 throw HttpClientErrorException(
                     HttpStatusCode.valueOf(403),
@@ -54,19 +55,19 @@ class AuditLogger(
         val timestamp = System.currentTimeMillis()
         val name = "Saksbehandling"
         return "CEF:0|$applicationName|auditLog|1.0|audit:${event.type}|$name|INFO|end=$timestamp " +
-            "suid=${ContextService.hentPåloggetSaksbehandler()} " +
-            "duid=${data.personIdent} " +
-            "sproc=${getCallId()} " +
-            "requestMethod=${request.method} " +
-            "request=${request.requestURI} " +
+            "suid=${ContextService.hentPåloggetSaksbehandler().sanitizeForLog()} " +
+            "duid=${data.personIdent.sanitizeForLog()} " +
+            "sproc=${getCallId().sanitizeForLog()} " +
+            "requestMethod=${request.method.sanitizeForLog()} " +
+            "request=${request.requestURI.sanitizeForLog()} " +
             "${createCustomString(data)} " +
             "flexStringLabel1=decision flexString1=${if (data.tilgang) "permit" else "deny"}"
     }
 
     private fun createCustomString(data: Sporingsdata): String = listOfNotNull(
-        data.ekstrafelter.getOrNull(0)?.let { "cs3Label=${it.first} cs3=${it.second}" },
-        data.ekstrafelter.getOrNull(1)?.let { "cs5Label=${it.first} cs5=${it.second}" },
-        data.ekstrafelter.getOrNull(2)?.let { "cs6Label=${it.first} cs6=${it.second}" },
+        data.ekstrafelter.getOrNull(0)?.let { "cs3Label=${it.first.sanitizeForLog()} cs3=${it.second.sanitizeForLog()}" },
+        data.ekstrafelter.getOrNull(1)?.let { "cs5Label=${it.first.sanitizeForLog()} cs5=${it.second.sanitizeForLog()}" },
+        data.ekstrafelter.getOrNull(2)?.let { "cs6Label=${it.first.sanitizeForLog()} cs6=${it.second.sanitizeForLog()}" },
     ).joinToString(" ")
 
     private fun getCallId(): String = MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC)

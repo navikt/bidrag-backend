@@ -29,13 +29,13 @@ spec:
             cluster: {{this.cluster}}
       {{/each}}
   liveness:
-    path: /internal/actuator/health
+    path: /internal/actuator/health/liveness
     initialDelay: 30
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /internal/actuator/health
+    path: /internal/actuator/health/readiness
     initialDelay: 30
     timeout: 1
   prometheus:

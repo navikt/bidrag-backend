@@ -69,5 +69,6 @@ spec:
     sqlInstances:
       tier: db-f1-micro
       diskAutoresize: false
+      diskSize: 25
       pointInTimeRecovery: false
       auditlog: "on"

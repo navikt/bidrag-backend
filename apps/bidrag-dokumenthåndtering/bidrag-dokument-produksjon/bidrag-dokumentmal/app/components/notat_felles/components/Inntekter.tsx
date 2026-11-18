@@ -44,7 +44,7 @@ import { VedleggProps } from "~/types/commonTypes";
 export default function Inntekter({ vedleggNummer = 2 }: VedleggProps) {
   const { erAvslag, bidragsmottakere, bidragspliktig, søknadsbarn, type } =
     useNotatFelles();
-  if (erAvslag) return null;
+  if (erAvslag && type != NotatMalType.BIDRAG) return null;
   return (
     <>
       <div className={"elements_inline section-title"}>
@@ -287,7 +287,12 @@ function InntektPerBarnTable({
                                 {
                                   content: d.beløpstypeVisningsnavn,
                                 },
-                                { content: formatterProsent(d.skattefaktor) },
+                                {
+                                  content:
+                                    d.skattefaktor == null
+                                      ? "Ikke relevant"
+                                      : formatterProsent(d.skattefaktor),
+                                },
                                 { content: formatterBeløp(d.beløp) },
                               ]
                             : erBarnetillegg

@@ -7,6 +7,7 @@ import { DataViewTableData } from "~/components/DataViewTable";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat.bidrag/VedleggBeregningsDetaljer";
 import { DataViewTableV2 } from "~/components/DataViewTableV2";
+import { Resultatkode } from "~/types/Api";
 
 export const BPAndelUnderholdskostnad = () => {
   const {
@@ -15,8 +16,12 @@ export const BPAndelUnderholdskostnad = () => {
     inntekter,
     delberegningUnderholdskostnad,
     forskuddssats,
+    inntektBBMultiplikator,
     bpsAndel,
   } = useBeregningDetaljer();
+  // Ved avslag for delt bosted setter sluttberegningen beløpet etter fratrekk til 0, så det negative beløpet regnes ut her
+  const erAvslagDeltBosted =
+    sluttberegning?.resultat === Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED;
   return (
     <div style={{ width: "600px" }}>
       <h4>{`${tekster.begreper.bidragspliktiges} andel`}</h4>
@@ -24,6 +29,7 @@ export const BPAndelUnderholdskostnad = () => {
         <BPsAndelInntekterTable
           inntekter={inntekter!}
           forskuddssats={forskuddssats}
+          inntektBBMultiplikator={inntektBBMultiplikator}
         />
         <DataViewTableV2
           gap={"5px"}
@@ -45,7 +51,11 @@ export const BPAndelUnderholdskostnad = () => {
                     textRight: false,
                     value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(0.5)}`,
                     result: formatterBeløpForBeregning(
-                      sluttberegning.bpAndelAvUVedDeltBostedBeløp,
+                      erAvslagDeltBosted
+                        ? bpsAndel!.andelBeløp -
+                            delberegningUnderholdskostnad!.underholdskostnad *
+                              0.5
+                        : sluttberegning.bpAndelAvUVedDeltBostedBeløp,
                     ),
                   }
                 : null,

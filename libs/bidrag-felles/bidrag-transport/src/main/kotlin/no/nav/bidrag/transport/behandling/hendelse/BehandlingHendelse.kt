@@ -51,6 +51,7 @@ data class BehandlingHendelseBarn(
     )
     val søknadsid: Long? = null,
     val omgjørSøknadsid: Long? = null,
+    val omgjørVedtaksid: Int? = null,
     val behandlerEnhet: String,
     val særbidragskategori: Særbidragskategori? = null,
     val mottattDato: LocalDate? = null,

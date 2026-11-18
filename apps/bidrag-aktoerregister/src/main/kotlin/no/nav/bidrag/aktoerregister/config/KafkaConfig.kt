@@ -1,6 +1,7 @@
 package no.nav.bidrag.aktoerregister.config
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.kafka.KafkaRetryListener
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.DefaultErrorHandler
@@ -13,7 +14,7 @@ class KafkaConfig {
 
     companion object {
         private const val BACKOFF_MULTIPLIER = 1.2
-        private const val MAX_INTERVAL_MS = 300000L // 5 mins
+        private const val MAX_INTERVAL_MS = 60_000L // 1 min
     }
 
     @Bean

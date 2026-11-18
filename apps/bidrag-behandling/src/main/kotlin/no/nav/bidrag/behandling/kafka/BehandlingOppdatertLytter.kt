@@ -72,6 +72,7 @@ class BehandlingOppdatertLytter(
                             behandlingstema = barn.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,
                             søknadsid = behandling.soknadsid,
                             omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                            omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
                             behandlerEnhet = ff?.behandlerenhet ?: behandling.behandlerEnhet,
                             saksnummer = ff?.tilhørerSak ?: behandling.saksnummer,
                             behandlingstype = behandling.søknadstype ?: Behandlingstype.SØKNAD,
@@ -83,7 +84,7 @@ class BehandlingOppdatertLytter(
                                 else -> barn.behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING
                             },
                         )
-                    barn.forholdsmessigFordeling?.søknader?.filter { it.status != null }?.map {
+                    barn.forholdsmessigFordeling?.søknader?.map {
                         hendelseBarn.copy(
                             søktAv = it.søktAvType,
                             søktFraDato = it.søknadFomDato ?: behandling.søktFomDato,
@@ -91,7 +92,7 @@ class BehandlingOppdatertLytter(
                             omgjørSøknadsid = it.omgjørSøknadsid,
                             medInnkreving = it.innkreving,
                             mottattDato = it.mottattDato,
-                            status = it.status!!,
+                            status = it.status ?: Behandlingstatus.UNDER_BEHANDLING,
                             behandlingstype = it.behandlingstype ?: behandling.søknadstype!!,
                             behandlingstema =
                             barn.behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema ?: Behandlingstema.BIDRAG,

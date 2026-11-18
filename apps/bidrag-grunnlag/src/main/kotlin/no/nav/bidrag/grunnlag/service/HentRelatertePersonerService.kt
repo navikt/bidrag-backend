@@ -1,10 +1,10 @@
 package no.nav.bidrag.grunnlag.service
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
 import no.nav.bidrag.domene.enums.person.Familierelasjon
 import no.nav.bidrag.domene.enums.person.SivilstandskodePDL
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.PersonBo
 import no.nav.bidrag.grunnlag.consumer.bidragperson.BidragPersonConsumer
 import no.nav.bidrag.grunnlag.consumer.bidragperson.api.HusstandsmedlemmerRequest
@@ -32,7 +32,7 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
         relatertPersonRequestListe.forEach { personIdOgPeriode ->
             // Henter alle husstandsmedlemmer til BM/BP
             val husstandsmedlemmerListe = hentHusstandsmedlemmer(personIdOgPeriode = personIdOgPeriode, feilrapporteringListe = feilrapporteringListe)
-            SECURE_LOGGER.debug("husstandsmedlemmerListe for {} {}", personIdOgPeriode.personId, husstandsmedlemmerListe)
+            secureLogger.debug { "husstandsmedlemmerListe for ${personIdOgPeriode.personId} $husstandsmedlemmerListe" }
 
             // Henter alle forelderbarnrelasjoner for BM/BP
             val forelderBarnRelasjoner =
@@ -41,7 +41,7 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
                     feilrapporteringListe = feilrapporteringListe,
                 ).forelderBarnRelasjon
 
-            SECURE_LOGGER.debug("forelderBarnRelasjoner for {} {}: ", personIdOgPeriode, forelderBarnRelasjoner)
+            secureLogger.debug { "forelderBarnRelasjoner for $personIdOgPeriode $forelderBarnRelasjoner: " }
 
             // Henter personid for eventuelle ektefeller
             val ektefelleListe = hentEktefelleListe(personIdOgPeriode.personId)
@@ -66,8 +66,8 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
                 }
             }
 
-            SECURE_LOGGER.debug("barnListe for {} {}", personIdOgPeriode.personId, barnListe)
-            SECURE_LOGGER.debug("relatertPersonRequestListe: {}", relatertPersonRequestListe)
+            secureLogger.debug { "barnListe for ${personIdOgPeriode.personId} $barnListe" }
+            secureLogger.debug { "relatertPersonRequestListe: $relatertPersonRequestListe" }
 
             // Slår sammen listene over husstandsmedlemmer og barn. Innsendt personId lagres ikke som eget husstandsmedlem.
             // Hvis personen ligger i barnListe settes erBarnAvBmBp lik true.
@@ -119,7 +119,7 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
             // En relatert person kan forekomme flere ganger i listen, én gang for hver periode personen har delt bolig med BM/BP (partPersonId).
             // I responsen skal hver person kun ligge én gang, med en liste over perioder personen har delt bolig med BM/BP (partPersonId).
             // Sjekker derfor om personen allerede ligger i responsen.
-            SECURE_LOGGER.debug("relatertPersonInternListe for ${personIdOgPeriode.personId} ${tilJson(relatertPersonInternListe)}")
+            secureLogger.debug { "relatertPersonInternListe for ${personIdOgPeriode.personId} ${tilJson(relatertPersonInternListe)}" }
 
             relatertPersonInternListe
                 .groupBy { it.partPersonId to it.relatertPersonPersonId }
@@ -143,7 +143,7 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
                         ),
                     )
                 }
-            SECURE_LOGGER.debug("relatertPersonListe for ${personIdOgPeriode.personId}: ${tilJson(relatertPersonListe)}")
+            secureLogger.debug { "relatertPersonListe for ${personIdOgPeriode.personId}: ${tilJson(relatertPersonListe)}" }
         }
 
         return HentGrunnlagGenericDto(grunnlagListe = relatertPersonListe, feilrapporteringListe = feilrapporteringListe)
@@ -169,12 +169,10 @@ class HentRelatertePersonerService(private val bidragPersonConsumer: BidragPerso
 
                 husstandsmedlemmerResponseDto.husstandListe.forEach { husstand ->
                     husstand.husstandsmedlemListe.forEach { husstandsmedlem ->
-                        SECURE_LOGGER.debug(
-                            "husstandsmedlemInnenforPeriode: {} {} {}",
-                            personIdOgPeriode.personId,
-                            husstandsmedlem.personId,
-                            husstandsmedlemInnenforPeriode(personIdOgPeriode, husstandsmedlem),
-                        )
+                        secureLogger.debug {
+                            "husstandsmedlemInnenforPeriode: ${personIdOgPeriode.personId} ${husstandsmedlem.personId} " +
+                                "${husstandsmedlemInnenforPeriode(personIdOgPeriode, husstandsmedlem)}"
+                        }
                         if (husstandsmedlem.personId.toString() != personIdOgPeriode.personId &&
                             husstandsmedlemInnenforPeriode(personIdOgPeriode, husstandsmedlem)
                         ) {

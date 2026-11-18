@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -40,12 +41,16 @@ import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ForpleiningPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SøknadGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.YearMonth
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
 
 class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
@@ -92,6 +97,45 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
             validerGrunnlag()
             validerUnderhold()
             validerSamvær()
+        }
+    }
+
+    @Test
+    fun `Skal knytte notater til rolle-entitet i lesemodus for BIDRAG`() {
+        val vedtakDto = lagVedtaksdata("fattetvedtak/bidrag-innvilget")
+        every { vedtakConsumer.hentVedtak(eq(1)) } returns
+            vedtakDto.copy(
+                vedtaksid = 1,
+                stønadsendringListe = vedtakDto.stønadsendringListe.map { it.copy(omgjørVedtakId = 2) },
+            )
+        every { vedtakConsumer.hentVedtak(eq(2)) } returns
+            vedtakDto.copy(
+                vedtaksid = 2,
+                stønadsendringListe = vedtakDto.stønadsendringListe.map { it.copy(omgjørVedtakId = null) },
+            )
+        every { behandlingService.hentBehandlingById(1) } returns (oppretteBehandling())
+        val behandling = vedtakService.konverterVedtakTilBehandlingForLesemodus(1)!!
+
+        assertSoftly(behandling) {
+            notater.shouldNotBeEmpty()
+            val rollenotattyper =
+                setOf(
+                    Notattype.VIRKNINGSTIDSPUNKT,
+                    Notattype.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+                    Notattype.INNTEKT,
+                    Notattype.SAMVÆR,
+                    Notattype.UNDERHOLDSKOSTNAD,
+                    Notattype.PRIVAT_AVTALE,
+                )
+            notater
+                .filter { it.type in rollenotattyper }
+                .shouldNotBeEmpty()
+                .forEach { notat ->
+                    notat.rolle.notat shouldContain notat
+                }
+            val søknadsbarnRolle = søknadsbarn.first()
+            søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.SAMVÆR
+            søknadsbarnRolle.notat.map { it.type } shouldContain Notattype.UNDERHOLDSKOSTNAD
         }
     }
 
@@ -224,6 +268,50 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
         assertSoftly(behandling) {
             validerSamvær()
             validerUnderhold()
+        }
+    }
+
+    @Test
+    fun `Skal opprette behandling fra vedtak med forpleining`() {
+        val vedtak = lagVedtaksdata("fattetvedtak/bidrag-innvilget")
+        val søknadsbarnReferanse = "person_PERSON_SØKNADSBARN_20130615_285"
+        val forpleiningGrunnlag =
+            GrunnlagDto(
+                referanse = "FORPLEINING_PERIODE_${søknadsbarnReferanse}_20240501_20240731",
+                type = Grunnlagstype.FORPLEINING_PERIODE,
+                innhold =
+                POJONode(
+                    ForpleiningPeriode(
+                        periode = ÅrMånedsperiode(YearMonth.parse("2024-05"), YearMonth.parse("2024-08")),
+                        beløp = BigDecimal(5000),
+                        manueltRegistrert = true,
+                    ),
+                ),
+                gjelderReferanse = "person_PERSON_BIDRAGSMOTTAKER_19790718_284",
+                gjelderBarnReferanse = søknadsbarnReferanse,
+            )
+        every { vedtakConsumer.hentVedtak(eq(12333)) } returns vedtak.copy(grunnlagListe = vedtak.grunnlagListe + forpleiningGrunnlag)
+
+        val behandling =
+            vedtakService.konverterVedtakTilBehandling(
+                OpprettBehandlingFraVedtakRequest(
+                    vedtakstype = Vedtakstype.KLAGE,
+                    søknadsid = 100,
+                    søknadsreferanseid = 222,
+                    søknadFra = SøktAvType.BIDRAGSPLIKTIG,
+                    saksnummer = "123213213",
+                    mottattdato = LocalDate.parse("2024-01-01"),
+                    søktFomDato = LocalDate.parse("2021-01-01"),
+                    behandlerenhet = "9999",
+                ),
+                12333,
+            )!!
+
+        assertSoftly(behandling.underholdskostnader.find { !it.gjelderAndreBarn }!!.forpleining) {
+            shouldHaveSize(1)
+            first().fom shouldBe LocalDate.parse("2024-05-01")
+            first().tom shouldBe LocalDate.parse("2024-07-31")
+            first().beløp shouldBe BigDecimal(5000)
         }
     }
 
@@ -533,11 +621,11 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
 
     private fun Behandling.validerGrunnlag() {
         assertSoftly(grunnlagListe) {
-            size shouldBe 16
+            size shouldBe 18
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.ANDRE_BARN,
                 testdataBM.ident,
-            ) shouldHaveSize 0
+            ) shouldHaveSize 1
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.SKATTEPLIKTIGE_INNTEKTER,
                 testdataBM.ident,
@@ -565,7 +653,7 @@ class VedtakTilBehandlingBidragTest : CommonVedtakTilBehandlingTest() {
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.ARBEIDSFORHOLD,
                 testdataBM.ident,
-            ) shouldHaveSize 0
+            ) shouldHaveSize 1
             filtrerEtterTypeOgIdent(
                 Grunnlagsdatatype.BOFORHOLD,
                 testdataBP.ident,

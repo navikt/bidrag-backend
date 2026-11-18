@@ -1,7 +1,8 @@
 package no.nav.bidrag.statistikk.hendelse
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.statistikk.SECURE_LOGGER
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.statistikk.BidragHendelse
 import no.nav.bidrag.transport.behandling.statistikk.ForskuddHendelse
 import no.nav.bidrag.transport.behandling.statistikk.SærbidragHendelse
@@ -37,7 +38,7 @@ class StatistikkKafkaEventProducer(
                 record,
             ).get().recordMetadata.offset()
         } catch (e: Exception) {
-            SECURE_LOGGER.error("Det skjedde en feil ved sending av kafkamelding med forskuddsvedtak, $record. Exception: $e")
+            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med forskuddsvedtak, $record. Exception: $e".sanitizeForLog() }
             throw IllegalStateException(e.message, e)
         }
     }
@@ -57,7 +58,7 @@ class StatistikkKafkaEventProducer(
                 record,
             ).get().recordMetadata.offset()
         } catch (e: Exception) {
-            SECURE_LOGGER.error("Det skjedde en feil ved sending av kafkamelding med bidragsvedtak, $record. Exception: $e")
+            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med bidragsvedtak, $record. Exception: $e".sanitizeForLog() }
             throw IllegalStateException(e.message, e)
         }
     }
@@ -77,7 +78,7 @@ class StatistikkKafkaEventProducer(
                 record,
             ).get().recordMetadata.offset()
         } catch (e: Exception) {
-            SECURE_LOGGER.error("Det skjedde en feil ved sending av kafkamelding med særbidragsvedtak, $record. Exception: $e")
+            secureLogger.error { "Det skjedde en feil ved sending av kafkamelding med særbidragsvedtak, $record. Exception: $e" }
             throw IllegalStateException(e.message, e)
         }
     }

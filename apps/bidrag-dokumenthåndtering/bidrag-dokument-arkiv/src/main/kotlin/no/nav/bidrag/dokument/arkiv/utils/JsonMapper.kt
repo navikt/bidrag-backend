@@ -3,7 +3,6 @@ package no.nav.bidrag.dokument.arkiv.utils
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
-import no.nav.bidrag.dokument.arkiv.StaticContextAccessor
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.slf4j.LoggerFactory
 

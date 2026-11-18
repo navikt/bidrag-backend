@@ -25,7 +25,7 @@ class Aktor(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "aktor", cascade = [CascadeType.MERGE])
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "aktor", cascade = [CascadeType.MERGE])
     val hendelsemottak: Set<Hendelsemottak> = HashSet(),
 ) {
     override fun equals(other: Any?): Boolean {

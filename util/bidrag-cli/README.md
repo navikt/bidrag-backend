@@ -17,8 +17,8 @@ Deretter legg til følgende i din `.bashrc` eller `.zshrc`:
 alias bidrag-cli='function _bcli(){node /path/to/bidrag-cli/dist/main.js "$@"};_bcli'
 ```
 
-Alternativt kan `./install.sh` kjøres, som gjør `npm install`/`npm run build` og
-legger til aliaset automatisk.
+Alternativt kan `./install.sh` kjøres. Skriptet gjør `npm install`/`npm run build`
+og legger til aliaset eller funksjonen automatisk for Bash, Zsh og Fish.
 
 ## Kommandoer
 

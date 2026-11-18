@@ -126,6 +126,7 @@ class BehandlingTilGrunnlagMappingV2(
     fun Behandling.byggInnhentetGrunnlag(
         personobjekter: MutableSet<GrunnlagDto>,
         byggForRoller: List<Rolle> = this.søknadsbarn,
+        byggBareInntekt: Boolean = false,
     ): Set<GrunnlagDto> {
         val sortertGrunnlagsListe =
             grunnlag
@@ -148,8 +149,16 @@ class BehandlingTilGrunnlagMappingV2(
                         }
                     }
                 }
+
         val sortertGrunnlagsListeBearbeidet = sortertGrunnlagsListe.filter { it.erBearbeidet }
         val sortertGrunnlagsListeIkkeBearbeidet = sortertGrunnlagsListe.filter { !it.erBearbeidet }
+
+        if (byggBareInntekt) {
+            val beregnetInntekt = sortertGrunnlagsListeBearbeidet.tilBeregnetInntekt(personobjekter)
+            val innhentetInntekter = sortertGrunnlagsListeIkkeBearbeidet.tilInnhentetGrunnlagInntekt(personobjekter)
+            return beregnetInntekt + innhentetInntekter
+        }
+
         val innhentetArbeidsforhold = sortertGrunnlagsListeIkkeBearbeidet.tilInnhentetArbeidsforhold(personobjekter)
         val innhentetSivilstand = sortertGrunnlagsListeIkkeBearbeidet.tilInnhentetSivilstand(personobjekter)
         val innhentetHusstandsmedlemmer =
@@ -277,6 +286,7 @@ class BehandlingTilGrunnlagMappingV2(
     fun Behandling.tilGrunnlagUnderholdskostnad(personobjekter: Set<GrunnlagDto> = emptySet()) = listOf(
         tilGrunnlagBarnetilsyn(),
         tilGrunnlagTilleggsstønad(),
+        tilGrunnlagForpleining(),
         tilGrunnlagFaktiskeTilsynsutgifter(personobjekter),
     ).flatten()
 
@@ -373,6 +383,12 @@ class BehandlingTilGrunnlagMappingV2(
         return inntekter
             .asSequence()
             .filter { personobjekter.hentPersonNyesteIdent(it.gjelderIdent) != null && (inkluderAlle || it.taMed) }
+            .filter { inntekt ->
+                val gjelderRolle = inntekt.gjelderRolle
+                gjelderRolle == null ||
+                    gjelderRolle.rolletype != Rolletype.BARN ||
+                    byggForSøknadsbarn.any { rolle -> rolle.erSammeRolle(gjelderRolle) }
+            }
             .groupBy { it.gjelderRolle }
             .flatMap { (rolle, innhold) ->
                 val gjelder = personobjekter.hentPersonMedReferanse(rolle!!.tilGrunnlagsreferanse())!! as GrunnlagDto

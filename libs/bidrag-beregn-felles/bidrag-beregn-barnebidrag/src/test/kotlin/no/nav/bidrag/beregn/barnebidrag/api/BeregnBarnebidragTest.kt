@@ -28,7 +28,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholds
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -106,7 +105,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
     private var forventetExceptionBegrensetRevurderingLøpendeForskuddMangler = false
 
     // Sjabloner
-    private var forventetAntallSjablonSjablontall: Int = 11
+    private var forventetAntallSjablonSjablontall: Int = 13
 
     // Grunnlag
     private var forventetAntallInntektrapporteringBP: Int = 1
@@ -680,7 +679,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetBpAndelAvUVedDeltBostedBeløp = BigDecimal.ZERO.setScale(2)
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -806,7 +805,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -992,7 +990,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetBpAndelAvUVedDeltBostedBeløp = BigDecimal.ZERO.setScale(2)
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -1052,7 +1050,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetEndringErOverGrense = true
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -1112,7 +1110,7 @@ internal class BeregnBarnebidragTest : FellesTest() {
         forventetEndringErOverGrense = false
 
         // Sjabloner
-        forventetAntallSjablonSjablontall = 10
+        forventetAntallSjablonSjablontall = 12
 
         // Grunnlag
         forventetAntallBarnetilleggBP = 0
@@ -1129,7 +1127,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -1274,7 +1271,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -1419,7 +1415,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -1573,7 +1568,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -2037,7 +2031,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
 
         val barnebidragResultat = api.beregn(request)
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val endeligBidragResultatListe = hentSluttberegning(barnebidragResultatGrunnlagListe)
 
@@ -2522,7 +2515,6 @@ internal class BeregnBarnebidragTest : FellesTest() {
         }
 
         val barnebidragResultatGrunnlagListe = barnebidragResultat.grunnlagListe
-        println(commonObjectmapper.writeValueAsString(barnebidragResultat))
 
         val alleReferanser = hentAlleReferanser(barnebidragResultatGrunnlagListe)
         val alleRefererteReferanser = hentAlleRefererteReferanser(

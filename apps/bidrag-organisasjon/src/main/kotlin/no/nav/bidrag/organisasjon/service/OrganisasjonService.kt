@@ -1,12 +1,15 @@
 package no.nav.bidrag.organisasjon.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.commons.security.SikkerhetsKontekst.medApplikasjonKontekst
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.web.HttpResponse
 import no.nav.bidrag.domene.enums.diverse.Enhetsstatus
 import no.nav.bidrag.domene.enums.diverse.Språk
 import no.nav.bidrag.domene.enums.diverse.Tema
 import no.nav.bidrag.domene.enums.person.Diskresjonskode
 import no.nav.bidrag.domene.enums.person.Gradering
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.organisasjon.consumer.EntraAnsatt
@@ -27,7 +30,6 @@ import no.nav.bidrag.transport.organisasjon.EnhetPostadresseDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
 import no.nav.bidrag.transport.organisasjon.JournalførendeEnhetDto
 import no.nav.bidrag.transport.person.Graderingsinfo
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 
@@ -39,7 +41,7 @@ class OrganisasjonService(
     private val skjermingConsumer: SkjermingConsumer,
 ) {
     fun hentEnhetInfo(enhetNr: Enhetsnummer): EnhetDto {
-        LOGGER.info("Hent enhetinfo for enhetNr {}", enhetNr)
+        LOGGER.debug { "Hent enhetinfo for enhetNr ${enhetNr.toString().sanitizeForLog()}" }
         val enhetInfoResponse = norg2Consumer.hentEnhetInfo(enhetNr)
         return EnhetDto(
             nummer = enhetInfoResponse.enhetNr,
@@ -57,11 +59,11 @@ class OrganisasjonService(
         }
 
         if (enhetKontaktinfo == null) {
-            LOGGER.info("Fant ingen kontakinformasjon for enhet {}. Returnerer standard kontaktinformasjon", enhetNr)
+            LOGGER.info { "Fant ingen kontakinformasjon for enhet ${enhetNr.toString().sanitizeForLog()}. Returnerer standard kontaktinformasjon" }
             return EnhetKontaktinfoDto.medStandardadresse(enhetNr)
         }
 
-        LOGGER.info("Hentet kontakinformasjon for enhet {}", enhetNr)
+        LOGGER.debug { "Hentet kontakinformasjon for enhet ${enhetNr.toString().sanitizeForLog()}" }
 
         val result = enhetKontaktinfo.postadresse[språkEnum]?.let { enhetKontaktinfo.tilKontaktadresse(it) } ?: run {
             val norskAdresse = enhetKontaktinfo.postadresse[Språk.NB]
@@ -72,7 +74,7 @@ class OrganisasjonService(
                 enhetKontaktinfo.tilKontaktadresse(norskAdresse) ?: EnhetKontaktinfoDto.medStandardadresse(enhetNr)
             }
         }
-        LOGGER.info("Hentet kontakinformasjon for enhet $enhetNr med info $result")
+        LOGGER.debug { "Hentet kontakinformasjon for enhet ${enhetNr.toString().sanitizeForLog()} med info $result" }
         return result
     }
 
@@ -94,7 +96,7 @@ class OrganisasjonService(
     }
 
     fun hentPersonerEnhet(enhet: String): List<EnhetBrukerDto> = medApplikasjonKontekst {
-        LOGGER.info("Hent liste brukere som har tilgang til enhet $enhet")
+        LOGGER.debug { "Hent liste brukere som har tilgang til enhet ${enhet.sanitizeForLog()}" }
         val personer = entraConsumer.hentBrukereForEnhet(enhet)
         personer.filter { harTilgangTilTemaBID(it) }.map { ansatt ->
             EnhetBrukerDto(ansatt.navIdent, ansatt.visningNavn)
@@ -107,7 +109,7 @@ class OrganisasjonService(
     }
 
     fun hentSaksbehandlerEnheter(saksbehandlerIdent: String): List<EnhetDto> = medApplikasjonKontekst {
-        LOGGER.info("Hent liste over enheter en saksbehandler har tilgang til")
+        LOGGER.debug { "Hent liste over enheter en saksbehandler har tilgang til" }
         val enheter = entraConsumer.hentPersonEnheter(saksbehandlerIdent)
         enheter.map { (enhetsnummer, navn) ->
             EnhetDto(
@@ -120,7 +122,7 @@ class OrganisasjonService(
     }
 
     fun hentArbeidsfordelingJournalforendeEnheter(): HttpResponse<List<JournalførendeEnhetDto>> {
-        LOGGER.info("Hent liste over alle journaførende enheter fra arbeidsfordeling")
+        LOGGER.debug { "Hent liste over alle journaførende enheter fra arbeidsfordeling" }
         val journalforendeEnheterParam = ArbeidsfordelingEnheterRequest(listOf(FORVALTNING, SPESIALENHETER, KLAGE), BIDRAG)
         val arbeidsfordelingResponse = norg2Consumer.finnArbeidsfordelingEnheterListe(journalforendeEnheterParam)
         val muligResponseBody = arbeidsfordelingResponse.responseEntity.body ?: listOf()
@@ -178,8 +180,12 @@ class OrganisasjonService(
                 behandlingstema = request.behandlingstema ?: request.arbeidsfordeling?.behandlingstema,
                 behandlingstype = mapBehandlingstype(request) ?: if (utland) BEHANDLINGSTYPE_UTLAND else null,
             )
-        return norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
+        val enhet = norg2Consumer.finnArbeidsfordelingEnheterBestMatch(arbeidsfordelingParam)
             ?.firstOrNull()?.let { EnhetDto(it.enhetNr, it.navn) }
+            ?: return null
+
+        val brukSettekontor = request.arbeidsfordeling == Arbeidsfordeling.SETTEKONTOR && !skjermet && diskresjonskode == null
+        return if (brukSettekontor) finnSettekontorForEnhet(enhet) else enhet
     }
 
     private fun finnStrengesteDiskresjonskode(graderingsinfo: Graderingsinfo): Diskresjonskode? {
@@ -216,10 +222,20 @@ class OrganisasjonService(
         return request.sakskategori?.finnBehandlingstypekode(request.behandlingstype!!)
     }
 
+    private fun finnSettekontorForEnhet(enhet: EnhetDto): EnhetDto {
+        val settekontor = norg2Consumer.hentEnhetKontaktinfo(enhet.nummer.verdi)?.settekontorEnhetId
+        if (settekontor == null) {
+            LOGGER.warn { "Fant ikke settekontor. Beholder enheten fra Norg." }
+            return enhet
+        }
+        val navn = norg2Consumer.hentEnhetKontaktinfo(settekontor)?.navn
+        return EnhetDto(Enhetsnummer(settekontor), navn)
+    }
+
     fun hentAlleEnheterGrupper(): BidragEnheterResponsDto = BidragEnheterResponsDto(EnhetYamlConverter.hentAlleEnheterGrupper())
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(OrganisasjonService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
         private const val FORVALTNING = "FPY"
         private const val SPESIALENHETER = "KO"
         private const val KLAGE = "KLAGE"

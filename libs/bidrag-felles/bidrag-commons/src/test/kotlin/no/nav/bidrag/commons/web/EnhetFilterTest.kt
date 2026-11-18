@@ -21,6 +21,7 @@ internal class EnhetFilterTest {
     private val enhetFilter = EnhetFilter()
 
     private val appenderMock: Appender<ILoggingEvent> = mockk(relaxed = true)
+    private val secureAppenderMock: Appender<ILoggingEvent> = mockk(relaxed = true)
     private val filterChainMock: FilterChain = mockk(relaxed = true)
     private val httpServletRequestMock: HttpServletRequest = mockk(relaxed = true)
     private val httpServletResponseMock: HttpServletResponseWrapper = mockk(relaxed = true)
@@ -36,6 +37,13 @@ internal class EnhetFilterTest {
         every { appenderMock.name } returns "MOCK"
         every { appenderMock.isStarted } returns true
         logger.addAppender(appenderMock)
+
+        // Enhetsnummer regnes som sensitiv informasjon og logges derfor via den delte
+        // "secureLogger"-kategorien i stedet for EnhetFilter sin egen loggerkategori.
+        val secureLogger = LoggerFactory.getLogger("secureLogger") as Logger
+        every { secureAppenderMock.name } returns "SECURE_MOCK"
+        every { secureAppenderMock.isStarted } returns true
+        secureLogger.addAppender(secureAppenderMock)
     }
 
     private fun mockRequestUri() {
@@ -63,7 +71,7 @@ internal class EnhetFilterTest {
         every { httpServletRequestMock.getHeader(EnhetFilter.X_ENHET_HEADER) } returns "007"
         enhetFilter.doFilter(httpServletRequestMock, httpServletResponseMock, filterChainMock)
         val logCaptor = slot<ILoggingEvent>()
-        verify { appenderMock.doAppend(capture(logCaptor)) }
+        verify { secureAppenderMock.doAppend(capture(logCaptor)) }
         val loggingEvent = logCaptor.captured
         loggingEvent shouldNotBe null
         loggingEvent.formattedMessage shouldContain "Behandler request 'some url' for enhet med enhetsnummer 007"
@@ -73,12 +81,12 @@ internal class EnhetFilterTest {
     @Test
     fun `skal logge når et enhetsnummer ikke kan videresendes`() {
         every { httpServletRequestMock.getHeader(EnhetFilter.X_ENHET_HEADER) } returns null
-        val logger = LoggerFactory.getLogger(EnhetFilter::class.java) as Logger
+        val logger = LoggerFactory.getLogger("secureLogger") as Logger
         logger.level = ch.qos.logback.classic.Level.DEBUG // Ensure DEBUG level
         enhetFilter.doFilter(httpServletRequestMock, httpServletResponseMock, filterChainMock)
 
         val logCaptor = slot<ILoggingEvent>()
-        verify { appenderMock.doAppend(capture(logCaptor)) }
+        verify { secureAppenderMock.doAppend(capture(logCaptor)) }
         val loggingEvent = logCaptor.captured
         loggingEvent shouldNotBe null
         loggingEvent.formattedMessage shouldContain "Behandler request 'some url' uten informasjon om enhetsnummer"

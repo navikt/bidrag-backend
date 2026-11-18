@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.transformers
 
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.hentNavn
 import no.nav.bidrag.behandling.dto.v1.beregning.BeregnetBidragBarnDto
@@ -55,6 +56,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnInnkre
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalInnkrevesPeriode
 import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX
+import no.nav.bidrag.beregn.core.util.InntektUtil.beløpTilÅrsbeløp
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvslag
@@ -64,7 +66,9 @@ import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.diverse.InntektBeløpstype
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.person.Bostatuskode
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -143,6 +147,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.VirkningstidspunktGrun
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottakerReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.byggSluttberegningBarnebidragDetaljer
+import no.nav.bidrag.transport.behandling.felles.grunnlag.erBeregnetAvslagBarnebidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erResultatEndringUnderGrenseForPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erSluttberegningGammelStruktur
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -177,7 +182,7 @@ import java.time.YearMonth
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
-val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_TILTAKSPENGER, Inntektstype.BARNETILLEGG_SUMMERT)
+val ikkeBeregnForBarnetillegg = listOf(Inntektstype.BARNETILLEGG_SUMMERT)
 
 fun Rolle.mapTilResultatBarn() = ResultatRolle(
     tilPersonident(),
@@ -241,7 +246,7 @@ fun mapTilBeregningresultatBarn(
         .finnBeregnTilDatoBehandling(søknadsbarn)
         ?.toYearMonth(),
     innkrevesFraDato = behandling.finnInnkrevesFraDato(søknadsbarn),
-    innkrevesFraPerioder = behandling.finnSkalInnkrevesPeriode(søknadsbarn),
+    innkrevesFraPerioder = if (endeligResultat?.periodeListe?.isNotEmpty() == true) behandling.finnSkalInnkrevesPeriode(søknadsbarn) else emptyList(),
     opphørsdato = søknadsbarn.opphørsdato?.toYearMonth(),
     løperBidrag = behandling.løperBidragEtterEldsteVirkning(søknadsbarn),
     resultat =
@@ -291,7 +296,11 @@ fun BeregnGebyrResultat.tilDto(
             skattepliktigInntekt = skattepliktigInntekt,
             maksBarnetillegg = maksBarnetillegg,
         ),
-        beregnetIlagtGebyr = ilagtGebyr,
+        beregnetIlagtGebyr = if (erManueltOverstyrt) {
+            !(gebyr.manueltOverstyrtGebyr?.ilagtGebyr ?: (rolle.gebyr!!.ilagtGebyr == true))
+        } else {
+            ilagtGebyr
+        },
         begrunnelse = if (erManueltOverstyrt) gebyr.manueltOverstyrtGebyr?.begrunnelse ?: rolle.gebyr?.begrunnelse else null,
         endeligIlagtGebyr =
         if (erManueltOverstyrt) {
@@ -304,27 +313,37 @@ fun BeregnGebyrResultat.tilDto(
     )
 }
 
-fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnlag = BeregnValgteInntekterGrunnlag(
-    periode =
-    ÅrMånedsperiode(
-        virkningstidspunktEllerSøktFomDato,
-        finnBeregnTilDatoBehandling(),
-    ),
-    opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
-    barnListe =
-    søknadsbarn
-        .filter { it.avslag == null }
-        .filter {
-            rolle.rolletype != Rolletype.BIDRAGSMOTTAKER || it.bidragsmottaker?.ident == null ||
-                it.bidragsmottaker?.ident == rolle.ident
-        }.map { PersonStønad(it.ident!!, it.stønadstype) },
-    gjelderIdent = Personident(rolle.ident!!),
-    grunnlagListe =
-    inntekter
-        .filter { it.erSammeRolle(rolle) }
+fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenValgt: Boolean = false): BeregnValgteInntekterGrunnlag {
+    val inntekterRolle = inntekter.filter { it.erSammeRolle(rolle) }
+    val inntekter = inntekterRolle
         .filter { it.taMed }
         .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
-        .map {
+        .filterNot { it.harBareSkattefrieBarnetillegg() }
+        .ifEmpty {
+            if (taMed12MndInntektHvisIngenValgt) {
+                inntekterRolle
+                    .filter { it.type == Inntektsrapportering.AINNTEKT_BEREGNET_12MND }
+                    .filter { !it.inntektsposter.mapNotNull { it.inntektstype }.any { ikkeBeregnForBarnetillegg.contains(it) } }
+            } else {
+                emptyList()
+            }
+        }
+    return BeregnValgteInntekterGrunnlag(
+        periode =
+        ÅrMånedsperiode(
+            virkningstidspunktEllerSøktFomDato,
+            finnBeregnTilDatoBehandling(),
+        ),
+        opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
+        barnListe =
+        søknadsbarn
+            .filter { it.avslag == null }
+            .filter {
+                rolle.rolletype != Rolletype.BIDRAGSMOTTAKER || it.bidragsmottaker?.ident == null ||
+                    it.bidragsmottaker?.ident == rolle.ident
+            }.map { PersonStønad(it.ident!!, it.stønadstype) },
+        gjelderIdent = Personident(rolle.ident!!),
+        grunnlagListe = inntekter.map {
             InntektsgrunnlagPeriode(
                 periode =
                 if (it.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(it.type)) {
@@ -335,9 +354,9 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnl
                         datoTil,
                     )
                 } else {
-                    ÅrMånedsperiode(it.datoFom!!, it.datoTom?.plusDays(1))
+                    ÅrMånedsperiode(if (taMed12MndInntektHvisIngenValgt) eldsteVirkningstidspunkt else it.datoFom!!, it.datoTom?.plusDays(1))
                 },
-                beløp = it.belop,
+                beløp = it.beløpUtenSkattefrieBarnetillegg(),
                 inntektsrapportering = it.type,
                 inntektGjelderBarn =
                 it.gjelderBarnRolle.takeIfNotNullOrEmpty { PersonStønad(it.ident!!, it.stønadstype) }
@@ -345,7 +364,8 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle): BeregnValgteInntekterGrunnl
                 inntektEiesAvIdent = Personident(it.gjelderIdent!!),
             )
         },
-)
+    )
+}
 
 fun opprettIndeksreguleringsperioder(
     resultat: ResultatBidragsberegningBarn,
@@ -815,8 +835,9 @@ fun BeregnetSærbidragResultat.tilDto(behandling: Behandling): ResultatSærbidra
 fun List<GrunnlagDto>.byggResultatInntekter(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
     bidragsmottakerReferanse: Grunnlagsreferanse? = null,
+    søknadsbarnReferanse: Grunnlagsreferanse? = null,
 ) = ResultatBeregningInntekterDto(
-    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN),
+    inntektBarn = finnTotalInntektForRolle(grunnlagsreferanseListe, Rolletype.BARN, søknadsbarnReferanse),
     barnEndeligInntekt = finnDelberegningBidragspliktigesAndel(grunnlagsreferanseListe)?.barnEndeligInntekt,
     inntektBP =
     finnTotalInntektForRolle(
@@ -1060,14 +1081,19 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
         erEndringUnderGrense = erResultatEndringUnderGrense,
         erBeregnetAvslag =
         sluttberegning != null &&
-            (sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet),
+            (
+                sluttberegning.barnetErSelvforsørget || sluttberegning.ikkeOmsorgForBarnet ||
+                    sluttberegning.resultat.erBeregnetAvslagBarnebidrag()
+                ),
         beregningsdetaljer =
         if (vedtakstype == Vedtakstype.INNKREVING) {
             null
         } else if (resultatkode?.erAvslag() == true) {
             BidragPeriodeBeregningsdetaljer(
                 forskuddssats = finnForskuddssats(grunnlagsreferanseListe),
-                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER),
+                inntektBBMultiplikator = finnInntektBBMultiplikator(grunnlagsreferanseListe),
+                maksInntektBBMultiplikator = finnMaksInntektBBMultiplikator(grunnlagsreferanseListe),
+                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER, personobjekt?.bidragsmottakerReferanse),
                 barnetilleggBP = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG),
                 sluttberegning = sluttberegning,
                 bpHarEvne = false,
@@ -1083,7 +1109,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                     ?.takeIf { it.erSluttberegningGammelStruktur() }
                     ?.innholdTilObjekt<SluttberegningBarnebidrag>(),
                 endringUnderGrense = delberegningGrensePeriode?.innhold,
-                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER),
+                barnetilleggBM = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSMOTTAKER, personobjekt?.bidragsmottakerReferanse),
                 barnetilleggBP = finnBarnetillegg(grunnlagsreferanseListe, Grunnlagstype.PERSON_BIDRAGSPLIKTIG),
                 samværsfradrag =
                 finnDelberegningSamværsfradrag(
@@ -1091,6 +1117,8 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                 ),
                 delberegningUnderholdskostnad = delberegningUnderholdskostnad,
                 forskuddssats = finnForskuddssats(grunnlagsreferanseListe),
+                inntektBBMultiplikator = finnInntektBBMultiplikator(grunnlagsreferanseListe),
+                maksInntektBBMultiplikator = finnMaksInntektBBMultiplikator(grunnlagsreferanseListe),
                 delberegningBidragspliktigesBeregnedeTotalBidrag =
                 finnDelberegningBPsBeregnedeTotalbidrag(
                     grunnlagsreferanseListe,
@@ -1098,7 +1126,7 @@ private fun List<GrunnlagDto>.byggPeriodeBeregningDto(
                 bpsAndel = bpsAndel,
                 sluttberegning = sluttberegning,
                 antallBarnIHusstanden = finnAntallBarnIHusstanden(grunnlagsreferanseListe),
-                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse),
+                inntekter = byggResultatInntekter(grunnlagsreferanseListe, personobjekt?.bidragsmottakerReferanse, personobjekt?.referanse),
                 voksenIHusstanden = finnBorMedAndreVoksne(grunnlagsreferanseListe),
                 enesteVoksenIHusstandenErEgetBarn =
                 finnEnesteVoksenIHusstandenErEgetBarn(
@@ -1593,8 +1621,9 @@ fun List<GrunnlagDto>.finnAlleDelberegningUnderholdskostnad(rolle: GrunnlagDto):
 fun List<GrunnlagDto>.finnBarnetillegg(
     grunnlagsreferanseListe: List<Grunnlagsreferanse>,
     personGrunnlagstype: Grunnlagstype,
+    personreferanseBM: String? = null,
 ): DelberegningBarnetilleggDto {
-    val personGrunnlag = find { it.type == personGrunnlagstype } ?: return DelberegningBarnetilleggDto()
+    val personGrunnlag = find { it.type == personGrunnlagstype && (personreferanseBM == null || it.referanse == personreferanseBM) } ?: return DelberegningBarnetilleggDto()
     val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return DelberegningBarnetilleggDto()
     val nettoBarnetillegg =
         finnOgKonverterGrunnlagSomErReferertAv<DelberegningNettoBarnetillegg>(
@@ -1758,7 +1787,7 @@ fun List<GrunnlagDto>.byggGrunnlagForholdsmessigFordeling(
                     it.referanse.endsWith(BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX)
                 }
             sumBidragTilFordelingGrunnlagsliste.find {
-                it.innhold.periode.omsluttesAv(sluttberegningPeriode)
+                it.innhold.periode.overlapper(sluttberegningPeriode)
             }
         }
 
@@ -2302,14 +2331,23 @@ fun List<GrunnlagDto>.finnDelberegningBidragsevne(grunnlagsreferanseListe: List<
     )
 }
 
-fun List<GrunnlagDto>.finnForskuddssats(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal {
-    val sluttberegning =
-        finnSluttberegningIReferanser(grunnlagsreferanseListe)
-            ?: return BigDecimal.ZERO
+fun List<GrunnlagDto>.finnForskuddssats(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.FORSKUDDSSATS_BELØP) ?: BigDecimal.ZERO
+
+// Vedtak fattet før sjablon 0010 ble lagt i grunnlaget til BPs andel er beregnet med 30
+fun List<GrunnlagDto>.finnInntektBBMultiplikator(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.INNTEKT_BB_MULTIPLIKATOR) ?: BigDecimal.valueOf(30)
+
+// Vedtak fattet før sjablon 0012 ble lagt i grunnlaget til BPs andel er beregnet med 100
+fun List<GrunnlagDto>.finnMaksInntektBBMultiplikator(grunnlagsreferanseListe: List<Grunnlagsreferanse>): BigDecimal = finnSjablontall(grunnlagsreferanseListe, SjablonTallNavn.MAKS_INNTEKT_BB_MULTIPLIKATOR) ?: BigDecimal.valueOf(100)
+
+private fun List<GrunnlagDto>.finnSjablontall(
+    grunnlagsreferanseListe: List<Grunnlagsreferanse>,
+    sjablon: SjablonTallNavn,
+): BigDecimal? {
+    val sluttberegning = finnSluttberegningIReferanser(grunnlagsreferanseListe) ?: return null
     return finnGrunnlagSomErReferertAv(Grunnlagstype.SJABLON_SJABLONTALL, sluttberegning)
-        .find { it.innholdTilObjekt<SjablonSjablontallPeriode>().sjablon == SjablonTallNavn.FORSKUDDSSATS_BELØP }
-        ?.innholdTilObjekt<SjablonSjablontallPeriode>()
-        ?.verdi ?: BigDecimal.ZERO
+        .map { it.innholdTilObjekt<SjablonSjablontallPeriode>() }
+        .find { it.sjablon == sjablon }
+        ?.verdi
 }
 
 fun List<GrunnlagDto>.finnTotalInntektForRolle(
@@ -2334,3 +2372,9 @@ fun List<GrunnlagDto>.finnTotalInntektForRolle(
     return delberegningSumInntektForRolle?.innholdTilObjekt<DelberegningSumInntekt>()?.totalinntekt
         ?: BigDecimal.ZERO
 }
+
+// Skattefrie barnetillegg (tiltakspenger og Forsvaret) er ikke personinntekt, og tas ikke med i inntekten. For en inntekt med
+// skattefrie poster summeres bare de andre postene, slik at andre barnetillegg i samme inntekt fortsatt tas med.
+private fun Inntekt.beløpUtenSkattefrieBarnetillegg() = if (inntektsposter.none { it.inntektstype?.erSkattefrittBarnetillegg == true }) belop else inntektsposter.filterNot { it.inntektstype?.erSkattefrittBarnetillegg == true }.sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
+
+private fun Inntekt.harBareSkattefrieBarnetillegg() = inntektsposter.isNotEmpty() && inntektsposter.all { it.inntektstype?.erSkattefrittBarnetillegg == true }

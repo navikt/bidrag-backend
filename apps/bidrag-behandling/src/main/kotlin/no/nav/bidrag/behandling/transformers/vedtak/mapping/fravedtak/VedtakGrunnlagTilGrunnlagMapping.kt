@@ -11,6 +11,7 @@ import no.nav.bidrag.behandling.transformers.grunnlag.skattegrunnlagListe
 import no.nav.bidrag.behandling.vedtakmappingFeilet
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BeregnetInntekt
@@ -59,33 +60,52 @@ data class SummerteInntekt(
     val inntekt: SummertÅrsinntekt,
 )
 
-fun List<GrunnlagDto>.hentBeregnetInntekt(): Map<String, SummerteInntekter<SummertMånedsinntekt>> = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.BEREGNET_INNTEKT)
-    .groupBy {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        gjelder.personIdent
-    }.map { (ident, beregnetInntekt) ->
+/**
+ * Samme person kan forekomme flere ganger i et vedtak med ulik stønadstype (f.eks. 18-årsbidrag og ordinært bidrag ved FF).
+ * Grunnlag må derfor grupperes per ident og stønadstype slik at de knyttes til riktig rolle.
+ */
+data class GjelderPerson(
+    val ident: String,
+    val stønadstype: Stønadstype?,
+)
+
+private fun List<GrunnlagDto>.hentGjelderPerson(referanse: String?): GjelderPerson {
+    val person = hentPersonMedReferanse(referanse) ?: manglerPersonGrunnlag(referanse)
+    return GjelderPerson(person.personIdent!!, person.stønadstype)
+}
+
+private inline fun <T> List<GrunnlagDto>.grupperPåGjelderPerson(
+    grunnlagType: Grunnlagstype,
+    mapper: (BaseGrunnlag, GjelderPerson) -> List<T>,
+): Map<GjelderPerson, List<T>> = filtrerBasertPåEgenReferanse(grunnlagType = grunnlagType)
+    .groupBy { hentGjelderPerson(it.gjelderReferanse) }
+    .mapValues { (gjelder, grunnlagListe) -> grunnlagListe.flatMap { mapper(it, gjelder) } }
+    .filterValues { it.isNotEmpty() }
+
+fun List<GrunnlagDto>.hentBeregnetInntekt(): Map<GjelderPerson, SummerteInntekter<SummertMånedsinntekt>> = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.BEREGNET_INNTEKT)
+    .groupBy { hentGjelderPerson(it.gjelderReferanse) }
+    .mapValues { (_, beregnetInntekt) ->
         val innhold = beregnetInntekt.innholdTilObjekt<BeregnetInntekt>().first()
-        ident to
-            SummerteInntekter(
-                versjon = innhold.versjon,
-                inntekter =
-                innhold.summertMånedsinntektListe
-                    .map {
-                        SummertMånedsinntekt(
-                            gjelderÅrMåned = it.gjelderÅrMåned,
-                            sumInntekt = it.sumInntekt,
-                            inntektPostListe =
-                            it.inntektPostListe.map {
-                                InntektPost(
-                                    kode = it.kode,
-                                    beløp = it.beløp,
-                                    inntekstype = it.inntektstype,
-                                )
-                            },
-                        )
-                    },
-            )
-    }.associate { it.first!! to it.second }
+        SummerteInntekter(
+            versjon = innhold.versjon,
+            inntekter =
+            innhold.summertMånedsinntektListe
+                .map {
+                    SummertMånedsinntekt(
+                        gjelderÅrMåned = it.gjelderÅrMåned,
+                        sumInntekt = it.sumInntekt,
+                        inntektPostListe =
+                        it.inntektPostListe.map {
+                            InntektPost(
+                                kode = it.kode,
+                                beløp = it.beløp,
+                                inntekstype = it.inntektstype,
+                            )
+                        },
+                    )
+                },
+        )
+    }
 
 fun List<GrunnlagDto>.hentInnhentetAndreVoksneIHusstanden(): List<RelatertPersonGrunnlagDto> = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_ANDRE_VOKSNE_I_HUSSTANDEN)
     .flatMap {
@@ -107,23 +127,19 @@ fun List<GrunnlagDto>.hentInnhentetAndreVoksneIHusstanden(): List<RelatertPerson
         }
     }
 
-fun List<GrunnlagDto>.hentInnhentetAndreBarnTilBidragsmottaker(): List<RelatertPersonGrunnlagDto>? = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER)
-    .firstOrNull()
-    ?.let {
-        val part = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>()
-        innhold.grunnlag.map { barn ->
-            val gjelderPerson = hentPersonMedReferanse(barn.gjelderPerson)!!
-            RelatertPersonGrunnlagDto(
-                partPersonId = part.personIdent!!,
-                relatertPersonPersonId = gjelderPerson.personIdent,
-                navn = barn.navn,
-                fødselsdato = barn.fødselsdato,
-                relasjon = barn.relasjon,
-                borISammeHusstandDtoListe = emptyList(),
-            )
-        }
+fun List<GrunnlagDto>.hentInnhentetAndreBarnTilBidragsmottaker(): Map<GjelderPerson, List<RelatertPersonGrunnlagDto>> = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_ANDRE_BARN_TIL_BIDRAGSMOTTAKER) { grunnlag, bidragsmottaker ->
+    grunnlag.innholdTilObjekt<InnhentetAndreBarnTilBidragsmottaker>().grunnlag.map { barn ->
+        val gjelderPerson = hentPersonMedReferanse(barn.gjelderPerson)!!
+        RelatertPersonGrunnlagDto(
+            partPersonId = bidragsmottaker.ident,
+            relatertPersonPersonId = gjelderPerson.personIdent,
+            navn = barn.navn,
+            fødselsdato = barn.fødselsdato,
+            relasjon = barn.relasjon,
+            borISammeHusstandDtoListe = emptyList(),
+        )
     }
+}
 
 fun List<GrunnlagDto>.hentInnhentetHusstandsmedlem(): List<RelatertPersonGrunnlagDto> = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_HUSSTANDSMEDLEM)
     .map {
@@ -178,89 +194,79 @@ fun List<GrunnlagDto>.henteGrunnlagBarnetilsyn() = filtrerBasertPåEgenReferanse
         }
     }
 
-fun List<GrunnlagDto>.hentKontantstøtteListe() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_KONTANTSTØTTE)
-    .flatMap {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetKontantstøtte>()
-        innhold.grunnlag.map {
-            val barn = hentPersonMedReferanse(it.gjelderBarn)!!
-            KontantstøtteGrunnlagDto(
-                partPersonId = gjelder.personIdent!!,
-                periodeFra = it.periode.fom,
-                periodeTil = it.periode.til,
-                beløp = it.beløp,
-                barnPersonId = barn.personIdent!!,
-            )
-        }
-    }
-
-fun List<GrunnlagDto>.hentBarnetillegListe() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_BARNETILLEGG)
-    .flatMap {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetBarnetillegg>()
-        innhold.grunnlag.map {
-            val barn = hentPersonMedReferanse(it.gjelderBarn)!!
-            BarnetilleggGrunnlagDto(
-                partPersonId = gjelder.personIdent!!,
-                periodeFra = it.periode.fom,
-                periodeTil = it.periode.til,
-                beløpBrutto = it.beløpBrutto,
-                barnType = it.barnType,
-                barnetilleggType = it.barnetilleggType,
-                barnPersonId = barn.personIdent!!,
-            )
-        }
-    }
-
-fun List<GrunnlagDto>.hentSmåbarnstilleggListe() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_SMÅBARNSTILLEGG)
-    .flatMap {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetSmåbarnstillegg>()
-        innhold.grunnlag.map {
-            SmåbarnstilleggGrunnlagDto(
-                personId = gjelder.personIdent!!,
-                periodeFra = it.periode.fom,
-                periodeTil = it.periode.til,
-                beløp = it.beløp,
-                manueltBeregnet = it.manueltBeregnet,
-            )
-        }
-    }
-
-fun List<GrunnlagDto>.hentUtvidetbarnetrygdListe() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_UTVIDETBARNETRYGD)
-    .flatMap {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetUtvidetBarnetrygd>()
-        innhold.grunnlag.map {
-            UtvidetBarnetrygdGrunnlagDto(
-                personId = gjelder.personIdent!!,
-                periodeFra = it.periode.fom,
-                periodeTil = it.periode.til,
-                beløp = it.beløp,
-                manueltBeregnet = it.manueltBeregnet,
-            )
-        }
-    }
-
-fun List<GrunnlagDto>.hentGrunnlagSkattepliktig(): Map<String, SkattepliktigeInntekter> {
-    val skattepliktigGruppert = hentGrunnlagSkattegrunnlag().groupBy { it.personId }
-    val ainntektGruppert = hentGrunnlagAinntekt().groupBy { it.personId }
-    val identer = ainntektGruppert.keys + skattepliktigGruppert.keys
-    return identer.associate { personident ->
-        personident to
-            SkattepliktigeInntekter(
-                skattegrunnlag = skattepliktigGruppert[personident] ?: emptyList(),
-                ainntekter = ainntektGruppert[personident] ?: emptyList(),
-            )
+fun List<GrunnlagDto>.hentKontantstøtteListe() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_KONTANTSTØTTE) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetKontantstøtte>()
+    innhold.grunnlag.map {
+        val barn = hentPersonMedReferanse(it.gjelderBarn)!!
+        KontantstøtteGrunnlagDto(
+            partPersonId = gjelder.ident,
+            periodeFra = it.periode.fom,
+            periodeTil = it.periode.til,
+            beløp = it.beløp,
+            barnPersonId = barn.personIdent!!,
+        )
     }
 }
 
-fun List<GrunnlagDto>.hentGrunnlagSkattegrunnlag() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE)
-    .map {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetSkattegrunnlag>()
+fun List<GrunnlagDto>.hentBarnetillegListe() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_BARNETILLEGG) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetBarnetillegg>()
+    innhold.grunnlag.map {
+        val barn = hentPersonMedReferanse(it.gjelderBarn)!!
+        BarnetilleggGrunnlagDto(
+            partPersonId = gjelder.ident,
+            periodeFra = it.periode.fom,
+            periodeTil = it.periode.til,
+            beløpBrutto = it.beløpBrutto,
+            barnType = it.barnType,
+            barnetilleggType = it.barnetilleggType,
+            barnPersonId = barn.personIdent!!,
+        )
+    }
+}
+
+fun List<GrunnlagDto>.hentSmåbarnstilleggListe() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_SMÅBARNSTILLEGG) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetSmåbarnstillegg>()
+    innhold.grunnlag.map {
+        SmåbarnstilleggGrunnlagDto(
+            personId = gjelder.ident,
+            periodeFra = it.periode.fom,
+            periodeTil = it.periode.til,
+            beløp = it.beløp,
+            manueltBeregnet = it.manueltBeregnet,
+        )
+    }
+}
+
+fun List<GrunnlagDto>.hentUtvidetbarnetrygdListe() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_UTVIDETBARNETRYGD) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetUtvidetBarnetrygd>()
+    innhold.grunnlag.map {
+        UtvidetBarnetrygdGrunnlagDto(
+            personId = gjelder.ident,
+            periodeFra = it.periode.fom,
+            periodeTil = it.periode.til,
+            beløp = it.beløp,
+            manueltBeregnet = it.manueltBeregnet,
+        )
+    }
+}
+
+fun List<GrunnlagDto>.hentGrunnlagSkattepliktig(): Map<GjelderPerson, SkattepliktigeInntekter> {
+    val skattepliktigGruppert = hentGrunnlagSkattegrunnlag()
+    val ainntektGruppert = hentGrunnlagAinntekt()
+    val personer = ainntektGruppert.keys + skattepliktigGruppert.keys
+    return personer.associateWith { person ->
+        SkattepliktigeInntekter(
+            skattegrunnlag = skattepliktigGruppert[person] ?: emptyList(),
+            ainntekter = ainntektGruppert[person] ?: emptyList(),
+        )
+    }
+}
+
+fun List<GrunnlagDto>.hentGrunnlagSkattegrunnlag() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_SKATTEGRUNNLAG_PERIODE) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetSkattegrunnlag>()
+    listOf(
         SkattegrunnlagGrunnlagDto(
-            personId = gjelder.personIdent!!,
+            personId = gjelder.ident,
             periodeFra = innhold.periode.fom,
             periodeTil = innhold.periode.til!!,
             skattegrunnlagspostListe =
@@ -273,88 +279,83 @@ fun List<GrunnlagDto>.hentGrunnlagSkattegrunnlag() = filtrerBasertPåEgenReferan
                     inntektType = it.kode,
                 )
             },
+        ),
+    )
+}
+
+fun List<GrunnlagDto>.hentGrunnlagAinntekt() = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT) { grunnlag, gjelder ->
+    val innhold = grunnlag.innholdTilObjekt<InnhentetAinntekt>()
+    innhold.grunnlag.map {
+        AinntektGrunnlagDto(
+            personId = gjelder.ident,
+            periodeFra = it.periode.fom,
+            periodeTil = it.periode.til!!,
+            ainntektspostListe =
+            it.ainntektspostListe.map {
+                AinntektspostDto(
+                    utbetalingsperiode = it.utbetalingsperiode,
+                    beløp = it.beløp,
+                    opptjeningsperiodeFra = it.opptjeningsperiodeFra,
+                    opptjeningsperiodeTil = it.opptjeningsperiodeTil,
+                    fordelType = it.fordelType,
+                    etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
+                    etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
+                    kategori = it.kategori,
+                    belop = it.beløp,
+                    beskrivelse = it.beskrivelse,
+                    inntektType = it.kategori,
+                    opplysningspliktigId = it.opplysningspliktigId,
+                    virksomhetId = it.virksomhetId,
+                )
+            },
         )
     }
+}
 
-fun List<GrunnlagDto>.hentGrunnlagAinntekt() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT)
-    .flatMap {
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        val innhold = it.innholdTilObjekt<InnhentetAinntekt>()
-        innhold.grunnlag.map {
-            AinntektGrunnlagDto(
-                personId = gjelder.personIdent!!,
-                periodeFra = it.periode.fom,
-                periodeTil = it.periode.til!!,
-                ainntektspostListe =
-                it.ainntektspostListe.map {
-                    AinntektspostDto(
-                        utbetalingsperiode = it.utbetalingsperiode,
-                        beløp = it.beløp,
-                        opptjeningsperiodeFra = it.opptjeningsperiodeFra,
-                        opptjeningsperiodeTil = it.opptjeningsperiodeTil,
-                        fordelType = it.fordelType,
-                        etterbetalingsperiodeFra = it.etterbetalingsperiodeFra,
-                        etterbetalingsperiodeTil = it.etterbetalingsperiodeTil,
-                        kategori = it.kategori,
-                        belop = it.beløp,
-                        beskrivelse = it.beskrivelse,
-                        inntektType = it.kategori,
-                        opplysningspliktigId = it.opplysningspliktigId,
-                        virksomhetId = it.virksomhetId,
-                    )
-                },
-            )
-        }
+fun List<GrunnlagDto>.hentGrunnlagArbeidsforhold(): Map<GjelderPerson, List<ArbeidsforholdGrunnlagDto>> = grupperPåGjelderPerson(Grunnlagstype.INNHENTET_ARBEIDSFORHOLD) { grunnlag, gjelder ->
+    grunnlag.innholdTilObjekt<InnhentetArbeidsforhold>().grunnlag.map {
+        ArbeidsforholdGrunnlagDto(
+            partPersonId = gjelder.ident,
+            startdato = it.startdato,
+            sluttdato = it.sluttdato,
+            arbeidsgiverNavn = it.arbeidsgiverNavn,
+            arbeidsgiverOrgnummer = it.arbeidsgiverOrgnummer,
+            ansettelsesdetaljerListe =
+            it.ansettelsesdetaljerListe.map {
+                Ansettelsesdetaljer(
+                    periodeFra = it.periodeFra,
+                    periodeTil = it.periodeTil,
+                    arbeidsforholdType = it.arbeidsforholdType,
+                    arbeidstidsordningBeskrivelse = it.arbeidstidsordningBeskrivelse,
+                    ansettelsesformBeskrivelse = it.ansettelsesformBeskrivelse,
+                    yrkeBeskrivelse = it.yrkeBeskrivelse,
+                    avtaltStillingsprosent = it.avtaltStillingsprosent,
+                    antallTimerPrUke = it.antallTimerPrUke,
+                    sisteLønnsendringDato = it.sisteLønnsendringDato,
+                    sisteStillingsprosentendringDato = it.sisteStillingsprosentendringDato,
+                )
+            },
+            permisjonListe =
+            it.permisjonListe.map {
+                Permisjon(
+                    startdato = it.startdato,
+                    beskrivelse = it.beskrivelse,
+                    prosent = it.prosent,
+                    sluttdato = it.sluttdato,
+                )
+            },
+            permitteringListe =
+            it.permitteringListe.map {
+                Permittering(
+                    startdato = it.startdato,
+                    sluttdato = it.sluttdato,
+                    beskrivelse = it.beskrivelse,
+                    prosent = it.prosent,
+                )
+            },
+        )
     }
-
-fun List<GrunnlagDto>.hentGrunnlagArbeidsforhold() = filtrerBasertPåEgenReferanse(grunnlagType = Grunnlagstype.INNHENTET_ARBEIDSFORHOLD)
-    .flatMap {
-        val innhold = it.innholdTilObjekt<InnhentetArbeidsforhold>()
-        val arbeidsforholdGrunnlag = innhold.grunnlag
-        val gjelder = hentPersonMedReferanse(it.gjelderReferanse)!!
-        arbeidsforholdGrunnlag.map {
-            ArbeidsforholdGrunnlagDto(
-                partPersonId = gjelder.personIdent!!,
-                startdato = it.startdato,
-                sluttdato = it.sluttdato,
-                arbeidsgiverNavn = it.arbeidsgiverNavn,
-                arbeidsgiverOrgnummer = it.arbeidsgiverOrgnummer,
-                ansettelsesdetaljerListe =
-                it.ansettelsesdetaljerListe.map {
-                    Ansettelsesdetaljer(
-                        periodeFra = it.periodeFra,
-                        periodeTil = it.periodeTil,
-                        arbeidsforholdType = it.arbeidsforholdType,
-                        arbeidstidsordningBeskrivelse = it.arbeidstidsordningBeskrivelse,
-                        ansettelsesformBeskrivelse = it.ansettelsesformBeskrivelse,
-                        yrkeBeskrivelse = it.yrkeBeskrivelse,
-                        avtaltStillingsprosent = it.avtaltStillingsprosent,
-                        antallTimerPrUke = it.antallTimerPrUke,
-                        sisteLønnsendringDato = it.sisteLønnsendringDato,
-                        sisteStillingsprosentendringDato = it.sisteStillingsprosentendringDato,
-                    )
-                },
-                permisjonListe =
-                it.permisjonListe.map {
-                    Permisjon(
-                        startdato = it.startdato,
-                        beskrivelse = it.beskrivelse,
-                        prosent = it.prosent,
-                        sluttdato = it.sluttdato,
-                    )
-                },
-                permitteringListe =
-                it.permitteringListe.map {
-                    Permittering(
-                        startdato = it.startdato,
-                        sluttdato = it.sluttdato,
-                        beskrivelse = it.beskrivelse,
-                        prosent = it.prosent,
-                    )
-                },
-            )
-        }
-    }
+}
 
 fun List<GrunnlagDto>.hentInnntekterBearbeidet(
     behandling: Behandling,
@@ -394,6 +395,7 @@ fun List<GrunnlagDto>.hentInnntekterBearbeidet(
                 erBearbeidet = true,
                 innhentetTidspunkt = innhentetTidspunkt,
                 lesemodus = lesemodus,
+                rolleStønadstype = gjelder.stønadstype,
             )
 
             val inntekter = årsinntekter.map { it.inntekt }
@@ -428,6 +430,7 @@ fun List<GrunnlagDto>.hentInnntekterBearbeidet(
                     erBearbeidet = true,
                     innhentetTidspunkt = innhentetTidspunkt(Grunnlagstype.INNHENTET_INNTEKT_AINNTEKT),
                     lesemodus = lesemodus,
+                    rolleStønadstype = gjelder.stønadstype,
                 ),
             )
         }.toMutableSet()

@@ -1,5 +1,15 @@
 name: Bidrag-statistikk
 on:
+  workflow_call:
+    inputs:
+      miljo:
+        required: false
+        type: string
+        default: ''
+      hopp_over_tester:
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       miljo:
@@ -16,42 +26,18 @@ on:
         required: false
         type: boolean
         default: false
-  push:
-    branches:
-      - 'main'
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - 'libs/bidrag-beregn-felles/**'
-      - '.nais/bidrag-statistikk/**.yaml'
-      - 'apps/bidrag-statistikk/**'
-  pull_request:
-    paths:
-      - 'pom.xml'
-      - 'libs/bidrag-felles/**'
-      - 'libs/bidrag-beregn-felles/**'
-      - '.nais/bidrag-statistikk/**.yaml'
-      - 'apps/bidrag-statistikk/**'
+
+env:
+  APP_PATHS: |
+    pom.xml
+    libs/bidrag-felles/**
+    libs/bidrag-beregn-felles/**
+    .nais/bidrag-statistikk/**.yaml
+    apps/bidrag-statistikk/**
 
 jobs:
-  detect_changes:
-    name: "Sjekk om appen faktisk er endret"
-    runs-on: ubuntu-latest
-    permissions:
-      contents: "read"
-    outputs:
-      changed: ${{ steps.detect.outputs.changed }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/utled-app-endringer
-        id: detect
-
   bygg_test_og_deploy:
     name: "Bygg, test og deploy"
-    needs: detect_changes
-    if: needs.detect_changes.outputs.changed == 'true'
     permissions:
       contents: "write"
       id-token: "write"
@@ -64,11 +50,11 @@ jobs:
       nais_variabler_filnavn_prod: bidrag-statistikk/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
-      maven_options: -B -fae -pl apps/bidrag-statistikk -am
+      maven_options: -B -fae -pl apps/bidrag-statistikk
       maven_cache_paths: |
         pom.xml
         apps/bidrag-statistikk/pom.xml
-      ktlint_paths: apps/bidrag-statistikk/src/**/*.kt libs/bidrag-beregn-felles/**/src/**/*.kt
+      ktlint_paths: apps/bidrag-statistikk/src/**/*.kt
       docker_context: ./apps/bidrag-statistikk
       image_suffix: bidrag-statistikk
       tag: bidrag-statistikk

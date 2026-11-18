@@ -119,6 +119,24 @@ internal class JournalpostControllerTest {
         }
 
         @Test
+        @DisplayName("skal hente Journalpost fra arkiv basert på eksternReferanseId")
+        fun skalHenteJournalpostForEksternReferanseId() {
+            val queryParams = HashMap<String, StringValuePattern>()
+            restConsumerStub.runHenteJournalpostArkiv(
+                "eksternreferanse/BID_123",
+                queryParams,
+                HttpStatus.OK,
+                RestConsumerStub.lesResponsfilSomStreng("journalpostInnholdMidlertidig.json"),
+            )
+            val responseEntity =
+                httpHeaderTestRestTemplate.getForEntity<JournalpostResponse>(
+                    initEndpointUrl("/journal/eksternreferanse/BID_123"),
+                )
+            Assertions.assertThat(responseEntity.statusCode).isEqualTo(HttpStatus.OK)
+            Assertions.assertThat(responseEntity.body?.journalpost?.innhold).isEqualTo("MIDLERTIDIG")
+        }
+
+        @Test
         @DisplayName("skal hente Journalpost når den eksisterer")
         @Throws(IOException::class)
         fun skalHenteJournalpostNarDenEksisterer() {

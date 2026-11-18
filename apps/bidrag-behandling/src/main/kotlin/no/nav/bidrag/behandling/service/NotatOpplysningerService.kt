@@ -81,6 +81,7 @@ import no.nav.bidrag.transport.behandling.grunnlag.response.TilleggsstønadGrunn
 import no.nav.bidrag.transport.dokument.JournalpostType
 import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
+import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBarnetilleggDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragsevneDto
 import no.nav.bidrag.transport.dokumentmaler.DokumentmalDelberegningBidragspliktigesBeregnedeTotalbidragDto
@@ -105,6 +106,7 @@ import no.nav.bidrag.transport.dokumentmaler.notat.NotatBeregnetInntektDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBeregnetPrivatAvtalePeriodeDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBoforholdDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatBoforholdTilBMMedSøknadsbarn
+import no.nav.bidrag.transport.dokumentmaler.notat.NotatErLikForAlleBasertPåSak
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrDetaljerDto.NotatGebyrInntektDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatGebyrRolleV2Dto
@@ -203,8 +205,7 @@ class NotatOpplysningerService(
                     ),
                 ),
             )
-        val response =
-            bidragDokumentConsumer.opprettJournalpost(forespørsel)
+        val response = opprettJournalpostEllerHentEksisterende(forespørsel)
         lagreJournalpostId(behandling, response.journalpostId)
         secureLogger.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
@@ -215,6 +216,24 @@ class NotatOpplysningerService(
                 "med journalpostId ${response.journalpostId}"
         }
         return response.journalpostId ?: ""
+    }
+
+    // Journalposten kan være opprettet i Joark selv om kallet feilet (f.eks. timeout). Sjekker derfor om den finnes via referanseId.
+    private fun opprettJournalpostEllerHentEksisterende(forespørsel: OpprettJournalpostRequest): OpprettJournalpostResponse = try {
+        bidragDokumentConsumer.opprettJournalpost(forespørsel)
+    } catch (e: Exception) {
+        val referanseId = forespørsel.referanseId ?: throw e
+        val eksisterendeJournalpostId =
+            bidragDokumentConsumer
+                .hentJournalpostForEksternReferanseId(referanseId)
+                ?.journalpost
+                ?.journalpostId
+                ?.substringAfter("-")
+                ?: throw e
+        log.warn(e) {
+            "Opprettelse av notat feilet, men fant eksisterende journalpost $eksisterendeJournalpostId med referanseId $referanseId. Bruker denne"
+        }
+        OpprettJournalpostResponse(journalpostId = eksisterendeJournalpostId)
     }
 
     private fun lagreJournalpostId(
@@ -309,7 +328,9 @@ class NotatOpplysningerService(
             virkningstidspunkt =
             NotatVirkningstidspunktDto(
                 erLikForAlle = behandling.sammeVirkningstidspunktForAlle,
+                erLikForAlleBasertPåSak = behandling.sammeVirkningstidspunktForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 erVirkningstidspunktLikForAlle = behandling.erVirkningstidspunktLiktForAlle,
+                erVirkningstidspunktLiktForAlleSaker = behandling.erVirkningstidspunktLiktForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 erAvslagForAlle = behandling.erAvslagForAlle,
                 eldsteVirkningstidspunkt = behandling.eldsteVirkningstidspunkt.toYearMonth(),
                 barn = behandling.tilVirkningstidspunktBarn(søknadsbarnForNotat),
@@ -323,6 +344,7 @@ class NotatOpplysningerService(
             samværV2 =
             NotatSamværDto(
                 erSammeForAlle = behandling.sammeSamværForAlle,
+                sammeSamværForAlleSaker = behandling.sammeSamværForAlleSaker.map { NotatErLikForAlleBasertPåSak(it.saksnummer, it.erLikForAlle) },
                 barn =
                 mapper
                     .run { behandling.tilSamværDto() }
@@ -362,6 +384,13 @@ class NotatOpplysningerService(
                                     total = it.total,
                                 )
                             },
+                            forpleining =
+                            it.forpleining.map {
+                                NotatUnderholdBarnDto.NotatForpleiningDto(
+                                    periode = DatoperiodeDto(it.periode.fom, it.periode.tom),
+                                    beløp = it.beløp,
+                                )
+                            },
                             underholdskostnad =
                             it.underholdskostnad.map {
                                 NotatUnderholdBarnDto.NotatUnderholdskostnadBeregningDto(
@@ -371,6 +400,7 @@ class NotatOpplysningerService(
                                     stønadTilBarnetilsyn = it.stønadTilBarnetilsyn,
                                     tilsynsutgifter = it.tilsynsutgifter,
                                     barnetrygd = it.barnetrygd,
+                                    forpleining = it.forpleining,
                                     total = it.total,
                                     beregningsdetaljer =
                                     it.beregningsdetaljer?.let {
@@ -541,7 +571,7 @@ class NotatOpplysningerService(
             NotatInntekterDto(
                 notat =
                 behandling.tilNotatInntekt(
-                    saksnummer?.let { behandling.bidragsmottakerForSak(it) } ?: behandling.bidragsmottaker!!,
+                    behandling.bidragsmottakerForSak(saksnummer),
                 ),
                 notatPerRolle =
                 rollerForNotat
@@ -869,6 +899,8 @@ private fun no.nav.bidrag.behandling.dto.v1.beregning.ResultatBarnebidragsberegn
             bpHarEvne = it.bpHarEvne,
             antallBarnIHusstanden = it.antallBarnIHusstanden,
             forskuddssats = it.forskuddssats,
+            inntektBBMultiplikator = it.inntektBBMultiplikator,
+            maksInntektBBMultiplikator = it.maksInntektBBMultiplikator,
             barnetilleggBM = it.barnetilleggBM.tilNotatDto(),
             indeksreguleringDetaljer =
             it.indeksreguleringDetaljer?.let {
@@ -1093,11 +1125,19 @@ private fun Behandling.tilNotatBoforhold(): NotatBegrunnelseDto = NotatBegrunnel
 private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )
@@ -1105,11 +1145,19 @@ private fun Behandling.tilNotatVurderingAvSkolegang(rolle: Rolle? = null) = Nota
 private fun Behandling.tilNotatVirkningstidspunkt(rolle: Rolle? = null) = NotatBegrunnelseDto(
     innhold =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first()).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT)
+        } else {
+            null
+        }
     },
     innholdFraOmgjortVedtak =
     henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, rolle ?: søknadsbarn.first(), false).ifEmpty {
-        henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        if (!erIForholdsmessigFordeling) {
+            henteNotatinnhold(this, NotatType.VIRKNINGSTIDSPUNKT, null, false)
+        } else {
+            null
+        }
     },
     gjelder = this.bidragsmottaker!!.tilNotatRolle(),
 )
@@ -1295,7 +1343,7 @@ private fun RolleDto.tilNotatRolle() = DokumentmalPersonDto(
     rolle = rolletype,
     navn = navn,
     fødselsdato = fødselsdato,
-    ident = ident?.let { Personident(ident) },
+    ident = ident?.let { Personident(it) },
     saksnummer = saksnummer,
     bidragsmottakerIdent = bidragsmottaker,
     harLøpendeBidrag = harLøpendeBidrag,

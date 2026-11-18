@@ -1,9 +1,10 @@
 package no.nav.bidrag.vedtak.exception
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.transport.felles.ifTrue
 import no.nav.bidrag.vedtak.exception.custom.PreconditionFailedException
-import org.slf4j.LoggerFactory
 import org.springframework.core.convert.ConversionFailedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -23,13 +24,13 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @Suppress("unused")
 class RestExceptionHandler {
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(RestExceptionHandler::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     @ResponseBody
     @ExceptionHandler(HttpClientErrorException::class, HttpServerErrorException::class)
     protected fun handleHttpClientErrorException(e: HttpStatusCodeException): ResponseEntity<*> {
-        LOGGER.warn("Det skjedde en feil ${e.message}", e)
+        LOGGER.warn(e) { "Det skjedde en feil ${e.message?.sanitizeForLog()}" }
         val payloadFeilmelding =
             e.responseBodyAsString.isEmpty().ifTrue { e.message }
                 ?: e.responseBodyAsString
@@ -48,7 +49,7 @@ class RestExceptionHandler {
     fun handleInvalidValueExceptions(exception: Exception): ResponseEntity<*> {
         val cause = exception.cause
         val valideringsFeil = if (cause is MismatchedInputException) createMissingKotlinParameterViolation(cause) else null
-        LOGGER.error("Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}", exception)
+        LOGGER.error(exception) { "Forespørselen inneholder ugyldig verdi: ${(valideringsFeil ?: "ukjent feil").sanitizeForLog()}" }
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
@@ -79,7 +80,7 @@ class RestExceptionHandler {
     @ExceptionHandler(Exception::class)
     protected fun handleOtherExceptions(e: Exception): ResponseEntity<*> {
         val feilmelding = "Det skjedde en feil: ${e.message}"
-        LOGGER.error(feilmelding, e)
+        LOGGER.error(e) { feilmelding.sanitizeForLog() }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, feilmelding)

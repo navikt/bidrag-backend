@@ -16,13 +16,13 @@ spec:
           - id: elastic
   image: {{ image }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 20
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 20
     timeout: 1
   prometheus:
@@ -42,8 +42,10 @@ spec:
   {{#each ingresses as |url|}}
     - {{url}}
   {{/each}}
+{{#if env}}
   env:
   {{#each env}}
     - name: {{@key}}
       value: "{{this}}"
   {{/each}}
+{{/if}}

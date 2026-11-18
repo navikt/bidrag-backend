@@ -662,20 +662,29 @@ class OmgjøringOrkestratorV2(
             .filtrerOgKonverterBasertPåFremmedReferanse<DelberegningIndeksreguleringPrivatAvtale>(
                 Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE,
                 gjelderBarnReferanse = søknadsbarn.referanse,
-            )
+            ).filter { it.innhold.periode.inneholder(context.omgjørVedtakVirkningstidspunkt) }
 
         val privatavtaleÅrmåndesperioder = privatavtalePerioder.map { it.innhold.periode }
-        if (!beløpshistorikk.all { privatavtaleÅrmåndesperioder.contains(it.periode) }) return null
+        if (!beløpshistorikk.all { privatavtaleÅrmåndesperioder.any { p -> p.inneholder(it.periode) } }) return null
 
         return BeregnetBarnebidragResultatInternal(
             resultat = BeregnetBarnebidragResultat(
-                beregnetBarnebidragPeriodeListe = privatavtalePerioder.map {
-                    ResultatPeriode(
-                        it.innhold.periode,
-                        ResultatBeregning(it.innhold.indeksregulertBeløp),
-                        it.grunnlag.grunnlagsreferanseListe,
-                    )
-                },
+                beregnetBarnebidragPeriodeListe = privatavtalePerioder
+                    .sortedBy { it.innhold.periode.fom }
+                    .mapIndexed { index, it ->
+                        val periode = it.innhold.periode
+                        val justertPeriode =
+                            if (index == 0 && context.omgjørVedtakVirkningstidspunkt > periode.fom) {
+                                ÅrMånedsperiode(context.omgjørVedtakVirkningstidspunkt, periode.til)
+                            } else {
+                                periode
+                            }
+                        ResultatPeriode(
+                            justertPeriode,
+                            ResultatBeregning(it.innhold.indeksregulertBeløp),
+                            it.grunnlag.grunnlagsreferanseListe,
+                        )
+                    },
                 grunnlagListe = delberegningIndeksreguleringPrivatAvtalePeriodeResultat,
             ),
             vedtakstype = Vedtakstype.FASTSETTELSE,

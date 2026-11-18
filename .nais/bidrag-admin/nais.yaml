@@ -49,13 +49,13 @@ spec:
     pool: {{ kafka.pool }}
   image: {{ image }}
   liveness:
-    path: /actuator/health
+    path: /actuator/health/liveness
     initialDelay: 60
     timeout: 1
     periodSeconds: 5
     failureThreshold: 10
   readiness:
-    path: /actuator/health
+    path: /actuator/health/readiness
     initialDelay: 60
     timeout: 1
     periodSeconds: 5
@@ -75,6 +75,7 @@ spec:
     min: {{replicas.min}}
   envFrom:
     - secret: {{unleash.secret_name}}
+    - secret: bidrag-bot-slack-oauth-token
   gcp:
     sqlInstances:
       - name: {{ database.navn }}
@@ -90,6 +91,8 @@ spec:
           - name: "pgaudit.log"
             value: "write"
           - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "pgaudit.log_relation"
             value: "on"
   ingresses:
   {{#each ingresses as |url|}}

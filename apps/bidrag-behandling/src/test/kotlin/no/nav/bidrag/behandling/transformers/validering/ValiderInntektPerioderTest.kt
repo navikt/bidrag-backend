@@ -8,10 +8,12 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Inntektspost
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForYtelse
 import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForYtelseSomGjelderBarn
 import no.nav.bidrag.behandling.transformers.behandling.mapValideringsfeilForÅrsinntekter
 import no.nav.bidrag.behandling.transformers.finnHullIPerioder
 import no.nav.bidrag.behandling.transformers.finnOverlappendePerioderInntekt
+import no.nav.bidrag.behandling.transformers.harUgyldigSluttperiode
 import no.nav.bidrag.behandling.utils.testdata.opprettRolle
 import no.nav.bidrag.behandling.utils.testdata.oppretteBehandling
 import no.nav.bidrag.behandling.utils.testdata.testdataBM
@@ -20,6 +22,7 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -475,6 +478,29 @@ class ValiderInntektPerioderTest {
                 gjelderBarn shouldBe barn2Ident
                 rolle!!.rolletype shouldBe Rolletype.BIDRAGSMOTTAKER
             }
+        }
+
+        @Test
+        fun `skal ikke kreve skattesats for skattefrie barnetillegg i bidrag`() {
+            val behandling = oppretteBehandling(stønadstype = Stønadstype.BIDRAG)
+            val bidragspliktig = opprettRolle("31233123", Rolletype.BIDRAGSPLIKTIG, behandling = behandling)
+            behandling.roller.addAll(listOf(bidragspliktig, opprettRolle("21333123", Rolletype.BARN, behandling = behandling)))
+            fun barnetilleggUtenSkattefaktor(vararg inntektstyper: Inntektstype) = opprettInntekt(
+                YearMonth.parse("2022-01"),
+                null,
+                type = Inntektsrapportering.BARNETILLEGG,
+                inntektstyper = inntektstyper.toList(),
+                rolle = bidragspliktig,
+                behandling = behandling,
+            ).also { inntekt -> inntekt.inntektsposter.forEach { it.skattefaktor = null } }
+            fun manglerSkatteprosent(inntekt: Inntekt) = listOf(inntekt)
+                .mapValideringsfeilForYtelse(Inntektsrapportering.BARNETILLEGG, LocalDate.parse("2022-01-01"))
+                .firstOrNull()?.manglerSkatteprosent == true
+
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET)) shouldBe false
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_TILTAKSPENGER)) shouldBe false
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
+            manglerSkatteprosent(barnetilleggUtenSkattefaktor(Inntektstype.BARNETILLEGG_FORSVARET, Inntektstype.BARNETILLEGG_PENSJON)) shouldBe true
         }
     }
 
@@ -1285,6 +1311,27 @@ class ValiderInntektPerioderTest {
             hullIPerioder shouldHaveSize 0
             ugyldigSluttPeriode shouldBe true
             gjelderBarn shouldBe barn2Ident
+        }
+    }
+
+    @Nested
+    inner class UgyldigSluttperiode {
+        private val opphørsdato = LocalDate.parse("2024-06-01")
+
+        private fun inntektSomSlutterFørOpphør(rolletype: Rolletype) = opprettInntekt(
+            YearMonth.parse("2024-01"),
+            YearMonth.parse("2024-03"),
+            rolle = opprettRolle("12345", rolletype),
+        )
+
+        @Test
+        fun `skal ikke gi ugyldig sluttperiode når inntekt til barn slutter før opphørsdato`() {
+            listOf(inntektSomSlutterFørOpphør(Rolletype.BARN)).harUgyldigSluttperiode(opphørsdato) shouldBe false
+        }
+
+        @Test
+        fun `skal gi ugyldig sluttperiode når inntekt til BM slutter før opphørsdato`() {
+            listOf(inntektSomSlutterFørOpphør(Rolletype.BIDRAGSMOTTAKER)).harUgyldigSluttperiode(opphørsdato) shouldBe true
         }
     }
 }

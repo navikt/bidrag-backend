@@ -139,11 +139,11 @@ class HttpStatusRestControllerAdvice {
         if (exception.responseHeaders != null) {
             errorMessage.append("Det skjedde en feil ved kall mot ekstern tjeneste: ")
             exception.responseHeaders?.get("Warning")
-                ?.let { if (it.size > 0) errorMessage.append(it[0]) }
+                ?.let { if (it.isNotEmpty()) errorMessage.append(it[0]) }
             errorMessage.append(" - ")
         }
 
-        if (!exception.statusText.isNullOrEmpty()) {
+        if (exception.statusText.isNotEmpty()) {
             errorMessage.append(exception.statusText)
         }
 

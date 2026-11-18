@@ -20,7 +20,7 @@ import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.oppdateringAvBoforholdFeilet
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.tilFFBarnDetaljer
-import no.nav.bidrag.behandling.service.hentNyesteIdent
+import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.service.hentPersonVisningsnavn
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.fødselsdatoSorteringJustering
@@ -162,8 +162,12 @@ open class Rolle(
     val erAvvisning get() = avslag != null && avslag!!.erAvvisning()
     val erDirekteAvslagIkkeAvvisning get() = avslag != null && avslag!!.erDirekteAvslag() && !avslag!!.erAvvisning()
     val løperBidragEtterEldsteVirkning get() = behandling.løperBidragEtterEldsteVirkning(this)
+
+    // Samme filtrering som inntektsbildet. Inntekter for andre barn uten søknadsrolle (gjelderBarnRolle == null) beholdes
+    val skalViseInntekterSomGjelderBarn get() = kreverGrunnlagForBeregning || kreverGrunnlagForGebyrBeregning
+    val kreverGrunnlagForGebyrBeregning get() = harGebyrsøknad
     val kreverGrunnlagForBeregning get() =
-        avslag == null || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
+        (!erRevurderingsbarn && avslag == null) || (behandling.erIForholdsmessigFordeling && løperBidragEtterEldsteVirkning)
     val harSøknadMedInnkreving get() = forholdsmessigFordeling?.søknaderUnderBehandling?.any { it.innkreving } == true
     val erRevurderingsbarn get() = rolletype == Rolletype.BARN && forholdsmessigFordeling != null && forholdsmessigFordeling!!.erRevurdering
     val erBarn get() = rolletype == Rolletype.BARN
@@ -243,21 +247,6 @@ open class Rolle(
         gebyrSøknaderForSak.forEach {
             it.manueltOverstyrtGebyr = manueltOverstyrtGebyr
         }
-        // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
-        // Fjern derfor vurdering av gebyr for andre søknader tilhørende samme sak
-        val søknadsiderSomBleOppdatert = gebyrSøknaderForSak.map { it.søknadsid }
-        gebyr
-            .finnAlleGebyrForSak(saksnummer)
-            .filter { !søknadsiderSomBleOppdatert.contains(it.søknadsid) && !it.gjelder18ÅrSøknad }
-            .forEach {
-                it.manueltOverstyrtGebyr =
-                    RolleManueltOverstyrtGebyr(
-                        ilagtGebyr = false,
-                        overstyrGebyr = true,
-                        begrunnelse = "Gebyr ilegges bare en gang per sak",
-                        beregnetIlagtGebyr = false,
-                    )
-            }
     }
 
     fun oppdaterGebyr(
@@ -420,10 +409,9 @@ data class GebyrRolle(
             alleGebyrSøknader
                 .filter { søknadsid == null || it.søknadsid == søknadsid }
                 .filter { !it.gjelder18ÅrSøknad }
-                .minByOrNull { it.søknadsid }
         val gebyr18År = alleGebyrSøknader.filter { søknadsid == null || it.søknadsid == søknadsid }.filter { it.gjelder18ÅrSøknad }
         // Det skal vurderes gebyr bare en gang per sak så lenge det ikke er 18 års søknad. Det skal vurderes gebyr for alle 18 års søknader
-        return listOfNotNull(gebyrIkke18År) + gebyr18År
+        return gebyrIkke18År + gebyr18År
     }
 
     fun finnGebyrForSøknad(søknadsid: Long): GebyrRolleSøknad? = gebyrSøknader.find { it.søknadsid == søknadsid }
@@ -476,7 +464,7 @@ data class RolleManueltOverstyrtGebyr(
 
 fun Rolle.tilPersonident() = ident?.let { Personident(it) }
 
-fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdent(it) }
+fun Rolle.tilNyestePersonident() = ident?.let { hentNyesteIdentIgnorerForbidden(it) }
 
 fun Rolle.hentNavn() = navn ?: hentPersonVisningsnavn(ident) ?: ""
 
@@ -511,6 +499,14 @@ fun Rolle.leggTilGebyr(gebyrSøknader: List<GebyrRolleSøknad>) {
             it
         }
 }
+
+/**
+ * Fjerner gebyrsøknad for søknaden fra alle roller i behandlingen (BP, BM og barn).
+ * @return roller som hadde gebyrsøknad for søknaden
+ */
+fun Behandling.fjernGebyrForSøknad(søknadsid: Long): List<Rolle> = roller
+    .filter { rolle -> rolle.gebyrSøknader.any { it.søknadsid == søknadsid } }
+    .onEach { it.fjernGebyr(søknadsid) }
 
 fun Set<Sivilstand>.tilSerialiseringsformat() = this.map {
     SivilstandUtenBehandling(

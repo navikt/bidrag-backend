@@ -24,6 +24,7 @@ import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakskilde
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
+import no.nav.bidrag.domene.organisasjon.Enhetsnummer
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.vedtak.Behandlingsreferanse
@@ -88,6 +89,24 @@ class VedtakHendelseTest : TestContainerRunner() {
         stubUtils.Verify().forsendelseSlettet("2")
 //        stubUtils.Verify().opprettNotatKalt()
 //        stubUtils.Verify().opprettJournalpostKaltMed()
+    }
+
+    @Test
+    fun `skal bruke enheten som fattet vedtak ved opprettelse av forsendelse`() {
+        stubUtils.stubOpprettForsendelse()
+        val vedtakId = 123123
+        val behandlingRequest = opprettBehandling().apply { behandlerEnhet = "4849" }
+        behandlingRequest.roller = oppretteBehandlingRoller(behandlingRequest)
+        val behandling = behandlingRepository.save(behandlingRequest)
+        stubUtils.stubHentePersoninfo(personident = behandling.bidragsmottaker!!.ident!!)
+
+        val vedtakHendelse =
+            opprettVedtakhendelse(vedtakId, behandling.id!!)
+                .copy(enhetsnummer = Enhetsnummer("4291"))
+
+        vedtakHendelseListener.prossesserVedtakHendelse(opprettHendelseRecord(vedtakHendelse))
+
+        stubUtils.Verify().opprettForsendelseKaltMed("\"enhet\":\"4291\"")
     }
 
     @Test

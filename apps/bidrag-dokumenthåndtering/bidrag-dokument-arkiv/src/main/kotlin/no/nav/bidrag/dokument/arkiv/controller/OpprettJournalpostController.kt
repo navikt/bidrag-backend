@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.dto.validerKanOppretteJournalpost
 import no.nav.bidrag.dokument.arkiv.service.OpprettJournalpostService
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
@@ -33,7 +32,6 @@ class OpprettJournalpostController(private val opprettJournalpostService: Oppret
         ],
     )
     fun opprettJournalpost(@RequestBody opprettJournalpostRequest: OpprettJournalpostRequest): ResponseEntity<OpprettJournalpostResponse> {
-        SECURE_LOGGER.info { "Oppretter journalpost $opprettJournalpostRequest" }
         validerKanOppretteJournalpost(opprettJournalpostRequest)
         return ResponseEntity.ok(
             opprettJournalpostService.opprettJournalpost(

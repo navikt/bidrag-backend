@@ -204,7 +204,7 @@ class VedtakService(
             saksbehandlerInfo = vedtakDto.tilSaksbehandler(),
             engangsbeløptype = vedtakDto.engangsbeløpListe.firstOrNull()?.type,
             stønadstype = vedtakDto.stønadsendringListe.firstOrNull()?.type,
-            søknadFra = soknadInfo.søktAv,
+            søknadFra = soknadInfo.søktAv.tilBakoverkompatibelBrev(),
             gebyr = vedtakDto.hentGebyrInfo(),
             sivilstandPerioder = vedtakDto.grunnlagListe.mapSivilstand(),
             resultat =

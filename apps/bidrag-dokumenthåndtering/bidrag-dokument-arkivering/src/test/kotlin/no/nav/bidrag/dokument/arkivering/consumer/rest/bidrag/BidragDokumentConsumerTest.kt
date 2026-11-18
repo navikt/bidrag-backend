@@ -15,6 +15,7 @@ import org.junit.jupiter.api.function.Executable
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -51,7 +52,7 @@ class BidragDokumentConsumerTest {
                     path,
                     HttpMethod.GET,
                     null,
-                    JournalpostResponse::class.java,
+                    object : ParameterizedTypeReference<JournalpostResponse>() {},
                 ),
             ).thenReturn(ResponseEntity(journalpostResponse, HttpStatus.OK))
 

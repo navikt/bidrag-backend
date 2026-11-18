@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Samværsperiode
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
@@ -50,25 +51,35 @@ class SamværService(
     ): Samvær {
         val behandling = behandlingRepository.findBehandlingById(behandlingsid).get()
         secureLogger.debug { "Oppdaterer samvær for behandling $behandlingsid, forespørsel=$request" }
-        if (request.sammeForAlle && !behandling.sammeSamværForAlle) {
+        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
+        val saksnummer = samværBarn.rolle.saksnummer
+        val flereSaker = behandling.samvær.map { it.rolle.saksnummer }.distinct().size > 1
+        val erSammeForAlle =
+            if (flereSaker) {
+                behandling.sammeSamværForAlleSaker.find { it.saksnummer == saksnummer }?.erLikForAlle ?: true
+            } else {
+                behandling.sammeSamværForAlle
+            }
+        if (request.sammeForAlle && !erSammeForAlle) {
             throw HttpClientErrorException(
                 HttpStatus.BAD_REQUEST,
                 "Ugyldig data ved oppdatering av samvær: Kan ikke oppdatere til samme for alle når det ikke valgt til å være samme",
             )
         }
-        val samværBarn = behandling.samvær.finnSamværForBarn(request.barnId, request.gjelderBarn)
         oppdaterSamvær(request, samværBarn)
 
         if (request.sammeForAlle) {
-            behandling.samvær.filter { it.id != samværBarn.id }.forEach { oppdaterSamvær ->
-                kopierSamværPerioderOgBegrunnelse(
-                    samværBarn,
-                    oppdaterSamvær,
-                    erPerioderOppdatert = request.periode != null,
-                    erBegrunnelseOppdatert =
-                    request.oppdatereBegrunnelse != null,
-                )
-            }
+            behandling.samvær
+                .filter { it.id != samværBarn.id && (!flereSaker || it.rolle.saksnummer == saksnummer) }
+                .forEach { oppdaterSamvær ->
+                    kopierSamværPerioderOgBegrunnelse(
+                        samværBarn,
+                        oppdaterSamvær,
+                        erPerioderOppdatert = request.periode != null,
+                        erBegrunnelseOppdatert =
+                        request.oppdatereBegrunnelse != null,
+                    )
+                }
         }
 
         return samværBarn
@@ -241,6 +252,7 @@ class SamværService(
         behandling: Behandling,
         opphørSlettet: Boolean = false,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         behandling.samvær.forEach {
             val virkningstidspunkt = it.rolle.finnBeregnFra().toLocalDate()
@@ -256,8 +268,10 @@ class SamværService(
                         periode.fom = virkningstidspunkt
                     }
                 }
-            it.perioder.filter { it.fom == forrigeVirkningstidspunkt }.forEach { periode ->
-                periode.fom = virkningstidspunkt
+            if (søknadsbarnSomEndres == null || it.rolle in søknadsbarnSomEndres) {
+                it.perioder.minByOrNull { it.fom }?.takeIf { it.fom == forrigeVirkningstidspunkt }?.let { periode ->
+                    periode.fom = virkningstidspunkt
+                }
             }
             it.perioder
                 .filter { it.fom > beregnTil }

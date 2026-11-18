@@ -78,7 +78,6 @@ enum class Grunnlagsobjektvelger(
     ;
 
     companion object {
-        @OptIn(ExperimentalStdlibApi::class)
         fun requestobjekter(
             behandlingstype: TypeBehandling,
             rolletype: Rolletype,

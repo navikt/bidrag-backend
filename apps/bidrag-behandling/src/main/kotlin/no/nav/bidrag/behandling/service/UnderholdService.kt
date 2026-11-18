@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
@@ -23,6 +24,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereBegrunnelseRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereFaktiskTilsynsutgiftRequest
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereTilleggsstønadRequest
 import no.nav.bidrag.behandling.dto.v2.underhold.SletteUnderholdselement
 import no.nav.bidrag.behandling.dto.v2.underhold.StønadTilBarnetilsynDto
@@ -79,17 +81,14 @@ class UnderholdService(
                 henteOgValidereUnderholdskostnad(behandling, it).rolle
             }
 
-        val rolleBm =
-            request.bidragsmottakerId?.let { bmId ->
-                val bm = behandling.alleBidragsmottakere.find { it.id == bmId }
-                if (behandling.alleBidragsmottakere.size > 1 && bm == null) {
-                    throw HttpClientErrorException(
-                        HttpStatus.BAD_REQUEST,
-                        "Bidragsmottaker id må settes hvis det finnes flere BMer i saken",
-                    )
-                }
-                bm
-            } ?: behandling.bidragsmottaker
+        val rolleBm = request.bidragsmottakerId?.let { bmId -> behandling.alleBidragsmottakere.find { it.id == bmId } }
+        // Begrunnelse for andre barn lagres på bidragsmottaker og må derfor angis når det finnes flere bidragsmottakere
+        if (behandling.alleBidragsmottakere.size > 1 && rolleBm == null && (request.bidragsmottakerId != null || rolleSøknadsbarn == null)) {
+            throw HttpClientErrorException(
+                HttpStatus.BAD_REQUEST,
+                "Bidragsmottaker id må settes hvis det finnes flere BMer i saken",
+            )
+        }
 
         if (request.underholdsid == null) {
             val underholdHarAndreBarn =
@@ -106,7 +105,7 @@ class UnderholdService(
             behandling,
             Notattype.UNDERHOLDSKOSTNAD,
             request.begrunnelse,
-            rolleSøknadsbarn ?: rolleBm!!,
+            rolleSøknadsbarn ?: rolleBm ?: behandling.bidragsmottaker!!,
         )
     }
 
@@ -123,11 +122,12 @@ class UnderholdService(
             (
                 underholdskostnad.barnetilsyn.isNotEmpty() ||
                     underholdskostnad.tilleggsstønad.isNotEmpty() ||
-                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
+                    underholdskostnad.faktiskeTilsynsutgifter.isNotEmpty() ||
+                    underholdskostnad.forpleining.isNotEmpty()
                 )
         ) {
             ugyldigForespørsel(
-                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilstyn, tilleggsstønad, eller faktiske tilsynsutgift",
+                "Kan ikke sette harTilsynsordning til usann så lenge barnet er registrert med stønad til barnetilsyn, tilleggsstønad, faktiske tilsynsutgifter eller forpleining",
             )
         }
 
@@ -161,6 +161,7 @@ class UnderholdService(
             eksisterendeUnderholdskostnad.person = person
             eksisterendeUnderholdskostnad.barnetilsyn.clear()
             eksisterendeUnderholdskostnad.tilleggsstønad.clear()
+            eksisterendeUnderholdskostnad.forpleining.clear()
             eksisterendeUnderholdskostnad.harTilsynsordning = eksisterendeUnderholdskostnad.faktiskeTilsynsutgifter.isNotEmpty()
         }
     }
@@ -246,6 +247,8 @@ class UnderholdService(
         }
         underholdskostnad.tilleggsstønad.clear()
         underholdskostnad.barnetilsyn.clear()
+        // Underholdskostnaden blir et andre-barn-objekt under, og forpleining gjelder bare søknadsbarn.
+        underholdskostnad.forpleining.clear()
         underholdskostnad.rolle = underholdskostnad.behandling.bidragsmottaker
     }
 
@@ -310,10 +313,11 @@ class UnderholdService(
         behandling: Behandling,
         opphørSlettet: Boolean = false,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         tilpasseAktiveBarnetilsynsgrunnlagEtterVirkningsdato(behandling)
         tilpasseIkkeaktiveBarnetilsynsgrunnlagEtterVirkningsdato(behandling)
-        oppdatereUnderholdsperioderEtterEndretVirkningsdato(behandling, forrigeVirkningstidspunkt)
+        oppdatereUnderholdsperioderEtterEndretVirkningsdato(behandling, forrigeVirkningstidspunkt, søknadsbarnSomEndres)
         behandling.aktivereBarnetilsynHvisIngenEndringerMåAksepteres()
     }
 
@@ -445,6 +449,32 @@ class UnderholdService(
     }
 
     @Transactional
+    fun oppdatereForpleining(
+        underholdskostnad: Underholdskostnad,
+        request: OppdatereForpleiningRequest,
+    ) {
+        request.validere(underholdskostnad)
+
+        request.id?.let { id ->
+            val forpleining = underholdskostnad.forpleining.find { id == it.id }!!
+            forpleining.fom = request.periode.fom
+            forpleining.tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato)
+            forpleining.beløp = request.beløp
+            forpleining.underholdskostnad = underholdskostnad
+        } ?: run {
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    fom = request.periode.fom,
+                    tom = request.periode.tom ?: justerPeriodeTomOpphørsdato(underholdskostnad.opphørsdato),
+                    beløp = request.beløp,
+                    underholdskostnad = underholdskostnad,
+                ),
+            )
+            underholdskostnad.harTilsynsordning = true
+        }
+    }
+
+    @Transactional
     fun oppdatereTilleggsstønad(
         underholdskostnad: Underholdskostnad,
         request: OppdatereTilleggsstønadRequest,
@@ -524,6 +554,10 @@ class UnderholdService(
                     request.idElement,
                 )
             }
+
+            Underholdselement.FORPLEINING -> {
+                sletteForpleining(underholdskostnad, request.idElement)
+            }
         }
     }
 
@@ -558,6 +592,14 @@ class UnderholdService(
     ) {
         val tilleggsstønad = underholdskostnad.tilleggsstønad.find { idElement == it.id }
         underholdskostnad.tilleggsstønad.remove(tilleggsstønad)
+    }
+
+    private fun sletteForpleining(
+        underholdskostnad: Underholdskostnad,
+        idElement: Long,
+    ) {
+        val forpleining = underholdskostnad.forpleining.find { idElement == it.id }
+        underholdskostnad.forpleining.remove(forpleining)
     }
 
     private fun sletteUnderholdskostnad(
@@ -601,10 +643,11 @@ class UnderholdService(
     private fun oppdatereUnderholdsperioderEtterEndretVirkningsdato(
         b: Behandling,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         b.underholdskostnader.forEach {
             it.erstatteOffentligePerioderIBarnetilsynstabellMedOppdatertGrunnlag()
-            it.justerePerioder(forrigeVirkningstidspunkt)
+            it.justerePerioder(forrigeVirkningstidspunkt.takeIf { _ -> søknadsbarnSomEndres == null || it.rolle in søknadsbarnSomEndres })
         }
     }
 

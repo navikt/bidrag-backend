@@ -39,9 +39,6 @@ spring.kafka:
     listener:
       ackMode: RECORD
 
-logging.level.root: INFO
-logging.level.wiremock.org: INFO
-logging.level: INFO
 SRVBIDRAG_USERNAME: srvbidrag
 SRVBIDRAG_PASSWORD: bareForTest
 no.nav.security.jwt:

@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.journalpost.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.journalpost.consumer.BrevserverConsumer
 import no.nav.bidrag.dokument.journalpost.dokument.DokumentConsumer
 import no.nav.bidrag.dokument.journalpost.dokument.DokumentTilgangConsumer
@@ -21,13 +23,12 @@ import no.nav.bidrag.transport.dokument.DokumentFormatDto
 import no.nav.bidrag.transport.dokument.DokumentMetadata
 import no.nav.bidrag.transport.dokument.DokumentStatusDto
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import java.util.Optional
 
-private val LOGGER = LoggerFactory.getLogger(DokumentService::class.java)
+private val LOGGER = KotlinLogging.logger {}
 
 val Journalpost.erUnderProduksjon get() = journalstatus == UNDER_PRODUKSJON
 
@@ -85,7 +86,7 @@ class DokumentService(
         val dokumentbestilling = bestillOgOpprettDokumenttilgang(dokumentReferanse)
         val dokumentByte =
             if (brukBrevserverRest) {
-                LOGGER.info("Henter dokument $dokumentReferanse via REST fra brevserver")
+                LOGGER.debug { "Henter dokument ${dokumentReferanse.sanitizeForLog()} via REST fra brevserver" }
                 brevserverConsumer.hentDokument(dokumentbestilling.brevreferanse!!)
             } else {
                 dokumentConsumer.henteDokument(dokumentbestilling).get()

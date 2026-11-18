@@ -1,5 +1,6 @@
 package no.nav.bidrag.reisekostnad.integrasjon.brukernotifikasjon;
 
+import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
 import static no.nav.bidrag.reisekostnad.integrasjon.brukernotifikasjon.Melding.MELDING_OM_AUTOMATISK_INNSENDING;
 import static no.nav.bidrag.reisekostnad.integrasjon.brukernotifikasjon.Melding.MELDING_OM_VENTENDE_FORESPØRSEL;
 import static no.nav.bidrag.reisekostnad.integrasjon.brukernotifikasjon.Melding.MELDING_TIL_FORELDRE_OM_UTLØPT_SAMTYKKEFRIST;
@@ -49,10 +50,9 @@ public class Brukernotifikasjonkonsument {
   }
 
   public void varsleOmAutomatiskInnsending(String personidentHovedpart, String personidentMotpart) {
-    log.info("Varsler foreldre om automatisk innsending av forespørsel etter at barn fylte 15 år");
     SIKKER_LOGG.info(
         "Varsler foreldre (hovedpart: {} og motpart: {}) om automatisk innsending av forespørsel etter at barn fylte 15 år",
-        personidentHovedpart, personidentMotpart);
+        sanitizeForLog(personidentHovedpart), sanitizeForLog(personidentMotpart));
     beskjedprodusent.oppretteBeskjedTilBruker(personidentHovedpart, new DynamiskMelding(MELDING_OM_AUTOMATISK_INNSENDING), true,
         UUID.randomUUID().toString());
     beskjedprodusent.oppretteBeskjedTilBruker(personidentMotpart, new DynamiskMelding(MELDING_OM_AUTOMATISK_INNSENDING), true,

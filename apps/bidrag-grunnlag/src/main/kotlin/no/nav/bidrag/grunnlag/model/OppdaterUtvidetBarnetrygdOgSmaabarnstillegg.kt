@@ -1,8 +1,8 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.UtvidetBarnetrygdOgSmaabarnstilleggBo
 import no.nav.bidrag.grunnlag.consumer.familiebasak.FamilieBaSakConsumer
 import no.nav.bidrag.grunnlag.consumer.familiebasak.api.FamilieBaSakRequest
@@ -34,7 +34,7 @@ class OppdaterUtvidetBarnetrygdOgSmaabarnstillegg(
                 fraDato = personIdOgPeriode.periodeFra,
             )
 
-            SECURE_LOGGER.info("Kaller familie-ba-sak med request: ${tilJson(familieBaSakRequest)}")
+            secureLogger.debug { "Kaller familie-ba-sak med request: ${tilJson(familieBaSakRequest)}" }
 
             try {
                 when (
@@ -43,7 +43,7 @@ class OppdaterUtvidetBarnetrygdOgSmaabarnstillegg(
                 ) {
                     is RestResponse.Success -> {
                         val familieBaSakResponse = restResponseFamilieBaSak.body
-                        SECURE_LOGGER.info("familie-ba-sak ga følgende respons: ${tilJson(familieBaSakResponse)}")
+                        secureLogger.debug { "familie-ba-sak ga følgende respons: ${tilJson(familieBaSakResponse)}" }
                         persistenceService.oppdaterEksisterendeUtvidetBarnetrygOgSmaabarnstilleggTilInaktiv(
                             grunnlagspakkeId = grunnlagspakkeId,
                             personIdListe = historiskeIdenterMap[personIdOgPeriode.personId] ?: listOf(personIdOgPeriode.personId),

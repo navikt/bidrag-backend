@@ -93,10 +93,12 @@ import no.nav.bidrag.beregn.sivilstand.dto.Sivilstand
 import no.nav.bidrag.beregn.sivilstand.response.SivilstandBeregnet
 import no.nav.bidrag.commons.service.forsendelse.bidragspliktig
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.behandling.tilBehandlingstema
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
@@ -340,7 +342,7 @@ fun oppdaterUnderholdskostnadForRoller(
     rollerSomLeggesTil: List<OpprettRolleDto>,
     rollerSomSkalSlettes: List<OpprettRolleDto>,
 ) {
-    if (behandling.tilType() == TypeBehandling.BIDRAG) {
+    if (behandling.erBidrag()) {
         rollerSomLeggesTil
             .filter { it.rolletype == Rolletype.BARN }
             .filter { rolle ->
@@ -365,7 +367,7 @@ fun oppdatereSamværForRoller(
     rollerSomLeggesTil: List<OpprettRolleDto>,
     rollerSomSlettes: List<OpprettRolleDto>,
 ) {
-    if (behandling.tilType() == TypeBehandling.BIDRAG) {
+    if (behandling.erBidrag()) {
         rollerSomLeggesTil
             .filter { it.rolletype == Rolletype.BARN }
             .filter { rolle ->
@@ -407,7 +409,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
         return "Kan ikke behandle søknad for bidrag uten bidragspliktig"
     }
 
-    val løpendeBidrag = hentLøpendeBidrag(bidragspliktig!!.personident)
+    val løpendeBidrag = hentLøpendeBidrag(bidragspliktig!!.personident, søktFomDato)
 
     val kanBehandleFlereBarnLøpendeBidrag =
         if (kanBehandleSjekk) {
@@ -514,10 +516,11 @@ fun Behandling.tilBehandlingDetaljerDtoV2() = BehandlingDetaljerDtoV2(
     saksnummer = saksnummer,
     søknadsid = soknadsid!!,
     behandlerenhet = behandlerEnhet,
+    slettet = deleted,
     roller =
     roller
         .map {
-            it.tilDto()
+            it.tilDto(true)
         }.toSet(),
     søknadRefId = omgjøringsdetaljer?.soknadRefId,
     vedtakRefId = omgjøringsdetaljer?.omgjørVedtakId,
@@ -563,54 +566,72 @@ fun Person.tilDto(stønadstype: Stønadstype? = null) = RolleDto(
     saksnummer = "",
 )
 
-fun Rolle.tilDto() = RolleDto(
-    id!!,
-    rolletype,
-    ident,
-    navn ?: hentPersonVisningsnavn(ident),
-    fødselsdato,
-    harInnvilgetTilleggsstønad = this.harInnvilgetTilleggsstønad(),
-    delAvOpprinneligBehandling = forholdsmessigFordeling?.delAvOpprinneligBehandling == true,
-    erRevurdering =
-    forholdsmessigFordeling?.erRevurdering == true ||
-        behandling.lesemodusVedtak?.inneholderBareRevurderingsbarn == true,
-    stønadstype = if (rolletype == Rolletype.BARN) stønadstype ?: behandling.stonadstype else null,
-    saksnummer = forholdsmessigFordeling?.tilhørerSak ?: behandling.saksnummer,
-    beregnFraDato = finnBeregnFra(),
-    beregnTilDato = finnBeregnTil(),
-    harLøpendeForskudd = behandling.finnesLøpendeForskuddForRolle(this),
-    harLøpendeBidrag = behandling.finnesLøpendeBidragForRolle(this),
-    søknader =
-    forholdsmessigFordeling?.søknaderUnderBehandling?.map {
-        RolleSøknadDto(
-            søknadsId = it.søknadsid!!,
-            søknadFra = it.søktAvType,
-            vedtakstype = it.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
-            enhet = it.enhet,
-        )
-    } ?: behandling.soknadsid?.let {
-        listOf(
+fun Rolle.tilDto(inkluderAlleSøknader: Boolean = false): RolleDto {
+    val søknader = if (inkluderAlleSøknader) forholdsmessigFordeling?.søknader else forholdsmessigFordeling?.søknaderUnderBehandling
+    return RolleDto(
+        id!!,
+        rolletype,
+        ident,
+        navn ?: hentPersonVisningsnavn(ident),
+        fødselsdato,
+        harInnvilgetTilleggsstønad = this.harInnvilgetTilleggsstønad(),
+        delAvOpprinneligBehandling = forholdsmessigFordeling?.delAvOpprinneligBehandling == true,
+        erRevurdering =
+        forholdsmessigFordeling?.erRevurdering == true ||
+            behandling.lesemodusVedtak?.inneholderBareRevurderingsbarn == true,
+        stønadstype = if (rolletype == Rolletype.BARN) stønadstype ?: behandling.stonadstype else null,
+        saksnummer = forholdsmessigFordeling?.tilhørerSak ?: behandling.saksnummer,
+        beregnFraDato = finnBeregnFra(),
+        beregnTilDato = finnBeregnTil(),
+        harLøpendeForskudd = behandling.finnesLøpendeForskuddForRolle(this),
+        harLøpendeBidrag = behandling.finnesLøpendeBidragForRolle(this),
+        søknader = søknader?.map {
             RolleSøknadDto(
-                søknadsId = behandling.soknadsid!!,
-                søknadFra = behandling.soknadFra,
-                vedtakstype = behandling.vedtakstype,
-                enhet = behandling.behandlerEnhet,
-            ),
-        )
-    } ?: emptyList(),
-    bidragsmottaker =
-    if (rolletype == Rolletype.BARN) {
-        forholdsmessigFordeling?.bidragsmottaker ?: behandling.bidragsmottaker?.ident
-    } else {
-        null
-    },
-)
-
+                søknadsId = it.søknadsid!!,
+                søknadFra = it.søktAvType,
+                vedtakstype = it.behandlingstype?.tilVedtakstype() ?: behandling.vedtakstype,
+                enhet = it.enhet,
+                status = it.status ?: Behandlingstatus.UNDER_BEHANDLING,
+                behandlingstype = it.behandlingstype ?: behandling.søknadstype,
+                behandlingstema = behandlingstema ?: it.behandlingstema ?: behandling.behandlingstema,
+                omgjørSøknadsid = it.omgjørSøknadsid,
+                omgjørVedtaksid = it.omgjørVedtaksid,
+                innkreving = it.innkreving,
+                mottattDato = it.mottattDato,
+                søknadFomDato = it.søknadFomDato ?: behandling.søktFomDato,
+            )
+        } ?: behandling.soknadsid?.let {
+            listOf(
+                RolleSøknadDto(
+                    søknadsId = behandling.soknadsid!!,
+                    søknadFra = behandling.soknadFra,
+                    vedtakstype = behandling.vedtakstype,
+                    enhet = behandling.behandlerEnhet,
+                    status = behandlingstatus ?: Behandlingstatus.UNDER_BEHANDLING,
+                    behandlingstype = behandling.søknadstype,
+                    behandlingstema = behandlingstema ?: behandling.behandlingstema,
+                    omgjørSøknadsid = behandling.omgjøringsdetaljer?.soknadRefId,
+                    omgjørVedtaksid = behandling.omgjøringsdetaljer?.omgjørVedtakId,
+                    innkreving = innkrevingstype?.let { it == Innkrevingstype.MED_INNKREVING },
+                    mottattDato = behandling.mottattdato,
+                    søknadFomDato = behandling.søktFomDato,
+                ),
+            )
+        } ?: emptyList(),
+        bidragsmottaker =
+        if (rolletype == Rolletype.BARN) {
+            forholdsmessigFordeling?.bidragsmottaker ?: behandling.bidragsmottaker?.ident
+        } else {
+            null
+        },
+    )
+}
 fun Rolle.tilSøknadsdetaljerDto(søknadsid: Long): SøknadDetaljerDto {
     val søknadsdetaljer = forholdsmessigFordeling?.søknaderUnderBehandling?.find { it.søknadsid == søknadsid }
     val barn = behandling.søknadsbarnForSøknad(søknadsid)
     return SøknadDetaljerDto(
         søknadsid = søknadsid,
+        erHovedsøknad = behandling.soknadsid == søknadsdetaljer?.søknadsid,
         saksnummer = sakForSøknad(søknadsid),
         barn = if (rolletype != Rolletype.BARN) barn.map { it.tilDto() } else emptyList(),
         søktFomDato = søknadsdetaljer?.søknadFomDato ?: behandling.søktFomDato,
@@ -695,7 +716,7 @@ fun Behandling.tilInntektDtoV3(
         rolle.barn
             .sortedWith(
                 sorterPersonEtterEldsteFødselsdato({ it.fødselsdatoSortering }, { it.identifikator }),
-            ).filter { it.kreverGrunnlagForBeregning }
+            ).filter { it.skalViseInntekterSomGjelderBarn }
 
     // Use precomputed inntekterPerType from cache, fall back to per-role computation
     val inntekterPerType =
@@ -799,7 +820,7 @@ fun Behandling.tilInntektDtoV3(
                 gjelder = rolle.tilDto(),
             )
         },
-        valideringsfeil = valideringsfeilForRolle ?: hentInntekterValideringsfeilV2(rolle),
+        valideringsfeil = if (!erAvslagForAlle) valideringsfeilForRolle ?: hentInntekterValideringsfeilV2(rolle) else InntektValideringsfeilV2Dto(),
     )
 }
 
@@ -833,7 +854,7 @@ data class RoleInntekterCache(
 )
 
 fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
-    val rolleInntekter = inntekter.groupBy { it.rolle?.id ?: return@groupBy null }.filterKeys { it != null }
+    val rolleInntekter = inntekter.groupBy { it.gjelderRolle?.id ?: return@groupBy null }.filterKeys { it != null }
 
     val barnetilleggPerRolle = mutableMapOf<Long, List<Inntekt>>()
     val kontantstøttePerRolle = mutableMapOf<Long, List<Inntekt>>()
@@ -862,6 +883,8 @@ fun Behandling.buildRoleInntekterCache(): RoleInntekterCache {
         inntekterPerTypePerRolle = inntekterPerTypePerRolle,
     )
 }
+
+fun List<Inntekt>.filtrerBarnSomSkalVises() = filter { it.gjelderBarnRolle?.skalViseInntekterSomGjelderBarn ?: true }
 
 fun List<Inntekt>.filtrerInntektGjelderBarn(rolle: Rolle?) = filter { rolle == null || it.erSammeRolle(rolle) }
     .filter {
@@ -1123,6 +1146,7 @@ fun Behandling.hentInntekterValideringsfeilV2(rolle: Rolle): InntektValideringsf
     inntekter
         .toList()
         .filtrerInntektGjelderBarn(rolle)
+        .filtrerBarnSomSkalVises()
         .mapValideringsfeilForYtelseSomGjelderBarn(
             Inntektsrapportering.BARNETILLEGG,
             eldsteVirkningstidspunkt,
@@ -1147,6 +1171,7 @@ fun Behandling.hentInntekterValideringsfeilV2(rolle: Rolle): InntektValideringsf
     inntekter
         .toList()
         .filtrerInntektGjelderBarn(rolle)
+        .filtrerBarnSomSkalVises()
         .mapValideringsfeilForYtelseSomGjelderBarn(
             Inntektsrapportering.KONTANTSTØTTE,
             eldsteVirkningstidspunkt,
@@ -1169,6 +1194,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
+                    .filter { barn.skalViseInntekterSomGjelderBarn }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.BARNETILLEGG,
                         eldsteVirkningstidspunkt,
@@ -1179,6 +1205,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
+            .filtrerBarnSomSkalVises()
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.BARNETILLEGG,
                 eldsteVirkningstidspunkt,
@@ -1206,6 +1233,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
             .mapNotNull { barn ->
                 inntekter
                     .filter { it.inntektGjelderBarn(barn) }
+                    .filter { barn.skalViseInntekterSomGjelderBarn }
                     .mapValideringsfeilForYtelseSomGjelderBarn(
                         Inntektsrapportering.KONTANTSTØTTE,
                         eldsteVirkningstidspunkt,
@@ -1216,6 +1244,7 @@ fun Behandling.hentInntekterValideringsfeil(rolle: Rolle? = null): InntektValide
         inntekter
             .toList()
             .filtrerInntektGjelderBarn(rolle)
+            .filtrerBarnSomSkalVises()
             .mapValideringsfeilForYtelseSomGjelderBarn(
                 Inntektsrapportering.KONTANTSTØTTE,
                 eldsteVirkningstidspunkt,
@@ -1347,7 +1376,7 @@ fun List<Inntekt>.mapValideringsfeilForYtelse(
             erYtelse = true,
             manglerSkatteprosent =
             if (type == Inntektsrapportering.BARNETILLEGG && erBidrag) {
-                inntekterTaMed.any { it.inntektsposter.any { it.skattefaktor == null } }
+                inntekterTaMed.any { it.inntektsposter.any { it.skattefaktor == null && it.inntektstype?.erSkattefrittBarnetillegg != true } }
             } else {
                 false
             },
@@ -1754,12 +1783,12 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
                     harOpprettetForholdsmessigFordeling = barn.forholdsmessigFordeling != null,
                     opphørsdato = barn.opphørsdato?.toYearMonth(),
                     eldsteSøktFraDato =
-                    barn.forholdsmessigFordeling!!
-                        .søknaderUnderBehandling
-                        .filter { it.søknadFomDato != null }
-                        .minOfOrNull { it.søknadFomDato!! },
+                    barn.forholdsmessigFordeling
+                        ?.søknaderUnderBehandling
+                        ?.filter { it.søknadFomDato != null }
+                        ?.minOfOrNull { it.søknadFomDato!! },
                     åpneBehandlinger =
-                    barn.forholdsmessigFordeling!!.søknaderUnderBehandling.map {
+                    barn.forholdsmessigFordeling?.søknaderUnderBehandling?.map {
                         ForholdsmessigFordelingÅpenBehandlingDto(
                             søktFraDato = it.søknadFomDato,
                             mottattDato = it.mottattDato,
@@ -1772,7 +1801,7 @@ fun Behandling.tilForholdsmessigFordelingDetaljer() = run {
                             behandlingstype = it.behandlingstype,
                             behandlingstema = it.behandlingstema,
                         )
-                    },
+                    } ?: emptyList(),
                     enhet = barn.forholdsmessigFordeling?.behandlerenhet ?: "",
                 )
             }

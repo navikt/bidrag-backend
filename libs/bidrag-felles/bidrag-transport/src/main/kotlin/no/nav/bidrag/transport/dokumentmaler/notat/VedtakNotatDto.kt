@@ -27,7 +27,6 @@ import no.nav.bidrag.domene.enums.samværskalkulator.SamværskalkulatorNetterFre
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
-import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.enums.vedtak.VirkningstidspunktÅrsakstype
@@ -169,6 +168,7 @@ data class NotatUnderholdBarnDto(
     val stønadTilBarnetilsyn: List<NotatStønadTilBarnetilsynDto> = emptyList(),
     val faktiskTilsynsutgift: List<NotatFaktiskTilsynsutgiftDto>,
     val tilleggsstønad: List<NotatTilleggsstønadDto> = emptyList(),
+    val forpleining: List<NotatForpleiningDto> = emptyList(),
     val underholdskostnad: List<NotatUnderholdskostnadBeregningDto>,
     val begrunnelse: NotatBegrunnelseDto? = null,
 ) {
@@ -234,6 +234,11 @@ data class NotatUnderholdBarnDto(
         val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
     }
 
+    data class NotatForpleiningDto(
+        val periode: DatoperiodeDto,
+        val beløp: BigDecimal,
+    )
+
     data class NotatUnderholdskostnadBeregningDto(
         val periode: DatoperiodeDto,
         val forbruk: BigDecimal = BigDecimal.ZERO,
@@ -241,6 +246,7 @@ data class NotatUnderholdBarnDto(
         val stønadTilBarnetilsyn: BigDecimal = BigDecimal.ZERO,
         val tilsynsutgifter: BigDecimal = BigDecimal.ZERO,
         val barnetrygd: BigDecimal = BigDecimal.ZERO,
+        val forpleining: BigDecimal? = null,
         val total: BigDecimal,
         val beregningsdetaljer: NotatUnderholdskostnadPeriodeBeregningsdetaljer? = null,
     )
@@ -248,6 +254,7 @@ data class NotatUnderholdBarnDto(
 
 data class NotatSamværDto(
     val erSammeForAlle: Boolean,
+    val sammeSamværForAlleSaker: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val barn: List<NotatSamværBarnDto>,
 )
 
@@ -345,11 +352,16 @@ data class NotatSærbidragKategoriDto(
     val kategori: Særbidragskategori,
     val beskrivelse: String? = null,
 )
-
+data class NotatErLikForAlleBasertPåSak(
+    val saksnummer: String,
+    val erLikForAlle: Boolean,
+)
 data class NotatVirkningstidspunktDto(
     @Schema(description = "Hvis det er likt for alle bruk avslag/årsak fra ett av barna")
     val erLikForAlle: Boolean,
+    val erLikForAlleBasertPåSak: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val erVirkningstidspunktLikForAlle: Boolean,
+    val erVirkningstidspunktLiktForAlleSaker: List<NotatErLikForAlleBasertPåSak> = emptyList(),
     val erAvslagForAlle: Boolean = false,
     val eldsteVirkningstidspunkt: YearMonth,
     val barn: List<NotatVirkningstidspunktBarnDto>,
@@ -674,9 +686,10 @@ data class NotatInntektDto(
 ) {
     val beløpstypeVisningsnavn get() = beløpstype.tilVisningsnavn()
 
+    @get:Schema(description = "Skattefaktor for barnetillegg. Null når skatteprosent ikke er relevant (skattefrie barnetillegg)")
     val skattefaktor get() =
         if (type == Inntektsrapportering.BARNETILLEGG) {
-            inntektsposter.firstOrNull()?.skattefaktor ?: BigDecimal.ZERO
+            inntektsposter.firstOrNull()?.skattefaktor
         } else {
             null
         }

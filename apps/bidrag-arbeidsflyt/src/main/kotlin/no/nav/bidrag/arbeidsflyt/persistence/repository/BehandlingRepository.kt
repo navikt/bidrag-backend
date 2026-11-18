@@ -42,6 +42,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long> {
             SELECT b.id
             FROM behandling b
             WHERE b.barn @> CAST('{"barn":[{"status":"UNDER_BEHANDLING"}]}' AS jsonb)
+              AND b.status NOT IN ('AVBRUTT', 'VEDTAK_FATTET')
               AND (b.status_sjekket_tidspunkt is null or b.status_sjekket_tidspunkt < :cutoff) limit 100
             """,
         nativeQuery = true,

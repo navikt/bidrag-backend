@@ -323,6 +323,50 @@ class DokumentValgServiceTest {
     }
 
     @Test
+    fun `Skal hente dokumentvalg for varsling revurdering bidrag når søknad er fra AUTOMATISK`() {
+        val dokumentValgListe =
+            dokumentValgService!!.hentDokumentMalListe(
+                HentDokumentValgRequest(
+                    vedtakType = Vedtakstype.REVURDERING,
+                    soknadFra = SøktAvType.AUTOMATISK,
+                    behandlingType = Stønadstype.BIDRAG.name,
+                    erFattetBeregnet = null,
+                ),
+            )
+
+        assertSoftly {
+            dokumentValgListe.size shouldBe 7
+            dokumentValgListe shouldContainKey "BI01S06"
+            dokumentValgListe shouldContainKey "BI01S07"
+            dokumentValgListe shouldContainKey "BI01S35"
+            dokumentValgListe shouldContainKey "BI01S46"
+            dokumentValgListe shouldContainKey "BI01S62"
+            dokumentValgListe shouldContainKey "BI01S02"
+            dokumentValgListe shouldContainKey "BI01S10"
+        }
+    }
+
+    @Test
+    fun `Skal hente samme varselbrev for R-barn når søknad er fra AUTOMATISK med samme innhold som det var NAV_BIDRAG`() {
+        fun hent(soknadFra: SøktAvType) = dokumentValgService!!.hentDokumentMalListe(
+            HentDokumentValgRequest(
+                vedtakType = Vedtakstype.REVURDERING,
+                soknadFra = soknadFra,
+                behandlingType = Stønadstype.BIDRAG18AAR.name,
+                erFattetBeregnet = null,
+            ),
+        )
+
+        val dokumentValgNavBidrag = hent(SøktAvType.NAV_BIDRAG)
+        val dokumentValgAutomatisk = hent(SøktAvType.AUTOMATISK)
+
+        assertSoftly {
+            (dokumentValgAutomatisk.size > 2) shouldBe true
+            dokumentValgAutomatisk.keys shouldBe dokumentValgNavBidrag.keys
+        }
+    }
+
+    @Test
     fun `Skal hente dokumentvalg for varsling begrenset revurdering bidrag`() {
         val dokumentValgListe =
             dokumentValgService!!.hentDokumentMalListe(

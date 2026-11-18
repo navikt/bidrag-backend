@@ -1,11 +1,11 @@
 package no.nav.bidrag.organisasjon.aop
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.organisasjon.exception.ArbeidsfordelingConsumerException
 import no.nav.bidrag.organisasjon.exception.EnhetIkkeFunnetException
 import no.nav.bidrag.organisasjon.exception.PersonConsumerException
 import no.nav.bidrag.organisasjon.exception.SkjermingConsumerException
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -19,7 +19,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(value = [ArbeidsfordelingConsumerException::class])
     fun handleFunctionalException(exception: Exception): ResponseEntity<*> {
-        LOGGER.warn(exception.message, exception)
+        LOGGER.warn(exception) { exception.message }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .header(HttpHeaders.WARNING, exception.message ?: "Ukjent feil")
@@ -29,7 +29,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler
     fun handleEnhetNotFoundException(exception: EnhetIkkeFunnetException): ResponseEntity<*> {
-        LOGGER.warn(exception.message, exception)
+        LOGGER.warn(exception) { exception.message }
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .header(HttpHeaders.WARNING, exception.message ?: "Ukjent feil")
@@ -39,7 +39,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler
     fun handlePersonConsumerException(exception: PersonConsumerException): ResponseEntity<*> {
-        LOGGER.error(exception.message, exception)
+        LOGGER.error(exception) { exception.message }
         return ResponseEntity
             .status(HttpStatus.NO_CONTENT)
             .header(HttpHeaders.WARNING, exception.message ?: "Ukjent feil")
@@ -49,7 +49,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: Exception): ResponseEntity<*> {
-        LOGGER.warn(exception.message)
+        LOGGER.warn { exception.message }
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WARNING, exception.message ?: "Ukjent feil")
@@ -59,7 +59,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler
     fun handleIllegalArgumentException(illegalArgumentException: IllegalArgumentException): ResponseEntity<*> {
-        LOGGER.warn(illegalArgumentException.message)
+        LOGGER.warn { illegalArgumentException.message }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .header(HttpHeaders.WARNING, illegalArgumentException.message ?: "Ukjent feil")
@@ -76,7 +76,7 @@ class HttpStatusRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler
     fun handleOtherExceptions(exception: Exception): ResponseEntity<*> {
-        LOGGER.error(exception.message, exception)
+        LOGGER.error(exception) { exception.message }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, exception.message ?: "Ukjent feil")
@@ -92,6 +92,6 @@ class HttpStatusRestControllerAdvice {
     private fun warningFrom(runtimeException: RuntimeException): String = "${runtimeException.javaClass.simpleName}: ${runtimeException.message}"
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(HttpStatusRestControllerAdvice::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

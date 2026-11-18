@@ -1,5 +1,7 @@
 package no.nav.bidrag.dokument.arkiv.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.BidragDokumentConsumer
 import no.nav.bidrag.dokument.arkiv.consumer.DokarkivConsumer
@@ -32,7 +34,6 @@ import no.nav.bidrag.transport.dokument.OpprettDokumentDto
 import no.nav.bidrag.transport.dokument.OpprettJournalpostRequest
 import no.nav.bidrag.transport.dokument.OpprettJournalpostResponse
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
@@ -48,16 +49,11 @@ class OpprettJournalpostService(
     private val endreJournalpostService: EndreJournalpostService,
     private val bidragDokumentConsumer: BidragDokumentConsumer,
 ) {
-    private val dokarkivConsumer: DokarkivConsumer
-    private val safConsumer: SafConsumer
+    private val dokarkivConsumer: DokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
+    private val safConsumer: SafConsumer = safConsumers.get(Discriminator.REGULAR_USER)
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(OpprettJournalpostService::class.java)
-    }
-
-    init {
-        dokarkivConsumer = dokarkivConsumers.get(Discriminator.REGULAR_USER)
-        safConsumer = safConsumers.get(Discriminator.REGULAR_USER)
+        private val LOGGER = KotlinLogging.logger {}
     }
 
     fun opprettJournalpost(request: OpprettJournalpostRequest): OpprettJournalpostResponse {
@@ -132,10 +128,7 @@ class OpprettJournalpostService(
         validerKanOppretteJournalpost(request, skalFerdigstilles)
 
         val response = dokarkivConsumer.opprett(request, skalFerdigstilles)
-        LOGGER.info(
-            "Opprettet ny journalpost ${response.journalpostId} med type=${request.journalpostType} kanal=${request.kanal}, tema=${request.tema}, referanseId=${request.eksternReferanseId} og enhet=${request.journalfoerendeEnhet}",
-        )
-        SECURE_LOGGER.info { "Opprettet ny journalpost $response" }
+        SECURE_LOGGER.debug { "Opprettet ny journalpost $response" }
 
         validerOpprettJournalpostResponse(skalFerdigstilles, response)
 
@@ -167,10 +160,9 @@ class OpprettJournalpostService(
             )
             knyttSakerTilOpprettetJournalpost(opprettetJournalpost, knyttTilSaker)
         } catch (e: Exception) {
-            LOGGER.error(
-                "Etterbehandling av opprettet journalpost feilet (knytt til flere saker eller lagre saksbehandler ident). Fortsetter behandling da feilen må behandles manuelt.",
-                e,
-            )
+            LOGGER.error(e) {
+                "Etterbehandling av opprettet journalpost feilet (knytt til flere saker eller lagre saksbehandler ident). Fortsetter behandling da feilen må behandles manuelt."
+            }
         }
     }
 
@@ -181,7 +173,7 @@ class OpprettJournalpostService(
                 response.journalpostId,
                 response.melding,
             )
-            LOGGER.error(message)
+            LOGGER.error { message.sanitizeForLog() }
             throw KunneIkkeJournalforeOpprettetJournalpost(message)
         }
     }
@@ -315,9 +307,6 @@ class OpprettJournalpostService(
     private fun hentDokument(dokumentDto: OpprettDokumentDto): ByteArray = dokumentDto.fysiskDokument ?: dokumentDto.dokument?.let {
         Base64.getDecoder().decode(it)
     } ?: dokumentDto.dokumentreferanse?.let {
-        LOGGER.info(
-            "Henter dokument bytedata for dokument med tittel ${dokumentDto.tittel} og dokumentreferanse ${dokumentDto.dokumentreferanse}",
-        )
         bidragDokumentConsumer.hentDokument(
             it,
         )

@@ -8,7 +8,6 @@ import no.nav.bidrag.transport.dokument.DokumentArkivSystemDto
 import no.nav.bidrag.transport.dokument.DokumentFormatDto
 import no.nav.bidrag.transport.dokument.DokumentMetadata
 import no.nav.bidrag.transport.dokument.DokumentStatusDto
-import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
@@ -17,18 +16,10 @@ class DokumentService(
     safConsumers: ResourceByDiscriminator<SafConsumer>,
     journalpostServices: ResourceByDiscriminator<JournalpostService>,
 ) {
-    private val safConsumer: SafConsumer
-    private val journalpostService: JournalpostService
+    private val safConsumer: SafConsumer = safConsumers.get(Discriminator.REGULAR_USER)
+    private val journalpostService: JournalpostService = journalpostServices.get(Discriminator.REGULAR_USER)
 
-    init {
-        safConsumer = safConsumers.get(Discriminator.REGULAR_USER)
-        journalpostService = journalpostServices.get(Discriminator.REGULAR_USER)
-    }
-
-    fun hentDokument(journalpostId: Long, dokumentReferanse: String?): ResponseEntity<ByteArray> {
-        LOGGER.info("Henter dokument med journalpostId=$journalpostId og dokumentReferanse=$dokumentReferanse")
-        return safConsumer.hentDokument(journalpostId, java.lang.Long.valueOf(dokumentReferanse))
-    }
+    fun hentDokument(journalpostId: Long, dokumentReferanse: String?): ResponseEntity<ByteArray> = safConsumer.hentDokument(journalpostId, java.lang.Long.valueOf(dokumentReferanse))
 
     fun tilDokumentMetadata(journalStatus: JournalStatus?, dokumentReferanse: String?, journalpostId: Long?, tittel: String?) = DokumentMetadata(
         arkivsystem = DokumentArkivSystemDto.JOARK,
@@ -68,9 +59,5 @@ class DokumentService(
             )
         }?.filter { dokumentReferanse.isNullOrEmpty() || it.dokumentreferanse == dokumentReferanse }
             ?: emptyList()
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(DokumentService::class.java)
     }
 }

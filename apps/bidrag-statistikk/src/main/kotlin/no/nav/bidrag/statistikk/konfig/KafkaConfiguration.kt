@@ -1,8 +1,9 @@
 package no.nav.bidrag.statistikk.konfig
 
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.kafka.KafkaRetryListener
 import no.nav.bidrag.statistikk.LOGGER
-import no.nav.bidrag.statistikk.SECURE_LOGGER
-import no.nav.bidrag.statistikk.konfig.KafkaRetryListener
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,13 +17,9 @@ class KafkaConfiguration {
     fun defaultErrorHandler(@Value("\${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
         // Max retry should not be set in production
         val backoffPolicy = if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
-        backoffPolicy.multiplier = 2.0
-        backoffPolicy.maxInterval = 1800000L // 30 mins
-        LOGGER.info(
-            "Initializing Kafka errorhandler with backoffpolicy {}, maxRetry={}",
-            backoffPolicy,
-            maxRetry,
-        )
+        backoffPolicy.multiplier = 1.2
+        backoffPolicy.maxInterval = 60_000L // 1 min
+        LOGGER.info { "Initializing Kafka errorhandler with backoffpolicy $backoffPolicy, maxRetry=$maxRetry" }
         val errorHandler =
             DefaultErrorHandler({ rec, e ->
                 val key = rec.key()
@@ -30,10 +27,9 @@ class KafkaConfiguration {
                 val offset = rec.offset()
                 val topic = rec.topic()
                 val partition = rec.partition()
-                SECURE_LOGGER.error(
-                    "Kafkamelding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value",
-                    e,
-                )
+                secureLogger.error(e) {
+                    "Kafkamelding med nøkkel $key, partition $partition og topic $topic feilet på offset $offset. Melding som feilet: $value".sanitizeForLog()
+                }
             }, backoffPolicy)
         errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler

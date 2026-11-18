@@ -1,6 +1,7 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
-import no.nav.bidrag.commons.cache.BrukerCacheable
+import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.cache.annotasjoner.LangCache
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.tilgangskontroll.konfigurasjon.Cache
@@ -9,12 +10,15 @@ import no.nav.bidrag.tilgangskontroll.model.graph.BrukerGrupperResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.BrukerinformasjonResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.CheckMemberGroupsResponse
 import no.nav.bidrag.tilgangskontroll.model.graph.EnhetResponse
+import no.nav.bidrag.tilgangskontroll.model.graph.Gruppe
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestOperations
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
+
+private val LOGGER = KotlinLogging.logger { }
 
 @Component
 class MicrosoftGraphConsumer(
@@ -24,7 +28,7 @@ class MicrosoftGraphConsumer(
         private val GRAPH_URL = URI("https://graph.microsoft.com/v1.0/")
     }
 
-    @BrukerCacheable(Cache.BRUKERINFO)
+    @LangCache(Cache.BRUKERINFO, perBruker = true)
     fun hentBrukerinformasjon(navident: String): BrukerinformasjonResponse? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
@@ -39,38 +43,11 @@ class MicrosoftGraphConsumer(
         return response
     }
 
-    @BrukerCacheable(Cache.BRUKERGRUPPER)
-    fun hentGrupperForBruker2(navident: String?): BrukerGrupperResponse? {
-        if (TokenUtils.erApplikasjonsbruker()) {
-            if (navident.isNullOrBlank()) {
-                log.warn("Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper.")
-                return null
-            }
-            val id = hentBrukerinformasjon(navident)?.value?.first()?.id ?: error("Fant ikke id for bruker med navident $navident")
-            val uri =
-                UriComponentsBuilder
-                    .fromUri(GRAPH_URL)
-                    .pathSegment("users/$id/transitiveMemberOf")
-                    .build()
-                    .toUri()
-            val response = getForEntity<BrukerGrupperResponse>(uri)
-            return response
-        } else {
-            val uri =
-                UriComponentsBuilder
-                    .fromUri(GRAPH_URL)
-                    .pathSegment("me/transitiveMemberOf")
-                    .build()
-                    .toUri()
-            return getForEntity<BrukerGrupperResponse>(uri)
-        }
-    }
-
-    @BrukerCacheable(Cache.BRUKERGRUPPER)
+    @LangCache(Cache.BRUKERGRUPPER, perBruker = true)
     fun hentGrupperForBruker(navident: String?): BrukerGrupperResponse? {
         if (TokenUtils.erApplikasjonsbruker()) {
             if (navident.isNullOrBlank()) {
-                log.warn("Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper.")
+                LOGGER.warn { "Ingen navident oppgitt for applikasjonsbruker, kan ikke hente grupper." }
                 return null
             }
             val id = hentBrukerinformasjon(navident)?.value?.first()?.id ?: error("Fant ikke id for bruker med navident $navident")
@@ -80,7 +57,7 @@ class MicrosoftGraphConsumer(
                     .pathSegment("users/$id/transitiveMemberOf")
                     .build()
                     .toUri()
-            val response = getForEntity<BrukerGrupperResponse>(uri)
+            val response = hentAlleGrupper(uri)
             return response
         } else {
             val uri =
@@ -89,11 +66,22 @@ class MicrosoftGraphConsumer(
                     .pathSegment("me/transitiveMemberOf")
                     .build()
                     .toUri()
-            return getForEntity<BrukerGrupperResponse>(uri)
+            return hentAlleGrupper(uri)
         }
     }
 
-    @BrukerCacheable(Cache.BRUKERE_FOR_ENHET)
+    private fun hentAlleGrupper(uri: URI): BrukerGrupperResponse {
+        val grupper = mutableListOf<Gruppe>()
+        var nesteSide: URI? = uri
+        while (nesteSide != null) {
+            val response = getForEntity<BrukerGrupperResponse>(nesteSide)
+            response?.value?.let { grupper.addAll(it) }
+            nesteSide = response?.nextLink?.takeIf { it.isNotBlank() }?.let(URI::create)
+        }
+        return BrukerGrupperResponse(value = grupper)
+    }
+
+    @LangCache(Cache.BRUKERE_FOR_ENHET, perBruker = true)
     fun hentBrukereForEnhet(enhet: String): BrukerinformasjonResponse? {
         val enhetId = hentEnhetId(enhet) ?: return null
         val temaBidId = hentTemaBidId() ?: return null
@@ -104,7 +92,7 @@ class MicrosoftGraphConsumer(
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups", enhetId, "transitiveMembers", "microsoft.graph.user")
-                .queryParam("\$select", "id,displayName,givenName,surname,mail,officeLocation,jobTitle,onPremisesSamAccountName")
+                .queryParam($$"$select", "id,displayName,givenName,surname,mail,officeLocation,jobTitle,onPremisesSamAccountName")
                 .build()
                 .toUri()
 
@@ -112,7 +100,7 @@ class MicrosoftGraphConsumer(
         val allUsers = response?.value?.toMutableList() ?: mutableListOf()
 
         // Handle pagination
-        if (response != null && response.nextLink != null) {
+        if (response?.nextLink != null) {
             var nextLink = response.nextLink
             while (!nextLink.isNullOrBlank()) {
                 val nextResponse = getForEntity<BrukerinformasjonResponse>(URI.create(nextLink), httpHeaders)
@@ -146,42 +134,42 @@ class MicrosoftGraphConsumer(
         val response = postForEntity<CheckMemberGroupsResponse>(uri, requestBody, httpHeaders)
         response?.value?.contains(groupId) ?: false
     } catch (e: Exception) {
-        log.warn("Feil ved sjekk av medlemskap for bruker $userId i gruppe $groupId", e)
+        LOGGER.warn(e) { "Feil ved sjekk av medlemskap for bruker $userId i gruppe $groupId" }
         false
     }
 
-    @BrukerCacheable(Cache.GRUPPE_DETALJER)
+    @LangCache(Cache.GRUPPE_DETALJER, perBruker = true)
     fun hentEnhetId(enhet: String): String? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups")
-                .queryParam("\$select", "id,displayName")
-                .queryParam("\$orderby", "displayName")
-                .queryParam("\$search", "\"displayName:0000-GA-ENHET-$enhet\"")
+                .queryParam($$"$select", "id,displayName")
+                .queryParam($$"$orderby", "displayName")
+                .queryParam($$"$search", "\"displayName:0000-GA-ENHET-$enhet\"")
                 .build()
                 .toUri()
         val response = getForEntity<EnhetResponse>(uri, httpHeaders)
         return response?.value?.firstOrNull()?.id
     }
 
-    @BrukerCacheable(Cache.GRUPPE_DETALJER_TEMA)
+    @LangCache(Cache.GRUPPE_DETALJER_TEMA, perBruker = true)
     fun hentTemaBidId(): String? {
         val httpHeaders = HttpHeaders().apply { add("ConsistencyLevel", "eventual") }
         val uri =
             UriComponentsBuilder
                 .fromUri(GRAPH_URL)
                 .pathSegment("groups")
-                .queryParam("\$select", "id,displayName")
-                .queryParam("\$filter", "displayName eq '0000-GA-TEMA_BID'")
+                .queryParam($$"$select", "id,displayName")
+                .queryParam($$"$filter", "displayName eq '0000-GA-TEMA_BID'")
                 .build()
                 .toUri()
         val response = getForEntity<EnhetResponse>(uri, httpHeaders)
         return response?.value?.firstOrNull()?.id
     }
 
-    @BrukerCacheable(Cache.BRUKERENHETER)
+    @LangCache(Cache.BRUKERENHETER, perBruker = true)
     fun hentEnheterForBruker(navident: String): BrukerEnheterRespons {
         val grupper = hentGrupperForBruker(navident)
         val enheter =

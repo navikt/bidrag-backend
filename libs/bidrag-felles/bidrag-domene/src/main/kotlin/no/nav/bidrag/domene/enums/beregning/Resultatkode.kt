@@ -47,6 +47,13 @@ enum class Resultatkode(
         ResultatkodeType.AVSLAG,
     ),
 
+    // Beregnet avslag/opphør: BPs andel av U er under 50 % ved delt bosted
+    BIDRAG_IKKE_BEREGNET_DELT_BOSTED(
+        listOf(BisysResultatkode("ADN", BisysResultatkodeType.AVSLAG), BisysResultatkode("ODN", BisysResultatkodeType.OPPHØR)),
+        ResultatkodeType.BARNEBIDRAG,
+        ResultatkodeType.AVSLAG,
+    ),
+
     @JsonAlias("DIREKTE_OPPJØR")
     DIREKTE_OPPGJØR(listOf(BisysResultatkode("V")), ResultatkodeType.BARNEBIDRAG),
 
@@ -119,9 +126,10 @@ enum class Resultatkode(
     FORHØYET_FORSKUDD_11_ÅR_125_PROSENT(listOf(BisysResultatkode("125")), ResultatkodeType.FORSKUDD),
 
     // Resultat av beregning av særbidrag
+    SÆRBIDRAG_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
+
     @Deprecated("SÆRTILSKUDD er erstattet med SÆRBIDRAG", ReplaceWith("SÆRBIDRAG_INNVILGET"))
     SÆRTILSKUDD_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
-    SÆRBIDRAG_INNVILGET(listOf(BisysResultatkode("VS")), ResultatkodeType.SÆRBIDRAG),
 
     // Resultat av beregning av særbidrag
     @Deprecated("SÆRTILSKUDD er erstattet med SÆRBIDRAG", ReplaceWith("SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE"))
@@ -141,7 +149,13 @@ enum class Resultatkode(
         ResultatkodeType.AVSLAG,
     ),
 
-    AVSLAG(listOf(BisysResultatkode("A", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
+    AVSLAG(
+        listOf(
+            BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("AG", BisysResultatkodeType.AVSLAG),
+        ),
+        ResultatkodeType.AVSLAG,
+    ),
     AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
 
     PARTEN_BER_OM_OPPHØR(
@@ -211,7 +225,11 @@ enum class Resultatkode(
         ResultatkodeType.FORSKUDD,
     ),
     MANGLENDE_DOKUMENTASJON(
-        listOf(BisysResultatkode("AMD", BisysResultatkodeType.AVSLAG), BisysResultatkode("OMD", BisysResultatkodeType.OPPHØR)),
+        listOf(
+            BisysResultatkode("AMD", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("AID", BisysResultatkodeType.AVSLAG),
+            BisysResultatkode("OMD", BisysResultatkodeType.OPPHØR),
+        ),
         ResultatkodeType.AVSLAG,
         ResultatkodeType.DIREKTE_AVSLAG,
         ResultatkodeType.SÆRBIDRAG,
@@ -367,6 +385,11 @@ enum class Resultatkode(
         listOf(BisysResultatkode("IREG")),
         ResultatkodeType.BARNEBIDRAG,
         ResultatkodeType.FORSKUDD,
+    ),
+    IKKE_UNDERHOLDSPLIKT(
+        listOf(BisysResultatkode("AIU", BisysResultatkodeType.AVSLAG)),
+        ResultatkodeType.AVSLAG,
+        ResultatkodeType.SÆRBIDRAG,
     ),
 
     // Bisys resultatkoder (ikke brukt i ny løsning)

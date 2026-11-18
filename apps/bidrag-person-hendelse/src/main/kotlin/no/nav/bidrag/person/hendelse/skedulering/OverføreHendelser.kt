@@ -1,13 +1,12 @@
 package no.nav.bidrag.person.hendelse.skedulering
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import no.nav.bidrag.person.hendelse.database.Databasetjeneste
 import no.nav.bidrag.person.hendelse.database.Status
 import no.nav.bidrag.person.hendelse.exception.OverføringFeiletException
 import no.nav.bidrag.person.hendelse.integrasjon.bidrag.bisys.BisysMeldingsprodusjon
 import no.nav.bidrag.person.hendelse.konfigurasjon.egenskaper.Egenskaper
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -29,16 +28,16 @@ class OverføreHendelser(
     fun overføreHendelserTilBisys() {
         val sisteStatusoppdateringFør =
             LocalDateTime.now().minusMinutes(egenskaper.generelt.antallMinutterForsinketVideresending.toLong())
-        log.info("Ser etter hendelser med status mottatt og med siste statusoppdatering før $sisteStatusoppdateringFør")
+        log.info { "Ser etter hendelser med status mottatt og med siste statusoppdatering før $sisteStatusoppdateringFør" }
 
         val hendelserKlarTilOverføring =
             databasetjeneste.hendelsemottakDao.idTilHendelserSomErKlarTilOverføring(sisteStatusoppdateringFør)
-        log.info(
+        log.info {
             henteLoggmelding(
                 hendelserKlarTilOverføring.size,
                 egenskaper.generelt.maksAntallMeldingerSomOverfoeresTilBisysOmGangen,
-            ),
-        )
+            )
+        }
 
         // Begrenser antall hendelser som skal videresendes
         val hendelserSomOverføresIDenneOmgang =
@@ -51,10 +50,10 @@ class OverføreHendelser(
                     databasetjeneste.hendelsemottakDao.findAllById(hendelserSomOverføresIDenneOmgang).map { it.hendelse },
                 )
             databasetjeneste.oppdatereStatusPåHendelser(hendelserSomOverføresIDenneOmgang, Status.OVERFØRT)
-            log.info("Overføring fullført (for antall: $antallOverført)")
+            log.info { "Overføring fullført (for antall: $antallOverført)" }
         } catch (ofe: OverføringFeiletException) {
             databasetjeneste.oppdatereStatusPåHendelser(hendelserSomOverføresIDenneOmgang, Status.OVERFØRING_FEILET)
-            log.error("Overføring av ${hendelserSomOverføresIDenneOmgang.size} meldinger feilet")
+            log.error { "Overføring av ${hendelserSomOverføresIDenneOmgang.size} meldinger feilet" }
         }
     }
 
@@ -77,6 +76,6 @@ class OverføreHendelser(
     }
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
+        val log = KotlinLogging.logger {}
     }
 }

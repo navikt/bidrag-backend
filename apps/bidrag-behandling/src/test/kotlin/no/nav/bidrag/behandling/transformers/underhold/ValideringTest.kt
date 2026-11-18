@@ -1,7 +1,9 @@
 package no.nav.bidrag.behandling.transformers.underhold
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldBeNull
@@ -9,15 +11,22 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
+import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.dto.v2.underhold.DatoperiodeDto
+import no.nav.bidrag.behandling.dto.v2.underhold.OppdatereForpleiningRequest
+import no.nav.bidrag.behandling.utils.testdata.leggTilNotat
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -728,6 +737,105 @@ class ValideringTest {
                     it.periode shouldBe DatoperiodeDto(fom, tom)
                 }
             }
+        }
+    }
+
+    @Nested
+    open inner class ForpleiningsperiodeErGyldig {
+        private fun underholdskostnad(): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            return behandling.underholdskostnader.first()
+        }
+
+        @Test
+        fun `skal avvise ugyldig periode`() {
+            listOf(
+                // Til og med før fra og med
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 5, 31)),
+                // Uten varighet: beregningen bruker hele måneder
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 1)),
+                DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 29)),
+            ).forEach { periode ->
+                val feil =
+                    shouldThrow<HttpClientErrorException> {
+                        OppdatereForpleiningRequest(periode = periode, beløp = BigDecimal.valueOf(2000)).validere(underholdskostnad())
+                    }
+
+                feil.statusCode shouldBe HttpStatus.BAD_REQUEST
+            }
+        }
+
+        @Test
+        fun `skal avvise en id som ikke er positiv`() {
+            shouldThrow<HttpClientErrorException> {
+                OppdatereForpleiningRequest(
+                    id = 0,
+                    periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), null),
+                    beløp = BigDecimal.valueOf(2000),
+                ).validere(underholdskostnad())
+            }
+        }
+
+        @Test
+        fun `skal godta et beløp som er høyere enn underholdskostnaden`() {
+            // Forpleining som er lik eller høyere enn U gir avslag/opphør i beregningen, og skal ikke stoppes ved lagring
+            OppdatereForpleiningRequest(
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), null),
+                beløp = BigDecimal.valueOf(50000),
+            ).validere(underholdskostnad())
+        }
+
+        @Test
+        fun `skal godta en periode på én måned`() {
+            OppdatereForpleiningRequest(
+                periode = DatoperiodeDto(LocalDate.of(2024, 6, 1), LocalDate.of(2024, 6, 30)),
+                beløp = BigDecimal.valueOf(2000),
+            ).validere(underholdskostnad())
+        }
+    }
+
+    @Nested
+    open inner class BegrunnelseForForpleining {
+        private fun behandlingMedForpleining(): Underholdskostnad {
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.harTilsynsordning = true
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.of(2024, 1, 1),
+                    tom = null,
+                    beløp = BigDecimal(2000),
+                ),
+            )
+            return underholdskostnad
+        }
+
+        @Test
+        fun `skal kreve begrunnelse når kun forpleining er registrert`() {
+            behandlingMedForpleining().manglerBegrunnelse().shouldBeTrue()
+        }
+
+        @Test
+        fun `skal ikke kreve begrunnelse når begrunnelsen er skrevet`() {
+            val underholdskostnad = behandlingMedForpleining()
+            underholdskostnad.behandling.leggTilNotat(
+                "Barnet bor på institusjon",
+                NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD,
+                underholdskostnad.rolle,
+            )
+
+            underholdskostnad.manglerBegrunnelse().shouldBeFalse()
         }
     }
 }

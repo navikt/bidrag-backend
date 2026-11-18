@@ -5,8 +5,6 @@ springdoc:
     path: /
     showCommonExtensions: true
 
-logging.level:
-  secureLogger: DEBUG
 
 spring:
   main:

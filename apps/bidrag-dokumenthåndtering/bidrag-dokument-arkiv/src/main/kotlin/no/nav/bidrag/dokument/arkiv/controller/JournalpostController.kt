@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
@@ -12,13 +13,11 @@ import no.nav.bidrag.dokument.arkiv.dto.Journalpost
 import no.nav.bidrag.dokument.arkiv.model.Discriminator
 import no.nav.bidrag.dokument.arkiv.model.ResourceByDiscriminator
 import no.nav.bidrag.dokument.arkiv.service.EndreJournalpostService
-import no.nav.bidrag.dokument.arkiv.service.InnsendingService
 import no.nav.bidrag.dokument.arkiv.service.JournalpostService
 import no.nav.bidrag.transport.dokument.EndreJournalpostCommand
 import no.nav.bidrag.transport.dokument.JournalpostDto
 import no.nav.bidrag.transport.dokument.JournalpostResponse
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -35,13 +34,8 @@ import org.springframework.web.bind.annotation.RestController
 class JournalpostController(
     journalpostService: ResourceByDiscriminator<JournalpostService?>,
     private val endreJournalpostService: EndreJournalpostService,
-    private val innsendingService: InnsendingService,
 ) : BaseController() {
-    private val journalpostService: JournalpostService
-
-    init {
-        this.journalpostService = journalpostService.get(Discriminator.REGULAR_USER)
-    }
+    private val journalpostService: JournalpostService = journalpostService.get(Discriminator.REGULAR_USER)
 
     @GetMapping("$ROOT_JOURNAL/{joarkJournalpostId}")
     @Operation(
@@ -63,7 +57,6 @@ class JournalpostController(
         @PathVariable joarkJournalpostId: String,
         @RequestParam(required = false) saksnummer: String?,
     ): ResponseEntity<JournalpostResponse> {
-        LOGGER.info("Henter journalpost $joarkJournalpostId med saksnummer $saksnummer")
         val kildesystemIdenfikator = KildesystemIdenfikator(joarkJournalpostId)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix() ||
             erIkkePrefixetMedJoark(
@@ -106,6 +99,26 @@ class JournalpostController(
             )
     }
 
+    @GetMapping("$ROOT_JOURNAL/eksternreferanse/{eksternReferanseId}")
+    @Operation(
+        description = "Hent journalpost i Joark basert på eksternReferanseId (referanseId brukt ved opprettelse)",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Journalpost er hentet"),
+            ApiResponse(responseCode = "404", description = "Fant ikke journalpost med gitt eksternReferanseId"),
+        ],
+    )
+    fun hentJournalpostForEksternReferanseId(@PathVariable eksternReferanseId: String): ResponseEntity<JournalpostResponse> {
+        LOGGER.debug { "Henter journalpost med eksternReferanseId $eksternReferanseId" }
+        return journalpostService.hentJournalpostForEksternReferanseId(eksternReferanseId)
+            ?.let { ResponseEntity.ok(it.tilJournalpostResponse()) }
+            ?: ResponseEntity.notFound()
+                .header(HttpHeaders.WARNING, "Fant ingen journalpost med eksternReferanseId $eksternReferanseId")
+                .build()
+    }
+
     private fun erIkkePrefixetMedJoark(joarkJournalpostId: String): Boolean = !joarkJournalpostId.startsWith(
         KildesystemIdenfikator.PREFIX_JOARK_COMPLETE,
     )
@@ -125,10 +138,7 @@ class JournalpostController(
             ),
         ],
     )
-    fun hentJournal(@PathVariable saksnummer: String, @RequestParam fagomrade: List<String> = emptyList()): ResponseEntity<List<JournalpostDto>> {
-        LOGGER.info("Henter journal for saksnummer $saksnummer og tema $fagomrade")
-        return ResponseEntity.ok(journalpostService.finnJournalposter(saksnummer, fagomrade))
-    }
+    fun hentJournal(@PathVariable saksnummer: String, @RequestParam fagomrade: List<String> = emptyList()): ResponseEntity<List<JournalpostDto>> = ResponseEntity.ok(journalpostService.finnJournalposter(saksnummer, fagomrade))
 
     @PatchMapping("$ROOT_JOURNAL/{joarkJournalpostId}")
     @Operation(
@@ -150,8 +160,7 @@ class JournalpostController(
         @PathVariable joarkJournalpostId: String,
         @RequestHeader(EnhetFilter.X_ENHET_HEADER) enhet: String?,
     ): ResponseEntity<Void> {
-        LOGGER.info("Mottatt oppdater journalpost $joarkJournalpostId kall")
-        SECURE_LOGGER.info {
+        SECURE_LOGGER.debug {
             "Oppdater journalpost $joarkJournalpostId med body: $endreJournalpostCommand"
         }
         val kildesystemIdenfikator = KildesystemIdenfikator(joarkJournalpostId)
@@ -161,7 +170,7 @@ class JournalpostController(
                 joarkJournalpostId,
                 endreJournalpostCommand,
             )
-            LOGGER.warn(msgBadRequest)
+            LOGGER.warn { msgBadRequest }
             return ResponseEntity
                 .badRequest()
                 .header(HttpHeaders.WARNING, msgBadRequest)
@@ -177,6 +186,6 @@ class JournalpostController(
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(JournalpostController::class.java)
+        private val LOGGER = KotlinLogging.logger { }
     }
 }

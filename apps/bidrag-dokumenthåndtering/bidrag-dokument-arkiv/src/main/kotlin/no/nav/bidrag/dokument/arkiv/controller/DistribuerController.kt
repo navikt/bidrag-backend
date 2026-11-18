@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import no.nav.bidrag.commons.util.KildesystemIdenfikator
-import no.nav.bidrag.dokument.arkiv.SECURE_LOGGER
 import no.nav.bidrag.dokument.arkiv.consumer.BestemKanalResponse
 import no.nav.bidrag.dokument.arkiv.dto.BestemDistribusjonKanalRequest
 import no.nav.bidrag.dokument.arkiv.dto.DistribuerJournalpostRequestInternal
@@ -15,7 +14,6 @@ import no.nav.bidrag.transport.dokument.DistribusjonInfoDto
 import no.nav.bidrag.transport.dokument.JournalpostId
 import no.nav.security.token.support.core.api.Protected
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -50,14 +48,9 @@ class DistribuerController(private val distribuerJournalpostService: DistribuerJ
         @RequestParam(required = false, name = "batchId") batchIdHeader: String?,
     ): ResponseEntity<DistribuerJournalpostResponse> {
         val batchId = if (Strings.isEmpty(batchIdHeader)) null else batchIdHeader
-        LOGGER.info(
-            "Distribuerer journalpost $joarkJournalpostId" +
-                if (Strings.isNotEmpty(batchId)) String.format(" og batchId %s", batchId) else "",
-        )
-        val kildesystemIdenfikator = KildesystemIdenfikator(joarkJournalpostId!!)
+        val kildesystemIdenfikator = KildesystemIdenfikator(joarkJournalpostId)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             val msgBadRequest = String.format("Id har ikke riktig prefix: %s", joarkJournalpostId)
-            LOGGER.warn(msgBadRequest)
             return ResponseEntity
                 .badRequest()
                 .header(HttpHeaders.WARNING, msgBadRequest)
@@ -88,11 +81,9 @@ class DistribuerController(private val distribuerJournalpostService: DistribuerJ
     )
     @ResponseBody
     fun kanDistribuerJournalpost(@PathVariable journalpostId: String): ResponseEntity<Void> {
-        LOGGER.info("Sjekker om journalpost $journalpostId kan distribueres")
         val kildesystemIdenfikator = KildesystemIdenfikator(journalpostId)
         if (kildesystemIdenfikator.erUkjentPrefixEllerHarIkkeTallEtterPrefix()) {
             val msgBadRequest = String.format("Id har ikke riktig prefix: %s", journalpostId)
-            LOGGER.warn(msgBadRequest)
             return ResponseEntity
                 .badRequest()
                 .header(HttpHeaders.WARNING, msgBadRequest)
@@ -125,11 +116,9 @@ class DistribuerController(private val distribuerJournalpostService: DistribuerJ
     )
     @ResponseBody
     fun hentDistribusjonsInfo(@PathVariable journalpostId: String): ResponseEntity<DistribusjonInfoDto> {
-        LOGGER.info("Henter distribusjonsinfo for journalpost $journalpostId")
         val kildesystemIdenfikator = JournalpostId(journalpostId)
         if (!kildesystemIdenfikator.erSystemJoark) {
             val msgBadRequest = String.format("Id har ikke riktig prefix: %s", journalpostId)
-            LOGGER.warn(msgBadRequest)
             return ResponseEntity
                 .badRequest()
                 .header(HttpHeaders.WARNING, msgBadRequest)
@@ -137,10 +126,7 @@ class DistribuerController(private val distribuerJournalpostService: DistribuerJ
         }
 
         return distribuerJournalpostService.hentDistribusjonsInfo(kildesystemIdenfikator.idNumerisk!!)
-            ?.let {
-                SECURE_LOGGER.info { "Hentet distribusjonsinfo $it for journalpost $journalpostId" }
-                ResponseEntity.ok(it)
-            } ?: ResponseEntity.noContent().build()
+            ?.let { ResponseEntity.ok(it) } ?: ResponseEntity.noContent().build()
     }
 
     @PostMapping("$ROOT_JOURNAL/distribuer/kanal")
@@ -155,8 +141,4 @@ class DistribuerController(private val distribuerJournalpostService: DistribuerJ
     )
     @ResponseBody
     fun hentDistribusjonKanal(@RequestBody request: BestemDistribusjonKanalRequest): BestemKanalResponse = distribuerJournalpostService.hentDistribusjonKanal(request)
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(DistribuerController::class.java)
-    }
 }

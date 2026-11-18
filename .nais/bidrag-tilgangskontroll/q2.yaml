@@ -3,6 +3,7 @@ min_replicas: 1
 ingresses:
   - https://bidrag-tilgangskontroll.intern.dev.nav.no
 env:
+  CACHE_VALKEY_INSTANCE: tilgangskontroll-q2
   BIDRAG_SAK_URL: https://bidrag-sak-q2.dev-fss-pub.nais.io
   BIDRAG_SAK_SCOPE: dev-fss.bidrag.bidrag-sak-q2
   TILGANGSMASKIN_URL: https://tilgangsmaskin.intern.dev.nav.no
@@ -55,6 +56,12 @@ azure_access_inbound:
     namespace: bidrag
     cluster: dev-gcp
   - application: bidrag-localauth
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-henvendelse-q2
+    namespace: bidrag
+    cluster: dev-gcp
+  - application: bidrag-oppgave-q2
     namespace: bidrag
     cluster: dev-gcp
 unleash:

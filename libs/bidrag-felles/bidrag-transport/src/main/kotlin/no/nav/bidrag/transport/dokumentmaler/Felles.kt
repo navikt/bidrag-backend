@@ -23,6 +23,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUnderholds
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ResultatFraVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragAldersjustering
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningIndeksregulering
+import no.nav.bidrag.transport.behandling.felles.grunnlag.erBeregnetAvslagBarnebidrag
 import no.nav.bidrag.transport.behandling.vedtak.response.erIndeksEllerAldersjustering
 import no.nav.bidrag.transport.dokumentmaler.notat.EndeligOrkestrertVedtak
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatMalType
@@ -166,7 +167,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
         fun tilResultatkodeVisningsnavn(): String = when {
             erOpphør -> {
                 if (beregningsdetaljer?.sluttberegning?.ikkeOmsorgForBarnet == true ||
-                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true
+                    beregningsdetaljer?.sluttberegning?.barnetErSelvforsørget == true ||
+                    beregningsdetaljer?.sluttberegning?.resultat?.erBeregnetAvslagBarnebidrag() == true
                 ) {
                     beregningsdetaljer.sluttberegning.resultatVisningsnavn!!.intern
                 } else if (resultatFraVedtak?.omgjøringsvedtak == true && resultatKode != null) {
@@ -212,6 +214,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
             val bpHarEvne: Boolean,
             val antallBarnIHusstanden: Double? = null,
             val forskuddssats: BigDecimal = BigDecimal.ZERO,
+            val inntektBBMultiplikator: BigDecimal = BigDecimal.valueOf(30),
+            val maksInntektBBMultiplikator: BigDecimal = BigDecimal.valueOf(100),
             val barnetilleggBM: DokumentmalDelberegningBarnetilleggDto? = null,
             val barnetilleggBP: DokumentmalDelberegningBarnetilleggDto? = null,
             val voksenIHusstanden: Boolean? = null,
@@ -243,7 +247,8 @@ data class DokumentmalResultatBidragsberegningBarnDto(
 
             val deltBosted get() =
                 sluttberegning?.bidragJustertForDeltBosted == true ||
-                    sluttberegning?.resultat == Resultatkode.BIDRAG_JUSTERT_FOR_DELT_BOSTED
+                    sluttberegning?.resultat == Resultatkode.BIDRAG_JUSTERT_FOR_DELT_BOSTED ||
+                    sluttberegning?.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED
         }
     }
 }
@@ -280,7 +285,7 @@ data class DokumentmalSluttberegningBarnebidragDetaljer(
     val resultatVisningsnavn: Visningsnavn?,
 ) {
     @get:JsonIgnore
-    val erResultatAvslag get() = listOf(Resultatkode.IKKE_OMSORG, Resultatkode.BARNET_ER_SELVFORSØRGET).contains(resultat)
+    val erResultatAvslag get() = resultat.erBeregnetAvslagBarnebidrag()
 }
 
 data class DokumentmalDelberegningBarnetilleggDto(

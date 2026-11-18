@@ -28,15 +28,9 @@ class BehandleOppgaveHendelseService(
     journalpostServices: ResourceByDiscriminator<JournalpostService?>,
     private val meterRegistry: MeterRegistry,
 ) {
-    private val dokarkivConsumer: DokarkivConsumer
-    private val oppgaveConsumer: OppgaveConsumer
-    private val journalpostService: JournalpostService
-
-    init {
-        dokarkivConsumer = dokarkivConsumers.get(Discriminator.SERVICE_USER)
-        oppgaveConsumer = oppgaveConsumers.get(Discriminator.SERVICE_USER)
-        journalpostService = journalpostServices.get(Discriminator.SERVICE_USER)
-    }
+    private val dokarkivConsumer: DokarkivConsumer = dokarkivConsumers.get(Discriminator.SERVICE_USER)
+    private val oppgaveConsumer: OppgaveConsumer = oppgaveConsumers.get(Discriminator.SERVICE_USER)
+    private val journalpostService: JournalpostService = journalpostServices.get(Discriminator.SERVICE_USER)
 
     // Returoppgave opprettes før journalpost retur attributter oppdateres. Det kan derfor hende at
     // journalpost ikke er markert at det har kommet i retur og må derfor prøves flere ganger
@@ -47,7 +41,7 @@ class BehandleOppgaveHendelseService(
     )
     fun behandleReturOppgaveOpprettetHendelse(oppgaveHendelse: OppgaveKafkaHendelse) {
         val oppgave = validerOgHentOppgave(oppgaveHendelse) ?: return
-        LOGGER.info {
+        LOGGER.debug {
             "Sjekker om det skal legges til returlogg med dagens dato på journalpost ${oppgave.journalpostId}"
         }
         journalpostService
@@ -59,7 +53,7 @@ class BehandleOppgaveHendelseService(
                             opprettKommentarSomLeggesTilReturlogg(journalpost),
                         ),
                     )
-                    LOGGER.info {
+                    LOGGER.debug {
                         "Lagt til ny returlogg med returdato ${LocalDate.now()} på journalpost ${journalpost.journalpostId} med dokumentdato ${journalpost.hentDatoDokument()}."
                     }
                 } else if (!journalpost.isDistribusjonKommetIRetur()) {
@@ -118,11 +112,11 @@ class BehandleOppgaveHendelseService(
                         kommentar,
                     ),
                 )
-                LOGGER.info {
+                LOGGER.debug {
                     "Oppdatert returoppgave ${oppgave.id} saksreferanse til ${journalpost.hentSaksnummer()} og lagt til kommentar $kommentar. JournalpostId=${journalpost.journalpostId}"
                 }
             } else {
-                LOGGER.info {
+                LOGGER.debug {
                     "Returoppgave ${oppgave.id} har allerede saksreferanse ${journalpost.hentSaksnummer()}. Gjør ingen endringer. JournalpostId=${journalpost.journalpostId}"
                 }
             }
@@ -136,7 +130,7 @@ class BehandleOppgaveHendelseService(
     private fun Journalpost.harReturKommetFraNavNo() = distribuertTilAdresse() == null && tilleggsopplysninger.isOriginalDistribuertDigitalt()
 
     private fun opprettKommentarSomLeggesTilOppgave(journalpost: Journalpost): String? {
-        SECURE_LOGGER.info {
+        SECURE_LOGGER.debug {
             "Journalpost kommet retur med følgende detaljer origDistDigitalt=${journalpost.tilleggsopplysninger.isOriginalDistribuertDigitalt()} " +
                 "jpId=${journalpost.journalpostId} status=${journalpost.journalstatus} adresse=${journalpost.distribuertTilAdresse()}"
         }

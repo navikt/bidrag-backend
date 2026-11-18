@@ -814,6 +814,80 @@ class GrunnlagMappingTest {
         val skattegrunnlagGrunnlagsreferanseListe = listOf("skattegrunnlag_2023")
 
         @Test
+        fun `skal bare mappe egne inntekter for barn det bygges grunnlag for`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            behandling.søknadsbarn.forEach { barn ->
+                val barnGrunnlag = personobjekter.single { it.referanse == barn.tilGrunnlagsreferanse() }
+                listOf(true, false).forEach { inkluderAlle ->
+                    val grunnlag =
+                        behandling.tilGrunnlagInntekt(
+                            personobjekter,
+                            søknadsbarn = barnGrunnlag,
+                            byggForRoller = listOf(barn),
+                            inkluderAlle = inkluderAlle,
+                        )
+                    val antallInntekterPerRolle = if (inkluderAlle) 3 else 2
+
+                    assertSoftly {
+                        grunnlag shouldHaveSize antallInntekterPerRolle * 3
+                        grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                            mapOf(
+                                grunnlagBm.referanse to antallInntekterPerRolle,
+                                grunnlagBp.referanse to antallInntekterPerRolle,
+                                barnGrunnlag.referanse to antallInntekterPerRolle,
+                            )
+                        grunnlag.forEach {
+                            it.type shouldBe Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE
+                            if (!inkluderAlle) {
+                                it.innholdTilObjekt<InntektsrapporteringPeriode>().valgt shouldBe true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Test
+        fun `skal mappe egne inntekter for alle barn når byggForRoller ikke er angitt`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            val grunnlag = behandling.tilGrunnlagInntekt(personobjekter)
+
+            assertSoftly {
+                grunnlag shouldHaveSize 12
+                grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                    personobjekter.associate { it.referanse to 3 }
+            }
+        }
+
+        @Test
+        fun `skal bare mappe inntekter for voksne når byggForRoller ikke inneholder barn`(): Unit = behandlingTilGrunnlagMapping.run {
+            val behandling = opprettBehandlingMedInntekterForAlleRoller()
+
+            val grunnlag =
+                behandling.tilGrunnlagInntekt(
+                    personobjekter,
+                    byggForRoller = behandling.roller.filter { it.rolletype != Rolletype.BARN },
+                )
+
+            assertSoftly {
+                grunnlag shouldHaveSize 6
+                grunnlag.groupingBy { it.gjelderReferanse }.eachCount() shouldBe
+                    mapOf(grunnlagBm.referanse to 3, grunnlagBp.referanse to 3)
+            }
+        }
+
+        private fun opprettBehandlingMedInntekterForAlleRoller(): Behandling {
+            val behandling = oppretteTestbehandling(inkludereBp = true)
+            listOf(testdataBM, testdataBP, testdataBarn1, testdataBarn2).forEach { person ->
+                behandling.grunnlag.addAll(opprettInntekterBearbeidetGrunnlag(behandling, person))
+                behandling.inntekter.addAll(opprettInntekter(behandling, person))
+            }
+            return behandling
+        }
+
+        @Test
         fun `skal mappe inntekt til grunnlag`(): Unit = behandlingTilGrunnlagMapping.run {
             val behandling = oppretteTestbehandling()
             behandling.grunnlag =
@@ -1880,6 +1954,80 @@ class GrunnlagMappingTest {
                     erMedIVedtaksdokumentet shouldBe false
                     type shouldBe no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType.INNTEKT
                 }
+            }
+        }
+
+        @Test
+        fun `skal opprette grunnlag for notater ved direkte avslag med inntekt og utgifter`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            behandling.leggTilNotat("virkning", NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT)
+            behandling.leggTilNotat("inntekt bm", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat(
+                "inntekt bm omgjort",
+                NotatGrunnlag.NotatType.INNTEKT,
+                behandling.bidragsmottaker,
+                erDelAvBehandlingen = false,
+            )
+            behandling.leggTilNotat("utgifter", NotatGrunnlag.NotatType.UTGIFTER)
+            behandling.leggTilNotat("boforhold", NotatGrunnlag.NotatType.BOFORHOLD, behandling.bidragsmottaker)
+
+            val notater = behandling.byggGrunnlagNotaterDirekteAvslag().map { it to it.innholdTilObjekt<NotatGrunnlag>() }
+
+            assertSoftly(notater) {
+                shouldHaveSize(4)
+                map { it.second.type } shouldContainAll
+                    listOf(
+                        NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT,
+                        NotatGrunnlag.NotatType.INNTEKT,
+                        NotatGrunnlag.NotatType.UTGIFTER,
+                    )
+                none { it.second.type == NotatGrunnlag.NotatType.BOFORHOLD } shouldBe true
+
+                val inntektsnotater = filter { it.second.type == NotatGrunnlag.NotatType.INNTEKT }
+                inntektsnotater shouldHaveSize 2
+                inntektsnotater.forEach {
+                    it.first.gjelderReferanse shouldBe behandling.bidragsmottaker!!.tilGrunnlagsreferanse()
+                }
+                inntektsnotater.single { !it.second.fraOmgjortVedtak }.second.innhold shouldBe "inntekt bm"
+                inntektsnotater.single { it.second.fraOmgjortVedtak }.second.innhold shouldBe "inntekt bm omgjort"
+
+                single { it.second.type == NotatGrunnlag.NotatType.UTGIFTER }.second.innhold shouldBe "utgifter"
+            }
+        }
+
+        @Test
+        fun `skal ikke opprette grunnlag for notater ved direkte avslag hvis notater er tomme`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            behandling.leggTilNotat("", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat("", NotatGrunnlag.NotatType.UTGIFTER)
+
+            behandling.byggGrunnlagNotaterDirekteAvslag().shouldBeEmpty()
+        }
+
+        @Test
+        fun `skal bare opprette inntektsnotat for søknadsbarn det bygges grunnlag for`(): Unit = mapper.run {
+            val behandling = oppretteTestbehandling(true, setteDatabaseider = true)
+            val barn1 = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+            val barn2 = behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }
+            behandling.leggTilNotat("inntekt bm", NotatGrunnlag.NotatType.INNTEKT, behandling.bidragsmottaker)
+            behandling.leggTilNotat("inntekt barn1", NotatGrunnlag.NotatType.INNTEKT, barn1)
+            behandling.leggTilNotat("inntekt barn2", NotatGrunnlag.NotatType.INNTEKT, barn2)
+
+            assertSoftly(behandling.byggGrunnlagInntekter().map { it.gjelderReferanse }) {
+                shouldHaveSize(3)
+            }
+            assertSoftly(behandling.byggGrunnlagInntekter(listOf(barn1)).map { it.gjelderReferanse }) {
+                shouldHaveSize(2)
+                shouldContainAll(behandling.bidragsmottaker!!.tilGrunnlagsreferanse(), barn1.tilGrunnlagsreferanse())
+            }
+            assertSoftly(
+                behandling
+                    .byggGrunnlagNotater(listOf(barn1))
+                    .filter { it.innholdTilObjekt<NotatGrunnlag>().type == NotatGrunnlag.NotatType.INNTEKT }
+                    .map { it.gjelderReferanse },
+            ) {
+                shouldHaveSize(2)
+                shouldContainAll(behandling.bidragsmottaker!!.tilGrunnlagsreferanse(), barn1.tilGrunnlagsreferanse())
             }
         }
     }

@@ -1,14 +1,23 @@
 package no.nav.bidrag.oppgave.config
 
+import no.nav.bidrag.mdc.MdcFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.env.Environment
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter
 import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
-class SecurityConfig {
+class SecurityConfig(environment: Environment) {
+
+    private val mdcFilter = MdcFilter(
+        appName = environment.getRequiredProperty("spring.application.name"),
+        userNameSupplier = { brukernavnFraJwt() },
+    )
 
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -30,6 +39,7 @@ class SecurityConfig {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
             csrf { disable() }
+            addFilterAfter<BearerTokenAuthenticationFilter>(mdcFilter)
         }
         return http.build()
     }

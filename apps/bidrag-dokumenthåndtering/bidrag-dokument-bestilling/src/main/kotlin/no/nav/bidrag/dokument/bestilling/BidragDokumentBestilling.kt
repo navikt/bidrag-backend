@@ -1,8 +1,6 @@
 package no.nav.bidrag.dokument.bestilling
 
 import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -12,7 +10,6 @@ import org.springframework.boot.security.autoconfigure.actuate.web.servlet.Manag
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
 
 const val PROFILE_NAIS = "nais"
-val SIKKER_LOGG: Logger = LoggerFactory.getLogger("secureLogger")
 
 @SpringBootApplication(
     exclude = [

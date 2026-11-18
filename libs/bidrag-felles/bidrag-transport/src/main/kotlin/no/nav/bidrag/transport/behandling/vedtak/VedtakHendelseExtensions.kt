@@ -7,6 +7,7 @@ import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedIdent
+import kotlin.text.all
 
 val VedtakHendelse.søknadsider
     get() =
@@ -36,6 +37,7 @@ val VedtakHendelse.behandlingId
             ?.find {
                 it.kilde == BehandlingsrefKilde.BEHANDLING_ID.name
             }?.referanse
+            ?.takeIf { it.all { char -> char.isDigit() } }
             ?.toLong()
 
 fun VedtakHendelse.erDelvedtak() = this.stønadsendringListe?.any { se ->

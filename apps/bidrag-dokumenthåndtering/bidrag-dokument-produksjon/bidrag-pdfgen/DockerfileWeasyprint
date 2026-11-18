@@ -23,9 +23,10 @@ RUN apt-get update -qq \
         libpangoft2-1.0-0 \
         libharfbuzz0b \
         libcairo2 \
-        libgdk-pixbuf-2.0-0 \
         libffi8 \
-        shared-mime-info \
+        # No libgdk-pixbuf-2.0-0/shared-mime-info: WeasyPrint decodes images
+        # with Pillow and never loads gdk-pixbuf, and those packages are the
+        # only thing pulling in libxml2 (CVE-2026-6653, unfixed in bookworm).
         # PDF post-processing (flatten/merge)
         qpdf \
         # Fonts: Source Sans is the NAV/Aksel typeface used by the templates.

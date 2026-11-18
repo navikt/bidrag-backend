@@ -1,4 +1,6 @@
 import { Command } from "commander";
+import { dirname } from "node:path";
+import { config } from "../config";
 
 const chalk = require("chalk");
 import Store from "electron-store";
@@ -17,8 +19,7 @@ const schema = {
     default: "mockdata/documents",
   },
 };
-//@ts-ignore
-const store = new Store({ projectName: "bidrag-cli", schema });
+const store = new Store({ cwd: dirname(config.path), schema });
 
 export default function init(program: Command) {
   const configCommand = program

@@ -35,7 +35,7 @@
         <mirror>
             <id>Nexus NAV Repository Group</id>
             <mirrorOf
-            >external:*,!public-snapshots,!internal-mirror-github-navikt,!nav-github-mirror</mirrorOf>
+            >external:*,!public-snapshots</mirrorOf>
             <url>https://repo.adeo.no/repository/maven-public</url>
         </mirror>
     </mirrors>
@@ -50,14 +50,9 @@
                     </releases>
                     <snapshots>
                         <enabled>true</enabled>
-                        <updatePolicy>always</updatePolicy>
+                        <updatePolicy>daily</updatePolicy>
                     </snapshots>
                     <url>https://repo.adeo.no/repository/maven-public-snapshots</url>
-                </repository>
-                <repository>
-                    <id>internal-mirror-github-navikt</id>
-                    <url
-                    >https://repo.adeo.no/repository/github-package-registry-navikt/</url>
                 </repository>
             </repositories>
             <pluginRepositories>
@@ -68,7 +63,7 @@
                     </releases>
                     <snapshots>
                         <enabled>true</enabled>
-                        <updatePolicy>always</updatePolicy>
+                        <updatePolicy>daily</updatePolicy>
                     </snapshots>
                     <url>https://repo.adeo.no/repository/maven-snapshots</url>
                 </pluginRepository>

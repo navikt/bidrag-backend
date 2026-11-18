@@ -1,8 +1,12 @@
 package no.nav.bidrag.behandling
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import io.mockk.clearMocks
+import io.mockk.isMockKMock
 import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import no.nav.bidrag.behandling.utils.StubUtils
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.junit.jupiter.api.AfterEach
@@ -40,7 +44,19 @@ class SpringTestRunner {
 
     @BeforeEach
     fun mockkUnleash() {
-        mockkObject(UnleashFeaturesProvider)
+        if (isMockKMock(UnleashFeaturesProvider, objectMock = true)) {
+            clearMocks(UnleashFeaturesProvider)
+        } else {
+            mockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @BeforeEach
+    fun pekAppContextTilGjeldendeKontekst() {
+        // AppContext er statisk og peker på sist startede Spring-kontekst. Når en cachet kontekst gjenbrukes
+        // må den pekes tilbake, ellers går oppslag via AppContext mot feil kontekst (og feil WireMock-server).
+        unmockkObject(AppContext)
+        AppContext().setApplicationContext(applicationContext)
     }
 
     @AfterEach

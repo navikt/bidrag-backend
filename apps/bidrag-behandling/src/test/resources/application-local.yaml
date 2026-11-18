@@ -17,10 +17,6 @@ BIDRAG_VEDTAK_LOCAL_URL: http://localhost:8889
 BIDRAG_VEDTAK_SCOPE: dev-gcp.bidrag.bidrag-vedtak-q2
 BIDRAG_SAMHANDLER_SCOPE: dev-gcp.bidrag.bidrag-samhandler-q2
 BIDRAG_SAMHANDLER_URL: https://bidrag-samhandler-q2.intern.dev.nav.no
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.orm.jdbc.bind: TRACE
 
 KAFKA_VEDTAK_TOPIC: bidrag.vedtak-test
 
@@ -162,11 +158,3 @@ BIDRAG_DOKUMENT_SCOPE: dev-fss.bidrag.bidrag-dokument-feature
 KODEVERK_URL: https://bidrag-kodeverk.intern.dev.nav.no
 OPPGAVE_URL: https://oppgave-q1.dev-fss-pub.nais.io
 OPPGAVE_SCOPE: dev-fss.oppgavehandtering.oppgave-q1
-#logging:
-#  level:
-#    org:
-#      hibernate:
-#        type:
-#          descriptor:
-#            sql: trace
-#      flywaydb: debug

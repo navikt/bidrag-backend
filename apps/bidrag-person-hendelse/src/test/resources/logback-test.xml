@@ -5,5 +5,7 @@
     <property name="CONSOLE_LOG_PATTERN"
               value="%d [%-5level] [%thread] %logger{5} %replace(- [%X{consumerId}, %X{callId}, %X{userId}] ){'- \[, , \] ',''}- %m%n"/>
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <root level="ERROR" />
+    <logger name="secureLogger" level="OFF" additivity="false" />
 
 </configuration>

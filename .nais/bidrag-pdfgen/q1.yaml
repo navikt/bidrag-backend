@@ -1,4 +1,2 @@
-ingresses:
-  - https://bidrag-pdfgen.intern.dev.nav.no
 azure_access_inbound:
   - application: bidrag-dokument-produksjon

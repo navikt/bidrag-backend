@@ -1,5 +1,6 @@
 package no.nav.bidrag.vedtak.controller
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.annotation.Timed
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
 import no.nav.bidrag.transport.behandling.vedtak.request.HentManuelleVedtakRequest
 import no.nav.bidrag.transport.behandling.vedtak.request.HentVedtakForStønadRequest
@@ -16,12 +19,10 @@ import no.nav.bidrag.transport.behandling.vedtak.request.OpprettVedtakRequestDto
 import no.nav.bidrag.transport.behandling.vedtak.response.HentVedtakForStønadResponse
 import no.nav.bidrag.transport.behandling.vedtak.response.OpprettVedtakResponseDto
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakDto
-import no.nav.bidrag.vedtak.SECURE_LOGGER
 import no.nav.bidrag.vedtak.exception.custom.ConflictException
 import no.nav.bidrag.vedtak.service.VedtakService
 import no.nav.bidrag.vedtak.util.VedtakUtil.Companion.tilJson
 import no.nav.security.token.support.core.api.Protected
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -71,12 +72,11 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: OpprettVedtakRequestDto,
     ): ResponseEntity<OpprettVedtakResponseDto>? {
-        SECURE_LOGGER.info("Følgende request for å opprette vedtak mottatt: ${tilJson(request)}")
         val vedtakOpprettet = vedtakService.opprettVedtak(
             vedtakRequest = request,
             vedtaksforslag = false,
         )
-        LOGGER.info("Vedtak er opprettet med følgende id: ${vedtakOpprettet.vedtaksid}")
+        LOGGER.info { "Vedtak er opprettet med følgende id: ${vedtakOpprettet.vedtaksid}" }
         return ResponseEntity(vedtakOpprettet, HttpStatus.OK)
     }
 
@@ -100,9 +100,8 @@ class VedtakController(private val vedtakService: VedtakService) {
         @PathVariable @NotNull
         vedtaksid: Int,
     ): ResponseEntity<VedtakDto> {
-        LOGGER.info("Request for å hente vedtak med følgende id ble mottatt: $vedtaksid")
         val vedtakFunnet = vedtakService.hentVedtak(vedtaksid)
-        SECURE_LOGGER.info("Følgende vedtak ble hentet: $vedtaksid ${tilJson(vedtakFunnet)}")
+        secureLogger.debug { "Følgende vedtak ble hentet: $vedtaksid ${tilJson(vedtakFunnet)}".sanitizeForLog() }
         return ResponseEntity(vedtakFunnet, HttpStatus.OK)
     }
 
@@ -132,14 +131,13 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: OpprettVedtakRequestDto,
     ): ResponseEntity<Int>? {
-        SECURE_LOGGER.info("Følgende request mottatt om å oppdatere vedtak med id $vedtaksid: ${tilJson(request)}")
         val vedtakOppdatert = try {
             vedtakService.oppdaterVedtak(vedtaksid, request)
         } catch (e: Exception) {
-            SECURE_LOGGER.error("Følgende request feilet om å oppdatere vedtak med id $vedtaksid: ${tilJson(request)}")
+            secureLogger.error { "Følgende request feilet om å oppdatere vedtak med id $vedtaksid: ${tilJson(request)}".sanitizeForLog() }
             throw e
         }
-        LOGGER.info("Vedtak med id $vedtakOppdatert er oppdatert")
+        secureLogger.info { "Vedtak med id $vedtakOppdatert er oppdatert ut i fra id: $vedtaksid, med request: ${tilJson(request)}".sanitizeForLog() }
         return ResponseEntity(vedtakOppdatert, HttpStatus.OK)
     }
 
@@ -162,9 +160,9 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: HentVedtakForStønadRequest,
     ): ResponseEntity<HentVedtakForStønadResponse>? {
-        SECURE_LOGGER.info("Følgende request for å hente vedtak for stønad ble mottatt: ${tilJson(request)}")
+        secureLogger.debug { "Følgende request for å hente vedtak for stønad ble mottatt: ${tilJson(request)}".sanitizeForLog() }
         val respons = vedtakService.hentVedtakForStønad(request)
-        SECURE_LOGGER.info("Følgende endringsvedtak ble hentet for request: ${tilJson(request)}: ${tilJson(respons)}")
+        secureLogger.debug { "Følgende endringsvedtak ble hentet for request: ${tilJson(request)}: ${tilJson(respons)}".sanitizeForLog() }
         return ResponseEntity(respons, HttpStatus.OK)
     }
 
@@ -190,12 +188,12 @@ class VedtakController(private val vedtakService: VedtakService) {
         @PathVariable @NotNull
         behandlingsreferanse: String,
     ): ResponseEntity<List<Int>> {
-        LOGGER.info("Request for å hente vedtak for kilde $kilde og behandlingsreferanse $behandlingsreferanse mottatt")
+        LOGGER.debug { "Request for å hente vedtak for kilde $kilde og behandlingsreferanse ${behandlingsreferanse.sanitizeForLog()} mottatt" }
         val vedtakFunnet = vedtakService.hentVedtakForBehandlingsreferanse(kilde, behandlingsreferanse)
         if (vedtakFunnet.isNotEmpty()) {
-            SECURE_LOGGER.info("Følgende vedtak ble hentet: ${tilJson(vedtakFunnet)}")
+            secureLogger.debug { "Følgende vedtak ble hentet: ${tilJson(vedtakFunnet)}".sanitizeForLog() }
         } else {
-            SECURE_LOGGER.info("Fant ingen vedtak for kilde $kilde og behandlingsreferanse $behandlingsreferanse")
+            secureLogger.debug { "Fant ingen vedtak for kilde $kilde og behandlingsreferanse ${behandlingsreferanse.sanitizeForLog()}" }
         }
         return ResponseEntity(vedtakFunnet, HttpStatus.OK)
     }
@@ -235,12 +233,11 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: OpprettVedtakRequestDto,
     ): ResponseEntity<Int> {
-        SECURE_LOGGER.info("Følgende request for å opprette vedtaksforslag mottatt: ${tilJson(request)}")
         val vedtaksforslagOpprettet = vedtakService.opprettVedtak(
             vedtakRequest = request,
             vedtaksforslag = true,
         )
-        LOGGER.info("Vedtaksforslag er opprettet med følgende id: ${vedtaksforslagOpprettet.vedtaksid}")
+        secureLogger.info { "Vedtaksforslag er opprettet med følgende id: ${vedtaksforslagOpprettet.vedtaksid} ut i fra request: ${tilJson(request)}".sanitizeForLog() }
         return ResponseEntity(vedtaksforslagOpprettet.vedtaksid, HttpStatus.OK)
     }
 
@@ -275,9 +272,8 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: OpprettVedtakRequestDto,
     ): ResponseEntity<Int>? {
-        SECURE_LOGGER.info("Følgende request mottatt om å oppdatere vedtaksforslag med id $vedtaksid: ${tilJson(request)}")
         val vedtaksforslagOppdatert = vedtakService.oppdaterVedtaksforslag(vedtaksid, request)
-        LOGGER.info("Vedtaksforslag med id $vedtaksforslagOppdatert er oppdatert")
+        secureLogger.info { "Vedtaksforslag med id $vedtaksforslagOppdatert er oppdatert ut i fra request: $vedtaksid: ${tilJson(request)}".sanitizeForLog() }
         return ResponseEntity(vedtaksforslagOppdatert, HttpStatus.OK)
     }
 
@@ -302,10 +298,9 @@ class VedtakController(private val vedtakService: VedtakService) {
         @PathVariable @NotNull
         vedtaksid: Int,
     ): ResponseEntity<Int> {
-        LOGGER.info("Request for å fatte vedtak for vedtaksforslag følgende id ble mottatt: $vedtaksid")
         vedtakService.fattVedtakForVedtaksforslag(vedtaksid)
         val vedtakFattet = vedtakService.hentVedtak(vedtaksid)
-        SECURE_LOGGER.info("Følgende vedtak ble fattet fra vedtaksforslag: $vedtaksid ${tilJson(vedtakFattet)}")
+        secureLogger.info { "Følgende vedtak ble fattet fra vedtaksforslag: $vedtaksid ${tilJson(vedtakFattet)}".sanitizeForLog() }
         return ResponseEntity(vedtaksid, HttpStatus.OK)
     }
 
@@ -328,9 +323,8 @@ class VedtakController(private val vedtakService: VedtakService) {
         @PathVariable @NotNull
         vedtaksid: Int,
     ): ResponseEntity<Int> {
-        LOGGER.info("Request for å slette vedtaksforslag med følgende id ble mottatt: $vedtaksid")
         val vedtaksforslagSlettet = vedtakService.slettVedtaksforslag(vedtaksid)
-        SECURE_LOGGER.info("Følgende vedtaksforslag ble slettet: $vedtaksid ${tilJson(vedtaksforslagSlettet)}")
+        secureLogger.info { "Følgende vedtaksforslag ble slettet: $vedtaksid ${tilJson(vedtaksforslagSlettet)}".sanitizeForLog() }
         return ResponseEntity(vedtaksforslagSlettet, HttpStatus.OK)
     }
 
@@ -354,9 +348,8 @@ class VedtakController(private val vedtakService: VedtakService) {
         @RequestBody @NotNull
         unikReferanse: String,
     ): ResponseEntity<VedtakDto> {
-        LOGGER.info("Request for å hente vedtak med følgende unike referanse ble mottatt: $unikReferanse")
         val vedtakFunnet = vedtakService.hentVedtakForUnikReferanse(unikReferanse)
-        SECURE_LOGGER.info("Følgende vedtak ble hentet: $unikReferanse $vedtakFunnet")
+        secureLogger.debug { "Følgende vedtak ble hentet: $unikReferanse $vedtakFunnet".sanitizeForLog() }
         return ResponseEntity(vedtakFunnet, HttpStatus.OK)
     }
 
@@ -379,9 +372,8 @@ class VedtakController(private val vedtakService: VedtakService) {
         @Valid @RequestBody
         request: HentManuelleVedtakRequest,
     ): ResponseEntity<HentVedtakForStønadResponse>? {
-        SECURE_LOGGER.info("Request for å hente manuelle vedtak for bp: ${request.skyldner.verdi}")
         val respons = vedtakService.hentManuelleVedtak(request)
-        SECURE_LOGGER.info("Følgende endringsvedtak ble hentet for bp: ${request.skyldner.verdi}}: ${tilJson(respons)}")
+        secureLogger.debug { "Følgende endringsvedtak ble hentet for bp: ${request.skyldner.verdi}}: ${tilJson(respons)}".sanitizeForLog() }
         return ResponseEntity(respons, HttpStatus.OK)
     }
 
@@ -396,6 +388,6 @@ class VedtakController(private val vedtakService: VedtakService) {
         const val HENT_ALLE_VEDTAKSFORSLAG = "/vedtaksforslag/alle"
         const val VEDTAKSFORSLAG = "/vedtaksforslag/{vedtaksid}"
         const val HENT_MANUELLE_VEDTAK = "/vedtak/hent-manuelle-vedtak"
-        private val LOGGER = LoggerFactory.getLogger(VedtakController::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

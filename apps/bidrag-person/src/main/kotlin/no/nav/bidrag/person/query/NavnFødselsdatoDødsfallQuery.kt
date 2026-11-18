@@ -1,8 +1,9 @@
 package no.nav.bidrag.person.query
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
-import no.nav.bidrag.person.BidragPerson.Companion.SECURE_LOGGER
 import no.nav.bidrag.transport.person.NavnFødselDødDto
 
 data class NavnFødselsdatoDødsfallQuery(val personId: Personident) : GraphQuery() {
@@ -24,7 +25,7 @@ data class NavnFødselsdatoDødsfallResponse(
         val fødselsaar =
             hentNavnFødselsdatoDødsfall.foedselsdato.firstOrNull()?.foedselsaar
         if (fødselsaar == null) {
-            SECURE_LOGGER.warn("Fødselsår mangler for person: ${personident.verdi} fødselsdato: $fødselsdato.")
+            secureLogger.warn { "Fødselsår mangler for person: ${personident.verdi.sanitizeForLog()} fødselsdato: $fødselsdato." }
         }
         val dødsdato = hentNavnFødselsdatoDødsfall.doedsfall.firstOrNull()?.doedsdato
         return NavnFødselDødDto(navn, fødselsdato, fødselsaar, dødsdato)

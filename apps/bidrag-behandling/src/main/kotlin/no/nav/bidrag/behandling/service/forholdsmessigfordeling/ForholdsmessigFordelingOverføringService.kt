@@ -177,7 +177,7 @@ class ForholdsmessigFordelingOverføringService(
                 ),
             )
         åpenSøknad.bidragsmottaker?.let { bm ->
-            val åpneSøknaderRolle = åpneSøknader.filter { it.barn.any { it.personident == bm.personident } }
+            val åpneSøknaderRolle = åpneSøknader.filter { it.partISøknadListe.any { it.personident == bm.personident } }
             opprettEllerOppdaterRolle(
                 behandling,
                 Rolletype.BIDRAGSMOTTAKER,

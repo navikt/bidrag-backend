@@ -1,3 +1,5 @@
+logging.config: classpath:logback-test.xml
+
 NAIS_APP_NAME: bidrag-person-hendelse
 WMQ_HOST: host.docker.internal
 WMQ_PORT: 1414
@@ -137,4 +139,3 @@ spring:
     hibernate.connection.provider_class: org.hibernate.hikaricp.internal.HikariCPConnectionProvider
     properties:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
-

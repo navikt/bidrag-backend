@@ -2,19 +2,29 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveAtLeastSize
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
 import no.nav.bidrag.behandling.service.PersonService
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunkt
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
+import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
+import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.behandling.utils.validerHarGrunnlag
 import no.nav.bidrag.behandling.utils.validerHarReferanseTilSjablon
 import no.nav.bidrag.beregn.barnebidrag.BeregnGebyrApi
@@ -27,16 +37,23 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.YearMonth
 
 @ExtendWith(MockKExtension::class)
 class VedtakGrunnlagMapperTest {
     lateinit var vedtakGrunnlagMapper: VedtakGrunnlagMapper
+
+    lateinit var personConsumer: BidragPersonConsumer
 
     @MockK
     lateinit var barnebidragGrunnlagInnhenting: BarnebidragGrunnlagInnhenting
@@ -46,7 +63,8 @@ class VedtakGrunnlagMapperTest {
 
     @BeforeEach
     fun init() {
-        val personService = PersonService(stubPersonConsumer())
+        personConsumer = stubPersonConsumer()
+        val personService = PersonService(personConsumer)
         stubSjablonProvider()
         val behandlingTilGrunnlagMappingV2 = BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(stubSjablonService()))
         vedtakGrunnlagMapper =
@@ -58,6 +76,18 @@ class VedtakGrunnlagMapperTest {
                 personService,
                 BeregnGebyrApi(stubSjablonService()),
             )
+    }
+
+    @Test
+    fun `skal finne riktig rolle i sak når identoppslaget gir 403`() {
+        val sak = opprettSakForBehandling(opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG))
+        val søktRolle = sak.roller.last()
+        every { personConsumer.hentPerson(any<String>()) } throws HttpClientErrorException(HttpStatus.FORBIDDEN)
+
+        val rolle = with(vedtakGrunnlagMapper) { sak.hentRolleMedFnr(søktRolle.fødselsnummer!!.verdi) }
+
+        sak.roller shouldHaveAtLeastSize 2
+        rolle shouldBe søktRolle
     }
 
     @Test
@@ -91,6 +121,12 @@ class VedtakGrunnlagMapperTest {
                 ),
             )
 
+        val grunnlag =
+            with(vedtakGrunnlagMapper) {
+                behandling.beregnetInntekterGrunnlagForRolle(behandling.bidragsmottaker!!, false)
+            }
+        grunnlag.filter { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE } shouldHaveSize 2
+
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
             ilagtGebyr shouldBe true
@@ -98,9 +134,9 @@ class VedtakGrunnlagMapperTest {
             maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
             resultatkode shouldBe Resultatkode.GEBYR_ILAGT
-            grunnlagsreferanseListeEngangsbeløp shouldHaveSize 1
+            grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsliste shouldHaveSize 5
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
@@ -144,19 +180,20 @@ class VedtakGrunnlagMapperTest {
 
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
-            ilagtGebyr shouldBe false
+            ilagtGebyr shouldBe true
             skattepliktigInntekt shouldBe BigDecimal(900000)
-            maksBarnetillegg shouldBe null
+            maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
-            resultatkode shouldBe Resultatkode.GEBYR_FRITATT
+            resultatkode shouldBe Resultatkode.GEBYR_ILAGT
             grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }!!.referanse
-            grunnlagsliste shouldHaveSize 3
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
+            grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_INNTEKTSBASERT_GEBYR, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, antall = 1)
         }
     }
 
@@ -192,22 +229,23 @@ class VedtakGrunnlagMapperTest {
                 ),
             )
 
-        behandling.bidragsmottaker!!.gebyr = GebyrRolle(true, true, "test")
+        behandling.bidragsmottaker!!.gebyr = GebyrRolle(overstyrGebyr = true, ilagtGebyr = true, begrunnelse = "test")
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
-            ilagtGebyr shouldBe false
+            ilagtGebyr shouldBe true
             skattepliktigInntekt shouldBe BigDecimal(900000)
-            maksBarnetillegg shouldBe null
+            maksBarnetillegg shouldBe BigDecimal(2000)
             beløpGebyrsats shouldBe BigDecimal(1345)
-            resultatkode shouldBe Resultatkode.GEBYR_FRITATT
+            resultatkode shouldBe Resultatkode.GEBYR_ILAGT
             grunnlagsreferanseListeEngangsbeløp shouldHaveSize 2
             grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.SLUTTBEREGNING_GEBYR }!!.referanse
-            grunnlagsreferanseListeEngangsbeløp shouldContain grunnlagsliste.find { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }!!.referanse
-            grunnlagsliste shouldHaveSize 3
+            grunnlagsliste shouldHaveSize 7
             grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SLUTTBEREGNING_GEBYR)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE)
-            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.SJABLON_SJABLONTALL, antall = 2)
+            grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.NEDRE_INNTEKTSGRENSE_GEBYR_BELØP)
             grunnlagsliste.validerHarReferanseTilSjablon(SjablonTallNavn.FASTSETTELSESGEBYR_BELØP)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_INNTEKTSBASERT_GEBYR, antall = 1)
+            grunnlagsliste.validerHarGrunnlag(Grunnlagstype.DELBEREGNING_SUM_INNTEKT, antall = 1)
         }
     }
 
@@ -258,7 +296,7 @@ class VedtakGrunnlagMapperTest {
                 ÅrMånedsperiode(YearMonth.of(2025, 6), YearMonth.of(2025, 8)),
             )
 
-        val sammenslåttePerioder = perioder.`slåSammenEtterfølgendePerioder`()
+        val sammenslåttePerioder = perioder.slåSammenEtterfølgendePerioder()
 
         sammenslåttePerioder shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 1), YearMonth.of(2025, 8)))
     }
@@ -271,7 +309,7 @@ class VedtakGrunnlagMapperTest {
                 ÅrMånedsperiode(YearMonth.of(2025, 4), YearMonth.of(2025, 6)),
             )
 
-        val sammenslåttePerioder = perioder.`slåSammenEtterfølgendePerioder`()
+        val sammenslåttePerioder = perioder.slåSammenEtterfølgendePerioder()
 
         sammenslåttePerioder shouldBe perioder
     }
@@ -321,5 +359,81 @@ class VedtakGrunnlagMapperTest {
         val resultat = perioder.filtrerOgJusterFraVirkningstidspunkt(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
 
         resultat shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
+    }
+
+    @Test
+    fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.stønadstype = Stønadstype.BIDRAG
+        søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
+
+        søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
+    }
+
+    @Test
+    fun `skal sette opphørsdato til virkningstidspunkt ved avvisning uten eksisterende opphør`() {
+        every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
+        // Må ha et søknadsbarn uten avslag for at behandlingen ikke skal regnes som direkte avslag
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        val søknadsbarn = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.virkningstidspunkt = LocalDate.parse("2023-04-01")
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
+
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag
+
+        grunnlag.opphørsdato shouldBe YearMonth.of(2023, 4)
+    }
+
+    @Test
+    fun `skal sette opphørsdato til opphørsdato på rolle ved avvisning uten eksisterende opphør og virkningstidspunkt`() {
+        every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
+        // Må ha et søknadsbarn uten avslag for at behandlingen ikke skal regnes som direkte avslag
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        val søknadsbarn = behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.virkningstidspunkt = null
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
+
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag
+
+        grunnlag.opphørsdato shouldBe YearMonth.of(2023, 8)
+    }
+
+    @Test
+    fun `Skal bruke beregn fra som beregn til dato ved avvisning uten eksisterende opphør eller opphørsdato`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = null
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe søknadsbarn.finnBeregnFra().atDay(1)
+    }
+
+    @Test
+    fun `Skal bruke opphørsdato som beregn til dato ved avvisning uten eksisterende opphør`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-06-01")
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2023-06-01")
+    }
+
+    @Test
+    fun `Skal bruke opphørsdato fra eksisterende vedtak som beregn til dato ved avvisning`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val søknadsbarn = behandling.søknadsbarn.first()
+        søknadsbarn.avslag = Resultatkode.BIDRAGSMOTTAKER_HAR_OMSORG_FOR_BARNET
+        søknadsbarn.opphørsdato = LocalDate.parse("2023-06-01")
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            søknadsbarn,
+            listOf(opprettStønadPeriodeDto(ÅrMånedsperiode(LocalDate.parse("2022-01-01"), LocalDate.parse("2024-03-01")))),
+        )
+
+        behandling.finnBeregnTilDatoBehandling(søknadsbarn) shouldBe LocalDate.parse("2024-03-01")
     }
 }

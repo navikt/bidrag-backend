@@ -18,6 +18,7 @@ import no.nav.bidrag.transport.dokument.AktorDto
 import no.nav.bidrag.transport.dokument.AvsenderMottakerDto
 import no.nav.bidrag.transport.dokument.AvsenderMottakerDtoIdType
 import no.nav.bidrag.transport.dokument.DokumentDto
+import no.nav.bidrag.transport.dokument.DokumentStatusDto
 import no.nav.bidrag.transport.dokument.EndreJournalpostCommand
 import no.nav.bidrag.transport.dokument.HendelseType
 import no.nav.bidrag.transport.dokument.JournalpostDto
@@ -109,6 +110,13 @@ data class JournalpostIntern(
                     dokumentreferanse = it.dokumentreferanse,
                     dokumentType = it.dokumentType,
                     tittel = it.tittel,
+                    status = when (status) {
+                        JournalpostStatus.UNDER_PRODUKSJON,
+                        JournalpostStatus.UNDER_OPPRETTELSE,
+                        -> DokumentStatusDto.UNDER_PRODUKSJON
+
+                        else -> DokumentStatusDto.FERDIGSTILT
+                    },
                 )
             },
             dokumentDato = dokumentDato,

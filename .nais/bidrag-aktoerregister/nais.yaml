@@ -30,6 +30,8 @@ spec:
             value: "write,role,ddl"
           - name: "pgaudit.log_parameter"
             value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"
   liveness:
     path: /actuator/health/liveness
     initialDelay: 30
@@ -44,7 +46,9 @@ spec:
     failureThreshold: 10
   resources:
     limits:
+      {{#if limits.cpu}}
       cpu: {{limits.cpu}}
+      {{/if}}
       memory: {{limits.memory}}
     requests:
       cpu: {{requests.cpu}}

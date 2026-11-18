@@ -2,7 +2,15 @@ package no.nav.bidrag.reisekostnad.tjeneste.støtte;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import no.nav.bidrag.reisekostnad.konfigurasjon.Profil;
+import no.nav.bidrag.reisekostnad.feilhåndtering.InternFeil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,10 +53,21 @@ public class KrypteringsverktøyTest {
     // så
     // Kryptert personident skal være ulik originalen
     assertThat(kryptertPersonident).isNotEqualTo(personident);
+    assertThat(kryptertPersonident).startsWith("GCM1:");
 
     var dekryptertPersonident = Krypteringsverktøy.dekryptere(kryptertPersonident);
 
     // Dekrypterer den krypterte personidenten gir originalen
     Assertions.assertEquals(personident, dekryptertPersonident);
+  }
+
+  @Test
+  void vedManipuleringAvGcmVerdiSkalDekrypteringFeile() {
+    var kryptert = Krypteringsverktøy.kryptere("12345678910");
+    var dekodet = Base64.getDecoder().decode(kryptert.substring("GCM1:".length()));
+    dekodet[dekodet.length - 1] ^= 1;
+    var manipulert = "GCM1:" + Base64.getEncoder().encodeToString(dekodet);
+
+    Assertions.assertThrows(InternFeil.class, () -> Krypteringsverktøy.dekryptere(manipulert));
   }
 }

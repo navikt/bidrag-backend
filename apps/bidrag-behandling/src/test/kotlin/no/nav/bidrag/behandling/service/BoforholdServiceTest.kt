@@ -1,6 +1,7 @@
 package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
@@ -14,6 +15,7 @@ import io.mockk.every
 import jakarta.persistence.EntityManager
 import jakarta.transaction.Transactional
 import no.nav.bidrag.behandling.TestContainerRunner
+import no.nav.bidrag.behandling.consumer.BidragGrunnlagConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
@@ -34,7 +36,6 @@ import no.nav.bidrag.behandling.dto.v2.boforhold.Sivilstandsperiode
 import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.transformers.boforhold.tilBoforholdBarnRequest
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandRequest
-import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandskodePDL
 import no.nav.bidrag.behandling.transformers.tilTypeBoforhold
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
@@ -78,8 +79,13 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatTyp
 
 @RunWith(Enclosed::class)
 class BoforholdServiceTest : TestContainerRunner() {
+    // Samme mock-oppsett som GrunnlagServiceTest, slik at de deler Spring-kontekst
     @MockkBean(relaxed = true)
     lateinit var bidragPersonConsumer: BidragPersonConsumer
+
+    @MockkSpyBean
+    @Suppress("unused")
+    lateinit var bidragGrunnlagConsumer: BidragGrunnlagConsumer
 
     @Autowired
     lateinit var boforholdService: BoforholdService
@@ -521,7 +527,7 @@ class BoforholdServiceTest : TestContainerRunner() {
                 // hvis
                 boforholdService.oppdatereAutomatiskInnhentetBoforhold(
                     behandling,
-                    periodisertBoforhold.filter { it.gjelderPersonId == testdataBarn1.ident }!!,
+                    periodisertBoforhold.filter { it.gjelderPersonId == testdataBarn1.ident },
                     grunnlagBoforhold.groupBy { it.gjelderPersonId }.map { Personident(it.key!!) }.toSet(),
                     true,
                     testdataBarn1.tilPersonStønad(),
@@ -555,6 +561,55 @@ class BoforholdServiceTest : TestContainerRunner() {
                     barn2.perioder.last().datoFom shouldBe LocalDate.of(2022, 1, 1)
                     barn2.perioder.last().datoTom shouldBe null
                     barn2.perioder.last().bostatus shouldBe Bostatuskode.MED_FORELDER
+                }
+            }
+
+            @Test
+            @Transactional
+            open fun `skal oppdatere offentlig husstandsmedlem når identoppslaget gir 403`() {
+                val behandling = testdataManager.oppretteBehandling()
+                behandling.virkningstidspunkt = testdataBarn1.fødselsdato
+                every { bidragPersonConsumer.hentPerson(testdataBarn1.ident) } throws HttpClientErrorException(HttpStatus.FORBIDDEN)
+
+                val grunnlagBoforhold =
+                    listOf(
+                        RelatertPersonGrunnlagDto(
+                            partPersonId = behandling.bidragsmottaker!!.ident!!,
+                            relatertPersonPersonId = testdataBarn1.ident,
+                            fødselsdato = testdataBarn1.fødselsdato,
+                            erBarnAvBmBp = true,
+                            navn = testdataBarn1.navn,
+                            borISammeHusstandDtoListe =
+                            listOf(
+                                BorISammeHusstandDto(
+                                    periodeFra = testdataBarn1.fødselsdato,
+                                    periodeTil = null,
+                                ),
+                            ),
+                        ),
+                    )
+                val periodisertBoforhold =
+                    BoforholdApi.beregnBoforholdBarnV3(
+                        testdataBarn1.fødselsdato,
+                        null,
+                        null,
+                        behandling.tilTypeBoforhold(),
+                        grunnlagBoforhold.tilBoforholdBarnRequest(behandling),
+                    )
+
+                boforholdService.oppdatereAutomatiskInnhentetBoforhold(
+                    behandling,
+                    periodisertBoforhold,
+                    setOf(Personident(testdataBarn1.ident)),
+                    true,
+                    testdataBarn1.tilPersonStønad(),
+                )
+
+                assertSoftly(behandling.husstandsmedlem.filter { it.ident == testdataBarn1.ident }) { barn1 ->
+                    barn1 shouldHaveSize 1
+                    barn1.first().perioder.size shouldBe 1
+                    barn1.first().perioder.first().kilde shouldBe Kilde.OFFENTLIG
+                    barn1.first().perioder.first().bostatus shouldBe Bostatuskode.MED_FORELDER
                 }
             }
 
@@ -1001,8 +1056,8 @@ class BoforholdServiceTest : TestContainerRunner() {
                     husstandsmedlem.forrigePerioder.shouldNotBeEmpty()
                     val førstePeriode = husstandsmedlem.perioder.minBy { it.datoFom!! }
                     val andrePeriode = husstandsmedlem.perioder.maxBy { it.datoFom!! }
-                    førstePeriode!!.datoFom shouldBe LocalDate.parse("2023-01-01")
-                    andrePeriode!!.datoFom shouldBe LocalDate.parse("2024-02-01")
+                    førstePeriode.datoFom shouldBe LocalDate.parse("2023-01-01")
+                    andrePeriode.datoFom shouldBe LocalDate.parse("2024-02-01")
                 }
 
                 boforholdService.oppdatereHusstandsmedlemManuelt(
@@ -1218,8 +1273,12 @@ class BoforholdServiceTest : TestContainerRunner() {
             inkludereBoforhold: Boolean = false,
         ): Behandling {
             val behandling =
-                testdataManager.oppretteBehandling(inkludereInntekter, inkludereSivilstand, inkludereBoforhold)
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.parse("2023-01-01"))
+                testdataManager.oppretteBehandling(
+                    inkludereInntekter,
+                    inkludereSivilstand,
+                    inkludereBoforhold,
+                    virkningstidspunkt = LocalDate.parse("2023-01-01"),
+                )
             behandling.husstandsmedlem.clear()
             behandling.husstandsmedlem.addAll(
                 setOf(
@@ -1800,20 +1859,5 @@ class BoforholdServiceTest : TestContainerRunner() {
             .returns(testdataBarn1.tilPersonDto())
         every { bidragPersonConsumer.hentPerson(testdataBarn2.ident) }
             .returns(testdataBarn2.tilPersonDto())
-    }
-}
-
-fun Set<Sivilstand>.tilSivilstandGrunnlagDto(): List<SivilstandGrunnlagDto> {
-    val nyesteGyldigFom = this.maxBy { it.datoFom }.datoFom
-    return this.map {
-        SivilstandGrunnlagDto(
-            gyldigFom = it.datoFom,
-            type = it.sivilstand.tilSivilstandskodePDL(),
-            bekreftelsesdato = it.datoFom,
-            personId = it.behandling.bidragsmottaker!!.ident,
-            master = "Freg",
-            historisk = it.datoFom.isBefore(nyesteGyldigFom),
-            registrert = it.datoFom.atStartOfDay(),
-        )
     }
 }

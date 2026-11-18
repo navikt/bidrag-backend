@@ -21,7 +21,7 @@
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.1.0</springdoc-openapi-ui.version>
     <okhttp.version>5.5.0</okhttp.version>
-    <unleash-client-java.version>12.2.3</unleash-client-java.version>
+    <unleash-client-java.version>12.3.0</unleash-client-java.version>
     <hypersistence-utils-hibernate.version>3.15.5</hypersistence-utils-hibernate.version>
     <db2.db2jcc4.version>10.5fp6</db2.db2jcc4.version>
     <db2.jcc.version>12.1.5.0</db2.jcc.version>
@@ -29,7 +29,7 @@
     <springmockk.version>5.0.1</springmockk.version>
     <mockk.version>1.14.11</mockk.version>
     <kotest.version>6.2.4</kotest.version>
-    <swagger-annotations.version>2.2.54</swagger-annotations.version>
+    <swagger-annotations.version>2.2.55</swagger-annotations.version>
     <!-- Root sin testcontainers.version (2.x, via Spring Boot BOM) mangler db2-modulen og er ikke kompatibel
          med Db2Container-API-et brukt i testene her. Låser derfor til en 1.x-versjon lokalt (samme løsning som bidrag-bbm). -->
     <testcontainers.version>1.21.4</testcontainers.version>
@@ -95,18 +95,6 @@
     </dependency>
 
     <!-- Spring -->
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-ldap</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-ldap</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.data</groupId>
-      <artifactId>spring-data-ldap</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -220,21 +208,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.springframework.ldap</groupId>
-      <artifactId>spring-ldap-test</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.httpcomponents</groupId>
-          <artifactId>httpclient</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.unboundid</groupId>
-      <artifactId>unboundid-ldapsdk</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.wiremock.integrations</groupId>
       <artifactId>wiremock-spring-boot</artifactId>
       <version>${wiremock-spring-boot.version}</version>
@@ -274,8 +247,6 @@
 
   <build>
     <plugins>
-      <!-- Overstyrer root sin kotlin-maven-plugin-konfigurasjon: bidrag-sak trenger "no-arg"-kompilatorpluginet
-           for å generere no-arg-konstruktør på Spring LDAP sine @Entry-annoterte Kotlin-klasser. -->
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>
@@ -288,11 +259,7 @@
           <compilerPlugins>
             <plugin>spring</plugin>
             <plugin>jpa</plugin>
-            <plugin>no-arg</plugin>
           </compilerPlugins>
-          <pluginOptions>
-            <option>no-arg:annotation=org.springframework.ldap.odm.annotations.Entry</option>
-          </pluginOptions>
           <jvmTarget>${java.version}</jvmTarget>
         </configuration>
       </plugin>

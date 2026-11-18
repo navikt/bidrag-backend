@@ -16,10 +16,12 @@ import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadR
 import no.nav.bidrag.transport.behandling.beregning.felles.FeilregistrerSøknadsBarnRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentBPsÅpneSøknaderRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknadRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknaderForBehandlingRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import no.nav.security.token.support.core.api.Protected
@@ -141,6 +143,23 @@ class BidragBeregningController(
         @Valid @RequestBody request: OppdaterBehandlerenhetRequest,
     ) = bisysService.oppdaterBehandlerenhet(request)
 
+    @PostMapping("/oppdatersoknadfomdato")
+    @Operation(
+        description = "Oppdaterer søkt fom dato på søknad",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Oppdaterer søknad i Bisys med ny søkt fom dato",
+            ),
+        ],
+    )
+    fun oppdaterSøknadFomDato(
+        @Valid @RequestBody request: OppdaterSøknadFomDatoRequest,
+    ) = bisysService.oppdaterSøknadFomDato(request)
+
     @PostMapping("/feilregistrersoknad")
     @Operation(
         description = "Feilregister søknad",
@@ -208,6 +227,23 @@ class BidragBeregningController(
     fun hentSøknad(
         @Valid @RequestBody request: HentSøknadRequest,
     ) = bisysService.hentSøknad(request)
+
+    @PostMapping("/hentsoknaderforbehandling")
+    @Operation(
+        description = "Henter alle søknader for angitt behandlingsid",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Søknader hentet. Vil returnere tom liste hvis ingen søknader finnes for behandlingen",
+            ),
+        ],
+    )
+    fun hentSøknaderForBehandling(
+        @Valid @RequestBody request: HentSøknaderForBehandlingRequest,
+    ) = bisysService.hentSøknaderForBehandling(request)
 
     @PostMapping("/oppdaterreferansegebyr")
     @Operation(

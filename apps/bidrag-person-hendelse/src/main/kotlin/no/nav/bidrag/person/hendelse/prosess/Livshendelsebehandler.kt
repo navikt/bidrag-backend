@@ -1,13 +1,13 @@
 package no.nav.bidrag.person.hendelse.prosess
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Metrics
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.person.hendelse.database.Databasetjeneste
 import no.nav.bidrag.person.hendelse.domene.Endringstype
 import no.nav.bidrag.person.hendelse.domene.Livshendelse
 import no.nav.bidrag.person.hendelse.domene.Livshendelse.Opplysningstype
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -27,8 +27,8 @@ class Livshendelsebehandler(
             Opplysningstype.UTFLYTTING_FRA_NORGE -> behandleUtflytting(livshendelse)
             Opplysningstype.SIVILSTAND_V1 -> behandleSivilstand(livshendelse)
             Opplysningstype.VERGEMAAL_ELLER_FREMTIDSFULLMAKT_V1 -> behandleVerge(livshendelse)
-            Opplysningstype.FOEDSEL_V1 -> log.error("Opplysningstype Foedsel ignoreres. Erstattet av Foedselsdato.")
-            Opplysningstype.IKKE_STØTTET -> log.error("Forsøk på prosessere medling med opplysningstype som ikke støttes av løsningen.")
+            Opplysningstype.FOEDSEL_V1 -> log.error { "Opplysningstype Foedsel ignoreres. Erstattet av Foedselsdato." }
+            Opplysningstype.IKKE_STØTTET -> log.error { "Forsøk på prosessere medling med opplysningstype som ikke støttes av løsningen." }
             Opplysningstype.KONTAKTADRESSE_V1 -> behandleAdresse(livshendelse, Opplysningstype.KONTAKTADRESSE_V1)
             Opplysningstype.OPPHOLDSADRESSE_V1 -> behandleAdresse(livshendelse, Opplysningstype.OPPHOLDSADRESSE_V1)
         }
@@ -43,10 +43,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -71,10 +71,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -123,10 +123,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -187,10 +187,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -206,7 +206,7 @@ class Livshendelsebehandler(
         when (livshendelse.endringstype) {
             Endringstype.OPPRETTET, Endringstype.KORRIGERT -> {
                 if (livshendelse.doedsdato == null) {
-                    log.error("Mangler dødsdato. Ignorerer hendelse ${livshendelse.hendelseid}")
+                    log.error { "Mangler dødsdato. Ignorerer hendelse ${livshendelse.hendelseid}" }
                     tellerDødsfallIgnorert.increment()
                 } else {
                     databasetjeneste.lagreHendelse(livshendelse)
@@ -215,17 +215,17 @@ class Livshendelsebehandler(
 
             Endringstype.ANNULLERT -> {
                 if (livshendelse.tidligereHendelseid == null) {
-                    log.warn("Mottatt annullert fødsel uten tidligereHendelseId, hendelseId ${livshendelse.hendelseid}")
+                    log.warn { "Mottatt annullert fødsel uten tidligereHendelseId, hendelseId ${livshendelse.hendelseid}" }
                 } else {
                     databasetjeneste.lagreHendelse(livshendelse)
                 }
             }
 
             else -> {
-                log.info(
+                log.info {
                     "Ignorerer hendelse med id ${livshendelse.hendelseid} " +
-                        "og opplysningstype ${livshendelse.opplysningstype}. Dødsdato: ${livshendelse.doedsdato}",
-                )
+                        "og opplysningstype ${livshendelse.opplysningstype}. Dødsdato: ${livshendelse.doedsdato}"
+                }
             }
         }
     }
@@ -239,10 +239,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -258,13 +258,13 @@ class Livshendelsebehandler(
         when (livshendelse.endringstype) {
             Endringstype.OPPRETTET, Endringstype.KORRIGERT -> {
                 if (livshendelse.folkeregisteridentifikator?.type == null) {
-                    log.error("Mangler folkeregisteridentifikator.type. Ignorerer hendelse ${livshendelse.hendelseid}")
+                    log.error { "Mangler folkeregisteridentifikator.type. Ignorerer hendelse ${livshendelse.hendelseid}" }
                     tellerFolkeregisteridentifikatorIgnorert.increment()
                 }
             }
 
             else -> {
-                log.warn("Hendelse med id ${livshendelse.hendelseid} var ikke type OPPRETTET. Endringstype: ${livshendelse.endringstype}")
+                log.warn { "Hendelse med id ${livshendelse.hendelseid} var ikke type OPPRETTET. Endringstype: ${livshendelse.endringstype}" }
             }
         }
 
@@ -280,10 +280,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.hendelseid}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.hendelseid}. Ignorerer denne."
+            }
             return
         }
 
@@ -324,10 +324,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -345,7 +345,7 @@ class Livshendelsebehandler(
                 val manglerFornavn = livshendelse.navn?.fornavn == null
                 if (manglerFornavn || livshendelse.navn?.etternavn == null) {
                     val navnedel = if (manglerFornavn) "Fornavn" else "Etternavn"
-                    log.warn("$navnedel mangler. Ignorerer navnehendelse med id ${livshendelse.hendelseid}")
+                    log.warn { "$navnedel mangler. Ignorerer navnehendelse med id ${livshendelse.hendelseid}" }
                 } else {
                     databasetjeneste.lagreHendelse(livshendelse)
                 }
@@ -356,10 +356,10 @@ class Livshendelsebehandler(
             }
 
             else -> {
-                log.info(
+                log.info {
                     "Ignorerer navnehendelse med id ${livshendelse.hendelseid} " +
-                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}",
-                )
+                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}"
+                }
             }
         }
     }
@@ -373,10 +373,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -393,7 +393,7 @@ class Livshendelsebehandler(
                 val fødselsdato = livshendelse.foedselsdato?.foedselsdato
                 if (fødselsdato == null) {
                     tellerFødselsdatoIgnorert.increment()
-                    log.warn("Mangler fødselsdato. Ignorerer hendelse ${livshendelse.hendelseid}")
+                    log.warn { "Mangler fødselsdato. Ignorerer hendelse ${livshendelse.hendelseid}" }
                 } else if (erUnder6mnd(fødselsdato)) {
                     tellerFødselsdatoIgnorert.increment()
                     // Kontrollen på fødeland fjernes siden det nå ligger i ny opplysningstype. Tanken er at Bisys vil håndtere utenlandske fødsler ok
@@ -404,17 +404,17 @@ class Livshendelsebehandler(
             Endringstype.ANNULLERT -> {
                 sikkerLoggingAvLivshendelse(livshendelse)
                 if (livshendelse.tidligereHendelseid == null) {
-                    log.warn("Mottatt annullert fødselsdato uten tidligereHendelseId, hendelseId ${livshendelse.hendelseid}")
+                    log.warn { "Mottatt annullert fødselsdato uten tidligereHendelseId, hendelseId ${livshendelse.hendelseid}" }
                 } else {
                     databasetjeneste.lagreHendelse(livshendelse)
                 }
             }
 
             else -> {
-                log.info(
+                log.info {
                     "Ignorerer livshendelse med id ${livshendelse.hendelseid} " +
-                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}",
-                )
+                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}"
+                }
                 sikkerLoggingAvLivshendelse(livshendelse)
             }
         }
@@ -429,10 +429,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -459,10 +459,10 @@ class Livshendelsebehandler(
 
             else -> {
                 tellerUtflyttingIgnorert.increment()
-                log.info(
+                log.info {
                     "Ignorerer livshendelse med id ${livshendelse.hendelseid} " +
-                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}",
-                )
+                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}"
+                }
                 sikkerLoggingAvLivshendelse(livshendelse, "Ikke av type OPPRETTET eller ANNULLERT.")
             }
         }
@@ -477,10 +477,10 @@ class Livshendelsebehandler(
             )
         ) {
             tellerLeesahDuplikat.increment()
-            log.info(
+            log.info {
                 "Mottok duplikat livshendelse (hendelseid: ${livshendelse.hendelseid}) " +
-                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne.",
-            )
+                    "med opplysningstype ${livshendelse.opplysningstype}. Ignorerer denne."
+            }
             return
         }
 
@@ -506,10 +506,10 @@ class Livshendelsebehandler(
             }
 
             else -> {
-                log.info(
+                log.info {
                     "Ignorerer livshendelse med id ${livshendelse.hendelseid} " +
-                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}",
-                )
+                        "av type ${livshendelse.opplysningstype}. Endringstype: ${livshendelse.endringstype}"
+                }
                 sikkerLoggingAvLivshendelse(livshendelse, "Ikke av type OPPRETTET, KORRIGERT, eller ANNULLERT.")
             }
         }
@@ -519,14 +519,14 @@ class Livshendelsebehandler(
         livshendelse: Livshendelse,
         ekstraInfo: String = "",
     ) {
-        slog.info(
+        secureLogger.info {
             "Livshendelse mottatt: " +
                 "hendelseId: ${livshendelse.hendelseid} " +
                 "offset: ${livshendelse.offset}, " +
                 "opplysningstype: ${livshendelse.opplysningstype}, " +
                 "aktørid: ${livshendelse.hentGjeldendeAktørid()}, " +
-                "endringstype: ${livshendelse.endringstype}, $ekstraInfo",
-        )
+                "endringstype: ${livshendelse.endringstype}, $ekstraInfo"
+        }
     }
 
     private fun erUnder6mnd(fødselsDato: LocalDate): Boolean = LocalDate.now().isBefore(fødselsDato.plusMonths(6))
@@ -537,8 +537,7 @@ class Livshendelsebehandler(
     }
 
     companion object {
-        val log: Logger = LoggerFactory.getLogger(this::class.java)
-        val slog: Logger = LoggerFactory.getLogger("secureLogger")
+        val log = KotlinLogging.logger {}
 
         val tellerLeesahDuplikat: Counter = Metrics.counter(tellernavn("leesah.duplikat"))
 

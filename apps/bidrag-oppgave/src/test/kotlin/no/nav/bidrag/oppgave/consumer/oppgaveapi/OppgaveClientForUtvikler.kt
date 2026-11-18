@@ -19,7 +19,7 @@ import java.util.UUID
 class OppgaveClientForUtvikler {
 
     /**
-     * Genereres i Ida  auth token med client id dev-fss.oppgavehandtering.oppgave
+     * Genereres i https://azure-token-generator.intern.dev.nav.no/api/obo?aud=dev-gcp:bidrag:bidrag-oppgave
      */
 
     val accessToken =

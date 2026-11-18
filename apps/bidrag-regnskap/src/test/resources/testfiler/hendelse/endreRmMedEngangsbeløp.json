@@ -1,0 +1,61 @@
+{
+  "kilde": "MANUELT",
+  "type": "ENDRING_MOTTAKER",
+  "id": "648464",
+  "vedtakstidspunkt": "2022-01-02T00:00:00",
+  "enhetsnummer": "4849",
+  "opprettetAv": "B138788",
+  "kildeapplikasjon": "TEST",
+  "opprettetTidspunkt": "2022-01-02T16:00:23",
+  "stønadsendringListe": [
+    {
+      "type": "BIDRAG",
+      "sak": "2203234",
+      "skyldner": "BP",
+      "kravhaver": "BARN1",
+      "mottaker": "BM",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": []
+    },
+    {
+      "type": "BIDRAG18AAR",
+      "sak": "2203234",
+      "skyldner": "BP",
+      "kravhaver": "BARN2",
+      "mottaker": "BM",
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING",
+      "periodeListe": []
+    }
+  ],
+  "engangsbeløpListe": [
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2200400",
+      "skyldner": "BP",
+      "kravhaver": "BARN2",
+      "mottaker": "BM",
+      "referanse": "SARTILSKUDD_REFERANSE",
+      "resultatkode": "GIGI",
+      "omgjørVedtakId": 8002,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    },
+    {
+      "type": "SÆRBIDRAG",
+      "sak": "2200400",
+      "skyldner": "BP",
+      "kravhaver": "BARN2",
+      "mottaker": "BM",
+      "referanse": "MANGLER",
+      "resultatkode": "GIGI",
+      "omgjørVedtakId": 8002,
+      "innkreving": "MED_INNKREVING",
+      "beslutning": "ENDRING"
+    }
+  ],
+  "sporingsdata": {
+    "correlationId": "12345"
+  }
+}

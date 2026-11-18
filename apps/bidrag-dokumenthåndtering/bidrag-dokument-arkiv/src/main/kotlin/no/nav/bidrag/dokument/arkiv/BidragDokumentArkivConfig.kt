@@ -26,7 +26,6 @@ import no.nav.bidrag.dokument.arkiv.security.SaksbehandlerInfoManager
 import no.nav.bidrag.dokument.arkiv.service.EndreJournalpostService
 import no.nav.bidrag.dokument.arkiv.service.JournalpostService
 import no.nav.bidrag.dokument.arkiv.service.OppgaveService
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -286,7 +285,6 @@ class BidragDokumentArkivConfig {
             bidragPersonUrl,
             bidragOrganisasjonUrl,
         )
-        LOGGER.info(String.format("> Environment: %s", environmentProperties))
         return environmentProperties
     }
 
@@ -325,9 +323,6 @@ class BidragDokumentArkivConfig {
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(
-            BidragDokumentArkivConfig::class.java,
-        )
         const val PROFILE_LIVE = "live"
         const val PROFILE_KAFKA_TEST = "kafka_test"
         const val PROFILE_TEST = "test"

@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration
@@ -14,7 +12,6 @@ import org.springframework.boot.security.autoconfigure.actuate.web.servlet.Manag
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration
 
 const val PROFILE_NAIS = "nais"
-val SECURE_LOGGER: Logger = LoggerFactory.getLogger("secureLogger")
 val objectmapper =
     ObjectMapper()
         .findAndRegisterModules()

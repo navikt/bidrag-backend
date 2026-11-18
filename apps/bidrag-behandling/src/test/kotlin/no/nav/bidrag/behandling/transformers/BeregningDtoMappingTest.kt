@@ -2,32 +2,51 @@ package no.nav.bidrag.behandling.transformers
 
 import com.fasterxml.jackson.databind.node.POJONode
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.mockk.unmockkObject
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBarnebidragsberegningPeriodeDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegningBarn
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatForskuddsberegningBarn
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatRolle
+import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalInnkrevesPeriode
+import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.TestDataPerson
+import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
+import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettInntekt
+import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.oppretteTestbehandling
 import no.nav.bidrag.behandling.utils.testdata.oppretteUtgift
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
+import no.nav.bidrag.commons.service.AppContext
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erAvvisning
+import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
+import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultat
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningResultatBarnV2
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatVedtakV2
 import no.nav.bidrag.transport.behandling.beregning.forskudd.BeregnetForskuddResultat
 import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatBeregning
 import no.nav.bidrag.transport.behandling.beregning.forskudd.ResultatPeriode
@@ -36,12 +55,26 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBarnIHusst
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumInntekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SivilstandPeriode
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatBeregning as ResultatBeregningBB
+import no.nav.bidrag.transport.behandling.beregning.barnebidrag.ResultatPeriode as ResultatPeriodeBB
 
 class BeregningDtoMappingTest {
+    @BeforeEach
+    fun oppsett() {
+        stubPersonConsumer()
+    }
+
+    @AfterEach
+    fun rydd() {
+        unmockkObject(AppContext)
+    }
+
     @Test
     fun `skal mappe beregning resultat til DTO`() {
         val beregningBarn =
@@ -354,6 +387,91 @@ class BeregningDtoMappingTest {
         }
     }
 
+    @Test
+    fun `skal ikke sette innkrevesFraPerioder når endelig resultat ikke har perioder`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+        val søknadsbarn = behandling.søknadsbarn.first()
+        behandling.finnSkalInnkrevesPeriode(søknadsbarn).shouldNotBeEmpty()
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = opprettEndeligResultat(emptyList()))
+
+        resultat.innkrevesFraPerioder.shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal ikke sette innkrevesFraPerioder når endelig resultat mangler`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = null)
+
+        resultat.innkrevesFraPerioder.shouldBeEmpty()
+    }
+
+    @Test
+    fun `skal sette innkrevesFraPerioder når endelig resultat har perioder`() {
+        val behandling = opprettBehandlingUtenInnkrevingMedBeløpshistorikk()
+        val søknadsbarn = behandling.søknadsbarn.first()
+        val endeligResultat =
+            opprettEndeligResultat(
+                listOf(
+                    ResultatPeriodeBB(
+                        periode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+                        resultat = ResultatBeregningBB(BigDecimal(1000)),
+                        grunnlagsreferanseListe = emptyList(),
+                    ),
+                ),
+            )
+
+        val resultat = mapTilBeregningresultatBarn(behandling, endeligResultat = endeligResultat)
+
+        resultat.innkrevesFraPerioder shouldBe behandling.finnSkalInnkrevesPeriode(søknadsbarn)
+        resultat.innkrevesFraPerioder.shouldNotBeEmpty()
+    }
+
+    private fun opprettBehandlingUtenInnkrevingMedBeløpshistorikk(): Behandling {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        behandling.innkrevingstype = Innkrevingstype.UTEN_INNKREVING
+        behandling.leggTilGrunnlagBeløpshistorikk(
+            Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+            behandling.søknadsbarn.first(),
+            listOf(
+                opprettStønadPeriodeDto(
+                    ÅrMånedsperiode(behandling.virkningstidspunkt!!.plusMonths(2), null),
+                    beløp = BigDecimal("2000"),
+                ),
+            ),
+        )
+        return behandling
+    }
+
+    private fun opprettEndeligResultat(perioder: List<ResultatPeriodeBB>) = ResultatVedtakV2(
+        periodeListe = perioder,
+        vedtakstype = Vedtakstype.FASTSETTELSE,
+        beregnet = true,
+    )
+
+    private fun mapTilBeregningresultatBarn(
+        behandling: Behandling,
+        endeligResultat: ResultatVedtakV2?,
+    ) = mapTilBeregningresultatBarn(
+        søknadsbarn = behandling.søknadsbarn.first(),
+        erAvvistRevurdering = false,
+        resultatBarn =
+        BidragsberegningResultatBarnV2(
+            søknadsbarnreferanse = behandling.søknadsbarn.first().tilGrunnlagsreferanse(),
+            resultatVedtakListe = listOfNotNull(endeligResultat),
+        ),
+        grunnlagBarn = emptyList(),
+        grunnlagBeregning =
+        BidragsberegningOrkestratorRequestV2(
+            beregningsperiode = ÅrMånedsperiode(behandling.virkningstidspunkt!!, null),
+            beregningBarn = emptyList(),
+            grunnlagsliste = emptyList(),
+        ),
+        behandling = behandling,
+        endeligResultat = endeligResultat,
+    )
+
     private fun opprettResultatBidragsberegningBarn(
         testDataPerson: TestDataPerson,
         referanse: String,
@@ -376,7 +494,7 @@ class BeregningDtoMappingTest {
         ),
         avslagskode = avslagskode,
         opphørsdato = null,
-        `løperBidrag` = true,
+        løperBidrag = true,
     )
 
     private fun opprettGyldigBeregning(testDataPerson: TestDataPerson) = ResultatForskuddsberegningBarn(
@@ -485,4 +603,80 @@ class BeregningDtoMappingTest {
             ),
         ),
     )
+
+    @Test
+    fun `skal ikke ta med skattefrie barnetillegg i beregnet inntekt`() {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+        val bidragspliktig = behandling.bidragspliktig!!
+        behandling.inntekter.removeIf { it.type == Inntektsrapportering.BARNETILLEGG }
+        behandling.inntekter.add(
+            opprettInntekt(
+                datoFom = YearMonth.parse("2023-02"),
+                type = Inntektsrapportering.BARNETILLEGG,
+                kilde = Kilde.MANUELL,
+                beløp = BigDecimal(50400),
+                inntektstyper = listOf(
+                    Inntektstype.BARNETILLEGG_PENSJON to BigDecimal(20400),
+                    Inntektstype.BARNETILLEGG_FORSVARET to BigDecimal(30000),
+                ),
+                behandling = behandling,
+                gjelderRolle = bidragspliktig,
+            ),
+        )
+        behandling.inntekter.add(
+            opprettInntekt(
+                datoFom = YearMonth.parse("2023-02"),
+                type = Inntektsrapportering.BARNETILLEGG,
+                kilde = Kilde.MANUELL,
+                beløp = BigDecimal(12000),
+                inntektstyper = listOf(Inntektstype.BARNETILLEGG_FORSVARET to BigDecimal(12000)),
+                behandling = behandling,
+                gjelderRolle = bidragspliktig,
+            ),
+        )
+
+        val barnetillegg = behandling.tilInntektberegningDto(bidragspliktig).grunnlagListe
+            .filter { it.inntektsrapportering == Inntektsrapportering.BARNETILLEGG }
+
+        barnetillegg shouldHaveSize 1
+        barnetillegg.first().beløp.compareTo(BigDecimal(20400)) shouldBe 0
+    }
+
+    @Test
+    fun `skal hente barnets inntekt for søknadsbarnet i perioden når det er flere søknadsbarn`() {
+        fun sumInntekt(
+            referanse: String,
+            gjelderReferanse: String,
+            totalinntekt: Int,
+        ) = GrunnlagDto(
+            type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+            referanse = referanse,
+            gjelderReferanse = gjelderReferanse,
+            innhold = POJONode(DelberegningSumInntekt(periode = ÅrMånedsperiode(YearMonth.parse("2026-01"), null), totalinntekt = BigDecimal(totalinntekt))),
+        )
+        val grunnlagListe =
+            listOf(
+                GrunnlagDto(type = Grunnlagstype.PERSON_SØKNADSBARN, referanse = "person_barn1", innhold = POJONode(emptyMap<String, Any>())),
+                GrunnlagDto(type = Grunnlagstype.PERSON_SØKNADSBARN, referanse = "person_barn2", innhold = POJONode(emptyMap<String, Any>())),
+                sumInntekt("sum_inntekt_barn1", "person_barn1", 100000),
+                sumInntekt("sum_inntekt_barn2", "person_barn2", 0),
+                // Grunnlaget til barn 2 refererer også til inntekten til barn 1, slik BPs totale underholdskostnad gjør
+                GrunnlagDto(
+                    type = Grunnlagstype.DELBEREGNING_UNDERHOLDSKOSTNAD,
+                    referanse = "underholdskostnad_barn1",
+                    innhold = POJONode(emptyMap<String, Any>()),
+                    grunnlagsreferanseListe = listOf("sum_inntekt_barn1"),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+                    referanse = "sluttberegning_barn2",
+                    innhold = POJONode(emptyMap<String, Any>()),
+                    grunnlagsreferanseListe = listOf("sum_inntekt_barn2", "underholdskostnad_barn1"),
+                ),
+            )
+
+        val inntekter = grunnlagListe.byggResultatInntekter(listOf("sluttberegning_barn2"), søknadsbarnReferanse = "person_barn2")
+
+        inntekter.inntektBarn!!.compareTo(BigDecimal.ZERO) shouldBe 0
+    }
 }

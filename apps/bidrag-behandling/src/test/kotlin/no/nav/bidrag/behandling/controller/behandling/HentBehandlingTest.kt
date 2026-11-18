@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.controller.behandling
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -56,9 +57,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
             rolleIdent = testdataBarn2.ident,
         )
 
-        val behandlingFørLagring = opprettBehandling()
-        behandlingFørLagring.oppdaterVirkningstidspunktForAlle(LocalDate.parse("2022-01-01"))
-        val behandling = testdataManager.lagreBehandling(behandlingFørLagring)
+        val behandling = testdataManager.lagreBehandling(opprettBehandling(virkningstidspunkt = LocalDate.parse("2022-02-01")))
 
         // hvis
         val behandlingRes =
@@ -88,7 +87,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
             inntekterBarn2.shouldNotBeNull()
 
             assertSoftly(it.inntekter.barnetillegg.toList()) {
-                this shouldHaveSize 1
+                this shouldHaveSize 2
                 this[0].gjelderBarn shouldBe Personident(testdataBarn1.ident)
                 this[0].inntektsposter shouldHaveSize 1
                 this[0].inntektsposter.first().beløp shouldBe this[0].beløp
@@ -234,7 +233,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
     }
 
     @Test
-    fun `skal hente behandling med informajson om feil ved siste grunnlagsinnhenting`() {
+    fun `skal hente behandling med informasjon om feil ved siste grunnlagsinnhenting`() {
         // gitt
         val fomdatoIFeilrespons = LocalDate.of(2020, 6, 1)
         val tildatoIFeilrespons = LocalDate.of(2023, 7, 1)
@@ -251,6 +250,10 @@ class HentBehandlingTest : BehandlingControllerTest() {
         stubUtils.stubHenteGrunnlag(
             tomRespons = true,
             rolleIdent = testdataBarn2.ident,
+        )
+        WireMock.stubFor(
+            WireMock.post(WireMock.urlEqualTo("/stonad/hent-stonad-historisk/"))
+                .willReturn(WireMock.aResponse().withStatus(HttpStatus.NOT_FOUND.value())),
         )
 
         val behandling = testdataManager.lagreBehandling(opprettBehandling())
@@ -269,7 +272,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
 
         assertSoftly(behandlingRes.body?.feilOppståttVedSisteGrunnlagsinnhenting) { feil ->
             feil shouldNotBe null
-            feil!! shouldHaveSize 3
+            feil!! shouldHaveSize 2
             val sjekkFeil = feil.find { it.rolle.rolletype == Rolletype.BIDRAGSMOTTAKER }!!
             sjekkFeil.rolle.id shouldBe behandling.bidragsmottaker!!.id!!
             sjekkFeil.periode?.fom shouldBe fomdatoIFeilrespons
@@ -280,8 +283,8 @@ class HentBehandlingTest : BehandlingControllerTest() {
         }
     }
 
-    private fun opprettBehandling(): Behandling {
-        val behandling = oppretteBehandling()
+    private fun opprettBehandling(virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01")): Behandling {
+        val behandling = oppretteBehandling(virkningstidspunkt = virkningstidspunkt)
         behandling.husstandsmedlem =
             mutableSetOf(
                 oppretteHusstandsmedlem(behandling, testdataBarn1),
@@ -289,8 +292,8 @@ class HentBehandlingTest : BehandlingControllerTest() {
             )
         behandling.roller =
             mutableSetOf(
-                opprettRolle(behandling, testdataBarn1),
-                opprettRolle(behandling, testdataBarn2),
+                opprettRolle(behandling, testdataBarn1, virkningstidspunkt = virkningstidspunkt),
+                opprettRolle(behandling, testdataBarn2, virkningstidspunkt = virkningstidspunkt),
                 opprettRolle(behandling, testdataBM),
             )
         behandling.sivilstand =

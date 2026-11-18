@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.kafka
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.arkiv.BidragDokumentArkivConfig
 import no.nav.bidrag.dokument.arkiv.dto.JournalpostKanal
 import no.nav.bidrag.dokument.arkiv.model.JournalpostTema
@@ -20,8 +21,8 @@ class HendelseListener(
 ) {
     @KafkaListener(
         containerFactory = "oppgaveKafkaListenerContainerFactory",
-        groupId = "\${NAIS_APP_NAME}",
-        topics = ["\${TOPIC_OPPGAVE_HENDELSE}"],
+        groupId = $$"${NAIS_APP_NAME}",
+        topics = [$$"${TOPIC_OPPGAVE_HENDELSE}"],
     )
     fun lesOppgaveOpprettetHendelse(consumerRecord: ConsumerRecord<String?, String?>) {
         val oppgaveOpprettetHendelse =
@@ -37,7 +38,7 @@ class HendelseListener(
         }
     }
 
-    @KafkaListener(groupId = "\${NAIS_APP_NAME}", topics = ["\${TOPIC_JOURNALFOERING}"])
+    @KafkaListener(groupId = $$"${NAIS_APP_NAME}", topics = [$$"${TOPIC_JOURNALFOERING}"])
     fun listenJournalforingHendelse(@Payload journalfoeringHendelseRecord: JournalfoeringHendelseRecord) {
         val journalpostTema = JournalpostTema(journalfoeringHendelseRecord)
         if (!journalpostTema.erOmhandlingAvBidrag()) {
@@ -48,7 +49,7 @@ class HendelseListener(
             LOGGER.debug("Journalpost er opprettet av NKS. Stopper videre behandling")
             return
         }
-        LOGGER.info("Mottok journalføringshendelse {}", journalfoeringHendelseRecord)
+        secureLogger.info { "Mottok journalføringshendelse $journalfoeringHendelseRecord" }
         behandleJournalforingHendelseService.behandleJournalforingHendelse(
             journalfoeringHendelseRecord,
         )

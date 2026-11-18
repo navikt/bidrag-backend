@@ -20,12 +20,12 @@ class PersonHendelseService(
         hendelse.personidenter.forEach { personident ->
             barnRepository.findAllByKravhaver(personident).forEach { barn ->
                 val nyestePersonIdent = identUtils.hentNyesteIdent(Personident(personident))
-                LOGGER.info { "Behandler personhendelse og oppdaterer kravhaver ${barn.kravhaver} til $nyestePersonIdent." }
+                LOGGER.debug { "Behandler personhendelse og oppdaterer kravhaver ${barn.kravhaver} til $nyestePersonIdent." }
                 barnRepository.save(barn.copy(kravhaver = nyestePersonIdent.verdi))
             }
             barnRepository.findAllBySkyldner(personident).forEach { barn ->
                 val nyestePersonIdent = identUtils.hentNyesteIdent(Personident(personident))
-                LOGGER.info { "Behandler personhendelse og oppdaterer skyldner ${barn.skyldner} til $nyestePersonIdent." }
+                LOGGER.debug { "Behandler personhendelse og oppdaterer skyldner ${barn.skyldner} til $nyestePersonIdent." }
                 barnRepository.save(barn.copy(skyldner = nyestePersonIdent.verdi))
             }
         }

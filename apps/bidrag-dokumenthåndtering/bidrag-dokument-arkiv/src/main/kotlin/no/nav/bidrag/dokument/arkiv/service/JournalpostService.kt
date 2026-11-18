@@ -8,10 +8,10 @@ import no.nav.bidrag.dokument.arkiv.dto.DistribusjonsInfo
 import no.nav.bidrag.dokument.arkiv.dto.Journalpost
 import no.nav.bidrag.dokument.arkiv.dto.Sak
 import no.nav.bidrag.dokument.arkiv.dto.TilknyttetJournalpost
+import no.nav.bidrag.dokument.arkiv.model.JournalpostIkkeFunnetException
 import no.nav.bidrag.dokument.arkiv.model.kanIkkeHenteJournalMedUgyldigFagomrade
 import no.nav.bidrag.transport.dokument.JournalpostDto
 import no.nav.bidrag.transport.person.PersonDto
-import org.slf4j.LoggerFactory
 import java.util.Optional
 
 class JournalpostService(
@@ -19,6 +19,12 @@ class JournalpostService(
     private val personConsumer: PersonConsumer,
 ) {
     fun hentJournalpost(journalpostId: Long): Journalpost? = hentJournalpost(journalpostId, null)
+
+    fun hentJournalpostForEksternReferanseId(eksternReferanseId: String): Journalpost? = try {
+        safConsumer.hentJournalpostForEksternReferanseId(eksternReferanseId)
+    } catch (e: JournalpostIkkeFunnetException) {
+        null
+    }
 
     fun hentJournalpostMedTilknyttedeSaker(journalpostId: Long): Journalpost? = hentJournalpost(journalpostId)?.let { populerMedTilknyttedeSaker(it) }
 
@@ -56,7 +62,6 @@ class JournalpostService(
             return listOf()
         }
         val dokumentInfoId = journalpost.dokumenter[0].dokumentInfoId
-        LOGGER.info("Henter tilknyttede journalposter for journalpost ${journalpost.journalpostId} med dokumentinfoId $dokumentInfoId")
         return dokumentInfoId?.let { finnTilknyttedeJournalposter(it) } ?: emptyList()
     }
 
@@ -76,7 +81,6 @@ class JournalpostService(
             .filterNotNull()
             .filter { it != journalpostFagsakId }.toList()
         val sakerNoDuplicates = HashSet(saker).stream().toList()
-        LOGGER.info("Fant ${saker.size + 1} saker for journalpost ${journalpost.journalpostId}")
         journalpost.tilknyttedeSaker = sakerNoDuplicates
         return journalpost
     }
@@ -101,9 +105,5 @@ class JournalpostService(
             journalpost.bruker = Bruker(brukerId.verdi, BrukerType.FNR.name)
         }
         return journalpost
-    }
-
-    companion object {
-        private val LOGGER = LoggerFactory.getLogger(JournalpostService::class.java)
     }
 }

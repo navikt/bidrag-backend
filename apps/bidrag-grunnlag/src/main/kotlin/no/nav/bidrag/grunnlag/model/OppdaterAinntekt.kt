@@ -1,8 +1,8 @@
 package no.nav.bidrag.grunnlag.model
 
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestStatus
 import no.nav.bidrag.domene.enums.grunnlag.GrunnlagRequestType
-import no.nav.bidrag.grunnlag.SECURE_LOGGER
 import no.nav.bidrag.grunnlag.bo.AinntektBo
 import no.nav.bidrag.grunnlag.bo.AinntektspostBo
 import no.nav.bidrag.grunnlag.comparator.PeriodComparable
@@ -20,8 +20,6 @@ import no.nav.bidrag.grunnlag.util.GrunnlagUtil.Companion.tilJson
 import no.nav.bidrag.transport.behandling.grunnlag.response.OppdaterGrunnlagDto
 import no.nav.tjenester.aordningen.inntektsinformasjon.AktoerType
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -34,11 +32,6 @@ class OppdaterAinntekt(
     private val inntektskomponentenService: InntektskomponentenService,
 ) : MutableList<OppdaterGrunnlagDto> by mutableListOf() {
 
-    companion object {
-        @JvmStatic
-        val LOGGER: Logger = LoggerFactory.getLogger(OppdaterAinntekt::class.java)
-    }
-
     fun oppdaterAinntekt(ainntektRequestListe: List<PersonIdOgPeriodeRequest>, historiskeIdenterMap: Map<String, List<String>>): OppdaterAinntekt {
         val formaal = persistenceService.hentFormaalGrunnlagspakke(grunnlagspakkeId)
 
@@ -48,26 +41,24 @@ class OppdaterAinntekt(
             // 2015.01 hvis periodeFra er tidligere enn det. Hvis periodeTil er før januar 2015 så gjøres det ikke et kall.
             //
             if (personIdOgPeriode.periodeTil.isBefore(LocalDate.of(2015, 1, 1))) {
-                LOGGER.warn("Ugyldig periode angitt i HentInntektRequest (Inntektskomponenten). PeriodeTil må være januar 2015 eller senere")
-                SECURE_LOGGER.warn(
+                secureLogger.warn {
                     "Ugyldig periode angitt i HentInntektRequest (Inntektskomponenten). PeriodeTil må være januar 2015 eller senere: ${
                         tilJson(
                             personIdOgPeriode,
                         )
-                    }",
-                )
+                    }"
+                }
             } else {
                 val periodeFra: String
                 if (personIdOgPeriode.periodeFra.isBefore(LocalDate.parse("2015-01-01"))) {
                     periodeFra = JANUAR2015
-                    LOGGER.warn("For gammel periodeFra angitt i HentInntektRequest (Inntektskomponenten), overstyres til januar 2015")
-                    SECURE_LOGGER.warn(
+                    secureLogger.warn {
                         "For gammel periodeFra angitt i HentInntektRequest (Inntektskomponenten), overstyres til januar 2015: ${
                             tilJson(
                                 personIdOgPeriode,
                             )
-                        }",
-                    )
+                        }"
+                    }
                 } else {
                     periodeFra = personIdOgPeriode.periodeFra.toString().substring(0, 7)
                 }
@@ -86,10 +77,10 @@ class OppdaterAinntekt(
                 hentInntektListeRequestListe.forEach { hentInntektListeRequest ->
                     // Henter inntekter for ett og ett år (litt uvisst hvorfor det er løst slik)
 
-                    SECURE_LOGGER.info("Kaller InntektskomponentenService med request: ${tilJson(hentInntektListeRequest)}")
+                    secureLogger.debug { "Kaller InntektskomponentenService med request: ${tilJson(hentInntektListeRequest)}" }
 
                     val hentInntektListeResponseIntern = inntektskomponentenService.hentInntekt(hentInntektListeRequest)
-                    SECURE_LOGGER.info("Inntektskomponenten ga følgende respons: ${tilJson(hentInntektListeResponseIntern)}")
+                    secureLogger.debug { "Inntektskomponenten ga følgende respons: ${tilJson(hentInntektListeResponseIntern)}" }
 
                     if (hentInntektListeResponseIntern.exceptionKastet) {
                         this.add(

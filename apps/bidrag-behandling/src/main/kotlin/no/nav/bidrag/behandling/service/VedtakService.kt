@@ -247,13 +247,14 @@ class VedtakService(
             ) {
                 val bp = konvertertBehandlingLesemodus.roller.find { it.rolletype == Rolletype.BIDRAGSPLIKTIG }
                 behandlingRepository!!
-                    .finnHovedbehandlingForBpVedFF(bp!!.ident!!, påklagetVedtak)
+                    .finnHovedbehandlingForBpVedFF(bp!!.ident!!, påklagetVedtak, refVedtaksid)
                     ?.let { behandling ->
 
                         forholdsmessigFordelingService!!.opprettSøknaderForKlageEllerOmgjøring(
                             behandling,
                             request.søknadsid,
                             opprettetAvEnhet = request.behandlerenhet,
+                            søknadOpprettetAvSaksbehandler = true,
                         )
 
                         return OpprettBehandlingResponse(behandling.id!!)
@@ -269,6 +270,7 @@ class VedtakService(
                     konvertertBehandling,
                     request.søknadsid,
                     opprettetAvEnhet = request.behandlerenhet,
+                    søknadOpprettetAvSaksbehandler = true,
                 )
             }
             konvertertBehandling.roller.forEach {
@@ -722,6 +724,8 @@ class VedtakService(
                 vedtaksidHovedvedktak,
                 vedtak,
             )
+        // Ingen innkreving hvis det er ingen stønadsendringsliste. Hopper over
+        if (innkrevingRequest.stønadsendringListe.isEmpty()) return
         innkrevingRequest.validerGrunnlagsreferanser()
         val responseInnkreving = fatteVedtak(innkrevingRequest, simuler)
         vedtakRequestDtos.add(responseInnkreving.vedtaksid to innkrevingRequest)
@@ -877,6 +881,14 @@ class VedtakService(
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+            // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
+            if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
+                if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
+                    opprettNotatForAlleSakerParallelt(behandling)
+                } else {
+                    opprettNotat(behandling)
+                }
+            }
         }
 
         return BeregningVedtakResultat(vedtakRequestDtos, vedtaksid)
@@ -890,7 +902,7 @@ class VedtakService(
 
         return behandlingTilVedtakMapping
             .run {
-                if (behandling.erAvslagForAlle) {
+                if (behandling.erAvslagForAlle && !behandling.erIForholdsmessigFordeling) {
                     VedtakRequstDto(
                         listOf(behandling.byggOpprettVedtakRequestAvslagForBidrag(request)),
                         erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder = false,

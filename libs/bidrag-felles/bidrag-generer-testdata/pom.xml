@@ -100,12 +100,6 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>test-compile</id>
-                        <configuration>
-                            <jvmTarget>21</jvmTarget>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>default-test-compile</id>
                         <configuration>
                             <jvmTarget>21</jvmTarget>
@@ -118,7 +112,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.7.0</version>
+                <version>1.8.0</version>
                 <configuration>
                     <flattenMode>defaults</flattenMode>
                     <updatePomFile>true</updatePomFile>

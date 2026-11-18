@@ -24,7 +24,7 @@ import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
-import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.LøpendeBidragPeriodeRequest
@@ -197,8 +197,15 @@ class ForholdsmessigFordelingKravhaverService(
         val løpendeBidragsaker =
             løpendeBidraggsakerBP
                 .filter { lb -> !kravhaverFraÅpneSaker.finnes(lb.kravhaver.verdi, lb.type) }
-                .map {
+                .mapNotNull {
                     val sak = sakConsumer.hentSak(it.sak.verdi)
+                    val opphørsdato = behandling.finnOpphørsdato(it.type, it.kravhaver.verdi)
+                    // Ikke ta med de som opphører og starter samme tidspunkt
+                    if (it.periodeFra == opphørsdato ||
+                        (opphørsdato != null && opphørsdato <= behandling.eldsteSøktFomDato.toYearMonth())
+                    ) {
+                        return@mapNotNull null
+                    }
                     SakKravhaver(
                         saksnummer = it.sak.verdi,
                         kravhaver = it.kravhaver.verdi,
@@ -206,7 +213,7 @@ class ForholdsmessigFordelingKravhaverService(
                         bidragsmottaker = sak.bidragsmottaker?.fødselsnummer?.verdi,
                         løperBidragFra = it.periodeFra,
                         løperBidragTil = it.periodeTil,
-                        opphørsdato = behandling.finnOpphørsdato(it.type, it.kravhaver.verdi),
+                        opphørsdato = opphørsdato,
                         privatAvtale = behandling.privatAvtale.find { pa -> pa.gjelderPerson(it.kravhaver.verdi, it.type) },
                     )
                 }.distinctBy { it.distinctKey }
@@ -272,19 +279,21 @@ class ForholdsmessigFordelingKravhaverService(
         stønadstype: no.nav.bidrag.domene.enums.vedtak.Stønadstype?,
         omgjøringsdetaljer: Omgjøringsdetaljer?,
         erKlageEllerOmgjøring: Boolean = omgjøringsdetaljer != null,
+        barnIdent: String? = null,
     ) = hentÅpneSøknader(bidragspliktigFnr, behandlingstype, omgjøringsdetaljer, erKlageEllerOmgjøring)
         .filter { it.behandlingstype.erForholdsmessigFordeling }
         .find {
             (it.innkreving == medInnkreving) &&
                 it.saksnummer == saksnummer &&
                 it.søknadFomDato == søktFomDato &&
-                it.behandlingstema.tilStønadstype() == stønadstype
+                it.behandlingstema.tilStønadstype() == stønadstype &&
+                (stønadstype != Stønadstype.BIDRAG18AAR || it.søknadGjelderKunBarn(barnIdent))
         }
 
     fun hentÅpneSøknaderRevurdering(bidragspliktigFnr: String): List<HentSøknad> = bbmConsumer
         .hentÅpneSøknaderForBp(bidragspliktigFnr)
         .åpneSøknader
-        .filter { it.behandlingstype == Behandlingstype.REVURDERING && it.søktAvType == SøktAvType.NAV_BIDRAG }
+        .filter { it.behandlingstype == Behandlingstype.REVURDERING && (it.søktAvType == SøktAvType.NAV_BIDRAG || it.søktAvType == SøktAvType.AUTOMATISK) }
 
     fun hentÅpneSøknader(
         bidragspliktigFnr: String,

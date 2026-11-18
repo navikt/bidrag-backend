@@ -24,6 +24,8 @@ import { BeregningBegrensetRevurdering } from "~/routes/notat.bidrag/beregningsd
 import { EndringUnderGrense } from "~/routes/notat.bidrag/beregningsdetaljer/EndringUnderGrense";
 import { AldersjusteringDetaljer } from "~/routes/notat.bidrag/beregningsdetaljer/AldersjusteringDetaljer";
 import { IndeksreguleringDetaljer } from "~/routes/notat.bidrag/beregningsdetaljer/IndeksreguleringDetaljer";
+import { erBeregnetAvslagUtenBeløp } from "~/routes/notat.bidrag/BidragHelpers";
+import { BarnetErSelvforsørget } from "~/routes/notat.bidrag/beregningsdetaljer/BarnetErSelvforsørget";
 import { BeregningForholdsmessigFordeling } from "~/routes/notat.bidrag/beregningsdetaljer/BeregningForholdsmessigFordelingDetaljer";
 import { PersonV2 } from "~/components/Person";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
@@ -230,26 +232,54 @@ function VedleggBeregningsDetaljerInnhold() {
                   .filter(
                     (d) =>
                       d.beregningsdetaljer?.sluttberegning &&
-                      !d.beregningsdetaljer.sluttberegning!
-                        .barnetErSelvforsørget &&
                       !d.beregningsdetaljer.sluttberegning!.ikkeOmsorgForBarnet,
                   )
                   .map((periode) => {
                     const detaljer = periode.beregningsdetaljer!;
+                    const kontekst = {
+                      ...detaljer,
+                      periode,
+                      endeligBeløp: periode.faktiskBidrag,
+                      kanFatteVedtakForRevurderingsbarn:
+                        data.vedtak.kanFatteVedtakForRevurderingsbarn,
+                      erEndringUnderGrense:
+                        periode.resultatKode ===
+                        Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
+                    };
+                    // Avslag fra beregningen viser bare grunnlaget for avslaget, som i steg 8 i behandling
+                    if (erBeregnetAvslagUtenBeløp(detaljer.sluttberegning)) {
+                      return (
+                        <>
+                          <BidragBeregningContext.Provider value={kontekst}>
+                            <div className={"pb-2"}>
+                              <DataViewTable
+                                className={"mb-2"}
+                                data={[
+                                  {
+                                    label: "Periode",
+                                    labelBold: true,
+                                    value: formatPeriode(
+                                      periode.periode.fom,
+                                      deductDays(periode.periode!.til, 1),
+                                    ),
+                                  },
+                                ]}
+                              />
+                              {detaljer.sluttberegning!
+                                .barnetErSelvforsørget ? (
+                                <BarnetErSelvforsørget />
+                              ) : (
+                                <BPAndelUnderholdskostnad />
+                              )}
+                            </div>
+                          </BidragBeregningContext.Provider>
+                          <HorizontalLine />
+                        </>
+                      );
+                    }
                     return (
                       <>
-                        <BidragBeregningContext.Provider
-                          value={{
-                            ...detaljer,
-                            periode,
-                            endeligBeløp: periode.faktiskBidrag,
-                            kanFatteVedtakForRevurderingsbarn:
-                              data.vedtak.kanFatteVedtakForRevurderingsbarn,
-                            erEndringUnderGrense:
-                              periode.resultatKode ===
-                              Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
-                          }}
-                        >
+                        <BidragBeregningContext.Provider value={kontekst}>
                           <>
                             <div className={"pb-2"}>
                               <DataViewTable

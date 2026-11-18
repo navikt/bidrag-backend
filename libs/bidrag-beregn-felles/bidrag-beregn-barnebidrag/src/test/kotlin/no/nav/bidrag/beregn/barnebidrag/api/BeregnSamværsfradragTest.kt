@@ -7,7 +7,6 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSamværsfradrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -85,7 +84,6 @@ internal class BeregnSamværsfradragTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatSamværsfradrag() {
         val request = lesFilOgByggRequest(filnavn)
         val samværsfradragResultat = api.beregnSamværsfradrag(request)
-        println(commonObjectmapper.writeValueAsString(samværsfradragResultat))
 
         val alleReferanser = hentAlleReferanser(samværsfradragResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(samværsfradragResultat)
@@ -128,7 +126,6 @@ internal class BeregnSamværsfradragTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatSamværsfradragFlerePerioder() {
         val request = lesFilOgByggRequest(filnavn)
         val samværsfradragResultat = api.beregnSamværsfradrag(request)
-        println(commonObjectmapper.writeValueAsString(samværsfradragResultat))
 
         val alleReferanser = hentAlleReferanser(samværsfradragResultat)
         val alleRefererteReferanser = hentAlleRefererteReferanser(samværsfradragResultat)

@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.service
 
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
@@ -11,13 +12,17 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Barnetilsyn
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.FaktiskTilsynsutgift
+import no.nav.bidrag.behandling.database.datamodell.Forpleining
 import no.nav.bidrag.behandling.database.datamodell.Person
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Tilleggsstønad
 import no.nav.bidrag.behandling.database.datamodell.Underholdskostnad
 import no.nav.bidrag.behandling.database.datamodell.hentAlleAktiv
@@ -28,6 +33,7 @@ import no.nav.bidrag.behandling.database.datamodell.henteNyesteIkkeAktiveGrunnla
 import no.nav.bidrag.behandling.database.datamodell.konvertereData
 import no.nav.bidrag.behandling.database.repository.PersonRepository
 import no.nav.bidrag.behandling.database.repository.UnderholdskostnadRepository
+import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagstype
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
@@ -62,6 +68,7 @@ import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
 import no.nav.bidrag.domene.enums.barnetilsyn.Tilsynstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
@@ -305,6 +312,140 @@ class UnderholdServiceTest {
                 innhold shouldBe "Begrunnelse for andre barn"
                 type shouldBe NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("Tester forpleining")
+    open inner class ForpleiningTest {
+        @Test
+        open fun `skal ikke kunne slå av tilsynsordning når barnet har forpleining`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            // hvis, så
+            assertFailsWith<HttpClientErrorException> {
+                underholdService.oppdatereTilsynsordning(underholdskostnad, false)
+            }
+        }
+
+        @Test
+        open fun `skal fjerne forpleining når barnet endres til andre barn`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first { !it.gjelderAndreBarn }
+            val rolleBarn = underholdskostnad.rolle!!
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().minusMonths(4).withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            every { personRepository.findFirstByIdent(any()) } returns
+                Person(
+                    ident = rolleBarn.ident,
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            val request =
+                OpprettRolleDto(
+                    rolletype = Rolletype.BARN,
+                    ident = Personident(rolleBarn.ident!!),
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            // hvis
+            underholdService.endreUnderholdskostnadTilAndreBarn(behandling, request)
+
+            // så
+            underholdskostnad.forpleining.shouldBeEmpty()
+        }
+
+        @Test
+        open fun `skal fjerne forpleining når rollen fjernes fra underholdskostnaden`() {
+            // gitt
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first { !it.gjelderAndreBarn }
+            val rolleBarn = underholdskostnad.rolle!!
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = 1L,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+
+            every { personRepository.findFirstByIdent(any()) } returns
+                Person(
+                    ident = rolleBarn.ident,
+                    fødselsdato = rolleBarn.fødselsdato,
+                )
+
+            // hvis
+            underholdService.fjernRolleFraUnderholdskostnad(underholdskostnad)
+
+            // så
+            underholdskostnad.gjelderAndreBarn.shouldBeTrue()
+            underholdskostnad.forpleining.shouldBeEmpty()
+        }
+
+        @Test
+        open fun `skal slette forpleining fra underholdskostnad`() {
+            // gitt
+            val universalid = 1L
+            val behandling =
+                oppretteTestbehandling(
+                    setteDatabaseider = true,
+                    inkludereBp = true,
+                    behandlingstype = TypeBehandling.BIDRAG,
+                )
+            val underholdskostnad = behandling.underholdskostnader.first()
+            underholdskostnad.forpleining.add(
+                Forpleining(
+                    id = universalid,
+                    underholdskostnad = underholdskostnad,
+                    fom = LocalDate.now().withDayOfMonth(1),
+                    beløp = BigDecimal(2000),
+                ),
+            )
+            val request = SletteUnderholdselement(idUnderhold = 1, idElement = 1, Underholdselement.FORPLEINING)
+
+            // hvis
+            underholdService.sletteFraUnderhold(behandling, request)
+
+            // så
+            behandling.underholdskostnader
+                .find { it.id == universalid }
+                ?.forpleining
+                .shouldBeEmpty()
         }
     }
 
@@ -1050,6 +1191,45 @@ class UnderholdServiceTest {
 
                 // så
                 respons.shouldNotBeNull()
+            }
+
+            private fun leggTilBidragsmottaker(behandling: Behandling) = behandling.roller.add(
+                Rolle(
+                    ident = "12345678910",
+                    rolletype = Rolletype.BIDRAGSMOTTAKER,
+                    behandling = behandling,
+                    fødselsdato = LocalDate.parse("1985-01-01"),
+                    id = 66,
+                ),
+            )
+
+            @Test
+            open fun `skal kreve bidragsmottaker id for begrunnelse for andre barn når det finnes flere bidragsmottakere`() {
+                val behandling = oppretteTestbehandling(setteDatabaseider = true, inkludereBp = true, behandlingstype = TypeBehandling.BIDRAG)
+                leggTilBidragsmottaker(behandling)
+
+                val respons =
+                    assertFailsWith<HttpClientErrorException> {
+                        underholdService.oppdatereBegrunnelse(behandling, OppdatereBegrunnelseRequest(begrunnelse = "Begrunnelse for annet barn"))
+                    }
+
+                respons.message shouldContain "Bidragsmottaker id må settes hvis det finnes flere BMer i saken"
+            }
+
+            @Test
+            open fun `skal ikke kreve bidragsmottaker id for begrunnelse for søknadsbarn når det finnes flere bidragsmottakere`() {
+                val behandling = oppretteTestbehandling(setteDatabaseider = true, inkludereBp = true, behandlingstype = TypeBehandling.BIDRAG)
+                leggTilBidragsmottaker(behandling)
+                val barn = behandling.søknadsbarn.first()
+                val underholdskostnad = behandling.underholdskostnader.find { it.rolle?.ident == barn.ident }.shouldNotBeNull()
+
+                underholdService.oppdatereBegrunnelse(
+                    behandling,
+                    OppdatereBegrunnelseRequest(underholdsid = underholdskostnad.id, begrunnelse = "Begrunnelse for søknadsbarn"),
+                )
+
+                NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.UNDERHOLDSKOSTNAD, barn.id!!) shouldBe
+                    "Begrunnelse for søknadsbarn"
             }
         }
     }

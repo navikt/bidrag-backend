@@ -8,7 +8,6 @@ import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
-import no.nav.bidrag.transport.felles.commonObjectmapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -585,7 +584,6 @@ internal class BeregnEndeligBidragTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatEndeligBidrag(antallGrunnlag: Int = 1) {
         val request = lesFilOgByggRequest(filnavn)
         val endeligBidragResultat = api.beregnEndeligBidrag(request)
-        println(commonObjectmapper.writeValueAsString(endeligBidragResultat))
 
         val alleReferanser = hentAlleReferanser(endeligBidragResultat.grunnlagListe)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endeligBidragResultat.grunnlagListe)
@@ -703,7 +701,6 @@ internal class BeregnEndeligBidragTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatEndeligBidragFlerePerioder() {
         val request = lesFilOgByggRequest(filnavn)
         val endeligBidragResultat = api.beregnEndeligBidrag(request)
-        println(commonObjectmapper.writeValueAsString(endeligBidragResultat))
 
         val alleReferanser = hentAlleReferanser(endeligBidragResultat.grunnlagListe)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endeligBidragResultat.grunnlagListe)
@@ -1035,7 +1032,6 @@ internal class BeregnEndeligBidragTest : FellesTest() {
     private fun utførBeregningerOgEvaluerResultatEndeligBidragFlerePerioderBegrensetRevurdering() {
         val request = lesFilOgByggRequest(filnavn)
         val endeligBidragResultat = api.beregnEndeligBidrag(request)
-        println(commonObjectmapper.writeValueAsString(endeligBidragResultat))
 
         val alleReferanser = hentAlleReferanser(endeligBidragResultat.grunnlagListe)
         val alleRefererteReferanser = hentAlleRefererteReferanser(endeligBidragResultat.grunnlagListe)

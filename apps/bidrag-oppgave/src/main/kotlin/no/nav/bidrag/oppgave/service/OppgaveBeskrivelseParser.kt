@@ -1,7 +1,7 @@
 package no.nav.bidrag.oppgave.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.oppgave.dto.Beskrivelseinnslag
-import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -28,7 +28,7 @@ import java.time.format.ResolverStyle
  */
 object OppgaveBeskrivelseParser {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
+    private val logger = KotlinLogging.logger {}
 
     private const val HEADER_PREFIX = "---"
     private const val ENDRING_PREFIX = "\u00B7"
@@ -59,11 +59,7 @@ object OppgaveBeskrivelseParser {
         } catch (e: DateTimeParseException) {
             // Beskrivelsen kan inneholde personopplysninger og skal ikke logges. Meldingen fra
             // DateTimeParseException inneholder kun tidsstempelet fra headeren, som er trygt å logge.
-            logger.warn(
-                "Kunne ikke tolke beskrivelseshistorikk for oppgave {}, setter historikken til null. Årsak: {}",
-                oppgaveId,
-                e.message,
-            )
+            logger.warn(e) { "Kunne ikke tolke beskrivelseshistorikk for oppgave $oppgaveId, setter historikken til null." }
             null
         }
     }

@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.annotation.Timed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -7,6 +8,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.commons.util.RequestContextAsyncContext
 import no.nav.bidrag.commons.util.SecurityCoroutineContext
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.dokument.BidragDokumentConfig
 import no.nav.bidrag.dokument.consumer.BidragDokumentConsumer
 import no.nav.bidrag.dokument.consumer.DokumentTilgangConsumer
@@ -16,7 +18,6 @@ import no.nav.bidrag.dokument.dto.Kilde
 import no.nav.bidrag.transport.dokument.DokumentArkivSystemDto
 import no.nav.bidrag.transport.dokument.DokumentMetadata
 import no.nav.bidrag.transport.dokument.DokumentTilgangResponse
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -128,7 +129,7 @@ class DokumentService(
                 "inline; filename=dokumenter_sammenslatt.pdf",
             ).body(dokumentByte)
     } catch (e: Exception) {
-        LOGGER.error("Det skjedde en feil ved henting av dokumenter {}", dokumentRefList, e)
+        LOGGER.error(e) { "Det skjedde en feil ved henting av dokumenter ${dokumentRefList.toString().sanitizeForLog()}" }
         if (e is HttpStatusCodeException) {
             ResponseEntity.status(e.statusCode).build()
         } else {
@@ -181,6 +182,6 @@ class DokumentService(
         .collect(Collectors.toList())
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(DokumentService::class.java)
+        private val LOGGER = KotlinLogging.logger {}
     }
 }

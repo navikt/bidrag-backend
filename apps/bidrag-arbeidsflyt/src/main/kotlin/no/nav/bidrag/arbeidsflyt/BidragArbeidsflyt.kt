@@ -1,7 +1,6 @@
 package no.nav.bidrag.arbeidsflyt
 
 import no.nav.security.token.support.spring.api.EnableJwtTokenValidation
-import org.slf4j.LoggerFactory
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration
@@ -12,7 +11,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy
 
 const val PROFILE_NAIS = "nais"
 const val PROFILE_KAFKA_TEST = "kafka_test"
-val SECURE_LOGGER = LoggerFactory.getLogger("secureLogger")
 
 @SpringBootApplication(
     exclude = [

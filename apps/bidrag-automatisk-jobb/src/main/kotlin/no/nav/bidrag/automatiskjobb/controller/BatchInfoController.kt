@@ -7,11 +7,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.security.token.support.core.api.Protected
 import org.springframework.batch.core.BatchStatus
 import org.springframework.batch.core.configuration.JobRegistry
 import org.springframework.batch.core.job.JobExecution
-import org.springframework.batch.core.job.parameters.JobParameter
 import org.springframework.batch.core.launch.NoSuchJobException
 import org.springframework.batch.core.repository.JobRepository
 import org.springframework.batch.core.step.StepExecution
@@ -23,8 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.Duration
 import java.time.LocalDateTime
+import kotlin.math.max
+import kotlin.math.min
 
 private val LOGGER = KotlinLogging.logger {}
+
+private const val MAKS_ANTALL_KJØRINGER = 1000
 
 @Protected
 @RestController
@@ -82,21 +86,23 @@ class BatchInfoController(
         @PathVariable @Parameter(description = "Navn på jobben", example = "opprettAldersjusteringerBidragJob") jobNavn: String,
         @RequestParam(defaultValue = "10") @Parameter(description = "Maks antall kjøringer som returneres", example = "10") antall: Int,
     ): ResponseEntity<JobDetaljerDto> {
-        if (jobNavn !in jobRegistry.jobNames) {
-            LOGGER.warn { "Ukjent jobb forespurt: $jobNavn" }
-            return ResponseEntity.notFound().build()
-        }
+        val jobNavnSanitert =
+            saniterJobNavn(jobNavn) ?: run {
+                LOGGER.warn { "Ukjent jobb forespurt: ${jobNavn.sanitizeForLog()}" }
+                return ResponseEntity.notFound().build()
+            }
+        val antallSanitert = saniterAntall(antall) ?: return ResponseEntity.badRequest().build()
 
         val kjøringer =
             jobRepository
-                .getJobInstances(jobNavn, 0, antall)
+                .getJobInstances(jobNavnSanitert, 0, antallSanitert)
                 .flatMap { instans -> jobRepository.getJobExecutions(instans).map { it.tilJobKjøringDto() } }
                 .sortedByDescending { it.opprettetTidspunkt }
 
         return ResponseEntity.ok(
             JobDetaljerDto(
-                jobNavn = jobNavn,
-                antallKjøringer = antallKjøringerFor(jobNavn),
+                jobNavn = jobNavnSanitert,
+                antallKjøringer = antallKjøringerFor(jobNavnSanitert),
                 kjøringer = kjøringer,
             ),
         )
@@ -136,10 +142,10 @@ class BatchInfoController(
     fun hentSisteKjøring(
         @PathVariable @Parameter(description = "Navn på jobben", example = "opprettAldersjusteringerBidragJob") jobNavn: String,
     ): ResponseEntity<JobKjøringDto> {
-        if (jobNavn !in jobRegistry.jobNames) return ResponseEntity.notFound().build()
+        val jobNavnSanitert = saniterJobNavn(jobNavn) ?: return ResponseEntity.notFound().build()
         val kjøring =
             jobRepository
-                .getJobInstances(jobNavn, 0, 1)
+                .getJobInstances(jobNavnSanitert, 0, 1)
                 .firstOrNull()
                 ?.let { jobRepository.getLastJobExecution(it) }
                 ?: return ResponseEntity.notFound().build()
@@ -166,18 +172,21 @@ class BatchInfoController(
             defaultValue = "10",
         ) @Parameter(description = "Antall vellykkede kjøringer som brukes for ETA-beregning", example = "10") historikkAntall: Int,
     ): ResponseEntity<FremgangDto> {
+        val jobNavnSanitert = saniterJobNavn(jobNavn) ?: return ResponseEntity.notFound().build()
+        val antallSanitert = saniterAntall(historikkAntall) ?: return ResponseEntity.badRequest().build()
+
         val aktiv =
-            jobRepository.findRunningJobExecutions(jobNavn).maxByOrNull { it.createTime }
+            jobRepository.findRunningJobExecutions(jobNavnSanitert).maxByOrNull { it.createTime }
                 ?: return ResponseEntity.notFound().build()
 
         val medgåttSekunder = aktiv.startTime?.let { Duration.between(it, LocalDateTime.now()).toSeconds() }
 
         val gjennomsnittSekunder =
             jobRepository
-                .getJobInstances(jobNavn, 0, historikkAntall * 2)
+                .getJobInstances(jobNavnSanitert, 0, antallSanitert * 2)
                 .flatMap { jobRepository.getJobExecutions(it) }
                 .filter { it.status == BatchStatus.COMPLETED && it.startTime != null && it.endTime != null }
-                .take(historikkAntall)
+                .take(antallSanitert)
                 .map { Duration.between(it.startTime, it.endTime).toSeconds() }
                 .takeIf { it.isNotEmpty() }
                 ?.average()
@@ -193,7 +202,7 @@ class BatchInfoController(
         return ResponseEntity.ok(
             FremgangDto(
                 kjøringId = aktiv.id,
-                jobNavn = jobNavn,
+                jobNavn = jobNavnSanitert,
                 status = aktiv.status,
                 startTidspunkt = aktiv.startTime,
                 medgåttSekunder = medgåttSekunder,
@@ -233,11 +242,12 @@ class BatchInfoController(
             defaultValue = "50",
         ) @Parameter(description = "Antall siste kjøringer som inngår i statistikken", example = "50") antall: Int,
     ): ResponseEntity<List<JobStatistikkDto>> {
+        val antallSanitert = saniterAntall(antall) ?: return ResponseEntity.badRequest().build()
         val statistikk =
             jobRegistry.jobNames.map { jobName ->
                 val kjøringer =
                     jobRepository
-                        .getJobInstances(jobName, 0, antall)
+                        .getJobInstances(jobName, 0, antallSanitert)
                         .flatMap { jobRepository.getJobExecutions(it) }
 
                 val fullførte =
@@ -285,6 +295,23 @@ class BatchInfoController(
                 }
             }
         return ResponseEntity.ok(aktive)
+    }
+
+    /**
+     * Slår opp jobbnavnet i jobbregisteret og returnerer den registrerte verdien.
+     * Verdien som brukes videre kommer fra registeret, ikke fra forespørselen, slik at ukjente jobbnavn
+     * aldri når databasespørringene.
+     */
+    private fun saniterJobNavn(jobNavn: String): String? = jobRegistry.jobNames.firstOrNull { it == jobNavn }
+
+    /**
+     * Antall-parametere er brukerstyrte og må ligge innenfor et kjent intervall. Verdien som brukes videre
+     * utledes med min/max mot konstante grenser, slik at hverken negative verdier (underflow) eller svært store verdier (overflow) kan nå beregningene.
+     */
+    private fun saniterAntall(antall: Int): Int? = if (antall in 1..MAKS_ANTALL_KJØRINGER) {
+        min(max(antall, 1), MAKS_ANTALL_KJØRINGER)
+    } else {
+        null
     }
 
     private fun antallKjøringerFor(jobName: String): Long = try {

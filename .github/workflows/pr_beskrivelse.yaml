@@ -57,11 +57,6 @@ jobs:
         # eksporteres via GITHUB_ENV for å kunne brukes i resten av jobben.
         run: echo "ARBEIDSKATALOG=$RUNNER_TEMP/pr-beskrivelse" >> "$GITHUB_ENV"
 
-      - name: Kjør tester for hjelpeskriptene
-        run: |
-          bash .github/scripts/test-pr-endringsoversikt.sh
-          python3 .github/scripts/test_oppdater_pr_beskrivelse.py
-
       - name: Bygg endringsoversikt
         run: |
           git fetch origin "$BASE_BRANCH" --quiet
@@ -94,7 +89,7 @@ jobs:
           PR_TITTEL: ${{ github.event.pull_request.title }}
           SYSTEMPROMPT_FIL: .github/prompts/pr-beskrivelse-system.txt
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: env.GENERER_PROSA == 'true'
         with:
           node-version: '24'

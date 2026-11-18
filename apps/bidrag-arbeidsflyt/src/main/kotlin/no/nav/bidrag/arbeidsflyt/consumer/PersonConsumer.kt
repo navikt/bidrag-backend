@@ -2,7 +2,6 @@ package no.nav.bidrag.arbeidsflyt.consumer
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nav.bidrag.arbeidsflyt.CacheConfig.Companion.PERSON_CACHE
-import no.nav.bidrag.arbeidsflyt.SECURE_LOGGER
 import no.nav.bidrag.arbeidsflyt.model.HentArbeidsfordelingFeiletTekniskException
 import no.nav.bidrag.arbeidsflyt.model.HentPersonFeiletFunksjoneltException
 import no.nav.bidrag.commons.web.client.AbstractRestClient
@@ -46,23 +45,13 @@ class PersonConsumer(
     fun hentPerson(ident: String?): PersonDto? {
         if (ident == null) return null
 
-        try {
-            val response =
-                postForEntity<PersonDto>(
-                    hentPersonUri,
-                    PersonRequest(Personident(ident)),
-                )
-
-            if (response == null) {
-                SECURE_LOGGER.warn("Fant ingen person for ident $ident")
-                return null
-            }
-
-            return response
+        return try {
+            postForEntity<PersonDto>(
+                hentPersonUri,
+                PersonRequest(Personident(ident)),
+            )
         } catch (statusException: HttpStatusCodeException) {
             if (statusException.statusCode.is4xxClientError) {
-                LOGGER.error(statusException) { "Det skjedde en feil ved henting av person" }
-                SECURE_LOGGER.error("Det skjedde en feil ved henting av person $ident", statusException)
                 throw HentPersonFeiletFunksjoneltException("Det skjedde en feil ved henting av person $ident", statusException)
             }
             throw HentArbeidsfordelingFeiletTekniskException("Det skjedde en teknisk feil ved henting av person $ident", statusException)

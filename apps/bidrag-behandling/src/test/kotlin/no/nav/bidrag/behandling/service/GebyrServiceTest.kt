@@ -191,8 +191,8 @@ class GebyrServiceTest {
 
         bm.gebyr.shouldNotBeNull()
         bm.gebyr!!.overstyrGebyr shouldBe true
-        bm.gebyr!!.ilagtGebyr shouldBe true
-        bm.gebyr!!.beregnetIlagtGebyr shouldBe false
+        bm.gebyr!!.ilagtGebyr shouldBe false
+        bm.gebyr!!.beregnetIlagtGebyr shouldBe true
         bm.gebyr!!.begrunnelse shouldBe "Begrunnelse"
     }
 

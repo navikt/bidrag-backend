@@ -33,7 +33,7 @@ import no.nav.bidrag.behandling.transformers.inntekt.skalAutomatiskSettePeriode
 import no.nav.bidrag.behandling.transformers.inntekt.tilInntektDtoV2
 import no.nav.bidrag.behandling.transformers.inntektstypeListe
 import no.nav.bidrag.behandling.transformers.opphørSisteTilDato
-import no.nav.bidrag.behandling.transformers.skatteprosentTilFaktor
+import no.nav.bidrag.behandling.transformers.skattefaktorFraSkatteprosent
 import no.nav.bidrag.behandling.transformers.valider
 import no.nav.bidrag.behandling.transformers.validerKanOppdatere
 import no.nav.bidrag.behandling.transformers.vedtak.nullIfEmpty
@@ -146,6 +146,7 @@ class InntektService(
         opphørSlettet: Boolean = false,
         forrigeOpphørsdato: LocalDate? = null,
         forrigeVirkningstidspunkt: LocalDate? = null,
+        søknadsbarnSomEndres: Set<Rolle>? = null,
     ) {
         if (behandling.virkningstidspunkt == null) return
 
@@ -164,6 +165,7 @@ class InntektService(
         behandling.inntekter
             .filter { it.taMed && it.datoFom != null }
             .filter { it.datoFom!! == forrigeVirkningstidspunkt }
+            .filter { søknadsbarnSomEndres == null || (it.gjelderSøknadsbarn ?: it.gjelderRolle) in søknadsbarnSomEndres }
             .forEach { inntekt ->
                 inntekt.datoFom = inntekt.virkningstidspunktGjelderEllerBarn.toLocalDate()
             }
@@ -512,7 +514,7 @@ class InntektService(
                 val inntekt = henteInntektMedId(behandling, it.id)
                 if (inntekt.type == Inntektsrapportering.BARNETILLEGG) {
                     inntekt.inntektsposter.forEach { inntektspost ->
-                        inntektspost.skattefaktor = it.skatteprosent.skatteprosentTilFaktor
+                        inntektspost.skattefaktor = inntektspost.inntektstype.skattefaktorFraSkatteprosent(it.skatteprosent)
                     }
                 }
             }
@@ -552,7 +554,7 @@ class InntektService(
             inntekt.taMed = taMedIBeregning
             if (inntekt.type == Inntektsrapportering.BARNETILLEGG) {
                 inntekt.inntektsposter.forEach { inntektspost ->
-                    inntektspost.skattefaktor = skatteprosent.skatteprosentTilFaktor
+                    inntektspost.skattefaktor = inntektspost.inntektstype.skattefaktorFraSkatteprosent(skatteprosent)
                 }
             }
             return inntekt.tilInntektDtoV2()

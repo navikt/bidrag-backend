@@ -30,6 +30,11 @@ enum class UnleashFeatures(
     BEHANDLE_BARNEBIDRAG_FLERE_SAKER("behandling.behandle_bidrag_bp_har_flere_saker", false),
     FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA("behandling.fattevedtak_barnebidrag_utenlandskvaluta", false),
     FATTE_VEDTAK_BARNEBIDRAG_OPPFOSTRINGSBIDRAG("behandling.fattevedtak_barnebidrag_oppfostringsbidrag", false),
+
+    GJENOPPRETT_FF_SØKNAD("behandling.gjenopprett_ff_soknad", false),
+
+    // Midlertidig sperre for særbidrag når barnet er selvforsørget (§ 5). Er på når toggle ikke finnes i Unleash.
+    SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG("behandling.saerbidrag_sperr_selvforsorget_barn", true),
     ;
 
     private var defaultValue = false
