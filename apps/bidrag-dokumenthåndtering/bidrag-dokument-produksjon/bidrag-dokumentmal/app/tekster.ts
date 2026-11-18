@@ -13,6 +13,7 @@ export default {
   titler: {
     forskudd: "Forskudd, saksbehandlingsnotat",
     særbidrag: "Særbidrag, saksbehandlingsnotat",
+    rimeligÅInnvilge: "Rimelig å innvilge særbidrag",
     bidrag: "Bidrag, saksbehandlingsnotat",
     barnISaken: "Barn i saken",
     boforhold: {

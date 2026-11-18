@@ -1195,6 +1195,7 @@ export interface NotatSaerbidragKategoriDto {
 export interface NotatSaerbidragUtgifterDto {
   beregning?: NotatUtgiftBeregningDto | null;
   maksGodkjentBeløp?: NotatMaksGodkjentBelopDto | null;
+  rimeligÅInnvilge?: NotatSaerbidragRimeligAInnvilgeDto | null;
   /** Notat begrunnelse skrevet av saksbehandler */
   begrunnelse: NotatBegrunnelseDto;
   /**
@@ -1204,6 +1205,11 @@ export interface NotatSaerbidragUtgifterDto {
   notat: NotatBegrunnelseDto;
   utgifter: NotatUtgiftspostDto[];
   totalBeregning: NotatTotalBeregningUtgifterDto[];
+}
+
+export interface NotatSaerbidragRimeligAInnvilgeDto {
+  rimeligÅInnvilge: boolean;
+  begrunnelse?: string | null;
 }
 
 export interface NotatTilleggsstonadDto {

@@ -10,6 +10,7 @@ import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer"
 import Utgifter from "~/routes/notat.særbidrag/Utgifter";
 import Inntekter from "~/components/notat_felles/components/Inntekter";
 import Vedtak from "~/routes/notat.særbidrag/Vedtak";
+import RimeligÅInnvilge from "~/routes/notat.særbidrag/RimeligÅInnvilge";
 import VedleggBoforhold from "~/components/notat_felles/components/VedleggBoforhold";
 import VedleggInntekter from "~/components/notat_felles/components/VedleggInntekter";
 import NotatTittel from "~/components/NotatTittel";
@@ -55,6 +56,7 @@ export default function NotatSærbidrag() {
           <Utgifter />
           <Inntekter vedleggNummer={1} />
           <Boforhold vedleggNummer={2} />
+          <RimeligÅInnvilge />
           <Vedtak vedleggNummer={3} />
           <VedleggInntekter vedleggNummer={1} />
           <VedleggBoforhold vedleggNummer={2} />
