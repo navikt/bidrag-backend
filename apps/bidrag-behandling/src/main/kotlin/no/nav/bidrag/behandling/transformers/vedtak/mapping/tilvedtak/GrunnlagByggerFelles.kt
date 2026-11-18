@@ -805,7 +805,12 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
             if (periode != null) {
                 periode
             } else if (kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type)) {
-                val datoFom = maxOfNullable(datoFomEllerOpprinneligFom!!, behandling?.eldsteVirkningstidspunkt)!!
+                val datoFom = maxOfNullable(
+                    datoFomEllerOpprinneligFom!!,
+                    gjelderBarnRolle?.finnBeregnFra()?.atDay(1),
+                    behandling!!.eldsteVirkningstidspunkt,
+
+                )!!
                 val datoTil = bestemDatoTomForOffentligInntekt()?.plusDays(1)
                 ÅrMånedsperiode(
                     if (datoTil != null && datoFom > datoTil) opprinneligFom!! else datoFom,
