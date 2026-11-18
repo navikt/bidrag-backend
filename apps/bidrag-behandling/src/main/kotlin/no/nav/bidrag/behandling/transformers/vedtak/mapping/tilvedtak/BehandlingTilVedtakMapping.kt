@@ -1052,12 +1052,26 @@ class BehandlingTilVedtakMapping(
                             .map { it.resultat.byggStønadsendringerForVedtak(behandling, it.barn) }
                     }
                 val stønadsendringGrunnlag = stønadsendringPerioder.flatMap(StønadsendringPeriode::grunnlag)
+                val personobjekter = grunnlagslisteForSak.hentAllePersoner().toMutableSet() as MutableSet<GrunnlagDto>
+
+                val manglendeSøknadsbarnMedInntekterFraBeregning = grunnlagslisteForSak.filter { it.type == Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE }
+                    .mapNotNull { i ->
+                        val inntektGjelderPerson = personobjekter
+                            .filter { it.type == Grunnlagstype.PERSON_SØKNADSBARN }
+                            .find { i.gjelderReferanse == it.referanse } ?: return@mapNotNull null
+                        roller.find { it.tilGrunnlagsreferanse() == inntektGjelderPerson.referanse }
+                    }.distinctBy { it.id }.filter { inntektGjelderPerson -> byggGrunnlagForRoller.none { it.erSammeRolle(inntektGjelderPerson.ident!!, inntektGjelderPerson.stønadstype) } }
+
+                // Beregningen bruker inntekter fra alle barn i beregningen ved vurdering av FF. Da må alle inntekter bli med for å kunne vise hele vurderingen selv om vedtak splittes
+                // Da må også innhentet grunnlag for inntekene tas med (feks for 12 mnd 3 mnd bergningene osv)
+                val grunnlagslisteInnhentetInntekterAndreBarn = mapper.run { byggInnhentetGrunnlag(personobjekter, manglendeSøknadsbarnMedInntekterFraBeregning, byggBareInntekt = true) }
 
                 val grunnlagListeVedtak =
                     byggGrunnlagForVedtak(
                         grunnlagslisteForSak.hentAllePersoner().toMutableSet() as MutableSet<GrunnlagDto>,
                         byggForRoller = byggGrunnlagForRoller,
                     )
+
                 val stønadsendringGrunnlagListe =
                     if (erAvvistRevurdering) {
                         byggGrunnlagBegrunnelseVirkningstidspunkt(byggGrunnlagForSøknadsbarn) +
@@ -1068,7 +1082,7 @@ class BehandlingTilVedtakMapping(
                     }
 
                 val grunnlagListe =
-                    (grunnlagListeVedtak + stønadsendringGrunnlag + stønadsendringGrunnlagListe).toSet()
+                    (grunnlagListeVedtak + stønadsendringGrunnlag + stønadsendringGrunnlagListe + grunnlagslisteInnhentetInntekterAndreBarn).toSet()
                 val engangsbeløpGebyr =
                     if (erAvvistRevurdering) {
                         GebyrResulat(emptyList(), emptySet())
