@@ -21,6 +21,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.søknad.FinnSammenknytningerHovedsøknadRequest
 import no.nav.security.token.support.core.api.Protected
@@ -141,6 +142,23 @@ class BidragBeregningController(
     fun oppdaterBehandlerenhet(
         @Valid @RequestBody request: OppdaterBehandlerenhetRequest,
     ) = bisysService.oppdaterBehandlerenhet(request)
+
+    @PostMapping("/oppdatersoknadfomdato")
+    @Operation(
+        description = "Oppdaterer søkt fom dato på søknad",
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Oppdaterer søknad i Bisys med ny søkt fom dato",
+            ),
+        ],
+    )
+    fun oppdaterSøknadFomDato(
+        @Valid @RequestBody request: OppdaterSøknadFomDatoRequest,
+    ) = bisysService.oppdaterSøknadFomDato(request)
 
     @PostMapping("/feilregistrersoknad")
     @Operation(
