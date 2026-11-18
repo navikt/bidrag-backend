@@ -806,7 +806,8 @@ class VedtakService(
                     periodeRequest.periode.toDatoperiode().fom == it.fom &&
                         periodeRequest.periode.toDatoperiode().til == it.til &&
                         periodeRequest.beløp?.toInt() == it.beløp?.toInt() &&
-                        periodeRequest.valutakode == it.valutakode &&
+                        periodeRequest.valutakode == it.valutakode ||
+                        (periodeRequest.valutakode == "NOK" && it.valutakode == null) &&
                         periodeRequest.resultatkode == it.resultatkode &&
                         periodeRequest.delytelseId == it.delytelseId
                 }
@@ -1165,8 +1166,9 @@ class VedtakService(
                     eksisterendePeriode.fom == periodeRequest.periode.toDatoperiode().fom &&
                         eksisterendePeriode.til == periodeRequest.periode.toDatoperiode().til &&
                         eksisterendePeriode.beløp?.toInt() == periodeRequest.beløp?.toInt() &&
-                        eksisterendePeriode.valutakode == periodeRequest.valutakode &&
-                        eksisterendePeriode.resultatkode == periodeRequest.resultatkode &&
+                        periodeRequest.valutakode == eksisterendePeriode.valutakode ||
+                        (periodeRequest.valutakode == "NOK" && eksisterendePeriode.valutakode == null)
+                    eksisterendePeriode.resultatkode == periodeRequest.resultatkode &&
                         eksisterendePeriode.delytelseId == periodeRequest.delytelseId
                 }
             }
@@ -1366,28 +1368,6 @@ class VedtakService(
         )
     }
 
-    /*    ).groupBy { it.vedtak }
-
-        val resultat = mutableListOf<VedtakForStønad>()
-
-        vedtakOgStønadsendringerMap.forEach { vedtak, stønadsendring ->
-            resultat.add(
-                VedtakForStønad(
-                    vedtaksid = vedtak.id,
-                    vedtakstidspunkt = vedtak.vedtakstidspunkt!!,
-                    type = Vedtakstype.valueOf(vedtak.type),
-                    stønadsendring = stønadsendring.first().tilDto(),
-                    behandlingsreferanser = persistenceService.hentAlleBehandlingsreferanserForVedtak(vedtak.id).map {
-                        BehandlingsreferanseDto(BehandlingsrefKilde.valueOf(it.kilde), it.referanse)
-                    },
-                    kilde = Vedtakskilde.valueOf(vedtak.kilde),
-                    kildeapplikasjon = vedtak.kildeapplikasjon,
-                ),
-            )
-
-
-        }*/
-
     fun measureVedtak(
         metrikkNavn: String,
         enhetsnummer: Enhetsnummer?,
@@ -1495,7 +1475,12 @@ class VedtakService(
                     eksisterendeEngangsbeløp.beslutning == it.beslutning.name &&
                     eksisterendeEngangsbeløp.omgjørVedtakId == it.omgjørVedtakId &&
                     eksisterendeEngangsbeløp.referanse == it.referanse &&
-                    eksisterendeEngangsbeløp.eksternReferanse == it.eksternReferanse
+                    eksisterendeEngangsbeløp.eksternReferanse == it.eksternReferanse &&
+                    eksisterendeEngangsbeløp.beløp?.toInt() == it.beløp?.toInt() &&
+                    (
+                        eksisterendeEngangsbeløp.valutakode == it.valutakode ||
+                            (eksisterendeEngangsbeløp.valutakode == null && it.valutakode == "NOK")
+                        )
             }
         }
 
