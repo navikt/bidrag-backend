@@ -37,7 +37,6 @@ import no.nav.bidrag.transport.behandling.inntekt.response.SummertMånedsinntekt
 import no.nav.bidrag.transport.behandling.inntekt.response.SummertÅrsinntekt
 import no.nav.bidrag.transport.felles.ifTrue
 import java.math.BigDecimal
-import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -60,19 +59,24 @@ fun Inntekt.bestemOpprinneligTomVisningsverdi() = opprinneligTom?.let { opprinne
 
 // Hvis SB har lagt til inntekt manuelt så legges det på datoTom på offentlig slik at offentlig inntekt avsluttes før nye begynner
 // Hvis ikke datoTom tas med her så vil begge inntektene bli tatt med i beregningen som løpende (både manuelle og offentlig)
-fun Inntekt.bestemDatoTomForOffentligInntekt() = datoTom ?: skalAutomatiskSettePeriode().ifTrue {
-    opprinneligTom?.let { tom ->
+// Grunnen til at SB manuelt overstyrer offentlige ytelser er hvis SB har lagt inn skjønnsbasert inntekt og må derfor sette offentlig ytelse til 0kr
+fun Inntekt.bestemDatoTomForOffentligInntekt(): LocalDate? {
+    fun justerPeriodeForOpphørsdato(tom: LocalDate): LocalDate? {
         val maxDate =
             maxOf(
                 YearMonth.now().atEndOfMonth(),
                 minOf(YearMonth.now().atEndOfMonth(), opphørsdato?.plusMonths(1)?.minusDays(1) ?: LocalDate.MAX),
                 behandling!!.virkningstidspunktEllerSøktFomDato,
             )
-        if (tom.plusMonths(1).isAfter(maxDate)) {
+        return if (tom.plusMonths(1).isAfter(maxDate)) {
             justerPeriodeTomOpphørsdato(opphørsdato)
         } else {
             minOfNullable(justerPeriodeTomOpphørsdato(opphørsdato), tom)
         }
+    }
+
+    return skalAutomatiskSettePeriode().ifTrue {
+        (datoTom ?: opprinneligTom)?.let { justerPeriodeForOpphørsdato(it) }
     }
 }
 
