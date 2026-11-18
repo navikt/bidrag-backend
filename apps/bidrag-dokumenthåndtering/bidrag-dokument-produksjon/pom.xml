@@ -31,6 +31,8 @@
         <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
         <logback-encoder.version>9.0</logback-encoder.version>
         <swagger-annotations.version>2.2.55</swagger-annotations.version>
+        <mockk.version>1.14.11</mockk.version>
+        <kotest.version>6.2.6</kotest.version>
     </properties>
 
     <build>
@@ -186,6 +188,18 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.mockk</groupId>
+            <artifactId>mockk-jvm</artifactId>
+            <version>${mockk.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.kotest</groupId>
+            <artifactId>kotest-assertions-core-jvm</artifactId>
+            <version>${kotest.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

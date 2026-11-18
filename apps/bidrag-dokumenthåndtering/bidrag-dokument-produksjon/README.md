@@ -81,6 +81,16 @@ Hver av de tre appene har sin egen NAIS-applikasjon og deployes uavhengig:
 * `.nais/bidrag-dokumentmal` + `.github/workflows/bidrag-dokumentmal.yaml`
 * `.nais/bidrag-pdfgen` + `.github/workflows/bidrag-pdfgen.yaml`
 
+### Metrikker
+
+* `bidrag-dokument-produksjon`: `pdf_produksjon_seconds` gir tiden per steg
+  (`hent_html`, `rens_html`, `konverter_pdf`, `totalt`). `pdf_produksjon_storrelse_bytes`
+  gir størrelsen på HTML og PDF.
+* `bidrag-pdfgen` (`/metrics`): `pdfgen_phase_duration_seconds` og `pdfgen_phase_cpu_seconds`
+  gir veggtid og CPU-tid per WeasyPrint-fase (`parse`, `render`, `write_pdf`, `qpdf`, `total`).
+  Når veggtiden er mye høyere enn CPU-tiden, venter renderingen på CPU.
+* Grafana-dashboard: importer `.nais/bidrag-pdfgen/grafana/pdf-produksjon.json`.
+
 ### 👥 Eierskap
 
 **Team Bidrag** er ansvarlig for vedlikehold av disse applikasjonene.

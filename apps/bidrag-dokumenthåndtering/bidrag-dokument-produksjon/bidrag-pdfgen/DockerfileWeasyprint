@@ -13,6 +13,9 @@ ENV PYTHONUNBUFFERED=1 \
     XDG_CACHE_HOME=/tmp/.cache \
     XDG_CONFIG_HOME=/tmp/.config \
     FONTCONFIG_PATH=/etc/fonts \
+    # Shared by the gunicorn workers so /metrics reports all of them, not just
+    # the worker that happened to answer the scrape. See gunicorn.conf.py.
+    PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus \
     PORT=8080
 
 RUN apt-get update -qq \
@@ -65,7 +68,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --requirement requirements.txt
 
-COPY weasyprint_server.py ./
+COPY weasyprint_server.py metrics.py gunicorn.conf.py ./
 
 # Warm the fontconfig cache into a world-readable location so the first request
 # after a cold start is not several seconds slower than the rest.
@@ -97,6 +100,7 @@ EXPOSE 8080
 # than worker slots) /health queues and times out in every configuration - the
 # Nais probes are tuned to tolerate that rather than restart a busy pod.
 CMD exec gunicorn \
+    --config gunicorn.conf.py \
     --worker-class gthread \
     --bind "0.0.0.0:${PORT}" \
     --workers "${GUNICORN_WORKERS:-2}" \
