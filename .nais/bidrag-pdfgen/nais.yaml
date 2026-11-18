@@ -55,6 +55,9 @@ spec:
     timeout: 3
     periodSeconds: 10
     failureThreshold: 3
+  prometheus:
+    enabled: true
+    path: /metrics
   resources:
     limits:
       # Two gunicorn workers at two threads each. Measured ~490Mi resident for
@@ -63,7 +66,8 @@ spec:
       # sat at ~780Mi, which was uncomfortably close to this limit.)
       memory: 1000Mi
     requests:
-      # Bumped from 50m: a full saksbehandlingsnotat takes ~1.5s of solid CPU,
-      # and a 50m request means the pod is throttled hard on a busy node.
-      cpu: 500m
+      # A 21-page saksbehandlingsnotat takes ~2.5s of solid CPU on one core.
+      # There is no CPU limit, so the request is the share guaranteed on a busy
+      # node: at 500m that render can stretch to ~5s, so reserve a full core.
+      cpu: 1000m
       memory: 512Mi
