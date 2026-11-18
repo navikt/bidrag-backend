@@ -98,7 +98,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -121,6 +124,9 @@ class BehandlingServiceTest : TestContainerRunner() {
 
     @Autowired
     lateinit var testdataManager: TestdataManager
+
+    @Autowired
+    lateinit var transactionManager: PlatformTransactionManager
 
     @Autowired
     lateinit var dtomapper: Dtomapper
@@ -1020,6 +1026,52 @@ class BehandlingServiceTest : TestContainerRunner() {
                     .next()
                     .belop,
             )
+        }
+    }
+
+    @Nested
+    open inner class LagreNotatJournalpostId {
+        private val notatJournalpostId = "notat-journalpost-1"
+        private val samtidigVedtaksid = 4321
+
+        @Test
+        fun `skal lagre notatJournalpostId på behandling`() {
+            // gitt
+            val behandling = oppretteBehandling()
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandling.id!!, notatJournalpostId)
+
+            // så
+            behandlingRepository.findBehandlingById(behandling.id!!).get().notatJournalpostId shouldBe notatJournalpostId
+        }
+
+        @Test
+        fun `skal ikke overskrive samtidig oppdatering av behandling når notatJournalpostId lagres fra transaksjon med utdatert behandling`() {
+            // gitt
+            val behandlingId = oppretteBehandling().id!!
+            val lesetransaksjon = TransactionTemplate(transactionManager).apply { isReadOnly = true }
+            val nyTransaksjon =
+                TransactionTemplate(transactionManager).apply {
+                    propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+                }
+
+            // når
+            lesetransaksjon.executeWithoutResult {
+                val utdatertBehandling = behandlingService.hentBehandlingById(behandlingId)
+                nyTransaksjon.executeWithoutResult {
+                    behandlingRepository.findBehandlingById(behandlingId).get().vedtaksid = samtidigVedtaksid
+                }
+                behandlingService.lagreNotatJournalpostId(behandlingId, notatJournalpostId)
+                utdatertBehandling.vedtaksid shouldBe null
+            }
+
+            // så
+            val behandlingEtter = behandlingRepository.findBehandlingById(behandlingId).get()
+            assertSoftly(behandlingEtter) {
+                notatJournalpostId shouldBe this@LagreNotatJournalpostId.notatJournalpostId
+                vedtaksid shouldBe samtidigVedtaksid
+            }
         }
     }
 

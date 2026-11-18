@@ -592,6 +592,19 @@ class BehandlingService(
             }
     }
 
+    /**
+     * Egen kort transaksjon med radlås slik at journalpostId lagres på siste committede tilstand av behandlingen,
+     * og ikke overskriver samtidige oppdateringer (f.eks. fra [no.nav.bidrag.behandling.kafka.VedtakHendelseListener]).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun lagreNotatJournalpostId(
+        behandlingId: Long,
+        journalpostId: String?,
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+        hentBehandlingById(behandlingId).notatJournalpostId = journalpostId
+    }
+
     @Retryable(
         value = [CannotAcquireLockException::class],
         maxAttempts = 3,

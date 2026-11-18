@@ -170,7 +170,8 @@ class NotatOpplysningerService(
         maxAttempts = 3,
         backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
     )
-    @Transactional
+    // Kun lesing: PDF-produksjon og journalføring skal ikke holde radlås, og entiteten lastet her skal ikke flushes over samtidige endringer
+    @Transactional(readOnly = true)
     fun opprettNotat(
         behandlingId: Long,
         oppdaterDatoDokument: Boolean = false,
@@ -206,7 +207,7 @@ class NotatOpplysningerService(
                 ),
             )
         val response = opprettJournalpostEllerHentEksisterende(forespørsel)
-        lagreJournalpostId(behandling, response.journalpostId)
+        behandlingService.lagreNotatJournalpostId(behandlingId, response.journalpostId)
         secureLogger.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
                 "med journalpostId ${response.journalpostId} med forespørsel $forespørsel"
@@ -234,13 +235,6 @@ class NotatOpplysningerService(
             "Opprettelse av notat feilet, men fant eksisterende journalpost $eksisterendeJournalpostId med referanseId $referanseId. Bruker denne"
         }
         OpprettJournalpostResponse(journalpostId = eksisterendeJournalpostId)
-    }
-
-    private fun lagreJournalpostId(
-        behandling: Behandling,
-        journalpostId: String?,
-    ) {
-        behandling.notatJournalpostId = journalpostId
     }
 
     fun hentNotatOpplysninger(

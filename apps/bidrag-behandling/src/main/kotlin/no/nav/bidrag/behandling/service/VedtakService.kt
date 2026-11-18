@@ -884,9 +884,11 @@ class VedtakService(
             // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
             if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
                 if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                    opprettNotatForAlleSakerParallelt(behandling)
+                    behandling.saker.forEach {
+                        bestillOpprettelseAvNotat(behandling, it)
+                    }
                 } else {
-                    opprettNotat(behandling)
+                    bestillOpprettelseAvNotat(behandling)
                 }
             }
         }
