@@ -7,7 +7,6 @@ import no.nav.bidrag.behandling.database.datamodell.Bostatusperiode
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
-import no.nav.bidrag.behandling.database.datamodell.PrivatAvtalePeriode
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Sivilstand
 import no.nav.bidrag.behandling.database.datamodell.Utgiftspost
@@ -48,7 +47,6 @@ import no.nav.bidrag.behandling.transformers.behandling.finnOpphørsdatoBoforhol
 import no.nav.bidrag.behandling.transformers.behandling.finnVirkningstidspunktBeregningBoforhold
 import no.nav.bidrag.behandling.transformers.behandling.tilDto
 import no.nav.bidrag.behandling.transformers.utgift.kategorierSomKreverType
-import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.beregn.core.util.sluttenAvForrigeMåned
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
@@ -70,8 +68,6 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 private val log = KotlinLogging.logger {}
-
-val resultatkoderSomKreverBegrunnelseVirkningstidspunkt = listOf(Resultatkode.PARTEN_BER_OM_OPPHØR)
 
 fun Behandling.kanSkriveVurderingAvSkolegangAlle() = søknadsbarn.any { kanSkriveVurderingAvSkolegang(it) }
 
@@ -166,7 +162,7 @@ fun bestemRollerSomKanHaInntekter(typeBehandling: TypeBehandling) = when (typeBe
 }
 
 private val inntekstrapporteringerSomKreverInnteksttype = listOf(Inntektsrapportering.BARNETILLEGG)
-val Behandling.utgiftCuttofDato get() = mottattdato.minusYears(1)
+val Behandling.utgiftCuttofDato: LocalDate get() = mottattdato.minusYears(1)
 
 fun Behandling.erDatoForUtgiftForeldet(utgiftDato: LocalDate) = utgiftDato < utgiftCuttofDato
 
@@ -181,7 +177,6 @@ fun Behandling.validerKanOppdatere() {
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 fun OpprettBehandlingRequest.valider() {
     val feilliste = mutableListOf<String>()
     (stønadstype == null && engangsbeløpstype == null).ifTrue {
@@ -206,13 +201,13 @@ fun OpprettBehandlingRequest.valider() {
                 )
             }
 
-            Særbidragskategori.entries.none { it.name == kategori?.kategori } -> {
+            Særbidragskategori.entries.none { it.name == kategori.kategori } -> {
                 feilliste.add(
-                    "Kategori ${kategori?.kategori} er ikke en gyldig særbidrag kategori",
+                    "Kategori ${kategori.kategori} er ikke en gyldig særbidrag kategori",
                 )
             }
 
-            kategori?.kategori == Særbidragskategori.ANNET.name && kategori.beskrivelse.isNullOrEmpty() -> {
+            kategori.kategori == Særbidragskategori.ANNET.name && kategori.beskrivelse.isNullOrEmpty() -> {
                 feilliste.add("Beskrivelse må settes hvis kategori er ${Særbidragskategori.ANNET}")
             }
         }
@@ -339,53 +334,16 @@ fun OppdatereVirkningstidspunktBegrunnelseDto.valider(behandling: Behandling) {
 }
 
 fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
-    val feilliste = mutableListOf<String>()
-    if (rolleId != null && behandling.roller.none { it.id == rolleId }) {
-        feilliste.add("Barn med id $rolleId finnes ikke i behandling ${behandling.id}")
-    }
-    if (oppdaterBegrunnelseVurderingAvSkolegang != null && !behandling.kanSkriveVurderingAvSkolegangAlle()) {
-        feilliste.add("Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR")
-    }
-    if (oppdaterBegrunnelseVurderingAvSkolegang != null && behandling.kanSkriveVurderingAvSkolegangAlle() &&
-        (rolleId == null && behandling.søknadsbarn.size > 1)
-    ) {
-        feilliste.add(
-            "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken",
-        )
-    }
     val gjelderBarn = behandling.søknadsbarn.find { it.id == rolleId }
-    if (gjelderBarn != null) {
-        // Revurderingsbarn kan ha opphør før virkning mtp at det kan være case hvor bidraget har opphørt i løpet av beregningsperioden men før revurderingen ble opprettet
-        // En hack for å unngå at beregninge beregner videre etter opphøret
-        if (!gjelderBarn.erRevurderingsbarn && gjelderBarn.opphørsdato != null &&
-            behandling.eldsteVirkningstidspunkt >= gjelderBarn.opphørsdato
-        ) {
-            feilliste.add("Virkningstidspunkt kan ikke være lik eller senere enn opphørsdato")
-        }
-
-        if (gjelderBarn.opprinneligVirkningstidspunkt != null &&
-            avslag == null &&
-            behandling.eldsteVirkningstidspunkt.isAfter(gjelderBarn.opprinneligVirkningstidspunkt) == true
-        ) {
-            if (!(behandling.erBidrag() && behandling.erKlageEllerOmgjøring)) {
-                feilliste.add("Virkningstidspunkt kan ikke være senere enn opprinnelig virkningstidspunkt")
-            }
-        }
-    } else {
-//        if (behandling.omgjøringsdetaljer?.opprinneligVirkningstidspunkt != null &&
-//            avslag == null &&
-//            virkningstidspunkt?.isAfter(behandling.omgjøringsdetaljer!!.opprinneligVirkningstidspunkt) == true
-//        ) {
-//            feilliste.add("Virkningstidspunkt kan ikke være senere enn opprinnelig virkningstidspunkt")
-//        }
-
-        if (behandling.globalOpphørsdato != null && behandling.eldsteVirkningstidspunkt >= behandling.globalOpphørsdato) {
-            feilliste.add("Virkningstidspunkt kan ikke lik eller senere enn opphørsdato")
-        }
-    }
-    if (avslag != null && årsak != null) {
-        feilliste.add("Kan ikke sette både avslag og årsak samtidig")
-    }
+    val feilliste =
+        listOfNotNull(
+            validerRolle(gjelderBarn),
+            validerVirkningstidspunktForBarn(behandling, gjelderBarn),
+            validerSkolegang(behandling),
+            if (gjelderBarn == null) validerGlobaltOpphør(behandling) else validerOpphørForBarn(behandling, gjelderBarn),
+            validerOpprinneligVirkningstidspunkt(behandling, gjelderBarn),
+            validerAvslagOgÅrsak(),
+        )
 
     if (feilliste.isNotEmpty()) {
         throw HttpClientErrorException(
@@ -394,6 +352,70 @@ fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
         )
     }
 }
+
+private fun OppdatereVirkningstidspunkt.validerRolle(gjelderBarn: Rolle?): String? = if (rolleId != null && gjelderBarn == null) "Barnet finnes ikke i behandlingen" else null
+
+private fun OppdatereVirkningstidspunkt.validerVirkningstidspunktForBarn(
+    behandling: Behandling,
+    gjelderBarn: Rolle?,
+): String? {
+    val nyVirkningstidspunkt = virkningstidspunkt ?: return null
+    val barnSomOppdateres = gjelderBarn?.let { listOf(it) } ?: behandling.finnSøknadsbarnForSak(saksnummer)
+
+    return when {
+        barnSomOppdateres.isEmpty() -> "Oppdateringen gjelder ingen søknadsbarn"
+
+        barnSomOppdateres.any { maxOf(it.eldsteSøktFomDato, nyVirkningstidspunkt).isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
+            "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
+
+        else -> null
+    }
+}
+
+private fun OppdatereVirkningstidspunkt.validerSkolegang(behandling: Behandling): String? {
+    if (oppdaterBegrunnelseVurderingAvSkolegang == null) return null
+    if (!behandling.kanSkriveVurderingAvSkolegangAlle()) {
+        return "Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR"
+    }
+    if (rolleId == null && behandling.søknadsbarn.size > 1) {
+        return "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken"
+    }
+    return null
+}
+
+private fun validerGlobaltOpphør(behandling: Behandling): String? {
+    val opphørsdato = behandling.globalOpphørsdato ?: return null
+    if (behandling.eldsteVirkningstidspunkt < opphørsdato) return null
+
+    return "Virkningstidspunkt kan ikke lik eller senere enn opphørsdato"
+}
+
+private fun validerOpphørForBarn(
+    behandling: Behandling,
+    gjelderBarn: Rolle,
+): String? {
+    // Revurderingsbarn kan ha opphør før virkning mtp at det kan være case hvor bidraget har opphørt i løpet av beregningsperioden men før revurderingen ble opprettet
+    // En hack for å unngå at beregninge beregner videre etter opphøret
+    if (gjelderBarn.erRevurderingsbarn) return null
+    val opphørsdato = gjelderBarn.opphørsdato ?: return null
+    if (behandling.eldsteVirkningstidspunkt < opphørsdato) return null
+
+    return "Virkningstidspunkt kan ikke være lik eller senere enn opphørsdato"
+}
+
+private fun OppdatereVirkningstidspunkt.validerOpprinneligVirkningstidspunkt(
+    behandling: Behandling,
+    gjelderBarn: Rolle?,
+): String? {
+    val opprinneligVirkningstidspunkt = gjelderBarn?.opprinneligVirkningstidspunkt ?: return null
+    if (avslag != null) return null
+    if (behandling.erBidrag() && behandling.erKlageEllerOmgjøring) return null
+    if (behandling.eldsteVirkningstidspunkt <= opprinneligVirkningstidspunkt) return null
+
+    return "Virkningstidspunkt kan ikke være senere enn opprinnelig virkningstidspunkt"
+}
+
+private fun OppdatereVirkningstidspunkt.validerAvslagOgÅrsak(): String? = if (avslag != null && årsak != null) "Kan ikke sette både avslag og årsak samtidig" else null
 
 fun Behandling.manglerPrivatAvtaleBegrunnelseAndreBarn(): Boolean {
     val notatPrivatAvtaleAndreBarn =
@@ -440,14 +462,6 @@ fun PrivatAvtale.validerePrivatAvtale(): PrivatAvtaleValideringsfeilDto {
         ingenLøpendePeriode =
         when {
             perioderInnkreving.isEmpty() -> true
-
-//                rolle != null &&
-//                    behandling.manglerLøpendePeriode(
-//                        perioderInnkreving,
-//                        rolle!!,
-//                    )
-//                -> true
-
             else -> false
         },
         manglerBegrunnelse = if (rolle == null) false else !behandling.erKlageEllerOmgjøring && notatPrivatAvtale?.innhold.isNullOrEmpty(),
@@ -560,25 +574,12 @@ fun Set<Husstandsmedlem>.validerBoforhold(virkniningstidspunkt: LocalDate): Set<
 fun Set<Sivilstand>.validereSivilstand(virkningstidspunkt: LocalDate): SivilstandPeriodeseringsfeil {
     val kanIkkeVæreSenereEnnDato = maxOf(LocalDate.now().withDayOfMonth(1), virkningstidspunkt.withDayOfMonth(1))
     return SivilstandPeriodeseringsfeil(
-        map { Datoperiode(it.datoFom!!, it.datoTom) }.finnHullIPerioder(virkningstidspunkt),
-        fremtidigPeriode = any { it.datoFom!!.isAfter(kanIkkeVæreSenereEnnDato) },
+        map { Datoperiode(it.datoFom, it.datoTom) }.finnHullIPerioder(virkningstidspunkt),
+        fremtidigPeriode = any { it.datoFom.isAfter(kanIkkeVæreSenereEnnDato) },
         manglerPerioder = isEmpty(),
         overlappendePerioder = finnSivilstandOverlappendePerioder(),
         ugyldigStatus = any { it.sivilstand == Sivilstandskode.UKJENT },
     )
-}
-
-fun Behandling.manglerLøpendePeriode(
-    perioder: Set<PrivatAvtalePeriode>,
-    søknadsbarn: Rolle,
-): Boolean {
-    val løpendeBidrag = finnPerioderHvorDetLøperBidrag(søknadsbarn)
-    val løperBidrag = løpendeBidrag.isNotEmpty() && løpendeBidrag.maxBy { it.fom }.til == null
-    val harLøpendePrivatAvtale = perioder.isNotEmpty() && perioder.maxBy { it.fom }.tom == null
-    val fødselsdato18År = søknadsbarn.fødselsdato.tilDato18årsBidrag()
-    val ikkeLøpendePeriode = perioder.maxByOrNull { it.fom }?.tom
-    val sistePeriodeEr18Årsdag = ikkeLøpendePeriode != null && ikkeLøpendePeriode == fødselsdato18År
-    return !løperBidrag && (!harLøpendePrivatAvtale && !sistePeriodeEr18Årsdag)
 }
 
 fun Behandling.finnPerioderSomOverlapperMedLøpendeBidragForAndreBarn(
@@ -632,7 +633,7 @@ private fun Set<Sivilstand>.finnSivilstandOverlappendePerioder() = sortedBy { it
         if (sivilstand.tilDatoperiode().overlapper(nesteSivilstand.tilDatoperiode())) {
             SivilstandOverlappendePeriode(
                 Datoperiode(
-                    maxOf(sivilstand.datoFom!!, nesteSivilstand.datoFom!!),
+                    maxOf(sivilstand.datoFom, nesteSivilstand.datoFom),
                     minOfNullable(sivilstand.datoTom, nesteSivilstand.datoTom),
                 ),
                 setOf(sivilstand.sivilstand, nesteSivilstand.sivilstand),
@@ -710,7 +711,7 @@ fun List<Inntekt>.finnOverlappendePerioderInntekt(): Set<OverlappendePeriode> {
     val inntekterSomSkalSjekkes = filter { it.taMed }.sortedBy { it.datoFom }
     val overlappendePerioder =
         inntekterSomSkalSjekkes.flatMapIndexed { index, inntekt ->
-            inntekterSomSkalSjekkes.drop(index + 1).mapIndexedNotNull { indexNesteInntekt, nesteInntekt ->
+            inntekterSomSkalSjekkes.drop(index + 1).mapNotNull { nesteInntekt ->
                 inntekt.validerOverlapperMedInntekt(nesteInntekt)
             }
         }
@@ -859,22 +860,22 @@ fun OppdatereHusstandsmedlem.validere(behandling: Behandling) {
         }
     }
 
-    this.oppdaterPeriode?.let {
-        val husstandsmedlem = behandling.husstandsmedlem.find { this.oppdaterPeriode.idHusstandsmedlem == it.id }
+    this.oppdaterPeriode?.let { periode ->
+        val husstandsmedlem = behandling.husstandsmedlem.find { it.id == periode.idHusstandsmedlem }
 
         if (husstandsmedlem == null) {
-            husstandsmedlemIkkeFunnetException(this.oppdaterPeriode.idHusstandsmedlem, behandling.id!!)
+            husstandsmedlemIkkeFunnetException(periode.idHusstandsmedlem, behandling.id!!)
         }
 
-        husstandsmedlem.validereNyPeriode(it.datoFom, it.datoTom)
+        husstandsmedlem.validereNyPeriode(periode.datoFom, periode.datoTom)
 
-        if (it.idPeriode != null) {
-            val bostatusperiode = behandling.finnBostatusperiode(it.idPeriode)
+        if (periode.idPeriode != null) {
+            val bostatusperiode = behandling.finnBostatusperiode(periode.idPeriode)
             if (bostatusperiode == null) {
-                ressursIkkeFunnetException("Fant ikke bostatusperiode med id ${it.idPeriode}.")
+                ressursIkkeFunnetException("Fant ikke bostatusperiode med id ${periode.idPeriode}.")
             } else if (husstandsmedlem.id != bostatusperiode.husstandsmedlem.id) {
                 ressursIkkeTilknyttetBehandling(
-                    "Bostatusperiode ${it.idPeriode} er ikke tilknyttet husstandsmedlem ${husstandsmedlem.id}" +
+                    "Bostatusperiode ${periode.idPeriode} er ikke tilknyttet husstandsmedlem ${husstandsmedlem.id}" +
                         " i behandling ${behandling.id}.",
                 )
             }
@@ -898,10 +899,10 @@ fun OppdatereHusstandsmedlem.validere(behandling: Behandling) {
         }
     }
 
-    this.slettHusstandsmedlem?.let {
-        val husstandsmedlem = behandling.husstandsmedlem.find { this.slettHusstandsmedlem == it.id }
+    this.slettHusstandsmedlem?.let { id ->
+        val husstandsmedlem = behandling.husstandsmedlem.find { it.id == id }
         if (husstandsmedlem == null) {
-            husstandsmedlemIkkeFunnetException(this.slettHusstandsmedlem, behandling.id!!)
+            husstandsmedlemIkkeFunnetException(id, behandling.id!!)
         } else if (Kilde.OFFENTLIG == husstandsmedlem.kilde) {
             ressursHarFeilKildeException(
                 "Husstandsmedlem med id ${husstandsmedlem.id} i behandling ${husstandsmedlem.behandling.id} " +
@@ -909,35 +910,35 @@ fun OppdatereHusstandsmedlem.validere(behandling: Behandling) {
             )
         } else if (behandling.id != husstandsmedlem.behandling.id) {
             ressursIkkeTilknyttetBehandling(
-                "Husstandsmedlem $it hører ikke til behandling med id" +
+                "Husstandsmedlem $id hører ikke til behandling med id" +
                     "${behandling.id}.",
             )
         }
     }
 
-    this.tilbakestillPerioderForHusstandsmedlem?.let {
-        val husstandsmedlem = behandling.husstandsmedlem.find { this.tilbakestillPerioderForHusstandsmedlem == it.id }
+    this.tilbakestillPerioderForHusstandsmedlem?.let { id ->
+        val husstandsmedlem = behandling.husstandsmedlem.find { it.id == id }
         if (husstandsmedlem == null) {
-            husstandsmedlemIkkeFunnetException(it, behandling.id!!)
+            husstandsmedlemIkkeFunnetException(id, behandling.id!!)
         } else if (husstandsmedlem.kilde == Kilde.MANUELL) {
             oppdateringAvBoforholdFeilet("Kan ikke tilbakestille manuell lagt inn husstandsmedlem til offentlige perioder")
         } else if (behandling.id != husstandsmedlem.behandling.id) {
             ressursIkkeTilknyttetBehandling(
-                "Husstandsmedlem $it hører ikke til behandling med id" +
+                "Husstandsmedlem $id hører ikke til behandling med id" +
                     "${behandling.id}.",
             )
         }
     }
 
-    this.angreSisteStegForHusstandsmedlem?.let {
-        val husstandsmedlem = behandling.husstandsmedlem.find { this.angreSisteStegForHusstandsmedlem == it.id }
+    this.angreSisteStegForHusstandsmedlem?.let { id ->
+        val husstandsmedlem = behandling.husstandsmedlem.find { it.id == id }
         if (husstandsmedlem == null) {
-            husstandsmedlemIkkeFunnetException(it, behandling.id!!)
+            husstandsmedlemIkkeFunnetException(id, behandling.id!!)
         } else if (husstandsmedlem.forrigePerioder.isNullOrEmpty()) {
             oppdateringAvBoforholdFeilet("Kan ikke angre siste steg for husstandsmedlem. Det mangler informasjon om siste steg")
         } else if (behandling.id != husstandsmedlem.behandling.id) {
             ressursIkkeTilknyttetBehandling(
-                "Husstandsmedlem $it hører ikke til behandling med id" +
+                "Husstandsmedlem $id hører ikke til behandling med id" +
                     "${behandling.id}.",
             )
         }
@@ -1029,7 +1030,7 @@ fun OppdatereManuellInntekt.validerHarInnteksttype(feilliste: MutableList<String
     }
 }
 
-fun Sivilstand.tilDatoperiode() = Datoperiode(datoFom!!, datoTom)
+fun Sivilstand.tilDatoperiode() = Datoperiode(datoFom, datoTom)
 
 fun Bostatusperiode.tilDatoperiode() = Datoperiode(datoFom!!, datoTom)
 
@@ -1064,18 +1065,16 @@ private fun Set<OverlappendePeriode>.mergePerioder(): Set<OverlappendePeriode> {
     val sortertePerioder = sortedBy { it.periode.fom }
     sortertePerioder.forEachIndexed { index, overlappendePeriode ->
         val annenOverlappendePeriode =
-            sortertePerioder.drop(index + 1).find {
-                it.periode.overlapper(overlappendePeriode.periode) &&
-                    it.rapporteringTyper.any {
-                        overlappendePeriode.rapporteringTyper.contains(
-                            it,
-                        )
+            sortertePerioder.drop(index + 1).find { periode ->
+                periode.periode.overlapper(overlappendePeriode.periode) &&
+                    periode.rapporteringTyper.any {
+                        overlappendePeriode.rapporteringTyper.contains(it)
                     }
             }
 
         val sammenstiltePerioderSomInneholderOverlappende =
-            sammenstiltePerioder.find {
-                it.idListe.any { overlappendePeriode.idListe.contains(it) }
+            sammenstiltePerioder.find { periode ->
+                periode.idListe.any { overlappendePeriode.idListe.contains(it) }
             }
         if (annenOverlappendePeriode != null) {
             if (sammenstiltePerioderSomInneholderOverlappende != null) {

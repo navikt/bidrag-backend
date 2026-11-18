@@ -532,25 +532,13 @@ class VirkningstidspunktService(
 
         if (erVirkningstidspunktEndret) {
             if (gjelderBarn != null) {
-                val eldsteSøktFomDato =
-                    gjelderBarn.forholdsmessigFordeling
-                        ?.eldsteSøknad
-                        ?.søknadFomDato
-                        ?.withDayOfMonth(1)
-                        ?: behandling.søktFomDato.withDayOfMonth(1)
                 gjelderBarn.virkningstidspunkt =
-                    maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
+                    maxOf(gjelderBarn.eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
             } else {
                 behandling.finnSøknadsbarnForSak(saksnummer)
                     .forEach { gjelderBarn ->
-                        val eldsteSøktFomDato =
-                            gjelderBarn.forholdsmessigFordeling
-                                ?.eldsteSøknad
-                                ?.søknadFomDato
-                                ?.withDayOfMonth(1)
-                                ?: behandling.søktFomDato.withDayOfMonth(1)
                         gjelderBarn.virkningstidspunkt =
-                            maxOf(eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
+                            maxOf(gjelderBarn.eldsteSøktFomDato, nyVirkningstidspunkt ?: gjelderBarn.virkningstidspunkt ?: behandling.søktFomDato)
                     }
             }
 
