@@ -39,6 +39,7 @@ import no.nav.bidrag.vedtak.persistence.repository.StønadsendringRepository
 import no.nav.bidrag.vedtak.persistence.repository.VedtakRepository
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
@@ -53,6 +54,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.web.client.HttpClientErrorException
 import org.wiremock.spring.ConfigureWireMock
 import org.wiremock.spring.EnableWireMock
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -1003,6 +1005,156 @@ class VedtakServiceTest {
         assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
             vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest)
         }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med mismatch på beløp i engangsbeløp feiler`() {
+        // Oppretter nytt vedtak
+        val vedtak = byggVedtakRequest()
+        val vedtakId = vedtakService.opprettVedtak(vedtak, false).vedtaksid
+
+        val oppdaterVedtakMedGrunnlagRequest = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(beløp = it.beløp?.plus(BigDecimal.ONE)) },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med mismatch på valutakode i engangsbeløp feiler`() {
+        // Oppretter nytt vedtak
+        val vedtak = byggVedtakRequest()
+        val vedtakId = vedtakService.opprettVedtak(vedtak, false).vedtaksid
+
+        val oppdaterVedtakMedGrunnlagRequest = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(valutakode = "SEK") },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med valutakode = null og utlandsk valuta i oppdateringsrequest engangsbeløp feiler`() {
+        // Oppretter nytt vedtak
+        val vedtak = byggVedtakRequest()
+        val vedtakUtenAngittValutakode = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(valutakode = null) },
+        )
+        val vedtakId = vedtakService.opprettVedtak(vedtakUtenAngittValutakode, false).vedtaksid
+
+        val oppdaterVedtakMedGrunnlagRequest = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(valutakode = "SEK") },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med valutakode = null og NOK i oppdateringsrequest engangsbeløp går ok`() {
+        // Oppretter nytt vedtak
+        val vedtak = byggVedtakRequest()
+        val vedtakUtenAngittValutakode = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(valutakode = null) },
+        )
+        val vedtakId = vedtakService.opprettVedtak(vedtakUtenAngittValutakode, false).vedtaksid
+
+        val oppdaterVedtakMedGrunnlagRequest = vedtak.copy(
+            engangsbeløpListe = vedtak.engangsbeløpListe.map { it.copy(valutakode = "NOK") },
+        )
+
+        assertThat(
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakMedGrunnlagRequest),
+        ).isEqualTo(vedtakId)
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med mismatch på beløp i periode feiler`() {
+        val vedtak = byggVedtakRequest()
+        val vedtakId = vedtakService.opprettVedtak(vedtak, false).vedtaksid
+
+        val oppdaterVedtakRequest = vedtak.copy(
+            stønadsendringListe = vedtak.stønadsendringListe.map { stønadsendring ->
+                stønadsendring.copy(
+                    periodeListe = stønadsendring.periodeListe.map { it.copy(beløp = it.beløp?.plus(BigDecimal.ONE)) },
+                )
+            },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med mismatch på valutakode i periode feiler`() {
+        val vedtak = byggVedtakRequest()
+        val vedtakId = vedtakService.opprettVedtak(vedtak, false).vedtaksid
+
+        val oppdaterVedtakRequest = vedtak.copy(
+            stønadsendringListe = vedtak.stønadsendringListe.map { stønadsendring ->
+                stønadsendring.copy(
+                    periodeListe = stønadsendring.periodeListe.map { it.copy(valutakode = "SEK") },
+                )
+            },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med valutakode = null og utlandsk valuta i periode i oppdateringsrequest feiler`() {
+        val vedtak = byggVedtakRequest()
+        val vedtakUtenAngittValutakode = vedtak.copy(
+            stønadsendringListe = vedtak.stønadsendringListe.map { stønadsendring ->
+                stønadsendring.copy(
+                    periodeListe = stønadsendring.periodeListe.map { it.copy(valutakode = null) },
+                )
+            },
+        )
+        val vedtakId = vedtakService.opprettVedtak(vedtakUtenAngittValutakode, false).vedtaksid
+
+        val oppdaterVedtakRequest = vedtak.copy(
+            stønadsendringListe = vedtak.stønadsendringListe.map { stønadsendring ->
+                stønadsendring.copy(
+                    periodeListe = stønadsendring.periodeListe.map { it.copy(valutakode = "SEK") },
+                )
+            },
+        )
+
+        assertThatExceptionOfType(VedtaksdataMatcherIkkeException::class.java).isThrownBy {
+            vedtakService.oppdaterVedtak(vedtakId, oppdaterVedtakRequest)
+        }
+    }
+
+    @Test
+    @Suppress("NonAsciiCharacters")
+    fun `test at oppdatering av vedtak med valutakode = null og NOK i periode i oppdateringsrequest går ok`() {
+        val vedtak = byggVedtakRequest()
+        val vedtakUtenAngittValutakode = vedtak.copy(
+            stønadsendringListe = vedtak.stønadsendringListe.map { stønadsendring ->
+                stønadsendring.copy(
+                    periodeListe = stønadsendring.periodeListe.map { it.copy(valutakode = null) },
+                )
+            },
+        )
+        val vedtakId = vedtakService.opprettVedtak(vedtakUtenAngittValutakode, false).vedtaksid
+
+        assertThatCode { vedtakService.oppdaterVedtak(vedtakId, vedtak) }.doesNotThrowAnyException()
     }
 
     @Test
