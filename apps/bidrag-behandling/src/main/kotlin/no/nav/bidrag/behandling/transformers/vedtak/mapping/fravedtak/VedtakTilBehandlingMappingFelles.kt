@@ -1347,7 +1347,7 @@ internal fun VedtakDto.notatMedType(
     .find { it.type == type && it.fraOmgjortVedtak == fraOmgjortVedtak }
     ?.innhold
 
-internal fun VedtakDto.resultatkodeSærbidrag(): Resultatkode? = if (engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }) {
+internal fun VedtakDto.resultatkodeSærbidrag(): Resultatkode? = if (engangsbeløpListe.isNotEmpty() && engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }) {
     Resultatkode.fraKode(engangsbeløpListe.first().resultatkode)
 } else {
     null
@@ -1363,7 +1363,9 @@ internal fun VedtakDto.avslagskode(): Resultatkode? {
                 .first()
                 .resultatkode,
         )
-    } else if ((virkningstidspunkt == null || virkningstidspunkt.årsak == VirkningstidspunktÅrsakstype.ANNET) && engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }) {
+    } else if ((virkningstidspunkt == null || virkningstidspunkt.årsak == VirkningstidspunktÅrsakstype.ANNET) &&
+        engangsbeløpListe.isNotEmpty() && engangsbeløpListe.all { it.type.konverterFraDeprekerteVerdier() == Engangsbeløptype.SÆRBIDRAG }
+    ) {
         Resultatkode.fraKode(engangsbeløpListe.first().resultatkode)?.takeIf { it.erDirekteAvslag() }
     } else if (virkningstidspunkt?.avslag != null && virkningstidspunkt.avslag != Resultatkode.INNVILGET_VEDTAK) {
         virkningstidspunkt.avslag
