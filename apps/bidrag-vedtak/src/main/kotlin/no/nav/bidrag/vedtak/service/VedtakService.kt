@@ -806,8 +806,10 @@ class VedtakService(
                     periodeRequest.periode.toDatoperiode().fom == it.fom &&
                         periodeRequest.periode.toDatoperiode().til == it.til &&
                         periodeRequest.beløp?.toInt() == it.beløp?.toInt() &&
-                        periodeRequest.valutakode == it.valutakode ||
-                        (periodeRequest.valutakode == "NOK" && it.valutakode == null) &&
+                        (
+                            periodeRequest.valutakode == it.valutakode ||
+                                (periodeRequest.valutakode == "NOK" && it.valutakode == null)
+                            ) &&
                         periodeRequest.resultatkode == it.resultatkode &&
                         periodeRequest.delytelseId == it.delytelseId
                 }
@@ -1166,9 +1168,12 @@ class VedtakService(
                     eksisterendePeriode.fom == periodeRequest.periode.toDatoperiode().fom &&
                         eksisterendePeriode.til == periodeRequest.periode.toDatoperiode().til &&
                         eksisterendePeriode.beløp?.toInt() == periodeRequest.beløp?.toInt() &&
-                        periodeRequest.valutakode == eksisterendePeriode.valutakode ||
-                        (periodeRequest.valutakode == "NOK" && eksisterendePeriode.valutakode == null)
-                    eksisterendePeriode.resultatkode == periodeRequest.resultatkode &&
+                        (
+                            periodeRequest.valutakode == eksisterendePeriode.valutakode ||
+                                (periodeRequest.valutakode == "NOK" && eksisterendePeriode.valutakode == null)
+                            ) &&
+                        eksisterendePeriode.resultatkode == periodeRequest.resultatkode &&
+                        eksisterendePeriode.resultatkode == periodeRequest.resultatkode &&
                         eksisterendePeriode.delytelseId == periodeRequest.delytelseId
                 }
             }
