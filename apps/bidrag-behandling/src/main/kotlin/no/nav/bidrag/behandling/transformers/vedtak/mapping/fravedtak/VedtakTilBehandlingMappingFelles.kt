@@ -1363,7 +1363,7 @@ internal fun VedtakDto.resultatkodeSærbidrag(): Resultatkode? = if (engangsbel�
 
 internal fun VedtakDto.avslagskode(): Resultatkode? {
     val virkningstidspunkt = hentVirkningstidspunkt()
-    return if (virkningstidspunkt == null && stønadsendringListe.all { it.periodeListe.size == 1 }) {
+    return if (virkningstidspunkt == null && stønadsendringListe.isNotEmpty() && stønadsendringListe.all { it.periodeListe.size == 1 }) {
         Resultatkode.fraKode(
             stønadsendringListe
                 .first()
