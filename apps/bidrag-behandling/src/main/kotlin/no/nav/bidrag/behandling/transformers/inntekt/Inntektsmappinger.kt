@@ -58,7 +58,9 @@ fun Inntekt.bestemOpprinneligTomVisningsverdi() = opprinneligTom?.let { opprinne
     }
 }
 
-fun Inntekt.bestemDatoTomForOffentligInntekt() = skalAutomatiskSettePeriode().ifTrue {
+// Hvis SB har lagt til inntekt manuelt så legges det på datoTom på offentlig slik at offentlig inntekt avsluttes før nye begynner
+// Hvis ikke datoTom tas med her så vil begge inntektene bli tatt med i beregningen som løpende (både manuelle og offentlig)
+fun Inntekt.bestemDatoTomForOffentligInntekt() = datoTom ?: skalAutomatiskSettePeriode().ifTrue {
     opprinneligTom?.let { tom ->
         val maxDate =
             maxOf(

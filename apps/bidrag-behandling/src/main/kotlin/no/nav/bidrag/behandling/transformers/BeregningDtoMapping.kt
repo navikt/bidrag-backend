@@ -331,7 +331,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
     return BeregnValgteInntekterGrunnlag(
         periode =
         ÅrMånedsperiode(
-            virkningstidspunktEllerSøktFomDato,
+            eldsteVirkningstidspunkt,
             finnBeregnTilDatoBehandling(),
         ),
         opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
@@ -347,8 +347,8 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
             InntektsgrunnlagPeriode(
                 periode =
                 if (it.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(it.type)) {
-                    val datoFom = maxOf(it.opprinneligFom!!, virkningstidspunktEllerSøktFomDato)
-                    val datoTil = it.datoTom ?: it.bestemDatoTomForOffentligInntekt()?.plusDays(1)
+                    val datoFom = maxOf(it.datoFomEllerOpprinneligFom!!, virkningstidspunktEllerSøktFomDato)
+                    val datoTil = it.bestemDatoTomForOffentligInntekt()?.plusDays(1)
                     ÅrMånedsperiode(
                         if (datoTil != null && datoFom > datoTil) it.opprinneligFom!! else datoFom,
                         datoTil,

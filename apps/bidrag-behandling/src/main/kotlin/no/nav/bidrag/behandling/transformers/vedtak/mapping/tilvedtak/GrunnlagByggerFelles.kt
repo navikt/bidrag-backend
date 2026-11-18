@@ -26,6 +26,7 @@ import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
 import no.nav.bidrag.behandling.transformers.inntekt.bestemDatoTomForOffentligInntekt
 import no.nav.bidrag.behandling.transformers.kanSkriveVurderingAvSkolegangAlle
 import no.nav.bidrag.behandling.transformers.konverterTilStønadDto
+import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.vedtak.inntektsrapporteringSomKreverSøknadsbarn
 import no.nav.bidrag.behandling.transformers.vedtak.personIdentNav
@@ -804,9 +805,12 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
             if (periode != null) {
                 periode
             } else if (kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type)) {
-                // Hvis SB har lagt til inntekt manuelt så legges det på datoTom på offentlig slik at offentlig inntekt avsluttes før nye begynner
-                // Hvis ikke datoTom tas med her så vil begge inntektene bli tatt med i beregningen som løpende (både manuelle og offentlig)
-                ÅrMånedsperiode(opprinneligFom!!, datoTom ?: bestemDatoTomForOffentligInntekt()?.plusDays(1))
+                val datoFom = maxOfNullable(datoFomEllerOpprinneligFom!!, behandling?.virkningstidspunktEllerSøktFomDato)!!
+                val datoTil = bestemDatoTomForOffentligInntekt()?.plusDays(1)
+                ÅrMånedsperiode(
+                    if (datoTil != null && datoFom > datoTil) opprinneligFom!! else datoFom,
+                    datoTil,
+                )
             } else {
                 ÅrMånedsperiode(datoFomEllerOpprinneligFom!!, datoTom?.plusDays(1))
             },
