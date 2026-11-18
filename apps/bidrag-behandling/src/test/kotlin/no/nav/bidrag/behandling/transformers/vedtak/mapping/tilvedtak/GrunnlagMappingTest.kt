@@ -966,7 +966,7 @@ class GrunnlagMappingTest {
                 assertSoftly(this[3]) { inntekt ->
                     val innhold: InntektsrapporteringPeriode = inntekt.innholdTilObjekt()
                     innhold.inntektsrapportering shouldBe Inntektsrapportering.BARNETILLEGG
-                    innhold.periode.fom shouldBe YearMonth.parse("2022-01")
+                    innhold.periode.fom shouldBe YearMonth.parse("2023-01")
                     innhold.periode.til shouldBe YearMonth.parse("2023-01")
                     innhold.beløp shouldBe BigDecimal(5000)
                     innhold.valgt shouldBe true
