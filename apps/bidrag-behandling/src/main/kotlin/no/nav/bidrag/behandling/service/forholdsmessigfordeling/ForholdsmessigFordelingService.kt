@@ -21,6 +21,7 @@ import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessi
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
+import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OppdaterRevurderingsdatoFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SøknadRevurdering
@@ -151,12 +152,30 @@ class ForholdsmessigFordelingService(
             søknadService = søknadService,
         )
 
+    private val revurderingsdatoService =
+        ForholdsmessigFordelingRevurderingsdatoService(
+            bbmConsumer = bbmConsumer,
+            søknadService = søknadService,
+            virkningstidspunktService = virkningstidspunktService,
+        )
+
     // ═══════════════════════════════════════════════════════════════════
     // region Opprett forholdsmessig fordeling flow
     // ═══════════════════════════════════════════════════════════════════
 
     fun fjernSammeknytningHovedsøknad(behandling: Behandling) {
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
+    }
+
+    @Transactional
+    fun oppdaterRevurderingsdato(
+        behandlingId: Long,
+        request: OppdaterRevurderingsdatoFFRequest,
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+        val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+        revurderingsdatoService.oppdaterRevurderingsdato(behandling, request)
+        behandlingService.sendOppdatertHendelse(behandling.id!!, false)
     }
 
     /**

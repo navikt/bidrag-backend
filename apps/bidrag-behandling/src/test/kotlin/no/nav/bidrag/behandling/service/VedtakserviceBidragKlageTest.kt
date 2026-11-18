@@ -141,6 +141,28 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
             )
     }
 
+    private fun OpprettVedtakRequestDto.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() {
+        val typerPåStønadsendring =
+            stønadsendringListe
+                .flatMap { it.grunnlagReferanseListe }
+                .toSet()
+                .let { referanser -> grunnlagListe.filter { it.referanse in referanser }.map { it.type } }
+                .toSet()
+        // Cherrypick noen grunnlag for å bekrefte
+        val typerSomIkkeSkalPåStønadsendring =
+            setOf(
+                Grunnlagstype.BOSTATUS_PERIODE,
+                Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+                Grunnlagstype.SAMVÆRSPERIODE,
+                Grunnlagstype.SJABLON_SAMVARSFRADRAG,
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING,
+                Grunnlagstype.DELBEREGNING_BIDRAGSEVNE,
+                Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+            )
+
+        typerPåStønadsendring.intersect(typerSomIkkeSkalPåStønadsendring) shouldBe emptySet()
+    }
+
     private fun byggGrunnlagForBeregning(
         behandling: Behandling,
         søknadsbarn: Rolle,
@@ -1050,6 +1072,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = null))
 
         opprettVedtakSlot shouldHaveSize 3
+        opprettVedtakSlot.forEach { it.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() }
         assertSoftly(opprettVedtakSlot.first()) {
             it.type shouldBe Vedtakstype.KLAGE
 

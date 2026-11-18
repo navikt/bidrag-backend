@@ -1268,7 +1268,7 @@ class GrunnlagService(
             BoforholdApi.beregnBoforholdBarnV3(
                 rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                 rolle.finnOpphørsdatoBoforhold(),
-                behandling.finnBeregnTilDatoBehandling(gjelderRolle),
+                behandling.finnBeregnTilDatoBehandling(),
                 behandling.tilTypeBoforhold(),
                 boforhold.tilBoforholdBarnRequest(behandling, true),
             )
@@ -2019,7 +2019,7 @@ class GrunnlagService(
                                 BoforholdApi.beregnBoforholdBarnV3(
                                     rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                                     rolle.finnOpphørsdatoBoforhold(),
-                                    behandling.finnBeregnTilDatoBehandling(rolle),
+                                    behandling.finnBeregnTilDatoBehandling(),
                                     behandling.tilTypeBoforhold(),
                                     husstandsmedlemmerOgEgneBarn.tilBoforholdBarnRequest(behandling, leggeTilManglendeSøknadsbarn),
                                 )
@@ -2160,7 +2160,7 @@ class GrunnlagService(
                     BoforholdApi.beregnBoforholdBarnV3(
                         søknadsbarn.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                         søknadsbarn.finnOpphørsdatoBoforhold(),
-                        behandling.finnBeregnTilDatoBehandling(søknadsbarn),
+                        behandling.finnBeregnTilDatoBehandling(),
                         behandling.tilTypeBoforhold(),
                         boforholdRequest,
                     ).filter { it.gjelderPersonId == gjelderBarnIdent }

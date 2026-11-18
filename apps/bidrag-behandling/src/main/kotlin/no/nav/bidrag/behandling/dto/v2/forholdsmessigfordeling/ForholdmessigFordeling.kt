@@ -1,19 +1,12 @@
 package no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessigFordeling
-import no.nav.bidrag.behandling.dto.v1.behandling.RolleDto
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.SimulertInntektGrunnlag
-import no.nav.bidrag.domene.enums.behandling.Behandlingstema
-import no.nav.bidrag.domene.enums.behandling.Behandlingstype
-import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
-import no.nav.bidrag.domene.enums.rolle.SøktAvType
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.transport.behandling.beregning.felles.HentSøknad
 import java.time.LocalDate
-import java.time.YearMonth
 
 typealias ForholdmessigFordelingDetaljerDto = no.nav.bidrag.transport.behandling.behandling.ForholdmessigFordelingDetaljerDto
 
@@ -33,6 +26,17 @@ data class OpprettFFRequest(
         val manueltOverstyrtRevurderingFraDato: LocalDate? = null,
         val ident: String,
         val stønadstype: Stønadstype,
+    )
+}
+
+@Schema(description = "Oppdaterer revurderingsdato (søkt fra dato) for revurderingsbarn i en opprettet forholdsmessig fordeling")
+data class OppdaterRevurderingsdatoFFRequest(
+    val barn: List<OppdaterRevurderingsdatoBarn> = emptyList(),
+) {
+    data class OppdaterRevurderingsdatoBarn(
+        val ident: String,
+        val stønadstype: Stønadstype,
+        val nyRevurderingsdato: LocalDate,
     )
 }
 

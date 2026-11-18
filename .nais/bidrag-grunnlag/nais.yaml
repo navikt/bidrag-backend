@@ -45,6 +45,9 @@ spec:
         - host: {{ azure.tilleggsstonadersak_url }}
         - host: {{ azure.unsecure.ereg_url }}
         - host: {{ azure.unsecure.norgesbank_url }}
+        - host: {{ azure.unsecure.ecb_url }}
+        - host: slack.com
+        - host: api.slack.com
       rules:
         - application: familie-ba-sak
           namespace: teamfamilie
@@ -86,7 +89,11 @@ spec:
   {{#each ingresses as |url|}}
      - {{url}}
   {{/each}}
+  envFrom:
+    - secret: bidrag-bot-slack-oauth-token
   env:
+    - name: SLACK_CHANNEL_ID
+      value: {{ slackChannelId }}
     - name: FAMILIEBASAK_URL
       value: https://{{ azure.familiebasak_url }}
     - name: FAMILIEBASAK_SCOPE
@@ -131,6 +138,8 @@ spec:
       value: {{ azure.tilleggsstonadersak_scope }}
     - name: NORGESBANK_URL
       value: https://{{ azure.unsecure.norgesbank_url }}
+    - name: ECB_URL
+      value: https://{{ azure.unsecure.ecb_url }}
   gcp:
     sqlInstances:
       - name: {{ dbinstancename }}
@@ -140,3 +149,12 @@ spec:
           - name: {{ dbname }}
             envVarPrefix: DB
         tier: {{ spec.gcp.sqlInstances.tier }}
+        flags:
+          - name: "cloudsql.enable_pgaudit"
+            value: "{{ dbauditlog }}"
+          - name: "pgaudit.log"
+            value: "write,role,ddl"
+          - name: "pgaudit.log_parameter"
+            value: "on"
+          - name: "pgaudit.log_relation"
+            value: "on"

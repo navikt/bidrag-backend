@@ -10,7 +10,7 @@ spring:
     problemdetails:
       enabled: true
 springdoc:
-  packages-to-scan: no.nav.bidrag.tilgangskontroll.controller
+  packages-to-scan: no.nav.bidrag.tilgangskontroll.controller,no.nav.bidrag.cache
   swagger-ui:
     path: /
     display-request-duration: true
