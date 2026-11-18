@@ -641,4 +641,42 @@ class BeregningDtoMappingTest {
         barnetillegg shouldHaveSize 1
         barnetillegg.first().beløp.compareTo(BigDecimal(20400)) shouldBe 0
     }
+
+    @Test
+    fun `skal hente barnets inntekt for søknadsbarnet i perioden når det er flere søknadsbarn`() {
+        fun sumInntekt(
+            referanse: String,
+            gjelderReferanse: String,
+            totalinntekt: Int,
+        ) = GrunnlagDto(
+            type = Grunnlagstype.DELBEREGNING_SUM_INNTEKT,
+            referanse = referanse,
+            gjelderReferanse = gjelderReferanse,
+            innhold = POJONode(DelberegningSumInntekt(periode = ÅrMånedsperiode(YearMonth.parse("2026-01"), null), totalinntekt = BigDecimal(totalinntekt))),
+        )
+        val grunnlagListe =
+            listOf(
+                GrunnlagDto(type = Grunnlagstype.PERSON_SØKNADSBARN, referanse = "person_barn1", innhold = POJONode(emptyMap<String, Any>())),
+                GrunnlagDto(type = Grunnlagstype.PERSON_SØKNADSBARN, referanse = "person_barn2", innhold = POJONode(emptyMap<String, Any>())),
+                sumInntekt("sum_inntekt_barn1", "person_barn1", 100000),
+                sumInntekt("sum_inntekt_barn2", "person_barn2", 0),
+                // Grunnlaget til barn 2 refererer også til inntekten til barn 1, slik BPs totale underholdskostnad gjør
+                GrunnlagDto(
+                    type = Grunnlagstype.DELBEREGNING_UNDERHOLDSKOSTNAD,
+                    referanse = "underholdskostnad_barn1",
+                    innhold = POJONode(emptyMap<String, Any>()),
+                    grunnlagsreferanseListe = listOf("sum_inntekt_barn1"),
+                ),
+                GrunnlagDto(
+                    type = Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+                    referanse = "sluttberegning_barn2",
+                    innhold = POJONode(emptyMap<String, Any>()),
+                    grunnlagsreferanseListe = listOf("sum_inntekt_barn2", "underholdskostnad_barn1"),
+                ),
+            )
+
+        val inntekter = grunnlagListe.byggResultatInntekter(listOf("sluttberegning_barn2"), søknadsbarnReferanse = "person_barn2")
+
+        inntekter.inntektBarn!!.compareTo(BigDecimal.ZERO) shouldBe 0
+    }
 }
