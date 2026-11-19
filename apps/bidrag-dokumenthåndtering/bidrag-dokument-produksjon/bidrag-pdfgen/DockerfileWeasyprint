@@ -55,7 +55,7 @@ COPY weasyprint_server.py metrics.py gunicorn.conf.py ./
 
 # Warm the fontconfig cache into a world-readable location so the first request
 # after a cold start is not several seconds slower than the rest.
-RUN fc-cache -f && chmod -R a+rX /usr/share/fonts /var/cache/fontconfig
+RUN ["fc-cache", "-f"]
 
 USER 1001
 
