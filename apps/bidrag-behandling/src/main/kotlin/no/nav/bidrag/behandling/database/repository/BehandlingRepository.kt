@@ -157,6 +157,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
               )
               or (
                   b.metadata -> '$NOTATBESTILLINGER' is not null
+                  and b.vedtakstidspunkt >= :etterDato
                   and b.vedtakstidspunkt <= :førDato
                   and exists (
                       select 1
