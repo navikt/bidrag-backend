@@ -61,12 +61,11 @@ jobs:
           docker_context: ./apps/bidrag-kafka-manager
           image_suffix: bidrag-kafka-manager
           tag: bidrag-kafka-manager
-      # Docker-imaget bygges (og pushes til artifact-registryet) uansett, slik at
-      # dependabot-PR-er som bumper base-image i Dockerfilen faktisk får bygge-feedback.
-      # Selve deploy til dev skjer derimot ikke for dependabot, siden det er en reell
-      # endring i et kjørende dev-miljø fra en ennå ikke reviewet PR.
+      # Docker-imaget bygges (og pushes til artifact-registryet) også for PR-er, slik at
+      # PR-er (også dependabot) får bygge-feedback. Deploy til dev skjer kun ved manuell
+      # workflow_dispatch, som for de andre appene.
       - name: Deploy to dev-gcp
-        if: github.actor != 'dependabot[bot]'
+        if: github.event_name == 'workflow_dispatch'
         uses: nais/deploy/actions/deploy@6a9dcd6df697ec2d38edc78cadb0b9acd1232f50 # v3
         env:
           CLUSTER: dev-gcp
