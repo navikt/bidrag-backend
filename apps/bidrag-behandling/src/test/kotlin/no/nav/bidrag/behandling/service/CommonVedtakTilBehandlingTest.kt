@@ -176,6 +176,7 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
 
         unleash.enableAll()
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
+        enableUnleashFeature(UnleashFeatures.OPPRETT_NOTAT_ASYNC)
         enableUnleashFeature(UnleashFeatures.BEHANDLE_BARNEBIDRAG_FLERE_BARN_LØPENDE_BIDRAG)
         every { vedtakServiceBeregning.hentAlleStønaderForBidragspliktig(any()) } returns LøpendeBidragPeriodeResponse()
 

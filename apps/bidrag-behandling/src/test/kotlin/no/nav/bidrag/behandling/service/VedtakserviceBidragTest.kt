@@ -404,9 +404,9 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verifyOrder {
             vedtakConsumer.fatteVedtak(any())
             behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any())
-            notatOpplysningerService.opprettNotat(behandling.id!!, any(), any())
+            bestillAsyncJobService.bestillOpprettelseAvNotat(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any(), any(), any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
 
         val opprettVedtakRequest = opprettVedtakSlot.captured
 
