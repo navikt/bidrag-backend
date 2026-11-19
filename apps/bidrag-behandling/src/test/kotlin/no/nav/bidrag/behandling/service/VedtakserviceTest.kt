@@ -431,7 +431,6 @@ class VedtakserviceTest : TestContainerRunner() {
 
         vedtakService.fatteVedtak(behandling.id!!)
         entityManager.flush()
-        entityManager.refresh(behandling)
         val opprettVedtakRequest = opprettVedtakSlot.captured
 
         assertSoftly(behandling) {

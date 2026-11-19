@@ -160,6 +160,7 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
             VedtakService(
                 behandlingService,
                 grunnlagService,
+                notatOpplysningerService,
                 tilgangskontrollService,
                 vedtakConsumer,
 //                null,

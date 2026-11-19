@@ -117,6 +117,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
             VedtakService(
                 behandlingService,
                 grunnlagService,
+                notatOpplysningerService,
                 tilgangskontrollService,
                 vedtakConsumer,
                 validerBeregning,

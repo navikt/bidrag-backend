@@ -1017,22 +1017,23 @@ class VedtakService(
     private fun ventPåFerdigstiltSøknad(søknadsider: List<Long>) {
         if (søknadsider.isEmpty() || bidragBBMConsumer == null) return
         val frist = Instant.now().plus(VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT)
-        val gjenstående = søknadsider.toMutableSet()
+        val ventPåSøknadsider = søknadsider.toMutableSet()
         var ventetid = VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START
-        while (gjenstående.isNotEmpty() && Instant.now().isBefore(frist)) {
+        secureLogger.info { "Venter på ferdigstilling av søknader. Ventetid: $ventetid, søknadsider: $ventPåSøknadsider" }
+        while (ventPåSøknadsider.isNotEmpty() && Instant.now().isBefore(frist)) {
             try {
                 Thread.sleep(ventetid.toMillis())
             } catch (ie: InterruptedException) {
                 Thread.currentThread().interrupt()
-                LOGGER.warn(ie) { "Tråd avbrutt under venting på ferdigstilte søknader $gjenstående" }
+                LOGGER.warn(ie) { "Tråd avbrutt under venting på ferdigstilte søknader $ventPåSøknadsider" }
                 return
             }
-            gjenstående.removeAll { erSøknadFerdigstilt(it) }
+            ventPåSøknadsider.removeAll { erSøknadFerdigstilt(it) }
             ventetid = minOf(ventetid.multipliedBy(2), VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS)
         }
-        if (gjenstående.isNotEmpty()) {
+        if (ventPåSøknadsider.isNotEmpty()) {
             LOGGER.warn {
-                "Søknadene $gjenstående var ikke ferdigstilt i BBM innen " +
+                "Søknadene $ventPåSøknadsider var ikke ferdigstilt i BBM innen " +
                     "${VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT.toSeconds()} sekunder. Fortsetter uten å vente."
             }
         }
