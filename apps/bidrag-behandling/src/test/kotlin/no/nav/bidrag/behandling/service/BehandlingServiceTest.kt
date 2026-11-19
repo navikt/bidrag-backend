@@ -21,6 +21,8 @@ import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Notat
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.barn
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.lesNotatbestillinger
+import no.nav.bidrag.behandling.database.datamodell.extensions.Notatbestilling
 import no.nav.bidrag.behandling.database.datamodell.hentSisteAktiv
 import no.nav.bidrag.behandling.database.datamodell.hentSisteIkkeAktiv
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
@@ -1044,6 +1046,45 @@ class BehandlingServiceTest : TestContainerRunner() {
 
             // så
             behandlingRepository.findBehandlingById(behandling.id!!).get().notatJournalpostId shouldBe notatJournalpostId
+        }
+
+        @Test
+        fun `skal finne manglende saksnotater selv når ett notat er journalført`() {
+            val behandlingId = oppretteBehandling().id!!
+            val saker = listOf("1900000", "1900001")
+            val start = LocalDateTime.now()
+            behandlingService.oppdaterVedtakFattetStatus(behandlingId, samtidigVedtaksid, "1234", saksnumreForNotat = saker)
+
+            fun finnBestillinger() = behandlingRepository
+                .hentBehandlingerSomManglerNotater(start.minusDays(1), start.plusDays(1), behandlingId - 1, 10)
+                .singleOrNull { it.id == behandlingId }
+                ?.let { lesNotatbestillinger(it.notatbestillinger) }
+
+            finnBestillinger() shouldBe saker.map { Notatbestilling(it) }
+
+            behandlingService.lagreNotatJournalpostId(behandlingId, notatJournalpostId, saker.first())
+            finnBestillinger() shouldBe listOf(Notatbestilling(saker.first(), notatJournalpostId), Notatbestilling(saker.last()))
+
+            behandlingService.lagreNotatJournalpostId(behandlingId, "notat-journalpost-2", saker.last())
+            finnBestillinger() shouldBe null
+            behandlingService.hentBehandlingById(behandlingId).metadata?.hentNotatbestillinger() shouldBe listOf(
+                Notatbestilling(saker.first(), notatJournalpostId),
+                Notatbestilling(saker.last(), "notat-journalpost-2"),
+            )
+        }
+
+        @Test
+        fun `skal finne både ny og gammel behandling som mangler felles notat`() {
+            val ny = oppretteBehandling().id!!
+            val gammel = oppretteBehandling().id!!
+            val start = LocalDateTime.now()
+            behandlingService.oppdaterVedtakFattetStatus(ny, samtidigVedtaksid, "1234", saksnumreForNotat = listOf(null))
+            behandlingService.oppdaterVedtakFattetStatus(gammel, samtidigVedtaksid, "1234")
+
+            val kandidater = behandlingRepository.hentBehandlingerSomManglerNotater(start.minusDays(1), start.plusDays(1), ny - 1, 10)
+            kandidater.map { it.id } shouldBe listOf(ny, gammel)
+            lesNotatbestillinger(kandidater.first().notatbestillinger) shouldBe listOf(Notatbestilling(null))
+            kandidater.last().notatbestillinger shouldBe null
         }
 
         @Test

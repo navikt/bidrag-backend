@@ -403,8 +403,8 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
 
         verifyOrder {
             vedtakConsumer.fatteVedtak(any())
-            behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any())
-            bestillAsyncJobService.bestillOpprettelseAvNotat(any())
+            behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any(), saksnumreForNotat = listOf(null))
+            bestillAsyncJobService.bestillOpprettelseAvNotat(match { it.behandlingId == behandling.id && it.saksnummer == null })
         }
         verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
 

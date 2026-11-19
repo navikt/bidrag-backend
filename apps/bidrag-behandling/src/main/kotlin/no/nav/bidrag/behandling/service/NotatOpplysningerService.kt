@@ -178,7 +178,36 @@ class NotatOpplysningerService(
         saksnummer: String? = null,
     ): String {
         val behandling = behandlingService.hentBehandlingById(behandlingId)
-        val notatDto = hentNotatOpplysninger(behandlingId, saksnummer)
+        return opprettNotat(behandling, oppdaterDatoDokument, saksnummer)
+    }
+
+    @Retryable(
+        value = [Exception::class],
+        maxAttempts = 3,
+        backoff = Backoff(delay = 200, maxDelay = 1000, multiplier = 2.0),
+    )
+    @Transactional(readOnly = true)
+    fun opprettNotatManuelt(behandlingId: Long): String {
+        val behandling = behandlingService.hentBehandlingById(behandlingId)
+        val bestillinger = behandling.metadata?.hentNotatbestillinger()
+            ?: return behandling.notatJournalpostId ?: opprettNotat(behandling, true, null)
+        check(bestillinger.isNotEmpty()) { "Ingen notater bestilt for behandling $behandlingId" }
+        return bestillinger.map { opprettNotat(behandling, true, it.saksnummer) }.first()
+    }
+
+    private fun opprettNotat(
+        behandling: Behandling,
+        oppdaterDatoDokument: Boolean,
+        saksnummer: String?,
+    ): String {
+        val behandlingId = requireNotNull(behandling.id)
+        behandling.metadata?.hentNotatbestillinger()?.let { bestillinger ->
+            val bestilling = checkNotNull(bestillinger.find { it.saksnummer == saksnummer }) {
+                "Notatet er ikke bestilt for behandling $behandlingId"
+            }
+            bestilling.journalpostId?.let { return it }
+        }
+        val notatDto = hentNotatOpplysningerForBehandling(behandling, saksnummer)
         secureLogger.info { "Oppretter notat med opplysninger $notatDto og saksnummer $saksnummer" }
         val notatPdf = bidragDokumentProduksjonConsumer.opprettNotat(notatDto)
         log.info { "Oppretter notat for behandling $behandlingId i sak ${behandling.saksnummer}" }
@@ -206,17 +235,19 @@ class NotatOpplysningerService(
                     ),
                 ),
             )
-        val response = opprettJournalpostEllerHentEksisterende(forespørsel)
-        behandlingService.lagreNotatJournalpostId(behandlingId, response.journalpostId)
+        val journalpostId = checkNotNull(opprettJournalpostEllerHentEksisterende(forespørsel).journalpostId?.takeIf { it.isNotBlank() }) {
+            "Journalføring av notat for behandling $behandlingId ga ingen journalpost-ID"
+        }
+        behandlingService.lagreNotatJournalpostId(behandlingId, journalpostId, saksnummer)
         secureLogger.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
-                "med journalpostId ${response.journalpostId} med forespørsel $forespørsel"
+                "med journalpostId $journalpostId med forespørsel $forespørsel"
         }
         log.info {
             "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
-                "med journalpostId ${response.journalpostId}"
+                "med journalpostId $journalpostId"
         }
-        return response.journalpostId ?: ""
+        return journalpostId
     }
 
     // Journalposten kan være opprettet i Joark selv om kallet feilet (f.eks. timeout). Sjekker derfor om den finnes via referanseId.

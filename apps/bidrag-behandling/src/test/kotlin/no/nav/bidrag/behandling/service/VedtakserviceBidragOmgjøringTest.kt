@@ -84,6 +84,7 @@ class VedtakserviceBidragOmgjøringTest : CommonVedtakTilBehandlingTest() {
     @BeforeEach
     fun initMocksOmgjøring() {
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK)
+        every { behandlingRepository.initialiserNotatbestillinger(any(), any()) } returns Unit
         bidragsberegningOrkestrator = mockkClass(BidragsberegningOrkestrator::class)
         behandlingService =
             BehandlingService(

@@ -91,6 +91,7 @@ private val LOGGER = KotlinLogging.logger {}
 private val VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT = Duration.ofSeconds(10)
 private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START = Duration.ofMillis(250)
 private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS = Duration.ofSeconds(2)
+private val FELLES_NOTAT_FOR_ALLE_SAKER = listOf<String?>(null)
 
 @Service
 class VedtakService(
@@ -449,6 +450,7 @@ class VedtakService(
                 behandlingId,
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
             ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
@@ -483,6 +485,7 @@ class VedtakService(
                 behandling.id!!,
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
             ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
@@ -634,13 +637,15 @@ class VedtakService(
                         info = it,
                     )
             }
+            val saksnumreForNotat = behandling.saksnumreForNotat(erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
             behandlingService.oppdaterVedtakFattetStatus(
                 behandling.id!!,
                 vedtaksid = endeligVedtakOrkestrering.first.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = saksnumreForNotat,
             )
 
-            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, saksnumreForNotat)
 
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
@@ -685,6 +690,7 @@ class VedtakService(
                 vedtaksid = responseInnkreving.vedtaksid,
                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                 unikreferanse = innkrevingRequest.unikReferanse,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
 
             ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
@@ -861,17 +867,23 @@ class VedtakService(
         val vedtaksid =
             vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.firstOrNull() ?: vedtakResponser.values.first()
         if (!simuler) {
+            val saksnumreForNotat = if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
+                behandling.saksnumreForNotat(erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
+            } else {
+                null
+            }
             behandlingService.oppdaterVedtakFattetStatus(
                 behandling.id!!,
                 vedtaksid = vedtaksid,
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = saksnumreForNotat,
             )
 
             val søknadsider = vedtakResponser.flatMap { it.key }
             // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
-            if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
-                ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder, søknadsider)
+            if (saksnumreForNotat != null) {
+                ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, saksnumreForNotat, søknadsider)
             } else {
                 ventPåFerdigstiltSøknad(søknadsider)
             }
@@ -944,32 +956,29 @@ class VedtakService(
         }
     }
 
+    private fun Behandling.saksnumreForNotat(separateNotater: Boolean): List<String?> {
+        val saksnumre = saker
+        return if (separateNotater && saksnumre.size > 1) saksnumre else FELLES_NOTAT_FOR_ALLE_SAKER
+    }
+
     private fun ventTilSøknaderErFerdigstiltOgOpprettNotat(
         behandling: Behandling,
-        opprettSeparatNotatForHverSak: Boolean = false,
+        saksnumreForNotat: List<String?> = FELLES_NOTAT_FOR_ALLE_SAKER,
         søknadsider: List<Long> = behandling.søknadsider,
     ) {
+        ventPåFerdigstiltSøknad(søknadsider)
         if (!UnleashFeatures.OPPRETT_NOTAT_ASYNC.isEnabled) {
-            if (opprettSeparatNotatForHverSak) {
-                opprettNotatForAlleSakerParallelt(behandling)
-            } else {
-                opprettNotatSynkront(behandling)
-            }
+            opprettNotatForAlleSakerParallelt(behandling, saksnumreForNotat)
             return
         }
 
-        ventPåFerdigstiltSøknad(søknadsider)
-        if (opprettSeparatNotatForHverSak) {
-            behandling.saker.forEach {
-                bestillOpprettelseAvNotat(behandling, it)
-            }
-        } else {
-            bestillOpprettelseAvNotat(behandling)
-        }
+        saksnumreForNotat.forEach { bestillOpprettelseAvNotat(behandling, it) }
     }
 
-    private fun opprettNotatForAlleSakerParallelt(behandling: Behandling) {
-        val saker = behandling.saker.toList()
+    private fun opprettNotatForAlleSakerParallelt(
+        behandling: Behandling,
+        saker: List<String?>,
+    ) {
         if (saker.size <= 1) {
             saker.forEach { opprettNotatSynkront(behandling, it) }
             return
@@ -985,7 +994,7 @@ class VedtakService(
 
     private fun opprettNotatSynkront(
         behandling: Behandling,
-        saksnummer: String? = null,
+        saksnummer: String?,
     ) {
         try {
             notatOpplysningerService.opprettNotat(behandling.id!!, saksnummer = saksnummer)
@@ -1003,7 +1012,7 @@ class VedtakService(
      */
     private fun bestillOpprettelseAvNotat(
         behandling: Behandling,
-        saksnummer: String? = null,
+        saksnummer: String?,
     ) {
         bestillAsyncJobService!!.bestillOpprettelseAvNotat(
             OpprettNotatBestilling(behandlingId = behandling.id!!, saksnummer = saksnummer),

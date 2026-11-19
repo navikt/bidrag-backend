@@ -184,9 +184,9 @@ abstract class CommonVedtakTilBehandlingTest : CommonMockServiceTest() {
         every { tilgangskontrollService.sjekkTilgangPersonISak(any(), any()) } returns Unit
         every { tilgangskontrollService.sjekkTilgangBehandling(any()) } returns Unit
         every { tilgangskontrollService.sjekkTilgangVedtak(any()) } returns Unit
-        every { notatOpplysningerService.opprettNotat(any()) } returns "213"
+        every { notatOpplysningerService.opprettNotat(any(), saksnummer = any()) } returns "213"
         every { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) } returns Unit
-        every { behandlingService.oppdaterVedtakFattetStatus(any(), any(), any()) } returns Unit
+        every { behandlingService.oppdaterVedtakFattetStatus(any(), any(), any(), any(), any()) } returns Unit
         every { behandlingService.oppdaterDelvedtakFattetStatus(any(), any(), any()) } returns Unit
         every { forsendelseService.opprettForsendelseForAldersjustering(any()) } returns Unit
         every { validerBehandlingService.validerKanBehandlesINyLøsning(any()) } returns Unit

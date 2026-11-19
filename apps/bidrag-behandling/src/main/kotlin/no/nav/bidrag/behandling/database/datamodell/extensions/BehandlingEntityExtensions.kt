@@ -46,16 +46,27 @@ enum class LasterGrunnlagAsyncStatus {
     FEILET,
 }
 
+data class Notatbestilling(
+    val saksnummer: String?,
+    val journalpostId: String? = null,
+)
+
 class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
     companion object {
         const val FATTE_VEDTAK_REVURDERINGSBARN_INFORMASJON = "fatte_vedtak_revurderingsbarn_informasjon"
+        const val NOTATBESTILLINGER = "notatbestillinger"
+
+        fun lesNotatbestillinger(json: String?): List<Notatbestilling>? = json?.let { commonObjectmapper.readValue(it) }
 
         fun from(initValue: Map<String, String> = hashMapOf()): BehandlingMetadataDo {
             val dokmap = BehandlingMetadataDo()
             dokmap.putAll(initValue)
             return dokmap
         }
+
     }
+
+    fun hentNotatbestillinger(): List<Notatbestilling>? = lesNotatbestillinger(this[NOTATBESTILLINGER])
 
     private val opprettelseEllerOppdateringAvFFFeilet = "opprettelseEllerOppdateringAvFFFeilet"
     private val oppdateringAvFFRollerFeilet = "oppdateringAvFFRollerFeilet"
