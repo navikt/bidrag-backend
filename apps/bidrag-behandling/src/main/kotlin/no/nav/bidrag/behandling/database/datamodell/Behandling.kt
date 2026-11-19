@@ -423,6 +423,7 @@ open class Behandling(
             sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
     }
 
+    val søknadsider get() = (roller.flatMap { it.søknader.mapNotNull { it.søknadsid } } + listOfNotNull(soknadsid)).distinct()
     val sammeSamværForAlle get() = sammeSamværForAlleSaker.all { it.erLikForAlle }
     val sammeSamværForAlleSaker get() = samvær
         .filter { it.rolle.kreverGrunnlagForBeregning }

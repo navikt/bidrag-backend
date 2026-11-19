@@ -3,6 +3,11 @@
 package no.nav.bidrag.behandling.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.async.BestillAsyncJobService
 import no.nav.bidrag.behandling.async.dto.OpprettNotatBestilling
@@ -49,6 +54,8 @@ import no.nav.bidrag.behandling.transformers.vedtak.takeIfNotNullOrEmpty
 import no.nav.bidrag.behandling.transformers.vedtak.validerGrunnlagsreferanser
 import no.nav.bidrag.behandling.ugyldigForespørsel
 import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtak
+import no.nav.bidrag.commons.util.RequestContextAsyncContext
+import no.nav.bidrag.commons.util.SecurityCoroutineContext
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -89,6 +96,7 @@ private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS = Duration.ofSeconds(2)
 class VedtakService(
     private val behandlingService: BehandlingService,
     private val grunnlagService: GrunnlagService,
+    private val notatOpplysningerService: NotatOpplysningerService,
     private val tilgangskontrollService: TilgangskontrollService,
     private val vedtakConsumer: BidragVedtakConsumer,
     private val validering: ValiderBeregning,
@@ -442,9 +450,7 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
-            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
-
-            bestillOpprettelseAvNotat(behandling)
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for særbidrag behandling $behandlingId med vedtaksid ${response.vedtaksid}"
             }
@@ -478,8 +484,7 @@ class VedtakService(
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
             )
-            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
-            bestillOpprettelseAvNotat(behandling)
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -635,13 +640,7 @@ class VedtakService(
                 request?.enhet ?: behandling.behandlerEnhet,
             )
 
-            if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                behandling.saker.forEach {
-                    bestillOpprettelseAvNotat(behandling, it)
-                }
-            } else {
-                bestillOpprettelseAvNotat(behandling)
-            }
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
 
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
@@ -687,8 +686,8 @@ class VedtakService(
                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                 unikreferanse = innkrevingRequest.unikReferanse,
             )
-            ventPåFerdigstiltSøknad(listOf(behandling.soknadsid!!))
-            bestillOpprettelseAvNotat(behandling)
+
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -838,12 +837,6 @@ class VedtakService(
                     if (aldersjusteringBeregnet) {
                         behandling.vedtaksid = response.vedtaksid
                         forsendelseService.opprettForsendelseForAldersjustering(behandling)
-                    } else if (vedtakRequest.type != Vedtakstype.ALDERSJUSTERING) {
-                        if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                            behandling.saker.forEach { bestillOpprettelseAvNotat(behandling, it) }
-                        } else {
-                            bestillOpprettelseAvNotat(behandling)
-                        }
                     }
                 }
 
@@ -865,13 +858,6 @@ class VedtakService(
                 søknadsider to response.vedtaksid
             }
 
-        if (!simuler) {
-            val søknadsider = vedtakResponser.flatMap { it.key }
-            // Venter til vedtaksbro har lest inn vedtaket og lukket søknadslinjene i saksloggen,
-            // slik at neste iterasjon i loopen ser oppdatert sakslogg
-            ventPåFerdigstiltSøknad(søknadsider)
-        }
-
         val vedtaksid =
             vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.firstOrNull() ?: vedtakResponser.values.first()
         if (!simuler) {
@@ -881,15 +867,13 @@ class VedtakService(
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
             )
+
+            val søknadsider = vedtakResponser.flatMap { it.key }
             // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
             if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
-                if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                    behandling.saker.forEach {
-                        bestillOpprettelseAvNotat(behandling, it)
-                    }
-                } else {
-                    bestillOpprettelseAvNotat(behandling)
-                }
+                ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder, søknadsider)
+            } else {
+                ventPåFerdigstiltSøknad(søknadsider)
             }
         }
 
@@ -957,6 +941,58 @@ class VedtakService(
 
         if (saksnummer.isEmpty()) {
             throw HttpClientErrorException(HttpStatus.BAD_REQUEST, "Saksnummer mangler")
+        }
+    }
+
+    private fun ventTilSøknaderErFerdigstiltOgOpprettNotat(
+        behandling: Behandling,
+        opprettSeparatNotatForHverSak: Boolean = false,
+        søknadsider: List<Long> = behandling.søknadsider,
+    ) {
+        if (!UnleashFeatures.OPPRETT_NOTAT_ASYNC.isEnabled) {
+            if (opprettSeparatNotatForHverSak) {
+                opprettNotatForAlleSakerParallelt(behandling)
+            } else {
+                opprettNotatSynkront(behandling)
+            }
+            return
+        }
+
+        ventPåFerdigstiltSøknad(søknadsider)
+        if (opprettSeparatNotatForHverSak) {
+            behandling.saker.forEach {
+                bestillOpprettelseAvNotat(behandling, it)
+            }
+        } else {
+            bestillOpprettelseAvNotat(behandling)
+        }
+    }
+
+    private fun opprettNotatForAlleSakerParallelt(behandling: Behandling) {
+        val saker = behandling.saker.toList()
+        if (saker.size <= 1) {
+            saker.forEach { opprettNotatSynkront(behandling, it) }
+            return
+        }
+        val scope = CoroutineScope(Dispatchers.IO + SecurityCoroutineContext() + RequestContextAsyncContext())
+        runBlocking {
+            saker
+                .map { saksnummer ->
+                    scope.async { opprettNotatSynkront(behandling, saksnummer) }
+                }.awaitAll()
+        }
+    }
+
+    private fun opprettNotatSynkront(
+        behandling: Behandling,
+        saksnummer: String? = null,
+    ) {
+        try {
+            notatOpplysningerService.opprettNotat(behandling.id!!, saksnummer = saksnummer)
+        } catch (e: Exception) {
+            LOGGER.error(
+                e,
+            ) { "Det skjedde en feil ved opprettelse av notat for behandling ${behandling.id} og vedtaksid ${behandling.vedtaksid}" }
         }
     }
 
