@@ -110,6 +110,16 @@ COMPAT_CSS_SOURCE = """
 .navlogo_new {
   transform: scale(4) !important;
 }
+
+table:has(.begrunnelse) {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+table:has(.begrunnelse) > tbody > tr > td:first-child {
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
 """
 
 _font_config = FontConfiguration()
