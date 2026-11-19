@@ -64,10 +64,10 @@ spec:
       # the whole container under concurrent load with a 15-page notat, so
       # 1000Mi leaves roughly 2x headroom. (An earlier 4-thread configuration
       # sat at ~780Mi, which was uncomfortably close to this limit.)
-      memory: 1000Mi
+      memory: 2000Mi
     requests:
       # A 21-page saksbehandlingsnotat takes ~2.5s of solid CPU on one core.
       # There is no CPU limit, so the request is the share guaranteed on a busy
       # node: at 500m that render can stretch to ~5s, so reserve a full core.
-      cpu: 1000m
-      memory: 512Mi
+      cpu: 2000m
+      memory: 1000Mi
