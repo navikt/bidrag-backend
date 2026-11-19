@@ -1315,7 +1315,7 @@ class ForholdsmessigFordelingService(
                 }
         val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = true)
         return SjekkForholdmessigFordelingResponse(
-            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
+            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!, behandling.erKlageEllerOmgjøring),
             skalBehandlesAvEnhet = behandlesAvEnhet,
             kanOppretteForholdsmessigFordeling =
             (
@@ -1331,10 +1331,12 @@ class ForholdsmessigFordelingService(
         )
     }
 
-    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String): List<SøknadRevurdering> {
+    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String, erKlageEllerOmgjøring: Boolean): List<SøknadRevurdering> {
         val åpneSøknaderRevurdering = kravhaverService.hentÅpneSøknaderRevurdering(bidragspliktig)
-        return åpneSøknaderRevurdering.map {
+        return åpneSøknaderRevurdering.mapNotNull {
             val sammenknytninger = bbmConsumer.finnSammenknytningerHovedsøknad(it.søknadsid)
+            val hovedsøknad = sammenknytninger.søknader.find { it.søknadsid == sammenknytninger.hovedsøknadsid }
+            if (hovedsøknad != null && hovedsøknad.behandlingstype.erKlageEllerOmgjøring != erKlageEllerOmgjøring) return@mapNotNull null
             SøknadRevurdering(
                 it,
                 erDelAvFF = sammenknytninger.søknader.isNotEmpty(),
