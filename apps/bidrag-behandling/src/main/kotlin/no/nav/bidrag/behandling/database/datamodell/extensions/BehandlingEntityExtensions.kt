@@ -63,7 +63,6 @@ class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
             dokmap.putAll(initValue)
             return dokmap
         }
-
     }
 
     fun hentNotatbestillinger(): List<Notatbestilling>? = lesNotatbestillinger(this[NOTATBESTILLINGER])
