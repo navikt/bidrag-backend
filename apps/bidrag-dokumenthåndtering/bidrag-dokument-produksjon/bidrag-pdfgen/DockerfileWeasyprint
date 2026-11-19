@@ -1,5 +1,12 @@
-# syntax=docker/dockerfile:1.7
+
+# siden minimal-varianten av jre-imaget verken har pakkehåndtering eller shell.
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest-dev AS tools
+USER root
+
 FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest
+
+COPY --from=tools /bin/busybox /bin/sh
+COPY --from=tools /bin/busybox /bin/printenv
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
