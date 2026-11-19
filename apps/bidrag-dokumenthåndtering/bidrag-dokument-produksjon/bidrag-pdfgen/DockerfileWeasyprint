@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.13-slim-bookworm
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -104,8 +104,8 @@ CMD exec gunicorn \
     --config gunicorn.conf.py \
     --worker-class gthread \
     --bind "0.0.0.0:${PORT}" \
-    --workers "${GUNICORN_WORKERS:-2}" \
-    --threads "${GUNICORN_THREADS:-2}" \
+    --workers "${GUNICORN_WORKERS:-4}" \
+    --threads "${GUNICORN_THREADS:-4}" \
     --timeout "${GUNICORN_TIMEOUT:-120}" \
     --graceful-timeout 30 \
     --keep-alive 15 \
