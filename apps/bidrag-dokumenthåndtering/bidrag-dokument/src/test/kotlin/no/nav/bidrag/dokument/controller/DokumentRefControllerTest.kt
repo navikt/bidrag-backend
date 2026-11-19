@@ -1,5 +1,6 @@
 package no.nav.bidrag.dokument.controller
 
+import com.github.tomakehurst.wiremock.client.WireMock
 import no.nav.bidrag.commons.web.test.HttpHeaderTestRestTemplate
 import no.nav.bidrag.dokument.BidragDokumentTest
 import no.nav.bidrag.dokument.TEST_PROFILE
@@ -9,6 +10,8 @@ import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.resttestclient.TestRestTemplate
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
@@ -98,6 +101,30 @@ internal class DokumentRefControllerTest {
             responseEntity.statusCode,
             HttpStatus.UNAUTHORIZED,
         )
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = HttpStatus::class, names = ["FORBIDDEN", "NOT_FOUND"])
+    fun `sammenslåing av forsendelser svarer med statusen fra feilet henting av dokument`(status: HttpStatus) {
+        WireMock.stubFor(
+            WireMock
+                .request("OPTIONS", WireMock.urlPathMatching("/forsendelse/dokument/BIF-1(/D1)?"))
+                .willReturn(
+                    WireMock.okJson(
+                        """[{"journalpostId":"BIF-1","dokumentreferanse":"D1","format":"PDF","status":"FERDIGSTILT","arkivsystem":"BIDRAG"}]""",
+                    ),
+                ),
+        )
+        WireMock.stubFor(
+            WireMock
+                .get(WireMock.urlPathEqualTo("/forsendelse/dokument/BIF-1/D1"))
+                .willReturn(WireMock.aResponse().withStatus(status.value())),
+        )
+
+        val response =
+            securedTestRestTemplate.getForEntity<ByteArray>(localhostUrl("/bidrag-dokument/dokument?dokument=BIF-1"))
+
+        Assertions.assertThat(response.statusCode).isEqualTo(status)
     }
 
     private fun localhostUrl(url: String): String = "http://localhost:$port$url"
