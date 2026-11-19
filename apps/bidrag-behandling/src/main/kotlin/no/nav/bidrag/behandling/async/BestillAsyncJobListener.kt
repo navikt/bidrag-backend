@@ -70,7 +70,7 @@ class BestillAsyncJobListener(
         fallbackExecution = true,
     )
     fun behandleBestillingAvNotat(bestilling: OpprettNotatBestilling) {
-        log.info {
+        secureLogger.info {
             "Async: Oppretter notat for behandling ${bestilling.behandlingId}" +
                 bestilling.saksnummer?.let { " i sak $it" }.orEmpty()
         }
@@ -79,7 +79,7 @@ class BestillAsyncJobListener(
                 notatOpplysningerService.opprettNotat(bestilling.behandlingId, saksnummer = bestilling.saksnummer)
             }
         } catch (e: Exception) {
-            log.error(e) {
+            secureLogger.error(e) {
                 "Det skjedde en feil ved opprettelse av notat for behandling ${bestilling.behandlingId}" +
                     bestilling.saksnummer?.let { " i sak $it" }.orEmpty()
             }

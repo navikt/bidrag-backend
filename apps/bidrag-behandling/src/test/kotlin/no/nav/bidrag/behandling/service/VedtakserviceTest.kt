@@ -273,6 +273,7 @@ class VedtakserviceTest : TestContainerRunner() {
             VedtakService(
                 behandlingService,
                 grunnlagService,
+                notatOpplysningerService,
                 tilgangskontrollService,
                 vedtakConsumer,
                 validerBeregning,
