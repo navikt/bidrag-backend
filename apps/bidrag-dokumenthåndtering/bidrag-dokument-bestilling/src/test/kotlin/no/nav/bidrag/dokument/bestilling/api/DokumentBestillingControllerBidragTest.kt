@@ -1,6 +1,8 @@
 package no.nav.bidrag.dokument.bestilling.api
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentBestillingForespørsel
 import no.nav.bidrag.dokument.bestilling.api.dto.DokumentBestillingResponse
@@ -11,6 +13,7 @@ import no.nav.bidrag.dokument.bestilling.utils.BM1
 import no.nav.bidrag.dokument.bestilling.utils.BP1
 import no.nav.bidrag.dokument.bestilling.utils.createEnhetKontaktInformasjon
 import no.nav.bidrag.dokument.bestilling.utils.createPostAdresseResponse
+import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
@@ -88,6 +91,22 @@ class DokumentBestillingControllerBidragTest : AbstractControllerTest() {
             message.brev?.soknadBost?.hgKode shouldBe "BB"
             message.brev?.soknadBost?.ugKode shouldBe "R"
             message.brev?.soknad?.undergrp shouldBe "R"
+        }
+    }
+
+    @Test
+    fun `skal ta med beregningen i vedtaksbrev bidrag ved avslag for delt bosted`() {
+        val message = bestillVedtaksbrevBidrag("vedtak_response-bidrag-avslag-delt-bosted.json")
+
+        val barn = message.brev!!.bidragBarn.single()
+        assertSoftly {
+            barn.andelUnderholdPerioder.shouldNotBeEmpty()
+            barn.andelUnderholdPerioder.forEach { it.fordNokkel shouldBe BigDecimal("400.0") }
+            barn.underholdkostnadPerioder.shouldNotBeEmpty()
+            barn.samværPerioder.shouldNotBeEmpty()
+            barn.samværPerioder.forEach { it.samvarKode shouldBe Samværsklasse.DELT_BOSTED.bisysKode }
+            barn.inntektPerioder.shouldNotBeEmpty()
+            barn.bidragEvnePerioder.shouldBeEmpty()
         }
     }
 
