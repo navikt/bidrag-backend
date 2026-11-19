@@ -1,14 +1,38 @@
 
-# siden minimal-varianten av jre-imaget verken har pakkehåndtering eller shell.
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest-dev AS tools
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest AS runtime
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest-dev AS build
 USER root
 
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/python:latest
+COPY --from=runtime /usr/lib/apk/ /runtime/usr/lib/apk/
+COPY --from=runtime /etc/apk/ /runtime/etc/apk/
+RUN ln -s usr/lib /runtime/lib \
+    && mkdir -p /runtime/var/cache/apk \
+    && apk --root /runtime --no-cache --no-scripts add \
+        pango harfbuzz cairo qpdf fontconfig \
+        font-opensans ttf-dejavu font-liberation font-noto font-noto-emoji \
+        glibc-locale-nb libxcrypt
 
-COPY --from=tools /bin/busybox /bin/sh
-COPY --from=tools /bin/busybox /bin/printenv
+ADD --checksum=sha256:a4ebbdea20b08ccbd7bf3665a9462454eefdd01d9a6307129d3b3d4672981074 \
+    https://github.com/adobe-fonts/source-sans/releases/download/3.052R/OTF-source-sans-3.052R.zip \
+    /tmp/source-sans.zip
+RUN mkdir -p /runtime/usr/share/fonts/opentype/source-sans \
+    && unzip -j /tmp/source-sans.zip '*.otf' -d /runtime/usr/share/fonts/opentype/source-sans
+COPY fonts.conf /runtime/etc/fonts/local.conf
 
-ENV PYTHONUNBUFFERED=1 \
+COPY requirements.txt /tmp/requirements.txt
+RUN python -m venv --without-pip /opt/venv \
+    && python -m pip --python /opt/venv install --no-cache-dir --requirement /tmp/requirements.txt
+
+FROM runtime
+USER root
+
+COPY --from=build /runtime/ /
+COPY --from=build /bin/busybox /bin/sh
+COPY --from=build /bin/busybox /bin/printenv
+COPY --from=build /opt/venv /opt/venv
+
+ENV PATH="/opt/venv/bin:${PATH}" \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     LANG=nb_NO.UTF-8 \
     LANGUAGE=nb_NO:nb \
@@ -25,56 +49,7 @@ ENV PYTHONUNBUFFERED=1 \
     PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus \
     PORT=8080
 
-RUN apt-get update -qq \
-    && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-        # WeasyPrint's rendering stack
-        libpango-1.0-0 \
-        libpangoft2-1.0-0 \
-        libharfbuzz0b \
-        libharfbuzz-subset0 \
-        libcairo2 \
-        libffi8 \
-        # No libgdk-pixbuf-2.0-0/shared-mime-info: WeasyPrint decodes images
-        # with Pillow and never loads gdk-pixbuf, and those packages are the
-        # only thing pulling in libxml2 (CVE-2026-6653, unfixed in bookworm).
-        # PDF post-processing (flatten/merge)
-        qpdf \
-        # Fonts: Source Sans is the NAV/Aksel typeface used by the templates.
-        # The others provide fallbacks so missing glyphs render as text, not tofu.
-        fonts-open-sans \
-        fonts-dejavu-core \
-        fonts-liberation2 \
-        fonts-noto-core \
-        fonts-noto-color-emoji \
-        locales \
-    && sed -i '/^# *nb_NO.UTF-8/s/^# *//' /etc/locale.gen \
-    && locale-gen \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# style.css asks for both "Source Sans 3" (the NAV/Aksel typeface) and the older
-# "Source Sans Pro" name. Debian packages neither, so fetch upstream. The
-# checksum pins the artefact: without it the build silently accepts whatever
-# that URL serves. fonts.conf aliases the old family name onto the new one -
-# otherwise h1/p fall back to DejaVu Sans and look wrong next to everything else.
-ADD --checksum=sha256:a4ebbdea20b08ccbd7bf3665a9462454eefdd01d9a6307129d3b3d4672981074 \
-    https://github.com/adobe-fonts/source-sans/releases/download/3.052R/OTF-source-sans-3.052R.zip \
-    /tmp/source-sans.zip
-RUN apt-get update -qq \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends unzip \
-    && mkdir -p /usr/share/fonts/opentype/source-sans \
-    && unzip -j -o /tmp/source-sans.zip '*.otf' -d /usr/share/fonts/opentype/source-sans \
-    && rm -f /tmp/source-sans.zip \
-    && apt-get purge -y -qq unzip \
-    && apt-get autoremove -y -qq \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY fonts.conf /etc/fonts/local.conf
-
 WORKDIR /app
-
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --requirement requirements.txt
 
 COPY weasyprint_server.py metrics.py gunicorn.conf.py ./
 
@@ -107,6 +82,8 @@ EXPOSE 8080
 # higher only buys memory pressure. Note that under *saturation* (more requests
 # than worker slots) /health queues and times out in every configuration - the
 # Nais probes are tuned to tolerate that rather than restart a busy pod.
+ENTRYPOINT []
+SHELL ["/bin/sh", "-c"]
 CMD exec gunicorn \
     --config gunicorn.conf.py \
     --worker-class gthread \
