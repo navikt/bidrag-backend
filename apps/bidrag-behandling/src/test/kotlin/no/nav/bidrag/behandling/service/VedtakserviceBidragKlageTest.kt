@@ -93,6 +93,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
     @BeforeEach
     fun initMocksKlage() {
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK)
+        every { behandlingRepository.initialiserNotatbestillinger(any(), any()) } returns Unit
         bidragsberegningOrkestrator = mockkClass(BidragsberegningOrkestrator::class)
 //        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, personConsumer, sakConsumer)
 //        every { bidragsberegningOrkestrator.utførBidragsberegningV3(any()) } returns BidragsberegningOrkestratorResponseV2()
