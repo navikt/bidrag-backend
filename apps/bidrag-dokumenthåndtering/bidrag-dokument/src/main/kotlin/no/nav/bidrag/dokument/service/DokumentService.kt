@@ -63,10 +63,36 @@ class DokumentService(
         documentProperties: DocumentProperties,
     ): ResponseEntity<ByteArray> {
         val dokumentRef = hentDokumentRefMedRiktigKilde(_dokumentRef)
-        if (!dokumentRef.hasDokumentId() && !dokumentRef.erForKilde(Kilde.MIDLERTIDLIG_BREVLAGER)) {
+        if (erJournalpostUtenDokumentId(dokumentRef)) {
             val dokumentReferanser = hentAlleJournalpostDokumentReferanser(dokumentRef)
             return hentDokumenterData(dokumentReferanser, documentProperties)
         }
+        return hentEnkeltDokument(dokumentRef, documentProperties)
+    }
+
+    /**
+     * Henter innholdet til ett dokument eller alle dokumentene i en journalpost, uten å fange feil.
+     * En feil ved henting går dermed videre til kalleren, som svarer med den opprinnelige statusen.
+     */
+    private fun hentDokumentInnhold(
+        _dokumentRef: DokumentRef,
+        documentProperties: DocumentProperties,
+    ): ByteArray {
+        val dokumentRef = hentDokumentRefMedRiktigKilde(_dokumentRef)
+        if (erJournalpostUtenDokumentId(dokumentRef)) {
+            return hentOgMergeAlleDokumenter(hentAlleJournalpostDokumentReferanser(dokumentRef), documentProperties)
+        }
+        return checkNotNull(hentEnkeltDokument(dokumentRef, documentProperties).body) {
+            "Dokument ${dokumentRef.toString().sanitizeForLog()} har ikke innhold"
+        }
+    }
+
+    private fun erJournalpostUtenDokumentId(dokumentRef: DokumentRef): Boolean = !dokumentRef.hasDokumentId() && !dokumentRef.erForKilde(Kilde.MIDLERTIDLIG_BREVLAGER)
+
+    private fun hentEnkeltDokument(
+        dokumentRef: DokumentRef,
+        documentProperties: DocumentProperties,
+    ): ResponseEntity<ByteArray> {
         val response = hentDokumentData(dokumentRef)
         return ResponseEntity
             .ok()
@@ -148,10 +174,10 @@ class DokumentService(
                 dokumentList
                     .map {
                         async {
-                            hentDokument(
+                            hentDokumentInnhold(
                                 it,
                                 DocumentProperties(documentProperties, dokumentList.indexOf(it)),
-                            ).body!!
+                            )
                         }
                     }.awaitAll()
             }
