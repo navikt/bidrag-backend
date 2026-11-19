@@ -71,7 +71,11 @@ data class LesemodusVedtak(
     val opprettetAvBatch: Boolean,
     val erOrkestrertVedtak: Boolean,
     val fattetTidspunkt: LocalDateTime,
-)
+    var erManuellVedtak: Boolean = false,
+    val resultatkodeSærbidrag: Resultatkode? = null,
+) {
+    val resultatkodeVisningsnavn: String? get() = resultatkodeSærbidrag?.visningsnavn?.intern
+}
 
 data class BehandlingDtoV2(
     val id: Long,
@@ -238,6 +242,7 @@ data class PersoninfoDto(
 
 data class SærbidragUtgifterDto(
     val avslag: Resultatkode? = null,
+    val resultatkodeVisningsnavn: String? = null,
     val kategori: SærbidragKategoriDto,
     val beregning: UtgiftBeregningDto? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
