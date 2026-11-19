@@ -9,9 +9,9 @@ import no.nav.bidrag.behandling.async.dto.OpprettNotatBestilling
 import no.nav.bidrag.behandling.async.dto.SøknadSlettetBestilling
 import no.nav.bidrag.behandling.service.BehandlingService
 import no.nav.bidrag.behandling.service.GrunnlagService
-import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.behandling.service.NotatOpplysningerService
 import no.nav.bidrag.commons.security.SikkerhetsKontekst
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.tilJsonString
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
@@ -59,12 +59,11 @@ class BestillAsyncJobListener(
     }
 
     /**
-     * Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor i bakgrunnen etter at
+     * Notatopprettelse kan ta veldig lang tid (PDF-produksjon + journalføring) og kjøres derfor i bakgrunnen etter at
      * vedtaket er fattet. Kjøres i applikasjonskontekst fordi saksbehandlerens token ikke propageres til
      * async-tråder.
      * Feiler jobben, plukkes behandlingen opp igjen av [no.nav.bidrag.behandling.scheduling.NotatFeilhåndteringScheduler].
      */
-    @EventListener
     @Async
     @TransactionalEventListener(
         phase = TransactionPhase.AFTER_COMMIT,
