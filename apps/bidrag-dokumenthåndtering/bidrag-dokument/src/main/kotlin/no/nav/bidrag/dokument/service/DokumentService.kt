@@ -63,7 +63,7 @@ class DokumentService(
         documentProperties: DocumentProperties,
     ): ResponseEntity<ByteArray> {
         val dokumentRef = hentDokumentRefMedRiktigKilde(_dokumentRef)
-        if (erJournalpostUtenDokumentId(dokumentRef)) {
+        if (skalHenteAlleDokumenterIJournalpost(dokumentRef)) {
             val dokumentReferanser = hentAlleJournalpostDokumentReferanser(dokumentRef)
             return hentDokumenterData(dokumentReferanser, documentProperties)
         }
@@ -79,7 +79,7 @@ class DokumentService(
         documentProperties: DocumentProperties,
     ): ByteArray {
         val dokumentRef = hentDokumentRefMedRiktigKilde(_dokumentRef)
-        if (erJournalpostUtenDokumentId(dokumentRef)) {
+        if (skalHenteAlleDokumenterIJournalpost(dokumentRef)) {
             return hentOgMergeAlleDokumenter(hentAlleJournalpostDokumentReferanser(dokumentRef), documentProperties)
         }
         return checkNotNull(hentEnkeltDokument(dokumentRef, documentProperties).body) {
@@ -87,7 +87,7 @@ class DokumentService(
         }
     }
 
-    private fun erJournalpostUtenDokumentId(dokumentRef: DokumentRef): Boolean = !dokumentRef.hasDokumentId() && !dokumentRef.erForKilde(Kilde.MIDLERTIDLIG_BREVLAGER)
+    private fun skalHenteAlleDokumenterIJournalpost(dokumentRef: DokumentRef): Boolean = !dokumentRef.hasDokumentId() && !dokumentRef.erForKilde(Kilde.MIDLERTIDLIG_BREVLAGER)
 
     private fun hentEnkeltDokument(
         dokumentRef: DokumentRef,
