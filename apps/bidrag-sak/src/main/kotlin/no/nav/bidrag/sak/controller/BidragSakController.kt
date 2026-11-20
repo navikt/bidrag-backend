@@ -1,18 +1,14 @@
 package no.nav.bidrag.sak.controller
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
-import no.nav.bidrag.sak.dto.FogdhistorikkDto
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.dto.SakshendelseDto
@@ -20,6 +16,7 @@ import no.nav.bidrag.sak.service.BidragSakService
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.FogdhistorikkDto
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
@@ -35,7 +32,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
@@ -44,8 +40,6 @@ import org.springframework.web.bind.annotation.RestController
 class BidragSakController(
     private val bidragSakService: BidragSakService,
 ) {
-    private val logger = KotlinLogging.logger {}
-
     @GetMapping("/bidrag-sak$SAK_SOK/{saksnummer}")
     @Operation(
         description = "Finn metadata for en bidragssak",

@@ -17,6 +17,7 @@ import no.nav.bidrag.sak.domain.Tilgang
 import no.nav.bidrag.sak.mapper.RollehistorikkMapper.toRollehistorikkDto
 import no.nav.bidrag.sak.mapper.model.RolleMedFødselsdato
 import no.nav.bidrag.transport.sak.BarnISak
+import no.nav.bidrag.transport.sak.FogdhistorikkDto
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.ReellMottakerDto
@@ -217,3 +218,13 @@ fun Collection<Rolle>.toBarnISak() = this
 fun RolleDto.medFødselsdato(fødselsdatoer: Map<Personident, LocalDate?>) = RolleMedFødselsdato(this, this.fødselsnummer?.let { fødselsdatoer[it] })
 
 private fun hentGjeldendeIdent(ident: String) = Personident(AppContext.getBean(IdentConsumer::class.java).hentGjeldendeIdent(ident) ?: ident)
+
+fun Tilgang.tilFogdhistorikkDto(): FogdhistorikkDto = FogdhistorikkDto(
+    tilgangId = tilgangId,
+    enhetsnummer = enhetsnummer,
+    tilgangFomDato = tilgangFomDato,
+    tilgangTomDato = tilgangTomDato,
+    arsak = årsak,
+    type = type,
+    opprettetAv = opprettetAv,
+)
