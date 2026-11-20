@@ -522,7 +522,7 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
             return valutakursGrunnlag?.let {
                 ValutakursGrunnlagTilBeregning(
                     referanse = grunnlag.referanse,
-                    periode = it.periode,
+                    periode = requireNotNull(it.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" },
                     valutakursListe = it.valutakursListe,
                 )
             }

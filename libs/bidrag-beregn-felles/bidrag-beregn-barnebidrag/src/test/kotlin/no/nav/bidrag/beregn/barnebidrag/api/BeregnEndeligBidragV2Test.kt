@@ -128,6 +128,33 @@ internal class BeregnEndeligBidragV2Test : FellesTest() {
 
     @ParameterizedTest
     @ValueSource(booleans = [false, true])
+    fun `skal avvise kursgrunnlag uten periode ved beregning av løpende bidrag og privat avtale`(privatAvtale: Boolean) {
+        val grunnlag = valutaperiodeGrunnlag(privatAvtale, ÅrMånedsperiode("2024-07", "2024-08"))
+        val original = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs).single()
+        val kursgrunnlag = original.copy(innhold = POJONode(original.innholdTilObjekt<ValutakursGrunnlag>().copy(periode = null)))
+
+        shouldThrow<IllegalArgumentException> {
+            if (privatAvtale) {
+                BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingPrivatAvtale(grunnlag, listOf(kursgrunnlag), åpenSluttperiode = false)
+            } else {
+                BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingLøpendeBidrag(grunnlag, listOf(kursgrunnlag), åpenSluttperiode = false)
+            }
+        }.message shouldBe "Valutakursgrunnlaget må ha en periode ved beregning"
+    }
+
+    @Test
+    fun `skal avvise kursgrunnlag uten periode ved mapping til beregning`() {
+        val original = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs).single()
+        val kursgrunnlag = original.copy(innhold = POJONode(original.innholdTilObjekt<ValutakursGrunnlag>().copy(periode = null)))
+
+        shouldThrow<IllegalArgumentException> {
+            EndeligBidragMapperV2.mapValutakurs(kursgrunnlag)
+        }.message shouldBe "Ugyldig input ved beregning av barnebidrag. Innhold i Grunnlagstype.VALUTAKURS_GRUNNLAG er ikke gyldig: " +
+            "Valutakursgrunnlaget må ha en periode ved beregning"
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
     fun `skal bevare kursperioden ved mapping av løpende bidrag og privat avtale`(åpenPeriode: Boolean) {
         val periode = ÅrMånedsperiode(YearMonth.of(2024, 7), if (åpenPeriode) null else YearMonth.of(2025, 1))
         val original = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs).single()

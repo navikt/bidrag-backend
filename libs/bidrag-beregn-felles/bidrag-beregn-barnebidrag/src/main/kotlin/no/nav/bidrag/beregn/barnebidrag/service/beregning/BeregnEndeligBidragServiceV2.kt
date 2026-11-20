@@ -1474,14 +1474,15 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             .plus(
                 valutakursGrunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
                     .filter { kurs ->
+                        val kursperiode = requireNotNull(kurs.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
                         grunnlagListe.løpendeBidragPeriodeGrunnlagListe.any { bidrag ->
                             val løpende = bidrag.løpendeBidragPeriode
                             løpende.valutakode != Valutakode.NOK &&
-                                kurs.innhold.periode.fom < løpende.periode.tilEllerMax() && løpende.periode.fom < kurs.innhold.periode.tilEllerMax() &&
+                                kursperiode.fom < løpende.periode.tilEllerMax() && løpende.periode.fom < kursperiode.tilEllerMax() &&
                                 kurs.innhold.valutakursListe.any { it.valutakode1 == løpende.valutakode && it.valutakode2 == Valutakode.NOK }
                         }
                     }
-                    .map { it.innhold.periode },
+                    .map { requireNotNull(it.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" } },
             )
 
         val løpendeBidragPerioder = grunnlagListe.løpendeBidragPeriodeGrunnlagListe
@@ -1572,14 +1573,15 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             .plus(
                 valutakursGrunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
                     .filter { kurs ->
+                        val kursperiode = requireNotNull(kurs.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
                         grunnlagListe.indeksreguleringPrivatAvtalePeriodeGrunnlagListe.any { avtale ->
                             val privat = avtale.privatAvtalePeriode
                             privat.valutakode != Valutakode.NOK &&
-                                kurs.innhold.periode.fom < privat.periode.tilEllerMax() && privat.periode.fom < kurs.innhold.periode.tilEllerMax() &&
+                                kursperiode.fom < privat.periode.tilEllerMax() && privat.periode.fom < kursperiode.tilEllerMax() &&
                                 kurs.innhold.valutakursListe.any { it.valutakode1 == privat.valutakode && it.valutakode2 == Valutakode.NOK }
                         }
                     }
-                    .map { it.innhold.periode },
+                    .map { requireNotNull(it.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" } },
             )
 
         return lagBruddPeriodeListe(periodeListe, beregningsperiode)

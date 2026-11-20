@@ -53,6 +53,25 @@ internal class ValutaIEvnevurderingTest {
     }
 
     @Test
+    fun `skal avvise valutakursgrunnlag uten periode ved beregning av særbidrag`() {
+        val original = grunnlag(Valutakode.EUR, BigDecimal("6"))
+        val grunnlag = original.copy(
+            grunnlagListe = original.grunnlagListe.map {
+                if (it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG) {
+                    it.copy(innhold = POJONode(it.innholdTilObjekt<ValutakursGrunnlag>().copy(periode = null)))
+                } else {
+                    it
+                }
+            },
+        )
+
+        val feil = assertThrows<IllegalArgumentException> {
+            api.beregn(grunnlag, Vedtakstype.FASTSETTELSE)
+        }
+        assertThat(feil).hasMessage("Valutakursgrunnlaget må ha en periode ved beregning")
+    }
+
+    @Test
     fun `skal vurdere løpende NOK-bidrag uten kursgrunnlag`() {
         val grunnlag = grunnlag(Valutakode.NOK)
 
