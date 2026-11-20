@@ -309,6 +309,32 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
         shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
 
         testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4833"
+        testDataGenerator.hentSak("1234567")!!.flytterTilEierfogd shouldBe "4806"
+    }
+
+    @Test
+    fun `skal fullføre avbrutt flytting før saken flyttes videre`() {
+        stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002)))
+        stubFor(patch("/oppgave/api/v1/oppgaver/1002").willReturn(aResponse().withStatus(500)))
+        shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
+        stubOppgaver(listOf(oppgave.copy(tildeltEnhetsnr = "4806"), oppgave.copy(id = 1002)))
+        stubFor(patch("/oppgave/api/v1/oppgaver/1002").willReturn(aResponse().withStatus(200)))
+        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4802")))
+
+        service.behandleHendelse(hendelse)
+
+        verify(
+            2,
+            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
+                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4806"))),
+        )
+        verify(
+            1,
+            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
+                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
+        )
+        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4802"
+        testDataGenerator.hentSak("1234567")!!.flytterTilEierfogd shouldBe null
     }
 
     @Test

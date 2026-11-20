@@ -32,14 +32,20 @@ class BehandleSakHendelseService(
             return
         }
         val eierfogd = sak.eierfogd.verdi
-        val lagretSak = sakRepository.findBySaksnummer(saksnummer)
         if (UnleashFeatures.FLYTT_OPPGAVER_VED_ENHETSBYTTE.isEnabled) {
-            val forrigeEierfogd = lagretSak?.eierfogd ?: forrigeEierfogdFraHistorikk(saksnummer)
-            if (forrigeEierfogd != null && forrigeEierfogd != eierfogd) {
-                flyttOppgaver(saksnummer, forrigeEierfogd, eierfogd)
-            }
+            flyttOppgaverTilEierfogd(saksnummer, eierfogd)
+        } else {
+            lagreEierfogdUtenFlytting(saksnummer, eierfogd)
         }
-        lagreEierfogd(lagretSak, saksnummer, eierfogd)
+    }
+
+    private fun flyttOppgaverTilEierfogd(saksnummer: String, eierfogd: String) {
+        val lagretSak = sakRepository.findBySaksnummer(saksnummer)
+            ?: sakRepository.save(Sak(saksnummer = saksnummer, eierfogd = forrigeEierfogdFraHistorikk(saksnummer) ?: eierfogd))
+        val sakUtenPågåendeFlytting = lagretSak.flytterTilEierfogd?.let { fullførFlytting(lagretSak) } ?: lagretSak
+        if (sakUtenPågåendeFlytting.eierfogd != eierfogd) {
+            fullførFlytting(lagre(sakUtenPågåendeFlytting.copy(flytterTilEierfogd = eierfogd)))
+        }
     }
 
     private fun forrigeEierfogdFraHistorikk(saksnummer: String): String? = sakConsumer.hentFogdhistorikk(saksnummer)
@@ -48,24 +54,27 @@ class BehandleSakHendelseService(
         .maxByOrNull { it.tilgangId }
         ?.enhetsnummer
 
-    private fun flyttOppgaver(saksnummer: String, forrigeEierfogd: String, eierfogd: String) {
-        oppgaveConsumer.hentÅpneOppgaverForSak(saksnummer)
-            .filter { it.tildeltEnhetsnr == forrigeEierfogd }
+    private fun fullførFlytting(sak: Sak): Sak {
+        val nyEierfogd = requireNotNull(sak.flytterTilEierfogd) { "Saken har ingen pågående flytting" }
+        oppgaveConsumer.hentÅpneOppgaverForSak(sak.saksnummer)
+            .filter { it.tildeltEnhetsnr == sak.eierfogd }
             .distinctBy { it.id }
-            .forEach { flytt(it, eierfogd) }
+            .forEach { flytt(it, nyEierfogd) }
+        return lagre(sak.copy(eierfogd = nyEierfogd, flytterTilEierfogd = null))
     }
 
-    private fun lagreEierfogd(lagretSak: Sak?, saksnummer: String, eierfogd: String) {
+    private fun lagreEierfogdUtenFlytting(saksnummer: String, eierfogd: String) {
+        val lagretSak = sakRepository.findBySaksnummer(saksnummer)
         when {
             lagretSak == null -> sakRepository.save(Sak(saksnummer = saksnummer, eierfogd = eierfogd))
-
-            lagretSak.eierfogd != eierfogd -> {
-                lagretSak.eierfogd = eierfogd
-                lagretSak.endretTidspunkt = LocalDateTime.now()
-                sakRepository.save(lagretSak)
-            }
+            lagretSak.eierfogd != eierfogd -> lagre(lagretSak.copy(eierfogd = eierfogd, flytterTilEierfogd = null))
+            lagretSak.flytterTilEierfogd != null -> forkastAvbruttFlytting(lagretSak)
         }
     }
+
+    private fun forkastAvbruttFlytting(sak: Sak) = lagre(sak.copy(flytterTilEierfogd = null))
+
+    private fun lagre(sak: Sak): Sak = sakRepository.save(sak.copy(endretTidspunkt = LocalDateTime.now()))
 
     private fun flytt(oppgave: OppgaveData, nyEnhet: String) {
         oppgaveConsumer.endreOppgave(
