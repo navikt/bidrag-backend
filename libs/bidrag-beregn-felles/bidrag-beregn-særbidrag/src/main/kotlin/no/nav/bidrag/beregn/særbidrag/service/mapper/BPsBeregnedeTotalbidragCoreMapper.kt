@@ -60,7 +60,7 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
                     løpendeBeløp = it.løpendeBeløp,
                     valutakode = it.valutakode,
                     valutakursTilNOK = valutakurser
-                        ?.valutakursListe?.find { par -> (par.valutakode1 == it.valutakode && par.valutakode2 == Valutakode.NOK) || (par.valutakode2 == it.valutakode && par.valutakode1 == Valutakode.NOK) }
+                        ?.valutakursListe?.find { vl -> vl.valutakode1 == it.valutakode && vl.valutakode2 == Valutakode.NOK }
                         ?.valutakurs,
                     valutakursGrunnlagsreferanse = valutakursGrunnlag?.referanse,
                     samværsklasse = it.samværsklasse,
