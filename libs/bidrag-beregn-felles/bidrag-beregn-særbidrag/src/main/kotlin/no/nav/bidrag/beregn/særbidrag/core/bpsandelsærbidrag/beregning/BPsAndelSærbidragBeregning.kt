@@ -26,8 +26,11 @@ class BPsAndelSærbidragBeregning : FellesBeregning() {
         val inntektBM = grunnlag.inntektBM?.inntektBeløp ?: BigDecimal.ZERO
         var inntektSB = grunnlag.inntektSB?.inntektBeløp ?: BigDecimal.ZERO
 
-        // Tester om barnets inntekt er høyere enn 100 ganger sats for forhøyet forskudd. I så fall skal ikke BPs andel regnes ut.
-        val barnetErSelvforsorget = (inntektSB >= forskuddssats.multiply(BigDecimal.valueOf(100)))
+        // Tester om barnets inntekt er høyere enn 100 ganger sats for forhøyet forskudd. I så fall skal ikke BPs andel regnes ut,
+        // med mindre saksbehandler har vurdert at det er rimelig å innvilge særbidrag. Da regnes BPs andel ut på vanlig måte.
+        val barnetsInntektErOverGrensen = (inntektSB >= forskuddssats.multiply(BigDecimal.valueOf(100)))
+        val rimeligÅInnvilgeErBrukt = barnetsInntektErOverGrensen && grunnlag.rimeligÅInnvilgeReferanse != null
+        val barnetErSelvforsorget = barnetsInntektErOverGrensen && !rimeligÅInnvilgeErBrukt
 
         if (!barnetErSelvforsorget) {
             inntektSB = (inntektSB - forskuddssats.multiply(BigDecimal.valueOf(30))).coerceAtLeast(BigDecimal.ZERO)
@@ -42,6 +45,7 @@ class BPsAndelSærbidragBeregning : FellesBeregning() {
             beregnetAndelFaktor = beregnetAndelFaktor.avrundetMedTiDesimaler,
             barnEndeligInntekt = inntektSB.avrundetMedToDesimaler,
             barnetErSelvforsørget = barnetErSelvforsorget,
+            rimeligÅInnvilgeErBrukt = rimeligÅInnvilgeErBrukt,
             sjablonListe = byggSjablonResultatListe(sjablonNavnVerdiMap = sjablonNavnVerdiMap, sjablonPeriodeListe = grunnlag.sjablonListe),
         )
     }

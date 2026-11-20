@@ -11,6 +11,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.BehandlingDetaljerGrun
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.FatteVedtakRevurderingsbarn
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragRimeligÅInnvilgeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SærbidragskategoriGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.UtgiftDirekteBetaltGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.UtgiftMaksGodkjentBeløpGrunnlag
@@ -90,6 +91,25 @@ fun Behandling.byggGrunnlagUtgiftMaksGodkjentBeløp() = utgift!!.maksGodkjentBel
         ),
     )
 } ?: emptySet()
+
+fun Behandling.byggGrunnlagSærbidragRimeligÅInnvilge(): Set<GrunnlagDto> {
+    val utgift = utgift ?: return emptySet()
+    val begrunnelse = utgift.rimeligÅInnvilgeBegrunnelse
+    if (!utgift.rimeligÅInnvilge && begrunnelse.isNullOrBlank()) return emptySet()
+    return setOf(
+        GrunnlagDto(
+            referanse = grunnlagsreferanse_særbidrag_rimelig_å_innvilge,
+            type = Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE,
+            innhold =
+            POJONode(
+                SærbidragRimeligÅInnvilgeGrunnlag(
+                    rimeligÅInnvilge = utgift.rimeligÅInnvilge,
+                    begrunnelse = begrunnelse ?: "",
+                ),
+            ),
+        ),
+    )
+}
 
 fun Behandling.byggGrunnlagUtgiftDirekteBetalt() = setOf(
     GrunnlagDto(

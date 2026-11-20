@@ -271,6 +271,11 @@ val List<BaseGrunnlag>.utgiftMaksGodkjentBeløp get() =
         Grunnlagstype.UTGIFT_MAKS_GODKJENT_BELØP,
     ).firstOrNull()?.innholdTilObjekt<UtgiftMaksGodkjentBeløpGrunnlag>()
 
+val List<BaseGrunnlag>.særbidragRimeligÅInnvilge get() =
+    filtrerBasertPåEgenReferanse(
+        Grunnlagstype.SÆRBIDRAG_RIMELIG_Å_INNVILGE,
+    ).firstOrNull()?.innholdTilObjekt<SærbidragRimeligÅInnvilgeGrunnlag>()
+
 val List<BaseGrunnlag>.utgiftsposter get() = try {
     filtrerBasertPåEgenReferanse(
         Grunnlagstype.UTGIFTSPOSTER,

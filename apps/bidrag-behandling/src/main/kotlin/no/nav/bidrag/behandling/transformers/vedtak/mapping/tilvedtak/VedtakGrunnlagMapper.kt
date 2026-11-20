@@ -584,6 +584,7 @@ class VedtakGrunnlagMapper(
         inkluderAlleSøknadsbarn: Boolean = true,
         simulerBeregning: Boolean = false,
         skalFatteVedtakForRevurderingsbarn: Boolean? = null,
+        inkluderLøpendeBidrag: Boolean = true,
     ): BidragsberegningOrkestratorRequest {
         mapper.run {
             behandling.run {
@@ -650,11 +651,14 @@ class VedtakGrunnlagMapper(
 
                             TypeBehandling.SÆRBIDRAG -> {
                                 grunnlagsliste.add(tilGrunnlagUtgift())
-                                val grunnlagLøpendeBidrag =
-                                    beregningEvnevurderingService
-                                        .hentLøpendeBidragForBehandling(behandling)
-                                        .tilGrunnlagDto(grunnlagsliste)
-                                grunnlagsliste.addAll(grunnlagLøpendeBidrag)
+                                grunnlagsliste.addAll(byggGrunnlagSærbidragRimeligÅInnvilge())
+                                if (inkluderLøpendeBidrag) {
+                                    val grunnlagLøpendeBidrag =
+                                        beregningEvnevurderingService
+                                            .hentLøpendeBidragForBehandling(behandling)
+                                            .tilGrunnlagDto(grunnlagsliste)
+                                    grunnlagsliste.addAll(grunnlagLøpendeBidrag)
+                                }
                             }
 
                             TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> {
@@ -763,7 +767,8 @@ class VedtakGrunnlagMapper(
 
                 TypeBehandling.SÆRBIDRAG -> {
                     grunnlagListe.addAll(
-                        byggGrunnlagUtgiftsposter() + byggGrunnlagUtgiftDirekteBetalt() + byggGrunnlagUtgiftMaksGodkjentBeløp(),
+                        byggGrunnlagUtgiftsposter() + byggGrunnlagUtgiftDirekteBetalt() + byggGrunnlagUtgiftMaksGodkjentBeløp() +
+                            byggGrunnlagSærbidragRimeligÅInnvilge(),
                     )
                 }
 

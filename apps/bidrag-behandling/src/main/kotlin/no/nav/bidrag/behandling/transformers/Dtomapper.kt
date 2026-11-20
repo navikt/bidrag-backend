@@ -49,6 +49,7 @@ import no.nav.bidrag.behandling.dto.v2.behandling.IkkeAktiveGrunnlagsdata
 import no.nav.bidrag.behandling.dto.v2.behandling.IkkeAktiveInntekter
 import no.nav.bidrag.behandling.dto.v2.behandling.PeriodeAndreVoksneIHusstanden
 import no.nav.bidrag.behandling.dto.v2.behandling.PersoninfoDto
+import no.nav.bidrag.behandling.dto.v2.behandling.SærbidragRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.dto.v2.behandling.SærbidragUtgifterDto
 import no.nav.bidrag.behandling.dto.v2.boforhold.BoforholdDtoV2
 import no.nav.bidrag.behandling.dto.v2.boforhold.HusstandsmedlemDtoV2
@@ -78,6 +79,7 @@ import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.utgift.OppdatereUtgiftResponse
 import no.nav.bidrag.behandling.dto.v2.validering.GrunnlagFeilDto
 import no.nav.bidrag.behandling.dto.v2.validering.InntektValideringsfeilV2Dto
+import no.nav.bidrag.behandling.dto.v2.validering.SærbidragRimeligÅInnvilgeValideringsfeil
 import no.nav.bidrag.behandling.objectmapper
 import no.nav.bidrag.behandling.service.BeregningService
 import no.nav.bidrag.behandling.service.NotatService
@@ -124,6 +126,7 @@ import no.nav.bidrag.behandling.transformers.utgift.hentValideringsfeil
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
 import no.nav.bidrag.behandling.transformers.utgift.tilDto
 import no.nav.bidrag.behandling.transformers.utgift.tilMaksGodkjentBeløpDto
+import no.nav.bidrag.behandling.transformers.utgift.tilRimeligÅInnvilgeDto
 import no.nav.bidrag.behandling.transformers.utgift.tilSærbidragKategoriDto
 import no.nav.bidrag.behandling.transformers.utgift.tilTotalBeregningDto
 import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
@@ -458,6 +461,7 @@ class Dtomapper(
             oppdatertUtgiftspost = utgiftsposter.find { it.id == utgiftspostId }?.tilDto(),
             utgiftposter = utgiftsposter.sorter().map { it.tilDto() },
             maksGodkjentBeløp = tilMaksGodkjentBeløpDto(),
+            rimeligÅInnvilge = tilRimeligÅInnvilgeDto(),
             begrunnelse = henteNotatinnhold(behandling, NotatType.UTGIFTER),
             beregning = tilBeregningDto(),
             valideringsfeil = behandling.utgift.hentValideringsfeil(),
@@ -492,6 +496,7 @@ class Dtomapper(
                 beregning = utgift.tilBeregningDto(),
                 kategori = tilSærbidragKategoriDto(),
                 maksGodkjentBeløp = utgift.tilMaksGodkjentBeløpDto(),
+                rimeligÅInnvilge = tilSærbidragRimeligÅInnvilgeDto(),
                 begrunnelse = BegrunnelseDto(henteNotatinnhold(this, NotatType.UTGIFTER)),
                 begrunnelseFraOpprinneligVedtak = utgiftBegrunnelseFraOpprinneligVedtak(),
                 utgifter = utgift.utgiftsposter.sorter().map { it.tilDto() },
@@ -509,6 +514,18 @@ class Dtomapper(
         )
     } else {
         null
+    }
+
+    fun Behandling.tilSærbidragRimeligÅInnvilgeDto(): SærbidragRimeligÅInnvilgeDto {
+        val barnetsInntektErOverGrensen = beregningService?.barnetsInntektErOverGrensenForSelvforsørget(this) ?: false
+        val begrunnelse = utgift?.rimeligÅInnvilgeBegrunnelse
+        return SærbidragRimeligÅInnvilgeDto(
+            barnetsInntektErOverGrensen = barnetsInntektErOverGrensen,
+            rimeligÅInnvilge = utgift?.rimeligÅInnvilge ?: false,
+            begrunnelse = begrunnelse,
+            valideringsfeil =
+            if (barnetsInntektErOverGrensen && begrunnelse.isNullOrBlank()) SærbidragRimeligÅInnvilgeValideringsfeil() else null,
+        )
     }
 
     fun Behandling.utgiftBegrunnelseFraOpprinneligVedtak() = if (erKlageEllerOmgjøring) {

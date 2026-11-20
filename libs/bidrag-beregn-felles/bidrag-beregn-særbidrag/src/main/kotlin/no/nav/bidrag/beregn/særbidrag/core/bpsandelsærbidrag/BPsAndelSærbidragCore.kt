@@ -40,6 +40,7 @@ internal class BPsAndelSærbidragCore(private val bPsAndelSærbidragPeriode: BPs
         inntektBMPeriodeListe = mapInntektPeriodeListe(grunnlag.inntektBMPeriodeListe),
         inntektSBPeriodeListe = mapInntektPeriodeListe(grunnlag.inntektSBPeriodeListe),
         sjablonPeriodeListe = mapSjablonPeriodeListe(grunnlag.sjablonPeriodeListe),
+        rimeligÅInnvilgeReferanse = grunnlag.rimeligÅInnvilgeReferanse,
     )
 
     private fun mapFraBusinessObject(avvikListe: List<Avvik>, resultat: BeregnBPsAndelSærbidragResultat) = BeregnBPsAndelSærbidragResultatCore(
@@ -86,6 +87,9 @@ internal class BPsAndelSærbidragCore(private val bPsAndelSærbidragPeriode: BPs
         if (inntektBP != null) referanseListe.add(inntektBP.referanse)
         if (inntektBM != null) referanseListe.add(inntektBM.referanse)
         if (inntektSB != null) referanseListe.add(inntektSB.referanse)
+        if (resultatPeriode.resultat.rimeligÅInnvilgeErBrukt) {
+            resultatPeriode.grunnlag.rimeligÅInnvilgeReferanse?.let { referanseListe.add(it) }
+        }
         referanseListe.addAll(sjablonListe.map { lagSjablonReferanse(it) }.distinct())
         return referanseListe.sorted()
     }

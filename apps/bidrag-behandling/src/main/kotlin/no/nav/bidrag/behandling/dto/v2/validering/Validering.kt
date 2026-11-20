@@ -310,7 +310,13 @@ data class BeregningValideringsfeil(
     val samvær: Set<SamværValideringsfeilDto>? = null,
     val gebyr: Set<GebyrValideringsfeilDto>? = null,
     val underholdskostnad: Set<UnderholdskostnadValideringsfeil>? = null,
+    val særbidragRimeligÅInnvilge: SærbidragRimeligÅInnvilgeValideringsfeil? = null,
     val måBekrefteNyeOpplysninger: Set<MåBekrefteNyeOpplysninger> = emptySet(),
+)
+
+data class SærbidragRimeligÅInnvilgeValideringsfeil(
+    @get:Schema(description = "Begrunnelse for om det er rimelig å innvilge særbidrag mangler")
+    val manglerBegrunnelse: Boolean = true,
 )
 
 data class MåBekrefteNyeOpplysninger(

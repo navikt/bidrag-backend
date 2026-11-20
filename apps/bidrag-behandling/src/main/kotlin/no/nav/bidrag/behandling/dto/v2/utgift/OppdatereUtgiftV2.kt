@@ -24,6 +24,11 @@ data class OppdatereUtgiftRequest(
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
     @get:Schema(
         description =
+        "Oppdater saksbehandlers vurdering av om det er rimelig å innvilge særbidrag når barnet er selvforsørget",
+    )
+    val rimeligÅInnvilge: RimeligÅInnvilgeDto? = null,
+    @get:Schema(
+        description =
         "Legg til eller endre en utgift. Utgift kan ikke endres eller oppdateres hvis avslag er satt",
     )
     val nyEllerEndretUtgift: OppdatereUtgift? = null,
@@ -47,6 +52,12 @@ data class MaksGodkjentBeløpDto(
     val begrunnelse: String? = null,
 )
 
+data class RimeligÅInnvilgeDto(
+    @get:Schema(description = "Om det er rimelig å innvilge særbidrag selv om barnets inntekt er lik eller høyere enn 100 ganger forskuddssats")
+    val rimeligÅInnvilge: Boolean = false,
+    val begrunnelse: String? = null,
+)
+
 data class OppdatereUtgiftResponse(
     @get:Schema(description = "Utgiftspost som ble oppdatert")
     val oppdatertUtgiftspost: UtgiftspostDto? = null,
@@ -55,6 +66,7 @@ data class OppdatereUtgiftResponse(
     val begrunnelse: String? = null,
     val beregning: UtgiftBeregningDto? = null,
     val maksGodkjentBeløp: MaksGodkjentBeløpDto? = null,
+    val rimeligÅInnvilge: RimeligÅInnvilgeDto? = null,
     val avslag: Resultatkode? = null,
     val valideringsfeil: UtgiftValideringsfeilDto?,
     val totalBeregning: List<TotalBeregningUtgifterDto> = emptyList(),

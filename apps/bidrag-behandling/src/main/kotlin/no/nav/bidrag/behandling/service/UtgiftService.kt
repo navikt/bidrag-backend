@@ -45,6 +45,10 @@ class UtgiftService(
         val utgift = behandling.utgift ?: Utgift(behandling = behandling)
         utgift.beløpDirekteBetaltAvBp = request.beløpDirekteBetaltAvBp ?: utgift.beløpDirekteBetaltAvBp
         utgift.oppdaterMaksGodkjentBeløp(request)
+        request.rimeligÅInnvilge?.let {
+            utgift.rimeligÅInnvilge = it.rimeligÅInnvilge
+            utgift.rimeligÅInnvilgeBegrunnelse = it.begrunnelse
+        }
         request.henteOppdatereNotat()?.let {
             notatService.oppdatereNotat(
                 behandling,

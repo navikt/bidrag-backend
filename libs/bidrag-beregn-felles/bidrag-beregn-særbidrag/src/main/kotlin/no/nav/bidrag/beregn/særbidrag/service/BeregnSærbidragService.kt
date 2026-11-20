@@ -108,6 +108,27 @@ internal class BeregnSærbidragService(
         null
     }
 
+    // Beregner bare BPs andel, uten saksbehandlers vurdering av om det er rimelig å innvilge særbidrag. Gir true hvis barnets inntekt er
+    // lik eller høyere enn 100 ganger forskuddssats. Løpende bidrag og bidragsevne trengs ikke i grunnlaget.
+    fun barnetsInntektErOverGrensenForSelvforsørget(grunnlag: BeregnGrunnlag, vedtakstype: Vedtakstype): Boolean {
+        val sjablonListe = hentSjabloner()
+        val delberegningUtgift = grunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<DelberegningUtgift>(Grunnlagstype.DELBEREGNING_UTGIFT)
+            .first()
+        if (validerForBeregning(vedtakstype, delberegningUtgift.innhold, sjablonListe, grunnlag.periode) != null) return false
+
+        val bpAndelSærbidragGrunnlagTilCore =
+            BPAndelSærbidragCoreMapper.mapBPsAndelSærbidragGrunnlagTilCore(
+                beregnGrunnlag = grunnlag,
+                sjablontallMap = SjablonTallNavn.entries.associateBy { it.id },
+                sjablonListe = sjablonListe,
+                innslagKapitalinntekt =
+                finnInnslagKapitalinntektFraSjablontallListe(sjablonListe.sjablonSjablontallResponse)?.verdi ?: BigDecimal.ZERO,
+            ).copy(rimeligÅInnvilgeReferanse = null)
+
+        return beregnBPAndelSærbidrag(bpAndelSærbidragGrunnlagTilCore).resultatPeriodeListe.any { it.resultat.barnetErSelvforsørget }
+    }
+
     fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == "NOK" }
 
     // ==================================================================================================================================================

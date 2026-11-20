@@ -48,3 +48,14 @@ data class UtgiftMaksGodkjentBeløpGrunnlag(
     @Schema(description = "Begrunnelse på hvorfor maks godkjent beløp er satt")
     val begrunnelse: String,
 ) : GrunnlagInnhold
+
+data class SærbidragRimeligÅInnvilgeGrunnlag(
+    @Schema(
+        description =
+        "Saksbehandlers vurdering av om det er rimelig å innvilge særbidrag når barnets inntekt er lik eller høyere enn " +
+            "100 ganger forskuddssats. Hvis true, regnes BPs andel ut med barnets inntekt over 30 ganger forskuddssats",
+    )
+    val rimeligÅInnvilge: Boolean,
+    @Schema(description = "Begrunnelse for vurderingen")
+    val begrunnelse: String,
+) : GrunnlagInnhold

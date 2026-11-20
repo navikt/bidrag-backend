@@ -129,6 +129,7 @@ import no.nav.bidrag.transport.dokumentmaler.notat.NotatSamværBarnDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatSamværDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatSivilstand
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatSærbidragKategoriDto
+import no.nav.bidrag.transport.dokumentmaler.notat.NotatSærbidragRimeligÅInnvilgeDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatSærbidragUtgifterDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatTotalBeregningUtgifterDto
 import no.nav.bidrag.transport.dokumentmaler.notat.NotatUnderholdBarnDto
@@ -1211,6 +1212,13 @@ private fun SærbidragUtgifterDto.tilNotatUtgiftDto(behandling: Behandling) = No
         NotatMaksGodkjentBeløpDto(
             taMed = it.taMed,
             beløp = it.beløp,
+            begrunnelse = it.begrunnelse,
+        )
+    },
+    rimeligÅInnvilge =
+    rimeligÅInnvilge?.takeIf { it.barnetsInntektErOverGrensen }?.let {
+        NotatSærbidragRimeligÅInnvilgeDto(
+            rimeligÅInnvilge = it.rimeligÅInnvilge,
             begrunnelse = it.begrunnelse,
         )
     },
