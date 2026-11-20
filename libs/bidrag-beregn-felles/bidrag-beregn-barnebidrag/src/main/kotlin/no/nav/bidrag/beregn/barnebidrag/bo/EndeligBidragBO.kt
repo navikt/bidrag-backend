@@ -465,6 +465,6 @@ data class SluttberegningBarnebidragV2BeregningResultat(
     val grunnlagsreferanseListe: List<String> = emptyList(),
 )
 
-data class ValutakursGrunnlagTilBeregning(val referanse: String, val valutakursListe: List<ValutaPar>)
+data class ValutakursGrunnlagTilBeregning(val referanse: String, val periode: ÅrMånedsperiode, val valutakursListe: List<ValutaPar>)
 
 data class PrivatAvtaleGrunnlagTilBeregning(val referanse: String, val sakskategori: Sakskategori)

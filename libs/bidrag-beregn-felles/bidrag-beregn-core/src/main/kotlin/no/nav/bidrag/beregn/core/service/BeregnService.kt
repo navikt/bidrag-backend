@@ -29,6 +29,7 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.inngårIInntektRapporteringer
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
@@ -38,7 +39,9 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.Grunnlagsreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InntektsrapporteringPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonTrinnvisSkattesats
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettSjablonreferanse
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -46,6 +49,31 @@ import java.time.Period
 import java.time.YearMonth
 
 abstract class BeregnService {
+    fun hentValutakursGrunnlag(
+        grunnlagListe: List<GrunnlagDto>,
+        periode: ÅrMånedsperiode,
+        valutakode: Valutakode,
+    ): GrunnlagDto? {
+        if (valutakode == Valutakode.NOK) return null
+
+        val treff = grunnlagListe
+            .filter { it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }
+            .map { it to it.innholdTilObjekt<ValutakursGrunnlag>() }
+            .filter { (_, kursgrunnlag) ->
+                // Kursperiodenes til-dato er eksklusiv.
+                kursgrunnlag.periode.fom < periode.tilEllerMax() && periode.fom < kursgrunnlag.periode.tilEllerMax() &&
+                    kursgrunnlag.valutakursListe.any { it.valutakode1 == valutakode && it.valutakode2 == Valutakode.NOK }
+            }
+        require(treff.isNotEmpty()) { "Valutakursgrunnlag mangler for valuta og beregningsperiode" }
+        require(treff.size == 1) { "Flere valutakursgrunnlag dekker samme valuta og beregningsperiode" }
+        val (grunnlag, kursgrunnlag) = treff.single()
+        require(kursgrunnlag.periode.inneholder(periode)) { "Valutakursgrunnlaget må dekke hele beregningsperioden" }
+        val kurser = kursgrunnlag.valutakursListe.filter { it.valutakode1 == valutakode && it.valutakode2 == Valutakode.NOK }
+        require(kurser.size == 1) { "Flere valutakurser finnes for samme valutapar" }
+        require(kurser.single().valutakurs.signum() > 0) { "Valutakurs til NOK må være større enn null" }
+        return grunnlag
+    }
+
     fun håndterAvvik(avvikListe: List<AvvikCore>, kontekst: String) {
         if (avvikListe.isNotEmpty()) {
             val avviktekst = avvikListe.joinToString("; ") { it.avvikTekst }

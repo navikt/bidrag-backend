@@ -125,6 +125,7 @@ class EndeligBidragBeregningV2Test {
             samværsfradragBeregningGrunnlag = null,
             valutakursBeregningGrunnlag = ValutakursGrunnlagTilBeregning(
                 referanse = "kurs",
+                periode = ÅrMånedsperiode("2020-07", "2021-01"),
                 valutakursListe = listOf(
                     ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal(kurs)),
                     ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal.ONE.divide(BigDecimal(kurs), 10, java.math.RoundingMode.HALF_UP)),

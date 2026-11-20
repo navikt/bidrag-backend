@@ -516,12 +516,13 @@ internal object EndeligBidragMapperV2 : CoreMapper() {
         }
     }
 
-    private fun mapValutakurs(grunnlag: GrunnlagDto?): ValutakursGrunnlagTilBeregning? {
+    fun mapValutakurs(grunnlag: GrunnlagDto?): ValutakursGrunnlagTilBeregning? {
         try {
             val valutakursGrunnlag: ValutakursGrunnlag? = grunnlag?.innholdTilObjekt<ValutakursGrunnlag>()
             return valutakursGrunnlag?.let {
                 ValutakursGrunnlagTilBeregning(
                     referanse = grunnlag.referanse,
+                    periode = it.periode,
                     valutakursListe = it.valutakursListe,
                 )
             }

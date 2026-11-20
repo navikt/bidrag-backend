@@ -1,7 +1,15 @@
 package no.nav.bidrag.beregn.barnebidrag.api
 
+import com.fasterxml.jackson.databind.node.POJONode
+import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotContain
+import io.kotest.matchers.shouldBe
 import io.mockk.mockkObject
+import no.nav.bidrag.beregn.barnebidrag.bo.ValutakursGrunnlagTilBeregning
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
+import no.nav.bidrag.beregn.barnebidrag.mapper.EndeligBidragMapperV2
 import no.nav.bidrag.beregn.barnebidrag.service.beregning.BeregnEndeligBidragServiceV2
 import no.nav.bidrag.beregn.barnebidrag.unleash.BarnebidragUnleashFeatures
 import no.nav.bidrag.beregn.barnebidrag.unleash.disableUnleashFeature
@@ -20,20 +28,29 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilF
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragTilFordelingPrivatAvtale
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspliktigesAndelDeltBosted
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEvne25ProsentAvInntekt
+import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningIndeksreguleringPrivatAvtale
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningNettoBarnetillegg
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumBidragTilFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
+import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutaPar
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåFremmedReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.junit.jupiter.MockitoExtension
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.YearMonth
 
 @ExtendWith(MockitoExtension::class)
@@ -108,6 +125,166 @@ internal class BeregnEndeligBidragV2Test : FellesTest() {
         stubSjablonProvider()
         mockkObject(UnleashFeaturesProvider)
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `skal bevare kursperioden ved mapping av løpende bidrag og privat avtale`(åpenPeriode: Boolean) {
+        val periode = ÅrMånedsperiode(YearMonth.of(2024, 7), if (åpenPeriode) null else YearMonth.of(2025, 1))
+        val original = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs).single()
+        val valutakurs = original.innholdTilObjekt<ValutakursGrunnlag>().copy(periode = periode)
+        val kursgrunnlag = original.copy(innhold = POJONode(valutakurs))
+        val løpendeBidrag = lesFilOgByggRequest(
+            "src/test/resources/testfiler/endeligbidrag/bidragtilfordelingløpendebidrag_eksempel1CD.json",
+        )
+        val privatAvtale = lesFilOgByggRequest(
+            "src/test/resources/testfiler/endeligbidrag/bidragtilfordelingprivatavtale_eksempel1.json",
+        )
+
+        val løpendeGrunnlag = EndeligBidragMapperV2.mapBidragTilFordelingLøpendeBidragGrunnlag(løpendeBidrag, kursgrunnlag)
+        val privatGrunnlag = EndeligBidragMapperV2.mapBidragTilFordelingPrivatAvtaleGrunnlag(privatAvtale, kursgrunnlag)
+
+        val forventet = ValutakursGrunnlagTilBeregning(
+            referanse = kursgrunnlag.referanse,
+            periode = periode,
+            valutakursListe = valutakurs.valutakursListe,
+        )
+        assertSoftly {
+            løpendeGrunnlag.valutakursGrunnlag shouldBe forventet
+            privatGrunnlag.valutakursGrunnlag shouldBe forventet
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource("2024-07, false", "2025-01, false", "2024-07, true", "2025-01, true")
+    fun `skal velge riktig kursgrunnlag per halvår for løpende bidrag og privat avtale`(halvårsstart: YearMonth, privatAvtale: Boolean) {
+        disableUnleashFeature(BarnebidragUnleashFeatures.BIDRAG_REDUKSJON_UNDERHOLDSKOSTNAD)
+        val førstePeriode = ÅrMånedsperiode(halvårsstart.minusMonths(1), halvårsstart)
+        val andrePeriode = ÅrMånedsperiode(halvårsstart, halvårsstart.plusMonths(1))
+        val grunnlag = valutaperiodeGrunnlag(privatAvtale, ÅrMånedsperiode(førstePeriode.fom, andrePeriode.til))
+        val førsteKurs = kursgrunnlag(ÅrMånedsperiode(halvårsstart.minusMonths(6), halvårsstart), "6")
+        val andreKurs = kursgrunnlag(ÅrMånedsperiode(halvårsstart, halvårsstart.plusMonths(6)), "12")
+        val fremtidigKurs = kursgrunnlag(ÅrMånedsperiode(halvårsstart.plusMonths(6), halvårsstart.plusMonths(12)), "18")
+        val kurser = listOf(fremtidigKurs, andreKurs, førsteKurs)
+
+        val resultat = if (privatAvtale) {
+            BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingPrivatAvtale(grunnlag, kurser, åpenSluttperiode = false)
+        } else {
+            BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingLøpendeBidrag(grunnlag, kurser, åpenSluttperiode = false)
+        }
+
+        val type = if (privatAvtale) {
+            Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_PRIVAT_AVTALE
+        } else {
+            Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_LØPENDE_BIDRAG
+        }
+        val delberegninger = resultat.filter { it.type == type }
+        val perioderOgBeløp = delberegninger.map {
+            if (privatAvtale) {
+                it.innholdTilObjekt<DelberegningBidragTilFordelingPrivatAvtale>().let { innhold -> innhold.periode to innhold.bidragTilFordelingNOK }
+            } else {
+                it.innholdTilObjekt<DelberegningBidragTilFordelingLøpendeBidrag>().let { innhold -> innhold.periode to innhold.bidragTilFordelingNOK }
+            }
+        }
+        assertSoftly {
+            perioderOgBeløp.map { it.first } shouldBe listOf(førstePeriode, andrePeriode)
+            perioderOgBeløp.map { it.second } shouldBe if (privatAvtale) {
+                listOf(BigDecimal("3000.00"), BigDecimal("6000.00"))
+            } else {
+                listOf(BigDecimal("5400.00"), BigDecimal("10800.00"))
+            }
+            delberegninger[0].grunnlagsreferanseListe shouldContain førsteKurs.referanse
+            delberegninger[0].grunnlagsreferanseListe shouldNotContain andreKurs.referanse
+            delberegninger[1].grunnlagsreferanseListe shouldContain andreKurs.referanse
+            delberegninger[1].grunnlagsreferanseListe shouldNotContain førsteKurs.referanse
+            resultat.filter { it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }.map { it.referanse }.toSet() shouldBe
+                setOf(førsteKurs.referanse, andreKurs.referanse)
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `skal avvise manglende kurs etter halvårsgrensen`(privatAvtale: Boolean) {
+        val grunnlag = valutaperiodeGrunnlag(privatAvtale, ÅrMånedsperiode("2024-06", "2024-08"))
+        val kurser = listOf(kursgrunnlag(ÅrMånedsperiode("2024-01", "2024-07"), "6"))
+
+        shouldThrow<IllegalArgumentException> {
+            if (privatAvtale) {
+                BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingPrivatAvtale(grunnlag, kurser, åpenSluttperiode = false)
+            } else {
+                BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingLøpendeBidrag(grunnlag, kurser, åpenSluttperiode = false)
+            }
+        }.message shouldBe "Valutakursgrunnlag mangler for valuta og beregningsperiode"
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [false, true])
+    fun `skal ikke dele NOK-bidrag på grunn av ubrukte kurser`(privatAvtale: Boolean) {
+        val periode = ÅrMånedsperiode("2024-06", "2024-08")
+        val grunnlag = valutaperiodeGrunnlag(privatAvtale, periode, Valutakode.NOK)
+        val kurser = listOf(
+            kursgrunnlag(ÅrMånedsperiode("2024-01", "2024-07"), "6"),
+            kursgrunnlag(ÅrMånedsperiode("2024-07", "2025-01"), "12"),
+        )
+
+        val resultat = if (privatAvtale) {
+            BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingPrivatAvtale(grunnlag, kurser, åpenSluttperiode = false)
+        } else {
+            BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingLøpendeBidrag(grunnlag, kurser, åpenSluttperiode = false)
+        }
+
+        resultat.none { it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG } shouldBe true
+        val perioder = if (privatAvtale) {
+            resultat.filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordelingPrivatAvtale>(
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_PRIVAT_AVTALE,
+            ).map { it.innhold.periode }
+        } else {
+            resultat.filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragTilFordelingLøpendeBidrag>(
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING_LØPENDE_BIDRAG,
+            ).map { it.innhold.periode }
+        }
+        perioder shouldBe listOf(periode)
+    }
+
+    private fun valutaperiodeGrunnlag(
+        privatAvtale: Boolean,
+        periode: ÅrMånedsperiode,
+        valuta: Valutakode = Valutakode.EUR,
+    ): BeregnGrunnlag {
+        val fil = if (privatAvtale) "bidragtilfordelingprivatavtale_eksempel2.json" else "bidragtilfordelingløpendebidrag_eksempel2.json"
+        val original = lesFilOgByggRequest("src/test/resources/testfiler/endeligbidrag/$fil")
+        return original.copy(
+            periode = periode,
+            grunnlagListe = original.grunnlagListe.filterNot { it.type == Grunnlagstype.DELBEREGNING_SAMVÆRSFRADRAG }.map {
+                when (it.type) {
+                    Grunnlagstype.LØPENDE_BIDRAG_PERIODE -> it.copy(
+                        innhold = POJONode(it.innholdTilObjekt<LøpendeBidragPeriode>().copy(periode = periode, valutakode = valuta)),
+                    )
+
+                    Grunnlagstype.DELBEREGNING_INDEKSREGULERING_PRIVAT_AVTALE -> it.copy(
+                        innhold = POJONode(
+                            it.innholdTilObjekt<DelberegningIndeksreguleringPrivatAvtale>().copy(periode = periode, valutakode = valuta),
+                        ),
+                    )
+
+                    else -> it
+                }
+            },
+        )
+    }
+
+    private fun kursgrunnlag(periode: ÅrMånedsperiode, kurs: String) = GrunnlagDto(
+        referanse = "kurs_${periode.fom}",
+        type = Grunnlagstype.VALUTAKURS_GRUNNLAG,
+        innhold = POJONode(
+            ValutakursGrunnlag(
+                periode = periode,
+                valutakursListe = listOf(
+                    ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal(kurs)),
+                    ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal.ONE.divide(BigDecimal(kurs), 10, RoundingMode.HALF_UP)),
+                ),
+            ),
+        ),
+    )
 
     @Test
     @DisplayName("Bidragspliktiges andel delt bosted - eksempel 1 - delt bosted")
@@ -683,7 +860,7 @@ internal class BeregnEndeligBidragV2Test : FellesTest() {
         val requestValutakurs = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs)
         val resultat = BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingLøpendeBidrag(
             mottattGrunnlag = request,
-            valutakursGrunnlag = requestValutakurs.first(),
+            valutakursGrunnlagListe = requestValutakurs,
         )
 
         val alleReferanser = hentAlleReferanser(resultat)
@@ -791,7 +968,7 @@ internal class BeregnEndeligBidragV2Test : FellesTest() {
         val requestValutakurs = lesFilOgByggRequestGenerisk<List<GrunnlagDto>>(filnavnValutakurs)
         val resultat = BeregnEndeligBidragServiceV2.delberegningBidragTilFordelingPrivatAvtale(
             mottattGrunnlag = request,
-            valutakursGrunnlag = requestValutakurs.first(),
+            valutakursGrunnlagListe = requestValutakurs,
         )
 
         val alleReferanser = hentAlleReferanser(resultat)
