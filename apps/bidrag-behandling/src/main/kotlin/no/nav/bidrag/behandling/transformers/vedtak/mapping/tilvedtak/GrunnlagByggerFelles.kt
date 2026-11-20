@@ -26,6 +26,7 @@ import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagsreferanse
 import no.nav.bidrag.behandling.transformers.inntekt.bestemDatoTomForOffentligInntekt
 import no.nav.bidrag.behandling.transformers.kanSkriveVurderingAvSkolegangAlle
 import no.nav.bidrag.behandling.transformers.konverterTilStønadDto
+import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.vedtak.inntektsrapporteringSomKreverSøknadsbarn
 import no.nav.bidrag.behandling.transformers.vedtak.personIdentNav
@@ -804,7 +805,17 @@ internal fun Inntekt.tilInntektsrapporteringPeriode(
             if (periode != null) {
                 periode
             } else if (kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(type)) {
-                ÅrMånedsperiode(opprinneligFom!!, bestemDatoTomForOffentligInntekt()?.plusDays(1))
+                val datoFom = maxOfNullable(
+                    datoFomEllerOpprinneligFom!!,
+                    gjelderBarnRolle?.finnBeregnFra()?.atDay(1),
+                    behandling!!.eldsteVirkningstidspunkt,
+
+                )!!
+                val datoTil = bestemDatoTomForOffentligInntekt()?.plusDays(1)
+                ÅrMånedsperiode(
+                    if (datoTil != null && datoFom > datoTil) opprinneligFom!! else datoFom,
+                    datoTil,
+                )
             } else {
                 ÅrMånedsperiode(datoFomEllerOpprinneligFom!!, datoTom?.plusDays(1))
             },

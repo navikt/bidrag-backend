@@ -1234,8 +1234,8 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
 
             assertSoftly(inntektBarnetillegg2Barn2) {
                 taMed shouldBe false
-                datoTom shouldBe null
                 datoFom shouldBe null
+                datoTom shouldBe null
             }
             assertSoftly(inntektBarnetilleggBarn2) {
                 taMed shouldBe true

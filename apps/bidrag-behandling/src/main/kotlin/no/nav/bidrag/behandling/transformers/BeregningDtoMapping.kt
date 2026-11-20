@@ -51,6 +51,7 @@ import no.nav.bidrag.behandling.transformers.vedtak.hentPersonNyesteIdent
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak.hentBehandlingDetaljer
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.fravedtak.hentSøknader
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.BeregnGebyrResultat
+import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnFra
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnInnkrevesFraDato
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnSkalInnkrevesPeriode
@@ -331,7 +332,7 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
     return BeregnValgteInntekterGrunnlag(
         periode =
         ÅrMånedsperiode(
-            virkningstidspunktEllerSøktFomDato,
+            eldsteVirkningstidspunkt,
             finnBeregnTilDatoBehandling(),
         ),
         opphørsdato = rolle.opphørsdatoYearMonth ?: globalOpphørsdatoYearMonth,
@@ -344,10 +345,16 @@ fun Behandling.tilInntektberegningDto(rolle: Rolle, taMed12MndInntektHvisIngenVa
             }.map { PersonStønad(it.ident!!, it.stønadstype) },
         gjelderIdent = Personident(rolle.ident!!),
         grunnlagListe = inntekter.map {
+            val gjelderBarn = it.gjelderBarnRolle
             InntektsgrunnlagPeriode(
                 periode =
                 if (it.kilde == Kilde.OFFENTLIG && eksplisitteYtelser.contains(it.type)) {
-                    val datoFom = maxOf(it.opprinneligFom!!, virkningstidspunktEllerSøktFomDato)
+                    val datoFom = maxOfNullable(
+                        it.datoFomEllerOpprinneligFom!!,
+                        gjelderBarn?.finnBeregnFra()?.atDay(1),
+                        eldsteVirkningstidspunkt,
+
+                    )!!
                     val datoTil = it.bestemDatoTomForOffentligInntekt()?.plusDays(1)
                     ÅrMånedsperiode(
                         if (datoTil != null && datoFom > datoTil) it.opprinneligFom!! else datoFom,
