@@ -266,7 +266,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 0) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 0) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
         verify(exactly = 1) { forsendelseService.opprettForsendelseForAldersjustering(any()) }
     }
 
@@ -403,10 +403,10 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
 
         verifyOrder {
             vedtakConsumer.fatteVedtak(any())
-            behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any())
-            notatOpplysningerService.opprettNotat(behandling.id!!, any(), any())
+            behandlingService.oppdaterVedtakFattetStatus(behandling.id!!, any(), any(), saksnumreForNotat = listOf(null))
+            bestillAsyncJobService.bestillOpprettelseAvNotat(match { it.behandlingId == behandling.id && it.saksnummer == null })
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any(), any(), any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
 
         val opprettVedtakRequest = opprettVedtakSlot.captured
 
@@ -553,7 +553,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -703,7 +703,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -817,7 +817,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1176,7 +1176,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1270,7 +1270,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1377,7 +1377,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1507,7 +1507,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 0) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 0) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 0) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1737,7 +1737,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1991,7 +1991,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -2081,7 +2081,7 @@ class VedtakserviceBidragTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test

@@ -2,12 +2,14 @@ package no.nav.bidrag.behandling.service
 
 import io.kotest.assertions.assertSoftly
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
@@ -16,6 +18,9 @@ import no.nav.bidrag.behandling.consumer.BidragTilgangskontrollConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.FF_SIST_SYNKRONISERT
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.NOTATBESTILLINGER
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingSøknadBarn
@@ -45,6 +50,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class ForholdsmessigFordelingServiceSynkroniseringTest {
     @MockK
@@ -105,6 +111,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
             )
         service.grenseSynkroniserFF = "60"
 
+        every { behandlingRepository.lagreMetadataObjekt(any(), eq(FF_SIST_SYNKRONISERT), any()) } returns Unit
         every { grunnlagService.lagreBeløpshistorikkGrunnlag(any()) } returns emptyMap<Grunnlagsdatatype, GrunnlagFeilDto>()
         every { grunnlagService.lagreBeløpshistorikkFraOpprinneligVedtakstidspunktGrunnlag(any()) } returns
             emptyMap<Grunnlagsdatatype, GrunnlagFeilDto>()
@@ -130,6 +137,10 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
     fun `skal fjerne gamle sammenknytninger og legge til manglende hovedsoknad for ff behandling`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(generateId = true, typeBehandling = TypeBehandling.BIDRAG)
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling(erHovedbehandling = true)
+        val forrigeSynkronisering = LocalDateTime.parse("2024-01-01T12:00:00")
+        val eksisterendeMetadata = mapOf(FF_SIST_SYNKRONISERT to forrigeSynkronisering.toString(), NOTATBESTILLINGER to "[]")
+        behandling.metadata = BehandlingMetadataDo.from(eksisterendeMetadata)
+        val tidspunkt = slot<String>()
 
         val annenSøknad = mockk<HentSøknad> { every { søknadsid } returns 999L }
         every { bbmConsumer.finnSammenknytningerHovedsøknad(behandling.soknadsid!!) } returns
@@ -142,6 +153,11 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         verify(exactly = 1) { bbmConsumer.fjernSammenknytning(999L) }
         verify(exactly = 1) { bbmConsumer.sammeknyttSøknader(behandling.soknadsid!!, behandling.soknadsid!!) }
         verify(exactly = 0) { bbmConsumer.endreSammenknytningSøknad(any(), any()) }
+        verify(exactly = 1) {
+            behandlingRepository.lagreMetadataObjekt(checkNotNull(behandling.id), FF_SIST_SYNKRONISERT, capture(tidspunkt))
+        }
+        LocalDateTime.parse(tidspunkt.captured) shouldBeGreaterThan forrigeSynkronisering
+        behandling.metadata?.toMap() shouldBe eksisterendeMetadata
     }
 
     @Test
@@ -154,6 +170,7 @@ class ForholdsmessigFordelingServiceSynkroniseringTest {
         verify(exactly = 0) { bbmConsumer.finnSammenknytningerHovedsøknad(any()) }
         verify(exactly = 0) { bbmConsumer.fjernSammenknytning(any()) }
         verify(exactly = 0) { bbmConsumer.endreSammenknytningSøknad(any(), any()) }
+        verify(exactly = 0) { behandlingRepository.lagreMetadataObjekt(any(), eq(FF_SIST_SYNKRONISERT), any()) }
     }
 
     @Test
