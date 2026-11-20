@@ -249,7 +249,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                         type = Stønadstype.valueOf(stønad.type),
                         kravhaver = nyesteIdent(stønad.kravhaver),
                         løpendeBeløp = periode.beløp ?: BigDecimal.ZERO,
-                        valutakode = periode.valutakode?.let { Valutakode.valueOf(it) } ?: Valutakode.NOK,
+                        valutakode = periode.valutakode?.takeIf { it.isNotEmpty() }?.let { Valutakode.valueOf(it) } ?: Valutakode.NOK,
                     ),
                 )
             }
