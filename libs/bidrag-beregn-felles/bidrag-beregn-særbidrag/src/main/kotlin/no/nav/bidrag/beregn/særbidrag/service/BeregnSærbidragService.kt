@@ -33,6 +33,7 @@ import no.nav.bidrag.commons.service.sjablon.Sjablontall
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.sjablon.SjablonInnholdNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
@@ -108,7 +109,7 @@ internal class BeregnSærbidragService(
         null
     }
 
-    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == "NOK" }
+    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == Valutakode.NOK }
 
     // ==================================================================================================================================================
     // Bygger grunnlag til core og kaller delberegninger

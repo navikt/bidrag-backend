@@ -1,6 +1,7 @@
 package no.nav.bidrag.transport.behandling.belopshistorikk.response
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -23,5 +24,5 @@ data class LøpendeBidragssak(
     @Schema(description = "Løpende beløp i stønaden på dato angitt i requesten")
     val løpendeBeløp: BigDecimal,
     @Schema(description = "Valutakoden tilhørende stønadsbeløpet")
-    val valutakode: String = "NOK",
+    val valutakode: Valutakode = Valutakode.NOK,
 )

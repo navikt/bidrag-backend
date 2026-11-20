@@ -9,6 +9,7 @@ import no.nav.bidrag.belopshistorikk.persistence.entity.toStønadDto
 import no.nav.bidrag.belopshistorikk.persistence.entity.toStønadPeriodeDto
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -248,7 +249,7 @@ class BeløpshistorikkService(val persistenceService: PersistenceService, privat
                         type = Stønadstype.valueOf(stønad.type),
                         kravhaver = nyesteIdent(stønad.kravhaver),
                         løpendeBeløp = periode.beløp ?: BigDecimal.ZERO,
-                        valutakode = periode.valutakode ?: "NOK",
+                        valutakode = periode.valutakode?.let { Valutakode.valueOf(it) } ?: Valutakode.NOK,
                     ),
                 )
             }

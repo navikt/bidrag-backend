@@ -11,11 +11,14 @@ import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.Løpende
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragGrunnlagCore
 import no.nav.bidrag.beregn.særbidrag.core.felles.bo.SjablonListe
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import java.time.LocalDate
 import java.util.Collections.emptyList
 
@@ -40,6 +43,9 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
                 sjablonSamværsfradragListe = sjablonListe.sjablonSamværsfradragResponse,
             )
         val sjablonPeriodeListe = mapSjablonPeriodeListe(sjablonPeriodeCoreListe)
+        val valutakursGrunnlag = beregnGrunnlag.grunnlagListe.firstOrNull { grunnlagDto -> grunnlagDto.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }
+        val valutakurser = valutakursGrunnlag
+            ?.innholdTilObjekt<ValutakursGrunnlag>()
 
         return LøpendeBidragGrunnlagCore(
             beregnDatoFra = beregnGrunnlag.periode.fom.atDay(1),
@@ -53,6 +59,10 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
                     referanseBarn = it.gjelderBarn,
                     løpendeBeløp = it.løpendeBeløp,
                     valutakode = it.valutakode,
+                    valutakursTilNOK = valutakurser
+                        ?.valutakursListe?.find { par -> (par.valutakode1 == it.valutakode && par.valutakode2 == Valutakode.NOK) || (par.valutakode2 == it.valutakode && par.valutakode1 == Valutakode.NOK) }
+                        ?.valutakurs,
+                    valutakursGrunnlagsreferanse = valutakursGrunnlag?.referanse,
                     samværsklasse = it.samværsklasse,
                     beregnetBeløp = it.beregnetBeløp,
                     faktiskBeløp = it.faktiskBeløp,

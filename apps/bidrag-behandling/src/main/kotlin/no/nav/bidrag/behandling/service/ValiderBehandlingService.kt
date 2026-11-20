@@ -20,6 +20,7 @@ import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -63,7 +64,7 @@ class ValiderBehandlingService(
         val løpendeBidrag = bidragBeløpshistorikkConsumer.hentLøpendeBidrag(LøpendeBidragssakerRequest(skyldner = bpIdent))
         val harLøpendeBidragUtenlandskValuta =
             løpendeBidrag.bidragssakerListe.all {
-                it.valutakode == "NOK" || it.valutakode.isEmpty()
+                it.valutakode == Valutakode.NOK
             }
         return if (!harLøpendeBidragUtenlandskValuta) "Bidragspliktig har løpende bidrag i utenlandsk valuta" else null
     }
