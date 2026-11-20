@@ -24,6 +24,7 @@ private val log = KotlinLogging.logger {}
 class PdfProducerService(
     private val bidragDokumentmalConsumer: BidragDokumentmalConsumer,
     private val bidragPdfGenConsumer: BidragPdfGenConsumer,
+    private val pdfProduksjonMetrikker: PdfProduksjonMetrikker,
 ) {
     fun generateHTMLResponseDokument(
         category: String,
@@ -78,44 +79,20 @@ class PdfProducerService(
         dokumentmal: String,
         payload: String?,
         useHottemplate: Boolean = false,
-    ): ResponseEntity<ByteArray> {
-        if (payload == null && !useHottemplate) {
-            throw RuntimeException(
-                "Mangler data for å generere brev",
-            )
-        }
-        val jsonPayload = payload ?: hotTemplateData(category, dokumentmal)
-        val startTime = System.currentTimeMillis()
-        return bidragDokumentmalConsumer
-            .hentDokumentmal(category, dokumentmal, jsonPayload)
-            ?.let { document ->
-                val bytes =
-                    bidragPdfGenConsumer.produserPdf(
-                        document.fjernKontrollTegn(),
-                        Configuration(BigDecimal(1), false),
-                    )
-                log.info {
-                    "Done generating PDF for category $category and template $dokumentmal in ${System.currentTimeMillis() - startTime}ms"
-                }
-                ResponseEntity
-                    .ok()
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=dokumenter_sammenslatt.pdf",
-                    ).body(bytes)
-            }
-            ?: ResponseEntity
-                .status(
-                    HttpStatus.NOT_FOUND,
-                ).body("Template or category not found".toByteArray())
-    }
+    ): ResponseEntity<ByteArray> = genererPdf(category, dokumentmal, payload, useHottemplate)
 
     fun generatePDFResponseV2(
         category: String,
         dokumentmal: String,
         payload: String?,
         useHottemplate: Boolean = false,
+    ): ResponseEntity<ByteArray> = genererPdf(category, dokumentmal, payload, useHottemplate)
+
+    private fun genererPdf(
+        category: String,
+        dokumentmal: String,
+        payload: String?,
+        useHottemplate: Boolean,
     ): ResponseEntity<ByteArray> {
         if (payload == null && !useHottemplate) {
             throw RuntimeException(
@@ -124,29 +101,49 @@ class PdfProducerService(
         }
         val jsonPayload = payload ?: hotTemplateData(category, dokumentmal)
         val startTime = System.currentTimeMillis()
-        return bidragDokumentmalConsumer
-            .hentDokumentmal(category, dokumentmal, jsonPayload)
-            ?.let { document ->
-                val bytes =
-                    bidragPdfGenConsumer.produserPdf(
-                        document.fjernKontrollTegn(),
-                        Configuration(BigDecimal(1), false),
+        return pdfProduksjonMetrikker.målSteg(
+            PdfProduksjonSteg.TOTALT,
+            category,
+            dokumentmal,
+            utfallFor = { if (it.statusCode.is2xxSuccessful && it.body != null) PdfProduksjonUtfall.OK else PdfProduksjonUtfall.FEIL },
+        ) {
+            pdfProduksjonMetrikker
+                .målSteg(PdfProduksjonSteg.HENT_HTML, category, dokumentmal) {
+                    bidragDokumentmalConsumer.hentDokumentmal(category, dokumentmal, jsonPayload)
+                }?.let { document ->
+                    val html =
+                        pdfProduksjonMetrikker.målSteg(PdfProduksjonSteg.RENS_HTML, category, dokumentmal) {
+                            document.fjernKontrollTegn()
+                        }
+                    pdfProduksjonMetrikker.registrerStørrelse(
+                        PdfProduksjonDokumenttype.HTML,
+                        category,
+                        dokumentmal,
+                        html.toByteArray(Charsets.UTF_8).size,
                     )
-                log.info {
-                    "Done generating PDF for category $category and template $dokumentmal in ${System.currentTimeMillis() - startTime}ms"
+                    val bytes =
+                        pdfProduksjonMetrikker.målSteg(PdfProduksjonSteg.KONVERTER_PDF, category, dokumentmal) {
+                            bidragPdfGenConsumer.produserPdf(html, Configuration(BigDecimal(1), false))
+                        }
+                    bytes?.let {
+                        pdfProduksjonMetrikker.registrerStørrelse(PdfProduksjonDokumenttype.PDF, category, dokumentmal, it.size)
+                    }
+                    log.info {
+                        "Done generating PDF for category $category and template $dokumentmal in ${System.currentTimeMillis() - startTime}ms"
+                    }
+                    ResponseEntity
+                        .ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=dokumenter_sammenslatt.pdf",
+                        ).body(bytes)
                 }
-                ResponseEntity
-                    .ok()
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=dokumenter_sammenslatt.pdf",
-                    ).body(bytes)
-            }
-            ?: ResponseEntity
-                .status(
-                    HttpStatus.NOT_FOUND,
-                ).body("Template or category not found".toByteArray())
+                ?: ResponseEntity
+                    .status(
+                        HttpStatus.NOT_FOUND,
+                    ).body("Template or category not found".toByteArray())
+        }
     }
 
     fun flattenPDF(payload: ByteArray): ResponseEntity<ByteArray> {

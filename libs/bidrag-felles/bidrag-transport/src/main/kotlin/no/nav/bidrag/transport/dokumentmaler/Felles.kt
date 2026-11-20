@@ -1,6 +1,7 @@
 package no.nav.bidrag.transport.dokumentmaler
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.beregning.Resultatkode.Companion.erDirekteAvslag
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
@@ -54,6 +55,10 @@ data class DokumentmalManuellVedtak(
         }
 }
 
+// Beregningen gir avslag/opphør uten beløp for disse resultatene, på samme måte som når barnet er selvforsørget
+private val beregnetAvslagUtenBeløp =
+    setOf(Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED, Resultatkode.FULLT_UNDERHOLDT_AV_OFFENTLIG)
+
 data class DokumentmalResultatBidragsberegningBarnDto(
     val barn: DokumentmalPersonDto,
     val indeksår: Int? = null,
@@ -91,6 +96,14 @@ data class DokumentmalResultatBidragsberegningBarnDto(
             if (resultatkodeVisningsnavn.isEmpty()) {
                 resultatkodeVisningsnavn = tilResultatkodeVisningsnavn()
             }
+        }
+
+        @get:Schema(description = "Om perioden er avslag/opphør uten beløp, f.eks. fordi barnet er selvforsørget eller BP ikke har omsorg")
+        val erAvslagUtenBeløp get(): Boolean {
+            val sluttberegning = beregningsdetaljer?.sluttberegning ?: return false
+            return sluttberegning.ikkeOmsorgForBarnet ||
+                sluttberegning.barnetErSelvforsørget ||
+                sluttberegning.resultat in beregnetAvslagUtenBeløp
         }
 
         private val erKlagevedtak get() =

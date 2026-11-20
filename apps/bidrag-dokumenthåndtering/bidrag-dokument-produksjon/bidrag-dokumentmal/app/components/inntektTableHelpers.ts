@@ -1,6 +1,5 @@
 import { Rolletype, NotatMalType, InntekterPerRolle } from "~/types/Api";
-import tekster from "~/tekster";
-
+import { tekst } from "~/utils/tekst";
 export enum InntektTableType {
   SKATTEPLIKTIG = "SKATTEPLIKTIG",
   UTVIDET_BARNETRYGD = "UTVIDET_BARNETRYGD",
@@ -81,35 +80,57 @@ export const beregnetInntekterColumnWidth: {
   },
   [NotatMalType.SAeRBIDRAG]: {
     [Rolletype.BM]: {
-      [tekster.tabell.felles.fraTilOgMed]: "130px",
-      [tekster.tabell.beregnet.skattepliktigInntektSplittet]: "85px",
-      [tekster.tabell.beregnet.barnetilleggSplittet]: "75px",
-      [tekster.tabell.beregnet.utvidetBarnetrygd]: "70px",
-      [tekster.tabell.beregnet.småbarnstillegg]: "70px",
-      [tekster.tabell.beregnet.kontantstøtte]: "80px",
-      [tekster.tabell.beregnet.total]: "60px",
+      [tekst("felles.tabell.felles.fraTilOgMed", "Fra og med - Til og med")]:
+        "130px",
+      [tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      )]: "85px",
+      [tekst("felles.tabell.beregnet.barnetilleggSplittet", "Barnetillegg")]:
+        "75px",
+      [tekst("felles.tabell.beregnet.utvidetBarnetrygd", "Utvidet barnetrygd")]:
+        "70px",
+      [tekst("felles.tabell.beregnet.småbarnstillegg", "Småbarnstillegg")]:
+        "70px",
+      [tekst("felles.tabell.beregnet.kontantstøtte", "Kontantstøtte")]: "80px",
+      [tekst("ord.totalt", "Totalt")]: "60px",
     },
     [Rolletype.BP]: {
-      [tekster.tabell.felles.fraTilOgMed]: "120px",
-      [tekster.tabell.beregnet.skattepliktigInntekt]: "125px",
-      [tekster.tabell.beregnet.barnetillegg]: "75px",
-      [tekster.tabell.beregnet.total]: "150px",
+      [tekst("felles.tabell.felles.fraTilOgMed", "Fra og med - Til og med")]:
+        "120px",
+      [tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      )]: "125px",
+      [tekst("felles.tabell.beregnet.barnetillegg", "Barnetillegg")]: "75px",
+      [tekst("ord.totalt", "Totalt")]: "150px",
     },
     [Rolletype.BA]: {
-      [tekster.tabell.felles.fraTilOgMed]: "152px",
-      [tekster.tabell.beregnet.skattepliktigInntekt]: "155px",
-      [tekster.tabell.beregnet.total]: "300px",
+      [tekst("felles.tabell.felles.fraTilOgMed", "Fra og med - Til og med")]:
+        "152px",
+      [tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      )]: "155px",
+      [tekst("ord.totalt", "Totalt")]: "300px",
     },
   },
   [NotatMalType.FORSKUDD]: {
     [Rolletype.BM]: {
-      [tekster.tabell.felles.fraTilOgMed]: "130px",
-      [tekster.tabell.beregnet.skattepliktigInntektSplittet]: "85px",
-      [tekster.tabell.beregnet.barnetilleggSplittet]: "75px",
-      [tekster.tabell.beregnet.utvidetBarnetrygd]: "70px",
-      [tekster.tabell.beregnet.småbarnstillegg]: "70px",
-      [tekster.tabell.beregnet.kontantstøtte]: "80px",
-      [tekster.tabell.beregnet.total]: "60px",
+      [tekst("felles.tabell.felles.fraTilOgMed", "Fra og med - Til og med")]:
+        "130px",
+      [tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      )]: "85px",
+      [tekst("felles.tabell.beregnet.barnetilleggSplittet", "Barnetillegg")]:
+        "75px",
+      [tekst("felles.tabell.beregnet.utvidetBarnetrygd", "Utvidet barnetrygd")]:
+        "70px",
+      [tekst("felles.tabell.beregnet.småbarnstillegg", "Småbarnstillegg")]:
+        "70px",
+      [tekst("felles.tabell.beregnet.kontantstøtte", "Kontantstøtte")]: "80px",
+      [tekst("ord.totalt", "Totalt")]: "60px",
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},
@@ -124,66 +145,113 @@ export const beregnetInntekterColumnNames: {
 } = {
   [NotatMalType.BIDRAG]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntektSplittet,
-      [InntektTableType.BARNETILLEGG]:
-        tekster.tabell.beregnet.barnetilleggSplittet,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygdSplittet,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstilleggSplittet,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetilleggSplittet",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygdSplittet",
+        "Utvidet- barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstilleggSplittet",
+        "Småbarns- tillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetillegg",
+        "Barnetillegg",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BA]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
   },
   [NotatMalType.SAeRBIDRAG]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntektSplittet,
-      [InntektTableType.BARNETILLEGG]:
-        tekster.tabell.beregnet.barnetilleggSplittet,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygdSplittet,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstilleggSplittet,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetilleggSplittet",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygdSplittet",
+        "Utvidet- barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstilleggSplittet",
+        "Småbarns- tillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetillegg",
+        "Barnetillegg",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BA]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
   },
   [NotatMalType.FORSKUDD]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntektSplittet,
-      [InntektTableType.BARNETILLEGG]:
-        tekster.tabell.beregnet.barnetilleggSplittet,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygdSplittet,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstilleggSplittet,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetilleggSplittet",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygdSplittet",
+        "Utvidet- barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstilleggSplittet",
+        "Småbarns- tillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},
@@ -198,65 +266,113 @@ export const beregnetInntekterColumnNamesV2: {
 } = {
   [NotatMalType.BIDRAG]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygd,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstillegg,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetillegg",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygd",
+        "Utvidet barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstillegg",
+        "Småbarnstillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetillegg",
+        "Barnetillegg",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BA]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
   },
   [NotatMalType.SAeRBIDRAG]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntektSplittet,
-      [InntektTableType.BARNETILLEGG]:
-        tekster.tabell.beregnet.barnetilleggSplittet,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygd,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstillegg,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetilleggSplittet",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygd",
+        "Utvidet barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstillegg",
+        "Småbarnstillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.BARNETILLEGG]: tekster.tabell.beregnet.barnetillegg,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetillegg",
+        "Barnetillegg",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BA]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntekt,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntekt",
+        "Skattepliktige inntekter",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
   },
   [NotatMalType.FORSKUDD]: {
     [Rolletype.BM]: {
-      [InntektTableType.SKATTEPLIKTIG]:
-        tekster.tabell.beregnet.skattepliktigInntektSplittet,
-      [InntektTableType.BARNETILLEGG]:
-        tekster.tabell.beregnet.barnetilleggSplittet,
-      [InntektTableType.UTVIDET_BARNETRYGD]:
-        tekster.tabell.beregnet.utvidetBarnetrygd,
-      [InntektTableType.SMÅBARNSTILLEGG]:
-        tekster.tabell.beregnet.småbarnstillegg,
-      [InntektTableType.KONTANTSTØTTE]: tekster.tabell.beregnet.kontantstøtte,
-      [InntektTableType.TOTAL_INNTEKTER]: tekster.tabell.beregnet.total,
+      [InntektTableType.SKATTEPLIKTIG]: tekst(
+        "felles.tabell.beregnet.skattepliktigInntektSplittet",
+        "Skattepliktige- inntekter",
+      ),
+      [InntektTableType.BARNETILLEGG]: tekst(
+        "felles.tabell.beregnet.barnetilleggSplittet",
+        "Barnetillegg",
+      ),
+      [InntektTableType.UTVIDET_BARNETRYGD]: tekst(
+        "felles.tabell.beregnet.utvidetBarnetrygd",
+        "Utvidet barnetrygd",
+      ),
+      [InntektTableType.SMÅBARNSTILLEGG]: tekst(
+        "felles.tabell.beregnet.småbarnstillegg",
+        "Småbarnstillegg",
+      ),
+      [InntektTableType.KONTANTSTØTTE]: tekst(
+        "felles.tabell.beregnet.kontantstøtte",
+        "Kontantstøtte",
+      ),
+      [InntektTableType.TOTAL_INNTEKTER]: tekst("ord.totalt", "Totalt"),
     },
     [Rolletype.BP]: {},
     [Rolletype.BA]: {},

@@ -92,8 +92,10 @@ export interface PrivatAvtaleBarnUnder18Dto {
   vedlegg: Vedleggskrav;
 }
 
-export interface PrivatAvtaleBarnOver18Dto
-  extends Omit<PrivatAvtaleBarnUnder18Dto, "barn"> {
+export interface PrivatAvtaleBarnOver18Dto extends Omit<
+  PrivatAvtaleBarnUnder18Dto,
+  "barn"
+> {
   bidrag: IBidrag[];
 }
 

@@ -1,18 +1,17 @@
 import React, { ReactElement, CSSProperties } from "react";
-import tekster from "~/tekster";
 import {
-  CommonTable,
-  TableColumn,
-  RowContent,
-  TableHeader,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  type RowContent,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
+import { tekst } from "~/utils/tekst";
 //file:@ts-ignore
 interface CalculationTableData {
   label: RowContent;
   calculation?: RowContent;
   value: RowContent;
 }
-
 interface CalculationTableProps {
   data: CalculationTableData[]; // Array of data objects
   title?: string;
@@ -26,7 +25,6 @@ interface CalculationTableProps {
   className?: string;
   style?: CSSProperties;
 }
-
 export const CalculationTable: React.FC<CalculationTableProps> = ({
   data,
   result,
@@ -35,74 +33,52 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
   width,
 }) => {
   const harBeregning = data.some((d) => d.calculation);
-
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto
-      size={simpleStyling ? "small" : "large"}
-      width={width}
+      storrelse={simpleStyling ? "small" : "large"}
+      bredde={width}
       className={className}
-      data={{
-        headers: [
-          {
-            name: tekster.tabell.felles.beskrivelse,
-            width: "250px",
-          },
-          harBeregning && {
-            name: tekster.tabell.felles.beregning,
-            width: "250px",
-          },
-          {
-            name: tekster.tabell.felles.beløp,
-            width: "100px",
-            textAlign: "right",
-          },
-        ].filter((d) => typeof d != "boolean") as TableHeader[],
-        rows: data
-          .map((content) => ({
-            columns: [
+      kolonner={[
+        { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
+        ...(harBeregning
+          ? [
               {
-                content: content.label,
+                tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
+                bredde: "250px",
               },
-              harBeregning && {
-                content: content.calculation,
-              },
-              {
-                textAlign: "right",
-                content: content.value,
-              },
-            ].filter((d) => typeof d != "boolean") as TableColumn[],
-          }))
-          .concat(
-            result
-              ? [
-                  {
-                    columns: [
-                      {
-                        content: result!.label,
-                        colSpan: harBeregning ? 2 : 1,
-                        labelBold: true,
-                      } as TableColumn,
-                      {
-                        textAlign: "right",
-                        content: result!.value,
-                      } as TableColumn,
-                    ],
-                  },
-                ]
-              : [],
-          ),
-      }}
-    />
+            ]
+          : []),
+        {
+          tittel: tekst("ord.beløp", "Beløp"),
+          bredde: "100px",
+          tekstjustering: "right",
+        },
+      ]}
+    >
+      {data.map((rad, index) => (
+        <Tabellrad key={index} index={index}>
+          <Tabellcelle>{rad.label}</Tabellcelle>
+          {harBeregning && <Tabellcelle>{rad.calculation}</Tabellcelle>}
+          <Tabellcelle textAlign="right">{rad.value}</Tabellcelle>
+        </Tabellrad>
+      ))}
+      {result && (
+        <Tabellrad index={data.length}>
+          <Tabellcelle colSpan={harBeregning ? 2 : 1} labelBold>
+            {result.label}
+          </Tabellcelle>
+          <Tabellcelle textAlign="right">{result.value}</Tabellcelle>
+        </Tabellrad>
+      )}
+    </DokumentTabell>
   );
 };
-
 interface MathDivisionProps {
   negativeValue?: boolean;
   top: string;
   bottom: number | string;
 }
-
 export const MathDivision: React.FC<MathDivisionProps> = ({
   negativeValue,
   top,
@@ -117,7 +93,6 @@ export const MathDivision: React.FC<MathDivisionProps> = ({
     </span>
   );
 };
-
 export const MathValue: React.FC<{
   value: string | number;
   negativeValue?: boolean;
@@ -134,7 +109,6 @@ interface MathMultiplicationProps {
   left: string;
   right: string | number;
 }
-
 export const MathMultiplication: React.FC<MathMultiplicationProps> = ({
   negativeValue,
   left,

@@ -1,6 +1,10 @@
-import tekster from "~/tekster";
-import { CommonTable, RowContent } from "~/components/CommonTable";
-
+import {
+  DokumentTabell,
+  type RowContent,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
+import { tekst } from "~/utils/tekst";
 type CalculationTableRowProps = {
   label: RowContent;
   labelBold?: boolean;
@@ -19,41 +23,29 @@ export default function CalculationTable({
   return (
     <div>
       {title && <h4>{title}</h4>}
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            {
-              name: tekster.tabell.felles.beskrivelse,
-              width: "250px",
-            },
-            hasCalulcation
-              ? {
-                  name: tekster.tabell.felles.beregning,
-                  width: "250px",
-                }
-              : undefined,
-            {
-              name: tekster.tabell.felles.beløp,
-              width: "50px",
-            },
-          ].filter((d) => d != undefined),
-          rows: data.map((r) => ({
-            columns: [
-              {
-                content: r.label,
-                labelBold: r.labelBold,
-              },
-              hasCalulcation && {
-                content: r.calculation,
-              },
-              {
-                content: r.result,
-              },
-            ].filter((d) => typeof d != "boolean"),
-          })),
-        }}
-      />
+        kolonner={[
+          { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
+          ...(hasCalulcation
+            ? [
+                {
+                  tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
+                  bredde: "250px",
+                },
+              ]
+            : []),
+          { tittel: tekst("ord.beløp", "Beløp"), bredde: "50px" },
+        ]}
+      >
+        {data.map((rad, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle labelBold={rad.labelBold}>{rad.label}</Tabellcelle>
+            {hasCalulcation && <Tabellcelle>{rad.calculation}</Tabellcelle>}
+            <Tabellcelle>{rad.result}</Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
     </div>
   );
 }

@@ -67,7 +67,29 @@
   content: counter(footnote, symbols("*", "†", "‡"));
 }
 
+.dokument-stabel > .dokument-stabel-del {
+  display: contents;
+}
+
+.dokument-stabel > .dokument-stabel-del:empty {
+  display: none;
+}
+
 @media print {
+  .dokument-stabel.flex {
+    display: block;
+  }
+
+  .dokument-stabel > .dokument-stabel-del {
+    display: flow-root;
+  }
+
+  .dokument-stabel
+    > .dokument-stabel-del:not(:empty)
+    ~ .dokument-stabel-del:not(:empty) {
+    padding-top: var(--dokument-stabel-gap);
+  }
+
   /* `div { break-inside: avoid }` traff *alle* divs, også de ytterste
      container-divene. En container som er høyere enn én side kan ikke unngå
      sidebrudd; Chromium ignorerte regelen da, mens WeasyPrint tegnet innholdet
@@ -75,6 +97,10 @@
      (de som ikke selv inneholder en div), som er de vi faktisk vil holde samlet. */
   div:not(:has(div)) {
     break-inside: avoid;
+  }
+
+  .dokument-stabel > .dokument-stabel-del {
+    break-inside: auto;
   }
 
   .page {

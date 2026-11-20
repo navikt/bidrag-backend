@@ -55,6 +55,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import no.nav.bidrag.transport.felles.toCompactString
 import org.hibernate.annotations.ColumnTransformer
+import org.hibernate.annotations.DynamicUpdate
 import org.hibernate.annotations.SQLDelete
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.annotations.Type
@@ -64,6 +65,7 @@ import java.time.YearMonth
 
 @Suppress("Unused")
 @Entity(name = "behandling")
+@DynamicUpdate
 @SQLDelete(sql = "UPDATE behandling SET deleted = true, slettet_tidspunkt = now() WHERE id=?")
 @SQLRestriction(value = "deleted=false")
 open class Behandling(
@@ -423,6 +425,7 @@ open class Behandling(
             sb2.normalisertNotat(NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG)
     }
 
+    val søknadsider get() = (roller.flatMap { it.søknader.mapNotNull { it.søknadsid } } + listOfNotNull(soknadsid)).distinct()
     val sammeSamværForAlle get() = sammeSamværForAlleSaker.all { it.erLikForAlle }
     val sammeSamværForAlleSaker get() = samvær
         .filter { it.rolle.kreverGrunnlagForBeregning }
