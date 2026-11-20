@@ -108,7 +108,7 @@
         <artifactId>kotlin-maven-plugin</artifactId>
         <executions>
           <execution>
-            <id>default-test-compile</id>
+            <id>test-compile</id>
             <configuration>
               <jvmTarget>21</jvmTarget>
             </configuration>
