@@ -17,7 +17,6 @@ import org.springframework.util.LinkedMultiValueMap
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
 
 private val NORSK_TIDSSTEMPEL_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
 private val NORSK_DATO_FORMAT = DateTimeFormatter.ofPattern("dd.MM.uuuu")
@@ -25,7 +24,6 @@ private val NORSK_DATO_FORMAT = DateTimeFormatter.ofPattern("dd.MM.uuuu")
 const val METADATA_NØKKEL_BEHANDLING_ID = "BEHANDLING_ID"
 const val METADATA_NØKKEL_SØKNAD_ID = "SOKNAD_ID"
 const val METADATA_NØKKEL_NORM_DATO = "NORM_DATO"
-private const val PARAMETER_JOURNALPOST_ID = "journalpostId"
 private const val PARAMETER_OPPGAVE_TYPE = "oppgavetype"
 private const val PARAMETER_SAKSREFERANSE = "saksreferanse"
 private const val PARAMETER_TEMA = "tema"
@@ -53,10 +51,6 @@ data class OppgaveSokRequest(
     fun copy(): OppgaveSokRequest = OppgaveSokRequest(LinkedMultiValueMap(parametreMap.deepCopy()))
 
     fun brukBehandlingSomOppgaveType(): OppgaveSokRequest = leggTilParameter(PARAMETER_OPPGAVE_TYPE, OppgaveType.BEH_SAK)
-
-    fun brukVurderDokumentSomOppgaveType(): OppgaveSokRequest = leggTilParameter(PARAMETER_OPPGAVE_TYPE, OppgaveType.VUR)
-
-    fun brukJournalforingSomOppgaveType(): OppgaveSokRequest = leggTilParameter(PARAMETER_OPPGAVE_TYPE, OppgaveType.JFR)
 
     fun leggTilJournalpostId(journalpostId: String): OppgaveSokRequest {
         leggTilParameter(PARAMETER_JOURNALPOSTID, journalpostId)
@@ -252,47 +246,6 @@ class DefaultOpprettOppgaveRequest(
     var metadata: Map<String, String>? = null,
 )
 
-data class BrukerDto(
-    val ident: String,
-    val type: OppgaveBrukertype,
-)
-
-enum class OppgaveBrukertype {
-    PERSON,
-    ARBEIDSGIVER,
-    SAMHANDLER,
-}
-
-data class OpprettOppgaveRequestV2(
-    var aktoerId: String? = null,
-    var personident: String? = null,
-    var npidOrFolkeregisterIdent: String? = null,
-    var orgnr: String? = null,
-    var bnr: String? = null,
-    var samhandlernr: String? = null,
-    var tildeltEnhetsnr: String? = null,
-    var opprettetAvEnhetsnr: String? = null,
-    var journalpostId: String? = null,
-    var journalpostkilde: String? = null,
-    var behandlesAvApplikasjon: String? = null,
-    var saksreferanse: String? = null,
-    var tilordnetRessurs: String? = null,
-    var temagruppe: String? = null,
-    var tema: String? = null,
-    var behandlingstema: String? = null,
-    var oppgavetype: String? = null,
-    var behandlingstype: String? = null,
-    var mappeId: Long? = null,
-    var aktivDato: String = formatterDatoForOppgave(LocalDate.now()),
-    var fristFerdigstillelse: String = formatterDatoForOppgave(VirkedagerProvider.nesteVirkedag()),
-    var prioritet: Prioritet? = null,
-    var uuid: UUID? = null,
-    var metadata: Map<String, String>? = null,
-    @JsonIgnore
-    var kommentar: String,
-    val saksbehandlersInfo: String,
-)
-
 @Suppress("unused") // used by jackson...
 class GjenopprettSøknadsoppgaveRequest(
     søknadsid: Long?,
@@ -330,7 +283,7 @@ class GjenopprettSøknadsoppgaveRequest(
                 } else {
                     METADATA_NØKKEL_NORM_DATO to null
                 },
-            ).filter { !it.value.isNullOrEmpty() }.takeIf { it.isNotEmpty() } as Map<String, String>?
+            ).utenTommeVerdier()
     }
 }
 
@@ -375,7 +328,7 @@ class OpprettSøknadsoppgaveRequest(
                 METADATA_NØKKEL_SØKNAD_ID to søknadsid?.toString(),
                 METADATA_NØKKEL_BEHANDLING_ID to behandlingsid?.toString(),
                 METADATA_NØKKEL_NORM_DATO to formatterDatoForOppgaveMetadata(frist),
-            ).filter { !it.value.isNullOrEmpty() }.takeIf { it.isNotEmpty() } as Map<String, String>?
+            ).utenTommeVerdier()
     }
 }
 
@@ -447,8 +400,6 @@ open class PatchOppgaveRequest(
     @JsonAnyGetter
     fun nullstillMappeFelt(): Map<String, Any?> = if (nullstillMappe) mapOf("mappeId" to null) else emptyMap()
 
-    fun leggOppgaveIdPa(contextUrl: String) = "$contextUrl/$id".replace("//", "/")
-
     protected fun leggTilObligatoriskeVerdier(oppgaveDataForHendelse: OppgaveData) {
         id = oppgaveDataForHendelse.id
         versjon = oppgaveDataForHendelse.versjon
@@ -481,7 +432,7 @@ data class OpprettBehandleDokumentOppgaveRequest(
     private var tittel: String,
     private var dokumentDato: LocalDate?,
     private var saksbehandlersInfo: String,
-    private var sporingsdata: no.nav.bidrag.transport.dokument.Sporingsdata,
+    private var sporingsdata: Sporingsdata,
 ) : DefaultOpprettOppgaveRequest(
     beskrivelse =
     lagBeskrivelseHeader(saksbehandlersInfo) +
@@ -735,30 +686,6 @@ class OppdaterOppgaveRequest(
     }
 }
 
-class EndreTemaOppgaveRequest(
-    override var tema: String?,
-    override var tildeltEnhetsnr: String?,
-) : PatchOppgaveRequest() {
-    @JsonInclude(JsonInclude.Include.ALWAYS)
-    override var tilordnetRessurs: String? = null
-
-    constructor(
-        oppgaveDataForHendelse: OppgaveData,
-        tema: String?,
-        tildeltEnhetsnr: String?,
-        saksbehandlersInfo: String,
-    ) : this(tema = tema, tildeltEnhetsnr = tildeltEnhetsnr) {
-        leggTilObligatoriskeVerdier(oppgaveDataForHendelse)
-        val dateFormatted = LocalDateTime.now().format(NORSK_TIDSSTEMPEL_FORMAT)
-        this.beskrivelse = "--- $dateFormatted $saksbehandlersInfo ---\r\n" +
-            "${"Saksbehandler endret fra $saksbehandlersInfo til ikke valgt"}\r\n\r\n" +
-            "${oppgaveDataForHendelse.beskrivelse}"
-        this.beskrivelse = "--- $dateFormatted $saksbehandlersInfo ---\r\n" +
-            "${"Oppgave overført fra tema ${oppgaveDataForHendelse.tema} til $tema"}\r\n\r\n" +
-            "${this.beskrivelse}"
-    }
-}
-
 class FerdigstillOppgaveRequest(
     override var status: String?,
 ) : PatchOppgaveRequest() {
@@ -772,13 +699,6 @@ enum class Prioritet {
     HOY,
     NORM,
     LAV,
-}
-
-enum class OppgaveIdentType {
-    AKTOERID,
-    ORGNR,
-    SAMHANDLERNR,
-    BNR,
 }
 
 enum class OppgaveStatus {
@@ -809,8 +729,7 @@ enum class OppgaveType(
 
     companion object {
         fun descriptionFrom(value: String?): String = OppgaveType
-            .values()
-            .asList()
+            .entries
             .find { it.name == value }
             ?.description ?: value ?: "Ukjent"
     }
@@ -829,7 +748,6 @@ internal fun lagBeskrivelseHeader(saksbehandlersInfo: String): String {
     return "--- $dateFormatted $saksbehandlersInfo ---\r\n"
 }
 
-private fun fieldToString(
-    fieldName: String,
-    value: String?,
-) = if (value != null) "$fieldName=$value, " else ""
+private fun Map<String, String?>.utenTommeVerdier(): Map<String, String>? = mapNotNull { (nøkkel, verdi) ->
+    verdi?.takeIf { it.isNotEmpty() }?.let { nøkkel to it }
+}.toMap().takeIf { it.isNotEmpty() }

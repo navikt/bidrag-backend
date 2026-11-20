@@ -307,6 +307,8 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
         stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
 
         shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
+
+        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4833"
     }
 
     @Test

@@ -28,7 +28,6 @@ private val LOGGER = KotlinLogging.logger { }
 class OppgaveConsumer(
     @Value($$"${OPPGAVE_URL}") val url: URI,
     @Qualifier("azure") restTemplate: RestTemplate,
-    @Value($$"${retry.enabled:true}") val shouldRetry: Boolean,
 ) : AbstractRestClient(restTemplate, "oppgave") {
 
     private val baseUri

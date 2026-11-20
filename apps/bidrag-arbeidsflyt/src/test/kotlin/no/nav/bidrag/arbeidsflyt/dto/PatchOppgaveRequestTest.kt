@@ -1,11 +1,29 @@
 package no.nav.bidrag.arbeidsflyt.dto
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.kotest.matchers.shouldBe
 import no.nav.bidrag.arbeidsflyt.model.Fagomrade
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 internal class PatchOppgaveRequestTest {
+    @Test
+    fun `skal utelate metadata når referanser og normdato mangler`() {
+        val request = gjenopprettSøknadsoppgave()
+
+        request.metadata shouldBe null
+        jacksonObjectMapper().valueToTree<com.fasterxml.jackson.databind.JsonNode>(request)["metadata"].isNull shouldBe true
+    }
+
+    @Test
+    fun `skal beholde søknadsreferanse når behandlingsreferanse og normdato mangler`() {
+        val request = gjenopprettSøknadsoppgave(søknadsid = 123)
+
+        request.metadata shouldBe mapOf(METADATA_NØKKEL_SØKNAD_ID to "123")
+        jacksonObjectMapper().valueToTree<com.fasterxml.jackson.databind.JsonNode>(request)["metadata"].size() shouldBe 1
+    }
+
     @Test
     fun `skal serialisere UpdateOppgaveAfterOpprettRequest`() {
         val opprinneligOppgave =
@@ -69,4 +87,22 @@ internal class PatchOppgaveRequestTest {
             .containsPattern("\"aktoerId\":\"123213\"")
             .containsPattern("\"journalpostId\":\"1234\"")
     }
+
+    private fun gjenopprettSøknadsoppgave(søknadsid: Long? = null) = GjenopprettSøknadsoppgaveRequest(
+        søknadsid = søknadsid,
+        behandlingsid = null,
+        normDato = null,
+        frist = LocalDate.parse("2026-01-05"),
+        aktivDato = "2026-01-01",
+        ignorerNormDatoHvisIkkeFinnes = true,
+        opprettetAvEnhetsnr = "4806",
+        beskrivelse = "Test",
+        saksreferanse = "1234567",
+        tildeltEnhetsnr = "4806",
+        personident = null,
+        tilordnetRessurs = null,
+        behandlesAvApplikasjon = null,
+        oppgavetype = OppgaveType.BEH_SAK,
+        tema = "BID",
+    )
 }

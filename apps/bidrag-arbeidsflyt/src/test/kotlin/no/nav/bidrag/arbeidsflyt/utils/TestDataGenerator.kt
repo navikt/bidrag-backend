@@ -49,10 +49,7 @@ class TestDataGenerator {
     }
 
     fun deleteAll() {
-        try {
-            dlqKafkaRepository.deleteAll()
-        } catch (e: Exception) {
-        }
+        dlqKafkaRepository.deleteAll()
         journalpostRepository.deleteAll()
         oppgaveRepository.deleteAll()
         behandlingRepository.deleteAll()

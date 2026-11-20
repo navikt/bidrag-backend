@@ -7,7 +7,6 @@ enum class UnleashFeatures(
     val featureName: String,
     defaultValue: Boolean,
 ) {
-    DEBUG_LOGGING("debug_logging", false),
     FLYTT_OPPGAVER_VED_ENHETSBYTTE("arbeidsflyt.flytt_oppgaver_ved_enhetsbytte", false),
     ;
 
