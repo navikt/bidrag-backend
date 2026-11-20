@@ -633,7 +633,7 @@ class BidragsberegningOrkestrator(
                 request = request,
                 totalBeregningsperiode = totalBeregningsperiode,
             )
-            val grunnlagValutakursListe = byggValutakursListe()
+            val grunnlagValutakursListe = byggValutakursListe(totalBeregningsperiode)
 
             val beregningResultatListe = barnebidragApi.beregnV2(
                 beregningsperiode = totalBeregningsperiode,
@@ -1126,17 +1126,18 @@ class BidragsberegningOrkestrator(
         )
     }
 
-    private fun byggValutakursListe(): List<GrunnlagDto> = listOf(
+    private fun byggValutakursListe(periode: ÅrMånedsperiode): List<GrunnlagDto> = listOf(
         GrunnlagDto(
             referanse = "innhentet_valutakurs_grunnlag",
             type = Grunnlagstype.VALUTAKURS_GRUNNLAG,
-            innhold = POJONode(hentValutakurser()),
+            innhold = POJONode(hentValutakurser(periode)),
         ),
     )
 
     // TODO Skal hente valutakurser fra ekstern tjeneste i bidrag-grunnlag
-    private fun hentValutakurser() = ValutakursGrunnlag(
-        listOf(
+    private fun hentValutakurser(periode: ÅrMånedsperiode) = ValutakursGrunnlag(
+        periode = periode,
+        valutakursListe = listOf(
             ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.SEK, valutakurs = BigDecimal.valueOf(0.92)),
             ValutaPar(valutakode1 = Valutakode.SEK, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(1.09)),
             ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.DKK, valutakurs = BigDecimal.valueOf(0.65)),

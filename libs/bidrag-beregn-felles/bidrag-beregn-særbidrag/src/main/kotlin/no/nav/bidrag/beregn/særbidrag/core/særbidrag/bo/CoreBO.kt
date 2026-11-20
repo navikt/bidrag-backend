@@ -13,7 +13,7 @@ data class BeregnSærbidragGrunnlag(
     val søknadsbarnPersonId: String,
     val betaltAvBpPeriodeListe: List<BetaltAvBpPeriode>,
     val bidragsevnePeriodeListe: List<BidragsevnePeriode>,
-    val bPsBeregnedeTotalbidrag: BPsBeregnedeTotalbidragPeriode,
+    val bPsBeregnedeTotalbidragPeriodeListe: List<BPsBeregnedeTotalbidragPeriode>,
     val bPsAndelSærbidragPeriodeListe: List<BPsAndelSærbidragPeriode>,
 
 )
@@ -56,11 +56,7 @@ data class BeregnSærbidragListeGrunnlag(
     val periodeResultatListe: MutableList<ResultatPeriode> = mutableListOf(),
     var betaltAvBpPeriodeListe: List<BetaltAvBpPeriode> = listOf(),
     var bidragsevnePeriodeListe: List<BidragsevnePeriode> = listOf(),
-    var bPsBeregnedeTotalbidragPeriode: BPsBeregnedeTotalbidragPeriode = BPsBeregnedeTotalbidragPeriode(
-        "",
-        Periode(LocalDate.MIN, LocalDate.MIN),
-        BigDecimal.ZERO,
-    ),
+    var bPsBeregnedeTotalbidragPeriodeListe: List<BPsBeregnedeTotalbidragPeriode> = listOf(),
     var bPsAndelSærbidragPeriodeListe: List<BPsAndelSærbidragPeriode> = listOf(),
     var bruddPeriodeListe: MutableList<Periode> = mutableListOf(),
 )
