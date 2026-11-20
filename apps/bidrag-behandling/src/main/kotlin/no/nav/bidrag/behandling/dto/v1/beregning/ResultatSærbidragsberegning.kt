@@ -32,7 +32,10 @@ data class ResultatSærbidragsberegningDto(
     val voksenIHusstanden: Boolean? = null,
     val enesteVoksenIHusstandenErEgetBarn: Boolean? = null,
     val erDirekteAvslag: Boolean = false,
-    val bpHarEvne: Boolean = resultatKode != Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE,
+    val bpHarEvne: Boolean = resultatKode !in setOf(
+        Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE,
+        Resultatkode.SÆRBIDRAG_MANGLER_BIDRAGSEVNE,
+    ),
 ) {
     val beløpSomInnkreves: BigDecimal get() = maxOf(resultat - (beregning?.totalBeløpBetaltAvBp ?: BigDecimal.ZERO), BigDecimal.ZERO)
 }
