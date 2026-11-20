@@ -768,7 +768,7 @@ private fun OpprettVedtakRequestDto.validerInntektrapportering() {
             }
         }
         assertSoftly(it[3].innholdTilObjekt<InntektsrapporteringPeriode>()) {
-            periode.fom shouldBe YearMonth.parse("2023-01")
+            periode.fom shouldBe YearMonth.parse("2023-02")
             periode.til shouldBe YearMonth.parse("2024-01")
             inntektspostListe shouldHaveSize 1
             beløp shouldBe 60000.toBigDecimal()
