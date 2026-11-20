@@ -1,6 +1,7 @@
 package no.nav.bidrag.beregn.barnebidrag.beregning
 
 import io.kotest.assertions.assertSoftly
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.AndelAvBidragsevneDelberegningBeregningGrunnlag
@@ -8,21 +9,129 @@ import no.nav.bidrag.beregn.barnebidrag.bo.BarnetilleggDelberegningBeregningGrun
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragJustertForBPBarnetilleggBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.BidragTilFordelingLøpendeBidragBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BidragspliktigesAndelDeltBostedDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.BpAndelUnderholdskostnadDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.Evne25ProsentAvInntektDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.LøpendeBidragTilFordelingBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SamværsfradragDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SumBidragTilFordelingDelberegningBeregningGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.SøknadsbarnetBorHosBpGrunnlag
 import no.nav.bidrag.beregn.barnebidrag.bo.UnderholdskostnadDelberegningBeregningGrunnlag
+import no.nav.bidrag.beregn.barnebidrag.bo.ValutakursGrunnlagTilBeregning
+import no.nav.bidrag.domene.enums.sak.Sakskategori
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.enums.vedtak.Stønadstype
+import no.nav.bidrag.domene.sak.Saksnummer
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragPeriode
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutaPar
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.math.BigDecimal
+import java.time.YearMonth
 
 class EndeligBidragBeregningV2Test {
+
+    @Nested
+    inner class ValutaIEvnevurderingen {
+
+        @Test
+        fun `skal bevare eurobeløpet og legge samværsfradraget til i riktig valuta`() {
+            val grunnlag = valutagrunnlag().copy(
+                samværsfradragBeregningGrunnlag = SamværsfradragDelberegningBeregningGrunnlag("samvær", BigDecimal("600")),
+            )
+
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordelingLøpendeBidrag(grunnlag)
+
+            assertSoftly {
+                resultat.valutakode shouldBe Valutakode.EUR
+                resultat.bidragTilFordeling shouldBe BigDecimal("1100.00")
+                resultat.bidragTilFordelingNOK shouldBe BigDecimal("6600.00")
+                resultat.samværsfradrag shouldBe BigDecimal("100.00")
+                resultat.grunnlagsreferanseListe shouldBe listOf("løpende", "samvær", "kurs")
+                grunnlag.løpendeBidragBeregningGrunnlag.løpendeBidrag.løpendeBeløp shouldBe BigDecimal("1000")
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["6", "12"])
+        fun `skal vurdere evnen mot eurobidraget i NOK`(kurs: String) {
+            val løpendeBidrag = EndeligBidragBeregningV2.beregnBidragTilFordelingLøpendeBidrag(valutagrunnlag(kurs))
+            val grunnlag = AndelAvBidragsevneBeregningGrunnlag(
+                evne25ProsentAvInntektBeregningGrunnlag = Evne25ProsentAvInntektDelberegningBeregningGrunnlag(
+                    "evne",
+                    BigDecimal("10000"),
+                ),
+                sumBidragTilFordelingBeregningGrunnlag = SumBidragTilFordelingDelberegningBeregningGrunnlag(
+                    referanse = "sum",
+                    sumBidragTilFordeling = BigDecimal("4000") + løpendeBidrag.bidragTilFordelingNOK,
+                    sumPrioriterteBidragTilFordeling = løpendeBidrag.bidragTilFordelingNOK,
+                ),
+                bidragTilFordelingBeregningGrunnlag = BidragTilFordelingDelberegningBeregningGrunnlag("søknadsbarn", BigDecimal("4000")),
+            )
+
+            val resultat = EndeligBidragBeregningV2.beregnAndelAvBidragsevne(grunnlag)
+
+            assertSoftly {
+                resultat.harBPFullEvne shouldBe (kurs == "6")
+                resultat.bidragEtterFordeling shouldBe if (kurs == "6") BigDecimal("4000.00") else BigDecimal("0.00")
+                løpendeBidrag.bidragTilFordeling shouldBe BigDecimal("1000.00")
+            }
+        }
+
+        @Test
+        fun `skal bruke NOK uten kurs også for utlandssak`() {
+            val eurogrunnlag = valutagrunnlag()
+            val grunnlag = eurogrunnlag.copy(
+                løpendeBidragBeregningGrunnlag = eurogrunnlag.løpendeBidragBeregningGrunnlag.copy(
+                    løpendeBidrag = eurogrunnlag.løpendeBidragBeregningGrunnlag.løpendeBidrag.copy(valutakode = Valutakode.NOK),
+                ),
+                valutakursBeregningGrunnlag = null,
+            )
+
+            val resultat = EndeligBidragBeregningV2.beregnBidragTilFordelingLøpendeBidrag(grunnlag)
+
+            resultat.bidragTilFordelingNOK shouldBe BigDecimal("1000.00")
+            resultat.grunnlagsreferanseListe shouldBe listOf("løpende")
+        }
+
+        @Test
+        fun `skal avvise eurobidrag uten kursgrunnlag`() {
+            val grunnlag = valutagrunnlag().copy(valutakursBeregningGrunnlag = null)
+
+            shouldThrow<IllegalArgumentException> {
+                EndeligBidragBeregningV2.beregnBidragTilFordelingLøpendeBidrag(grunnlag)
+            }
+        }
+
+        private fun valutagrunnlag(kurs: String = "6") = BidragTilFordelingLøpendeBidragBeregningGrunnlag(
+            løpendeBidragBeregningGrunnlag = LøpendeBidragTilFordelingBeregningGrunnlag(
+                referanse = "løpende",
+                løpendeBidrag = LøpendeBidragPeriode(
+                    periode = ÅrMånedsperiode(YearMonth.of(2020, 8), YearMonth.of(2020, 9)),
+                    saksnummer = Saksnummer("1"),
+                    stønadstype = Stønadstype.BIDRAG,
+                    løpendeBeløp = BigDecimal("1000"),
+                    valutakode = Valutakode.EUR,
+                    beregnetBeløp = BigDecimal("1000"),
+                    faktiskBeløp = BigDecimal("1000"),
+                    sakskategori = Sakskategori.UTLAND,
+                ),
+            ),
+            samværsfradragBeregningGrunnlag = null,
+            valutakursBeregningGrunnlag = ValutakursGrunnlagTilBeregning(
+                referanse = "kurs",
+                valutakursListe = listOf(
+                    ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal(kurs)),
+                    ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal.ONE.divide(BigDecimal(kurs), 10, java.math.RoundingMode.HALF_UP)),
+                ),
+            ),
+        )
+    }
 
     @Nested
     inner class AndelAvBidragsevne {

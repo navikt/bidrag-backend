@@ -101,6 +101,7 @@ import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.inntekt.Inntektstype.Companion.erSkattefrittBarnetillegg
 import no.nav.bidrag.domene.enums.person.Sivilstandskode
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
 import no.nav.bidrag.domene.enums.vedtak.BeregnTil
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
@@ -461,7 +462,7 @@ fun BehandlingSimple.kanFatteVedtakBegrunnelse(kanBehandleSjekk: Boolean = true)
 
     val harLøpendeBidragUtenlandskValuta =
         løpendeBidrag?.bidragssakerListe?.any {
-            it.valutakode.isNotEmpty() && it.valutakode != "NOK"
+            it.valutakode != Valutakode.NOK
         } == true
 
     if (harLøpendeBidragUtenlandskValuta && !UnleashFeatures.FATTE_VEDTAK_BARNEBIDRAG_UTENLANDSK_VALUTA.isEnabled) {

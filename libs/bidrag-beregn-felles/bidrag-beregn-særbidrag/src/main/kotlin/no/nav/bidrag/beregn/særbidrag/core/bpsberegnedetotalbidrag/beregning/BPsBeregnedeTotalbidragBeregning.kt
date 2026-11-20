@@ -7,6 +7,7 @@ import no.nav.bidrag.beregn.core.util.SjablonUtil
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.bo.ResultatBeregning
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragGrunnlagCore
 import no.nav.bidrag.beregn.særbidrag.core.felles.FellesBeregning
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.sjablon.SjablonInnholdNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonNøkkelNavn
@@ -49,7 +50,15 @@ class BPsBeregnedeTotalbidragBeregning : FellesBeregning() {
                 )
             }
 
-            val beregnetBidrag = it.løpendeBeløp + samværsfradrag + reduksjonUnderholdskostnad
+            fun beregnBidrag(løpendeBeløp: BigDecimal) = løpendeBeløp + samværsfradrag + reduksjonUnderholdskostnad
+            val beregnetBidrag = beregnBidrag(it.løpendeBeløp)
+            val beregnetBidragNOK = if (it.valutakode == Valutakode.NOK) {
+                beregnetBidrag
+            } else {
+                it.valutakursTilNOK?.let { kurs ->
+                    beregnBidrag(it.løpendeBeløp.multiply(kurs))
+                } ?: throw IllegalArgumentException("Kurs kreves for å regne ut bidrag i NOK")
+            }
 
             beregnetBidragPerBarnListe.add(
                 BeregnetBidragPerBarn(
@@ -57,6 +66,8 @@ class BPsBeregnedeTotalbidragBeregning : FellesBeregning() {
                     saksnummer = it.saksnummer,
                     løpendeBeløp = it.løpendeBeløp,
                     valutakode = it.valutakode,
+                    beregnetBidragNOK = beregnetBidragNOK,
+                    valutakursGrunnlagsreferanse = it.valutakursGrunnlagsreferanse,
                     samværsfradrag = samværsfradrag,
                     samværsklasse = it.samværsklasse,
                     beregnetBeløp = beregnetBeløpAvrundet,
@@ -70,7 +81,7 @@ class BPsBeregnedeTotalbidragBeregning : FellesBeregning() {
                 ),
             )
 
-            bPsBeregnedeTotalbidrag += beregnetBidrag
+            bPsBeregnedeTotalbidrag += beregnetBidragNOK
         }
 
         return ResultatBeregning(

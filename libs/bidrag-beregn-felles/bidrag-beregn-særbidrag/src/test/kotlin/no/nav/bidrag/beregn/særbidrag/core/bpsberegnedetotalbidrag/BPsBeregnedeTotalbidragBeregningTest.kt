@@ -5,6 +5,7 @@ import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.beregning.BP
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragCore
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragGrunnlagCore
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
@@ -34,7 +35,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident(genererFødselsnummer(LocalDate.of(2000, 5, 4))),
                     referanseBarn = "referanseBarn",
                     løpendeBeløp = BigDecimal.valueOf(1200),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1, // 528
                     beregnetBeløp = BigDecimal.valueOf(1004),
                     faktiskBeløp = BigDecimal.valueOf(900),
@@ -49,7 +50,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident("040501678901"),
                     referanseBarn = "referanseBarn2",
                     løpendeBeløp = BigDecimal.valueOf(1350),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2, // 1749
                     beregnetBeløp = BigDecimal.valueOf(1164),
                     faktiskBeløp = BigDecimal.valueOf(1010),
@@ -64,7 +65,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident(genererFødselsnummer(LocalDate.of(2002, 5, 4))),
                     referanseBarn = "referanseBarn3",
                     løpendeBeløp = BigDecimal.valueOf(2140),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_3, // 3528
                     beregnetBeløp = BigDecimal.valueOf(1725),
                     faktiskBeløp = BigDecimal.valueOf(1700),
@@ -96,7 +97,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident("1"),
                     referanseBarn = "referanseBarn",
                     løpendeBeløp = BigDecimal.valueOf(1200),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1, // 528
                     beregnetBeløp = BigDecimal.valueOf(1004),
                     faktiskBeløp = BigDecimal.valueOf(900),
@@ -112,7 +113,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident("2"),
                     referanseBarn = "referanseBarn2",
                     løpendeBeløp = BigDecimal.valueOf(1350),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_2, // 1749
                     beregnetBeløp = BigDecimal.valueOf(1164),
                     faktiskBeløp = BigDecimal.valueOf(1010),
@@ -127,7 +128,7 @@ internal class BPsBeregnedeTotalbidragBeregningTest {
                     personidentBarn = Personident("3"),
                     referanseBarn = "referanseBarn3",
                     løpendeBeløp = BigDecimal.valueOf(2140),
-                    valutakode = "NOK",
+                    valutakode = Valutakode.NOK,
                     samværsklasse = Samværsklasse.SAMVÆRSKLASSE_3, // 3528
                     beregnetBeløp = BigDecimal.valueOf(1725),
                     faktiskBeløp = BigDecimal.valueOf(1700),

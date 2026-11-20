@@ -34,6 +34,7 @@ import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.rolle.Rolletype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -308,14 +309,14 @@ private fun HttpClientErrorException.validerInneholderMelding(melding: String) {
 
 private fun oppretLøpendeBidragListeMedUtenlandskValuta() = listOf(
     LøpendeBidragssak(
-        valutakode = "NOK",
+        valutakode = Valutakode.NOK,
         sak = Saksnummer(SAKSNUMMER),
         kravhaver = Personident("12345678901"),
         type = Stønadstype.BIDRAG,
         løpendeBeløp = BigDecimal.ONE,
     ),
     LøpendeBidragssak(
-        valutakode = "USD",
+        valutakode = Valutakode.USD,
         sak = Saksnummer(SAKSNUMMER),
         kravhaver = Personident("12345678901"),
         type = Stønadstype.BIDRAG,
@@ -327,7 +328,7 @@ private fun opprettSkyldnerStønad(type: Stønadstype = Stønadstype.BIDRAG) = S
 
 private fun oppretLøpendeBidragListeMedBareNorskValuta() = listOf(
     LøpendeBidragssak(
-        valutakode = "NOK",
+        valutakode = Valutakode.NOK,
         sak = Saksnummer(SAKSNUMMER),
         kravhaver = Personident(testdataBarn1.ident),
         type = Stønadstype.BIDRAG,

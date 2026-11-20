@@ -7,6 +7,7 @@ import no.nav.bidrag.belopshistorikk.TestUtil.Companion.byggEngangsbeløpRequest
 import no.nav.bidrag.belopshistorikk.persistence.repository.EngangsbeløpRepository
 import no.nav.bidrag.belopshistorikk.persistence.repository.PeriodeRepository
 import no.nav.bidrag.belopshistorikk.persistence.repository.StønadRepository
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -1431,27 +1432,27 @@ class BeløpshistorikkServiceTest {
             { assertThat(respons1.bidragssakerListe[0].type).isEqualTo(Stønadstype.BIDRAG) },
             { assertThat(respons1.bidragssakerListe[0].kravhaver).isEqualTo(Personident("Kravhaver001")) },
             { assertThat(respons1.bidragssakerListe[0].løpendeBeløp).isEqualTo(BigDecimal.valueOf(100.01)) },
-            { assertThat(respons1.bidragssakerListe[0].valutakode).isEqualTo("SEK") },
+            { assertThat(respons1.bidragssakerListe[0].valutakode).isEqualTo(Valutakode.SEK) },
 
             { assertThat(respons1.bidragssakerListe[1].sak.toString()).isEqualTo(Saksnummer("SAK-002").toString()) },
             { assertThat(respons1.bidragssakerListe[1].type).isEqualTo(Stønadstype.BIDRAG) },
             { assertThat(respons1.bidragssakerListe[1].kravhaver).isEqualTo(Personident("Kravhaver002")) },
             { assertThat(respons1.bidragssakerListe[1].løpendeBeløp).isEqualTo(BigDecimal.valueOf(4477.03)) },
-            { assertThat(respons1.bidragssakerListe[1].valutakode).isEqualTo("USD") },
+            { assertThat(respons1.bidragssakerListe[1].valutakode).isEqualTo(Valutakode.USD) },
 
             { assertThat(respons2.bidragssakerListe).size().isEqualTo(1) },
             { assertThat(respons2.bidragssakerListe[0].sak.toString()).isEqualTo(Saksnummer("SAK-001").toString()) },
             { assertThat(respons2.bidragssakerListe[0].type).isEqualTo(Stønadstype.BIDRAG) },
             { assertThat(respons2.bidragssakerListe[0].kravhaver).isEqualTo(Personident("Kravhaver001")) },
             { assertThat(respons2.bidragssakerListe[0].løpendeBeløp).isEqualTo(BigDecimal.valueOf(17.01)) },
-            { assertThat(respons2.bidragssakerListe[0].valutakode).isEqualTo("NOK") },
+            { assertThat(respons2.bidragssakerListe[0].valutakode).isEqualTo(Valutakode.NOK) },
 
             { assertThat(respons3.bidragssakerListe).size().isEqualTo(1) },
             { assertThat(respons3.bidragssakerListe[0].sak.toString()).isEqualTo(Saksnummer("SAK-003").toString()) },
             { assertThat(respons3.bidragssakerListe[0].type).isEqualTo(Stønadstype.BIDRAG) },
             { assertThat(respons3.bidragssakerListe[0].kravhaver).isEqualTo(Personident("Kravhaver005")) },
             { assertThat(respons3.bidragssakerListe[0].løpendeBeløp).isEqualTo(BigDecimal.valueOf(999.06)) },
-            { assertThat(respons3.bidragssakerListe[0].valutakode).isEqualTo("ISK") },
+            { assertThat(respons3.bidragssakerListe[0].valutakode).isEqualTo(Valutakode.ISK) },
 
         )
     }
