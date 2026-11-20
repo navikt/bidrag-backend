@@ -7,11 +7,16 @@ import io.kotest.matchers.shouldBe
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.person.Familierelasjon
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.Datoperiode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspliktigesAndel
+import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.InnhentetHusstandsmedlem
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidrag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutaPar
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
+import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import no.nav.bidrag.transport.behandling.grunnlag.response.BorISammeHusstandDto
 import no.nav.bidrag.transport.behandling.grunnlag.response.RelatertPersonGrunnlagDto
 import no.nav.bidrag.transport.felles.commonObjectmapper
@@ -21,6 +26,31 @@ import java.math.BigDecimal
 import java.time.LocalDate
 
 class JsonMappingTest {
+    @Test
+    fun `skal lese lagret valutakursgrunnlag uten periode`() {
+        val json = """
+            {
+              "referanse": "innhentet_valutakurs_grunnlag",
+              "type": "VALUTAKURS_GRUNNLAG",
+              "innhold": {
+                "valutakursListe": [
+                  {"valutakode1": "NOK", "valutakode2": "EUR", "valutakurs": 0.087},
+                  {"valutakode1": "EUR", "valutakode2": "NOK", "valutakurs": 11.45}
+                ]
+              }
+            }
+        """.trimIndent()
+
+        val grunnlag: GrunnlagDto = commonObjectmapper.readValue(json)
+        val valutakurs = grunnlag.innholdTilObjekt<ValutakursGrunnlag>()
+
+        valutakurs.periode shouldBe null
+        valutakurs.valutakursListe shouldBe listOf(
+            ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal("0.087")),
+            ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal("11.45")),
+        )
+    }
+
     @Test
     fun `skal returnere andelProsent`() {
         val delberegningObjekt =

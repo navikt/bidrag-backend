@@ -37,6 +37,19 @@ internal class BeregnServiceTest {
     }
 
     @Test
+    fun `skal avvise valutakursgrunnlag uten periode ved beregning`() {
+        val grunnlag = GrunnlagDto(
+            referanse = "innhentet_valutakurs_grunnlag",
+            type = Grunnlagstype.VALUTAKURS_GRUNNLAG,
+            innhold = POJONode(ValutakursGrunnlag(valutakursListe = listOf(ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal.TEN)))),
+        )
+
+        shouldThrow<IllegalArgumentException> {
+            service.hentValutakursGrunnlag(listOf(grunnlag), ÅrMånedsperiode("2024-07", "2024-08"), Valutakode.EUR)
+        }.message shouldBe "Valutakursgrunnlaget må ha en periode ved beregning"
+    }
+
+    @Test
     fun `skal avvise manglende eller feil valutapar`() {
         val periode = ÅrMånedsperiode("2024-07", "2024-08")
         val feilValuta = kursgrunnlag(periode, par = ValutaPar(Valutakode.USD, Valutakode.NOK, BigDecimal.TEN))

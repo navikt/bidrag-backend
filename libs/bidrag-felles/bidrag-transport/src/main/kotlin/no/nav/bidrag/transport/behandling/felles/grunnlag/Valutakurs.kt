@@ -7,7 +7,7 @@ import java.math.BigDecimal
 
 @Schema(description = "Liste over valutakurser")
 data class ValutakursGrunnlag(
-    val periode: ÅrMånedsperiode,
+    val periode: ÅrMånedsperiode? = null,
     val valutakursListe: List<ValutaPar>,
 ) : GrunnlagInnhold
 

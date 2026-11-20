@@ -60,14 +60,16 @@ abstract class BeregnService {
             .filter { it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }
             .map { it to it.innholdTilObjekt<ValutakursGrunnlag>() }
             .filter { (_, kursgrunnlag) ->
+                val kursperiode = requireNotNull(kursgrunnlag.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
                 // Kursperiodenes til-dato er eksklusiv.
-                kursgrunnlag.periode.fom < periode.tilEllerMax() && periode.fom < kursgrunnlag.periode.tilEllerMax() &&
+                kursperiode.fom < periode.tilEllerMax() && periode.fom < kursperiode.tilEllerMax() &&
                     kursgrunnlag.valutakursListe.any { it.valutakode1 == valutakode && it.valutakode2 == Valutakode.NOK }
             }
         require(treff.isNotEmpty()) { "Valutakursgrunnlag mangler for valuta og beregningsperiode" }
         require(treff.size == 1) { "Flere valutakursgrunnlag dekker samme valuta og beregningsperiode" }
         val (grunnlag, kursgrunnlag) = treff.single()
-        require(kursgrunnlag.periode.inneholder(periode)) { "Valutakursgrunnlaget må dekke hele beregningsperioden" }
+        val kursperiode = requireNotNull(kursgrunnlag.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
+        require(kursperiode.inneholder(periode)) { "Valutakursgrunnlaget må dekke hele beregningsperioden" }
         val kurser = kursgrunnlag.valutakursListe.filter { it.valutakode1 == valutakode && it.valutakode2 == Valutakode.NOK }
         require(kurser.size == 1) { "Flere valutakurser finnes for samme valutapar" }
         require(kurser.single().valutakurs.signum() > 0) { "Valutakurs til NOK må være større enn null" }

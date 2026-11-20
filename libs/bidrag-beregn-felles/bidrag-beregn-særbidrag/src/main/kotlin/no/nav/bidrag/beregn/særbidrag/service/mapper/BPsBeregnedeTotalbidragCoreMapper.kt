@@ -46,9 +46,10 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
         val valutakursPeriodeListe = beregnGrunnlag.grunnlagListe
             .filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
             .map {
+                val periode = requireNotNull(it.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
                 ValutakursPeriodeCore(
                     referanse = it.referanse,
-                    periode = PeriodeCore(it.innhold.periode.fom.atDay(1), it.innhold.periode.til?.atDay(1)),
+                    periode = PeriodeCore(periode.fom.atDay(1), periode.til?.atDay(1)),
                     valutakursListe = it.innhold.valutakursListe,
                 )
             }
