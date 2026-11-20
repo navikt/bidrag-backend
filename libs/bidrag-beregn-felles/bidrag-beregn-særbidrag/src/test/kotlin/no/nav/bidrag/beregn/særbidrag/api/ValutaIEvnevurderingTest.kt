@@ -115,10 +115,51 @@ internal class ValutaIEvnevurderingTest {
         assertThat(feil).hasMessageContaining("Kurs kreves for å regne ut bidrag i NOK")
     }
 
+    @Test
+    fun `skal bruke kurs fra EUR til NOK selv om den inverse kursen står først`() {
+        val grunnlag = grunnlag(
+            valuta = Valutakode.EUR,
+            valutakursListe = listOf(
+                ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal("0.1666666667")),
+                ValutaPar(Valutakode.EUR, Valutakode.NOK, BigDecimal("6")),
+            ),
+        )
+
+        val resultat = api.beregn(grunnlag, Vedtakstype.FASTSETTELSE)
+        val total = resultat.grunnlagListe.single { it.type == Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_BEREGNEDE_TOTALBIDRAG }
+            .innholdTilObjekt<DelberegningBidragspliktigesBeregnedeTotalbidrag>()
+
+        assertSoftly {
+            it.assertThat(total.beregnetBidragPerBarnListe.single().beregnetBidragNOK).isEqualByComparingTo("6000")
+            it.assertThat(total.bidragspliktigesBeregnedeTotalbidrag).isEqualByComparingTo("6000")
+        }
+    }
+
+    @Test
+    fun `skal avvise eurobidrag når bare kurs fra NOK til EUR finnes`() {
+        val grunnlag = grunnlag(
+            valuta = Valutakode.EUR,
+            valutakursListe = listOf(
+                ValutaPar(Valutakode.NOK, Valutakode.EUR, BigDecimal("0.1666666667")),
+            ),
+        )
+
+        val feil = assertThrows<UgyldigInputException> {
+            api.beregn(grunnlag, Vedtakstype.FASTSETTELSE)
+        }
+        assertThat(feil).hasMessageContaining("Kurs kreves for å regne ut bidrag i NOK")
+    }
+
     private fun grunnlag(
         valuta: Valutakode,
         kurs: BigDecimal? = null,
         samværsklasse: Samværsklasse = Samværsklasse.SAMVÆRSKLASSE_0,
+        valutakursListe: List<ValutaPar> = kurs?.let {
+            listOf(
+                ValutaPar(valuta, Valutakode.NOK, it),
+                ValutaPar(Valutakode.NOK, valuta, BigDecimal.ONE.divide(it, 10, RoundingMode.HALF_UP)),
+            )
+        } ?: emptyList(),
     ): BeregnGrunnlag {
         val original = commonObjectmapper.readValue(
             Files.readString(Path.of("src/test/resources/testfiler/særbidrag_eksempel1.json")),
@@ -142,17 +183,12 @@ internal class ValutaIEvnevurderingTest {
                     it
                 }
             } + listOfNotNull(
-                kurs?.let {
+                valutakursListe.takeIf { it.isNotEmpty() }?.let {
                     GrunnlagDto(
                         referanse = "kurs",
                         type = Grunnlagstype.VALUTAKURS_GRUNNLAG,
                         innhold = POJONode(
-                            ValutakursGrunnlag(
-                                listOf(
-                                    ValutaPar(valuta, Valutakode.NOK, it),
-                                    ValutaPar(Valutakode.NOK, valuta, BigDecimal.ONE.divide(it, 10, RoundingMode.HALF_UP)),
-                                ),
-                            ),
+                            ValutakursGrunnlag(it),
                         ),
                     )
                 },
