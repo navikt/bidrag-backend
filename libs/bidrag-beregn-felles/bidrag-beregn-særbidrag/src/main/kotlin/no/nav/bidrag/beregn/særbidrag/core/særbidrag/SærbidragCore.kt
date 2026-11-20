@@ -42,7 +42,7 @@ internal class SærbidragCore(private val særbidragPeriode: SærbidragPeriode =
         søknadsbarnPersonId = grunnlag.søknadsbarnPersonId,
         betaltAvBpPeriodeListe = mapBetaltAvBpPeriodeListe(grunnlag.betaltAvBpPeriodeListe),
         bidragsevnePeriodeListe = mapBidragsevnePeriodeListe(grunnlag.bidragsevnePeriodeListe),
-        bPsBeregnedeTotalbidrag = mapBPsBeregnedeTotalbidrag(grunnlag.bPsBeregnedeTotalbidragPeriodeCore),
+        bPsBeregnedeTotalbidragPeriodeListe = grunnlag.bPsBeregnedeTotalbidragPeriodeListe.map { mapBPsBeregnedeTotalbidrag(it) },
         bPsAndelSærbidragPeriodeListe = mapBPsAndelSærbidragPeriodeListe(grunnlag.bPsAndelSærbidragPeriodeListe),
     )
 

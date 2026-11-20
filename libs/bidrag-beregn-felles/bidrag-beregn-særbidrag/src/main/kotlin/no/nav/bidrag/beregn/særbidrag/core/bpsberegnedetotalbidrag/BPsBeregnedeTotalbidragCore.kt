@@ -21,8 +21,8 @@ internal class BPsBeregnedeTotalbidragCore(
     }
 
     private fun mapFraBusinessObject(resultat: BeregnBPsBeregnedeTotalbidragResultat) = BeregnBPsBeregnedeTotalbidragResultatCore(
-        resultatPeriode = mapResultatPeriode(resultat.resultatPeriode),
-        sjablonListe = mapSjablonGrunnlagListe(resultat.resultatPeriode),
+        resultatPeriodeListe = resultat.resultatPeriodeListe.map { mapResultatPeriode(it) },
+        sjablonListe = resultat.resultatPeriodeListe.flatMap { mapSjablonGrunnlagListe(it) }.distinct(),
     )
 
     private fun mapResultatPeriode(resultatPeriode: ResultatPeriode) = ResultatPeriodeCore(
@@ -37,8 +37,9 @@ internal class BPsBeregnedeTotalbidragCore(
         referanseListe.add(resultatPeriode.grunnlag.referanse)
         referanseListe.addAll(resultatPeriode.grunnlag.grunnlagsreferanseListe)
         referanseListe.addAll(resultatPeriode.grunnlag.løpendeBidragCoreListe.map { it.referanseBarn })
+        referanseListe.addAll(resultatPeriode.grunnlag.løpendeBidragCoreListe.mapNotNull { it.valutakursGrunnlagsreferanse })
         referanseListe.addAll(sjablonListe.map { lagSjablonReferanse(it) }.distinct())
-        return referanseListe.sorted()
+        return referanseListe.distinct().sorted()
     }
 
     private fun mapSjablonGrunnlagListe(resultatPeriode: ResultatPeriode) = resultatPeriode

@@ -5,20 +5,20 @@ import no.nav.bidrag.beregn.core.bo.Sjablon
 import no.nav.bidrag.beregn.core.bo.SjablonInnhold
 import no.nav.bidrag.beregn.core.bo.SjablonNøkkel
 import no.nav.bidrag.beregn.core.bo.SjablonPeriode
+import no.nav.bidrag.beregn.core.dto.PeriodeCore
 import no.nav.bidrag.beregn.core.dto.SjablonPeriodeCore
 import no.nav.bidrag.beregn.core.service.mapper.CoreMapper
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragCore
 import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.LøpendeBidragGrunnlagCore
+import no.nav.bidrag.beregn.særbidrag.core.bpsberegnedetotalbidrag.dto.ValutakursPeriodeCore
 import no.nav.bidrag.beregn.særbidrag.core.felles.bo.SjablonListe
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
-import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidragGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
-import no.nav.bidrag.transport.behandling.felles.grunnlag.innholdTilObjekt
 import java.time.LocalDate
 import java.util.Collections.emptyList
 
@@ -43,9 +43,15 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
                 sjablonSamværsfradragListe = sjablonListe.sjablonSamværsfradragResponse,
             )
         val sjablonPeriodeListe = mapSjablonPeriodeListe(sjablonPeriodeCoreListe)
-        val valutakursGrunnlag = beregnGrunnlag.grunnlagListe.firstOrNull { grunnlagDto -> grunnlagDto.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }
-        val valutakurser = valutakursGrunnlag
-            ?.innholdTilObjekt<ValutakursGrunnlag>()
+        val valutakursPeriodeListe = beregnGrunnlag.grunnlagListe
+            .filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
+            .map {
+                ValutakursPeriodeCore(
+                    referanse = it.referanse,
+                    periode = PeriodeCore(it.innhold.periode.fom.atDay(1), it.innhold.periode.til?.atDay(1)),
+                    valutakursListe = it.innhold.valutakursListe,
+                )
+            }
 
         return LøpendeBidragGrunnlagCore(
             beregnDatoFra = beregnGrunnlag.periode.fom.atDay(1),
@@ -59,10 +65,6 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
                     referanseBarn = it.gjelderBarn,
                     løpendeBeløp = it.løpendeBeløp,
                     valutakode = it.valutakode,
-                    valutakursTilNOK = valutakurser
-                        ?.valutakursListe?.find { vl -> vl.valutakode1 == it.valutakode && vl.valutakode2 == Valutakode.NOK }
-                        ?.valutakurs,
-                    valutakursGrunnlagsreferanse = valutakursGrunnlag?.referanse,
                     samværsklasse = it.samværsklasse,
                     beregnetBeløp = it.beregnetBeløp,
                     faktiskBeløp = it.faktiskBeløp,
@@ -74,6 +76,7 @@ internal object BPsBeregnedeTotalbidragCoreMapper : CoreMapper() {
             },
             grunnlagsreferanseListe = emptyList(),
             sjablonPeriodeListe = sjablonPeriodeListe,
+            valutakursPeriodeListe = valutakursPeriodeListe,
         )
     }
 

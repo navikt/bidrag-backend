@@ -144,7 +144,7 @@ internal class SærbidragCoreTest {
             søknadsbarnPersonId = "1",
             betaltAvBpPeriodeListe = betaltAvBpPeriodeListe,
             bidragsevnePeriodeListe = bidragsevnePeriodeListe,
-            bPsBeregnedeTotalbidragPeriodeCore = bPsBeregnedeTotalbidrag,
+            bPsBeregnedeTotalbidragPeriodeListe = listOf(bPsBeregnedeTotalbidrag),
             bPsAndelSærbidragPeriodeListe = bPsAndelSærbidragPeriodeListe,
         )
     }
