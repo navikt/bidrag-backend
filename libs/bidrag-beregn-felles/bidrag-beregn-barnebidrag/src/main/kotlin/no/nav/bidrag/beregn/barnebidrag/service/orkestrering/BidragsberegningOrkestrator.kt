@@ -9,6 +9,7 @@ import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidr
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgOppfostringsbidragException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagBeregningException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Beregningstype
@@ -36,8 +37,6 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.Person
 import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtaleGrunnlagV2
 import no.nav.bidrag.transport.behandling.felles.grunnlag.PrivatAvtalePeriodeGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
-import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutaPar
-import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erPerson
 import no.nav.bidrag.transport.behandling.felles.grunnlag.erRevurderingsbarn
@@ -77,7 +76,7 @@ data class BeregningsResultatOrkestrert(
 const val BARNEBIDRAG_BEREGNING_GRUNNLAGSREFERANSE_SJEKK_EVNESPREKK_ETTER_FF_POSTFIX = "_2A"
 
 @Service
-@Import(BeregnBarnebidragApi::class, OmgjøringOrkestrator::class, OmgjøringOrkestratorV2::class)
+@Import(BeregnBarnebidragApi::class, OmgjøringOrkestrator::class, OmgjøringOrkestratorV2::class, ValutakursService::class)
 class BidragsberegningOrkestrator(
     private val barnebidragApi: BeregnBarnebidragApi,
     private val omgjøringOrkestrator: OmgjøringOrkestrator,
@@ -85,6 +84,7 @@ class BidragsberegningOrkestrator(
     private val hentLøpendeBidragService: HentLøpendeBidragService,
     private val personConsumer: BeregningPersonConsumer,
     private val sakConsumer: BeregningSakConsumer,
+    private val valutakursService: ValutakursService,
 ) {
 
     fun utførBidragsberegningV3(request: BidragsberegningOrkestratorRequestV2): BidragsberegningOrkestratorResponseV2 = when (request.beregningstype) {
@@ -633,7 +633,7 @@ class BidragsberegningOrkestrator(
                 request = request,
                 totalBeregningsperiode = totalBeregningsperiode,
             )
-            val grunnlagValutakursListe = byggValutakursListe(totalBeregningsperiode)
+            val grunnlagValutakursListe = valutakursService.hentValutakursgrunnlag(løpendeBidragOgBeregningerGrunnlag + privatAvtaleGrunnlag)
 
             val beregningResultatListe = barnebidragApi.beregnV2(
                 beregningsperiode = totalBeregningsperiode,
@@ -1125,31 +1125,6 @@ class BidragsberegningOrkestrator(
             utlandssakerListe = utlandssakerListe,
         )
     }
-
-    private fun byggValutakursListe(periode: ÅrMånedsperiode): List<GrunnlagDto> = listOf(
-        GrunnlagDto(
-            referanse = "innhentet_valutakurs_grunnlag",
-            type = Grunnlagstype.VALUTAKURS_GRUNNLAG,
-            innhold = POJONode(hentValutakurser(periode)),
-        ),
-    )
-
-    // TODO Skal hente valutakurser fra ekstern tjeneste i bidrag-grunnlag
-    private fun hentValutakurser(periode: ÅrMånedsperiode) = ValutakursGrunnlag(
-        periode = periode,
-        valutakursListe = listOf(
-            ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.SEK, valutakurs = BigDecimal.valueOf(0.92)),
-            ValutaPar(valutakode1 = Valutakode.SEK, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(1.09)),
-            ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.DKK, valutakurs = BigDecimal.valueOf(0.65)),
-            ValutaPar(valutakode1 = Valutakode.DKK, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(1.53)),
-            ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.EUR, valutakurs = BigDecimal.valueOf(0.087)),
-            ValutaPar(valutakode1 = Valutakode.EUR, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(11.45)),
-            ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.GBP, valutakurs = BigDecimal.valueOf(0.076)),
-            ValutaPar(valutakode1 = Valutakode.GBP, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(13.21)),
-            ValutaPar(valutakode1 = Valutakode.NOK, valutakode2 = Valutakode.USD, valutakurs = BigDecimal.valueOf(0.10)),
-            ValutaPar(valutakode1 = Valutakode.USD, valutakode2 = Valutakode.NOK, valutakurs = BigDecimal.valueOf(9.60)),
-        ),
-    )
 
     private fun mapBeregningExceptionToResponse(
         data: List<BeregnetBarnebidragResultatV2>,

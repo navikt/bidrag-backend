@@ -7,8 +7,10 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
@@ -25,10 +27,14 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.sperrBeregningNårB
 import no.nav.bidrag.beregn.barnebidrag.unleash.BarnebidragUnleashFeatures
 import no.nav.bidrag.beregn.barnebidrag.unleash.disableUnleashFeature
 import no.nav.bidrag.beregn.barnebidrag.unleash.enableUnleashFeature
+import no.nav.bidrag.beregn.core.consumer.ValutakursConsumer
+import no.nav.bidrag.beregn.core.consumer.ValutakursgrunnlagResponse
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BeregnetBarnebidragResultatV2
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
@@ -42,6 +48,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import java.math.BigDecimal
+import java.time.LocalDate
 import java.time.YearMonth
 
 /**
@@ -162,6 +170,7 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
         hentLøpendeBidragService = hentLøpendeBidragService,
         personConsumer = personConsumer,
         sakConsumer = sakConsumer,
+        valutakursService = lagValutakursService(),
     )
 
     private fun beregn(scenario: String): List<BeregnetBarnebidragResultatV2> {
@@ -171,6 +180,34 @@ internal class SperrSelvforsørgetBarnTest : FellesTest() {
             beregningsperiode = beregningsperiode,
             grunnlagSøknadsbarnListe = request,
         )
+    }
+
+    private fun lagValutakursService(): ValutakursService {
+        val consumer = mockk<ValutakursConsumer>()
+        every { consumer.hentValutakurs(any(), any()) } answers {
+            val valutakode = firstArg<Valutakode>()
+            val dato = secondArg<LocalDate>()
+            val brukFra = dato.atStartOfDay()
+            val brukTil = brukFra.plusMonths(6)
+            val kurs = when (valutakode.name) {
+                "EUR" -> BigDecimal("11.45")
+                "SEK" -> BigDecimal("1.09")
+                "DKK" -> BigDecimal("1.53")
+                "GBP" -> BigDecimal("13.21")
+                "USD" -> BigDecimal("9.60")
+                else -> error("Valuta er ikke stubbet")
+            }
+            ValutakursgrunnlagResponse(
+                brukFra = brukFra,
+                brukTil = brukTil,
+                kurs = kurs,
+                multiplikator = 0,
+                basisvaluta = valutakode,
+                kvoteringsvaluta = Valutakode.NOK,
+                feiletHenting = false,
+            )
+        }
+        return ValutakursService(consumer)
     }
 
     private fun sluttberegninger(resultat: List<BeregnetBarnebidragResultatV2>, søknadsbarn: String) = resultat

@@ -10,9 +10,11 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.CapturingSlot
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
+import io.mockk.spyk
 import io.mockk.unmockkObject
 import io.mockk.verify
 import no.nav.bidrag.behandling.config.UnleashFeatures
@@ -56,6 +58,9 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrk
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
+import no.nav.bidrag.beregn.core.consumer.ValutakursConsumer
+import no.nav.bidrag.beregn.core.consumer.ValutakursgrunnlagResponse
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
 import no.nav.bidrag.commons.unleash.UnleashFeaturesProvider
@@ -71,6 +76,7 @@ import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.grunnlag.HentGrunnlagFeiltype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.person.Bostatuskode
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.særbidrag.Utgiftstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -81,6 +87,7 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.BostatusPeriode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningUtgift
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragsmottaker
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
 import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerBasertPåEgenReferanse
@@ -94,6 +101,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.HttpClientErrorException
@@ -103,6 +112,10 @@ import java.time.YearMonth
 
 @ExtendWith(SpringExtension::class)
 class BeregningServiceTest {
+    private val valutakursConsumer = mockk<ValutakursConsumer>()
+    private val valutakursService = ValutakursService(valutakursConsumer)
+    private val validering = spyk(ValiderBeregning())
+
     @MockkBean
     lateinit var behandlingService: BehandlingService
 
@@ -162,7 +175,7 @@ class BeregningServiceTest {
         vedtakGrunnlagMapper =
             VedtakGrunnlagMapper(
                 BehandlingTilGrunnlagMappingV2(personService, BeregnSamværsklasseApi(sjablonService)),
-                ValiderBeregning(),
+                validering,
                 evnevurderingService,
                 barnebidragGrunnlagInnhenting,
                 personService,
@@ -184,7 +197,7 @@ class BeregningServiceTest {
         val beregnCapture = mutableListOf<BeregnGrunnlag>()
         mockkConstructor(BeregnForskuddApi::class)
         every { BeregnForskuddApi().beregn(capture(beregnCapture)) } answers { callOriginal() }
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneForskudd(1)
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneForskudd(1)
         val beregnGrunnlagList: List<BeregnGrunnlag> = beregnCapture
 
         verify(exactly = 2) {
@@ -258,7 +271,7 @@ class BeregningServiceTest {
             ).toMutableSet()
 
         every { behandlingService.hentBehandlingById(any()) } returns behandling
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneBidrag(1).resultatBarn
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneBidrag(1).resultatBarn
 
         verify(exactly = 1) {
             bidragsberegningOrkestrator.utførBidragsberegningV3(any())
@@ -289,7 +302,7 @@ class BeregningServiceTest {
         behandling.finnBeregnTilDatoBehandling(barnMedAvslag).toYearMonth() shouldBeLessThan beregnFra
 
         val request =
-            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+            BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                 .opprettGrunnlagBeregningBidragV2(behandling)
 
         val beregningBarnMedAvslag = request.beregningBarn.find { it.søknadsbarnreferanse == barnMedAvslag.tilGrunnlagsreferanse() }!!
@@ -337,7 +350,7 @@ class BeregningServiceTest {
         )
         behandling.grunnlagsinnhentingFeilet = commonObjectmapper.writeValueAsString(mapOf(Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG to GrunnlagFeilDto(grunnlagstype = null, feilmelding = "", personId = "", feiltype = HentGrunnlagFeiltype.TEKNISK_FEIL)))
         every { behandlingService.hentBehandlingById(any()) } returns behandling
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneBidrag(1).resultatBarn
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneBidrag(1).resultatBarn
 
         verify(exactly = 1) {
             bidragsberegningOrkestrator.utførBidragsberegningV3(any())
@@ -391,7 +404,7 @@ class BeregningServiceTest {
             ),
         )
         every { behandlingService.hentBehandlingById(any()) } returns behandling
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneBidrag(1).resultatBarn
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneBidrag(1).resultatBarn
 
         verify(exactly = 1) {
             bidragsberegningOrkestrator.utførBidragsberegningV3(any())
@@ -448,7 +461,7 @@ class BeregningServiceTest {
         )
         every { behandlingService.hentBehandlingById(any()) } returns behandling
 
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneBidrag(1).resultatBarn
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneBidrag(1).resultatBarn
 
         verify(exactly = 1) {
             bidragsberegningOrkestrator.utførBidragsberegningV3(any())
@@ -473,16 +486,25 @@ class BeregningServiceTest {
 //        }
     }
 
-    @Test
-    fun `skal bygge grunnlag for særbidrag beregning`() {
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.SÆRBIDRAG)
+    @ParameterizedTest
+    @EnumSource(value = Valutakode::class, names = ["NOK", "EUR"])
+    fun `skal bygge grunnlag for særbidrag beregning`(valuta: Valutakode) {
+        val virkningstidspunkt = LocalDate.of(2024, 7, 1)
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(
+            true,
+            typeBehandling = TypeBehandling.SÆRBIDRAG,
+            virkningstidspunkt = virkningstidspunkt,
+        )
+        // Historisk testperiode: regelen om inneværende måned testes i valideringstestene.
+        every { with(validering) { behandling.validerTekniskForBeregningAvSærbidrag() } } returns Unit
         behandling.utgift = oppretteUtgift(behandling, Utgiftstype.KLÆR.name)
+        behandling.utgift!!.utgiftsposter.forEach { it.dato = virkningstidspunkt.minusDays(3) }
         behandling.utgift!!.maksGodkjentBeløp = null
         behandling.utgift!!.maksGodkjentBeløpBegrunnelse = "Maks godkjent beløp"
         behandling.utgift!!.maksGodkjentBeløpTaMed = false
         behandling.utgift!!.utgiftsposter.add(
             Utgiftspost(
-                dato = LocalDate.now().minusDays(3),
+                dato = virkningstidspunkt.minusDays(3),
                 type = Utgiftstype.KONFIRMASJONSLEIR.name,
                 kravbeløp = BigDecimal(3000),
                 godkjentBeløp = BigDecimal(2500),
@@ -491,7 +513,7 @@ class BeregningServiceTest {
             ),
         )
         behandling.vedtakstype = Vedtakstype.FASTSETTELSE
-        behandling.virkningstidspunkt = LocalDate.now().withDayOfMonth(1)
+        behandling.virkningstidspunkt = virkningstidspunkt
         behandling.grunnlag =
             opprettAlleAktiveGrunnlagFraFil(
                 behandling,
@@ -499,11 +521,26 @@ class BeregningServiceTest {
             ).toMutableSet()
 
         every { behandlingService.hentBehandlingById(any()) } returns behandling
+        val evnevurdering = opprettEvnevurderingResultat(
+            listOf(testdataBarn1 to Stønadstype.BIDRAG, testdataHusstandsmedlem1 to Stønadstype.BIDRAG),
+        )
+        every { evnevurderingService.hentLøpendeBidragForBehandling(any()) } returns evnevurdering.copy(
+            løpendeBidragsaker = evnevurdering.løpendeBidragsaker.map { it.copy(valutakode = valuta) },
+        )
+        every { valutakursConsumer.hentValutakurs(Valutakode.EUR, virkningstidspunkt) } returns ValutakursgrunnlagResponse(
+            brukFra = virkningstidspunkt.atStartOfDay(),
+            brukTil = virkningstidspunkt.plusMonths(6).atStartOfDay(),
+            kurs = BigDecimal("11.45"),
+            multiplikator = 0,
+            basisvaluta = Valutakode.EUR,
+            kvoteringsvaluta = Valutakode.NOK,
+            feiletHenting = false,
+        )
         val beregnCapture = mutableListOf<BeregnGrunnlag>()
         val vedtaksTypeCapture = CapturingSlot<Vedtakstype>()
         mockkConstructor(BeregnSærbidragApi::class)
         every { BeregnSærbidragApi().beregn(capture(beregnCapture), capture(vedtaksTypeCapture)) } answers { callOriginal() }
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneSærbidrag(1)
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneSærbidrag(1)
         val beregnGrunnlagList: List<BeregnGrunnlag> = beregnCapture
 
         verify(exactly = 1) {
@@ -514,7 +551,7 @@ class BeregningServiceTest {
         beregnGrunnlagList shouldHaveSize 1
         assertSoftly(beregnGrunnlagList[0]) {
             it.periode.fom shouldBe YearMonth.from(behandling.virkningstidspunkt)
-            it.periode.til shouldBe YearMonth.now().plusMonths(1)
+            it.periode.til shouldBe YearMonth.of(2024, 8)
 
             val personer =
                 it.grunnlagListe.hentAllePersoner() as Collection<GrunnlagDto>
@@ -550,6 +587,16 @@ class BeregningServiceTest {
             val delberegningUtgift = it.grunnlagListe.filtrerBasertPåEgenReferanse(Grunnlagstype.DELBEREGNING_UTGIFT).first()
             delberegningUtgift.innholdTilObjekt<DelberegningUtgift>().sumGodkjent shouldBe BigDecimal(5000)
         }
+        val kurser = resultat.grunnlagListe.filter { it.type == Grunnlagstype.VALUTAKURS_GRUNNLAG }
+        if (valuta == Valutakode.EUR) {
+            val kursgrunnlag = kurser.single()
+            kursgrunnlag.innholdTilObjekt<ValutakursGrunnlag>().periode shouldBe ÅrMånedsperiode("2024-07", "2025-01")
+            resultat.grunnlagListe.any { kursgrunnlag.referanse in it.grunnlagsreferanseListe } shouldBe true
+            verify(exactly = 1) { valutakursConsumer.hentValutakurs(Valutakode.EUR, virkningstidspunkt) }
+        } else {
+            kurser shouldHaveSize 0
+            verify(exactly = 0) { valutakursConsumer.hentValutakurs(any(), any()) }
+        }
     }
 
     @Test
@@ -582,7 +629,7 @@ class BeregningServiceTest {
         val vedtaksTypeCapture = CapturingSlot<Vedtakstype>()
         mockkConstructor(BeregnSærbidragApi::class)
         every { BeregnSærbidragApi().beregn(capture(beregnCapture), capture(vedtaksTypeCapture)) } answers { callOriginal() }
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneSærbidrag(1)
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneSærbidrag(1)
         val beregnGrunnlagList: List<BeregnGrunnlag> = beregnCapture
 
         verify(exactly = 1) {
@@ -619,7 +666,7 @@ class BeregningServiceTest {
         val vedtaksTypeCapture = CapturingSlot<Vedtakstype>()
         mockkConstructor(BeregnSærbidragApi::class)
         every { BeregnSærbidragApi().beregn(capture(beregnCapture), capture(vedtaksTypeCapture)) } answers { callOriginal() }
-        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneSærbidrag(1)
+        val resultat = BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneSærbidrag(1)
 
         verify(exactly = 1) {
             BeregnSærbidragApi().beregn(any(), any())
@@ -648,7 +695,7 @@ class BeregningServiceTest {
         every { BeregnSærbidragApi().beregn(capture(beregnCapture), capture(vedtaksTypeCapture)) } answers { callOriginal() }
 
         val exception =
-            assertThrows<HttpClientErrorException> { BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator).beregneSærbidrag(1) }
+            assertThrows<HttpClientErrorException> { BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService).beregneSærbidrag(1) }
         verify(exactly = 0) {
             BeregnSærbidragApi().beregn(any(), any())
         }
@@ -665,7 +712,7 @@ class BeregningServiceTest {
 
             val exception =
                 assertThrows<HttpClientErrorException> {
-                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                         .beregneSærbidrag(1)
                 }
             exception.statusCode shouldBe HttpStatus.BAD_REQUEST
@@ -685,14 +732,14 @@ class BeregningServiceTest {
 
             val exception =
                 assertThrows<HttpClientErrorException> {
-                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                         .beregneSærbidrag(1)
                 }
             exception.message shouldContain FEILMELDING_SELVFORSØRGET_BARN_SÆRBIDRAG
 
             disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
             val resultat =
-                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                     .beregneSærbidrag(1)
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_IKKE_FULL_BIDRAGSEVNE
         } finally {
@@ -714,7 +761,7 @@ class BeregningServiceTest {
             every { behandlingService.hentBehandlingById(any()) } returns behandling
 
             val resultat =
-                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                     .beregneSærbidrag(1)
 
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.BARNET_ER_SELVFORSØRGET
@@ -732,7 +779,7 @@ class BeregningServiceTest {
             every { behandlingService.hentBehandlingById(any()) } returns behandling
 
             val resultat =
-                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator, valutakursService)
                     .beregneSærbidrag(1)
 
             resultat.beregnetSærbidragPeriodeListe.first().resultat.resultatkode shouldBe Resultatkode.SÆRBIDRAG_INNVILGET

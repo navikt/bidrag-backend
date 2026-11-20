@@ -9,6 +9,7 @@ import io.kotest.matchers.date.shouldHaveSameDayAs
 import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import jakarta.persistence.EntityManager
@@ -64,6 +65,9 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrk
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
+import no.nav.bidrag.beregn.core.consumer.ValutakursConsumer
+import no.nav.bidrag.beregn.core.consumer.ValutakursgrunnlagResponse
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.commons.web.mock.stubKodeverkProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.commons.web.mock.stubSjablonService
@@ -71,6 +75,7 @@ import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Samværsklasse
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
@@ -199,7 +204,8 @@ class VedtakserviceTest : TestContainerRunner() {
         enableUnleashFeature(UnleashFeatures.BEGRENSET_REVURDERING)
         disableUnleashFeature(UnleashFeatures.VEDTAKSSPERRE)
         bidragPersonConsumer = stubPersonConsumer()
-        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, bidragPersonConsumer, sakConsumer)
+        val valutakursService = lagValutakursService()
+        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, bidragPersonConsumer, sakConsumer, valutakursService)
         every { barnebidragGrunnlagInnhenting.hentBeløpshistorikk(any(), any(), any(), any(), any()) } returns null
         every { barnebidragGrunnlagInnhenting.byggGrunnlagBeløpshistorikk(any(), any()) } returns emptySet()
         val personService = PersonService(bidragPersonConsumer)
@@ -253,6 +259,7 @@ class VedtakserviceTest : TestContainerRunner() {
                 vedtakGrunnlagMapper,
                 aldersjusteringOrchestrator,
                 bidragsberegningOrkestrator,
+                valutakursService,
             )
 
         val vedtakTilBehandlingMapping = VedtakTilBehandlingMapping(validerBeregning, underholdService, behandlingRepository)
@@ -298,6 +305,34 @@ class VedtakserviceTest : TestContainerRunner() {
         stubUtils.stubBidraBBMHentBeregning()
         stubUtils.stubBidragBeløpshistorikkLøpendeSaker()
         stubUtils.stubBidragStønaderForSkyldner()
+    }
+
+    private fun lagValutakursService(): ValutakursService {
+        val consumer = mockk<ValutakursConsumer>()
+        every { consumer.hentValutakurs(any(), any()) } answers {
+            val valutakode = firstArg<Valutakode>()
+            val dato = secondArg<LocalDate>()
+            val brukFra = dato.atStartOfDay()
+            val brukTil = brukFra.plusMonths(6)
+            val kurs = when (valutakode.name) {
+                "EUR" -> BigDecimal("11.45")
+                "SEK" -> BigDecimal("1.09")
+                "DKK" -> BigDecimal("1.53")
+                "GBP" -> BigDecimal("13.21")
+                "USD" -> BigDecimal("9.60")
+                else -> error("Valuta er ikke stubbet")
+            }
+            ValutakursgrunnlagResponse(
+                brukFra = brukFra,
+                brukTil = brukTil,
+                kurs = kurs,
+                multiplikator = 0,
+                basisvaluta = valutakode,
+                kvoteringsvaluta = Valutakode.NOK,
+                feiletHenting = false,
+            )
+        }
+        return ValutakursService(consumer)
     }
 
     @Test

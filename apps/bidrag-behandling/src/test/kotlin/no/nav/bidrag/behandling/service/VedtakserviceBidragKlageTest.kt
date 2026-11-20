@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.verify
 import no.nav.bidrag.behandling.config.UnleashFeatures
@@ -46,6 +47,7 @@ import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.utils.tilDto
 import no.nav.bidrag.beregn.barnebidrag.utils.toYearMonth
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.domene.enums.behandling.Behandlingstype
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
@@ -115,6 +117,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 vedtakGrunnlagMapper,
                 aldersjusteringOrchestrator,
                 bidragsberegningOrkestrator,
+                ValutakursService(mockk()),
             )
         behandlingTilVedtakMapping =
             BehandlingTilVedtakMapping(

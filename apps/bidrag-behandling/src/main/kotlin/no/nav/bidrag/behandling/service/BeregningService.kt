@@ -56,6 +56,7 @@ import no.nav.bidrag.beregn.core.exception.BegrensetRevurderingLikEllerLavereEnn
 import no.nav.bidrag.beregn.core.exception.BegrensetRevurderingLøpendeForskuddManglerException
 import no.nav.bidrag.beregn.core.exception.BidragsberegningFeiletTekniskException
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.beregn.core.service.mapper.CoreMapper
 import no.nav.bidrag.beregn.forskudd.BeregnForskuddApi
 import no.nav.bidrag.beregn.særbidrag.BeregnSærbidragApi
@@ -130,6 +131,7 @@ class BeregningService(
     private val mapper: VedtakGrunnlagMapper,
     private val aldersjusteringOrchestrator: AldersjusteringOrchestrator,
     private val beregnBarnebidrag: BidragsberegningOrkestrator,
+    private val valutakursService: ValutakursService,
 ) {
     private val beregnApi = BeregnForskuddApi()
     private val beregnSærbidragApi = BeregnSærbidragApi()
@@ -175,9 +177,11 @@ class BeregningService(
             try {
                 val beregningRequest =
                     mapper.byggGrunnlagForBeregning(behandling, søknasdbarn)
+                val beregnGrunnlag = beregningRequest.beregnGrunnlag
+                val valutakurser = valutakursService.hentValutakursgrunnlag(listOf(beregnGrunnlag))
                 beregnSærbidragApi
                     .beregn(
-                        beregningRequest.beregnGrunnlag!!,
+                        beregnGrunnlag.copy(grunnlagListe = beregnGrunnlag.grunnlagListe + valutakurser),
                         behandling.omgjøringsdetaljer?.opprinneligVedtakstype ?: behandling.vedtakstype,
                     ).let { resultat ->
                         resultat.validerForSærbidrag()

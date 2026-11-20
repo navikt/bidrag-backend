@@ -27,6 +27,15 @@ management.metrics.distribution.percentiles-histogram.http.client.requests: true
 no.nav.security.jwt:
   client:
     registration:
+      bidrag-grunnlag:
+        resource-url: ${BIDRAG_GRUNNLAG_URL}
+        token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://${BIDRAG_GRUNNLAG_SCOPE}/.default
+        authentication:
+          client-id: ${AZURE_APP_CLIENT_ID}
+          client-secret: ${AZURE_APP_CLIENT_SECRET}
+          client-auth-method: client_secret_post
       bidrag-person:
         resource-url: ${BIDRAG_PERSON_URL}
         token-endpoint-url: https://login.microsoftonline.com/${AZURE_APP_TENANT_ID}/oauth2/v2.0/token
@@ -98,6 +107,8 @@ spring:
   config:
     activate:
       on-profile: q2
+BIDRAG_GRUNNLAG_URL: https://bidrag-grunnlag.intern.dev.nav.no
+BIDRAG_GRUNNLAG_SCOPE: dev-gcp.bidrag.bidrag-grunnlag
 BIDRAG_BELOPSHISTORIKK_URL: https://bidrag-belopshistorikk-q2.intern.dev.nav.no
 BIDRAG_BELOPSHISTORIKK_SCOPE: dev-gcp.bidrag.bidrag-belopshistorikk-q2
 BIDRAG_BBM_URL: https://bidrag-bbm.dev-fss-pub.nais.io
@@ -113,6 +124,8 @@ spring:
   config:
     activate:
       on-profile: q1
+BIDRAG_GRUNNLAG_URL: https://bidrag-grunnlag-feature.intern.dev.nav.no
+BIDRAG_GRUNNLAG_SCOPE: dev-gcp.bidrag.bidrag-grunnlag-feature
 BIDRAG_BELOPSHISTORIKK_URL: https://bidrag-belopshistorikk-q1.intern.dev.nav.no
 BIDRAG_BELOPSHISTORIKK_SCOPE: dev-gcp.bidrag.bidrag-belopshistorikk-q1
 BIDRAG_BBM_URL: https://bidrag-bbm-feature.dev-fss-pub.nais.io
