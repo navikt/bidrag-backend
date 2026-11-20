@@ -195,6 +195,14 @@
                         </goals>
                     </execution>
                     <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-test-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
                         <id>default-kapt</id>
                         <phase>none</phase>
                     </execution>

@@ -105,6 +105,12 @@
                             <jvmTarget>21</jvmTarget>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>default-test-compile</id>
+                        <configuration>
+                            <jvmTarget>21</jvmTarget>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <!-- Flater ut parent-referansen (til rot-pom-en, som ikke publiseres) i den deployede pom-en,
