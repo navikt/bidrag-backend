@@ -1,14 +1,19 @@
 package no.nav.bidrag.sak.service
 
+import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
+import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.sak.Tilgangstype
 import no.nav.bidrag.domene.enums.vedtak.Behandlingstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.sak.domain.Bidragssak
+import no.nav.bidrag.sak.domain.Rolle
 import no.nav.bidrag.sak.domain.Tilgang
+import no.nav.bidrag.sak.domain.finnPrimærrolle
 import no.nav.bidrag.sak.integration.organisasjon.BidragOrganisasjonClient
 import no.nav.bidrag.transport.organisasjon.EnhetDto
 import no.nav.bidrag.transport.organisasjon.HentEnhetRequest
+import no.nav.bidrag.transport.sak.RolleDto
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -16,10 +21,13 @@ import java.time.LocalDate
 class ArbeidsfordelingService(
     private val bidragOrganisasjonClient: BidragOrganisasjonClient,
 ) {
+    /**
+     * Setter eierfogd til enheten arbeidsfordelingen i Norg gir for saken, ut fra primærrollens geografi
+     * og strengeste diskresjon og skjerming blant nåværende og tidligere parter.
+     * Avslutter den aktive eiertilgangen og oppretter en ny når enheten endres.
+     */
     fun utførArbeidsfordeling(sak: Bidragssak) {
-        val hentEnhetRequest = lagHentEnhetRequest(sak)
-        val enhetDto = bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(hentEnhetRequest)
-        oppdaterAktivEierfogd(sak, enhetDto)
+        oppdaterAktivEierfogd(sak, hentEnhet(sak))
     }
 
     private fun oppdaterAktivEierfogd(
@@ -46,25 +54,45 @@ class ArbeidsfordelingService(
         sak.eierfogd = enhetDto.nummer.verdi
     }
 
-    private fun lagHentEnhetRequest(sak: Bidragssak): HentEnhetRequest {
-        val fødselsnummer: Personident =
-            sak.primærrolle.fødselsnummer?.let { Personident(it) }
-                ?: error("Primærrolle for sak ${sak.saksnummer} mangler fødselsnummer.")
-
-        return HentEnhetRequest(
-            ident = fødselsnummer,
-            biidenter =
-            sak.roller
-                .mapNotNull {
-                    if (it.erPerson()) {
-                        it.fødselsnummer?.let { fødselsnummer -> Personident(fødselsnummer) }
-                    } else {
-                        null
-                    }
-                }.toSet(),
-            behandlingstema = sak.arbeidsfordeling.behandlingstema,
-            sakskategori = sak.kategori,
-            behandlingstype = Behandlingstype.SØKNAD,
+    private fun hentEnhet(sak: Bidragssak): EnhetDto {
+        val hovedident = sak.primærrolle?.fødselsnummer?.let(::Personident)
+            ?: error("Sak ${sak.saksnummer} har ingen kjent part, og enheten kan ikke bestemmes.")
+        return bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(
+            HentEnhetRequest(
+                ident = hovedident,
+                biidenter = sak.personidenter() - hovedident,
+                arbeidsfordeling = sak.arbeidsfordeling,
+                sakskategori = sak.kategori,
+                behandlingstype = Behandlingstype.SØKNAD,
+            ),
         )
+    }
+
+    fun hentEnhetForNySak(
+        roller: Set<RolleDto>,
+        fødselsdatoer: Map<Personident, LocalDate?>,
+        arbeidsfordeling: Arbeidsfordeling,
+        sakskategori: Sakskategori,
+    ): EnhetDto {
+        val hovedident = roller.map {
+            Rolle(fødselsnummer = it.fødselsnummer?.verdi, rolleType = it.type, fødselsdato = fødselsdatoer[it.fødselsnummer])
+        }.finnPrimærrolle()?.fødselsnummer?.let(::Personident)
+            ?: error("Saken har ingen kjent part, og enheten kan ikke bestemmes.")
+        val parter = (roller.mapNotNull { it.fødselsnummer } + roller.mapNotNull { it.rmFødselsnummer() }).toSet()
+        return bidragOrganisasjonClient.hentEnhetForArbeidsfordelingGeografiskTilknytning(
+            HentEnhetRequest(
+                ident = hovedident,
+                biidenter = parter - hovedident,
+                arbeidsfordeling = arbeidsfordeling,
+                sakskategori = sakskategori,
+                behandlingstype = Behandlingstype.SØKNAD,
+            ),
+        )
+    }
+
+    private fun Bidragssak.personidenter(): Set<Personident> {
+        val nåværende = roller.mapNotNull { it.fødselsnummer }
+        val tidligere = roller.flatMap { it.rollehistorikk }.flatMap { listOfNotNull(it.rolleFødselsnummer, it.rmRolleFødselsnummer) }
+        return (nåværende + tidligere).map(::Personident).filter { it.gyldig() }.toSet()
     }
 }

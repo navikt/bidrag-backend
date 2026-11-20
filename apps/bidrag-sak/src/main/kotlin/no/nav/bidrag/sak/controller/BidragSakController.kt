@@ -2,13 +2,12 @@ package no.nav.bidrag.sak.controller
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.commons.util.sanitizeForLog
+import jakarta.validation.Valid
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -23,7 +22,9 @@ import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
+import no.nav.bidrag.transport.sak.OppdaterSaksrollerRequest
 import no.nav.bidrag.transport.sak.OpprettMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.OpprettSakMedRollerRequest
 import no.nav.bidrag.transport.sak.OpprettSakRequest
 import no.nav.bidrag.transport.sak.OpprettSakResponse
 import no.nav.bidrag.transport.sak.SamhandlerSakerDto
@@ -32,10 +33,10 @@ import no.nav.security.token.support.core.api.Protected
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
@@ -161,6 +162,18 @@ class BidragSakController(
         return samhandlerSakDto
     }
 
+    @PatchMapping("/sak/{saksnummer}/roller")
+    @Operation(
+        summary = "Oppdater saksroller",
+        description = "Rollene i forespørselen legges til eller oppdateres. Andre roller beholdes.\n\n" + SAKSROLLE_REGLER,
+        security = [SecurityRequirement(name = "bearer-key")],
+    )
+    fun oppdaterSaksroller(
+        @PathVariable saksnummer: Saksnummer,
+        @Valid @RequestBody request: OppdaterSaksrollerRequest,
+    ): OppdaterSakResponse = bidragSakService.oppdaterSaksroller(saksnummer, request)
+
+    @Deprecated("Bruk PATCH /sak/{saksnummer}/roller")
     @PostMapping("/sak/oppdater/roller")
     @Operation(
         summary = "Oppdater roller i sak",
@@ -219,6 +232,13 @@ class BidragSakController(
         @RequestBody request: OpprettMidlertidligTilgangRequest,
     ) = bidragSakService.opprettEllerUtvidMidlertidligTilgangSak(request)
 
+    @PostMapping("/sak/opprett")
+    @Operation(description = "Opprett sak med enheten fra Norg", security = [SecurityRequirement(name = "bearer-key")])
+    fun opprettSakMedRoller(
+        @Valid @RequestBody request: OpprettSakMedRollerRequest,
+    ): OpprettSakResponse = bidragSakService.opprettSak(request)
+
+    @Deprecated("Bruk POST /sak/opprett")
     @PostMapping("/sak")
     @Operation(description = "Opprette ny sak", security = [SecurityRequirement(name = "bearer-key")])
     fun opprettSak(

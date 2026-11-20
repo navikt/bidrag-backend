@@ -363,4 +363,22 @@ internal class RolleServiceTest {
         resultat.fødselsnummer shouldBe Personident(fødselsnummerBarn2)
         resultat.reellMottaker?.ident shouldBe ReellMottaker(fødselsnummerBp)
     }
+
+    @Test
+    fun `beholder samhandler i reellMottaker uten type når reellMottager er en person`() {
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerBarn1) } returns fødselsnummerBarn1
+        every { identConsumer.hentGjeldendeIdent(fødselsnummerRm) } returns fødselsnummerRm
+        val samhandler = ReellMottaker("85000000083")
+        val forespørsel = RolleDto(
+            type = Rolletype.BARN,
+            fødselsnummer = Personident(fødselsnummerBarn1),
+            reellMottaker = ReellMottakerDto(ident = samhandler, verge = false),
+            reellMottager = ReellMottaker(fødselsnummerRm),
+        )
+
+        val resultat = rolleService.brukGjeldendeIdent(setOf(forespørsel)).single()
+
+        resultat.reellMottaker?.ident shouldBe samhandler
+        resultat.reellMottager shouldBe ReellMottaker(fødselsnummerRm)
+    }
 }
