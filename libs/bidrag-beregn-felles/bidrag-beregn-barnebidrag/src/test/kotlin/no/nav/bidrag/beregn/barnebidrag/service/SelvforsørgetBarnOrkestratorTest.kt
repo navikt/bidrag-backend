@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
@@ -14,6 +15,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.BidragsberegningOrk
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.HentLøpendeBidragService
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestrator
 import no.nav.bidrag.beregn.barnebidrag.service.orkestrering.OmgjøringOrkestratorV2
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.transport.behandling.beregning.barnebidrag.BidragsberegningOrkestratorRequestV2
@@ -72,5 +74,6 @@ internal class SelvforsørgetBarnOrkestratorTest : FellesTest() {
         hentLøpendeBidragService = hentLøpendeBidragService,
         personConsumer = personConsumer,
         sakConsumer = sakConsumer,
+        valutakursService = ValutakursService(mockk()),
     )
 }
