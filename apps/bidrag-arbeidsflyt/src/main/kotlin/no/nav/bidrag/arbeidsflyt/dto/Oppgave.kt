@@ -101,6 +101,13 @@ data class OppgaveSokRequest(
         return this
     }
 
+    fun medOffset(offset: Int): OppgaveSokRequest {
+        parametreMap.set("offset", offset.toString())
+        return this
+    }
+
+    fun utenFagomrade(): OppgaveSokRequest = fjernParameter(PARAMETER_TEMA)
+
     private fun harJournalpostIdPrefiks(journalpostId: String) = journalpostId.contains("-")
 
     private fun hentJournalpostIdUtenPrefiks(journalpostId: String) = if (harJournalpostIdPrefiks(journalpostId)) journalpostId.split('-')[1] else journalpostId
@@ -430,7 +437,7 @@ open class PatchOppgaveRequest(
     open var tildeltEnhetsnr: String? = null,
     open var tilordnetRessurs: String? = null,
     open var beskrivelse: String? = null,
-    open var mappeId: Int? = null,
+    open var mappeId: Long? = null,
     open var metadata: Map<String, String>? = null,
 ) {
     @JsonIgnore
@@ -493,6 +500,29 @@ data class MappeDto(
     val enhetsnr: String? = null,
     val navn: String? = null,
 )
+
+data class MapperResponse(
+    val antallTreffTotalt: Int,
+    val mapper: List<MappeDto>,
+)
+
+class FlyttOppgaveVedEnhetsbytteRequest(
+    oppgave: OppgaveData,
+    nyEnhet: String,
+    beholdSaksbehandler: Boolean,
+    nyMappeId: Long?,
+) : PatchOppgaveRequest(
+    id = oppgave.id,
+    versjon = oppgave.versjon,
+    tildeltEnhetsnr = nyEnhet,
+    tilordnetRessurs = if (beholdSaksbehandler) null else "",
+    status = OppgaveStatus.OPPRETTET.name,
+    mappeId = nyMappeId,
+) {
+    init {
+        nullstillMappe = oppgave.mappeId != null && nyMappeId == null
+    }
+}
 
 class OppdaterOppgave() : PatchOppgaveRequest() {
     @Suppress("ktlint:standard:backing-property-naming")

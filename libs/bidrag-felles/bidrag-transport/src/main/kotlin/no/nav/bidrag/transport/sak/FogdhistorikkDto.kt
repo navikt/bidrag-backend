@@ -1,8 +1,7 @@
-package no.nav.bidrag.sak.dto
+package no.nav.bidrag.transport.sak
 
 import no.nav.bidrag.domene.enums.sak.Fogdårsak
 import no.nav.bidrag.domene.enums.sak.Tilgangstype
-import no.nav.bidrag.sak.domain.Tilgang
 import java.time.LocalDate
 
 data class FogdhistorikkDto(
@@ -19,13 +18,3 @@ data class FogdhistorikkDto(
     val typeBeskrivelse: String
         get() = type.beskrivelse
 }
-
-fun Tilgang.tilFogdhistorikkDto(): FogdhistorikkDto = FogdhistorikkDto(
-    tilgangId = tilgangId,
-    enhetsnummer = enhetsnummer,
-    tilgangFomDato = tilgangFomDato,
-    tilgangTomDato = tilgangTomDato,
-    arsak = årsak,
-    type = type,
-    opprettetAv = opprettetAv,
-)

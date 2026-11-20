@@ -12,7 +12,6 @@ import no.nav.bidrag.commons.util.sanitizeForLog
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
-import no.nav.bidrag.sak.dto.FogdhistorikkDto
 import no.nav.bidrag.sak.dto.NySakCommandDto
 import no.nav.bidrag.sak.dto.NySakResponseDto
 import no.nav.bidrag.sak.dto.SakshendelseDto
@@ -20,6 +19,7 @@ import no.nav.bidrag.sak.service.BidragSakService
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.sak.BidragssakDto
 import no.nav.bidrag.transport.sak.FjernMidlertidligTilgangRequest
+import no.nav.bidrag.transport.sak.FogdhistorikkDto
 import no.nav.bidrag.transport.sak.OppdaterRollerISakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakRequest
 import no.nav.bidrag.transport.sak.OppdaterSakResponse
