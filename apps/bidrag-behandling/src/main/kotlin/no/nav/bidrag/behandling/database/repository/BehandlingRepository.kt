@@ -6,6 +6,7 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.NOTATBESTILLINGER
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.OPPRETTELSE_AV_FF_BEHANDLING_FEILET
 import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
 import no.nav.bidrag.behandling.database.datamodell.minified.RolleSimple
 import no.nav.bidrag.behandling.behandlingNotFoundException
@@ -53,7 +54,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     @Query("update behandling set metadata = coalesce(metadata, hstore('')) || hstore(array['laster_grunnlag_async_status', 'laster_grunnlag_async_tidspunkt'], array['BESTILT', now()::text]) where id = :id and deleted = false", nativeQuery = true)
     fun oppdaterLasterGrunnlagStatus(id: Long)
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("update behandling set metadata = coalesce(metadata, hstore('')) || hstore(array['laster_grunnlag_async_status', 'laster_grunnlag_async_tidspunkt'], array['FERDIG', now()::text]) where id = :id and deleted = false", nativeQuery = true)
     fun resetLasterGrunnlagStatus(id: Long)
 
@@ -320,7 +321,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun hentIdSlettedeBehandlingerHvorOpprettelseAvFFFeilet(): List<Long>
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query(
         "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseEllerOppdateringAvFFFeilet', 'false') where b.id = :behandling_id",
         nativeQuery = true
@@ -334,9 +335,9 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun markerOppdateringFFRollerFeilet(behandling_id: Long, data: String)
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query(
-        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseAvFFRollerFeilet', :data) where b.id = :behandling_id",
+        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('$OPPRETTELSE_AV_FF_BEHANDLING_FEILET', :data) where b.id = :behandling_id",
         nativeQuery = true
     )
     fun markerOpprettelseAvFFBehandlingFeilet(behandling_id: Long, data: String)
