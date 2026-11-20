@@ -966,12 +966,12 @@ class VedtakService(
         saksnumreForNotat: List<String?> = FELLES_NOTAT_FOR_ALLE_SAKER,
         søknadsider: List<Long> = behandling.søknadsider,
     ) {
-        ventPåFerdigstiltSøknad(søknadsider)
         if (!UnleashFeatures.OPPRETT_NOTAT_ASYNC.isEnabled) {
             opprettNotatForAlleSakerParallelt(behandling, saksnumreForNotat)
             return
         }
 
+        ventPåFerdigstiltSøknad(søknadsider)
         saksnumreForNotat.forEach { bestillOpprettelseAvNotat(behandling, it) }
     }
 
