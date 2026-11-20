@@ -21,6 +21,8 @@ import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.Notat
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.barn
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.lesNotatbestillinger
+import no.nav.bidrag.behandling.database.datamodell.extensions.Notatbestilling
 import no.nav.bidrag.behandling.database.datamodell.hentSisteAktiv
 import no.nav.bidrag.behandling.database.datamodell.hentSisteIkkeAktiv
 import no.nav.bidrag.behandling.database.datamodell.json.Omgjøringsdetaljer
@@ -98,7 +100,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.client.HttpClientErrorException
 import java.math.BigDecimal
 import java.time.LocalDate
@@ -121,6 +126,9 @@ class BehandlingServiceTest : TestContainerRunner() {
 
     @Autowired
     lateinit var testdataManager: TestdataManager
+
+    @Autowired
+    lateinit var transactionManager: PlatformTransactionManager
 
     @Autowired
     lateinit var dtomapper: Dtomapper
@@ -267,15 +275,15 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal ikke oppdatere virkningstidspunkt på særbidrag hvis klage`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
                     false,
                     inkludereBp = true,
                     behandlingstype = TypeBehandling.SÆRBIDRAG,
+                    virkningstidspunkt = LocalDate.now().minusMonths(1).withDayOfMonth(1),
                 )
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.now().minusMonths(1).withDayOfMonth(1))
             behandling.omgjøringsdetaljer =
                 Omgjøringsdetaljer(
                     omgjørVedtakId = 2,
@@ -330,8 +338,8 @@ class BehandlingServiceTest : TestContainerRunner() {
                     false,
                     inkludereBp = true,
                     behandlingstype = TypeBehandling.SÆRBIDRAG,
+                    virkningstidspunkt = LocalDate.now().minusMonths(1).withDayOfMonth(1),
                 )
-            behandling.oppdaterVirkningstidspunktForAlle(LocalDate.now().minusMonths(1).withDayOfMonth(1))
             stubUtils.stubbeGrunnlagsinnhentingForBehandling(behandling)
             stubPersonConsumer()
             grunnlagService.oppdatereGrunnlagForBehandling(behandling)
@@ -1024,6 +1032,91 @@ class BehandlingServiceTest : TestContainerRunner() {
     }
 
     @Nested
+    open inner class LagreNotatJournalpostId {
+        private val notatJournalpostId = "notat-journalpost-1"
+        private val samtidigVedtaksid = 4321
+
+        @Test
+        fun `skal lagre notatJournalpostId på behandling`() {
+            // gitt
+            val behandling = oppretteBehandling()
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandling.id!!, notatJournalpostId)
+
+            // så
+            behandlingRepository.findBehandlingById(behandling.id!!).get().notatJournalpostId shouldBe notatJournalpostId
+        }
+
+        @Test
+        fun `skal finne manglende saksnotater selv når ett notat er journalført`() {
+            val behandlingId = oppretteBehandling().id!!
+            val saker = listOf("1900000", "1900001")
+            val start = LocalDateTime.now()
+            behandlingService.oppdaterVedtakFattetStatus(behandlingId, samtidigVedtaksid, "1234", saksnumreForNotat = saker)
+
+            fun finnBestillinger() = behandlingRepository
+                .hentBehandlingerSomManglerNotater(start.minusDays(1), start.plusDays(1), behandlingId - 1, 10)
+                .singleOrNull { it.id == behandlingId }
+                ?.let { lesNotatbestillinger(it.notatbestillinger) }
+
+            finnBestillinger() shouldBe saker.map { Notatbestilling(it) }
+
+            behandlingService.lagreNotatJournalpostId(behandlingId, notatJournalpostId, saker.first())
+            finnBestillinger() shouldBe listOf(Notatbestilling(saker.first(), notatJournalpostId), Notatbestilling(saker.last()))
+
+            behandlingService.lagreNotatJournalpostId(behandlingId, "notat-journalpost-2", saker.last())
+            finnBestillinger() shouldBe null
+            behandlingService.hentBehandlingById(behandlingId).metadata?.hentNotatbestillinger() shouldBe listOf(
+                Notatbestilling(saker.first(), notatJournalpostId),
+                Notatbestilling(saker.last(), "notat-journalpost-2"),
+            )
+        }
+
+        @Test
+        fun `skal finne både ny og gammel behandling som mangler felles notat`() {
+            val ny = oppretteBehandling().id!!
+            val gammel = oppretteBehandling().id!!
+            val start = LocalDateTime.now()
+            behandlingService.oppdaterVedtakFattetStatus(ny, samtidigVedtaksid, "1234", saksnumreForNotat = listOf(null))
+            behandlingService.oppdaterVedtakFattetStatus(gammel, samtidigVedtaksid, "1234")
+
+            val kandidater = behandlingRepository.hentBehandlingerSomManglerNotater(start.minusDays(1), start.plusDays(1), ny - 1, 10)
+            kandidater.map { it.id } shouldBe listOf(ny, gammel)
+            lesNotatbestillinger(kandidater.first().notatbestillinger) shouldBe listOf(Notatbestilling(null))
+            kandidater.last().notatbestillinger shouldBe null
+        }
+
+        @Test
+        fun `skal ikke overskrive samtidig oppdatering av behandling når notatJournalpostId lagres fra transaksjon med utdatert behandling`() {
+            // gitt
+            val behandlingId = oppretteBehandling().id!!
+            val lesetransaksjon = TransactionTemplate(transactionManager).apply { isReadOnly = true }
+            val nyTransaksjon =
+                TransactionTemplate(transactionManager).apply {
+                    propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+                }
+
+            // når
+            lesetransaksjon.executeWithoutResult {
+                val utdatertBehandling = behandlingService.hentBehandlingById(behandlingId)
+                nyTransaksjon.executeWithoutResult {
+                    behandlingRepository.findBehandlingById(behandlingId).get().vedtaksid = samtidigVedtaksid
+                }
+                behandlingService.lagreNotatJournalpostId(behandlingId, notatJournalpostId)
+                utdatertBehandling.vedtaksid shouldBe null
+            }
+
+            // så
+            val behandlingEtter = behandlingRepository.findBehandlingById(behandlingId).get()
+            assertSoftly(behandlingEtter) {
+                notatJournalpostId shouldBe this@LagreNotatJournalpostId.notatJournalpostId
+                vedtaksid shouldBe samtidigVedtaksid
+            }
+        }
+    }
+
+    @Nested
     open inner class SletteBehandling {
         @Test
         fun `delete behandling`() {
@@ -1313,7 +1406,6 @@ class BehandlingServiceTest : TestContainerRunner() {
                 kjøreStubber(b)
                 val barnetilsynInnhentesForRolle = Grunnlagsdatatype.BARNETILSYN.innhentesForRolle(b)!!
                 barnetilsynInnhentesForRolle shouldBe b.bidragsmottaker!!
-                val innhentet = LocalDateTime.now()
 
                 // gjeldende barnetilsyn
                 b.leggeTilGjeldendeBarnetilsyn()
@@ -1768,7 +1860,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere perioder på andre voksne i husstand boforhold og inntekter når virkningstidspunkt på særbidrag endres`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
@@ -1819,7 +1911,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere aktivert og ikke aktivert andre voksne i husstand ved endring av virkningstidspunkt for særbidrag`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,
@@ -1912,7 +2004,7 @@ class BehandlingServiceTest : TestContainerRunner() {
         @Transactional
         open fun `skal oppdatere aktivert og ikke aktivert andre voksne i husstand ved endring av virkningstidspunkt for særbidrag og automatisk aktivere`() {
             // gitt
-            var behandling =
+            val behandling =
                 testdataManager.oppretteBehandling(
                     false,
                     false,

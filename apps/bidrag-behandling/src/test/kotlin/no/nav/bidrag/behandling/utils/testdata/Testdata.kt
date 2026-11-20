@@ -47,7 +47,6 @@ import no.nav.bidrag.behandling.transformers.boforhold.tilHusstandsmedlem
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstand
 import no.nav.bidrag.behandling.transformers.grunnlag.ainntektListe
 import no.nav.bidrag.behandling.transformers.grunnlag.skattegrunnlagListe
-import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
 import no.nav.bidrag.behandling.transformers.grunnlag.tilInntekt
 import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.tilTypeBoforhold
@@ -100,7 +99,6 @@ import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadDto
 import no.nav.bidrag.transport.behandling.belopshistorikk.response.StønadPeriodeDto
 import no.nav.bidrag.transport.behandling.beregning.felles.BidragBeregningResponsDto
 import no.nav.bidrag.transport.behandling.beregning.samvær.SamværskalkulatorDetaljer
-import no.nav.bidrag.transport.behandling.felles.grunnlag.LøpendeBidrag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.ManuellVedtakGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.delberegningSamværsklasse
@@ -133,13 +131,13 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
-val SAKSNUMMER = "1233333"
-val SOKNAD_ID = "12412421414"
-val SOKNAD_ID_2 = 1241552421414L
-val SOKNAD_ID_3 = 124152421414L
-val SAKSBEHANDLER_IDENT = "Z999999"
-val BP_BARN_ANNEN_IDENT = "24417901910"
-val BP_BARN_ANNEN_IDENT_2 = "24417901912"
+const val SAKSNUMMER = "1233333"
+const val SOKNAD_ID = "12412421414"
+const val SOKNAD_ID_2 = 1241552421414L
+const val SOKNAD_ID_3 = 124152421414L
+const val SAKSBEHANDLER_IDENT = "Z999999"
+const val BP_BARN_ANNEN_IDENT = "24417901910"
+const val BP_BARN_ANNEN_IDENT_2 = "24417901912"
 val MANUELL_INNTEKT_GJELDER_BARN_IDENT = genererFødselsnummer()
 val testdataBP =
     TestDataPerson(
@@ -267,7 +265,7 @@ fun opprettForsendelseResponsUnderOpprettelse(forsendelseId: Long = 1) = Forsend
     saksnummer = SAKSNUMMER,
     behandlingInfo =
     BehandlingInfoResponseDto(
-        soknadId = SOKNAD_ID.toString(),
+        soknadId = SOKNAD_ID,
         erFattet = false,
     ),
     forsendelseType = ForsendelseTypeTo.UTGÅENDE,
@@ -367,6 +365,7 @@ fun opprettRolle(
     behandling: Behandling,
     data: TestDataPerson,
     id: Long? = null,
+    virkningstidspunkt: LocalDate? = null,
 ): Rolle = Rolle(
     id = id,
     navn = data.navn,
@@ -375,6 +374,7 @@ fun opprettRolle(
     behandling = behandling,
     fødselsdato = data.fødselsdato,
     opprettet = LocalDateTime.now(),
+    virkningstidspunkt = virkningstidspunkt,
 )
 
 fun oppretteRequestForOppdateringAvManuellInntekt(idInntekt: Long? = null) = OppdatereManuellInntekt(
@@ -569,6 +569,7 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
     vedtakstype: Vedtakstype = Vedtakstype.FASTSETTELSE,
     typeBehandling: TypeBehandling = TypeBehandling.FORSKUDD,
     andreBarn: List<TestDataPerson> = emptyList(),
+    virkningstidspunkt: LocalDate? = null,
 ): Behandling {
     // given
     val behandling =
@@ -576,7 +577,7 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
             if (generateId) 1 else null,
             vedtakstype = vedtakstype,
             virkningstidspunkt =
-            when (typeBehandling) {
+            virkningstidspunkt ?: when (typeBehandling) {
                 TypeBehandling.FORSKUDD, TypeBehandling.BIDRAG, TypeBehandling.BIDRAG_18_ÅR -> LocalDate.parse("2023-02-01")
                 TypeBehandling.SÆRBIDRAG -> LocalDate.now().withDayOfMonth(1)
             },
@@ -875,8 +876,6 @@ fun opprettGyldigBehandlingForBeregningOgVedtak(
             behandling.inntekter.addAll(inntekterBp)
             behandling.inntekter.addAll(inntekterBm)
         }
-
-        else -> {}
     }
 
     behandling.husstandsmedlem = husstandsmedlem
@@ -978,7 +977,7 @@ fun opprettAlleAktiveGrunnlagFraFil(
     val filJsonString =
         try {
             erstattVariablerITestFil(filnavn.removeSuffix(".json"))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             filnavn
         }
     val grunnlagListe =
@@ -1162,7 +1161,7 @@ fun tilAinntektspostDto(
 )
 
 fun oppretteBoforholdBearbeidetGrunnlagForhusstandsmedlem(husstandsmedlemSet: Set<Husstandsmedlem>): List<Grunnlag> = husstandsmedlemSet.groupBy { it.ident }.map { (ident, husstandsmedlem) ->
-    val behandling = husstandsmedlem.first().behandling!!
+    val behandling = husstandsmedlem.first().behandling
     Grunnlag(
         behandling = behandling,
         type = Grunnlagsdatatype.BOFORHOLD,
@@ -1327,6 +1326,7 @@ fun oppretteTestbehandling(
     setteDatabaseider: Boolean = false,
     inkludereArbeidsforhold: Boolean = false,
     inkludereInntektsgrunnlag: Boolean = false,
+    virkningstidspunkt: LocalDate? = null,
 ): Behandling {
     val behandlingsid = if (setteDatabaseider) 1L else null
     val behandling = oppretteBehandling(behandlingsid)
@@ -1350,6 +1350,10 @@ fun oppretteTestbehandling(
         else -> {
             throw IllegalStateException("Behandlingstype $behandlingstype er foreløpig ikke støttet")
         }
+    }
+
+    if (virkningstidspunkt != null) {
+        behandling.virkningstidspunkt = virkningstidspunkt
     }
 
     val parterIBehandlingen = hashMapOf(1 to testdataBM, 2 to testdataBarn1, 3 to testdataBarn2)
@@ -1382,12 +1386,12 @@ fun oppretteTestbehandling(
     if (TypeBehandling.BIDRAG == behandlingstype) {
         var idUnderholdskostnad = if (setteDatabaseider) 1 else null
         // Oppretter underholdskostnad for alle barna i behandlingen ved bidrag
-        behandling.søknadsbarn.forEach {
+        behandling.søknadsbarn.forEach { rolle ->
             val u =
                 Underholdskostnad(
                     id = idUnderholdskostnad?.toLong(),
                     behandling = behandling,
-                    rolle = it,
+                    rolle = rolle,
                 )
             behandling.underholdskostnader.add(
                 u,
@@ -1860,20 +1864,6 @@ fun oppretteBarnetilsynGrunnlagDto(
     partPersonId = behandling.bidragsmottaker!!.personident!!.verdi,
 )
 
-fun opprettLøpendeBidragGrunnlag(
-    gjelderBarn: TestDataPerson,
-    stønadstype: Stønadstype,
-    barnId: Long,
-) = LøpendeBidrag(
-    gjelderBarn = gjelderBarn.tilRolle(id = barnId).tilGrunnlagPerson().referanse,
-    type = stønadstype,
-    løpendeBeløp = BigDecimal(5123),
-    faktiskBeløp = BigDecimal(6555),
-    samværsklasse = Samværsklasse.SAMVÆRSKLASSE_1,
-    beregnetBeløp = BigDecimal(6334),
-    saksnummer = Saksnummer(SAKSNUMMER),
-)
-
 fun opprettEvnevurderingResultat(sakerFor: List<Pair<TestDataPerson, Stønadstype>>) = EvnevurderingBeregningResultat(
     løpendeBidragsaker =
     sakerFor.map {
@@ -1972,7 +1962,7 @@ fun Behandling.leggTilTillegsstønad(
             underholdskostnad = underholdskostnad,
             fom = periode.fom.atDay(1),
             tom = periode.til?.minusMonths(1)?.atEndOfMonth(),
-            `beløp` = BigDecimal(50),
+            beløp = BigDecimal(50),
         ),
     )
 }
@@ -1992,7 +1982,7 @@ fun Behandling.leggTilForpleining(
             underholdskostnad = underholdskostnad,
             fom = periode.fom.atDay(1),
             tom = periode.til?.minusMonths(1)?.atEndOfMonth(),
-            `beløp` = beløp,
+            beløp = beløp,
         ),
     )
 }
@@ -2018,10 +2008,10 @@ fun Behandling.leggTilGrunnlagManuelleVedtak(
                         Vedtakstype.FASTSETTELSE,
                         Stønadstype.BIDRAG,
                         false,
-                        false,
-                        false,
-                        "",
-                        "",
+                        begrensetRevurdering = false,
+                        privatAvtale = false,
+                        resultatkodeSistePeriode = "",
+                        resultatSistePeriode = "",
                     ),
                 ),
             ),
@@ -2485,7 +2475,7 @@ fun opprettVedtakhendelse(
         ),
         Behandlingsreferanse(
             BehandlingsrefKilde.BISYS_SØKNAD.name,
-            SOKNAD_ID.toString(),
+            SOKNAD_ID,
         ),
     ),
 )

@@ -74,7 +74,7 @@ class SpringTestRunner {
 
     protected fun localhost(uri: String): String = UriComponentsBuilder.fromUriString(LOCALHOST + getPort()).pathSegment(uri).toUriString()
 
-    protected fun lokalTestToken(): String {
+    protected fun lokalTestToken(roller: List<String> = emptyList()): String {
         val iss = mockOAuth2Server.issuerUrl("aad")
         val newIssuer = iss.newBuilder().host("localhost").build()
         return mockOAuth2Server
@@ -86,7 +86,7 @@ class SpringTestRunner {
                     subject = "aud-localhost",
                     typeHeader = JOSEObjectType.JWT.type,
                     audience = listOf("aud-localhost"),
-                    claims = mapOf("iss" to newIssuer.toString(), "NAVident" to "AB12345"),
+                    claims = mapOf("iss" to newIssuer.toString(), "NAVident" to "AB12345", "roles" to roller),
                     3600,
                 ),
             ).serialize()

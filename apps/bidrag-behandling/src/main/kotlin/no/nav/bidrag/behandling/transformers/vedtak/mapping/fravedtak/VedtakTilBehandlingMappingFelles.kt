@@ -324,105 +324,157 @@ private fun VedtakDto.hentDelvedtakFraAndreVedtak(
                 resultatFraVedtak.vedtaksid
                     ?: return@mapNotNull opprettOpphørDelvedtak(periode.periode)
 
-            opprettDelvedtakFraVedtak(
-                stønadsendring = stønadsendring,
-                periode = periode,
-                resultatFraVedtak = resultatFraVedtak,
-                vedtaksid = vedtaksid,
-                virkningstidspunkt = virkningstidspunkt,
-                orkestreringDetaljer = orkestreringDetaljer,
-            )
-        }.slåSammenPerVedtak(stønadsendring)
+                val resultatFraAnnenVedtak =
+                    grunnlagListe
+                        .finnResultatFraAnnenVedtak(
+                            periode.grunnlagReferanseListe,
+                        )
+                resultatFraAnnenVedtak?.let {
+                    if (it.vedtaksid == null) {
+                        return@let DelvedtakDto(
+                            type = Vedtakstype.OPPHØR,
+                            omgjøringsvedtak = false,
+                            vedtaksid = it.vedtaksid,
+                            delvedtak = true,
+                            beregnet = true,
+                            indeksår = 1,
+                            perioder =
+                            listOf(
+                                ResultatBarnebidragsberegningPeriodeDto(
+                                    periode.periode,
+                                    vedtakstype = Vedtakstype.OPPHØR,
+                                    resultatKode = Resultatkode.OPPHØR,
+                                    erOpphør = true,
+                                ),
+                            ),
+                        )
+                    }
+                    val vedtak = hentVedtak(it.vedtaksid)
+                    val vedtakStønadsendring =
+                        vedtak!!
+                            .stønadsendringListe
+                            .find {
+                                it.kravhaver == stønadsendring.kravhaver && stønadsendring.type == it.type
+                            }!!
+                    val vedtakPeriode =
+                        vedtak.finnPeriodeIStønadsendringSomDekkerPerioden(vedtakStønadsendring, periode.periode)
+                            ?: opprettOpphørsperiodeHvisBarnetOpphører(periode.periode, virkningstidspunkt)
+                            ?: return@mapNotNull null
+                    val søknadsbarn = grunnlagListe.hentPersonMedIdent(stønadsendring.kravhaver.verdi, stønadsendring.type)!!
+                    DelvedtakDto(
+                        type = vedtak.type,
+                        omgjøringsvedtak = it.omgjøringsvedtak,
+                        vedtaksid = it.vedtaksid,
+                        delvedtak = !it.omgjøringsvedtak,
+                        beregnet = it.beregnet,
+                        resultatFraVedtakVedtakstidspunkt = vedtak.vedtakstidspunkt,
+                        indeksår = vedtak.stønadsendringListe.first().førsteIndeksreguleringsår ?: 1,
+                        perioder =
+                        listOf(
+                            vedtak.grunnlagListe
+                                .byggResultatBidragsberegning(
+                                    vedtakPeriode.periode,
+                                    vedtakPeriode.beløp,
+                                    try {
+                                        Resultatkode.fraKode(vedtakPeriode.resultatkode)!!
+                                    } catch (_: Exception) {
+                                        Resultatkode.BEREGNET_BIDRAG
+                                    },
+                                    vedtakPeriode.grunnlagReferanseListe,
+                                    null,
+                                    Resultatkode.fraKode(vedtakPeriode.resultatkode) == Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
+                                    vedtak.type,
+                                    ResultatRolle(
+                                        ident = stønadsendring.kravhaver,
+                                        navn = søknadsbarn.personObjekt.navn ?: "",
+                                        referanse = søknadsbarn.referanse,
+                                        erRevurderingsbarn = søknadsbarn.erRevurderingsbarn,
+                                        fødselsdato = søknadsbarn.personObjekt.fødselsdato,
+                                        stønadstype = stønadsendring.type,
+                                    ),
+                                ).copy(
+                                    klageOmgjøringDetaljer =
+                                    KlageOmgjøringDetaljer(
+                                        resultatFraVedtak = it.vedtaksid,
+                                        omgjøringsvedtak = it.omgjøringsvedtak,
+                                        beregnTilDato = orkestreringDetaljer?.beregnTilDato,
+                                        resultatFraVedtakVedtakstidspunkt = it.vedtakstidspunkt,
+                                        kanOpprette35c =
+                                        orkestreringDetaljer?.let { od ->
+                                            kanOpprette35C(
+                                                periode.periode,
+                                                orkestreringDetaljer.beregnTilDato,
+                                                virkningstidspunkt?.opphørsdato?.toYearMonth(),
+                                                vedtak.type,
+                                                periode.beløp == null,
+                                                it.omgjøringsvedtak,
+                                            )
+                                        } ?: false,
+                                        skalOpprette35c = it.opprettParagraf35c,
+                                    ),
+                                ),
+                        ),
+                    )
+                }
+            }.groupBy { it.vedtaksid }
+            .map { (_, delvedtakListe) ->
+                val første = delvedtakListe.first()
+                første.copy(
+                    perioder =
+                    delvedtakListe
+                        .flatMap { it.perioder }
+                        .map {
+                            it.copy(
+                                periode =
+                                stønadsendring.periodeListe
+                                    .find { st ->
+                                        it.periode.inneholder(st.periode) || it.periode.fom == st.periode.fom
+                                    }!!
+                                    .periode,
+                            )
+                        },
+                )
+            }
+    }
+
+    val endeligVedtak =
+        DelvedtakDto(
+            type = type,
+            omgjøringsvedtak = false,
+            vedtaksid = null,
+            delvedtak = false,
+            beregnet = false,
+            indeksår = 1,
+            perioder =
+            delvedtak
+                .flatMap { it.perioder }
+                .map { p ->
+                    val periodeVedtak = delvedtak.find { it.perioder.any { it.periode.inneholder(p.periode) } }
+                    p.copy(
+                        vedtakstype = periodeVedtak?.type ?: p.vedtakstype,
+                        resultatFraVedtak =
+                        ResultatFraVedtakGrunnlag(
+                            vedtaksid = periodeVedtak?.vedtaksid,
+                            vedtakstype = periodeVedtak?.type,
+                            beregnet = periodeVedtak?.beregnet ?: false,
+                        ),
+                        klageOmgjøringDetaljer =
+                        KlageOmgjøringDetaljer(
+                            resultatFraVedtak = periodeVedtak?.vedtaksid,
+                            omgjøringsvedtak = periodeVedtak?.omgjøringsvedtak ?: false,
+                            kanOpprette35c =
+                            periodeVedtak?.perioder?.any { it.klageOmgjøringDetaljer?.kanOpprette35c == true } == true,
+                            skalOpprette35c =
+                            periodeVedtak?.perioder?.any { it.klageOmgjøringDetaljer?.skalOpprette35c == true } == true,
+                            resultatFraVedtakVedtakstidspunkt = periodeVedtak?.resultatFraVedtakVedtakstidspunkt,
+                            beregnTilDato = orkestreringDetaljer?.beregnTilDato,
+                        ),
+                    )
+                },
+        )
+    return delvedtak + listOf(endeligVedtak)
 }
-
-private fun opprettOpphørDelvedtak(periode: ÅrMånedsperiode) = DelvedtakDto(
-    type = Vedtakstype.OPPHØR,
-    omgjøringsvedtak = false,
-    vedtaksid = null,
-    delvedtak = true,
-    beregnet = true,
-    indeksår = 1,
-    perioder =
-    listOf(
-        ResultatBarnebidragsberegningPeriodeDto(
-            periode,
-            vedtakstype = Vedtakstype.OPPHØR,
-            resultatKode = Resultatkode.OPPHØR,
-            erOpphør = true,
-        ),
-    ),
-)
-
-private fun VedtakDto.opprettDelvedtakFraVedtak(
-    stønadsendring: StønadsendringDto,
-    periode: VedtakPeriodeDto,
-    resultatFraVedtak: ResultatFraVedtakGrunnlag,
-    vedtaksid: Int,
-    virkningstidspunkt: VirkningstidspunktGrunnlag?,
-    orkestreringDetaljer: VedtakOrkestreringDetaljerGrunnlag?,
-): DelvedtakDto? {
-    val vedtak = hentVedtak(vedtaksid)!!
-    val vedtakPeriode =
-        vedtak.finnPeriodeSomDekker(stønadsendring, periode.periode)
-            ?: opprettOpphørsperiodeHvisBarnetOpphører(periode.periode, virkningstidspunkt)
-            ?: return null
-    val søknadsbarn = grunnlagListe.hentPersonMedIdent(stønadsendring.kravhaver.verdi, stønadsendring.type)!!
-    val resultatkode = Resultatkode.fraKode(vedtakPeriode.resultatkode)
-    val kanOpprette35c =
-        orkestreringDetaljer?.let {
-            kanOpprette35C(
-                periode.periode,
-                it.beregnTilDato,
-                virkningstidspunkt?.opphørsdato?.toYearMonth(),
-                vedtak.type,
-                periode.beløp == null,
-                resultatFraVedtak.omgjøringsvedtak,
-            )
-        } ?: false
-
-    val beregningsperiode =
-        vedtak.grunnlagListe
-            .byggResultatBidragsberegning(
-                vedtakPeriode.periode,
-                vedtakPeriode.beløp,
-                resultatkode ?: Resultatkode.BEREGNET_BIDRAG,
-                vedtakPeriode.grunnlagReferanseListe,
-                null,
-                resultatkode == Resultatkode.INGEN_ENDRING_UNDER_GRENSE,
-                vedtak.type,
-                ResultatRolle(
-                    ident = stønadsendring.kravhaver,
-                    navn = søknadsbarn.personObjekt.navn ?: "",
-                    referanse = søknadsbarn.referanse,
-                    erRevurderingsbarn = søknadsbarn.erRevurderingsbarn,
-                    fødselsdato = søknadsbarn.personObjekt.fødselsdato,
-                    stønadstype = stønadsendring.type,
-                ),
-            ).copy(
-                klageOmgjøringDetaljer =
-                KlageOmgjøringDetaljer(
-                    resultatFraVedtak = vedtaksid,
-                    omgjøringsvedtak = resultatFraVedtak.omgjøringsvedtak,
-                    beregnTilDato = orkestreringDetaljer?.beregnTilDato,
-                    resultatFraVedtakVedtakstidspunkt = resultatFraVedtak.vedtakstidspunkt,
-                    kanOpprette35c = kanOpprette35c,
-                    skalOpprette35c = resultatFraVedtak.opprettParagraf35c,
-                ),
-            )
-
-    return DelvedtakDto(
-        type = vedtak.type,
-        omgjøringsvedtak = resultatFraVedtak.omgjøringsvedtak,
-        vedtaksid = vedtaksid,
-        delvedtak = !resultatFraVedtak.omgjøringsvedtak,
-        beregnet = resultatFraVedtak.beregnet,
-        resultatFraVedtakVedtakstidspunkt = vedtak.vedtakstidspunkt,
-        indeksår = vedtak.stønadsendringListe.first().førsteIndeksreguleringsår ?: 1,
-        perioder = listOf(beregningsperiode),
-    )
-}
-
-private fun VedtakDto.finnPeriodeSomDekker(
+private fun VedtakDto.finnPeriodeIStønadsendringSomDekkerPerioden(
     stønadsendring: StønadsendringDto,
     periode: ÅrMånedsperiode,
 ): VedtakPeriodeDto? {
@@ -430,8 +482,8 @@ private fun VedtakDto.finnPeriodeSomDekker(
         stønadsendringListe
             .find { it.kravhaver == stønadsendring.kravhaver && it.type == stønadsendring.type }!!
             .periodeListe
-    return perioder.find { it.periode.inneholder(periode) }
-        ?: perioder.find { it.periode.overlapperKunIStartenAv(periode) }
+    return perioder.find { periode.fom == it.periode.fom || it.periode.inneholder(periode) }
+        ?: perioder.find { it.periode.overlapperKunISluttenAv(periode) }
 }
 
 private fun opprettOpphørsperiodeHvisBarnetOpphører(
@@ -442,58 +494,6 @@ private fun opprettOpphørsperiodeHvisBarnetOpphører(
 } else {
     null
 }
-
-private fun List<DelvedtakDto>.slåSammenPerVedtak(stønadsendring: StønadsendringDto): List<DelvedtakDto> = groupBy { it.vedtaksid }
-    .map { (_, delvedtakListe) ->
-        delvedtakListe.first().copy(
-            perioder =
-            delvedtakListe
-                .flatMap { it.perioder }
-                .map { resultatperiode ->
-                    val stønadsperiode = stønadsendring.periodeListe.find { resultatperiode.periode.inneholder(it.periode) }!!
-                    resultatperiode.copy(periode = stønadsperiode.periode)
-                },
-        )
-    }
-
-private fun VedtakDto.opprettEndeligVedtak(
-    delvedtak: List<DelvedtakDto>,
-    orkestreringDetaljer: VedtakOrkestreringDetaljerGrunnlag?,
-) = DelvedtakDto(
-    type = type,
-    omgjøringsvedtak = false,
-    vedtaksid = null,
-    delvedtak = false,
-    beregnet = false,
-    indeksår = 1,
-    perioder =
-    delvedtak
-        .flatMap { it.perioder }
-        .map { periode ->
-            val periodeVedtak = delvedtak.find { vedtak -> vedtak.perioder.any { it.periode.inneholder(periode.periode) } }
-            periode.copy(
-                vedtakstype = periodeVedtak?.type ?: periode.vedtakstype,
-                resultatFraVedtak =
-                ResultatFraVedtakGrunnlag(
-                    vedtaksid = periodeVedtak?.vedtaksid,
-                    vedtakstype = periodeVedtak?.type,
-                    beregnet = periodeVedtak?.beregnet ?: false,
-                ),
-                klageOmgjøringDetaljer =
-                KlageOmgjøringDetaljer(
-                    resultatFraVedtak = periodeVedtak?.vedtaksid,
-                    omgjøringsvedtak = periodeVedtak?.omgjøringsvedtak ?: false,
-                    kanOpprette35c =
-                    periodeVedtak?.perioder?.any { it.klageOmgjøringDetaljer?.kanOpprette35c == true } == true,
-                    skalOpprette35c =
-                    periodeVedtak?.perioder?.any { it.klageOmgjøringDetaljer?.skalOpprette35c == true } == true,
-                    resultatFraVedtakVedtakstidspunkt = periodeVedtak?.resultatFraVedtakVedtakstidspunkt,
-                    beregnTilDato = orkestreringDetaljer?.beregnTilDato,
-                ),
-            )
-        },
-)
-
 internal fun VedtakDto.hentBeregningsperioder(stønadsendring: StønadsendringDto): List<ResultatBarnebidragsberegningPeriodeDto> {
     val grunnlagsliste = grunnlagListe
     val aldersjusteringDetaljer = grunnlagListe.finnAldersjusteringDetaljerGrunnlag()

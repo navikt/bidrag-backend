@@ -1,6 +1,6 @@
 package no.nav.bidrag.tilgangskontroll.konsumer
 
-import no.nav.bidrag.commons.cache.BrukerCacheable
+import no.nav.bidrag.cache.annotasjoner.KortCache
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.tilgangskontroll.konfigurasjon.Cache
 import no.nav.bidrag.tilgangskontroll.model.sakIkkeFunnet
@@ -23,7 +23,7 @@ class SakPipKonsumer(
         .build()
         .toUri()
 
-    @BrukerCacheable(Cache.PIP_SAK)
+    @KortCache(Cache.PIP_SAK, perBruker = true, levetid = Cache.PIP_SAK_LEVETID)
     fun hentPipMetadata(saksnr: String): BidragssakPipDto = getForEntity(sakPipUrl(saksnr))
         ?: sakIkkeFunnet("Fant ingen sak med saksnr $saksnr")
 }

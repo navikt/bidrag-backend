@@ -14,6 +14,7 @@
   <name>bidrag-tilgangskontroll</name>
 
   <properties>
+    <jackson-bom.version>3.1.8</jackson-bom.version>
     <mockk.version>1.14.11</mockk.version>
     <nav-token-support.version>7.0.1</nav-token-support.version>
     <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
@@ -99,10 +100,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-cache</artifactId>
-    </dependency>
 
     <!-- swagger -->
     <dependency>
@@ -119,6 +116,12 @@
     </dependency>
 
     <!--NAV-->
+    <!-- Samler Caffeine, Valkey og Spring-cacheoppsettet i det interne biblioteket. -->
+    <dependency>
+      <groupId>no.nav.bidrag</groupId>
+      <artifactId>bidrag-cache</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>no.nav.bidrag</groupId>
       <artifactId>bidrag-backend-commons</artifactId>
@@ -139,10 +142,6 @@
     <dependency>
       <groupId>org.jetbrains.kotlin</groupId>
       <artifactId>kotlin-reflect</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.ben-manes.caffeine</groupId>
-      <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
       <groupId>tools.jackson.dataformat</groupId>
