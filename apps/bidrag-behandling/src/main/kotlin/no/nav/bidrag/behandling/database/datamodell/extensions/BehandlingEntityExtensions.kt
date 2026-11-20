@@ -151,16 +151,15 @@ class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
 
     fun setOppdateringAvFFRollerFeilet(value: String) = set(oppdateringAvFFRollerFeilet, value)
 
-    fun getOppprettelseAvBehandlingFeilet(): MutableSet<OpprettBehandlingRequest> =
-        listOf(OPPRETTELSE_AV_FF_BEHANDLING_FEILET, TIDLIGERE_NØKKEL_FOR_FF_OPPRETTELSESFEIL).flatMapTo(mutableSetOf()) { nøkkel ->
-            val verdi = get(nøkkel) ?: return@flatMapTo emptySet()
-            try {
-                commonObjectmapper.readValue<Set<OpprettBehandlingRequest>?>(verdi).orEmpty()
-            } catch (e: JsonProcessingException) {
-                secureLogger.warn(e) { "Kunne ikke lese metadata for FF-opprettelsesfeil fra $nøkkel" }
-                emptySet()
-            }
+    fun getOppprettelseAvBehandlingFeilet(): MutableSet<OpprettBehandlingRequest> = listOf(OPPRETTELSE_AV_FF_BEHANDLING_FEILET, TIDLIGERE_NØKKEL_FOR_FF_OPPRETTELSESFEIL).flatMapTo(mutableSetOf()) { nøkkel ->
+        val verdi = get(nøkkel) ?: return@flatMapTo emptySet()
+        try {
+            commonObjectmapper.readValue<Set<OpprettBehandlingRequest>?>(verdi).orEmpty()
+        } catch (e: JsonProcessingException) {
+            secureLogger.warn(e) { "Kunne ikke lese metadata for FF-opprettelsesfeil fra $nøkkel" }
+            emptySet()
         }
+    }
 
     fun leggTilOppdateringAvFFRollerFeilet(request: OppdaterRollerRequest): MutableSet<OppdaterRollerRequest> = getOppdateringAvFFRollerFeilet().apply {
         add(request)
