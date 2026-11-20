@@ -58,6 +58,7 @@ class BehandleSakHendelseService(
     private fun lagreEierfogd(lagretSak: Sak?, saksnummer: String, eierfogd: String) {
         when {
             lagretSak == null -> sakRepository.save(Sak(saksnummer = saksnummer, eierfogd = eierfogd))
+
             lagretSak.eierfogd != eierfogd -> {
                 lagretSak.eierfogd = eierfogd
                 lagretSak.endretTidspunkt = LocalDateTime.now()
