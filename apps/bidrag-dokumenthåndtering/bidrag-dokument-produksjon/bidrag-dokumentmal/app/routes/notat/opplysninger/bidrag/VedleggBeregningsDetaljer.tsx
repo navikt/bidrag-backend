@@ -31,11 +31,7 @@ import { BarnetErSelvforsørget } from "~/routes/notat/opplysninger/bidrag/bereg
 import { BeregningForholdsmessigFordeling } from "~/routes/notat/opplysninger/bidrag/beregningsdetaljer/BeregningForholdsmessigFordelingDetaljer";
 import { PersonV2 } from "~/components/Person";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.yaml";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer;
-
+import { tekst } from "~/utils/tekst";
 export default function VedleggBeregningsDetaljer() {
   const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
@@ -44,13 +40,19 @@ export default function VedleggBeregningsDetaljer() {
     <>
       <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
         <h2 id={elementIds.vedleggBeregningsdetaljer}>
-          {t.tittel.replace("{}", `${vedleggNummer}`)}
+          {tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.tittel",
+            "Vedlegg nr. {}: Beregningsdetaljer",
+          ).replace("{}", `${vedleggNummer}`)}
         </h2>
         <VedleggBeregningsDetaljerInnhold />
         {data.erOrkestrertVedtak && (
           <div>
             <h2 id={elementIds.vedleggBeregningsdetaljer}>
-              {t.tittelEndeligVedtak}
+              {tekst(
+                "notat.opplysninger.bidrag.beregningsdetaljer.tittelEndeligVedtak",
+                "Beregningsdetaljer endelig vedtak",
+              )}
             </h2>
             <VedleggBeregningsDetaljerEndeligVedtakInnhold />
           </div>
@@ -59,7 +61,6 @@ export default function VedleggBeregningsDetaljer() {
     </>
   );
 }
-
 type BeregnindDetaljerContextProps = BidragPeriodeBeregningsdetaljer & {
   endeligBeløp: number;
   kanFatteVedtakForRevurderingsbarn: boolean;
@@ -68,13 +69,11 @@ type BeregnindDetaljerContextProps = BidragPeriodeBeregningsdetaljer & {
 };
 export const BidragBeregningContext =
   createContext<BeregnindDetaljerContextProps | null>(null);
-
 export function useBeregningDetaljer(): Required<BeregnindDetaljerContextProps> {
   return useContext(
     BidragBeregningContext,
   ) as Required<BeregnindDetaljerContextProps>;
 }
-
 function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
   const { data } = useNotatFelles();
   const resultatPerioder = data.vedtak
@@ -86,13 +85,18 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
         d.vedtakstype == Vedtakstype.ALDERSJUSTERING,
     ),
   );
-
   if (
     perioder.every((p) => p?.filter((pd) => !pd.erDirekteAvslag)?.length === 0)
   ) {
-    return <div>{t.ingenBeregningsdetaljer}</div>;
+    return (
+      <div>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.ingenBeregningsdetaljer",
+          "Ingen beregningsdetaljer å vise",
+        )}
+      </div>
+    );
   }
-
   return (
     <>
       {resultatPerioder?.map(
@@ -110,7 +114,12 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
                 </FeltTabell>
               </div>
               {resultat.orkestrertVedtak?.perioder.length === 0 ? (
-                <div>{t.ingenBeregningsdetaljer}</div>
+                <div>
+                  {tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.ingenBeregningsdetaljer",
+                    "Ingen beregningsdetaljer å vise",
+                  )}
+                </div>
               ) : (
                 resultat.orkestrertVedtak?.perioder
                   .filter(
@@ -120,7 +129,6 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
                   )
                   .map((periode) => {
                     const detaljer = periode.beregningsdetaljer!;
-
                     function renderTables() {
                       if (periode.vedtakstype == Vedtakstype.ALDERSJUSTERING) {
                         return (
@@ -152,7 +160,10 @@ function VedleggBeregningsDetaljerEndeligVedtakInnhold() {
                             <div className={"pb-2"}>
                               <div className={"mb-2"}>
                                 <FeltTabell>
-                                  <Feltrad label={ord.periode} labelBold>
+                                  <Feltrad
+                                    label={tekst("ord.periode", "Periode")}
+                                    labelBold
+                                  >
                                     {formatPeriode(
                                       periode.periode.fom,
                                       deductDays(periode.periode!.til, 1),
@@ -180,8 +191,8 @@ function VedleggBeregningsDetaljerInnhold() {
   const { data } = useNotatFelles();
   const resultatPerioder = data.vedtak
     ?.resultat as DokumentmalResultatBidragsberegningBarnDto[];
-  if (resultatPerioder.length == 0) return <div>{ord.manglerResultat}</div>;
-
+  if (resultatPerioder.length == 0)
+    return <div>{tekst("ord.manglerResultat", "Mangler resultat")}</div>;
   const erForholdsmessigFordelt = resultatPerioder.some(
     (b) => b.minstEnPeriodeHarSlåttUtTilFF,
   );
@@ -203,11 +214,22 @@ function VedleggBeregningsDetaljerInnhold() {
     <>
       {erForholdsmessigFordelt && (
         <div className={"pb-2"}>
-          <h4>{t.forholdsmessigFordelingVarsel.tittel}</h4>
+          <h4>
+            {tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordelingVarsel.tittel",
+              "Forholdsmessig fordeling",
+            )}
+          </h4>
           {enPeriodeHarSlåttUtTilFFPga25Prosent &&
-            t.forholdsmessigFordelingVarsel.pga25Prosent}
+            tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordelingVarsel.pga25Prosent",
+              "BPs totale andel av U overstiger 25% av inntekten. Bidraget er derfor forholdsmessig fordelt i minst en av periodene",
+            )}
           {enPeriodeHarSlåttUtTilFFPgaRedusertEvne &&
-            t.forholdsmessigFordelingVarsel.pgaRedusertEvne}
+            tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordelingVarsel.pgaRedusertEvne",
+              "BP har ikke full bidragsevne. Bidraget er derfor forholdsmessig fordelt i minst en av periodene",
+            )}
         </div>
       )}
       {resultatPerioder?.map(
@@ -228,7 +250,12 @@ function VedleggBeregningsDetaljerInnhold() {
                 </FeltTabell>
               </div>
               {perioderUtenAvslag.length === 0 ? (
-                <div>{t.ingenBeregningsdetaljer}</div>
+                <div>
+                  {tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.ingenBeregningsdetaljer",
+                    "Ingen beregningsdetaljer å vise",
+                  )}
+                </div>
               ) : (
                 perioderUtenAvslag
                   .filter(
@@ -256,7 +283,10 @@ function VedleggBeregningsDetaljerInnhold() {
                             <div className={"pb-2"}>
                               <div className={"mb-2"}>
                                 <FeltTabell>
-                                  <Feltrad label={ord.periode} labelBold>
+                                  <Feltrad
+                                    label={tekst("ord.periode", "Periode")}
+                                    labelBold
+                                  >
                                     {formatPeriode(
                                       periode.periode.fom,
                                       deductDays(periode.periode!.til, 1),
@@ -283,7 +313,10 @@ function VedleggBeregningsDetaljerInnhold() {
                             <div className={"pb-2"}>
                               <div className={"mb-2"}>
                                 <FeltTabell>
-                                  <Feltrad label={ord.periode} labelBold>
+                                  <Feltrad
+                                    label={tekst("ord.periode", "Periode")}
+                                    labelBold
+                                  >
                                     {formatPeriode(
                                       periode.periode.fom,
                                       deductDays(periode.periode!.til, 1),

@@ -32,109 +32,135 @@ import {
   Tabelloppsett,
 } from "~/components/KolonneTabell";
 import { formater } from "~/utils/visning";
-import ord from "~/tekster/ord.yaml";
-import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
-
-const t = bidragTekster.vedtak;
-const tr = bidragTekster.revurderingsbarn;
-
-const te = t.tabellEndelig;
-const tb = t.tabellBeregning;
-
+import { tekst } from "~/utils/tekst";
 const tabellInnkreving: Tabelloppsett = {
   kolonner: [
     {
       felt: "periode",
-      tittel: ord.periode,
+      tittel: tekst("ord.periode", "Periode"),
       bredde: "170px",
       format: "periodeTilOgMedTilMåned",
     },
     {
       felt: "faktiskBidrag",
-      tittel: ord.beløp,
+      tittel: tekst("ord.beløp", "Beløp"),
       bredde: "150px",
       format: "beløpAvrundet",
     },
     {
       felt: "resultatkodeVisningsnavn",
-      tittel: ord.resultat,
+      tittel: tekst("ord.resultat", "Resultat"),
       bredde: "250px",
     },
   ],
 };
-
 const tabellAvslag: Tabelloppsett = {
   kolonner: [
     {
       felt: "periode",
-      tittel: ord.periode,
+      tittel: tekst("ord.periode", "Periode"),
       bredde: "170px",
       format: "periodeTilOgMedTilMåned",
     },
-    { felt: "resultat", tittel: ord.resultat, bredde: "150px" },
+    {
+      felt: "resultat",
+      tittel: tekst("ord.resultat", "Resultat"),
+      bredde: "150px",
+    },
     {
       felt: "resultatkodeVisningsnavn",
-      tittel: ord.årsak,
+      tittel: tekst("ord.årsak", "Årsak"),
       bredde: "250px",
     },
   ],
 };
-
 // bpsAndel, samvær og evne viser to verdier i samme celle, se `beregningsceller`
 const tabellBeregning: Tabelloppsett = {
   periodelinje: { felt: "periode", format: "periode" },
   kolonner: [
     {
       felt: "underholdskostnad",
-      tittel: tb.underholdskostnad,
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.underholdskostnad",
+        "U",
+      ),
       bredde: "50px",
       format: "beløpAvrundet",
     },
-    { felt: "bpsAndel", tittel: tb.bpsAndel, bredde: "120px" },
-    { felt: "samvær", tittel: tb.samvær, bredde: "100px" },
-    { felt: "evne", tittel: tb.evne, bredde: "100px" },
+    {
+      felt: "bpsAndel",
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.bpsAndel",
+        "BPs andel U",
+      ),
+      bredde: "120px",
+    },
+    {
+      felt: "samvær",
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.samvær",
+        "Samvær",
+      ),
+      bredde: "100px",
+    },
+    {
+      felt: "evne",
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.evne",
+        "Evne / 25%",
+      ),
+      bredde: "100px",
+    },
     {
       felt: "beregnetBidrag",
-      tittel: tb.beregnetBidrag,
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.beregnetBidrag",
+        "Beregnet bidrag",
+      ),
       bredde: "80px",
       format: "beløpAvrundet",
     },
     {
       felt: "faktiskBidrag",
-      tittel: tb.endeligBidrag,
+      tittel: tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.endeligBidrag",
+        "Endelig bidrag",
+      ),
       bredde: "80px",
       format: "beløpAvrundet",
     },
   ],
 };
-
 type Resultat = DokumentmalResultatBidragsberegningBarnDto;
 type Periode = ResultatBarnebidragsberegningPeriodeDto;
-
 export default function Vedtak() {
   const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
   const resultat = data.vedtak.resultat as Resultat[];
-
   function renderTabell() {
-    if (resultat.length == 0) return <div>{ord.manglerResultat}</div>;
+    if (resultat.length == 0)
+      return <div>{tekst("ord.manglerResultat", "Mangler resultat")}</div>;
     if (erInnkrevingsgrunnlag) return <VedtakInnkreving resultat={resultat} />;
     if (erAvslag) return <VedtakAvslag resultat={resultat} />;
     return <VedtakBeregning resultat={resultat} />;
   }
-
   return (
     <>
       <div className={"elements_inline section-title break-before-page"}>
         <h2 className={"section-title"}>
-          {data.erOrkestrertVedtak ? t.tittelKlagevedtak : t.tittel}
+          {data.erOrkestrertVedtak
+            ? tekst(
+                "notat.begrunnelse.bidrag.vedtak.tittelKlagevedtak",
+                "Klagevedtak",
+              )
+            : tekst("notat.begrunnelse.bidrag.vedtak.tittel", "Vedtak")}
         </h2>
         {!erAvslag && !erInnkrevingsgrunnlag && (
           <a href={`#${elementIds.vedleggBeregningsdetaljer}`}>
-            {ord.seVedleggForBeregningsdetaljer.replace(
-              "{}",
-              `${vedleggNummer}`,
-            )}
+            {tekst(
+              "ord.seVedleggForBeregningsdetaljer",
+              "se vedlegg nr. {} for beregningsdetaljer",
+            ).replace("{}", `${vedleggNummer}`)}
           </a>
         )}
       </div>
@@ -142,7 +168,12 @@ export default function Vedtak() {
       {data.erOrkestrertVedtak && (
         <>
           <div className={"elements_inline section-title break-before-page"}>
-            <h2 className={"section-title"}>{t.tittelEndeligVedtak}</h2>
+            <h2 className={"section-title"}>
+              {tekst(
+                "notat.begrunnelse.bidrag.vedtak.tittelEndeligVedtak",
+                "Endelig vedtak",
+              )}
+            </h2>
           </div>
           <VedtakEndeligTable data={resultat} />
         </>
@@ -152,21 +183,18 @@ export default function Vedtak() {
     </>
   );
 }
-
 /** Ett resultat per barn. Barna sorteres etter alder når `sorter` er satt. */
 function resultatPerBarn(data: Resultat[], sorter = false): Resultat[] {
   const perBarn = groupBy(data, (d) => d.barn?.ident!).map(([, v]) => v[0]);
   return sorter ? perBarn.sort((a, b) => sortByAge(a.barn, b.barn)) : perBarn;
 }
-
 function useAvslagstekst() {
   const { erOpphør } = useNotatFelles();
   return (resultat: Resultat) =>
     erOpphør || resultat.barn.harLøpendeBidrag == true
-      ? ord.opphør
-      : ord.avslag;
+      ? tekst("ord.opphør", "Opphør")
+      : tekst("ord.avslag", "Avslag");
 }
-
 function VedtakInnkreving({ resultat }: { resultat: Resultat[] }) {
   return (
     <div style={{ paddingTop: "0px" }}>
@@ -179,7 +207,6 @@ function VedtakInnkreving({ resultat }: { resultat: Resultat[] }) {
     </div>
   );
 }
-
 function VedtakAvslag({ resultat }: { resultat: Resultat[] }) {
   const avslagstekst = useAvslagstekst();
   return (
@@ -195,7 +222,6 @@ function VedtakAvslag({ resultat }: { resultat: Resultat[] }) {
     </div>
   );
 }
-
 function TabellAvslag({
   resultat,
   avslagstekst,
@@ -211,7 +237,6 @@ function TabellAvslag({
     />
   );
 }
-
 function ResultatEllerTabell({
   resultat,
   children,
@@ -220,32 +245,67 @@ function ResultatEllerTabell({
   children: ReactNode;
 }) {
   if (resultat.erAvvistRevurdering) {
-    return <div>{t.ingenPerioderSlåttUtTilFF}</div>;
+    return (
+      <div>
+        {tekst(
+          "notat.begrunnelse.bidrag.vedtak.ingenPerioderSlåttUtTilFF",
+          "Ingen perioder har slått ut til FF. Det vil derfor ikke fattes noe vedtak for revurderingsbarnet.",
+        )}
+      </div>
+    );
   }
   if (resultat.erAvvisning) {
-    return <div>{t.avvisning}</div>;
+    return (
+      <div>
+        {tekst(
+          "notat.begrunnelse.bidrag.vedtak.avvisning",
+          "Vedtak er avslag på behandling og har derfor ingen perioder",
+        )}
+      </div>
+    );
   }
   return <>{children}</>;
 }
-
 function OverstyrFatteVedtakRevurderingsbarnInformasjon() {
   const { data } = useNotatFelles();
   const { vedtak } = data;
   if (!vedtak.kanFatteVedtakForRevurderingsbarn) return null;
   return (
     <div>
-      <h2 className={"section-title"}>{tr.tittel}</h2>
+      <h2 className={"section-title"}>
+        {tekst(
+          "notat.begrunnelse.bidrag.revurderingsbarn.tittel",
+          "Vedtak for revurderingsbarn",
+        )}
+      </h2>
       {vedtak.skalFatteVedtakForRevurderingsbarn
-        ? tr.foreslåttFatteVedtak
-        : tr.foreslåttIkkeFatteVedtak}
+        ? tekst(
+            "notat.begrunnelse.bidrag.revurderingsbarn.foreslåttFatteVedtak",
+            "Basert på informasjonen som ble lagt inn foreslo beregningen å fatte vedtak for revurderingsbarn.",
+          )
+        : tekst(
+            "notat.begrunnelse.bidrag.revurderingsbarn.foreslåttIkkeFatteVedtak",
+            "Basert på informasjonen som ble lagt inn foreslo beregningen å ikke fatte vedtak for revurderingsbarn.",
+          )}
 
       {!!vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse && (
         <div className={"mt-2"}>
           {vedtak.skalFatteVedtakForRevurderingsbarn
-            ? tr.overstyrtTilIkkeFatteVedtak
-            : tr.overstyrtTilFatteVedtak}
+            ? tekst(
+                "notat.begrunnelse.bidrag.revurderingsbarn.overstyrtTilIkkeFatteVedtak",
+                "Det ble manuelt overstyrt til å ikke fatte vedtak for revurderingsbarn",
+              )
+            : tekst(
+                "notat.begrunnelse.bidrag.revurderingsbarn.overstyrtTilFatteVedtak",
+                "Det ble manuelt overstyrt til å fatte vedtak for revurderingsbarn",
+              )}
           <div>
-            <h5 style={{ margin: 0 }}>{tr.begrunnelse}</h5>
+            <h5 style={{ margin: 0 }}>
+              {tekst(
+                "notat.begrunnelse.bidrag.revurderingsbarn.begrunnelse",
+                "Begrunnelse:",
+              )}
+            </h5>
             {`${vedtak.manueltOverstyrtFatteVedtakRevurderingsbarnBegrunnelse}`}
           </div>
         </div>
@@ -253,7 +313,6 @@ function OverstyrFatteVedtakRevurderingsbarnInformasjon() {
     </div>
   );
 }
-
 /** Viser to verdier i samme celle, f.eks. `45 % / 1 234`. */
 function ToVerdier({
   venstre,
@@ -278,18 +337,18 @@ function ToVerdier({
     </table>
   );
 }
-
 // Samvær vises som 0 når perioden mangler beregningsdetaljer
 const SAMVÆRSKLASSE_UTEN_BEREGNING = "0";
-
 function samværsklasse(p: Periode) {
   const samværsfradrag = p.beregningsdetaljer?.samværsfradrag;
   if (p.beregningsdetaljer == undefined) return SAMVÆRSKLASSE_UTEN_BEREGNING;
   return samværsfradrag?.samværsklasse === Samvaersklasse.DELT_BOSTED
-    ? tb.samværsklasseDeltBosted
+    ? tekst(
+        "notat.begrunnelse.bidrag.vedtak.tabellBeregning.samværsklasseDeltBosted",
+        "D",
+      )
     : samværsfradrag?.samværsklasseVisningsnavn;
 }
-
 const beregningsceller = {
   bpsAndel: (p: Periode) => (
     <ToVerdier
@@ -314,7 +373,6 @@ const beregningsceller = {
     );
   },
 };
-
 function ForklaringRad({ index }: { index: number }) {
   return (
     <Tabellrad
@@ -324,11 +382,15 @@ function ForklaringRad({ index }: { index: number }) {
       skipPadding
       className="pt-2"
     >
-      <Tabellcelle fullSpan>{tb.forklaringForkortelser}</Tabellcelle>
+      <Tabellcelle fullSpan>
+        {tekst(
+          "notat.begrunnelse.bidrag.vedtak.tabellBeregning.forklaringForkortelser",
+          "U = Underholdskostnad, BP = Bidragspliktig, BM = Bidragsmottaker",
+        )}
+      </Tabellcelle>
     </Tabellrad>
   );
 }
-
 function Beregningsrader({
   perioder,
   avslagstekst,
@@ -371,7 +433,10 @@ function Beregningsrader({
               <Tabellcelle colSpan={8}>
                 <div className={"pl-0 ml-0"}>
                   <FeltTabell>
-                    <Feltrad label={ord.resultat} labelBold>
+                    <Feltrad
+                      label={tekst("ord.resultat", "Resultat")}
+                      labelBold
+                    >
                       {periode.resultatkodeVisningsnavn}
                     </Feltrad>
                   </FeltTabell>
@@ -385,7 +450,6 @@ function Beregningsrader({
     </>
   );
 }
-
 function BarnOgIndeksår({
   resultat,
   visIndeksår,
@@ -403,7 +467,13 @@ function BarnOgIndeksår({
             <Feltrader
               rows={[
                 visIndeksår
-                  ? { label: t.nesteIndeksår, value: resultat.indeksår }
+                  ? {
+                      label: tekst(
+                        "notat.begrunnelse.bidrag.vedtak.nesteIndeksår",
+                        "Neste indeksår",
+                      ),
+                      value: resultat.indeksår,
+                    }
                   : {},
               ]}
             />
@@ -413,7 +483,13 @@ function BarnOgIndeksår({
       {gjelderBarn.innbetaltBeløp && (
         <div className="mt-2 mb-2">
           <FeltTabell>
-            <Feltrad label={t.innbetaltBeløp} labelBold>
+            <Feltrad
+              label={tekst(
+                "notat.begrunnelse.bidrag.vedtak.innbetaltBeløp",
+                "Innbetalt beløp",
+              )}
+              labelBold
+            >
               {gjelderBarn.innbetaltBeløp}
             </Feltrad>
           </FeltTabell>
@@ -422,7 +498,6 @@ function BarnOgIndeksår({
     </>
   );
 }
-
 function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
   const { erDirekteAvslagForBarn } = useNotatFelles();
   const avslagstekst = useAvslagstekst();
@@ -451,10 +526,8 @@ function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
     </>
   );
 }
-
 // Brevet har en tom siste kolonne der notatet viser resultat. Beholdes for å ikke endre utseendet på brevet
 const TOM_KOLONNE = { name: "", content: "" };
-
 function overskrifterEndelig(
   vurderUgyldighet: boolean,
   visningForSaksbehandler: boolean,
@@ -463,26 +536,34 @@ function overskrifterEndelig(
     visningForSaksbehandler ? saksbehandler : brev;
   return [
     ...(vurderUgyldighet
-      ? [{ tittel: te.vurderUgyldighet, bredde: "20px" }]
+      ? [
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.vedtak.tabellEndelig.vurderUgyldighet",
+              "Vurder ugyldighet",
+            ),
+            bredde: "20px",
+          },
+        ]
       : []),
-    { tittel: ord.periode, bredde: bredde("120px", "30%") },
+    { tittel: tekst("ord.periode", "Periode"), bredde: bredde("120px", "30%") },
     {
-      tittel: visningForSaksbehandler ? ord.type : ord.årsak,
+      tittel: visningForSaksbehandler
+        ? tekst("ord.type", "Type")
+        : tekst("ord.årsak", "Årsak"),
       bredde: bredde("100px", "40%"),
     },
-    { tittel: ord.beløp, bredde: bredde("120px", "30%") },
+    { tittel: tekst("ord.beløp", "Beløp"), bredde: bredde("120px", "30%") },
     visningForSaksbehandler
-      ? { tittel: ord.resultat, bredde: "130px" }
+      ? { tittel: tekst("ord.resultat", "Resultat"), bredde: "130px" }
       : { tittel: TOM_KOLONNE.name },
   ];
 }
-
 export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
   const { typeInnhold } = useDokumentFelles();
   if (data.length == 0) return null;
   if (data.every((e) => e.orkestrertVedtak === null)) return null;
   const visningForSaksbehandler = typeInnhold == TypeInnhold.NOTAT;
-
   return (
     <>
       {resultatPerBarn(data, true).map((r) => {
@@ -505,8 +586,8 @@ export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
                     <Tabellcelle>
                       {periode.klageOmgjøringDetaljer?.kanOpprette35c
                         ? periode.klageOmgjøringDetaljer?.skalOpprette35c
-                          ? ord.ja
-                          : ord.nei
+                          ? tekst("ord.ja", "Ja")
+                          : tekst("ord.nei", "Nei")
                         : ""}
                     </Tabellcelle>
                   )}
@@ -519,8 +600,11 @@ export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
                   <Tabellcelle>
                     {periode.erOpphør
                       ? visningForSaksbehandler
-                        ? te.opphørForSaksbehandler
-                        : ord.opphør
+                        ? tekst(
+                            "notat.begrunnelse.bidrag.vedtak.tabellEndelig.opphørForSaksbehandler",
+                            "-",
+                          )
+                        : tekst("ord.opphør", "Opphør")
                       : formater(periode.faktiskBidrag, "beløpAvrundet")}
                   </Tabellcelle>
                   <Tabellcelle>

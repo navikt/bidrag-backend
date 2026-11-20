@@ -3,72 +3,79 @@ import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
 import { NotatResultatForskuddBeregningBarnDto } from "~/types/Api";
-import ord from "~/tekster/ord.yaml";
-import forskuddTekster from "~/tekster/notat/begrunnelse/forskudd.yaml";
-
-const t = forskuddTekster.vedtak;
-
+import { tekst } from "~/utils/tekst";
 const tabellAvslag: Tabelloppsett = {
   bredde: "500px",
   kolonner: [
     {
       felt: "periode",
-      tittel: ord.periode,
+      tittel: tekst("ord.periode", "Periode"),
       bredde: "170px",
       format: "periodeTilOgMedTilMåned",
     },
-    { felt: "resultat", tittel: ord.resultat, bredde: "150px" },
+    {
+      felt: "resultat",
+      tittel: tekst("ord.resultat", "Resultat"),
+      bredde: "150px",
+    },
     {
       felt: "resultatKodeVisningsnavn",
-      tittel: ord.årsak,
+      tittel: tekst("ord.årsak", "Årsak"),
       bredde: "250px",
     },
   ],
 };
-
 const tabellInnvilget: Tabelloppsett = {
   bredde: "550px",
   periodelinje: { felt: "periode", format: "periode" },
   kolonner: [
     {
       felt: "inntekt",
-      tittel: ord.inntekt,
+      tittel: tekst("ord.inntekt", "Inntekt"),
       bredde: "80px",
       format: "beløp",
     },
     {
       felt: "sivilstandVisningsnavn",
-      tittel: t.tabellInnvilget.sivilstand,
+      tittel: tekst(
+        "notat.begrunnelse.forskudd.vedtak.tabellInnvilget.sivilstand",
+        "Sivilstand",
+      ),
       bredde: "100px",
     },
     {
       felt: "antallBarnIHusstanden",
-      tittel: t.tabellInnvilget.antallBarnIHusstand,
+      tittel: tekst(
+        "notat.begrunnelse.forskudd.vedtak.tabellInnvilget.antallBarnIHusstand",
+        "Antall barn i husstand",
+      ),
       bredde: "80px",
     },
     {
       felt: "beløp",
-      tittel: t.tabellInnvilget.forskudd,
+      tittel: tekst(
+        "notat.begrunnelse.forskudd.vedtak.tabellInnvilget.forskudd",
+        "Forskudd",
+      ),
       bredde: "70px",
       format: "beløp",
     },
     {
       felt: "resultatKodeVisningsnavn",
-      tittel: ord.resultat,
+      tittel: tekst("ord.resultat", "Resultat"),
       bredde: "160px",
     },
   ],
 };
-
 export default function Vedtak() {
   const { erAvslag, data } = useNotatFelles();
   const resultat = data.vedtak
     .resultat as NotatResultatForskuddBeregningBarnDto[];
   return (
     <div style={{ pageBreakBefore: erAvslag ? "auto" : "always" }}>
-      <h2>{t.tittel}</h2>
+      <h2>{tekst("notat.begrunnelse.forskudd.vedtak.tittel", "Vedtak")}</h2>
       {resultat.length == 0 ? (
-        <div>{ord.manglerResultat}</div>
+        <div>{tekst("ord.manglerResultat", "Mangler resultat")}</div>
       ) : erAvslag ? (
         <div style={{ paddingTop: "0px" }}>
           {resultat.map((barn) => (
@@ -84,14 +91,16 @@ export default function Vedtak() {
     </div>
   );
 }
-
 function VedtakAvslagForBarn({
   barn,
 }: {
   barn: NotatResultatForskuddBeregningBarnDto;
 }) {
   const { erOpphør } = useNotatFelles();
-  const resultat = erOpphør || barn.erOpphørAvStønad ? ord.opphør : ord.avslag;
+  const resultat =
+    erOpphør || barn.erOpphørAvStønad
+      ? tekst("ord.opphør", "Opphør")
+      : tekst("ord.avslag", "Avslag");
   return (
     <div className="table_container">
       <TableGjelderBarn gjelderBarn={barn.barn} />
@@ -109,7 +118,6 @@ function VedtakAvslagForBarn({
     </div>
   );
 }
-
 function VedtakForBarn({
   barn,
 }: {

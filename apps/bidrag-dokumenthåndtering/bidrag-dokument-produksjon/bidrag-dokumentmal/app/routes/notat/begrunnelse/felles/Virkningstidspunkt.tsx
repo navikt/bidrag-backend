@@ -8,22 +8,23 @@ import DokumentStabel from "~/components/DokumentStabel";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { FeltTabell, Feltrad, Feltrader } from "~/components/FeltTabell";
 import { NotatVirkningstidspunktBarnDto, Stonadstype } from "~/types/Api";
-import ord from "~/tekster/ord.yaml";
-import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
 import Beregningsperiode from "~/routes/notat/begrunnelse/bidrag/Beregningsperiode";
 import {
   TypeInnhold,
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
-
-const t = notatTekster.virkningstidspunkt;
-
+import { tekst } from "~/utils/tekst";
 export default function Virkningstidspunkt() {
   const { data, gjelderFlereSaker } = useNotatFelles();
   const virkningstidspunkt = data.virkningstidspunkt;
   return (
     <div className={"virkningstidspunkt"}>
-      <h2>{t.tittel}</h2>
+      <h2>
+        {tekst(
+          "notat.begrunnelse.felles.virkningstidspunkt.tittel",
+          "Virkningstidspunkt",
+        )}
+      </h2>
       {gjelderFlereSaker ? (
         <VirkningstidspunktPerSak />
       ) : virkningstidspunkt.erLikForAlle ? (
@@ -34,16 +35,13 @@ export default function Virkningstidspunkt() {
     </div>
   );
 }
-
 function VirkningstidspunktPerSak() {
   const { data } = useNotatFelles();
   const { typeInnhold } = useDokumentFelles();
   const virkningstidspunkt = data.virkningstidspunkt;
-
   const saksnummerListe = Array.from(
     new Set(virkningstidspunkt.barn.map((barn) => barn.rolle.saksnummer)),
   );
-
   return (
     <DokumentStabel gap={4}>
       {saksnummerListe.map((saksnummer) => {
@@ -57,13 +55,16 @@ function VirkningstidspunktPerSak() {
           <div key={saksnummer}>
             <div>
               <FeltTabell labelColWidth={"70px"}>
-                <Feltrad label={ord.saksnummer} labelBold>
+                <Feltrad
+                  label={tekst("ord.saksnummer", "Saksnummer")}
+                  labelBold
+                >
                   {typeInnhold == TypeInnhold.NOTAT
                     ? saksnummer
-                    : ord.saksnummerMedHenvisning.replace(
-                        "{}",
-                        `${saksnummer}`,
-                      )}
+                    : tekst(
+                        "ord.saksnummerMedHenvisning",
+                        "{} (Oppgi saksnummeret ved henvendelse til oss.)",
+                      ).replace("{}", `${saksnummer}`)}
                 </Feltrad>
               </FeltTabell>
             </div>
@@ -78,7 +79,6 @@ function VirkningstidspunktPerSak() {
     </DokumentStabel>
   );
 }
-
 function VirkningstidspunktPerBarn({
   barnListe,
 }: {
@@ -105,25 +105,30 @@ function VirkningstidspunktPerBarn({
                     <Feltrader
                       rows={[
                         {
-                          label: ord.søknadstype,
+                          label: tekst("ord.søknadstype", "Søknadstype"),
                           value: barn.behandlingstypeVisningsnavn,
                         },
                         {
-                          label: ord.søknadFra,
+                          label: tekst("ord.søknadFra", "Søknad fra"),
                           value: søktAvTilVisningsnavn(barn.søktAv),
                         },
                         {
-                          label: t.innkreving,
-                          value: barn.innkreving ? ord.ja : ord.nei,
+                          label: tekst(
+                            "notat.begrunnelse.felles.virkningstidspunkt.innkreving",
+                            "Innkreving",
+                          ),
+                          value: barn.innkreving
+                            ? tekst("ord.ja", "Ja")
+                            : tekst("ord.nei", "Nei"),
                         },
                         ...[
                           barn.avslag
                             ? {
-                                label: ord.avslag,
+                                label: tekst("ord.avslag", "Avslag"),
                                 value: barn.avslagVisningsnavn,
                               }
                             : {
-                                label: ord.årsak,
+                                label: tekst("ord.årsak", "Årsak"),
                                 value: barn.årsakVisningsnavn,
                               },
                         ],
@@ -133,10 +138,10 @@ function VirkningstidspunktPerBarn({
                 </div>
                 <div className={"mb-2"}>
                   <FeltTabell labelColWidth={"100px"}>
-                    <Feltrad label={ord.mottattDato}>
+                    <Feltrad label={tekst("ord.mottattDato", "Mottatt dato")}>
                       {dateToDDMMYYYY(barn.mottattDato as string)}
                     </Feltrad>
-                    <Feltrad label={ord.søktFraDato}>
+                    <Feltrad label={tekst("ord.søktFraDato", "Søkt fra dato")}>
                       {dateToDDMMYYYY(barn.søktFraDato as string)}
                     </Feltrad>
                   </FeltTabell>
@@ -145,7 +150,12 @@ function VirkningstidspunktPerBarn({
               <div>
                 <div>
                   <FeltTabell labelColWidth={"100px"}>
-                    <Feltrad label={t.virkningstidspunkt}>
+                    <Feltrad
+                      label={tekst(
+                        "notat.begrunnelse.felles.virkningstidspunkt.virkningstidspunkt",
+                        "Virkningstidspunkt",
+                      )}
+                    >
                       {dateToDDMMYYYY(barn.virkningstidspunkt)}
                     </Feltrad>
                   </FeltTabell>
@@ -153,7 +163,12 @@ function VirkningstidspunktPerBarn({
                 {barn.opphørsdato && (
                   <div key={barn.rolle.ident}>
                     <FeltTabell labelColWidth={"100px"}>
-                      <Feltrad label={t.opphørsdato}>
+                      <Feltrad
+                        label={tekst(
+                          "notat.begrunnelse.felles.virkningstidspunkt.opphørsdato",
+                          "Opphørsdato",
+                        )}
+                      >
                         {dateToDDMMYYYY(barn.opphørsdato as string)}
                       </Feltrad>
                     </FeltTabell>
@@ -163,7 +178,10 @@ function VirkningstidspunktPerBarn({
                 <NotatBegrunnelse data={barn.begrunnelse} />
                 {data.stønadstype == Stonadstype.BIDRAG18AAR && (
                   <NotatBegrunnelse
-                    label={t.vurderingAvSkolegang}
+                    label={tekst(
+                      "notat.begrunnelse.felles.virkningstidspunkt.vurderingAvSkolegang",
+                      "Vurdering av skolegang",
+                    )}
                     data={barn.begrunnelseVurderingAvSkolegang}
                   />
                 )}
@@ -174,7 +192,6 @@ function VirkningstidspunktPerBarn({
     </DokumentStabel>
   );
 }
-
 function VirkningstidspunktFelles({
   barnListe,
 }: {
@@ -191,25 +208,30 @@ function VirkningstidspunktFelles({
             <Feltrader
               rows={[
                 {
-                  label: ord.søknadstype,
+                  label: tekst("ord.søknadstype", "Søknadstype"),
                   value: virkningstidspunktBarn.behandlingstypeVisningsnavn,
                 },
                 {
-                  label: t.innkreving,
-                  value: virkningstidspunktBarn.innkreving ? ord.ja : ord.nei,
+                  label: tekst(
+                    "notat.begrunnelse.felles.virkningstidspunkt.innkreving",
+                    "Innkreving",
+                  ),
+                  value: virkningstidspunktBarn.innkreving
+                    ? tekst("ord.ja", "Ja")
+                    : tekst("ord.nei", "Nei"),
                 },
                 {
-                  label: ord.søknadFra,
+                  label: tekst("ord.søknadFra", "Søknad fra"),
                   value: søktAvTilVisningsnavn(virkningstidspunktBarn.søktAv),
                 },
                 ...[
                   virkningstidspunkt.erAvslagForAlle
                     ? {
-                        label: ord.avslag,
+                        label: tekst("ord.avslag", "Avslag"),
                         value: virkningstidspunktBarn.avslagVisningsnavn,
                       }
                     : {
-                        label: ord.årsak,
+                        label: tekst("ord.årsak", "Årsak"),
                         value: virkningstidspunktBarn.årsakVisningsnavn,
                       },
                 ],
@@ -219,10 +241,10 @@ function VirkningstidspunktFelles({
         </div>
         <div>
           <FeltTabell labelColWidth={"100px"}>
-            <Feltrad label={ord.mottattDato}>
+            <Feltrad label={tekst("ord.mottattDato", "Mottatt dato")}>
               {dateToDDMMYYYY(virkningstidspunktBarn.mottattDato as string)}
             </Feltrad>
-            <Feltrad label={ord.søktFraDato}>
+            <Feltrad label={tekst("ord.søktFraDato", "Søkt fra dato")}>
               {dateToDDMMYYYY(virkningstidspunktBarn.søktFraDato as string)}
             </Feltrad>
           </FeltTabell>
@@ -230,7 +252,12 @@ function VirkningstidspunktFelles({
       </div>
       <div className={"mt-4"}>
         <FeltTabell labelColWidth={"100px"}>
-          <Feltrad label={t.virkningstidspunkt}>
+          <Feltrad
+            label={tekst(
+              "notat.begrunnelse.felles.virkningstidspunkt.virkningstidspunkt",
+              "Virkningstidspunkt",
+            )}
+          >
             {dateToDDMMYYYY(virkningstidspunktBarn.virkningstidspunkt)}
           </Feltrad>
         </FeltTabell>
@@ -238,7 +265,12 @@ function VirkningstidspunktFelles({
       {virkningstidspunktBarn.opphørsdato && (
         <div>
           <FeltTabell labelColWidth={"100px"}>
-            <Feltrad label={t.opphørsdato}>
+            <Feltrad
+              label={tekst(
+                "notat.begrunnelse.felles.virkningstidspunkt.opphørsdato",
+                "Opphørsdato",
+              )}
+            >
               {dateToDDMMYYYY(virkningstidspunktBarn.opphørsdato as string)}
             </Feltrad>
           </FeltTabell>
@@ -248,7 +280,10 @@ function VirkningstidspunktFelles({
       <NotatBegrunnelse data={virkningstidspunktBarn.begrunnelse} />
       {data.stønadstype == Stonadstype.BIDRAG18AAR && (
         <NotatBegrunnelse
-          label={t.vurderingAvSkolegang}
+          label={tekst(
+            "notat.begrunnelse.felles.virkningstidspunkt.vurderingAvSkolegang",
+            "Vurdering av skolegang",
+          )}
           data={virkningstidspunktBarn.begrunnelseVurderingAvSkolegang}
         />
       )}

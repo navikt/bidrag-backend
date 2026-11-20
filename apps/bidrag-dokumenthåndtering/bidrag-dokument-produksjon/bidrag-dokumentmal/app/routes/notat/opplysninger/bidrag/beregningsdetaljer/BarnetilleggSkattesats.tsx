@@ -1,7 +1,5 @@
 import { Rolletype } from "~/types/Api";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import ord from "~/tekster/ord.yaml";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
 import {
   formatterBeløpForBeregning,
   formatterProsent,
@@ -10,15 +8,11 @@ import {
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import CalculationTable from "~/components/notat_felles/CalculationTable";
 import { barnetilleggTiltakspengerVisningsnavn } from "~/constants/beregning";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.barnetilleggSkattesats;
-
+import { tekst } from "~/utils/tekst";
 export const BarnetilleggSkattesats = ({ rolle }: { rolle: Rolletype }) => {
   const { barnetilleggBP, barnetilleggBM } = useBeregningDetaljer();
-
   const barnetillegg = rolle == Rolletype.BP ? barnetilleggBP : barnetilleggBM;
   const barnetilleggSkattesats = barnetillegg.delberegningSkattesats;
-
   if (barnetilleggSkattesats == null) return null;
   if (
     barnetillegg.barnetillegg.every(
@@ -26,35 +20,51 @@ export const BarnetilleggSkattesats = ({ rolle }: { rolle: Rolletype }) => {
     )
   )
     return null;
-
   return (
     <div className={"mb-2"}>
-      <h4>{t.tittel.replace("{rolle}", rolleTilVisningsnavn(rolle))}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.tittel",
+          "Beregning av skatteprosent på barnetillegg ({rolle})",
+        ).replace("{rolle}", rolleTilVisningsnavn(rolle))}
+      </h4>
       <CalculationTable
         data={[
           {
-            label: t.skatt,
+            label: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.skatt",
+              "Skatt",
+            ),
             result: formatterBeløpForBeregning(
               barnetilleggSkattesats.skattAlminneligInntekt,
               true,
             ),
           },
           {
-            label: t.trygdeavgift,
+            label: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.trygdeavgift",
+              "Trygdeavgift",
+            ),
             result: formatterBeløpForBeregning(
               barnetilleggSkattesats.trygdeavgift,
               true,
             ),
           },
           {
-            label: t.trinnskatt,
+            label: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.trinnskatt",
+              "Trinnskatt",
+            ),
             result: formatterBeløpForBeregning(
               barnetilleggSkattesats.trinnskatt,
               true,
             ),
           },
           {
-            label: t.sumSkatt,
+            label: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.sumSkatt",
+              "Sum skatt",
+            ),
             labelBold: true,
             result: formatterBeløpForBeregning(
               barnetilleggSkattesats.sumSkatt,
@@ -65,11 +75,14 @@ export const BarnetilleggSkattesats = ({ rolle }: { rolle: Rolletype }) => {
       />
       <div>
         <FeltTabell>
-          <Feltrad label={ord.inntekt}>
+          <Feltrad label={tekst("ord.inntekt", "Inntekt")}>
             {formatterBeløpForBeregning(barnetilleggSkattesats.sumInntekt)}
           </Feltrad>
           <Feltrad
-            label={t.skattesats}
+            label={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.barnetilleggSkattesats.skattesats",
+              "Skattesats",
+            )}
           >{`${formatterBeløpForBeregning(barnetilleggSkattesats.sumSkatt, true)} / ${formatterBeløpForBeregning(barnetilleggSkattesats.sumInntekt)} = ${formatterProsent(barnetilleggSkattesats.skattFaktor)}`}</Feltrad>
         </FeltTabell>
       </div>

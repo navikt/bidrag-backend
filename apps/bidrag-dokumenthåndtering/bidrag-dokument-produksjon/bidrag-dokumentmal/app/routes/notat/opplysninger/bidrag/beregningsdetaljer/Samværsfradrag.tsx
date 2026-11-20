@@ -1,19 +1,29 @@
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.samværsfradrag;
-
+import { tekst } from "~/utils/tekst";
 export const Samværsfradrag = () => {
   const { samværsfradrag } = useBeregningDetaljer();
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.samværsfradrag.tittel",
+          "Samværsfradrag",
+        )}
+      </h4>
       <div>
         <FeltTabell>
-          <Feltrad label={t.samværsklasse}>
-            {t.samværsklasseVerdi
+          <Feltrad
+            label={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.samværsfradrag.samværsklasse",
+              "Samværsklasse",
+            )}
+          >
+            {tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.samværsfradrag.samværsklasseVerdi",
+              "Samværsklasse {samværsklasse} (samvær per måned: {samværPerMåned})",
+            )
               .replace(
                 "{samværsklasse}",
                 `${samværsfradrag.samværsklasseVisningsnavn}`,
@@ -23,7 +33,12 @@ export const Samværsfradrag = () => {
                 `${samværsfradrag.gjennomsnittligSamværPerMåned}`,
               )}
           </Feltrad>
-          <Feltrad label={t.samværsfradrag}>
+          <Feltrad
+            label={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.samværsfradrag.samværsfradrag",
+              "Samværsfradrag",
+            )}
+          >
             {formatterBeløpForBeregning(samværsfradrag.samværsfradrag)}
           </Feltrad>
         </FeltTabell>

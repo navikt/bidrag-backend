@@ -1,10 +1,7 @@
 import { FeltTabell, Feltrader } from "~/components/FeltTabell";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.endeligBidrag;
-
+import { tekst } from "~/utils/tekst";
 export const EndeligBidragTable = () => {
   const {
     deltBosted,
@@ -12,22 +9,32 @@ export const EndeligBidragTable = () => {
     sluttberegningAldersjustering,
     samværsfradrag: beregning,
   } = useBeregningDetaljer();
-
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.endeligBidrag.tittel",
+          "Endelig bidrag",
+        )}
+      </h4>
       <div>
         <FeltTabell>
           <Feltrader
             rows={[
               !deltBosted
                 ? {
-                    label: t.etterSamværsfradraget,
+                    label: tekst(
+                      "notat.opplysninger.bidrag.beregningsdetaljer.endeligBidrag.etterSamværsfradraget",
+                      "Etter samværsfradraget",
+                    ),
                     value: `${formatterBeløpForBeregning(sluttberegningAldersjustering?.bpAndelBeløp ?? sluttberegning?.bruttoBidragEtterBarnetilleggBP)} - ${formatterBeløpForBeregning(beregning.samværsfradrag)} = ${formatterBeløpForBeregning(sluttberegningAldersjustering?.beregnetBeløp ?? sluttberegning?.beregnetBeløp)}`,
                   }
                 : null,
               {
-                label: t.avrundetBeløp,
+                label: tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.endeligBidrag.avrundetBeløp",
+                  "Avrundet beløp",
+                ),
                 value: `${formatterBeløpForBeregning(sluttberegningAldersjustering?.resultatBeløp ?? sluttberegning?.resultatBeløp)}`,
               },
             ]}

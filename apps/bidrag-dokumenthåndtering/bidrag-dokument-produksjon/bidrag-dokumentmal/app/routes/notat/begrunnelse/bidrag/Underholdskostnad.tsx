@@ -11,18 +11,13 @@ import {
   Tabellrad,
 } from "~/components/DokumentTabell";
 import { formatPeriode, dateToDDMMYYYY } from "~/utils/date-utils";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
 import {
   formatterBeløpForBeregning,
   rolleTilVisningsnavnV2,
   beløpstypeVisningsnavn,
 } from "~/utils/visningsnavn";
 import KildeIcon from "~/components/KildeIcon";
-
-const t = bidragTekster.underholdskostnad;
-
+import { tekst } from "~/utils/tekst";
 export default function Underholdskostnad() {
   const { data, erAvslag } = useNotatFelles();
   if (erAvslag || data.underholdskostnader == null) return null;
@@ -31,9 +26,15 @@ export default function Underholdskostnad() {
   );
   return (
     <Seksjon
-      tittel={t.tittel}
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.tittel",
+        "Underholdskostnad",
+      )}
       vedlegg={"underholdskostnader"}
-      lenketekst={t.lenkeTilVedlegg}
+      lenketekst={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.lenkeTilVedlegg",
+        "se vedlegg nr. {} for underholdskostnad",
+      )}
     >
       {søknadsbarn.map((barn, i) => (
         <UnderholdskostnaderSøknadsbarn
@@ -45,7 +46,6 @@ export default function Underholdskostnad() {
     </Seksjon>
   );
 }
-
 function UnderholdskostnaderAndreBarn({
   data,
 }: {
@@ -59,7 +59,10 @@ function UnderholdskostnaderAndreBarn({
           <div className={"pt-2 pb-0 mb-2 mt-2"}>
             <FeltTabell>
               <Feltrad
-                label={t.andreBarnTilBidragsmottaker}
+                label={tekst(
+                  "notat.begrunnelse.bidrag.underholdskostnad.andreBarnTilBidragsmottaker",
+                  "Andre barn til bidragsmottaker",
+                )}
                 labelBold
               >{`${barn.gjelderBarn.navn} / ${dateToDDMMYYYY(barn.gjelderBarn.fødselsdato)}`}</Feltrad>
             </FeltTabell>
@@ -87,8 +90,15 @@ function UnderholdskostnaderSøknadsbarn({
       </div>
       <div>
         <FeltTabell>
-          <Feltrad label={t.harTilsynsutgift}>
-            {data.harTilsynsordning ? ord.ja : ord.nei}
+          <Feltrad
+            label={tekst(
+              "notat.begrunnelse.bidrag.underholdskostnad.harTilsynsutgift",
+              "Barn har tilsynsutgift/forpleining",
+            )}
+          >
+            {data.harTilsynsordning
+              ? tekst("ord.ja", "Ja")
+              : tekst("ord.nei", "Nei")}
           </Feltrad>
         </FeltTabell>
       </div>
@@ -107,22 +117,35 @@ function UnderholdskostnaderSøknadsbarn({
 }
 function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
   if (data.tilleggsstønad.length == 0) return null;
-
   return (
-    <Underseksjon tittel={t.tilleggsstønad}>
+    <Underseksjon
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.tilleggsstønad",
+        "Tilleggsstønad",
+      )}
+    >
       <DokumentTabell
         layoutAuto
         bredde="320px"
         kolonner={[
-          { tittel: tekster.tabell.felles.fraTilOgMed },
-          { tittel: ord.beløp },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.tilleggsstønad.beløpstype,
+            tittel: tekst(
+              "felles.tabell.felles.fraTilOgMed",
+              "Fra og med - Til og med",
+            ),
+          },
+          { tittel: tekst("ord.beløp", "Beløp") },
+          {
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.tilleggsstønad.beløpstype",
+              "Beløpstype",
+            ),
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.faktiskeTilsynsutgifter.totalt,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.faktiskeTilsynsutgifter.totalt",
+              "Totalt (12 mnd)",
+            ),
           },
         ]}
       >
@@ -149,18 +172,26 @@ function TilleggstønadTabell({ data }: { data: NotatUnderholdBarnDto }) {
     </Underseksjon>
   );
 }
-
 function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
   if (!data.forpleining?.length) return null;
-
   return (
-    <Underseksjon tittel={t.forpleining}>
+    <Underseksjon
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.forpleining",
+        "Forpleining",
+      )}
+    >
       <DokumentTabell
         layoutAuto
         bredde="320px"
         kolonner={[
-          { tittel: tekster.tabell.felles.fraTilOgMed },
-          { tittel: ord.beløp },
+          {
+            tittel: tekst(
+              "felles.tabell.felles.fraTilOgMed",
+              "Fra og med - Til og med",
+            ),
+          },
+          { tittel: tekst("ord.beløp", "Beløp") },
         ]}
       >
         {data.forpleining.map((forpleining, index) => (
@@ -177,7 +208,6 @@ function ForpleiningTabell({ data }: { data: NotatUnderholdBarnDto }) {
     </Underseksjon>
   );
 }
-
 function FaktiskeTilsynsutgifterTabell({
   data,
 }: {
@@ -185,28 +215,39 @@ function FaktiskeTilsynsutgifterTabell({
 }) {
   if (data.faktiskTilsynsutgift.length == 0) return null;
   return (
-    <Underseksjon tittel={t.faktiskeTilsynsutgifter} avstandOver={false}>
+    <Underseksjon
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.faktiskeTilsynsutgifter",
+        "Faktiske tilsynsutgifter",
+      )}
+      avstandOver={false}
+    >
       <DokumentTabell
         kolonner={[
           {
-            tittel:
-              tekster.tabell.underholdskostnader.faktiskeTilsynsutgifter
-                .totalTilsynsutgift,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.faktiskeTilsynsutgifter.totalTilsynsutgift",
+              "Total tilsynsutgift",
+            ),
             bredde: "100px",
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.faktiskeTilsynsutgifter
-                .fratrekk,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.faktiskeTilsynsutgifter.fratrekk",
+              "Fratrekk",
+            ),
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.faktiskeTilsynsutgifter.totalt,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.faktiskeTilsynsutgifter.totalt",
+              "Totalt (12 mnd)",
+            ),
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.faktiskeTilsynsutgifter
-                .kommentar,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.faktiskeTilsynsutgifter.kommentar",
+              "Kommentar",
+            ),
             bredde: "300px",
           },
         ]}
@@ -236,26 +277,38 @@ function FaktiskeTilsynsutgifterTabell({
     </Underseksjon>
   );
 }
-
 function StønadTilBarnetilsynTabell({ data }: { data: NotatUnderholdBarnDto }) {
   if (data.stønadTilBarnetilsyn.length == 0) return null;
   return (
-    <Underseksjon tittel={t.stønadTilBarnetilsyn}>
+    <Underseksjon
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.stønadTilBarnetilsyn",
+        "Stønad til barnetilsyn",
+      )}
+    >
       <DokumentTabell
         layoutAuto
         bredde="400px"
         kolonner={[
-          { tittel: tekster.tabell.felles.fraTilOgMed },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.stønadTilBarnetilsyn
-                .stønadTilBarnetilsyn,
+            tittel: tekst(
+              "felles.tabell.felles.fraTilOgMed",
+              "Fra og med - Til og med",
+            ),
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.stønadTilBarnetilsyn.omfang,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.stønadTilBarnetilsyn.stønadTilBarnetilsyn",
+              "Stønad til barnetilsyn",
+            ),
           },
-          { tittel: tekster.tabell.felles.kilde },
+          {
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.stønadTilBarnetilsyn.omfang",
+              "Omfang",
+            ),
+          },
+          { tittel: tekst("felles.tabell.felles.kilde", "Kilde") },
         ]}
       >
         {data.stønadTilBarnetilsyn.map((stønad, index) => (
@@ -276,39 +329,62 @@ function StønadTilBarnetilsynTabell({ data }: { data: NotatUnderholdBarnDto }) 
 }
 function UnderholdskostnaderTabell({ data }: { data: NotatUnderholdBarnDto }) {
   if (data.underholdskostnad.length == 0) return null;
-
   return (
-    <Underseksjon tittel={t.underholdskostnader}>
+    <Underseksjon
+      tittel={tekst(
+        "notat.begrunnelse.bidrag.underholdskostnad.underholdskostnader",
+        "Underholdskostnader",
+      )}
+    >
       <DokumentTabell
         kolonner={[
           {
-            tittel: tekster.tabell.underholdskostnader.beregning.forbruk,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.forbruk",
+              "Forbruk",
+            ),
             bredde: "80px",
           },
           {
-            tittel: tekster.tabell.underholdskostnader.beregning.boutgifter,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.boutgifter",
+              "Boutgifter",
+            ),
             bredde: "80px",
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.beregning.stønadTilBarnetilsyn,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.stønadTilBarnetilsyn",
+              "Stønad til barnetilsyn",
+            ),
             bredde: "100px",
           },
           {
-            tittel: tekster.tabell.underholdskostnader.beregning.beregnetTilsyn,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.beregnetTilsyn",
+              "Beregnet tilsynsutgift",
+            ),
             bredde: "100px",
           },
           {
-            tittel: tekster.tabell.underholdskostnader.beregning.barnetrygd,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.barnetrygd",
+              "Barnetrygd",
+            ),
             bredde: "80px",
           },
           {
-            tittel: tekster.tabell.underholdskostnader.beregning.forpleining,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.forpleining",
+              "Forpleining",
+            ),
             bredde: "80px",
           },
           {
-            tittel:
-              tekster.tabell.underholdskostnader.beregning.underholdskostnad,
+            tittel: tekst(
+              "felles.tabell.underholdskostnader.beregning.underholdskostnad",
+              "Underholdskostnad",
+            ),
           },
         ]}
       >

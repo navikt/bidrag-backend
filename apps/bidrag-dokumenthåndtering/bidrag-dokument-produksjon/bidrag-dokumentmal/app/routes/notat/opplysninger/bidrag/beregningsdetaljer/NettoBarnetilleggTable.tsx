@@ -16,12 +16,8 @@ import {
   Tabellrad,
 } from "~/components/DokumentTabell";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import ord from "~/tekster/ord.yaml";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
 import { barnetilleggTiltakspengerVisningsnavn } from "~/constants/beregning";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.nettoBarnetillegg;
-
+import { tekst } from "~/utils/tekst";
 export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
   const {
     sluttberegning,
@@ -29,36 +25,52 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
     barnetilleggBP,
     barnetilleggBM,
   } = useBeregningDetaljer();
-
   const barnetillegg = rolle == Rolletype.BP ? barnetilleggBP : barnetilleggBM;
   const harBareTiltakspenger = barnetillegg.barnetillegg.every(
     (bt) => bt.visningsnavn === barnetilleggTiltakspengerVisningsnavn,
   );
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel.replace("{rolle}", rolleTilVisningsnavn(rolle))}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.tittel",
+          "Netto barnetillegg ({rolle})",
+        ).replace("{rolle}", rolleTilVisningsnavn(rolle))}
+      </h4>
 
       <DokumentTabell
         layoutAuto
         kolonner={[
           {
-            tittel: t.tabell.typeBarnetillegg,
+            tittel: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.tabell.typeBarnetillegg",
+              "Type barnetillegg",
+            ),
             bredde: "100px",
           },
           ...(!harBareTiltakspenger
             ? [
                 {
-                  tittel: t.tabell.brutto,
+                  tittel: tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.tabell.brutto",
+                    "Brutto",
+                  ),
                   bredde: "50px",
                 },
               ]
             : []),
           {
-            tittel: t.tabell.skattesats,
+            tittel: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.tabell.skattesats",
+              "Skattesats",
+            ),
             bredde: "50px",
           },
           {
-            tittel: t.tabell.netto,
+            tittel: tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.tabell.netto",
+              "Netto",
+            ),
             bredde: "50px",
           },
         ]}
@@ -69,7 +81,7 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
             {!harBareTiltakspenger && (
               <Tabellcelle>
                 {bt.visningsnavn === barnetilleggTiltakspengerVisningsnavn
-                  ? ord.ikkeRelevant
+                  ? tekst("ord.ikkeRelevant", "Ikke relevant")
                   : formatterBeløpForBeregning(bt.bruttoBeløp, true)}
               </Tabellcelle>
             )}
@@ -80,7 +92,7 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
           </Tabellrad>
         ))}
         <Tabellrad index={barnetillegg.barnetillegg.length}>
-          <Tabellcelle>{ord.resultat}</Tabellcelle>
+          <Tabellcelle>{tekst("ord.resultat", "Resultat")}</Tabellcelle>
           <Tabellcelle>
             {!harBareTiltakspenger &&
               formatterBeløpForBeregning(barnetillegg!.sumBruttoBeløp)}
@@ -110,7 +122,10 @@ export const BeregningJusterBPsBarnetillegg = ({
 }) => {
   function renderResult() {
     if (sluttberegning.bidragJustertForNettoBarnetilleggBP) {
-      return t.justerBPsBarnetillegg.justertOppTilBPsNettoBarnetillegg;
+      return tekst(
+        "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.justerBPsBarnetillegg.justertOppTilBPsNettoBarnetillegg",
+        " (justert opp til BPs netto barnetillegg)",
+      );
     }
     return "";
   }
@@ -127,7 +142,10 @@ export const BeregningJusterBPsBarnetillegg = ({
     <div>
       <FeltTabell>
         <Feltrad
-          label={t.justerBPsBarnetillegg.foreløpigBidrag}
+          label={tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.justerBPsBarnetillegg.foreløpigBidrag",
+            "Foreløpig bidrag",
+          )}
         >{`${hentForeløpigBidrag()}${renderResult()}`}</Feltrad>
       </FeltTabell>
     </div>
@@ -144,19 +162,27 @@ export const BeregningJusterBMsBarnetillegg = ({
 }) => {
   function renderResult() {
     if (sluttberegning.bidragJustertForNettoBarnetilleggBM) {
-      return t.justerBMsBarnetillegg.justertTilUMinusBMsNettoBarnetillegg;
+      return tekst(
+        "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.justerBMsBarnetillegg.justertTilUMinusBMsNettoBarnetillegg",
+        " (justert til U - BMs netto barnetillegg + samværsfradrag)",
+      );
     }
     return "";
   }
-
   return (
     <div>
       <FeltTabell>
         <Feltrad
-          label={t.justerBMsBarnetillegg.uMinusBMsNettoBarnetillegg}
+          label={tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.justerBMsBarnetillegg.uMinusBMsNettoBarnetillegg",
+            "U - BMs netto barnetillegg",
+          )}
         >{`${formatterBeløpForBeregning(underholdskostnad.underholdskostnad)} - ${formatterBeløpForBeregning(barnetilleggBM.sumNettoBeløp)} = ${formatterBeløpForBeregning(sluttberegning.uminusNettoBarnetilleggBM)}`}</Feltrad>
         <Feltrad
-          label={t.justerBMsBarnetillegg.foreløpigBidrag}
+          label={tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.nettoBarnetillegg.justerBMsBarnetillegg.foreløpigBidrag",
+            "Foreløpig bidrag",
+          )}
         >{`${formatterBeløpForBeregning(sluttberegning.bruttoBidragEtterBarnetilleggBM)}${renderResult()}`}</Feltrad>
       </FeltTabell>
     </div>

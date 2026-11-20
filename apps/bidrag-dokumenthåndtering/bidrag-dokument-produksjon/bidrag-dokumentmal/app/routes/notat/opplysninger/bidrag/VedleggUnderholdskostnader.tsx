@@ -19,8 +19,6 @@ import {
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
 import { formatPeriode } from "~/utils/date-utils";
 import {
   formatterBeløpForBeregning,
@@ -28,10 +26,7 @@ import {
 } from "~/utils/visningsnavn";
 import CalculationTable from "~/components/notat_felles/CalculationTable";
 import { erRolle } from "~/utils/converter-utils";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.underholdskostnader;
-
+import { tekst } from "~/utils/tekst";
 export default function VedleggUnderholdskostnader() {
   const vedleggNummer = useVedleggNummer("underholdskostnader");
   const { data, erAvslag } = useNotatFelles();
@@ -39,7 +34,10 @@ export default function VedleggUnderholdskostnader() {
   return (
     <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
       <h2 id={elementIds.vedleggUnderholdskostnader}>
-        {t.tittel.replace("{}", `${vedleggNummer}`)}
+        {tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.tittel",
+          "Vedlegg nr. {}: Underholdskostnader",
+        ).replace("{}", `${vedleggNummer}`)}
       </h2>
       {data.underholdskostnader?.offentligeOpplysningerV2.offentligeOpplysningerBarn.map(
         (offentligOpplysningBarn, index) => (
@@ -64,7 +62,10 @@ export default function VedleggUnderholdskostnader() {
 
       <>
         <h4 className={"mt-2"}>
-          {t.beregningsdetaljer.tittel.replace("{}", `${vedleggNummer}`)}
+          {tekst(
+            "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.tittel",
+            "{}.4 Beregningsdetaljer tilsynsutgifter",
+          ).replace("{}", `${vedleggNummer}`)}
         </h4>
         {data.underholdskostnader?.underholdskostnaderBarn?.flatMap((uBarn) =>
           uBarn.underholdskostnad.map((underholdskostnader, index) => (
@@ -89,10 +90,18 @@ function InnhentetAndreBarnTilBidragsmottaker({
   return (
     <>
       <h4 className={"mt-3"}>
-        {t.andreBarnTilBidragsmottaker.tittel.replace("{}", `${vedleggNummer}`)}
+        {tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.andreBarnTilBidragsmottaker.tittel",
+          "{}.2 Andre barn til bidragsmottaker - hentet fra offentlige registre",
+        ).replace("{}", `${vedleggNummer}`)}
       </h4>
       {opplysninger.length == 0 ? (
-        <p>{t.andreBarnTilBidragsmottaker.ingenAndreBarn}</p>
+        <p>
+          {tekst(
+            "notat.opplysninger.bidrag.underholdskostnader.andreBarnTilBidragsmottaker.ingenAndreBarn",
+            "Bidragsmottaker har ingen andre barn",
+          )}
+        </p>
       ) : (
         opplysninger.map((barn, index) => (
           <GjelderPerson rolle={barn} key={index} visFødselsdato />
@@ -109,16 +118,29 @@ function InnhentetBarnetilsynTable({
   const vedleggNummer = useVedleggNummer("underholdskostnader");
   return (
     <>
-      <h4>{t.barnetilsyn.tittel.replace("{}", `${vedleggNummer}`)}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.barnetilsyn.tittel",
+          "{}.1 Barnetilsyn",
+        ).replace("{}", `${vedleggNummer}`)}
+      </h4>
       <GjelderPerson rolle={opplysninger.gjelderBarn!} />
       {opplysninger.barnetilsyn.length == 0 ? (
-        <p>{t.barnetilsyn.ingenOffentligBarnetilsyn}</p>
+        <p>
+          {tekst(
+            "notat.opplysninger.bidrag.underholdskostnader.barnetilsyn.ingenOffentligBarnetilsyn",
+            "Ingen offentlig barnetilsyn",
+          )}
+        </p>
       ) : (
         <DokumentTabell
           layoutAuto
           kolonner={[
             {
-              tittel: tekster.tabell.felles.fraTilOgMed,
+              tittel: tekst(
+                "felles.tabell.felles.fraTilOgMed",
+                "Fra og med - Til og med",
+              ),
               bredde: "150px",
             },
           ]}
@@ -142,25 +164,33 @@ function InnhentetTilleggsstønad({
 }) {
   const vedleggNummer = useVedleggNummer("underholdskostnader");
   const { data } = useNotatFelles();
-
   const bm = data.roller.find((r) => erRolle(Rolletype.BM)(r));
   return (
     <>
       <h4 className={"mt-3"}>
-        {t.tilleggsstønad.tittel.replace("{}", `${vedleggNummer}`)}
+        {tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.tilleggsstønad.tittel",
+          "{}.2 Tilleggsstønad",
+        ).replace("{}", `${vedleggNummer}`)}
       </h4>
       <GjelderPerson rolle={bm!} />
       <div className={"pt-2"}>
         <FeltTabell>
-          <Feltrad label={t.tilleggsstønad.harFåttInnvilget}>
-            {bidragsmottakerHarInnvilgetTilleggsstønad ? ord.ja : ord.nei}
+          <Feltrad
+            label={tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.tilleggsstønad.harFåttInnvilget",
+              "Har fått innvilget tilleggsstønad for ett eller flere barn",
+            )}
+          >
+            {bidragsmottakerHarInnvilgetTilleggsstønad
+              ? tekst("ord.ja", "Ja")
+              : tekst("ord.nei", "Nei")}
           </Feltrad>
         </FeltTabell>
       </div>
     </>
   );
 }
-
 function UnderholdskostnaderBeregningsdetaljerTabell({
   detaljer,
   periode,
@@ -172,7 +202,7 @@ function UnderholdskostnaderBeregningsdetaljerTabell({
     <>
       <div className={"mb-2"}>
         <FeltTabell>
-          <Feltrad label={ord.periode}>
+          <Feltrad label={tekst("ord.periode", "Periode")}>
             {formatPeriode(periode.fom, periode.tom)}
           </Feltrad>
         </FeltTabell>
@@ -181,29 +211,44 @@ function UnderholdskostnaderBeregningsdetaljerTabell({
     </>
   );
 }
-
 function UnderholdskostnadBeregningsdetaljer({
   detaljer,
 }: {
   detaljer?: NotatUnderholdskostnadPeriodeBeregningsdetaljer;
 }) {
   if (!detaljer)
-    return <div>{t.beregningsdetaljer.ingenBeregningsdetaljer}</div>;
+    return (
+      <div>
+        {tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.ingenBeregningsdetaljer",
+          "Ingen beregningsdetaljer",
+        )}
+      </div>
+    );
   const tilleggstønad =
     detaljer.tilsynsutgifterBarn?.filter(
       (b) => b.tilleggsstønadBeløp !== undefined,
     ) ?? [];
-
   return (
     <DokumentStabel gap={3}>
       <div>
         <FeltTabell>
-          <Feltrad label={t.beregningsdetaljer.antallBarnUnderTolvÅr}>
+          <Feltrad
+            label={tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.antallBarnUnderTolvÅr",
+              "Antall barn under 12 år",
+            )}
+          >
             {formatterBeløpForBeregning(detaljer.antallBarnBMUnderTolvÅr)}
           </Feltrad>
           {detaljer.antallBarnBMBeregnet !==
             detaljer.antallBarnMedTilsynsutgifter && (
-            <Feltrad label={t.beregningsdetaljer.antallBarnMedTilsynsutgifter}>
+            <Feltrad
+              label={tekst(
+                "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.antallBarnMedTilsynsutgifter",
+                "Antall barn med tilsynsutgifter",
+              )}
+            >
               {formatterBeløpForBeregning(
                 detaljer.antallBarnMedTilsynsutgifter,
               )}
@@ -213,16 +258,22 @@ function UnderholdskostnadBeregningsdetaljer({
             detaljer.antallBarnBMUnderTolvÅr && (
             <>
               <Feltrad
-                label={
-                  t.beregningsdetaljer.antallBarnOverTolvÅrMedTilsynsutgifter
-                }
+                label={tekst(
+                  "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.antallBarnOverTolvÅrMedTilsynsutgifter",
+                  "Antall barn over 12 år med tilsynsutgifter",
+                )}
               >
                 {formatterBeløpForBeregning(
                   detaljer.antallBarnBMBeregnet -
                     detaljer.antallBarnBMUnderTolvÅr,
                 )}
               </Feltrad>
-              <Feltrad label={t.beregningsdetaljer.antallBarnIBeregningen}>
+              <Feltrad
+                label={tekst(
+                  "notat.opplysninger.bidrag.underholdskostnader.beregningsdetaljer.antallBarnIBeregningen",
+                  "Antall barn i beregningen",
+                )}
+              >
                 {formatterBeløpForBeregning(detaljer.antallBarnBMBeregnet)}
               </Feltrad>
             </>
@@ -232,13 +283,19 @@ function UnderholdskostnadBeregningsdetaljer({
 
       {tilleggstønad.length > 0 && (
         <CalculationTable
-          title={t.faktiskTilsynsutgifter.tittel}
+          title={tekst(
+            "notat.opplysninger.bidrag.underholdskostnader.faktiskTilsynsutgifter.tittel",
+            "Faktisk Tilsynsutgifter",
+          )}
           data={
             detaljer.tilsynsutgifterBarn
               ?.flatMap((b) => [
                 {
                   label: b.gjelderBarn.navn,
-                  calculation: t.faktiskTilsynsutgifter.beregning
+                  calculation: tekst(
+                    "notat.opplysninger.bidrag.underholdskostnader.faktiskTilsynsutgifter.beregning",
+                    "({totalTilsynsutgift} - {kostpenger}) x 11/12",
+                  )
                     .replace(
                       "{totalTilsynsutgift}",
                       formatterBeløpForBeregning(b.totalTilsynsutgift),
@@ -256,18 +313,27 @@ function UnderholdskostnadBeregningsdetaljer({
       )}
       {tilleggstønad.length > 0 && (
         <CalculationTable
-          title={t.tilleggsstønadBeregning.tittel}
+          title={tekst(
+            "notat.opplysninger.bidrag.underholdskostnader.tilleggsstønadBeregning.tittel",
+            "Tilleggsstønad",
+          )}
           data={detaljer.tilsynsutgifterBarn
             ?.filter((b) => b.tilleggsstønadBeløp !== undefined)
             .map((b) => ({
               label: b.gjelderBarn.navn,
               calculation:
                 b.beløpstype === InntektBelopstype.DAGSATS
-                  ? t.tilleggsstønadBeregning.beregningDagsats.replace(
+                  ? tekst(
+                      "notat.opplysninger.bidrag.underholdskostnader.tilleggsstønadBeregning.beregningDagsats",
+                      "({beløp} x 260) / 12 x 11 / 12",
+                    ).replace(
                       "{beløp}",
                       formatterBeløpForBeregning(b.tilleggsstønadBeløp),
                     )
-                  : t.tilleggsstønadBeregning.beregning.replace(
+                  : tekst(
+                      "notat.opplysninger.bidrag.underholdskostnader.tilleggsstønadBeregning.beregning",
+                      "{beløp} x 11 / 12",
+                    ).replace(
                       "{beløp}",
                       formatterBeløpForBeregning(b.tilleggsstønadBeløp),
                     ),
@@ -277,13 +343,19 @@ function UnderholdskostnadBeregningsdetaljer({
         />
       )}
       <CalculationTable
-        title={t.tilsynsutgifter.tittel}
+        title={tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.tilsynsutgifter.tittel",
+          "Tilsynsutgifter",
+        )}
         data={[
           ...(detaljer.tilsynsutgifterBarn?.flatMap((b) => [
             {
               label: b.gjelderBarn.navn,
               calculation: b.tilleggsstønad
-                ? t.tilsynsutgifter.beregning
+                ? tekst(
+                    "notat.opplysninger.bidrag.underholdskostnader.tilsynsutgifter.beregning",
+                    "{faktiskUtgift} - {tilleggsstønad}",
+                  )
                     .replace(
                       "{faktiskUtgift}",
                       formatterBeløpForBeregning(b.faktiskUtgiftBeregnet),
@@ -297,7 +369,7 @@ function UnderholdskostnadBeregningsdetaljer({
             },
           ]) ?? []),
           {
-            label: ord.total,
+            label: tekst("ord.total", "Total"),
             labelBold: true,
             result: `${formatterBeløpForBeregning(detaljer.sumTilsynsutgifter)}`,
           },
@@ -308,10 +380,21 @@ function UnderholdskostnadBeregningsdetaljer({
         <div>
           <FeltTabell>
             <Feltrad
-              label={t.begrensetAvMaksTilsyn.totalbeløp}
+              label={tekst(
+                "notat.opplysninger.bidrag.underholdskostnader.begrensetAvMaksTilsyn.totalbeløp",
+                "Totalbeløp begrenset av maks tilsynsutgift",
+              )}
             >{`${formatterBeløpForBeregning(detaljer.totalTilsynsutgift)}`}</Feltrad>
-            <Feltrad label={t.begrensetAvMaksTilsyn.andelSøknadsbarn}>
-              {t.begrensetAvMaksTilsyn.andelSøknadsbarnBeregning
+            <Feltrad
+              label={tekst(
+                "notat.opplysninger.bidrag.underholdskostnader.begrensetAvMaksTilsyn.andelSøknadsbarn",
+                "Andel søknadsbarn",
+              )}
+            >
+              {tekst(
+                "notat.opplysninger.bidrag.underholdskostnader.begrensetAvMaksTilsyn.andelSøknadsbarnBeregning",
+                "{bruttoTilsynsutgift} / {sumTilsynsutgifter} = {fordelingFaktor}",
+              )
                 .replace(
                   "{bruttoTilsynsutgift}",
                   formatterBeløpForBeregning(detaljer.bruttoTilsynsutgift),
@@ -329,11 +412,20 @@ function UnderholdskostnadBeregningsdetaljer({
         </div>
       )}
       <CalculationTable
-        title={t.skattefradrag.tittel}
+        title={tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.tittel",
+          "Skattefradrag",
+        )}
         data={[
           {
-            label: t.skattefradrag.maksFradrag,
-            calculation: t.skattefradrag.maksFradragBeregning
+            label: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.maksFradrag",
+              "Maks fradrag",
+            ),
+            calculation: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.maksFradragBeregning",
+              "{sjablonMaksFradrag} x {skattesats}",
+            )
               .replace(
                 "{sjablonMaksFradrag}",
                 formatterBeløpForBeregning(detaljer.sjablonMaksFradrag),
@@ -347,8 +439,14 @@ function UnderholdskostnadBeregningsdetaljer({
             ),
           },
           {
-            label: t.skattefradrag.totalTilsynsutgift,
-            calculation: t.skattefradrag.totalTilsynsutgiftBeregning
+            label: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.totalTilsynsutgift",
+              "Total tilsynsutgift",
+            ),
+            calculation: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.totalTilsynsutgiftBeregning",
+              "{totalTilsynsutgift} x {skattesats}",
+            )
               .replace(
                 "{totalTilsynsutgift}",
                 formatterBeløpForBeregning(detaljer.totalTilsynsutgift),
@@ -362,19 +460,31 @@ function UnderholdskostnadBeregningsdetaljer({
             ),
           },
           {
-            label: t.skattefradrag.lavesteVerdi,
+            label: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.skattefradrag.lavesteVerdi",
+              "Skattefradrag (laveste verdi)",
+            ),
             labelBold: true,
             result: `${formatterBeløpForBeregning(detaljer.skattefradrag)}`,
           },
         ].filter((d) => d)}
       />
       <CalculationTable
-        title={t.beregnetTilsynsutgifter.tittel}
+        title={tekst(
+          "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.tittel",
+          "Beregnet tilsynsutgifter",
+        )}
         data={[
           {
-            label: t.beregnetTilsynsutgifter.bruttoBeløp,
+            label: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.bruttoBeløp",
+              "Brutto beløp",
+            ),
             calculation: detaljer.erBegrensetAvMaksTilsyn
-              ? t.beregnetTilsynsutgifter.bruttoBeløpBeregning
+              ? tekst(
+                  "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.bruttoBeløpBeregning",
+                  "{totalTilsynsutgift} x {fordelingFaktor}",
+                )
                   .replace(
                     "{totalTilsynsutgift}",
                     formatterBeløpForBeregning(detaljer.totalTilsynsutgift),
@@ -387,8 +497,14 @@ function UnderholdskostnadBeregningsdetaljer({
             result: `${formatterBeløpForBeregning(detaljer.justertBruttoTilsynsutgift)}`,
           },
           {
-            label: t.beregnetTilsynsutgifter.skattefradragPerBarn,
-            calculation: t.beregnetTilsynsutgifter.skattefradragPerBarnBeregning
+            label: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.skattefradragPerBarn",
+              "Skattefradrag (per barn)",
+            ),
+            calculation: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.skattefradragPerBarnBeregning",
+              "{skattefradrag} / {antallBarn}",
+            )
               .replace(
                 "{skattefradrag}",
                 formatterBeløpForBeregning(detaljer.skattefradrag),
@@ -399,14 +515,16 @@ function UnderholdskostnadBeregningsdetaljer({
                   detaljer.antallBarnMedTilsynsutgifter,
                 ),
               ),
-            result:
-              t.beregnetTilsynsutgifter.skattefradragPerBarnResultat.replace(
-                "{}",
-                formatterBeløpForBeregning(detaljer.skattefradragPerBarn),
-              ),
+            result: tekst(
+              "notat.opplysninger.bidrag.underholdskostnader.beregnetTilsynsutgifter.skattefradragPerBarnResultat",
+              "- {}",
+            ).replace(
+              "{}",
+              formatterBeløpForBeregning(detaljer.skattefradragPerBarn),
+            ),
           },
           {
-            label: ord.resultat,
+            label: tekst("ord.resultat", "Resultat"),
             labelBold: true,
             result: `${formatterBeløpForBeregning(detaljer.nettoTilsynsutgift)}`,
           },

@@ -8,7 +8,7 @@ import {
 
 /**
  * Formatene som kan brukes for kolonner og felter i malene, f.eks.
- * `{ felt: "beløp", tittel: t.tabellInnvilget.forskudd, format: "beløp" }`.
+ * `{ felt: "beløp", tittel: tekst("notat.begrunnelse.forskudd.vedtak.tabellInnvilget.forskudd", "Forskudd"), format: "beløp" }`.
  *
  * Funksjonene er bevisst enkle og uten React, slik at de kan skrives om til Typst.
  * Tall vises med norsk format: mellomrom som tusenskille og komma som desimaltegn.

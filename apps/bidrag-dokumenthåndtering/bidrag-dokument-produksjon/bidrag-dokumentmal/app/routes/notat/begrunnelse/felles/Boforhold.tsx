@@ -7,9 +7,6 @@ import Person from "~/components/Person";
 import { SimpleTable } from "~/components/SimpleTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
 import {
   useNotatFelles,
   useVedleggNummer,
@@ -22,9 +19,7 @@ import {
 } from "~/components/DokumentTabell";
 import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
-
-const t = notatTekster.boforhold;
-
+import { tekst } from "~/utils/tekst";
 export default function Boforhold() {
   const vedleggNummer = useVedleggNummer("boforhold");
   const { erAvslag, data } = useNotatFelles();
@@ -32,12 +27,14 @@ export default function Boforhold() {
   return (
     <>
       <div className={"elements_inline section-title"}>
-        <h2>{t.tittel}</h2>
+        <h2>
+          {tekst("notat.begrunnelse.felles.boforhold.tittel", "Boforhold")}
+        </h2>
         <a href={`#${elementIds.vedleggBoforhold}`}>
-          {ord.seVedleggForOffentligeRegistre.replace(
-            "{}",
-            vedleggNummer?.toString(),
-          )}
+          {tekst(
+            "ord.seVedleggForOffentligeRegistre",
+            "se vedlegg nr. {} for opplysninger fra offentlige registre",
+          ).replace("{}", vedleggNummer?.toString())}
         </a>
       </div>
       {data.boforhold.barn
@@ -60,20 +57,39 @@ export default function Boforhold() {
     </>
   );
 }
-
 function BoforholdBeregnetTabell() {
   const { data } = useNotatFelles();
   const beregnetBoforhold = data.boforhold.beregnetBoforhold;
   if (beregnetBoforhold.length === 0) return null;
   return (
     <>
-      <h3 id={"linktilmeg"}>{t.beregnetBoforhold.tittel}</h3>
+      <h3 id={"linktilmeg"}>
+        {tekst(
+          "notat.begrunnelse.felles.boforhold.beregnetBoforhold.tittel",
+          "Beregnet boforhold",
+        )}
+      </h3>
 
       <DokumentTabell
         kolonner={[
-          { tittel: tekster.tabell.felles.fraTilOgMed },
-          { tittel: t.beregnetBoforhold.kolonner.antallBarnIHusstanden },
-          { tittel: t.beregnetBoforhold.kolonner.borMedAndreVoksne },
+          {
+            tittel: tekst(
+              "felles.tabell.felles.fraTilOgMed",
+              "Fra og med - Til og med",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.felles.boforhold.beregnetBoforhold.kolonner.antallBarnIHusstanden",
+              "Antall barn i husstanden",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.felles.boforhold.beregnetBoforhold.kolonner.borMedAndreVoksne",
+              "Bor med andre voksne",
+            ),
+          },
         ]}
       >
         {beregnetBoforhold.map((boforhold, index) => (
@@ -83,7 +99,9 @@ function BoforholdBeregnetTabell() {
             </Tabellcelle>
             <Tabellcelle>{boforhold.antallBarn}</Tabellcelle>
             <Tabellcelle>
-              {boforhold.borMedAndreVoksne ? ord.ja : ord.nei}
+              {boforhold.borMedAndreVoksne
+                ? tekst("ord.ja", "Ja")
+                : tekst("ord.nei", "Nei")}
             </Tabellcelle>
           </Tabellrad>
         ))}
@@ -99,12 +117,16 @@ function BoforholdAndreVoksneIHusstanden({
   if (!data) return;
   return (
     <div className={"mb-2"}>
-      <h3 id={"linktilmeg"}>{t.andreVoksneIHusstanden.tittel}</h3>
+      <h3 id={"linktilmeg"}>
+        {tekst(
+          "notat.begrunnelse.felles.boforhold.andreVoksneIHusstanden.tittel",
+          "Andre voksne i husstanden",
+        )}
+      </h3>
       <SimpleTable data={data.opplysningerBruktTilBeregning} />
     </div>
   );
 }
-
 function BoforholdHusstandsmedlem({ data }: { data: BoforholdBarn }) {
   return (
     <div className={"mb-3"}>
@@ -114,9 +136,18 @@ function BoforholdHusstandsmedlem({ data }: { data: BoforholdBarn }) {
             label={
               data.medIBehandling
                 ? data.gjelder.revurdering
-                  ? t.revurderingsbarn
-                  : t.søknadsbarn
-                : t.egetBarnIHusstanden
+                  ? tekst(
+                      "notat.begrunnelse.felles.boforhold.revurderingsbarn",
+                      "Revurderingsbarn",
+                    )
+                  : tekst(
+                      "notat.begrunnelse.felles.boforhold.søknadsbarn",
+                      "Søknadsbarn",
+                    )
+                : tekst(
+                    "notat.begrunnelse.felles.boforhold.egetBarnIHusstanden",
+                    "Eget barn i husstanden",
+                  )
             }
             labelBold
           >

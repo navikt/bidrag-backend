@@ -6,12 +6,7 @@ import {
   NotatMalType,
   NotatVirkningstidspunktBarnDto,
 } from "~/types/Api";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const tekst = bidragOpplysningerTekster.beregningsdetaljer;
-
-const t = tekst.beregningsperiode;
-
+import { tekst } from "~/utils/tekst";
 export default function Beregningsperiode({
   virkningstidspunkt,
 }: {
@@ -24,14 +19,23 @@ export default function Beregningsperiode({
   function beregningsperiodeVisningsnavn() {
     switch (virkningstidspunkt.beregnTil) {
       case BeregnTil.ETTERFOLGENDEMANUELLVEDTAK:
-        return t.beregnTil.etterfølgendeManueltVedtak.replace(
+        return tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.beregningsperiode.beregnTil.etterfølgendeManueltVedtak",
+          "Til etterfølgende vedtak med virkningstidspunkt {}",
+        ).replace(
           "{}",
           `${dateToDDMMYYYY(virkningstidspunkt.etterfølgendeVedtakVirkningstidspunkt as string)}`,
         );
       case BeregnTil.INNEVAeRENDEMANED:
-        return t.beregnTil.inneværendeMåned;
+        return tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.beregningsperiode.beregnTil.inneværendeMåned",
+          "Ut inneværende måned",
+        );
       case BeregnTil.OPPRINNELIG_VEDTAKSTIDSPUNKT:
-        return t.beregnTil.opprinneligVedtakstidspunkt;
+        return tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.beregningsperiode.beregnTil.opprinneligVedtakstidspunkt",
+          "Ut måneden opprinnelig vedtak ble fattet",
+        );
     }
   }
   return (
@@ -40,11 +44,19 @@ export default function Beregningsperiode({
         <div className={"flex flex-row justify-between w-[500px]"}>
           <div>
             <FeltTabell labelColWidth={"140px"}>
-              <Feltrad label={t.periodeVedtaketVurderes}>
+              <Feltrad
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.beregningsperiode.periodeVedtaketVurderes",
+                  "Periode vedtaket vurderes",
+                )}
+              >
                 {beregningsperiodeVisningsnavn()}
               </Feltrad>
               <Feltrad
-                label={t.beregningsperiode}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.beregningsperiode.beregningsperiode",
+                  "Beregningsperiode",
+                )}
               >{`${dateToDDMMYYYY(virkningstidspunkt.virkningstidspunkt as string)} - ${dateToDDMMYYYY(deductDays(virkningstidspunkt.beregnTilDato as string, 1))}`}</Feltrad>
             </FeltTabell>
           </div>

@@ -4,10 +4,7 @@ import {
   formatterProsent,
 } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.endringUnderGrense;
-
+import { tekst } from "~/utils/tekst";
 export const EndringUnderGrense = () => {
   const {
     endringUnderGrense,
@@ -15,19 +12,28 @@ export const EndringUnderGrense = () => {
     erEndringUnderGrense,
     endeligBeløp,
   } = useBeregningDetaljer();
-
   if (!erEndringUnderGrense) return null;
-
   return (
     <div className={"pt-2"}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.endringUnderGrense.tittel",
+          "Endring under grense",
+        )}
+      </h4>
       <div>
         <FeltTabell>
           <Feltrad
-            label={t.løpendeBidragsbeløp}
+            label={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.endringUnderGrense.løpendeBidragsbeløp",
+              "Løpende bidragsbeløp",
+            )}
           >{`${formatterBeløpForBeregning(endeligBeløp)}`}</Feltrad>
           <Feltrad
-            label={t.endringIProsent}
+            label={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.endringUnderGrense.endringIProsent",
+              "Endring i prosent",
+            )}
           >{`(${formatterBeløpForBeregning(endeligBeløp)} - ${formatterBeløpForBeregning(sluttberegning.beregnetBeløp)}) / ${formatterBeløpForBeregning(endeligBeløp)} = ${formatterProsent(endringUnderGrense.faktiskEndringFaktor)}`}</Feltrad>
         </FeltTabell>
       </div>

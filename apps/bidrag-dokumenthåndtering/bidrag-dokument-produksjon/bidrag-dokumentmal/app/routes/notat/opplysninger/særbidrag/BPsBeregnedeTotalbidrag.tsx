@@ -1,8 +1,6 @@
 import { Fragment } from "react";
-import ord from "~/tekster/ord.yaml";
 import { NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import særbidragOpplysningerTekster from "~/tekster/notat/opplysninger/særbidrag.yaml";
 import {
   DokumentTabell,
   Tabellcelle,
@@ -10,11 +8,7 @@ import {
   Tabellrad,
 } from "~/components/DokumentTabell";
 import { CalculationTable } from "~/components/vedtak/CalculationTable";
-
-const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
-
-const t = tekst.bpsBeregnedeTotalbidrag;
-
+import { tekst } from "~/utils/tekst";
 export const BPsBeregnedeTotalbidrag = ({
   delberegning,
 }: {
@@ -22,15 +16,35 @@ export const BPsBeregnedeTotalbidrag = ({
 }) => {
   return (
     <div>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.tittel",
+          "Bidragspliktiges beregnede totalbidrag",
+        )}
+      </h4>
       <DokumentTabell
         kolonner={[
-          { tittel: ord.barn },
-          { tittel: ord.saksnummer },
-          { tittel: t.kolonner.løpendeBidrag },
-          { tittel: t.kolonner.samvær },
-          { tittel: t.kolonner.reduksjonAvBpsAndelAvU },
-          { tittel: ord.sum },
+          { tittel: tekst("ord.barn", "Barn") },
+          { tittel: tekst("ord.saksnummer", "Saksnummer") },
+          {
+            tittel: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.kolonner.løpendeBidrag",
+              "Løpende bidrag",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.kolonner.samvær",
+              "Samvær",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.kolonner.reduksjonAvBpsAndelAvU",
+              "Reduksjon av BPs andel av U",
+            ),
+          },
+          { tittel: tekst("ord.sum", "Sum") },
         ]}
       >
         {delberegning.beregnetBidragPerBarnListe.map(
@@ -40,7 +54,6 @@ export const BPsBeregnedeTotalbidrag = ({
             const erVedtakFraBBM =
               row.erVedtakKildeBBM === undefined ||
               row.erVedtakKildeBBM === true;
-
             return (
               <Fragment key={`${personidentBarn}-${row.saksnummer}-${index}`}>
                 <Tabellrad index={index}>
@@ -68,14 +81,19 @@ export const BPsBeregnedeTotalbidrag = ({
                       width={"200px"}
                       simpleStyling
                       className={"ml-2"}
-                      title={t.reduksjonAvBpsAndelAvU.tittel}
+                      title={tekst(
+                        "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.tittel",
+                        "Reduksjon av BPs andel av U",
+                      )}
                       data={[
                         {
-                          label: `${t.reduksjonAvBpsAndelAvU.bpsAndelAvU}${
+                          label: `${tekst("notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.bpsAndelAvU", "BPs andel av U")}${
                             !erVedtakFraBBM &&
                             row.bidragJustertForNettoBarnetilleggBP
-                              ? t.reduksjonAvBpsAndelAvU
-                                  .justertOppTilBpsNettoBarnetillegg
+                              ? tekst(
+                                  "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.justertOppTilBpsNettoBarnetillegg",
+                                  " (justert opp til BPs netto barnetillegg)",
+                                )
                               : ""
                           }`,
                           value: formatterBeløpForBeregning(
@@ -86,7 +104,10 @@ export const BPsBeregnedeTotalbidrag = ({
                           ),
                         },
                         {
-                          label: t.reduksjonAvBpsAndelAvU.faktiskBidrag,
+                          label: tekst(
+                            "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.faktiskBidrag",
+                            "Faktisk bidrag",
+                          ),
                           value: (
                             <div>
                               -{" "}
@@ -101,7 +122,7 @@ export const BPsBeregnedeTotalbidrag = ({
                         },
                       ]}
                       result={{
-                        label: ord.resultat,
+                        label: tekst("ord.resultat", "Resultat"),
                         value: formatterBeløpForBeregning(
                           row.reduksjonUnderholdskostnad,
                           true,
@@ -120,7 +141,10 @@ export const BPsBeregnedeTotalbidrag = ({
         >
           <Tabellcelle colSpan={4} />
           <Tabellcelle labelBold textAlign="right" colSpan={1}>
-            {t.beregnetTotalbidrag}
+            {tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.beregnetTotalbidrag",
+              "Beregnet totalbidrag: ",
+            )}
           </Tabellcelle>
           <Tabellcelle textAlign="center">
             {formatterBeløpForBeregning(
@@ -135,7 +159,12 @@ export const BPsBeregnedeTotalbidrag = ({
           skipPadding
           skipBorderBottom
         >
-          <Tabellcelle colSpan={7}>{t.forklaring}</Tabellcelle>
+          <Tabellcelle colSpan={7}>
+            {tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.forklaring",
+              "U = Underholdskostnad, BP = Bidragspliktig",
+            )}
+          </Tabellcelle>
         </Tabellrad>
       </DokumentTabell>
     </div>

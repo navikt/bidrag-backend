@@ -1,23 +1,20 @@
 import { Kilde, TypeArManedsperiode } from "~/types/Api";
 import { formatPeriode } from "~/utils/date-utils";
 import KildeIcon from "~/components/KildeIcon";
-import tekster from "~/tekster";
 import {
   DokumentTabell,
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-
+import { tekst } from "~/utils/tekst";
 type TableData = {
   periode: TypeArManedsperiode;
   statusVisningsnavn?: string;
   kilde: Kilde;
 };
-
 type SimpleTableProps = {
   data: TableData[];
 };
-
 export function SimpleTable({ data }: SimpleTableProps) {
   if (data.length === 0) return "Ingen offentlige opplysninger";
   return (
@@ -25,8 +22,17 @@ export function SimpleTable({ data }: SimpleTableProps) {
       layoutAuto
       bredde="400px"
       kolonner={[
-        { tittel: tekster.tabell.felles.fraTilOgMed, bredde: "150px" },
-        { tittel: tekster.tabell.felles.status, bredde: "150px" },
+        {
+          tittel: tekst(
+            "felles.tabell.felles.fraTilOgMed",
+            "Fra og med - Til og med",
+          ),
+          bredde: "150px",
+        },
+        {
+          tittel: tekst("felles.tabell.felles.status", "Status"),
+          bredde: "150px",
+        },
         { tittel: "Kilde" },
       ]}
     >

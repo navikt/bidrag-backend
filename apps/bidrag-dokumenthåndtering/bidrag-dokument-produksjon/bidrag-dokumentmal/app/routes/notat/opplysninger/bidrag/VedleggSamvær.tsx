@@ -13,11 +13,7 @@ import { NotatSamvaerBarnDto, NotatSamvaersperiodeDto } from "~/types/Api";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import { formatPeriode } from "~/utils/date-utils";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.yaml";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.samvær;
-
+import { tekst } from "~/utils/tekst";
 export default function VedleggSamvær() {
   const vedleggNummer = useVedleggNummer("samvær");
   const { data, erAvslag } = useNotatFelles();
@@ -25,7 +21,10 @@ export default function VedleggSamvær() {
   return (
     <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
       <h2 id={elementIds.vedleggSamvær}>
-        {t.tittel.replace("{}", `${vedleggNummer}`)}
+        {tekst(
+          "notat.opplysninger.bidrag.samvær.tittel",
+          "Vedlegg nr. {}: Samvær",
+        ).replace("{}", `${vedleggNummer}`)}
       </h2>
       {(data.samværV2?.barn ?? []).map((samværBarn, index) => (
         <div key={index + "-" + samværBarn.gjelderBarn.ident}>
@@ -35,7 +34,6 @@ export default function VedleggSamvær() {
     </div>
   );
 }
-
 function SamværsberegningDetaljerBarn({
   samværBarn,
 }: {
@@ -57,13 +55,18 @@ function SamværsberegningDetaljerBarn({
         </FeltTabell>
       </div>
       {samværsperioderMedBeregning.length == 0 ? (
-        <p>{t.ingenBeregnetSamvær}</p>
+        <p>
+          {tekst(
+            "notat.opplysninger.bidrag.samvær.ingenBeregnetSamvær",
+            "Ingen beregnet samvær",
+          )}
+        </p>
       ) : (
         samværsperioderMedBeregning.map((periode, index) => (
           <div key={index + "_" + periode.samværsklasseVisningsnavn}>
             <div>
               <FeltTabell>
-                <Feltrad label={ord.periode}>
+                <Feltrad label={tekst("ord.periode", "Periode")}>
                   {formatPeriode(periode.periode.fom, periode.periode.tom)}
                 </Feltrad>
               </FeltTabell>
@@ -79,7 +82,6 @@ function SamværsberegningDetaljerBarn({
     </DokumentStabel>
   );
 }
-
 function SamværKalkulatorTable({
   beregning,
   samværsklasseVisningsnavn,
@@ -89,25 +91,46 @@ function SamværKalkulatorTable({
 }: NotatSamvaersperiodeDto) {
   const samværNetterBeskrivelse = () => {
     if (gjennomsnittligSamværPerMåned === 0) return "";
-    return t.beregning.samværPerMåned
+    return tekst(
+      "notat.opplysninger.bidrag.samvær.beregning.samværPerMåned",
+      " (samvær per måned: {antall} {netter})",
+    )
       .replace("{antall}", `${gjennomsnittligSamværPerMåned}`)
       .replace(
         "{netter}",
         gjennomsnittligSamværPerMåned === 1
-          ? t.beregning.natt
-          : t.beregning.netter,
+          ? tekst("notat.opplysninger.bidrag.samvær.beregning.natt", "natt")
+          : tekst(
+              "notat.opplysninger.bidrag.samvær.beregning.netter",
+              "netter",
+            ),
       );
   };
   return (
     <DokumentStabel gap={1} className="pt-2 pb-2">
       <div>
-        {t.regelmessigSamvær.tittel && <h4>{t.regelmessigSamvær.tittel}</h4>}
-        <FeltTabell>
-          <Feltrad label={t.regelmessigSamvær.antallNetter}>
-            {t.regelmessigSamvær.antallNetterVerdi.replace(
-              "{}",
-              `${beregning!.regelmessigSamværNetter}`,
+        {tekst(
+          "notat.opplysninger.bidrag.samvær.regelmessigSamvær.tittel",
+          "Regelmessig samvær",
+        ) && (
+          <h4>
+            {tekst(
+              "notat.opplysninger.bidrag.samvær.regelmessigSamvær.tittel",
+              "Regelmessig samvær",
             )}
+          </h4>
+        )}
+        <FeltTabell>
+          <Feltrad
+            label={tekst(
+              "notat.opplysninger.bidrag.samvær.regelmessigSamvær.antallNetter",
+              "Antall netter",
+            )}
+          >
+            {tekst(
+              "notat.opplysninger.bidrag.samvær.regelmessigSamvær.antallNetterVerdi",
+              "{} / 14 dager",
+            ).replace("{}", `${beregning!.regelmessigSamværNetter}`)}
           </Feltrad>
         </FeltTabell>
       </div>
@@ -115,10 +138,20 @@ function SamværKalkulatorTable({
         <DokumentTabell
           layoutAuto
           kolonner={[
-            { tittel: t.ferieTabell.ferie },
-            { tittel: ord.bidragspliktig },
-            { tittel: ord.bidragsmottaker },
-            { tittel: t.ferieTabell.frekvens },
+            {
+              tittel: tekst(
+                "notat.opplysninger.bidrag.samvær.ferieTabell.ferie",
+                "Ferie",
+              ),
+            },
+            { tittel: tekst("ord.bidragspliktig", "Bidragspliktig") },
+            { tittel: tekst("ord.bidragsmottaker", "Bidragsmottaker") },
+            {
+              tittel: tekst(
+                "notat.opplysninger.bidrag.samvær.ferieTabell.frekvens",
+                "Frekvens",
+              ),
+            },
           ]}
         >
           {beregning!.ferier.map((ferie, index) => (
@@ -138,8 +171,17 @@ function SamværKalkulatorTable({
         </DokumentTabell>
         <div>
           <FeltTabell>
-            <Feltrad label={t.beregning.ledetekst} labelBold>
-              {t.beregning.samværsklasse
+            <Feltrad
+              label={tekst(
+                "notat.opplysninger.bidrag.samvær.beregning.ledetekst",
+                "Beregning",
+              )}
+              labelBold
+            >
+              {tekst(
+                "notat.opplysninger.bidrag.samvær.beregning.samværsklasse",
+                "Samværsklasse {samværsklasse}{samværPerMåned}",
+              )
                 .replace("{samværsklasse}", `${samværsklasseVisningsnavn}`)
                 .replace("{samværPerMåned}", samværNetterBeskrivelse())}
             </Feltrad>
@@ -149,7 +191,6 @@ function SamværKalkulatorTable({
     </DokumentStabel>
   );
 }
-
 function zeroToEmpty(value: number) {
   return value === 0 ? "" : value;
 }

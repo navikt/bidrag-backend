@@ -5,7 +5,7 @@ import { Visningsformat } from "~/utils/visning";
 
 /**
  * Ledetekst og verdi, f.eks.
- * `{ felt: "inntekter.inntektBM", tittel: t.inntekter.inntektBidragsmottaker, format: "beløp" }`.
+ * `{ felt: "inntekter.inntektBM", tittel: tekst("notat.begrunnelse.særbidrag.vedtak.inntekter.inntektBidragsmottaker", "Inntekt Bidragsmottaker"), format: "beløp" }`.
  */
 export type Felt = {
   felt: string;

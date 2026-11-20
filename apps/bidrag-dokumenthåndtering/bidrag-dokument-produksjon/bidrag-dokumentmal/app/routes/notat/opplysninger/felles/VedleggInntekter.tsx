@@ -10,9 +10,6 @@ import {
 import { formatterBeløp, sammenlignRoller } from "~/utils/visningsnavn";
 import { groupBy } from "~/utils/array-utils";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import opplysningerTekster from "~/tekster/notat/opplysninger/felles.yaml";
 import { Fragment } from "react";
 import {
   DokumentTabell,
@@ -32,23 +29,26 @@ import InntektTableTitle from "~/components/inntekt/InntektTableTitle";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
 import GjelderPerson from "~/components/GjelderPerson";
-
-const t = opplysningerTekster.inntekter;
-
+import { tekst } from "~/utils/tekst";
 export default function VedleggInntekter() {
   const vedleggNummer = useVedleggNummer("inntekter");
   const { erAvslag, bidragsmottaker, bidragspliktig, søknadsbarn, type } =
     useNotatFelles();
   if (erAvslag && type != NotatMalType.BIDRAG) return null;
-
   return (
     <div>
       <h2
         id={elementIds.vedleggInntekter}
         className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}
       >
-        {t.tittel.replace("{}", `${vedleggNummer}`)}
-        {tekster.fraOffentligeRegistre}
+        {tekst(
+          "notat.opplysninger.felles.inntekter.tittel",
+          "Vedlegg nr. {}: Inntekt - ",
+        ).replace("{}", `${vedleggNummer}`)}
+        {tekst(
+          "felles.fraOffentligeRegistre",
+          "Hentet fra offentlige registre",
+        )}
       </h2>
       <OpplysningerForRolle
         rolle={bidragsmottaker}
@@ -68,7 +68,6 @@ export default function VedleggInntekter() {
     </div>
   );
 }
-
 function OpplysningerForRolle({
   rolle,
   showRole = true,
@@ -78,57 +77,71 @@ function OpplysningerForRolle({
 }) {
   const vedleggNummer = useVedleggNummer("inntekter");
   const { data } = useNotatFelles();
-
   const inntekter = data.inntekter.offentligeInntekterPerRolle.find(
     (d) =>
       sammenlignRoller(d.gjelder.rolle, rolle.rolle) &&
       d.gjelder.ident == rolle.ident,
   );
   if (!inntekter) return null;
-
   return (
     <div>
       {showRole && <GjelderPerson rolle={rolle} />}
       {inntekter.arbeidsforhold && inntekter.arbeidsforhold.length > 0 && (
         <div>
-          <h4>{t.tabeller.arbeidsforhold.replace("{}", `${vedleggNummer}`)}</h4>
+          <h4>
+            {tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.arbeidsforhold",
+              "{}.1 Arbeidsforhold",
+            ).replace("{}", `${vedleggNummer}`)}
+          </h4>
           <ArbeidsforholdTable data={inntekter.arbeidsforhold} />
         </div>
       )}
       {!isHarInntekter(inntekter) ? (
-        <p>{t.ingenOffentligeInntekter}</p>
+        <p>
+          {tekst(
+            "notat.opplysninger.felles.inntekter.ingenOffentligeInntekter",
+            "Ingen offentlige inntekter",
+          )}
+        </p>
       ) : (
         <>
           <OffentligeInntekter
             data={inntekter.årsinntekter}
-            tittel={t.tabeller.skattepliktigeOgPensjonsgivende.replace(
-              "{}",
-              `${vedleggNummer}`,
-            )}
+            tittel={tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.skattepliktigeOgPensjonsgivende",
+              "{}.2 Skattepliktige og pensjonsgivende inntekter",
+            ).replace("{}", `${vedleggNummer}`)}
             medInntektsposter
           />
           <OffentligeInntekter
             data={inntekter.barnetillegg}
-            tittel={t.tabeller.barnetillegg.replace("{}", `${vedleggNummer}`)}
+            tittel={tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.barnetillegg",
+              "{}.3 Barnetillegg",
+            ).replace("{}", `${vedleggNummer}`)}
             medBarn
           />
           <OffentligeInntekter
             data={inntekter.utvidetBarnetrygd}
-            tittel={t.tabeller.utvidetBarnetrygd.replace(
-              "{}",
-              `${vedleggNummer}`,
-            )}
+            tittel={tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.utvidetBarnetrygd",
+              "{}.4 Utvidet barnetrygd",
+            ).replace("{}", `${vedleggNummer}`)}
           />
           <OffentligeInntekter
             data={inntekter.småbarnstillegg}
-            tittel={t.tabeller.småbarnstillegg.replace(
-              "{}",
-              `${vedleggNummer}`,
-            )}
+            tittel={tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.småbarnstillegg",
+              "{}.5 Småbarnstillegg",
+            ).replace("{}", `${vedleggNummer}`)}
           />
           <OffentligeInntekter
             data={inntekter.kontantstøtte}
-            tittel={t.tabeller.kontantstøtte.replace("{}", `${vedleggNummer}`)}
+            tittel={tekst(
+              "notat.opplysninger.felles.inntekter.tabeller.kontantstøtte",
+              "{}.6 Kontantstøtte",
+            ).replace("{}", `${vedleggNummer}`)}
             medBarn
           />
         </>
@@ -136,7 +149,6 @@ function OpplysningerForRolle({
     </div>
   );
 }
-
 type OffentligeInntekterProps = {
   tittel: string;
   data: NotatInntektDto[];
@@ -144,7 +156,6 @@ type OffentligeInntekterProps = {
   medInntektsposter?: boolean;
   subsection?: boolean;
 };
-
 function OffentligeInntekter({
   tittel,
   data,
@@ -164,13 +175,11 @@ function OffentligeInntekter({
     </div>
   );
 }
-
 type InntektTableProps = {
   data: NotatInntektDto[];
   inkluderBeskrivelse?: boolean;
   medInntektsposter?: boolean;
 };
-
 function InntektTable({
   data,
   inkluderBeskrivelse = true,
@@ -181,12 +190,18 @@ function InntektTable({
       <DokumentTabell
         kolonner={
           [
-            { tittel: tekster.tabell.felles.fraTilOgMed, bredde: "170px" },
+            {
+              tittel: tekst(
+                "felles.tabell.felles.fraTilOgMed",
+                "Fra og med - Til og med",
+              ),
+              bredde: "170px",
+            },
             inkluderBeskrivelse && {
-              tittel: ord.beskrivelse,
+              tittel: tekst("ord.beskrivelse", "Beskrivelse"),
               bredde: "175px",
             },
-            { tittel: ord.beløp },
+            { tittel: tekst("ord.beløp", "Beløp") },
           ].filter((d) => typeof d != "boolean") as Kolonne[]
         }
       >
@@ -200,7 +215,7 @@ function InntektTable({
                 </Tabellcelle>
                 {inkluderBeskrivelse && (
                   <Tabellcelle>
-                    {`${d.visningsnavn}${d.historisk ? t.historisk : ""}`}
+                    {`${d.visningsnavn}${d.historisk ? tekst("notat.opplysninger.felles.inntekter.historisk", " (historisk)") : ""}`}
                   </Tabellcelle>
                 )}
                 <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
@@ -221,25 +236,29 @@ function InntektTable({
     </div>
   );
 }
-
 function ArbeidsforholdTable({ data }: { data: Arbeidsforhold[] }) {
   if (data.length === 0) return null;
-
   return (
     <DokumentTabell
       bredde="450px"
       kolonner={[
-        { tittel: ord.periode, bredde: "100px" },
+        { tittel: tekst("ord.periode", "Periode"), bredde: "100px" },
         {
-          tittel: tekster.tabell.arbeidsforhold.arbeidsgiver,
+          tittel: tekst(
+            "felles.tabell.arbeidsforhold.arbeidsgiver",
+            "Arbeidsgiver",
+          ),
           bredde: "140px",
         },
         {
-          tittel: tekster.tabell.arbeidsforhold.stilling,
+          tittel: tekst("felles.tabell.arbeidsforhold.stilling", "Stilling"),
           bredde: "40px",
         },
         {
-          tittel: tekster.tabell.arbeidsforhold.lønnsendring,
+          tittel: tekst(
+            "felles.tabell.arbeidsforhold.lønnsendring",
+            "Lønnsendring",
+          ),
           bredde: "80px",
         },
       ]}
@@ -299,7 +318,6 @@ function InntektPerBarnTable({ data }: InntektTableProps) {
                     styling == "V2" && erBarnetillegg
                       ? formatPeriode(periode!.fom, periode!.til)
                       : undefined;
-
                   return (
                     <Fragment key={index}>
                       {periodColumn && (

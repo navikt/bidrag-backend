@@ -1,31 +1,41 @@
 import { FeltTabell, Feltrader } from "~/components/FeltTabell";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.begrensetRevurdering;
-
+import { tekst } from "~/utils/tekst";
 export const BeregningBegrensetRevurdering = () => {
   const { sluttberegning, samværsfradrag } = useBeregningDetaljer();
   if (!sluttberegning.begrensetRevurderingUtført) return null;
-
   return (
     <div className={"mb-2"}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.begrensetRevurdering.tittel",
+          "Begrenset revurdering",
+        )}
+      </h4>
       <div>
         <FeltTabell>
           <Feltrader
             rows={[
               {
-                label: t.løpendeForskudd,
+                label: tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.begrensetRevurdering.løpendeForskudd",
+                  "Løpende forskudd",
+                ),
                 value: `${formatterBeløpForBeregning(sluttberegning.løpendeForskudd ?? 0)}`,
               },
               {
-                label: t.løpendeBidrag,
+                label: tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.begrensetRevurdering.løpendeBidrag",
+                  "Løpende bidrag",
+                ),
                 value: `${formatterBeløpForBeregning(sluttberegning.løpendeBidrag ?? 0)}`,
               },
               {
-                label: t.foreløpigBidrag,
+                label: tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.begrensetRevurdering.foreløpigBidrag",
+                  "Foreløpig bidrag",
+                ),
                 value: `${formatterBeløpForBeregning(sluttberegning.løpendeForskudd ?? 0)} + ${formatterBeløpForBeregning(samværsfradrag.samværsfradrag)}`,
                 result: `${formatterBeløpForBeregning(sluttberegning.bruttoBidragEtterBegrensetRevurdering)}`,
               },

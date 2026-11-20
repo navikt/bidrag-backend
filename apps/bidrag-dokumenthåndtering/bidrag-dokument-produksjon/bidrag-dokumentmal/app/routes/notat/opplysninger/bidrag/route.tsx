@@ -7,17 +7,20 @@ import {
   Vedlegg,
 } from "~/components/notat_felles/NotatContext";
 import { VedtakNotatDto, Vedtakstype } from "~/types/Api";
-import tekster from "~/tekster/notat/opplysninger/bidrag.yaml";
 import VedleggUnderholdskostnader from "~/routes/notat/opplysninger/bidrag/VedleggUnderholdskostnader";
 import VedleggBoforhold from "~/routes/notat/opplysninger/felles/VedleggBoforhold";
 import VedleggInntekter from "~/routes/notat/opplysninger/felles/VedleggInntekter";
 import VedleggSamvær from "~/routes/notat/opplysninger/bidrag/VedleggSamvær";
 import VedleggBeregningsDetaljer from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-
+import { tekst } from "~/utils/tekst";
 // /notat/opplysninger/bidrag: bare vedleggene i bidragsnotatet.
 export const action = notatAction;
-export const meta = notatMeta(tekster.tittel);
-
+export const meta = notatMeta(
+  tekst(
+    "notat.opplysninger.bidrag.tittel",
+    "Bidrag, vedlegg til saksbehandlingsnotat",
+  ),
+);
 /**
  * Vedleggene i bidragsnotatet, i den rekkefølgen de står. Vedleggsnummeret følger av rekkefølgen.
  * Ved innkreving er det bare beregningsdetaljene.
@@ -34,12 +37,14 @@ export function vedleggBidrag(data: VedtakNotatDto): Vedlegg[] {
     "beregningsdetaljer",
   ];
 }
-
 export default function NotatOpplysningerBidrag() {
   return (
     <NotatSide
       id="bidrag_notat"
-      tittel={tekster.tittel}
+      tittel={tekst(
+        "notat.opplysninger.bidrag.tittel",
+        "Bidrag, vedlegg til saksbehandlingsnotat",
+      )}
       vedlegg={vedleggBidrag}
       kanGjeldeFlereSaker
     >
@@ -47,7 +52,6 @@ export default function NotatOpplysningerBidrag() {
     </NotatSide>
   );
 }
-
 export function OpplysningerBidrag() {
   const { erInnkrevingsgrunnlag } = useNotatFelles();
   return (

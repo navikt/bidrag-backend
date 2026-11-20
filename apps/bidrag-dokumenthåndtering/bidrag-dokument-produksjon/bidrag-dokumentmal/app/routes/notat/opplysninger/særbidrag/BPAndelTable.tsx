@@ -4,21 +4,15 @@ import {
   formatterBeløpForBeregning,
   formatterProsent,
 } from "~/utils/visningsnavn";
-import særbidragOpplysningerTekster from "~/tekster/notat/opplysninger/særbidrag.yaml";
 import { FeltTabell, JusterteFeltrader } from "~/components/FeltTabell";
 import {
   MathValue,
   MathMultiplication,
   CalculationTable,
 } from "~/components/vedtak/CalculationTable";
-
-const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
-
-const t = tekst.bpsAndel;
-
+import { tekst } from "~/utils/tekst";
 export const BPsAndel = () => {
   const { data } = useNotatFelles();
-
   const beregnetSærbidrag = data.vedtak!
     .resultat[0] as NotatResultatSaerbidragsberegningDto;
   const delberegningBpsAndel = beregnetSærbidrag.bpsAndel!;
@@ -26,21 +20,35 @@ export const BPsAndel = () => {
   const utgifter = beregnetSærbidrag.delberegningUtgift!;
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.tittel",
+          "Bidragspliktiges andel",
+        )}
+      </h4>
       <CalculationTable
         width={"55%"}
         className={"pb-2 "}
         data={[
           {
-            label: t.bidragspliktigesInntekt,
+            label: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.bidragspliktigesInntekt",
+              "Bidragspliktiges inntekt",
+            ),
             value: formatterBeløpForBeregning(inntekter.inntektBP, true),
           },
           {
-            label: t.bidragsmottakerensInntekt,
+            label: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.bidragsmottakerensInntekt",
+              "Bidragsmottakerens inntekt",
+            ),
             value: formatterBeløpForBeregning(inntekter.inntektBM, true),
           },
           {
-            label: t.barnetsInntekt,
+            label: tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.barnetsInntekt",
+              "Barnets inntekt",
+            ),
             calculation:
               inntekter.inntektBarn! > 0 ? (
                 <div>
@@ -58,7 +66,10 @@ export const BPsAndel = () => {
           },
         ]}
         result={{
-          label: t.totalInntekt,
+          label: tekst(
+            "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.totalInntekt",
+            "Total inntekt",
+          ),
           value: formatterBeløpForBeregning(
             inntekter.totalEndeligInntekt,
             true,
@@ -71,12 +82,18 @@ export const BPsAndel = () => {
           <JusterteFeltrader
             rows={[
               {
-                label: t.bpsAndelAvUtgifter,
+                label: tekst(
+                  "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.bpsAndelAvUtgifter",
+                  "BP's andel av utgifter (i prosent)",
+                ),
                 value: `${formatterBeløpForBeregning(inntekter.inntektBP, true)} X ${formatterBeløpForBeregning(inntekter.totalEndeligInntekt)}`,
                 result: `${formatterProsent(delberegningBpsAndel.beregnetAndelFaktor)}`,
               },
               {
-                label: t.andelUtgifter,
+                label: tekst(
+                  "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.andelUtgifter",
+                  "Andel utgifter",
+                ),
                 value: `${formatterBeløpForBeregning(utgifter.sumGodkjent, true)} X ${formatterProsent(delberegningBpsAndel.endeligAndelFaktor)}`,
                 result: `${formatterBeløpForBeregning(delberegningBpsAndel.andelBeløp, true)}`,
               },
@@ -88,7 +105,10 @@ export const BPsAndel = () => {
         {delberegningBpsAndel.endeligAndelFaktor !==
           delberegningBpsAndel.beregnetAndelFaktor && (
           <div className="text-red-500" style={{ width: "200px" }}>
-            {t.andelBegrensetTil}{" "}
+            {tekst(
+              "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.andelBegrensetTil",
+              "Andel begrenset til",
+            )}{" "}
             {formatterProsent(delberegningBpsAndel.endeligAndelFaktor)}
           </div>
         )}

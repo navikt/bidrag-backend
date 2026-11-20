@@ -1,6 +1,4 @@
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
 import {
   DokumentmalDelberegningBidragsevneDto,
   DokumentmalResultatBeregningInntekterDto,
@@ -15,7 +13,7 @@ import {
   MathValue,
   MathMultiplication,
 } from "~/components/vedtak/CalculationTable";
-
+import { tekst } from "~/utils/tekst";
 export const BPsEvneTable = ({
   delberegningBidragsevne,
   inntekter,
@@ -29,12 +27,12 @@ export const BPsEvneTable = ({
       <DokumentTabell
         layoutAuto
         kolonner={[
-          { tittel: ord.beskrivelse, bredde: "250px" },
+          { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
           {
-            tittel: tekster.tabell.felles.beregning,
+            tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
             bredde: "250px",
           },
-          { tittel: ord.beløp, bredde: "50px" },
+          { tittel: tekst("ord.beløp", "Beløp"), bredde: "50px" },
         ]}
       >
         <Tabellrad index={0}>

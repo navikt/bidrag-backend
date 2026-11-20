@@ -6,8 +6,7 @@
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
     "**/.client/**/*.tsx",
-    ".react-router/types/**/*",
-    ".tekster-typer/**/*"
+    ".react-router/types/**/*"
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
@@ -25,10 +24,9 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./app/*", "./.tekster-typer/app/*"]
+      "~/*": ["./app/*"]
     },
     "noEmit": true,
-    "rootDirs": [".", "./.react-router/types"],
-    "allowArbitraryExtensions": true
+    "rootDirs": [".", "./.react-router/types"]
   }
 }

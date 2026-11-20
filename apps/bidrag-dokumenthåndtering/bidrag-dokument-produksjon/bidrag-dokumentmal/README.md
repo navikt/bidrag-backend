@@ -60,15 +60,10 @@ app/
 │       ├── forskudd/route.tsx        /notat/opplysninger/forskudd, viser rekkefølgen på vedleggene
 │       ├── særbidrag/                route.tsx og beregningsdetaljer for særbidrag
 │       └── bidrag/                   route.tsx, vedleggene for bidrag og beregningsdetaljer/
-├── tekster/                          alle faste tekster, i YAML. Se «Endre tekster i notatene»
-│   ├── ord.yaml                      Ja, Nei, Årsak, Periode …
-│   ├── felles.yaml                   kolonnenavn og begreper som brukes på tvers av malene
-│   ├── notat/
-│   │   ├── begrunnelse/              felles.yaml, forskudd.yaml, særbidrag.yaml, bidrag.yaml
-│   │   └── opplysninger/             felles.yaml, forskudd.yaml, særbidrag.yaml, bidrag.yaml
-│   └── vedtak/forside.yaml           forsiden til orkestrerte bidragsvedtak (/vedtak/forside)
 ├── components/                       felles byggeklosser (tabeller, NotatContext, topptekst) brukt av notater og vedtak
-└── utils/visning.ts                  hvordan beløp, prosent, datoer og perioder vises
+└── utils/
+    ├── tekst.ts                      oversetting med norsk standardtekst inline i malen
+    └── visning.ts                    hvordan beløp, prosent, datoer og perioder vises
 ```
 
 Vil du se hvordan et notat er bygd opp, starter du i `routes/notat/<notat>.tsx`. Derfra følger du
@@ -83,13 +78,17 @@ notat-routes. Den leser input, legger på topp- og bunntekst, søknadsdetaljer o
 
 ```tsx
 export const action = notatAction;
-export const meta = notatMeta(tekster.tittel);
+const tittel = tekst(
+  "notat.begrunnelse.bidrag.tittel",
+  "Bidrag, saksbehandlingsnotat",
+);
+export const meta = notatMeta(tittel);
 
 export default function NotatBidrag() {
   return (
     <NotatSide
       id="bidrag_notat"
-      tittel={tekster.tittel}
+      tittel={tittel}
       vedlegg={vedleggBidrag}
       kanGjeldeFlereSaker
     >
@@ -130,10 +129,14 @@ lager tabeller og lister ut fra et oppsett:
 ```tsx
 const kolonner: Tabelloppsett = {
   kolonner: [
-    { felt: "periode", tittel: ord.periode, format: "periode" },
+    {
+      felt: "periode",
+      tittel: tekst("ord.periode", "Periode"),
+      format: "periode",
+    },
     {
       felt: "beløp",
-      tittel: t.tabell.inntekt,
+      tittel: tekst("ord.inntekt", "Inntekt"),
       format: "beløp",
       bredde: "80px",
     },
@@ -142,31 +145,29 @@ const kolonner: Tabelloppsett = {
 <KolonneTabell oppsett={kolonner} rader={perioder} />;
 ```
 
-`felt` er navnet i input-JSON, `tittel` kommer fra en tekstfil og `format` er et av formatene i
+`felt` er navnet i input-JSON, `tittel` er teksten som vises og `format` er et av formatene i
 [`utils/visning.ts`](app/utils/visning.ts) (`beløp`, `beløpAvrundet`, `prosent`, `dato`, `periode`,
 `periodeTilOgMedTilMåned`). Bruk `celler` når en verdi må beregnes.
 
-**Tekster i koden.** Tekstfilene importeres direkte, for eksempel
-`import tekster from "~/tekster/notat/begrunnelse/bidrag.yaml"`. Typene til YAML-filene lages av
-[`scripts/tekster.ts`](scripts/tekster.ts), både i Vite-bygget og med `npm run tekster:typer`. De legges i
-`.tekster-typer/`, som ikke sjekkes inn.
+**Tekster i koden.** Faste tekster står inline i malen gjennom
+`tekst("notat.begrunnelse.bidrag.samvær.tittel", "Samvær")`. Norsk bokmål er standardteksten. `i18next` bruker
+nøkkelen når en katalog senere legges til.
 
 ## Regler for endringer
 
-- Alle faste tekster ligger i `app/tekster/*.yaml`. Tekstfilene har bare tekster, ikke bredder, formater eller logikk.
-- Ord som brukes mange steder (Ja, Nei, Årsak …) ligger i `ord.yaml`. Tekster for én del ligger i filen for den delen.
+- Bruk `tekst(nøkkel, norskTekst)` for brukerrettet tekst. Behold nøkkelen stabil og ikke endre norsk tekst med mindre
+  dokumentinnholdet skal endres.
 - Formatering av tall og datoer gjøres i malen med `utils/visning.ts`, ikke i backend.
 - Bruk `NotatContext` framfor props. Legg logikk som gjelder hele notatet i contexten.
 - Ikke endre adressene `/notat/<notat>`. bidrag-dokument-produksjon bygger dem ut fra notattypen.
-- Hold funksjonene i `utils/visning.ts` enkle og uten React. Målet er at malene senere kan skrives om til Typst, og
-  YAML-filene kan da brukes som de er.
+- Hold funksjonene i `utils/visning.ts` enkle og uten React, slik at malene senere kan skrives om til Typst.
 
 ## Utvikling
 
 ```sh
 npm ci
 npm run dev           # utviklingsserver på http://localhost:5173
-npm run typecheck     # typer for routes og tekster + tsc
+npm run typecheck     # typer for routes + tsc
 npm run lint
 npm run build && npm start
 ```
@@ -203,45 +204,86 @@ og at nestede stabler beholder tekst og tabellkolonner over flere sider.
 
 ## Endre tekster i notatene
 
-Alle faste tekster i notatene ligger i YAML-filer under [`app/tekster`](app/tekster). Du kan endre dem uten å røre koden.
+Faste tekster står der de brukes i React- og TypeScript-filene. Søk etter den norske teksten, og endre standardteksten
+i andre argument til `tekst`:
 
-Hvert notat har to deler, og tekstene er delt på samme måte:
-
-- **Begrunnelse**: delen saksbehandleren har skrevet og vurdert, med tittelen på notatet først.
-- **Opplysninger**: vedleggene med opplysninger og beregningsdetaljer.
-
-| Fil                               | Innhold                                                                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `ord.yaml`                        | Ord og korte setninger som brukes flere steder, for eksempel «Ja», «Nei», «Årsak» og «Periode». En endring her slår ut overalt. |
-| `felles.yaml`                     | Kolonnenavn og begreper som brukes på tvers av malene, også i vedtaksforsiden.                                                  |
-| `notat/begrunnelse/<notat>.yaml`  | Begrunnelsesdelen av hvert notat, med tittelen på notatet først.                                                                |
-| `notat/opplysninger/<notat>.yaml` | Vedleggene i hvert notat, med tittelen på vedleggsdokumentet først.                                                             |
-| `vedtak/forside.yaml`             | Forsiden til orkestrerte bidragsvedtak: informasjon om klagen, endringer etter vedtaket og spørsmål.                            |
-
-`<notat>` er `forskudd`, `særbidrag` eller `bidrag`. `felles.yaml` i de to mappene har deler som er like i alle
-notatene, for eksempel boforhold og inntekter. Delene står i samme rekkefølge i filene som i notatet.
-Tekstene i samværsdelen av bidragsnotatet ligger for eksempel under `samvær:` i `notat/begrunnelse/bidrag.yaml`,
-og samværsvedlegget under `samvær:` i `notat/opplysninger/bidrag.yaml`.
-
-`{}` i en tekst er en plassholder som fylles ut med en verdi, for eksempel et vedleggsnummer. La den stå.
-
-Tekstfilene inneholder bare tekster. Søk etter teksten du vil endre, og endre teksten til høyre for kolon:
-
-```yaml
-tabellInnvilget:
-  inntekt: Inntekt
-  forskudd: Forskudd
+```tsx
+<h3>{tekst("notat.begrunnelse.bidrag.samvær.tittel", "Samvær")}</h3>
 ```
 
-Navnet til venstre brukes av malen og må ikke endres. Innrykket viser hvilken del teksten hører til, så la det stå som
-det er. Tekster som starter med `{` eller inneholder `: ` må stå i anførselstegn, for eksempel
-`tittel: "Vedlegg nr. {}: Boforhold"`.
+Første argument er en stabil nøkkel som en senere katalog kan overskrive. Nøkkelen følger området, dokumentdelen og
+tekstens plassering. Ikke endre nøkkelen når du retter norsk ordlyd.
 
-Hvis malen bruker en tekst som ikke finnes i filene, gir `npm run typecheck` feil. Typene lages fra YAML-filene av
-[`scripts/tekster.ts`](scripts/tekster.ts).
+### Legg til et annet språk
+
+Samle oversettelsene i én fil per språk, for eksempel
+[`app/oversettelser/en.ts`](app/oversettelser/en.ts):
+
+```ts
+export default {
+  notat: {
+    begrunnelse: {
+      bidrag: {
+        samvær: {
+          tittel: "Contact",
+        },
+      },
+    },
+  },
+  ord: {
+    periode: "Period",
+    beløp: "Amount",
+  },
+};
+```
+
+Importer katalogen i [`app/utils/tekst.ts`](app/utils/tekst.ts), og send den til `opprettTekstoversetter`:
+
+```ts
+import en from "~/oversettelser/en";
+
+export const tekstoversetter = opprettTekstoversetter({
+  en: {
+    translation: en,
+  },
+});
+export const tekst = tekstoversetter.tekst;
+```
+
+Malene endres ikke. `tekst("notat.begrunnelse.bidrag.samvær.tittel", "Samvær")` viser `Contact` når engelsk er aktivt.
+Hvis nøkkelen ikke finnes i katalogen, viser `i18next` den norske standardteksten.
+
+Bruk `{{navn}}` for verdier som skal oversettes sammen med teksten:
+
+```tsx
+<h2>
+  {tekst("notat.vedlegg.tittel", "Vedlegg nr. {{nummer}}", {
+    nummer: vedleggNummer,
+  })}
+</h2>
+```
+
+Maloversettelser kan da holde samme rekkefølge og grammatikk uavhengig av norsk:
+
+```ts
+{
+  notat: {
+    vedlegg: {
+      tittel: "Appendix no. {{nummer}}",
+    },
+  },
+}
+```
+
+Dokumentmalene rendres på serveren. Velger du språk per forespørsel, skal du opprette en oversetter for den forespørselen
+eller gi den riktige oversetteren videre gjennom context. Ikke bytt språk på en delt global `i18next`-instans mellom
+parallelle forespørsler.
 
 Hvilke kolonner som vises, bredder og hvordan beløp og datoer formateres, bestemmes i malen (`.tsx`-filene).
 Formatene ligger samlet i [`app/utils/visning.ts`](app/utils/visning.ts).
+
+Tekster med `{}` bruker fortsatt `.replace`, for eksempel et vedleggsnummer. Behold plassholderen når du endrer
+tekst. Nye navngitte verdier kan bruke i18next-syntaksen `{{navn}}` og tredje argument til `tekst`.
 
 Rekkefølgen på vedleggene står i `routes/notat/opplysninger/<notat>/route.tsx` (`vedleggForskudd()` osv.).
 Vedleggsnumrene, også i henvisningene fra begrunnelsen, følger av denne listen.

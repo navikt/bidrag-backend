@@ -8,9 +8,6 @@ import {
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
 import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
@@ -21,9 +18,7 @@ import {
   TypeInnhold,
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
-
-const t = bidragTekster.samvær;
-
+import { tekst } from "~/utils/tekst";
 export default function Samvær() {
   const vedleggNummer = useVedleggNummer("samvær");
   const { data, erAvslag, gjelderFlereSaker } = useNotatFelles();
@@ -33,9 +28,12 @@ export default function Samvær() {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>{t.tittel}</h2>
+        <h2>{tekst("notat.begrunnelse.bidrag.samvær.tittel", "Samvær")}</h2>
         <a href={`#${elementIds.vedleggSamvær}`}>
-          {ord.seVedleggForBeregningsdetaljer.replace("{}", `${vedleggNummer}`)}
+          {tekst(
+            "ord.seVedleggForBeregningsdetaljer",
+            "se vedlegg nr. {} for beregningsdetaljer",
+          ).replace("{}", `${vedleggNummer}`)}
         </a>
       </div>
       {gjelderFlereSaker ? (
@@ -53,11 +51,9 @@ function SamværPerSak({ data }: { data: NotatSamvaerBarnDto[] }) {
   const { typeInnhold } = useDokumentFelles();
   const sammeSamværForAlleSaker =
     notatData.samværV2?.sammeSamværForAlleSaker ?? [];
-
   const saksnummerListe = Array.from(
     new Set(data.map((barn) => barn.gjelderBarn.saksnummer)),
   );
-
   return (
     <DokumentStabel gap={4}>
       {saksnummerListe.map((saksnummer) => {
@@ -71,13 +67,16 @@ function SamværPerSak({ data }: { data: NotatSamvaerBarnDto[] }) {
           <div key={saksnummer}>
             <div>
               <FeltTabell>
-                <Feltrad label={ord.saksnummer} labelBold>
+                <Feltrad
+                  label={tekst("ord.saksnummer", "Saksnummer")}
+                  labelBold
+                >
                   {typeInnhold == TypeInnhold.NOTAT
                     ? saksnummer
-                    : ord.saksnummerMedHenvisning.replace(
-                        "{}",
-                        `${saksnummer}`,
-                      )}
+                    : tekst(
+                        "ord.saksnummerMedHenvisning",
+                        "{} (Oppgi saksnummeret ved henvendelse til oss.)",
+                      ).replace("{}", `${saksnummer}`)}
                 </Feltrad>
               </FeltTabell>
             </div>
@@ -108,7 +107,12 @@ function SamværBarnFelles({ data }: { data: NotatSamvaerBarnDto[] }) {
           </FeltTabell>
         </div>
       ) : (
-        <div>{t.sammeForAlleSøknadsbarn}</div>
+        <div>
+          {tekst(
+            "notat.begrunnelse.bidrag.samvær.sammeForAlleSøknadsbarn",
+            "Samme for alle søknadsbarn",
+          )}
+        </div>
       )}
       <SamværTabell data={førsteSamvær.perioder} />
       <NotatBegrunnelse data={førsteSamvær?.begrunnelse} />
@@ -138,8 +142,15 @@ function SamværTabell({ data }: { data: NotatSamvaersperiodeDto[] }) {
       layoutAuto
       bredde="350px"
       kolonner={[
-        { tittel: tekster.tabell.felles.fraTilOgMed },
-        { tittel: tekster.tabell.samvær.samværsklasse },
+        {
+          tittel: tekst(
+            "felles.tabell.felles.fraTilOgMed",
+            "Fra og med - Til og med",
+          ),
+        },
+        {
+          tittel: tekst("felles.tabell.samvær.samværsklasse", "Samværsklasse"),
+        },
       ]}
     >
       {data.map((periode, index) => (

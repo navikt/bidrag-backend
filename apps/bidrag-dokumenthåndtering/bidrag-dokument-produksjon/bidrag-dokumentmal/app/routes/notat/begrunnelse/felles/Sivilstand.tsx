@@ -1,15 +1,17 @@
 import { SimpleTable } from "~/components/SimpleTable";
-import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
 import { NotatMalType } from "~/types/Api";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
-
+import { tekst } from "~/utils/tekst";
 export default function Sivilstand() {
   const { data } = useNotatFelles();
   if (data.type != NotatMalType.FORSKUDD) return;
   return (
     <div style={{ pageBreakBefore: "auto" }}>
       <h3 style={{ marginBottom: 0 }} id={"linktilmeg"}>
-        {notatTekster.boforhold.sivilstand.tittel}
+        {tekst(
+          "notat.begrunnelse.felles.boforhold.sivilstand.tittel",
+          "Sivilstand",
+        )}
       </h3>
       <div>
         <SimpleTable

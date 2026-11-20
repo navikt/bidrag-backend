@@ -5,11 +5,8 @@ import {
 import { FeltTabell, JusterteFeltrader } from "~/components/FeltTabell";
 import BPsAndelInntekterTable from "~/components/vedtak/BPsAndelInntekterTable";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
 import { Resultatkode } from "~/types/Api";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.bpAndelUnderholdskostnad;
-
+import { tekst } from "~/utils/tekst";
 export const BPAndelUnderholdskostnad = () => {
   const {
     sluttberegning,
@@ -24,7 +21,12 @@ export const BPAndelUnderholdskostnad = () => {
     sluttberegning?.resultat === Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED;
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.bpAndelUnderholdskostnad.tittel",
+          "Bidragspliktiges andel",
+        )}
+      </h4>
       <div>
         <BPsAndelInntekterTable
           inntekter={inntekter!}
@@ -35,18 +37,27 @@ export const BPAndelUnderholdskostnad = () => {
             <JusterteFeltrader
               rows={[
                 {
-                  label: t.bpsAndelAvUnderholdskostnad,
+                  label: tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.bpAndelUnderholdskostnad.bpsAndelAvUnderholdskostnad",
+                    "BP's andel av underholdskostnad (i prosent)",
+                  ),
                   value: `${formatterBeløpForBeregning(inntekter.inntektBP)} / ${formatterBeløpForBeregning(inntekter.totalEndeligInntekt)}`,
                   result: formatterProsent(bpsAndel.beregnetAndelFaktor),
                 },
                 {
-                  label: t.andelUnderholdskostnad,
+                  label: tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.bpAndelUnderholdskostnad.andelUnderholdskostnad",
+                    "Andel underholdskostnad",
+                  ),
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(bpsAndel.endeligAndelFaktor)}`,
                   result: formatterBeløpForBeregning(bpsAndel.andelBeløp),
                 },
                 deltBosted
                   ? {
-                      label: t.etterFratrekkDeltBosted,
+                      label: tekst(
+                        "notat.opplysninger.bidrag.beregningsdetaljer.bpAndelUnderholdskostnad.etterFratrekkDeltBosted",
+                        "Etter fratrekk delt bosted",
+                      ),
                       value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad)} x ${formatterProsent(0.5)}`,
                       result: formatterBeløpForBeregning(
                         erAvslagDeltBosted
@@ -64,7 +75,10 @@ export const BPAndelUnderholdskostnad = () => {
       </div>
       {bpsAndel.endeligAndelFaktor !== bpsAndel.beregnetAndelFaktor && (
         <div className="text-red-500" style={{ width: "200px" }}>
-          {t.andelBegrensetTil}
+          {tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.bpAndelUnderholdskostnad.andelBegrensetTil",
+            "Andel begrenset til ",
+          )}
           {formatterProsent(bpsAndel.endeligAndelFaktor)}
         </div>
       )}

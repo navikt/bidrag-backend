@@ -12,9 +12,6 @@ import {
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
 import { dateToDDMMYYYY, formatPeriode } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
@@ -23,9 +20,7 @@ import {
   formatterProsent,
   rolleTilVisningsnavnV2,
 } from "~/utils/visningsnavn";
-
-const t = bidragTekster.privatAvtale;
-
+import { tekst } from "~/utils/tekst";
 export default function PrivatAvtale() {
   const { data, erAvslag } = useNotatFelles();
   const privatAvtale = data.privatavtale;
@@ -33,7 +28,12 @@ export default function PrivatAvtale() {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>{t.tittel}</h2>
+        <h2>
+          {tekst(
+            "notat.begrunnelse.bidrag.privatAvtale.tittel",
+            "Privat avtale",
+          )}
+        </h2>
       </div>
       <>
         {privatAvtale.map((barn, i) => (
@@ -51,7 +51,6 @@ export default function PrivatAvtale() {
     </div>
   );
 }
-
 function PrivatAvtaleBarn({
   data,
   vedtakInnkreving,
@@ -70,10 +69,20 @@ function PrivatAvtaleBarn({
       </div>
       <div className={"mt-2"}>
         <FeltTabell>
-          <Feltrad label={t.avtale.avtalemåned}>
+          <Feltrad
+            label={tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.avtale.avtalemåned",
+              "Avtalemåned",
+            )}
+          >
             {dateToDDMMYYYY(data.avtaleDato)}
           </Feltrad>
-          <Feltrad label={t.avtale.avtaletype}>
+          <Feltrad
+            label={tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.avtale.avtaletype",
+              "Avtaletype",
+            )}
+          >
             {data.avtaleTypeVisningsnavn}
           </Feltrad>
         </FeltTabell>
@@ -99,21 +108,48 @@ function PrivatAvtaleManuelleVedtakTabell({
 }) {
   return (
     <div className={"pt-2"}>
-      <h4>{t.vedtakFraNav.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.begrunnelse.bidrag.privatAvtale.vedtakFraNav.tittel",
+          "Vedtak fra Nav",
+        )}
+      </h4>
       <DokumentTabell
         layoutAuto
         bredde="350px"
         kolonner={[
-          { tittel: t.vedtakFraNav.kolonner.valgt },
-          { tittel: t.vedtakFraNav.kolonner.virkningsdato },
-          { tittel: t.vedtakFraNav.kolonner.vedtaksdato },
-          { tittel: ord.søknadstype },
-          { tittel: t.vedtakFraNav.kolonner.resultatSistePeriode },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.vedtakFraNav.kolonner.valgt",
+              "Valgt",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.vedtakFraNav.kolonner.virkningsdato",
+              "Virkningsdato",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.vedtakFraNav.kolonner.vedtaksdato",
+              "Vedtaksdato",
+            ),
+          },
+          { tittel: tekst("ord.søknadstype", "Søknadstype") },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.vedtakFraNav.kolonner.resultatSistePeriode",
+              "Resultat siste periode",
+            ),
+          },
         ]}
       >
         {data.map((vedtak, index) => (
           <Tabellrad key={index} index={index}>
-            <Tabellcelle>{vedtak.valgt ? ord.ja : ord.nei}</Tabellcelle>
+            <Tabellcelle>
+              {vedtak.valgt ? tekst("ord.ja", "Ja") : tekst("ord.nei", "Nei")}
+            </Tabellcelle>
             <Tabellcelle>{dateToDDMMYYYY(vedtak.virkningsDato)}</Tabellcelle>
             <Tabellcelle>{dateToDDMMYYYY(vedtak.fattetTidspunkt)}</Tabellcelle>
             <Tabellcelle>{vedtak.søknadstype}</Tabellcelle>
@@ -124,15 +160,19 @@ function PrivatAvtaleManuelleVedtakTabell({
     </div>
   );
 }
-
 function PrivatAvtaleTabell({ data }: { data: NotatPrivatAvtalePeriodeDto[] }) {
   return (
     <DokumentTabell
       layoutAuto
       bredde="350px"
       kolonner={[
-        { tittel: tekster.tabell.felles.fraTilOgMed },
-        { tittel: ord.beløp },
+        {
+          tittel: tekst(
+            "felles.tabell.felles.fraTilOgMed",
+            "Fra og med - Til og med",
+          ),
+        },
+        { tittel: tekst("ord.beløp", "Beløp") },
       ]}
     >
       {data.map((periode, index) => (
@@ -146,7 +186,6 @@ function PrivatAvtaleTabell({ data }: { data: NotatPrivatAvtalePeriodeDto[] }) {
     </DokumentTabell>
   );
 }
-
 function PrivatAvtaleBeregnetTabell({
   data,
 }: {
@@ -156,14 +195,29 @@ function PrivatAvtaleBeregnetTabell({
   const perioder = data;
   return (
     <div>
-      <h4 className={"mb-1 mt-4"}>{t.beregnetPrivatAvtale.tittel}</h4>
+      <h4 className={"mb-1 mt-4"}>
+        {tekst(
+          "notat.begrunnelse.bidrag.privatAvtale.beregnetPrivatAvtale.tittel",
+          "Beregnet privat avtale",
+        )}
+      </h4>
       <DokumentTabell
         layoutAuto
         bredde="350px"
         kolonner={[
-          { tittel: tekster.tabell.felles.fraTilOgMed },
-          { tittel: t.beregnetPrivatAvtale.indeksprosent },
-          { tittel: ord.beløp },
+          {
+            tittel: tekst(
+              "felles.tabell.felles.fraTilOgMed",
+              "Fra og med - Til og med",
+            ),
+          },
+          {
+            tittel: tekst(
+              "notat.begrunnelse.bidrag.privatAvtale.beregnetPrivatAvtale.indeksprosent",
+              "Indeksprosent",
+            ),
+          },
+          { tittel: tekst("ord.beløp", "Beløp") },
         ]}
       >
         {perioder.map((periode, index) => (

@@ -14,145 +14,199 @@ import { Feltliste, Feltlisteoppsett } from "~/components/Feltliste";
 import type { RowContent } from "~/components/DokumentTabell";
 import { Tabellcelle, Tabellrad } from "~/components/DokumentTabell";
 import { formater } from "~/utils/visning";
-import ord from "~/tekster/ord.yaml";
-import særbidragTekster from "~/tekster/notat/begrunnelse/særbidrag.yaml";
-
-const t = særbidragTekster.vedtak;
-
+import { tekst } from "~/utils/tekst";
 const avslagMedUtgifter: Feltlisteoppsett = {
   ledetekstBredde: "90px",
   felter: [
-    { felt: "resultatVisningsnavn", tittel: ord.årsak },
+    { felt: "resultatVisningsnavn", tittel: tekst("ord.årsak", "Årsak") },
     {
       felt: "forskuddssats",
-      tittel: t.avslagMedUtgifter.forskuddssats,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.avslagMedUtgifter.forskuddssats",
+        "Forskuddssaats",
+      ),
       format: "beløp",
     },
     {
       felt: "beregning.totalKravbeløp",
-      tittel: ord.kravbeløp,
+      tittel: tekst("ord.kravbeløp", "Kravbeløp"),
       format: "beløp",
     },
     {
       felt: "beregning.totalGodkjentBeløp",
-      tittel: ord.godkjentBeløp,
+      tittel: tekst("ord.godkjentBeløp", "Godkjent beløp"),
       format: "beløp",
     },
   ],
 };
-
 const inntekter: Feltlisteoppsett = {
-  tittel: t.inntekter.tittel,
+  tittel: tekst(
+    "notat.begrunnelse.særbidrag.vedtak.inntekter.tittel",
+    "Inntekter",
+  ),
   ledetekstBredde: "140px",
   felter: [
     {
       felt: "inntekter.inntektBM",
-      tittel: t.inntekter.inntektBidragsmottaker,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.inntekter.inntektBidragsmottaker",
+        "Inntekt Bidragsmottaker",
+      ),
       format: "beløp",
     },
     {
       felt: "inntekter.inntektBP",
-      tittel: t.inntekter.inntektBidragspliktig,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.inntekter.inntektBidragspliktig",
+        "Inntekt Bidragspliktig",
+      ),
       format: "beløp",
     },
     {
       felt: "inntekter.inntektBarn",
-      tittel: t.inntekter.inntektBarn,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.inntekter.inntektBarn",
+        "Inntekt Barn",
+      ),
       format: "beløp",
     },
   ],
 };
-
 const boforhold: Feltlisteoppsett = {
-  tittel: t.boforhold.tittel,
+  tittel: tekst(
+    "notat.begrunnelse.særbidrag.vedtak.boforhold.tittel",
+    "Boforhold",
+  ),
   ledetekstBredde: "145px",
   felter: [
     {
       felt: "antallBarnIHusstanden",
-      tittel: t.boforhold.antallBarnIHusstanden,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.boforhold.antallBarnIHusstanden",
+        "Antall barn i husstanden",
+      ),
     },
-    { felt: "voksenIHusstanden", tittel: t.boforhold.voksneIHusstanden },
+    {
+      felt: "voksenIHusstanden",
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.boforhold.voksneIHusstanden",
+        "Voksne i husstanden",
+      ),
+    },
   ],
 };
-
 function beregning(medInnkreving: boolean): Feltlisteoppsett {
-  const tb = t.beregning;
   return {
-    tittel: tb.tittel,
+    tittel: tekst(
+      "notat.begrunnelse.særbidrag.vedtak.beregning.tittel",
+      "Beregning",
+    ),
     ledetekstBredde: "130px",
     felter: [
       {
         felt: "beregning.totalKravbeløp",
-        tittel: ord.kravbeløp,
+        tittel: tekst("ord.kravbeløp", "Kravbeløp"),
         format: "beløp",
       },
       {
         felt: "beregning.totalGodkjentBeløp",
-        tittel: ord.godkjentBeløp,
+        tittel: tekst("ord.godkjentBeløp", "Godkjent beløp"),
         format: "beløp",
       },
       {
         felt: "maksGodkjentBeløp",
-        tittel: tb.maksGodkjentBeløp,
+        tittel: tekst(
+          "notat.begrunnelse.særbidrag.vedtak.beregning.maksGodkjentBeløp",
+          "Maks godkjent beløp",
+        ),
         format: "beløp",
       },
       {
         felt: "bpsAndel.endeligAndelFaktor",
-        tittel: tb.bidragspliktigesAndel,
+        tittel: tekst(
+          "notat.begrunnelse.særbidrag.vedtak.beregning.bidragspliktigesAndel",
+          "Bidragspliktiges andel",
+        ),
         format: "prosent",
       },
-      { felt: "bpHarEvne", tittel: tb.bidragspliktigHarEvne },
-      { felt: "resultat", tittel: ord.resultat, format: "beløp" },
+      {
+        felt: "bpHarEvne",
+        tittel: tekst(
+          "notat.begrunnelse.særbidrag.vedtak.beregning.bidragspliktigHarEvne",
+          "Bidragspliktig har evne",
+        ),
+      },
+      {
+        felt: "resultat",
+        tittel: tekst("ord.resultat", "Resultat"),
+        format: "beløp",
+      },
       {
         felt: "beregning.totalBeløpBetaltAvBp",
-        tittel: tb.betaltAvBidragspliktig,
+        tittel: tekst(
+          "notat.begrunnelse.særbidrag.vedtak.beregning.betaltAvBidragspliktig",
+          "Betalt av Bidragspliktig",
+        ),
         format: "beløp",
       },
       {
         felt: "beløpSomInnkreves",
         tittel: medInnkreving
-          ? tb.beløpSomInnkreves
-          : tb.beløpSomInnkrevesUtenInnkreving,
+          ? tekst(
+              "notat.begrunnelse.særbidrag.vedtak.beregning.beløpSomInnkreves",
+              "Beløp som innkreves",
+            )
+          : tekst(
+              "notat.begrunnelse.særbidrag.vedtak.beregning.beløpSomInnkrevesUtenInnkreving",
+              "Fastsatt beløp å betale",
+            ),
         format: "beløp",
       },
     ],
   };
 }
-
 const utgifter: Tabelloppsett = {
   bredde: "630px",
   kolonner: [
     {
       felt: "betaltAvBp",
-      tittel: t.utgifter.betaltAvBidragspliktig,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.utgifter.betaltAvBidragspliktig",
+        "Betalt av Bidragspliktig",
+      ),
       bredde: "100px",
     },
     {
       felt: "dato",
-      tittel: t.utgifter.forfallsdato,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.utgifter.forfallsdato",
+        "Forfallsdato",
+      ),
       bredde: "70px",
       format: "dato",
     },
     {
       felt: "utgiftstypeVisningsnavn",
-      tittel: t.utgifter.utgift,
+      tittel: tekst(
+        "notat.begrunnelse.særbidrag.vedtak.utgifter.utgift",
+        "Utgift",
+      ),
       bredde: "120px",
     },
     {
       felt: "kravbeløp",
-      tittel: ord.kravbeløp,
+      tittel: tekst("ord.kravbeløp", "Kravbeløp"),
       bredde: "80px",
       format: "beløp",
     },
     {
       felt: "godkjentBeløp",
-      tittel: ord.godkjentBeløp,
+      tittel: tekst("ord.godkjentBeløp", "Godkjent beløp"),
       bredde: "110px",
       format: "beløp",
     },
   ],
 };
-
 export default function Vedtak() {
   const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data } = useNotatFelles();
@@ -167,18 +221,20 @@ export default function Vedtak() {
         }}
       >
         <div className={"elements_inline section-title mb-2"}>
-          <h2>{t.tittel}</h2>
+          <h2>
+            {tekst("notat.begrunnelse.særbidrag.vedtak.tittel", "Vedtak")}
+          </h2>
           {erResutlatMedBeregning(resultat) && (
             <a href={`#${elementIds.vedleggBeregningsdetaljer}`}>
-              {ord.seVedleggForBeregningsdetaljer.replace(
-                "{}",
-                vedleggNummer.toString(),
-              )}
+              {tekst(
+                "ord.seVedleggForBeregningsdetaljer",
+                "se vedlegg nr. {} for beregningsdetaljer",
+              ).replace("{}", vedleggNummer.toString())}
             </a>
           )}
         </div>
         {resultat.length == 0 ? (
-          <div>{ord.manglerResultat}</div>
+          <div>{tekst("ord.manglerResultat", "Mangler resultat")}</div>
         ) : (
           <VedtakResultat resultat={resultat[0]} />
         )}
@@ -187,7 +243,6 @@ export default function Vedtak() {
     </>
   );
 }
-
 function VedtakResultat({
   resultat,
 }: {
@@ -196,28 +251,28 @@ function VedtakResultat({
   const {
     data: { medInnkreving },
   } = useNotatFelles();
-
   if (resultat.erDirekteAvslag) {
     return (
       <div>
-        <h3 style={{ marginTop: 0 }}>{ord.avslag}</h3>
+        <h3 style={{ marginTop: 0 }}>{tekst("ord.avslag", "Avslag")}</h3>
         <p>
           <dl className="bd_datadisplay">
-            <dt>{t.årsak}</dt>
+            <dt>
+              {tekst("notat.begrunnelse.særbidrag.vedtak.årsak", "Årsak: ")}
+            </dt>
             <dd>{resultat.resultatVisningsnavn}</dd>
           </dl>
         </p>
       </div>
     );
   }
-
   if (resultat.erAvslagSomInneholderUtgifter) {
     const visForskuddssats =
       resultat.resultatKode ==
       Resultatkode.GODKJENTBELOPERLAVEREENNFORSKUDDSSATS;
     return (
       <div>
-        <h3 style={{ marginTop: 0 }}>{ord.avslag}</h3>
+        <h3 style={{ marginTop: 0 }}>{tekst("ord.avslag", "Avslag")}</h3>
         <UtgiftsposterTabell />
         <div>
           <Feltliste
@@ -229,16 +284,20 @@ function VedtakResultat({
       </div>
     );
   }
-
   const avslagEllerBeløp = (_: unknown, beløp: RowContent) =>
-    resultat.erBeregningAvslag ? ord.avslag : beløp;
-  const voksne = t.boforhold.svarVoksneIHusstanden;
+    resultat.erBeregningAvslag ? tekst("ord.avslag", "Avslag") : beløp;
   return (
     <div>
       <h3 style={{ marginTop: 0 }}>
         {resultat.erBeregningAvslag
-          ? t.avslagMedÅrsak.replace("{}", resultat.resultatVisningsnavn)
-          : t.innvilget}
+          ? tekst(
+              "notat.begrunnelse.særbidrag.vedtak.avslagMedÅrsak",
+              "Avslag: {}",
+            ).replace("{}", resultat.resultatVisningsnavn)
+          : tekst(
+              "notat.begrunnelse.særbidrag.vedtak.innvilget",
+              "Særbidrag innvilget",
+            )}
       </h3>
       <div>
         <div className="two_column_view_v2" style={{ width: "35%" }}>
@@ -251,10 +310,13 @@ function VedtakResultat({
             verdier={{
               voksenIHusstanden: (r) =>
                 !r.voksenIHusstanden
-                  ? ord.nei
+                  ? tekst("ord.nei", "Nei")
                   : r.enesteVoksenIHusstandenErEgetBarn
-                    ? voksne.jaEgetBarn
-                    : ord.ja,
+                    ? tekst(
+                        "notat.begrunnelse.særbidrag.vedtak.boforhold.svarVoksneIHusstanden.jaEgetBarn",
+                        "Ja (barn over 18 år)",
+                      )
+                    : tekst("ord.ja", "Ja"),
             }}
           />
         </div>
@@ -273,13 +335,17 @@ function VedtakResultat({
     </div>
   );
 }
-
 function UtgiftsposterTabell() {
   const { data } = useNotatFelles();
   const beregning = data.utgift?.beregning;
   return (
     <div className={"mt-4"}>
-      <h4>{t.utgifter.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.begrunnelse.særbidrag.vedtak.utgifter.tittel",
+          "Utgiftene lagt til grunn",
+        )}
+      </h4>
       <KolonneTabell
         layoutAuto
         oppsett={utgifter}
@@ -287,7 +353,7 @@ function UtgiftsposterTabell() {
         ekstraRader={
           <Tabellrad index={(data.utgift?.utgifter ?? []).length}>
             <Tabellcelle colSpan={3} labelBold>
-              {ord.sum}
+              {tekst("ord.sum", "Sum")}
             </Tabellcelle>
             <Tabellcelle>
               {formater(beregning?.totalKravbeløp, "beløpAvrundet")}

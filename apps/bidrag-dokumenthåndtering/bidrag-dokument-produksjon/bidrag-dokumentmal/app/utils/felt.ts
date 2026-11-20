@@ -1,7 +1,6 @@
 import type { RowContent } from "~/components/DokumentTabell";
 import { formater, Visningsformat } from "~/utils/visning";
-import ord from "~/tekster/ord.yaml";
-
+import { tekst } from "~/utils/tekst";
 /**
  * Henter verdien som skal vises for et felt i input-JSON.
  * `felt` kan peke inn i objekter med punktum, f.eks. `inntekter.inntektBM`.
@@ -19,6 +18,7 @@ export function verdiForFelt(
         (objekt as Record<string, unknown> | undefined)?.[nøkkel],
       kilde,
     );
-  if (typeof verdi === "boolean") return verdi ? ord.ja : ord.nei;
+  if (typeof verdi === "boolean")
+    return verdi ? tekst("ord.ja", "Ja") : tekst("ord.nei", "Nei");
   return formater(verdi, format);
 }

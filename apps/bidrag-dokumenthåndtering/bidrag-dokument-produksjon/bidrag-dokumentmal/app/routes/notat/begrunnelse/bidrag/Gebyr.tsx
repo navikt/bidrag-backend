@@ -16,14 +16,9 @@ import {
 import { PersonV2 } from "~/components/Person";
 import HorizontalLine from "~/components/HorizontalLine";
 import { formater } from "~/utils/visning";
-import ord from "~/tekster/ord.yaml";
-import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
-
-const t = bidragTekster.gebyr;
-
+import { tekst } from "~/utils/tekst";
 // Rekkefølgen rollene vises i innenfor hver sak.
 const rollerekkefølge = [Rolletype.BM, Rolletype.BP, Rolletype.BA];
-
 // Gebyr per sak. Hver sak viser rollene med inntekt og resultat for hver søknad.
 export default function Gebyr() {
   const { data } = useNotatFelles();
@@ -35,7 +30,7 @@ export default function Gebyr() {
   return (
     <div>
       <div className={"elements_inline section-title"}>
-        <h2>{t.tittel}</h2>
+        <h2>{tekst("notat.begrunnelse.bidrag.gebyr.tittel", "Gebyr")}</h2>
       </div>
       {saker.map((sak) => (
         <GebyrForSak
@@ -47,7 +42,6 @@ export default function Gebyr() {
     </div>
   );
 }
-
 function GebyrForSak({
   sak,
   visSaksnummer,
@@ -60,7 +54,10 @@ function GebyrForSak({
       {visSaksnummer && (
         <div className={"mt-4"}>
           <FeltTabell>
-            <Feltrad label={t.søknad.sak} labelBold>
+            <Feltrad
+              label={tekst("notat.begrunnelse.bidrag.gebyr.søknad.sak", "Sak")}
+              labelBold
+            >
               {sak.saksnummer}
             </Feltrad>
           </FeltTabell>
@@ -69,14 +66,18 @@ function GebyrForSak({
       <GebyrForRoller gebyr={sak.gebyrRoller} />
       {sak.gebyr18År.length > 0 && (
         <>
-          <h3>{t.søknadOver18År}</h3>
+          <h3>
+            {tekst(
+              "notat.begrunnelse.bidrag.gebyr.søknadOver18År",
+              "Søknad om bidrag etter fylte 18 år",
+            )}
+          </h3>
           <GebyrForRoller gebyr={sak.gebyr18År} />
         </>
       )}
     </>
   );
 }
-
 function GebyrForRoller({ gebyr }: { gebyr: NotatGebyrDetaljerDto[] }) {
   const roller = grupperPerRolle(gebyr);
   return roller.map((søknader, i) => (
@@ -89,14 +90,12 @@ function GebyrForRoller({ gebyr }: { gebyr: NotatGebyrDetaljerDto[] }) {
     </div>
   ));
 }
-
 // Inntekten er den samme for alle søknadene til en rolle i en sak, og vises én gang.
 function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
   const { erAvslag } = useNotatFelles();
   const rolle = søknader[0].rolle;
   const inntekt = søknader[0].inntekt;
   const flereSøknader = søknader.length > 1;
-
   return (
     <>
       <div className={"mb-1 mt-2"}>
@@ -109,13 +108,22 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
       <div>
         <DokumentTabell
           layoutAuto
-          kolonner={[{ tittel: ord.beskrivelse }, { tittel: ord.beløp }]}
+          kolonner={[
+            { tittel: tekst("ord.beskrivelse", "Beskrivelse") },
+            { tittel: tekst("ord.beløp", "Beløp") },
+          ]}
         >
           <Tabellrad index={0}>
             <Tabellcelle>
               {erAvslag
-                ? t.inntekt.inntektSiste12Måneder
-                : t.inntekt.skattepliktigInntekt}
+                ? tekst(
+                    "notat.begrunnelse.bidrag.gebyr.inntekt.inntektSiste12Måneder",
+                    "Inntekt siste 12 måneder",
+                  )
+                : tekst(
+                    "notat.begrunnelse.bidrag.gebyr.inntekt.skattepliktigInntekt",
+                    "Skattepliktig inntekt",
+                  )}
             </Tabellcelle>
             <Tabellcelle>
               {formater(inntekt.skattepliktigInntekt, "beløp")}
@@ -124,13 +132,20 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
           {!erAvslag && (
             <>
               <Tabellrad index={1}>
-                <Tabellcelle>{t.inntekt.høyesteBarnetillegg}</Tabellcelle>
+                <Tabellcelle>
+                  {tekst(
+                    "notat.begrunnelse.bidrag.gebyr.inntekt.høyesteBarnetillegg",
+                    "Høyeste barnetillegg",
+                  )}
+                </Tabellcelle>
                 <Tabellcelle>
                   {formater(inntekt.maksBarnetillegg, "beløp")}
                 </Tabellcelle>
               </Tabellrad>
               <Tabellrad index={2}>
-                <Tabellcelle labelBold>{ord.total}</Tabellcelle>
+                <Tabellcelle labelBold>
+                  {tekst("ord.total", "Total")}
+                </Tabellcelle>
                 <Tabellcelle>
                   {formater(inntekt.totalInntekt, "beløp")}
                 </Tabellcelle>
@@ -144,22 +159,29 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
               <FeltTabell>
                 {flereSøknader && gebyr.søknad && (
                   <>
-                    <Feltrad label={ord.søktFraDato}>
+                    <Feltrad label={tekst("ord.søktFraDato", "Søkt fra dato")}>
                       {formater(gebyr.søknad.søknadFomDato, "dato")}
                     </Feltrad>
-                    <Feltrad label={ord.mottattDato}>
+                    <Feltrad label={tekst("ord.mottattDato", "Mottatt dato")}>
                       {formater(gebyr.søknad.mottattDato, "dato")}
                     </Feltrad>
-                    <Feltrad label={ord.søknadFra}>
+                    <Feltrad label={tekst("ord.søknadFra", "Søknad fra")}>
                       {gebyr.søknad.søktAvTypeVisningsnavn}
                     </Feltrad>
                   </>
                 )}
-                <Feltrad label={t.resultat.gebyr}>
+                <Feltrad
+                  label={tekst(
+                    "notat.begrunnelse.bidrag.gebyr.resultat.gebyr",
+                    "Gebyr",
+                  )}
+                >
                   {gebyr.gebyrResultatVisningsnavn}
                 </Feltrad>
                 {gebyr.erManueltOverstyrt && (
-                  <Feltrad label={ord.begrunnelse}>{gebyr.begrunnelse}</Feltrad>
+                  <Feltrad label={tekst("ord.begrunnelse", "Begrunnelse")}>
+                    {gebyr.begrunnelse}
+                  </Feltrad>
                 )}
               </FeltTabell>
             </div>
@@ -169,7 +191,6 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
     </>
   );
 }
-
 function grupperPerRolle(
   gebyr: NotatGebyrDetaljerDto[],
 ): NotatGebyrDetaljerDto[][] {

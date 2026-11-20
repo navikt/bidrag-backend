@@ -3,15 +3,13 @@ import {
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import {
   MathValue,
   MathMultiplication,
 } from "~/components/vedtak/CalculationTable";
 import { NotatResultatBeregningInntekterDto } from "~/types/Api";
-
+import { tekst } from "~/utils/tekst";
 export default function BPsAndelInntekterTable({
   inntekter,
   forskuddssats,
@@ -23,30 +21,30 @@ export default function BPsAndelInntekterTable({
     <DokumentTabell
       layoutAuto
       kolonner={[
-        { tittel: ord.beskrivelse, bredde: "250px" },
+        { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
         {
-          tittel: tekster.tabell.felles.beregning,
+          tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
           bredde: "250px",
         },
-        { tittel: ord.beløp, bredde: "50px" },
+        { tittel: tekst("ord.beløp", "Beløp"), bredde: "50px" },
       ]}
     >
       <Tabellrad index={0}>
-        <Tabellcelle>{`${tekster.begreper.bidragspliktiges} inntekt`}</Tabellcelle>
+        <Tabellcelle>{`${tekst("felles.begreper.bidragspliktiges", "Bidragspliktiges")} inntekt`}</Tabellcelle>
         <Tabellcelle />
         <Tabellcelle>
           {formatterBeløpForBeregning(inntekter.inntektBP, true)}
         </Tabellcelle>
       </Tabellrad>
       <Tabellrad index={1}>
-        <Tabellcelle>{`${tekster.begreper.bidragsmottakerens} inntekt`}</Tabellcelle>
+        <Tabellcelle>{`${tekst("felles.begreper.bidragsmottakerens", "Bidragsmottakerens")} inntekt`}</Tabellcelle>
         <Tabellcelle />
         <Tabellcelle>
           {formatterBeløpForBeregning(inntekter.inntektBM, true)}
         </Tabellcelle>
       </Tabellrad>
       <Tabellrad index={2}>
-        <Tabellcelle>{`${tekster.begreper.barnets} inntekt`}</Tabellcelle>
+        <Tabellcelle>{`${tekst("felles.begreper.barnets", "Barnets")} inntekt`}</Tabellcelle>
         <Tabellcelle>
           {inntekter.inntektBarn! > 0 ? (
             <div>

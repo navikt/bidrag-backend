@@ -20,9 +20,6 @@ import {
   Tabelldetaljer,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
 import { getInntektTableHeaders } from "~/constants/tableHeaders";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { Seksjon } from "~/components/notat_felles/Seksjon";
@@ -42,24 +39,24 @@ import InntektTableTitle from "~/components/inntekt/InntektTableTitle";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { useTheme } from "~/components/notat_felles/ThemeContext";
 import GjelderPerson from "~/components/GjelderPerson";
-
-const t = notatTekster.inntekter;
-
+import { tekst } from "~/utils/tekst";
 /** Hvilke roller som får vist inntektene sine, per notattype. */
 const rollerMedInntekter: Record<NotatMalType, Rolletype[]> = {
   [NotatMalType.FORSKUDD]: [Rolletype.BM],
   [NotatMalType.SAeRBIDRAG]: [Rolletype.BM, Rolletype.BP, Rolletype.BA],
   [NotatMalType.BIDRAG]: [Rolletype.BM, Rolletype.BP, Rolletype.BA],
 };
-
 export default function Inntekter() {
   const { erAvslag, type } = useNotatFelles();
   if (erAvslag && type != NotatMalType.BIDRAG) return null;
   return (
     <Seksjon
-      tittel={t.tittel}
+      tittel={tekst("notat.begrunnelse.felles.inntekter.tittel", "Inntekter")}
       vedlegg={"inntekter"}
-      lenketekst={ord.seVedleggForOffentligeRegistre}
+      lenketekst={tekst(
+        "ord.seVedleggForOffentligeRegistre",
+        "se vedlegg nr. {} for opplysninger fra offentlige registre",
+      )}
     >
       <ForHverRolle typer={rollerMedInntekter[type]}>
         <InntekterForRolle />
@@ -67,7 +64,6 @@ export default function Inntekter() {
     </Seksjon>
   );
 }
-
 function InntekterForRolle() {
   const { data } = useNotatFelles();
   const rolle = useRolle();
@@ -80,26 +76,41 @@ function InntekterForRolle() {
         <>
           <InntektTable
             data={inntekter.årsinntekter}
-            title={t.tabeller.skattepliktigeOgPensjonsgivende}
+            title={tekst(
+              "notat.begrunnelse.felles.inntekter.tabeller.skattepliktigeOgPensjonsgivende",
+              "Skattepliktige og pensjonsgivende inntekt",
+            )}
             subsection={false}
           />
           <InntektPerBarnTable
             data={inntekter.barnetillegg}
-            title={t.tabeller.barnetillegg}
+            title={tekst(
+              "notat.begrunnelse.felles.inntekter.tabeller.barnetillegg",
+              "Barnetillegg",
+            )}
           />
           <InntektTable
             data={inntekter.utvidetBarnetrygd}
-            title={t.tabeller.utvidetBarnetrygd}
+            title={tekst(
+              "notat.begrunnelse.felles.inntekter.tabeller.utvidetBarnetrygd",
+              "Utvidet barnetrygd",
+            )}
             inkluderBeskrivelse={false}
           />
           <InntektTable
             data={inntekter.småbarnstillegg}
-            title={t.tabeller.småbarnstillegg}
+            title={tekst(
+              "notat.begrunnelse.felles.inntekter.tabeller.småbarnstillegg",
+              "Småbarnstillegg",
+            )}
             inkluderBeskrivelse={false}
           />
           <InntektPerBarnTable
             data={inntekter.kontantstøtte}
-            title={t.tabeller.kontantstøtte}
+            title={tekst(
+              "notat.begrunnelse.felles.inntekter.tabeller.kontantstøtte",
+              "Kontantstøtte",
+            )}
           />
           <BeregnetInntektTable
             data={inntekter.beregnetInntekter}
@@ -107,13 +118,17 @@ function InntekterForRolle() {
           />
         </>
       ) : (
-        <p>{t.ingenInntekter}</p>
+        <p>
+          {tekst(
+            "notat.begrunnelse.felles.inntekter.ingenInntekter",
+            "Ingen inntekter",
+          )}
+        </p>
       )}
       <NotatBegrunnelse data={begrunnelse} />
     </>
   );
 }
-
 type InntektTableProps = {
   data: NotatInntektDto[];
   title?: string;
@@ -122,7 +137,6 @@ type InntektTableProps = {
   bareMedIBeregning?: boolean;
   subsection?: boolean;
 };
-
 function InntektTable({
   data,
   title,
@@ -139,16 +153,22 @@ function InntektTable({
       <DokumentTabell
         kolonner={
           [
-            { tittel: tekster.tabell.felles.fraTilOgMed, bredde: "170px" },
+            {
+              tittel: tekst(
+                "felles.tabell.felles.fraTilOgMed",
+                "Fra og med - Til og med",
+              ),
+              bredde: "170px",
+            },
             inkluderBeskrivelse && {
-              tittel: ord.beskrivelse,
+              tittel: tekst("ord.beskrivelse", "Beskrivelse"),
               bredde: "230px",
             },
             {
-              tittel: tekster.tabell.felles.kilde,
+              tittel: tekst("felles.tabell.felles.kilde", "Kilde"),
               bredde: inkluderBeskrivelse ? "80px" : "230px",
             },
-            { tittel: ord.beløp },
+            { tittel: tekst("ord.beløp", "Beløp") },
           ].filter((d) => typeof d != "boolean") as Kolonne[]
         }
       >
@@ -168,7 +188,7 @@ function InntektTable({
                   </Tabellcelle>
                   {inkluderBeskrivelse && (
                     <Tabellcelle>
-                      {`${d.visningsnavn}${d.historisk ? t.historisk : ""}`}
+                      {`${d.visningsnavn}${d.historisk ? tekst("notat.begrunnelse.felles.inntekter.historisk", " (historisk)") : ""}`}
                     </Tabellcelle>
                   )}
                   <Tabellcelle>
@@ -192,7 +212,6 @@ function InntektTable({
     </div>
   );
 }
-
 function InntektPerBarnTable({
   data,
   title,
@@ -204,7 +223,6 @@ function InntektPerBarnTable({
   const { type } = useNotatFelles();
   const erBidrag = type === NotatMalType.BIDRAG;
   if (inntekter.length == 0) return null;
-
   const inntekterBarn = groupBy(data, (d) => d.gjelderBarn?.ident!);
   return (
     <div className={"mt-medium"}>
@@ -248,7 +266,6 @@ function InntektPerBarnTable({
                       styling == "V2" && erBarnetillegg
                         ? formatPeriode(periode!.fom, periode!.til)
                         : undefined;
-
                     return (
                       <Fragment key={index}>
                         {periodColumn && (
@@ -279,7 +296,7 @@ function InntektPerBarnTable({
                               {erBidrag && (
                                 <Tabellcelle>
                                   {d.skattefaktor == null
-                                    ? ord.ikkeRelevant
+                                    ? tekst("ord.ikkeRelevant", "Ikke relevant")
                                     : formatterProsent(d.skattefaktor)}
                                 </Tabellcelle>
                               )}
@@ -301,23 +318,19 @@ function InntektPerBarnTable({
     </div>
   );
 }
-
 type BeregnetInntektTableProps = {
   data: NotatBeregnetInntektDto[];
   rolle: DokumentmalPersonDto;
 };
-
 function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
   const { type, harFlereEnnEttSøknadsbarn } = useNotatFelles();
   const { styling } = useTheme();
   const inntektTableRules =
     inntekterTablesViewRules[type][rolle.rolle as BehandlingRolletype];
-
   const columnNames =
     styling == "V2"
       ? beregnetInntekterColumnNamesV2[type][rolle.rolle as BehandlingRolletype]
       : beregnetInntekterColumnNames[type][rolle.rolle as BehandlingRolletype];
-
   const columnWidth =
     beregnetInntekterColumnWidth[type][rolle.rolle as BehandlingRolletype];
   function renderTable(
@@ -334,8 +347,17 @@ function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
           kolonner={
             [
               styling == "V1" && {
-                tittel: tekster.tabell.felles.fraTilOgMed,
-                bredde: columnWidth[tekster.tabell.felles.fraTilOgMed],
+                tittel: tekst(
+                  "felles.tabell.felles.fraTilOgMed",
+                  "Fra og med - Til og med",
+                ),
+                bredde:
+                  columnWidth[
+                    tekst(
+                      "felles.tabell.felles.fraTilOgMed",
+                      "Fra og med - Til og med",
+                    )
+                  ],
               },
               {
                 tittel: columnNames.SKATTEPLIKTIG,
@@ -427,7 +449,6 @@ function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
       </>
     );
   }
-
   function renderForAllChildren() {
     const inntekterBarn = groupBy(data, (d) => d.gjelderBarn?.ident!).sort(
       ([_, a], [d2, b]) => sortByAge(a[0].gjelderBarn, b[0].gjelderBarn),
@@ -447,13 +468,17 @@ function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
       );
     });
   }
-
   const harInntekter = data.every((d) => d.summertInntektListe.length > 0);
-
   if (!harInntekter) return;
   return (
     <>
-      <InntektTableTitle title={t.tabeller.beregnetTotalt} witMarginTop />
+      <InntektTableTitle
+        title={tekst(
+          "notat.begrunnelse.felles.inntekter.tabeller.beregnetTotalt",
+          "Beregnet totalt",
+        )}
+        witMarginTop
+      />
       {rolle.rolle === Rolletype.BA
         ? renderTable(
             data.find((d) => d.gjelderBarn.ident == rolle.ident)

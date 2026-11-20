@@ -11,19 +11,14 @@ import {
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import særbidragTekster from "~/tekster/notat/begrunnelse/særbidrag.yaml";
 import { FeltTabell, JustertFeltrad } from "~/components/FeltTabell";
-
-const t = særbidragTekster.utgifter;
-
+import { tekst } from "~/utils/tekst";
 export default function Utgifter() {
   const { data } = useNotatFelles();
   const utgifter = data.utgift;
   return (
     <>
-      <h2>{t.tittel}</h2>
+      <h2>{tekst("notat.begrunnelse.særbidrag.utgifter.tittel", "Utgift")}</h2>
       <>
         <SøknadsDetaljer />
         <Utgiftsposter />
@@ -32,7 +27,6 @@ export default function Utgifter() {
     </>
   );
 }
-
 function Utgiftsposter() {
   const { data, erAvslag } = useNotatFelles();
   if (erAvslag) return;
@@ -40,22 +34,46 @@ function Utgiftsposter() {
   const beregnetUtgifter = data.utgift?.totalBeregning ?? [];
   return (
     <>
-      <h3>{t.oversiktOverUtgifter.tittel}</h3>
+      <h3>
+        {tekst(
+          "notat.begrunnelse.særbidrag.utgifter.oversiktOverUtgifter.tittel",
+          "Oversikt over utgifter",
+        )}
+      </h3>
       <DokumentTabell
         layoutAuto
         bredde="630px"
         kolonner={[
-          { tittel: tekster.tabell.utgifter.betaltAvBp, bredde: "100px" },
-          { tittel: tekster.tabell.utgifter.dato, bredde: "70px" },
-          { tittel: tekster.tabell.utgifter.utgift, bredde: "120px" },
-          { tittel: ord.kravbeløp, bredde: "80px" },
-          { tittel: ord.godkjentBeløp, bredde: "110px" },
-          { tittel: ord.begrunnelse, bredde: "180px" },
+          {
+            tittel: tekst(
+              "felles.tabell.utgifter.betaltAvBp",
+              "Betalt av Bidragspliktig",
+            ),
+            bredde: "100px",
+          },
+          {
+            tittel: tekst("felles.tabell.utgifter.dato", "Forfallsdato"),
+            bredde: "70px",
+          },
+          {
+            tittel: tekst("felles.tabell.utgifter.utgift", "Utgift"),
+            bredde: "120px",
+          },
+          { tittel: tekst("ord.kravbeløp", "Kravbeløp"), bredde: "80px" },
+          {
+            tittel: tekst("ord.godkjentBeløp", "Godkjent beløp"),
+            bredde: "110px",
+          },
+          { tittel: tekst("ord.begrunnelse", "Begrunnelse"), bredde: "180px" },
         ]}
       >
         {utgifter.map((utgift, index) => (
           <Tabellrad key={index} index={index}>
-            <Tabellcelle>{utgift.betaltAvBp ? ord.ja : ord.nei}</Tabellcelle>
+            <Tabellcelle>
+              {utgift.betaltAvBp
+                ? tekst("ord.ja", "Ja")
+                : tekst("ord.nei", "Nei")}
+            </Tabellcelle>
             <Tabellcelle>{dateToDDMMYYYY(utgift.dato)}</Tabellcelle>
             <Tabellcelle>{utgift.utgiftstypeVisningsnavn}</Tabellcelle>
             <Tabellcelle>{formatterBeløp(utgift.kravbeløp)}</Tabellcelle>
@@ -67,24 +85,43 @@ function Utgiftsposter() {
 
       {beregnetUtgifter.length > 0 && (
         <div className={"mt-medium mb-medium"}>
-          <h3>{t.beregnetTotalt.tittel}</h3>
+          <h3>
+            {tekst(
+              "notat.begrunnelse.særbidrag.utgifter.beregnetTotalt.tittel",
+              "Beregnet totalt",
+            )}
+          </h3>
           <DokumentTabell
             layoutAuto
             bredde="450px"
             kolonner={[
-              { tittel: tekster.tabell.utgifter.betaltAvBp, bredde: "100px" },
               {
-                tittel: tekster.tabell.utgifter.utgiftskategori,
+                tittel: tekst(
+                  "felles.tabell.utgifter.betaltAvBp",
+                  "Betalt av Bidragspliktig",
+                ),
+                bredde: "100px",
+              },
+              {
+                tittel: tekst(
+                  "felles.tabell.utgifter.utgiftskategori",
+                  "Utgiftskategori",
+                ),
                 bredde: "220px",
               },
-              { tittel: ord.kravbeløp, bredde: "80px" },
-              { tittel: ord.godkjentBeløp, bredde: "110px" },
+              { tittel: tekst("ord.kravbeløp", "Kravbeløp"), bredde: "80px" },
+              {
+                tittel: tekst("ord.godkjentBeløp", "Godkjent beløp"),
+                bredde: "110px",
+              },
             ]}
           >
             {beregnetUtgifter.map((utgift, index) => (
               <Tabellrad key={index} index={index}>
                 <Tabellcelle>
-                  {utgift.betaltAvBp ? ord.ja : ord.nei}
+                  {utgift.betaltAvBp
+                    ? tekst("ord.ja", "Ja")
+                    : tekst("ord.nei", "Nei")}
                 </Tabellcelle>
                 <Tabellcelle>{utgift.utgiftstypeVisningsnavn}</Tabellcelle>
                 <Tabellcelle>{utgift.totalKravbeløp}</Tabellcelle>
@@ -94,17 +131,24 @@ function Utgiftsposter() {
           </DokumentTabell>
         </div>
       )}
-      <h3>{ord.totalt}</h3>
+      <h3>{tekst("ord.totalt", "Totalt")}</h3>
       <div style={{ marginTop: "8px", width: "280px" }}>
         <div className={"two_column_view_v2"}>
           <FeltTabell labelColWidth={"200px"}>
-            <JustertFeltrad label={ord.kravbeløp}>
+            <JustertFeltrad label={tekst("ord.kravbeløp", "Kravbeløp")}>
               {formatterBeløp(data.utgift?.beregning?.totalKravbeløp)}
             </JustertFeltrad>
-            <JustertFeltrad label={ord.godkjentBeløp}>
+            <JustertFeltrad
+              label={tekst("ord.godkjentBeløp", "Godkjent beløp")}
+            >
               {formatterBeløp(data.utgift?.beregning?.totalGodkjentBeløp)}
             </JustertFeltrad>
-            <JustertFeltrad label={t.totalt.direkteBetaltAvBidragspliktig}>
+            <JustertFeltrad
+              label={tekst(
+                "notat.begrunnelse.særbidrag.utgifter.totalt.direkteBetaltAvBidragspliktig",
+                "Direkte betalt av Bidragspliktig",
+              )}
+            >
               {formatterBeløp(data.utgift?.beregning?.beløpDirekteBetaltAvBp)}
             </JustertFeltrad>
           </FeltTabell>
@@ -114,10 +158,20 @@ function Utgiftsposter() {
         <div>
           <div className={"two_column_view_v2"}>
             <FeltTabell labelColWidth={"200px"}>
-              <JustertFeltrad label={t.maksGodkjentBeløp.maksGodkjentBeløp}>
+              <JustertFeltrad
+                label={tekst(
+                  "notat.begrunnelse.særbidrag.utgifter.maksGodkjentBeløp.maksGodkjentBeløp",
+                  "Maks godkjent beløp",
+                )}
+              >
                 {formatterBeløp(data.utgift?.maksGodkjentBeløp?.beløp)}
               </JustertFeltrad>
-              <JustertFeltrad label={t.maksGodkjentBeløp.begrunnelse}>
+              <JustertFeltrad
+                label={tekst(
+                  "notat.begrunnelse.særbidrag.utgifter.maksGodkjentBeløp.begrunnelse",
+                  "Begrunnelse for maks godkjent beløp",
+                )}
+              >
                 {data.utgift?.maksGodkjentBeløp?.begrunnelse}
               </JustertFeltrad>
             </FeltTabell>
@@ -127,7 +181,6 @@ function Utgiftsposter() {
     </>
   );
 }
-
 function SøknadsDetaljer() {
   const { data } = useNotatFelles();
   const behandling = data.behandling;
@@ -136,17 +189,34 @@ function SøknadsDetaljer() {
       <div style={{ width: "600px", height: "80px", marginBottom: 0 }}>
         <div className={"two_column_view"} style={{ width: "45%" }}>
           <FeltTabell labelColWidth={"80px"}>
-            <JustertFeltrad label={ord.søknadstype}>
+            <JustertFeltrad label={tekst("ord.søknadstype", "Søknadstype")}>
               {capitalizeFirstLetter(behandling.søknadstype)}
             </JustertFeltrad>
-            <JustertFeltrad label={t.søknadsdetaljer.kategori}>
+            <JustertFeltrad
+              label={tekst(
+                "notat.begrunnelse.særbidrag.utgifter.søknadsdetaljer.kategori",
+                "Kategori",
+              )}
+            >
               {behandling.kategoriVisningsnavn}
             </JustertFeltrad>
-            <JustertFeltrad label={t.søknadsdetaljer.søktFra}>
+            <JustertFeltrad
+              label={tekst(
+                "notat.begrunnelse.særbidrag.utgifter.søknadsdetaljer.søktFra",
+                "Søkt fra",
+              )}
+            >
               {søktAvTilVisningsnavn(behandling.søktAv)}
             </JustertFeltrad>
-            <JustertFeltrad label={t.søknadsdetaljer.innkreving}>
-              {behandling.innkreving ? ord.ja : ord.nei}
+            <JustertFeltrad
+              label={tekst(
+                "notat.begrunnelse.særbidrag.utgifter.søknadsdetaljer.innkreving",
+                "Innkreving",
+              )}
+            >
+              {behandling.innkreving
+                ? tekst("ord.ja", "Ja")
+                : tekst("ord.nei", "Nei")}
             </JustertFeltrad>
           </FeltTabell>
         </div>
@@ -154,18 +224,23 @@ function SøknadsDetaljer() {
           <FeltTabell
             labelColWidth={behandling.klageMottattDato ? "110px" : "80px"}
           >
-            <JustertFeltrad label={ord.mottattDato}>
+            <JustertFeltrad label={tekst("ord.mottattDato", "Mottatt dato")}>
               {dateToDDMMYYYY(behandling.mottattDato as string)}
             </JustertFeltrad>
             {behandling.klageMottattDato ? (
-              <JustertFeltrad label={t.søknadsdetaljer.klageMottattDato}>
+              <JustertFeltrad
+                label={tekst(
+                  "notat.begrunnelse.særbidrag.utgifter.søknadsdetaljer.klageMottattDato",
+                  "Klage mottatt dato",
+                )}
+              >
                 {dateToDDMMYYYY(behandling.klageMottattDato)}
               </JustertFeltrad>
             ) : behandling.klageMottattDato === "" ? (
               <JustertFeltrad />
             ) : null}
             {behandling.avslag ? (
-              <JustertFeltrad label={ord.avslag}>
+              <JustertFeltrad label={tekst("ord.avslag", "Avslag")}>
                 {`${behandling.avslagVisningsnavnUtenPrefiks}`}
               </JustertFeltrad>
             ) : typeof behandling.avslag === "string" ? (

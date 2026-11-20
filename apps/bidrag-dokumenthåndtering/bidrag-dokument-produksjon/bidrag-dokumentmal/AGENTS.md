@@ -5,7 +5,7 @@ Les [README.md](README.md) før du endrer malene. Den beskriver adressene, mappe
 Det viktigste:
 
 - Notatene er delt i `begrunnelse` og `opplysninger`, både i `app/routes/notat` og `app/tekster/notat`.
-- Faste tekster ligger bare i `app/tekster/**/*.yaml`. Formatering skjer i malen med `app/utils/visning.ts`.
+- Faste tekster står inline i malene gjennom `tekst(nøkkel, norskTekst)`. Formatering skjer med `app/utils/visning.ts`.
 - Bruk `NotatContext` (`useNotatFelles`, `useVedleggNummer`) framfor props.
 - Ikke endre adressene `/notat/<notat>`. Backend kaller dem.
 - Sjekk endringene med `npm run typecheck`, `npx eslint app` og ved å rendre eksemplene i `../data/notat` før og

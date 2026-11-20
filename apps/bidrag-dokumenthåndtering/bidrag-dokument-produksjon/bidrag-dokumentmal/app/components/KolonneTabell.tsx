@@ -11,7 +11,7 @@ import { Visningsformat } from "~/utils/visning";
 
 /**
  * Kolonne i en tabell, f.eks.
- * `{ felt: "inntekt", tittel: t.tabellInnvilget.inntekt, bredde: "80px", format: "beløp" }`.
+ * `{ felt: "inntekt", tittel: tekst("ord.inntekt", "Inntekt"), bredde: "80px", format: "beløp" }`.
  * `felt` er navnet på feltet i input-JSON som skal vises i kolonnen, og `tittel` hentes fra tekstfilen.
  * `format` er valgfritt og bestemmer hvordan verdien vises, se `visningsformater`.
  */

@@ -1,19 +1,17 @@
 import React, { ReactElement, CSSProperties } from "react";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
 import {
   DokumentTabell,
   type RowContent,
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
+import { tekst } from "~/utils/tekst";
 //file:@ts-ignore
 interface CalculationTableData {
   label: RowContent;
   calculation?: RowContent;
   value: RowContent;
 }
-
 interface CalculationTableProps {
   data: CalculationTableData[]; // Array of data objects
   title?: string;
@@ -27,7 +25,6 @@ interface CalculationTableProps {
   className?: string;
   style?: CSSProperties;
 }
-
 export const CalculationTable: React.FC<CalculationTableProps> = ({
   data,
   result,
@@ -36,7 +33,6 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
   width,
 }) => {
   const harBeregning = data.some((d) => d.calculation);
-
   return (
     <DokumentTabell
       layoutAuto
@@ -44,11 +40,20 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
       bredde={width}
       className={className}
       kolonner={[
-        { tittel: ord.beskrivelse, bredde: "250px" },
+        { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
         ...(harBeregning
-          ? [{ tittel: tekster.tabell.felles.beregning, bredde: "250px" }]
+          ? [
+              {
+                tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
+                bredde: "250px",
+              },
+            ]
           : []),
-        { tittel: ord.beløp, bredde: "100px", tekstjustering: "right" },
+        {
+          tittel: tekst("ord.beløp", "Beløp"),
+          bredde: "100px",
+          tekstjustering: "right",
+        },
       ]}
     >
       {data.map((rad, index) => (
@@ -69,13 +74,11 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
     </DokumentTabell>
   );
 };
-
 interface MathDivisionProps {
   negativeValue?: boolean;
   top: string;
   bottom: number | string;
 }
-
 export const MathDivision: React.FC<MathDivisionProps> = ({
   negativeValue,
   top,
@@ -90,7 +93,6 @@ export const MathDivision: React.FC<MathDivisionProps> = ({
     </span>
   );
 };
-
 export const MathValue: React.FC<{
   value: string | number;
   negativeValue?: boolean;
@@ -107,7 +109,6 @@ interface MathMultiplicationProps {
   left: string;
   right: string | number;
 }
-
 export const MathMultiplication: React.FC<MathMultiplicationProps> = ({
   negativeValue,
   left,

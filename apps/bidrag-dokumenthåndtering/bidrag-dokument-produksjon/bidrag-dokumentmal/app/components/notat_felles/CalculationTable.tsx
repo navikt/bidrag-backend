@@ -1,12 +1,10 @@
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
 import {
   DokumentTabell,
   type RowContent,
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
-
+import { tekst } from "~/utils/tekst";
 type CalculationTableRowProps = {
   label: RowContent;
   labelBold?: boolean;
@@ -28,11 +26,16 @@ export default function CalculationTable({
       <DokumentTabell
         layoutAuto
         kolonner={[
-          { tittel: ord.beskrivelse, bredde: "250px" },
+          { tittel: tekst("ord.beskrivelse", "Beskrivelse"), bredde: "250px" },
           ...(hasCalulcation
-            ? [{ tittel: tekster.tabell.felles.beregning, bredde: "250px" }]
+            ? [
+                {
+                  tittel: tekst("felles.tabell.felles.beregning", "Beregning"),
+                  bredde: "250px",
+                },
+              ]
             : []),
-          { tittel: ord.beløp, bredde: "50px" },
+          { tittel: tekst("ord.beløp", "Beløp"), bredde: "50px" },
         ]}
       >
         {data.map((rad, index) => (

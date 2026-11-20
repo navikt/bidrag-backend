@@ -16,9 +16,6 @@ import { groupBy } from "~/utils/array-utils";
 import DataDescription from "~/components/DataDescription";
 import Person from "~/components/Person";
 import elementIds from "~/utils/elementIds";
-import ord from "~/tekster/ord.yaml";
-import tekster from "~/tekster";
-import opplysningerTekster from "~/tekster/notat/opplysninger/felles.yaml";
 import {
   DokumentTabell,
   Tabellcelle,
@@ -29,9 +26,7 @@ import {
   useNotatFelles,
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
-
-const t = opplysningerTekster.boforhold;
-
+import { tekst } from "~/utils/tekst";
 export default function VedleggBoforhold() {
   const vedleggNummer = useVedleggNummer("boforhold");
   const { erAvslag, type } = useNotatFelles();
@@ -39,9 +34,18 @@ export default function VedleggBoforhold() {
   return (
     <div className={`${vedleggNummer == 1 ? "break-before-page" : ""}`}>
       <h2 id={elementIds.vedleggBoforhold}>
-        {t.tittel
+        {tekst(
+          "notat.opplysninger.felles.boforhold.tittel",
+          "Vedlegg nr. {nummer}: Boforhold - {kilde}",
+        )
           .replace("{nummer}", vedleggNummer.toString())
-          .replace("{kilde}", tekster.fraOffentligeRegistre)}
+          .replace(
+            "{kilde}",
+            tekst(
+              "felles.fraOffentligeRegistre",
+              "Hentet fra offentlige registre",
+            ),
+          )}
       </h2>
       <BarnFraFolkeregisteret />
       {type === NotatMalType.FORSKUDD ? (
@@ -55,13 +59,11 @@ export default function VedleggBoforhold() {
     </div>
   );
 }
-
 function BarnFraFolkeregisteret() {
   const { data } = useNotatFelles();
   const barnMedOpplysninger = data.boforhold.barn
     .filter((barn) => barn.opplysningerFraFolkeregisteret.length > 0)
     .sort((barn) => (barn.medIBehandling ? -1 : 1));
-
   return groupBy(
     barnMedOpplysninger,
     (barn) => barn.gjelder.ident ?? barn.gjelder.fødselsdato!,
@@ -73,7 +75,15 @@ function BarnFraFolkeregisteret() {
         <DataDescription
           style={{ marginBottom: "0px" }}
           label={
-            opplysninger.medIBehandling ? t.søknadsbarn : t.egetBarnIHusstanden
+            opplysninger.medIBehandling
+              ? tekst(
+                  "notat.opplysninger.felles.boforhold.søknadsbarn",
+                  "Søknadsbarn",
+                )
+              : tekst(
+                  "notat.opplysninger.felles.boforhold.egetBarnIHusstanden",
+                  "Eget barn i husstanden",
+                )
           }
           value={
             <Person
@@ -88,7 +98,6 @@ function BarnFraFolkeregisteret() {
     );
   });
 }
-
 function AndreVoksneFraFolkeregisteret() {
   const { data } = useNotatFelles();
   const opplysninger =
@@ -96,21 +105,30 @@ function AndreVoksneFraFolkeregisteret() {
   if (!opplysninger) return null;
   return (
     <div>
-      <h3>{t.andreVoksneIHusstanden}</h3>
+      <h3>
+        {tekst(
+          "notat.opplysninger.felles.boforhold.andreVoksneIHusstanden",
+          "Andre voksne i husstanden",
+        )}
+      </h3>
       <div className="table_container">
         <BoforholdTable data={opplysninger} />
       </div>
     </div>
   );
 }
-
 function BidragsmottakersBoforhold() {
   const { data } = useNotatFelles();
   const boforhold = data.boforhold.boforholdBMSøknadsbarn;
   if (!boforhold?.length) return null;
   return (
     <div>
-      <h3>{t.boforholdBidragsmottaker}</h3>
+      <h3>
+        {tekst(
+          "notat.opplysninger.felles.boforhold.boforholdBidragsmottaker",
+          "Boforhold bidragsmottaker",
+        )}
+      </h3>
       {groupBy(
         boforhold.sort((a, b) =>
           a.gjelderBarn.ident!.localeCompare(b.gjelderBarn.ident!),
@@ -122,7 +140,10 @@ function BidragsmottakersBoforhold() {
           <div key={key} className="table_container mb-medium">
             <DataDescription
               style={{ marginBottom: "0px" }}
-              label={t.søknadsbarn}
+              label={tekst(
+                "notat.opplysninger.felles.boforhold.søknadsbarn",
+                "Søknadsbarn",
+              )}
               value={
                 <Person
                   fødselsdato={gjelderBarn.fødselsdato!}
@@ -138,12 +159,13 @@ function BidragsmottakersBoforhold() {
     </div>
   );
 }
-
 function SivilstandFraFolkeregisteret() {
   const { data } = useNotatFelles();
   return (
     <div>
-      <h3>{t.sivilstand}</h3>
+      <h3>
+        {tekst("notat.opplysninger.felles.boforhold.sivilstand", "Sivilstand")}
+      </h3>
       <div className="table_container">
         <BoforholdTable
           data={data.boforhold.sivilstand.opplysningerFraFolkeregisteret}
@@ -152,7 +174,6 @@ function SivilstandFraFolkeregisteret() {
     </div>
   );
 }
-
 export function BoforholdTable({
   data,
 }: {
@@ -162,9 +183,10 @@ export function BoforholdTable({
     | OpplysningerFraFolkeregisteretMedDetaljerSivilstandskodePDLUnit[];
 }) {
   if (data.length === 0) return null;
-
   const periodeoverskrift =
-    data[0].periode !== undefined ? tekster.tabell.felles.fraDato : ord.periode;
+    data[0].periode !== undefined
+      ? tekst("felles.tabell.felles.fraDato", "Fra dato")
+      : tekst("ord.periode", "Periode");
   return (
     <DokumentTabell
       bredde="400px"
@@ -173,7 +195,7 @@ export function BoforholdTable({
           tittel: periodeoverskrift,
           bredde: "140px",
         },
-        { tittel: tekster.tabell.felles.status },
+        { tittel: tekst("felles.tabell.felles.status", "Status") },
       ]}
     >
       {data.map((opplysning, index) => {
@@ -205,7 +227,6 @@ export function BoforholdTable({
     </DokumentTabell>
   );
 }
-
 function AndreVoksneiHusstandenDetaljer({
   andreVoksneIHusstandenDetaljer,
 }: {
@@ -213,7 +234,12 @@ function AndreVoksneiHusstandenDetaljer({
 }) {
   return (
     <>
-      <h4 style={{ width: "200px" }}>{t.hvemBorPåAdresse}</h4>
+      <h4 style={{ width: "200px" }}>
+        {tekst(
+          "notat.opplysninger.felles.boforhold.hvemBorPåAdresse",
+          "Hvem bor på adresse?",
+        )}
+      </h4>
       <ul
         style={{
           listStyleType: "decimal",
@@ -232,7 +258,10 @@ function AndreVoksneiHusstandenDetaljer({
                       dateOrNull(husstandsmedlem.fødselsdato)!,
                     )}
                 {husstandsmedlem.harRelasjonTilBp &&
-                  t.relasjonTilBidragspliktig}
+                  tekst(
+                    "notat.opplysninger.felles.boforhold.relasjonTilBidragspliktig",
+                    " (Relasjon til Bidragspliktig)",
+                  )}
               </li>
             );
           },

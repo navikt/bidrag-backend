@@ -8,11 +8,7 @@ import {
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 import { isNullOrEmpty } from "~/utils/string-utils";
-import ord from "~/tekster/ord.yaml";
-import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
-
-const t = notatTekster.søknaddetaljer;
-
+import { tekst } from "~/utils/tekst";
 export default function Soknaddetaljer({
   gjelderFlereSaker,
 }: {
@@ -25,7 +21,6 @@ export default function Soknaddetaljer({
   const rollerBarn = roller.filter((rolle) =>
     sammenlignRoller(rolle.rolle, Rolletype.BA),
   );
-
   function tilNavnOgFødselsdato(rolle: DokumentmalPersonDto) {
     if (isNullOrEmpty(rolle.navn)) {
       return dateToDDMMYYYY(rolle.fødselsdato);
@@ -44,10 +39,13 @@ export default function Soknaddetaljer({
             {gjelderFlereSaker ? (
               <Feltrad />
             ) : (
-              <Feltrad label={ord.saksnummer}>
+              <Feltrad label={tekst("ord.saksnummer", "Saksnummer")}>
                 {typeInnhold === TypeInnhold.NOTAT
                   ? saksnummer
-                  : ord.saksnummerMedHenvisning.replace("{}", `${saksnummer}`)}
+                  : tekst(
+                      "ord.saksnummerMedHenvisning",
+                      "{} (Oppgi saksnummeret ved henvendelse til oss.)",
+                    ).replace("{}", `${saksnummer}`)}
               </Feltrad>
             )}
             <Feltrader
@@ -67,7 +65,10 @@ export default function Soknaddetaljer({
                     value: `${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`,
                   })),
                 {
-                  label: t.søknadsbarn,
+                  label: tekst(
+                    "notat.begrunnelse.felles.søknaddetaljer.søknadsbarn",
+                    "Søknadsbarn",
+                  ),
                   value: (
                     <div style={{ display: "inline-table" }}>
                       {rollerBarn.sort(sortByAge).map((rolle) => (

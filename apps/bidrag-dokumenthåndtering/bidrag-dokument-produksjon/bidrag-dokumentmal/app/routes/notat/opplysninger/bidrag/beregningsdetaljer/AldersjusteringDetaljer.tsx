@@ -8,10 +8,7 @@ import {
   JusterteFeltrader,
 } from "~/components/FeltTabell";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
-import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
-
-const t = bidragOpplysningerTekster.beregningsdetaljer.aldersjustering;
-
+import { tekst } from "~/utils/tekst";
 export const AldersjusteringDetaljer = () => {
   const {
     samværsfradrag,
@@ -23,39 +20,83 @@ export const AldersjusteringDetaljer = () => {
   } = useBeregningDetaljer();
   return (
     <div style={{ width: "600px" }}>
-      <h4>{t.tittel}</h4>
+      <h4>
+        {tekst(
+          "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.tittel",
+          "Aldersjustering",
+        )}
+      </h4>
       <div>
         <div className={"flex flex-row gap-5 mb-4"}>
           <div>
-            {t.underholdskostnad.tittel && (
-              <h4>{t.underholdskostnad.tittel}</h4>
+            {tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.tittel",
+              "Underholdskostnad",
+            ) && (
+              <h4>
+                {tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.tittel",
+                  "Underholdskostnad",
+                )}
+              </h4>
             )}
             <FeltTabell>
               <JustertFeltrad
-                label={t.underholdskostnad.forbruksutgift}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.forbruksutgift",
+                  "Forbruksutgift",
+                )}
               >{`${formatterBeløpForBeregning(delberegningUnderholdskostnad.forbruksutgift, true)}`}</JustertFeltrad>
               <JustertFeltrad
-                label={t.underholdskostnad.boutgift}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.boutgift",
+                  "Boutgift",
+                )}
               >{`${formatterBeløpForBeregning(delberegningUnderholdskostnad.boutgift, true)}`}</JustertFeltrad>
               <JustertFeltrad
-                label={t.underholdskostnad.nettoTilsynsutgift}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.nettoTilsynsutgift",
+                  "Netto tilsynsutgift",
+                )}
               >{`${formatterBeløpForBeregning(delberegningUnderholdskostnad.nettoTilsynsutgift, true)}`}</JustertFeltrad>
               <JustertFeltrad
-                label={t.underholdskostnad.barnetrygd}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.barnetrygd",
+                  "Barnetrygd",
+                )}
               >{`${formatterBeløpForBeregning(delberegningUnderholdskostnad.barnetrygd, true)}`}</JustertFeltrad>
               <JustertFeltrad
-                label={t.underholdskostnad.barnetilsynMedStønad}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnad.barnetilsynMedStønad",
+                  "Barnetilsyn med stønad",
+                )}
               >{`${formatterBeløpForBeregning(delberegningUnderholdskostnad.barnetilsynMedStønad, true)}`}</JustertFeltrad>
             </FeltTabell>
           </div>
           <div>
-            {t.samværsfradrag.tittel && <h4>{t.samværsfradrag.tittel}</h4>}
+            {tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.samværsfradrag.tittel",
+              "Samværsfradrag",
+            ) && (
+              <h4>
+                {tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.samværsfradrag.tittel",
+                  "Samværsfradrag",
+                )}
+              </h4>
+            )}
             <FeltTabell>
               <JustertFeltrad
-                label={t.samværsfradrag.samværsklasse}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.samværsfradrag.samværsklasse",
+                  "Samværsklasse",
+                )}
               >{`${samværsfradrag.samværsklasseVisningsnavn}`}</JustertFeltrad>
               <JustertFeltrad
-                label={t.samværsfradrag.samværsfradrag}
+                label={tekst(
+                  "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.samværsfradrag.samværsfradrag",
+                  "Samværsfradrag",
+                )}
               >{`${formatterBeløpForBeregning(samværsfradrag?.samværsfradrag, true)}`}</JustertFeltrad>
             </FeltTabell>
           </div>
@@ -65,17 +106,26 @@ export const AldersjusteringDetaljer = () => {
             <JusterteFeltrader
               rows={[
                 {
-                  label: t.underholdskostnadLedetekst,
+                  label: tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.underholdskostnadLedetekst",
+                    "Underholdskostnad",
+                  ),
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)}`,
                 },
                 {
-                  label: t.andelUnderholdskostnad,
+                  label: tekst(
+                    "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.andelUnderholdskostnad",
+                    "Andel underholdskostnad",
+                  ),
                   value: `${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)} x ${formatterProsent(periode.bpsAndelU)}`,
                   result: formatterBeløpForBeregning(periode.bpsAndelBeløp),
                 },
                 deltBosted
                   ? {
-                      label: t.etterFratrekkDeltBosted,
+                      label: tekst(
+                        "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.etterFratrekkDeltBosted",
+                        "Etter fratrekk delt bosted",
+                      ),
                       value: `${formatterBeløpForBeregning(bpsAndel.andelBeløp, true)} - ${formatterBeløpForBeregning(delberegningUnderholdskostnad.underholdskostnad, true)} x ${formatterProsent(0.5)}`,
                       result: formatterBeløpForBeregning(
                         sluttberegning.bpAndelAvUVedDeltBostedBeløp,
@@ -91,7 +141,10 @@ export const AldersjusteringDetaljer = () => {
 
       {bpsAndel.endeligAndelFaktor !== bpsAndel.beregnetAndelFaktor && (
         <div className="text-red-500" style={{ width: "200px" }}>
-          {t.andelBegrensetTil}
+          {tekst(
+            "notat.opplysninger.bidrag.beregningsdetaljer.aldersjustering.andelBegrensetTil",
+            "Andel begrenset til ",
+          )}
           {formatterProsent(bpsAndel.endeligAndelFaktor)}
         </div>
       )}
