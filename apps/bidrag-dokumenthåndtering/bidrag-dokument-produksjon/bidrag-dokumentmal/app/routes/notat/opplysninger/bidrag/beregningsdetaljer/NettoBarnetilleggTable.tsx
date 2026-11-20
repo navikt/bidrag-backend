@@ -11,10 +11,10 @@ import {
   DokumentmalSluttberegningBarnebidragDetaljer,
 } from "~/types/Api";
 import {
-  CommonTable,
-  TableHeader,
-  TableColumn,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { useBeregningDetaljer } from "~/routes/notat/opplysninger/bidrag/VedleggBeregningsDetaljer";
 import ord from "~/tekster/ord.yaml";
 import bidragOpplysningerTekster from "~/tekster/notat/opplysninger/bidrag.yaml";
@@ -38,72 +38,59 @@ export const NettoBarnetilleggTable = ({ rolle }: { rolle: Rolletype }) => {
     <div style={{ width: "600px" }}>
       <h4>{t.tittel.replace("{rolle}", rolleTilVisningsnavn(rolle))}</h4>
 
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            {
-              name: t.tabell.typeBarnetillegg,
-              width: "100px",
-            },
-            !harBareTiltakspenger && {
-              name: t.tabell.brutto,
-              width: "50px",
-            },
-            {
-              name: t.tabell.skattesats,
-              width: "50px",
-            },
-            {
-              name: t.tabell.netto,
-              width: "50px",
-            },
-          ].filter((h) => h != null) as TableHeader[],
-          rows: barnetillegg.barnetillegg
-            .map((bt) => ({
-              columns: [
+        kolonner={[
+          {
+            tittel: t.tabell.typeBarnetillegg,
+            bredde: "100px",
+          },
+          ...(!harBareTiltakspenger
+            ? [
                 {
-                  content: bt.visningsnavn,
-                  colSpan: 1,
+                  tittel: t.tabell.brutto,
+                  bredde: "50px",
                 },
-                !harBareTiltakspenger && {
-                  content:
-                    bt.visningsnavn === barnetilleggTiltakspengerVisningsnavn
-                      ? ord.ikkeRelevant
-                      : formatterBeløpForBeregning(bt.bruttoBeløp, true),
-                },
-                {
-                  content: formatterProsent(bt.skattefaktor),
-                },
-                {
-                  content: formatterBeløpForBeregning(bt.nettoBeløp, true),
-                },
-              ].filter((d) => d != null) as TableColumn[],
-            }))
-            .concat([
-              {
-                columns: [
-                  {
-                    content: ord.resultat,
-                  },
-                  !harBareTiltakspenger && {
-                    content: formatterBeløpForBeregning(
-                      barnetillegg!.sumBruttoBeløp,
-                    ),
-                  },
-                  {
-                    content: "",
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      barnetillegg!.sumNettoBeløp,
-                    ),
-                  },
-                ] as TableColumn[],
-              },
-            ]),
-        }}
-      />
+              ]
+            : []),
+          {
+            tittel: t.tabell.skattesats,
+            bredde: "50px",
+          },
+          {
+            tittel: t.tabell.netto,
+            bredde: "50px",
+          },
+        ]}
+      >
+        {barnetillegg.barnetillegg.map((bt, index) => (
+          <Tabellrad key={`${bt.visningsnavn}-${index}`} index={index}>
+            <Tabellcelle colSpan={1}>{bt.visningsnavn}</Tabellcelle>
+            {!harBareTiltakspenger && (
+              <Tabellcelle>
+                {bt.visningsnavn === barnetilleggTiltakspengerVisningsnavn
+                  ? ord.ikkeRelevant
+                  : formatterBeløpForBeregning(bt.bruttoBeløp, true)}
+              </Tabellcelle>
+            )}
+            <Tabellcelle>{formatterProsent(bt.skattefaktor)}</Tabellcelle>
+            <Tabellcelle>
+              {formatterBeløpForBeregning(bt.nettoBeløp, true)}
+            </Tabellcelle>
+          </Tabellrad>
+        ))}
+        <Tabellrad index={barnetillegg.barnetillegg.length}>
+          <Tabellcelle>{ord.resultat}</Tabellcelle>
+          <Tabellcelle>
+            {!harBareTiltakspenger &&
+              formatterBeløpForBeregning(barnetillegg!.sumBruttoBeløp)}
+          </Tabellcelle>
+          <Tabellcelle />
+          <Tabellcelle>
+            {formatterBeløpForBeregning(barnetillegg!.sumNettoBeløp)}
+          </Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
       {rolle == Rolletype.BP ? (
         <BeregningJusterBPsBarnetillegg sluttberegning={sluttberegning!} />
       ) : (

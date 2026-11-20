@@ -12,11 +12,14 @@ import KildeIcon from "~/components/KildeIcon";
 import { groupBy, hasValue } from "~/utils/array-utils";
 import { formatterBeløp, formatterProsent } from "~/utils/visningsnavn";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
+import { Fragment } from "react";
 import {
-  CommonTable,
-  TableColumn,
-  TableHeader,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  type Kolonne,
+  Tabellcelle,
+  Tabelldetaljer,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
@@ -133,55 +136,59 @@ function InntektTable({
   return (
     <div className={subsection ? "subsection" : ""}>
       <InntektTableTitle title={title} subtitle={subtitle} />
-      <CommonTable
-        data={{
-          headers: [
-            { name: tekster.tabell.felles.fraTilOgMed, width: "170px" },
+      <DokumentTabell
+        kolonner={
+          [
+            { tittel: tekster.tabell.felles.fraTilOgMed, bredde: "170px" },
             inkluderBeskrivelse && {
-              name: ord.beskrivelse,
-              width: "230px",
+              tittel: ord.beskrivelse,
+              bredde: "230px",
             },
             {
-              name: tekster.tabell.felles.kilde,
-              width: inkluderBeskrivelse ? "80px" : "230px",
+              tittel: tekster.tabell.felles.kilde,
+              bredde: inkluderBeskrivelse ? "80px" : "230px",
             },
-            { name: ord.beløp },
-          ].filter((d) => typeof d != "boolean") as TableHeader[],
-          rows: inntekter
-            .sort((a, b) =>
-              a.periode?.fom && b.periode?.fom
-                ? a.periode?.fom.localeCompare(b.periode?.fom)
-                : 1,
-            )
-            .map((d, i) => {
-              const periode = d.periode ?? d.opprinneligPeriode;
-              return {
-                columns: [
-                  { content: formatPeriode(periode!.fom, periode!.til) },
-                  inkluderBeskrivelse && {
-                    content: `${d.visningsnavn}${d.historisk ? t.historisk : ""}`,
-                  },
-                  { content: <KildeIcon kilde={d.kilde} /> },
-                  { content: formatterBeløp(d.beløp) },
-                ].filter((d) => typeof d != "boolean") as TableColumn[],
-                expandableContent:
-                  d.inntektsposter.length > 0
-                    ? [
-                        {
-                          content: (
-                            <Inntektsposter
-                              data={d}
-                              periode={periode}
-                              withHorizontalLine={inntekter.length > i + 1}
-                            />
-                          ),
-                        },
-                      ]
-                    : undefined,
-              };
-            }),
-        }}
-      />
+            { tittel: ord.beløp },
+          ].filter((d) => typeof d != "boolean") as Kolonne[]
+        }
+      >
+        {inntekter
+          .sort((a, b) =>
+            a.periode?.fom && b.periode?.fom
+              ? a.periode?.fom.localeCompare(b.periode?.fom)
+              : 1,
+          )
+          .map((d, i) => {
+            const periode = d.periode ?? d.opprinneligPeriode;
+            return (
+              <Fragment key={i}>
+                <Tabellrad index={i}>
+                  <Tabellcelle>
+                    {formatPeriode(periode!.fom, periode!.til)}
+                  </Tabellcelle>
+                  {inkluderBeskrivelse && (
+                    <Tabellcelle>
+                      {`${d.visningsnavn}${d.historisk ? t.historisk : ""}`}
+                    </Tabellcelle>
+                  )}
+                  <Tabellcelle>
+                    <KildeIcon kilde={d.kilde} />
+                  </Tabellcelle>
+                  <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
+                </Tabellrad>
+                {d.inntektsposter.length > 0 && (
+                  <Tabelldetaljer index={i}>
+                    <Inntektsposter
+                      data={d}
+                      periode={periode}
+                      withHorizontalLine={inntekter.length > i + 1}
+                    />
+                  </Tabelldetaljer>
+                )}
+              </Fragment>
+            );
+          })}
+      </DokumentTabell>
     </div>
   );
 }
@@ -220,70 +227,74 @@ function InntektPerBarnTable({
               }}
             >
               <TableGjelderBarn gjelderBarn={gjelderBarn} />
-              <CommonTable
-                width={"580px"}
-                data={{
-                  headers: getInntektTableHeaders(
-                    erBarnetillegg,
-                    erBidrag,
-                    true,
-                    styling,
-                  ),
-                  rows: value
-                    .filter((d) => !bareMedIBeregning || d.medIBeregning)
-                    .map((d) => {
-                      const periode = d.periode ?? d.opprinneligPeriode;
-                      const visningsnavnInntektstype =
-                        d.inntektsposter.length > 0
-                          ? d.inntektsposter[0].visningsnavn
-                          : "";
+              <DokumentTabell
+                bredde="580px"
+                kolonner={getInntektTableHeaders(
+                  erBarnetillegg,
+                  erBidrag,
+                  true,
+                  styling,
+                )}
+              >
+                {value
+                  .filter((d) => !bareMedIBeregning || d.medIBeregning)
+                  .map((d, index) => {
+                    const periode = d.periode ?? d.opprinneligPeriode;
+                    const visningsnavnInntektstype =
+                      d.inntektsposter.length > 0
+                        ? d.inntektsposter[0].visningsnavn
+                        : "";
+                    const periodColumn =
+                      styling == "V2" && erBarnetillegg
+                        ? formatPeriode(periode!.fom, periode!.til)
+                        : undefined;
 
-                      return {
-                        periodColumn:
-                          styling == "V2" && erBarnetillegg
-                            ? formatPeriode(periode!.fom, periode!.til)
-                            : undefined,
-                        columns: [
-                          (styling == "V1" || !erBarnetillegg) && {
-                            content: formatPeriode(periode!.fom, periode!.til),
-                          },
-                          { content: <KildeIcon kilde={d.kilde} /> },
-                          erBarnetillegg && erBidrag
-                            ? [
-                                { content: visningsnavnInntektstype },
-                                {
-                                  content: Number(d.beløpMånedDagsats),
-                                },
-                                {
-                                  content: d.beløpstypeVisningsnavn,
-                                },
-                                {
-                                  content:
-                                    d.skattefaktor == null
-                                      ? ord.ikkeRelevant
-                                      : formatterProsent(d.skattefaktor),
-                                },
-                                { content: formatterBeløp(d.beløp) },
-                              ]
-                            : erBarnetillegg
-                              ? [
-                                  { content: visningsnavnInntektstype },
-                                  {
-                                    content: Number(d.beløpMånedDagsats),
-                                  },
-                                  {
-                                    content: d.beløpstypeVisningsnavn,
-                                  },
-                                  { content: formatterBeløp(d.beløp) },
-                                ]
-                              : [{ content: formatterBeløp(d.beløp) }],
-                        ]
-                          .filter((d) => typeof d != "boolean")
-                          .flatMap((d) => d as TableColumn),
-                      };
-                    }),
-                }}
-              />
+                    return (
+                      <Fragment key={index}>
+                        {periodColumn && (
+                          <Tabellrad index={1} periode>
+                            <Tabellcelle fullSpan>{periodColumn}</Tabellcelle>
+                          </Tabellrad>
+                        )}
+                        <Tabellrad index={index} harPeriode={!!periodColumn}>
+                          {(styling == "V1" || !erBarnetillegg) && (
+                            <Tabellcelle>
+                              {formatPeriode(periode!.fom, periode!.til)}
+                            </Tabellcelle>
+                          )}
+                          <Tabellcelle>
+                            <KildeIcon kilde={d.kilde} />
+                          </Tabellcelle>
+                          {erBarnetillegg ? (
+                            <>
+                              <Tabellcelle>
+                                {visningsnavnInntektstype}
+                              </Tabellcelle>
+                              <Tabellcelle>
+                                {Number(d.beløpMånedDagsats)}
+                              </Tabellcelle>
+                              <Tabellcelle>
+                                {d.beløpstypeVisningsnavn}
+                              </Tabellcelle>
+                              {erBidrag && (
+                                <Tabellcelle>
+                                  {d.skattefaktor == null
+                                    ? ord.ikkeRelevant
+                                    : formatterProsent(d.skattefaktor)}
+                                </Tabellcelle>
+                              )}
+                              <Tabellcelle>
+                                {formatterBeløp(d.beløp)}
+                              </Tabellcelle>
+                            </>
+                          ) : (
+                            <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
+                          )}
+                        </Tabellrad>
+                      </Fragment>
+                    );
+                  })}
+              </DokumentTabell>
             </div>
           );
         })}
@@ -318,74 +329,101 @@ function BeregnetInntektTable({ data, rolle }: BeregnetInntektTableProps) {
         {harFlereEnnEttSøknadsbarn && gjelderBarn && (
           <TableGjelderBarn gjelderBarn={gjelderBarn} />
         )}
-        <CommonTable
-          width={"580px"}
-          data={{
-            headers: [
+        <DokumentTabell
+          bredde="580px"
+          kolonner={
+            [
               styling == "V1" && {
-                name: tekster.tabell.felles.fraTilOgMed,
-                width: columnWidth[tekster.tabell.felles.fraTilOgMed],
+                tittel: tekster.tabell.felles.fraTilOgMed,
+                bredde: columnWidth[tekster.tabell.felles.fraTilOgMed],
               },
               {
-                name: columnNames.SKATTEPLIKTIG,
-                width: columnWidth[columnNames.SKATTEPLIKTIG as string],
+                tittel: columnNames.SKATTEPLIKTIG,
+                bredde: columnWidth[columnNames.SKATTEPLIKTIG as string],
               },
               hasValue(inntektTableRules, InntektTableType.BARNETILLEGG) && {
-                name: columnNames.BARNETILLEGG,
-                width: columnWidth[columnNames.BARNETILLEGG as string],
+                tittel: columnNames.BARNETILLEGG,
+                bredde: columnWidth[columnNames.BARNETILLEGG as string],
               },
               hasValue(
                 inntektTableRules,
                 InntektTableType.UTVIDET_BARNETRYGD,
               ) && {
-                name: columnNames.UTVIDET_BARNETRYGD,
-                width: columnWidth[columnNames.UTVIDET_BARNETRYGD as string],
+                tittel: columnNames.UTVIDET_BARNETRYGD,
+                bredde: columnWidth[columnNames.UTVIDET_BARNETRYGD as string],
               },
               hasValue(inntektTableRules, InntektTableType.SMÅBARNSTILLEGG) && {
-                name: columnNames.SMÅBARNSTILLEGG,
-                width: columnWidth[columnNames.SMÅBARNSTILLEGG as string],
+                tittel: columnNames.SMÅBARNSTILLEGG,
+                bredde: columnWidth[columnNames.SMÅBARNSTILLEGG as string],
               },
               hasValue(inntektTableRules, InntektTableType.KONTANTSTØTTE) && {
-                name: columnNames.KONTANTSTØTTE,
-                width: columnWidth[columnNames.KONTANTSTØTTE as string],
+                tittel: columnNames.KONTANTSTØTTE,
+                bredde: columnWidth[columnNames.KONTANTSTØTTE as string],
               },
               {
-                name: columnNames.TOTAL_INNTEKTER,
-                width: columnWidth[columnNames.TOTAL_INNTEKTER as string],
+                tittel: columnNames.TOTAL_INNTEKTER,
+                bredde: columnWidth[columnNames.TOTAL_INNTEKTER as string],
               },
-            ].filter((d) => typeof d != "boolean") as TableHeader[],
-            rows: inntekter.map((d) => ({
-              periodColumn:
-                styling == "V2"
-                  ? formatPeriode(d.periode!.fom, deductDays(d.periode!.til, 1))
-                  : undefined,
-              columns: [
-                styling == "V1" && {
-                  content: formatPeriode(
-                    d.periode!.fom,
-                    deductDays(d.periode!.til, 1),
-                  ),
-                },
-                { content: formatterBeløp(d.skattepliktigInntekt ?? 0) },
-                hasValue(inntektTableRules, InntektTableType.BARNETILLEGG) && {
-                  content: formatterBeløp(d.barnetillegg ?? 0),
-                },
-                hasValue(
-                  inntektTableRules,
-                  InntektTableType.UTVIDET_BARNETRYGD,
-                ) && { content: formatterBeløp(d.utvidetBarnetrygd ?? 0) },
-                hasValue(
-                  inntektTableRules,
-                  InntektTableType.SMÅBARNSTILLEGG,
-                ) && { content: formatterBeløp(d.småbarnstillegg ?? 0) },
-                hasValue(inntektTableRules, InntektTableType.KONTANTSTØTTE) && {
-                  content: formatterBeløp(d.kontantstøtte ?? 0),
-                },
-                { content: formatterBeløp(d.totalinntekt ?? 0) },
-              ].filter((d) => typeof d != "boolean") as TableColumn[],
-            })),
-          }}
-        />
+            ].filter((d) => typeof d != "boolean") as Kolonne[]
+          }
+        >
+          {inntekter.map((d, index) => {
+            const periode = formatPeriode(
+              d.periode!.fom,
+              deductDays(d.periode!.til, 1),
+            );
+            return (
+              <Fragment key={index}>
+                {styling == "V2" && (
+                  <Tabellrad index={1} periode>
+                    <Tabellcelle fullSpan>{periode}</Tabellcelle>
+                  </Tabellrad>
+                )}
+                <Tabellrad index={index} harPeriode={styling == "V2"}>
+                  {styling == "V1" && <Tabellcelle>{periode}</Tabellcelle>}
+                  <Tabellcelle>
+                    {formatterBeløp(d.skattepliktigInntekt ?? 0)}
+                  </Tabellcelle>
+                  {hasValue(
+                    inntektTableRules,
+                    InntektTableType.BARNETILLEGG,
+                  ) && (
+                    <Tabellcelle>
+                      {formatterBeløp(d.barnetillegg ?? 0)}
+                    </Tabellcelle>
+                  )}
+                  {hasValue(
+                    inntektTableRules,
+                    InntektTableType.UTVIDET_BARNETRYGD,
+                  ) && (
+                    <Tabellcelle>
+                      {formatterBeløp(d.utvidetBarnetrygd ?? 0)}
+                    </Tabellcelle>
+                  )}
+                  {hasValue(
+                    inntektTableRules,
+                    InntektTableType.SMÅBARNSTILLEGG,
+                  ) && (
+                    <Tabellcelle>
+                      {formatterBeløp(d.småbarnstillegg ?? 0)}
+                    </Tabellcelle>
+                  )}
+                  {hasValue(
+                    inntektTableRules,
+                    InntektTableType.KONTANTSTØTTE,
+                  ) && (
+                    <Tabellcelle>
+                      {formatterBeløp(d.kontantstøtte ?? 0)}
+                    </Tabellcelle>
+                  )}
+                  <Tabellcelle>
+                    {formatterBeløp(d.totalinntekt ?? 0)}
+                  </Tabellcelle>
+                </Tabellrad>
+              </Fragment>
+            );
+          })}
+        </DokumentTabell>
       </>
     );
   }

@@ -1,4 +1,4 @@
-import { RowContent } from "~/components/CommonTable";
+import type { RowContent } from "~/components/DokumentTabell";
 import { formater, Visningsformat } from "~/utils/visning";
 import ord from "~/tekster/ord.yaml";
 

@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { Fragment, ReactNode } from "react";
 import {
   DokumentmalResultatBidragsberegningBarnDto,
   ResultatBarnebidragsberegningPeriodeDto,
@@ -12,7 +12,12 @@ import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFa
 import { sortByAge } from "~/utils/date-utils";
 import elementIds from "~/utils/elementIds";
 import { groupBy } from "~/utils/array-utils";
-import { CommonTable, TableHeader, TableRow } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  type Kolonne,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { FeltTabell, Feltrad, Feltrader } from "~/components/FeltTabell";
 import {
@@ -310,50 +315,75 @@ const beregningsceller = {
   },
 };
 
-function radForklaring(): TableRow {
-  return {
-    skipBorderBottom: true,
-    zebraStripe: false,
-    skipPadding: true,
-    className: "pt-2",
-    columns: [{ fullSpan: true, content: tb.forklaringForkortelser }],
-  };
+function ForklaringRad({ index }: { index: number }) {
+  return (
+    <Tabellrad
+      index={index}
+      skipBorderBottom
+      zebraStripe={false}
+      skipPadding
+      className="pt-2"
+    >
+      <Tabellcelle fullSpan>{tb.forklaringForkortelser}</Tabellcelle>
+    </Tabellrad>
+  );
 }
 
-function raderBeregning(perioder: Periode[], avslagstekst: string): TableRow[] {
+function Beregningsrader({
+  perioder,
+  avslagstekst,
+}: {
+  perioder: Periode[];
+  avslagstekst: string;
+}) {
   const antallKolonnerFørResultat = tabellBeregning.kolonner.length - 1;
-  return perioder
-    .flatMap((p): TableRow[] => [
-      {
-        skipBorderBottom: true,
-        periodColumn: periodelinje(tabellBeregning, p),
-        columns: p.erAvslagUtenBeløp
-          ? [
-              { content: "", colSpan: antallKolonnerFørResultat },
-              { content: avslagstekst },
-            ]
-          : kolonneceller(tabellBeregning, p, beregningsceller),
-      },
-      {
-        zebraStripe: false,
-        skipPadding: true,
-        columns: [
-          {
-            colSpan: 8,
-            content: (
-              <div className={"pl-0 ml-0"}>
-                <FeltTabell>
-                  <Feltrad label={ord.resultat} labelBold>
-                    {p.resultatkodeVisningsnavn}
-                  </Feltrad>
-                </FeltTabell>
-              </div>
-            ),
-          },
-        ],
-      },
-    ])
-    .concat(radForklaring());
+  return (
+    <>
+      {perioder.map((periode, periodeIndex) => {
+        const periodeverdi = periodelinje(tabellBeregning, periode);
+        const radIndex = periodeIndex * 2;
+        return (
+          <Fragment key={periodeIndex}>
+            {periodeverdi && (
+              <Tabellrad index={1} periode skipBorderBottom>
+                <Tabellcelle fullSpan>{periodeverdi}</Tabellcelle>
+              </Tabellrad>
+            )}
+            <Tabellrad
+              index={radIndex}
+              skipBorderBottom
+              harPeriode={!!periodeverdi}
+            >
+              {periode.erAvslagUtenBeløp ? (
+                <>
+                  <Tabellcelle colSpan={antallKolonnerFørResultat} />
+                  <Tabellcelle>{avslagstekst}</Tabellcelle>
+                </>
+              ) : (
+                kolonneceller(tabellBeregning, periode, beregningsceller).map(
+                  (verdi, celleIndex) => (
+                    <Tabellcelle key={celleIndex}>{verdi}</Tabellcelle>
+                  ),
+                )
+              )}
+            </Tabellrad>
+            <Tabellrad index={radIndex + 1} zebraStripe={false} skipPadding>
+              <Tabellcelle colSpan={8}>
+                <div className={"pl-0 ml-0"}>
+                  <FeltTabell>
+                    <Feltrad label={ord.resultat} labelBold>
+                      {periode.resultatkodeVisningsnavn}
+                    </Feltrad>
+                  </FeltTabell>
+                </div>
+              </Tabellcelle>
+            </Tabellrad>
+          </Fragment>
+        );
+      })}
+      <ForklaringRad index={perioder.length * 2} />
+    </>
+  );
 }
 
 function BarnOgIndeksår({
@@ -408,12 +438,12 @@ function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
             {erDirekteAvslagForBarn(r.barn.ident!) ? (
               <TabellAvslag resultat={r} avslagstekst={avslagstekst(r)} />
             ) : (
-              <CommonTable
-                data={{
-                  headers: kolonneoverskrifter(tabellBeregning),
-                  rows: raderBeregning(r.perioder, avslagstekst(r)),
-                }}
-              />
+              <DokumentTabell kolonner={kolonneoverskrifter(tabellBeregning)}>
+                <Beregningsrader
+                  perioder={r.perioder}
+                  avslagstekst={avslagstekst(r)}
+                />
+              </DokumentTabell>
             )}
           </ResultatEllerTabell>
         </>
@@ -428,20 +458,22 @@ const TOM_KOLONNE = { name: "", content: "" };
 function overskrifterEndelig(
   vurderUgyldighet: boolean,
   visningForSaksbehandler: boolean,
-): TableHeader[] {
+): Kolonne[] {
   const bredde = (saksbehandler: string, brev: string) =>
     visningForSaksbehandler ? saksbehandler : brev;
   return [
-    ...(vurderUgyldighet ? [{ name: te.vurderUgyldighet, width: "20px" }] : []),
-    { name: ord.periode, width: bredde("120px", "30%") },
+    ...(vurderUgyldighet
+      ? [{ tittel: te.vurderUgyldighet, bredde: "20px" }]
+      : []),
+    { tittel: ord.periode, bredde: bredde("120px", "30%") },
     {
-      name: visningForSaksbehandler ? ord.type : ord.årsak,
-      width: bredde("100px", "40%"),
+      tittel: visningForSaksbehandler ? ord.type : ord.årsak,
+      bredde: bredde("100px", "40%"),
     },
-    { name: ord.beløp, width: bredde("120px", "30%") },
+    { tittel: ord.beløp, bredde: bredde("120px", "30%") },
     visningForSaksbehandler
-      ? { name: ord.resultat, width: "130px" }
-      : { name: TOM_KOLONNE.name },
+      ? { tittel: ord.resultat, bredde: "130px" }
+      : { tittel: TOM_KOLONNE.name },
   ];
 }
 
@@ -458,50 +490,50 @@ export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
         const vurderUgyldighet = perioder.some(
           (e) => e.klageOmgjøringDetaljer?.kanOpprette35c === true,
         );
-        const rader: TableRow[] = perioder.map((p) => ({
-          skipBorderBottom: true,
-          columns: [
-            ...(vurderUgyldighet
-              ? [
-                  {
-                    content: p.klageOmgjøringDetaljer?.kanOpprette35c
-                      ? p.klageOmgjøringDetaljer?.skalOpprette35c
-                        ? ord.ja
-                        : ord.nei
-                      : "",
-                  },
-                ]
-              : []),
-            { content: formater(p.periode, "periode") },
-            { content: p.delvedtakstypeVisningsnavn },
-            {
-              content: p.erOpphør
-                ? visningForSaksbehandler
-                  ? te.opphørForSaksbehandler
-                  : ord.opphør
-                : formater(p.faktiskBidrag, "beløpAvrundet"),
-            },
-            {
-              content: visningForSaksbehandler
-                ? p.resultatkodeVisningsnavn
-                : TOM_KOLONNE.content,
-            },
-          ],
-        }));
         return (
           <>
             <BarnOgIndeksår resultat={r} visIndeksår />
-            <CommonTable
-              data={{
-                headers: overskrifterEndelig(
-                  vurderUgyldighet,
-                  visningForSaksbehandler,
-                ),
-                rows: visningForSaksbehandler
-                  ? rader.concat(radForklaring())
-                  : rader,
-              }}
-            />
+            <DokumentTabell
+              kolonner={overskrifterEndelig(
+                vurderUgyldighet,
+                visningForSaksbehandler,
+              )}
+            >
+              {perioder.map((periode, index) => (
+                <Tabellrad key={index} index={index} skipBorderBottom>
+                  {vurderUgyldighet && (
+                    <Tabellcelle>
+                      {periode.klageOmgjøringDetaljer?.kanOpprette35c
+                        ? periode.klageOmgjøringDetaljer?.skalOpprette35c
+                          ? ord.ja
+                          : ord.nei
+                        : ""}
+                    </Tabellcelle>
+                  )}
+                  <Tabellcelle>
+                    {formater(periode.periode, "periode")}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {periode.delvedtakstypeVisningsnavn}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {periode.erOpphør
+                      ? visningForSaksbehandler
+                        ? te.opphørForSaksbehandler
+                        : ord.opphør
+                      : formater(periode.faktiskBidrag, "beløpAvrundet")}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {visningForSaksbehandler
+                      ? periode.resultatkodeVisningsnavn
+                      : TOM_KOLONNE.content}
+                  </Tabellcelle>
+                </Tabellrad>
+              ))}
+              {visningForSaksbehandler && (
+                <ForklaringRad index={perioder.length} />
+              )}
+            </DokumentTabell>
           </>
         );
       })}

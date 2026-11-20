@@ -3,7 +3,11 @@ import {
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
 import { NotatSamvaersperiodeDto, NotatSamvaerBarnDto } from "~/types/Api";
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
@@ -130,25 +134,22 @@ function SamværBarn({ data }: { data: NotatSamvaerBarnDto[] }) {
 }
 function SamværTabell({ data }: { data: NotatSamvaersperiodeDto[] }) {
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto
-      width={"350px"}
-      data={{
-        headers: [
-          {
-            name: tekster.tabell.felles.fraTilOgMed,
-          },
-          {
-            name: tekster.tabell.samvær.samværsklasse,
-          },
-        ],
-        rows: data.map((d) => ({
-          columns: [
-            { content: formatPeriode(d.periode.fom, d.periode.tom) },
-            { content: d.samværsklasseVisningsnavn },
-          ],
-        })),
-      }}
-    />
+      bredde="350px"
+      kolonner={[
+        { tittel: tekster.tabell.felles.fraTilOgMed },
+        { tittel: tekster.tabell.samvær.samværsklasse },
+      ]}
+    >
+      {data.map((periode, index) => (
+        <Tabellrad key={index} index={index}>
+          <Tabellcelle>
+            {formatPeriode(periode.periode.fom, periode.periode.tom)}
+          </Tabellcelle>
+          <Tabellcelle>{periode.samværsklasseVisningsnavn}</Tabellcelle>
+        </Tabellrad>
+      ))}
+    </DokumentTabell>
   );
 }

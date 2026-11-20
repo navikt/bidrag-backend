@@ -15,7 +15,11 @@ import {
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
 import Sivilstand from "~/routes/notat/begrunnelse/felles/Sivilstand";
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 
@@ -36,56 +40,54 @@ export default function Boforhold() {
           )}
         </a>
       </div>
-      <>
-        {data.boforhold.barn
-          .sort((a, b) => sortByAge(a.gjelder, b.gjelder))
-          .map((b, i) => (
-            <BoforholdHusstandsmedlem key={b.gjelder + i.toString()} data={b} />
-          ))}
-        {data.type === NotatMalType.FORSKUDD && <Sivilstand />}
-        {data.type !== NotatMalType.FORSKUDD && (
-          <BoforholdAndreVoksneIHusstanden
-            data={data.boforhold.andreVoksneIHusstanden}
+      {data.boforhold.barn
+        .sort((a, b) => sortByAge(a.gjelder, b.gjelder))
+        .map((barn, index) => (
+          <BoforholdHusstandsmedlem
+            key={barn.gjelder + index.toString()}
+            data={barn}
           />
-        )}
-        <NotatBegrunnelse data={data.boforhold.begrunnelse} />
-        <BoforholdBeregnetTabell />
-      </>
+        ))}
+      {data.type === NotatMalType.FORSKUDD ? (
+        <Sivilstand />
+      ) : (
+        <BoforholdAndreVoksneIHusstanden
+          data={data.boforhold.andreVoksneIHusstanden}
+        />
+      )}
+      <NotatBegrunnelse data={data.boforhold.begrunnelse} />
+      <BoforholdBeregnetTabell />
     </>
   );
 }
 
 function BoforholdBeregnetTabell() {
   const { data } = useNotatFelles();
-  if (data.boforhold.beregnetBoforhold.length === 0) return null;
+  const beregnetBoforhold = data.boforhold.beregnetBoforhold;
+  if (beregnetBoforhold.length === 0) return null;
   return (
     <>
       <h3 id={"linktilmeg"}>{t.beregnetBoforhold.tittel}</h3>
 
-      <CommonTable
-        data={{
-          headers: [
-            {
-              name: tekster.tabell.felles.fraTilOgMed,
-            },
-            {
-              name: t.beregnetBoforhold.kolonner.antallBarnIHusstanden,
-            },
-            {
-              name: t.beregnetBoforhold.kolonner.borMedAndreVoksne,
-            },
-          ],
-          rows: data.boforhold.beregnetBoforhold.map((d) => ({
-            columns: [
-              { content: formatPeriode(d.periode.fom, d.periode.til) },
-              { content: d.antallBarn },
-              {
-                content: d.borMedAndreVoksne ? ord.ja : ord.nei,
-              },
-            ],
-          })),
-        }}
-      />
+      <DokumentTabell
+        kolonner={[
+          { tittel: tekster.tabell.felles.fraTilOgMed },
+          { tittel: t.beregnetBoforhold.kolonner.antallBarnIHusstanden },
+          { tittel: t.beregnetBoforhold.kolonner.borMedAndreVoksne },
+        ]}
+      >
+        {beregnetBoforhold.map((boforhold, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle>
+              {formatPeriode(boforhold.periode.fom, boforhold.periode.til)}
+            </Tabellcelle>
+            <Tabellcelle>{boforhold.antallBarn}</Tabellcelle>
+            <Tabellcelle>
+              {boforhold.borMedAndreVoksne ? ord.ja : ord.nei}
+            </Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
     </>
   );
 }
@@ -118,13 +120,11 @@ function BoforholdHusstandsmedlem({ data }: { data: BoforholdBarn }) {
             }
             labelBold
           >
-            {
-              <Person
-                fødselsdato={data.gjelder.fødselsdato!}
-                navn={data.gjelder.navn!}
-                erBeskyttet={data.gjelder.erBeskyttet}
-              />
-            }
+            <Person
+              fødselsdato={data.gjelder.fødselsdato!}
+              navn={data.gjelder.navn!}
+              erBeskyttet={data.gjelder.erBeskyttet}
+            />
           </Feltrad>
         </FeltTabell>
       </div>

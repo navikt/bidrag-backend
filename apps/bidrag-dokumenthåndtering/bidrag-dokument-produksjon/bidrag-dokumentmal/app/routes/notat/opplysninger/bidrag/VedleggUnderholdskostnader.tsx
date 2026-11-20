@@ -14,7 +14,11 @@ import {
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import GjelderPerson from "~/components/GjelderPerson";
 import DokumentStabel from "~/components/DokumentStabel";
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import { formatPeriode } from "~/utils/date-utils";
@@ -110,27 +114,23 @@ function InnhentetBarnetilsynTable({
       {opplysninger.barnetilsyn.length == 0 ? (
         <p>{t.barnetilsyn.ingenOffentligBarnetilsyn}</p>
       ) : (
-        <CommonTable
+        <DokumentTabell
           layoutAuto
-          data={{
-            headers: [
-              {
-                name: tekster.tabell.felles.fraTilOgMed,
-                width: "150px",
-              },
-            ],
-            rows: opplysninger.barnetilsyn.map((periode) => ({
-              columns: [
-                {
-                  content: formatPeriode(
-                    periode.periode.fom,
-                    periode.periode.til,
-                  ),
-                },
-              ],
-            })),
-          }}
-        />
+          kolonner={[
+            {
+              tittel: tekster.tabell.felles.fraTilOgMed,
+              bredde: "150px",
+            },
+          ]}
+        >
+          {opplysninger.barnetilsyn.map((periode, index) => (
+            <Tabellrad key={index} index={index}>
+              <Tabellcelle>
+                {formatPeriode(periode.periode.fom, periode.periode.til)}
+              </Tabellcelle>
+            </Tabellrad>
+          ))}
+        </DokumentTabell>
       )}
     </>
   );

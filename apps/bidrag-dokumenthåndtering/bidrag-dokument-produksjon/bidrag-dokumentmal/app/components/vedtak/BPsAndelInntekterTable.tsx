@@ -1,4 +1,8 @@
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
@@ -16,88 +20,53 @@ export default function BPsAndelInntekterTable({
   inntekter: NotatResultatBeregningInntekterDto;
 }) {
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto
-      data={{
-        headers: [
-          {
-            name: ord.beskrivelse,
-            width: "250px",
-          },
-          {
-            name: tekster.tabell.felles.beregning,
-            width: "250px",
-          },
-          {
-            name: ord.beløp,
-            width: "50px",
-          },
-        ],
-        rows: [
-          {
-            columns: [
-              {
-                content: `${tekster.begreper.bidragspliktiges} inntekt`,
-              },
-
-              {
-                content: "",
-              },
-              {
-                content: formatterBeløpForBeregning(inntekter.inntektBP, true),
-              },
-            ],
-          },
-          {
-            columns: [
-              {
-                content: `${tekster.begreper.bidragsmottakerens} inntekt`,
-              },
-              { content: "" },
-              {
-                content: formatterBeløpForBeregning(inntekter.inntektBM, true),
-              },
-            ],
-          },
-          {
-            columns: [
-              {
-                content: `${tekster.begreper.barnets} inntekt`,
-              },
-              {
-                content:
-                  inntekter.inntektBarn! > 0 ? (
-                    <div>
-                      <MathValue value={inntekter.inntektBarn!} /> -{" "}
-                      <MathMultiplication left="30" right={forskuddssats!} />
-                    </div>
-                  ) : undefined,
-              },
-              {
-                content: formatterBeløpForBeregning(
-                  inntekter.inntektBarn,
-                  true,
-                ),
-              },
-            ],
-          },
-          {
-            borderBottom: true,
-            columns: [
-              {
-                content: `Totalt`,
-                colSpan: 2,
-                labelBold: true,
-              },
-              {
-                content: formatterBeløpForBeregning(
-                  inntekter.totalEndeligInntekt,
-                ),
-              },
-            ],
-          },
-        ],
-      }}
-    />
+      kolonner={[
+        { tittel: ord.beskrivelse, bredde: "250px" },
+        {
+          tittel: tekster.tabell.felles.beregning,
+          bredde: "250px",
+        },
+        { tittel: ord.beløp, bredde: "50px" },
+      ]}
+    >
+      <Tabellrad index={0}>
+        <Tabellcelle>{`${tekster.begreper.bidragspliktiges} inntekt`}</Tabellcelle>
+        <Tabellcelle />
+        <Tabellcelle>
+          {formatterBeløpForBeregning(inntekter.inntektBP, true)}
+        </Tabellcelle>
+      </Tabellrad>
+      <Tabellrad index={1}>
+        <Tabellcelle>{`${tekster.begreper.bidragsmottakerens} inntekt`}</Tabellcelle>
+        <Tabellcelle />
+        <Tabellcelle>
+          {formatterBeløpForBeregning(inntekter.inntektBM, true)}
+        </Tabellcelle>
+      </Tabellrad>
+      <Tabellrad index={2}>
+        <Tabellcelle>{`${tekster.begreper.barnets} inntekt`}</Tabellcelle>
+        <Tabellcelle>
+          {inntekter.inntektBarn! > 0 ? (
+            <div>
+              <MathValue value={inntekter.inntektBarn!} /> -{" "}
+              <MathMultiplication left="30" right={forskuddssats!} />
+            </div>
+          ) : undefined}
+        </Tabellcelle>
+        <Tabellcelle>
+          {formatterBeløpForBeregning(inntekter.inntektBarn, true)}
+        </Tabellcelle>
+      </Tabellrad>
+      <Tabellrad index={3} borderBottom>
+        <Tabellcelle colSpan={2} labelBold>
+          Totalt
+        </Tabellcelle>
+        <Tabellcelle>
+          {formatterBeløpForBeregning(inntekter.totalEndeligInntekt)}
+        </Tabellcelle>
+      </Tabellrad>
+    </DokumentTabell>
   );
 }

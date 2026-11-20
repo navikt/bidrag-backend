@@ -11,7 +11,8 @@ import elementIds from "~/utils/elementIds";
 import { erResutlatMedBeregning } from "~/routes/notat/felles/SærbidragHelpers";
 import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { Feltliste, Feltlisteoppsett } from "~/components/Feltliste";
-import { RowContent } from "~/components/CommonTable";
+import type { RowContent } from "~/components/DokumentTabell";
+import { Tabellcelle, Tabellrad } from "~/components/DokumentTabell";
 import { formater } from "~/utils/visning";
 import ord from "~/tekster/ord.yaml";
 import særbidragTekster from "~/tekster/notat/begrunnelse/særbidrag.yaml";
@@ -283,22 +284,19 @@ function UtgiftsposterTabell() {
         layoutAuto
         oppsett={utgifter}
         rader={data.utgift?.utgifter ?? []}
-        ekstraRader={[
-          {
-            columns: [
-              { content: ord.sum, colSpan: 3, labelBold: true },
-              {
-                content: formater(beregning?.totalKravbeløp, "beløpAvrundet"),
-              },
-              {
-                content: formater(
-                  beregning?.totalGodkjentBeløp,
-                  "beløpAvrundet",
-                ),
-              },
-            ],
-          },
-        ]}
+        ekstraRader={
+          <Tabellrad index={(data.utgift?.utgifter ?? []).length}>
+            <Tabellcelle colSpan={3} labelBold>
+              {ord.sum}
+            </Tabellcelle>
+            <Tabellcelle>
+              {formater(beregning?.totalKravbeløp, "beløpAvrundet")}
+            </Tabellcelle>
+            <Tabellcelle>
+              {formater(beregning?.totalGodkjentBeløp, "beløpAvrundet")}
+            </Tabellcelle>
+          </Tabellrad>
+        }
       />
     </div>
   );

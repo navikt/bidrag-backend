@@ -1,8 +1,14 @@
+import { Fragment } from "react";
 import ord from "~/tekster/ord.yaml";
 import { NotatDelberegningBidragspliktigesBeregnedeTotalbidragDto } from "~/types/Api";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
 import særbidragOpplysningerTekster from "~/tekster/notat/opplysninger/særbidrag.yaml";
-import { CommonTable, TableColumn, TableRow } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabelldetaljer,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { CalculationTable } from "~/components/vedtak/CalculationTable";
 
 const tekst = særbidragOpplysningerTekster.beregningsdetaljer;
@@ -17,157 +23,121 @@ export const BPsBeregnedeTotalbidrag = ({
   return (
     <div>
       <h4>{t.tittel}</h4>
-      <CommonTable
-        data={{
-          headers: [
-            {
-              name: ord.barn,
-            },
-            {
-              name: ord.saksnummer,
-            },
-            {
-              name: t.kolonner.løpendeBidrag,
-            },
-            {
-              name: t.kolonner.samvær,
-            },
-            {
-              name: t.kolonner.reduksjonAvBpsAndelAvU,
-            },
-            {
-              name: ord.sum,
-            },
-          ],
-          rows: delberegning.beregnetBidragPerBarnListe
-            .map(({ beregnetBidragPerBarn: row, personidentBarn }) => {
-              const showBeregningAvU =
-                row.beregnetBidrag !== 0 || row.faktiskBeløp !== 0;
-              const erVedtakFraBBM =
-                row.erVedtakKildeBBM === undefined ||
-                row.erVedtakKildeBBM === true;
-              return {
-                expandableContent: showBeregningAvU
-                  ? [
-                      {
-                        content: (
-                          <CalculationTable
-                            width={"200px"}
-                            simpleStyling
-                            className={"ml-2"}
-                            title={t.reduksjonAvBpsAndelAvU.tittel}
-                            data={[
-                              {
-                                label: `${t.reduksjonAvBpsAndelAvU.bpsAndelAvU}${
-                                  !erVedtakFraBBM &&
-                                  row.bidragJustertForNettoBarnetilleggBP
-                                    ? t.reduksjonAvBpsAndelAvU
-                                        .justertOppTilBpsNettoBarnetillegg
-                                    : ""
-                                }`,
+      <DokumentTabell
+        kolonner={[
+          { tittel: ord.barn },
+          { tittel: ord.saksnummer },
+          { tittel: t.kolonner.løpendeBidrag },
+          { tittel: t.kolonner.samvær },
+          { tittel: t.kolonner.reduksjonAvBpsAndelAvU },
+          { tittel: ord.sum },
+        ]}
+      >
+        {delberegning.beregnetBidragPerBarnListe.map(
+          ({ beregnetBidragPerBarn: row, personidentBarn }, index: number) => {
+            const showBeregningAvU =
+              row.beregnetBidrag !== 0 || row.faktiskBeløp !== 0;
+            const erVedtakFraBBM =
+              row.erVedtakKildeBBM === undefined ||
+              row.erVedtakKildeBBM === true;
 
-                                value: formatterBeløpForBeregning(
-                                  erVedtakFraBBM
-                                    ? row.beregnetBeløp
-                                    : row.bruttoBidragEtterBarnetilleggBM,
-                                  true,
-                                ),
-                              },
-                              {
-                                label: t.reduksjonAvBpsAndelAvU.faktiskBidrag,
-                                value: (
-                                  <div>
-                                    -{" "}
-                                    {formatterBeløpForBeregning(
-                                      erVedtakFraBBM
-                                        ? row.faktiskBeløp
-                                        : row.bruttoBidragEtterBarnetilleggBP,
-                                      true,
-                                    )}
-                                  </div>
-                                ),
-                              },
-                            ]}
-                            result={{
-                              label: ord.resultat,
-                              value: formatterBeløpForBeregning(
-                                row.reduksjonUnderholdskostnad,
-                                true,
-                              ),
-                            }}
-                          />
-                        ),
-                      },
-                    ]
-                  : undefined,
-                columns: [
-                  {
-                    content: personidentBarn,
-                  },
-                  {
-                    content: row.saksnummer,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(row.løpendeBeløp, true),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      row.samværsfradrag,
-                      true,
-                    ),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
+            return (
+              <Fragment key={`${personidentBarn}-${row.saksnummer}-${index}`}>
+                <Tabellrad index={index}>
+                  <Tabellcelle>{personidentBarn}</Tabellcelle>
+                  <Tabellcelle>{row.saksnummer}</Tabellcelle>
+                  <Tabellcelle>
+                    {formatterBeløpForBeregning(row.løpendeBeløp, true)}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {formatterBeløpForBeregning(row.samværsfradrag, true)}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {formatterBeløpForBeregning(
                       row.reduksjonUnderholdskostnad,
                       true,
-                    ),
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      row.beregnetBidrag,
-                      true,
-                    ),
-                  },
-                ],
-              };
-            })
-            .concat([
-              {
-                skipPadding: true,
-                columns: [
-                  {
-                    content: "",
-                    colSpan: 4,
-                  } as TableColumn,
-                  {
-                    content: t.beregnetTotalbidrag,
-                    labelBold: true,
-                    textAlign: "right",
-                    colSpan: 1,
-                  } as TableColumn,
-                  {
-                    textAlign: "center",
-                    content: formatterBeløpForBeregning(
-                      delberegning.bidragspliktigesBeregnedeTotalbidrag,
-                      true,
-                    ),
-                  } as TableColumn,
-                ] as TableColumn[],
-              } as TableRow,
-              {
-                zebraStripe: false,
-                skipPadding: true,
-                skipBorderBottom: true,
-                columns: [
-                  {
-                    content: t.forklaring,
-                    colSpan: 7,
-                  },
-                ] as TableColumn[],
-              } as TableRow,
-            ]) as TableRow[],
-        }}
-      />
+                    )}
+                  </Tabellcelle>
+                  <Tabellcelle>
+                    {formatterBeløpForBeregning(row.beregnetBidrag, true)}
+                  </Tabellcelle>
+                </Tabellrad>
+                {showBeregningAvU && (
+                  <Tabelldetaljer index={index}>
+                    <CalculationTable
+                      width={"200px"}
+                      simpleStyling
+                      className={"ml-2"}
+                      title={t.reduksjonAvBpsAndelAvU.tittel}
+                      data={[
+                        {
+                          label: `${t.reduksjonAvBpsAndelAvU.bpsAndelAvU}${
+                            !erVedtakFraBBM &&
+                            row.bidragJustertForNettoBarnetilleggBP
+                              ? t.reduksjonAvBpsAndelAvU
+                                  .justertOppTilBpsNettoBarnetillegg
+                              : ""
+                          }`,
+                          value: formatterBeløpForBeregning(
+                            erVedtakFraBBM
+                              ? row.beregnetBeløp
+                              : row.bruttoBidragEtterBarnetilleggBM,
+                            true,
+                          ),
+                        },
+                        {
+                          label: t.reduksjonAvBpsAndelAvU.faktiskBidrag,
+                          value: (
+                            <div>
+                              -{" "}
+                              {formatterBeløpForBeregning(
+                                erVedtakFraBBM
+                                  ? row.faktiskBeløp
+                                  : row.bruttoBidragEtterBarnetilleggBP,
+                                true,
+                              )}
+                            </div>
+                          ),
+                        },
+                      ]}
+                      result={{
+                        label: ord.resultat,
+                        value: formatterBeløpForBeregning(
+                          row.reduksjonUnderholdskostnad,
+                          true,
+                        ),
+                      }}
+                    />
+                  </Tabelldetaljer>
+                )}
+              </Fragment>
+            );
+          },
+        )}
+        <Tabellrad
+          index={delberegning.beregnetBidragPerBarnListe.length}
+          skipPadding
+        >
+          <Tabellcelle colSpan={4} />
+          <Tabellcelle labelBold textAlign="right" colSpan={1}>
+            {t.beregnetTotalbidrag}
+          </Tabellcelle>
+          <Tabellcelle textAlign="center">
+            {formatterBeløpForBeregning(
+              delberegning.bidragspliktigesBeregnedeTotalbidrag,
+              true,
+            )}
+          </Tabellcelle>
+        </Tabellrad>
+        <Tabellrad
+          index={delberegning.beregnetBidragPerBarnListe.length + 1}
+          zebraStripe={false}
+          skipPadding
+          skipBorderBottom
+        >
+          <Tabellcelle colSpan={7}>{t.forklaring}</Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
     </div>
   );
 };

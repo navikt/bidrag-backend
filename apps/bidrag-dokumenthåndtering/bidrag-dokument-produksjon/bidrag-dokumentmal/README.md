@@ -114,6 +114,10 @@ delene rendres hver for seg.
 verdier. Bruk `Feltrader` når radene bygges fra data. De justerte radvariantene bevarer kolonnebreddene og
 resultatkolonnen i tabellene som bruker den utformingen. Sett tittel, bredde og CSS-klasser rundt tabellen.
 
+[`DokumentTabell`](app/components/DokumentTabell.tsx) lar deg skrive rader og celler direkte i JSX.
+Bruk `Tabellrad` og `Tabellcelle`, og `Tabelldetaljer` når en rad har opplysninger under seg.
+Gi både raden og detaljene samme radindeks, slik at stripingen stemmer.
+
 **Deler under hverandre.** Bruk [`DokumentStabel`](app/components/DokumentStabel.tsx) med `gap={1}` til `gap={4}`
 for mellomrom på 4 til 16 piksler. På skjerm bruker den flex. Ved utskrift bruker den blokkflyt, slik at WeasyPrint
 slipper gjentatte flex-beregninger av lange tabeller. Barnas egne marger kommer i tillegg til mellomrommet.

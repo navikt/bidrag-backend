@@ -1,11 +1,11 @@
+import { Fragment, type ReactNode } from "react";
 import {
-  CommonTable,
-  RowContent,
-  TableColumn,
-  TableData,
-  TableHeader,
-  TableRow,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  type Kolonne as Tabellkolonne,
+  type RowContent,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { verdiForFelt } from "~/utils/felt";
 import { Visningsformat } from "~/utils/visning";
 
@@ -38,25 +38,26 @@ type KolonneTabellProps<T> = {
   /** Overstyr innholdet i en kolonne når verdien ikke kan leses rett fra input. */
   celler?: Record<string, Celleverdi<T>>;
   /** Rader som legges til etter dataradene, f.eks. en sumrad. */
-  ekstraRader?: TableData["rows"];
+  ekstraRader?: ReactNode;
   layoutAuto?: boolean;
   className?: string;
 };
 
-export function kolonneoverskrifter(oppsett: Tabelloppsett): TableHeader[] {
-  return oppsett.kolonner.map((k) => ({ name: k.tittel, width: k.bredde }));
+export function kolonneoverskrifter(oppsett: Tabelloppsett): Tabellkolonne[] {
+  return oppsett.kolonner.map((k) => ({
+    tittel: k.tittel,
+    bredde: k.bredde,
+  }));
 }
 
 export function kolonneceller<T extends object>(
   oppsett: Tabelloppsett,
   rad: T,
   celler: Record<string, Celleverdi<T>> = {},
-): TableColumn[] {
+): RowContent[] {
   return oppsett.kolonner.map((k) => {
     const formatert = verdiForFelt(rad, k.felt, k.format);
-    return {
-      content: k.felt in celler ? celler[k.felt](rad, formatert) : formatert,
-    };
+    return k.felt in celler ? celler[k.felt](rad, formatert) : formatert;
   });
 }
 
@@ -72,25 +73,35 @@ export function KolonneTabell<T extends object>({
   oppsett,
   rader,
   celler = {},
-  ekstraRader = [],
+  ekstraRader,
   layoutAuto,
   className,
 }: KolonneTabellProps<T>) {
-  const data: TableData = {
-    headers: kolonneoverskrifter(oppsett),
-    rows: rader
-      .map((rad): TableRow => ({
-        periodColumn: periodelinje(oppsett, rad),
-        columns: kolonneceller(oppsett, rad, celler),
-      }))
-      .concat(ekstraRader),
-  };
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto={layoutAuto}
-      width={oppsett.bredde}
-      data={data}
+      bredde={oppsett.bredde}
+      kolonner={kolonneoverskrifter(oppsett)}
       className={className}
-    />
+    >
+      {rader.map((rad, index) => {
+        const periode = periodelinje(oppsett, rad);
+        return (
+          <Fragment key={index}>
+            {periode && (
+              <Tabellrad index={1} periode>
+                <Tabellcelle fullSpan>{periode}</Tabellcelle>
+              </Tabellrad>
+            )}
+            <Tabellrad index={index} harPeriode={!!periode}>
+              {kolonneceller(oppsett, rad, celler).map((celle, celleIndex) => (
+                <Tabellcelle key={celleIndex}>{celle}</Tabellcelle>
+              ))}
+            </Tabellrad>
+          </Fragment>
+        );
+      })}
+      {ekstraRader}
+    </DokumentTabell>
   );
 }

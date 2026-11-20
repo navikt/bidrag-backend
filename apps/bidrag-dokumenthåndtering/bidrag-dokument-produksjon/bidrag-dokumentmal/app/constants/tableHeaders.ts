@@ -1,6 +1,6 @@
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import { TableHeader } from "~/components/CommonTable";
+import type { Kolonne } from "~/components/DokumentTabell";
 import { Styling } from "~/components/notat_felles/ThemeContext";
 
 export const getInntektTableHeaders = (
@@ -12,35 +12,35 @@ export const getInntektTableHeaders = (
   [
     !erBarnetillegg || styling == "V1"
       ? {
-          name: tekster.tabell.felles.fraTilOgMed,
-          width: inkluderKilde ? "170px" : erBarnetillegg ? "150px" : "345px",
+          tittel: tekster.tabell.felles.fraTilOgMed,
+          bredde: inkluderKilde ? "170px" : erBarnetillegg ? "150px" : "345px",
         }
       : undefined,
     inkluderKilde
       ? {
-          name: tekster.tabell.felles.kilde,
-          width: erBarnetillegg ? "70px" : "230px",
+          tittel: tekster.tabell.felles.kilde,
+          bredde: erBarnetillegg ? "70px" : "230px",
         }
       : undefined,
     erBarnetillegg && erBidrag
       ? [
-          { name: ord.type, width: "160px" },
-          { name: ord.beløp, width: "80px" },
-          { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
-          { name: tekster.tabell.inntekt.skattesats, width: "80px" },
-          { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
+          { tittel: ord.type, bredde: "160px" },
+          { tittel: ord.beløp, bredde: "80px" },
+          { tittel: tekster.tabell.inntekt.beløpstype, bredde: "80px" },
+          { tittel: tekster.tabell.inntekt.skattesats, bredde: "80px" },
+          { tittel: tekster.tabell.inntekt.beløp12Mnd, bredde: "120px" },
         ]
       : erBarnetillegg
         ? [
-            { name: ord.type, width: "160px" },
-            { name: ord.beløp, width: "80px" },
-            { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
-            { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
+            { tittel: ord.type, bredde: "160px" },
+            { tittel: ord.beløp, bredde: "80px" },
+            { tittel: tekster.tabell.inntekt.beløpstype, bredde: "80px" },
+            { tittel: tekster.tabell.inntekt.beløp12Mnd, bredde: "120px" },
           ]
         : {
-            name: ord.beløp,
-            width: erBarnetillegg ? "140px" : undefined,
+            tittel: ord.beløp,
+            bredde: erBarnetillegg ? "140px" : undefined,
           },
   ]
     .filter((d) => d !== undefined)
-    .flatMap((d) => d) as TableHeader[];
+    .flatMap((d) => d) as Kolonne[];

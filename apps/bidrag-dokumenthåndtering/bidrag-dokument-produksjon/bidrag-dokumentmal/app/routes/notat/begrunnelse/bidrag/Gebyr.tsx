@@ -2,7 +2,11 @@ import { Fragment } from "react";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import { rolleTilVisningsnavn } from "~/utils/visningsnavn";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
-import { CommonTable, TableRow } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { konverterRolletype } from "~/utils/converter-utils";
 import {
   NotatGebyrDetaljerDto,
@@ -93,35 +97,6 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
   const inntekt = søknader[0].inntekt;
   const flereSøknader = søknader.length > 1;
 
-  const inntektsrader: TableRow[] = [
-    {
-      columns: [
-        {
-          content: erAvslag
-            ? t.inntekt.inntektSiste12Måneder
-            : t.inntekt.skattepliktigInntekt,
-        },
-        { content: formater(inntekt.skattepliktigInntekt, "beløp") },
-      ],
-    },
-  ];
-  if (!erAvslag) {
-    inntektsrader.push(
-      {
-        columns: [
-          { content: t.inntekt.høyesteBarnetillegg },
-          { content: formater(inntekt.maksBarnetillegg, "beløp") },
-        ],
-      },
-      {
-        columns: [
-          { labelBold: true, content: ord.total },
-          { content: formater(inntekt.totalInntekt, "beløp") },
-        ],
-      },
-    );
-  }
-
   return (
     <>
       <div className={"mb-1 mt-2"}>
@@ -132,13 +107,37 @@ function GebyrForRolle({ søknader }: { søknader: NotatGebyrDetaljerDto[] }) {
         </FeltTabell>
       </div>
       <div>
-        <CommonTable
+        <DokumentTabell
           layoutAuto
-          data={{
-            headers: [{ name: ord.beskrivelse }, { name: ord.beløp }],
-            rows: inntektsrader,
-          }}
-        />
+          kolonner={[{ tittel: ord.beskrivelse }, { tittel: ord.beløp }]}
+        >
+          <Tabellrad index={0}>
+            <Tabellcelle>
+              {erAvslag
+                ? t.inntekt.inntektSiste12Måneder
+                : t.inntekt.skattepliktigInntekt}
+            </Tabellcelle>
+            <Tabellcelle>
+              {formater(inntekt.skattepliktigInntekt, "beløp")}
+            </Tabellcelle>
+          </Tabellrad>
+          {!erAvslag && (
+            <>
+              <Tabellrad index={1}>
+                <Tabellcelle>{t.inntekt.høyesteBarnetillegg}</Tabellcelle>
+                <Tabellcelle>
+                  {formater(inntekt.maksBarnetillegg, "beløp")}
+                </Tabellcelle>
+              </Tabellrad>
+              <Tabellrad index={2}>
+                <Tabellcelle labelBold>{ord.total}</Tabellcelle>
+                <Tabellcelle>
+                  {formater(inntekt.totalInntekt, "beløp")}
+                </Tabellcelle>
+              </Tabellrad>
+            </>
+          )}
+        </DokumentTabell>
         {søknader.map((gebyr, i) => (
           <Fragment key={gebyr.søknad?.søknadsid ?? i}>
             <div className={"mt-4"}>

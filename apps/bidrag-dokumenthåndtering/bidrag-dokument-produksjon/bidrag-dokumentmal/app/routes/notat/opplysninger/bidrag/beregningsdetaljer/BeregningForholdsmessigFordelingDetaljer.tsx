@@ -6,10 +6,10 @@ import {
 } from "~/utils/visningsnavn";
 import { FeltTabell, Feltrader } from "~/components/FeltTabell";
 import {
-  CommonTable,
-  TableHeader,
-  TableColumn,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import Person from "~/components/Person";
 import DokumentStabel from "~/components/DokumentStabel";
 import { BeregningBarn } from "~/types/commonTypes";
@@ -283,52 +283,40 @@ export const ForholdsmessigFordelingSøknadsbarn = ({
           ? t.søknadsbarn.tittelNårAndreBarnHarLøpendeBidrag
           : t.søknadsbarn.tittel}
       </h4>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            { name: ord.barn, width: "500px" },
-            { name: t.søknadsbarn.kolonner.andelU, width: "50px" },
-          ] as TableHeader[],
-          rows: søknadsbarn
-            .map((b) => ({
-              columns: [
-                {
-                  content: (
-                    <Person
-                      fødselsdato={b.barn.fødselsdato!}
-                      navn={b.barn.navn!}
-                      erBeskyttet={b.barn.erBeskyttet}
-                    />
-                  ),
-                  colSpan: 1,
-                },
-                {
-                  content: formatterBeløpForBeregning(
-                    b.bidragTilFordeling,
-                    true,
-                  ),
-                },
-              ] as TableColumn[],
-            }))
-            .concat([
-              {
-                columns: [
-                  {
-                    content: ord.sum,
-                    labelBold: true,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      sumFordeling.sumBidragTilFordelingSøknadsbarn,
-                      true,
-                    ),
-                  },
-                ] as TableColumn[],
-              },
-            ]),
-        }}
-      />
+        kolonner={[
+          { tittel: ord.barn, bredde: "500px" },
+          {
+            tittel: t.søknadsbarn.kolonner.andelU,
+            bredde: "50px",
+          },
+        ]}
+      >
+        {søknadsbarn.map((b, index) => (
+          <Tabellrad key={b.barn.ident} index={index}>
+            <Tabellcelle colSpan={1}>
+              <Person
+                fødselsdato={b.barn.fødselsdato!}
+                navn={b.barn.navn!}
+                erBeskyttet={b.barn.erBeskyttet}
+              />
+            </Tabellcelle>
+            <Tabellcelle>
+              {formatterBeløpForBeregning(b.bidragTilFordeling, true)}
+            </Tabellcelle>
+          </Tabellrad>
+        ))}
+        <Tabellrad index={søknadsbarn.length}>
+          <Tabellcelle labelBold>{ord.sum}</Tabellcelle>
+          <Tabellcelle>
+            {formatterBeløpForBeregning(
+              sumFordeling.sumBidragTilFordelingSøknadsbarn,
+              true,
+            )}
+          </Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
     </div>
   );
 };
@@ -589,55 +577,39 @@ export const BpsBeregnedeTotalbidragTabell = ({
   return (
     <div className="mb-2">
       <h4>{title}</h4>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            { name: ord.barn, width: "500px" },
-            {
-              name: t.beregnedeTotalbidrag.kolonner.beregnetBidrag,
-              width: "50px",
-            },
-          ] as TableHeader[],
-          rows: beregning
-            .filter((b) => !b.privatAvtale)
-            .map((b) => ({
-              columns: [
-                {
-                  content: (
-                    <Person
-                      fødselsdato={b.barn.fødselsdato!}
-                      navn={b.barn.navn!}
-                      erBeskyttet={b.barn.erBeskyttet}
-                    />
-                  ),
-                  colSpan: 1,
-                },
-                {
-                  content: formatterBeløpForBeregning(
-                    b.bidragTilFordeling,
-                    true,
-                  ),
-                },
-              ] as TableColumn[],
-            }))
-            .concat([
-              {
-                columns: [
-                  {
-                    content: ord.sum,
-                    labelBold: true,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(
-                      bidragspliktigesBeregnedeTotalbidrag,
-                    ),
-                  },
-                ] as TableColumn[],
-              },
-            ]),
-        }}
-      />
+        kolonner={[
+          { tittel: ord.barn, bredde: "500px" },
+          {
+            tittel: t.beregnedeTotalbidrag.kolonner.beregnetBidrag,
+            bredde: "50px",
+          },
+        ]}
+      >
+        {beregning
+          .filter((b) => !b.privatAvtale)
+          .map((b, index) => (
+            <Tabellrad key={b.barn.ident} index={index}>
+              <Tabellcelle colSpan={1}>
+                <Person
+                  fødselsdato={b.barn.fødselsdato!}
+                  navn={b.barn.navn!}
+                  erBeskyttet={b.barn.erBeskyttet}
+                />
+              </Tabellcelle>
+              <Tabellcelle>
+                {formatterBeløpForBeregning(b.bidragTilFordeling, true)}
+              </Tabellcelle>
+            </Tabellrad>
+          ))}
+        <Tabellrad index={beregning.filter((b) => !b.privatAvtale).length}>
+          <Tabellcelle labelBold>{ord.sum}</Tabellcelle>
+          <Tabellcelle>
+            {formatterBeløpForBeregning(bidragspliktigesBeregnedeTotalbidrag)}
+          </Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
     </div>
   );
 };
@@ -655,49 +627,34 @@ export const BpsPrivatAvtalerTabell = ({
   return (
     <div className="mb-2">
       <h4>{t.privatAvtaler.tittel}</h4>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            { name: ord.barn, width: "500px" },
-            { name: ord.beløp, width: "50px" },
-          ] as TableHeader[],
-          rows: privatAvtaleBarn
-            .map((b) => ({
-              columns: [
-                {
-                  content: (
-                    <Person
-                      fødselsdato={b.barn.fødselsdato!}
-                      navn={b.barn.navn!}
-                      erBeskyttet={b.barn.erBeskyttet}
-                    />
-                  ),
-                  colSpan: 1,
-                },
-                {
-                  content: formatterBeløpForBeregning(
-                    b.bidragTilFordeling,
-                    true,
-                  ),
-                },
-              ] as TableColumn[],
-            }))
-            .concat([
-              {
-                columns: [
-                  {
-                    content: ord.sum,
-                    labelBold: true,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(sumBidragPrivatAvtale),
-                  },
-                ] as TableColumn[],
-              },
-            ]),
-        }}
-      />
+        kolonner={[
+          { tittel: ord.barn, bredde: "500px" },
+          { tittel: ord.beløp, bredde: "50px" },
+        ]}
+      >
+        {privatAvtaleBarn.map((b, index) => (
+          <Tabellrad key={b.barn.ident} index={index}>
+            <Tabellcelle colSpan={1}>
+              <Person
+                fødselsdato={b.barn.fødselsdato!}
+                navn={b.barn.navn!}
+                erBeskyttet={b.barn.erBeskyttet}
+              />
+            </Tabellcelle>
+            <Tabellcelle>
+              {formatterBeløpForBeregning(b.bidragTilFordeling, true)}
+            </Tabellcelle>
+          </Tabellrad>
+        ))}
+        <Tabellrad index={privatAvtaleBarn.length}>
+          <Tabellcelle labelBold>{ord.sum}</Tabellcelle>
+          <Tabellcelle>
+            {formatterBeløpForBeregning(sumBidragPrivatAvtale)}
+          </Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
     </div>
   );
 };
@@ -729,91 +686,95 @@ export const BpsPrivatAvtalerTabellIkkeTilFordeling = ({
 
   function renderTablePrivatAvtale() {
     return (
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            {
-              name: ord.barn,
-              width: "500px",
-            },
-            finnesIndeksregulering && {
-              name: t.bidragSomIkkeKanFordeles.kolonner.indeks,
-              width: "50px",
-            },
-            inneholderUtenlandsk && {
-              name: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløp,
-              width: "50px",
-            },
-            inneholderUtenlandsk && {
-              name: t.bidragSomIkkeKanFordeles.kolonner.valutakurs,
-              width: "50px",
-            },
-            inneholderUtenlandsk && {
-              name: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløpNok,
-              width: "50px",
-            },
-            inneholderUtenlandsk && {
-              name: t.bidragSomIkkeKanFordeles.kolonner.samvær,
-              width: "50px",
-            },
-            {
-              name: ord.beløp,
-              width: "50px",
-            },
-          ].filter((h) => h != null) as TableHeader[],
-          rows: bidragIkkeTilFordeling
-            .map(({ beregnetBidragPerBarn: row, barn }, rowIndex) => ({
-              columns: [
+        kolonner={[
+          {
+            tittel: ord.barn,
+            bredde: "500px",
+          },
+          ...(finnesIndeksregulering
+            ? [
                 {
-                  content: (
-                    <Person
-                      fødselsdato={barn.fødselsdato!}
-                      navn={barn.navn!}
-                      erBeskyttet={barn.erBeskyttet}
-                    />
-                  ),
-                  colSpan: 1,
+                  tittel: t.bidragSomIkkeKanFordeles.kolonner.indeks,
+                  bredde: "50px",
                 },
-                finnesIndeksregulering && {
-                  content: formatterProsent(row.indeksreguleringFaktor),
-                },
-                inneholderUtenlandsk && {
-                  content:
-                    row.valutakode === "NOK"
-                      ? formatterBeløpForBeregning(row.løpendeBeløp)
-                      : `${formatterBeløpForBeregning(row.løpendeBeløp)} (${row.valutakode})`,
-                },
-                løperIUtlandskValuta && {
-                  content: formatterBeløp(row.valutakurs),
-                },
-                inneholderUtenlandsk && {
-                  content: formatterBeløpForBeregning(row.beregnetBeløp),
-                },
-                inneholderUtenlandsk && {
-                  content: formatterBeløpForBeregning(row.samværsfradrag),
+              ]
+            : []),
+          ...(inneholderUtenlandsk
+            ? [
+                {
+                  tittel: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløp,
+                  bredde: "50px",
                 },
                 {
-                  content: formatterBeløpForBeregning(row.beregnetBidrag, true),
+                  tittel: t.bidragSomIkkeKanFordeles.kolonner.valutakurs,
+                  bredde: "50px",
                 },
-              ].filter((d) => d != null) as TableColumn[],
-            }))
-            .concat([
-              {
-                columns: [
-                  {
-                    content: ord.sum,
-                    labelBold: true,
-                    colSpanNegative: 1,
-                  },
-                  {
-                    content: formatterBeløpForBeregning(sumBidrag),
-                  },
-                ] as TableColumn[],
-              },
-            ]),
-        }}
-      />
+                {
+                  tittel: t.bidragSomIkkeKanFordeles.kolonner.avtalebeløpNok,
+                  bredde: "50px",
+                },
+                {
+                  tittel: t.bidragSomIkkeKanFordeles.kolonner.samvær,
+                  bredde: "50px",
+                },
+              ]
+            : []),
+          {
+            tittel: ord.beløp,
+            bredde: "50px",
+          },
+        ]}
+      >
+        {bidragIkkeTilFordeling.map(
+          ({ beregnetBidragPerBarn: row, barn }, index) => (
+            <Tabellrad key={barn.ident} index={index}>
+              <Tabellcelle colSpan={1}>
+                <Person
+                  fødselsdato={barn.fødselsdato!}
+                  navn={barn.navn!}
+                  erBeskyttet={barn.erBeskyttet}
+                />
+              </Tabellcelle>
+              {finnesIndeksregulering && (
+                <Tabellcelle>
+                  {formatterProsent(row.indeksreguleringFaktor)}
+                </Tabellcelle>
+              )}
+              {inneholderUtenlandsk && (
+                <Tabellcelle>
+                  {row.valutakode === "NOK"
+                    ? formatterBeløpForBeregning(row.løpendeBeløp)
+                    : `${formatterBeløpForBeregning(row.løpendeBeløp)} (${row.valutakode})`}
+                </Tabellcelle>
+              )}
+              {løperIUtlandskValuta && (
+                <Tabellcelle>{formatterBeløp(row.valutakurs)}</Tabellcelle>
+              )}
+              {inneholderUtenlandsk && (
+                <Tabellcelle>
+                  {formatterBeløpForBeregning(row.beregnetBeløp)}
+                </Tabellcelle>
+              )}
+              {inneholderUtenlandsk && (
+                <Tabellcelle>
+                  {formatterBeløpForBeregning(row.samværsfradrag)}
+                </Tabellcelle>
+              )}
+              <Tabellcelle>
+                {formatterBeløpForBeregning(row.beregnetBidrag, true)}
+              </Tabellcelle>
+            </Tabellrad>
+          ),
+        )}
+        <Tabellrad index={bidragIkkeTilFordeling.length}>
+          <Tabellcelle labelBold colSpanNegative={1}>
+            {ord.sum}
+          </Tabellcelle>
+          <Tabellcelle>{formatterBeløpForBeregning(sumBidrag)}</Tabellcelle>
+        </Tabellrad>
+      </DokumentTabell>
     );
   }
 

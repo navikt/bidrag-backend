@@ -13,11 +13,14 @@ import elementIds from "~/utils/elementIds";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import opplysningerTekster from "~/tekster/notat/opplysninger/felles.yaml";
+import { Fragment } from "react";
 import {
-  CommonTable,
-  TableColumn,
-  TableHeader,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  type Kolonne,
+  Tabellcelle,
+  Tabelldetaljer,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import { getInntektTableHeaders } from "~/constants/tableHeaders";
 import {
   useNotatFelles,
@@ -175,44 +178,46 @@ function InntektTable({
 }: InntektTableProps) {
   return (
     <div className={"table_container"}>
-      <CommonTable
-        data={{
-          headers: [
-            { name: tekster.tabell.felles.fraTilOgMed, width: "170px" },
+      <DokumentTabell
+        kolonner={
+          [
+            { tittel: tekster.tabell.felles.fraTilOgMed, bredde: "170px" },
             inkluderBeskrivelse && {
-              name: ord.beskrivelse,
-              width: "175px",
+              tittel: ord.beskrivelse,
+              bredde: "175px",
             },
-            { name: ord.beløp },
-          ].filter((d) => typeof d != "boolean") as TableHeader[],
-          rows: data.map((d, i) => {
-            const periode = d.opprinneligPeriode;
-            return {
-              columns: [
-                { content: formatPeriode(periode!.fom, periode!.til) },
-                inkluderBeskrivelse && {
-                  content: `${d.visningsnavn}${d.historisk ? t.historisk : ""}`,
-                },
-                { content: formatterBeløp(d.beløp) },
-              ].filter((d) => typeof d != "boolean") as TableColumn[],
-              expandableContent:
-                medInntektsposter && d.inntektsposter.length > 0
-                  ? [
-                      {
-                        content: (
-                          <Inntektsposter
-                            data={d}
-                            periode={periode}
-                            withHorizontalLine={data.length > i + 1}
-                          />
-                        ),
-                      },
-                    ]
-                  : undefined,
-            };
-          }),
-        }}
-      />
+            { tittel: ord.beløp },
+          ].filter((d) => typeof d != "boolean") as Kolonne[]
+        }
+      >
+        {data.map((d, index) => {
+          const periode = d.opprinneligPeriode;
+          return (
+            <Fragment key={index}>
+              <Tabellrad index={index}>
+                <Tabellcelle>
+                  {formatPeriode(periode!.fom, periode!.til)}
+                </Tabellcelle>
+                {inkluderBeskrivelse && (
+                  <Tabellcelle>
+                    {`${d.visningsnavn}${d.historisk ? t.historisk : ""}`}
+                  </Tabellcelle>
+                )}
+                <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
+              </Tabellrad>
+              {medInntektsposter && d.inntektsposter.length > 0 && (
+                <Tabelldetaljer index={index}>
+                  <Inntektsposter
+                    data={d}
+                    periode={periode}
+                    withHorizontalLine={data.length > index + 1}
+                  />
+                </Tabelldetaljer>
+              )}
+            </Fragment>
+          );
+        })}
+      </DokumentTabell>
     </div>
   );
 }
@@ -221,28 +226,37 @@ function ArbeidsforholdTable({ data }: { data: Arbeidsforhold[] }) {
   if (data.length === 0) return null;
 
   return (
-    <CommonTable
-      width={"450px"}
-      data={{
-        headers: [
-          { name: ord.periode, width: "100px" },
-          { name: tekster.tabell.arbeidsforhold.arbeidsgiver, width: "140px" },
-          { name: tekster.tabell.arbeidsforhold.stilling, width: "40px" },
-          { name: tekster.tabell.arbeidsforhold.lønnsendring, width: "80px" },
-        ],
-        rows: data.map((d) => ({
-          columns: [
-            { content: formatPeriode(d.periode.fom, d.periode.til) },
-            { content: d.arbeidsgiver },
-            {
-              content:
-                d.stillingProsent != undefined ? d.stillingProsent + "%" : "0%",
-            },
-            { content: dateToDDMMYYYY(d.lønnsendringDato) },
-          ],
-        })),
-      }}
-    />
+    <DokumentTabell
+      bredde="450px"
+      kolonner={[
+        { tittel: ord.periode, bredde: "100px" },
+        {
+          tittel: tekster.tabell.arbeidsforhold.arbeidsgiver,
+          bredde: "140px",
+        },
+        {
+          tittel: tekster.tabell.arbeidsforhold.stilling,
+          bredde: "40px",
+        },
+        {
+          tittel: tekster.tabell.arbeidsforhold.lønnsendring,
+          bredde: "80px",
+        },
+      ]}
+    >
+      {data.map((d, index) => (
+        <Tabellrad key={index} index={index}>
+          <Tabellcelle>
+            {formatPeriode(d.periode.fom, d.periode.til)}
+          </Tabellcelle>
+          <Tabellcelle>{d.arbeidsgiver}</Tabellcelle>
+          <Tabellcelle>
+            {d.stillingProsent != undefined ? d.stillingProsent + "%" : "0%"}
+          </Tabellcelle>
+          <Tabellcelle>{dateToDDMMYYYY(d.lønnsendringDato)}</Tabellcelle>
+        </Tabellrad>
+      ))}
+    </DokumentTabell>
   );
 }
 function InntektPerBarnTable({ data }: InntektTableProps) {
@@ -264,43 +278,59 @@ function InntektPerBarnTable({ data }: InntektTableProps) {
             }}
           >
             <TableGjelderBarn gjelderBarn={gjelderBarn} />
-            <CommonTable
-              width={"580px"}
-              data={{
-                headers: getInntektTableHeaders(erBarnetillegg, false, styling),
-                rows: data
-                  .filter((d) => d.kilde == Kilde.OFFENTLIG)
-                  .map((d) => {
-                    const periode = d.periode ?? d.opprinneligPeriode;
-                    const visningsnavnInntektstype =
-                      d.inntektsposter.length > 0
-                        ? d.inntektsposter[0].visningsnavn
-                        : "";
-                    return {
-                      periodColumn:
-                        styling == "V2" && erBarnetillegg
-                          ? formatPeriode(periode!.fom, periode!.til)
-                          : undefined,
-                      columns: [
-                        (styling == "V1" || !erBarnetillegg) && {
-                          content: formatPeriode(periode!.fom, periode!.til),
-                        },
-                        erBarnetillegg
-                          ? [
-                              { content: visningsnavnInntektstype },
-                              {
-                                content: formatterBeløp(d.månedsbeløp ?? 0),
-                              },
-                              { content: formatterBeløp(d.beløp) },
-                            ]
-                          : { content: formatterBeløp(d.beløp) },
-                      ]
-                        .filter((d) => typeof d != "boolean")
-                        .flatMap((d) => d as TableColumn),
-                    };
-                  }),
-              }}
-            />
+            <DokumentTabell
+              bredde="580px"
+              kolonner={getInntektTableHeaders(
+                erBarnetillegg,
+                false,
+                true,
+                "V2",
+              )}
+            >
+              {data
+                .filter((d) => d.kilde == Kilde.OFFENTLIG)
+                .map((d, index) => {
+                  const periode = d.periode ?? d.opprinneligPeriode;
+                  const visningsnavnInntektstype =
+                    d.inntektsposter.length > 0
+                      ? d.inntektsposter[0].visningsnavn
+                      : "";
+                  const periodColumn =
+                    styling == "V2" && erBarnetillegg
+                      ? formatPeriode(periode!.fom, periode!.til)
+                      : undefined;
+
+                  return (
+                    <Fragment key={index}>
+                      {periodColumn && (
+                        <Tabellrad index={1} periode>
+                          <Tabellcelle fullSpan>{periodColumn}</Tabellcelle>
+                        </Tabellrad>
+                      )}
+                      <Tabellrad index={index} harPeriode={!!periodColumn}>
+                        {(styling == "V1" || !erBarnetillegg) && (
+                          <Tabellcelle>
+                            {formatPeriode(periode!.fom, periode!.til)}
+                          </Tabellcelle>
+                        )}
+                        {erBarnetillegg ? (
+                          <>
+                            <Tabellcelle>
+                              {visningsnavnInntektstype}
+                            </Tabellcelle>
+                            <Tabellcelle>
+                              {formatterBeløp(d.månedsbeløp ?? 0)}
+                            </Tabellcelle>
+                            <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
+                          </>
+                        ) : (
+                          <Tabellcelle>{formatterBeløp(d.beløp)}</Tabellcelle>
+                        )}
+                      </Tabellrad>
+                    </Fragment>
+                  );
+                })}
+            </DokumentTabell>
           </div>
         );
       })}

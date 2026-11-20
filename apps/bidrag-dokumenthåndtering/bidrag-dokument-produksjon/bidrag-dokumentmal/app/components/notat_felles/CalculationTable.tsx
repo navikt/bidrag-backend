@@ -1,6 +1,11 @@
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
-import { CommonTable, RowContent } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  type RowContent,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 
 type CalculationTableRowProps = {
   label: RowContent;
@@ -20,41 +25,24 @@ export default function CalculationTable({
   return (
     <div>
       {title && <h4>{title}</h4>}
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        data={{
-          headers: [
-            {
-              name: ord.beskrivelse,
-              width: "250px",
-            },
-            hasCalulcation
-              ? {
-                  name: tekster.tabell.felles.beregning,
-                  width: "250px",
-                }
-              : undefined,
-            {
-              name: ord.beløp,
-              width: "50px",
-            },
-          ].filter((d) => d != undefined),
-          rows: data.map((r) => ({
-            columns: [
-              {
-                content: r.label,
-                labelBold: r.labelBold,
-              },
-              hasCalulcation && {
-                content: r.calculation,
-              },
-              {
-                content: r.result,
-              },
-            ].filter((d) => typeof d != "boolean"),
-          })),
-        }}
-      />
+        kolonner={[
+          { tittel: ord.beskrivelse, bredde: "250px" },
+          ...(hasCalulcation
+            ? [{ tittel: tekster.tabell.felles.beregning, bredde: "250px" }]
+            : []),
+          { tittel: ord.beløp, bredde: "50px" },
+        ]}
+      >
+        {data.map((rad, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle labelBold={rad.labelBold}>{rad.label}</Tabellcelle>
+            {hasCalulcation && <Tabellcelle>{rad.calculation}</Tabellcelle>}
+            <Tabellcelle>{rad.result}</Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
     </div>
   );
 }

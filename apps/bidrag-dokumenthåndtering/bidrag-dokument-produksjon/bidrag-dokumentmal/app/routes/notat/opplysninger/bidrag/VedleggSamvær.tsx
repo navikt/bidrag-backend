@@ -3,7 +3,11 @@ import {
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
 import elementIds from "~/utils/elementIds";
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import DokumentStabel from "~/components/DokumentStabel";
 import { NotatSamvaerBarnDto, NotatSamvaersperiodeDto } from "~/types/Api";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
@@ -108,42 +112,30 @@ function SamværKalkulatorTable({
         </FeltTabell>
       </div>
       <div>
-        <CommonTable
+        <DokumentTabell
           layoutAuto
-          data={{
-            headers: [
-              {
-                name: t.ferieTabell.ferie,
-              },
-              {
-                name: ord.bidragspliktig,
-              },
-              {
-                name: ord.bidragsmottaker,
-              },
-              {
-                name: t.ferieTabell.frekvens,
-              },
-            ],
-            rows: beregning!.ferier.map((ferie) => ({
-              borderBottom: true,
-              columns: [
-                {
-                  content: ferieVisningsnavnMap[ferie.type],
-                },
-                {
-                  content: zeroToEmpty(ferie.bidragspliktigNetter),
-                },
-                {
-                  content: zeroToEmpty(ferie.bidragsmottakerNetter),
-                },
-                {
-                  content: frekvensVisningsnavnMap[ferie.frekvens],
-                },
-              ],
-            })),
-          }}
-        />
+          kolonner={[
+            { tittel: t.ferieTabell.ferie },
+            { tittel: ord.bidragspliktig },
+            { tittel: ord.bidragsmottaker },
+            { tittel: t.ferieTabell.frekvens },
+          ]}
+        >
+          {beregning!.ferier.map((ferie, index) => (
+            <Tabellrad key={index} index={index} borderBottom>
+              <Tabellcelle>{ferieVisningsnavnMap[ferie.type]}</Tabellcelle>
+              <Tabellcelle>
+                {zeroToEmpty(ferie.bidragspliktigNetter)}
+              </Tabellcelle>
+              <Tabellcelle>
+                {zeroToEmpty(ferie.bidragsmottakerNetter)}
+              </Tabellcelle>
+              <Tabellcelle>
+                {frekvensVisningsnavnMap[ferie.frekvens]}
+              </Tabellcelle>
+            </Tabellrad>
+          ))}
+        </DokumentTabell>
         <div>
           <FeltTabell>
             <Feltrad label={t.beregning.ledetekst} labelBold>

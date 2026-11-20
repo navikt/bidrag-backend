@@ -2,11 +2,11 @@ import React, { ReactElement, CSSProperties } from "react";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import {
-  CommonTable,
-  TableColumn,
-  RowContent,
-  TableHeader,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  type RowContent,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 //file:@ts-ignore
 interface CalculationTableData {
   label: RowContent;
@@ -38,63 +38,35 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
   const harBeregning = data.some((d) => d.calculation);
 
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto
-      size={simpleStyling ? "small" : "large"}
-      width={width}
+      storrelse={simpleStyling ? "small" : "large"}
+      bredde={width}
       className={className}
-      data={{
-        headers: [
-          {
-            name: ord.beskrivelse,
-            width: "250px",
-          },
-          harBeregning && {
-            name: tekster.tabell.felles.beregning,
-            width: "250px",
-          },
-          {
-            name: ord.beløp,
-            width: "100px",
-            textAlign: "right",
-          },
-        ].filter((d) => typeof d != "boolean") as TableHeader[],
-        rows: data
-          .map((content) => ({
-            columns: [
-              {
-                content: content.label,
-              },
-              harBeregning && {
-                content: content.calculation,
-              },
-              {
-                textAlign: "right",
-                content: content.value,
-              },
-            ].filter((d) => typeof d != "boolean") as TableColumn[],
-          }))
-          .concat(
-            result
-              ? [
-                  {
-                    columns: [
-                      {
-                        content: result!.label,
-                        colSpan: harBeregning ? 2 : 1,
-                        labelBold: true,
-                      } as TableColumn,
-                      {
-                        textAlign: "right",
-                        content: result!.value,
-                      } as TableColumn,
-                    ],
-                  },
-                ]
-              : [],
-          ),
-      }}
-    />
+      kolonner={[
+        { tittel: ord.beskrivelse, bredde: "250px" },
+        ...(harBeregning
+          ? [{ tittel: tekster.tabell.felles.beregning, bredde: "250px" }]
+          : []),
+        { tittel: ord.beløp, bredde: "100px", tekstjustering: "right" },
+      ]}
+    >
+      {data.map((rad, index) => (
+        <Tabellrad key={index} index={index}>
+          <Tabellcelle>{rad.label}</Tabellcelle>
+          {harBeregning && <Tabellcelle>{rad.calculation}</Tabellcelle>}
+          <Tabellcelle textAlign="right">{rad.value}</Tabellcelle>
+        </Tabellrad>
+      ))}
+      {result && (
+        <Tabellrad index={data.length}>
+          <Tabellcelle colSpan={harBeregning ? 2 : 1} labelBold>
+            {result.label}
+          </Tabellcelle>
+          <Tabellcelle textAlign="right">{result.value}</Tabellcelle>
+        </Tabellrad>
+      )}
+    </DokumentTabell>
   );
 };
 

@@ -7,7 +7,11 @@ import {
   PrivatAvtaleType,
   Vedtakstype,
 } from "~/types/Api";
-import { CommonTable } from "~/components/CommonTable";
+import {
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import bidragTekster from "~/tekster/notat/begrunnelse/bidrag.yaml";
@@ -96,64 +100,50 @@ function PrivatAvtaleManuelleVedtakTabell({
   return (
     <div className={"pt-2"}>
       <h4>{t.vedtakFraNav.tittel}</h4>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        width={"350px"}
-        data={{
-          headers: [
-            {
-              name: t.vedtakFraNav.kolonner.valgt,
-            },
-            {
-              name: t.vedtakFraNav.kolonner.virkningsdato,
-            },
-            {
-              name: t.vedtakFraNav.kolonner.vedtaksdato,
-            },
-            {
-              name: ord.søknadstype,
-            },
-            {
-              name: t.vedtakFraNav.kolonner.resultatSistePeriode,
-            },
-          ],
-          rows: data.map((d) => ({
-            columns: [
-              { content: d.valgt ? ord.ja : ord.nei },
-              { content: dateToDDMMYYYY(d.virkningsDato) },
-              { content: dateToDDMMYYYY(d.fattetTidspunkt) },
-              { content: d.søknadstype },
-              { content: d.resultatSistePeriode },
-            ],
-          })),
-        }}
-      />
+        bredde="350px"
+        kolonner={[
+          { tittel: t.vedtakFraNav.kolonner.valgt },
+          { tittel: t.vedtakFraNav.kolonner.virkningsdato },
+          { tittel: t.vedtakFraNav.kolonner.vedtaksdato },
+          { tittel: ord.søknadstype },
+          { tittel: t.vedtakFraNav.kolonner.resultatSistePeriode },
+        ]}
+      >
+        {data.map((vedtak, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle>{vedtak.valgt ? ord.ja : ord.nei}</Tabellcelle>
+            <Tabellcelle>{dateToDDMMYYYY(vedtak.virkningsDato)}</Tabellcelle>
+            <Tabellcelle>{dateToDDMMYYYY(vedtak.fattetTidspunkt)}</Tabellcelle>
+            <Tabellcelle>{vedtak.søknadstype}</Tabellcelle>
+            <Tabellcelle>{vedtak.resultatSistePeriode}</Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
     </div>
   );
 }
 
 function PrivatAvtaleTabell({ data }: { data: NotatPrivatAvtalePeriodeDto[] }) {
   return (
-    <CommonTable
+    <DokumentTabell
       layoutAuto
-      width={"350px"}
-      data={{
-        headers: [
-          {
-            name: tekster.tabell.felles.fraTilOgMed,
-          },
-          {
-            name: ord.beløp,
-          },
-        ],
-        rows: data.map((d) => ({
-          columns: [
-            { content: formatPeriode(d.periode.fom, d.periode.tom) },
-            { content: formatterBeløp(d.beløp) },
-          ],
-        })),
-      }}
-    />
+      bredde="350px"
+      kolonner={[
+        { tittel: tekster.tabell.felles.fraTilOgMed },
+        { tittel: ord.beløp },
+      ]}
+    >
+      {data.map((periode, index) => (
+        <Tabellrad key={index} index={index}>
+          <Tabellcelle>
+            {formatPeriode(periode.periode.fom, periode.periode.tom)}
+          </Tabellcelle>
+          <Tabellcelle>{formatterBeløp(periode.beløp)}</Tabellcelle>
+        </Tabellrad>
+      ))}
+    </DokumentTabell>
   );
 }
 
@@ -167,30 +157,25 @@ function PrivatAvtaleBeregnetTabell({
   return (
     <div>
       <h4 className={"mb-1 mt-4"}>{t.beregnetPrivatAvtale.tittel}</h4>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        width={"350px"}
-        data={{
-          headers: [
-            {
-              name: tekster.tabell.felles.fraTilOgMed,
-            },
-            {
-              name: t.beregnetPrivatAvtale.indeksprosent,
-            },
-            {
-              name: ord.beløp,
-            },
-          ],
-          rows: perioder.map((d) => ({
-            columns: [
-              { content: formatPeriode(d.periode.fom, d.periode.tom) },
-              { content: formatterProsent(d.indeksfaktor) },
-              { content: formatterBeløp(d.beløp) },
-            ],
-          })),
-        }}
-      />
+        bredde="350px"
+        kolonner={[
+          { tittel: tekster.tabell.felles.fraTilOgMed },
+          { tittel: t.beregnetPrivatAvtale.indeksprosent },
+          { tittel: ord.beløp },
+        ]}
+      >
+        {perioder.map((periode, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle>
+              {formatPeriode(periode.periode.fom, periode.periode.tom)}
+            </Tabellcelle>
+            <Tabellcelle>{formatterProsent(periode.indeksfaktor)}</Tabellcelle>
+            <Tabellcelle>{formatterBeløp(periode.beløp)}</Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
     </div>
   );
 }

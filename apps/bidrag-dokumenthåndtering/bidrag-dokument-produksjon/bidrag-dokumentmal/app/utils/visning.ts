@@ -1,4 +1,4 @@
-import { RowContent } from "~/components/CommonTable";
+import type { RowContent } from "~/components/DokumentTabell";
 import { dateToDDMMYYYY, deductDays, formatPeriode } from "~/utils/date-utils";
 import {
   formatterBeløp,

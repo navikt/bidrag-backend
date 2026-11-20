@@ -7,10 +7,10 @@ import { dateToDDMMYYYY } from "~/utils/date-utils";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
 import {
-  CommonTable,
-  TableHeader,
-  TableColumn,
-} from "~/components/CommonTable";
+  DokumentTabell,
+  Tabellcelle,
+  Tabellrad,
+} from "~/components/DokumentTabell";
 import ord from "~/tekster/ord.yaml";
 import tekster from "~/tekster";
 import særbidragTekster from "~/tekster/notat/begrunnelse/særbidrag.yaml";
@@ -41,61 +41,57 @@ function Utgiftsposter() {
   return (
     <>
       <h3>{t.oversiktOverUtgifter.tittel}</h3>
-      <CommonTable
+      <DokumentTabell
         layoutAuto
-        width={"630px"}
-        data={{
-          headers: [
-            { name: tekster.tabell.utgifter.betaltAvBp, width: "100px" },
-            { name: tekster.tabell.utgifter.dato, width: "70px" },
-            { name: tekster.tabell.utgifter.utgift, width: "120px" },
-            { name: ord.kravbeløp, width: "80px" },
-            { name: ord.godkjentBeløp, width: "110px" },
-            { name: ord.begrunnelse, width: "180px" },
-          ].filter((d) => typeof d != "boolean") as TableHeader[],
-          rows: utgifter.map((d) => {
-            return {
-              columns: [
-                { content: d.betaltAvBp ? ord.ja : ord.nei },
-                { content: dateToDDMMYYYY(d.dato) },
-                { content: d.utgiftstypeVisningsnavn },
-                { content: formatterBeløp(d.kravbeløp) },
-                { content: formatterBeløp(d.godkjentBeløp) },
-                { content: d.begrunnelse },
-              ].filter((d) => typeof d != "boolean") as TableColumn[],
-            };
-          }),
-        }}
-      />
+        bredde="630px"
+        kolonner={[
+          { tittel: tekster.tabell.utgifter.betaltAvBp, bredde: "100px" },
+          { tittel: tekster.tabell.utgifter.dato, bredde: "70px" },
+          { tittel: tekster.tabell.utgifter.utgift, bredde: "120px" },
+          { tittel: ord.kravbeløp, bredde: "80px" },
+          { tittel: ord.godkjentBeløp, bredde: "110px" },
+          { tittel: ord.begrunnelse, bredde: "180px" },
+        ]}
+      >
+        {utgifter.map((utgift, index) => (
+          <Tabellrad key={index} index={index}>
+            <Tabellcelle>{utgift.betaltAvBp ? ord.ja : ord.nei}</Tabellcelle>
+            <Tabellcelle>{dateToDDMMYYYY(utgift.dato)}</Tabellcelle>
+            <Tabellcelle>{utgift.utgiftstypeVisningsnavn}</Tabellcelle>
+            <Tabellcelle>{formatterBeløp(utgift.kravbeløp)}</Tabellcelle>
+            <Tabellcelle>{formatterBeløp(utgift.godkjentBeløp)}</Tabellcelle>
+            <Tabellcelle>{utgift.begrunnelse}</Tabellcelle>
+          </Tabellrad>
+        ))}
+      </DokumentTabell>
 
       {beregnetUtgifter.length > 0 && (
         <div className={"mt-medium mb-medium"}>
           <h3>{t.beregnetTotalt.tittel}</h3>
-          <CommonTable
+          <DokumentTabell
             layoutAuto
-            width={"450px"}
-            data={{
-              headers: [
-                { name: tekster.tabell.utgifter.betaltAvBp, width: "100px" },
-                {
-                  name: tekster.tabell.utgifter.utgiftskategori,
-                  width: "220px",
-                },
-                { name: ord.kravbeløp, width: "80px" },
-                { name: ord.godkjentBeløp, width: "110px" },
-              ].filter((d) => typeof d != "boolean") as TableHeader[],
-              rows: beregnetUtgifter.map((d) => {
-                return {
-                  columns: [
-                    { content: d.betaltAvBp ? ord.ja : ord.nei },
-                    { content: d.utgiftstypeVisningsnavn },
-                    { content: d.totalKravbeløp },
-                    { content: d.totalGodkjentBeløp },
-                  ].filter((d) => typeof d != "boolean") as TableColumn[],
-                };
-              }),
-            }}
-          />
+            bredde="450px"
+            kolonner={[
+              { tittel: tekster.tabell.utgifter.betaltAvBp, bredde: "100px" },
+              {
+                tittel: tekster.tabell.utgifter.utgiftskategori,
+                bredde: "220px",
+              },
+              { tittel: ord.kravbeløp, bredde: "80px" },
+              { tittel: ord.godkjentBeløp, bredde: "110px" },
+            ]}
+          >
+            {beregnetUtgifter.map((utgift, index) => (
+              <Tabellrad key={index} index={index}>
+                <Tabellcelle>
+                  {utgift.betaltAvBp ? ord.ja : ord.nei}
+                </Tabellcelle>
+                <Tabellcelle>{utgift.utgiftstypeVisningsnavn}</Tabellcelle>
+                <Tabellcelle>{utgift.totalKravbeløp}</Tabellcelle>
+                <Tabellcelle>{utgift.totalGodkjentBeløp}</Tabellcelle>
+              </Tabellrad>
+            ))}
+          </DokumentTabell>
         </div>
       )}
       <h3>{ord.totalt}</h3>
