@@ -1,13 +1,13 @@
 import { useActionData, ActionFunctionArgs } from "react-router";
 import "../../style/style.css";
-import bidragTekster from "~/tekster/notat/bidrag/saksbehandler.yaml";
+import tekster from "~/tekster/vedtak/forside.yaml";
 import HeaderFooter from "~/components/notat_felles/HeaderFooter";
 import { parseRequestAction, VedtakRequest } from "~/routes/common";
 import BrevAdresseKontaktinfo from "~/components/notat_felles/components/BrevAdresseKontaktinfo";
 import { VedtakProvider } from "~/components/vedtak_felles/VedtakContext";
 import { RenderMode } from "~/components/notat_felles/NotatContext";
 import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer";
-import { VedtakEndeligTable } from "~/routes/notat.bidrag/Vedtak";
+import { VedtakEndeligTable } from "~/routes/notat/begrunnelse/bidrag/Vedtak";
 import { VedtakSignatur } from "~/components/vedtak_felles/VedtakSignatur";
 
 export async function action(args: ActionFunctionArgs) {
@@ -16,10 +16,10 @@ export async function action(args: ActionFunctionArgs) {
 
 export function meta() {
   return [
-    { title: bidragTekster.tittel },
-    { name: "description", content: bidragTekster.tittel },
+    { title: tekster.tittel },
+    { name: "description", content: tekster.tittel },
     { property: "author", content: "bidrag-dokument-produksjon" },
-    { property: "subject", content: bidragTekster.tittel },
+    { property: "subject", content: tekster.tittel },
   ];
 }
 
@@ -41,31 +41,18 @@ export default function ForsideOrkestrertBidragsvedtak() {
           <BrevAdresseKontaktinfo />
           <Soknaddetaljer gjelderFlereSaker={false} />
           <div className={"mb-4"}>
-            <h4>Informasjon om klage</h4>
+            <h4>{tekster.informasjonOmKlage.tittel}</h4>
             <p>
-              Behandlingen av klagen har ført til endringer utover
-              klagevedtaket. Endringene skyldes automatiske justeringer, enten
-              indeksregulering eller aldersjustering av bidraget. Eventuelt
-              begge deler.
-              <p>
-                Nedenfor har vi laget en oversikt over nye perioder og
-                bidragsbeløp. Du finner relevante vedtak vedlagt
-              </p>
+              {tekster.informasjonOmKlage.endringer}
+              <p>{tekster.informasjonOmKlage.oversikt}</p>
             </p>
           </div>
           <VedtakEndeligTable data={data.vedtakDetaljer?.resultat} />
           <div className={"pt-4"}>
-            <h4>Endringer etter vedtaket</h4>
-            <p>
-              Hvis det har skjedd faktiske endringer etter at det påklagede
-              vedtaket ble fattet, for eksempel i inntekt, bosted eller andre
-              forhold som kan ha betydning for bidraget, må du sende en ny
-              søknad om endring av barnebidraget.
-            </p>
-            <h4 className={"pt-2"}>Har du spørsmål?</h4>
-            <p>
-              Du kan finne nyttig generell informasjon på nav.no/barnebidrag.
-            </p>
+            <h4>{tekster.endringerEtterVedtaket.tittel}</h4>
+            <p>{tekster.endringerEtterVedtaket.tekst}</p>
+            <h4 className={"pt-2"}>{tekster.spørsmål.tittel}</h4>
+            <p>{tekster.spørsmål.tekst}</p>
           </div>
           <VedtakSignatur
             saksbehandler={data.saksbehandler!}

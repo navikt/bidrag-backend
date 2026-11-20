@@ -1,6 +1,6 @@
 import xss from "xss";
 import { NotatBegrunnelseDto } from "~/types/Api";
-import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
+import { FeltTabell, Feltrader, Feltrad } from "~/components/FeltTabell";
 
 type NotatProps = {
   data?: NotatBegrunnelseDto;
@@ -18,53 +18,50 @@ export default function NotatBegrunnelse({
         overflowWrap: "anywhere",
       }}
     >
-      <DataViewTable
-        data={
-          [
-            {
-              label,
-              textRight: false,
-              labelBold: true,
-            },
-            {
-              label: undefined,
-              textRight: false,
-              labelBold: true,
-              value: (
-                <PurifiedHtml text={data?.innhold?.replaceAll("&nbsp;", " ")} />
-              ),
-            },
-          ].filter((d) => d != null) as DataViewTableData[]
-        }
-      />
-      {data?.innholdFraOmgjortVedtak && (
-        <DataViewTable
-          className={"pt-1"}
-          data={
-            [
+      <div>
+        <FeltTabell>
+          <Feltrader
+            rows={[
               {
-                label: label
-                  ? `${label} (opprinnelig vedtak)`
-                  : "Begrunnelse (opprinnelig vedtak)",
-                textRight: false,
+                label,
                 labelBold: true,
               },
               {
                 label: undefined,
-                textRight: false,
                 labelBold: true,
                 value: (
                   <PurifiedHtml
-                    text={data?.innholdFraOmgjortVedtak?.replaceAll(
-                      "&nbsp;",
-                      " ",
-                    )}
+                    text={data?.innhold?.replaceAll("&nbsp;", " ")}
                   />
                 ),
               },
-            ].filter((d) => d != null) as DataViewTableData[]
-          }
-        />
+            ]}
+          />
+        </FeltTabell>
+      </div>
+      {data?.innholdFraOmgjortVedtak && (
+        <div className={"pt-1"}>
+          <FeltTabell>
+            <Feltrad
+              label={
+                label
+                  ? `${label} (opprinnelig vedtak)`
+                  : "Begrunnelse (opprinnelig vedtak)"
+              }
+              labelBold
+            />
+            <Feltrad label={undefined} labelBold>
+              {
+                <PurifiedHtml
+                  text={data?.innholdFraOmgjortVedtak?.replaceAll(
+                    "&nbsp;",
+                    " ",
+                  )}
+                />
+              }
+            </Feltrad>
+          </FeltTabell>
+        </div>
       )}
     </div>
   );

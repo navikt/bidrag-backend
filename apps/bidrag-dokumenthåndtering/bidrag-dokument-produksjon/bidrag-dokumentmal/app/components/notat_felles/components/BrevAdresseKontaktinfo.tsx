@@ -1,6 +1,7 @@
 import NavLogo from "~/components/NavLogo";
 import { useVedtakFelles } from "~/components/vedtak_felles/VedtakContext";
 import { Adresse, EnhetKontaktInfo } from "~/types/Api";
+import tekster from "~/tekster/vedtak/forside.yaml";
 
 export default function BrevAdresseKontaktinfo() {
   const { data } = useVedtakFelles();
@@ -44,7 +45,7 @@ function renderAdresse(adresse?: Adresse) {
     <div className={"flex flex-col"}>
       <span>
         {adresse?.bruksenhetsnummer
-          ? `Bolignummer ${adresse?.bruksenhetsnummer}`
+          ? tekster.adresse.bolignummer.replace("{}", adresse.bruksenhetsnummer)
           : ""}
       </span>
       {adresse?.adresselinje1 && <span>{adresse?.adresselinje1}</span>}

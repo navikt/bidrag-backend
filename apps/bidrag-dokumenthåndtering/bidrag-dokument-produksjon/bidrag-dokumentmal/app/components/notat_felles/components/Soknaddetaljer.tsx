@@ -2,14 +2,14 @@ import { rolleTilVisningsnavnV2, sammenlignRoller } from "~/utils/visningsnavn";
 import { DokumentmalPersonDto, Rolletype } from "~/types/Api";
 import { dateToDDMMYYYY, sortByAge } from "~/utils/date-utils";
 import NavLogo from "~/components/NavLogo";
-import { DataViewTable, DataViewTableData } from "~/components/DataViewTable";
+import { FeltTabell, Feltrad, Feltrader } from "~/components/FeltTabell";
 import {
   TypeInnhold,
   useDokumentFelles,
 } from "~/components/vedtak_felles/FellesContext";
 import { isNullOrEmpty } from "~/utils/string-utils";
 import ord from "~/tekster/ord.yaml";
-import notatTekster from "~/tekster/notat/felles/saksbehandler.yaml";
+import notatTekster from "~/tekster/notat/begrunnelse/felles.yaml";
 
 const t = notatTekster.søknaddetaljer;
 
@@ -39,51 +39,55 @@ export default function Soknaddetaljer({
     <div className={"soknad_detaljer mb-[30px]"}>
       <div>
         {typeInnhold == TypeInnhold.NOTAT && <NavLogo />}
-        <DataViewTable
-          labelColWidth={"98px"}
-          data={[
-            (!gjelderFlereSaker && {
-              label: ord.saksnummer,
-              value:
-                typeInnhold == TypeInnhold.NOTAT
+        <div>
+          <FeltTabell labelColWidth={"98px"}>
+            {gjelderFlereSaker ? (
+              <Feltrad />
+            ) : (
+              <Feltrad label={ord.saksnummer}>
+                {typeInnhold === TypeInnhold.NOTAT
                   ? saksnummer
-                  : ord.saksnummerMedHenvisning.replace("{}", `${saksnummer}`),
-            }) as unknown as DataViewTableData,
-
-            ...rollerIkkeBarn
-              .sort((a, b) => {
-                const rolleA = rolleTilVisningsnavnV2(a);
-                const rolleB = rolleTilVisningsnavnV2(b);
-                if (rolleA === "BM" && rolleB !== "BM") return -1;
-                if (rolleA !== "BM" && rolleB === "BM") return 1;
-                if (rolleA === "BP" && rolleB !== "BP") return -1;
-                if (rolleA !== "BP" && rolleB === "BP") return 1;
-                return rolleA.localeCompare(rolleB);
-              })
-              .map((rolle) => ({
-                label: rolleTilVisningsnavnV2(rolle)!,
-                value: `${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`,
-              })),
-            {
-              label: t.søknadsbarn,
-              value: (
-                <div style={{ display: "inline-table" }}>
-                  {rollerBarn.sort(sortByAge).map((rolle) => (
-                    <span
-                      key={rolle.ident}
-                      style={{
-                        width: "100%",
-                        display: "block",
-                      }}
-                    >
-                      {`${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`}
-                    </span>
-                  ))}
-                </div>
-              ),
-            },
-          ]}
-        />
+                  : ord.saksnummerMedHenvisning.replace("{}", `${saksnummer}`)}
+              </Feltrad>
+            )}
+            <Feltrader
+              rows={[
+                ...rollerIkkeBarn
+                  .sort((a, b) => {
+                    const rolleA = rolleTilVisningsnavnV2(a);
+                    const rolleB = rolleTilVisningsnavnV2(b);
+                    if (rolleA === "BM" && rolleB !== "BM") return -1;
+                    if (rolleA !== "BM" && rolleB === "BM") return 1;
+                    if (rolleA === "BP" && rolleB !== "BP") return -1;
+                    if (rolleA !== "BP" && rolleB === "BP") return 1;
+                    return rolleA.localeCompare(rolleB);
+                  })
+                  .map((rolle) => ({
+                    label: rolleTilVisningsnavnV2(rolle)!,
+                    value: `${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`,
+                  })),
+                {
+                  label: t.søknadsbarn,
+                  value: (
+                    <div style={{ display: "inline-table" }}>
+                      {rollerBarn.sort(sortByAge).map((rolle) => (
+                        <span
+                          key={rolle.ident}
+                          style={{
+                            width: "100%",
+                            display: "block",
+                          }}
+                        >
+                          {`${tilNavnOgFødselsdato(rolle)}${gjelderFlereSaker && rolle.rolle != Rolletype.BP ? ` / ${rolle.saksnummer}` : ""}`}
+                        </span>
+                      ))}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </FeltTabell>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,25 @@
+# Forsiden til orkestrerte bidragsvedtak (klage med automatiske justeringer), i samme rekkefølge som på forsiden.
+# Endre bare teksten etter kolon. Navnet foran kolon brukes av malen og må ikke endres.
+# {} fylles ut med en verdi og må stå.
+
+tittel: Bidrag, saksbehandlingsnotat
+
+adresse:
+  bolignummer: Bolignummer {}
+
+informasjonOmKlage:
+  tittel: Informasjon om klage
+  endringer: >-
+    Behandlingen av klagen har ført til endringer utover klagevedtaket. Endringene skyldes automatiske justeringer,
+    enten indeksregulering eller aldersjustering av bidraget. Eventuelt begge deler.
+  oversikt: Nedenfor har vi laget en oversikt over nye perioder og bidragsbeløp. Du finner relevante vedtak vedlagt
+
+endringerEtterVedtaket:
+  tittel: Endringer etter vedtaket
+  tekst: >-
+    Hvis det har skjedd faktiske endringer etter at det påklagede vedtaket ble fattet, for eksempel i inntekt, bosted
+    eller andre forhold som kan ha betydning for bidraget, må du sende en ny søknad om endring av barnebidraget.
+
+spørsmål:
+  tittel: Har du spørsmål?
+  tekst: Du kan finne nyttig generell informasjon på nav.no/barnebidrag.

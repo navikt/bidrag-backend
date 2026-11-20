@@ -69,6 +69,12 @@ oppsummert:
   scripts).
 * `bidrag-pdfgen`: `docker compose up` (se `docker-compose.yaml`).
 
+Docker-bygget for `bidrag-pdfgen` kjører regresjonstestene i
+`test_weasyprint_server.py` som UID 1001. Testene kontrollerer at lange ord uten
+mellomrom rendres innen 15 sekunder, uten at tekst forsvinner eller går utenfor
+margene. PDF-stilarket bruker fast tabelloppsett for begrunnelser, slik at
+WeasyPrint slipper å beregne minste innholdsbredde for slike ord.
+
 For lokal kjøring mot `bidrag-dokument-produksjon` pekes det på disse via
 miljøvariablene `BIDRAG_DOKUMENTMAL_URL` og `BIDRAG_PDFGEN_URL`
 (se `src/test/resources/application-local.yaml`).

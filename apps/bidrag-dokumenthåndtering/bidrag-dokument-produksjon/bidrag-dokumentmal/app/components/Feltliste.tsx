@@ -1,4 +1,4 @@
-import { DataViewTableV2 } from "~/components/DataViewTableV2";
+import { FeltTabell, JustertFeltrad } from "~/components/FeltTabell";
 import { Celleverdi } from "~/components/KolonneTabell";
 import { verdiForFelt } from "~/utils/felt";
 import { Visningsformat } from "~/utils/visning";
@@ -15,7 +15,6 @@ export type Felt = {
 
 export type Feltlisteoppsett = {
   tittel?: string;
-  bredde?: string;
   ledetekstBredde?: string;
   felter: Felt[];
 };
@@ -27,7 +26,6 @@ type FeltlisteProps<T> = {
   verdier?: Record<string, Celleverdi<T>>;
   /** Felter som ikke skal vises. */
   skjul?: string[];
-  className?: string;
 };
 
 export function Feltliste<T extends object>({
@@ -35,24 +33,22 @@ export function Feltliste<T extends object>({
   kilde,
   verdier = {},
   skjul = [],
-  className,
 }: FeltlisteProps<T>) {
   return (
-    <DataViewTableV2
-      title={oppsett.tittel}
-      width={oppsett.bredde}
-      labelColWidth={oppsett.ledetekstBredde}
-      className={className}
-      data={oppsett.felter
-        .filter((f) => !skjul.includes(f.felt))
-        .map((f) => {
-          const formatert = verdiForFelt(kilde, f.felt, f.format);
-          return {
-            label: f.tittel,
-            value:
-              f.felt in verdier ? verdier[f.felt](kilde, formatert) : formatert,
-          };
-        })}
-    />
+    <>
+      {oppsett.tittel && <h4>{oppsett.tittel}</h4>}
+      <FeltTabell labelColWidth={oppsett.ledetekstBredde}>
+        {oppsett.felter
+          .filter(({ felt }) => !skjul.includes(felt))
+          .map(({ felt, tittel, format }) => {
+            const formatert = verdiForFelt(kilde, felt, format);
+            return (
+              <JustertFeltrad key={felt} label={tittel}>
+                {felt in verdier ? verdier[felt](kilde, formatert) : formatert}
+              </JustertFeltrad>
+            );
+          })}
+      </FeltTabell>
+    </>
   );
 }

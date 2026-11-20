@@ -22,9 +22,9 @@ data class Configuration(
 @Component
 class BidragPdfGenConsumer(
     @Value("\${bidrag-pdfgen.url}") private val url: String,
+    restTemplateBuilder: RestTemplateBuilder,
 ) {
-    // Singleton RestTemplate — avoids TCP connection overhead on every request
-    private val restTemplate: RestTemplate = RestTemplateBuilder().build()
+    private val restTemplate: RestTemplate = restTemplateBuilder.build()
 
     fun flattenPDF(pdf: ByteArray): ByteArray? = try {
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_PDF }
