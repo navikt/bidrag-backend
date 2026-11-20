@@ -384,8 +384,6 @@ class BehandlingService(
                         behandling.id!!,
                         data,
                     )
-                    metadata.setOpprettelseAvFFBehandlingFeilet(data)
-                    behandling.metadata = metadata
                 }
 
                 return OpprettBehandlingResponse(behandling.id!!)
