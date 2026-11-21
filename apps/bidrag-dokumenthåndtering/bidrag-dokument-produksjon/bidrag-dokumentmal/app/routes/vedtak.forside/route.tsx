@@ -6,7 +6,7 @@ import BrevAdresseKontaktinfo from "~/components/notat_felles/components/BrevAdr
 import { VedtakProvider } from "~/components/vedtak_felles/VedtakContext";
 import { RenderMode } from "~/components/notat_felles/NotatContext";
 import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer";
-import { VedtakEndeligTable } from "~/routes/notat/begrunnelse/bidrag/Vedtak";
+import { VedtakEndeligTable } from "~/routes/notat/begrunnelse/bidrag/VedtakEndeligTable";
 import { VedtakSignatur } from "~/components/vedtak_felles/VedtakSignatur";
 import { tekst } from "~/utils/tekst";
 export async function action(args: ActionFunctionArgs) {

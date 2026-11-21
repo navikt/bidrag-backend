@@ -105,9 +105,10 @@ og flagg som `erAvslag` og `erInnkrevingsgrunnlag`. `useVedleggNummer("boforhold
 Bruk context framfor props.
 
 **Vedleggsnummer.** `OpplysningerBidrag`, `OpplysningerForskudd` og `OpplysningerSærbidrag` viser vedleggene
-i samme rekkefølge som i nummerlisten i samme route-fil. Endrer du rekkefølgen i JSX, må du også endre listen.
-`useVedleggNummer` henter nummeret fra listen. Begrunnelsen bruker den samme listen for henvisninger, også når
-delene rendres hver for seg.
+eksplisitt i JSX. Funksjonen `vedleggBidrag`, `vedleggForskudd` eller `vedleggSærbidrag` i samme route-fil gir den
+ordnede nummerlisten til `NotatSide`. Hold rekkefølgen i JSX og nummerlisten i sync når et vedlegg legges til, fjernes
+eller flyttes. `useVedleggNummer` henter nummeret fra listen. Begrunnelsen bruker samme liste for henvisninger, også
+når delene rendres hver for seg.
 
 **Tabeller og felter.** Bruk [`FeltTabell`](app/components/FeltTabell.tsx) med `Feltrad` for faste ledetekster og
 verdier. Bruk `Feltrader` når radene bygges fra data. De justerte radvariantene bevarer kolonnebreddene og
@@ -116,6 +117,9 @@ resultatkolonnen i tabellene som bruker den utformingen. Sett tittel, bredde og 
 [`DokumentTabell`](app/components/DokumentTabell.tsx) lar deg skrive rader og celler direkte i JSX.
 Bruk `Tabellrad` og `Tabellcelle`, og `Tabelldetaljer` når en rad har opplysninger under seg.
 Gi både raden og detaljene samme radindeks, slik at stripingen stemmer.
+
+[`CalculationTable`](app/components/CalculationTable.tsx) brukes til beregningstabeller med beskrivelse, valgfri
+beregning og resultat. Bruk `summary` for en avsluttende summeringsrad. Samme komponent brukes i notater og vedtak.
 
 **Deler under hverandre.** Bruk [`DokumentStabel`](app/components/DokumentStabel.tsx) med `gap={1}` til `gap={4}`
 for mellomrom på 4 til 16 piksler. På skjerm bruker den flex. Ved utskrift bruker den blokkflyt, slik at WeasyPrint

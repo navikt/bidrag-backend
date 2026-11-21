@@ -9,7 +9,7 @@ import {
   MathValue,
   MathMultiplication,
   CalculationTable,
-} from "~/components/vedtak/CalculationTable";
+} from "~/components/CalculationTable";
 import { tekst } from "~/utils/tekst";
 export const BPsAndel = () => {
   const { data } = useNotatFelles();
@@ -28,6 +28,9 @@ export const BPsAndel = () => {
       </h4>
       <CalculationTable
         width={"55%"}
+        resultColumnWidth="100px"
+        alignResults
+        withContainer={false}
         className={"pb-2 "}
         data={[
           {
@@ -35,14 +38,14 @@ export const BPsAndel = () => {
               "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.bidragspliktigesInntekt",
               "Bidragspliktiges inntekt",
             ),
-            value: formatterBeløpForBeregning(inntekter.inntektBP, true),
+            result: formatterBeløpForBeregning(inntekter.inntektBP, true),
           },
           {
             label: tekst(
               "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.bidragsmottakerensInntekt",
               "Bidragsmottakerens inntekt",
             ),
-            value: formatterBeløpForBeregning(inntekter.inntektBM, true),
+            result: formatterBeløpForBeregning(inntekter.inntektBM, true),
           },
           {
             label: tekst(
@@ -59,18 +62,18 @@ export const BPsAndel = () => {
                   />
                 </div>
               ) : undefined,
-            value: formatterBeløpForBeregning(
+            result: formatterBeløpForBeregning(
               inntekter.barnEndeligInntekt,
               true,
             ),
           },
         ]}
-        result={{
+        summary={{
           label: tekst(
             "notat.opplysninger.særbidrag.beregningsdetaljer.bpsAndel.totalInntekt",
             "Total inntekt",
           ),
-          value: formatterBeløpForBeregning(
+          result: formatterBeløpForBeregning(
             inntekter.totalEndeligInntekt,
             true,
           ),

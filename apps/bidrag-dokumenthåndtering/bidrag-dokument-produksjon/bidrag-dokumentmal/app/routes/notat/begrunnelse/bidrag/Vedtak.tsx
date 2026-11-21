@@ -1,29 +1,28 @@
 import { Fragment, ReactNode } from "react";
 import {
-  DokumentmalResultatBidragsberegningBarnDto,
   ResultatBarnebidragsberegningPeriodeDto,
   Samvaersklasse,
 } from "~/types/Api";
+import {
+  BarnOgIndeksår,
+  ForklaringRad,
+  resultatPerBarn,
+  type Resultat,
+} from "~/routes/notat/begrunnelse/bidrag/VedtakFelles";
+import { VedtakEndeligTable } from "~/routes/notat/begrunnelse/bidrag/VedtakEndeligTable";
 import {
   useNotatFelles,
   useVedleggNummer,
 } from "~/components/notat_felles/NotatContext";
 import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
-import { sortByAge } from "~/utils/date-utils";
 import elementIds from "~/utils/elementIds";
-import { groupBy } from "~/utils/array-utils";
 import {
   DokumentTabell,
-  type Kolonne,
   Tabellcelle,
   Tabellrad,
 } from "~/components/DokumentTabell";
 import TableGjelderBarn from "~/components/TableGjelderBarn";
-import { FeltTabell, Feltrad, Feltrader } from "~/components/FeltTabell";
-import {
-  useDokumentFelles,
-  TypeInnhold,
-} from "~/components/vedtak_felles/FellesContext";
+import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import {
   KolonneTabell,
   kolonneceller,
@@ -131,7 +130,6 @@ const tabellBeregning: Tabelloppsett = {
     },
   ],
 };
-type Resultat = DokumentmalResultatBidragsberegningBarnDto;
 type Periode = ResultatBarnebidragsberegningPeriodeDto;
 export default function Vedtak() {
   const vedleggNummer = useVedleggNummer("beregningsdetaljer");
@@ -182,11 +180,6 @@ export default function Vedtak() {
       <VedtakFattetDetaljer data={data.vedtak} />
     </>
   );
-}
-/** Ett resultat per barn. Barna sorteres etter alder når `sorter` er satt. */
-function resultatPerBarn(data: Resultat[], sorter = false): Resultat[] {
-  const perBarn = groupBy(data, (d) => d.barn?.ident!).map(([, v]) => v[0]);
-  return sorter ? perBarn.sort((a, b) => sortByAge(a.barn, b.barn)) : perBarn;
 }
 function useAvslagstekst() {
   const { erOpphør } = useNotatFelles();
@@ -373,24 +366,6 @@ const beregningsceller = {
     );
   },
 };
-function ForklaringRad({ index }: { index: number }) {
-  return (
-    <Tabellrad
-      index={index}
-      skipBorderBottom
-      zebraStripe={false}
-      skipPadding
-      className="pt-2"
-    >
-      <Tabellcelle fullSpan>
-        {tekst(
-          "notat.begrunnelse.bidrag.vedtak.tabellBeregning.forklaringForkortelser",
-          "U = Underholdskostnad, BP = Bidragspliktig, BM = Bidragsmottaker",
-        )}
-      </Tabellcelle>
-    </Tabellrad>
-  );
-}
 function Beregningsrader({
   perioder,
   avslagstekst,
@@ -450,61 +425,13 @@ function Beregningsrader({
     </>
   );
 }
-function BarnOgIndeksår({
-  resultat,
-  visIndeksår,
-}: {
-  resultat: Resultat;
-  visIndeksår: boolean;
-}) {
-  const gjelderBarn = resultat.barn;
-  return (
-    <>
-      <TableGjelderBarn gjelderBarn={gjelderBarn} />
-      {resultat.indeksår && (
-        <div className={"mb-1 mt-2"}>
-          <FeltTabell>
-            <Feltrader
-              rows={[
-                visIndeksår
-                  ? {
-                      label: tekst(
-                        "notat.begrunnelse.bidrag.vedtak.nesteIndeksår",
-                        "Neste indeksår",
-                      ),
-                      value: resultat.indeksår,
-                    }
-                  : {},
-              ]}
-            />
-          </FeltTabell>
-        </div>
-      )}
-      {gjelderBarn.innbetaltBeløp && (
-        <div className="mt-2 mb-2">
-          <FeltTabell>
-            <Feltrad
-              label={tekst(
-                "notat.begrunnelse.bidrag.vedtak.innbetaltBeløp",
-                "Innbetalt beløp",
-              )}
-              labelBold
-            >
-              {gjelderBarn.innbetaltBeløp}
-            </Feltrad>
-          </FeltTabell>
-        </div>
-      )}
-    </>
-  );
-}
 function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
   const { erDirekteAvslagForBarn } = useNotatFelles();
   const avslagstekst = useAvslagstekst();
   return (
     <>
       {resultatPerBarn(resultat, true).map((r) => (
-        <>
+        <Fragment key={r.barn.ident}>
           <BarnOgIndeksår
             resultat={r}
             visIndeksår={!r.erAvvistRevurdering && !r.erAvvisning}
@@ -521,106 +448,8 @@ function VedtakBeregning({ resultat }: { resultat: Resultat[] }) {
               </DokumentTabell>
             )}
           </ResultatEllerTabell>
-        </>
+        </Fragment>
       ))}
-    </>
-  );
-}
-// Brevet har en tom siste kolonne der notatet viser resultat. Beholdes for å ikke endre utseendet på brevet
-const TOM_KOLONNE = { name: "", content: "" };
-function overskrifterEndelig(
-  vurderUgyldighet: boolean,
-  visningForSaksbehandler: boolean,
-): Kolonne[] {
-  const bredde = (saksbehandler: string, brev: string) =>
-    visningForSaksbehandler ? saksbehandler : brev;
-  return [
-    ...(vurderUgyldighet
-      ? [
-          {
-            tittel: tekst(
-              "notat.begrunnelse.bidrag.vedtak.tabellEndelig.vurderUgyldighet",
-              "Vurder ugyldighet",
-            ),
-            bredde: "20px",
-          },
-        ]
-      : []),
-    { tittel: tekst("ord.periode", "Periode"), bredde: bredde("120px", "30%") },
-    {
-      tittel: visningForSaksbehandler
-        ? tekst("ord.type", "Type")
-        : tekst("ord.årsak", "Årsak"),
-      bredde: bredde("100px", "40%"),
-    },
-    { tittel: tekst("ord.beløp", "Beløp"), bredde: bredde("120px", "30%") },
-    visningForSaksbehandler
-      ? { tittel: tekst("ord.resultat", "Resultat"), bredde: "130px" }
-      : { tittel: TOM_KOLONNE.name },
-  ];
-}
-export function VedtakEndeligTable({ data }: { data: Resultat[] }) {
-  const { typeInnhold } = useDokumentFelles();
-  if (data.length == 0) return null;
-  if (data.every((e) => e.orkestrertVedtak === null)) return null;
-  const visningForSaksbehandler = typeInnhold == TypeInnhold.NOTAT;
-  return (
-    <>
-      {resultatPerBarn(data, true).map((r) => {
-        const perioder = r.orkestrertVedtak?.perioder ?? [];
-        const vurderUgyldighet = perioder.some(
-          (e) => e.klageOmgjøringDetaljer?.kanOpprette35c === true,
-        );
-        return (
-          <>
-            <BarnOgIndeksår resultat={r} visIndeksår />
-            <DokumentTabell
-              kolonner={overskrifterEndelig(
-                vurderUgyldighet,
-                visningForSaksbehandler,
-              )}
-            >
-              {perioder.map((periode, index) => (
-                <Tabellrad key={index} index={index} skipBorderBottom>
-                  {vurderUgyldighet && (
-                    <Tabellcelle>
-                      {periode.klageOmgjøringDetaljer?.kanOpprette35c
-                        ? periode.klageOmgjøringDetaljer?.skalOpprette35c
-                          ? tekst("ord.ja", "Ja")
-                          : tekst("ord.nei", "Nei")
-                        : ""}
-                    </Tabellcelle>
-                  )}
-                  <Tabellcelle>
-                    {formater(periode.periode, "periode")}
-                  </Tabellcelle>
-                  <Tabellcelle>
-                    {periode.delvedtakstypeVisningsnavn}
-                  </Tabellcelle>
-                  <Tabellcelle>
-                    {periode.erOpphør
-                      ? visningForSaksbehandler
-                        ? tekst(
-                            "notat.begrunnelse.bidrag.vedtak.tabellEndelig.opphørForSaksbehandler",
-                            "-",
-                          )
-                        : tekst("ord.opphør", "Opphør")
-                      : formater(periode.faktiskBidrag, "beløpAvrundet")}
-                  </Tabellcelle>
-                  <Tabellcelle>
-                    {visningForSaksbehandler
-                      ? periode.resultatkodeVisningsnavn
-                      : TOM_KOLONNE.content}
-                  </Tabellcelle>
-                </Tabellrad>
-              ))}
-              {visningForSaksbehandler && (
-                <ForklaringRad index={perioder.length} />
-              )}
-            </DokumentTabell>
-          </>
-        );
-      })}
     </>
   );
 }

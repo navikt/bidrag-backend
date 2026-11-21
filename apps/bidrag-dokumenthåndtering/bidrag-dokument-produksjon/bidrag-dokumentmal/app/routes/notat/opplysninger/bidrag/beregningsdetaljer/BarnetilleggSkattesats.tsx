@@ -6,7 +6,7 @@ import {
   rolleTilVisningsnavn,
 } from "~/utils/visningsnavn";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
-import CalculationTable from "~/components/notat_felles/CalculationTable";
+import { CalculationTable } from "~/components/CalculationTable";
 import { barnetilleggTiltakspengerVisningsnavn } from "~/constants/beregning";
 import { tekst } from "~/utils/tekst";
 export const BarnetilleggSkattesats = ({ rolle }: { rolle: Rolletype }) => {

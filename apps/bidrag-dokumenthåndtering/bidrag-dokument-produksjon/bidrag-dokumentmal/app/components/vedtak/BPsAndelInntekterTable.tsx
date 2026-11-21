@@ -4,10 +4,7 @@ import {
   Tabellrad,
 } from "~/components/DokumentTabell";
 import { formatterBeløpForBeregning } from "~/utils/visningsnavn";
-import {
-  MathValue,
-  MathMultiplication,
-} from "~/components/vedtak/CalculationTable";
+import { MathValue, MathMultiplication } from "~/components/CalculationTable";
 import { NotatResultatBeregningInntekterDto } from "~/types/Api";
 import { tekst } from "~/utils/tekst";
 export default function BPsAndelInntekterTable({

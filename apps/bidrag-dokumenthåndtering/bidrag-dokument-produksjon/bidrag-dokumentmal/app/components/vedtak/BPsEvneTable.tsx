@@ -12,7 +12,7 @@ import {
   MathDivision,
   MathValue,
   MathMultiplication,
-} from "~/components/vedtak/CalculationTable";
+} from "~/components/CalculationTable";
 import { tekst } from "~/utils/tekst";
 export const BPsEvneTable = ({
   delberegningBidragsevne,

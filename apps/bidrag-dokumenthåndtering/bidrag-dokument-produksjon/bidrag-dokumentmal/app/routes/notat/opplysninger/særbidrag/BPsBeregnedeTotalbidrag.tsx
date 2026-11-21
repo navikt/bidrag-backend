@@ -7,7 +7,7 @@ import {
   Tabelldetaljer,
   Tabellrad,
 } from "~/components/DokumentTabell";
-import { CalculationTable } from "~/components/vedtak/CalculationTable";
+import { CalculationTable } from "~/components/CalculationTable";
 import { tekst } from "~/utils/tekst";
 export const BPsBeregnedeTotalbidrag = ({
   delberegning,
@@ -79,12 +79,11 @@ export const BPsBeregnedeTotalbidrag = ({
                   <Tabelldetaljer index={index}>
                     <CalculationTable
                       width={"200px"}
+                      resultColumnWidth="100px"
+                      alignResults
                       simpleStyling
+                      withContainer={false}
                       className={"ml-2"}
-                      title={tekst(
-                        "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.tittel",
-                        "Reduksjon av BPs andel av U",
-                      )}
                       data={[
                         {
                           label: `${tekst("notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.bpsAndelAvU", "BPs andel av U")}${
@@ -96,7 +95,7 @@ export const BPsBeregnedeTotalbidrag = ({
                                 )
                               : ""
                           }`,
-                          value: formatterBeløpForBeregning(
+                          result: formatterBeløpForBeregning(
                             erVedtakFraBBM
                               ? row.beregnetBeløp
                               : row.bruttoBidragEtterBarnetilleggBM,
@@ -108,7 +107,7 @@ export const BPsBeregnedeTotalbidrag = ({
                             "notat.opplysninger.særbidrag.beregningsdetaljer.bpsBeregnedeTotalbidrag.reduksjonAvBpsAndelAvU.faktiskBidrag",
                             "Faktisk bidrag",
                           ),
-                          value: (
+                          result: (
                             <div>
                               -{" "}
                               {formatterBeløpForBeregning(
@@ -121,9 +120,9 @@ export const BPsBeregnedeTotalbidrag = ({
                           ),
                         },
                       ]}
-                      result={{
+                      summary={{
                         label: tekst("ord.resultat", "Resultat"),
-                        value: formatterBeløpForBeregning(
+                        result: formatterBeløpForBeregning(
                           row.reduksjonUnderholdskostnad,
                           true,
                         ),

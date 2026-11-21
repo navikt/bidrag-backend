@@ -16,26 +16,13 @@ import { BeregningBarn } from "~/types/commonTypes";
 import { BeregnetBidragBarnDto } from "~/types/Api";
 import { tekst } from "~/utils/tekst";
 export const BeregningForholdsmessigFordeling = () => {
-  const {
-    sluttberegning,
-    forholdsmessigFordelingBeregningsdetaljer: forholdsmessigFordeling,
-  } = useBeregningDetaljer();
+  const { forholdsmessigFordelingBeregningsdetaljer: forholdsmessigFordeling } =
+    useBeregningDetaljer();
   if (!forholdsmessigFordeling) return null;
-  const kanFatteVedtakForRevurderingsbarn =
-    !forholdsmessigFordeling.harBPFullEvne;
-  const inneholderRevurderingsbarn =
-    forholdsmessigFordeling.beregningFordelingAvBidrag.bidragTilFordelingAlle.some(
-      (b) => b.barn.revurdering,
-    );
-  const periodeInneholderRevurderingsbarn =
-    forholdsmessigFordeling.beregningFordelingAvBidrag.bidragTilFordelingAlle.some(
-      (r) => r.erSøknadsbarn && r.barn.revurdering,
-    );
-  const foreløpigBidragSøknadsbarn =
-    forholdsmessigFordeling.bidragEtterFordeling ??
-    sluttberegning.bruttoBidragJustertForEvneOg25Prosent ??
-    0;
-  if (periodeInneholderRevurderingsbarn && kanFatteVedtakForRevurderingsbarn) {
+
+  const visning = velgForholdsmessigFordelingVisning(forholdsmessigFordeling);
+
+  if (visning === "revurdering-med-søknadsbarn") {
     return (
       <DokumentStabel gap={3} className="mt-2">
         <div className="border border-gray-200 rounded">
@@ -55,34 +42,58 @@ export const BeregningForholdsmessigFordeling = () => {
           />
         </div>
 
-        {kanFatteVedtakForRevurderingsbarn && (
-          <div className="border border-gray-200  rounded">
-            <BeregningForholdsmessigFordelingSøknadsbarn
-              overskrift={tekst(
-                "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordeling.overskrifter.beregningSøknadsbarnOgRevurderingsbarn",
-                "Beregning for søknadsbarn og revurderingsbarn",
-              )}
-            />
-          </div>
-        )}
+        <div className="border border-gray-200 rounded">
+          <BeregningForholdsmessigFordelingSøknadsbarn
+            overskrift={tekst(
+              "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordeling.overskrifter.beregningSøknadsbarnOgRevurderingsbarn",
+              "Beregning for søknadsbarn og revurderingsbarn",
+            )}
+          />
+        </div>
       </DokumentStabel>
     );
-  } else if (
-    inneholderRevurderingsbarn &&
-    forholdsmessigFordeling.beregningFordelingAvBidragSjekkEvnesprekk
-  ) {
+  }
+  if (visning === "revurdering") {
     return <BeregningForholdsmessigFordelingRevurdering />;
   }
   return <BeregningForholdsmessigFordelingSøknadsbarn />;
 };
+
+type ForholdsmessigFordeling = NonNullable<
+  ReturnType<
+    typeof useBeregningDetaljer
+  >["forholdsmessigFordelingBeregningsdetaljer"]
+>;
+
+function velgForholdsmessigFordelingVisning(
+  forholdsmessigFordeling: ForholdsmessigFordeling,
+): "revurdering-med-søknadsbarn" | "revurdering" | "søknadsbarn" {
+  const fordelinger =
+    forholdsmessigFordeling.beregningFordelingAvBidrag.bidragTilFordelingAlle;
+  const inneholderRevurderingsbarn = fordelinger.some(
+    ({ barn }) => barn.revurdering,
+  );
+  const harSøknadsbarnMedRevurdering = fordelinger.some(
+    ({ barn, erSøknadsbarn }) => erSøknadsbarn && barn.revurdering,
+  );
+
+  if (harSøknadsbarnMedRevurdering && !forholdsmessigFordeling.harBPFullEvne) {
+    return "revurdering-med-søknadsbarn";
+  }
+  if (
+    inneholderRevurderingsbarn &&
+    forholdsmessigFordeling.beregningFordelingAvBidragSjekkEvnesprekk
+  ) {
+    return "revurdering";
+  }
+  return "søknadsbarn";
+}
 export const BeregningForholdsmessigFordelingRevurdering = ({
   overskrift,
 }: {
   overskrift?: string;
 }) => {
   const {
-    sluttberegning,
-    bpsAndel,
     periode: { erSistePeriode },
     delberegningBidragsevne,
     kanFatteVedtakForRevurderingsbarn,
@@ -95,45 +106,14 @@ export const BeregningForholdsmessigFordelingRevurdering = ({
       </DokumentStabel>
     ) : null;
   }
-  function renderResult() {
-    if (sluttberegning.bidragJustertNedTil25ProsentAvInntekt) {
-      return tekst(
-        "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordeling.forholdsmessigFordeling.redusertNedTil25ProsentAvInntekt",
-        " (redusert ned til 25% av inntekt)",
-      );
-    } else if (sluttberegning.bidragJustertNedTilEvne) {
-      return tekst(
-        "notat.opplysninger.bidrag.beregningsdetaljer.forholdsmessigFordeling.forholdsmessigFordeling.redusertNedTilEvne",
-        " (redusert ned til evne)",
-      );
-    }
-    return "";
-  }
   const beregningFordelingAvBidrag =
     forholdsmessigFordeling.beregningFordelingAvBidragSjekkEvnesprekk!;
-  const bpAndelAvUVedForholdsmessigFordelingFaktor =
-    sluttberegning.bpAndelAvUVedForholdsmessigFordelingFaktor ??
-    forholdsmessigFordeling.andelAvSumBidragTilFordelingFaktor;
-  const bpEvneVedForholdsmessigFordeling =
-    forholdsmessigFordeling.andelAvEvneBeløp ??
-    sluttberegning.bpEvneVedForholdsmessigFordeling;
-  const foreløpigBidrag =
-    forholdsmessigFordeling.bidragEtterFordeling ??
-    sluttberegning.bruttoBidragJustertForEvneOg25Prosent ??
-    0;
   const bpsSumAndelAvU = beregningFordelingAvBidrag.sumBidragTilFordeling ?? 0;
-  const andelFordeltTilBarnet =
-    forholdsmessigFordeling.bidragTilFordelingForBarnet ??
-    bpsAndel.andelBeløp ??
-    0;
   const sumAndreBarn =
     beregningFordelingAvBidrag.sumBidragTilFordelingIkkeSøknadsbarn +
     beregningFordelingAvBidrag.sumBidragTilFordelingPrivatAvtale;
   const finnesPriorierteBidrag =
     beregningFordelingAvBidrag.sumBidragSomIkkeKanFordeles > 0;
-  const bidragTilFordelingMinusUtlandsbidrag =
-    beregningFordelingAvBidrag.sumBidragTilFordeling -
-    beregningFordelingAvBidrag.sumBidragSomIkkeKanFordeles;
   const evne = Math.min(
     delberegningBidragsevne.bidragsevne,
     delberegningBidragsevne.sumInntekt25Prosent,
