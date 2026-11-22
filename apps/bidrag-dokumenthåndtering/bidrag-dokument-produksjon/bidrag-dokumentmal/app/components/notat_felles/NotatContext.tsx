@@ -22,6 +22,12 @@ export type Vedlegg =
   | "samvær"
   | "beregningsdetaljer";
 
+/**
+ * Hvilken del av notatet som rendres: hele notatet, bare begrunnelsen eller bare opplysningene (vedleggene).
+ * Lenker til vedleggene vises bare i det komplette notatet, der vedleggene står i samme dokument.
+ */
+export type NotatDel = "komplett" | "begrunnelse" | "opplysninger";
+
 export enum RenderMode {
   PDF,
   HTML,
@@ -43,6 +49,8 @@ interface INotatContext {
   renderMode: RenderMode;
   renderPDFVersion: RenderPDFVersion;
   vedlegg: Vedlegg[];
+  del: NotatDel;
+  visLenkerTilVedlegg: boolean;
 }
 export const NotatContext = createContext<INotatContext | null>(null);
 export function useNotatFelles(): INotatContext {
@@ -57,6 +65,7 @@ export type NotatDataProps = {
   renderMode: RenderMode;
   renderPDFVersion: RenderPDFVersion;
   vedlegg?: Vedlegg[];
+  del?: NotatDel;
 };
 
 export function NotatProvider({
@@ -66,6 +75,7 @@ export function NotatProvider({
   renderMode,
   renderPDFVersion,
   vedlegg = [],
+  del = "komplett",
 }: PropsWithChildren<NotatDataProps>) {
   const dataCorrected = {
     ...data,
@@ -90,6 +100,8 @@ export function NotatProvider({
             erDirekteAvslagForBarn,
             renderPDFVersion,
             vedlegg,
+            del,
+            visLenkerTilVedlegg: del === "komplett",
             data: dataCorrected,
             type: dataCorrected.type,
             gjelderFlereSaker:

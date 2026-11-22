@@ -1,7 +1,5 @@
-import {
-  useNotatFelles,
-  useVedleggNummer,
-} from "~/components/notat_felles/NotatContext";
+import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import { LenkeTilVedlegg } from "~/components/notat_felles/Seksjon";
 import { NotatSamvaersperiodeDto, NotatSamvaerBarnDto } from "~/types/Api";
 import {
   DokumentTabell,
@@ -12,7 +10,6 @@ import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
 import DokumentStabel from "~/components/DokumentStabel";
-import elementIds from "~/utils/elementIds";
 import { rolleTilVisningsnavnV2 } from "~/utils/visningsnavn";
 import {
   TypeInnhold,
@@ -20,7 +17,6 @@ import {
 } from "~/components/vedtak_felles/FellesContext";
 import { tekst } from "~/utils/tekst";
 export default function Samvær() {
-  const vedleggNummer = useVedleggNummer("samvær");
   const { data, erAvslag, gjelderFlereSaker } = useNotatFelles();
   if (erAvslag) return null;
   const samvær = data.samværV2;
@@ -29,12 +25,13 @@ export default function Samvær() {
     <div>
       <div className={"elements_inline section-title"}>
         <h2>{tekst("notat.begrunnelse.bidrag.samvær.tittel", "Samvær")}</h2>
-        <a href={`#${elementIds.vedleggSamvær}`}>
-          {tekst(
+        <LenkeTilVedlegg
+          vedlegg="samvær"
+          lenketekst={tekst(
             "ord.seVedleggForBeregningsdetaljer",
             "se vedlegg nr. {} for beregningsdetaljer",
-          ).replace("{}", `${vedleggNummer}`)}
-        </a>
+          )}
+        />
       </div>
       {gjelderFlereSaker ? (
         <SamværPerSak data={samvær.barn} />

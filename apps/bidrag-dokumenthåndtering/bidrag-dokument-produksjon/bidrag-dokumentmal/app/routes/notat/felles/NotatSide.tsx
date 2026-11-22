@@ -6,6 +6,7 @@ import {
 import { PropsWithChildren } from "react";
 import "~/style/style.css";
 import {
+  NotatDel,
   NotatProvider,
   RenderMode,
   Vedlegg,
@@ -15,6 +16,7 @@ import Soknaddetaljer from "~/components/notat_felles/components/Soknaddetaljer"
 import NotatTittel from "~/components/NotatTittel";
 import { NotatRequest, parseRequestAction } from "~/routes/common";
 import { VedtakNotatDto } from "~/types/Api";
+import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
 
 /** Felles `action` for alle notat-routes: leser notatdataene fra forespørselen. */
 export async function notatAction(args: ActionFunctionArgs) {
@@ -34,6 +36,8 @@ export function notatMeta(tittel: string): MetaFunction {
 type NotatSideProps = {
   id: string;
   tittel: string;
+  /** Hvilken del av notatet routen viser. Lenker til vedleggene vises bare i det komplette notatet. */
+  del: NotatDel;
   /** Vedleggene i notatet, i rekkefølge. Nummeret til et vedlegg følger av plassen i listen. */
   vedlegg: (data: VedtakNotatDto) => Vedlegg[];
   /** Bidrag kan gjelde flere saker. Da vises alle sakene i topp- og bunnteksten og i søknadsdetaljene. */
@@ -43,10 +47,12 @@ type NotatSideProps = {
 /**
  * Rammen rundt alle notatene: topp- og bunntekst, søknadsdetaljer og tittel.
  * Innholdet (begrunnelsen og/eller opplysningene) legges inn som `children`.
+ * Detaljene om hvem som ferdigstilte vedtaket står til slutt i hver del.
  */
 export default function NotatSide({
   id,
   tittel,
+  del,
   vedlegg,
   kanGjeldeFlereSaker = false,
   children,
@@ -79,6 +85,7 @@ export default function NotatSide({
         renderPDFVersion={response.renderPDFVersion}
         renderMode={renderMode}
         vedlegg={vedlegg(data)}
+        del={del}
       >
         {kanGjeldeFlereSaker ? (
           <HeaderFooter saker={saker} renderMode={renderMode} />
@@ -89,6 +96,7 @@ export default function NotatSide({
           <Soknaddetaljer gjelderFlereSaker={gjelderFlereSaker} />
           <NotatTittel title={tittel} />
           {children}
+          <VedtakFattetDetaljer data={data.vedtak} />
         </div>
       </NotatProvider>
     </div>

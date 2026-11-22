@@ -6,11 +6,8 @@ import {
 import Person from "~/components/Person";
 import { SimpleTable } from "~/components/SimpleTable";
 import NotatBegrunnelse from "~/components/NotatBegrunnelse";
-import elementIds from "~/utils/elementIds";
-import {
-  useNotatFelles,
-  useVedleggNummer,
-} from "~/components/notat_felles/NotatContext";
+import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import { LenkeTilVedlegg } from "~/components/notat_felles/Seksjon";
 import Sivilstand from "~/routes/notat/begrunnelse/felles/Sivilstand";
 import {
   DokumentTabell,
@@ -21,7 +18,6 @@ import { formatPeriode, sortByAge } from "~/utils/date-utils";
 import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import { tekst } from "~/utils/tekst";
 export default function Boforhold() {
-  const vedleggNummer = useVedleggNummer("boforhold");
   const { erAvslag, data } = useNotatFelles();
   if (erAvslag) return null;
   return (
@@ -30,12 +26,13 @@ export default function Boforhold() {
         <h2>
           {tekst("notat.begrunnelse.felles.boforhold.tittel", "Boforhold")}
         </h2>
-        <a href={`#${elementIds.vedleggBoforhold}`}>
-          {tekst(
+        <LenkeTilVedlegg
+          vedlegg="boforhold"
+          lenketekst={tekst(
             "ord.seVedleggForOffentligeRegistre",
             "se vedlegg nr. {} for opplysninger fra offentlige registre",
-          ).replace("{}", vedleggNummer?.toString())}
-        </a>
+          )}
+        />
       </div>
       {data.boforhold.barn
         .sort((a, b) => sortByAge(a.gjelder, b.gjelder))

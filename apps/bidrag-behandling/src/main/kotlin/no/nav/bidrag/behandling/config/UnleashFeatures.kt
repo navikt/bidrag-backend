@@ -36,6 +36,7 @@ enum class UnleashFeatures(
     // Midlertidig sperre for særbidrag når barnet er selvforsørget (§ 5). Er på når toggle ikke finnes i Unleash.
     SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG("behandling.saerbidrag_sperr_selvforsorget_barn", true),
     OPPRETT_NOTAT_ASYNC("behandling.opprett_notat_async", false),
+    SPLITT_NOTAT("behandling.splitt_notat", false),
     ;
 
     private var defaultValue = false

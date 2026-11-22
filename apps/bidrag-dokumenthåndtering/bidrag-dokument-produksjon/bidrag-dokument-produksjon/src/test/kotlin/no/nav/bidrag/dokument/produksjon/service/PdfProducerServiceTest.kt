@@ -140,6 +140,30 @@ class PdfProducerServiceTest {
     }
 
     @Test
+    fun `skal hente notatdel fra innhold og bruke det i metrikk-typen`() {
+        // Given
+        every {
+            dokumentmalConsumer.hentDokumentmal(KATEGORI, DOKUMENTMAL, PAYLOAD, innhold = "begrunnelse")
+        } returns RENSET_HTML
+        every { pdfGenConsumer.produserPdf(RENSET_HTML, any()) } returns PDF
+
+        // When
+        val respons = service.generatePDFResponseV2(KATEGORI, DOKUMENTMAL, PAYLOAD, innhold = "begrunnelse")
+
+        // Then
+        assertSoftly {
+            respons.statusCode shouldBe HttpStatus.OK
+            meterRegistry
+                .find(METRIKK_PDF_PRODUKSJON)
+                .tags(TAG_STEG, PdfProduksjonSteg.TOTALT.tagverdi, TAG_KATEGORI, "notat-begrunnelse", TAG_UTFALL, "ok")
+                .timer()
+                .shouldNotBeNull()
+                .count() shouldBe 1L
+            timer(PdfProduksjonSteg.TOTALT, PdfProduksjonUtfall.OK).shouldBeNull()
+        }
+    }
+
+    @Test
     fun `skal kaste exception uten å registrere metrikk når payload mangler`() {
         // When
         assertThrows<RuntimeException> { service.generatePDFResponseV2(KATEGORI, DOKUMENTMAL, null) }

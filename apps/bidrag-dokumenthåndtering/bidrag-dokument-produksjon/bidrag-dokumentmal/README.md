@@ -11,7 +11,8 @@ tekst, kan du gå rett til [Endre tekster i notatene](#endre-tekster-i-notatene)
 ```text
 bidrag-behandling                 bidrag-dokument-produksjon          bidrag-dokumentmal (denne appen)
 NotatOpplysningerService   ──►    POST /api/v2/notat/pdf       ──►    POST /notat/<notat>  ──►  HTML
-lager VedtakNotatDto              kaller <url>/notat/<type>           tekster + mal               │
+lager VedtakNotatDto              ?del=KOMPLETT|BEGRUNNELSE|          tekster + mal               │
+                                  OPPLYSNINGER, kaller dokumentmal                                │
                                   og lager PDF av HTML-en      ◄──────────────────────────────────┘
 ```
 
@@ -32,10 +33,56 @@ Hvert notat (`forskudd`, `særbidrag` og `bidrag`) har tre adresser. Alle tar im
 | `/notat/opplysninger/<notat>` | Bare vedleggene med opplysninger og beregningsdetaljer.               |
 | `/vedtak/forside`             | Forsiden til orkestrerte bidragsvedtak.                               |
 
+bidrag-dokument-produksjon velger adresse ut fra parameteren `del` (`KOMPLETT`, `BEGRUNNELSE` eller `OPPLYSNINGER`).
+Uten `del` brukes hele notatet.
+
+Alle tre adressene viser søknadsdetaljene og rollene øverst. Når vedtaket er fattet, står «Ferdigstilt» med
+saksbehandler og dato til slutt i dokumentet. I hele notatet står det etter vedleggene. Lenkene fra begrunnelsen til
+vedleggene («se vedlegg nr. …») vises bare i hele notatet, fordi vedleggene ikke står i samme dokument når delene
+lages hver for seg.
+
 Headeren `renderforpdf: false` gir HTML uten topp- og bunntekst. Uten headeren lages PDF-versjonen.
 
 Notat-adressene er satt opp i [`app/routes.ts`](app/routes.ts). Resten av `app/routes` følger React Routers
 filnavnkonvensjon (`vedtak.forside/route.tsx` blir `/vedtak/forside`).
+
+### Slik bygges notatdelene
+
+De tre adressene for et notat er bygd av de samme to delene:
+
+| Adresse                       | Fil                                           | `del`          | Innhold                                      |
+| ----------------------------- | --------------------------------------------- | -------------- | -------------------------------------------- |
+| `/notat/<notat>`              | `routes/notat/<notat>.tsx`                    | `komplett`     | `Begrunnelse<Notat>` + `Opplysninger<Notat>` |
+| `/notat/begrunnelse/<notat>`  | `routes/notat/begrunnelse/<notat>/route.tsx`  | `begrunnelse`  | `Begrunnelse<Notat>`                         |
+| `/notat/opplysninger/<notat>` | `routes/notat/opplysninger/<notat>/route.tsx` | `opplysninger` | `Opplysninger<Notat>`                        |
+
+- `routes/notat/begrunnelse/<notat>/route.tsx` eksporterer `Begrunnelse<Notat>`. Den viser delene saksbehandleren har
+  skrevet og vurdert, for eksempel virkningstidspunkt, inntekter, boforhold og vedtak, i samme rekkefølge som i notatet.
+- `routes/notat/opplysninger/<notat>/route.tsx` eksporterer `Opplysninger<Notat>` med vedleggene, og
+  `vedlegg<Notat>()`. Funksjonen gir rekkefølgen på vedleggene, og dermed vedleggsnumrene.
+
+Hver route legger innholdet inn i [`NotatSide`](app/routes/notat/felles/NotatSide.tsx):
+
+```tsx
+// /notat/bidrag
+<NotatSide del="komplett" tittel={...} vedlegg={vedleggBidrag}>
+  <BegrunnelseBidrag />
+  <OpplysningerBidrag />
+</NotatSide>
+
+// /notat/begrunnelse/bidrag
+<NotatSide del="begrunnelse" tittel={...} vedlegg={vedleggBidrag}>
+  <BegrunnelseBidrag />
+</NotatSide>
+```
+
+`NotatSide` legger på det som er felles for alle delene: topp- og bunntekst, søknadsdetaljer med roller, tittel og
+«Ferdigstilt» til slutt. Den gir `del` videre i `NotatContext`, som skjuler vedleggslenkene når delen ikke er
+`komplett`.
+
+bidrag-behandling ber om en del med `POST /api/v2/notat/pdf?del=BEGRUNNELSE` (eller `OPPLYSNINGER`) til
+bidrag-dokument-produksjon, som velger tilhørende adresse og lager PDF av HTML-en. Når toggelen `behandling.splitt_notat`
+er på, journalfører bidrag-behandling begrunnelsen og opplysningene som to journalposter.
 
 ## Mappestruktur
 
@@ -74,7 +121,8 @@ som i dokumentet.
 
 **`NotatSide`** ([`routes/notat/felles/NotatSide.tsx`](app/routes/notat/felles/NotatSide.tsx)) brukes av alle
 notat-routes. Den leser input, legger på topp- og bunntekst, søknadsdetaljer og tittel, og gjør dataene tilgjengelige i
-`NotatContext`. Den eksporterer også `notatAction` og `notatMeta`. En route ser slik ut:
+`NotatContext`. Til slutt viser den «Ferdigstilt» når vedtaket er fattet. `del` (`komplett`, `begrunnelse` eller
+`opplysninger`) forteller hvilken del routen viser. Den eksporterer også `notatAction` og `notatMeta`. En route ser slik ut:
 
 ```tsx
 export const action = notatAction;
@@ -88,6 +136,7 @@ export default function NotatBidrag() {
   return (
     <NotatSide
       id="bidrag_notat"
+      del="komplett"
       tittel={tittel}
       vedlegg={vedleggBidrag}
       kanGjeldeFlereSaker
@@ -102,6 +151,8 @@ export default function NotatBidrag() {
 **`NotatContext`** ([`components/notat_felles/NotatContext.tsx`](app/components/notat_felles/NotatContext.tsx)) gir
 alle deler tilgang til dataene uten props: `useNotatFelles()` gir `data`, rollene (`bidragsmottaker`, `søknadsbarn` …)
 og flagg som `erAvslag` og `erInnkrevingsgrunnlag`. `useVedleggNummer("boforhold")` gir nummeret til et vedlegg.
+`visLenkerTilVedlegg` er sann bare i hele notatet. Bruk `LenkeTilVedlegg` (eller `Seksjon`) for lenker til vedlegg,
+så forsvinner de av seg selv i de delte notatene.
 Bruk context framfor props.
 
 **Vedleggsnummer.** `OpplysningerBidrag`, `OpplysningerForskudd` og `OpplysningerSærbidrag` viser vedleggene

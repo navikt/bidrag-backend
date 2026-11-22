@@ -27,6 +27,7 @@ import no.nav.bidrag.behandling.dto.v2.behandling.TotalBeregningUtgifterDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftBeregningDto
 import no.nav.bidrag.behandling.dto.v2.behandling.UtgiftspostDto
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
+import no.nav.bidrag.behandling.dto.v2.notat.NotatDel
 import no.nav.bidrag.behandling.dto.v2.samvær.SamværBarnDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdDto
 import no.nav.bidrag.behandling.dto.v2.underhold.UnderholdskostnadDto
@@ -208,16 +209,33 @@ class NotatOpplysningerService(
         saksnummer: String?,
     ): String {
         val behandlingId = requireNotNull(behandling.id)
-        behandling.metadata?.hentNotatbestillinger()?.let { bestillinger ->
-            val bestilling = checkNotNull(bestillinger.find { it.saksnummer == saksnummer }) {
+        val bestilling = behandling.metadata?.hentNotatbestillinger()?.let { bestillinger ->
+            checkNotNull(bestillinger.find { it.saksnummer == saksnummer }) {
                 "Notatet er ikke bestilt for behandling $behandlingId"
             }
-            bestilling.journalpostId?.let { return it }
         }
+        if (bestilling != null && bestilling.erFullført()) return bestilling.hovedJournalpostId()!!
+
+        val deler = bestilling?.deler() ?: listOf(NotatDel.KOMPLETT)
         val notatDto = hentNotatOpplysningerForBehandling(behandling, saksnummer)
         secureLogger.info { "Oppretter notat med opplysninger $notatDto og saksnummer $saksnummer" }
-        val notatPdf = bidragDokumentProduksjonConsumer.opprettNotat(notatDto)
-        log.info { "Oppretter notat for behandling $behandlingId i sak ${behandling.saksnummer}" }
+        return deler
+            .map { del ->
+                bestilling?.journalpostIdFor(del)
+                    ?: opprettNotatDel(behandling, notatDto, del, oppdaterDatoDokument, saksnummer)
+            }.first()
+    }
+
+    private fun opprettNotatDel(
+        behandling: Behandling,
+        notatDto: VedtakNotatDto,
+        del: NotatDel,
+        oppdaterDatoDokument: Boolean,
+        saksnummer: String?,
+    ): String {
+        val behandlingId = requireNotNull(behandling.id)
+        val notatPdf = bidragDokumentProduksjonConsumer.opprettNotat(notatDto, del)
+        log.info { "Oppretter notat ($del) for behandling $behandlingId i sak ${behandling.saksnummer}" }
         val vedtakDetaljer = behandling.vedtakDetaljer
         val forespørsel =
             OpprettJournalpostRequest(
@@ -232,26 +250,26 @@ class NotatOpplysningerService(
                 } else {
                     behandling.bidragspliktig!!.ident
                 },
-                referanseId = behandling.tilReferanseId(saksnummer),
+                referanseId = behandling.tilReferanseId(saksnummer) + del.referanseIdPostfiks,
                 saksbehandlerIdent = vedtakDetaljer?.vedtakFattetAv ?: behandling.vedtakFattetAv ?: TokenUtils.hentSaksbehandlerIdent(),
                 dokumenter =
                 listOf(
                     OpprettDokumentDto(
                         fysiskDokument = notatPdf,
-                        tittel = behandling.notatTittel(),
+                        tittel = behandling.notatTittel() + del.tittelPostfiks,
                     ),
                 ),
             )
         val journalpostId = checkNotNull(opprettJournalpostEllerHentEksisterende(forespørsel).journalpostId?.takeIf { it.isNotBlank() }) {
-            "Journalføring av notat for behandling $behandlingId ga ingen journalpost-ID"
+            "Journalføring av notat ($del) for behandling $behandlingId ga ingen journalpost-ID"
         }
-        behandlingService.lagreNotatJournalpostId(behandlingId, journalpostId, saksnummer)
+        behandlingService.lagreNotatJournalpostId(behandlingId, journalpostId, saksnummer, del)
         secureLogger.info {
-            "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
+            "Opprettet notat ($del) for behandling $behandlingId i sak ${behandling.saksnummer} " +
                 "med journalpostId $journalpostId med forespørsel $forespørsel"
         }
         log.info {
-            "Opprettet notat for behandling $behandlingId i sak ${behandling.saksnummer} " +
+            "Opprettet notat ($del) for behandling $behandlingId i sak ${behandling.saksnummer} " +
                 "med journalpostId $journalpostId"
         }
         return journalpostId

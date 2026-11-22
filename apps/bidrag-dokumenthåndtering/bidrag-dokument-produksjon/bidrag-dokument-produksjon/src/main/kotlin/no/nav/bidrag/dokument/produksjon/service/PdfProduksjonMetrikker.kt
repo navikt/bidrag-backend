@@ -58,7 +58,7 @@ class PdfProduksjonMetrikker(
 ) {
     fun <T> målSteg(
         steg: PdfProduksjonSteg,
-        kategori: String,
+        type: String,
         dokumentmal: String,
         utfallFor: (T) -> PdfProduksjonUtfall = { if (it == null) PdfProduksjonUtfall.FEIL else PdfProduksjonUtfall.OK },
         block: () -> T,
@@ -68,13 +68,13 @@ class PdfProduksjonMetrikker(
         try {
             return block().also { utfall = utfallFor(it) }
         } finally {
-            sample.stop(timer(steg, kategori, dokumentmal, utfall))
+            sample.stop(timer(steg, type, dokumentmal, utfall))
         }
     }
 
     fun registrerStørrelse(
         dokumenttype: PdfProduksjonDokumenttype,
-        kategori: String,
+        type: String,
         dokumentmal: String,
         antallBytes: Int,
     ) {
@@ -83,7 +83,7 @@ class PdfProduksjonMetrikker(
             .description("Størrelse på HTML og PDF i PDF-produksjonen")
             .baseUnit(BaseUnits.BYTES)
             .tag(TAG_DOKUMENTTYPE, dokumenttype.tagverdi)
-            .tag(TAG_KATEGORI, tagverdi(kategori))
+            .tag(TAG_KATEGORI, tagverdi(type))
             .tag(TAG_DOKUMENTMAL, tagverdi(dokumentmal))
             .serviceLevelObjectives(*STØRRELSESBØTTER)
             .register(meterRegistry)
@@ -92,19 +92,19 @@ class PdfProduksjonMetrikker(
 
     private fun timer(
         steg: PdfProduksjonSteg,
-        kategori: String,
+        type: String,
         dokumentmal: String,
         utfall: PdfProduksjonUtfall,
     ): Timer = Timer
         .builder(METRIKK_PDF_PRODUKSJON)
         .description("Tid brukt per steg i PDF-produksjonen")
         .tag(TAG_STEG, steg.tagverdi)
-        .tag(TAG_KATEGORI, tagverdi(kategori))
+        .tag(TAG_KATEGORI, tagverdi(type))
         .tag(TAG_DOKUMENTMAL, tagverdi(dokumentmal))
         .tag(TAG_UTFALL, utfall.tagverdi)
         .serviceLevelObjectives(*TIDSBØTTER)
         .register(meterRegistry)
 }
 
-// Kategori og dokumentmal kommer fra path-parametre. Avgrens verdiene så en ugyldig sti ikke gir nye tidsserier uten grense.
+// Type og dokumentmal kommer fra path-parametre. Avgrens verdiene så en ugyldig sti ikke gir nye tidsserier uten grense.
 internal fun tagverdi(verdi: String): String = GYLDIG_TAGVERDI.matchEntire(verdi.trim().lowercase())?.value ?: UGYLDIG_TAGVERDI

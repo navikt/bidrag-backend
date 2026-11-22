@@ -10,12 +10,8 @@ import {
   type Resultat,
 } from "~/routes/notat/begrunnelse/bidrag/VedtakFelles";
 import { VedtakEndeligTable } from "~/routes/notat/begrunnelse/bidrag/VedtakEndeligTable";
-import {
-  useNotatFelles,
-  useVedleggNummer,
-} from "~/components/notat_felles/NotatContext";
-import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
-import elementIds from "~/utils/elementIds";
+import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import { LenkeTilVedlegg } from "~/components/notat_felles/Seksjon";
 import {
   DokumentTabell,
   Tabellcelle,
@@ -132,7 +128,6 @@ const tabellBeregning: Tabelloppsett = {
 };
 type Periode = ResultatBarnebidragsberegningPeriodeDto;
 export default function Vedtak() {
-  const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data, erInnkrevingsgrunnlag } = useNotatFelles();
   const resultat = data.vedtak.resultat as Resultat[];
   function renderTabell() {
@@ -154,12 +149,13 @@ export default function Vedtak() {
             : tekst("notat.begrunnelse.bidrag.vedtak.tittel", "Vedtak")}
         </h2>
         {!erAvslag && !erInnkrevingsgrunnlag && (
-          <a href={`#${elementIds.vedleggBeregningsdetaljer}`}>
-            {tekst(
+          <LenkeTilVedlegg
+            vedlegg="beregningsdetaljer"
+            lenketekst={tekst(
               "ord.seVedleggForBeregningsdetaljer",
               "se vedlegg nr. {} for beregningsdetaljer",
-            ).replace("{}", `${vedleggNummer}`)}
-          </a>
+            )}
+          />
         )}
       </div>
       {renderTabell()}
@@ -177,7 +173,6 @@ export default function Vedtak() {
         </>
       )}
       <OverstyrFatteVedtakRevurderingsbarnInformasjon />
-      <VedtakFattetDetaljer data={data.vedtak} />
     </>
   );
 }

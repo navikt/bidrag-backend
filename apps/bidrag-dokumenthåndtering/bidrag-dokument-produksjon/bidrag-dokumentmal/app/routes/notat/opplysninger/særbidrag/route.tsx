@@ -23,6 +23,7 @@ export default function NotatOpplysningerSærbidrag() {
   return (
     <NotatSide
       id="særbidrag_notat"
+      del="opplysninger"
       tittel={tekst(
         "notat.opplysninger.særbidrag.tittel",
         "Særbidrag, vedlegg til saksbehandlingsnotat",

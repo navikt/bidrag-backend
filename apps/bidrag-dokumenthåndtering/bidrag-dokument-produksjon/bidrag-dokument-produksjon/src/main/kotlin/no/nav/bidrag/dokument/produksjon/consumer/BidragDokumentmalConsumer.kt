@@ -27,17 +27,22 @@ class BidragDokumentmalConsumer(
         }
 
     fun hentDokumentmal(
-        category: String,
         type: String,
+        dokumentmal: String,
         payload: String,
         renderforpdf: Boolean = true,
+        innhold: String? = null,
     ): String? = try {
         // URI-mal i stedet for ferdig URL, så http_client_requests får en avgrenset uri-tag.
-        restTemplateForRenderforpdf
-            .getValue(renderforpdf)
-            .postForEntity<ByteArray>("$url/{category}/{type}", payload, category, type)
-            .body
-            ?.toString(Charsets.UTF_8)
+        // Innhold er en egen variabel, fordi skråstrek i en variabel blir kodet.
+        val restTemplate = restTemplateForRenderforpdf.getValue(renderforpdf)
+        val respons =
+            if (innhold == null) {
+                restTemplate.postForEntity<ByteArray>("$url/{type}/{dokumentmal}", payload, type, dokumentmal)
+            } else {
+                restTemplate.postForEntity<ByteArray>("$url/{type}/{innhold}/{dokumentmal}", payload, type, innhold, dokumentmal)
+            }
+        respons.body?.toString(Charsets.UTF_8)
     } catch (e: Exception) {
         log.error(e) { "Det skjedde en feil ved henting av dokumentmal fra url $url" }
         null

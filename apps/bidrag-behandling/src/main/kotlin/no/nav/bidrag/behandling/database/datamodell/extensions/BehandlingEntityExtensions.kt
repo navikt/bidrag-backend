@@ -12,6 +12,7 @@ import no.nav.bidrag.behandling.database.datamodell.tilÅrsakstype
 import no.nav.bidrag.behandling.database.repository.BehandlingRepository
 import no.nav.bidrag.behandling.dto.v1.behandling.OppdaterRollerRequest
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettBehandlingRequest
+import no.nav.bidrag.behandling.dto.v2.notat.NotatDel
 import no.nav.bidrag.behandling.transformers.toLocalDateTime
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
@@ -50,7 +51,32 @@ enum class LasterGrunnlagAsyncStatus {
 data class Notatbestilling(
     val saksnummer: String?,
     val journalpostId: String? = null,
-)
+    val splittet: Boolean = false,
+    val begrunnelseJournalpostId: String? = null,
+    val opplysningerJournalpostId: String? = null,
+) {
+    fun deler(): List<NotatDel> = if (splittet) NotatDel.SPLITTEDE_DELER else listOf(NotatDel.KOMPLETT)
+
+    fun erFullført(): Boolean = deler().all { journalpostIdFor(it) != null }
+
+    /** Journalposten som representerer bestillingen: samlet notat, eller begrunnelsen når notatet er splittet. */
+    fun hovedJournalpostId(): String? = journalpostIdFor(deler().first())
+
+    fun journalpostIdFor(del: NotatDel): String? = when (del) {
+        NotatDel.KOMPLETT -> journalpostId
+        NotatDel.BEGRUNNELSE -> begrunnelseJournalpostId
+        NotatDel.OPPLYSNINGER -> opplysningerJournalpostId
+    }
+
+    fun medJournalpostId(
+        del: NotatDel,
+        id: String,
+    ): Notatbestilling = when (del) {
+        NotatDel.KOMPLETT -> copy(journalpostId = id)
+        NotatDel.BEGRUNNELSE -> copy(begrunnelseJournalpostId = id)
+        NotatDel.OPPLYSNINGER -> copy(opplysningerJournalpostId = id)
+    }
+}
 
 class BehandlingMetadataDo : MutableMap<String, String> by hashMapOf() {
     companion object {

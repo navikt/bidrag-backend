@@ -2,12 +2,8 @@ import {
   NotatResultatSaerbidragsberegningDto,
   Resultatkode,
 } from "~/types/Api";
-import {
-  useNotatFelles,
-  useVedleggNummer,
-} from "~/components/notat_felles/NotatContext";
-import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
-import elementIds from "~/utils/elementIds";
+import { useNotatFelles } from "~/components/notat_felles/NotatContext";
+import { LenkeTilVedlegg } from "~/components/notat_felles/Seksjon";
 import { erResutlatMedBeregning } from "~/routes/notat/felles/SærbidragHelpers";
 import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { Feltliste, Feltlisteoppsett } from "~/components/Feltliste";
@@ -208,7 +204,6 @@ const utgifter: Tabelloppsett = {
   ],
 };
 export default function Vedtak() {
-  const vedleggNummer = useVedleggNummer("beregningsdetaljer");
   const { erAvslag, data } = useNotatFelles();
   const resultat =
     (data.vedtak?.resultat as NotatResultatSaerbidragsberegningDto[]) ?? [];
@@ -225,12 +220,13 @@ export default function Vedtak() {
             {tekst("notat.begrunnelse.særbidrag.vedtak.tittel", "Vedtak")}
           </h2>
           {erResutlatMedBeregning(resultat) && (
-            <a href={`#${elementIds.vedleggBeregningsdetaljer}`}>
-              {tekst(
+            <LenkeTilVedlegg
+              vedlegg="beregningsdetaljer"
+              lenketekst={tekst(
                 "ord.seVedleggForBeregningsdetaljer",
                 "se vedlegg nr. {} for beregningsdetaljer",
-              ).replace("{}", vedleggNummer.toString())}
-            </a>
+              )}
+            />
           )}
         </div>
         {resultat.length == 0 ? (
@@ -239,7 +235,6 @@ export default function Vedtak() {
           <VedtakResultat resultat={resultat[0]} />
         )}
       </div>
-      <VedtakFattetDetaljer data={data.vedtak} />
     </>
   );
 }

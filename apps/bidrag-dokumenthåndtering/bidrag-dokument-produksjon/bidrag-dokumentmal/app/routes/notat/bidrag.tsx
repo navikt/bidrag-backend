@@ -17,6 +17,7 @@ export default function NotatBidrag() {
   return (
     <NotatSide
       id="bidrag_notat"
+      del="komplett"
       tittel={tekst(
         "notat.begrunnelse.bidrag.tittel",
         "Bidrag, saksbehandlingsnotat",

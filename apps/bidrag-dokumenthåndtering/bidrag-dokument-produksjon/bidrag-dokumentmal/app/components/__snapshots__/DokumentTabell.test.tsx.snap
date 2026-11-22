@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DokumentTabell > skal bevare HTML for V1 med detaljer på en stripet rad > V1 1`] = `
+"<table class="table undefined" style="width:400px;max-width:600px;table-layout:fixed"><colgroup><col style="width:140px"/><col/></colgroup><thead style="word-break:auto-phrase;text-wrap:wrap" class=""><tr><th class="pb-1 pt-1 border-b border-solid border-t-0 border-r-0 border-l-0" style="width:140px;vertical-align:top;text-align:left">Periode</th><th class="pb-1 pt-1 border-b border-solid border-t-0 border-r-0 border-l-0" style="vertical-align:top;text-align:left">Status</th></tr></thead><tbody><tr><td class="
+              border-b border-solid border-t-0 border-r-0 border-l-0 " style="font-weight:normal;text-align:left">2020</td><td class="
+              border-b border-solid border-t-0 border-r-0 border-l-0 " style="font-weight:normal;text-align:left">Første</td></tr><tr><td class="
+              border-b border-solid border-t-0 border-r-0 border-l-0 " style="font-weight:normal;text-align:left">2021</td><td class="
+              border-b border-solid border-t-0 border-r-0 border-l-0 " style="font-weight:normal;text-align:left">Andre</td></tr><tr><td colSpan="2" class="table_row_details" style="padding-top:8px"><strong>Detaljer</strong></td></tr></tbody></table>"
+`;
+
+exports[`DokumentTabell > skal bevare HTML for V2 med detaljer på en stripet rad > V2 1`] = `
+"<table class="table undefined" style="width:650px;table-layout:auto"><colgroup><col style="width:140px"/><col/></colgroup><thead style="word-break:auto-phrase;text-wrap:wrap" class="bg-table-header"><tr><th class="pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0" style="width:140px;vertical-align:top;text-align:left">Periode</th><th class="pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0" style="vertical-align:top;text-align:left">Status</th></tr></thead><tbody><tr><td class="
+              pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0  undefined " style="font-weight:normal;text-align:left">2020</td><td class="
+              pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0  undefined " style="font-weight:normal;text-align:left">Første</td></tr><tr><td class="
+              pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0 bg-table-bg-even undefined " style="font-weight:normal;text-align:left">2021</td><td class="
+              pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0 bg-table-bg-even undefined " style="font-weight:normal;text-align:left">Andre</td></tr><tr><td colSpan="2" class="table_row_details pb-2 bg-table-bg-even" style="padding-top:8px"><strong>Detaljer</strong></td></tr></tbody></table>"
+`;
+
+exports[`DokumentTabell > skal støtte periode, span, justering og radvarianter 1`] = `
+"<table class="table undefined" style="width:650px;table-layout:auto"><colgroup><col/><col/></colgroup><thead style="word-break:auto-phrase;text-wrap:wrap" class="bg-table-header"><tr><th class="pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0" style="vertical-align:top;text-align:left">Beskrivelse</th><th class="pb-2 pt-2 pl-3 pr-3 border-b border-solid border-t-0 border-r-0 border-l-0" style="vertical-align:top;text-align:right">Verdi</th></tr></thead><tbody><tr><td class="
+              pb-2 pt-2 pl-3 pr-3 bg-table-bg-even undefined " colSpan="2" style="font-weight:normal;text-align:left">Mai 2025</td></tr><tr style="border-bottom:1px solid black"><td class="
+              pb-2 pt-2 pl-3 pr-3 false undefined " colSpan="1" style="font-weight:bold;text-align:center">Midlertidig</td><td class="
+              pb-2 pt-2 pl-3 pr-3 false undefined " style="font-weight:normal;text-align:right">100</td></tr><tr><td class="
+                pt-2 " colSpan="2" style="font-weight:normal;text-align:left">Forklaring</td></tr></tbody></table>"
+`;

@@ -1,7 +1,6 @@
 import TableGjelderBarn from "~/components/TableGjelderBarn";
 import { KolonneTabell, Tabelloppsett } from "~/components/KolonneTabell";
 import { useNotatFelles } from "~/components/notat_felles/NotatContext";
-import { VedtakFattetDetaljer } from "~/routes/notat/begrunnelse/felles/VedtakFattetDetaljer";
 import { NotatResultatForskuddBeregningBarnDto } from "~/types/Api";
 import { tekst } from "~/utils/tekst";
 const tabellAvslag: Tabelloppsett = {
@@ -87,7 +86,6 @@ export default function Vedtak() {
           <VedtakForBarn key={barn.barn.ident} barn={barn} />
         ))
       )}
-      <VedtakFattetDetaljer data={data.vedtak} />
     </div>
   );
 }

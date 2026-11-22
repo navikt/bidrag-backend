@@ -14,6 +14,7 @@ import io.kotest.matchers.string.shouldContain
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import no.nav.bidrag.behandling.TestContainerRunner
+import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.Grunnlag
 import no.nav.bidrag.behandling.database.datamodell.Husstandsmedlem
@@ -39,6 +40,7 @@ import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagRequestV2
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.dto.v2.behandling.innhentesForRolle
+import no.nav.bidrag.behandling.dto.v2.notat.NotatDel
 import no.nav.bidrag.behandling.transformers.Dtomapper
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.jsonListeTilObjekt
 import no.nav.bidrag.behandling.transformers.Jsonoperasjoner.Companion.tilJson
@@ -49,6 +51,7 @@ import no.nav.bidrag.behandling.transformers.boforhold.tilBoforholdVoksneRequest
 import no.nav.bidrag.behandling.transformers.boforhold.tilSivilstandRequest
 import no.nav.bidrag.behandling.transformers.tilTypeBoforhold
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
+import no.nav.bidrag.behandling.utils.enableUnleashFeature
 import no.nav.bidrag.behandling.utils.hentInntektForBarn
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.SOKNAD_ID
@@ -1071,6 +1074,76 @@ class BehandlingServiceTest : TestContainerRunner() {
                 Notatbestilling(saker.first(), notatJournalpostId),
                 Notatbestilling(saker.last(), "notat-journalpost-2"),
             )
+        }
+
+        @Test
+        fun `skal lagre journalpost per notatdel for splittet bestilling og finne bestillingen til begge deler er lagret`() {
+            // gitt
+            enableUnleashFeature(UnleashFeatures.SPLITT_NOTAT)
+            val behandlingId = oppretteBehandling().id!!
+            val saker = listOf("1900000", "1900001")
+            val start = LocalDateTime.now()
+            behandlingService.oppdaterVedtakFattetStatus(behandlingId, samtidigVedtaksid, "1234", saksnumreForNotat = saker)
+
+            fun finnBestillinger() = behandlingRepository
+                .hentBehandlingerSomManglerNotater(start.minusDays(1), start.plusDays(1), behandlingId - 1, 10)
+                .singleOrNull { it.id == behandlingId }
+                ?.let { lesNotatbestillinger(it.notatbestillinger) }
+
+            finnBestillinger() shouldBe saker.map { Notatbestilling(it, splittet = true) }
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandlingId, "begrunnelse-1", saker.first(), NotatDel.BEGRUNNELSE)
+
+            // så
+            finnBestillinger()!!.first() shouldBe Notatbestilling(saker.first(), splittet = true, begrunnelseJournalpostId = "begrunnelse-1")
+            behandlingService.hentBehandlingById(behandlingId).notatJournalpostId shouldBe "begrunnelse-1"
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandlingId, "opplysninger-1", saker.first(), NotatDel.OPPLYSNINGER)
+            behandlingService.lagreNotatJournalpostId(behandlingId, "begrunnelse-2", saker.last(), NotatDel.BEGRUNNELSE)
+
+            // så
+            finnBestillinger() shouldBe
+                listOf(
+                    Notatbestilling(saker.first(), splittet = true, begrunnelseJournalpostId = "begrunnelse-1", opplysningerJournalpostId = "opplysninger-1"),
+                    Notatbestilling(saker.last(), splittet = true, begrunnelseJournalpostId = "begrunnelse-2"),
+                )
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandlingId, "opplysninger-2", saker.last(), NotatDel.OPPLYSNINGER)
+
+            // så
+            finnBestillinger() shouldBe null
+            assertSoftly(behandlingService.hentBehandlingById(behandlingId)) {
+                notatJournalpostId shouldBe "begrunnelse-1"
+                metadata?.hentNotatbestillinger()!!.all { it.erFullført() } shouldBe true
+            }
+        }
+
+        @Test
+        fun `skal ikke overskrive lagret journalpost for notatdel`() {
+            // gitt
+            enableUnleashFeature(UnleashFeatures.SPLITT_NOTAT)
+            val behandlingId = oppretteBehandling().id!!
+            behandlingService.oppdaterVedtakFattetStatus(behandlingId, samtidigVedtaksid, "1234", saksnumreForNotat = listOf("1900000"))
+            behandlingService.lagreNotatJournalpostId(behandlingId, "begrunnelse-1", "1900000", NotatDel.BEGRUNNELSE)
+
+            // når
+            behandlingService.lagreNotatJournalpostId(behandlingId, "begrunnelse-2", "1900000", NotatDel.BEGRUNNELSE)
+
+            // så
+            assertSoftly(behandlingService.hentBehandlingById(behandlingId)) {
+                notatJournalpostId shouldBe "begrunnelse-1"
+                metadata?.hentNotatbestillinger() shouldBe
+                    listOf(Notatbestilling("1900000", splittet = true, begrunnelseJournalpostId = "begrunnelse-1"))
+            }
+        }
+
+        @Test
+        fun `skal lese notatbestillinger lagret før notatet kunne splittes`() {
+            lesNotatbestillinger("""[{"saksnummer":"1900000","journalpostId":"123"},{"saksnummer":null}]""") shouldBe
+                listOf(Notatbestilling("1900000", "123"), Notatbestilling(null))
         }
 
         @Test

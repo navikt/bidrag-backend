@@ -17,6 +17,7 @@ export default function NotatForskudd() {
   return (
     <NotatSide
       id="forskudd_notat"
+      del="komplett"
       tittel={tekst(
         "notat.begrunnelse.forskudd.tittel",
         "Forskudd, saksbehandlingsnotat",

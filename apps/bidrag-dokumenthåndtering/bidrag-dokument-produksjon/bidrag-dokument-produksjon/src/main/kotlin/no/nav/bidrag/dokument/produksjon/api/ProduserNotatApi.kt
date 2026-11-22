@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.nio.file.Paths
 import kotlin.io.path.readText
@@ -35,12 +36,14 @@ class ProduserNotatApi(
     @PostMapping("/pdf")
     fun generatePDF(
         @org.springframework.web.bind.annotation.RequestBody payload: VedtakNotatDto,
+        @RequestParam(required = false, defaultValue = "KOMPLETT") del: NotatDel,
     ): ResponseEntity<ByteArray> {
-        log.info { "Produserer notat PDF 2 for dokumentmal ${payload.type}" }
+        log.info { "Produserer notat PDF 2 for dokumentmal ${payload.type} og del $del" }
         return pdfProducerService.generatePDFResponseV2(
             "notat",
             payload.type.name.lowercase(),
             commonObjectmapper.writeValueAsString(payload),
+            innhold = del.innhold,
         )
     }
 
@@ -48,15 +51,17 @@ class ProduserNotatApi(
     fun generateHTML(
         @Parameter(name = "dokumentmal", example = "forskudd")
         @org.springframework.web.bind.annotation.RequestBody payload: VedtakNotatDto,
+        @RequestParam(required = false, defaultValue = "KOMPLETT") del: NotatDel,
     ): ResponseEntity<String> {
         SIKKER_LOGG.info {
-            "Produserer notat HTML for dokumentmal ${payload.type} for input $payload"
+            "Produserer notat HTML for dokumentmal ${payload.type} og del $del for input $payload"
         }
-        log.info { "Produserer notat HTML for dokumentmal ${payload.type}" }
+        log.info { "Produserer notat HTML for dokumentmal ${payload.type} og del $del" }
         return pdfProducerService.generateHTMLResponseV2(
             "notat",
             payload.type.name.lowercase(),
             getObjectmapper().writeValueAsString(payload),
+            innhold = del.innhold,
         )
     }
 }
