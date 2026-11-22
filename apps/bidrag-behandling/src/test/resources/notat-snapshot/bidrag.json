@@ -1830,6 +1830,7 @@
             },
             "forskuddssats" : 1760,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 50000.00,
@@ -1840,6 +1841,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 550000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 0,
               "samværsfradrag" : 276.00,
@@ -2107,6 +2109,7 @@
             },
             "forskuddssats" : 1760,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -2117,6 +2120,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 913.00,
@@ -2384,6 +2388,7 @@
             },
             "forskuddssats" : 1760,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -2394,6 +2399,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 913.00,
@@ -2661,6 +2667,7 @@
             },
             "forskuddssats" : 1880,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -2671,6 +2678,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 1011.00,
@@ -2938,6 +2946,7 @@
             },
             "forskuddssats" : 1880,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -2948,6 +2957,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 1011.00,
@@ -3215,6 +3225,7 @@
             },
             "forskuddssats" : 1970,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -3225,6 +3236,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 1048.00,
@@ -3492,6 +3504,7 @@
             },
             "forskuddssats" : 1970,
             "indeksreguleringDetaljer" : null,
+            "inntektBBMultiplikator" : 30,
             "inntekter" : {
               "barnEndeligInntekt" : 0.00,
               "inntektBM" : 53000.00,
@@ -3502,6 +3515,7 @@
               "inntektBarnMånedlig" : 0.00,
               "totalEndeligInntekt" : 556000.00
             },
+            "maksInntektBBMultiplikator" : 100,
             "samværsfradrag" : {
               "gjennomsnittligSamværPerMåned" : 8.01,
               "samværsfradrag" : 1048.00,
@@ -3762,6 +3776,7 @@
           },
           "forskuddssats" : 1760,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 50000.00,
@@ -3772,6 +3787,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 550000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 0,
             "samværsfradrag" : 276.00,
@@ -4032,6 +4048,7 @@
           },
           "forskuddssats" : 1760,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -4042,6 +4059,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 913.00,
@@ -4302,6 +4320,7 @@
           },
           "forskuddssats" : 1760,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -4312,6 +4331,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 913.00,
@@ -4572,6 +4592,7 @@
           },
           "forskuddssats" : 1880,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -4582,6 +4603,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 1011.00,
@@ -4842,6 +4864,7 @@
           },
           "forskuddssats" : 1880,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -4852,6 +4875,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 1011.00,
@@ -5112,6 +5136,7 @@
           },
           "forskuddssats" : 1970,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -5122,6 +5147,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 1048.00,
@@ -5382,6 +5408,7 @@
           },
           "forskuddssats" : 1970,
           "indeksreguleringDetaljer" : null,
+          "inntektBBMultiplikator" : 30,
           "inntekter" : {
             "barnEndeligInntekt" : 0.00,
             "inntektBM" : 53000.00,
@@ -5392,6 +5419,7 @@
             "inntektBarnMånedlig" : 0.00,
             "totalEndeligInntekt" : 556000.00
           },
+          "maksInntektBBMultiplikator" : 100,
           "samværsfradrag" : {
             "gjennomsnittligSamværPerMåned" : 8.01,
             "samværsfradrag" : 1048.00,
