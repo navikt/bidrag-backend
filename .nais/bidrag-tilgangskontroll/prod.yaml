@@ -22,9 +22,6 @@ azure_access_inbound:
   - application: bidrag-sak
     namespace: bidrag
     cluster: prod-fss
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
   - application: bidrag-dokument-journalpost
     namespace: bidrag
     cluster: prod-fss
