@@ -1,6 +1,7 @@
 package no.nav.bidrag.dokument.bestilling.consumer
 
 import no.nav.bidrag.commons.cache.BrukerCacheable
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.dokument.bestilling.config.CacheConfig.Companion.PERSON_ADRESSE_CACHE
 import no.nav.bidrag.dokument.bestilling.config.CacheConfig.Companion.PERSON_CACHE
@@ -43,7 +44,8 @@ class BidragPersonConsumer(
             if (e.statusCode == HttpStatus.NOT_FOUND) {
                 return null
             }
-            throw HentPersonFeiletException("Henting av person $personId feilet", e)
+            secureLogger.warn(e) { "Henting av person $personId feilet med status ${e.statusCode}" }
+            throw HentPersonFeiletException("Henting av person feilet med status ${e.statusCode}", e)
         }
     }
 
@@ -55,7 +57,8 @@ class BidragPersonConsumer(
         if (e.statusCode == HttpStatus.NOT_FOUND) {
             null
         } else {
-            throw HentPersonFeiletException("Henting av språk for person $id feilet", e)
+            secureLogger.warn(e) { "Henting av adresse for person $id feilet med status ${e.statusCode}" }
+            throw HentPersonFeiletException("Henting av adresse feilet med status ${e.statusCode}", e)
         }
     }
 
@@ -70,7 +73,8 @@ class BidragPersonConsumer(
             if (e.statusCode == HttpStatus.NOT_FOUND) {
                 return null
             }
-            throw HentPersonFeiletException("Henting av språk for person $id feilet", e)
+            secureLogger.warn(e) { "Henting av språk for person $id feilet med status ${e.statusCode}" }
+            throw HentPersonFeiletException("Henting av språk feilet med status ${e.statusCode}", e)
         }
     }
 }

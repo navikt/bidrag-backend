@@ -6,6 +6,7 @@ import no.nav.bidrag.behandling.config.CacheConfig.Companion.SAK_PERSON_CACHE
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningSakConsumer
 import no.nav.bidrag.commons.cache.BrukerCacheable
 import no.nav.bidrag.commons.service.consumers.FellesSakConsumer
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.transport.sak.BidragssakDto
@@ -43,7 +44,8 @@ class BidragSakConsumer(
         try {
             return getForNonNullEntity(createUri("/bidrag-sak/sak/$saksnr"))
         } catch (e: HttpStatusCodeException) {
-            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak $saksnr" }
+            LOGGER.warn { "Feil ved henting av sak. status=${e.statusCode.value()}" }
+            secureLogger.warn(e) { "Feil ved henting av sak $saksnr" }
             throw e
         }
     }
@@ -57,7 +59,8 @@ class BidragSakConsumer(
             if (e.statusCode == HttpStatus.NOT_FOUND) {
                 return emptyList()
             }
-            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak for $personident" }
+            LOGGER.warn { "Feil ved henting av saker for person. status=${e.statusCode.value()}" }
+            secureLogger.warn(e) { "Feil ved henting av saker for person $personident" }
             throw e
         }
     }
@@ -67,7 +70,8 @@ class BidragSakConsumer(
         try {
             postForEntity<Unit>(createUri("/sak/tilgang/opprett"), request)
         } catch (e: HttpStatusCodeException) {
-            LOGGER.warn(e) { "Det skjedde en feil opprettelse av midlertlidlig tilgang for $request" }
+            LOGGER.warn { "Feil ved opprettelse av midlertidlig tilgang. status=${e.statusCode.value()}" }
+            secureLogger.warn(e) { "Feil ved opprettelse av midlertidlig tilgang for $request" }
             throw e
         }
     }
@@ -77,7 +81,8 @@ class BidragSakConsumer(
         try {
             postForEntity<Unit>(createUri("/sak/tilgang/fjern"), request)
         } catch (e: HttpStatusCodeException) {
-            LOGGER.warn(e) { "Det skjedde en feil fjerning av midlertidlig tilgang for sak $request" }
+            LOGGER.warn { "Feil ved fjerning av midlertidlig tilgang. status=${e.statusCode.value()}" }
+            secureLogger.warn(e) { "Feil ved fjerning av midlertidlig tilgang for $request" }
             throw e
         }
     }
