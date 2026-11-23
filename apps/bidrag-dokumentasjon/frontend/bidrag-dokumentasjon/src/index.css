@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@navikt/ds-css";
-@import "@navikt/bidrag-ui-common/styles/index.css";
 
 :root {
   color: #1f2937;
@@ -71,12 +70,6 @@ body {
   flex-shrink: 0;
   align-self: flex-start;
   margin: 1rem 0.5rem;
-}
-
-.sidebar-drawer-paper {
-  background: transparent !important;
-  box-shadow: none !important;
-  overflow: visible !important;
 }
 
 .sidebar-panel {

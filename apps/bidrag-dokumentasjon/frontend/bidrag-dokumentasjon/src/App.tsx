@@ -1,4 +1,3 @@
-import "@cubone/react-file-manager/dist/style.css";
 import "highlight.js/styles/default.css";
 
 import {ChevronLeftIcon, ChevronRightLastIcon} from "@navikt/aksel-icons";
