@@ -1,16 +1,15 @@
 package no.nav.bidrag.organisasjon.consumer.ldap
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.Appender
+import ch.qos.logback.core.read.ListAppender
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.slot
-import io.mockk.verify
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -26,13 +25,16 @@ import javax.naming.ldap.LdapContext
 @ExtendWith(MockKExtension::class)
 internal class LdapBrukeroppslagTest {
     private lateinit var baseSearch: String
-    private lateinit var logCaptor: CapturingSlot<ILoggingEvent>
     private lateinit var sbIdent: String
 
     private lateinit var ldap: LdapBrukeroppslag
-
-    @RelaxedMockK
-    private lateinit var appenderMock: Appender<ILoggingEvent>
+    private val regularLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+    private val secureLogger = LoggerFactory.getLogger("secureLogger") as Logger
+    private val regularAppender = ListAppender<ILoggingEvent>()
+    private val secureAppender = ListAppender<ILoggingEvent>()
+    private var originalRegularLevel: Level? = null
+    private var originalSecureLevel: Level? = null
+    private var originalSecureAdditivity = false
 
     @RelaxedMockK
     private lateinit var ldapInnlogging: LdapInnlogging
@@ -49,15 +51,27 @@ internal class LdapBrukeroppslagTest {
         ldap = LdapBrukeroppslag(environment, ldapInnlogging, baseSearch)
         sbIdent = "L999999"
         every { ldapInnlogging.lagLdapContext(environment) } returns context
-        mockLogAppender()
-        logCaptor = slot()
+        originalRegularLevel = regularLogger.level
+        originalSecureLevel = secureLogger.level
+        originalSecureAdditivity = secureLogger.isAdditive
+        regularAppender.start()
+        secureAppender.start()
+        regularLogger.level = Level.WARN
+        secureLogger.level = Level.WARN
+        secureLogger.isAdditive = false
+        regularLogger.addAppender(regularAppender)
+        secureLogger.addAppender(secureAppender)
     }
 
-    private fun mockLogAppender() {
-        val logger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
-        every { appenderMock.name } returns "MOCK"
-        every { appenderMock.isStarted } returns true
-        logger.addAppender(appenderMock)
+    @AfterEach
+    fun ryddOppLogging() {
+        regularLogger.detachAppender(regularAppender)
+        secureLogger.detachAppender(secureAppender)
+        regularLogger.level = originalRegularLevel
+        secureLogger.level = originalSecureLevel
+        secureLogger.isAdditive = originalSecureAdditivity
+        regularAppender.stop()
+        secureAppender.stop()
     }
 
     @Test
@@ -90,11 +104,9 @@ internal class LdapBrukeroppslagTest {
             )
         } returns heleResultatet
         val saksbehandlerNavn = ldap.hentBrukernavn(sbIdent)
-        verify { appenderMock.doAppend(capture(logCaptor)) }
-        val loggingEvent = logCaptor.captured
         saksbehandlerNavn shouldBe null
-        loggingEvent shouldNotBe null
-        loggingEvent.formattedMessage.contains("Navn på saksbehandler for ident $sbIdent ikke funnet (2)") shouldBe true
+        regularAppender.list.single().formattedMessage shouldBe "Navn på saksbehandler ikke funnet i LDAP"
+        secureAppender.list.single().formattedMessage.contains(sbIdent) shouldBe true
     }
 
     @Test
@@ -103,13 +115,11 @@ internal class LdapBrukeroppslagTest {
             context.search(eq(baseSearch), eq("(cn=L999999)"), any())
         } throws LimitExceededException("This is a test")
         val saksbehandlerNavn = ldap.hentBrukernavn(sbIdent)
-        verify { appenderMock.doAppend(capture(logCaptor)) }
-        val loggingEvent = logCaptor.captured
         saksbehandlerNavn shouldBe null
-        loggingEvent shouldNotBe null
-        loggingEvent.formattedMessage.contains(
-            "Navn på saksbehandler for ident $sbIdent ikke funnet (LimitExceededException)",
-        ) shouldBe true
+        regularAppender.list.single().throwableProxy shouldBe null
+        regularAppender.list.single().formattedMessage.contains(sbIdent) shouldBe false
+        secureAppender.list.single().throwableProxy shouldNotBe null
+        secureAppender.list.single().formattedMessage.contains(sbIdent) shouldBe true
     }
 
     @Test
@@ -118,11 +128,11 @@ internal class LdapBrukeroppslagTest {
             context.search(eq(baseSearch), eq("(cn=L999999)"), any())
         } throws NamingException("This is a test")
         val saksbehandlerNavn = ldap.hentBrukernavn(sbIdent)
-        verify { appenderMock.doAppend(capture(logCaptor)) }
-        val loggingEvent = logCaptor.captured
         saksbehandlerNavn shouldBe null
-        loggingEvent shouldNotBe null
-        loggingEvent.formattedMessage.contains("Navn på saksbehandler for ident $sbIdent ikke funnet (NamingException)") shouldBe true
+        regularAppender.list.single().throwableProxy shouldBe null
+        regularAppender.list.single().formattedMessage.contains(sbIdent) shouldBe false
+        secureAppender.list.single().throwableProxy shouldNotBe null
+        secureAppender.list.single().formattedMessage.contains(sbIdent) shouldBe true
     }
 
     @Test
@@ -135,22 +145,17 @@ internal class LdapBrukeroppslagTest {
             context.search(eq(baseSearch), eq("(cn=L999999)"), any())
         } returns heleResultatet
         val saksbehandlerNavn = ldap.hentBrukernavn(sbIdent)
-        verify { appenderMock.doAppend(capture(logCaptor)) }
-        val loggingEvent = logCaptor.captured
         saksbehandlerNavn shouldBe null
-        loggingEvent shouldNotBe null
-        loggingEvent.formattedMessage.contains("Navn på saksbehandler ikke funnet (attribute == null)") shouldBe true
+        regularAppender.list.single().formattedMessage.contains("attribute == null") shouldBe true
     }
 
     @Test
     fun `Skal gi brukernavn ukjent og lage warning når det søkes med spesialtegn`() {
         sbIdent = "L999999) or (cn=A*"
         val saksbehandlerNavn = ldap.hentBrukernavn(sbIdent)
-        verify { appenderMock.doAppend(capture(logCaptor)) }
-        val loggingEvent = logCaptor.captured
         saksbehandlerNavn shouldBe null
-        loggingEvent shouldNotBe null
-        loggingEvent.formattedMessage.contains("Navn på saksbehandler for ident $sbIdent ikke funnet (1)") shouldBe true
+        regularAppender.list.single().formattedMessage.contains(sbIdent) shouldBe false
+        secureAppender.list.single().formattedMessage.contains(sbIdent) shouldBe true
     }
 
     private class SearchMock(private val resultList: List<SearchResult>) : NamingEnumeration<SearchResult> {
