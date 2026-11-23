@@ -49,6 +49,8 @@ from weasyprint.pdf import VARIANTS
 from weasyprint.text.fonts import FontConfiguration
 from weasyprint.urls import URLFetcher, URLFetchingError
 
+import metrics
+
 # PDF/A-3b was what the Gotenberg deployment produced, so keep it as the default
 # for `pdfa=true`. "b" = basic conformance (visual fidelity, no tagging).
 DEFAULT_PDFA_VARIANT = os.environ.get("DEFAULT_PDFA_VARIANT", "pdf/a-3b")
@@ -107,6 +109,16 @@ COMPAT_CSS_SOURCE = """
    origin (50% 50%), and anchoring at `top right` pushes the logo off the page. */
 .navlogo_new {
   transform: scale(4) !important;
+}
+
+table:has(.begrunnelse) {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+table:has(.begrunnelse) > tbody > tr > td:first-child {
+  box-sizing: border-box !important;
+  width: 100% !important;
 }
 """
 
@@ -315,8 +327,25 @@ def health() -> Response:
     )
 
 
+@app.get("/metrics")
+def prometheus_metrics() -> Response:
+    body, content_type = metrics.render_metrics()
+    return Response(body, content_type=content_type)
+
+
+@app.after_request
+def count_request(response: Response) -> Response:
+    metrics.record_request(request.endpoint, response.status_code)
+    return response
+
+
 @app.post("/convert")
 def convert() -> Response:
+    with metrics.IN_PROGRESS.track_inprogress(), metrics.measure_phase(metrics.PHASE_TOTAL):
+        return _convert()
+
+
+def _convert() -> Response:
     """Render an HTML document to PDF.
 
     Body:  the HTML document (text/html, UTF-8)
@@ -349,21 +378,26 @@ def convert() -> Response:
     except ValueError as exc:
         return _error(str(exc), 400)
 
+    metrics.DOCUMENT_BYTES.labels(type=metrics.DOCUMENT_TYPE_HTML).observe(len(html_bytes))
+    timings: dict[str, float] = {}
     try:
-        html = HTML(
-            string=html_source,
-            base_url=request.args.get("baseUrl") or None,
-            url_fetcher=_restricted_url_fetcher(),
-            # WeasyPrint already defaults to the print media type, which is what
-            # Gotenberg's emulatedMediaType=print gave us. Be explicit anyway.
-            media_type="print",
-        )
+        with metrics.measure_phase(metrics.PHASE_PARSE, timings):
+            html = HTML(
+                string=html_source,
+                base_url=request.args.get("baseUrl") or None,
+                url_fetcher=_restricted_url_fetcher(),
+                # WeasyPrint already defaults to the print media type, which is what
+                # Gotenberg's emulatedMediaType=print gave us. Be explicit anyway.
+                media_type="print",
+            )
         # render() and write_pdf() are split so metadata can be patched in between.
-        document = html.render(
-            stylesheets=[_compat_css],
-            font_config=_font_config,
-            presentational_hints=True,
-        )
+        with metrics.measure_phase(metrics.PHASE_RENDER, timings):
+            document = html.render(
+                stylesheets=[_compat_css],
+                font_config=_font_config,
+                presentational_hints=True,
+            )
+        metrics.PAGES.observe(len(document.pages))
         meta, title = _extract_head_meta(html_source)
         _apply_chromium_metadata(document, meta, title)
 
@@ -372,7 +406,8 @@ def convert() -> Response:
             # NB: the option is `pdf_variant`, not `variant` — WeasyPrint ignores
             # unknown kwargs silently, which made the old `variant=` a no-op.
             options["pdf_variant"] = pdf_variant
-        pdf_bytes = document.write_pdf(zoom=scale, **options)
+        with metrics.measure_phase(metrics.PHASE_WRITE_PDF, timings):
+            pdf_bytes = document.write_pdf(zoom=scale, **options)
     except URLFetchingError as exc:
         return _error(f"Blocked or unreachable resource: {exc}", 400)
     except Exception as exc:  # noqa: BLE001 - surface a 500 with context
@@ -381,17 +416,21 @@ def convert() -> Response:
 
     if _parse_bool(request.args.get("flatten"), False):
         try:
-            pdf_bytes = _run_qpdf(["--flatten-annotations=all"], pdf_bytes)
+            with metrics.measure_phase(metrics.PHASE_QPDF, timings):
+                pdf_bytes = _run_qpdf(["--flatten-annotations=all"], pdf_bytes)
         except Exception as exc:  # noqa: BLE001
             log.exception("Flatten after convert failed")
             return _error(f"Flatten failed: {exc}", 500)
 
+    metrics.DOCUMENT_BYTES.labels(type=metrics.DOCUMENT_TYPE_PDF).observe(len(pdf_bytes))
     log.info(
-        "Converted %d bytes of HTML to a %d byte PDF (scale=%s, variant=%s)",
+        "Converted %d bytes of HTML to a %d byte, %d page PDF (scale=%s, variant=%s, phases=%s)",
         len(html_bytes),
         len(pdf_bytes),
+        len(document.pages),
         scale,
         pdf_variant,
+        " ".join(f"{phase}={seconds:.3f}s" for phase, seconds in timings.items()),
     )
     return Response(pdf_bytes, mimetype="application/pdf")
 

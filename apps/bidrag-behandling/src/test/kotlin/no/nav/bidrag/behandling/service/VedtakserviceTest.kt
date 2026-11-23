@@ -13,6 +13,7 @@ import io.mockk.slot
 import io.mockk.verify
 import jakarta.persistence.EntityManager
 import no.nav.bidrag.behandling.TestContainerRunner
+import no.nav.bidrag.behandling.async.BestillAsyncJobService
 import no.nav.bidrag.behandling.config.UnleashFeatures
 import no.nav.bidrag.behandling.consumer.BidragBeløpshistorikkConsumer
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
@@ -105,6 +106,9 @@ class VedtakserviceTest : TestContainerRunner() {
     @MockkBean
     lateinit var notatOpplysningerService: NotatOpplysningerService
 
+    @MockkBean(relaxed = true)
+    lateinit var bestillAsyncJobService: BestillAsyncJobService
+
     @MockkBean
     lateinit var tilgangskontrollService: TilgangskontrollService
 
@@ -196,6 +200,7 @@ class VedtakserviceTest : TestContainerRunner() {
         clearAllMocks()
         stubTokenUtils()
         enableUnleashFeature(UnleashFeatures.BIDRAG_KLAGE)
+        enableUnleashFeature(UnleashFeatures.OPPRETT_NOTAT_ASYNC)
         enableUnleashFeature(UnleashFeatures.BEGRENSET_REVURDERING)
         disableUnleashFeature(UnleashFeatures.VEDTAKSSPERRE)
         bidragPersonConsumer = stubPersonConsumer()
@@ -278,6 +283,7 @@ class VedtakserviceTest : TestContainerRunner() {
                 validerBehandlingService,
                 forsendelseService,
                 virkningstidspunktService,
+                bestillAsyncJobService = bestillAsyncJobService,
             )
         every { notatOpplysningerService.opprettNotat(any()) } returns testNotatJournalpostId
         every { tilgangskontrollService.sjekkTilgangPersonISak(any(), any()) } returns Unit
@@ -410,7 +416,6 @@ class VedtakserviceTest : TestContainerRunner() {
         stubUtils.stubBidragBeløpshistorikkHistoriskeSaker()
         grunnlagService.oppdatereGrunnlagForBehandling(behandling)
         entityManager.flush()
-        entityManager.refresh(behandling)
         behandling.leggTilSkatteprosentPåBarnetillegg()
         behandling.taMedInntekt(behandling.bidragsmottaker!!, Inntektsrapportering.AINNTEKT_BEREGNET_12MND)
         behandling.taMedInntekt(behandling.bidragspliktig!!, Inntektsrapportering.AINNTEKT_BEREGNET_12MND)
@@ -426,7 +431,6 @@ class VedtakserviceTest : TestContainerRunner() {
 
         vedtakService.fatteVedtak(behandling.id!!)
         entityManager.flush()
-        entityManager.refresh(behandling)
         val opprettVedtakRequest = opprettVedtakSlot.captured
 
         assertSoftly(behandling) {
@@ -483,6 +487,6 @@ class VedtakserviceTest : TestContainerRunner() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 }

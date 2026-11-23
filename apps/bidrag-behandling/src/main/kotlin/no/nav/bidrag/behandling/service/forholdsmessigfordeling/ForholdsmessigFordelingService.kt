@@ -9,7 +9,7 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.FF_SIST_SYNKRONISERT
 import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -651,7 +651,7 @@ class ForholdsmessigFordelingService(
             overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
             syncGebyrSøknadReferanse(behandling)
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
-            behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
+            behandlingRepository.resetOpprettelseAvFFFeilet(requireNotNull(behandling.id))
         }
 
         val søknaderKnyttetTilBehandling =
@@ -867,12 +867,11 @@ class ForholdsmessigFordelingService(
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
-        metadata =
-            run {
-                val metadata = metadata ?: BehandlingMetadataDo()
-                metadata.setFFSistSynkronisert(LocalDateTime.now())
-                metadata
-            }
+        behandlingRepository.lagreMetadataObjekt(
+            behandlingId = checkNotNull(id),
+            metadataKey = FF_SIST_SYNKRONISERT,
+            jsonValue = LocalDateTime.now().toString(),
+        )
     }
 
     @Transactional

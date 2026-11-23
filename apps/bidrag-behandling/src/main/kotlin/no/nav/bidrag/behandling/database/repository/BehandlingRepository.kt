@@ -5,6 +5,8 @@ package no.nav.bidrag.behandling.database.repository
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.NOTATBESTILLINGER
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.OPPRETTELSE_AV_FF_BEHANDLING_FEILET
 import no.nav.bidrag.behandling.database.datamodell.minified.BehandlingSimple
 import no.nav.bidrag.behandling.database.datamodell.minified.RolleSimple
 import no.nav.bidrag.behandling.behandlingNotFoundException
@@ -15,6 +17,10 @@ import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 import java.util.Optional
 
+interface BehandlingMedManglendeNotater {
+    val id: Long
+    val notatbestillinger: String?
+}
 
 interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandlingRepository {
 
@@ -32,13 +38,23 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
         @Param("jsonValue") jsonValue: String,
     )
 
+    @Modifying(flushAutomatically = true)
+    @Query(
+        """
+        update behandling
+        set metadata = coalesce(metadata, hstore('')) || hstore('$NOTATBESTILLINGER', :json)
+        where id = :behandlingId and deleted = false and metadata -> '$NOTATBESTILLINGER' is null
+        """,
+        nativeQuery = true,
+    )
+    fun initialiserNotatbestillinger(behandlingId: Long, json: String)
 
 
     @Modifying
     @Query("update behandling set metadata = coalesce(metadata, hstore('')) || hstore(array['laster_grunnlag_async_status', 'laster_grunnlag_async_tidspunkt'], array['BESTILT', now()::text]) where id = :id and deleted = false", nativeQuery = true)
     fun oppdaterLasterGrunnlagStatus(id: Long)
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("update behandling set metadata = coalesce(metadata, hstore('')) || hstore(array['laster_grunnlag_async_status', 'laster_grunnlag_async_tidspunkt'], array['FERDIG', now()::text]) where id = :id and deleted = false", nativeQuery = true)
     fun resetLasterGrunnlagStatus(id: Long)
 
@@ -129,12 +145,39 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
 
     // FF-behandlinger som ikke er hovedbehandling ignoreres fordi notatet lagres på hovedbehandlingen
     @Query(
-        "select b.* from behandling b where b.deleted = false and b.vedtaksid is not null and b.notat_journalpost_id is null " +
-                "and b.vedtakstidspunkt >= :afterDate and b.vedtakstype != 'ALDERSJUSTERING' " +
-                "and (b.forholdsmessig_fordeling is null or b.forholdsmessig_fordeling ->> 'erHovedbehandling' = 'true')",
+        """
+        select b.id, b.metadata -> '$NOTATBESTILLINGER' as notatbestillinger
+        from behandling b
+        where b.id > :etterId and b.deleted = false and b.vedtaksid is not null
+          and (
+              (
+                  b.metadata -> '$NOTATBESTILLINGER' is null
+                  and b.notat_journalpost_id is null and b.vedtakstidspunkt >= :etterDato
+                  and b.vedtakstype != 'ALDERSJUSTERING'
+                  and (b.forholdsmessig_fordeling is null or b.forholdsmessig_fordeling ->> 'erHovedbehandling' = 'true')
+              )
+              or (
+                  b.metadata -> '$NOTATBESTILLINGER' is not null
+                  and b.vedtakstidspunkt >= :etterDato
+                  and b.vedtakstidspunkt <= :førDato
+                  and exists (
+                      select 1
+                      from jsonb_array_elements(cast(b.metadata -> '$NOTATBESTILLINGER' as jsonb)) as bestilling
+                      where bestilling ->> 'journalpostId' is null
+                  )
+              )
+          )
+        order by b.id
+        limit :batchstørrelse
+        """,
         nativeQuery = true,
     )
-    fun hentBehandlingerSomManglerNotater(afterDate: LocalDateTime): List<Behandling>
+    fun hentBehandlingerSomManglerNotater(
+        etterDato: LocalDateTime,
+        førDato: LocalDateTime,
+        etterId: Long,
+        batchstørrelse: Int,
+    ): List<BehandlingMedManglendeNotater>
 
 
     @Query(
@@ -278,7 +321,7 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun hentIdSlettedeBehandlingerHvorOpprettelseAvFFFeilet(): List<Long>
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query(
         "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseEllerOppdateringAvFFFeilet', 'false') where b.id = :behandling_id",
         nativeQuery = true
@@ -292,9 +335,9 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
     )
     fun markerOppdateringFFRollerFeilet(behandling_id: Long, data: String)
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query(
-        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('opprettelseAvFFRollerFeilet', :data) where b.id = :behandling_id",
+        "update behandling b set metadata = coalesce(b.metadata, hstore('')) || hstore('$OPPRETTELSE_AV_FF_BEHANDLING_FEILET', :data) where b.id = :behandling_id",
         nativeQuery = true
     )
     fun markerOpprettelseAvFFBehandlingFeilet(behandling_id: Long, data: String)

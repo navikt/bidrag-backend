@@ -53,8 +53,6 @@ class NotatOpplysningerController(
                 "Det er ikke fattet vedtak for behandling $behandlingId. Kan ikke opprette notat for behandling vedtak ikke er fattet",
             )
         }
-        return ResponseEntity.ok(
-            behandling.notatJournalpostId ?: notatOpplysningerService.opprettNotat(behandlingId, true),
-        )
+        return ResponseEntity.ok(notatOpplysningerService.opprettNotatManuelt(behandlingId))
     }
 }
