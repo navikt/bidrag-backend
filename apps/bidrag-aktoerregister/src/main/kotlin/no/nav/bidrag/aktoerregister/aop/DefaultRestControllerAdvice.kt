@@ -1,6 +1,7 @@
 package no.nav.bidrag.aktoerregister.aop
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -18,7 +19,7 @@ class DefaultRestControllerAdvice {
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpClientErrorException(exception: HttpStatusCodeException): ProblemDetail {
         val errorMessage = getErrorMessage(exception)
-        LOGGER.warn(exception) { errorMessage }
+        secureLogger.warn(exception) { errorMessage }
         return ProblemDetail.forStatusAndDetail(
             exception.statusCode,
             errorMessage,
@@ -29,7 +30,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException?): ProblemDetail {
-        LOGGER.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
+        secureLogger.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.UNAUTHORIZED,
             "Ugyldig eller manglende sikkerhetstoken",
@@ -40,7 +41,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(ResponseStatusException::class)
     fun handlerResponseStatusException(exception: ResponseStatusException): ProblemDetail {
-        LOGGER.warn(exception) { exception.message }
+        secureLogger.warn(exception) { exception.message }
         return ProblemDetail.forStatusAndDetail(
             exception.statusCode,
             exception.message,
@@ -51,7 +52,7 @@ class DefaultRestControllerAdvice {
 
     @ExceptionHandler(Exception::class)
     fun handleException(exception: Exception): ProblemDetail {
-        LOGGER.warn(exception) { "Det skjedde en ukjent feil" }
+        secureLogger.warn(exception) { "Det skjedde en ukjent feil" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Det skjedde en ukjent feil: ${exception.message}",
