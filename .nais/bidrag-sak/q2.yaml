@@ -8,12 +8,6 @@ unleash:
   env: development
   secret_name: bidrag-sak-unleash-api-token
 env:
-  - name: LDAP_SERVICEUSER_BASEDN
-    value: ou=ServiceAccounts,dc=preprod,dc=local
-  - name: LDAP_URL
-    value: ldaps://ldapgw.preprod.local
-  - name: LDAP_USERNAME
-    value: srvSSOLinux
   - name: BIDRAG_SAMHANDLER_URL
     value: https://bidrag-samhandler-q2.intern.dev.nav.no
   - name: BIDRAG_SAMHANDLER_SCOPE

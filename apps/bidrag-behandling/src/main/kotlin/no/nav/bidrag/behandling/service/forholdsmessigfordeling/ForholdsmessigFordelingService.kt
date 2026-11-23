@@ -9,7 +9,7 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.FF_SIST_SYNKRONISERT
 import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -21,6 +21,7 @@ import no.nav.bidrag.behandling.dto.grunnlag.LøpendeBidragGrunnlagForholdsmessi
 import no.nav.bidrag.behandling.dto.grunnlag.PersonStønad
 import no.nav.bidrag.behandling.dto.v1.behandling.OpprettRolleDto
 import no.nav.bidrag.behandling.dto.v1.beregning.ResultatBidragsberegning
+import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OppdaterRevurderingsdatoFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.OpprettFFRequest
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SjekkForholdmessigFordelingResponse
 import no.nav.bidrag.behandling.dto.v2.forholdsmessigfordeling.SøknadRevurdering
@@ -151,12 +152,30 @@ class ForholdsmessigFordelingService(
             søknadService = søknadService,
         )
 
+    private val revurderingsdatoService =
+        ForholdsmessigFordelingRevurderingsdatoService(
+            bbmConsumer = bbmConsumer,
+            søknadService = søknadService,
+            virkningstidspunktService = virkningstidspunktService,
+        )
+
     // ═══════════════════════════════════════════════════════════════════
     // region Opprett forholdsmessig fordeling flow
     // ═══════════════════════════════════════════════════════════════════
 
     fun fjernSammeknytningHovedsøknad(behandling: Behandling) {
         bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
+    }
+
+    @Transactional
+    fun oppdaterRevurderingsdato(
+        behandlingId: Long,
+        request: OppdaterRevurderingsdatoFFRequest,
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+        val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
+        revurderingsdatoService.oppdaterRevurderingsdato(behandling, request)
+        behandlingService.sendOppdatertHendelse(behandling.id!!, false)
     }
 
     /**
@@ -632,7 +651,7 @@ class ForholdsmessigFordelingService(
             overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
             syncGebyrSøknadReferanse(behandling)
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
-            behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
+            behandlingRepository.resetOpprettelseAvFFFeilet(requireNotNull(behandling.id))
         }
 
         val søknaderKnyttetTilBehandling =
@@ -848,12 +867,11 @@ class ForholdsmessigFordelingService(
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
-        metadata =
-            run {
-                val metadata = metadata ?: BehandlingMetadataDo()
-                metadata.setFFSistSynkronisert(LocalDateTime.now())
-                metadata
-            }
+        behandlingRepository.lagreMetadataObjekt(
+            behandlingId = checkNotNull(id),
+            metadataKey = FF_SIST_SYNKRONISERT,
+            jsonValue = LocalDateTime.now().toString(),
+        )
     }
 
     @Transactional
@@ -1296,7 +1314,7 @@ class ForholdsmessigFordelingService(
                 }
         val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = true)
         return SjekkForholdmessigFordelingResponse(
-            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
+            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!, behandling.erKlageEllerOmgjøring),
             skalBehandlesAvEnhet = behandlesAvEnhet,
             kanOppretteForholdsmessigFordeling =
             (
@@ -1312,10 +1330,12 @@ class ForholdsmessigFordelingService(
         )
     }
 
-    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String): List<SøknadRevurdering> {
+    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String, erKlageEllerOmgjøring: Boolean): List<SøknadRevurdering> {
         val åpneSøknaderRevurdering = kravhaverService.hentÅpneSøknaderRevurdering(bidragspliktig)
-        return åpneSøknaderRevurdering.map {
+        return åpneSøknaderRevurdering.mapNotNull {
             val sammenknytninger = bbmConsumer.finnSammenknytningerHovedsøknad(it.søknadsid)
+            val hovedsøknad = sammenknytninger.søknader.find { it.søknadsid == sammenknytninger.hovedsøknadsid }
+            if (hovedsøknad != null && hovedsøknad.behandlingstype.erKlageEllerOmgjøring != erKlageEllerOmgjøring) return@mapNotNull null
             SøknadRevurdering(
                 it,
                 erDelAvFF = sammenknytninger.søknader.isNotEmpty(),

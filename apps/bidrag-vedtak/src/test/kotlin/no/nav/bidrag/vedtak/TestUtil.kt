@@ -297,27 +297,6 @@ class TestUtil {
                     "SJAB-REF001",
                 ),
             ),
-//            OpprettEngangsbeløpRequestDto(
-//                type = Engangsbeløptype.SÆRBIDRAG,
-//                sak = Saksnummer("SAK-101"),
-//                skyldner = Personident(SKYLDNER_IDENT),
-//                kravhaver = Personident(KRAVHAVER_IDENT),
-//                mottaker = Personident(MOTTAKER_IDENT),
-//                beløp = BigDecimal.valueOf(2345),
-//                valutakode = "NOK",
-//                resultatkode = "SAERTILSKUDD BEREGNET",
-//                innkreving = Innkrevingstype.MED_INNKREVING,
-//                beslutning = Beslutningstype.ENDRING,
-//                omgjørVedtakId = 400,
-//                referanse = "referanse1",
-//                delytelseId = "delytelseId2",
-//                eksternReferanse = "EksternRef2",
-//                grunnlagReferanseListe = listOf(
-//                    "BM-LIGS-19",
-//                    "BM-LIGN-19",
-//                    "SJAB-REF001",
-//                ),
-//            ),
         )
 
         private fun byggBehandlingsreferanseListe() = listOf(
