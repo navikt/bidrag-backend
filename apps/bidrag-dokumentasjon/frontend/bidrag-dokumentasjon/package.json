@@ -9,8 +9,7 @@
         "dev": "node scripts/sync-dokumentasjon.mjs && vite",
         "build": "node scripts/sync-dokumentasjon.mjs && tsc -b && vite build",
         "lint": "biome lint .",
-        "preview": "vite preview",
-        "deploy": "pnpm run build && gh-pages -d dist"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@emotion/react": "^11.14.0",
