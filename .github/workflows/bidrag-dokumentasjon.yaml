@@ -60,6 +60,8 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+      - name: Check lint and formatting
+        run: pnpm exec biome ci . --error-on-warnings
       - name: Build project
         run: pnpm run build
       - name: Upload artifact
