@@ -107,7 +107,6 @@ class DokumentBestillingControllerBidragTest : AbstractControllerTest() {
             barn.samværPerioder.forEach {
                 it.samvarKode shouldBe Samværsklasse.DELT_BOSTED.bisysKode
                 it.samvBeskr shouldBe "Delt bosted"
-                it.belSamvFradr shouldBe null
             }
             barn.inntektPerioder.shouldNotBeEmpty()
             barn.bidragEvnePerioder.shouldBeEmpty()

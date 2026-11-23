@@ -529,8 +529,7 @@ class BrevserverProducer(
                                     tomDato = it.periode.til?.atEndOfMonth() ?: MAX_DATE
                                     samvarKode = it.samværsklasse.bisysKode
                                     aldersGruppe = it.aldersgruppe?.let { "${it.first} - ${it.second ?: ""}" }
-                                    // Samværsfradrag gjelder ikke ved delt bosted, så beløpet sendes ikke til brevet
-                                    belSamvFradr = it.samværsfradragBeløp.takeIf { _ -> it.samværsklasse != Samværsklasse.DELT_BOSTED }
+                                    belSamvFradr = it.samværsfradragBeløp
                                     samvBeskr =
                                         when (it.samværsklasse) {
                                             Samværsklasse.SAMVÆRSKLASSE_0 -> "0-1 netter pr mnd"
