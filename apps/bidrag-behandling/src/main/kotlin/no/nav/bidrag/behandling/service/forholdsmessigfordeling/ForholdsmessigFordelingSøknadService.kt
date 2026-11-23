@@ -14,6 +14,7 @@ import no.nav.bidrag.behandling.service.VirkningstidspunktService
 import no.nav.bidrag.behandling.service.hentNyesteIdentIgnorerForbidden
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDato
 import no.nav.bidrag.commons.service.forsendelse.bidragsmottaker
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.Behandlingstatus
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.behandling.tilBehandlingstema
@@ -570,7 +571,8 @@ class ForholdsmessigFordelingSøknadService(
                     ?.parterUnderBehandling
                     ?.any { it.personident != rolle.ident } == true
             } catch (e: Exception) {
-                LOGGER.warn(e) { "Kunne ikke hente søknad $søknadsid fra BBM. Feilregistrerer bare barnet fra søknaden" }
+                LOGGER.warn { "Kunne ikke hente søknad $søknadsid fra BBM. Feilregistrerer bare barnet fra søknaden" }
+                secureLogger.warn(e) { "Kunne ikke hente søknad $søknadsid fra BBM. Feilregistrerer bare barnet fra søknaden" }
                 true
             }
         if (harAndreBarnUnderBehandling) {
@@ -677,7 +679,8 @@ class ForholdsmessigFordelingSøknadService(
         }
         true
     } catch (e: Exception) {
-        LOGGER.warn(e) { "Kunne ikke feilregistrere søknad ${søknad.søknadsid} i BBM" }
+        LOGGER.warn { "Kunne ikke feilregistrere søknad ${søknad.søknadsid} i BBM" }
+        secureLogger.warn(e) { "Kunne ikke feilregistrere søknad ${søknad.søknadsid} i BBM" }
         false
     }
 
@@ -686,7 +689,8 @@ class ForholdsmessigFordelingSøknadService(
         søknadsid: Long,
     ): Long? {
         val personidentBarn = rolle.ident!!
-        LOGGER.info { "Feilregistrerer barn $personidentBarn fra søknad $søknadsid" }
+        LOGGER.info { "Feilregistrerer barn rolleId=${rolle.id} fra søknad $søknadsid" }
+        secureLogger.info { "Feilregistrerer barn $personidentBarn fra søknad $søknadsid" }
         return try {
             bbmConsumer.feilregistrerSøknadsbarn(FeilregistrerSøknadsBarnRequest(søknadsid, personidentBarn))
             rolle.forholdsmessigFordeling!!
@@ -697,7 +701,8 @@ class ForholdsmessigFordelingSøknadService(
                 }
             søknadsid
         } catch (e: Exception) {
-            LOGGER.error(e) { "Feil ved feilregistrering av søknad $søknadsid" }
+            LOGGER.error { "Feil ved feilregistrering av søknad $søknadsid" }
+            secureLogger.error(e) { "Feil ved feilregistrering av barn $personidentBarn fra søknad $søknadsid" }
             null
         }
     }
@@ -732,7 +737,8 @@ class ForholdsmessigFordelingSøknadService(
                                 søknadFraBbm?.partISøknadListe?.find { it.personident == rolle.ident }
                             } catch (e: Exception) {
                                 oppslagMotBbmFeilet = true
-                                LOGGER.warn(e) { "Kunne ikke hente søknad ${lagretSøknad.søknadsid} fra BBM" }
+                                LOGGER.warn { "Kunne ikke hente søknad ${lagretSøknad.søknadsid} fra BBM" }
+                                secureLogger.warn(e) { "Kunne ikke hente søknad ${lagretSøknad.søknadsid} fra BBM" }
                                 null
                             }
                         } else {

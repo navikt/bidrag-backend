@@ -48,13 +48,16 @@ class OppgaveService(
                     if (UnleashFeatures.OPPRETT_REVURDER_FORSKUDD_OPPGAVE.isEnabled) {
                         it.opprettRevurderForskuddOppgaveEtterAdresseEndring()
                     } else {
-                        LOGGER.info {
-                            "Feature toggle ${UnleashFeatures.OPPRETT_REVURDER_FORSKUDD_OPPGAVE.name} er skrudd av. Oppretter ikke oppgave for $it"
+                        secureLogger.info {
+                            "Oppretter ikke oppgave for $it fordi feature toggle " +
+                                "${UnleashFeatures.OPPRETT_REVURDER_FORSKUDD_OPPGAVE.name} er skrudd av"
                         }
                     }
                 }
             } catch (e: Exception) {
-                LOGGER.error(e) { "Det skjedde en feil ved sjekk om BM fortsatt skal motta forskudd for barn fra hendelse $hendelse" }
+                secureLogger.error(e) {
+                    "Det skjedde en feil ved sjekk om BM fortsatt skal motta forskudd for barn fra hendelse $hendelse"
+                }
                 throw e
             }
         }
@@ -75,7 +78,7 @@ class OppgaveService(
                     return // Opprett kun en oppgave per sak
                 }
         } catch (e: Exception) {
-            LOGGER.error(e) { "Det skjedde en feil ved sjekk for om det skal opprettes revurder forskudd oppgave" }
+            secureLogger.error(e) { "Det skjedde en feil ved sjekk for om det skal opprettes revurder forskudd oppgave" }
             throw e
         }
     }
@@ -119,7 +122,8 @@ class OppgaveService(
             return oppgaveId.toLong()
         }
         val slettetOppgave = oppgaveConsumer.slettOppgave(oppgaveId, oppgave.versjon)
-        LOGGER.info { "Slettet oppgave med id $oppgaveId: $slettetOppgave" }
+        LOGGER.info { "Slettet oppgave med id $oppgaveId og status ${slettetOppgave.status}" }
+        secureLogger.info { "Slettet oppgave med id $oppgaveId: $slettetOppgave" }
         return slettetOppgave.id
     }
 
