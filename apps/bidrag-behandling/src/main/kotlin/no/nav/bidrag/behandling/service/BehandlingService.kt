@@ -14,6 +14,8 @@ import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.Samvær
 import no.nav.bidrag.behandling.database.datamodell.Utgift
 import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.NOTATBESTILLINGER
+import no.nav.bidrag.behandling.database.datamodell.extensions.Notatbestilling
 import no.nav.bidrag.behandling.database.datamodell.extensions.hentDefaultÅrsak
 import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.json.FattetVedtak
@@ -382,8 +384,6 @@ class BehandlingService(
                         behandling.id!!,
                         data,
                     )
-                    metadata.setOpprettelseAvFFBehandlingFeilet(data)
-                    behandling.metadata = metadata
                 }
 
                 return OpprettBehandlingResponse(behandling.id!!)
@@ -592,6 +592,45 @@ class BehandlingService(
             }
     }
 
+    /**
+     * Egen kort transaksjon med radlås slik at journalpostId lagres på siste committede tilstand av behandlingen,
+     * og ikke overskriver samtidige oppdateringer (f.eks. fra [no.nav.bidrag.behandling.kafka.VedtakHendelseListener]).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    fun lagreNotatJournalpostId(
+        behandlingId: Long,
+        journalpostId: String,
+        saksnummer: String? = null,
+    ) {
+        behandlingRepository.låsBehandlingForOppdatering(behandlingId)
+        val behandling = hentBehandlingById(behandlingId)
+        val bestillinger = behandling.metadata?.hentNotatbestillinger()
+        if (bestillinger == null) {
+            behandling.notatJournalpostId = journalpostId
+            return
+        }
+
+        val bestilling = checkNotNull(bestillinger.find { it.saksnummer == saksnummer }) {
+            "Notatet er ikke bestilt for behandling $behandlingId"
+        }
+        if (bestilling.journalpostId != null) return
+
+        if (behandling.notatJournalpostId == null) behandling.notatJournalpostId = journalpostId
+        lagreNotatbestillinger(
+            behandlingId,
+            bestillinger.map { if (it.saksnummer == saksnummer) it.copy(journalpostId = journalpostId) else it },
+        )
+    }
+
+    private fun lagreNotatbestillinger(
+        behandlingId: Long,
+        bestillinger: List<Notatbestilling>,
+    ) = behandlingRepository.lagreMetadataObjekt(
+        behandlingId,
+        NOTATBESTILLINGER,
+        commonObjectmapper.writeValueAsString(bestillinger),
+    )
+
     @Retryable(
         value = [CannotAcquireLockException::class],
         maxAttempts = 3,
@@ -603,6 +642,7 @@ class BehandlingService(
         vedtaksid: Int,
         fattetAvEnhet: String,
         unikreferanse: String? = null,
+        saksnumreForNotat: List<String?>? = null,
     ) {
         behandlingRepository
             .finnAlleRelaterteBehandlinger(behandlingsid)
@@ -632,6 +672,13 @@ class BehandlingService(
                     it.behandlingstatus = Behandlingstatus.VEDTAK_FATTET
                 }
             }
+
+        saksnumreForNotat?.let { saksnumre ->
+            behandlingRepository.initialiserNotatbestillinger(
+                behandlingsid,
+                commonObjectmapper.writeValueAsString(saksnumre.map { Notatbestilling(it) }),
+            )
+        }
 
         bestillAsyncJobService!!.bestillHendelse(
             BehandlingHendelseBestilling(

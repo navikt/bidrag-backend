@@ -9,6 +9,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import no.nav.bidrag.behandling.config.UnleashFeatures
+import no.nav.bidrag.behandling.async.BestillAsyncJobService
+import no.nav.bidrag.behandling.async.dto.OpprettNotatBestilling
+import no.nav.bidrag.behandling.consumer.BidragBBMConsumer
 import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.json.FattetVedtak
@@ -54,6 +57,7 @@ import no.nav.bidrag.beregn.core.util.justerVedtakstidspunktVedtak
 import no.nav.bidrag.commons.util.RequestContextAsyncContext
 import no.nav.bidrag.commons.util.SecurityCoroutineContext
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.vedtak.BehandlingsrefKilde
@@ -78,9 +82,16 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.HttpClientErrorException
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
 
 private val LOGGER = KotlinLogging.logger {}
+
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT = Duration.ofSeconds(10)
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START = Duration.ofMillis(250)
+private val VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS = Duration.ofSeconds(2)
+private val FELLES_NOTAT_FOR_ALLE_SAKER = listOf<String?>(null)
 
 @Service
 class VedtakService(
@@ -97,6 +108,8 @@ class VedtakService(
     private val virkningstidspunktService: VirkningstidspunktService,
     private val forholdsmessigFordelingService: ForholdsmessigFordelingService? = null,
     private val behandlingRepository: BehandlingRepository? = null,
+    private val bidragBBMConsumer: BidragBBMConsumer? = null,
+    private val bestillAsyncJobService: BestillAsyncJobService? = null,
 //    private val vedtakLocalConsumer: BidragVedtakConsumerLocal? = null,
 ) {
     fun konverterVedtakTilBehandlingForLesemodus(vedtakId: Int): Behandling? {
@@ -437,8 +450,9 @@ class VedtakService(
                 behandlingId,
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
-            opprettNotat(behandling)
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for særbidrag behandling $behandlingId med vedtaksid ${response.vedtaksid}"
             }
@@ -471,8 +485,9 @@ class VedtakService(
                 behandling.id!!,
                 vedtaksid = response.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
-            opprettNotat(behandling)
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -622,17 +637,15 @@ class VedtakService(
                         info = it,
                     )
             }
+            val saksnumreForNotat = behandling.saksnumreForNotat(erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
             behandlingService.oppdaterVedtakFattetStatus(
                 behandling.id!!,
                 vedtaksid = endeligVedtakOrkestrering.first.vedtaksid,
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = saksnumreForNotat,
             )
 
-            if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                opprettNotatForAlleSakerParallelt(behandling)
-            } else {
-                opprettNotat(behandling)
-            }
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, saksnumreForNotat)
 
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
@@ -677,8 +690,10 @@ class VedtakService(
                 vedtaksid = responseInnkreving.vedtaksid,
                 fattetAvEnhet = request?.enhet ?: behandling.behandlerEnhet,
                 unikreferanse = innkrevingRequest.unikReferanse,
+                saksnumreForNotat = FELLES_NOTAT_FOR_ALLE_SAKER,
             )
-            opprettNotat(behandling)
+
+            ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling)
             LOGGER.info {
                 "Fattet vedtak for behandling ${behandling.id} med ${
                     behandling.årsak?.let { "årsakstype $it" }
@@ -831,16 +846,6 @@ class VedtakService(
                     }
                 }
 
-                if (vedtakRequest.type == Vedtakstype.ALDERSJUSTERING && !simuler) {
-                    try {
-                        // Venter i 2 sekunder for å sikre at vedtaksbro har lest inn vedtaket og har oppdatert saksloggen
-                        Thread.sleep(2000)
-                    } catch (ie: InterruptedException) {
-                        Thread.currentThread().interrupt()
-                        LOGGER.warn(ie) { "Tråd avbrutt under venting" }
-                    }
-                }
-
                 LOGGER.info {
                     "Fattet vedtak for behandling ${behandling.id} med ${
                         behandling.årsak?.let { "årsakstype $it" }
@@ -862,19 +867,25 @@ class VedtakService(
         val vedtaksid =
             vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.firstOrNull() ?: vedtakResponser.values.first()
         if (!simuler) {
+            val saksnumreForNotat = if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
+                behandling.saksnumreForNotat(erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder)
+            } else {
+                null
+            }
             behandlingService.oppdaterVedtakFattetStatus(
                 behandling.id!!,
                 vedtaksid = vedtaksid,
 //                vedtaksid = vedtakResponser.filterKeys { it.contains(behandling.soknadsid!!) }.values.first(),
                 request?.enhet ?: behandling.behandlerEnhet,
+                saksnumreForNotat = saksnumreForNotat,
             )
+
+            val søknadsider = vedtakResponser.flatMap { it.key }
             // Notat opprettes etter at vedtaksstatus er lagret slik at feil/treghet i notat ikke stopper fattingen
-            if (vedtakRequester.any { it.type != Vedtakstype.ALDERSJUSTERING }) {
-                if (erForholdsmessigFordelingHvorBPHarFullEvneIAllePerioder) {
-                    opprettNotatForAlleSakerParallelt(behandling)
-                } else {
-                    opprettNotat(behandling)
-                }
+            if (saksnumreForNotat != null) {
+                ventTilSøknaderErFerdigstiltOgOpprettNotat(behandling, saksnumreForNotat, søknadsider)
+            } else {
+                ventPåFerdigstiltSøknad(søknadsider)
             }
         }
 
@@ -945,25 +956,45 @@ class VedtakService(
         }
     }
 
-    // Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor parallelt per sak
-    private fun opprettNotatForAlleSakerParallelt(behandling: Behandling) {
-        val saker = behandling.saker.toList()
+    private fun Behandling.saksnumreForNotat(separateNotater: Boolean): List<String?> {
+        val saksnumre = saker
+        return if (separateNotater && saksnumre.size > 1) saksnumre else FELLES_NOTAT_FOR_ALLE_SAKER
+    }
+
+    private fun ventTilSøknaderErFerdigstiltOgOpprettNotat(
+        behandling: Behandling,
+        saksnumreForNotat: List<String?> = FELLES_NOTAT_FOR_ALLE_SAKER,
+        søknadsider: List<Long> = behandling.søknadsider,
+    ) {
+        if (!UnleashFeatures.OPPRETT_NOTAT_ASYNC.isEnabled) {
+            opprettNotatForAlleSakerParallelt(behandling, saksnumreForNotat)
+            return
+        }
+
+        ventPåFerdigstiltSøknad(søknadsider)
+        saksnumreForNotat.forEach { bestillOpprettelseAvNotat(behandling, it) }
+    }
+
+    private fun opprettNotatForAlleSakerParallelt(
+        behandling: Behandling,
+        saker: List<String?>,
+    ) {
         if (saker.size <= 1) {
-            saker.forEach { opprettNotat(behandling, it) }
+            saker.forEach { opprettNotatSynkront(behandling, it) }
             return
         }
         val scope = CoroutineScope(Dispatchers.IO + SecurityCoroutineContext() + RequestContextAsyncContext())
         runBlocking {
             saker
                 .map { saksnummer ->
-                    scope.async { opprettNotat(behandling, saksnummer) }
+                    scope.async { opprettNotatSynkront(behandling, saksnummer) }
                 }.awaitAll()
         }
     }
 
-    private fun opprettNotat(
+    private fun opprettNotatSynkront(
         behandling: Behandling,
-        saksnummer: String? = null,
+        saksnummer: String?,
     ) {
         try {
             notatOpplysningerService.opprettNotat(behandling.id!!, saksnummer = saksnummer)
@@ -972,6 +1003,56 @@ class VedtakService(
                 e,
             ) { "Det skjedde en feil ved opprettelse av notat for behandling ${behandling.id} og vedtaksid ${behandling.vedtaksid}" }
         }
+    }
+
+    /**
+     * Notatopprettelse er tung (PDF-produksjon + journalføring) og kjøres derfor i bakgrunnen slik at
+     * saksbehandler får svar med én gang. Jobben håndteres av
+     * [no.nav.bidrag.behandling.async.BestillAsyncJobListener.behandleBestillingAvNotat].
+     */
+    private fun bestillOpprettelseAvNotat(
+        behandling: Behandling,
+        saksnummer: String?,
+    ) {
+        bestillAsyncJobService!!.bestillOpprettelseAvNotat(
+            OpprettNotatBestilling(behandlingId = behandling.id!!, saksnummer = saksnummer),
+        )
+    }
+
+    /**
+     * Poller BBM til søknadene er ferdigstilt av vedtaksbroen (søknadslinjene lukket med status VF).
+     * Timeout er ikke en feil: vedtaket er allerede fattet, så vi logger og går videre.
+     */
+    private fun ventPåFerdigstiltSøknad(søknadsider: List<Long>) {
+        if (søknadsider.isEmpty() || bidragBBMConsumer == null) return
+        val frist = Instant.now().plus(VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT)
+        val ventPåSøknadsider = søknadsider.toMutableSet()
+        var ventetid = VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_START
+        secureLogger.info { "Venter på ferdigstilling av søknader. Ventetid: $ventetid, søknadsider: $ventPåSøknadsider" }
+        while (ventPåSøknadsider.isNotEmpty() && Instant.now().isBefore(frist)) {
+            try {
+                Thread.sleep(ventetid.toMillis())
+            } catch (ie: InterruptedException) {
+                Thread.currentThread().interrupt()
+                LOGGER.warn(ie) { "Tråd avbrutt under venting på ferdigstilte søknader $ventPåSøknadsider" }
+                return
+            }
+            ventPåSøknadsider.removeAll { erSøknadFerdigstilt(it) }
+            ventetid = minOf(ventetid.multipliedBy(2), VENT_PÅ_FERDIGSTILT_SØKNAD_INTERVALL_MAKS)
+        }
+        if (ventPåSøknadsider.isNotEmpty()) {
+            LOGGER.warn {
+                "Søknadene $ventPåSøknadsider var ikke ferdigstilt i BBM innen " +
+                    "${VENT_PÅ_FERDIGSTILT_SØKNAD_TIMEOUT.toSeconds()} sekunder. Fortsetter uten å vente."
+            }
+        }
+    }
+
+    private fun erSøknadFerdigstilt(søknadsid: Long): Boolean = try {
+        bidragBBMConsumer!!.hentSøknad(søknadsid)?.søknad?.behandlingStatusType == BehandlingStatusType.VEDTAK_FATTET
+    } catch (e: Exception) {
+        LOGGER.warn(e) { "Kunne ikke hente status for søknad $søknadsid fra BBM" }
+        false
     }
 
     private fun Behandling.vedtakAlleredeFattet(): Nothing = throw HttpClientErrorException(
