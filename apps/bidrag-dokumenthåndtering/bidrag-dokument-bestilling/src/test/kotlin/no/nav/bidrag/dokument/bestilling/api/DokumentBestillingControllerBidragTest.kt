@@ -104,7 +104,11 @@ class DokumentBestillingControllerBidragTest : AbstractControllerTest() {
             barn.andelUnderholdPerioder.forEach { it.fordNokkel shouldBe BigDecimal("400.0") }
             barn.underholdkostnadPerioder.shouldNotBeEmpty()
             barn.samværPerioder.shouldNotBeEmpty()
-            barn.samværPerioder.forEach { it.samvarKode shouldBe Samværsklasse.DELT_BOSTED.bisysKode }
+            barn.samværPerioder.forEach {
+                it.samvarKode shouldBe Samværsklasse.DELT_BOSTED.bisysKode
+                it.samvBeskr shouldBe "Delt bosted"
+                it.belSamvFradr shouldBe null
+            }
             barn.inntektPerioder.shouldNotBeEmpty()
             barn.bidragEvnePerioder.shouldBeEmpty()
         }
