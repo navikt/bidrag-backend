@@ -163,7 +163,12 @@ interface BehandlingRepository : CrudRepository<Behandling, Long>, CustomBehandl
                   and exists (
                       select 1
                       from jsonb_array_elements(cast(b.metadata -> '$NOTATBESTILLINGER' as jsonb)) as bestilling
-                      where bestilling ->> 'journalpostId' is null
+                      where case
+                          when coalesce(cast(bestilling ->> 'splittet' as boolean), false)
+                              then bestilling ->> 'begrunnelseJournalpostId' is null
+                                  or bestilling ->> 'opplysningerJournalpostId' is null
+                          else bestilling ->> 'journalpostId' is null
+                      end
                   )
               )
           )

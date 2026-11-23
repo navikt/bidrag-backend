@@ -15,21 +15,34 @@ enum class RenderPDFVersion { V1, V2 }
 @Component
 class BidragDokumentmalConsumer(
     @Value("\${bidrag-dokumentmal.url}") private val url: String,
+    restTemplateBuilder: RestTemplateBuilder,
 ) {
-    fun hentDokumentmal(
-        category: String,
-        type: String,
-        payload: String,
-        renderforpdf: Boolean = true,
-    ): String? = try {
-        val malUrl = "$url/$category/$type"
-        val restTemplate: RestTemplate =
-            RestTemplateBuilder()
+    private val restTemplateForRenderforpdf: Map<Boolean, RestTemplate> =
+        listOf(true, false).associateWith { renderforpdf ->
+            restTemplateBuilder
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
                 .defaultHeader("renderforpdf", renderforpdf.toString())
                 .defaultHeader("renderPDFVersion", RenderPDFVersion.V2.name)
                 .build()
-        restTemplate.postForEntity<ByteArray>(malUrl, payload).body?.toString(Charsets.UTF_8)
+        }
+
+    fun hentDokumentmal(
+        type: String,
+        dokumentmal: String,
+        payload: String,
+        renderforpdf: Boolean = true,
+        innhold: String? = null,
+    ): String? = try {
+        // URI-mal i stedet for ferdig URL, så http_client_requests får en avgrenset uri-tag.
+        // Innhold er en egen variabel, fordi skråstrek i en variabel blir kodet.
+        val restTemplate = restTemplateForRenderforpdf.getValue(renderforpdf)
+        val respons =
+            if (innhold == null) {
+                restTemplate.postForEntity<ByteArray>("$url/{type}/{dokumentmal}", payload, type, dokumentmal)
+            } else {
+                restTemplate.postForEntity<ByteArray>("$url/{type}/{innhold}/{dokumentmal}", payload, type, innhold, dokumentmal)
+            }
+        respons.body?.toString(Charsets.UTF_8)
     } catch (e: Exception) {
         log.error(e) { "Det skjedde en feil ved henting av dokumentmal fra url $url" }
         null

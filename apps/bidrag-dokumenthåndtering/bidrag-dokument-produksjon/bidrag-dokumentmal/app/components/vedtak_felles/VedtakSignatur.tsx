@@ -1,5 +1,5 @@
 import { dateToDDMMYYYY } from "~/utils/date-utils";
-import { DataViewTable } from "~/components/DataViewTable";
+import { FeltTabell, Feltrad } from "~/components/FeltTabell";
 import { Saksbehandler, EnhetKontaktInfo } from "~/types/Api";
 
 export function VedtakSignatur({
@@ -11,23 +11,13 @@ export function VedtakSignatur({
 }) {
   return (
     <div className={"mt-medium"}>
-      <DataViewTable
-        labelColWidth={"400px"}
-        data={[
-          {
-            label: "",
-            value: enhet.navn,
-          },
-          {
-            label: "",
-            value: saksbehandler.fornavnEtternavn,
-          },
-          {
-            label: "",
-            value: dateToDDMMYYYY(new Date()),
-          },
-        ]}
-      />
+      <div>
+        <FeltTabell labelColWidth={"400px"}>
+          <Feltrad label={""}>{enhet.navn}</Feltrad>
+          <Feltrad label={""}>{saksbehandler.fornavnEtternavn}</Feltrad>
+          <Feltrad label={""}>{dateToDDMMYYYY(new Date())}</Feltrad>
+        </FeltTabell>
+      </div>
     </div>
   );
 }

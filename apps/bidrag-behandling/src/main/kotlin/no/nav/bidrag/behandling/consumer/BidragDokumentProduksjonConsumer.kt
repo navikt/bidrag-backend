@@ -1,5 +1,6 @@
 package no.nav.bidrag.behandling.consumer
 
+import no.nav.bidrag.behandling.dto.v2.notat.NotatDel
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.transport.dokumentmaler.notat.VedtakNotatDto
 import org.springframework.beans.factory.annotation.Qualifier
@@ -17,8 +18,15 @@ class BidragDokumentProduksjonConsumer(
     private val bidragDokumentProduksjonUri
         get() = UriComponentsBuilder.fromUri(bidragDokumentProduksjonUrl).pathSegment("api", "v2", "notat", "pdf")
 
-    fun opprettNotat(request: VedtakNotatDto): ByteArray = postForEntity(
-        bidragDokumentProduksjonUri.build().toUri(),
+    // Utelater del for KOMPLETT slik at forespørselen for samlet notat er uendret
+    fun opprettNotat(
+        request: VedtakNotatDto,
+        del: NotatDel = NotatDel.KOMPLETT,
+    ): ByteArray = postForEntity(
+        bidragDokumentProduksjonUri
+            .apply { if (del != NotatDel.KOMPLETT) queryParam("del", del.name) }
+            .build()
+            .toUri(),
         request,
     )!!
 }

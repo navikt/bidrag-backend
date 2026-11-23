@@ -1,7 +1,6 @@
-import tekster from "~/tekster";
-import { TableHeader } from "~/components/CommonTable";
+import type { Kolonne } from "~/components/DokumentTabell";
 import { Styling } from "~/components/notat_felles/ThemeContext";
-
+import { tekst } from "~/utils/tekst";
 export const getInntektTableHeaders = (
   erBarnetillegg: boolean = false,
   erBidrag: boolean = false,
@@ -11,35 +10,56 @@ export const getInntektTableHeaders = (
   [
     !erBarnetillegg || styling == "V1"
       ? {
-          name: tekster.tabell.felles.fraTilOgMed,
-          width: inkluderKilde ? "170px" : erBarnetillegg ? "150px" : "345px",
+          tittel: tekst(
+            "felles.tabell.felles.fraTilOgMed",
+            "Fra og med - Til og med",
+          ),
+          bredde: inkluderKilde ? "170px" : erBarnetillegg ? "150px" : "345px",
         }
       : undefined,
     inkluderKilde
       ? {
-          name: tekster.tabell.felles.kilde,
-          width: erBarnetillegg ? "70px" : "230px",
+          tittel: tekst("felles.tabell.felles.kilde", "Kilde"),
+          bredde: erBarnetillegg ? "70px" : "230px",
         }
       : undefined,
     erBarnetillegg && erBidrag
       ? [
-          { name: tekster.tabell.felles.type, width: "160px" },
-          { name: tekster.tabell.inntekt.beløp, width: "80px" },
-          { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
-          { name: tekster.tabell.inntekt.skattesats, width: "80px" },
-          { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
+          { tittel: tekst("ord.type", "Type"), bredde: "160px" },
+          { tittel: tekst("ord.beløp", "Beløp"), bredde: "80px" },
+          {
+            tittel: tekst("felles.tabell.inntekt.beløpstype", "Beløpstype"),
+            bredde: "80px",
+          },
+          {
+            tittel: tekst("felles.tabell.inntekt.skattesats", "Skattesats"),
+            bredde: "80px",
+          },
+          {
+            tittel: tekst("felles.tabell.inntekt.beløp12Mnd", "Beløp (12mnd)"),
+            bredde: "120px",
+          },
         ]
       : erBarnetillegg
         ? [
-            { name: tekster.tabell.felles.type, width: "160px" },
-            { name: tekster.tabell.inntekt.beløp, width: "80px" },
-            { name: tekster.tabell.inntekt.beløpstype, width: "80px" },
-            { name: tekster.tabell.inntekt.beløp12Mnd, width: "120px" },
+            { tittel: tekst("ord.type", "Type"), bredde: "160px" },
+            { tittel: tekst("ord.beløp", "Beløp"), bredde: "80px" },
+            {
+              tittel: tekst("felles.tabell.inntekt.beløpstype", "Beløpstype"),
+              bredde: "80px",
+            },
+            {
+              tittel: tekst(
+                "felles.tabell.inntekt.beløp12Mnd",
+                "Beløp (12mnd)",
+              ),
+              bredde: "120px",
+            },
           ]
         : {
-            name: tekster.tabell.inntekt.beløp,
-            width: erBarnetillegg ? "140px" : undefined,
+            tittel: tekst("ord.beløp", "Beløp"),
+            bredde: erBarnetillegg ? "140px" : undefined,
           },
   ]
     .filter((d) => d !== undefined)
-    .flatMap((d) => d) as TableHeader[];
+    .flatMap((d) => d) as Kolonne[];

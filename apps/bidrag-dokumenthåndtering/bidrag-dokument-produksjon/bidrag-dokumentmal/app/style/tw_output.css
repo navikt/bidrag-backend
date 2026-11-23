@@ -253,10 +253,6 @@
   justify-content: space-between
 }
 
-.gap-1 {
-  gap: 4px
-}
-
 .gap-2 {
   gap: 8px
 }
@@ -353,10 +349,6 @@
 
 .text-left {
   text-align: left
-}
-
-.text-right {
-  text-align: right
 }
 
 .align-middle {

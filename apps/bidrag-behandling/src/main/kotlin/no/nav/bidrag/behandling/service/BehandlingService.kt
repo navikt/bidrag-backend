@@ -39,6 +39,7 @@ import no.nav.bidrag.behandling.dto.v1.forsendelse.InitalizeForsendelseRequest
 import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagRequestV2
 import no.nav.bidrag.behandling.dto.v2.behandling.AktivereGrunnlagResponseV2
 import no.nav.bidrag.behandling.dto.v2.behandling.BehandlingDetaljerDtoV2
+import no.nav.bidrag.behandling.dto.v2.notat.NotatDel
 import no.nav.bidrag.behandling.dto.v2.underhold.BarnDto
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.ForholdsmessigFordelingService
 import no.nav.bidrag.behandling.service.forholdsmessigfordeling.OppdaterBarnFraFFRequest
@@ -601,6 +602,7 @@ class BehandlingService(
         behandlingId: Long,
         journalpostId: String,
         saksnummer: String? = null,
+        del: NotatDel = NotatDel.KOMPLETT,
     ) {
         behandlingRepository.låsBehandlingForOppdatering(behandlingId)
         val behandling = hentBehandlingById(behandlingId)
@@ -613,12 +615,15 @@ class BehandlingService(
         val bestilling = checkNotNull(bestillinger.find { it.saksnummer == saksnummer }) {
             "Notatet er ikke bestilt for behandling $behandlingId"
         }
-        if (bestilling.journalpostId != null) return
+        check(del in bestilling.deler()) {
+            "Notatdel $del er ikke bestilt for behandling $behandlingId"
+        }
+        if (bestilling.journalpostIdFor(del) != null) return
 
         if (behandling.notatJournalpostId == null) behandling.notatJournalpostId = journalpostId
         lagreNotatbestillinger(
             behandlingId,
-            bestillinger.map { if (it.saksnummer == saksnummer) it.copy(journalpostId = journalpostId) else it },
+            bestillinger.map { if (it.saksnummer == saksnummer) it.medJournalpostId(del, journalpostId) else it },
         )
     }
 
@@ -676,7 +681,7 @@ class BehandlingService(
         saksnumreForNotat?.let { saksnumre ->
             behandlingRepository.initialiserNotatbestillinger(
                 behandlingsid,
-                commonObjectmapper.writeValueAsString(saksnumre.map { Notatbestilling(it) }),
+                commonObjectmapper.writeValueAsString(saksnumre.map { Notatbestilling(it, splittet = UnleashFeatures.SPLITT_NOTAT.isEnabled) }),
             )
         }
 

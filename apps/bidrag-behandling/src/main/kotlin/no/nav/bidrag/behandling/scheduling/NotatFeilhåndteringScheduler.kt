@@ -35,7 +35,7 @@ class NotatFeilhåndteringScheduler(
                 if (batch.isEmpty()) break
                 batch.forEach { behandling ->
                     val saksnumre = lesNotatbestillinger(behandling.notatbestillinger)
-                        ?.filter { it.journalpostId == null }
+                        ?.filter { !it.erFullført() }
                         ?.map { it.saksnummer }
                         ?: listOf(null)
                     saksnumre.forEach { saksnummer ->
