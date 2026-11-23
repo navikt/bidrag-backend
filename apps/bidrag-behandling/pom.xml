@@ -27,7 +27,7 @@
     <springmockk.version>5.0.1</springmockk.version>
     <mockk.version>1.14.11</mockk.version>
     <kotest.version>6.2.4</kotest.version>
-    <swagger-annotations.version>2.2.55</swagger-annotations.version>
+    <swagger-annotations.version>3.0.0</swagger-annotations.version>
     <jetbrains.annotations.version>26.1.0</jetbrains.annotations.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <okhttp.version>5.5.0</okhttp.version>
