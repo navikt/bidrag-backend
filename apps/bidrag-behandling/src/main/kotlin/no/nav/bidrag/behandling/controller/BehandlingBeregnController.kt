@@ -17,6 +17,7 @@ import no.nav.bidrag.behandling.service.BeregningService
 import no.nav.bidrag.behandling.service.VedtakService
 import no.nav.bidrag.behandling.transformers.behandling.kanFatteVedtakBegrunnelse
 import no.nav.bidrag.behandling.transformers.tilDto
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import org.springframework.http.HttpStatus
@@ -248,7 +249,8 @@ class BehandlingBeregnController(
         @PathVariable behandlingsid: Long,
         @RequestBody request: OppdaterParagraf35cDetaljerDto,
     ) {
-        LOGGER.debug { "Oppdaterer Paragraf 35c $request" }
+        LOGGER.debug { "Oppdaterer Paragraf 35c for behandling $behandlingsid" }
+        secureLogger.debug { "Oppdaterer Paragraf 35c for behandling $behandlingsid med forespørsel $request" }
 
         return vedtakService.oppdaterParagrafP35c(behandlingsid, request)
     }

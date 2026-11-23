@@ -57,4 +57,9 @@
     </logger>
 
     <logger name="org.hibernate.orm.connections.pooling" level="warn"/>
+    <!-- For producer-side warnings -->
+    <logger name="org.apache.kafka.clients.producer" level="ERROR"/>
+
+    <!-- For consumer-side warnings -->
+    <logger name="org.apache.kafka.clients.consumer" level="ERROR"/>
 </configuration>

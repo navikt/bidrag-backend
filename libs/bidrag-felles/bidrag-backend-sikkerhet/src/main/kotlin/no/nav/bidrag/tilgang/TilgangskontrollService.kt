@@ -25,6 +25,7 @@ class TilgangskontrollService(
     ticker: Ticker = Ticker.systemTicker(),
 ) {
     private val log = LoggerFactory.getLogger(TilgangskontrollService::class.java)
+    private val secureLog = LoggerFactory.getLogger("secureLogger")
 
     private val cache: Cache<CacheKey, TilgangskontrollResponse> =
         Caffeine
@@ -59,7 +60,10 @@ class TilgangskontrollService(
     fun sjekkTilgangSaksnummer(saksnummer: Saksnummer) {
         val response = hentTilgangSaksnummer(saksnummer)
         if (!response.harTilgang) {
-            log.info("Saksbehandler ${navIdentSupplier()} har ikke tilgang til sak ${saksnummer.verdi}. Detaljer: ${response.detaljer}")
+            log.info("Saksbehandler har ikke tilgang til sak")
+            secureLog.info(
+                "Saksbehandler ${navIdentSupplier()} har ikke tilgang til sak ${saksnummer.verdi}. Detaljer: ${response.detaljer}",
+            )
             throw TilgangskontrollException(response)
         }
     }
@@ -71,13 +75,17 @@ class TilgangskontrollService(
     fun sjekkTilgangPerson(personident: Personident) {
         val response = hentTilgangPerson(personident)
         if (!response.harTilgang) {
-            log.info("Saksbehandler ${navIdentSupplier()} har ikke tilgang til person. Detaljer: ${response.detaljer}")
+            log.info("Saksbehandler har ikke tilgang til person")
+            secureLog.info(
+                "Saksbehandler ${navIdentSupplier()} har ikke tilgang til person ${personident.verdi}. Detaljer: ${response.detaljer}",
+            )
             throw TilgangskontrollException(response)
         }
     }
 
     private fun ingenTilgangVedFeil(e: Exception, gjelder: String): TilgangskontrollResponse {
-        log.error("Feil ved sjekk av tilgang til $gjelder. Gir ingen tilgang.", e)
+        log.error("Feil ved sjekk av tilgang. Gir ingen tilgang")
+        secureLog.error("Feil ved sjekk av tilgang til $gjelder for NAV-ident ${navIdentSupplier()}. Gir ingen tilgang.", e)
         return TilgangskontrollResponse(
             harTilgang = false,
             detaljer = listOf(
@@ -103,6 +111,6 @@ class TilgangskontrollService(
         val type: Type,
         val verdi: String,
     ) {
-        override fun toString(): String = "CacheKey(navIdent=$navIdent, type=$type)"
+        override fun toString(): String = "CacheKey(type=$type)"
     }
 }
