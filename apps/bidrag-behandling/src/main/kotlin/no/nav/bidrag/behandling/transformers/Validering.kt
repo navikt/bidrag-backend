@@ -347,7 +347,7 @@ fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
         feilliste.add("Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR")
     }
     if (oppdaterBegrunnelseVurderingAvSkolegang != null && behandling.kanSkriveVurderingAvSkolegangAlle() &&
-        (rolleId == null && behandling.søknadsbarn.size > 1)
+        (rolleId == null && behandling.søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }.size > 1)
     ) {
         feilliste.add(
             "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken",
