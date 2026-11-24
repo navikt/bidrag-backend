@@ -42,10 +42,14 @@ class BehandleSakHendelseService(
     private fun flyttOppgaverTilEierfogd(saksnummer: String, eierfogd: String) {
         val lagretSak = sakRepository.findBySaksnummer(saksnummer)
             ?: sakRepository.save(Sak(saksnummer = saksnummer, eierfogd = forrigeEierfogdFraHistorikk(saksnummer) ?: eierfogd))
-        val sakUtenPågåendeFlytting = lagretSak.flytterTilEierfogd?.let { fullførFlytting(lagretSak) } ?: lagretSak
-        if (sakUtenPågåendeFlytting.eierfogd != eierfogd) {
-            fullførFlytting(lagre(sakUtenPågåendeFlytting.copy(flytterTilEierfogd = eierfogd)))
-        }
+        val flytterFraEierfogder = lagretSak.flytterFraEierfogder + lagretSak.eierfogd - eierfogd
+        if (flytterFraEierfogder.isEmpty()) return
+        val sak = lagre(lagretSak.copy(eierfogd = eierfogd, flytterFraEierfogder = flytterFraEierfogder))
+        oppgaveConsumer.hentÅpneOppgaverForSak(saksnummer)
+            .filter { it.tildeltEnhetsnr in flytterFraEierfogder }
+            .distinctBy { it.id }
+            .forEach { flytt(it, eierfogd) }
+        lagre(sak.copy(flytterFraEierfogder = emptySet()))
     }
 
     private fun forrigeEierfogdFraHistorikk(saksnummer: String): String? = sakConsumer.hentFogdhistorikk(saksnummer)
@@ -54,25 +58,15 @@ class BehandleSakHendelseService(
         .maxByOrNull { it.tilgangId }
         ?.enhetsnummer
 
-    private fun fullførFlytting(sak: Sak): Sak {
-        val nyEierfogd = requireNotNull(sak.flytterTilEierfogd) { "Saken har ingen pågående flytting" }
-        oppgaveConsumer.hentÅpneOppgaverForSak(sak.saksnummer)
-            .filter { it.tildeltEnhetsnr == sak.eierfogd }
-            .distinctBy { it.id }
-            .forEach { flytt(it, nyEierfogd) }
-        return lagre(sak.copy(eierfogd = nyEierfogd, flytterTilEierfogd = null))
-    }
-
     private fun lagreEierfogdUtenFlytting(saksnummer: String, eierfogd: String) {
         val lagretSak = sakRepository.findBySaksnummer(saksnummer)
         when {
             lagretSak == null -> sakRepository.save(Sak(saksnummer = saksnummer, eierfogd = eierfogd))
-            lagretSak.eierfogd != eierfogd -> lagre(lagretSak.copy(eierfogd = eierfogd, flytterTilEierfogd = null))
-            lagretSak.flytterTilEierfogd != null -> forkastAvbruttFlytting(lagretSak)
+
+            lagretSak.eierfogd != eierfogd || lagretSak.flytterFraEierfogder.isNotEmpty() ->
+                lagre(lagretSak.copy(eierfogd = eierfogd, flytterFraEierfogder = emptySet()))
         }
     }
-
-    private fun forkastAvbruttFlytting(sak: Sak) = lagre(sak.copy(flytterTilEierfogd = null))
 
     private fun lagre(sak: Sak): Sak = sakRepository.save(sak.copy(endretTidspunkt = LocalDateTime.now()))
 

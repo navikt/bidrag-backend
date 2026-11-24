@@ -7,6 +7,8 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.LocalDateTime
 
 @Entity
@@ -23,8 +25,9 @@ data class Sak(
     val saksnummer: String,
     @Column(name = "eierfogd")
     var eierfogd: String,
-    @Column(name = "flytter_til_eierfogd")
-    var flytterTilEierfogd: String? = null,
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", name = "flytter_fra_eierfogder")
+    var flytterFraEierfogder: Set<String> = emptySet(),
     @Column(name = "opprettet_tidspunkt")
     val opprettetTidspunkt: LocalDateTime = LocalDateTime.now(),
     @Column(name = "endret_tidspunkt")

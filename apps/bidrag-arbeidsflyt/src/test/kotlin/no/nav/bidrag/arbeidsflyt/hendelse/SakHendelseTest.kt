@@ -21,6 +21,7 @@ import no.nav.bidrag.arbeidsflyt.dto.OppgaveData
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveSokResponse
 import no.nav.bidrag.arbeidsflyt.dto.OppgaveStatus
 import no.nav.bidrag.arbeidsflyt.persistence.entity.DLQKafka
+import no.nav.bidrag.arbeidsflyt.persistence.entity.Sak
 import no.nav.bidrag.arbeidsflyt.service.BehandleSakHendelseService
 import no.nav.bidrag.arbeidsflyt.utils.disableUnleashFeature
 import no.nav.bidrag.arbeidsflyt.utils.enableUnleashFeature
@@ -308,33 +309,46 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
 
         shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
 
-        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4833"
-        testDataGenerator.hentSak("1234567")!!.flytterTilEierfogd shouldBe "4806"
+        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
+        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe setOf("4833")
     }
 
     @Test
-    fun `skal fullføre avbrutt flytting før saken flyttes videre`() {
-        stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002)))
-        stubFor(patch("/oppgave/api/v1/oppgaver/1002").willReturn(aResponse().withStatus(500)))
-        shouldThrow<HttpServerErrorException> { service.behandleHendelse(hendelse) }
-        stubOppgaver(listOf(oppgave.copy(tildeltEnhetsnr = "4806"), oppgave.copy(id = 1002)))
-        stubFor(patch("/oppgave/api/v1/oppgaver/1002").willReturn(aResponse().withStatus(200)))
+    fun `skal flytte rett til ny eierfogd når flytting er avbrutt`() {
+        lagreAvbruttFlytting()
         stubHentSak(sak.copy(eierfogd = Enhetsnummer("4802")))
 
         service.behandleHendelse(hendelse)
 
         verify(
-            2,
-            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
-                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4806"))),
-        )
-        verify(
             1,
             patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001"))
                 .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
         )
+        verify(
+            1,
+            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
+                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4802"))),
+        )
         testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4802"
-        testDataGenerator.hentSak("1234567")!!.flytterTilEierfogd shouldBe null
+        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe emptySet()
+    }
+
+    @Test
+    fun `skal flytte oppgaver tilbake når avbrutt flytting går tilbake til forrige eierfogd`() {
+        lagreAvbruttFlytting()
+        stubHentSak(sak.copy(eierfogd = Enhetsnummer("4833")))
+
+        service.behandleHendelse(hendelse)
+
+        verify(0, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+        verify(
+            1,
+            patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1002"))
+                .withRequestBody(matchingJsonPath("$.tildeltEnhetsnr", equalTo("4833"))),
+        )
+        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4833"
+        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe emptySet()
     }
 
     @Test
@@ -376,6 +390,12 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
 
         testDataGenerator.hentDlKafka() shouldBe emptyList()
         verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+    }
+
+    private fun lagreAvbruttFlytting() {
+        testDataGenerator.sakRepository.deleteAll()
+        testDataGenerator.sakRepository.save(Sak(saksnummer = "1234567", eierfogd = "4806", flytterFraEierfogder = setOf("4833")))
+        stubOppgaver(listOf(oppgave, oppgave.copy(id = 1002, tildeltEnhetsnr = "4806")))
     }
 
     private fun stubOppgaver(oppgaver: List<OppgaveData>, antall: Int = oppgaver.size) {
