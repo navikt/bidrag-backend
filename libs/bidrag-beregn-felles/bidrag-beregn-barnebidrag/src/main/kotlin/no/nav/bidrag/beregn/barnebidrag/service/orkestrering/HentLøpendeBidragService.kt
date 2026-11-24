@@ -8,6 +8,7 @@ import no.nav.bidrag.beregn.barnebidrag.service.external.VedtakService
 import no.nav.bidrag.beregn.vedtak.Vedtaksfiltrering
 import no.nav.bidrag.commons.security.SikkerhetsKontekst
 import no.nav.bidrag.commons.util.secureLogger
+import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.sak.Sakskategori
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
@@ -133,6 +134,10 @@ class HentLøpendeBidragService(private val vedtakService: VedtakService) {
                     )
                 }
                 .filtrerVedtakMotBeregningsperiode(beregningsperiode)
+                .filter {
+                    val erInnvilgetVedtak = it.stønadsendring.periodeListe.isNotEmpty() && it.stønadsendring.periodeListe.all { Resultatkode.fraKode(it.resultatkode) == Resultatkode.INNVILGET_VEDTAK }
+                    !erInnvilgetVedtak
+                }
 
             val beregningsdataIManuelleVedtak = manuelleVedtakFiltrertMotBeregningsperiode.hentBeregning()
             secureLogger.info {
