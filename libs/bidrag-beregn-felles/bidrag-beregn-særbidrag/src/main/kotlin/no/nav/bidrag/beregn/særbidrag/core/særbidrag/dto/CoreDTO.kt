@@ -16,7 +16,7 @@ data class BeregnSærbidragGrunnlagCore(
     val søknadsbarnPersonId: String,
     val betaltAvBpPeriodeListe: List<BetaltAvBpPeriodeCore>,
     val bidragsevnePeriodeListe: List<BidragsevnePeriodeCore>,
-    val bPsBeregnedeTotalbidragPeriodeCore: BPsBeregnedeTotalbidragPeriodeCore,
+    val bPsBeregnedeTotalbidragPeriodeListe: List<BPsBeregnedeTotalbidragPeriodeCore>,
     val bPsAndelSærbidragPeriodeListe: List<BPsAndelSærbidragPeriodeCore>,
 )
 

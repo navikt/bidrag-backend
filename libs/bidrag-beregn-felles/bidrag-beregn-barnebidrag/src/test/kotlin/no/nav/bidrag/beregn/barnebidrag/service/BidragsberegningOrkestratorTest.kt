@@ -8,9 +8,12 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import io.mockk.mockk
+import io.mockk.verify
 import no.nav.bidrag.beregn.barnebidrag.BeregnBarnebidragApi
 import no.nav.bidrag.beregn.barnebidrag.felles.FellesTest
 import no.nav.bidrag.beregn.barnebidrag.service.external.BeregningPersonConsumer
@@ -25,11 +28,15 @@ import no.nav.bidrag.beregn.barnebidrag.testdata.opprettVedtakDtoForBidragsbereg
 import no.nav.bidrag.beregn.barnebidrag.testdata.opprettVedtakForStønadBidragsberegning
 import no.nav.bidrag.beregn.barnebidrag.utils.OmgjøringOrkestratorHelpers
 import no.nav.bidrag.beregn.barnebidrag.utils.OmgjøringOrkestratorHelpersV2
+import no.nav.bidrag.beregn.core.consumer.ValutakursConsumer
+import no.nav.bidrag.beregn.core.consumer.ValutakursgrunnlagResponse
 import no.nav.bidrag.beregn.core.exception.IkkeFullBidragsevneOgUfullstendigeGrunnlagException
+import no.nav.bidrag.beregn.core.service.ValutakursService
 import no.nav.bidrag.beregn.indeksregulering.BeregnIndeksreguleringApi
 import no.nav.bidrag.commons.util.IdentUtils
 import no.nav.bidrag.commons.web.mock.stubSjablonProvider
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.sak.Saksnummer
@@ -75,6 +82,10 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
     private lateinit var omgjøringOrkestratorV2: OmgjøringOrkestratorV2
     private lateinit var bidragsberegningOrkestrator: BidragsberegningOrkestrator
     private lateinit var hentLøpendeBidragService: HentLøpendeBidragService
+    private lateinit var valutakursConsumer: ValutakursConsumer
+    private lateinit var valutakursService: ValutakursService
+    private val valutakursoppslag = mutableListOf<Pair<Valutakode, LocalDate>>()
+    private var valutakursHentingFeiler = false
 
     @MockK(relaxed = true)
     private lateinit var personConsumer: BeregningPersonConsumer
@@ -96,6 +107,16 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
         omgjøringOrkestratorV2 =
             OmgjøringOrkestratorV2(vedtakService, aldersjusteringOrchestrator, beregnIndeksreguleringApi, omgjøringOrkestratorHelpersV2)
         hentLøpendeBidragService = HentLøpendeBidragService(vedtakService = vedtakService)
+        valutakursoppslag.clear()
+        valutakursHentingFeiler = false
+        valutakursConsumer = mockk()
+        every { valutakursConsumer.hentValutakurs(any(), any()) } answers {
+            val valutakode = firstArg<Valutakode>()
+            val dato = secondArg<LocalDate>()
+            valutakursoppslag.add(valutakode to dato)
+            valutakursrespons(valutakode, dato, valutakursHentingFeiler)
+        }
+        valutakursService = ValutakursService(valutakursConsumer)
         bidragsberegningOrkestrator = BidragsberegningOrkestrator(
             barnebidragApi = barnebidragApi,
             omgjøringOrkestrator = omgjøringOrkestrator,
@@ -103,8 +124,72 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
             hentLøpendeBidragService = hentLøpendeBidragService,
             personConsumer = personConsumer,
             sakConsumer = sakConsumer,
+            valutakursService = valutakursService,
         )
         stubSjablonProvider()
+    }
+
+    @Test
+    fun `beregn bidrag v3 - privat avtale utland henter bare nødvendige valutakurser og beholder kilder`() {
+        filnavnBeregnGrunnlag =
+            "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag_privat_avtale_utland.json"
+        val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        valutakursoppslag.toSet().size shouldBe valutakursoppslag.size
+        valutakursoppslag shouldBe listOf(
+            Valutakode.EUR to LocalDate.parse("2024-01-01"),
+            Valutakode.EUR to LocalDate.parse("2024-07-01"),
+        )
+        beregnResponse.grunnlagListe.map { it.referanse } shouldContainAll listOf(
+            "innhentet_valutakurs_EUR_2024-07",
+            "innhentet_valutakurs_EUR_2024-01",
+        )
+        verify(exactly = 1) { valutakursConsumer.hentValutakurs(Valutakode.EUR, LocalDate.parse("2024-01-01")) }
+        verify(exactly = 1) { valutakursConsumer.hentValutakurs(Valutakode.EUR, LocalDate.parse("2024-07-01")) }
+    }
+
+    private fun valutakursrespons(
+        valutakode: Valutakode,
+        dato: LocalDate,
+        feiletHenting: Boolean = false,
+    ): ValutakursgrunnlagResponse {
+        val brukFra = dato.atStartOfDay()
+        val brukTil = brukFra.plusMonths(6)
+        val kurs = when (valutakode.name) {
+            "EUR" -> BigDecimal("11.45")
+            "SEK" -> BigDecimal("1.09")
+            "DKK" -> BigDecimal("1.53")
+            "GBP" -> BigDecimal("13.21")
+            "USD" -> BigDecimal("9.60")
+            else -> error("Valuta er ikke stubbet")
+        }
+        return ValutakursgrunnlagResponse(
+            brukFra = brukFra,
+            brukTil = brukTil,
+            kurs = if (feiletHenting) null else kurs,
+            multiplikator = if (feiletHenting) null else 0,
+            basisvaluta = valutakode,
+            kvoteringsvaluta = Valutakode.NOK,
+            feiletHenting = feiletHenting,
+        )
+    }
+
+    @Test
+    fun `beregn bidrag v3 - manglende valutakurs gir teknisk beregningsfeil`() {
+        filnavnBeregnGrunnlag =
+            "src/test/resources/testfiler/bidragsberegning_orkestrator/test01_v3_beregn_bidrag_grunnlag_privat_avtale_utland.json"
+        val beregnRequest = lesFilOgByggRequestGenerisk<BidragsberegningOrkestratorRequestV2>(filnavnBeregnGrunnlag)
+        valutakursHentingFeiler = true
+
+        val beregnResponse = bidragsberegningOrkestrator.utførBidragsberegningV3(beregnRequest)
+
+        beregnResponse.resultat.forEach {
+            it.beregningsfeil shouldNotBe null
+            it.beregningsfeil!!.message!! shouldContain "teknisk feil"
+        }
+        beregnResponse.grunnlagListe.none { it.referanse.startsWith("innhentet_valutakurs_") } shouldBe true
     }
 
     @Disabled
@@ -739,7 +824,7 @@ internal class BidragsberegningOrkestratorTest : FellesTest() {
                 perioder[0].resultat.beløp shouldBe BigDecimal(5920)
                 perioder[1].periode.fom shouldBe YearMonth.of(2024, 7)
                 perioder[1].periode.til shouldBe null
-                perioder[1].resultat.beløp shouldBe BigDecimal(6040)
+                perioder[1].resultat.beløp shouldBe BigDecimal(6030)
             }
 
             // Verifiser spesifikke beløp for søknadsbarn 2

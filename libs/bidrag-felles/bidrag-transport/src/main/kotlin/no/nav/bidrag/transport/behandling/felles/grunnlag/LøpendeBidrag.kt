@@ -46,8 +46,7 @@ data class LøpendeBidrag(
     @JsonAlias("stønadstype")
     val type: Stønadstype,
     val løpendeBeløp: BigDecimal,
-    // TODO Bytte ut String med Valutakode
-    val valutakode: String = "NOK",
+    val valutakode: Valutakode = Valutakode.NOK,
     // TODO Gjøre nullable
     val samværsklasse: Samværsklasse,
     val beregnetBeløp: BigDecimal,

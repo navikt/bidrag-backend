@@ -2,10 +2,12 @@ package no.nav.bidrag.transport.behandling.felles.grunnlag
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import java.math.BigDecimal
 
 @Schema(description = "Liste over valutakurser")
 data class ValutakursGrunnlag(
+    val periode: ÅrMånedsperiode? = null,
     val valutakursListe: List<ValutaPar>,
 ) : GrunnlagInnhold
 

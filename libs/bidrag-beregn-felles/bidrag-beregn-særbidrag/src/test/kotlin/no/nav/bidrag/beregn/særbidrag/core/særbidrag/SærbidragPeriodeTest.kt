@@ -87,7 +87,7 @@ internal class SærbidragPeriodeTest {
         søknadsbarnPersonId = genererFødselsnummer(),
         betaltAvBpPeriodeListe = lagBetaltAvBPGrunnlag(avvikBetaltAvBP),
         bidragsevnePeriodeListe = lagBidragsevneGrunnlag(avvikBidragsevne),
-        bPsBeregnedeTotalbidrag = lagBPsBeregnedeTotalbidragGrunnlag(),
+        bPsBeregnedeTotalbidragPeriodeListe = listOf(lagBPsBeregnedeTotalbidragGrunnlag()),
         bPsAndelSærbidragPeriodeListe = lagBPsAndelSærbidragGrunnlag(avvikBPsAndelSærbidrag),
     )
 

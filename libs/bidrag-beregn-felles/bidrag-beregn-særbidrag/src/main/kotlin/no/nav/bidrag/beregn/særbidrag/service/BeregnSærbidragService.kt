@@ -33,6 +33,7 @@ import no.nav.bidrag.commons.service.sjablon.Sjablontall
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
+import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.domene.enums.sjablon.SjablonInnholdNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonNavn
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
@@ -108,7 +109,7 @@ internal class BeregnSærbidragService(
         null
     }
 
-    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == "NOK" }
+    fun validerValutakode(løpendeBidragGrunnlag: LøpendeBidragGrunnlag): Boolean = løpendeBidragGrunnlag.løpendeBidragListe.all { it.valutakode == Valutakode.NOK }
 
     // ==================================================================================================================================================
     // Bygger grunnlag til core og kaller delberegninger
@@ -300,7 +301,7 @@ internal class BeregnSærbidragService(
         secureLogger.debug {
             "BPs Beregnede Totalbidrag - resultat av beregning: ${
                 commonObjectmapper.writeValueAsString(
-                    bPsBeregnedeTotalbidragResultatFraCore.resultatPeriode,
+                    bPsBeregnedeTotalbidragResultatFraCore.resultatPeriodeListe,
                 )
             }"
         }
@@ -487,8 +488,8 @@ internal class BeregnSærbidragService(
     ): MutableList<GrunnlagDto> {
         val resultatGrunnlagListe = mutableListOf<GrunnlagDto>()
         val grunnlagReferanseListe =
-            resultatFraCore.resultatPeriode
-                .grunnlagsreferanseListe
+            resultatFraCore.resultatPeriodeListe
+                .flatMap { it.grunnlagsreferanseListe }
                 .distinct()
 
         // Matcher mottatte grunnlag med grunnlag som er brukt i beregningen og mapper ut
@@ -616,7 +617,8 @@ internal class BeregnSærbidragService(
         // Filtrerer ut delberegninger som er brukt som grunnlag
         val bidragsevneListe = grunnlagTilCore.bidragsevnePeriodeListe
             .filter { grunnlagReferanseListe.contains(it.referanse) }
-        val bPsBeregnedeTotalbidrag = grunnlagTilCore.bPsBeregnedeTotalbidragPeriodeCore
+        val bPsBeregnedeTotalbidragListe = grunnlagTilCore.bPsBeregnedeTotalbidragPeriodeListe
+            .filter { grunnlagReferanseListe.contains(it.referanse) }
         val bPsAndelSærbidragListe = grunnlagTilCore.bPsAndelSærbidragPeriodeListe
             .filter { grunnlagReferanseListe.contains(it.referanse) }
 
@@ -630,12 +632,14 @@ internal class BeregnSærbidragService(
         )
 
         // Mapper ut delberegning sum løpende bidrag
-        resultatGrunnlagListe.add(
-            mapDelberegningBPsBeregnedeTotalbidrag(
-                bPsBeregnedeTotalbidrag = bPsBeregnedeTotalbidrag,
-                beregnBPsBeregnedeTotalbidragResultatCore = bPsBeregnedeTotalbidragResultatCore,
-                bidragspliktigReferanse = bidragspliktigReferanse,
-            ),
+        resultatGrunnlagListe.addAll(
+            bPsBeregnedeTotalbidragListe.map {
+                mapDelberegningBPsBeregnedeTotalbidrag(
+                    bPsBeregnedeTotalbidrag = it,
+                    beregnBPsBeregnedeTotalbidragResultatCore = bPsBeregnedeTotalbidragResultatCore,
+                    bidragspliktigReferanse = bidragspliktigReferanse,
+                )
+            },
         )
 
         // Mapper ut delberegning BPs andel særbidrag
@@ -709,7 +713,8 @@ internal class BeregnSærbidragService(
                 beregnetBidragPerBarnListe = bPsBeregnedeTotalbidrag.beregnetBidragPerBarnListe,
             ),
         ),
-        grunnlagsreferanseListe = beregnBPsBeregnedeTotalbidragResultatCore.resultatPeriode
+        grunnlagsreferanseListe = beregnBPsBeregnedeTotalbidragResultatCore.resultatPeriodeListe
+            .single { it.periode == bPsBeregnedeTotalbidrag.periode }
             .grunnlagsreferanseListe
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it }),
         gjelderReferanse = bidragspliktigReferanse,

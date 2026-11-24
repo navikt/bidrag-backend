@@ -39,7 +39,7 @@ class SærbidragPeriode(private val særbidragBeregning: SærbidragBeregning = S
     private fun lagGrunnlagTilBeregning(periodeGrunnlag: BeregnSærbidragGrunnlag, grunnlagTilBeregning: BeregnSærbidragListeGrunnlag) {
         grunnlagTilBeregning.betaltAvBpPeriodeListe = periodeGrunnlag.betaltAvBpPeriodeListe.map { it }
         grunnlagTilBeregning.bidragsevnePeriodeListe = periodeGrunnlag.bidragsevnePeriodeListe.map { it }
-        grunnlagTilBeregning.bPsBeregnedeTotalbidragPeriode = periodeGrunnlag.bPsBeregnedeTotalbidrag
+        grunnlagTilBeregning.bPsBeregnedeTotalbidragPeriodeListe = periodeGrunnlag.bPsBeregnedeTotalbidragPeriodeListe
         grunnlagTilBeregning.bPsAndelSærbidragPeriodeListe = periodeGrunnlag.bPsAndelSærbidragPeriodeListe.map { it }
     }
 
@@ -50,6 +50,7 @@ class SærbidragPeriode(private val særbidragBeregning: SærbidragBeregning = S
             .addBruddpunkt(periodeGrunnlag.beregnDatoFra) // For å sikre bruddpunkt på start-beregning-fra-dato
             .addBruddpunkter(beregnSærbidragListeGrunnlag.betaltAvBpPeriodeListe)
             .addBruddpunkter(beregnSærbidragListeGrunnlag.bidragsevnePeriodeListe)
+            .addBruddpunkter(beregnSærbidragListeGrunnlag.bPsBeregnedeTotalbidragPeriodeListe)
             .addBruddpunkter(beregnSærbidragListeGrunnlag.bPsAndelSærbidragPeriodeListe)
             .addBruddpunkt(periodeGrunnlag.beregnDatoTil) // For å sikre bruddpunkt på start-beregning-til-dato
             .finnPerioder(beregnDatoFom = periodeGrunnlag.beregnDatoFra, beregnDatoTil = periodeGrunnlag.beregnDatoTil)
@@ -97,13 +98,17 @@ class SærbidragPeriode(private val særbidragBeregning: SærbidragBeregning = S
                     )
                 }
 
+            val bPsBeregnedeTotalbidrag = grunnlag.bPsBeregnedeTotalbidragPeriodeListe
+                .singleOrNull { it.getPeriode().overlapperMed(beregningsperiode) }
+                ?: throw IllegalArgumentException("BPs beregnede totalbidrag må dekke hver beregningsperiode entydig")
+
             // Kaller beregningsmodulen for hver beregningsperiode
             val beregnSærbidragGrunnlagPeriodisert =
                 GrunnlagBeregning(
                     betaltAvBp = betaltAvBp,
                     bidragsevne = bidragsevne,
                     bPsAndelSærbidrag = bPsAndelSærbidrag,
-                    bPsBeregnedeTotalbidrag = grunnlag.bPsBeregnedeTotalbidragPeriode,
+                    bPsBeregnedeTotalbidrag = bPsBeregnedeTotalbidrag,
                 )
 
             grunnlag.periodeResultatListe.add(

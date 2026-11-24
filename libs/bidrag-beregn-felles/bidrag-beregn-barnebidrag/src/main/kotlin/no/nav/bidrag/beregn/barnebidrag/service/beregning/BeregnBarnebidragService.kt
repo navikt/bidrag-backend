@@ -328,7 +328,7 @@ class BeregnBarnebidragService : BeregnService() {
             grunnlagSøknadsbarnListe = utvidetGrunnlagSøknadsbarnListe,
             grunnlagLøpendeBidragListe = utvidetGrunnlagLøpendeBidragListe,
             grunnlagPrivatAvtaleListe = utvidetGrunnlagPrivatAvtaleListe,
-            grunnlagValutakurs = grunnlagValutakursListe.firstOrNull(),
+            grunnlagValutakursListe = grunnlagValutakursListe,
         )
 
         // Sjekker om det finnes perioder hvor det ikke er full evne for noen av søknadsbarna og det samtidig finnes løpende bidrag (norske bidrag)

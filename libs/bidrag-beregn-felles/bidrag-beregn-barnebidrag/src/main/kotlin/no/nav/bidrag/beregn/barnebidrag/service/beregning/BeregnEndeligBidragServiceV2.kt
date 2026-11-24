@@ -66,7 +66,9 @@ import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningEvne25Pros
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningSumBidragTilFordeling
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SluttberegningBarnebidragV2
+import no.nav.bidrag.transport.behandling.felles.grunnlag.ValutakursGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.bidragspliktig
+import no.nav.bidrag.transport.behandling.felles.grunnlag.filtrerOgKonverterBasertPåEgenReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.hentPersonMedReferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettDelberegningreferanse
 import no.nav.bidrag.transport.behandling.felles.grunnlag.opprettSluttberegningreferanse
@@ -81,7 +83,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
         grunnlagSøknadsbarnListe: List<BeregnGrunnlagJustert>,
         grunnlagLøpendeBidragListe: List<BeregnGrunnlagJustert>,
         grunnlagPrivatAvtaleListe: List<BeregnGrunnlagJustert>,
-        grunnlagValutakurs: GrunnlagDto? = null,
+        grunnlagValutakursListe: List<GrunnlagDto> = emptyList(),
     ): List<BeregnGrunnlagJustert> {
         // Søknadsbarn: Kaller delberegning Bidragspliktiges andel delt bosted
         var utvidetGrunnlagSøknadsbarnListe = grunnlagSøknadsbarnListe.map { beregnGrunnlag ->
@@ -107,7 +109,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
         val utvidetGrunnlagLøpendeBidragListe = grunnlagLøpendeBidragListe.map { beregnGrunnlag ->
             val delberegningBidragTilFordelingLøpendeBidrag = delberegningBidragTilFordelingLøpendeBidrag(
                 mottattGrunnlag = beregnGrunnlag.beregnGrunnlag,
-                valutakursGrunnlag = grunnlagValutakurs,
+                valutakursGrunnlagListe = grunnlagValutakursListe,
                 åpenSluttperiode = false, // Må alltid være false for å unngå at evt. nytt bidrag overstyres av løpende bidrag
             )
             beregnGrunnlag.utvidMedNyeGrunnlag(delberegningBidragTilFordelingLøpendeBidrag)
@@ -117,7 +119,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
         val utvidetGrunnlagPrivatAvtaleListe = grunnlagPrivatAvtaleListe.map { beregnGrunnlag ->
             val delberegningBidragTilFordelingPrivatAvtale = delberegningBidragTilFordelingPrivatAvtale(
                 mottattGrunnlag = beregnGrunnlag.beregnGrunnlag,
-                valutakursGrunnlag = grunnlagValutakurs,
+                valutakursGrunnlagListe = grunnlagValutakursListe,
                 åpenSluttperiode = false, // Må alltid være false for å unngå at evt. nytt bidrag overstyres av privat avtale
             )
             beregnGrunnlag.utvidMedNyeGrunnlag(delberegningBidragTilFordelingPrivatAvtale)
@@ -621,18 +623,19 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
 
     fun delberegningBidragTilFordelingLøpendeBidrag(
         mottattGrunnlag: BeregnGrunnlag,
-        valutakursGrunnlag: GrunnlagDto? = null,
+        valutakursGrunnlagListe: List<GrunnlagDto> = emptyList(),
         åpenSluttperiode: Boolean = true,
     ): List<GrunnlagDto> {
         val bidragTilFordelingLøpendeBidragPeriodeGrunnlag = EndeligBidragMapperV2.mapBidragTilFordelingLøpendeBidragGrunnlag(
             mottattGrunnlag = mottattGrunnlag,
-            valutakursGrunnlag = valutakursGrunnlag,
+            valutakursGrunnlag = null,
         )
 
         // Lager liste over bruddperioder
         val bruddPeriodeListe = lagBruddPeriodeListeBidragTilFordelingLøpendeBidrag(
             grunnlagListe = bidragTilFordelingLøpendeBidragPeriodeGrunnlag,
             beregningsperiode = mottattGrunnlag.periode,
+            valutakursGrunnlagListe = valutakursGrunnlagListe,
         )
 
         val bidragTilFordelingLøpendeBidragBeregningResultatListe = mutableListOf<BidragTilFordelingLøpendeBidragPeriodeResultat>()
@@ -643,6 +646,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 lagBidragTilFordelingLøpendeBidragBeregningGrunnlag(
                     bidragTilFordelingLøpendeBidragPeriodeGrunnlag = bidragTilFordelingLøpendeBidragPeriodeGrunnlag,
                     bruddPeriode = bruddPeriode,
+                    valutakursGrunnlagListe = valutakursGrunnlagListe,
                 )
             bidragTilFordelingLøpendeBidragBeregningResultatListe.add(
                 BidragTilFordelingLøpendeBidragPeriodeResultat(
@@ -667,7 +671,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             grunnlagReferanseListe = bidragTilFordelingLøpendeBidragBeregningResultatListe
                 .flatMap { it.resultat.grunnlagsreferanseListe }
                 .distinct(),
-            mottattGrunnlag = mottattGrunnlag.grunnlagListe + listOfNotNull(valutakursGrunnlag),
+            mottattGrunnlag = mottattGrunnlag.grunnlagListe + valutakursGrunnlagListe,
             sjablonGrunnlag = emptyList(),
         )
 
@@ -694,18 +698,19 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
 
     fun delberegningBidragTilFordelingPrivatAvtale(
         mottattGrunnlag: BeregnGrunnlag,
-        valutakursGrunnlag: GrunnlagDto? = null,
+        valutakursGrunnlagListe: List<GrunnlagDto> = emptyList(),
         åpenSluttperiode: Boolean = true,
     ): List<GrunnlagDto> {
         val bidragTilFordelingPrivatAvtalePeriodeGrunnlag = EndeligBidragMapperV2.mapBidragTilFordelingPrivatAvtaleGrunnlag(
             mottattGrunnlag = mottattGrunnlag,
-            valutakursGrunnlag = valutakursGrunnlag,
+            valutakursGrunnlag = null,
         )
 
         // Lager liste over bruddperioder
         val bruddPeriodeListe = lagBruddPeriodeListeBidragTilFordelingPrivatAvtale(
             grunnlagListe = bidragTilFordelingPrivatAvtalePeriodeGrunnlag,
             beregningsperiode = mottattGrunnlag.periode,
+            valutakursGrunnlagListe = valutakursGrunnlagListe,
         )
 
         val bidragTilFordelingPrivatAvtaleBeregningResultatListe = mutableListOf<BidragTilFordelingPrivatAvtalePeriodeResultat>()
@@ -716,6 +721,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 lagBidragTilFordelingPrivatAvtaleBeregningGrunnlag(
                     bidragTilFordelingPrivatAvtalePeriodeGrunnlag = bidragTilFordelingPrivatAvtalePeriodeGrunnlag,
                     bruddPeriode = bruddPeriode,
+                    valutakursGrunnlagListe = valutakursGrunnlagListe,
                 )
             // Grunnlag kan være null hvis indeksregulering mangler for perioden - i så fall gjøres det ingen beregning
             if (bidragTilFordelingPrivatAvtaleBeregningGrunnlag != null) {
@@ -743,7 +749,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             grunnlagReferanseListe = bidragTilFordelingPrivatAvtaleBeregningResultatListe
                 .flatMap { it.resultat.grunnlagsreferanseListe }
                 .distinct(),
-            mottattGrunnlag = mottattGrunnlag.grunnlagListe + listOfNotNull(valutakursGrunnlag),
+            mottattGrunnlag = mottattGrunnlag.grunnlagListe + valutakursGrunnlagListe,
             sjablonGrunnlag = emptyList(),
         )
 
@@ -1460,10 +1466,24 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
     private fun lagBruddPeriodeListeBidragTilFordelingLøpendeBidrag(
         grunnlagListe: BidragTilFordelingLøpendeBidragPeriodeGrunnlag,
         beregningsperiode: ÅrMånedsperiode,
+        valutakursGrunnlagListe: List<GrunnlagDto>,
     ): List<ÅrMånedsperiode> {
         val periodeListe = sequenceOf(grunnlagListe.beregningsperiode)
             .plus(grunnlagListe.løpendeBidragPeriodeGrunnlagListe.asSequence().map { it.løpendeBidragPeriode.periode })
             .plus(grunnlagListe.samværsfradragDelberegningPeriodeGrunnlagListe.asSequence().map { it.samværsfradragPeriode.periode })
+            .plus(
+                valutakursGrunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
+                    .filter { kurs ->
+                        val kursperiode = requireNotNull(kurs.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
+                        grunnlagListe.løpendeBidragPeriodeGrunnlagListe.any { bidrag ->
+                            val løpende = bidrag.løpendeBidragPeriode
+                            løpende.valutakode != Valutakode.NOK &&
+                                kursperiode.fom < løpende.periode.tilEllerMax() && løpende.periode.fom < kursperiode.tilEllerMax() &&
+                                kurs.innhold.valutakursListe.any { it.valutakode1 == løpende.valutakode && it.valutakode2 == Valutakode.NOK }
+                        }
+                    }
+                    .map { requireNotNull(it.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" } },
+            )
 
         val løpendeBidragPerioder = grunnlagListe.løpendeBidragPeriodeGrunnlagListe
             .asSequence()
@@ -1482,6 +1502,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
     private fun lagBidragTilFordelingLøpendeBidragBeregningGrunnlag(
         bidragTilFordelingLøpendeBidragPeriodeGrunnlag: BidragTilFordelingLøpendeBidragPeriodeGrunnlag,
         bruddPeriode: ÅrMånedsperiode,
+        valutakursGrunnlagListe: List<GrunnlagDto>,
     ): BidragTilFordelingLøpendeBidragBeregningGrunnlag {
         val løpendeBidragBeregningGrunnlag = bidragTilFordelingLøpendeBidragPeriodeGrunnlag.løpendeBidragPeriodeGrunnlagListe
             .firstOrNull { it.løpendeBidragPeriode.periode.inneholder(bruddPeriode) }
@@ -1491,11 +1512,13 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             .firstOrNull { it.samværsfradragPeriode.periode.inneholder(bruddPeriode) }
             ?.let { SamværsfradragDelberegningBeregningGrunnlag(referanse = it.referanse, beløp = it.samværsfradragPeriode.beløp) }
 
-        // TODO Testen på erNorskBidrag kan muligens fjernes etter at henting av reelle valutakurser er på plass. Lagt inn for å forhindre at det
-        // TODO lenkes til hardkodet valutakursgrunnlag for norske bidrag.
-        val erNorskBidrag = løpendeBidragBeregningGrunnlag.løpendeBidrag.valutakode == Valutakode.NOK &&
-            løpendeBidragBeregningGrunnlag.løpendeBidrag.sakskategori == Sakskategori.NASJONAL
-        val valutakursBeregningGrunnlag = if (erNorskBidrag) null else bidragTilFordelingLøpendeBidragPeriodeGrunnlag.valutakursGrunnlag
+        val valutakursBeregningGrunnlag = EndeligBidragMapperV2.mapValutakurs(
+            hentValutakursGrunnlag(
+                grunnlagListe = valutakursGrunnlagListe,
+                periode = bruddPeriode,
+                valutakode = løpendeBidragBeregningGrunnlag.løpendeBidrag.valutakode,
+            ),
+        )
 
         return BidragTilFordelingLøpendeBidragBeregningGrunnlag(
             løpendeBidragBeregningGrunnlag = løpendeBidragBeregningGrunnlag,
@@ -1542,10 +1565,24 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
     private fun lagBruddPeriodeListeBidragTilFordelingPrivatAvtale(
         grunnlagListe: BidragTilFordelingPrivatAvtalePeriodeGrunnlag,
         beregningsperiode: ÅrMånedsperiode,
+        valutakursGrunnlagListe: List<GrunnlagDto>,
     ): List<ÅrMånedsperiode> {
         val periodeListe = sequenceOf(grunnlagListe.beregningsperiode)
             .plus(grunnlagListe.indeksreguleringPrivatAvtalePeriodeGrunnlagListe.asSequence().map { it.privatAvtalePeriode.periode })
             .plus(grunnlagListe.samværsfradragDelberegningPeriodeGrunnlagListe.asSequence().map { it.samværsfradragPeriode.periode })
+            .plus(
+                valutakursGrunnlagListe.filtrerOgKonverterBasertPåEgenReferanse<ValutakursGrunnlag>(Grunnlagstype.VALUTAKURS_GRUNNLAG)
+                    .filter { kurs ->
+                        val kursperiode = requireNotNull(kurs.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" }
+                        grunnlagListe.indeksreguleringPrivatAvtalePeriodeGrunnlagListe.any { avtale ->
+                            val privat = avtale.privatAvtalePeriode
+                            privat.valutakode != Valutakode.NOK &&
+                                kursperiode.fom < privat.periode.tilEllerMax() && privat.periode.fom < kursperiode.tilEllerMax() &&
+                                kurs.innhold.valutakursListe.any { it.valutakode1 == privat.valutakode && it.valutakode2 == Valutakode.NOK }
+                        }
+                    }
+                    .map { requireNotNull(it.innhold.periode) { "Valutakursgrunnlaget må ha en periode ved beregning" } },
+            )
 
         return lagBruddPeriodeListe(periodeListe, beregningsperiode)
     }
@@ -1554,6 +1591,7 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
     private fun lagBidragTilFordelingPrivatAvtaleBeregningGrunnlag(
         bidragTilFordelingPrivatAvtalePeriodeGrunnlag: BidragTilFordelingPrivatAvtalePeriodeGrunnlag,
         bruddPeriode: ÅrMånedsperiode,
+        valutakursGrunnlagListe: List<GrunnlagDto>,
     ): BidragTilFordelingPrivatAvtaleBeregningGrunnlag? {
         val indeksreguleringPrivatAvtaleBeregningGrunnlag =
             bidragTilFordelingPrivatAvtalePeriodeGrunnlag.indeksreguleringPrivatAvtalePeriodeGrunnlagListe
@@ -1569,12 +1607,6 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
             .firstOrNull { it.samværsfradragPeriode.periode.inneholder(bruddPeriode) }
             ?.let { SamværsfradragDelberegningBeregningGrunnlag(referanse = it.referanse, beløp = it.samværsfradragPeriode.beløp) }
 
-        // TODO Testen på erNorskBidrag kan muligens fjernes etter at henting av reelle valutakurser er på plass. Lagt inn for å forhindre at det
-        // TODO lenkes til hardkodet valutakursgrunnlag for norske bidrag.
-        val erNorskBidrag = indeksreguleringPrivatAvtaleBeregningGrunnlag?.valutakode == Valutakode.NOK &&
-            bidragTilFordelingPrivatAvtalePeriodeGrunnlag.privatAvtaleGrunnlag.sakskategori == Sakskategori.NASJONAL
-        val valutakursBeregningGrunnlag = if (erNorskBidrag) null else bidragTilFordelingPrivatAvtalePeriodeGrunnlag.valutakursGrunnlag
-
         // Det kan mangle indeksregulering for den aktuelle perioden - da skal det heller ikke gjøres beregning
         return if (indeksreguleringPrivatAvtaleBeregningGrunnlag == null) {
             null
@@ -1583,7 +1615,13 @@ internal object BeregnEndeligBidragServiceV2 : BeregnService() {
                 privatAvtaleBeregningGrunnlag = bidragTilFordelingPrivatAvtalePeriodeGrunnlag.privatAvtaleGrunnlag,
                 indeksreguleringPrivatAvtaleBeregningGrunnlag = indeksreguleringPrivatAvtaleBeregningGrunnlag,
                 samværsfradragBeregningGrunnlag = samværsfradragBeregningGrunnlag,
-                valutakursBeregningGrunnlag = valutakursBeregningGrunnlag,
+                valutakursBeregningGrunnlag = EndeligBidragMapperV2.mapValutakurs(
+                    hentValutakursGrunnlag(
+                        grunnlagListe = valutakursGrunnlagListe,
+                        periode = bruddPeriode,
+                        valutakode = indeksreguleringPrivatAvtaleBeregningGrunnlag.valutakode,
+                    ),
+                ),
             )
         }
     }
