@@ -18,10 +18,10 @@
   <packaging>jar</packaging>
 
   <properties>
-    <mockk.version>1.14.11</mockk.version>
-    <nav-token-support.version>7.0.1</nav-token-support.version>
-    <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
-    <shedlock.version>7.10.1</shedlock.version>
+    <mockk.version>1.14.12</mockk.version>
+    <nav-token-support.version>7.1.0</nav-token-support.version>
+    <kotlin-logging-jvm.version>8.0.7</kotlin-logging-jvm.version>
+    <shedlock.version>7.11.0</shedlock.version>
     <spring-cloud-contract-wiremock.version>5.0.3</spring-cloud-contract-wiremock.version>
     <springdoc-openapi-ui.version>3.2.0</springdoc-openapi-ui.version>
     <logback-encoder.version>9.0</logback-encoder.version>
@@ -30,13 +30,13 @@
     <hypersistence-utils-hibernate.version>3.16.0</hypersistence-utils-hibernate.version>
     <wiremock-spring-boot.version>4.4.3</wiremock-spring-boot.version>
     <springmockk.version>5.0.1</springmockk.version>
-    <kotest.version>6.2.6</kotest.version>
+    <kotest.version>6.2.7</kotest.version>
     <swagger-annotations.version>3.0.0</swagger-annotations.version>
-    <google-cloud-libraries-bom.version>26.91.0</google-cloud-libraries-bom.version>
+    <google-cloud-libraries-bom.version>26.93.0</google-cloud-libraries-bom.version>
     <google-tink-gcpkms.version>1.12.0</google-tink-gcpkms.version>
     <google-tink.version>1.24.0</google-tink.version>
     <pdfbox.version>3.0.8</pdfbox.version>
-    <verapdf.version>1.30.3</verapdf.version>
+    <verapdf.version>1.30.4</verapdf.version>
   </properties>
 
   <!-- Sikrer at alle mockk-relaterte artefakter alltid samstemmer med
@@ -336,7 +336,7 @@
     <dependency>
       <groupId>org.jetbrains.kotlinx</groupId>
       <artifactId>kotlinx-serialization-json</artifactId>
-      <version>1.12.0</version>
+      <version>1.13.0</version>
     </dependency>
     <dependency>
       <groupId>io.getunleash</groupId>

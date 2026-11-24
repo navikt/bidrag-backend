@@ -2,9 +2,6 @@ name: bidrag-dokument-feature
 azure:
   inbound:
     rules:
-      - application: bidrag-ui-feature
-        namespace: bidrag
-        cluster: dev-fss
       - application: bidrag-dokument-arkivering-feature
         namespace: bidrag
         cluster: dev-fss
