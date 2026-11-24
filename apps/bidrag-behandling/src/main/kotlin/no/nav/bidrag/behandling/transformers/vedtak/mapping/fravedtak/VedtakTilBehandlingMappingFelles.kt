@@ -172,7 +172,7 @@ fun VedtakDto.tilBeregningResultatForskudd(): List<ResultatBeregningBarnDto> = s
             erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
         ),
         perioder =
-        stønadsendring.periodeListe.map {
+        stønadsendring.periodeListe.filter { Resultatkode.fraKode(it.resultatkode) != Resultatkode.OPPHØR }.map {
             ResultatBeregningBarnDto.ResultatPeriodeDto(
                 periode = it.periode,
                 resultatKode = Resultatkode.fraKode(it.resultatkode)!!,
