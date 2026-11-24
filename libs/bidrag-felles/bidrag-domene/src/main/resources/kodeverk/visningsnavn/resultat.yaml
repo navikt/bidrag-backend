@@ -215,3 +215,11 @@ BIDRAG_JUSTERT_FOR_DELT_BOSTED:
   intern: "Bidrag justert for delt bosted"
 IKKE_UNDERHOLDSPLIKT:
   intern: "Bidragspliktig har ikke underholdsplikt"
+STADSFESTELSE:
+  intern: "Stadsfestelse"
+AVVIST:
+  intern: "Avvist"
+UTENLANDSK_AVGJORELSE:
+  intern: "Utenlandsk avgjørelse"
+VEDTAK_INNKREVING_AV_SÆRBIDRAG:
+  intern: "Vedtak innkreving av særbidrag"

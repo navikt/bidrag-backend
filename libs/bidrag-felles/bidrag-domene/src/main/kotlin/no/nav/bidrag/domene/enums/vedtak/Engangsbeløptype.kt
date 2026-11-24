@@ -23,3 +23,9 @@ enum class Engangsbeløptype {
     SÆRTILSKUDD,
     SÆRBIDRAG,
 }
+
+fun Engangsbeløptype.konverterFraDeprekerteVerdier() = when (this) {
+    Engangsbeløptype.SÆRBIDRAG, Engangsbeløptype.SÆRTILSKUDD, Engangsbeløptype.SAERTILSKUDD -> Engangsbeløptype.SÆRBIDRAG
+    Engangsbeløptype.DIREKTE_OPPGJØR, Engangsbeløptype.DIREKTE_OPPGJOR -> Engangsbeløptype.DIREKTE_OPPGJØR
+    else -> this
+}
