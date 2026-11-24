@@ -75,6 +75,7 @@ import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
+import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.felles.grunnlag.AldersjusteringDetaljerGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BaseGrunnlag
 import no.nav.bidrag.transport.behandling.felles.grunnlag.BehandlingDetaljerGrunnlag
@@ -333,21 +334,9 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
                                 it.kravhaver == stønadsendring.kravhaver && stønadsendring.type == it.type
                             }!!
                     val vedtakPeriode =
-                        vedtakStønadsendring.periodeListe.find { it.periode.inneholder(periode.periode) }
-                            ?: vedtakStønadsendring.periodeListe.find { it.periode.overlapperKunISluttenAv(periode.periode) } ?: run {
-                            if (virkningstidspunkt != null && virkningstidspunkt.opphørsdato?.toYearMonth() == periode.periode.fom) {
-                                VedtakPeriodeDto(
-                                    periode.periode,
-                                    null,
-                                    null,
-                                    Resultatkode.OPPHØR.name,
-                                    null,
-                                    emptyList(),
-                                )
-                            } else {
-                                return@mapNotNull null
-                            }
-                        }
+                        vedtak.finnPeriodeIStønadsendringSomDekkerPerioden(vedtakStønadsendring, periode.periode)
+                            ?: opprettOpphørsperiodeHvisBarnetOpphører(periode.periode, virkningstidspunkt)
+                            ?: return@mapNotNull null
                     val søknadsbarn = grunnlagListe.hentPersonMedIdent(stønadsendring.kravhaver.verdi, stønadsendring.type)!!
                     DelvedtakDto(
                         type = vedtak.type,
@@ -416,7 +405,7 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
                                 periode =
                                 stønadsendring.periodeListe
                                     .find { st ->
-                                        it.periode.inneholder(st.periode)
+                                        it.periode.inneholder(st.periode) || it.periode.fom == st.periode.fom
                                     }!!
                                     .periode,
                             )
@@ -462,7 +451,26 @@ internal fun VedtakDto.hentDelvedtak(stønadsendring: StønadsendringDto): List<
         )
     return delvedtak + listOf(endeligVedtak)
 }
+private fun VedtakDto.finnPeriodeIStønadsendringSomDekkerPerioden(
+    stønadsendring: StønadsendringDto,
+    periode: ÅrMånedsperiode,
+): VedtakPeriodeDto? {
+    val perioder =
+        stønadsendringListe
+            .find { it.kravhaver == stønadsendring.kravhaver && it.type == stønadsendring.type }!!
+            .periodeListe
+    return perioder.find { periode.fom == it.periode.fom || it.periode.inneholder(periode) }
+        ?: perioder.find { it.periode.overlapperKunISluttenAv(periode) }
+}
 
+private fun opprettOpphørsperiodeHvisBarnetOpphører(
+    periode: ÅrMånedsperiode,
+    virkningstidspunkt: VirkningstidspunktGrunnlag?,
+): VedtakPeriodeDto? = if (virkningstidspunkt?.opphørsdato?.toYearMonth() == periode.fom) {
+    VedtakPeriodeDto(periode, null, null, Resultatkode.OPPHØR.name, null, emptyList())
+} else {
+    null
+}
 internal fun VedtakDto.hentBeregningsperioder(stønadsendring: StønadsendringDto): List<ResultatBarnebidragsberegningPeriodeDto> {
     val grunnlagsliste = grunnlagListe
     val aldersjusteringDetaljer = grunnlagListe.finnAldersjusteringDetaljerGrunnlag()
@@ -1131,7 +1139,7 @@ fun List<GrunnlagDto>.hentGrunnlagIkkeInntekt(
                                     BoforholdApi.beregnBoforholdBarnV3(
                                         rolle.finnVirkningstidspunktBeregningBoforhold() ?: behandling.eldsteVirkningstidspunkt,
                                         rolle.finnOpphørsdatoBoforhold(),
-                                        behandling.finnBeregnTilDatoBehandling(rolle),
+                                        behandling.finnBeregnTilDatoBehandling(),
                                         behandling.tilTypeBoforhold(),
                                         grunnlag.tilBoforholdBarnRequest(behandling, true),
                                     )

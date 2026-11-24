@@ -32,6 +32,7 @@ import no.nav.bidrag.beregn.særbidrag.ValiderSærbidragForBeregningService
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.Kilde
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.særbidrag.Særbidragskategori
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
@@ -243,6 +244,8 @@ class ValiderBeregning(
         val måBekrefteOpplysninger =
             grunnlag
                 .hentAlleSomMåBekreftes()
+                // Samme filter som i no/nav/bidrag/behandling/transformers/Dtomapper.kt:695 slik at validering og visning er det samme
+                .filter { it.rolle.rolletype != Rolletype.BARN || it.rolle.avslag == null }
                 .map { grunnlagSomMåBekreftes ->
                     val gjelder =
                         grunnlagSomMåBekreftes.gjelderBarnRolle?.ident ?: grunnlagSomMåBekreftes.gjelder

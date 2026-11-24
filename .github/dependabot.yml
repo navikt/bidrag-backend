@@ -14,7 +14,7 @@ updates:
   - package-ecosystem: "npm"
     directories:
       - "/util/bidrag-cli"
-      - "/util/bidrag-cloudfunctions/postgres-auditlog"
+      - "/util/bidrag-cloudfunctions/database-auditlog"
       - "/apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon"
       - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal"
       - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-forsendelse/script"
@@ -542,8 +542,9 @@ updates:
       - "/apps/*"
       - "/apps/bidrag-dokumenthåndtering/*"
       - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal"
+      - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen"
       - "/apps/bidrag-admin/*"
-      - "/util/bidrag-cloudfunctions/postgres-auditlog"
+      - "/util/bidrag-cloudfunctions/database-auditlog"
     cooldown:
       default-days: 7
     schedule:

@@ -43,6 +43,7 @@ import no.nav.bidrag.transport.behandling.beregning.felles.LeggTilBarnIFFSøknad
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlerenhetRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterBehandlingsidRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterReferanseGebyrRequest
+import no.nav.bidrag.transport.behandling.beregning.felles.OppdaterSøknadFomDatoRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.OpprettSøknadRequest
 import no.nav.bidrag.transport.behandling.beregning.felles.PartISøknad
 import no.nav.bidrag.transport.behandling.hendelse.BehandlingStatusType
@@ -686,6 +687,54 @@ class BisysServiceTest(
 
         val oppdatertSøknad = testdataManager.hentSøknadMedId(søknad.søknadsid!!)
         oppdatertSøknad!!.behandlerenhet shouldBe "1234"
+    }
+
+    @Test
+    fun `skal oppdatere søkt fom dato på søknad og tilhørende søknader med samme søkt fom dato`() {
+        val forrigeFomDato = LocalDate.parse("2024-01-01")
+        val nyFomDato = LocalDate.parse("2024-05-01")
+        val blankett =
+            testdataManager
+                .lagreBlankettListe(
+                    listOf(
+                        opprettBlankett(saksnummer = SAKSNUMMER_1, søknadFraKode = "ET", søknadstype = "RF"),
+                    ),
+                ).first()
+
+        val (søknad, innkrevingssøknad, gebyrsøknad) =
+            testdataManager.lagreSøknadListe(
+                listOf(
+                    opprettSøknad(saksnummer = SAKSNUMMER_1, blankettid = blankett.blankettid!!, søknadFomDato = forrigeFomDato),
+                    opprettSøknad(
+                        saksnummer = SAKSNUMMER_1,
+                        blankettid = blankett.blankettid!!,
+                        søknadFomDato = forrigeFomDato,
+                        søknadsgruppekode = "IK",
+                    ),
+                    opprettSøknad(
+                        saksnummer = SAKSNUMMER_1,
+                        blankettid = blankett.blankettid!!,
+                        søknadFomDato = LocalDate.parse("2023-01-01"),
+                        søknadsgruppekode = "GB",
+                    ),
+                ),
+            )
+
+        bisysService.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(søknadsid = søknad.søknadsid!!, søknadFomDato = nyFomDato))
+
+        testdataManager.hentSøknadMedId(søknad.søknadsid!!)!!.søknadFomDato shouldBe nyFomDato
+        testdataManager.hentSøknadMedId(innkrevingssøknad.søknadsid!!)!!.søknadFomDato shouldBe nyFomDato
+        testdataManager.hentSøknadMedId(gebyrsøknad.søknadsid!!)!!.søknadFomDato shouldBe LocalDate.parse("2023-01-01")
+    }
+
+    @Test
+    fun `skal kaste HttpClientErrorException ved oppdatering av søkt fom dato når søknad ikke eksisterer`() {
+        val exception =
+            shouldThrow<HttpClientErrorException> {
+                bisysService.oppdaterSøknadFomDato(OppdaterSøknadFomDatoRequest(søknadsid = 999L, søknadFomDato = LocalDate.parse("2024-05-01")))
+            }
+
+        exception.statusCode shouldBe HttpStatus.BAD_REQUEST
     }
 
     @Test

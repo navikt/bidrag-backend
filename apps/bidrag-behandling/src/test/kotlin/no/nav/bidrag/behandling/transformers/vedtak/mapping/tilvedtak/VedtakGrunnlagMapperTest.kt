@@ -229,7 +229,7 @@ class VedtakGrunnlagMapperTest {
                 ),
             )
 
-        behandling.bidragsmottaker!!.gebyr = GebyrRolle(true, true, "test")
+        behandling.bidragsmottaker!!.gebyr = GebyrRolle(overstyrGebyr = true, ilagtGebyr = true, begrunnelse = "test")
         val resultat = vedtakGrunnlagMapper.beregnGebyr(behandling, behandling.bidragsmottaker!!)
         assertSoftly(resultat) {
             ilagtGebyr shouldBe true
@@ -296,7 +296,7 @@ class VedtakGrunnlagMapperTest {
                 ÅrMånedsperiode(YearMonth.of(2025, 6), YearMonth.of(2025, 8)),
             )
 
-        val sammenslåttePerioder = perioder.`slåSammenEtterfølgendePerioder`()
+        val sammenslåttePerioder = perioder.slåSammenEtterfølgendePerioder()
 
         sammenslåttePerioder shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 1), YearMonth.of(2025, 8)))
     }
@@ -309,7 +309,7 @@ class VedtakGrunnlagMapperTest {
                 ÅrMånedsperiode(YearMonth.of(2025, 4), YearMonth.of(2025, 6)),
             )
 
-        val sammenslåttePerioder = perioder.`slåSammenEtterfølgendePerioder`()
+        val sammenslåttePerioder = perioder.slåSammenEtterfølgendePerioder()
 
         sammenslåttePerioder shouldBe perioder
     }
@@ -362,17 +362,6 @@ class VedtakGrunnlagMapperTest {
     }
 
     @Test
-    fun `finnBeregnFra skal ikke starte før barnets fødsel ved forholdsmessig fordeling`() {
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
-        val søknadsbarn = behandling.søknadsbarn.first()
-        søknadsbarn.stønadstype = Stønadstype.BIDRAG
-        søknadsbarn.fødselsdato = LocalDate.of(2023, 6, 15)
-
-        søknadsbarn.finnBeregnFra() shouldBe YearMonth.of(2023, 6)
-    }
-
-    @Test
     fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
         val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
         behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
@@ -393,7 +382,7 @@ class VedtakGrunnlagMapperTest {
         søknadsbarn.virkningstidspunkt = LocalDate.parse("2023-04-01")
         søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
 
-        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag!!
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag
 
         grunnlag.opphørsdato shouldBe YearMonth.of(2023, 4)
     }
@@ -408,7 +397,7 @@ class VedtakGrunnlagMapperTest {
         søknadsbarn.virkningstidspunkt = null
         søknadsbarn.opphørsdato = LocalDate.parse("2023-08-01")
 
-        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag!!
+        val grunnlag = vedtakGrunnlagMapper.byggGrunnlagForBeregning(behandling, søknadsbarn).beregnGrunnlag
 
         grunnlag.opphørsdato shouldBe YearMonth.of(2023, 8)
     }

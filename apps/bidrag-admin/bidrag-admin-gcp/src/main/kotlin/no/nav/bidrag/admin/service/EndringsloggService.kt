@@ -148,7 +148,8 @@ class EndringsloggService(
         endringsloggId: Long,
         request: LestAvBrukerRequest,
     ): Endringslogg {
-        log.info {
+        log.info { "Oppdaterer lest av bruker for endringslogg $endringsloggId" }
+        secureLogger.info {
             "Oppdaterer lest av bruker for endringslogg $endringsloggId og saksbehandler ${TokenUtils.hentSaksbehandlerIdent()}"
         }
         val endringslogg = hentEndringslogg(endringsloggId)
@@ -169,7 +170,8 @@ class EndringsloggService(
             lestAvBrukerNy.lestTidspunkt = LocalDateTime.now()
             lestAvBrukerRepository.save(lestAvBrukerNy)
         }
-        log.info {
+        log.info { "Oppdaterte lest av bruker for endringslogg $endringsloggId" }
+        secureLogger.info {
             "Oppdaterte lest av bruker for endringslogg $endringsloggId og saksbehandler ${TokenUtils.hentSaksbehandlerIdent()}"
         }
         return endringslogg
@@ -183,7 +185,8 @@ class EndringsloggService(
         endringsloggId: Long,
         request: OppdaterEndringsloggRequest,
     ): Endringslogg {
-        log.info { "Oppdaterer endringslogg $endringsloggId med $request" }
+        log.info { "Oppdaterer endringslogg $endringsloggId" }
+        secureLogger.info { "Oppdaterer endringslogg $endringsloggId med request=$request" }
         val endringslogg = hentEndringslogg(endringsloggId)
 
         endringslogg.tilhørerSkjermbilde = request.tilhørerSkjermbilde ?: endringslogg.tilhørerSkjermbilde
@@ -257,7 +260,8 @@ class EndringsloggService(
             )
         }
         val endringslogg = endringsloggRepository.save(endringsLogg)
-        log.info { "Opprettet enddringslogg $endringslogg" }
+        log.info { "Opprettet endringslogg ${endringslogg.id}" }
+        secureLogger.info { "Opprettet endringslogg $endringslogg" }
         return endringslogg
     }
 
@@ -267,7 +271,8 @@ class EndringsloggService(
         endringsloggEndringId: Long,
         request: LestAvBrukerRequest,
     ): Endringslogg {
-        log.info {
+        log.info { "Oppdaterer lest av bruker for endringslogg endring $endringsloggEndringId i endringslogg $endringsloggId" }
+        secureLogger.info {
             "Oppdaterer lest av bruker for endringslogg endring $endringsloggEndringId i endringslogg $endringsloggId og saksbehandler ${TokenUtils.hentSaksbehandlerIdent()}"
         }
         val endringslogg = hentEndringslogg(endringsloggId)
@@ -302,6 +307,9 @@ class EndringsloggService(
             lestAvBrukerNy.lestTidspunkt = LocalDateTime.now()
             endringsloggRepository.save(endringslogg)
             log.info {
+                "Oppdaterte lest av bruker for endringslogg endring ${endringsloggEndring.id} i endringslogg $endringsloggId"
+            }
+            secureLogger.info {
                 "Oppdaterte lest av bruker for endringslogg endring ${endringsloggEndring.id} i endringslogg $endringsloggId og saksbehandler ${TokenUtils.hentSaksbehandlerIdent()}"
             }
         }
@@ -344,7 +352,8 @@ class EndringsloggService(
         endringsloggId: Long,
         request: LeggTilEndringsloggEndring,
     ): Endringslogg {
-        log.info { "Legger til endring $request i endringslogg $endringsloggId" }
+        log.info { "Legger til endring i endringslogg $endringsloggId" }
+        secureLogger.info { "Legger til endring i endringslogg $endringsloggId med request=$request" }
 
         val endringslogg = hentEndringslogg(endringsloggId)
 

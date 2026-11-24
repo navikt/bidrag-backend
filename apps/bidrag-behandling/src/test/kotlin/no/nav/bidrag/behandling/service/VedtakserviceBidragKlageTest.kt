@@ -93,6 +93,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
     @BeforeEach
     fun initMocksKlage() {
         enableUnleashFeature(UnleashFeatures.FATTE_VEDTAK)
+        every { behandlingRepository.initialiserNotatbestillinger(any(), any()) } returns Unit
         bidragsberegningOrkestrator = mockkClass(BidragsberegningOrkestrator::class)
 //        bidragsberegningOrkestrator = BidragsberegningOrkestrator(BeregnBarnebidragApi(), klageOrkestrator, klageOrkestratorV2, hentLøpendeBidragService, personConsumer, sakConsumer)
 //        every { bidragsberegningOrkestrator.utførBidragsberegningV3(any()) } returns BidragsberegningOrkestratorResponseV2()
@@ -138,7 +139,30 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
                 validerBehandlingService,
                 forsendelseService,
                 virkningstidspunktService,
+                bestillAsyncJobService = bestillAsyncJobService,
             )
+    }
+
+    private fun OpprettVedtakRequestDto.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() {
+        val typerPåStønadsendring =
+            stønadsendringListe
+                .flatMap { it.grunnlagReferanseListe }
+                .toSet()
+                .let { referanser -> grunnlagListe.filter { it.referanse in referanser }.map { it.type } }
+                .toSet()
+        // Cherrypick noen grunnlag for å bekrefte
+        val typerSomIkkeSkalPåStønadsendring =
+            setOf(
+                Grunnlagstype.BOSTATUS_PERIODE,
+                Grunnlagstype.INNTEKT_RAPPORTERING_PERIODE,
+                Grunnlagstype.SAMVÆRSPERIODE,
+                Grunnlagstype.SJABLON_SAMVARSFRADRAG,
+                Grunnlagstype.DELBEREGNING_BIDRAG_TIL_FORDELING,
+                Grunnlagstype.DELBEREGNING_BIDRAGSEVNE,
+                Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG,
+            )
+
+        typerPåStønadsendring.intersect(typerSomIkkeSkalPåStønadsendring) shouldBe emptySet()
     }
 
     private fun byggGrunnlagForBeregning(
@@ -270,7 +294,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -382,7 +406,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 1) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -552,7 +576,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 2) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -770,7 +794,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 2) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -890,7 +914,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 2) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1050,6 +1074,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         vedtakService.fatteVedtak(behandling.id!!, FatteVedtakRequestDto(innkrevingUtsattAntallDager = null))
 
         opprettVedtakSlot shouldHaveSize 3
+        opprettVedtakSlot.forEach { it.skalIkkeLeggeTilBeregningsgrunnlagPåStønadsendring() }
         assertSoftly(opprettVedtakSlot.first()) {
             it.type shouldBe Vedtakstype.KLAGE
 
@@ -1234,7 +1259,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1590,7 +1615,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -1932,7 +1957,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -2236,7 +2261,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -2478,7 +2503,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     @Test
@@ -2699,7 +2724,7 @@ class VedtakserviceBidragKlageTest : CommonVedtakTilBehandlingTest() {
         verify(exactly = 3) {
             vedtakConsumer.fatteVedtak(any())
         }
-        verify(exactly = 1) { notatOpplysningerService.opprettNotat(any()) }
+        verify(exactly = 1) { bestillAsyncJobService.bestillOpprettelseAvNotat(any()) }
     }
 
     private fun initBehandlingTestdata(behandling: Behandling) {

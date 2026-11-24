@@ -57,9 +57,7 @@ class HentBehandlingTest : BehandlingControllerTest() {
             rolleIdent = testdataBarn2.ident,
         )
 
-        val behandlingFørLagring = opprettBehandling()
-        behandlingFørLagring.oppdaterVirkningstidspunktForAlle(LocalDate.parse("2022-01-01"))
-        val behandling = testdataManager.lagreBehandling(behandlingFørLagring)
+        val behandling = testdataManager.lagreBehandling(opprettBehandling(virkningstidspunkt = LocalDate.parse("2022-02-01")))
 
         // hvis
         val behandlingRes =
@@ -285,8 +283,8 @@ class HentBehandlingTest : BehandlingControllerTest() {
         }
     }
 
-    private fun opprettBehandling(): Behandling {
-        val behandling = oppretteBehandling()
+    private fun opprettBehandling(virkningstidspunkt: LocalDate = LocalDate.parse("2023-02-01")): Behandling {
+        val behandling = oppretteBehandling(virkningstidspunkt = virkningstidspunkt)
         behandling.husstandsmedlem =
             mutableSetOf(
                 oppretteHusstandsmedlem(behandling, testdataBarn1),
@@ -294,8 +292,8 @@ class HentBehandlingTest : BehandlingControllerTest() {
             )
         behandling.roller =
             mutableSetOf(
-                opprettRolle(behandling, testdataBarn1),
-                opprettRolle(behandling, testdataBarn2),
+                opprettRolle(behandling, testdataBarn1, virkningstidspunkt = virkningstidspunkt),
+                opprettRolle(behandling, testdataBarn2, virkningstidspunkt = virkningstidspunkt),
                 opprettRolle(behandling, testdataBM),
             )
         behandling.sivilstand =

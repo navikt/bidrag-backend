@@ -1,0 +1,37 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: util/bidrag-cloudfunctions/database-auditlog
+    args:
+      - 'build'
+      - '-t'
+      - '${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/bidrag-cloudfunctions/${_SERVICE_NAME}:$COMMIT_SHA'
+      - '.'
+    id: Build image
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/bidrag-cloudfunctions/${_SERVICE_NAME}:$COMMIT_SHA'
+    id: Push image
+
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy ${_SERVICE_NAME} \
+          --image=${_AR_HOSTNAME}/$PROJECT_ID/${_AR_REPOSITORY}/bidrag-cloudfunctions/${_SERVICE_NAME}:$COMMIT_SHA \
+          --region=${_DEPLOY_REGION} \
+          --platform=${_PLATFORM} \
+          --port=8080 \
+          --ingress=all \
+          --set-secrets=GCP_WEBHOOK_SECRET=slack-webhook-basicauth:latest \
+          --set-secrets=SLACK_WEBHOOK_URL=${_SLACK_WEBHOOK_SECRET}:latest \
+          --update-env-vars=PUBSUB_AUDIENCE=https://postgres-auditlog-961465283338.europe-north1.run.app,PUBSUB_SERVICE_ACCOUNT=database-auditlog-slack@$PROJECT_ID.iam.gserviceaccount.com \
+          --quiet
+
+options:
+  substitutionOption: ALLOW_LOOSE
+  logStreamingOption: STREAM_ON
+  logging: CLOUD_LOGGING_ONLY
