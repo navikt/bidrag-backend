@@ -199,8 +199,7 @@ class AdminController(
 
         behandling.grunnlagSistInnhentet = null
         behandling.grunnlagsinnhentingFeilet = null
-        behandling.metadata?.avsluttLastGrunnlagAsync()
-        behandlingRepository.save(behandling)
+        behandlingRepository.resetLasterGrunnlagStatus(behandlingId)
     }
 
     @PostMapping("/admin/opprett/aldersjustering/{saksnummer}")

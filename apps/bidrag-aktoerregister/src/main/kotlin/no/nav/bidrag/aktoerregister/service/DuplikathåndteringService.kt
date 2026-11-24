@@ -6,6 +6,7 @@ import no.nav.bidrag.aktoerregister.persistence.entities.Aktør
 import no.nav.bidrag.aktoerregister.persistence.repository.AktørRepository
 import no.nav.bidrag.aktoerregister.persistence.repository.HendelseRepository
 import no.nav.bidrag.aktoerregister.persistence.repository.TidligereIdenterRepository
+import no.nav.bidrag.commons.util.secureLogger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -92,7 +93,8 @@ class DuplikathåndteringService(
         if (duplikater.isEmpty()) return
 
         duplikater.forEach { duplikat ->
-            LOGGER.info { "Sletter duplikat aktør med ident: ${duplikat.aktørIdent}, id: ${duplikat.id}" }
+            LOGGER.info { "Sletter duplikat aktør. aktørId=${duplikat.id}" }
+            secureLogger.info { "Sletter duplikat aktør. aktørId=${duplikat.id}, aktørIdent=${duplikat.aktørIdent}" }
             slettAktør(duplikat)
         }
 

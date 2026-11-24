@@ -357,8 +357,6 @@ class GrunnlagService(
             }
         } catch (e: Exception) {
             secureLogger.error(e) { "Det skjedde en feil ved oppdatering av grunnlag" }
-        } finally {
-            behandling.metadata?.avsluttLastGrunnlagAsync()
         }
     }
 

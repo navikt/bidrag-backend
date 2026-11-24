@@ -5,6 +5,7 @@ import no.nav.bidrag.automatiskjobb.consumer.dto.OpprettBehandlingRequest
 import no.nav.bidrag.automatiskjobb.consumer.dto.OpprettBehandlingResponse
 import no.nav.bidrag.automatiskjobb.consumer.dto.OpprettRolleDto
 import no.nav.bidrag.automatiskjobb.persistence.entity.RevurderingForskudd
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.commons.web.client.AbstractRestClient
 import no.nav.bidrag.domene.enums.behandling.Behandlingstema
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -48,7 +49,8 @@ class BidragBehandlingConsumer(
     } catch (
         e: HttpStatusCodeException,
     ) {
-        LOGGER.error(e) { "Det skjedde en feil ved henting av åpne behandlinger for barn $barnIdent" }
+        LOGGER.error { "Feil ved henting av åpne behandlinger med HTTP-status ${e.statusCode}" }
+        secureLogger.error(e) { "Det skjedde en feil ved henting av åpne behandlinger for barn $barnIdent" }
         throw e
     }
 
@@ -97,7 +99,10 @@ class BidragBehandlingConsumer(
         } catch (
             e: HttpStatusCodeException,
         ) {
-            LOGGER.error(e) { "Det skjedde en feil ved opprettelse av revurderingslenke for barn ${revurderingForskudd.barn}" }
+            LOGGER.error { "Feil ved opprettelse av revurderingslenke med HTTP-status ${e.statusCode}" }
+            secureLogger.error(e) {
+                "Det skjedde en feil ved opprettelse av revurderingslenke for barn ${revurderingForskudd.barn}"
+            }
             throw e
         }
     }

@@ -542,6 +542,7 @@ updates:
       - "/apps/*"
       - "/apps/bidrag-dokumenthåndtering/*"
       - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-dokumentmal"
+      - "/apps/bidrag-dokumenthåndtering/bidrag-dokument-produksjon/bidrag-pdfgen"
       - "/apps/bidrag-admin/*"
       - "/util/bidrag-cloudfunctions/database-auditlog"
     cooldown:

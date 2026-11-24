@@ -9,7 +9,7 @@ import no.nav.bidrag.behandling.consumer.BidragVedtakConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolleSøknad
 import no.nav.bidrag.behandling.database.datamodell.Rolle
-import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo
+import no.nav.bidrag.behandling.database.datamodell.extensions.BehandlingMetadataDo.Companion.FF_SIST_SYNKRONISERT
 import no.nav.bidrag.behandling.database.datamodell.fjernGebyrForSøknad
 import no.nav.bidrag.behandling.database.datamodell.hentSisteGrunnlagLøpendeBidragFF
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -263,7 +263,7 @@ class ForholdsmessigFordelingService(
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
             behandlingService.sendOppdatertHendelse(behandling.id!!, false)
         } catch (e: Exception) {
-            LOGGER.error(e) {
+            LOGGER.error {
                 "Feil ved opprettelse/oppdatering av FF for behandlingId=$behandlingId. " +
                     "Transaksjonen rulles tilbake. Se secureLogger for detaljer."
             }
@@ -323,11 +323,13 @@ class ForholdsmessigFordelingService(
                         LOGGER.info { "Feilregistrerer FF-søknad ${it.søknadsid} for behandlingId=$behandlingId etter feilet opprettelse av FF" }
                         bbmConsumer.feilregistrerSøknad(FeilregistrerSøknadRequest(it.søknadsid))
                     } catch (e: Exception) {
-                        LOGGER.error(e) { "Klarte ikke å feilregistrere FF-søknad ${it.søknadsid} for behandlingId=$behandlingId" }
+                        LOGGER.error { "Klarte ikke å feilregistrere FF-søknad ${it.søknadsid} for behandlingId=$behandlingId" }
+                        secureLogger.error(e) { "Klarte ikke å feilregistrere FF-søknad ${it.søknadsid} for behandlingId=$behandlingId" }
                     }
                 }
         } catch (e: Exception) {
-            LOGGER.error(e) { "Klarte ikke å hente søknader for behandlingId=$behandlingId for å feilregistrere FF-søknader" }
+            LOGGER.error { "Klarte ikke å hente søknader for behandlingId=$behandlingId for å feilregistrere FF-søknader" }
+            secureLogger.error(e) { "Klarte ikke å hente søknader for behandlingId=$behandlingId for å feilregistrere FF-søknader" }
         }
     }
     private fun fjernSammenknytningHovedsøknad(behandlingId: Long) {
@@ -335,7 +337,8 @@ class ForholdsmessigFordelingService(
             val behandling = behandlingRepository.findBehandlingById(behandlingId).get()
             bbmConsumer.fjernSammeknytningHovedsøknad(behandling.soknadsid!!)
         } catch (e: Exception) {
-            LOGGER.error(e) { "Klarte ikke å fjerne sammenknytning for hovedsøknad for behandlingId=$behandlingId" }
+            LOGGER.error { "Klarte ikke å fjerne sammenknytning for hovedsøknad for behandlingId=$behandlingId" }
+            secureLogger.error(e) { "Klarte ikke å fjerne sammenknytning for hovedsøknad for behandlingId=$behandlingId" }
         }
     }
     private fun tilbakestillBehandlerenhetISøknader(forrigeBehandlerenheter: Map<Long, String?>) {
@@ -348,7 +351,8 @@ class ForholdsmessigFordelingService(
                 LOGGER.info { "Tilbakestiller behandlerenhet for søknad $søknadsid til $forrigeBehandlerenhet" }
                 bbmConsumer.lagreBehandlerEnhet(OppdaterBehandlerenhetRequest(søknadsid, forrigeBehandlerenhet))
             } catch (e: Exception) {
-                LOGGER.error(e) { "Klarte ikke å tilbakestille behandlerenhet for søknad $søknadsid" }
+                LOGGER.error { "Klarte ikke å tilbakestille behandlerenhet for søknad $søknadsid" }
+                secureLogger.error(e) { "Klarte ikke å tilbakestille behandlerenhet for søknad $søknadsid" }
             }
         }
     }
@@ -534,9 +538,13 @@ class ForholdsmessigFordelingService(
                     rolle.forholdsmessigFordeling = behandling.tilFFDetaljerBP()
                 }
                 rolle.forholdsmessigFordeling!!.søknader.addAll(søknader.toMutableSet())
-                LOGGER.info { "Legger til $søknader for bidragspliktig" }
+                LOGGER.info { "Legger til ${søknader.size} søknader for bidragspliktig rolleId=${rolle.id}" }
+                secureLogger.info { "Legger til $søknader for bidragspliktig ${rolle.ident}" }
             }
-            LOGGER.info { "Legger til $gebyrDetaljerRolle for ${rolle.ident} - ${rolle.rolletype}" }
+            LOGGER.info {
+                "Legger til ${gebyrDetaljerRolle.size} gebyrsøknader for rolleId=${rolle.id}, rolletype=${rolle.rolletype}"
+            }
+            secureLogger.info { "Legger til gebyrdetaljer $gebyrDetaljerRolle for ${rolle.ident} - ${rolle.rolletype}" }
 
             rolle.leggTilGebyr(gebyrDetaljerRolle)
         }
@@ -651,7 +659,7 @@ class ForholdsmessigFordelingService(
             overføringService.giSakTilgangTilEnhet(behandling, behandlerEnhet)
             syncGebyrSøknadReferanse(behandling)
             lagreOgOppdaterGrunnlag(behandling, nyesteLøpendeBidragGrunnlag)
-            behandling.metadata!!.resetOpprettelseEllerOppdateringAvFFFeilet()
+            behandlingRepository.resetOpprettelseAvFFFeilet(requireNotNull(behandling.id))
         }
 
         val søknaderKnyttetTilBehandling =
@@ -867,12 +875,11 @@ class ForholdsmessigFordelingService(
     }
 
     private fun Behandling.oppdaterFFSistSynkronisert() {
-        metadata =
-            run {
-                val metadata = metadata ?: BehandlingMetadataDo()
-                metadata.setFFSistSynkronisert(LocalDateTime.now())
-                metadata
-            }
+        behandlingRepository.lagreMetadataObjekt(
+            behandlingId = checkNotNull(id),
+            metadataKey = FF_SIST_SYNKRONISERT,
+            jsonValue = LocalDateTime.now().toString(),
+        )
     }
 
     @Transactional
@@ -945,8 +952,11 @@ class ForholdsmessigFordelingService(
         if (behandling.erKlageEllerOmgjøring) {
             if (rolle.erRevurderingsbarn && åpneSøknaderFF.isEmpty()) {
                 LOGGER.info {
-                    "Barn ${rolle.ident} i ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader." +
+                    "Barn rolleId=${rolle.id} i behandling ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader. " +
                         "Oppretter eller legger til i eksisterende FF søknad"
+                }
+                secureLogger.info {
+                    "Barn ${rolle.ident} i behandling ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader"
                 }
                 håndterBarnSomSkalVæreRevurderingsbarn(behandling, rolle, lagretSøknader)
             }
@@ -960,8 +970,11 @@ class ForholdsmessigFordelingService(
         } else if (!rolle.erRevurderingsbarn && åpneSøknaderIkkeFF.isEmpty()) {
             if (rolle.harLøpendeBidragFørOpphørEllerLøpende()) {
                 LOGGER.info {
-                    "Barn ${rolle.ident} i ${behandling.id} er ikke markert som revurderingsbarn men har ingen åpne søknader." +
+                    "Barn rolleId=${rolle.id} i behandling ${behandling.id} er ikke markert som revurderingsbarn men har ingen åpne søknader. " +
                         "Oppretter eller legger til i eksisterende FF søknad og endrer barnet til revurderingsbarn"
+                }
+                secureLogger.info {
+                    "Barn ${rolle.ident} i behandling ${behandling.id} er ikke markert som revurderingsbarn men har ingen åpne søknader"
                 }
                 håndterBarnSomSkalVæreRevurderingsbarn(behandling, rolle, lagretSøknader)
             } else {
@@ -974,8 +987,11 @@ class ForholdsmessigFordelingService(
             rolle.harLøpendeBidragFørOpphørEllerLøpende()
         ) {
             LOGGER.info {
-                "Barn ${rolle.ident} i ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader." +
+                "Barn rolleId=${rolle.id} i behandling ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader. " +
                     "Oppretter eller legger til i eksisterende FF søknad"
+            }
+            secureLogger.info {
+                "Barn ${rolle.ident} i behandling ${behandling.id} er markert som revurderingsbarn men har ingen åpne FF søknader"
             }
             håndterBarnSomSkalVæreRevurderingsbarn(behandling, rolle, lagretSøknader)
         } else if (rolle.erRevurderingsbarn && !rolle.harLøpendeBidragFørOpphørEllerLøpende()) {
@@ -1315,7 +1331,7 @@ class ForholdsmessigFordelingService(
                 }
         val resultat = sjekkBeregningKreverForholdsmessigFordeling(behandling, maskerSensitivInfo = true)
         return SjekkForholdmessigFordelingResponse(
-            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!),
+            søknaderRevurdering = hentÅpneSøknaderRevurdering(behandling.bidragspliktig!!.ident!!, behandling.erKlageEllerOmgjøring),
             skalBehandlesAvEnhet = behandlesAvEnhet,
             kanOppretteForholdsmessigFordeling =
             (
@@ -1331,10 +1347,12 @@ class ForholdsmessigFordelingService(
         )
     }
 
-    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String): List<SøknadRevurdering> {
+    private fun hentÅpneSøknaderRevurdering(bidragspliktig: String, erKlageEllerOmgjøring: Boolean): List<SøknadRevurdering> {
         val åpneSøknaderRevurdering = kravhaverService.hentÅpneSøknaderRevurdering(bidragspliktig)
-        return åpneSøknaderRevurdering.map {
+        return åpneSøknaderRevurdering.mapNotNull {
             val sammenknytninger = bbmConsumer.finnSammenknytningerHovedsøknad(it.søknadsid)
+            val hovedsøknad = sammenknytninger.søknader.find { it.søknadsid == sammenknytninger.hovedsøknadsid }
+            if (hovedsøknad != null && hovedsøknad.behandlingstype.erKlageEllerOmgjøring != erKlageEllerOmgjøring) return@mapNotNull null
             SøknadRevurdering(
                 it,
                 erDelAvFF = sammenknytninger.søknader.isNotEmpty(),
