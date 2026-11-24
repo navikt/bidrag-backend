@@ -729,8 +729,11 @@ class VedtakService(
                     val sluttberegningAldersjustering = grunnlagListe.finnOgKonverterGrunnlagSomErReferertFraGrunnlagsreferanseListe<SluttberegningBarnebidragAldersjustering>(Grunnlagstype.SLUTTBEREGNING_BARNEBIDRAG_ALDERSJUSTERING, stønadperiode.grunnlagReferanseListe).firstOrNull()
 
                     val erInnkreving = vedtakDto.erInnkrevingsgrunnlag()
-                    val erAvslagUtenGrunnlag = sluttberegning?.erResultatAvslag == true || resultatKode?.erDirekteAvslag() == true
+                    // Avslag/opphør ved delt bosted bygger på BPs andel av U, så inntekter, U og BPs andel skal med i vedlegget til vedtaket
+                    val erAvslagDeltBosted = sluttberegning?.resultat == Resultatkode.BIDRAG_IKKE_BEREGNET_DELT_BOSTED
+                    val erAvslagUtenGrunnlag = (sluttberegning?.erResultatAvslag == true && !erAvslagDeltBosted) || resultatKode?.erDirekteAvslag() == true
                     val erResultatPeriodeOpphør = (sluttberegning != null && sluttberegning.erResultatAvslag) || resultatKode?.erOpphør() == true
+                    val erOpphørUtenGrunnlag = erResultatPeriodeOpphør && !erAvslagDeltBosted
                     val erAldersjustering = sluttberegningAldersjustering != null
                     val virkningstidspunkt = vedtakDto.grunnlagListe.hentVirkningstidspunktGrunnlagForBarn(barnGrunnlag?.referanse)
 //                    if (erAvslagUtenGrunnlag && !erDirekteAvslag) return@mapNotNull null
@@ -752,7 +755,7 @@ class VedtakService(
                         samvær =
                         if (erAldersjustering) {
                             grunnlagListe.mapSamværAldersjustering(referanse)
-                        } else if (!erAvslagUtenGrunnlag && !erInnkreving && !erResultatPeriodeOpphør) {
+                        } else if (!erAvslagUtenGrunnlag && !erInnkreving && !erOpphørUtenGrunnlag) {
                             grunnlagListe.mapSamvær(referanse)
                         } else {
                             null
@@ -763,7 +766,7 @@ class VedtakService(
                         } else {
                             resultatKode?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: Resultatkode.fraKode(stønadperiode.resultatkode)?.tilBisysResultatkodeForBrev(vedtakDto.type) ?: stønadperiode.resultatkode
                         },
-                        inntekter = if (!erInnkreving && !erResultatPeriodeOpphør) grunnlagListe.mapInntekter(referanse, innteksgrense) else emptyList(),
+                        inntekter = if (!erInnkreving && !erOpphørUtenGrunnlag) grunnlagListe.mapInntekter(referanse, innteksgrense) else emptyList(),
                         inntektGrense = innteksgrense,
                         maksInntekt = sjablongService.hentMaksInntektForPeriode(getLastDayOfPreviousMonth(stønadperiode.periode.til?.atEndOfMonth())),
                     )

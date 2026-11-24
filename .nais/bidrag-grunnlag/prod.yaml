@@ -42,9 +42,6 @@ azureAccessInbound:
   - application: bisys
     namespace: bidrag
     cluster: prod-fss
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
   - application: bidrag-behandling
     namespace: bidrag
     cluster: prod-gcp

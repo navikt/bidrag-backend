@@ -1,7 +1,7 @@
 package no.nav.bidrag.organisasjon.consumer.ldap
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import java.util.regex.Pattern
 import javax.naming.LimitExceededException
 import javax.naming.NamingException
@@ -31,7 +31,7 @@ class LdapBrukeroppslag(
     private fun ldapSearch(ident: String, context: LdapContext): SearchResult? {
         val matcher = IDENT_PATTERN.matcher(ident)
         if (!matcher.matches()) {
-            LOGGER.warn { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (1)" }
+            secureLogger.warn { "Navn på saksbehandler for ident $ident ikke funnet (ugyldig ident)" }
             return null
         }
         val controls = SearchControls()
@@ -43,13 +43,13 @@ class LdapBrukeroppslag(
             if (result.hasMoreElements()) {
                 return result.nextElement()
             }
-            LOGGER.warn { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (2)" }
+            secureLogger.warn { "Navn på saksbehandler for ident $ident ikke funnet i LDAP" }
             null
         } catch (e: LimitExceededException) {
-            LOGGER.warn(e) { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (LimitExceededException)" }
+            secureLogger.warn(e) { "Navn på saksbehandler for ident $ident ikke funnet (LimitExceededException)" }
             null
         } catch (e: NamingException) {
-            LOGGER.warn(e) { "Navn på saksbehandler for ident ${ident.sanitizeForLog()} ikke funnet (NamingException)" }
+            secureLogger.warn(e) { "Navn på saksbehandler for ident $ident ikke funnet (NamingException)" }
             null
         }
     }
@@ -59,7 +59,7 @@ class LdapBrukeroppslag(
         return try {
             displayName.get().toString()
         } catch (e: NamingException) {
-            LOGGER.warn(e) { "Navn på saksbehandler ikke funnet (NamingException)" }
+            secureLogger.warn(e) { "Navn på saksbehandler ikke funnet (NamingException)" }
             null
         }
     }
