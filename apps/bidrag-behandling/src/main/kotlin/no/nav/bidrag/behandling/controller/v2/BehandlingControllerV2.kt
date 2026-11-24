@@ -57,6 +57,7 @@ import no.nav.bidrag.behandling.transformers.behandling.hentVirkningstidspunktVa
 import no.nav.bidrag.behandling.transformers.behandling.tilInntektDtoV2
 import no.nav.bidrag.behandling.transformers.behandling.tilKanBehandlesINyLøsningRequest
 import no.nav.bidrag.behandling.transformers.erForskudd
+import no.nav.bidrag.behandling.transformers.erSærbidrag
 import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.behandling.TypeBehandling
 import no.nav.bidrag.domene.enums.rolle.Rolletype
@@ -198,6 +199,8 @@ class BehandlingControllerV2(
                     )
                 },
             valideringsfeil = behandling.hentInntekterValideringsfeil(),
+            særbidragRimeligÅInnvilge =
+            if (behandling.erSærbidrag()) dtomapper.run { behandling.tilSærbidragRimeligÅInnvilgeDto() } else null,
             begrunnelse =
             request.henteOppdatereBegrunnelse?.let {
                 NotatService.henteInntektsnotat(
