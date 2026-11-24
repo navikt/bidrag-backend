@@ -408,7 +408,7 @@ class Dtomapper(
                 it.tilPersoninfoDto(),
                 underholdBeregning
                     .finnAlleDelberegningUnderholdskostnad(personObjekt ?: it.tilGrunnlagPerson())
-                    .tilUnderholdskostnadDto(underholdBeregning, erBisysVedtak),
+                    .tilUnderholdskostnadDto(underholdBeregning),
             )
         }.toSet()
 

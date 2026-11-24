@@ -480,7 +480,11 @@ object InntektUtil {
         .sumOf { it.beløp.beløpTilÅrsbeløp(it.beløpstype) }
 
     // Sjekker om inntekten er kapitalinntekt
-    fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) = inntektsrapportering in listOf(Inntektsrapportering.KAPITALINNTEKT, Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER)
+    fun erKapitalinntekt(inntektsrapportering: Inntektsrapportering) = inntektsrapportering in listOf(
+        Inntektsrapportering.KAPITALINNTEKT,
+        Inntektsrapportering.KAPITALINNTEKT_EGNE_OPPLYSNINGER,
+        Inntektsrapportering.NETTO_KAPITALINNTEKT,
+    )
 
     // Sjekker om inntekten inneholder skattefrie barnetillegg
     fun inneholderSkattefrieBarnetillegg(inntektsrapporteringPeriode: InntektsrapporteringPeriode) = (inntektsrapporteringPeriode.inntektsrapportering == Inntektsrapportering.BARNETILLEGG) &&
