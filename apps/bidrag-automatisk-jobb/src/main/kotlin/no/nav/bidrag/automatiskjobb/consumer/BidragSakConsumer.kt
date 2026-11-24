@@ -40,7 +40,8 @@ class BidragSakConsumer(
         try {
             return getForNonNullEntity(createUri("/bidrag-sak/sak/$saksnr"))
         } catch (e: HttpStatusCodeException) {
-            LOGGER.warn(e) { "Det skjedde en feil ved henting av sak $saksnr" }
+            LOGGER.warn { "Feil ved henting av sak $saksnr med HTTP-status ${e.statusCode}" }
+            secureLogger.warn(e) { "Det skjedde en feil ved henting av sak $saksnr" }
             throw e
         }
     }
@@ -55,7 +56,8 @@ class BidragSakConsumer(
                 secureLogger.info(e) { "Fant ingen saker for ${personIdent.verdi}" }
                 return emptyList()
             }
-            LOGGER.warn(e) { "Det skjedde en feil ved henting av saker for $personIdent" }
+            LOGGER.warn { "Feil ved henting av saker for person med HTTP-status ${e.statusCode}" }
+            secureLogger.warn(e) { "Det skjedde en feil ved henting av saker for ${personIdent.verdi}" }
             throw e
         }
     }
