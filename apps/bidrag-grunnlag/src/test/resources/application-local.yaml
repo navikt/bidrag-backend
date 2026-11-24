@@ -1,4 +1,5 @@
 FAMILIEBASAK_URL: http://localhost:${wiremock.server.port}/familiebasak
+BIDRAG_TILGANGSKONTROLL_URL: http://localhost:${wiremock.server.port}/tilgangskontroll
 FAMILIEEFSAK_URL: http://localhost:${wiremock.server.port}/familieefsak
 PENSJON_URL: http://localhost:${wiremock.server.port}/pensjon
 INNTEKTSKOMPONENTEN_URL: http://localhost:${wiremock.server.port}/inntektskomponenten
@@ -28,6 +29,15 @@ spring:
 no.nav.security.jwt:
   client:
     registration:
+      bidrag-tilgangskontroll:
+        resource-url: ${BIDRAG_TILGANGSKONTROLL_URL}
+        token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token
+        grant-type: urn:ietf:params:oauth:grant-type:jwt-bearer
+        scope: api://tilgangskontroll/.default
+        authentication:
+          client-id: ${no.nav.security.jwt.client.registration.bidrag-organisasjon.authentication.client-id}
+          client-secret: ${no.nav.security.jwt.client.registration.bidrag-organisasjon.authentication.client-secret}
+          client-auth-method: client_secret_basic
       bidrag-organisasjon:
         resource-url: ${BIDRAG_ORGANISASJON_URL}
         token-endpoint-url: http://localhost:${mock-oauth2-server.port:1234}/aad/token

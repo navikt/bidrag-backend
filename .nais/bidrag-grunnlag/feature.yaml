@@ -28,6 +28,8 @@ azure:
   aareg_cluster: dev-fss
   bidrag_organisasjon_url: bidrag-organisasjon-feature.dev-fss-pub.nais.io
   bidrag_organisasjon_scope: dev-fss.bidrag.bidrag-organisasjon-feature
+  bidrag_tilgangskontroll_url: bidrag-tilgangskontroll-feature.intern.dev.nav.no
+  bidrag_tilgangskontroll_scope: dev-gcp.bidrag.bidrag-tilgangskontroll-feature
   tilleggsstonadersak_url: tilleggsstonader-sak.intern.dev.nav.no
   tilleggsstonadersak_scope: dev-gcp.tilleggsstonader.tilleggsstonader-sak
   unsecure:

@@ -29,6 +29,8 @@ azure:
   aareg_cluster: prod-fss
   bidrag_organisasjon_url: bidrag-organisasjon.prod-fss-pub.nais.io
   bidrag_organisasjon_scope: prod-fss.bidrag.bidrag-organisasjon
+  bidrag_tilgangskontroll_url: bidrag-tilgangskontroll.intern.nav.no
+  bidrag_tilgangskontroll_scope: prod-gcp.bidrag.bidrag-tilgangskontroll
   tilleggsstonadersak_url: tilleggsstonader-sak.intern.nav.no
   tilleggsstonadersak_scope: prod-gcp.tilleggsstonader.tilleggsstonader-sak
   unsecure:

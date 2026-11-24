@@ -16,6 +16,9 @@ outbound-access-hosts:
   - bidrag-unleash-api.nav.cloud.nais.io
   - tilgangsmaskin.intern.nav.no
 azure_access_inbound:
+  - application: bidrag-grunnlag
+    namespace: bidrag
+    cluster: prod-gcp
   - application: bidrag-dokument-forsendelse
     namespace: bidrag
     cluster: prod-gcp

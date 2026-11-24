@@ -1,9 +1,11 @@
 package no.nav.bidrag.grunnlag.controller
 
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.aop.DefaultExceptionHandler
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.consumer.TilgangskontrollConsumer
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.HentValutaScheduler
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.VALUTAKURS_TIDSSONE
 import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.ValutakursKjøring
@@ -25,7 +27,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.converter.HttpMessageNotReadableException
-import org.springframework.mock.env.MockEnvironment
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -44,7 +45,8 @@ class ValutakursgrunnlagControllerTest {
     private val service = Mockito.mock(ValutakursgrunnlagService::class.java)
     private val historiskeValutakurserService = Mockito.mock(HentHistoriskeValutakurserService::class.java)
     private val hentValutaScheduler = Mockito.mock(HentValutaScheduler::class.java)
-    private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, hentValutaScheduler, MockEnvironment())
+    private val tilgangskontrollConsumer = Mockito.mock(TilgangskontrollConsumer::class.java)
+    private val controller = ValutakursgrunnlagController(service, historiskeValutakurserService, hentValutaScheduler, tilgangskontrollConsumer)
     private val mockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(DefaultExceptionHandler())
         .build()
@@ -96,12 +98,15 @@ class ValutakursgrunnlagControllerTest {
     }
 
     @Test
-    fun `innhenting avvises inntil rettighet er avklart`() {
+    fun `innhenting avvises uten administrasjonstilgang`() {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.FORBIDDEN))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
         val feil = assertThrows<ResponseStatusException> {
             controller.innhent(InnhentValutakursgrunnlagRequest(Valutakode.USD, dato))
         }
 
         assertEquals(HttpStatus.FORBIDDEN, feil.statusCode)
+        Mockito.verifyNoInteractions(service, historiskeValutakurserService)
     }
 
     @Test
@@ -167,42 +172,73 @@ class ValutakursgrunnlagControllerTest {
         Mockito.verifyNoInteractions(hentValutaScheduler)
     }
 
-    @Test
-    fun `overstyring avvises inntil rettighet er avklart`() {
+    @ParameterizedTest
+    @ValueSource(ints = [403, 503])
+    fun `skal stoppe overstyring ved avslag eller feil i tilgangskontroll`(statuskode: Int) {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.valueOf(statuskode), "Kunne ikke godkjenne tilgang"))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+
         val feil = assertThrows<ResponseStatusException> {
             controller.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("10.5")))
         }
 
-        assertEquals(HttpStatus.FORBIDDEN, feil.statusCode)
+        feil.statusCode.value() shouldBe statuskode
+        Mockito.verifyNoInteractions(service, historiskeValutakurserService)
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [403, 503])
+    fun `skal returnere tilgangsfeil ved HTTP-overstyring uten sideeffekter`(statuskode: Int) {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.valueOf(statuskode), "Kunne ikke godkjenne tilgang"))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+
+        mockMvc.perform(
+            put("/valutakursgrunnlag/1/kurs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"kurs":11}"""),
+        ).andExpect(status().`is`(statuskode))
+
+        Mockito.verifyNoInteractions(service, historiskeValutakurserService)
     }
 
     @Test
-    fun `testflagget alene gir ikke skrivetilgang uten local-profil`() {
-        val testController = ValutakursgrunnlagController(service, historiskeValutakurserService, hentValutaScheduler, MockEnvironment(), true)
-
-        val feil = assertThrows<ResponseStatusException> {
-            testController.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("10.5")))
-        }
-
-        assertEquals(HttpStatus.FORBIDDEN, feil.statusCode)
-    }
-
-    @Test
-    fun `lokal innhenting og overstyring kan testes med eksplisitt aktivering`() {
-        val lokal = ValutakursgrunnlagController(
-            service,
-            historiskeValutakurserService,
-            hentValutaScheduler,
-            MockEnvironment().apply { setActiveProfiles("local") },
-            true,
-        )
+    fun `skal tillate overstyring og innhenting for administrator uten lokalt skriveflagg`() {
         val request = InnhentValutakursgrunnlagRequest(Valutakode.USD, LocalDate.of(2025, 7, 1))
         val grunnlag = ValutakursgrunnlagBo(kurs = BigDecimal("10.5"), multiplikator = 0, basisvaluta = Valutakode.USD)
         Mockito.`when`(service.innhent(request.valutakode, request.gyldigFra)).thenReturn(grunnlag)
         Mockito.`when`(service.overstyr(1, BigDecimal("11"))).thenReturn(grunnlag)
 
-        assertSame(grunnlag, lokal.innhent(request))
-        assertSame(grunnlag, lokal.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("11"))))
+        assertSame(grunnlag, controller.innhent(request))
+        assertSame(grunnlag, controller.overstyr(1, OverstyrValutakursgrunnlagRequest(BigDecimal("11"))))
+        Mockito.verify(tilgangskontrollConsumer, Mockito.times(2)).krevAdministrasjonstilgang()
+    }
+
+    @Test
+    fun `skal tillate begge innhentinger for administrator uten lokalt skriveflagg`() {
+        val grunnlag = ValutakursgrunnlagBo(kurs = BigDecimal("10.5"), multiplikator = 0, basisvaluta = Valutakode.USD)
+        val fra = LocalDate.of(2025, 1, 1)
+        val til = LocalDate.of(2025, 7, 1)
+        Mockito.`when`(service.innhent(Valutakode.USD, fra)).thenReturn(grunnlag)
+        Mockito.`when`(historiskeValutakurserService.hentHistoriskeValutakurser(fra, til)).thenReturn(listOf(grunnlag))
+
+        controller.innhent(InnhentValutakursgrunnlagRequest(Valutakode.USD, fra)) shouldBe grunnlag
+        controller.innhentHistoriskeValutakursgrunnlag(InnhentHistoriskeRequest(fra, til)) shouldBe listOf(grunnlag)
+        Mockito.verify(tilgangskontrollConsumer, Mockito.times(2)).krevAdministrasjonstilgang()
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [403, 503])
+    fun `skal stoppe begge innhentinger ved avslag eller feil i tilgangskontroll`(statuskode: Int) {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.valueOf(statuskode), "Kunne ikke godkjenne tilgang"))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
+
+        assertThrows<ResponseStatusException> {
+            controller.innhent(InnhentValutakursgrunnlagRequest(Valutakode.USD, LocalDate.of(2025, 1, 1)))
+        }.statusCode.value() shouldBe statuskode
+        assertThrows<ResponseStatusException> {
+            controller.innhentHistoriskeValutakursgrunnlag(InnhentHistoriskeRequest(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 7, 1)))
+        }.statusCode.value() shouldBe statuskode
+        Mockito.verifyNoInteractions(service, historiskeValutakurserService)
     }
 
     @Test
@@ -316,7 +352,9 @@ class ValutakursgrunnlagControllerTest {
     }
 
     @Test
-    fun `skal beholde 403 for gyldig HTTP-forespørsel uten lokal skrivetilgang`() {
+    fun `skal returnere 403 for gyldig HTTP-forespørsel uten administrasjonstilgang`() {
+        Mockito.doThrow(ResponseStatusException(HttpStatus.FORBIDDEN))
+            .`when`(tilgangskontrollConsumer).krevAdministrasjonstilgang()
         mockMvc.perform(
             post("/valutakursgrunnlag/innhentinger")
                 .contentType(MediaType.APPLICATION_JSON)
