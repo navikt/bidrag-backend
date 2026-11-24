@@ -188,6 +188,8 @@ open class Rolle(
     val eldsteSøktFomDato get() =
         forholdsmessigFordeling?.eldsteSøknad?.søknadFomDato?.withDayOfMonth(1) ?: behandling.søktFomDato.withDayOfMonth(1)
 
+    val tidligsteVirkningstidspunkt get() = maxOf(eldsteSøktFomDato, fødselsdato.withDayOfMonth(1))
+
     val søknader get() = forholdsmessigFordeling?.søknaderUnderBehandling ?: listOf(behandling.tilFFBarnDetaljer())
 
     fun finnSøknad(søknadsid: Long) = forholdsmessigFordeling

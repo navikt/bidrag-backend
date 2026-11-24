@@ -470,6 +470,24 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
+        fun `skal avvise ukjent saksnummer ved avslag uten virkningstidspunkt`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+
+            val exception =
+                shouldThrow<HttpClientErrorException> {
+                    virkningstidspunktService.oppdatereVirkningstidspunkt(
+                        behandling.id!!,
+                        OppdatereVirkningstidspunkt(saksnummer = "99999999", avslag = Resultatkode.BIDRAGSPLIKTIG_ER_DØD),
+                    )
+                }
+
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.statusText shouldContain "Oppdateringen gjelder ingen søknadsbarn"
+            barn1.avslag shouldBe null
+            barn2.avslag shouldBe null
+        }
+
+        @Test
         fun `skal ikke flytte samvær og inntekter for barn i annen sak som starter på forrige virkningstidspunkt i saken`() {
             val (behandling, barn1, _) = opprettBehandlingMedBarnIToSaker()
             val mars = LocalDate.parse("2025-03-01")
@@ -916,6 +934,18 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
             barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-01-01")
             barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
             barn3.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
+        }
+
+        @Test
+        fun `skal ikke sette virkningstidspunkt før barnets fødselsmåned ved sammenslåing`() {
+            val (behandling, _, barn2) = opprettBehandlingMedBarnIToSaker()
+            val barn3 = leggTilBarn3ISak2(behandling)
+            barn3.fødselsdato = LocalDate.parse("2025-05-15")
+
+            virkningstidspunktService.brukSammeVirkningstidspunktForAlleBarn(behandling.id!!, sak2)
+
+            barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-03-01")
+            barn3.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
         }
 
         private fun leggTilBarn3ISak2(behandling: Behandling) = Rolle(

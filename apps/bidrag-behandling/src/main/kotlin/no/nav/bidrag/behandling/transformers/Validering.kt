@@ -359,13 +359,14 @@ private fun OppdatereVirkningstidspunkt.validerVirkningstidspunktForBarn(
     behandling: Behandling,
     gjelderBarn: Rolle?,
 ): String? {
-    val nyVirkningstidspunkt = virkningstidspunkt ?: return null
     val barnSomOppdateres = gjelderBarn?.let { listOf(it) } ?: behandling.finnSøknadsbarnForSak(saksnummer)
 
     return when {
         barnSomOppdateres.isEmpty() -> "Oppdateringen gjelder ingen søknadsbarn"
 
-        barnSomOppdateres.any { maxOf(it.eldsteSøktFomDato, nyVirkningstidspunkt).isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
+        virkningstidspunkt == null -> null
+
+        barnSomOppdateres.any { maxOf(it.eldsteSøktFomDato, virkningstidspunkt).isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
             "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
 
         else -> null

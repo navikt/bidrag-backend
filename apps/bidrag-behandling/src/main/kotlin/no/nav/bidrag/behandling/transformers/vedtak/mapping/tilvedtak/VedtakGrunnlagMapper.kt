@@ -27,6 +27,7 @@ import no.nav.bidrag.behandling.transformers.grunnlag.valider
 import no.nav.bidrag.behandling.transformers.hentGrunnlagBeløpshistorikkForRolle
 import no.nav.bidrag.behandling.transformers.hentNesteEtterfølgendeVedtak
 import no.nav.bidrag.behandling.transformers.konverterTilStønadDto
+import no.nav.bidrag.behandling.transformers.løperPeriodeEtterEldsteVirkningstidspunkt
 import no.nav.bidrag.behandling.transformers.maxOfNullable
 import no.nav.bidrag.behandling.transformers.minOfNullable
 import no.nav.bidrag.behandling.transformers.tilInntektberegningDto
@@ -247,7 +248,7 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
     Rolletype.BARN -> {
         val beregnFra = virkningstidspunkt?.toYearMonth() ?: behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
         if (behandling.erIForholdsmessigFordeling) {
-            val forholdsmessigFordelingBeregningsperiode = ÅrMånedsperiode(fom = behandling.eldsteVirkningstidspunkt, til = null)
+            val eldsteVirkningstidspunkt = behandling.eldsteVirkningstidspunkt.toYearMonth()
 
             val bidragsperioder = behandling
                 .hentGrunnlagBeløpshistorikkForRolle(this, behandling.erKlageEllerOmgjøring)
@@ -259,13 +260,13 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
 
             val privatAvtalePerioder = behandling.privatAvtale
                 .find { it.gjelderPerson(ident!!, stønadstype) }
-                ?.perioder
+                ?.perioderInnkreving
                 ?.map { it.tilÅrMånedsperiode() }
                 ?: emptyList()
 
             (bidragsperioder + privatAvtalePerioder)
-                .filter { it.overlapper(forholdsmessigFordelingBeregningsperiode) }
-                .minOfOrNull { it.fom }
+                .filter { behandling.løperPeriodeEtterEldsteVirkningstidspunkt(it) }
+                .minOfOrNull { maxOf(it.fom, eldsteVirkningstidspunkt) }
                 ?.takeIf { it.isBefore(beregnFra) }
                 ?.let { return it }
         }

@@ -9,6 +9,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
+import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
@@ -20,6 +21,7 @@ import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunkt
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
+import no.nav.bidrag.behandling.utils.testdata.leggTilPrivatAvtale
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
@@ -370,6 +372,30 @@ class VedtakGrunnlagMapperTest {
         søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
 
         søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
+    }
+
+    private fun opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt(): Behandling {
+        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+        behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }.virkningstidspunkt = LocalDate.parse("2025-01-01")
+        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.virkningstidspunkt = LocalDate.parse("2025-06-01")
+        return behandling
+    }
+
+    @Test
+    fun `FF - barn beregnes fra eget virkningstidspunkt når privat avtale sluttet før eldste virkningstidspunkt`() {
+        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+        behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2024, 1), YearMonth.of(2024, 12))
+
+        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+    }
+
+    @Test
+    fun `FF - barn beregnes fra eldste virkningstidspunkt når privat avtale løper fra før`() {
+        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+        behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2020, 1), null)
+
+        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 1)
     }
 
     @Test
