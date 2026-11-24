@@ -22,7 +22,4 @@ env:
   BBM_DB_SCHEMA: BI460P
   BISYS_DB_SCHEMA: BI464P
   JIRA_URL: https://jira.adeo.no/rest
-azure_access_inbound:
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
+azure_access_inbound: []

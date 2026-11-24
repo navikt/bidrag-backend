@@ -84,7 +84,7 @@
 
         <!-- Plugin-versjoner -->
         <ktlint.version>1.8.0</ktlint.version>
-        <versions-maven-plugin.version>2.23.0</versions-maven-plugin.version>
+        <versions-maven-plugin.version>2.25.2</versions-maven-plugin.version>
     </properties>
 
     <dependencyManagement>

@@ -89,9 +89,6 @@ azure_access_inbound:
   - application: bidrag-dokument-feature
     namespace: bidrag
     cluster: dev-fss
-  - application: bidrag-ui-feature
-    namespace: bidrag
-    cluster: dev-fss
   - application: bidrag-cucumber-cloud-feature
     namespace: bidrag
     cluster: dev-gcp

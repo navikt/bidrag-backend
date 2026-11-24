@@ -10,9 +10,6 @@ vault:
   srvKvPath: prod
   secretKvPath: prod
 azureAccessInbound:
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
   - application: bisys
     namespace: bidrag
     cluster: prod-fss
