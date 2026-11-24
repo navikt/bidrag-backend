@@ -3,6 +3,8 @@ package no.nav.bidrag.belopshistorikk.hendelse
 import no.nav.bidrag.belopshistorikk.BidragBeløpshistorikkTest
 import no.nav.bidrag.belopshistorikk.BidragBeløpshistorikkTest.Companion.TEST_PROFILE
 import no.nav.bidrag.belopshistorikk.service.BeløpshistorikkService
+import no.nav.bidrag.belopshistorikk.service.BehandleHendelseService
+import no.nav.bidrag.belopshistorikk.service.JsonMapperService
 import no.nav.bidrag.domene.enums.vedtak.Engangsbeløptype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.ident.Personident
@@ -10,12 +12,15 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentEngangsbeløpRequest
 import no.nav.bidrag.transport.behandling.belopshistorikk.request.HentStønadRequest
 import no.nav.security.token.support.spring.test.EnableMockOAuth2Server
+import org.apache.kafka.common.TopicPartition
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.verify
+import org.mockito.kotlin.mock
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.EnableAspectJAutoProxy
+import org.springframework.kafka.listener.ConsumerSeekAware.ConsumerSeekCallback
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.wiremock.spring.ConfigureWireMock
@@ -35,6 +40,28 @@ class VedtakHendelseListenerTest {
 
     @MockitoBean
     private lateinit var beløpshistorikkServiceMock: BeløpshistorikkService
+
+    @Test
+    fun `skal sette start-offset på alle tildelte partitioner bare én gang`() {
+        val listener =
+            VedtakHendelseListener(
+                JsonMapperService(),
+                mock<BehandleHendelseService>(),
+                "4722399",
+            )
+        val callback = mock<ConsumerSeekCallback>()
+        val assignments =
+            mapOf(
+                TopicPartition("bidrag.vedtak", 0) to 0L,
+                TopicPartition("bidrag.vedtak", 1) to 0L,
+            )
+
+        listener.onPartitionsAssigned(assignments, callback)
+        listener.onPartitionsAssigned(assignments, callback)
+
+        verify(callback).seek("bidrag.vedtak", 0, 4722399L)
+        verify(callback).seek("bidrag.vedtak", 1, 4722399L)
+    }
 
     @Test
     fun `skal lese vedtakshendelse uten feil`() {

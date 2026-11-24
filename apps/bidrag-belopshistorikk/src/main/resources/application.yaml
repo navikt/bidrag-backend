@@ -14,6 +14,10 @@ management:
         include: "*"
 springdoc.packages-to-scan: no.nav.bidrag.belopshistorikk.controller
 
+kafka:
+  vedtak:
+    start-offset: ${KAFKA_VEDTAK_START_OFFSET:4722380}
+
 ---
 spring:
   config.activate.on-profile: "nais"
@@ -75,4 +79,3 @@ no.nav.security.jwt:
     aad:
       discoveryurl: ${AZURE_APP_WELL_KNOWN_URL}
       accepted_audience: ${AZURE_APP_CLIENT_ID}, api://${AZURE_APP_CLIENT_ID}
-
