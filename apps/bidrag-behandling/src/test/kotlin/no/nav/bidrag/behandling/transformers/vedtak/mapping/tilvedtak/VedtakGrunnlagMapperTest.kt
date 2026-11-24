@@ -13,7 +13,9 @@ import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
 import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
+import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
+import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordelingRolle
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
 import no.nav.bidrag.behandling.service.BarnebidragGrunnlagInnhenting
 import no.nav.bidrag.behandling.service.BeregningEvnevurderingService
@@ -21,12 +23,15 @@ import no.nav.bidrag.behandling.service.PersonService
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
 import no.nav.bidrag.behandling.transformers.filtrerOgJusterFraVirkningstidspunkt
 import no.nav.bidrag.behandling.utils.stubPersonConsumer
+import no.nav.bidrag.behandling.utils.testdata.TestDataPerson
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.leggTilPrivatAvtale
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
 import no.nav.bidrag.behandling.utils.testdata.opprettPrivatAvtale
+import no.nav.bidrag.behandling.utils.testdata.opprettRolle
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
+import no.nav.bidrag.behandling.utils.testdata.testdataBM
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn2
 import no.nav.bidrag.behandling.utils.validerHarGrunnlag
@@ -41,12 +46,14 @@ import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
 import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
+import no.nav.bidrag.domene.enums.rolle.Rolletype
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
 import no.nav.bidrag.transport.behandling.vedtak.response.VedtakPeriodeDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.HttpStatus
@@ -367,71 +374,144 @@ class VedtakGrunnlagMapperTest {
         resultat shouldBe listOf(ÅrMånedsperiode(YearMonth.of(2025, 8), null))
     }
 
-    @Test
-    fun `finnBeregnFra skal bruke eldste virkningstidspunkt når barnet er født før virkning ved forholdsmessig fordeling`() {
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
-        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
-        val søknadsbarn = behandling.søknadsbarn.first()
-        søknadsbarn.stønadstype = Stønadstype.BIDRAG
-        søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
-
-        søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
-    }
-
-    private fun opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt(): Behandling {
-        val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
-        behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
-        behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }.virkningstidspunkt = LocalDate.parse("2025-01-01")
-        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.virkningstidspunkt = LocalDate.parse("2025-06-01")
-        return behandling
-    }
-
-    @Test
-    fun `FF - barn beregnes fra eget virkningstidspunkt når privat avtale sluttet før eldste virkningstidspunkt`() {
-        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
-        behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2024, 1), YearMonth.of(2024, 12))
-
-        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 6)
-    }
-
-    @Test
-    fun `FF - barn beregnes fra eldste virkningstidspunkt når privat avtale løper fra før`() {
-        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
-        behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2020, 1), null)
-
-        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 1)
-    }
-
-    @Test
-    fun `FF - barn beregnes fra eget virkningstidspunkt når valgt vedtak fra Nav har opphørt`() {
-        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
-        val privatAvtale = opprettPrivatAvtale(behandling, testdataBarn2)
-        privatAvtale.avtaleType = PrivatAvtaleType.VEDTAK_FRA_NAV
-        privatAvtale.grunnlagFraVedtak =
-            GrunnlagFraVedtak(
-                vedtak = 1,
-                perioder =
-                listOf(
-                    opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2024, 1), YearMonth.of(2025, 1)), BigDecimal(1000)),
-                    opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2025, 1), null), null),
-                ),
+    @Nested
+    inner class FinnBeregnFra {
+        private val annenBidragsmottaker =
+            TestDataPerson(
+                navn = "Annen Mappe",
+                ident = "99887766554",
+                rolletype = Rolletype.BIDRAGSMOTTAKER,
+                fødselsdato = LocalDate.parse("1980-01-01"),
             )
-        behandling.privatAvtale.add(privatAvtale)
 
-        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+        @Test
+        fun `barn født før virkningstidspunkt beregnes fra eldste virkningstidspunkt i FF`() {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG)
+            behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+            val søknadsbarn = behandling.søknadsbarn.first()
+            søknadsbarn.stønadstype = Stønadstype.BIDRAG
+            søknadsbarn.fødselsdato = LocalDate.of(2015, 4, 10)
+
+            søknadsbarn.finnBeregnFra() shouldBe behandling.eldsteVirkningstidspunkt.toYearMonth()
+        }
+
+        @Test
+        fun `BM beregnes fra tidligste virkningstidspunkt blant egne barn`() {
+            val behandling = opprettFFBehandlingMedToBidragsmottakere()
+
+            behandling.roller.first { it.ident == annenBidragsmottaker.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+        }
+
+        @Test
+        fun `BP beregnes fra tidligste virkningstidspunkt blant alle barn`() {
+            val behandling = opprettFFBehandlingMedToBidragsmottakere()
+
+            behandling.bidragspliktig!!.finnBeregnFra() shouldBe YearMonth.of(2025, 1)
+        }
+
+        @Test
+        fun `FF - barn beregnes fra eldste virkningstidspunkt når bidrag løper fra før`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.leggTilGrunnlagBeløpshistorikk(
+                Grunnlagsdatatype.BELØPSHISTORIKK_BIDRAG,
+                behandling.barn2(),
+                listOf(opprettStønadPeriodeDto(ÅrMånedsperiode(YearMonth.of(2024, 1), null))),
+            )
+
+            behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 1)
+        }
+
+        @Test
+        fun `FF - barn beregnes fra eget virkningstidspunkt når privat avtale sluttet før eldste virkningstidspunkt`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2024, 1), YearMonth.of(2024, 12))
+
+            behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+        }
+
+        @Test
+        fun `FF - barn beregnes fra eldste virkningstidspunkt når privat avtale løper fra før`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.leggTilPrivatAvtale(testdataBarn2, YearMonth.of(2020, 1), null)
+
+            behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 1)
+        }
+
+        @Test
+        fun `FF - barn beregnes fra eget virkningstidspunkt når valgt vedtak fra Nav har opphørt`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.leggTilVedtakFraNav(
+                testdataBarn2,
+                opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2024, 1), YearMonth.of(2025, 1)), BigDecimal(1000)),
+                opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2025, 1), null), null),
+            )
+
+            behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+        }
+
+        @Test
+        fun `FF - barn beregnes fra eldste virkningstidspunkt når valgt vedtak fra Nav løper fra før`() {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.leggTilVedtakFraNav(
+                testdataBarn2,
+                opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2024, 1), null), BigDecimal(1000)),
+            )
+
+            behandling.barn2().finnBeregnFra() shouldBe YearMonth.of(2025, 1)
+        }
+
+        private fun opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt(): Behandling {
+            val behandling = opprettGyldigBehandlingForBeregningOgVedtak(true, typeBehandling = TypeBehandling.BIDRAG, andreBarn = listOf(testdataBarn2))
+            behandling.forholdsmessigFordeling = ForholdsmessigFordeling(null, true)
+            behandling.søknadsbarn.forEach { it.stønadstype = Stønadstype.BIDRAG }
+            behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }.virkningstidspunkt = LocalDate.parse("2025-01-01")
+            behandling.barn2().virkningstidspunkt = LocalDate.parse("2025-06-01")
+            return behandling
+        }
+
+        private fun opprettFFBehandlingMedToBidragsmottakere(): Behandling {
+            val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+            behandling.roller.add(opprettRolle(behandling, annenBidragsmottaker))
+            behandling.søknadsbarn.first { it.ident == testdataBarn1.ident }.tilhørerBidragsmottaker(testdataBM)
+            behandling.barn2().tilhørerBidragsmottaker(annenBidragsmottaker)
+            return behandling
+        }
+
+        private fun Behandling.barn2() = søknadsbarn.first { it.ident == testdataBarn2.ident }
+
+        private fun Rolle.tilhørerBidragsmottaker(bidragsmottaker: TestDataPerson) {
+            forholdsmessigFordeling =
+                ForholdsmessigFordelingRolle(
+                    tilhørerSak = behandling.saksnummer,
+                    behandlerenhet = null,
+                    delAvOpprinneligBehandling = true,
+                    erRevurdering = false,
+                    bidragsmottaker = bidragsmottaker.ident,
+                )
+        }
+
+        private fun Behandling.leggTilVedtakFraNav(
+            barn: TestDataPerson,
+            vararg perioder: VedtakPeriodeDto,
+        ) {
+            val privatAvtale = opprettPrivatAvtale(this, barn)
+            privatAvtale.avtaleType = PrivatAvtaleType.VEDTAK_FRA_NAV
+            privatAvtale.grunnlagFraVedtak = GrunnlagFraVedtak(vedtak = 1, perioder = perioder.toList())
+            this.privatAvtale.add(privatAvtale)
+        }
+
+        private fun opprettVedtakPeriode(
+            periode: ÅrMånedsperiode,
+            beløp: BigDecimal?,
+        ) = VedtakPeriodeDto(
+            periode = periode,
+            beløp = beløp,
+            valutakode = null,
+            resultatkode = "",
+            delytelseId = null,
+            grunnlagReferanseListe = emptyList(),
+        )
     }
-
-    private fun opprettVedtakPeriode(
-        periode: ÅrMånedsperiode,
-        beløp: BigDecimal?,
-    ) = VedtakPeriodeDto(
-        periode = periode,
-        beløp = beløp,
-        valutakode = null,
-        resultatkode = "",
-        delytelseId = null,
-        grunnlagReferanseListe = emptyList(),
-    )
 
     @Test
     fun `skal sette opphørsdato til virkningstidspunkt ved avvisning uten eksisterende opphør`() {
