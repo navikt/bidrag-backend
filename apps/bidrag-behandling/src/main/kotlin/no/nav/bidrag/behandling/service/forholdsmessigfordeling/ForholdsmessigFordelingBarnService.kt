@@ -71,7 +71,8 @@ class ForholdsmessigFordelingBarnService(
             try {
                 bbmConsumer.hentSøknad(request.søknadsid)?.søknad
             } catch (e: Exception) {
-                BARN_LOGGER.error(e) { "Det skjedde en feil ved henting av søknad ${request.søknadsid}" }
+                BARN_LOGGER.error { "Feil ved henting av søknad ${request.søknadsid}" }
+                secureLogger.error(e) { "Feil ved henting av søknad ${request.søknadsid}" }
                 return
             }
         // Skal ikke trigge noe endringer for FF søknad
@@ -269,8 +270,12 @@ class ForholdsmessigFordelingBarnService(
         if (barn.forholdsmessigFordeling!!.søknaderUnderBehandling.isNotEmpty()) {
             barn.innkrevingstype = if (barn.harSøknadMedInnkreving) Innkrevingstype.MED_INNKREVING else Innkrevingstype.UTEN_INNKREVING
             BARN_LOGGER.info {
-                "Barnet er koblet til flere søknader ${barn.forholdsmessigFordeling!!.søknader}" +
-                    " etter den ble slettet fra søknad $søknadsid. Gjør ingen endring. Behandlingid = ${behandling.id}"
+                "Barn rolleId=${barn.id} er koblet til ${barn.forholdsmessigFordeling!!.søknader.size} søknader " +
+                    "etter sletting fra søknad $søknadsid. Gjør ingen endring. behandlingId=${behandling.id}"
+            }
+            secureLogger.info {
+                "Barn ${barn.ident} er koblet til flere søknader ${barn.forholdsmessigFordeling!!.søknader} " +
+                    "etter sletting fra søknad $søknadsid i behandling ${behandling.id}"
             }
             return
         }
@@ -359,7 +364,8 @@ class ForholdsmessigFordelingBarnService(
         barn: Rolle,
         behandling: Behandling,
     ) {
-        BARN_LOGGER.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingsøknad" }
+        BARN_LOGGER.info { "Sletter barn rolleId=${barn.id} fra behandling ${behandling.id} og lager ny revurderingssøknad" }
+        secureLogger.info { "Sletter barn ${barn.ident} fra behandling ${behandling.id} og lager ny revurderingssøknad" }
         if (!barn.harLøpendeBidragFørOpphørEllerLøpende()) {
             feilregistrerBarnFraFFSøknad(barn)
             behandlingService.slettRolleFraBehandling(behandling, barn)
@@ -719,7 +725,8 @@ class ForholdsmessigFordelingBarnService(
                         }
                 }
             } catch (e: Exception) {
-                BARN_LOGGER.error(e) { "Feil ved feilregistrering av søknad $søknadsid i behandling ${rolle.behandling.id}" }
+                BARN_LOGGER.error { "Feil ved feilregistrering av søknad $søknadsid i behandling ${rolle.behandling.id}" }
+                secureLogger.error(e) { "Feil ved feilregistrering av søknad $søknadsid i behandling ${rolle.behandling.id}" }
             }
         }
     }

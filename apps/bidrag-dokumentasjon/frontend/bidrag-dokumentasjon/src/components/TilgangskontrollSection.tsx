@@ -1,15 +1,23 @@
-import {TreeItem} from "@mui/x-tree-view";
-import {useQueryClient} from "@tanstack/react-query";
-import {load} from "js-yaml";
-import {useAppContext} from "../App.tsx";
+import { TreeItem } from "@mui/x-tree-view";
+import { useQueryClient } from "@tanstack/react-query";
+import { load } from "js-yaml";
+import { useAppContext } from "../App.tsx";
 
 const TILGANG_BASE_PATH = "dokumentasjon/tilgangskontroll";
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 export const TILGANG_FOLDER_ID = "folder_tilgangskontroll";
 
 const FILES = [
-    {id: "informasjonstilganger", label: "Informasjonstilganger", file: "informasjonstilganger.yaml"},
-    {id: "behandlingstemaer", label: "Behandlingstemaer", file: "behandlingstemaer.yaml"},
+    {
+        id: "informasjonstilganger",
+        label: "Informasjonstilganger",
+        file: "informasjonstilganger.yaml",
+    },
+    {
+        id: "behandlingstemaer",
+        label: "Behandlingstemaer",
+        file: "behandlingstemaer.yaml",
+    },
 ] as const;
 
 type TilgangFile = (typeof FILES)[number];
@@ -24,14 +32,12 @@ function sanitizeMermaidId(value: string): string {
 }
 
 function getLocalFileUrl(path: string): string {
-    const base = import.meta.env.BASE_URL.endsWith("/")
-        ? import.meta.env.BASE_URL
-        : `${import.meta.env.BASE_URL}/`;
+    const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
     return `${base}${path}`;
 }
 
 function parseYamlEntries(content: string): TilgangEntry[] {
-    const parsed = load(content) as Record<string, {adgruppe?: string}> | null;
+    const parsed = load(content) as Record<string, { adgruppe?: string }> | null;
     return Object.entries(parsed ?? {}).map(([kode, val]) => ({
         kode,
         adgruppe: val?.adgruppe ?? "-",
@@ -41,8 +47,10 @@ function parseYamlEntries(content: string): TilgangEntry[] {
 function generateTilgangMermaid(entries: TilgangEntry[]): string {
     // Group codes by AD group
     const byGroup = new Map<string, string[]>();
-    for (const {kode, adgruppe} of entries) {
-        (byGroup.get(adgruppe) ?? byGroup.set(adgruppe, []).get(adgruppe)!).push(kode);
+    for (const { kode, adgruppe } of entries) {
+        const groupCodes = byGroup.get(adgruppe) ?? [];
+        groupCodes.push(kode);
+        byGroup.set(adgruppe, groupCodes);
     }
 
     const lines = [
@@ -68,19 +76,23 @@ function generateTilgangMermaid(entries: TilgangEntry[]): string {
     return lines.join("\n");
 }
 
-function FolderLabel({name}: {name: string}) {
+function FolderLabel({ name }: { name: string }) {
     return (
         <span className="tree-label">
-            <span className="tree-label__name" title={name}>{name}</span>
+            <span className="tree-label__name" title={name}>
+                {name}
+            </span>
             <span className="tree-label__badge">mappe</span>
         </span>
     );
 }
 
-function ItemLabel({name}: {name: string}) {
+function ItemLabel({ name }: { name: string }) {
     return (
         <span className="tree-label">
-            <span className="tree-label__name" title={name}>{name}</span>
+            <span className="tree-label__name" title={name}>
+                {name}
+            </span>
             <span className="tree-label__badge">tilgang</span>
         </span>
     );
@@ -88,7 +100,7 @@ function ItemLabel({name}: {name: string}) {
 
 /** Renders a single TreeItem — must be placed inside an existing SimpleTreeView. */
 export function TilgangskontrollFolderItem() {
-    const {setShowContent, expandedFolders, setSelectedItem} = useAppContext();
+    const { setShowContent, expandedFolders, setSelectedItem } = useAppContext();
     const queryClient = useQueryClient();
     const isExpanded = expandedFolders.includes(TILGANG_FOLDER_ID);
 
@@ -100,13 +112,18 @@ export function TilgangskontrollFolderItem() {
                 staleTime: ONE_DAY_MS,
                 gcTime: ONE_DAY_MS,
                 queryFn: async () => {
-                    const res = await fetch(getLocalFileUrl(`${TILGANG_BASE_PATH}/${file.file}`), {cache: "no-store"});
+                    const res = await fetch(getLocalFileUrl(`${TILGANG_BASE_PATH}/${file.file}`), {
+                        cache: "no-store",
+                    });
                     if (!res.ok) throw new Error(`Klarte ikke hente ${file.file}: ${res.status}`);
                     return res.text();
                 },
             });
             const entries = parseYamlEntries(text);
-            setShowContent({type: "mermaid", content: generateTilgangMermaid(entries)});
+            setShowContent({
+                type: "mermaid",
+                content: generateTilgangMermaid(entries),
+            });
         } catch (err) {
             setShowContent({
                 type: "markdown",
@@ -116,18 +133,17 @@ export function TilgangskontrollFolderItem() {
     }
 
     return (
-        <TreeItem itemId={TILGANG_FOLDER_ID} label={<FolderLabel name="Tilgangskontroll"/>}>
+        <TreeItem itemId={TILGANG_FOLDER_ID} label={<FolderLabel name="Tilgangskontroll" />}>
             {isExpanded
                 ? FILES.map((file) => (
-                    <TreeItem
-                        key={file.id}
-                        itemId={`tilgang_${file.id}`}
-                        label={<ItemLabel name={file.label}/>}
-                        onClick={() => void handleItemClick(file)}
-                    />
-                ))
+                      <TreeItem
+                          key={file.id}
+                          itemId={`tilgang_${file.id}`}
+                          label={<ItemLabel name={file.label} />}
+                          onClick={() => void handleItemClick(file)}
+                      />
+                  ))
                 : null}
         </TreeItem>
     );
 }
-
