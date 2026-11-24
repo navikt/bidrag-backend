@@ -154,9 +154,10 @@ enum class Resultatkode(
             BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
             BisysResultatkode("AG", BisysResultatkodeType.AVSLAG),
         ),
+        ResultatkodeType.DIREKTE_AVSLAG,
         ResultatkodeType.AVSLAG,
     ),
-    AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
+    AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG, ResultatkodeType.DIREKTE_AVSLAG),
 
     PARTEN_BER_OM_OPPHØR(
         listOf(BisysResultatkode("OPB", BisysResultatkodeType.OPPHØR)),
@@ -446,8 +447,7 @@ enum class Resultatkode(
 
         fun Resultatkode.erType(type: ResultatkodeType): Boolean = Resultatkode.alleMedType(type).contains(this)
 
-        fun Resultatkode.erDirekteAvslag(): Boolean = erType(ResultatkodeType.DIREKTE_AVSLAG) ||
-            listOf(AVSLAG, AVSLAG2).contains(this)
+        fun Resultatkode.erDirekteAvslag(): Boolean = erType(ResultatkodeType.DIREKTE_AVSLAG)
 
         fun Resultatkode.erAvvisning(): Boolean = erType(ResultatkodeType.AVVISNING)
 
