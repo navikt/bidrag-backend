@@ -95,9 +95,6 @@ azure_access_inbound:
   - application: bisys
     namespace: bidrag
     cluster: dev-fss
-  - application: bidrag-ui-feature
-    namespace: bidrag
-    cluster: dev-fss
   - application: bidrag-frontend-q1
     namespace: bidrag
     cluster: dev-gcp

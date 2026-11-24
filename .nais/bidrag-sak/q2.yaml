@@ -37,9 +37,6 @@ env:
 kafka:
   pool: nav-dev
 azure_access_inbound:
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: dev-fss
   - application: bidrag-dokument-bestilling
     namespace: bidrag
     cluster: dev-gcp

@@ -1,50 +1,30 @@
-# React + TypeScript + Vite
+# Bidrag-dokumentasjon
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-appen viser dokumentasjon og diagrammer for Bidrag. Den bruker Vite, TypeScript og Aksel.
 
-Currently, two official plugins are available:
+## Lokal utvikling
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Kjør fra frontendmappen `apps/bidrag-dokumentasjon/frontend/bidrag-dokumentasjon`:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```sh
+pnpm install --frozen-lockfile
+pnpm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+`dev` og `build` kopierer først dokumentene fra `apps/bidrag-dokumentasjon/dokumentasjon` til `public/dokumentasjon` og lager en innholdsindeks. De genererte filene skal ikke sjekkes inn.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Sjekk og bygg
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+Kjør fra frontendmappen:
+
+```sh
+pnpm exec biome ci . --error-on-warnings
+pnpm run build
+pnpm run preview
 ```
+
+Biome sjekker lint og formatering. Bygget kjører TypeScript-sjekken og lager `dist`. `.editorconfig` angir fire mellomrom og maks 120 tegn per linje.
+
+## Deploy
+
+`.github/workflows/bidrag-dokumentasjon.yaml` sjekker og bygger appen på pull requests. Ved relevante endringer på `main` publiserer workflowen `dist` til GitHub Pages. Appen trenger ikke et lokalt deploy-script.
