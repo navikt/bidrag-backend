@@ -10,9 +10,6 @@ vault:
   srvKvPath: dev
   secretKvPath: preprod
 azureAccessInbound:
-  - application: bidrag-ui-feature
-    namespace: bidrag
-    cluster: dev-fss
   - application: bisys
     namespace: bidrag
     cluster: dev-fss

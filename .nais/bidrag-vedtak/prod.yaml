@@ -20,9 +20,6 @@ azureAccessInbound:
   - application: bidrag-dokument-forsendelse
     namespace: bidrag
     cluster: prod-gcp
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
   - application: bidrag-behandling
     namespace: bidrag
     cluster: prod-gcp
