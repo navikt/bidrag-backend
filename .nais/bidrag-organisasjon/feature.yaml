@@ -26,12 +26,6 @@ azure:
       - application: bidrag-arbeidsflyt-feature
         namespace: bidrag
         cluster: dev-gcp
-      - application: bidrag-ui-feature
-        namespace: bidrag
-        cluster: dev-fss
-      - application: bidrag-ui
-        namespace: bidrag
-        cluster: dev-fss
       - application: bidrag-sak-feature
         namespace: bidrag
         cluster: dev-fss

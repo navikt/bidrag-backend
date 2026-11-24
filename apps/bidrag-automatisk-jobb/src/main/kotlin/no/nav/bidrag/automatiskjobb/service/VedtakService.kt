@@ -5,6 +5,7 @@ import no.nav.bidrag.automatiskjobb.consumer.BidragPersonConsumer
 import no.nav.bidrag.automatiskjobb.persistence.entity.Barn
 import no.nav.bidrag.automatiskjobb.persistence.repository.BarnRepository
 import no.nav.bidrag.commons.util.IdentUtils
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.vedtak.Beslutningstype
 import no.nav.bidrag.domene.enums.vedtak.Innkrevingstype
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
@@ -128,7 +129,7 @@ class VedtakService(
         try {
             return bidragPersonConsumer.hentFødselsdatoForPerson(kravhaver)
         } catch (e: Exception) {
-            LOGGER.error(e) { "Det skjedde en feil ved henting av fødselsdato for person $kravhaver" }
+            secureLogger.error(e) { "Det skjedde en feil ved henting av fødselsdato for person ${kravhaver.verdi}" }
             throw e
         }
     }

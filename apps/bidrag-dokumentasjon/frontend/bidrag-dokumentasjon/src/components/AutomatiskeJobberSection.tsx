@@ -1,8 +1,8 @@
-import {TreeItem} from "@mui/x-tree-view";
-import {useQuery} from "@tanstack/react-query";
-import {load} from "js-yaml";
+import { TreeItem } from "@mui/x-tree-view";
+import { useQuery } from "@tanstack/react-query";
 import cronstrue from "cronstrue";
-import {useAppContext} from "../App.tsx";
+import { load } from "js-yaml";
+import { useAppContext } from "../App.tsx";
 
 const GITHUB_API_BASE = "https://api.github.com/repos/navikt/bidrag-automatisk-jobb/contents";
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/navikt/bidrag-automatisk-jobb/main";
@@ -48,10 +48,10 @@ function parseValueAnnotations(code: string): Map<string, string> {
 }
 
 /** Parses Batch("Name", varName) calls */
-function parseBatchCalls(code: string): Array<{name: string; variable: string}> {
-    const batches: Array<{name: string; variable: string}> = [];
+function parseBatchCalls(code: string): Array<{ name: string; variable: string }> {
+    const batches: Array<{ name: string; variable: string }> = [];
     for (const match of code.matchAll(/Batch\s*\(\s*"([^"]+)"\s*,\s*(\w+)/g)) {
-        batches.push({name: match[1], variable: match[2]});
+        batches.push({ name: match[1], variable: match[2] });
     }
     return batches;
 }
@@ -71,12 +71,12 @@ async function fetchText(url: string): Promise<string> {
 async function fetchAllBatchJobs(): Promise<BatchJob[]> {
     // 1. Subdirectories under batch/ (exclude utils)
     const batchEntries = await fetchJson<GithubEntry[]>(`${GITHUB_API_BASE}/${BATCH_DIR}`);
-    const subDirs = batchEntries.filter(e => e.type === "dir" && !EXCLUDED_DIRS.has(e.name));
+    const subDirs = batchEntries.filter((e) => e.type === "dir" && !EXCLUDED_DIRS.has(e.name));
 
     // 2. Fetch prod.yaml + dir listings in parallel
     const [prodYamlText, ...subDirListings] = await Promise.all([
         fetchText(`${GITHUB_RAW_BASE}/${PROD_YAML_PATH}`),
-        ...subDirs.map(d => fetchJson<GithubEntry[]>(`${GITHUB_API_BASE}/${d.path}`)),
+        ...subDirs.map((d) => fetchJson<GithubEntry[]>(`${GITHUB_API_BASE}/${d.path}`)),
     ]);
 
     // 3. Parse prod.yaml — flat map under the "env:" key
@@ -85,26 +85,24 @@ async function fetchAllBatchJobs(): Promise<BatchJob[]> {
     const envMap = new Map(Object.entries(envSection));
 
     // 4. Locate *Configuration.kt in each subdir
-    const configToFetch: Array<{module: string; path: string}> = [];
+    const configToFetch: Array<{ module: string; path: string }> = [];
     subDirListings.forEach((files, idx) => {
-        const hit = (files as GithubEntry[]).find(
-            f => f.type === "file" && f.name.endsWith("Configuration.kt"),
-        );
-        if (hit) configToFetch.push({module: subDirs[idx].name, path: hit.path});
+        const hit = (files as GithubEntry[]).find((f) => f.type === "file" && f.name.endsWith("Configuration.kt"));
+        if (hit) configToFetch.push({ module: subDirs[idx].name, path: hit.path });
     });
 
     // 5. Fetch all config files (best-effort)
     const configResults = await Promise.allSettled(
-        configToFetch.map(cf => fetchText(`${GITHUB_RAW_BASE}/${cf.path}`)),
+        configToFetch.map((cf) => fetchText(`${GITHUB_RAW_BASE}/${cf.path}`)),
     );
 
     // 6. Parse each file
     const jobs: BatchJob[] = [];
     configResults.forEach((result, idx) => {
         if (result.status !== "fulfilled") return;
-        const {module} = configToFetch[idx];
+        const { module } = configToFetch[idx];
         const valueMap = parseValueAnnotations(result.value);
-        for (const {name, variable} of parseBatchCalls(result.value)) {
+        for (const { name, variable } of parseBatchCalls(result.value)) {
             const envVarName = valueMap.get(variable) ?? variable.toUpperCase();
             const cronExpression = envMap.get(envVarName) ?? null;
             jobs.push({
@@ -123,7 +121,10 @@ async function fetchAllBatchJobs(): Promise<BatchJob[]> {
 
 function humanReadableCron(cron: string): string {
     try {
-        return cronstrue.toString(cron, {use24HourTimeFormat: true, throwExceptionOnParseError: true});
+        return cronstrue.toString(cron, {
+            use24HourTimeFormat: true,
+            throwExceptionOnParseError: true,
+        });
     } catch {
         return "";
     }
@@ -154,21 +155,24 @@ function generateBatchMermaid(job: BatchJob): string {
     ].join("\n");
 }
 
-function JobLabel({job}: {job: BatchJob}) {
+function JobLabel({ job }: { job: BatchJob }) {
     return (
         <span className="tree-label">
             <span className="tree-label__name" title={job.name}>
-                {job.disabled ? "⚠️ " : ""}{job.name}
+                {job.disabled ? "⚠️ " : ""}
+                {job.name}
             </span>
             <span className="tree-label__badge">{job.disabled ? "deaktivert" : "jobb"}</span>
         </span>
     );
 }
 
-function FolderLabel({name}: {name: string}) {
+function FolderLabel({ name }: { name: string }) {
     return (
         <span className="tree-label">
-            <span className="tree-label__name" title={name}>{name}</span>
+            <span className="tree-label__name" title={name}>
+                {name}
+            </span>
             <span className="tree-label__badge">mappe</span>
         </span>
     );
@@ -176,10 +180,14 @@ function FolderLabel({name}: {name: string}) {
 
 /** Renders a single TreeItem — must be placed inside an existing SimpleTreeView. */
 export function AutomatiskeJobberFolderItem() {
-    const {setShowContent, expandedFolders, setSelectedItem} = useAppContext();
+    const { setShowContent, expandedFolders, setSelectedItem } = useAppContext();
     const isExpanded = expandedFolders.includes(AUTO_JOBB_FOLDER_ID);
 
-    const {data: jobs = [], isLoading, error} = useQuery<BatchJob[]>({
+    const {
+        data: jobs = [],
+        isLoading,
+        error,
+    } = useQuery<BatchJob[]>({
         queryKey: ["automatiskeJobber"],
         enabled: isExpanded,
         staleTime: ONE_DAY_MS,
@@ -190,17 +198,19 @@ export function AutomatiskeJobberFolderItem() {
 
     function handleJobClick(job: BatchJob) {
         setSelectedItem(job.id);
-        setShowContent({type: "mermaid", content: generateBatchMermaid(job)});
+        setShowContent({ type: "mermaid", content: generateBatchMermaid(job) });
     }
 
     // Group jobs by module, preserving insertion order
     const moduleGroups = jobs.reduce<Record<string, BatchJob[]>>((acc, job) => {
-        (acc[job.module] ??= []).push(job);
+        const moduleJobs = acc[job.module] ?? [];
+        moduleJobs.push(job);
+        acc[job.module] = moduleJobs;
         return acc;
     }, {});
 
     return (
-        <TreeItem itemId={AUTO_JOBB_FOLDER_ID} label={<FolderLabel name="Automatiske Jobber"/>}>
+        <TreeItem itemId={AUTO_JOBB_FOLDER_ID} label={<FolderLabel name="Automatiske Jobber" />}>
             {isExpanded && isLoading && jobs.length === 0 ? (
                 <TreeItem
                     itemId="autojobb_loading"
@@ -224,16 +234,12 @@ export function AutomatiskeJobberFolderItem() {
                 />
             ) : null}
             {Object.entries(moduleGroups).map(([module, moduleJobs]) => (
-                <TreeItem
-                    key={module}
-                    itemId={`folder_autojobb_${module}`}
-                    label={<FolderLabel name={module}/>}
-                >
+                <TreeItem key={module} itemId={`folder_autojobb_${module}`} label={<FolderLabel name={module} />}>
                     {moduleJobs.map((job) => (
                         <TreeItem
                             key={job.id}
                             itemId={job.id}
-                            label={<JobLabel job={job}/>}
+                            label={<JobLabel job={job} />}
                             onClick={() => handleJobClick(job)}
                         />
                     ))}
@@ -242,9 +248,3 @@ export function AutomatiskeJobberFolderItem() {
         </TreeItem>
     );
 }
-
-
-
-
-
-

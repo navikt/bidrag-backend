@@ -1,6 +1,6 @@
 package no.nav.bidrag.dokument.arkiv.consumer;
 
-import static no.nav.bidrag.commons.util.LogSanitizerKt.sanitizeForLog;
+import static no.nav.bidrag.dokument.arkiv.BidragDokumentArkivKt.SECURE_LOGGER;
 
 import no.nav.bidrag.commons.web.HttpResponse;
 import no.nav.bidrag.dokument.arkiv.dto.FerdigstillJournalpostRequest;
@@ -44,10 +44,13 @@ public class DokarkivConsumer extends AbstractConsumer {
     } catch (HttpStatusCodeException e){
       var status = e.getStatusCode();
       var errorMessage = parseErrorMessage(e);
+      SECURE_LOGGER.warn(e, () -> String.format("Oppdatering av journalpost %s feilet med status %s og feilmelding: %s", oppdaterJournalpostRequest.hentJournalpostId(), status, errorMessage));
       if (HttpStatus.BAD_REQUEST.equals(status) || HttpStatus.NOT_FOUND.equals(status)){
-        throw new OppdaterJournalpostFeiletFunksjoneltException(String.format("Oppdatering av journalpost %s feilet med status %s og feilmelding: %s", oppdaterJournalpostRequest.hentJournalpostId(), e.getStatusCode(), errorMessage));
+        throw new OppdaterJournalpostFeiletFunksjoneltException(String.format("Oppdatering av journalpost feilet med status %s", status));
       }
-      throw new OppdaterJournalpostFeiletTekniskException(String.format("Oppdatering av journalpost %s feilet med status %s og feilmelding: %s", oppdaterJournalpostRequest.hentJournalpostId(), e.getStatusCode(), errorMessage), e);
+      throw new OppdaterJournalpostFeiletTekniskException(
+          String.format("Oppdatering av journalpost feilet med status %s", status),
+          new RuntimeException(String.format("Ekstern tjeneste svarte med status %s", status)));
     }
   }
 
@@ -57,7 +60,8 @@ public class DokarkivConsumer extends AbstractConsumer {
       return response.getBody();
     } catch (HttpClientErrorException clientErrorException){
       if (clientErrorException.getStatusCode() == HttpStatus.CONFLICT){
-        LOGGER.info("Journalpost med eksternReferanseId {} er allerede arkivert i Joark", sanitizeForLog(joarkOpprettJournalpostRequest.getEksternReferanseId()));
+        LOGGER.info("Journalpost er allerede arkivert i Joark med status {}", clientErrorException.getStatusCode());
+        SECURE_LOGGER.info(() -> String.format("Journalpost med eksternReferanseId %s er allerede arkivert i Joark", joarkOpprettJournalpostRequest.getEksternReferanseId()));
         return handleConflictResponse(clientErrorException);
       }
       throw clientErrorException;
@@ -95,7 +99,8 @@ public class DokarkivConsumer extends AbstractConsumer {
     } catch (HttpClientErrorException clientErrorException){
       // Antar at status allerede er satt til ekspedert. Ignorer feil for å gjøre kallet idempotent
       if (clientErrorException.getStatusCode() == HttpStatus.BAD_REQUEST && clientErrorException.getResponseBodyAsString().contains("Kan ikke ekspedere journalpost med status E")){
-        LOGGER.warn("Sett status til EKSPEDERT for journalpost {} feilet med melding {}", journalpostId, clientErrorException.getResponseBodyAsString());
+        LOGGER.warn("Sett status til EKSPEDERT for journalpost feilet med status {}", clientErrorException.getStatusCode());
+        SECURE_LOGGER.warn(clientErrorException, () -> String.format("Sett status til EKSPEDERT for journalpost %s feilet med melding %s", journalpostId, clientErrorException.getResponseBodyAsString()));
         return HttpResponse.Companion.from(HttpStatus.OK);
       }
       throw clientErrorException;

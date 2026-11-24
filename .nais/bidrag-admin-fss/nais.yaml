@@ -29,12 +29,16 @@ spec:
           - "azp_name"
   accessPolicy:
     inbound:
+      {{#if azure_access_inbound}}
       rules:
       {{#each azure_access_inbound}}
         - application: {{this.application}}
           namespace: {{this.namespace}}
           cluster: {{this.cluster}}
       {{/each}}
+      {{else}}
+      rules: []
+      {{/if}}
     outbound:
       {{#if outbound-access-hosts}}
       external:
