@@ -22,10 +22,4 @@ env:
   BBM_DB_SCHEMA: BI460Q2
   BISYS_DB_SCHEMA: BI464Q2
   JIRA_URL: dummy
-azure_access_inbound:
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: dev-fss
-  - application: bidrag-ui-feature
-    namespace: bidrag
-    cluster: dev-fss
+azure_access_inbound: []

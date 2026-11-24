@@ -34,9 +34,6 @@ azure:
       - application: azure-token-generator
         namespace: nais
         cluster: dev-gcp
-      - application: bidrag-ui
-        namespace: bidrag
-        cluster: dev-fss
       - application: bidrag-frontend-q2
         namespace: bidrag
         cluster: dev-gcp

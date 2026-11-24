@@ -22,9 +22,6 @@ azure:
       - application: bidrag-behandling-q2
         namespace: bidrag
         cluster: dev-gcp
-      - application: bidrag-ui
-        namespace: bidrag
-        cluster: dev-fss
       - application: bidrag-arbeidsflyt
         namespace: bidrag
         cluster: dev-gcp

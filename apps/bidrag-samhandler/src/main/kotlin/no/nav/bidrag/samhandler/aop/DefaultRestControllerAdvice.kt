@@ -1,6 +1,7 @@
 package no.nav.bidrag.samhandler.aop
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.transport.felles.ifTrue
 import no.nav.security.token.support.spring.validation.interceptor.JwtTokenUnauthorizedException
 import org.springframework.http.HttpHeaders
@@ -20,12 +21,12 @@ class DefaultRestControllerAdvice {
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpClientErrorException(exception: HttpStatusCodeException): ResponseEntity<*> {
         val errorMessage = getErrorMessage(exception)
-        LOGGER.warn(exception) { errorMessage }
+        LOGGER.warn { "Feil ved kall mot ekstern tjeneste med status ${exception.statusCode}" }
         val hasBody = exception.responseBodyAsString.isNotEmpty()
         val payloadFeilmelding =
             exception.responseBodyAsString.isEmpty().ifTrue { exception.message }
                 ?: exception.responseBodyAsString
-        LOGGER.warn { "Det skjedde en feil: $payloadFeilmelding" }
+        secureLogger.warn(exception) { "Feil ved kall mot ekstern tjeneste: $payloadFeilmelding" }
         return ResponseEntity
             .status(exception.statusCode)
             .header(HttpHeaders.WARNING, errorMessage)
@@ -50,7 +51,8 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(Exception::class)
     fun handleOtherExceptions(exception: Exception): ResponseEntity<*> {
-        LOGGER.warn(exception) { "Det skjedde en ukjent feil" }
+        LOGGER.warn { "Det skjedde en ukjent feil av type ${exception.javaClass.simpleName}" }
+        secureLogger.warn(exception) { "Det skjedde en ukjent feil" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, "Det skjedde en ukjent feil: ${exception.message}")
@@ -60,7 +62,8 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException): ResponseEntity<*> {
-        LOGGER.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
+        LOGGER.warn { "Ugyldig eller manglende sikkerhetstoken" }
+        secureLogger.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WARNING, "Ugyldig eller manglende sikkerhetstoken")
