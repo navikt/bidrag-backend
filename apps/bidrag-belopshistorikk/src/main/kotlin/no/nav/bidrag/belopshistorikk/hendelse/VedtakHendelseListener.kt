@@ -33,7 +33,7 @@ class VedtakHendelseListener(private val jsonMapperService: JsonMapperService, p
         } catch (e: JacksonException) {
             LOGGER.error { "Mapping av hendelse feilet for kafkamelding, se sikker logg for mer info" }
             secureLogger.error { "Mapping av hendelse feilet for kafkamelding: $hendelse" }
-            throw e
+//            throw e
         }
     }
 }
