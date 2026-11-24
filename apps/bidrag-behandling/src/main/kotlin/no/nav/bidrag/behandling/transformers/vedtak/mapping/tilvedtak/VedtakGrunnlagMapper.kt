@@ -2,6 +2,7 @@ package no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak
 
 import com.fasterxml.jackson.databind.node.POJONode
 import no.nav.bidrag.behandling.database.datamodell.Behandling
+import no.nav.bidrag.behandling.database.datamodell.PrivatAvtale
 import no.nav.bidrag.behandling.database.datamodell.Rolle
 import no.nav.bidrag.behandling.dto.v2.vedtak.FatteVedtakRequestDto
 import no.nav.bidrag.behandling.fantIkkeFødselsdatoTilSøknadsbarn
@@ -236,14 +237,16 @@ fun Rolle.finnBeregnTil(): YearMonth = when (rolletype) {
 }
 
 fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
-    Rolletype.BIDRAGSMOTTAKER -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
-        .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
-        .minOfOrNull { it.finnBeregnFra() }
-        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+    Rolletype.BIDRAGSMOTTAKER ->
+        behandling.søknadsbarn
+            .filter { it.bidragsmottaker != null && it.bidragsmottaker?.ident == ident }
+            .minOfOrNull { it.finnBeregnFra() }
+            ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
 
-    Rolletype.BIDRAGSPLIKTIG -> (behandling.søknadsbarn + behandling.revurderingdsbarn)
-        .minOfOrNull { it.finnBeregnFra() }
-        ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
+    Rolletype.BIDRAGSPLIKTIG ->
+        behandling.søknadsbarn
+            .minOfOrNull { it.finnBeregnFra() }
+            ?: behandling.eldsteVirkningstidspunkt.toYearMonth()
 
     Rolletype.BARN -> {
         val beregnFra = virkningstidspunkt?.toYearMonth() ?: behandling.virkningstidspunktEllerSøktFomDato.toYearMonth()
@@ -260,8 +263,7 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
 
             val privatAvtalePerioder = behandling.privatAvtale
                 .find { it.gjelderPerson(ident!!, stønadstype) }
-                ?.perioderInnkreving
-                ?.map { it.tilÅrMånedsperiode() }
+                ?.perioderMedBidrag()
                 ?: emptyList()
 
             (bidragsperioder + privatAvtalePerioder)
@@ -277,6 +279,12 @@ fun Rolle.finnBeregnFra(): YearMonth = when (rolletype) {
 
     Rolletype.FEILREGISTRERT -> throw IllegalArgumentException("Skal ikke beregne for feilregistrerte roller")
 }
+
+private fun PrivatAvtale.perioderMedBidrag(): List<ÅrMånedsperiode> = valgtVedtakFraNav
+    ?.perioder
+    ?.filter { it.beløp != null }
+    ?.map { it.periode }
+    ?: perioderInnkreving.map { it.tilÅrMånedsperiode() }
 
 fun Behandling.finnBeregnTilDatoBehandling(
     søknadsbarnRolle: Rolle? = null,

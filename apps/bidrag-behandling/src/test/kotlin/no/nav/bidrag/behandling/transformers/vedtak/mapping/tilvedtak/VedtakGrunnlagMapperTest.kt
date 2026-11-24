@@ -11,6 +11,7 @@ import io.mockk.junit5.MockKExtension
 import no.nav.bidrag.behandling.consumer.BidragPersonConsumer
 import no.nav.bidrag.behandling.database.datamodell.Behandling
 import no.nav.bidrag.behandling.database.datamodell.GebyrRolle
+import no.nav.bidrag.behandling.database.datamodell.GrunnlagFraVedtak
 import no.nav.bidrag.behandling.database.datamodell.Inntekt
 import no.nav.bidrag.behandling.database.datamodell.json.ForholdsmessigFordeling
 import no.nav.bidrag.behandling.dto.v2.behandling.Grunnlagsdatatype
@@ -23,6 +24,7 @@ import no.nav.bidrag.behandling.utils.stubPersonConsumer
 import no.nav.bidrag.behandling.utils.testdata.leggTilGrunnlagBeløpshistorikk
 import no.nav.bidrag.behandling.utils.testdata.leggTilPrivatAvtale
 import no.nav.bidrag.behandling.utils.testdata.opprettGyldigBehandlingForBeregningOgVedtak
+import no.nav.bidrag.behandling.utils.testdata.opprettPrivatAvtale
 import no.nav.bidrag.behandling.utils.testdata.opprettSakForBehandling
 import no.nav.bidrag.behandling.utils.testdata.opprettStønadPeriodeDto
 import no.nav.bidrag.behandling.utils.testdata.testdataBarn1
@@ -38,9 +40,11 @@ import no.nav.bidrag.domene.enums.beregning.Resultatkode
 import no.nav.bidrag.domene.enums.diverse.Kilde
 import no.nav.bidrag.domene.enums.grunnlag.Grunnlagstype
 import no.nav.bidrag.domene.enums.inntekt.Inntektsrapportering
+import no.nav.bidrag.domene.enums.privatavtale.PrivatAvtaleType
 import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.enums.vedtak.Stønadstype
 import no.nav.bidrag.domene.tid.ÅrMånedsperiode
+import no.nav.bidrag.transport.behandling.vedtak.response.VedtakPeriodeDto
 import no.nav.bidrag.transport.felles.toYearMonth
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -397,6 +401,37 @@ class VedtakGrunnlagMapperTest {
 
         behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 1)
     }
+
+    @Test
+    fun `FF - barn beregnes fra eget virkningstidspunkt når valgt vedtak fra Nav har opphørt`() {
+        val behandling = opprettFFBehandlingDerBarn2HarSenereVirkningstidspunkt()
+        val privatAvtale = opprettPrivatAvtale(behandling, testdataBarn2)
+        privatAvtale.avtaleType = PrivatAvtaleType.VEDTAK_FRA_NAV
+        privatAvtale.grunnlagFraVedtak =
+            GrunnlagFraVedtak(
+                vedtak = 1,
+                perioder =
+                listOf(
+                    opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2024, 1), YearMonth.of(2025, 1)), BigDecimal(1000)),
+                    opprettVedtakPeriode(ÅrMånedsperiode(YearMonth.of(2025, 1), null), null),
+                ),
+            )
+        behandling.privatAvtale.add(privatAvtale)
+
+        behandling.søknadsbarn.first { it.ident == testdataBarn2.ident }.finnBeregnFra() shouldBe YearMonth.of(2025, 6)
+    }
+
+    private fun opprettVedtakPeriode(
+        periode: ÅrMånedsperiode,
+        beløp: BigDecimal?,
+    ) = VedtakPeriodeDto(
+        periode = periode,
+        beløp = beløp,
+        valutakode = null,
+        resultatkode = "",
+        delytelseId = null,
+        grunnlagReferanseListe = emptyList(),
+    )
 
     @Test
     fun `skal sette opphørsdato til virkningstidspunkt ved avvisning uten eksisterende opphør`() {
