@@ -533,6 +533,8 @@ data class BidragPeriodeBeregningsdetaljer(
     val bpHarEvne: Boolean = false,
     val antallBarnIHusstanden: Double? = null,
     val forskuddssats: BigDecimal = BigDecimal.ZERO,
+    val inntektBBMultiplikator: BigDecimal = BigDecimal.ZERO,
+    val maksInntektBBMultiplikator: BigDecimal = BigDecimal.ZERO,
     val barnetilleggBM: DelberegningBarnetilleggDto = DelberegningBarnetilleggDto(),
     val barnetilleggBP: DelberegningBarnetilleggDto = DelberegningBarnetilleggDto(),
     val voksenIHusstanden: Boolean? = null,
