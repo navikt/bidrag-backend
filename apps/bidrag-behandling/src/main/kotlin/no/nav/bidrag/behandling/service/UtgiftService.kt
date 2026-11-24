@@ -48,6 +48,7 @@ class UtgiftService(
         request.rimeligÅInnvilge?.let {
             utgift.rimeligÅInnvilge = it.rimeligÅInnvilge
             utgift.rimeligÅInnvilgeBegrunnelse = it.begrunnelse
+            behandling.utgift = utgiftRepository.save(utgift)
         }
         request.henteOppdatereNotat()?.let {
             notatService.oppdatereNotat(
@@ -57,7 +58,8 @@ class UtgiftService(
                 behandling.bidragsmottaker!!,
             )
         }
-        if (request.oppdatereBegrunnelse == null) {
+        // En forespørsel med bare vurderingen av om det er rimelig å innvilge særbidrag inneholder ikke avslag
+        if (request.oppdatereBegrunnelse == null && request.rimeligÅInnvilge == null) {
             behandling.avslag = request.avslag
             behandling.søknadsbarn.forEach {
                 it.avslag = request.avslag

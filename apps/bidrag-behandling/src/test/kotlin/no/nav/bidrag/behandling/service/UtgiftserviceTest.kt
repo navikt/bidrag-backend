@@ -593,6 +593,47 @@ class UtgiftserviceTest : TestContainerRunner() {
 
     @Test
     @Transactional
+    fun `skal beholde avslag når bare vurdering av om det er rimelig å innvilge særbidrag lagres`() {
+        val behandling = oppretteBehandlingForSærbidrag()
+        behandling.utgift = Utgift(behandling = behandling)
+        behandling.avslag = Resultatkode.PRIVAT_AVTALE
+        behandling.søknadsbarn.forEach { it.avslag = Resultatkode.PRIVAT_AVTALE }
+        testdataManager.lagreBehandlingNewTransaction(behandling)
+
+        utgiftService.oppdatereUtgift(
+            behandling.id!!,
+            OppdatereUtgiftRequest(
+                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+            ),
+        )
+
+        val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)!!
+        behandlingEtter.avslag shouldBe Resultatkode.PRIVAT_AVTALE
+        behandlingEtter.søknadsbarn.forEach { it.avslag shouldBe Resultatkode.PRIVAT_AVTALE }
+    }
+
+    @Test
+    @Transactional
+    fun `skal lagre vurdering av om det er rimelig å innvilge særbidrag når behandlingen ikke har utgift`() {
+        val behandling = oppretteBehandlingForSærbidrag()
+        behandling.utgift = null
+        testdataManager.lagreBehandlingNewTransaction(behandling)
+
+        utgiftService.oppdatereUtgift(
+            behandling.id!!,
+            OppdatereUtgiftRequest(
+                rimeligÅInnvilge = RimeligÅInnvilgeDto(rimeligÅInnvilge = true, begrunnelse = "Særlige forhold"),
+            ),
+        )
+
+        val behandlingEtter = testdataManager.hentBehandling(behandling.id!!)!!
+        behandlingEtter.utgift shouldNotBe null
+        behandlingEtter.utgift!!.rimeligÅInnvilge shouldBe true
+        behandlingEtter.utgift!!.rimeligÅInnvilgeBegrunnelse shouldBe "Særlige forhold"
+    }
+
+    @Test
+    @Transactional
     fun `skal oppdatere maks godkjent beløp`() {
         val behandling = oppretteBehandlingForSærbidrag()
         behandling.utgift =

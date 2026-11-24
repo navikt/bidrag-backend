@@ -1241,7 +1241,7 @@ private fun SærbidragUtgifterDto.tilNotatUtgiftDto(behandling: Behandling) = No
         )
     },
     rimeligÅInnvilge =
-    rimeligÅInnvilge?.takeIf { it.barnetsInntektErOverGrensen }?.let {
+    rimeligÅInnvilge?.takeIf { it.barnetsInntektErOverGrensen || it.rimeligÅInnvilge || !it.begrunnelse.isNullOrBlank() }?.let {
         NotatSærbidragRimeligÅInnvilgeDto(
             rimeligÅInnvilge = it.rimeligÅInnvilge,
             begrunnelse = it.begrunnelse,

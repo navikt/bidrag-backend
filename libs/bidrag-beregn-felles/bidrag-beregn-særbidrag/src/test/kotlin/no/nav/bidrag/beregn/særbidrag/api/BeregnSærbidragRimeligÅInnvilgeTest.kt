@@ -9,6 +9,7 @@ import no.nav.bidrag.domene.enums.sjablon.SjablonTallNavn
 import no.nav.bidrag.domene.enums.vedtak.Vedtakstype
 import no.nav.bidrag.generer.testdata.person.genererFødselsnummer
 import no.nav.bidrag.transport.behandling.beregning.felles.BeregnGrunnlag
+import no.nav.bidrag.transport.behandling.beregning.særbidrag.BeregnetSærbidragResultat
 import no.nav.bidrag.transport.behandling.felles.grunnlag.DelberegningBidragspliktigesAndel
 import no.nav.bidrag.transport.behandling.felles.grunnlag.GrunnlagDto
 import no.nav.bidrag.transport.behandling.felles.grunnlag.SjablonSjablontallPeriode
@@ -86,12 +87,76 @@ internal class BeregnSærbidragRimeligÅInnvilgeTest {
         )
     }
 
-    private fun lesFilOgByggRequest(rimeligÅInnvilge: Boolean): BeregnGrunnlag {
+    @Test
+    @DisplayName("barnets inntekt er lik 100 ganger forskuddssats - barnet er selvforsørget uten vurdering")
+    fun skalGiAvslagNårBarnetsInntektErLikGrensenUtenVurdering() {
+        val grense = forskuddssats().multiply(BigDecimal.valueOf(100))
+
+        val resultat = beregnSærbidragService.beregn(lesFilOgByggRequest(rimeligÅInnvilge = null, barnetsInntekt = grense), Vedtakstype.FASTSETTELSE)
+
+        assertAll(
+            { assertThat(resultat.beregnetSærbidragPeriodeListe[0].resultat.resultatkode).isEqualTo(Resultatkode.BARNET_ER_SELVFORSØRGET) },
+            { assertThat(bpsAndel(resultat).innhold.barnetErSelvforsørget).isTrue() },
+        )
+    }
+
+    @Test
+    @DisplayName("barnets inntekt er lik 100 ganger forskuddssats og det er rimelig å innvilge - vurderingen brukes")
+    fun skalBrukeVurderingenNårBarnetsInntektErLikGrensen() {
+        val grense = forskuddssats().multiply(BigDecimal.valueOf(100))
+
+        val resultat = beregnSærbidragService.beregn(lesFilOgByggRequest(rimeligÅInnvilge = true, barnetsInntekt = grense), Vedtakstype.FASTSETTELSE)
+
+        val andel = bpsAndel(resultat)
+        assertAll(
+            { assertThat(resultat.beregnetSærbidragPeriodeListe[0].resultat.resultatkode).isEqualTo(Resultatkode.SÆRBIDRAG_INNVILGET) },
+            { assertThat(andel.innhold.barnetErSelvforsørget).isFalse() },
+            { assertThat(andel.grunnlag.grunnlagsreferanseListe).contains(referanseRimeligÅInnvilge) },
+        )
+    }
+
+    @Test
+    @DisplayName("barnets inntekt er rett under 100 ganger forskuddssats - vurderingen brukes ikke")
+    fun skalIkkeBrukeVurderingenNårBarnetsInntektErUnderGrensen() {
+        val sats = forskuddssats()
+        val underGrensen = sats.multiply(BigDecimal.valueOf(100)) - BigDecimal.ONE
+
+        val resultat = beregnSærbidragService.beregn(lesFilOgByggRequest(rimeligÅInnvilge = true, barnetsInntekt = underGrensen), Vedtakstype.FASTSETTELSE)
+
+        val andel = bpsAndel(resultat)
+        assertAll(
+            { assertThat(resultat.beregnetSærbidragPeriodeListe[0].resultat.resultatkode).isNotEqualTo(Resultatkode.BARNET_ER_SELVFORSØRGET) },
+            { assertThat(andel.innhold.barnetErSelvforsørget).isFalse() },
+            { assertThat(andel.grunnlag.grunnlagsreferanseListe).doesNotContain(referanseRimeligÅInnvilge) },
+            {
+                assertThat(andel.innhold.barnEndeligInntekt)
+                    .isEqualByComparingTo(underGrensen - sats.multiply(BigDecimal.valueOf(30)))
+            },
+        )
+    }
+
+    private fun forskuddssats(): BigDecimal = beregnSærbidragService
+        .beregn(lesFilOgByggRequest(rimeligÅInnvilge = null), Vedtakstype.FASTSETTELSE)
+        .grunnlagListe
+        .filtrerOgKonverterBasertPåEgenReferanse<SjablonSjablontallPeriode>(Grunnlagstype.SJABLON_SJABLONTALL)
+        .map { it.innhold }
+        .single { it.sjablon == SjablonTallNavn.FORSKUDDSSATS_BELØP }
+        .verdi
+
+    private fun bpsAndel(resultat: BeregnetSærbidragResultat) = resultat.grunnlagListe
+        .filtrerOgKonverterBasertPåEgenReferanse<DelberegningBidragspliktigesAndel>(Grunnlagstype.DELBEREGNING_BIDRAGSPLIKTIGES_ANDEL)
+        .single()
+
+    private fun lesFilOgByggRequest(rimeligÅInnvilge: Boolean?, barnetsInntekt: BigDecimal? = null): BeregnGrunnlag {
         var json = Files.readString(Paths.get(filnavn))
         listOf("{FNR_SB}", "{FNR_BM}", "{FNR_BP}", "{FNR_HM1}", "{FNR_HM2}", "{FNR_HM3}", "{FNR_BABP}").forEach {
             json = json.replace(it, genererFødselsnummer())
         }
+        if (barnetsInntekt != null) {
+            json = json.replace("\"beløp\": 200000", "\"beløp\": ${barnetsInntekt.toPlainString()}")
+        }
         val request = commonObjectmapper.readValue(json, BeregnGrunnlag::class.java)
+        if (rimeligÅInnvilge == null) return request
         return request.copy(
             grunnlagListe = request.grunnlagListe +
                 GrunnlagDto(
