@@ -446,7 +446,8 @@ enum class Resultatkode(
 
         fun Resultatkode.erType(type: ResultatkodeType): Boolean = Resultatkode.alleMedType(type).contains(this)
 
-        fun Resultatkode.erDirekteAvslag(): Boolean = erType(ResultatkodeType.DIREKTE_AVSLAG)
+        fun Resultatkode.erDirekteAvslag(): Boolean = erType(ResultatkodeType.DIREKTE_AVSLAG) ||
+            listOf(AVSLAG, AVSLAG2).contains(this)
 
         fun Resultatkode.erAvvisning(): Boolean = erType(ResultatkodeType.AVVISNING)
 
