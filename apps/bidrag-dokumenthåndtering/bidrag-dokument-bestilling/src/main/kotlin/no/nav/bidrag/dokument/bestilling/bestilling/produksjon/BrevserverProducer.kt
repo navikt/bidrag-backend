@@ -537,7 +537,7 @@ class BrevserverProducer(
                                             Samværsklasse.SAMVÆRSKLASSE_2 -> "4-8 netter pr mnd"
                                             Samværsklasse.SAMVÆRSKLASSE_3 -> "9-13 netter pr mnd"
                                             Samværsklasse.SAMVÆRSKLASSE_4 -> "14-15 netter pr mnd"
-                                            Samværsklasse.DELT_BOSTED -> "Delt samvær"
+                                            Samværsklasse.DELT_BOSTED -> "Delt bosted"
                                         }
                                     fodselsnummer = vedtakBarn.fødselsnummer
                                 }
