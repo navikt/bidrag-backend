@@ -766,6 +766,28 @@ class BeregningServiceTest {
     }
 
     @Test
+    fun `skal feile beregning av særbidrag når begrunnelse for rimelig å innvilge bare har tomme linjer`() {
+        mockkObject(UnleashFeaturesProvider)
+        try {
+            disableUnleashFeature(UnleashFeatures.SPERR_SELVFORSØRGET_BARN_SÆRBIDRAG)
+            val behandling = opprettSærbidragBehandlingMedInntektBarn(BigDecimal(1000000))
+            behandling.utgift!!.rimeligÅInnvilge = true
+            behandling.utgift!!.rimeligÅInnvilgeBegrunnelse = "<p><br/></p><p>&nbsp;</p>"
+            every { behandlingService.hentBehandlingById(any()) } returns behandling
+
+            val exception =
+                assertThrows<HttpClientErrorException> {
+                    BeregningService(behandlingService, vedtakGrunnlagMapper, aldersjusteringOrchestrator, bidragsberegningOrkestrator)
+                        .beregneSærbidrag(1)
+                }
+            exception.statusCode shouldBe HttpStatus.BAD_REQUEST
+            exception.responseBodyAsString shouldContain "\"særbidragRimeligÅInnvilge\":{\"manglerBegrunnelse\":true}"
+        } finally {
+            unmockkObject(UnleashFeaturesProvider)
+        }
+    }
+
+    @Test
     fun `skal beregne BPs andel når barnet er selvforsørget og saksbehandler har vurdert at det er rimelig å innvilge`() {
         mockkObject(UnleashFeaturesProvider)
         try {

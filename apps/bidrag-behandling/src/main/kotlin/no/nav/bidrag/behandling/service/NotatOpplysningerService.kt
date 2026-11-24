@@ -35,6 +35,7 @@ import no.nav.bidrag.behandling.transformers.behandling.hentBeregnetInntekterFor
 import no.nav.bidrag.behandling.transformers.behandling.kanFatteVedtakBegrunnelse
 import no.nav.bidrag.behandling.transformers.behandling.notatTittel
 import no.nav.bidrag.behandling.transformers.behandling.tilReferanseId
+import no.nav.bidrag.behandling.transformers.beregning.manglerSynligTekst
 import no.nav.bidrag.behandling.transformers.ekskluderYtelserFørVirkningstidspunkt
 import no.nav.bidrag.behandling.transformers.erBidrag
 import no.nav.bidrag.behandling.transformers.erForskudd
@@ -1241,7 +1242,7 @@ private fun SærbidragUtgifterDto.tilNotatUtgiftDto(behandling: Behandling) = No
         )
     },
     rimeligÅInnvilge =
-    rimeligÅInnvilge?.takeIf { it.barnetsInntektErOverGrensen || it.rimeligÅInnvilge || !it.begrunnelse.isNullOrBlank() }?.let {
+    rimeligÅInnvilge?.takeIf { it.barnetsInntektErOverGrensen || it.rimeligÅInnvilge || !it.begrunnelse.manglerSynligTekst() }?.let {
         NotatSærbidragRimeligÅInnvilgeDto(
             rimeligÅInnvilge = it.rimeligÅInnvilge,
             begrunnelse = it.begrunnelse,

@@ -26,12 +26,24 @@ fun BeregnetSærbidragResultat.barnetsInntektErOverGrensenForSelvforsørget(): B
             .any { it.innhold.barnetErSelvforsørget }
 }
 
+private val htmlTagg = Regex("<[^>]*>")
+
+/**
+ * Begrunnelsen kommer som HTML fra tekstredigeringen, for eksempel `<p><br/></p>` eller `<p>&nbsp;</p>` når den bare har
+ * tomme linjer eller mellomrom. Begrunnelsen mangler når den ikke har synlig tekst.
+ */
+fun String?.manglerSynligTekst(): Boolean = this == null ||
+    replace(htmlTagg, " ")
+        .replace("&nbsp;", " ")
+        .replace(' ', ' ')
+        .isBlank()
+
 /**
  * Saksbehandler må alltid begrunne vurderingen av om det er rimelig å innvilge særbidrag når barnets inntekt er lik eller høyere
  * enn 100 ganger forskuddssats.
  */
 fun Behandling.validerBegrunnelseRimeligÅInnvilge(resultat: BeregnetSærbidragResultat) {
-    if (!resultat.barnetsInntektErOverGrensenForSelvforsørget() || !utgift?.rimeligÅInnvilgeBegrunnelse.isNullOrBlank()) return
+    if (!resultat.barnetsInntektErOverGrensenForSelvforsørget() || !utgift?.rimeligÅInnvilgeBegrunnelse.manglerSynligTekst()) return
 
     val feil = BeregningValideringsfeil(særbidragRimeligÅInnvilge = SærbidragRimeligÅInnvilgeValideringsfeil(manglerBegrunnelse = true))
     secureLogger.warn {

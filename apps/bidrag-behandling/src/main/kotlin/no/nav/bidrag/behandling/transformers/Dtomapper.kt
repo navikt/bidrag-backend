@@ -117,6 +117,7 @@ import no.nav.bidrag.behandling.transformers.behandling.tilRolle
 import no.nav.bidrag.behandling.transformers.behandling.tilSøknadsdetaljerDto
 import no.nav.bidrag.behandling.transformers.behandling.toSivilstand
 import no.nav.bidrag.behandling.transformers.beregning.ValiderBeregning
+import no.nav.bidrag.behandling.transformers.beregning.manglerSynligTekst
 import no.nav.bidrag.behandling.transformers.boforhold.tilBostatusperiode
 import no.nav.bidrag.behandling.transformers.grunnlag.tilGrunnlagPerson
 import no.nav.bidrag.behandling.transformers.samvær.tilDto
@@ -524,7 +525,7 @@ class Dtomapper(
             rimeligÅInnvilge = utgift?.rimeligÅInnvilge ?: false,
             begrunnelse = begrunnelse,
             valideringsfeil =
-            if (barnetsInntektErOverGrensen && begrunnelse.isNullOrBlank()) SærbidragRimeligÅInnvilgeValideringsfeil() else null,
+            if (barnetsInntektErOverGrensen && begrunnelse.manglerSynligTekst()) SærbidragRimeligÅInnvilgeValideringsfeil() else null,
         )
     }
 
