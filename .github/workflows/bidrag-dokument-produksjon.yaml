@@ -19,6 +19,7 @@ on:
         options:
           - prod
           - q1
+          - q2
       hopp_over_tester:
         description: >-
           Hopp over tester og ktlint for å tvinge gjennom en deploy.
@@ -49,6 +50,8 @@ jobs:
       nais_hovedfil_navn: bidrag-dokument-produksjon/nais.yaml
       nais_variabler_filnavn_q1: bidrag-dokument-produksjon/q1.yaml
       deploy_q1: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q1' }}
+      nais_variabler_filnavn_q2: bidrag-dokument-produksjon/q2.yaml
+      deploy_q2: ${{ github.event_name == 'workflow_dispatch' && inputs.miljo == 'q2' }}
       nais_variabler_filnavn_prod: bidrag-dokument-produksjon/prod.yaml
       deploy_prod: ${{ (github.event_name == 'workflow_dispatch' && inputs.miljo == 'prod') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       skip_tester: ${{ inputs.hopp_over_tester == true && (inputs.miljo == 'q1' || inputs.miljo == 'q2') }}
