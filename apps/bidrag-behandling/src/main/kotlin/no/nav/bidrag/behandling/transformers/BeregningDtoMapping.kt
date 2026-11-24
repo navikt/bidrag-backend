@@ -1399,7 +1399,6 @@ fun List<GrunnlagDto>.finnDelberegningSamværsfradrag(
 
 fun List<InnholdMedReferanse<DelberegningUnderholdskostnad>>.tilUnderholdskostnadDto(
     underholdBeregning: List<GrunnlagDto>,
-    erBisysVedtak: Boolean,
 ) = this
     .map { delberegning ->
         val it = delberegning.innhold
@@ -1439,10 +1438,6 @@ fun List<InnholdMedReferanse<DelberegningUnderholdskostnad>>.tilUnderholdskostna
                 } else {
                     null
                 }
-            } else if (erBisysVedtak) {
-                underholdBeregning.tilUnderholdskostnadDetaljer(
-                    delberegning.grunnlag.grunnlagsreferanseListe,
-                )
             } else {
                 underholdBeregning.tilUnderholdskostnadDetaljer(
                     delberegning.grunnlag.grunnlagsreferanseListe,
@@ -1878,7 +1873,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn2(
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = false,
             privatAvtale = false,
-            erSøknadsbarn = true,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
@@ -1910,6 +1905,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn2(
                 fødselsdato = barn.fødselsdato,
                 navn = barn.navn,
                 erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                stønadstype = barn.stønadstype,
             ),
             bidragTilFordeling = it.innhold.bidragTilFordeling,
         )
@@ -1942,7 +1938,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn(
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = false,
             privatAvtale = false,
-            erSøknadsbarn = true,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
@@ -1974,6 +1970,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn(
                 fødselsdato = barn.fødselsdato,
                 navn = barn.navn,
                 erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                stønadstype = barn.stønadstype,
             ),
             bidragTilFordeling = it.innhold.bidragTilFordeling,
         )
@@ -2066,7 +2063,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
             ForholdsmessigFordelingBidragTilFordelingBarn(
                 utenlandskbidrag = !it.innhold.erNorskBidrag,
                 privatAvtale = true,
-                erSøknadsbarn = false,
+                erSøknadsbarn = barn.delAvOpprinneligBehandling,
                 bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
                 barn =
                 PersoninfoDto(
@@ -2074,6 +2071,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
                     fødselsdato = barn.fødselsdato,
                     navn = barn.navn,
                     erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                    stønadstype = barn.stønadstype,
                 ),
                 beregnetBidrag =
                 BeregnetBidragBarnDto(
@@ -2119,7 +2117,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
             ForholdsmessigFordelingBidragTilFordelingBarn(
                 utenlandskbidrag = false,
                 privatAvtale = true,
-                erSøknadsbarn = false,
+                erSøknadsbarn = barn.delAvOpprinneligBehandling,
                 bidragTilFordeling = periodeBeregnet.beløp,
                 barn =
                 PersoninfoDto(
@@ -2127,6 +2125,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
                     fødselsdato = barn.fødselsdato,
                     navn = barn.navn,
                     erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                    stønadstype = barn.stønadstype,
                 ),
                 beregnetBidrag =
                 BeregnetBidragBarnDto(
@@ -2190,7 +2189,7 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
             utenlandskbidrag = !it.innhold.erNorskBidrag,
             oppfostringsbidrag = it.innhold.erOppfostringsbidrag,
             privatAvtale = false,
-            erSøknadsbarn = false,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             stønadstype = løpendeBidrag.stønadstype,
             bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
             barn = if (harTilgangTilSak) {
@@ -2199,6 +2198,7 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
                     fødselsdato = barn.fødselsdato,
                     navn = barn.navn,
                     erRevurderingsbarn = !barn.delAvOpprinneligBehandling,
+                    stønadstype = barn.stønadstype,
                 )
             } else {
                 PersoninfoDto(ident = null, fødselsdato = null, navn = "Ingen tilgang", erRevurderingsbarn = false)
