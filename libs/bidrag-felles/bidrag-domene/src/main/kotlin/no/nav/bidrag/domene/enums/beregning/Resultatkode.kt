@@ -154,9 +154,10 @@ enum class Resultatkode(
             BisysResultatkode("A", BisysResultatkodeType.AVSLAG),
             BisysResultatkode("AG", BisysResultatkodeType.AVSLAG),
         ),
+        ResultatkodeType.DIREKTE_AVSLAG,
         ResultatkodeType.AVSLAG,
     ),
-    AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG),
+    AVSLAG2(listOf(BisysResultatkode("AA", BisysResultatkodeType.AVSLAG)), ResultatkodeType.AVSLAG, ResultatkodeType.DIREKTE_AVSLAG),
 
     PARTEN_BER_OM_OPPHØR(
         listOf(BisysResultatkode("OPB", BisysResultatkodeType.OPPHØR)),
@@ -388,6 +389,7 @@ enum class Resultatkode(
     ),
     IKKE_UNDERHOLDSPLIKT(
         listOf(BisysResultatkode("AIU", BisysResultatkodeType.AVSLAG)),
+        ResultatkodeType.DIREKTE_AVSLAG,
         ResultatkodeType.AVSLAG,
         ResultatkodeType.SÆRBIDRAG,
     ),
@@ -398,6 +400,14 @@ enum class Resultatkode(
     BIDRAG_JUSTERT_FOR_NETTO_BARNETILLEGG_BM(listOf(BisysResultatkode("102"))),
     BIDRAG_JUSTERT_TIL_FORSKUDDSSATS(listOf(BisysResultatkode("RFO"))),
     BIDRAG_JUSTERT_MANUELT_TIL_FORSKUDDSSATS(listOf(BisysResultatkode("RFO"))),
+    STADSFESTELSE(listOf(BisysResultatkode("SF"))),
+    UTENLANDSK_AVGJORELSE(listOf(BisysResultatkode("UA"))),
+    VEDTAK_INNKREVING_AV_SÆRBIDRAG(listOf(BisysResultatkode("VS1"))),
+    AVVIST(
+        listOf(BisysResultatkode("AV")),
+        ResultatkodeType.DIREKTE_AVSLAG,
+        ResultatkodeType.AVSLAG,
+    ),
     ;
 
     val legacyKode get() = bisysKode.firstOrNull()?.resultatKode

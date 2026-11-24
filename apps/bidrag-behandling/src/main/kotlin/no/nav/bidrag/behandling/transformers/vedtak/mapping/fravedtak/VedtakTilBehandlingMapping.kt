@@ -41,6 +41,7 @@ import no.nav.bidrag.behandling.transformers.tilType
 import no.nav.bidrag.behandling.transformers.utgift.tilBeregningDto
 import no.nav.bidrag.behandling.transformers.utgift.tilDto
 import no.nav.bidrag.behandling.transformers.vedtak.mapping.tilvedtak.finnBeregnTilDatoBehandling
+import no.nav.bidrag.behandling.transformers.vedtak.resultatkoderSomErManuellVedtak
 import no.nav.bidrag.commons.security.utils.TokenUtils
 import no.nav.bidrag.commons.service.organisasjon.SaksbehandlernavnProvider
 import no.nav.bidrag.domene.enums.barnetilsyn.Skolealder
@@ -102,6 +103,7 @@ import no.nav.bidrag.transport.behandling.vedtak.response.virkningstidspunkt
 import no.nav.bidrag.transport.felles.commonObjectmapper
 import no.nav.bidrag.transport.felles.ifTrue
 import org.springframework.stereotype.Component
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
 import no.nav.bidrag.transport.behandling.felles.grunnlag.NotatGrunnlag.NotatType as Notattype
@@ -265,6 +267,7 @@ class VedtakTilBehandlingMapping(
 
         if (lesemodus) {
             val behandlingDetaljer = grunnlagListe.hentBehandlingDetaljer()
+            val resultatkode = resultatkodeSærbidrag()
             behandling.lesemodusVedtak =
                 LesemodusVedtak(
                     erAvvist = stønadsendringListe.all { it.beslutning == Beslutningstype.AVVIST } ||
@@ -272,6 +275,8 @@ class VedtakTilBehandlingMapping(
                     opprettetAvBatch = kilde == Vedtakskilde.AUTOMATISK,
                     erOrkestrertVedtak = erOrkestrertVedtak,
                     inneholderBareRevurderingsbarn = inneholderBareRevurderingsbarn,
+                    erManuellVedtak = resultatkode != null && resultatkode in resultatkoderSomErManuellVedtak,
+                    resultatkodeSærbidrag = resultatkode,
                     fattetTidspunkt = this.vedtakstidspunkt ?: LocalDateTime.now(),
                 )
             behandling.grunnlagslisteFraVedtak = grunnlagListe
@@ -506,7 +511,7 @@ class VedtakTilBehandlingMapping(
         val utgift =
             Utgift(
                 behandling,
-                beløpDirekteBetaltAvBp = utgiftDirekteBetalt!!.beløpDirekteBetalt,
+                beløpDirekteBetaltAvBp = utgiftDirekteBetalt?.beløpDirekteBetalt ?: BigDecimal.ZERO,
                 maksGodkjentBeløpTaMed = utgiftMaksGodkjentBeløp != null,
                 maksGodkjentBeløp = utgiftMaksGodkjentBeløp?.beløp,
                 maksGodkjentBeløpBegrunnelse = utgiftMaksGodkjentBeløp?.begrunnelse,
