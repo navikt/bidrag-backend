@@ -1,3 +1,4 @@
+name: bidrag-dokumentmal
 ingresses:
   - https://bidrag-dokumentmal.intern.nav.no
 azure_access_inbound:
