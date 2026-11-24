@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 private val LOGGER = KotlinLogging.logger {}
+private val SECURE_LOGGER = KotlinLogging.logger("secureLogger")
 
 @RestControllerAdvice
 class GlobalRestControllerAdvice : ResponseEntityExceptionHandler() {
@@ -37,7 +38,8 @@ class GlobalRestControllerAdvice : ResponseEntityExceptionHandler() {
             title = "Feil mot ekstern tjeneste"
         }
 
-        LOGGER.warn(exception) { problem.detail }
+        LOGGER.warn { "Ekstern tjeneste returnerte HTTP ${exception.statusCode.value()}" }
+        SECURE_LOGGER.warn(exception) { "Feilrespons fra ekstern tjeneste: ${problem.detail}" }
 
         return problem
     }
@@ -45,7 +47,8 @@ class GlobalRestControllerAdvice : ResponseEntityExceptionHandler() {
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpStatusCodeException(exception: HttpStatusCodeException): ProblemDetail {
         val errorMessage = getErrorMessage(exception)
-        LOGGER.warn(exception) { errorMessage }
+        LOGGER.warn { "Ekstern tjeneste returnerte HTTP ${exception.statusCode.value()}" }
+        SECURE_LOGGER.warn(exception) { "Feilrespons fra ekstern tjeneste: $errorMessage" }
         return ProblemDetail.forStatusAndDetail(
             exception.statusCode,
             errorMessage,
@@ -56,7 +59,8 @@ class GlobalRestControllerAdvice : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(Exception::class)
     fun handleException(exception: Exception): ProblemDetail {
-        LOGGER.warn(exception) { "Det skjedde en ukjent feil" }
+        LOGGER.warn { "Det skjedde en ukjent feil" }
+        SECURE_LOGGER.warn(exception) { "Det skjedde en ukjent feil: ${exception.message}" }
         return ProblemDetail.forStatusAndDetail(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "Det skjedde en ukjent feil: ${exception.message}",

@@ -1,7 +1,7 @@
-import {TreeItem} from "@mui/x-tree-view";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {load} from "js-yaml";
-import {useAppContext} from "../App.tsx";
+import { TreeItem } from "@mui/x-tree-view";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { load } from "js-yaml";
+import { useAppContext } from "../App.tsx";
 
 const KAFKA_TOPICS_API_URL = "https://api.github.com/repos/navikt/bidrag-backend/contents/.nais/bidrag-kafka/topics";
 const KAFKA_RAW_BASE_URL = "https://raw.githubusercontent.com/navikt/bidrag-backend/main/.nais/bidrag-kafka/topics";
@@ -21,8 +21,8 @@ interface NaisAclEntry {
 }
 
 interface NaisTopic {
-    metadata?: {name?: string};
-    spec?: {acl?: NaisAclEntry[]};
+    metadata?: { name?: string };
+    spec?: { acl?: NaisAclEntry[] };
 }
 
 function sanitizeMermaidId(value: string): string {
@@ -80,31 +80,39 @@ function generateKafkaMermaid(topicName: string, acl: NaisAclEntry[]): string {
     return lines.join("\n");
 }
 
-function TopicLabel({name}: {name: string}) {
+function TopicLabel({ name }: { name: string }) {
     return (
         <span className="tree-label">
-      <span className="tree-label__name" title={name}>{name}</span>
-      <span className="tree-label__badge">topic</span>
-    </span>
+            <span className="tree-label__name" title={name}>
+                {name}
+            </span>
+            <span className="tree-label__badge">topic</span>
+        </span>
     );
 }
 
-function FolderLabel({name}: {name: string}) {
+function FolderLabel({ name }: { name: string }) {
     return (
         <span className="tree-label">
-      <span className="tree-label__name" title={name}>{name}</span>
-      <span className="tree-label__badge">mappe</span>
-    </span>
+            <span className="tree-label__name" title={name}>
+                {name}
+            </span>
+            <span className="tree-label__badge">mappe</span>
+        </span>
     );
 }
 
 /** Renders a single TreeItem (no SimpleTreeView wrapper) – must be placed inside an existing tree. */
 export function KafkaTopicsFolderItem() {
-    const {setShowContent, expandedFolders, setSelectedItem} = useAppContext();
+    const { setShowContent, expandedFolders, setSelectedItem } = useAppContext();
     const queryClient = useQueryClient();
     const isExpanded = expandedFolders.includes(KAFKA_FOLDER_ID);
 
-    const {data: topicFiles = [], isLoading, error} = useQuery<GithubFileEntry[]>({
+    const {
+        data: topicFiles = [],
+        isLoading,
+        error,
+    } = useQuery<GithubFileEntry[]>({
         queryKey: ["kafkaTopicsList"],
         enabled: isExpanded,
         staleTime: ONE_DAY_MS,
@@ -113,7 +121,7 @@ export function KafkaTopicsFolderItem() {
         queryFn: async () => {
             const response = await fetch(KAFKA_TOPICS_API_URL);
             if (!response.ok) throw new Error(`GitHub svarte med ${response.status}`);
-            const data = await response.json() as GithubFileEntry[];
+            const data = (await response.json()) as GithubFileEntry[];
             return data
                 .filter((f) => f.type === "file" && f.name.endsWith("-prod.yaml"))
                 .sort((a, b) => a.name.localeCompare(b.name, "nb"));
@@ -140,10 +148,16 @@ export function KafkaTopicsFolderItem() {
             const acl = parsed?.spec?.acl ?? [];
 
             if (acl.length === 0) {
-                setShowContent({type: "markdown", content: `# ${topicName}\n\nIngen ACL-regler funnet i \`${file.name}\`.`});
+                setShowContent({
+                    type: "markdown",
+                    content: `# ${topicName}\n\nIngen ACL-regler funnet i \`${file.name}\`.`,
+                });
                 return;
             }
-            setShowContent({type: "mermaid", content: generateKafkaMermaid(topicName, acl)});
+            setShowContent({
+                type: "mermaid",
+                content: generateKafkaMermaid(topicName, acl),
+            });
         } catch (err) {
             setShowContent({
                 type: "markdown",
@@ -153,15 +167,15 @@ export function KafkaTopicsFolderItem() {
     }
 
     return (
-        <TreeItem itemId={KAFKA_FOLDER_ID} label={<FolderLabel name="Kafka Topics"/>}>
+        <TreeItem itemId={KAFKA_FOLDER_ID} label={<FolderLabel name="Kafka Topics" />}>
             {isExpanded && isLoading && topicFiles.length === 0 ? (
                 <TreeItem
                     itemId="kafka_loading"
                     label={
                         <span className="tree-label">
-                  <span className="tree-label__name">Laster topics fra GitHub...</span>
-                  <span className="tree-label__badge">venter</span>
-                </span>
+                            <span className="tree-label__name">Laster topics fra GitHub...</span>
+                            <span className="tree-label__badge">venter</span>
+                        </span>
                     }
                 />
             ) : null}
@@ -171,9 +185,9 @@ export function KafkaTopicsFolderItem() {
                     itemId="kafka_error"
                     label={
                         <span className="tree-label">
-                  <span className="tree-label__name">Klarte ikke laste topics</span>
-                  <span className="tree-label__badge">feil</span>
-                </span>
+                            <span className="tree-label__name">Klarte ikke laste topics</span>
+                            <span className="tree-label__badge">feil</span>
+                        </span>
                     }
                 />
             ) : null}
@@ -182,7 +196,7 @@ export function KafkaTopicsFolderItem() {
                 <TreeItem
                     key={file.name}
                     itemId={`kafkatopic_${file.name}`}
-                    label={<TopicLabel name={formatTopicDisplayName(file.name)}/>}
+                    label={<TopicLabel name={formatTopicDisplayName(file.name)} />}
                     onClick={() => void handleTopicClick(file)}
                 />
             ))}

@@ -2,6 +2,7 @@ package no.nav.bidrag.dokument.bestilling.aop
 
 import com.fasterxml.jackson.databind.JsonMappingException
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.dokument.bestilling.model.FantIkkeEnhetException
 import no.nav.bidrag.dokument.bestilling.model.FantIkkePersonException
 import no.nav.bidrag.dokument.bestilling.model.ManglerGjelderException
@@ -33,7 +34,8 @@ class DefaultRestControllerAdvice {
         ],
     )
     fun fantIkkeData(exception: RuntimeException): ResponseEntity<*> {
-        LOGGER.warn { exception.message }
+        LOGGER.warn { "Forespørselen mangler data av type ${exception.javaClass.simpleName}" }
+        secureLogger.warn(exception) { "Forespørselen mangler data" }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .header(HttpHeaders.WARNING, exception.message ?: "")
@@ -52,9 +54,8 @@ class DefaultRestControllerAdvice {
             } else {
                 null
             }
-        LOGGER.warn(
-            exception,
-        ) {
+        LOGGER.warn { "Forespørselen inneholder en ugyldig verdi (${exception.javaClass.simpleName})" }
+        secureLogger.warn(exception) {
             "Forespørselen inneholder ugyldig verdi: ${valideringsFeil ?: "ukjent feil"}"
         }
 
@@ -69,7 +70,7 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(ProduksjonAvDokumentStottesIkke::class)
     fun ustottetBrev(exception: ProduksjonAvDokumentStottesIkke): ResponseEntity<*> {
-        LOGGER.warn { exception.message }
+        secureLogger.warn(exception) { "Produksjon av dokument støttes ikke" }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
             .header(HttpHeaders.WARNING, exception.message ?: "")
@@ -80,7 +81,7 @@ class DefaultRestControllerAdvice {
     @ExceptionHandler(HttpStatusCodeException::class)
     fun handleHttpClientErrorException(exception: HttpStatusCodeException): ResponseEntity<*> {
         val errorMessage = getErrorMessage(exception)
-        LOGGER.error(exception) { errorMessage }
+        secureLogger.error(exception) { errorMessage }
         return ResponseEntity
             .status(exception.statusCode)
             .header(HttpHeaders.WARNING, errorMessage)
@@ -103,7 +104,7 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(JwtTokenUnauthorizedException::class)
     fun handleUnauthorizedException(exception: JwtTokenUnauthorizedException): ResponseEntity<*> {
-        LOGGER.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
+        secureLogger.warn(exception) { "Ugyldig eller manglende sikkerhetstoken" }
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .header(HttpHeaders.WARNING, "Ugyldig eller manglende sikkerhetstoken")
@@ -113,7 +114,8 @@ class DefaultRestControllerAdvice {
     @ResponseBody
     @ExceptionHandler(Exception::class)
     fun handleOtherExceptions(exception: Exception): ResponseEntity<*> {
-        LOGGER.error(exception) { "Det skjedde en ukjent feil: ${exception.message}" }
+        LOGGER.error { "Det skjedde en ukjent feil av type ${exception.javaClass.simpleName}" }
+        secureLogger.error(exception) { "Det skjedde en ukjent feil" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .header(HttpHeaders.WARNING, "Det skjedde en ukjent feil: ${exception.message}")

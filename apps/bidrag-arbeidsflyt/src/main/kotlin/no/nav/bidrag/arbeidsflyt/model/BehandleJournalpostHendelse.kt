@@ -29,7 +29,10 @@ class BehandleJournalpostHendelse(
 
     fun oppdaterEksterntFagomrade(): BehandleJournalpostHendelse {
         if (journalpostHendelse.erEksterntFagomrade) {
-            LOGGER.info { "Endring til eksternt fagområde av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
+            LOGGER.info { "Endring til eksternt fagområde for journalpostId=${journalpostHendelse.journalpostId}." }
+            secureLogger.info {
+                "Endring til eksternt fagområde for journalpostId=${journalpostHendelse.journalpostId} av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+            }
 
             oppgaveService.ferdigstillJournalforingsOppgaver(
                 endretAvEnhetsnummer = journalpostHendelse.hentEndretAvEnhetsnummer(),
@@ -55,7 +58,13 @@ class BehandleJournalpostHendelse(
         val erEndringAvFagomrade = journalpost != null && journalpost.tema != fagområdeNy
 
         if (erEndringAvFagomrade || (!harTilgangTilTema && oppgaverForHendelse.erJournalforingsoppgaverTildeltSaksbehandler())) {
-            LOGGER.info { "Endring fra fagområde ${fagområdeGammelt ?: "UKJENT"} til $fagområdeNy av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}. Saksbehandler har tilgang til ny tema = $harTilgangTilTema" }
+            LOGGER.info {
+                "Endring fra fagområde ${fagområdeGammelt ?: "UKJENT"} til $fagområdeNy for journalpostId=${journalpostHendelse.journalpostId}. Saksbehandler har tilgang til ny tema = $harTilgangTilTema"
+            }
+            secureLogger.info {
+                "Endring fra fagområde ${fagområdeGammelt ?: "UKJENT"} til $fagområdeNy for journalpostId=${journalpostHendelse.journalpostId} av " +
+                    "${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}. Saksbehandler har tilgang til ny tema = $harTilgangTilTema"
+            }
             oppgaveService.endreMellomBidragFagomrade(
                 oppgaverForHendelse = oppgaverForHendelse,
                 journalpostHendelse,
@@ -74,7 +83,10 @@ class BehandleJournalpostHendelse(
         finnOppgaverForHendelse()
 
         if (oppgaverForHendelse.erEndringAvTildeltEnhetsnummer(journalpostHendelse)) {
-            LOGGER.info { "Endret tilordnet ressurs utført av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
+            LOGGER.info { "Endret tilordnet ressurs for journalpostId=${journalpostHendelse.journalpostId}." }
+            secureLogger.info {
+                "Endret tilordnet ressurs for journalpostId=${journalpostHendelse.journalpostId} utført av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+            }
             oppgaveService.overforOppgaver(oppgaverForHendelse, journalpostHendelse)
             finnOppdaterteOppgaverForHendelse = true
         }
@@ -86,7 +98,10 @@ class BehandleJournalpostHendelse(
         finnOppgaverForHendelse()
 
         if (oppgaverForHendelse.erEndringAvAktoerId(journalpostHendelse)) {
-            LOGGER.info { "Oppdaterer aktørid for oppgave. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}." }
+            LOGGER.info { "Oppdaterer aktørid for oppgave med journalpostId=${journalpostHendelse.journalpostId}." }
+            secureLogger.info {
+                "Oppdaterer aktørid for oppgave med journalpostId=${journalpostHendelse.journalpostId}. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+            }
             oppgaveService.oppdaterOppgaver(oppgaverForHendelse, journalpostHendelse)
             finnOppdaterteOppgaverForHendelse = true
         }
@@ -99,7 +114,11 @@ class BehandleJournalpostHendelse(
 
         if (!journalpostHendelse.erEksterntFagomrade && journalpostHendelse.erMottattStatus && oppgaverForHendelse.harIkkeJournalforingsoppgave()) {
             LOGGER.info {
-                "En mottaksregistert journalpost uten journalføringsoppgave. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+                "En mottaksregistert journalpost uten journalføringsoppgave. journalpostId=${journalpostHendelse.journalpostId}."
+            }
+            secureLogger.info {
+                "En mottaksregistert journalpost uten journalføringsoppgave. journalpostId=${journalpostHendelse.journalpostId}. " +
+                    "Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
             }
 
             val tildeltEnhetsnr = hentArbeidsfordeling()
@@ -120,7 +139,11 @@ class BehandleJournalpostHendelse(
                 )
             ) {
                 LOGGER.info {
-                    "En journalført journalpost skal ha oppdatert behandle dokument oppgaver for saker. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+                    "En journalført journalpost skal ha oppdatert behandle dokument oppgaver for saker. journalpostId=${journalpostHendelse.journalpostId}."
+                }
+                secureLogger.info {
+                    "En journalført journalpost skal ha oppdatert behandle dokument oppgaver for saker. journalpostId=${journalpostHendelse.journalpostId}. " +
+                        "Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
                 }
                 validerGyldigDataForBehandleDokument()
                 oppgaveService.opprettEllerEndreBehandleDokumentOppgaver(journalpostHendelse, behandlingsOppgaver)
@@ -135,7 +158,10 @@ class BehandleJournalpostHendelse(
         val tema = journalpostHendelse.hentTema()
         if (tema == Fagomrade.FARSKAP) {
             LOGGER.info {
-                "Journalposthendelse med journalpostId ${journalpostHendelse.journalpostId} har tema FAR. Bruker enhet $ENHET_FARSKAP ved arbeidsfordeling"
+                "Journalposthendelse med journalpostId=${journalpostHendelse.journalpostId} har tema FAR. Bruker fast enhet ved arbeidsfordeling"
+            }
+            secureLogger.info {
+                "Journalposthendelse med journalpostId=${journalpostHendelse.journalpostId} har tema FAR. Bruker enhet $ENHET_FARSKAP ved arbeidsfordeling"
             }
             return ENHET_FARSKAP
         }
@@ -145,11 +171,18 @@ class BehandleJournalpostHendelse(
             val erGyldigEnhet = enhetEksitererOgErAktiv && erJournalførendeEnhet
             return if (!erGyldigEnhet) {
                 LOGGER.warn {
-                    "Enhet ${journalpostHendelse.enhetKonvertert} fra hendelse er ikke journalførende enhet, eksisterer ikke eller er nedlagt. Henter enhet fra personens arbeidsfordeling."
+                    "Enheten fra hendelse med journalpostId=${journalpostHendelse.journalpostId} er ikke en gyldig journalførende enhet. Henter enhet fra personens arbeidsfordeling."
+                }
+                secureLogger.warn {
+                    "Enhet ${journalpostHendelse.enhetKonvertert} fra hendelse med journalpostId=${journalpostHendelse.journalpostId} er ikke journalførende enhet, eksisterer ikke eller er nedlagt. " +
+                        "Henter enhet fra personens arbeidsfordeling."
                 }
                 arbeidsfordelingService.hentArbeidsfordeling(journalpostHendelse.aktorId, journalpostHendelse.behandlingstema).verdi
             } else {
-                LOGGER.info { "Bruker enhet ${journalpostHendelse.enhetKonvertert} fra hendelsen ved arbeidsfordelingen." }
+                LOGGER.info { "Bruker enhet fra hendelsen med journalpostId=${journalpostHendelse.journalpostId} ved arbeidsfordelingen." }
+                secureLogger.info {
+                    "Bruker enhet ${journalpostHendelse.enhetKonvertert} fra hendelsen med journalpostId=${journalpostHendelse.journalpostId} ved arbeidsfordelingen."
+                }
                 journalpostHendelse.enhetKonvertert!!
             }
         }
@@ -179,7 +212,11 @@ class BehandleJournalpostHendelse(
 
         if (journalpostHendelse.erJournalstatusEndretTilIkkeMottatt() && oppgaverForHendelse.harJournalforingsoppgaver()) {
             LOGGER.info {
-                "En journalført journalpost skal ikke ha journalføringsoppgaver. Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
+                "En journalført journalpost skal ikke ha journalføringsoppgaver. journalpostId=${journalpostHendelse.journalpostId}."
+            }
+            secureLogger.info {
+                "En journalført journalpost skal ikke ha journalføringsoppgaver. journalpostId=${journalpostHendelse.journalpostId}. " +
+                    "Rapportert av ${journalpostHendelse.lagSaksbehandlerInfoMedEnhet()}."
             }
             oppgaveService.ferdigstillJournalforingsOppgaver(
                 endretAvEnhetsnummer = journalpostHendelse.hentEndretAvEnhetsnummer(),

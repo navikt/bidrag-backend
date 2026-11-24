@@ -6,9 +6,6 @@ env:
   KODEVERK_SCOPE: prod-gcp.team-rocket.kodeverk-api
   JAVA_TOOL_OPTIONS: -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=80.0
 azure_access_inbound:
-  - application: bidrag-ui
-    namespace: bidrag
-    cluster: prod-fss
   - application: bisys
     namespace: bidrag
     cluster: prod-fss

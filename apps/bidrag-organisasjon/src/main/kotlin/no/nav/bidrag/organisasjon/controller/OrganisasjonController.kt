@@ -7,7 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import no.nav.bidrag.commons.util.sanitizeForLog
+import no.nav.bidrag.commons.util.secureLogger
 import no.nav.bidrag.domene.enums.sak.Arbeidsfordeling
 import no.nav.bidrag.domene.ident.Personident
 import no.nav.bidrag.domene.organisasjon.Enhetsnummer
@@ -90,7 +90,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentEnhetInfo(@PathVariable enhetNr: Enhetsnummer): ResponseEntity<EnhetDto> {
-        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_INFO/${enhetNr.toString().sanitizeForLog()}" }
+        secureLogger.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_INFO/$enhetNr" }
         val enhetInfo = organisasjonService.hentEnhetInfo(enhetNr)
         return ResponseEntity(enhetInfo, HttpStatus.OK)
     }
@@ -139,7 +139,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentSaksbehandlerInfo(@PathVariable saksbehandlerIdent: String): ResponseEntity<SaksbehandlerDto> {
-        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERINFO/${saksbehandlerIdent.sanitizeForLog()}" }
+        secureLogger.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERINFO/$saksbehandlerIdent" }
         val saksbehandlerDto = organisasjonService.hentSaksbehandlerInfo(saksbehandlerIdent)
         return ResponseEntity(saksbehandlerDto, if (saksbehandlerDto == null) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -168,7 +168,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentSaksbehandlerEnheter(@PathVariable saksbehandlerIdent: String): ResponseEntity<List<EnhetDto>> {
-        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERENHETER/${saksbehandlerIdent.sanitizeForLog()}" }
+        secureLogger.debug { "request: bidrag-organisasjon$ENDPOINT_SAKSBEHANDLERENHETER/$saksbehandlerIdent" }
         val enhetDtoer = organisasjonService.hentSaksbehandlerEnheter(saksbehandlerIdent)
         return ResponseEntity(enhetDtoer, if (enhetDtoer.isEmpty()) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
@@ -211,7 +211,7 @@ class OrganisasjonController(private val organisasjonService: OrganisasjonServic
         ],
     )
     fun hentBidragEnhetBrukere(@PathVariable enhetsnummer: String): ResponseEntity<List<EnhetBrukerDto>> {
-        LOGGER.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_BRUKERE/${enhetsnummer.sanitizeForLog()}" }
+        secureLogger.debug { "request: bidrag-organisasjon$ENDPOINT_ENHET_BRUKERE/$enhetsnummer" }
         val brukere = organisasjonService.hentPersonerEnhet(enhetsnummer)
         return ResponseEntity(brukere, if (brukere.isEmpty()) HttpStatus.NO_CONTENT else HttpStatus.OK)
     }
