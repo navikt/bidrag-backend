@@ -114,7 +114,8 @@ fun OppdaterOpphørsdatoRequestDto.valider(behandling: Behandling) {
             ?: saksnummer?.let { søknadsbarnISak.minOfOrNull { it.virkningstidspunktRolle } }
             ?: behandling.eldsteVirkningstidspunkt
 
-    if (opphørsdato == virkningstidspunkt) {
+    val gjelderRevurderingsbarn = (rolle != null && rolle.erRevurderingsbarn) || (søknadsbarnISak.isNotEmpty() && søknadsbarnISak.all { it.erRevurderingsbarn })
+    if (opphørsdato == virkningstidspunkt && !gjelderRevurderingsbarn) {
         feilliste.add("Opphørsdato kan ikke settes lik virkningstidspunkt")
     }
     if ((rolle == null || !rolle.erRevurderingsbarn) && opphørsdato.isBefore(virkningstidspunkt)) {
@@ -347,7 +348,7 @@ fun OppdatereVirkningstidspunkt.valider(behandling: Behandling) {
         feilliste.add("Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR")
     }
     if (oppdaterBegrunnelseVurderingAvSkolegang != null && behandling.kanSkriveVurderingAvSkolegangAlle() &&
-        (rolleId == null && behandling.søknadsbarn.size > 1)
+        (rolleId == null && behandling.søknadsbarn.filter { saksnummer == null || it.saksnummer == saksnummer }.size > 1)
     ) {
         feilliste.add(
             "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken",
