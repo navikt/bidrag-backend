@@ -5,12 +5,11 @@ import no.nav.bidrag.domene.sak.Saksnummer
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.OppgaveClient
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FellesKodeverkTema
 import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.FinnOppgaverParams
+import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto
+import no.nav.bidrag.oppgave.controller.BidragOppgaveDto
 import no.nav.bidrag.oppgave.controller.FinnOppgaverRequest
-import no.nav.bidrag.oppgave.dto.OppgaveDto
-import no.nav.bidrag.oppgave.dto.OppgaveStatus
 import no.nav.bidrag.tilgang.TilgangskontrollService
 import org.springframework.stereotype.Service
-import no.nav.bidrag.oppgave.consumer.oppgaveapi.model.OppgaveDto as OppgaveApiDto
 
 @Service
 class OppgaveService(
@@ -39,8 +38,6 @@ class OppgaveService(
     private fun FinnOppgaverRequest.toOppgaveParams(offset: Int, limit: Int): FinnOppgaverParams = FinnOppgaverParams(
         saksreferanse = saksnummer?.let { listOf(it) },
         aktoerId = aktoerId?.let { listOf(it) },
-        tildeltEnhetsnr = enhetsnummer,
-        tilordnetRessurs = saksbehandler,
         tema = listOf(FellesKodeverkTema.BID),
         statuskategori = "AAPEN",
         limit = limit,
@@ -49,29 +46,39 @@ class OppgaveService(
 }
 
 data class FinnOppgaverResultat(
-    val oppgaver: List<OppgaveDto>,
+    val oppgaver: List<BidragOppgaveDto>,
     val offset: Int,
     val limit: Int,
     val antallTreffTotalt: Long?,
 )
 
-private fun OppgaveApiDto.tilBidragOppgave(): OppgaveDto = OppgaveDto(
-    id = id.verdi,
-    tittel = "$tema - $oppgavetype",
+private fun OppgaveDto.tilBidragOppgave(): BidragOppgaveDto = BidragOppgaveDto(
+    id = id,
+    tema = tema,
+    oppgavetype = oppgavetype,
+    brukerIdent = brukerIdent,
+    saksreferanse = saksreferanse,
+    prioritet = prioritet,
+    journalpostId = journalpostId,
+    tildeltEnhetsnr = tildeltEnhetsnr,
+    tilordnetRessurs = tilordnetRessurs,
     beskrivelse = beskrivelse,
-    beskrivelseshistorikk = OppgaveBeskrivelseParser.parse(
+    beskrivelseListe = OppgaveBeskrivelseParser.parse(
         beskrivelse = beskrivelse,
         sistEndretTidspunkt = endretTidspunkt ?: opprettetTidspunkt,
         sistEndretAv = endretAv ?: opprettetAv,
         sistEndretEnhetsnr = endretAvEnhetsnr ?: opprettetAvEnhetsnr,
         oppgaveId = id.verdi,
     ),
-    status = status.tilBidragStatus(),
-    opprettet = opprettetTidspunkt,
+    fristFerdigstillelse = fristFerdigstillelse,
+    status = status,
+    opprettetTidspunkt = opprettetTidspunkt,
 )
 
-private fun OppgaveApiDto.Status.tilBidragStatus(): OppgaveStatus = when (this) {
-    OppgaveApiDto.Status.OPPRETTET, OppgaveApiDto.Status.AAPNET -> OppgaveStatus.OPPRETTET
-    OppgaveApiDto.Status.UNDER_BEHANDLING -> OppgaveStatus.UNDER_BEHANDLING
-    OppgaveApiDto.Status.FERDIGSTILT, OppgaveApiDto.Status.FEILREGISTRERT -> OppgaveStatus.FERDIG
-}
+/** Fnr, dnr og NPID har 11 sifre; aktør-ID har 13 og filtreres bort. */
+private val OppgaveDto.brukerIdent: Personident?
+    get() = bruker
+        ?.takeIf { it.type == OppgaveDto.Bruker.BrukerType.PERSON && it.ident.length == PERSONIDENT_LENGDE }
+        ?.let { Personident(it.ident) }
+
+private const val PERSONIDENT_LENGDE = 11

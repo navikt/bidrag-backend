@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.headers.Header
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
-import no.nav.bidrag.oppgave.dto.OppgaveDto
 import no.nav.bidrag.oppgave.service.OppgaveService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -42,7 +41,7 @@ class OppgaveController(
     )
     fun finnOppgaver(
         @RequestBody @Valid request: FinnOppgaverRequest,
-    ): ResponseEntity<List<OppgaveDto>> {
+    ): ResponseEntity<List<BidragOppgaveDto>> {
         val resultat = oppgaveService.finnOppgaver(request)
         return ResponseEntity.ok()
             .header(HEADER_OFFSET, resultat.offset.toString())
