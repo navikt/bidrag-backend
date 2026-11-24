@@ -18,7 +18,7 @@ class KafkaConfiguration {
     @Bean
     fun defaultErrorHandler(@Value($$"${KAFKA_MAX_RETRY:-1}") maxRetry: Int): DefaultErrorHandler {
         // Max retry should not be set in production
-        val backoffPolicy = ExponentialBackOffWithMaxRetries(maxRetry)
+        val backoffPolicy = if (maxRetry == -1) ExponentialBackOff() else ExponentialBackOffWithMaxRetries(maxRetry)
         backoffPolicy.multiplier = 1.2
         backoffPolicy.maxInterval = 60_000L // 1 min
         LOGGER.info { "${"Initialiserer Kafka errorhandler med backoffpolicy {}, maxRetry={}"} $backoffPolicy $maxRetry" }
@@ -34,7 +34,7 @@ class KafkaConfiguration {
                         "Melding som feilet: $value"
                 }
             }, backoffPolicy)
-        errorHandler.setRetryListeners(KafkaRetryListener())
+//        errorHandler.setRetryListeners(KafkaRetryListener())
         return errorHandler
     }
 }
