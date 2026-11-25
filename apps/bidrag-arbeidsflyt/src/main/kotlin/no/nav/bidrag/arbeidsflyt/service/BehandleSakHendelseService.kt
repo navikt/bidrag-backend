@@ -12,6 +12,8 @@ import no.nav.bidrag.arbeidsflyt.persistence.repository.SakRepository
 import no.nav.bidrag.domene.enums.sak.Tilgangstype
 import no.nav.bidrag.transport.sak.SakHendelse
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -24,6 +26,7 @@ class BehandleSakHendelseService(
     private val organisasjonConsumer: BidragOrganisasjonConsumer,
     private val sakRepository: SakRepository,
 ) {
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     fun behandleHendelse(hendelse: SakHendelse) {
         val saksnummer = hendelse.saksnummer.verdi
         val sak = sakConsumer.hentSakUtenCache(saksnummer)

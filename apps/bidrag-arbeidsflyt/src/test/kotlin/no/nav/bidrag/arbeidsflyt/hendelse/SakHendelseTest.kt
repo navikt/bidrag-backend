@@ -39,15 +39,23 @@ import no.nav.bidrag.transport.sak.SakKafkaHendelsestype
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.annotation.Propagation
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.client.HttpServerErrorException
 import java.time.LocalDate
 
+@Transactional(propagation = Propagation.NOT_SUPPORTED)
 internal class SakHendelseTest : AbstractBehandleHendelseTest() {
     @Autowired
     lateinit var service: BehandleSakHendelseService
 
     @Autowired
     lateinit var scheduler: KafkaDLQRetryScheduler
+
+    @Autowired
+    lateinit var transactionManager: PlatformTransactionManager
 
     private val sak = BidragssakDto(
         eierfogd = Enhetsnummer("4806"),
@@ -390,6 +398,27 @@ internal class SakHendelseTest : AbstractBehandleHendelseTest() {
 
         testDataGenerator.hentDlKafka() shouldBe emptyList()
         verify(1, patchRequestedFor(urlEqualTo("/oppgave/api/v1/oppgaver/1001")))
+    }
+
+    @Test
+    fun `skal beholde påbegynt flytting når DLQ-batchen rulles tilbake`() {
+        stubFor(patch("/oppgave/api/v1/oppgaver/1001").willReturn(aResponse().withStatus(500)))
+        testDataGenerator.opprettDLQMelding(
+            DLQKafka(
+                messageKey = "1234567",
+                topicName = "topic_sak",
+                payload = objectMapper.writeValueAsString(hendelse),
+                retry = true,
+            ),
+        )
+
+        TransactionTemplate(transactionManager).executeWithoutResult {
+            scheduler.processMessages()
+            it.setRollbackOnly()
+        }
+
+        testDataGenerator.hentSak("1234567")!!.eierfogd shouldBe "4806"
+        testDataGenerator.hentSak("1234567")!!.flytterFraEierfogder shouldBe setOf("4833")
     }
 
     private fun lagreAvbruttFlytting() {
