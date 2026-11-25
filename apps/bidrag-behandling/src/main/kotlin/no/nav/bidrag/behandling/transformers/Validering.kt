@@ -378,7 +378,7 @@ private fun OppdatereVirkningstidspunkt.validerSkolegang(behandling: Behandling)
     if (!behandling.kanSkriveVurderingAvSkolegangAlle()) {
         return "Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR"
     }
-    if (rolleId == null && behandling.søknadsbarn.size > 1) {
+    if (rolleId == null && behandling.finnSøknadsbarnForSak(saksnummer).size > 1) {
         return "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken"
     }
     return null

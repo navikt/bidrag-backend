@@ -859,6 +859,21 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
+        fun `skal lagre vurdering av skolegang på eneste barn i angitt sak`() {
+            val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
+            behandling.stonadstype = Stønadstype.BIDRAG18AAR
+            behandling.søknadsbarn.forEach { it.stønadstype = Stønadstype.BIDRAG18AAR }
+
+            virkningstidspunktService.oppdatereVirkningstidspunkt(
+                behandling.id!!,
+                OppdatereVirkningstidspunkt(saksnummer = sak2, oppdaterBegrunnelseVurderingAvSkolegang = OppdatereBegrunnelse("Sak 2")),
+            )
+
+            NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, barn1.id!!) shouldBe ""
+            NotatService.henteNotatinnholdRolleId(behandling, NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG, barn2.id!!) shouldBe "Sak 2"
+        }
+
+        @Test
         fun `skal lagre begrunnelse for sak på bidragsmottaker i saken`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
             val bm1 = behandling.bidragsmottaker!!
