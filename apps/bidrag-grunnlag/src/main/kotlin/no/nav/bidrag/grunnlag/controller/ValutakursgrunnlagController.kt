@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import no.nav.bidrag.domene.enums.samhandler.Valutakode
 import no.nav.bidrag.grunnlag.ISSUER
 import no.nav.bidrag.grunnlag.bo.ValutakursgrunnlagBo
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.HentValutaScheduler
+import no.nav.bidrag.grunnlag.hendelse.schedule.valuta.VALUTAKURS_TIDSSONE
 import no.nav.bidrag.grunnlag.service.HentHistoriskeValutakurserService
 import no.nav.bidrag.grunnlag.service.Valutaberegning
 import no.nav.bidrag.grunnlag.service.ValutakursgrunnlagService
@@ -72,6 +74,7 @@ private const val OPPSLAG_BESKRIVELSE =
 class ValutakursgrunnlagController(
     private val valutakursgrunnlagService: ValutakursgrunnlagService,
     private val historiskeValutakurserService: HentHistoriskeValutakurserService,
+    private val hentValutaScheduler: HentValutaScheduler,
     private val environment: Environment,
     @param:Value("\${valutakurs.skriving-lokalt-aktivert:false}") private val skrivingLokaltAktivert: Boolean = false,
 ) {
@@ -143,6 +146,22 @@ class ValutakursgrunnlagController(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Oppgi en utenlandsk valuta og 1. januar eller 1. juli som startdato")
         }
         return valutakursgrunnlagService.innhent(request.valutakode, request.gyldigFra)
+    }
+
+    @PostMapping("/valutakursgrunnlag/planlagt-innhenting")
+    @Operation(
+        security = [SecurityRequirement(name = "bearer-key")],
+        summary = "Kjør planlagt innhenting av valutakurser",
+        description = "Starter samme innhenting som den planlagte halvårskjøringen for dagens dato i Oslo-tid.",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Planlagt innhenting fullført"),
+            ApiResponse(responseCode = "401", description = "Sikkerhetstoken mangler eller er ugyldig"),
+        ],
+    )
+    fun innhentPlanlagteValutakurser() {
+        hentValutaScheduler.hentValutakurs(LocalDate.now(VALUTAKURS_TIDSSONE))
     }
 
     @PostMapping("/valutakursgrunnlag/historisk")

@@ -21,6 +21,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 private val LOGGER = KotlinLogging.logger { }
+internal val VALUTAKURS_TIDSSONE: ZoneId = ZoneId.of("Europe/Oslo")
 
 @Configuration
 @EnableScheduling
@@ -31,18 +32,18 @@ class HentValutaScheduler(
     private val slackService: SlackService,
     @param:Value($$"${NAIS_CLIENT_ID:bidrag-grunnlag-local}") private val clientId: String,
 ) {
-    @Scheduled(cron = "0 0 5 1 1,7 *", zone = "Europe/Oslo")
+    @Scheduled(cron = $$"${VALUTAKURS_HENT_CRON:0 0 5 1 1,7 *}", zone = "Europe/Oslo")
     @SchedulerLock(name = "hentValutakursgrunnlag", lockAtLeastFor = "PT15M")
     fun hentValutakurs() {
         LockAssert.assertLocked()
-        hentValutakurs(LocalDate.now(ZoneId.of("Europe/Oslo")))
+        hentValutakurs(LocalDate.now(VALUTAKURS_TIDSSONE))
     }
 
-    @Scheduled(cron = "0 0 6 * * *", zone = "Europe/Oslo")
+    @Scheduled(cron = $$"${VALUTAKURS_SJEKK_CRON:0 0 6 * * *}", zone = "Europe/Oslo")
     @SchedulerLock(name = "sjekkValutakursgrunnlag", lockAtLeastFor = "PT15M")
     fun sjekkValutakursgrunnlag() {
         LockAssert.assertLocked()
-        sjekkValutakursgrunnlag(LocalDate.now(ZoneId.of("Europe/Oslo")))
+        sjekkValutakursgrunnlag(LocalDate.now(VALUTAKURS_TIDSSONE))
     }
 
     internal fun sjekkValutakursgrunnlag(dato: LocalDate) {
