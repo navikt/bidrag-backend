@@ -269,21 +269,27 @@ class VirkningstidspunktService(
         secureLogger.info { "Oppdaterer informasjon om virkningstidspunkt for behandling $behandlingsid, forespørsel=$request" }
         request.valider(behandling)
         oppdaterAvslagÅrsak(behandling, request)
-        val gjelderBarnRolle = request.rolleId?.let { rolleId -> behandling.søknadsbarn.find { it.id == rolleId } }
-        val stønadstype = gjelderBarnRolle?.stønadstype ?: behandling.stonadstype
-        if (stønadstype == Stønadstype.BIDRAG18AAR) {
-            request.oppdaterBegrunnelseVurderingAvSkolegang?.let { begrunnelse ->
-                // Det valideres at det finnes bare ett barn i behandlingen hvis rolleId i requesten er null og oppdaterBegrunnelseVurderingAvSkolegang oppdateres
-                notatService.oppdatereNotat(
-                    behandling,
-                    NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
-                    begrunnelse.nyBegrunnelse,
-                    gjelderBarnRolle ?: behandling.finnSøknadsbarnForSak(request.saksnummer).first(),
-                )
-            }
-        }
+        oppdaterVurderingAvSkolegang(behandling, request)
         oppdaterVirkningstidspunkt(request.rolleId, request.virkningstidspunkt, behandling, saksnummer = request.saksnummer)
         forholdsmessigFordelingService.synkroniserSøknadsbarnOgRevurderingsbarnForFFBehandling(behandling, ignorerSynkTimer = true)
+    }
+
+    private fun oppdaterVurderingAvSkolegang(
+        behandling: Behandling,
+        request: OppdatereVirkningstidspunkt,
+    ) {
+        val begrunnelse = request.oppdaterBegrunnelseVurderingAvSkolegang ?: return
+        val valgtBarn = request.rolleId?.let { rolleId -> behandling.søknadsbarn.find { it.id == rolleId } }
+        val enesteBarnISak = behandling.finnSøknadsbarnForSak(request.saksnummer).singleOrNull()
+        val barn = valgtBarn ?: enesteBarnISak ?: return
+        if ((barn.stønadstype ?: behandling.stonadstype) != Stønadstype.BIDRAG18AAR) return
+
+        notatService.oppdatereNotat(
+            behandling,
+            NotatGrunnlag.NotatType.VIRKNINGSTIDSPUNKT_VURDERING_AV_SKOLEGANG,
+            begrunnelse.nyBegrunnelse,
+            barn,
+        )
     }
 
     @Transactional

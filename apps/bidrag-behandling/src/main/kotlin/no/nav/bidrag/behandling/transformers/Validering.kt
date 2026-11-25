@@ -365,9 +365,9 @@ private fun OppdatereVirkningstidspunkt.validerVirkningstidspunktForBarn(
     return when {
         barnSomOppdateres.isEmpty() -> "Oppdateringen gjelder ingen søknadsbarn"
 
-        virkningstidspunkt == null -> null
+        gjelderBarn == null || virkningstidspunkt == null -> null
 
-        barnSomOppdateres.any { maxOf(it.eldsteSøktFomDato, virkningstidspunkt).isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
+        maxOf(gjelderBarn.eldsteSøktFomDato, virkningstidspunkt).isBefore(gjelderBarn.fødselsdato.withDayOfMonth(1)) ->
             "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
 
         else -> null
@@ -379,7 +379,7 @@ private fun OppdatereVirkningstidspunkt.validerSkolegang(behandling: Behandling)
     if (!behandling.kanSkriveVurderingAvSkolegangAlle()) {
         return "Oppdatering av begrunnelse for vurdering av skolegang kan kun gjøres for behandlinger av typen BIDRAG18AAR"
     }
-    if (rolleId == null && behandling.søknadsbarn.size > 1) {
+    if (rolleId == null && behandling.finnSøknadsbarnForSak(saksnummer).size > 1) {
         return "Oppdatering av begrunnelse for vurdering av skolegang må oppdateres for et enkelt barn når det er flere barn i saken"
     }
     return null
