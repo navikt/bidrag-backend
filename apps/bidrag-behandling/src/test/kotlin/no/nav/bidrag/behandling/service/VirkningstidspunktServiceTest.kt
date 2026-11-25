@@ -196,7 +196,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
     }
 
     @Test
-    fun `skal avvise virkningstidspunkt før fødselsmåned for ett av flere barn`() {
+    fun `skal sette yngre barn til fødselsmåned ved felles virkningstidspunkt før fødsel`() {
         val behandling =
             opprettGyldigBehandlingForBeregningOgVedtak(
                 generateId = true,
@@ -211,11 +211,33 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         barn2.virkningstidspunkt = LocalDate.parse("2025-07-01")
         every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
 
+        virkningstidspunktService.oppdatereVirkningstidspunkt(
+            behandling.id!!,
+            OppdatereVirkningstidspunkt(virkningstidspunkt = LocalDate.parse("2025-05-01")),
+        )
+
+        barn1.virkningstidspunkt shouldBe LocalDate.parse("2025-05-01")
+        barn2.virkningstidspunkt shouldBe LocalDate.parse("2025-06-01")
+    }
+
+    @Test
+    fun `skal avvise virkningstidspunkt før fødselsmåned for angitt barn`() {
+        val behandling =
+            opprettGyldigBehandlingForBeregningOgVedtak(
+                generateId = true,
+                typeBehandling = TypeBehandling.BIDRAG,
+                andreBarn = listOf(testdataBarn2),
+            )
+        val (_, barn2) = behandling.søknadsbarn
+        barn2.fødselsdato = LocalDate.parse("2025-06-15")
+        barn2.virkningstidspunkt = LocalDate.parse("2025-07-01")
+        every { behandlingRepository.findBehandlingById(any()) } returns Optional.of(behandling)
+
         val exception =
             shouldThrow<HttpClientErrorException> {
                 virkningstidspunktService.oppdatereVirkningstidspunkt(
                     behandling.id!!,
-                    OppdatereVirkningstidspunkt(virkningstidspunkt = LocalDate.parse("2025-05-01")),
+                    OppdatereVirkningstidspunkt(rolleId = barn2.id, virkningstidspunkt = LocalDate.parse("2025-05-01")),
                 )
             }
 
@@ -408,7 +430,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
-        fun `skal validere fødselsmåned mot barnets egen søknadsdato når den er senere enn virkningstidspunktet`() {
+        fun `skal sette barnet til egen søknadsdato når den er senere enn felles virkningstidspunkt`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
             barn2.fødselsdato = LocalDate.parse("2025-05-15")
             barn2.forholdsmessigFordeling!!.søknader.add(
@@ -777,7 +799,7 @@ class VirkningstidspunktServiceTest : CommonMockServiceTest() {
         }
 
         @Test
-        fun `skal validere virkningstidspunkt bare mot fødselsmåned for barn i angitt sak`() {
+        fun `skal ikke avvise virkningstidspunkt før fødselsmåned for barn i annen sak`() {
             val (behandling, barn1, barn2) = opprettBehandlingMedBarnIToSaker()
             barn1.fødselsdato = LocalDate.parse("2025-06-15")
             barn2.fødselsdato = LocalDate.parse("2025-05-15")

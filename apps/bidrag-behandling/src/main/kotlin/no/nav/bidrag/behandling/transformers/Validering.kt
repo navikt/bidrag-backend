@@ -364,9 +364,9 @@ private fun OppdatereVirkningstidspunkt.validerVirkningstidspunktForBarn(
     return when {
         barnSomOppdateres.isEmpty() -> "Oppdateringen gjelder ingen søknadsbarn"
 
-        virkningstidspunkt == null -> null
+        gjelderBarn == null || virkningstidspunkt == null -> null
 
-        barnSomOppdateres.any { maxOf(it.eldsteSøktFomDato, virkningstidspunkt).isBefore(it.fødselsdato.withDayOfMonth(1)) } ->
+        maxOf(gjelderBarn.eldsteSøktFomDato, virkningstidspunkt).isBefore(gjelderBarn.fødselsdato.withDayOfMonth(1)) ->
             "Virkningstidspunkt kan ikke være før barnets fødselsmåned"
 
         else -> null
