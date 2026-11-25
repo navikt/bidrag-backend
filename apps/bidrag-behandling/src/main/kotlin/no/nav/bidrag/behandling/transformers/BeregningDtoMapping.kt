@@ -1885,7 +1885,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn2(
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = false,
             privatAvtale = false,
-            erSøknadsbarn = true,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
@@ -1950,7 +1950,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingSøknadsbarn(
         ForholdsmessigFordelingBidragTilFordelingBarn(
             utenlandskbidrag = false,
             privatAvtale = false,
-            erSøknadsbarn = true,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             beregnetBidrag =
             BeregnetBidragBarnDto(
                 periode = it.innhold.periode,
@@ -2075,7 +2075,7 @@ private fun List<GrunnlagDto>.finnBidragTilFordelingLøpendeBidrag(
             ForholdsmessigFordelingBidragTilFordelingBarn(
                 utenlandskbidrag = !it.innhold.erNorskBidrag,
                 privatAvtale = true,
-                erSøknadsbarn = false,
+                erSøknadsbarn = barn.delAvOpprinneligBehandling,
                 bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
                 barn =
                 PersoninfoDto(
@@ -2201,7 +2201,7 @@ fun List<GrunnlagDto>.mapTilBeregnetBidragDto(
             utenlandskbidrag = !it.innhold.erNorskBidrag,
             oppfostringsbidrag = it.innhold.erOppfostringsbidrag,
             privatAvtale = false,
-            erSøknadsbarn = false,
+            erSøknadsbarn = barn.delAvOpprinneligBehandling,
             stønadstype = løpendeBidrag.stønadstype,
             bidragTilFordeling = it.innhold.bidragTilFordelingNOK,
             barn = if (harTilgangTilSak) {

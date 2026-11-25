@@ -977,6 +977,13 @@ fun Behandling.tilInntektDtoV2(
 )
 
 fun Rolle.hentVirkningstidspunktValideringsfeilRolle(): VirkningstidspunktFeilV2Dto {
+    val erAvslagForAlleSøknadsbarn = behandling.søknadsbarn.filter { !it.erRevurderingsbarn }.all { it.avslag != null }
+    if (erAvslagForAlleSøknadsbarn && erRevurderingsbarn) {
+        // Trenger ikke å validere virkningstidspunkt for R-barn hvis det er avslag for alle søknadsbarn
+        return VirkningstidspunktFeilV2Dto(
+            gjelder = tilDto(),
+        )
+    }
     val erVirkningstidspunktSenereEnnOpprinnerligVirknignstidspunkt =
         behandling.erKlageEllerOmgjøring &&
             behandling.omgjøringsdetaljer?.opprinneligVirkningstidspunkt != null &&
